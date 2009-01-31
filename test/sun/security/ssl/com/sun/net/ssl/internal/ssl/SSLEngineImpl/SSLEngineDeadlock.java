@@ -185,6 +185,7 @@ public class SSLEngineDeadlock {
             if ((task = serverEngine.getDelegatedTask()) != null) {
                 task.run();
             }
+	    Thread.yield();  // Workaround to avoid hotspot server bug.
         }
     }
 

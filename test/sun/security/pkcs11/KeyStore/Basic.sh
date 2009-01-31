@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -153,10 +153,15 @@ esac
 # first make cert/key DBs writable if token is NSS
 
 if [ "${TOKEN}" = "nss" ] ; then
-    ${CP} ${TESTSRC}${FS}..${FS}nss${FS}db${FS}cert8.db ${TESTCLASSES}
+    NSSBASE=${TESTSRC}${FS}..${FS}..${FS}..${FS}..${FS}closed${FS}sun${FS}security${FS}pkcs11${FS}nss
+    if [ ! -d ${NSSBASE} ] ; then
+        echo "NSS binaries not found; Skip tests"
+        exit 0;
+    fi
+    ${CP} ${NSSBASE}${FS}db${FS}cert8.db ${TESTCLASSES}
     ${CHMOD} +w ${TESTCLASSES}${FS}cert8.db
 
-    ${CP} ${TESTSRC}${FS}..${FS}nss${FS}db${FS}key3.db ${TESTCLASSES}
+    ${CP} ${NSSBASE}${FS}db${FS}key3.db ${TESTCLASSES}
     ${CHMOD} +w ${TESTCLASSES}${FS}key3.db
 fi
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,14 +42,24 @@ public abstract class PKCS11Test {
     // directory corresponding to BASE in the /closed hierarchy
     static final String CLOSED_BASE;
 
+    // directory corresponding to NSS binaries for various OS.
+    static final String NSS_BASE;
+
     static {
         // hack
         String absBase = new File(BASE).getAbsolutePath();
-        int k = absBase.indexOf(SEP + "test" + SEP + "sun" + SEP);
-        if (k < 0) k = 0;
-        String p1 = absBase.substring(0, k + 6);
-        String p2 = absBase.substring(k + 5);
-        CLOSED_BASE = p1 + "closed" + p2;
+        if (absBase.indexOf("closed") == -1) {
+            int k = absBase.indexOf(SEP + "test" + SEP + "sun" + SEP);
+            if (k < 0) k = 0;
+            String p1 = absBase.substring(0, k + 6);
+            String p2 = absBase.substring(k + 5);
+            CLOSED_BASE = p1 + "closed" + p2;
+        } else {
+            CLOSED_BASE = BASE;
+        }
+        int n = CLOSED_BASE.indexOf(SEP + "closed" + SEP);
+        NSS_BASE = CLOSED_BASE.substring(0, n + 8) +
+            ("sun/security/pkcs11/nss".replace('/', SEP));
     }
 
     static String NSPR_PREFIX = "";
@@ -83,8 +93,8 @@ public abstract class PKCS11Test {
             "true".equals(System.getProperty("NO_DEIMOS"))) {
             return;
         }
-        String base = getBase();
-        String p11config = base + SEP + "nss" + SEP + "p11-deimos.txt";
+        if (!(new File(NSS_BASE)).exists()) return;
+        String p11config = NSS_BASE + SEP + "p11-deimos.txt";
         Provider p = getSunPKCS11(p11config);
         test.premain(p);
     }
@@ -147,8 +157,7 @@ public abstract class PKCS11Test {
             System.out.println("NSS not supported on this platform, skipping test");
             return null;
         }
-        String base = getBase();
-        String libdir = base + SEP + "nss" + SEP + "lib" + SEP + ostype + SEP;
+        String libdir = NSS_BASE + SEP + "lib" + SEP + ostype + SEP;
         System.setProperty("pkcs11test.nss.libdir", libdir);
         return libdir;
     }
@@ -172,11 +181,12 @@ public abstract class PKCS11Test {
     }
 
     public static void testNSS(PKCS11Test test) throws Exception {
+        if (!(new File(NSS_BASE)).exists()) return;
+
         String libdir = getNSSLibDir();
         if (libdir == null) {
             return;
         }
-        String base = getBase();
 
         if (loadNSPR(libdir) == false) {
             return;
@@ -187,7 +197,7 @@ public abstract class PKCS11Test {
         String customDBdir = System.getProperty("CUSTOM_DB_DIR");
         String dbdir = (customDBdir != null) ?
                                 customDBdir :
-                                base + SEP + "nss" + SEP + "db";
+                                NSS_BASE + SEP + "db";
         // NSS always wants forward slashes for the config path
         dbdir = dbdir.replace('\\', '/');
 
@@ -195,7 +205,7 @@ public abstract class PKCS11Test {
         String customConfigName = System.getProperty("CUSTOM_P11_CONFIG_NAME", "p11-nss.txt");
         String p11config = (customConfig != null) ?
                                 customConfig :
-                                base + SEP + "nss" + SEP + customConfigName;
+                                NSS_BASE + SEP + customConfigName;
 
         System.setProperty("pkcs11test.nss.lib", libfile);
         System.setProperty("pkcs11test.nss.db", dbdir);

@@ -1,5 +1,5 @@
 #
-# Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,8 +78,12 @@ esac
 
 ${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}KeyToolTest.java || exit 10
 
-NSS=${TESTSRC}${FS}..${FS}..${FS}pkcs11${FS}nss
+NSS=${TESTSRC}${FS}..${FS}..${FS}..${FS}..${FS}closed${FS}sun${FS}security${FS}pkcs11${FS}nss
 
+if [ ! -d ${NSS} ] ; then
+    echo "NSS binaries not found; Skip tests"
+    exit 0;
+fi
 cp ${TESTSRC}${FS}p11-nss.txt .
 cp ${NSS}${FS}db${FS}cert8.db .
 cp ${NSS}${FS}db${FS}key3.db .
@@ -92,6 +96,8 @@ echo | ${TESTJAVA}${FS}bin${FS}java -Dfile -Dnss \
    -Dnss.lib=${NSS}${FS}lib${FS}${PF}${FS}${LIBNAME} \
    KeyToolTest || exit 12
 
+STATUS=$?
+
 rm -f p11-nss.txt
 rm -f cert8.db
 rm -f key3.db
@@ -101,4 +107,4 @@ rm HumanInputStream*.class
 rm KeyToolTest.class
 rm TestException.class 
 
-exit $?
+exit ${STATUS}
