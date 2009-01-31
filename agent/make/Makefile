@@ -201,6 +201,7 @@ sun/jvm/hotspot/utilities/memo/*.java \
 sun/jvm/hotspot/utilities/soql/*.java 
 #END FILELIST
 
+
 ifneq "x$(ALT_BOOTDIR)" "x"
   BOOTDIR := $(ALT_BOOTDIR)
 endif
@@ -220,20 +221,37 @@ else
 endif
 
 SRC_DIR    = ../src/share/classes
-LIB_DIR    = ../src/share/lib
-CLOSED_LIB_DIR    = ../closed/src/share/lib
 BUILD_DIR  = ../build
 OUTPUT_DIR = $(BUILD_DIR)/classes
 DOC_DIR    = $(BUILD_DIR)/doc
+
+
 
 # gnumake 3.78.1 does not accept the *s, 
 # so use the shell to expand them
 ALLFILES := $(patsubst %,$(SRC_DIR)/%,$(FILELIST))
 ALLFILES := $(shell /bin/ls $(ALLFILES))
 
+EXTRA_JAR  = ../closed/src/share/lib/maf-1_0.jar
 
-# tools.jar is needed by the JDI - SA binding
-CLASSPATH = $(LIB_DIR)/maf-1_0.jar$(CPS)$(JDK_HOME)/lib/tools.jar
+# tools.jar is used by the sa-jdi binding
+CLASSPATH = $(JDK_HOME)/lib/tools.jar
+
+
+noGui := $(shell test -r $(EXTRA_JAR); echo $$?)
+ifeq "$(noGui)" "1"
+    # the EXTRA_JAR is in the closed/ area because of open source issues.  If
+    # it doesn't exist, then delete from ALLFILES the files that depend on it.
+    # This means that that HSDB, the GUI debugger for HotSpot, won't be built
+    # in an open source build.
+    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/ui/%,,$(ALLFILES))
+    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/bugspot/%,,$(ALLFILES))
+    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/HSDB.java,,$(ALLFILES))
+    MSG = \"               WARNING::::    $(EXTRA_JAR) is missing; won't build the GUI part of SA\"
+else
+    CLASSPATH := $(EXTRA_JAR)$(CPS)$(CLASSPATH)
+endif
+
 CLASSPATH := $(subst \,/,$(CLASSPATH))
 
 # FIXME: autogenerate call to rmic
@@ -241,12 +259,13 @@ CLASSPATH := $(subst \,/,$(CLASSPATH))
 SA_BUILD_VERSION_PROP = "sun.jvm.hotspot.runtime.VM.saBuildVersion=$(SA_BUILD_VERSION)"
 
 SA_PROPERTIES = $(OUTPUT_DIR)/sa.properties
+JAVAC = $(JDK_HOME)/bin/javac
 
 # Tagging it on because there's no reason not to run it
 all: filelist
 	@mkdir -p $(OUTPUT_DIR)
 	@echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
-	@javac -source 1.4 -classpath $(CLASSPATH) -deprecation -sourcepath $(SRC_DIR) -g -d $(OUTPUT_DIR) @filelist
+	$(JAVAC) -source 1.4 -classpath $(CLASSPATH) -deprecation -sourcepath $(SRC_DIR) -g -d $(OUTPUT_DIR) @filelist
 	@rmic -classpath $(OUTPUT_DIR) -d $(OUTPUT_DIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	rm -f $(OUTPUT_DIR)/sun/jvm/hotspot/utilities/soql/sa.js
 	cp $(SRC_DIR)/sun/jvm/hotspot/utilities/soql/sa.js $(OUTPUT_DIR)/sun/jvm/hotspot/utilities/soql
@@ -254,18 +273,19 @@ all: filelist
 allprof: filelist
 	@mkdir -p $(OUTPUT_DIR)
 	@echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
-	@javac -source 1.4 -J-Xprof -classpath $(CLASSPATH) -deprecation -sourcepath $(SRC_DIR) -g -d $(OUTPUT_DIR) @filelist
+	$(JAVAC) -source 1.4 -J-Xprof -classpath $(CLASSPATH) -deprecation -sourcepath $(SRC_DIR) -g -d $(OUTPUT_DIR) @filelist
 	@rmic -classpath $(OUTPUT_DIR) -d $(OUTPUT_DIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	rm -f $(OUTPUT_DIR)/sun/jvm/hotspot/utilities/soql/sa.js
 	cp $(SRC_DIR)/sun/jvm/hotspot/utilities/soql/sa.js $(OUTPUT_DIR)/sun/jvm/hotspot/utilities/soql
 
-filelist: $(ALLFILES)
+.PHONY: filelist
+filelist:
 	@if [ ! -f $(JDK_HOME)/lib/tools.jar ] ; then \
           echo "Missing $(JDK_HOME)/lib/tools.jar file. Use 1.6.0 or later version jdk to build SA."; \
           echo ""; \
           exit 1; \
         fi
-	@rm -f $@
+	@echo "$(MSG)"
 	@echo $(ALLFILES) > $@
 
 .PHONY: natives
@@ -280,7 +300,7 @@ sa-jdi.jar:
         fi
 	rm -f $(BUILD_DIR)/sa-jdi.jar
 	rm -f $(OUTPUT_DIR)/jdi_class_files
-	javac -source 1.4 ClosureFinder.java -d $(OUTPUT_DIR)
+	$(JAVAC) -source 1.4 ClosureFinder.java -d $(OUTPUT_DIR)
 	cd $(OUTPUT_DIR) ; find sun/jvm/hotspot/jdi -name "*.class" > jdi_class_files
 	cd $(OUTPUT_DIR) ; jar cvf ../sa-jdi.jar `java ClosureFinder jdi_class_files .`
 	cd $(BUILD_DIR) ; jar uvf sa-jdi.jar -C $(SRC_DIR) META-INF/services/com.sun.jdi.connect.Connector
@@ -291,12 +311,11 @@ sa-jdi.jar:
 docs:
 	@javadoc -private -classpath $(CLASSPATH) -sourcepath $(SRC_DIR) -d $(DOC_DIR) $(PKGLIST)
 
-sizes: $(ALLFILES)
-	wc -l $(ALLFILES)
+sizes: filelist
+	wc -l `cat filelist`
 
-cscope: $(ALLFILES)
-	echo $(ALLFILES) > java.files
-	cscope -b -i java.files -f java.out 
+cscope: filelist
+	cscope -b -i filelist -f java.out 
 
 .PHONY: sa.jar
 sa.jar:

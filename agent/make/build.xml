@@ -42,7 +42,7 @@
 
   <property name="app.name" value="sa"/>
   <property name="dist.jar" value="${app.name}.jar"/>
-  <property name="libs"     value="../src/share/lib"/>
+  <property name="libs"     value="../closed/src/share/lib"/>
   <property name="classes"  value="../build/classes"/>
 
 <!-- The "prepare" target is used to construct the deployment home
