@@ -1215,7 +1215,9 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
 
     public int getController(int controller) {
         synchronized (control_mutex) {
-            return this.controller[controller];
+            // Should only return lower 7 bits,
+            // even when controller is "boosted" higher.
+            return this.controller[controller] & 127;
         }
     }
 

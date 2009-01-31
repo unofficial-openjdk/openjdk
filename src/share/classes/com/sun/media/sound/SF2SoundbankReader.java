@@ -46,6 +46,8 @@ public class SF2SoundbankReader extends SoundbankReader {
             return new SF2Soundbank(url);
         } catch (RIFFInvalidFormatException e) {
             return null;
+        } catch(IOException ioe) {
+            return null;
         }
     }
 

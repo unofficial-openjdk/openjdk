@@ -47,6 +47,8 @@ public class DLSSoundbankReader extends SoundbankReader {
             return new DLSSoundbank(url);
         } catch (RIFFInvalidFormatException e) {
             return null;
+        } catch(IOException ioe) {
+            return null;
         }
     }
 

@@ -69,7 +69,7 @@ public class SoftMainMixer {
     private int nrofchannels = 2;
     private SoftVoice[] voicestatus = null;
     private SoftAudioBuffer[] buffers;
-    private SoftAudioProcessor reverb;
+    private SoftReverb reverb;
     private SoftAudioProcessor chorus;
     private SoftAudioProcessor agc;
     private long msec_buffer_len = 0;
@@ -681,6 +681,8 @@ public class SoftMainMixer {
         chorus.init(samplerate, controlrate);
         agc.init(samplerate, controlrate);
 
+        reverb.setLightMode(synth.reverb_light);
+        
         reverb.setMixMode(true);
         chorus.setMixMode(true);
         agc.setMixMode(false);

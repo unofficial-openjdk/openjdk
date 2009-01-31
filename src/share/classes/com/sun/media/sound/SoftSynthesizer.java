@@ -177,6 +177,7 @@ public class SoftSynthesizer implements AudioSynthesizer,
     // 1: DLS Voice Allocation
     protected int voice_allocation_mode = 0;
 
+    protected boolean reverb_light = true;
     protected boolean reverb_on = true;
     protected boolean chorus_on = true;
     protected boolean agc_on = true;
@@ -334,6 +335,7 @@ public class SoftSynthesizer implements AudioSynthesizer,
         largemode = (Boolean)items[9].value;
         number_of_midi_channels = (Integer)items[10].value;
         jitter_correction = (Boolean)items[11].value;
+        reverb_light = (Boolean)items[12].value;
     }
 
     private String patchToString(Patch patch) {
@@ -742,6 +744,9 @@ public class SoftSynthesizer implements AudioSynthesizer,
     }
 
     public void unloadAllInstruments(Soundbank soundbank) {
+        if (soundbank == null || !isSoundbankSupported(soundbank))
+            throw new IllegalArgumentException("Unsupported soundbank: " + soundbank);
+
         if (!isOpen())
             return;
 
@@ -766,6 +771,9 @@ public class SoftSynthesizer implements AudioSynthesizer,
     }
 
     public void unloadInstruments(Soundbank soundbank, Patch[] patchList) {
+        if (soundbank == null || !isSoundbankSupported(soundbank))
+            throw new IllegalArgumentException("Unsupported soundbank: " + soundbank);
+
         if (!isOpen())
             return;
 
@@ -844,6 +852,10 @@ public class SoftSynthesizer implements AudioSynthesizer,
         item.description = "Turn jitter correction on or off.";
         list.add(item);
 
+        item = new AudioSynthesizerPropertyInfo("light reverb", o?reverb_light:true);
+        item.description = "Turn light reverb mode on or off";
+        list.add(item);
+        
         AudioSynthesizerPropertyInfo[] items;
         items = list.toArray(new AudioSynthesizerPropertyInfo[list.size()]);
 

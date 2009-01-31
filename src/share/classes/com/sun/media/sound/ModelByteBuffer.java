@@ -85,11 +85,12 @@ public class ModelByteBuffer {
         }
 
         public long skip(long n) throws IOException {
+            if( n < 0)
+                return 0;
             if (n > left)
                 n = left;
-            n = super.skip(n);
-            if (n == -1)
-                return -1;
+            long p = raf.getFilePointer();
+            raf.seek(p + n);
             left -= n;
             return n;
         }

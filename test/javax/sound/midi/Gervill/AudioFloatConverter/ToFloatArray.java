@@ -43,11 +43,30 @@ public class ToFloatArray {
 			testarray[i] += (float)Math.sin(0.231 + 6.3*ii*2*Math.PI);
 			testarray[i] *= 0.3;
 		}		
+        
+        // Check conversion using PCM_FLOAT
+        for (int big = 0; big < 2; big+=1)
+        for (int bits = 32; bits <= 64; bits+=32) {
+            AudioFormat frm = new AudioFormat(
+                    AudioFloatConverter.PCM_FLOAT,
+                    44100, bits, 1, bits/8,
+                    44100, big==1);
+            byte[] buff = new byte[testarray.length * frm.getFrameSize()];
+            float[] testarray2 = new float[testarray.length];
+            AudioFloatConverter conv = AudioFloatConverter.getConverter(frm);
+            conv.toByteArray(testarray, buff);
+            conv.toFloatArray(buff, testarray2);
+            for (int i = 0; i < testarray2.length; i++) {
+                if(Math.abs(testarray[i] - testarray2[i]) > 0.05)
+                    throw new RuntimeException("Conversion failed for " + frm  +" , arrays not equal enough!\n");
+            }               
+            
+        }
 		
 		// Check conversion from float2byte and byte2float.
 		for (int big = 0; big < 2; big+=1) 
 		for (int signed = 0; signed < 2; signed+=1) 
-		for (int bits = 8; bits <= 32; bits+=8) {					
+		for (int bits = 6; bits <= 40; bits+=2) {					
 			AudioFormat frm = new AudioFormat(44100, bits, 1, signed==1, big==1);
 			byte[] buff = new byte[testarray.length * frm.getFrameSize()];
 			float[] testarray2 = new float[testarray.length];
@@ -63,7 +82,7 @@ public class ToFloatArray {
 		// Check big/little
 		for (int big = 0; big < 2; big+=1) 
 		for (int signed = 0; signed < 2; signed+=1)
-		for (int bits = 8; bits <= 32; bits+=8) {					
+		for (int bits = 6; bits <= 40; bits+=2) {					
 			AudioFormat frm = new AudioFormat(44100, bits, 1, signed==1, big==1);
 			byte[] buff = new byte[testarray.length * frm.getFrameSize()];
 			AudioFloatConverter conv = AudioFloatConverter.getConverter(frm);
@@ -89,7 +108,7 @@ public class ToFloatArray {
 		// Check signed/unsigned 
 		for (int big = 0; big < 2; big+=1) 
 		for (int signed = 0; signed < 2; signed+=1)
-		for (int bits = 8; bits <= 32; bits+=8) {					
+		for (int bits = 6; bits <= 40; bits+=2) {					
 			AudioFormat frm = new AudioFormat(44100, bits, 1, signed==1, big==1);
 			byte[] b = new byte[testarray.length * frm.getFrameSize()];
 			AudioFloatConverter conv = AudioFloatConverter.getConverter(frm);
@@ -117,10 +136,10 @@ public class ToFloatArray {
 		}
 		
 		// Check if conversion 32->24, 24->16, 16->8 result in same float data
-		AudioFormat frm = new AudioFormat(44100, 32, 1, true, true);
+		AudioFormat frm = new AudioFormat(44100, 40, 1, true, true);
 		byte[] b = new byte[testarray.length * frm.getFrameSize()];
 		AudioFloatConverter.getConverter(frm).toByteArray(testarray, b);
-		for (int bits = 8; bits <= 32; bits+=8) {
+		for (int bits = 6; bits <= 40; bits+=2) {
 			AudioFormat frm2 = new AudioFormat(44100, bits, 1, true, true);
 			byte[] b2 = new byte[testarray.length * frm2.getFrameSize()];
 			int fs1 = frm.getFrameSize();
