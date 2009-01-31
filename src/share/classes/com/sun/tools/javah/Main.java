@@ -150,6 +150,7 @@ public class Main{
 	i++;
 	javadocargs[i] = "-Xclasses";
 	
-	com.sun.tools.javadoc.Main.execute("javadoc", "com.sun.tools.javah.MainDoclet", javadocargs);
+	int rc = com.sun.tools.javadoc.Main.execute("javadoc", "com.sun.tools.javah.MainDoclet", javadocargs);
+	System.exit(rc);
     }
 }
