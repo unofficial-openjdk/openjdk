@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,6 +79,8 @@ import static sun.security.pkcs11.P11Util.*;
 
 import sun.security.pkcs11.wrapper.*;
 import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
+
+import sun.security.rsa.RSAKeyFactory;
 
 final class P11KeyStore extends KeyStoreSpi {
 
@@ -1334,6 +1336,15 @@ final class P11KeyStore extends KeyStoreSpi {
             token.p11.C_GetAttributeValue(session.id(), oHandle, attrs);
             BigInteger modulus = attrs[0].getBigInteger();
             keyLength = modulus.bitLength();
+
+            // This check will combine our "don't care" values here
+            // with the system-wide min/max values.
+            try {
+                RSAKeyFactory.checkKeyLengths(keyLength, null,
+                    -1, Integer.MAX_VALUE);
+            } catch (InvalidKeyException e) {
+                throw new KeyStoreException(e.getMessage());
+            }
 
             return P11Key.privateKey(session,
                                 oHandle,

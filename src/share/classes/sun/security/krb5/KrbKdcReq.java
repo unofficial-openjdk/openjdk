@@ -273,27 +273,31 @@ public abstract class KrbKdcReq {
                                + ",Attempt =" + i
                                + ", #bytes=" + obuf.length);
                     }
-                    /*
-                     * Send the data to the kdc.
-                     */
-
-                    kdcClient.send(obuf);
-
-                    /*
-                     * And get a response.
-                     */
                     try {
-                        ibuf = kdcClient.receive();
-                        break;
-                    } catch (SocketTimeoutException se) {
-                        if (DEBUG) {
-                            System.out.println ("SocketTimeOutException with " +
-                                                "attempt: " + i);
+                        /*
+                         * Send the data to the kdc.
+                         */
+
+                        kdcClient.send(obuf);
+
+                        /*
+                         * And get a response.
+                         */
+                        try {
+                            ibuf = kdcClient.receive();
+                            break;
+                        } catch (SocketTimeoutException se) {
+                            if (DEBUG) {
+                                System.out.println ("SocketTimeOutException with " +
+                                                    "attempt: " + i);
+                            }
+                            if (i == DEFAULT_KDC_RETRY_LIMIT) {
+                                ibuf = null;
+                                throw se;
+                            }
                         }
-                        if (i == DEFAULT_KDC_RETRY_LIMIT) {
-                            ibuf = null;
-                            throw se;
-                        }
+                    } finally {
+                        kdcClient.close();
                     }
                 }
             }

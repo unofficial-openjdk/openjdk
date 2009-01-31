@@ -55,6 +55,7 @@ IMPORT_TOOLS_PACKAGES += \
      com/sun/tools/internal/xjc \
      com/sun/tools/internal/ws \
      com/sun/tools/internal/jxc \
+     org/relaxng \
      META-INF/services/com.sun.mirror.apt.AnnotationProcessorFactory \
      META-INF/services/com.sun.tools.internal.xjc.Plugin
 
