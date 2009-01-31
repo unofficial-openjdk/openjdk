@@ -30,74 +30,74 @@
  * @compile -source 1.5 ParametricException.java
  */
 
-import java.io.*; 
+import java.io.*;
 
-abstract class AChurchBoolean { 
-    public abstract <Return, Parameter, Throws extends Throwable> 
-    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws; 
-    
-    public interface IVisitor<Return, Parameter, Throws extends Throwable> { 
-	public Return caseTrue(Parameter parameter) throws Throws; 
-	public Return caseFalse(Parameter parameter) throws Throws; 
-    } 
-} 
+abstract class AChurchBoolean {
+    public abstract <Return, Parameter, Throws extends Throwable>
+    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws;
 
-class TrueChurchBoolean extends AChurchBoolean { 
-    private static TrueChurchBoolean instance = new TrueChurchBoolean(); 
-    private TrueChurchBoolean() {} 
-    public static TrueChurchBoolean singleton() { 
-	return instance; 
-    } 
-    public <Return, Parameter, Throws extends Throwable> 
-    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws { 
-	return visitor.caseTrue(parameter); 
-    } 
-} 
+    public interface IVisitor<Return, Parameter, Throws extends Throwable> {
+        public Return caseTrue(Parameter parameter) throws Throws;
+        public Return caseFalse(Parameter parameter) throws Throws;
+    }
+}
 
-class FalseChurchBoolean extends AChurchBoolean { 
-    private static FalseChurchBoolean instance = new FalseChurchBoolean(); 
-    private FalseChurchBoolean() {} 
-    public static FalseChurchBoolean singleton() { 
-	return instance; 
-    } 
-    public <Return, Parameter, Throws extends Throwable> 
-    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws { 
-	return visitor.caseFalse(parameter); 
-    } 
-} 
+class TrueChurchBoolean extends AChurchBoolean {
+    private static TrueChurchBoolean instance = new TrueChurchBoolean();
+    private TrueChurchBoolean() {}
+    public static TrueChurchBoolean singleton() {
+        return instance;
+    }
+    public <Return, Parameter, Throws extends Throwable>
+    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws {
+        return visitor.caseTrue(parameter);
+    }
+}
 
-class Pair<T,U> { 
-    private T first; 
-    private U second; 
-    Pair(T first, U second) { 
-	this.first = first; 
-	this.second = second; 
-    } 
-    T getFirst() { 
-	return first; 
-    } 
-    U getSecond() { 
-	return second; 
-    } 
-} 
+class FalseChurchBoolean extends AChurchBoolean {
+    private static FalseChurchBoolean instance = new FalseChurchBoolean();
+    private FalseChurchBoolean() {}
+    public static FalseChurchBoolean singleton() {
+        return instance;
+    }
+    public <Return, Parameter, Throws extends Throwable>
+    Return accept(IVisitor<Return, Parameter, Throws> visitor, Parameter parameter) throws Throws {
+        return visitor.caseFalse(parameter);
+    }
+}
 
-// Perhaps a bit of a toy example, but relevant nonetheless. 
-class ChurchBooleanTest { 
-    private AChurchBoolean bool; 
-    public ChurchBooleanTest(AChurchBoolean bool) { 
-	this.bool = bool; 
-    } 
-    public AChurchBoolean readIf(File file, byte[] output) throws IOException { 
-	return bool.accept(new AChurchBoolean.IVisitor<AChurchBoolean, Pair<File, byte[]>, IOException>() { 
-	    public AChurchBoolean caseTrue(Pair<File, byte[]> parameter) throws IOException { 
-		FileInputStream input = new FileInputStream(parameter.getFirst()); // throws 
-		input.read(parameter.getSecond()); // throws 
-		input.close(); // throws 
-		return TrueChurchBoolean.singleton(); 
-	    } 
-	    public AChurchBoolean caseFalse(Pair<File, byte[]> parameter) throws IOException { 
-		return FalseChurchBoolean.singleton(); 
-	    } 
-	}, new Pair<File, byte[]>(file, output)); 
-    } 
-} 
+class Pair<T,U> {
+    private T first;
+    private U second;
+    Pair(T first, U second) {
+        this.first = first;
+        this.second = second;
+    }
+    T getFirst() {
+        return first;
+    }
+    U getSecond() {
+        return second;
+    }
+}
+
+// Perhaps a bit of a toy example, but relevant nonetheless.
+class ChurchBooleanTest {
+    private AChurchBoolean bool;
+    public ChurchBooleanTest(AChurchBoolean bool) {
+        this.bool = bool;
+    }
+    public AChurchBoolean readIf(File file, byte[] output) throws IOException {
+        return bool.accept(new AChurchBoolean.IVisitor<AChurchBoolean, Pair<File, byte[]>, IOException>() {
+            public AChurchBoolean caseTrue(Pair<File, byte[]> parameter) throws IOException {
+                FileInputStream input = new FileInputStream(parameter.getFirst()); // throws
+                input.read(parameter.getSecond()); // throws
+                input.close(); // throws
+                return TrueChurchBoolean.singleton();
+            }
+            public AChurchBoolean caseFalse(Pair<File, byte[]> parameter) throws IOException {
+                return FalseChurchBoolean.singleton();
+            }
+        }, new Pair<File, byte[]>(file, output));
+    }
+}

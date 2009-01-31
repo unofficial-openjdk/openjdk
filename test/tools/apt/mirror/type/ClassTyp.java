@@ -40,28 +40,28 @@ import com.sun.mirror.util.*;
 public class ClassTyp<T1,T2> extends Tester {
 
     public static void main(String[] args) {
-	(new ClassTyp()).run();
+        (new ClassTyp()).run();
     }
 
 
     // Declarations used by tests
 
     static class C1<S> extends AbstractSet<S> implements Set<S> {
-	class C2<R> {
-	}
+        class C2<R> {
+        }
 
-	static class C3<R> {
-	    class C4<Q> {
-	    }
-	}
+        static class C3<R> {
+            class C4<Q> {
+            }
+        }
 
-	public Iterator<S> iterator() {
-	    return null;
-	}
+        public Iterator<S> iterator() {
+            return null;
+        }
 
-	public int size() {
-	    return 0;
-	}
+        public int size() {
+            return 0;
+        }
     }
 
 
@@ -84,9 +84,9 @@ public class ClassTyp<T1,T2> extends Tester {
 
 
     protected void init() {
-	for (int i = 0; i < t.length; i++) {
-	    t[i] = (ClassType) getField("f"+i).getType();
-	}
+        for (int i = 0; i < t.length; i++) {
+            t[i] = (ClassType) getField("f"+i).getType();
+        }
     }
 
 
@@ -94,61 +94,61 @@ public class ClassTyp<T1,T2> extends Tester {
 
     @Test(result="class")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	t[0].accept(new SimpleTypeVisitor() {
-	    public void visitReferenceType(ReferenceType t) {
-		res.add("ref type");
-	    }
-	    public void visitClassType(ClassType t) {
-		res.add("class");
-	    }
-	    public void visitInterfaceType(InterfaceType t) {
-		res.add("interface");
-	    }
-	});
-	return res;
+        t[0].accept(new SimpleTypeVisitor() {
+            public void visitReferenceType(ReferenceType t) {
+                res.add("ref type");
+            }
+            public void visitClassType(ClassType t) {
+                res.add("class");
+            }
+            public void visitInterfaceType(InterfaceType t) {
+                res.add("interface");
+            }
+        });
+        return res;
     }
 
     @Test(result="true")
     boolean equals1() {
-	return t[0].equals(t[0]);
+        return t[0].equals(t[0]);
     }
 
     @Test(result="false")
     boolean equals2() {
-	return t[0].equals(t[1]);
+        return t[0].equals(t[1]);
     }
 
     // Raw type is not same as type instantiated with unbounded type var.
     @Test(result="false")
     boolean equals3() {
-	return t[0].equals(t[2]);
+        return t[0].equals(t[2]);
     }
 
     // C1<T1> is same type as C1<T1>
     @Test(result="true")
     boolean equals4() {
-	return t[0].equals(t[6]);
+        return t[0].equals(t[6]);
     }
 
     @Test(result={
-	      "ClassTyp.C1<T1>",
-	      "ClassTyp.C1<java.lang.String>",
-	      "ClassTyp.C1",
-	      "ClassTyp.C1.C3<T2>",
-	      "ClassTyp.C1<T1>.C2<T2>",
-	      "ClassTyp.C1.C2",
-	      "ClassTyp.C1<T1>",
-	      "ClassTyp.C1.C3<T2>.C4<T1>"
-	  },
-	  ordered=true)
+              "ClassTyp.C1<T1>",
+              "ClassTyp.C1<java.lang.String>",
+              "ClassTyp.C1",
+              "ClassTyp.C1.C3<T2>",
+              "ClassTyp.C1<T1>.C2<T2>",
+              "ClassTyp.C1.C2",
+              "ClassTyp.C1<T1>",
+              "ClassTyp.C1.C3<T2>.C4<T1>"
+          },
+          ordered=true)
     Collection<String> toStringTests() {
-	Collection<String> res = new ArrayList<String>();
-	for (ClassType c : t) {
-	    res.add(c.toString());
-	}
-	return res;
+        Collection<String> res = new ArrayList<String>();
+        for (ClassType c : t) {
+            res.add(c.toString());
+        }
+        return res;
     }
 
 
@@ -156,85 +156,85 @@ public class ClassTyp<T1,T2> extends Tester {
 
     @Test(result={"T1"})
     Collection<TypeMirror> getActualTypeArguments1() {
-	return t[0].getActualTypeArguments();
+        return t[0].getActualTypeArguments();
     }
 
     @Test(result={})
     Collection<TypeMirror> getActualTypeArguments2() {
-	return t[2].getActualTypeArguments();
+        return t[2].getActualTypeArguments();
     }
 
     @Test(result={"T2"})
     Collection<TypeMirror> getActualTypeArguments3() {
-	return t[3].getActualTypeArguments();
+        return t[3].getActualTypeArguments();
     }
 
     @Test(result="null")
     DeclaredType getContainingType1() {
-	ClassType thisType = (ClassType) getField("me").getType();
-	return thisType.getContainingType();
+        ClassType thisType = (ClassType) getField("me").getType();
+        return thisType.getContainingType();
     }
 
     @Test(result="ClassTyp")
     DeclaredType getContainingType2() {
-	return t[0].getContainingType();
+        return t[0].getContainingType();
     }
 
     @Test(result="ClassTyp.C1")
     DeclaredType getContainingType3() {
-	return t[3].getContainingType();
+        return t[3].getContainingType();
     }
 
     @Test(result="ClassTyp.C1<T1>")
     DeclaredType getContainingType4() {
-	return t[4].getContainingType();
+        return t[4].getContainingType();
     }
 
     @Test(result={"java.util.Set<T1>"})
     Collection<InterfaceType> getSuperinterfaces() {
-	return t[0].getSuperinterfaces();
+        return t[0].getSuperinterfaces();
     }
-	
+
 
     // ClassType methods
 
     @Test(result="ClassTyp.C1<S>")
     ClassDeclaration getDeclaration1() {
-	return t[0].getDeclaration();
+        return t[0].getDeclaration();
     }
 
     @Test(result="ClassTyp.C1.C3<R>")
     ClassDeclaration getDeclaration2() {
-	return t[3].getDeclaration();
+        return t[3].getDeclaration();
     }
 
     @Test(result="ClassTyp.C1<S>.C2<R>")
     ClassDeclaration getDeclaration3a() {
-	return t[4].getDeclaration();
+        return t[4].getDeclaration();
     }
 
     @Test(result="ClassTyp.C1<S>.C2<R>")
     ClassDeclaration getDeclaration3b() {
-	return t[5].getDeclaration();
+        return t[5].getDeclaration();
     }
 
     @Test(result="true")
     boolean getDeclarationEq() {
-	return t[0].getDeclaration() == t[6].getDeclaration();
+        return t[0].getDeclaration() == t[6].getDeclaration();
     }
 
     @Test(result="java.util.AbstractSet<T1>")
     ClassType getSuperclass1() {
-	return t[0].getSuperclass();
+        return t[0].getSuperclass();
     }
 
     @Test(result="java.lang.Object")
     ClassType getSuperclass2() {
-	return t[4].getSuperclass();
+        return t[4].getSuperclass();
     }
 
     @Test(result="null")
     ClassType getSuperclassOfObject() {
-	return t[4].getSuperclass().getSuperclass();
+        return t[4].getSuperclass().getSuperclass();
     }
 }

@@ -44,40 +44,40 @@ import com.sun.tools.javac.api.*;
 
 public class T6348499 {
     public static void main(String... args) {
-	String testSrc = System.getProperty("test.src", ".");
-	String testClasses = System.getProperty("test.classes");
-	String A_java = new File(testSrc, "A.java").getPath();
-	JavacTool tool = JavacTool.create();
-	MyDiagListener dl = new MyDiagListener();
-	StandardJavaFileManager fm = tool.getStandardFileManager(dl, null, null);
-	Iterable<? extends JavaFileObject> files = 
-	    fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, "A.java")));
-	Iterable<String> opts = Arrays.asList("-proc:only",
-					      "-processor", "A",
-					      "-processorpath", testClasses);
-	StringWriter out = new StringWriter();
-	JavacTask task = tool.getTask(out, fm, dl, opts, null, files);
-	task.call();
-	String s = out.toString();
-	System.err.print(s);
-	// Expect the following 1 multi-line diagnostic, and no output to log
-	//     error: cannot access A_0
-	//     bad class file: A_0.class
-	//     illegal start of class file
-	//     Please remove or make sure it appears in the correct subdirectory of the classpath.
-	System.err.println(dl.count + " diagnostics; " + s.length() + " characters");
-	if (dl.count != 1 || s.length() != 0)
-	    throw new AssertionError("unexpected output from compiler");
+        String testSrc = System.getProperty("test.src", ".");
+        String testClasses = System.getProperty("test.classes");
+        String A_java = new File(testSrc, "A.java").getPath();
+        JavacTool tool = JavacTool.create();
+        MyDiagListener dl = new MyDiagListener();
+        StandardJavaFileManager fm = tool.getStandardFileManager(dl, null, null);
+        Iterable<? extends JavaFileObject> files =
+            fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, "A.java")));
+        Iterable<String> opts = Arrays.asList("-proc:only",
+                                              "-processor", "A",
+                                              "-processorpath", testClasses);
+        StringWriter out = new StringWriter();
+        JavacTask task = tool.getTask(out, fm, dl, opts, null, files);
+        task.call();
+        String s = out.toString();
+        System.err.print(s);
+        // Expect the following 1 multi-line diagnostic, and no output to log
+        //     error: cannot access A_0
+        //     bad class file: A_0.class
+        //     illegal start of class file
+        //     Please remove or make sure it appears in the correct subdirectory of the classpath.
+        System.err.println(dl.count + " diagnostics; " + s.length() + " characters");
+        if (dl.count != 1 || s.length() != 0)
+            throw new AssertionError("unexpected output from compiler");
     }
 
     static class MyDiagListener implements DiagnosticListener<JavaFileObject> {
-	public void report(Diagnostic d) {
-	    System.err.println(d);
-	    count++;
-	}
+        public void report(Diagnostic d) {
+            System.err.println(d);
+            count++;
+        }
 
-	public int count;
+        public int count;
     }
-	
+
     private static String self = T6348499.class.getName();
-} 
+}

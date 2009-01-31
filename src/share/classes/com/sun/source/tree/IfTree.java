@@ -30,13 +30,13 @@ package com.sun.source.tree;
  *
  * For example:
  * <pre>
- *   if ( <em>condition</em> ) 
+ *   if ( <em>condition</em> )
  *      <em>thenStatement</em>
- * 
- *   if ( <em>condition</em> ) 
- *       <em>thenStatement</em> 
+ *
+ *   if ( <em>condition</em> )
+ *       <em>thenStatement</em>
  *   else
- *       <em>elseStatement</em> 
+ *       <em>elseStatement</em>
  * </pre>
  *
  * @see "The Java Language Specification, 3rd ed, section 14.9"

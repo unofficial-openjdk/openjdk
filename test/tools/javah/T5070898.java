@@ -47,12 +47,12 @@ public class T5070898
     }
 
     void writeFile() throws Exception {
-        String content = 
+        String content =
             "package test;\n" +
             "public class JavahTest{\n" +
-            "    public static void main(String args){\n" + 
-            "        System.out.println(\"Test Message\");" + 
-            "    }\n" + 
+            "    public static void main(String args){\n" +
+            "        System.out.println(\"Test Message\");" +
+            "    }\n" +
             "    private static native Object nativeTest();\n" +
             "}\n";
         FileWriter out = new FileWriter("JavahTest.java");

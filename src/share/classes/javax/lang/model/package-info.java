@@ -25,7 +25,7 @@
 
 /**
  * Classes and hierarchies of packages used to model the Java
- * programming language.  
+ * programming language.
  *
  * The members of this package and its subpackages are for use in
  * language modeling and language processing tasks and APIs including,
@@ -40,7 +40,7 @@
  * In Proc. of the ACM Conf. on Object-Oriented Programming, Systems,
  * Languages and Applications, October 2004.
  * </blockquote>
- * 
+ *
  * In particular, the model makes a distinction between static
  * language constructs, like the {@linkplain javax.lang.model.element
  * element} representing {@code java.util.Set}, and the family of

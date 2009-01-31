@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,15 +33,15 @@
  */
 
 public class TestJavascript extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4665566-4855876";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg", SRC_DIR + FS + "TestJavascript.java"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "C.html",
@@ -50,7 +50,7 @@ public class TestJavascript extends JavadocTester {
             "<A HREF=\"index.html?TestJavascript.html\" target=\"_top\"><B>FRAMES</B></A>"},
         {BUG_ID + FS + "index.html",
             "<SCRIPT type=\"text/javascript\">" + NL +
-			"    targetPage = \"\" + window.location.search;" + NL +
+                        "    targetPage = \"\" + window.location.search;" + NL +
             "    if (targetPage != \"\" && targetPage != \"undefined\")" + NL +
             "        targetPage = targetPage.substring(1);" + NL +
             "    if (targetPage.indexOf(\":\") != -1)" + NL +
@@ -60,16 +60,16 @@ public class TestJavascript extends JavadocTester {
             "             top.classFrame.location = top.targetPage;" + NL +
             "    }" + NL +
             "</SCRIPT>"},
-            
+
         //Make sure title javascript only runs if is-external is not true
         {BUG_ID + FS + "pkg" + FS + "C.html",
-            	"    if (location.href.indexOf('is-external=true') == -1) {" + NL +
-            	"        parent.document.title=\"C\";" + NL +
-        		"    }"},
+                "    if (location.href.indexOf('is-external=true') == -1) {" + NL +
+                "        parent.document.title=\"C\";" + NL +
+                        "    }"},
     };
-        
+
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -79,14 +79,14 @@ public class TestJavascript extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

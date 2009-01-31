@@ -1,4 +1,4 @@
-/* /nodynamiccopyright/ */ 
+/* /nodynamiccopyright/ */
 // combinations of methods defined in an interface
 // and overridden in subtypes
 

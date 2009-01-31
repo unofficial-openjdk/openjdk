@@ -883,9 +883,9 @@ public class Type implements PrimitiveType {
             return List.nil();
         }
 
-	public TypeSymbol asElement() {
-	    return null;
-	}
+        public TypeSymbol asElement() {
+            return null;
+        }
 
         public TypeKind getKind() {
             return TypeKind.EXECUTABLE;
@@ -979,15 +979,15 @@ public class Type implements PrimitiveType {
         public WildcardType wildcard;
 
         public CapturedType(Name name,
-			    Symbol owner,
-			    Type upper,
-			    Type lower,
-			    WildcardType wildcard) {
+                            Symbol owner,
+                            Type upper,
+                            Type lower,
+                            WildcardType wildcard) {
             super(name, owner, lower);
             assert lower != null;
             this.bound = upper;
             this.lower = lower;
-	    this.wildcard = wildcard;
+            this.wildcard = wildcard;
         }
 
         @Override
@@ -999,14 +999,14 @@ public class Type implements PrimitiveType {
             return lower;
         }
 
-	@Override
-	public String toString() {
+        @Override
+        public String toString() {
             return "capture#"
-		+ (hashCode() & 0xFFFFFFFFL) % PRIME
-		+ " of "
-		+ wildcard;
+                + (hashCode() & 0xFFFFFFFFL) % PRIME
+                + " of "
+                + wildcard;
         }
-	static final int PRIME = 997;  // largest prime less than 1000
+        static final int PRIME = 997;  // largest prime less than 1000
     }
 
     public static abstract class DelegatedType extends Type {
@@ -1124,50 +1124,50 @@ public class Type implements PrimitiveType {
     /** Represents VOID or NONE.
      */
     static class JCNoType extends Type implements NoType {
-	public JCNoType(int tag) {
-	    super(tag, null);
-	}
-
-	@Override
-        public TypeKind getKind() {
-	    switch (tag) {
-	    case VOID:  return TypeKind.VOID;
-	    case NONE:  return TypeKind.NONE;
-            default:
-		throw new AssertionError("Unexpected tag: " + tag);
-	    }
+        public JCNoType(int tag) {
+            super(tag, null);
         }
 
-	@Override
+        @Override
+        public TypeKind getKind() {
+            switch (tag) {
+            case VOID:  return TypeKind.VOID;
+            case NONE:  return TypeKind.NONE;
+            default:
+                throw new AssertionError("Unexpected tag: " + tag);
+            }
+        }
+
+        @Override
         public <R, P> R accept(TypeVisitor<R, P> v, P p) {
             return v.visitNoType(this, p);
         }
     }
 
     static class BottomType extends Type implements NullType {
-	public BottomType() {
-	    super(TypeTags.BOT, null);
-	}
+        public BottomType() {
+            super(TypeTags.BOT, null);
+        }
 
-	@Override
+        @Override
         public TypeKind getKind() {
             return TypeKind.NULL;
         }
 
-	@Override
+        @Override
         public <R, P> R accept(TypeVisitor<R, P> v, P p) {
             return v.visitNull(this, p);
         }
-	
-	@Override
-	public Type constType(Object value) {
-	    return this;
-	}
-	
-	@Override 
-	public String stringValue() {
-	    return "null";
-	}
+
+        @Override
+        public Type constType(Object value) {
+            return this;
+        }
+
+        @Override
+        public String stringValue() {
+            return "null";
+        }
     }
 
     public static class ErrorType extends ClassType

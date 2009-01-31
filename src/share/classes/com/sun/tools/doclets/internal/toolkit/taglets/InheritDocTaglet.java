@@ -29,33 +29,33 @@ import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
- * An inline Taglet representing the <b>inheritDoc</b> tag. This tag should only 
- * be used with a method.  It is used to inherit documentation from overriden 
+ * An inline Taglet representing the <b>inheritDoc</b> tag. This tag should only
+ * be used with a method.  It is used to inherit documentation from overriden
  * and implemented methods.
  *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 
 public class InheritDocTaglet extends BaseInlineTaglet {
-    
+
     /**
      * The inline tag that would appear in the documentation if
      * the writer wanted documentation to be inherited.
      */
     public static final String INHERIT_DOC_INLINE_TAG = "{@inheritDoc}";
-    
+
     /**
      * Construct a new InheritDocTaglet.
      */
     public InheritDocTaglet () {
         name = "inheritDoc";
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Methods.
@@ -64,7 +64,7 @@ public class InheritDocTaglet extends BaseInlineTaglet {
     public boolean inField() {
         return false;
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Methods.
@@ -73,7 +73,7 @@ public class InheritDocTaglet extends BaseInlineTaglet {
     public boolean inConstructor() {
         return false;
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Methods.
@@ -100,7 +100,7 @@ public class InheritDocTaglet extends BaseInlineTaglet {
     public boolean inType() {
         return false;
     }
-    
+
     /**
      * Given a <code>MethodDoc</code> item, a <code>Tag</code> in the
      * <code>MethodDoc</code> item and a String, replace all occurances
@@ -114,24 +114,24 @@ public class InheritDocTaglet extends BaseInlineTaglet {
     private TagletOutput retrieveInheritedDocumentation(TagletWriter writer,
             MethodDoc md, Tag holderTag, boolean isFirstSentence) {
         TagletOutput replacement = writer.getTagletOutputInstance();
-        
-        Taglet inheritableTaglet = holderTag == null ? 
+
+        Taglet inheritableTaglet = holderTag == null ?
             null : writer.configuration().tagletManager.getTaglet(holderTag.name());
-        if (inheritableTaglet != null && 
+        if (inheritableTaglet != null &&
             !(inheritableTaglet instanceof InheritableTaglet)) {
                 //This tag does not support inheritence.
-                writer.configuration().message.warning(md.position(), 
+                writer.configuration().message.warning(md.position(),
                 "doclet.noInheritedDoc", md.name() + md.flatSignature());
          }
-        DocFinder.Output inheritedDoc = 
-            DocFinder.search(new DocFinder.Input(md, 
-                (InheritableTaglet) inheritableTaglet, holderTag, 
+        DocFinder.Output inheritedDoc =
+            DocFinder.search(new DocFinder.Input(md,
+                (InheritableTaglet) inheritableTaglet, holderTag,
                 isFirstSentence, true));
         if (inheritedDoc.isValidInheritDocTag == false) {
-            writer.configuration().message.warning(md.position(), 
+            writer.configuration().message.warning(md.position(),
                 "doclet.noInheritedDoc", md.name() + md.flatSignature());
         } else if (inheritedDoc.inlineTags.length > 0) {
-            replacement = writer.commentTagsToOutput(inheritedDoc.holderTag, 
+            replacement = writer.commentTagsToOutput(inheritedDoc.holderTag,
                 inheritedDoc.holder, inheritedDoc.inlineTags, isFirstSentence);
         }
         return replacement;

@@ -7,7 +7,7 @@
 class A
 {
     void f() {
-	A1 a1 = new A1();
+        A1 a1 = new A1();
     }
 }
 

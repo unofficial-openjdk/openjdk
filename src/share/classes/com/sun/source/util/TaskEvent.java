@@ -45,19 +45,19 @@ public final class TaskEvent
         /**
          * For events related to the parsing of a file.
          */
-	PARSE,
+        PARSE,
         /**
          * For events relating to elements being entered.
          **/
-	ENTER,
+        ENTER,
         /**
          * For events relating to elements being analyzed for errors.
          **/
-	ANALYZE,
+        ANALYZE,
         /**
          * For events relating to class files being generated.
          **/
-	GENERATE,
+        GENERATE,
         /**
          * For events relating to overall annotaion processing.
          **/
@@ -69,50 +69,50 @@ public final class TaskEvent
     };
 
     public TaskEvent(Kind kind) {
-	this(kind, null, null, null);
+        this(kind, null, null, null);
     }
 
     public TaskEvent(Kind kind, JavaFileObject sourceFile) {
-	this(kind, sourceFile, null, null);
+        this(kind, sourceFile, null, null);
     }
 
     public TaskEvent(Kind kind, CompilationUnitTree unit) {
-	this(kind, unit.getSourceFile(), unit, null);
+        this(kind, unit.getSourceFile(), unit, null);
     }
 
     public TaskEvent(Kind kind, CompilationUnitTree unit, TypeElement clazz) {
-	this(kind, unit.getSourceFile(), unit, clazz);
+        this(kind, unit.getSourceFile(), unit, clazz);
     }
 
     private TaskEvent(Kind kind, JavaFileObject file, CompilationUnitTree unit, TypeElement clazz) {
-	this.kind = kind;
-	this.file = file;
-	this.unit = unit;
-	this.clazz = clazz;
+        this.kind = kind;
+        this.file = file;
+        this.unit = unit;
+        this.clazz = clazz;
     }
 
     public Kind getKind() {
-	return kind;
+        return kind;
     }
 
     public JavaFileObject getSourceFile() {
-	return file;
+        return file;
     }
 
     public CompilationUnitTree getCompilationUnit() {
-	return unit;
+        return unit;
     }
 
     public TypeElement getTypeElement() {
-	return clazz;
+        return clazz;
     }
-    
+
     public String toString() {
-	return "TaskEvent[" 
-	    + kind + "," 
-	    + file + ","
-	    // the compilation unit is identified by the file
-	    + clazz + "]";
+        return "TaskEvent["
+            + kind + ","
+            + file + ","
+            // the compilation unit is identified by the file
+            + clazz + "]";
     }
 
     private Kind kind;

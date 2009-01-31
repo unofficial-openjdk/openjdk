@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,11 +27,11 @@
  *  Keyword `abstract' is not necessary since interfaces are implicitly
  *  abstract.
  *
- *  @bug 4210388 
+ *  @bug 4210388
  *  @summary Javadoc declares interfaces to be "abstract".
  *  @build ModifierAbstract.java
- *  @run shell ModifierAbstractWrapper.sh 
- *  @author Atul M Dambalkar 
+ *  @run shell ModifierAbstractWrapper.sh
+ *  @author Atul M Dambalkar
  */
 
 import com.sun.javadoc.*;
@@ -40,18 +40,18 @@ import java.lang.*;
 public class ModifierAbstract {
 
   public static boolean start(RootDoc root) throws Exception {
-    
+
     ClassDoc[] classarr = root.classes();
     for (int i = 0; i < classarr.length; i++) {
         if (classarr[i].isInterface()) {
             String modifier = classarr[i].modifiers();
             if (modifier.indexOf("abstract") > 0) {
-                throw new Exception("Keyword `abstract' found in the " + 
-                                    "modifier string for class " + 
+                throw new Exception("Keyword `abstract' found in the " +
+                                    "modifier string for class " +
                                     classarr[i].qualifiedName());
             }
         }
-    }        
+    }
     return true;
   }
 }

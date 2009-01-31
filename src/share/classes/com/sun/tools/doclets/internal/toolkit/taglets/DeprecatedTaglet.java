@@ -29,28 +29,28 @@ import com.sun.javadoc.*;
 
 /**
  * A taglet that represents the @deprecated tag.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.5
  */
 
 public class DeprecatedTaglet extends BaseTaglet{
-    
+
     public DeprecatedTaglet() {
         name = "deprecated";
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public boolean inPackage() {
         return false;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -58,4 +58,3 @@ public class DeprecatedTaglet extends BaseTaglet{
         return writer.deprecatedTagOutput(holder);
     }
 }
-

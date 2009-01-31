@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,10 +27,10 @@ import java.lang.annotation.*;
 
 /**
  * This is just a test annotation type.
- * 
+ *
  * @author Jamie Ho.
  * @since 1.5
  */
 @Documented public @interface AnnotationType {
-   
+
 }

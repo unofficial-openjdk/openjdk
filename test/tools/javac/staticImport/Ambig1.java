@@ -44,6 +44,6 @@ class B {
 
 class Main {
     void g() {
-	f(2);
+        f(2);
     }
 }

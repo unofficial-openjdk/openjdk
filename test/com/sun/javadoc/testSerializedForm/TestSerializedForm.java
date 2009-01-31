@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,30 +44,30 @@ import java.io.*;
 public class TestSerializedForm extends JavadocTester implements Serializable {
 
     private static final String BUG_ID = "4341304-4485668-4966728";
-    
+
     private static final String[][] TEST = {
-        {BUG_ID + FS + "serialized-form.html", 
+        {BUG_ID + FS + "serialized-form.html",
             "protected java.lang.Object <B>readResolve</B>()"},
-        {BUG_ID + FS + "serialized-form.html", 
+        {BUG_ID + FS + "serialized-form.html",
             "protected java.lang.Object <B>writeReplace</B>()"},
-        {BUG_ID + FS + "serialized-form.html", 
+        {BUG_ID + FS + "serialized-form.html",
             "protected java.lang.Object <B>readObjectNoData</B>()"},
-        {BUG_ID + FS + "serialized-form.html", 
+        {BUG_ID + FS + "serialized-form.html",
             "See Also"},
     };
-    
+
     private static final String[][] NEGATED_TEST = NO_TEST;
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR,
         SRC_DIR + FS + "TestSerializedForm.java"
     };
-    
+
     /**
      * @serial
      * @see TestSerializedForm
      */
     public final int SERIALIZABLE_CONSTANT = 1;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -77,21 +77,21 @@ public class TestSerializedForm extends JavadocTester implements Serializable {
         int actualExitCode = run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugName() {
         return getClass().getName();
     }
-    
+
     /**
      * @throws IOException when there is an I/O error.
      * @serial
@@ -115,7 +115,7 @@ public class TestSerializedForm extends JavadocTester implements Serializable {
      * @serialData This is a serial data comment.
      */
     protected Object writeReplace(){return null;}
-    
+
     /**
      * @throws IOException when there is an I/O error.
      * @serialData This is a serial data comment.

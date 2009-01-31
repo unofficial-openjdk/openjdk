@@ -37,4 +37,3 @@ public class ArrayCast {
     public static void main(String[] args) {
     }
 }
-

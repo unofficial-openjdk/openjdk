@@ -60,4 +60,3 @@ public abstract class Tree {
         public void visitTree(Tree that)                   throws E { assert false; }
     }
 }
-

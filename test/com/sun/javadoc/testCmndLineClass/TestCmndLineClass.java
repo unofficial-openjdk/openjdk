@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,7 +35,7 @@
  */
 
 public class TestCmndLineClass extends JavadocTester {
-    
+
     private static final String OUTPUT_DIR1 = "4506980-tmp1";
     private static final String OUTPUT_DIR2 = "4506980-tmp2";
     private static final String[][] TEST = NO_TEST;
@@ -61,9 +61,9 @@ public class TestCmndLineClass extends JavadocTester {
         {OUTPUT_DIR1 + FS + "pkg2" + FS + "C3.html", OUTPUT_DIR2 + FS + "pkg2" + FS + "C3.html"},
         {OUTPUT_DIR1 + FS + "pkg2" + FS + "C4.html", OUTPUT_DIR2 + FS + "pkg2" + FS + "C4.html"}
     };
-    
+
     private static final String BUG_ID = "4506980";
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -74,14 +74,14 @@ public class TestCmndLineClass extends JavadocTester {
         run(tester, ARGS2, TEST, NEGATED_TEST);
         tester.runDiffs(FILES_TO_DIFF);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

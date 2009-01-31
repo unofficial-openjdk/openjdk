@@ -52,7 +52,7 @@ class SerialFieldTagImpl
 {
     //### These could be final, except that the constructor
     //### does not set them directly.
-  
+
     private String fieldName;    // Required Argument 1 of serialField
     private String fieldType;    // Required Argument 2 of serialField
     private String description;  // Optional Remaining Arguments of serialField
@@ -65,9 +65,9 @@ class SerialFieldTagImpl
    SerialFieldTagImpl(DocImpl holder, String name, String text) {
         super(holder, name, text);
         parseSerialFieldString();
-	if (holder instanceof MemberDoc) {
-	    containingClass = ((MemberDocImpl)holder).containingClass();
-	}
+        if (holder instanceof MemberDoc) {
+            containingClass = ((MemberDocImpl)holder).containingClass();
+        }
     }
 
     /*
@@ -82,8 +82,8 @@ class SerialFieldTagImpl
         int len = text.length();
 
         // if no white space found
-	/* Skip white space. */
-	int inx = 0;
+        /* Skip white space. */
+        int inx = 0;
         int cp;
         for (; inx < len; inx += Character.charCount(cp)) {
              cp = text.codePointAt(inx);
@@ -92,16 +92,16 @@ class SerialFieldTagImpl
              }
         }
 
-	/* find first word. */
-	int first = inx;
-	int last = inx;
+        /* find first word. */
+        int first = inx;
+        int last = inx;
         cp = text.codePointAt(inx);
-	if (! Character.isJavaIdentifierStart(cp)) {
-	    docenv().warning(holder,
-			     "tag.serialField.illegal_character",
-			     new String(Character.toChars(cp)), text);
-	    return;
-	}
+        if (! Character.isJavaIdentifierStart(cp)) {
+            docenv().warning(holder,
+                             "tag.serialField.illegal_character",
+                             new String(Character.toChars(cp)), text);
+            return;
+        }
 
         for (inx += Character.charCount(cp); inx < len; inx += Character.charCount(cp)) {
              cp = text.codePointAt(inx);
@@ -110,17 +110,17 @@ class SerialFieldTagImpl
              }
         }
 
-	if (inx < len && ! Character.isWhitespace(cp = text.codePointAt(inx))) {
-	    docenv().warning(holder, 
-			     "tag.serialField.illegal_character",
-			     new String(Character.toChars(cp)), text);
-	    return;
-	}
+        if (inx < len && ! Character.isWhitespace(cp = text.codePointAt(inx))) {
+            docenv().warning(holder,
+                             "tag.serialField.illegal_character",
+                             new String(Character.toChars(cp)), text);
+            return;
+        }
 
         last = inx;
-	fieldName = text.substring(first, last);
+        fieldName = text.substring(first, last);
 
-	/* Skip white space. */
+        /* Skip white space. */
         for (; inx < len; inx += Character.charCount(cp)) {
              cp = text.codePointAt(inx);
              if (!Character.isWhitespace(cp)) {
@@ -128,9 +128,9 @@ class SerialFieldTagImpl
              }
         }
 
-	/* find second word. */
-	first = inx;
-	last = inx;
+        /* find second word. */
+        first = inx;
+        last = inx;
 
         for (; inx < len; inx += Character.charCount(cp)) {
              cp = text.codePointAt(inx);
@@ -138,30 +138,30 @@ class SerialFieldTagImpl
                  break;
              }
         }
-	if (inx < len && ! Character.isWhitespace(cp = text.codePointAt(inx))) {
-	    docenv().warning(holder, 
-			     "tag.serialField.illegal_character",
-			     new String(Character.toChars(cp)), text);
-	    return;
-	}
+        if (inx < len && ! Character.isWhitespace(cp = text.codePointAt(inx))) {
+            docenv().warning(holder,
+                             "tag.serialField.illegal_character",
+                             new String(Character.toChars(cp)), text);
+            return;
+        }
         last = inx;
-	fieldType = text.substring(first, last);
+        fieldType = text.substring(first, last);
 
-	/* Skip leading white space. Rest of string is description for serialField.*/
+        /* Skip leading white space. Rest of string is description for serialField.*/
         for (; inx < len; inx += Character.charCount(cp)) {
              cp = text.codePointAt(inx);
              if (!Character.isWhitespace(cp)) {
                  break;
              }
         }
-	description = text.substring(inx);
+        description = text.substring(inx);
     }
 
     /**
      * return a key for sorting.
      */
     String key() {
-	return fieldName;
+        return fieldName;
     }
 
     /*
@@ -170,7 +170,7 @@ class SerialFieldTagImpl
      * there be a field in the class that matches serialField tag.
      */
     void mapToFieldDocImpl(FieldDocImpl fd) {
-	matchingField = fd;
+        matchingField = fd;
     }
 
     /**
@@ -194,10 +194,10 @@ class SerialFieldTagImpl
      *          containingClass context.
      */
     public ClassDoc fieldTypeDoc() {
-	if (fieldTypeDoc == null && containingClass != null) {
-	    fieldTypeDoc = containingClass.findClass(fieldType);
-	}
-	return fieldTypeDoc;
+        if (fieldTypeDoc == null && containingClass != null) {
+            fieldTypeDoc = containingClass.findClass(fieldType);
+        }
+        return fieldTypeDoc;
     }
 
     /**
@@ -206,7 +206,7 @@ class SerialFieldTagImpl
      * @returns null if no matching FieldDocImpl.
      */
     FieldDocImpl getMatchingField() {
-	return matchingField;
+        return matchingField;
     }
 
     /**
@@ -214,15 +214,15 @@ class SerialFieldTagImpl
      * javadoc comment of corresponding FieldDocImpl.
      */
     public String description() {
-	if (description.length() == 0 && matchingField != null) {
+        if (description.length() == 0 && matchingField != null) {
 
-	    //check for javadoc comment of corresponding field.
-	    Comment comment = matchingField.comment();
-	    if (comment != null) {
-		return comment.commentText();
-	    }
-	}
-	return description;
+            //check for javadoc comment of corresponding field.
+            Comment comment = matchingField.comment();
+            if (comment != null) {
+                return comment.commentText();
+            }
+        }
+        return description;
     }
 
     /**
@@ -248,12 +248,12 @@ class SerialFieldTagImpl
      *
      * @param   obj the <code>Object</code> to be compared.
      * @return  a negative integer, zero, or a positive integer as this Object
-     *		is less than, equal to, or greater than the given Object.
+     *          is less than, equal to, or greater than the given Object.
      * @exception ClassCastException the specified Object's type prevents it
-     *		  from being compared to this Object.
+     *            from being compared to this Object.
      * @since 1.2
      */
     public int compareTo(Object obj) {
-	return key().compareTo(((SerialFieldTagImpl)obj).key());
+        return key().compareTo(((SerialFieldTagImpl)obj).key());
     }
 }

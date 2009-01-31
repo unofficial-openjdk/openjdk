@@ -35,12 +35,12 @@ interface A { void g(); }
 public class T5092545<D extends A> {
     D d;
     class Inner {
-	public void f() {
-	    d.g();   // causes a javac assertion error: writePool D
-	}
+        public void f() {
+            d.g();   // causes a javac assertion error: writePool D
+        }
     }
-    
+
     public static void main(String[] args) {
-	System.out.println("FISK");
+        System.out.println("FISK");
     }
 }

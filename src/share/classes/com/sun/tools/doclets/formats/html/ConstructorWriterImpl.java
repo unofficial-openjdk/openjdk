@@ -39,11 +39,11 @@ import java.io.*;
  * @author Atul M Dambalkar
  */
 public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
-    implements ConstructorWriter, MemberSummaryWriter {    
-    
+    implements ConstructorWriter, MemberSummaryWriter {
+
     private boolean foundNonPubConstructor = false;
     private boolean printedSummaryHeader = false;
-    
+
     /**
      * Construct a new ConstructorWriterImpl.
      *
@@ -53,17 +53,17 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public ConstructorWriterImpl(SubWriterHolderWriter writer,
             ClassDoc classDoc) {
         super(writer, classDoc);
-        VisibleMemberMap visibleMemberMap = new VisibleMemberMap(classDoc, 
+        VisibleMemberMap visibleMemberMap = new VisibleMemberMap(classDoc,
             VisibleMemberMap.CONSTRUCTORS, configuration().nodeprecated);
         List constructors = new ArrayList(visibleMemberMap.getMembersFor(classDoc));
         for (int i = 0; i < constructors.size(); i++) {
             if (((ProgramElementDoc)(constructors.get(i))).isProtected() ||
                 ((ProgramElementDoc)(constructors.get(i))).isPrivate()) {
-                setFoundNonPubConstructor(true);                   
+                setFoundNonPubConstructor(true);
             }
-        } 
+        }
     }
-    
+
     /**
      * Construct a new ConstructorWriterImpl.
      *
@@ -72,7 +72,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public ConstructorWriterImpl(SubWriterHolderWriter writer) {
         super(writer);
     }
-    
+
     /**
      * Write the constructors summary header for the given class.
      *
@@ -81,20 +81,20 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public void writeMemberSummaryHeader(ClassDoc classDoc) {
         printedSummaryHeader = true;
         writer.println();
-        writer.println("<!-- ======== CONSTRUCTOR SUMMARY ======== -->"); 
+        writer.println("<!-- ======== CONSTRUCTOR SUMMARY ======== -->");
         writer.println();
         writer.printSummaryHeader(this, classDoc);
     }
-    
+
     /**
      * Write the constructors summary footer for the given class.
      *
      * @param classDoc the class the summary belongs to.
      */
     public void writeMemberSummaryFooter(ClassDoc classDoc) {
-        writer.printSummaryFooter(this, classDoc);        
+        writer.printSummaryFooter(this, classDoc);
     }
-    
+
     /**
      * Write the header for the constructor documentation.
      *
@@ -102,34 +102,34 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     public void writeHeader(ClassDoc classDoc, String header) {
         writer.println();
-        writer.println("<!-- ========= CONSTRUCTOR DETAIL ======== -->"); 
+        writer.println("<!-- ========= CONSTRUCTOR DETAIL ======== -->");
         writer.println();
         writer.anchor("constructor_detail");
         writer.printTableHeadingBackground(header);
     }
-    
+
     /**
      * Write the constructor header for the given constructor.
      *
      * @param constructor the constructor being documented.
-     * @param isFirst the flag to indicate whether or not the constructor is the 
+     * @param isFirst the flag to indicate whether or not the constructor is the
      *        first to be documented.
      */
     public void writeConstructorHeader(ConstructorDoc constructor, boolean isFirst) {
         if (! isFirst) {
-            writer.printMemberHeader();            
+            writer.printMemberHeader();
         }
         writer.println();
         String erasureAnchor;
         if ((erasureAnchor = getErasureAnchor(constructor)) != null) {
             writer.anchor(erasureAnchor);
-        } 
+        }
         writer.anchor(constructor);
         writer.h3();
         writer.print(constructor.name());
         writer.h3End();
     }
-    
+
     /**
      * Write the signature for the given constructor.
      *
@@ -151,7 +151,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
         writer.preEnd();
         writer.dl();
     }
-    
+
     /**
      * Write the deprecated output for the given constructor.
      *
@@ -159,13 +159,13 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     public void writeDeprecated(ConstructorDoc constructor) {
         String output = ((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(constructor, 
+            (new DeprecatedTaglet()).getTagletOutput(constructor,
             writer.getTagletWriterInstance(false))).toString();
-        if (output != null && output.trim().length() > 0) {            
+        if (output != null && output.trim().length() > 0) {
             writer.print(output);
         }
     }
-    
+
     /**
      * Write the comments for the given constructor.
      *
@@ -177,7 +177,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             writer.printInlineComment(constructor);
         }
     }
-    
+
     /**
      * Write the tag output for the given constructor.
      *
@@ -186,14 +186,14 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public void writeTags(ConstructorDoc constructor) {
         writer.printTags(constructor);
     }
-    
+
     /**
      * Write the constructor footer.
      */
     public void writeConstructorFooter() {
         writer.dlEnd();
     }
-    
+
     /**
      * Write the footer for the constructor documentation.
      *
@@ -202,14 +202,14 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public void writeFooter(ClassDoc classDoc) {
         //No footer to write for constructor documentation
     }
-    
+
     /**
      * Close the writer.
      */
     public void close() throws IOException {
         writer.close();
     }
-    
+
     /**
      * Let the writer know whether a non public constructor was found.
      *
@@ -218,31 +218,31 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
     public void setFoundNonPubConstructor(boolean foundNonPubConstructor) {
         this.foundNonPubConstructor = foundNonPubConstructor;
     }
-    
+
     public void printSummaryLabel(ClassDoc cd) {
         writer.boldText("doclet.Constructor_Summary");
     }
-    
+
     public void printSummaryAnchor(ClassDoc cd) {
         writer.anchor("constructor_summary");
     }
-    
+
     public void printInheritedSummaryAnchor(ClassDoc cd) {
     }   // no such
-    
+
     public void printInheritedSummaryLabel(ClassDoc cd) {
         // no such
     }
-    
+
     public int getMemberKind() {
         return VisibleMemberMap.CONSTRUCTORS;
     }
-    
+
     protected void navSummaryLink(List members) {
         printNavSummaryLink(classdoc,
                 members.size() > 0? true: false);
     }
-    
+
     protected void printNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
             writer.printHyperLink("", "constructor_summary",
@@ -251,7 +251,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             writer.printText("doclet.navConstructor");
         }
     }
-    
+
     protected void printNavDetailLink(boolean link) {
         if (link) {
             writer.printHyperLink("", "constructor_detail",
@@ -260,7 +260,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             writer.printText("doclet.navConstructor");
         }
     }
-    
+
     protected void printSummaryType(ProgramElementDoc member) {
         if (foundNonPubConstructor) {
             writer.printTypeSummaryHeader();
@@ -276,7 +276,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             writer.printTypeSummaryFooter();
         }
     }
-    
+
     /**
      * Write the inherited member summary header for the given class.
      *
@@ -290,13 +290,13 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             printedSummaryHeader = true;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public void writeInheritedMemberSummary(ClassDoc classDoc, 
+    public void writeInheritedMemberSummary(ClassDoc classDoc,
         ProgramElementDoc member, boolean isFirst, boolean isLast) {}
-    
+
     /**
      * Write the inherited member summary footer for the given class.
      *

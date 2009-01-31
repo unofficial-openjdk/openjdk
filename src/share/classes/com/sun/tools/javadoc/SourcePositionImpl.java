@@ -42,20 +42,20 @@ class SourcePositionImpl implements SourcePosition {
     int position;
     Position.LineMap lineMap;
 
-    /** The source file. Returns null if no file information is 
+    /** The source file. Returns null if no file information is
      *  available. */
     public File file() {
-	return (filename == null) ? null : new File(filename);
+        return (filename == null) ? null : new File(filename);
     }
 
     /** The line in the source file. The first line is numbered 1;
      *  0 means no line number information is available. */
     public int line() {
-	if (lineMap == null) {
-	    return 0;
-	} else {
-	    return lineMap.getLineNumber(position);
-	}
+        if (lineMap == null) {
+            return 0;
+        } else {
+            return lineMap.getLineNumber(position);
+        }
     }
 
     /** The column in the source file. The first column is
@@ -64,31 +64,31 @@ class SourcePositionImpl implements SourcePosition {
      *  advances the column number to the next 8-column tab stop.
      */
     public int column() {
-	if (lineMap == null) {
-	    return 0;
-	}else {
-	    return lineMap.getColumnNumber(position);
-	}
+        if (lineMap == null) {
+            return 0;
+        }else {
+            return lineMap.getColumnNumber(position);
+        }
     }
 
     private SourcePositionImpl(String file, int position,
-			       Position.LineMap lineMap) {
-	super();
-	this.filename = file;
-	this.position = position;
-	this.lineMap = lineMap;
+                               Position.LineMap lineMap) {
+        super();
+        this.filename = file;
+        this.position = position;
+        this.lineMap = lineMap;
     }
 
     public static SourcePosition make(String file, int pos,
-				      Position.LineMap lineMap) {
-	if (file == null) return null;
-	return new SourcePositionImpl(file, pos, lineMap);
+                                      Position.LineMap lineMap) {
+        if (file == null) return null;
+        return new SourcePositionImpl(file, pos, lineMap);
     }
 
     public String toString() {
-	if (position == Position.NOPOS)
-	    return filename;
-	else
-	    return filename + ":" + line();
+        if (position == Position.NOPOS)
+            return filename;
+        else
+            return filename + ":" + line();
     }
 }

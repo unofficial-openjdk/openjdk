@@ -33,9 +33,9 @@
 
 class FinallyWarn {
     void f() {
-	try {
-	} finally {
-	    return;
-	}
+        try {
+        } finally {
+            return;
+        }
     }
 }

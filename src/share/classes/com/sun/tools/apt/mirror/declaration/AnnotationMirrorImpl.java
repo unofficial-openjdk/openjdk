@@ -51,9 +51,9 @@ public class AnnotationMirrorImpl implements AnnotationMirror {
 
 
     AnnotationMirrorImpl(AptEnv env, Attribute.Compound anno, Declaration decl) {
-	this.env = env;
-	this.anno = anno;
-	this.decl = decl;
+        this.env = env;
+        this.anno = anno;
+        this.decl = decl;
     }
 
 
@@ -66,71 +66,71 @@ public class AnnotationMirrorImpl implements AnnotationMirror {
      * Omit parens for marker annotations, and omit "value=" when allowed.
      */
     public String toString() {
-	StringBuilder sb = new StringBuilder("@");
-	Constants.Formatter fmtr = Constants.getFormatter(sb);
+        StringBuilder sb = new StringBuilder("@");
+        Constants.Formatter fmtr = Constants.getFormatter(sb);
 
-	fmtr.append(anno.type.tsym);
+        fmtr.append(anno.type.tsym);
 
-	int len = anno.values.length();
-	if (len > 0) {		// omit parens for marker annotations
-	    sb.append('(');
-	    boolean first = true;
-	    for (Pair<MethodSymbol, Attribute> val : anno.values) {
-		if (!first) {
-		    sb.append(", ");
-		}
-		first = false;
+        int len = anno.values.length();
+        if (len > 0) {          // omit parens for marker annotations
+            sb.append('(');
+            boolean first = true;
+            for (Pair<MethodSymbol, Attribute> val : anno.values) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                first = false;
 
-		Name name = val.fst.name;
-		if (len > 1 || name != env.names.value) {
-		    fmtr.append(name);
-		    sb.append('=');
-		}
-		sb.append(new AnnotationValueImpl(env, val.snd, this));
-	    }
-	    sb.append(')');
-	}
-	return fmtr.toString();
+                Name name = val.fst.name;
+                if (len > 1 || name != env.names.value) {
+                    fmtr.append(name);
+                    sb.append('=');
+                }
+                sb.append(new AnnotationValueImpl(env, val.snd, this));
+            }
+            sb.append(')');
+        }
+        return fmtr.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public AnnotationType getAnnotationType() {
-	return (AnnotationType) env.typeMaker.getType(anno.type);
+        return (AnnotationType) env.typeMaker.getType(anno.type);
     }
 
     /**
      * {@inheritDoc}
      */
     public Map<AnnotationTypeElementDeclaration, AnnotationValue>
-							getElementValues() {
-	Map<AnnotationTypeElementDeclaration, AnnotationValue> res =
-	    new LinkedHashMap<AnnotationTypeElementDeclaration,
-						   AnnotationValue>(); // whew!
-	for (Pair<MethodSymbol, Attribute> val : anno.values) {
-	    res.put(getElement(val.fst),
-		    new AnnotationValueImpl(env, val.snd, this));
-	}
-	return res;
+                                                        getElementValues() {
+        Map<AnnotationTypeElementDeclaration, AnnotationValue> res =
+            new LinkedHashMap<AnnotationTypeElementDeclaration,
+                                                   AnnotationValue>(); // whew!
+        for (Pair<MethodSymbol, Attribute> val : anno.values) {
+            res.put(getElement(val.fst),
+                    new AnnotationValueImpl(env, val.snd, this));
+        }
+        return res;
     }
 
     public SourcePosition getPosition() {
-	// Return position of the declaration on which this annotation
-	// appears.
-	return (decl == null) ? null : decl.getPosition();
+        // Return position of the declaration on which this annotation
+        // appears.
+        return (decl == null) ? null : decl.getPosition();
 
     }
 
     public Declaration getDeclaration() {
-	return this.decl;
+        return this.decl;
     }
 
     /**
      * Returns the annotation type element for a symbol.
      */
     private AnnotationTypeElementDeclaration getElement(MethodSymbol m) {
-	return (AnnotationTypeElementDeclaration)
-		    env.declMaker.getExecutableDeclaration(m);
+        return (AnnotationTypeElementDeclaration)
+                    env.declMaker.getExecutableDeclaration(m);
     }
 }

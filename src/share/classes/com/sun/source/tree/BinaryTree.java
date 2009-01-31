@@ -31,7 +31,7 @@ package com.sun.source.tree;
  *
  * For example:
  * <pre>
- *   <em>leftOperand</em> <em>operator</em> <em>rightOperand</em> 
+ *   <em>leftOperand</em> <em>operator</em> <em>rightOperand</em>
  * </pre>
  *
  * @see "The Java Language Specification, 3rd ed, sections 15.17 to 15.24"

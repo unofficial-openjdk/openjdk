@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug      4951228 6290760
  * @summary  Test the case where the overriden method returns a different
- *           type than the method in the child class.  Make sure the 
+ *           type than the method in the child class.  Make sure the
  *           documentation is inherited but the return type isn't.
  * @author   jamieh
  * @library  ../lib/
@@ -35,38 +35,38 @@
  */
 
 public class TestMemberSummary extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4951228-6290760";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg","pkg2"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         // Check return type in member summary.
-        {BUG_ID + FS + "pkg" + FS + "PublicChild.html",        
+        {BUG_ID + FS + "pkg" + FS + "PublicChild.html",
             "<CODE>&nbsp;<A HREF=\"../pkg/PublicChild.html\" " +
             "title=\"class in pkg\">PublicChild</A></CODE></FONT></TD>" + NL +
             "<TD><CODE><B><A HREF=\"../pkg/PublicChild.html#" +
             "returnTypeTest()\">returnTypeTest</A></B>()</CODE>"
         },
         // Check return type in member detail.
-        {BUG_ID + FS + "pkg" + FS + "PublicChild.html",        
+        {BUG_ID + FS + "pkg" + FS + "PublicChild.html",
             "public <A HREF=\"../pkg/PublicChild.html\" " +
             "title=\"class in pkg\">PublicChild</A> " +
             "<B>returnTypeTest</B>()"
         },
-        
+
          // Legacy anchor dimensions (6290760)
-        {BUG_ID + FS + "pkg2" + FS + "A.html",        
+        {BUG_ID + FS + "pkg2" + FS + "A.html",
             "<A NAME=\"f(java.lang.Object[])\"><!-- --></A><A NAME=\"f(T[])\"><!-- --></A>"
         },
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -76,14 +76,14 @@ public class TestMemberSummary extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

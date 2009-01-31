@@ -22,7 +22,7 @@
  */
 
 /*
- * @test    
+ * @test
  * @bug     6500207
  * @summary REGRESSION: Compiler Crash with java.lang.AssertionError assertion
  * @author  Lubo Litchev
@@ -42,7 +42,7 @@ public class T6500207 {
 
         Object codeForNull = all[0].getValueForNull();
     }
-    
+
      public static void main(String [] args) {
          new T6500207();
      }

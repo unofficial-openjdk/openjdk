@@ -42,20 +42,20 @@ import com.sun.tools.javac.util.Position;
 
 /**
  * Represents an annotation type.
- * 
+ *
  * @author Scott Seligman
  * @since 1.5
  */
 
 public class AnnotationTypeDocImpl
-	extends ClassDocImpl implements AnnotationTypeDoc {
+        extends ClassDocImpl implements AnnotationTypeDoc {
 
     AnnotationTypeDocImpl(DocEnv env, ClassSymbol sym) {
         this(env, sym, null, null, null);
     }
 
     AnnotationTypeDocImpl(DocEnv env, ClassSymbol sym,
-			  String doc, JCClassDecl tree, Position.LineMap lineMap) {
+                          String doc, JCClassDecl tree, Position.LineMap lineMap) {
         super(env, sym, doc, tree, lineMap);
     }
 
@@ -64,7 +64,7 @@ public class AnnotationTypeDocImpl
      * (For legacy doclets, return false.)
      */
     public boolean isAnnotationType() {
-	return !isInterface();
+        return !isInterface();
     }
 
     /**
@@ -73,7 +73,7 @@ public class AnnotationTypeDocImpl
      * (For legacy doclets, returns true.)
      */
     public boolean isInterface() {
-	return env.legacyDoclet;
+        return env.legacyDoclet;
     }
 
     /**
@@ -82,9 +82,9 @@ public class AnnotationTypeDocImpl
      * @see #elements()
      */
     public MethodDoc[] methods(boolean filter) {
-	return env.legacyDoclet
-		? (MethodDoc[])elements()
-		: new MethodDoc[0];
+        return env.legacyDoclet
+                ? (MethodDoc[])elements()
+                : new MethodDoc[0];
     }
 
     /**
@@ -93,15 +93,15 @@ public class AnnotationTypeDocImpl
      * Elements are always public, so no need to filter them.
      */
     public AnnotationTypeElementDoc[] elements() {
-	Name.Table names = tsym.name.table;
-	List<AnnotationTypeElementDoc> elements = List.nil();
-	for (Scope.Entry e = tsym.members().elems; e != null; e = e.sibling) {
-	    if (e.sym != null && e.sym.kind == Kinds.MTH) {
-		MethodSymbol s = (MethodSymbol)e.sym;
-		elements = elements.prepend(env.getAnnotationTypeElementDoc(s));
-	    }
-	}
-	return
-	    elements.toArray(new AnnotationTypeElementDoc[elements.length()]);
+        Name.Table names = tsym.name.table;
+        List<AnnotationTypeElementDoc> elements = List.nil();
+        for (Scope.Entry e = tsym.members().elems; e != null; e = e.sibling) {
+            if (e.sym != null && e.sym.kind == Kinds.MTH) {
+                MethodSymbol s = (MethodSymbol)e.sym;
+                elements = elements.prepend(env.getAnnotationTypeElementDoc(s));
+            }
+        }
+        return
+            elements.toArray(new AnnotationTypeElementDoc[elements.length()]);
     }
 }

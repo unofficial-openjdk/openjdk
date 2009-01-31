@@ -84,7 +84,7 @@ public enum ElementKind {
     /** A type parameter. */
     TYPE_PARAMETER,
 
-    /** 
+    /**
      * An implementation-reserved element.  This is not the element
      * you are looking for.
      */
@@ -98,7 +98,7 @@ public enum ElementKind {
      * @return {@code true} if this is a kind of class
      */
     public boolean isClass() {
-	return this == CLASS || this == ENUM;
+        return this == CLASS || this == ENUM;
     }
 
     /**
@@ -108,7 +108,7 @@ public enum ElementKind {
      * @return {@code true} if this is a kind of interface
      */
     public boolean isInterface() {
-	return this == INTERFACE || this == ANNOTATION_TYPE;
+        return this == INTERFACE || this == ANNOTATION_TYPE;
     }
 
     /**
@@ -118,6 +118,6 @@ public enum ElementKind {
      * @return {@code true} if this is a kind of field
      */
     public boolean isField() {
-	return this == FIELD || this == ENUM_CONSTANT;
+        return this == FIELD || this == ENUM_CONSTANT;
     }
 }

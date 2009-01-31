@@ -31,13 +31,13 @@ import javax.lang.model.element.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class A extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
-	Filer filer = processingEnv.getFiler();
-	try {
-	    OutputStream out = filer.createClassFile(getClass().getName()+"_0").openOutputStream();
-	    out.close();
-	} catch (IOException e) { 
-	    throw new Error(e);
-	}
-	return true;
-    } 
+        Filer filer = processingEnv.getFiler();
+        try {
+            OutputStream out = filer.createClassFile(getClass().getName()+"_0").openOutputStream();
+            out.close();
+        } catch (IOException e) {
+            throw new Error(e);
+        }
+        return true;
+    }
 }

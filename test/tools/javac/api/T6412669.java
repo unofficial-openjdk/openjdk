@@ -41,35 +41,35 @@ import com.sun.tools.javac.api.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class T6412669 extends AbstractProcessor {
     public static void main(String... args) throws IOException {
-	String testSrc = System.getProperty("test.src", ".");
-	String testClasses = System.getProperty("test.classes", ".");
+        String testSrc = System.getProperty("test.src", ".");
+        String testClasses = System.getProperty("test.classes", ".");
 
-	JavacTool tool = JavacTool.create();
+        JavacTool tool = JavacTool.create();
         StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
-	fm.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(testClasses)));
-	Iterable<? extends JavaFileObject> files = 
-	    fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, T6412669.class.getName()+".java")));
-	String[] opts = { "-proc:only", "-processor", T6412669.class.getName(),
-			  "-classpath", new File(testClasses).getPath() };
-	JavacTask task = tool.getTask(null, fm, null, Arrays.asList(opts), null, files);
+        fm.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(testClasses)));
+        Iterable<? extends JavaFileObject> files =
+            fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, T6412669.class.getName()+".java")));
+        String[] opts = { "-proc:only", "-processor", T6412669.class.getName(),
+                          "-classpath", new File(testClasses).getPath() };
+        JavacTask task = tool.getTask(null, fm, null, Arrays.asList(opts), null, files);
         if (!task.call())
-	    throw new AssertionError("test failed");
+            throw new AssertionError("test failed");
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-	Trees trees = Trees.instance(processingEnv);
-	SourcePositions sp = trees.getSourcePositions();
-	Messager m = processingEnv.getMessager();
-	for (TypeElement anno: annotations) {
-	    for (Element e: roundEnv.getElementsAnnotatedWith(anno)) {
-		TreePath p = trees.getPath(e);
-		long start = sp.getStartPosition(p.getCompilationUnit(), p.getLeaf());
-		long end = sp.getEndPosition(p.getCompilationUnit(), p.getLeaf());
-		Diagnostic.Kind k = (start > 0 && end > 0 && start < end
-				     ? Diagnostic.Kind.NOTE : Diagnostic.Kind.ERROR);
-		m.printMessage(k, "test [" + start + "," + end + "]", e);
-	    }
-	}
-	return true;
+        Trees trees = Trees.instance(processingEnv);
+        SourcePositions sp = trees.getSourcePositions();
+        Messager m = processingEnv.getMessager();
+        for (TypeElement anno: annotations) {
+            for (Element e: roundEnv.getElementsAnnotatedWith(anno)) {
+                TreePath p = trees.getPath(e);
+                long start = sp.getStartPosition(p.getCompilationUnit(), p.getLeaf());
+                long end = sp.getEndPosition(p.getCompilationUnit(), p.getLeaf());
+                Diagnostic.Kind k = (start > 0 && end > 0 && start < end
+                                     ? Diagnostic.Kind.NOTE : Diagnostic.Kind.ERROR);
+                m.printMessage(k, "test [" + start + "," + end + "]", e);
+            }
+        }
+        return true;
     }
 }

@@ -40,22 +40,22 @@ package com.sun.javadoc;
 public interface PackageDoc extends Doc {
 
     /**
-     * Get all classes and interfaces in the package, filtered to the specified 
-     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#included">access 
+     * Get all classes and interfaces in the package, filtered to the specified
+     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#included">access
      * modifier option</a>.
      *
      * @return       filtered classes and interfaces in this package
-     * @param filter Specifying true filters according to the specified access 
+     * @param filter Specifying true filters according to the specified access
      *               modifier option.
-     *               Specifying false includes all classes and interfaces 
+     *               Specifying false includes all classes and interfaces
      *               regardless of access modifier option.
      * @since 1.4
      */
     ClassDoc[] allClasses(boolean filter);
 
     /**
-     * Get all 
-     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#included">included</a> 
+     * Get all
+     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#included">included</a>
      * classes and interfaces in the package.  Same as allClasses(true).
      *
      * @return all included classes and interfaces in this package.
@@ -64,7 +64,7 @@ public interface PackageDoc extends Doc {
 
     /**
      * Get included
-     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#class">ordinary</a> 
+     * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#class">ordinary</a>
      * classes (that is, exclude exceptions, errors, enums, interfaces, and
      * annotation types)
      * in this package.
@@ -122,7 +122,7 @@ public interface PackageDoc extends Doc {
     /**
      * Lookup a class or interface within this package.
      *
-     * @return ClassDoc of found class or interface, 
+     * @return ClassDoc of found class or interface,
      * or null if not found.
      */
     ClassDoc findClass(String className);

@@ -48,12 +48,12 @@ public class T6358786 {
         String srcdir = System.getProperty("test.src");
         File file = new File(srcdir, args[0]);
         JavacTaskImpl task = (JavacTaskImpl)tool.getTask(null, fm, null, null, null, fm.getJavaFileObjectsFromFiles(Arrays.asList(file)));
-	Elements elements = task.getElements();
+        Elements elements = task.getElements();
         for (TypeElement clazz : task.enter(task.parse())) {
             String doc = elements.getDocComment(clazz);
-	    if (doc == null)
-		throw new AssertionError(clazz.getSimpleName() + ": no doc comment");
-	    System.out.format("%s: %s%n", clazz.getSimpleName(), doc);
-	}
+            if (doc == null)
+                throw new AssertionError(clazz.getSimpleName() + ": no doc comment");
+            System.out.format("%s: %s%n", clazz.getSimpleName(), doc);
+        }
     }
 }

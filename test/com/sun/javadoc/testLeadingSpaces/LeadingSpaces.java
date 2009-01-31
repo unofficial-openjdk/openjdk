@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -53,7 +53,7 @@ public class LeadingSpaces extends JavadocTester {
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
         SRC_DIR + FS + "LeadingSpaces.java"};
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -63,21 +63,21 @@ public class LeadingSpaces extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugName() {
         return getClass().getName();
     }
-    
+
     /**
        This leading spaces in the &lt;pre&gt; block below should be
        preserved.

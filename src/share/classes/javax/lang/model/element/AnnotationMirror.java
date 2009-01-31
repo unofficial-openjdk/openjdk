@@ -68,7 +68,7 @@ public interface AnnotationMirror {
      * getElementValuesWithDefaults}.
      *
      * @return the values of this annotation's elements,
-     *		or an empty map if there are none
+     *          or an empty map if there are none
      */
     Map<? extends ExecutableElement, ? extends AnnotationValue> getElementValues();
 }

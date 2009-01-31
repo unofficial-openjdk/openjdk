@@ -26,7 +26,7 @@
 package com.sun.tools.javac.processing;
 
 
-/** 
+/**
  * Error thrown for problems encountered during annotation processing.
  *
  * <p><b>This is NOT part of any API supported by Sun Microsystems.
@@ -37,6 +37,6 @@ package com.sun.tools.javac.processing;
 public class AnnotationProcessingError extends Error {
     static final long serialVersionUID = 305337707019230790L;
     AnnotationProcessingError(Throwable cause) {
-	super(cause);
+        super(cause);
     }
 }

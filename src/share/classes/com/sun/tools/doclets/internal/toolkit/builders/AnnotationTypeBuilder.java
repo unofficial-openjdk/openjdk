@@ -38,27 +38,27 @@ import java.lang.reflect.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.5
  */
 public class AnnotationTypeBuilder extends AbstractBuilder {
-    
+
     /**
      * The root element of the annotation type XML is {@value}.
      */
     public static final String ROOT = "AnnotationTypeDoc";
-    
+
     /**
      * The annotation type being documented.
      */
     private AnnotationTypeDoc annotationTypeDoc;
-    
+
     /**
      * The doclet specific writer.
      */
     private AnnotationTypeWriter writer;
-    
+
     /**
      * Construct a new ClassBuilder.
      *
@@ -68,7 +68,7 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
     private AnnotationTypeBuilder(Configuration configuration) {
         super(configuration);
     }
-    
+
     /**
      * Construct a new ClassBuilder.
      *
@@ -76,8 +76,8 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
      * @param annotationTypeDoc the class being documented.
      * @param writer            the doclet specific writer.
      */
-    public static AnnotationTypeBuilder getInstance(Configuration configuration, 
-        AnnotationTypeDoc annotationTypeDoc, AnnotationTypeWriter writer) 
+    public static AnnotationTypeBuilder getInstance(Configuration configuration,
+        AnnotationTypeDoc annotationTypeDoc, AnnotationTypeWriter writer)
     throws Exception {
         AnnotationTypeBuilder builder = new AnnotationTypeBuilder(configuration);
         builder.configuration = configuration;
@@ -88,35 +88,35 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
         }
         return builder;
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public void invokeMethod(String methodName, Class[] paramClasses, 
-            Object[] params) 
+    public void invokeMethod(String methodName, Class[] paramClasses,
+            Object[] params)
     throws Exception {
         if (DEBUG) {
-            configuration.root.printError("DEBUG: " + this.getClass().getName() 
+            configuration.root.printError("DEBUG: " + this.getClass().getName()
                 + "." + methodName);
         }
         Method method = this.getClass().getMethod(methodName, paramClasses);
         method.invoke(this, params);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void build() throws IOException {
         build(LayoutParser.getInstance(configuration).parseXML(ROOT));
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getName() {
         return ROOT;
     }
-     
+
      /**
       * Handles the &lt;AnnotationTypeDoc> tag.
       *
@@ -125,10 +125,10 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
      public void buildAnnotationTypeDoc(List elements) throws Exception {
         build(elements);
         writer.close();
-        copyDocFiles(); 
+        copyDocFiles();
      }
-    
-    
+
+
      /**
       * Copy the doc files for the current ClassDoc if necessary.
       */
@@ -148,24 +148,24 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
                     annotationTypeDoc.containingPackage())
                     + File.separator, DocletConstants.DOC_FILES_DIR_NAME, true);
             containingPackagesSeen.add(containingPackage.name());
-        } 
+        }
      }
-    
+
     /**
      * Build the header of the page.
      */
-    public void buildAnnotationTypeHeader() {        		
-        writer.writeHeader(configuration.getText("doclet.AnnotationType") + 
+    public void buildAnnotationTypeHeader() {
+        writer.writeHeader(configuration.getText("doclet.AnnotationType") +
             " " + annotationTypeDoc.name());
     }
-    
+
     /**
      * If this class is deprecated, print the appropriate information.
      */
     public void buildDeprecationInfo () {
         writer.writeAnnotationTypeDeprecationInfo();
     }
-    
+
     /**
      * Build the signature of the current annotation type.
      */
@@ -176,21 +176,21 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
             Util.replaceText(
                 modifiers.toString(), "interface", "@interface"));
     }
-    
+
     /**
      * Build the class description.
      */
     public void buildAnnotationTypeDescription() {
        writer.writeAnnotationTypeDescription();
     }
-    
+
     /**
      * Build the tag information for the current class.
      */
     public void buildAnnotationTypeTagInfo() {
        writer.writeAnnotationTypeTagInfo();
     }
-    
+
     /**
      * Build the contents of the page.
      *
@@ -202,32 +202,32 @@ public class AnnotationTypeBuilder extends AbstractBuilder {
             getMemberSummaryBuilder(writer).build(elements);
         writer.completeMemberSummaryBuild();
     }
-    
+
     /**
      * Build the annotation type optional member documentation.
      *
      * @param elements the XML elements that specify how a annotation type
      *                 members are documented.
      */
-    public void buildAnnotationTypeOptionalMemberDetails(List elements) 
+    public void buildAnnotationTypeOptionalMemberDetails(List elements)
     throws Exception {
         configuration.getBuilderFactory().
             getAnnotationTypeOptionalMemberBuilder(writer).build(elements);
     }
-    
+
     /**
      * Build the annotation type required member documentation.
      *
      * @param elements the XML elements that specify how a annotation type
      *                 members are documented.
      */
-    public void buildAnnotationTypeRequiredMemberDetails(List elements) 
+    public void buildAnnotationTypeRequiredMemberDetails(List elements)
     throws Exception {
         configuration.getBuilderFactory().
             getAnnotationTypeRequiredMemberBuilder(writer).build(elements);
     }
-    
-    
+
+
     /**
      * Build the footer of the page.
      */

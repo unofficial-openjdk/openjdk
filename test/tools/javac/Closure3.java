@@ -34,11 +34,11 @@
 // Make sure the closure is present when the superclass is constructed.
 // Specifically, Closure3.$1 must have its $parameter and $local_var copies initialized when BaseClass calls x().
 
-abstract class BaseClass 
+abstract class BaseClass
 {
     protected BaseClass()
     {
-	x();
+        x();
     }
     protected abstract void x();
 }
@@ -47,19 +47,19 @@ public class Closure3
 {
     public static void main(String[] args)
     {
-	callingMethod("12345678");
+        callingMethod("12345678");
     }
 
     protected static void callingMethod(final String parameter)
     {
-	String t = "12345";
-	final String local_var = t;
-	BaseClass enum_ = new BaseClass() {
-	    public void x()
-		{
-		    int i = parameter.length() + local_var.length();
-		    if (i != 13) throw new Error();
-		}
-	};
+        String t = "12345";
+        final String local_var = t;
+        BaseClass enum_ = new BaseClass() {
+            public void x()
+                {
+                    int i = parameter.length() + local_var.length();
+                    if (i != 13) throw new Error();
+                }
+        };
     }
 }

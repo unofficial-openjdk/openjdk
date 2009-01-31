@@ -29,6 +29,6 @@ interface I {
 
 public class Child extends one.Parent implements I {
     void method() {
-	System.out.println(i);
+        System.out.println(i);
     }
 }

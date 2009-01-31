@@ -43,27 +43,27 @@ import java.util.Map;
  */
 public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     private TreeMaker M;
-    
+
     /** Creates a new instance of TreeCopier */
     public TreeCopier(TreeMaker M) {
         this.M = M;
     }
-    
+
     public <T extends JCTree> T copy(T tree) {
         return copy(tree, null);
     }
-    
+
     @SuppressWarnings("unchecked")
     public <T extends JCTree> T copy(T tree, P p) {
         if (tree == null)
             return null;
         return (T) (tree.accept(this, p));
     }
-    
+
     public <T extends JCTree> List<T> copy(List<T> trees) {
         return copy(trees, null);
     }
-    
+
     public <T extends JCTree> List<T> copy(List<T> trees, P p) {
         if (trees == null)
             return null;
@@ -411,5 +411,5 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
                 throw new AssertionError("unknown tree tag: " + tree.getTag());
         }
     }
-    
+
 }

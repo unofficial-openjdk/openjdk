@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,10 +23,10 @@
 
 
 public class C implements I {
-    
+
     /**
      * @throws NullPointerException Test 1 passes.
      */
     public void method() throws NullPointerException {}
-    
+
 }

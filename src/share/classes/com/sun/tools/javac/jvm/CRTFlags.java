@@ -50,6 +50,6 @@ public interface CRTFlags {
     /** The mask for valid flags
      */
     public static final int CRT_VALID_FLAGS = CRT_STATEMENT | CRT_BLOCK | CRT_ASSIGNMENT |
-		        		      CRT_FLOW_CONTROLLER | CRT_FLOW_TARGET | CRT_INVOKE |
-			                      CRT_CREATE | CRT_BRANCH_TRUE | CRT_BRANCH_FALSE;
+                                              CRT_FLOW_CONTROLLER | CRT_FLOW_TARGET | CRT_INVOKE |
+                                              CRT_CREATE | CRT_BRANCH_TRUE | CRT_BRANCH_FALSE;
 }

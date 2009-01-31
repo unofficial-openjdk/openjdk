@@ -43,16 +43,16 @@ import static javax.tools.Diagnostic.Kind.*;
 @SupportedOptions("finalError")
 public class MessagerBasics extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
-			   RoundEnvironment roundEnv) {
-	Messager m = processingEnv.getMessager();
-	if (roundEnv.processingOver()) {
-	    if (processingEnv.getOptions().containsKey("finalError")) 
-		m.printMessage(ERROR,	"Does not compute");
-	    else {
-		m.printMessage(NOTE,	"Post no bills");
-		m.printMessage(WARNING,	"Beware the ides of March!");
-	    }
-	}
-	return true;
+                           RoundEnvironment roundEnv) {
+        Messager m = processingEnv.getMessager();
+        if (roundEnv.processingOver()) {
+            if (processingEnv.getOptions().containsKey("finalError"))
+                m.printMessage(ERROR,   "Does not compute");
+            else {
+                m.printMessage(NOTE,    "Post no bills");
+                m.printMessage(WARNING, "Beware the ides of March!");
+            }
+        }
+        return true;
     }
 }

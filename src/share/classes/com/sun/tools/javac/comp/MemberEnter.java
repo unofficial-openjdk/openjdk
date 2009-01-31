@@ -659,22 +659,22 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
      */
     public void visitTree(JCTree tree) {
     }
-    
-    
+
+
     public void visitErroneous(JCErroneous tree) {
         memberEnter(tree.errs, env);
     }
-    
+
     public Env<AttrContext> getMethodEnv(JCMethodDecl tree, Env<AttrContext> env) {
         Env<AttrContext> mEnv = methodEnv(tree, env);
-	mEnv.info.lint = mEnv.info.lint.augment(tree.sym.attributes_field, tree.sym.flags());
+        mEnv.info.lint = mEnv.info.lint.augment(tree.sym.attributes_field, tree.sym.flags());
         for (List<JCTypeParameter> l = tree.typarams; l.nonEmpty(); l = l.tail)
             mEnv.info.scope.enterIfAbsent(l.head.type.tsym);
         for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail)
             mEnv.info.scope.enterIfAbsent(l.head.sym);
         return mEnv;
     }
-    
+
     public Env<AttrContext> getInitEnv(JCVariableDecl tree, Env<AttrContext> env) {
         Env<AttrContext> iEnv = initEnv(tree, env);
         return iEnv;

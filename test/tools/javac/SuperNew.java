@@ -38,8 +38,8 @@ public class SuperNew {
         Inner2(Inner1 ignore) {}
         Inner2() {
             this(new Inner1()); //BAD
-	}
-	Inner2(String s) {
+        }
+        Inner2(String s) {
             this(SuperNew.this.new Inner1()); //OK
         }
         Inner2(char junk) {
@@ -51,4 +51,3 @@ public class SuperNew {
     }
     Inner1 newInner1() { return new Inner1(); }
 }
-

@@ -31,7 +31,7 @@ import java.util.HashSet;
 
 /**
  * Source versions of the Java&trade; programming language.
- * 
+ *
  * See <a
  * href="http://java.sun.com/docs/books/jls/">http://java.sun.com/docs/books/jls/</a>
  * for information on editions of <i>The Java&trade; Language
@@ -52,13 +52,13 @@ public enum SourceVersion {
      * 1.2: strictfp
      * 1.3: no changes
      * 1.4: assert
-     * 1.5: annotations, generics, autoboxing, var-args... 
+     * 1.5: annotations, generics, autoboxing, var-args...
      * 1.6: no changes
      */
 
     /**
      * The original version.
-     * 
+     *
      * The language described in the first edition of <i>The
      * Java&trade; Language Specification</i>.
      */
@@ -127,19 +127,19 @@ public enum SourceVersion {
      * @return the latest source version that can be modeled
      */
     public static SourceVersion latest() {
-	return RELEASE_6;
+        return RELEASE_6;
     }
 
     private static final SourceVersion latestSupported = getLatestSupported();
-    
+
     private static SourceVersion getLatestSupported() {
-	try {
-	    String specVersion = System.getProperty("java.specification.version");
-	    if ("1.6".equals(specVersion))
-		return RELEASE_6;
-	} catch (SecurityException se) {}
-	
-	return RELEASE_5;
+        try {
+            String specVersion = System.getProperty("java.specification.version");
+            if ("1.6".equals(specVersion))
+                return RELEASE_6;
+        } catch (SecurityException se) {}
+
+        return RELEASE_5;
     }
 
     /**
@@ -150,7 +150,7 @@ public enum SourceVersion {
      * @return the latest source version that is fully supported
      */
     public static SourceVersion latestSupported() {
-	return latestSupported;
+        return latestSupported;
     }
 
     /**
@@ -171,22 +171,22 @@ public enum SourceVersion {
      * otherwise.
      */
     public static boolean isIdentifier(CharSequence name) {
-	String id = name.toString();
-	
-	if (id.length() == 0) {
-	    return false;
-	}
-	int cp = id.codePointAt(0);
+        String id = name.toString();
+
+        if (id.length() == 0) {
+            return false;
+        }
+        int cp = id.codePointAt(0);
         if (!Character.isJavaIdentifierStart(cp)) {
-	    return false;
-	}
+            return false;
+        }
         for (int i = Character.charCount(cp);
-		i < id.length();
-		i += Character.charCount(cp)) {
-	    cp = id.codePointAt(i);
+                i < id.length();
+                i += Character.charCount(cp)) {
+            cp = id.codePointAt(i);
             if (!Character.isJavaIdentifierPart(cp)) {
-		return false;
-	    }
+                return false;
+            }
         }
         return true;
     }
@@ -203,35 +203,35 @@ public enum SourceVersion {
      * @jls3 6.2 Names and Identifiers
      */
     public static boolean isName(CharSequence name) {
-	String id = name.toString();
-	
-	for(String s : id.split("\\.", -1)) {
-	    if (!isIdentifier(s) || isKeyword(s))
-		return false;
-	}
-	return true;
+        String id = name.toString();
+
+        for(String s : id.split("\\.", -1)) {
+            if (!isIdentifier(s) || isKeyword(s))
+                return false;
+        }
+        return true;
     }
 
     private final static Set<String> keywords;
     static {
-	Set<String> s = new HashSet<String>();
-	String [] kws = {
-	    "abstract",	"continue",	"for",		"new",		"switch",
-	    "assert",	"default",	"if",		"package",	"synchronized",
-	    "boolean",	"do",		"goto",		"private",	"this",
-	    "break",	"double",	"implements",	"protected",	"throw",
-	    "byte",	"else",		"import",	"public",	"throws",
-	    "case",	"enum",		"instanceof",	"return",	"transient",
-	    "catch",	"extends",	"int",		"short",	"try",
-	    "char",	"final",	"interface",	"static",	"void",
-	    "class",	"finally",	"long",		"strictfp",	"volatile",
-	    "const",	"float",	"native",	"super",	"while",
-	    // literals
-	    "null",	"true",		"false"
-	};
-	for(String kw : kws)
-	    s.add(kw);
-	keywords = Collections.unmodifiableSet(s);
+        Set<String> s = new HashSet<String>();
+        String [] kws = {
+            "abstract", "continue",     "for",          "new",          "switch",
+            "assert",   "default",      "if",           "package",      "synchronized",
+            "boolean",  "do",           "goto",         "private",      "this",
+            "break",    "double",       "implements",   "protected",    "throw",
+            "byte",     "else",         "import",       "public",       "throws",
+            "case",     "enum",         "instanceof",   "return",       "transient",
+            "catch",    "extends",      "int",          "short",        "try",
+            "char",     "final",        "interface",    "static",       "void",
+            "class",    "finally",      "long",         "strictfp",     "volatile",
+            "const",    "float",        "native",       "super",        "while",
+            // literals
+            "null",     "true",         "false"
+        };
+        for(String kw : kws)
+            s.add(kw);
+        keywords = Collections.unmodifiableSet(s);
     }
 
     /**
@@ -242,7 +242,7 @@ public enum SourceVersion {
      * @return {@code true} if {@code s} is a keyword or literal, {@code false} otherwise.
      */
     public static boolean isKeyword(CharSequence s) {
-	String keywordOrLiteral = s.toString();
-	return keywords.contains(keywordOrLiteral);
+        String keywordOrLiteral = s.toString();
+        return keywords.contains(keywordOrLiteral);
     }
-} 
+}

@@ -36,16 +36,16 @@ public class SupplementaryJavaID1 {
         // U+10400 (\ud801\udc00): DESERET CAPITAL LETTER LONG I (can be start or part)
         // U+1D17B (\ud834\udd7b): MUSICAL SYMBOL COMBINING ACCENT (can only be part)
         // U+1D100 (\ud834\udd00): MUSICAL SYMBOL SINGLE BARLINE (can be none of start nor part)
-	int \ud801\udc00abc = 1;
-	int \ud802\udc00abc = 2;
-	int \ud801\udc01abc = 3;
-	int def\ud801\udc00 = 4;
+        int \ud801\udc00abc = 1;
+        int \ud802\udc00abc = 2;
+        int \ud801\udc01abc = 3;
+        int def\ud801\udc00 = 4;
         int \ud801\udc00\ud834\udd7b = 5;
 
         if (\ud801\udc00abc != 1 ||
-	    \ud802\udc00abc != 2 ||
-	    \ud801\udc01abc != 3 ||
-	    def\ud801\udc00 != 4 ||
+            \ud802\udc00abc != 2 ||
+            \ud801\udc01abc != 3 ||
+            def\ud801\udc00 != 4 ||
             \ud801\udc00\ud834\udd7b != 5) {
                 throw new RuntimeException("test failed");
         }

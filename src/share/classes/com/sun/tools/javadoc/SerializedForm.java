@@ -94,76 +94,76 @@ class SerializedForm {
      */
     SerializedForm(DocEnv env, ClassSymbol def, ClassDocImpl cd) {
         if (cd.isExternalizable()) {
-	    /* look up required public accessible methods,
-	     *   writeExternal and readExternal.
-	     */
+            /* look up required public accessible methods,
+             *   writeExternal and readExternal.
+             */
             String[] readExternalParamArr = { "java.io.ObjectInput" };
             String[] writeExternalParamArr = { "java.io.ObjectOutput" };
-	    MethodDoc md = cd.findMethod("readExternal", readExternalParamArr);
-	    if (md != null) {
-		methods.append(md);
+            MethodDoc md = cd.findMethod("readExternal", readExternalParamArr);
+            if (md != null) {
+                methods.append(md);
             }
-	    md = cd.findMethod("writeExternal", writeExternalParamArr);
-	    if (md != null) {
-		methods.append(md);
-		Tag tag[] = md.tags("serialData");
-	    }
-	// } else { // isSerializable() //### ???
-	} else if (cd.isSerializable()) {
+            md = cd.findMethod("writeExternal", writeExternalParamArr);
+            if (md != null) {
+                methods.append(md);
+                Tag tag[] = md.tags("serialData");
+            }
+        // } else { // isSerializable() //### ???
+        } else if (cd.isSerializable()) {
 
-	    VarSymbol dsf = getDefinedSerializableFields(def);
-	    if (dsf != null) {
+            VarSymbol dsf = getDefinedSerializableFields(def);
+            if (dsf != null) {
 
-		/* Define serializable fields with array of ObjectStreamField.
-		 * Each ObjectStreamField should be documented by a
-		 * serialField tag.
-		 */
-		definesSerializableFields = true;
-		//### No modifier filtering applied here.
-		FieldDocImpl dsfDoc = env.getFieldDoc(dsf);
-		fields.append(dsfDoc);
-		mapSerialFieldTagImplsToFieldDocImpls(dsfDoc, env, def);
+                /* Define serializable fields with array of ObjectStreamField.
+                 * Each ObjectStreamField should be documented by a
+                 * serialField tag.
+                 */
+                definesSerializableFields = true;
+                //### No modifier filtering applied here.
+                FieldDocImpl dsfDoc = env.getFieldDoc(dsf);
+                fields.append(dsfDoc);
+                mapSerialFieldTagImplsToFieldDocImpls(dsfDoc, env, def);
             } else {
 
-		/* Calculate default Serializable fields as all
-		 * non-transient, non-static fields.
-		 * Fields should be documented by serial tag.
-		 */
-		computeDefaultSerializableFields(env, def, cd);
-	    }
+                /* Calculate default Serializable fields as all
+                 * non-transient, non-static fields.
+                 * Fields should be documented by serial tag.
+                 */
+                computeDefaultSerializableFields(env, def, cd);
+            }
 
-           /* Check for optional customized readObject, writeObject, 
-            * readResolve and writeReplace, which can all contain 
-            * the serialData tag.	 */
-            addMethodIfExist(env, def, READOBJECT); 
-            addMethodIfExist(env, def, WRITEOBJECT); 
-            addMethodIfExist(env, def, READRESOLVE); 
+           /* Check for optional customized readObject, writeObject,
+            * readResolve and writeReplace, which can all contain
+            * the serialData tag.        */
+            addMethodIfExist(env, def, READOBJECT);
+            addMethodIfExist(env, def, WRITEOBJECT);
+            addMethodIfExist(env, def, READRESOLVE);
             addMethodIfExist(env, def, WRITEREPLACE);
             addMethodIfExist(env, def, READOBJECTNODATA);
-	}
+        }
     }
 
     /*
-     * Check for explicit Serializable fields. 
-     * Check for a private static array of ObjectStreamField with 
+     * Check for explicit Serializable fields.
+     * Check for a private static array of ObjectStreamField with
      * name SERIALIZABLE_FIELDS.
      */
     private VarSymbol getDefinedSerializableFields(ClassSymbol def) {
-	Name.Table names = def.name.table;
+        Name.Table names = def.name.table;
 
-	/* SERIALIZABLE_FIELDS can be private,
-	 * so must lookup by ClassSymbol, not by ClassDocImpl.
-	 */
-	for (Scope.Entry e = def.members().lookup(names.fromString(SERIALIZABLE_FIELDS)); e.scope != null; e = e.next()) {
-	    if (e.sym.kind == Kinds.VAR) {
-		VarSymbol f = (VarSymbol)e.sym;
-		if ((f.flags() & Flags.STATIC) != 0 &&
-		    (f.flags() & Flags.PRIVATE) != 0) {
-		    return f;
-		}
-	    }
-	}
-	return null;
+        /* SERIALIZABLE_FIELDS can be private,
+         * so must lookup by ClassSymbol, not by ClassDocImpl.
+         */
+        for (Scope.Entry e = def.members().lookup(names.fromString(SERIALIZABLE_FIELDS)); e.scope != null; e = e.next()) {
+            if (e.sym.kind == Kinds.VAR) {
+                VarSymbol f = (VarSymbol)e.sym;
+                if ((f.flags() & Flags.STATIC) != 0 &&
+                    (f.flags() & Flags.PRIVATE) != 0) {
+                    return f;
+                }
+            }
+        }
+        return null;
     }
 
     /*
@@ -173,21 +173,21 @@ class SerializedForm {
      * package accessible fields, must walk over all members of ClassSymbol.
      */
     private void computeDefaultSerializableFields(DocEnv env,
-						  ClassSymbol def,
-						  ClassDocImpl cd) {
-	for (Scope.Entry e = def.members().elems; e != null; e = e.sibling) {
-	    if (e.sym != null && e.sym.kind == Kinds.VAR) {
-		VarSymbol f = (VarSymbol)e.sym;
-		if ((f.flags() & Flags.STATIC) == 0 &&
-		    (f.flags() & Flags.TRANSIENT) == 0) {
-		    //### No modifier filtering applied here.
-		    FieldDocImpl fd = env.getFieldDoc(f);
-		    //### Add to beginning.
-		    //### Preserve order used by old 'javadoc'.
-		    fields.prepend(fd);
-		}
-	    }
-	}
+                                                  ClassSymbol def,
+                                                  ClassDocImpl cd) {
+        for (Scope.Entry e = def.members().elems; e != null; e = e.sibling) {
+            if (e.sym != null && e.sym.kind == Kinds.VAR) {
+                VarSymbol f = (VarSymbol)e.sym;
+                if ((f.flags() & Flags.STATIC) == 0 &&
+                    (f.flags() & Flags.TRANSIENT) == 0) {
+                    //### No modifier filtering applied here.
+                    FieldDocImpl fd = env.getFieldDoc(f);
+                    //### Add to beginning.
+                    //### Preserve order used by old 'javadoc'.
+                    fields.prepend(fd);
+                }
+            }
+        }
     }
 
     /*
@@ -197,27 +197,27 @@ class SerializedForm {
      * Serialization requires these methods to be non-static.
      *
      * @param method should be an unqualified Serializable method
-     *               name either READOBJECT, WRITEOBJECT, READRESOLVE 
+     *               name either READOBJECT, WRITEOBJECT, READRESOLVE
      *               or WRITEREPLACE.
      * @param visibility the visibility flag for the given method.
      */
     private void addMethodIfExist(DocEnv env, ClassSymbol def, String methodName) {
-	Name.Table names = def.name.table;
+        Name.Table names = def.name.table;
 
-	for (Scope.Entry e = def.members().lookup(names.fromString(methodName)); e.scope != null; e = e.next()) {
-	    if (e.sym.kind == Kinds.MTH) {
-		MethodSymbol md = (MethodSymbol)e.sym;
-		if ((md.flags() & Flags.STATIC) == 0) {
-		    /*
-		     * WARNING: not robust if unqualifiedMethodName is overloaded
-		     *          method. Signature checking could make more robust.
-		     * READOBJECT takes a single parameter, java.io.ObjectInputStream.
-		     * WRITEOBJECT takes a single parameter, java.io.ObjectOutputStream.
-		     */
-		    methods.append(env.getMethodDoc(md));
-		}
-	    }
-	}
+        for (Scope.Entry e = def.members().lookup(names.fromString(methodName)); e.scope != null; e = e.next()) {
+            if (e.sym.kind == Kinds.MTH) {
+                MethodSymbol md = (MethodSymbol)e.sym;
+                if ((md.flags() & Flags.STATIC) == 0) {
+                    /*
+                     * WARNING: not robust if unqualifiedMethodName is overloaded
+                     *          method. Signature checking could make more robust.
+                     * READOBJECT takes a single parameter, java.io.ObjectInputStream.
+                     * WRITEOBJECT takes a single parameter, java.io.ObjectOutputStream.
+                     */
+                    methods.append(env.getMethodDoc(md));
+                }
+            }
+        }
     }
 
     /*
@@ -226,24 +226,24 @@ class SerializedForm {
      *       of a class.
      */
     private void mapSerialFieldTagImplsToFieldDocImpls(FieldDocImpl spfDoc,
-						       DocEnv env,
-						       ClassSymbol def) {
-	Name.Table names = def.name.table;
+                                                       DocEnv env,
+                                                       ClassSymbol def) {
+        Name.Table names = def.name.table;
 
-	SerialFieldTag[] sfTag = spfDoc.serialFieldTags();
-	for (int i = 0; i < sfTag.length; i++) {
-	    Name fieldName = names.fromString(sfTag[i].fieldName());
+        SerialFieldTag[] sfTag = spfDoc.serialFieldTags();
+        for (int i = 0; i < sfTag.length; i++) {
+            Name fieldName = names.fromString(sfTag[i].fieldName());
 
-	    // Look for a FieldDocImpl that is documented by serialFieldTagImpl.
-	    for (Scope.Entry e = def.members().lookup(fieldName); e.scope != null; e = e.next()) {
-	        if (e.sym.kind == Kinds.VAR) {
-	            VarSymbol f = (VarSymbol)e.sym;
-		    FieldDocImpl fdi = env.getFieldDoc(f);
-		    ((SerialFieldTagImpl)(sfTag[i])).mapToFieldDocImpl(fdi);
-		    break;
-		}
-	    }
-	}
+            // Look for a FieldDocImpl that is documented by serialFieldTagImpl.
+            for (Scope.Entry e = def.members().lookup(fieldName); e.scope != null; e = e.next()) {
+                if (e.sym.kind == Kinds.VAR) {
+                    VarSymbol f = (VarSymbol)e.sym;
+                    FieldDocImpl fdi = env.getFieldDoc(f);
+                    ((SerialFieldTagImpl)(sfTag[i])).mapToFieldDocImpl(fdi);
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -277,8 +277,6 @@ class SerializedForm {
      * @see #fields()
      */
     boolean definesSerializableFields() {
-	return definesSerializableFields;
+        return definesSerializableFields;
     }
 }
-
-

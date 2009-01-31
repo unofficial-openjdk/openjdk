@@ -36,65 +36,65 @@ import com.sun.tools.javac.api.*;
 
 public class T6392782 {
     public static void main(String... args) throws IOException {
-	String testSrc = System.getProperty("test.src", ".");
-	JavacTool tool = JavacTool.create();
+        String testSrc = System.getProperty("test.src", ".");
+        JavacTool tool = JavacTool.create();
         StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
-	Iterable<? extends JavaFileObject> files = 
-	    fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, T6392782.class.getName()+".java")));
-	JavacTask task = tool.getTask(null, fm, null, null, null, files);
-	Iterable<? extends Tree> trees = task.parse();
-	TreeScanner<Integer,Void> scanner = new MyScanner();
-	check(scanner, 6, scanner.scan(trees, null));
+        Iterable<? extends JavaFileObject> files =
+            fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, T6392782.class.getName()+".java")));
+        JavacTask task = tool.getTask(null, fm, null, null, null, files);
+        Iterable<? extends Tree> trees = task.parse();
+        TreeScanner<Integer,Void> scanner = new MyScanner();
+        check(scanner, 6, scanner.scan(trees, null));
 
-	CountNodes nodeCounter = new CountNodes();
+        CountNodes nodeCounter = new CountNodes();
         // 383 nodes with the regular parser; 384 nodes with EndPosParser
         // We automatically swith to EndPosParser when calling JavacTask.parse()
         check(nodeCounter, 384, nodeCounter.scan(trees, null));
 
-	CountIdentifiers idCounter = new CountIdentifiers();
-	check(idCounter, 106, idCounter.scan(trees, null));
+        CountIdentifiers idCounter = new CountIdentifiers();
+        check(idCounter, 106, idCounter.scan(trees, null));
     }
 
     private static void check(TreeScanner<?,?> scanner, int expect, int found) {
-	if (found != expect)
-	    throw new AssertionError(scanner.getClass().getName() + ": expected: " + expect + " found: " + found);
+        if (found != expect)
+            throw new AssertionError(scanner.getClass().getName() + ": expected: " + expect + " found: " + found);
     }
-    
+
     static class MyScanner extends TreeScanner<Integer,Void> {
-	@Override
-	public Integer visitImport(ImportTree tree, Void ignore) {
-	    //System.err.println(tree);
-	    return 1;
-	}
-	
-	@Override
-	public Integer reduce(Integer i1, Integer i2) {
-	    return (i1 == null ? 0 : i1) + (i2 == null ? 0 : i2);
-	}
+        @Override
+        public Integer visitImport(ImportTree tree, Void ignore) {
+            //System.err.println(tree);
+            return 1;
+        }
+
+        @Override
+        public Integer reduce(Integer i1, Integer i2) {
+            return (i1 == null ? 0 : i1) + (i2 == null ? 0 : i2);
+        }
     }
-    
+
     // example from TreeScanner javadoc
     static class CountNodes extends TreeScanner<Integer,Void> {
-	@Override
-	public Integer scan(Tree node, Void p) { 
-	    Integer n = super.scan(node, p);
-	    return (n == null ? 0 : n) + 1; 
+        @Override
+        public Integer scan(Tree node, Void p) {
+            Integer n = super.scan(node, p);
+            return (n == null ? 0 : n) + 1;
         }
-	@Override
-	public Integer reduce(Integer r1, Integer r2) { 
-	    return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2); 
-	}
+        @Override
+        public Integer reduce(Integer r1, Integer r2) {
+            return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2);
+        }
     }
 
     // example from TreeScanner javadoc
     static class CountIdentifiers extends TreeScanner<Integer,Void> {
-	@Override
-	public Integer visitIdentifier(IdentifierTree node, Void p) { 
-	    return 1; 
-	}
-	@Override
-	public Integer reduce(Integer r1, Integer r2) { 
-	    return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2); 
-	}
+        @Override
+        public Integer visitIdentifier(IdentifierTree node, Void p) {
+            return 1;
+        }
+        @Override
+        public Integer reduce(Integer r1, Integer r2) {
+            return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2);
+        }
     }
 }

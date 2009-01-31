@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,13 +24,13 @@
 package pkg;
 
 public class P {
-    
+
     /**
-     * @throws T5 the first inherited throws tag. 
-     * @throws T6 the second inherited throws tag. 
+     * @throws T5 the first inherited throws tag.
+     * @throws T6 the second inherited throws tag.
      * @throws T7 the third inherited throws tag.
      * @throws T8 the fourth inherited throws tag.
-     */    
+     */
     public void method() throws T5, T6, T7, T8 {}
 
 }

@@ -49,8 +49,8 @@ class DeclarationScanner implements DeclarationVisitor {
     protected DeclarationVisitor post;
 
     DeclarationScanner(DeclarationVisitor pre, DeclarationVisitor post) {
-	this.pre = pre;
-	this.post = post;
+        this.pre = pre;
+        this.post = post;
     }
 
     /**
@@ -59,8 +59,8 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitDeclaration(Declaration d) {
-	d.accept(pre);
-	d.accept(post);
+        d.accept(pre);
+        d.accept(post);
     }
 
     /**
@@ -69,17 +69,17 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitPackageDeclaration(PackageDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	for(ClassDeclaration classDecl: d.getClasses()) {
-	    classDecl.accept(this);
-	}
+        for(ClassDeclaration classDecl: d.getClasses()) {
+            classDecl.accept(this);
+        }
 
-	for(InterfaceDeclaration interfaceDecl: d.getInterfaces()) {
-	    interfaceDecl.accept(this);
-	}
+        for(InterfaceDeclaration interfaceDecl: d.getInterfaces()) {
+            interfaceDecl.accept(this);
+        }
 
-	d.accept(post);
+        d.accept(post);
     }
 
     /**
@@ -88,7 +88,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitMemberDeclaration(MemberDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 
     /**
@@ -97,25 +97,25 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitTypeDeclaration(TypeDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
-	    tpDecl.accept(this);
-	}
-	
-	for(FieldDeclaration fieldDecl: d.getFields()) {
-	    fieldDecl.accept(this);
-	}
-	
-	for(MethodDeclaration methodDecl: d.getMethods()) {
-	    methodDecl.accept(this);
-	}
-	
-	for(TypeDeclaration typeDecl: d.getNestedTypes()) {
-	    typeDecl.accept(this);
-	}
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
+            tpDecl.accept(this);
+        }
 
-	d.accept(post);
+        for(FieldDeclaration fieldDecl: d.getFields()) {
+            fieldDecl.accept(this);
+        }
+
+        for(MethodDeclaration methodDecl: d.getMethods()) {
+            methodDecl.accept(this);
+        }
+
+        for(TypeDeclaration typeDecl: d.getNestedTypes()) {
+            typeDecl.accept(this);
+        }
+
+        d.accept(post);
     }
 
     /**
@@ -124,29 +124,29 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitClassDeclaration(ClassDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
-	    tpDecl.accept(this);
-	}
-	
-	for(FieldDeclaration fieldDecl: d.getFields()) {
-	    fieldDecl.accept(this);
-	}
-	
-	for(MethodDeclaration methodDecl: d.getMethods()) {
-	    methodDecl.accept(this);
-	}
-	
-	for(TypeDeclaration typeDecl: d.getNestedTypes()) {
-	    typeDecl.accept(this);
-	}
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
+            tpDecl.accept(this);
+        }
 
-	for(ConstructorDeclaration ctorDecl: d.getConstructors()) {
-	    ctorDecl.accept(this);
-	}
+        for(FieldDeclaration fieldDecl: d.getFields()) {
+            fieldDecl.accept(this);
+        }
 
-	d.accept(post);
+        for(MethodDeclaration methodDecl: d.getMethods()) {
+            methodDecl.accept(this);
+        }
+
+        for(TypeDeclaration typeDecl: d.getNestedTypes()) {
+            typeDecl.accept(this);
+        }
+
+        for(ConstructorDeclaration ctorDecl: d.getConstructors()) {
+            ctorDecl.accept(this);
+        }
+
+        d.accept(post);
     }
 
     /**
@@ -155,7 +155,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitEnumDeclaration(EnumDeclaration d) {
-	visitClassDeclaration(d);
+        visitClassDeclaration(d);
     }
 
     /**
@@ -164,7 +164,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitInterfaceDeclaration(InterfaceDeclaration d) {
-	visitTypeDeclaration(d);
+        visitTypeDeclaration(d);
     }
 
     /**
@@ -173,7 +173,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitAnnotationTypeDeclaration(AnnotationTypeDeclaration d) {
-	visitInterfaceDeclaration(d);
+        visitInterfaceDeclaration(d);
     }
 
     /**
@@ -182,7 +182,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitFieldDeclaration(FieldDeclaration d) {
-	visitMemberDeclaration(d);
+        visitMemberDeclaration(d);
     }
 
     /**
@@ -191,7 +191,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitEnumConstantDeclaration(EnumConstantDeclaration d) {
-	visitFieldDeclaration(d);
+        visitFieldDeclaration(d);
     }
 
     /**
@@ -200,17 +200,17 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitExecutableDeclaration(ExecutableDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
-	    tpDecl.accept(this);
-	}
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
+            tpDecl.accept(this);
+        }
 
-	for(ParameterDeclaration pDecl: d.getParameters()) {
-	    pDecl.accept(this);
-	}
+        for(ParameterDeclaration pDecl: d.getParameters()) {
+            pDecl.accept(this);
+        }
 
-	d.accept(post);
+        d.accept(post);
     }
 
     /**
@@ -219,7 +219,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitConstructorDeclaration(ConstructorDeclaration d) {
-	visitExecutableDeclaration(d);
+        visitExecutableDeclaration(d);
     }
 
     /**
@@ -228,7 +228,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitMethodDeclaration(MethodDeclaration d) {
-	visitExecutableDeclaration(d);
+        visitExecutableDeclaration(d);
     }
 
     /**
@@ -237,8 +237,8 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitAnnotationTypeElementDeclaration(
-	    AnnotationTypeElementDeclaration d) {
-	visitMethodDeclaration(d);
+            AnnotationTypeElementDeclaration d) {
+        visitMethodDeclaration(d);
     }
 
     /**
@@ -247,7 +247,7 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitParameterDeclaration(ParameterDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 
     /**
@@ -256,6 +256,6 @@ class DeclarationScanner implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitTypeParameterDeclaration(TypeParameterDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 }

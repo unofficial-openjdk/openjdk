@@ -32,33 +32,33 @@ import java.util.Set;
 
 public class NullAPF implements AnnotationProcessorFactory {
     static class NullAP implements AnnotationProcessor {
-	NullAP(AnnotationProcessorEnvironment ape) {
-	}
-    
-	public void process() {
-	    return;
-	}
+        NullAP(AnnotationProcessorEnvironment ape) {
+        }
+
+        public void process() {
+            return;
+        }
     }
 
     static Collection<String> supportedTypes;
-    
+
     static {
-	String types[] = {"*"};
-	supportedTypes = java.util.Arrays.asList(types);
+        String types[] = {"*"};
+        supportedTypes = java.util.Arrays.asList(types);
     }
 
     /*
      * Processor doesn't examine any options.
      */
     public Collection<String> supportedOptions() {
-	return java.util.Collections.emptySet();
+        return java.util.Collections.emptySet();
     }
 
     /*
      * All annotation types are supported.
      */
     public Collection<String> supportedAnnotationTypes() {
-	return supportedTypes;
+        return supportedTypes;
     }
 
     /*
@@ -66,7 +66,7 @@ public class NullAPF implements AnnotationProcessorFactory {
      * present, if any.
      */
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-					AnnotationProcessorEnvironment env) {
-	return new NullAP(env);
+                                        AnnotationProcessorEnvironment env) {
+        return new NullAP(env);
     }
 }

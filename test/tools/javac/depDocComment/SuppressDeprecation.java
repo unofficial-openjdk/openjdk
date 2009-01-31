@@ -19,57 +19,57 @@
  * o  Extending a deprecated class with a deprecated one is OK.
  * o  Overriding a deprecated method with a deprecated one is OK.
  * o  Code appearing in a deprecated class is OK.
- * 
+ *
  */
 
 class T {
     /** var.
-     *	@deprecated . */
+     *  @deprecated . */
     int var;
 
     /** f.
-     *	@deprecated . */
+     *  @deprecated . */
     void f() {
     }
 
     /** g.
-     *	@deprecated . */
+     *  @deprecated . */
     void g() {
-	f();
+        f();
     }
 
     void h() {
-	f();
+        f();
     }
 
     /** T.
-     *	@deprecated . */
+     *  @deprecated . */
     T() {
     }
 
     /** T.
-     *	@deprecated . */
+     *  @deprecated . */
     T(int i) {
-	this();
+        this();
     }
 
     T(float f) {
-	this();
+        this();
     }
 
     void xyzzy() {
-	new T();
-	new T(1.4f);
+        new T();
+        new T(1.4f);
     }
     /** plugh.
-     *	@deprecated . */
+     *  @deprecated . */
     void plugh() {
-	new T();
-	new T(1.45f);
+        new T();
+        new T(1.45f);
     }
 
     /** calcx..
-     *	@deprecated . */
+     *  @deprecated . */
     int calcx() { return 0; }
 }
 
@@ -80,18 +80,18 @@ class U extends T {
     }
 
     void g() { // error (1)
-	super.g(); // error (2)
-	var = 12; // error (3)
+        super.g(); // error (2)
+        var = 12; // error (3)
     }
 
     U() {} // error (4)
 
     U(int i) {
-	super(i); // error (5)
+        super(i); // error (5)
     }
 
     U(float f) {
-	super(1.3f);
+        super(1.3f);
     }
 }
 
@@ -105,7 +105,7 @@ class W extends T { // ok - inside deprecated class
     static {
         new T(1.3f).g(); // ok - called from deprecated static block
     }
-    
+
     /** W.
      * @deprecated . */
     {
@@ -115,7 +115,7 @@ class W extends T { // ok - inside deprecated class
     {
         new T(1.3f).g(); // ok - inside deprecated class
     }
-    
+
     int x = calcx(); // ok - inside deprecated class
 
     /** y.

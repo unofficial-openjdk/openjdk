@@ -47,7 +47,7 @@ import static com.sun.mirror.util.DeclarationVisitors.*;
 public class ConstExpr extends Tester {
 
     public static void main(String[] args) {
-	(new ConstExpr()).run();
+        (new ConstExpr()).run();
     }
 
 
@@ -61,7 +61,7 @@ public class ConstExpr extends Tester {
     public static final double PI = Math.PI;
     public static final char C = 'C';
     public static final String STR = "cheese";
-    
+
     public static final char SMILEY = '\u263A';
     public static final String TWOLINES = "ab\ncd";
 
@@ -72,45 +72,45 @@ public class ConstExpr extends Tester {
     public static final float  F2 = Float.NEGATIVE_INFINITY;
     public static final float  F3 = Float.NaN;
 
-    public static final String NOSTR = null;	// not a compile-time constant
-    public static final RoundingMode R = UP;	// not a compile-time constant
+    public static final String NOSTR = null;    // not a compile-time constant
+    public static final RoundingMode R = UP;    // not a compile-time constant
 
-    
+
     @Test(result={
-	      "0xbe",
-	      "32767",
-	      "-4",
-	      "4294967296L",
-	      "3.5f",
-	      "3.141592653589793",
-	      "'C'",
-	      "\"cheese\"",
+              "0xbe",
+              "32767",
+              "-4",
+              "4294967296L",
+              "3.5f",
+              "3.141592653589793",
+              "'C'",
+              "\"cheese\"",
 
-	      "'\\u263a'",
-	      "\"ab\\ncd\"",
+              "'\\u263a'",
+              "\"ab\\ncd\"",
 
-	      "1.0/0.0",
-	      "-1.0/0.0",
-	      "0.0/0.0",
-	      "1.0f/0.0f",
-	      "-1.0f/0.0f",
-	      "0.0f/0.0f",
+              "1.0/0.0",
+              "-1.0/0.0",
+              "0.0/0.0",
+              "1.0f/0.0f",
+              "-1.0f/0.0f",
+              "0.0f/0.0f",
 
-	      "null",
-	      "null"
-	  },
-	  ordered=true)
+              "null",
+              "null"
+          },
+          ordered=true)
     Collection<String> getConstantExpression() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	thisClassDecl.accept(
-	    DeclarationVisitors.getSourceOrderDeclarationScanner(
-		NO_OP,
-		new SimpleDeclarationVisitor() {
-		    public void visitFieldDeclaration(FieldDeclaration f) {
-			res.add(f.getConstantExpression());
-		    }
-		}));
-	return res;
+        thisClassDecl.accept(
+            DeclarationVisitors.getSourceOrderDeclarationScanner(
+                NO_OP,
+                new SimpleDeclarationVisitor() {
+                    public void visitFieldDeclaration(FieldDeclaration f) {
+                        res.add(f.getConstantExpression());
+                    }
+                }));
+        return res;
     }
 }

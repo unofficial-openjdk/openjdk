@@ -65,13 +65,13 @@ public interface Elements {
 
     /**
      * Returns the values of an annotation's elements, including defaults.
-     * 
+     *
      * @see AnnotationMirror#getElementValues()
      * @param a  annotation to examine
      * @return the values of the annotation's elements, including defaults
      */
     Map<? extends ExecutableElement, ? extends AnnotationValue>
-	    getElementValuesWithDefaults(AnnotationMirror a);
+            getElementValuesWithDefaults(AnnotationMirror a);
 
     /**
      * Returns the text of the documentation (&quot;Javadoc&quot;)
@@ -79,7 +79,7 @@ public interface Elements {
      *
      * @param e  the element being examined
      * @return the documentation comment of the element, or {@code null}
-     *		if there is none
+     *          if there is none
      */
     String getDocComment(Element e);
 
@@ -142,7 +142,7 @@ public interface Elements {
      * @param hider   the first element
      * @param hidden  the second element
      * @return {@code true} if and only if the first element hides
-     *		the second
+     *          the second
      */
     boolean hides(Element hider, Element hidden);
 
@@ -164,7 +164,7 @@ public interface Elements {
      * {@code assert elements.overrides(m1, m2,
      *          elements.getTypeElement("java.lang.String")); }
      * </blockquote>
-     * 
+     *
      * A more interesting case can be illustrated by the following example
      * in which a method in type {@code A} does not override a
      * like-named method in type {@code B}:
@@ -178,8 +178,8 @@ public interface Elements {
      * {@code assert ! elements.overrides(m1, m2,
      *          elements.getTypeElement("A")); }
      * </blockquote>
-     * 
-     * When viewed as a member of a third type {@code C}, however, 
+     *
+     * When viewed as a member of a third type {@code C}, however,
      * the method in {@code A} does override the one in {@code B}:
      *
      * <blockquote>
@@ -193,12 +193,12 @@ public interface Elements {
      * @param overridden  the second method, possibly being overridden
      * @param type   the type of which the first method is a member
      * @return {@code true} if and only if the first method overrides
-     *		the second
+     *          the second
      * @jls3 8.4.8 Inheritance, Overriding, and Hiding
      * @jls3 9.4.1 Inheritance and Overriding
      */
     boolean overrides(ExecutableElement overrider, ExecutableElement overridden,
-		      TypeElement type);
+                      TypeElement type);
 
     /**
      * Returns the text of a <i>constant expression</i> representing a
@@ -209,7 +209,7 @@ public interface Elements {
      * @param value  a primitive value or string
      * @return the text of a constant expression
      * @throws IllegalArgumentException if the argument is not a primitive
-     *		value or string
+     *          value or string
      *
      * @see VariableElement#getConstantValue()
      */

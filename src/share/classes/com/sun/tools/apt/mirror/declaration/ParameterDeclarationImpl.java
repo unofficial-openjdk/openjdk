@@ -41,14 +41,14 @@ import com.sun.tools.javac.code.Symbol.VarSymbol;
  */
 
 public class ParameterDeclarationImpl extends DeclarationImpl
-				      implements ParameterDeclaration
+                                      implements ParameterDeclaration
 {
     protected VarSymbol sym;
 
 
     ParameterDeclarationImpl(AptEnv env, VarSymbol sym) {
-	super(env, sym);
-	this.sym = sym;
+        super(env, sym);
+        this.sym = sym;
     }
 
 
@@ -56,45 +56,45 @@ public class ParameterDeclarationImpl extends DeclarationImpl
      * Returns the simple name of the parameter.
      */
     public String toString() {
-	return getType() + " " + sym.name;
+        return getType() + " " + sym.name;
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean equals(Object obj) {
-	// Neither ParameterDeclarationImpl objects nor their symbols
-	// are cached by the current implementation, so check symbol
-	// owners and names.
+        // Neither ParameterDeclarationImpl objects nor their symbols
+        // are cached by the current implementation, so check symbol
+        // owners and names.
 
-	if (obj instanceof ParameterDeclarationImpl) {
-	    ParameterDeclarationImpl that = (ParameterDeclarationImpl) obj;
-	    return sym.owner == that.sym.owner &&
-		   sym.name == that.sym.name &&
-		   env == that.env;
-	} else {
-	    return false;
-	}
+        if (obj instanceof ParameterDeclarationImpl) {
+            ParameterDeclarationImpl that = (ParameterDeclarationImpl) obj;
+            return sym.owner == that.sym.owner &&
+                   sym.name == that.sym.name &&
+                   env == that.env;
+        } else {
+            return false;
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public int hashCode() {
-	return sym.owner.hashCode() + sym.name.hashCode() + env.hashCode();
+        return sym.owner.hashCode() + sym.name.hashCode() + env.hashCode();
     }
 
     /**
      * {@inheritDoc}
      */
     public TypeMirror getType() {
-	return env.typeMaker.getType(sym.type);
+        return env.typeMaker.getType(sym.type);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitParameterDeclaration(this);
+        v.visitParameterDeclaration(this);
     }
 }

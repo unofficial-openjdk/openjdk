@@ -36,30 +36,30 @@ public class b6341534 extends AbstractProcessor {
     static Elements E = null;
     static Messager msgr = null;
     public void init(ProcessingEnvironment penv)  {
-	processingEnv = penv;
-	msgr = penv.getMessager();
-	E = penv.getElementUtils();
+        processingEnv = penv;
+        msgr = penv.getMessager();
+        E = penv.getElementUtils();
     }
     //Create directory 'dir1' and a test class in dir1
     public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv)
     {
-	if(!renv.errorRaised() &&  !renv.processingOver()){
-	    r++;
-	    for( TypeElement t : typesIn(renv.getRootElements()) )
-		System.out.println("Round"+r+ ": " + t.toString());
+        if(!renv.errorRaised() &&  !renv.processingOver()){
+            r++;
+            for( TypeElement t : typesIn(renv.getRootElements()) )
+                System.out.println("Round"+r+ ": " + t.toString());
 
-	    try {
-		PackageElement PE = E.getPackageElement("dir1");
-		List<? extends Element> LEE = PE.getEnclosedElements();    /* <=This line elicits the error message.  */
-		for(Element e : LEE)    System.out.println("found " + e.toString() + " in dir1.");
-	    }
-	    catch(NullPointerException npe) {
-		msgr.printMessage(ERROR,npe.toString());
-		//npe.printStackTrace();
-		return false;
-	    }
-	}
-	if( renv.errorRaised() ) {      msgr.printMessage(ERROR, "FAILED");}
-	return true;
+            try {
+                PackageElement PE = E.getPackageElement("dir1");
+                List<? extends Element> LEE = PE.getEnclosedElements();    /* <=This line elicits the error message.  */
+                for(Element e : LEE)    System.out.println("found " + e.toString() + " in dir1.");
+            }
+            catch(NullPointerException npe) {
+                msgr.printMessage(ERROR,npe.toString());
+                //npe.printStackTrace();
+                return false;
+            }
+        }
+        if( renv.errorRaised() ) {      msgr.printMessage(ERROR, "FAILED");}
+        return true;
     }
 }

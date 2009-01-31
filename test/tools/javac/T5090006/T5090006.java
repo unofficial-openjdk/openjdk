@@ -33,15 +33,15 @@
 import stub_tie_gen.wsdl_hello_lit.client.*;
 import junit.framework.*;
 import testutil.ClientServerTestUtil;
- 
+
 public class T5090006 {
 
     void getStub() throws Exception {
         Hello_PortType_Stub x = null;
         new ClientServerTestUtil().setTransport(x, null, null, null);
     }
- 
+
     public static void main(String[] args) {
-	System.out.println("FISK");
+        System.out.println("FISK");
     }
 }

@@ -41,14 +41,14 @@ import com.sun.tools.javac.code.Symbol.*;
  */
 
 public class PackageDeclarationImpl extends DeclarationImpl
-				    implements PackageDeclaration {
+                                    implements PackageDeclaration {
 
     private PackageSymbol sym;
 
 
     public PackageDeclarationImpl(AptEnv env, PackageSymbol sym) {
-	super(env, sym);
-	this.sym = sym;
+        super(env, sym);
+        this.sym = sym;
     }
 
 
@@ -56,53 +56,53 @@ public class PackageDeclarationImpl extends DeclarationImpl
      * Returns the qualified name.
      */
     public String toString() {
-	return getQualifiedName();
+        return getQualifiedName();
     }
 
     /**
      * {@inheritDoc}
      */
     public String getQualifiedName() {
-	return sym.getQualifiedName().toString();
+        return sym.getQualifiedName().toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<ClassDeclaration> getClasses() {
-	return identityFilter.filter(getAllTypes(),
-				     ClassDeclaration.class);
+        return identityFilter.filter(getAllTypes(),
+                                     ClassDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<EnumDeclaration> getEnums() {
-	return identityFilter.filter(getAllTypes(),
-				     EnumDeclaration.class);
+        return identityFilter.filter(getAllTypes(),
+                                     EnumDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<InterfaceDeclaration> getInterfaces() {
-	return identityFilter.filter(getAllTypes(),
-				     InterfaceDeclaration.class);
+        return identityFilter.filter(getAllTypes(),
+                                     InterfaceDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<AnnotationTypeDeclaration> getAnnotationTypes() {
-	return identityFilter.filter(getAllTypes(),
-				     AnnotationTypeDeclaration.class);
+        return identityFilter.filter(getAllTypes(),
+                                     AnnotationTypeDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitPackageDeclaration(this);
+        v.visitPackageDeclaration(this);
     }
 
 
@@ -114,13 +114,13 @@ public class PackageDeclarationImpl extends DeclarationImpl
      * Omits synthetic types.
      */
     private Collection<TypeDeclaration> getAllTypes() {
-	if (allTypes != null) {
-	    return allTypes;
-	}
-	allTypes = new ArrayList<TypeDeclaration>();
-	for (Symbol s : getMembers(false)) {
-	    allTypes.add(env.declMaker.getTypeDeclaration((ClassSymbol) s));
-	}
-	return allTypes;
+        if (allTypes != null) {
+            return allTypes;
+        }
+        allTypes = new ArrayList<TypeDeclaration>();
+        for (Symbol s : getMembers(false)) {
+            allTypes.add(env.declMaker.getTypeDeclaration((ClassSymbol) s));
+        }
+        return allTypes;
     }
 }

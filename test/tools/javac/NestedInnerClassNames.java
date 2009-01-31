@@ -24,79 +24,79 @@ public class NestedInnerClassNames {
     }
 
     void m2 () {
-	class foo {
+        class foo {
             class foo { }                       // ERROR
-	}
+        }
     }
 
     class bar {
-	class foo { }
+        class foo { }
         class NestedInnerClassNames {}          // ERROR
     }
 
     void m3() {
-	class bar {
-	    class foo { }
+        class bar {
+            class foo { }
             class NestedInnerClassNames {}      // ERROR
-	}
+        }
     }
 
     class baz {
         class baz {                             // ERROR
             class baz { }                       // ERROR
-	}
+        }
     }
 
     void m4() {
-	class baz {
+        class baz {
             class baz {                         // ERROR
                 class baz { }                   // ERROR
-	    }
-	}
+            }
+        }
     }
 
     class foo$bar {
         class foo$bar {                         // ERROR
-	    class foo { }
-	    class bar { }
-	}
+            class foo { }
+            class bar { }
+        }
     }
 
     void m5() {
-	class foo$bar {
+        class foo$bar {
             class foo$bar {                     // ERROR
-		class foo { }
-		class bar { }
-	    }
-	}
+                class foo { }
+                class bar { }
+            }
+        }
     }
 
     class $bar {
-	class foo {
+        class foo {
             class $bar { }                      // ERROR
-	}
+        }
     }
 
     void m6() {
-	class $bar {
-	    class foo {
+        class $bar {
+            class foo {
                 class $bar { }                  // ERROR
-	    }
-	}
+            }
+        }
     }
 
     class bar$bar {
-	class bar {
+        class bar {
             class bar{ }                       // ERROR
-	}
+        }
     }
 
     void m7() {
-	class bar$bar {
-	    class bar {
+        class bar$bar {
+            class bar {
                 class bar{ }                   // ERROR
-	    }
-	}
+            }
+        }
     }
 
     // The name of the class below clashes with the name of the

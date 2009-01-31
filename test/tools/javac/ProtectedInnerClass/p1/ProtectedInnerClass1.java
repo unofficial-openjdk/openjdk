@@ -32,6 +32,6 @@ package p1;
 
 public class ProtectedInnerClass1 {
     protected class Foo {
-	public String getBar() { return "bar"; }
+        public String getBar() { return "bar"; }
     }
 }

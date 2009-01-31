@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,46 +34,46 @@
  */
 
 public class TestOverridenPrivateMethodsWithPrivateFlag extends JavadocTester {
-    
+
     private static final String BUG_ID = "4634891";
-    
+
     private static final String[][] TEST = {
         //The public method should be overriden
         {BUG_ID + FS + "pkg1" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#publicMethod"},
-        
+
         //The package private method should be overriden since the base and sub class are in the same
         //package.
         {BUG_ID + FS + "pkg1" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#packagePrivateMethod"},
-            
+
         //The public method in different package should be overriden
         {BUG_ID + FS + "pkg2" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#publicMethod"},
     };
-    
+
     private static final String[][] NEGATED_TEST = {
-            
+
         //The private method in should not be overriden
         {BUG_ID + FS + "pkg1" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#privateMethod"},
-            
+
         //The private method in different package should not be overriden
         {BUG_ID + FS + "pkg2" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#privateMethod"},
-            
+
         //The package private method should not be overriden since the base and sub class are in
         //different packages.
         {BUG_ID + FS + "pkg2" + FS + "SubClass.html",
          "Overrides:</B><DD><CODE><A HREF=\"../pkg1/BaseClass.html#packagePrivateMethod"}
-        
-        
+
+
     };
-    
+
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR, "-private", "pkg1", "pkg2"};
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -83,14 +83,14 @@ public class TestOverridenPrivateMethodsWithPrivateFlag extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

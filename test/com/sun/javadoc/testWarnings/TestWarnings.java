@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      4515705 4804296 4702454 4697036 
+ * @bug      4515705 4804296 4702454 4697036
  * @summary  Make sure that first sentence warning only appears once.
  *           Make sure that only warnings/errors are printed when quiet is used.
  *           Make sure that links to private/unincluded methods do not cause
@@ -37,42 +37,42 @@
  */
 
 public class TestWarnings extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4515705-4804296-4702454-4697036";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"
     };
-    
+
     private static final String[] ARGS2 = new String[] {
         "-d", BUG_ID, "-private", "-sourcepath", SRC_DIR, "pkg"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         {WARNING_OUTPUT,
             "X.java:11: warning - Missing closing '}' character for inline tag"},
         {ERROR_OUTPUT,
-            "package.html: error - Body tag missing from HTML"},    
-            
+            "package.html: error - Body tag missing from HTML"},
+
     };
     private static final String[][] NEGATED_TEST = {
         {BUG_ID + FS + "pkg" + FS + "X.html", "can't find m()"},
         {BUG_ID + FS + "pkg" + FS + "X.html", "can't find X()"},
         {BUG_ID + FS + "pkg" + FS + "X.html", "can't find f"},
     };
-        
+
     private static final String[][] TEST2 = {
         {BUG_ID + FS + "pkg" + FS + "X.html", "<A HREF=\"../pkg/X.html#m()\"><CODE>m()</CODE></A><br/>"},
         {BUG_ID + FS + "pkg" + FS + "X.html", "<A HREF=\"../pkg/X.html#X()\"><CODE>X()</CODE></A><br/>"},
         {BUG_ID + FS + "pkg" + FS + "X.html", "<A HREF=\"../pkg/X.html#f\"><CODE>f</CODE></A><br/>"},
     };
-    
+
     private static final String[][] NEGATED_TEST2 = NO_TEST;
-    
-    
+
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -83,14 +83,14 @@ public class TestWarnings extends JavadocTester {
         run(tester, ARGS2, TEST2, NEGATED_TEST2);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

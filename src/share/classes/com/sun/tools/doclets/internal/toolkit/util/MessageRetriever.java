@@ -36,7 +36,7 @@ import java.text.MessageFormat;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @since 1.2
  * @author Atul M Dambalkar
  * @author Robert Field
@@ -46,17 +46,17 @@ public class MessageRetriever {
      * The global configuration information for this run.
      */
     private final Configuration configuration;
-    
+
     /**
      * The location from which to lazily fetch the resource..
      */
     private final String resourcelocation;
-    
+
     /**
      * The lazily fetched resource..
      */
     private ResourceBundle messageRB;
-    
+
     /**
      * Initilize the ResourceBundle with the given resource.
      *
@@ -67,7 +67,7 @@ public class MessageRetriever {
         this.messageRB = rb;
         this.resourcelocation = null;
     }
-    
+
     /**
      * Initilize the ResourceBundle with the given resource.
      *
@@ -79,7 +79,7 @@ public class MessageRetriever {
         this.configuration = configuration;
         this.resourcelocation = resourcelocation;
     }
-    
+
     /**
      * get and format message string from resource
      *
@@ -88,7 +88,7 @@ public class MessageRetriever {
     public String getText(String key) {
         return getText(key, (String)null);
     }
-    
+
     /**
      * Get and format message string from resource
      *
@@ -98,7 +98,7 @@ public class MessageRetriever {
     public String getText(String key, String a1) {
         return getText(key, a1, null);
     }
-    
+
     /**
      * Get and format message string from resource
      *
@@ -109,7 +109,7 @@ public class MessageRetriever {
     public String getText(String key, String a1, String a2) {
         return getText(key, a1, a2, null);
     }
-    
+
     /**
      * Get and format message string from resource
      *
@@ -132,7 +132,7 @@ public class MessageRetriever {
         String message = messageRB.getString(key);
         return MessageFormat.format(message, a1, a2, a3);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -142,16 +142,16 @@ public class MessageRetriever {
     private void printError(SourcePosition pos, String msg) {
         configuration.root.printError(pos, msg);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
      * @param msg message to print
      */
-    private void printError(String msg) {        
+    private void printError(String msg) {
         configuration.root.printError(msg);
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -161,7 +161,7 @@ public class MessageRetriever {
     private void printWarning(SourcePosition pos, String msg) {
         configuration.root.printWarning(pos, msg);
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -170,7 +170,7 @@ public class MessageRetriever {
     private void printWarning(String msg) {
         configuration.root.printWarning(msg);
     }
-    
+
     /**
      * Print a message.
      *
@@ -180,7 +180,7 @@ public class MessageRetriever {
     private void printNotice(SourcePosition pos, String msg) {
         configuration.root.printNotice(pos, msg);
     }
-    
+
     /**
      * Print a message.
      *
@@ -189,7 +189,7 @@ public class MessageRetriever {
     private void printNotice(String msg) {
         configuration.root.printNotice(msg);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -199,7 +199,7 @@ public class MessageRetriever {
     public void error(SourcePosition pos, String key) {
         printError(pos, getText(key));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -208,7 +208,7 @@ public class MessageRetriever {
     public void error(String key) {
         printError(getText(key));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -219,7 +219,7 @@ public class MessageRetriever {
     public void error(SourcePosition pos, String key, String a1) {
         printError(pos, getText(key, a1));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -229,7 +229,7 @@ public class MessageRetriever {
     public void error(String key, String a1) {
         printError(getText(key, a1));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -241,7 +241,7 @@ public class MessageRetriever {
     public void error(SourcePosition pos, String key, String a1, String a2) {
         printError(pos, getText(key, a1, a2));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -252,7 +252,7 @@ public class MessageRetriever {
     public void error(String key, String a1, String a2) {
         printError(getText(key, a1, a2));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -265,7 +265,7 @@ public class MessageRetriever {
     public void error(SourcePosition pos, String key, String a1, String a2, String a3) {
         printError(pos, getText(key, a1, a2, a3));
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -277,7 +277,7 @@ public class MessageRetriever {
     public void error(String key, String a1, String a2, String a3) {
         printError(getText(key, a1, a2, a3));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -287,7 +287,7 @@ public class MessageRetriever {
     public void warning(SourcePosition pos, String key) {
         printWarning(pos, getText(key));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -296,7 +296,7 @@ public class MessageRetriever {
     public void warning(String key) {
         printWarning(getText(key));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -307,7 +307,7 @@ public class MessageRetriever {
     public void warning(SourcePosition pos, String key, String a1) {
         printWarning(pos, getText(key, a1));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -317,7 +317,7 @@ public class MessageRetriever {
     public void warning(String key, String a1) {
         printWarning(getText(key, a1));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -329,7 +329,7 @@ public class MessageRetriever {
     public void warning(SourcePosition pos, String key, String a1, String a2) {
         printWarning(pos, getText(key, a1, a2));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -340,7 +340,7 @@ public class MessageRetriever {
     public void warning(String key, String a1, String a2) {
         printWarning(getText(key, a1, a2));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -353,7 +353,7 @@ public class MessageRetriever {
     public void warning(SourcePosition pos, String key, String a1, String a2, String a3) {
         printWarning(pos, getText(key, a1, a2, a3));
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -365,7 +365,7 @@ public class MessageRetriever {
     public void warning(String key, String a1, String a2, String a3) {
         printWarning(getText(key, a1, a2, a3));
     }
-    
+
     /**
      * Print a message.
      *
@@ -375,7 +375,7 @@ public class MessageRetriever {
     public void notice(SourcePosition pos, String key) {
         printNotice(pos, getText(key));
     }
-    
+
     /**
      * Print a message.
      *
@@ -384,7 +384,7 @@ public class MessageRetriever {
     public void notice(String key) {
         printNotice(getText(key));
     }
-    
+
     /**
      * Print a message.
      * @param pos the position of the source
@@ -394,7 +394,7 @@ public class MessageRetriever {
     public void notice(SourcePosition pos, String key, String a1) {
         printNotice(pos, getText(key, a1));
     }
-    
+
     /**
      * Print a message.
      *
@@ -404,7 +404,7 @@ public class MessageRetriever {
     public void notice(String key, String a1) {
         printNotice(getText(key, a1));
     }
-    
+
     /**
      * Print a message.
      *
@@ -416,7 +416,7 @@ public class MessageRetriever {
     public void notice(SourcePosition pos, String key, String a1, String a2) {
         printNotice(pos, getText(key, a1, a2));
     }
-    
+
     /**
      * Print a message.
      *
@@ -427,7 +427,7 @@ public class MessageRetriever {
     public void notice(String key, String a1, String a2) {
         printNotice(getText(key, a1, a2));
     }
-    
+
     /**
      * Print a message.
      *
@@ -440,7 +440,7 @@ public class MessageRetriever {
     public void notice(SourcePosition pos, String key, String a1, String a2, String a3) {
         printNotice(pos, getText(key, a1, a2, a3));
     }
-    
+
     /**
      * Print a message.
      *

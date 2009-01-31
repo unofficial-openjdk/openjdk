@@ -24,6 +24,6 @@
 
 class foo {
     class bar {
-	public native void aardvark();
+        public native void aardvark();
     }
 }

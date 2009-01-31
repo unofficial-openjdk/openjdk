@@ -28,7 +28,7 @@ package javax.lang.model.type;
 
 /**
  * Represents a wildcard type argument.
- * Examples include:	<pre><tt>
+ * Examples include:    <pre><tt>
  *   ?
  *   ? extends Number
  *   ? super T

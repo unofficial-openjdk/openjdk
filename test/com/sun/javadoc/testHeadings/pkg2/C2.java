@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,12 +30,12 @@ import java.io.Serializable;
  * @serial This is the serial tag's comment.
  */
 public class C2 implements Serializable {
- 
+
     public C1 field;
-    
+
     public static final String CONSTANT1 = "C2";
-    
+
     public C1 method(C1 param) {
-        return param;          
-    }    
+        return param;
+    }
 }

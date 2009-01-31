@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java 
+ * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java
  */
 
 /**

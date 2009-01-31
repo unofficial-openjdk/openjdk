@@ -32,15 +32,15 @@
 
 public class DefAssignConstantBoolean {
     public static void main(String args[]) {
-	boolean b;
-	if (true | false) ;
-	else
-	    if (b) ;        // case '|'
-	if (true & true) ;
-	else
-	    if (b) ;        // case '&'
-	if (true ^ false) ;
-	else
-	    if (b) ;        // case '^'
-    }  
+        boolean b;
+        if (true | false) ;
+        else
+            if (b) ;        // case '|'
+        if (true & true) ;
+        else
+            if (b) ;        // case '&'
+        if (true ^ false) ;
+        else
+            if (b) ;        // case '^'
+    }
 }

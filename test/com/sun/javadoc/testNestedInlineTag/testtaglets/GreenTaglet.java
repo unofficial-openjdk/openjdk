@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,7 +39,7 @@ import java.util.*;
  */
 
 public class GreenTaglet extends BaseInlineTaglet {
-    
+
 
     public GreenTaglet() {
         name = "green";
@@ -53,7 +53,7 @@ public class GreenTaglet extends BaseInlineTaglet {
        }
        tagletMap.put(tag.getName(), tag);
     }
-    
+
     /**
      * {@inheritDoc}
      */

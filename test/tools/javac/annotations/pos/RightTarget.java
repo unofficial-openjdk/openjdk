@@ -78,7 +78,7 @@ class constructor1 {
 }
 class local1 {
     void f() {
-	@local int x;
+        @local int x;
     }
 }
 */

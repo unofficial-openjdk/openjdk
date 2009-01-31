@@ -32,7 +32,7 @@ package com.sun.tools.doclets.internal.toolkit.util.links;
  * @since 1.5
  */
 public interface LinkOutput {
-    
+
     /**
      * Append the given object to the output.
      *
@@ -40,4 +40,3 @@ public interface LinkOutput {
      */
     public void append(Object o);
 }
-

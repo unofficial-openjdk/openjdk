@@ -47,7 +47,7 @@ import javax.annotation.processing.SupportedSourceVersion;
  * added to this class in the future; to avoid incompatibilities,
  * classes which extend this class should not declare any instance
  * methods with names beginning with {@code "visit"}.
- * 
+ *
  * <p>When such a new visit method is added, the default
  * implementation in this class will be to call the {@link
  * #visitUnknown visitUnknown} method.  A new abstract annotation
@@ -65,7 +65,7 @@ import javax.annotation.processing.SupportedSourceVersion;
  * @since 1.6
  */
 @SupportedSourceVersion(RELEASE_6)
-public abstract class AbstractAnnotationValueVisitor6<R, P> 
+public abstract class AbstractAnnotationValueVisitor6<R, P>
     implements AnnotationValueVisitor<R, P> {
 
     /**
@@ -81,7 +81,7 @@ public abstract class AbstractAnnotationValueVisitor6<R, P>
      * @param p  {@inheritDoc}
      */
     public final R visit(AnnotationValue av, P p) {
-	return av.accept(this, p);
+        return av.accept(this, p);
     }
 
     /**
@@ -93,7 +93,7 @@ public abstract class AbstractAnnotationValueVisitor6<R, P>
      * @param av {@inheritDoc}
      */
     public final R visit(AnnotationValue av) {
-	return av.accept(this, null);
+        return av.accept(this, null);
     }
 
     /**
@@ -108,6 +108,6 @@ public abstract class AbstractAnnotationValueVisitor6<R, P>
      * @param p  {@inheritDoc}
      */
     public R visitUnknown(AnnotationValue av, P p) {
-	throw new UnknownAnnotationValueException(av, p);
+        throw new UnknownAnnotationValueException(av, p);
     }
 }

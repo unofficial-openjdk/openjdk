@@ -41,11 +41,11 @@ class CastTest {
 
     private class BC<T> extends BA<Integer> { }
     private class BD<T> extends BB<T, T> { }
-    
-    private void inconsistentMatches() {
-	Object o;
 
-	o = (BC<?>) (BA<String>) null; // <<fail 8>>
+    private void inconsistentMatches() {
+        Object o;
+
+        o = (BC<?>) (BA<String>) null; // <<fail 8>>
     }
 
 }

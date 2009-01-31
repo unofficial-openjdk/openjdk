@@ -41,7 +41,7 @@ import com.sun.source.util.*;
 public class T6411379 extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annoElems,
-				    RoundEnvironment renv) {
+                                    RoundEnvironment renv) {
         Trees trees = Trees.instance(processingEnv);
         for (TypeElement annoElem: annoElems) {
             for (Element te: renv.getRootElements()) {
@@ -57,7 +57,7 @@ public class T6411379 extends AbstractProcessor {
         }
         return true;
     }
-    
+
     public void checkNull(Object o) {
         if (o != null)
             throw new AssertionError("expected null");

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,7 +29,7 @@ import java.util.*;
 public class ClassUseTest3 <T extends ParamTest2<List<? extends Foo4>>> {
 
     public ClassUseTest3(Set<Foo4> p) {}
-    
+
     public <T extends ParamTest2<List<? extends Foo4>>> ParamTest2<List<? extends Foo4>> method(T t) {
         return null;
     }

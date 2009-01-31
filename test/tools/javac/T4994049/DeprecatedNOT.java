@@ -42,6 +42,6 @@ class A {
 
 class B {
     void bar(A a) {
-	a.foo();
+        a.foo();
     }
 }

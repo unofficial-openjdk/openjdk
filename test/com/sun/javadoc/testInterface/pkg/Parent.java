@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,9 +24,9 @@
 package pkg;
 
 public class Parent<E> implements Interface<E> {
- 
+
     public int method() {
         return 1;
     }
-    
+
 }

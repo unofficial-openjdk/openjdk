@@ -22,7 +22,7 @@
  */
 
 /*
- * @test @(#)Basic.java	1.1 03/04/21
+ * @test @(#)Basic.java 1.1 03/04/21
  * @bug 4851039
  * @summary explicit type arguments
  * @author gafter
@@ -35,30 +35,30 @@
 class T<X> {
 
     class U<Y> extends T<X> {
-	<B> U(B b) {
-	    <Object>super();
-	}
-	U(int i) {
-	    <Object>this("");
-	}
+        <B> U(B b) {
+            <Object>super();
+        }
+        U(int i) {
+            <Object>this("");
+        }
     }
 
     class V<Z> extends U<Z> {
-	<C> V(T<X> t) {
-	    t.<Integer>super("");
-	}
+        <C> V(T<X> t) {
+            t.<Integer>super("");
+        }
     }
 
     <A> T() {
     }
 
     <K> void f() {
-	this.<Object>f();
+        this.<Object>f();
     }
 
     public static void main(String[] args) {
-	T<Integer> x = new <Object>T<Integer>();
-	T<Integer>.U<Float> y = x.new <Object>U<Float>("");
-	x.<Object>f();
+        T<Integer> x = new <Object>T<Integer>();
+        T<Integer>.U<Float> y = x.new <Object>U<Float>("");
+        x.<Object>f();
     }
 }

@@ -30,11 +30,11 @@
  * @compile/fail BreakAcrossClass.java
  */
 
-class BreakAcrossClass { 
+class BreakAcrossClass {
      public static void main(String argv[]) {
         final int i = 6;
     M:  {
-            class A { 
+            class A {
                 {
                     if (i != 5) break M;
                 }

@@ -8,8 +8,8 @@ class C
 
 class C1
 {
-    C1() { 
-	return; return;
+    C1() {
+        return; return;
     }
 }
 

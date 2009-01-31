@@ -37,23 +37,23 @@ import com.sun.tools.javac.code.Symbol.VarSymbol;
  */
 
 public class EnumConstantDeclarationImpl extends FieldDeclarationImpl
-					 implements EnumConstantDeclaration {
+                                         implements EnumConstantDeclaration {
 
     EnumConstantDeclarationImpl(AptEnv env, VarSymbol sym) {
-	super(env, sym);
+        super(env, sym);
     }
 
     /**
      * {@inheritDoc}
      */
     public EnumDeclaration getDeclaringType() {
-	return (EnumDeclaration) super.getDeclaringType();
+        return (EnumDeclaration) super.getDeclaringType();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitEnumConstantDeclaration(this);
+        v.visitEnumConstantDeclaration(this);
     }
 }

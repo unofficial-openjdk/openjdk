@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,13 +27,13 @@ public class BaseClass {
 
   /*************************************************
    * A public method that can be overriden.
-   * 
+   *
    */
   public void publicMethod() {}
 
-  
+
   /*************************************************
-   * A package private method that can only 
+   * A package private method that can only
    * be overriden by sub classes in the same package.
    *
    */
@@ -44,7 +44,7 @@ public class BaseClass {
    *
    */
   private void privateMethod() {}
-  
+
   /**
    * These comments will be copied to the overriden method.
    */

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,18 +24,18 @@
 package pkg;
 
 public class C extends Parent {
- 
+
     /**
      * @param param1 testing 1 2 3.
      * @param param2 testing 1 2 3.
      */
     public void regularParams(int param1, int param2) {}
-    
+
     /**
      * @param <I>p1</I> testing 1 2 3.
      * @param <I>p2</I> testing 1 2 3.
      * @param <I>inheritBug</I> {@inheritDoc}
      */
-    public void nonMatchingParams(int param1, int param2) {}   
-    
+    public void nonMatchingParams(int param1, int param2) {}
+
 }

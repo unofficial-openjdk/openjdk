@@ -40,28 +40,28 @@ public class AbstractList {
     public static void test(String... args) {
         List<String> ss = from(args);
         if (args != null) {
-	    int index = 0;
+            int index = 0;
             for (String s : args) {
                 if (s != ss.get(index))
                     throw new AssertionError("s != ss.get(" + index + ")");
-		index++;
+                index++;
             }
-	    boolean ok = false;
-	    try {
-		ss.get(-1);
-	    } catch(IndexOutOfBoundsException ex) {
-		ok = true;
-	    }
-	    if (!ok)
-		throw new AssertionError();
-	    ok = false;
-	    try {
-		ss.get(args.length);
-	    } catch(IndexOutOfBoundsException ex) {
-		ok = true;
-	    }
-	    if (!ok)
-		throw new AssertionError();
+            boolean ok = false;
+            try {
+                ss.get(-1);
+            } catch(IndexOutOfBoundsException ex) {
+                ok = true;
+            }
+            if (!ok)
+                throw new AssertionError();
+            ok = false;
+            try {
+                ss.get(args.length);
+            } catch(IndexOutOfBoundsException ex) {
+                ok = true;
+            }
+            if (!ok)
+                throw new AssertionError();
         }
     }
     public static void main(String... args) {

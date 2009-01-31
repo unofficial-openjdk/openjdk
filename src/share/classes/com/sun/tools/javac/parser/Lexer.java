@@ -70,7 +70,7 @@ public interface Lexer {
     /**
      * Build a map for translating between line numbers and
      * positions in the input.
-     * 
+     *
      * @return a LineMap
      */
     LineMap getLineMap();
@@ -86,10 +86,10 @@ public interface Lexer {
      * The returned array begins at the <code>beginIndex</code> and
      * extends to the character at index <code>endIndex - 1</code>.
      * Thus the length of the substring is <code>endIndex-beginIndex</code>.
-     * This behavior is like 
+     * This behavior is like
      * <code>String.substring(beginIndex, endIndex)</code>.
      * Unicode escape sequences are not translated.
-     * 
+     *
      * @param beginIndex the beginning index, inclusive.
      * @param endIndex the ending index, exclusive.
      * @throws IndexOutOfBounds if either offset is outside of the

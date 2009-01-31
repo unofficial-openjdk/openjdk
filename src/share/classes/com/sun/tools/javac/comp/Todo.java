@@ -37,18 +37,18 @@ import com.sun.tools.javac.util.*;
 public class Todo extends ListBuffer<Env<AttrContext>> {
     /** The context key for the todo list. */
     protected static final Context.Key<Todo> todoKey =
-	new Context.Key<Todo>();
+        new Context.Key<Todo>();
 
     /** Get the Todo instance for this context. */
     public static Todo instance(Context context) {
-	Todo instance = context.get(todoKey);
-	if (instance == null)
-	    instance = new Todo(context);
-	return instance;
+        Todo instance = context.get(todoKey);
+        if (instance == null)
+            instance = new Todo(context);
+        return instance;
     }
 
     /** Create a new todo list. */
     protected Todo(Context context) {
-	context.put(todoKey, this);
+        context.put(todoKey, this);
     }
 }

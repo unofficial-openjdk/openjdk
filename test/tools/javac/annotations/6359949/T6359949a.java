@@ -30,7 +30,7 @@
 
 class Example {
     public static void example() {
-        
+
     }
 }
 

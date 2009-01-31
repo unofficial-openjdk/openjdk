@@ -37,20 +37,20 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  * @since 1.5
  */
 public class LinkFactoryImpl extends LinkFactory {
-    
+
     private HtmlDocletWriter m_writer;
-    
+
     public LinkFactoryImpl(HtmlDocletWriter writer) {
         m_writer = writer;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     protected LinkOutput getOutputInstance() {
         return new LinkOutputImpl();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -60,45 +60,45 @@ public class LinkFactoryImpl extends LinkFactory {
         ClassDoc classDoc = classLinkInfo.classDoc;
         //Create a tool tip if we are linking to a class or interface.  Don't
         //create one if we are linking to a member.
-        String title = 
+        String title =
             (classLinkInfo.where == null || classLinkInfo.where.length() == 0) ?
-                getClassToolTip(classDoc, 
-                    classLinkInfo.type != null && 
-                    !classDoc.qualifiedTypeName().equals(classLinkInfo.type.qualifiedTypeName())) : 
+                getClassToolTip(classDoc,
+                    classLinkInfo.type != null &&
+                    !classDoc.qualifiedTypeName().equals(classLinkInfo.type.qualifiedTypeName())) :
             "";
         StringBuffer label = new StringBuffer(
             classLinkInfo.getClassLinkLabel(m_writer.configuration));
         classLinkInfo.displayLength += label.length();
         if (noLabel && classLinkInfo.excludeTypeParameterLinks) {
             label.append(getTypeParameterLinks(linkInfo).toString());
-        }        
+        }
         Configuration configuration = ConfigurationImpl.getInstance();
         LinkOutputImpl linkOutput = new LinkOutputImpl();
         if (classDoc.isIncluded()) {
             if (configuration.isGeneratedDoc(classDoc)) {
                 String filename = pathString(classLinkInfo);
-                if (linkInfo.linkToSelf || 
-                		!(linkInfo.classDoc.name() + ".html").equals(m_writer.filename)) {
-	                linkOutput.append(m_writer.getHyperLink(filename, 
-	                    classLinkInfo.where, label.toString(), 
-	                    classLinkInfo.isBold, classLinkInfo.styleName, 
-	                    title, classLinkInfo.target));
-	                if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
-	                    linkOutput.append(getTypeParameterLinks(linkInfo).toString());
-	                } 
-	                return linkOutput;
+                if (linkInfo.linkToSelf ||
+                                !(linkInfo.classDoc.name() + ".html").equals(m_writer.filename)) {
+                        linkOutput.append(m_writer.getHyperLink(filename,
+                            classLinkInfo.where, label.toString(),
+                            classLinkInfo.isBold, classLinkInfo.styleName,
+                            title, classLinkInfo.target));
+                        if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
+                            linkOutput.append(getTypeParameterLinks(linkInfo).toString());
+                        }
+                        return linkOutput;
                 }
             }
         } else {
             String crossLink = m_writer.getCrossClassLink(
-                classDoc.qualifiedName(), classLinkInfo.where, 
-                label.toString(), classLinkInfo.isBold, classLinkInfo.styleName, 
+                classDoc.qualifiedName(), classLinkInfo.where,
+                label.toString(), classLinkInfo.isBold, classLinkInfo.styleName,
                 true);
             if (crossLink != null) {
                 linkOutput.append(crossLink);
                 if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
                     linkOutput.append(getTypeParameterLinks(linkInfo).toString());
-                } 
+                }
                 return linkOutput;
             }
         }
@@ -106,16 +106,16 @@ public class LinkFactoryImpl extends LinkFactory {
         linkOutput.append(label.toString());
         if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
             linkOutput.append(getTypeParameterLinks(linkInfo).toString());
-        }         
+        }
         return linkOutput;
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    protected LinkOutput getTypeParameterLink(LinkInfo linkInfo, 
+    protected LinkOutput getTypeParameterLink(LinkInfo linkInfo,
         Type typeParam) {
-        LinkInfoImpl typeLinkInfo = new LinkInfoImpl(linkInfo.getContext(), 
+        LinkInfoImpl typeLinkInfo = new LinkInfoImpl(linkInfo.getContext(),
             typeParam);
         typeLinkInfo.excludeTypeBounds = linkInfo.excludeTypeBounds;
         typeLinkInfo.excludeTypeParameterLinks = linkInfo.excludeTypeParameterLinks;
@@ -124,7 +124,7 @@ public class LinkFactoryImpl extends LinkFactory {
         ((LinkInfoImpl) linkInfo).displayLength += typeLinkInfo.displayLength;
         return output;
     }
-    
+
     /**
      * Given a class, return the appropriate tool tip.
      *
@@ -134,12 +134,12 @@ public class LinkFactoryImpl extends LinkFactory {
     private String getClassToolTip(ClassDoc classDoc, boolean isTypeLink) {
         Configuration configuration = ConfigurationImpl.getInstance();
         if (isTypeLink) {
-            return configuration.getText("doclet.Href_Type_Param_Title", 
+            return configuration.getText("doclet.Href_Type_Param_Title",
             classDoc.name());
         } else if (classDoc.isInterface()){
             return configuration.getText("doclet.Href_Interface_Title",
                 Util.getPackageName(classDoc.containingPackage()));
-        } else if (classDoc.isAnnotationType()) {            
+        } else if (classDoc.isAnnotationType()) {
             return configuration.getText("doclet.Href_Annotation_Title",
                 Util.getPackageName(classDoc.containingPackage()));
         } else if (classDoc.isEnum()) {
@@ -150,7 +150,7 @@ public class LinkFactoryImpl extends LinkFactory {
                 Util.getPackageName(classDoc.containingPackage()));
         }
     }
-    
+
     /**
      * Return path to the given file name in the given package. So if the name
      * passed is "Object.html" and the name of the package is "java.lang", and
@@ -168,9 +168,8 @@ public class LinkFactoryImpl extends LinkFactory {
         }
         StringBuffer buf = new StringBuffer(m_writer.relativePath);
         buf.append(DirectoryManager.getPathToPackage(
-            linkInfo.classDoc.containingPackage(), 
+            linkInfo.classDoc.containingPackage(),
             linkInfo.classDoc.name() + ".html"));
         return buf.toString();
     }
 }
-

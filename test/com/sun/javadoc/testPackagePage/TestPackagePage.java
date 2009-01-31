@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 4492643 4689286
  * @summary Test that a package page is properly generated when a .java file
- * passed to Javadoc.  Also test that the proper package links are generated 
+ * passed to Javadoc.  Also test that the proper package links are generated
  * when single or multiple packages are documented.
  * @author jamieh
  * @library ../lib/
@@ -35,7 +35,7 @@
  */
 
 public class TestPackagePage extends JavadocTester {
-    
+
     private static final String BUG_ID = "4492643-4689286";
     private static final String[][] TEST1 = {
         {BUG_ID + "-1" + FS + "com" + FS + "pkg" + FS + "package-summary.html",
@@ -62,7 +62,7 @@ public class TestPackagePage extends JavadocTester {
             "<FONT CLASS=\"NavBarFont1\"><B>Package</B></FONT></A>"
         },
     };
-    
+
     private static final String[][] TEST2 = {
         //With multiple packages, there is no package link in general pages.
         {BUG_ID + "-2" + FS + "deprecated-list.html",
@@ -75,19 +75,19 @@ public class TestPackagePage extends JavadocTester {
             " <FONT CLASS=\"NavBarFont1\">Package</FONT>&nbsp;"
         },
     };
-    
+
     private static final String[] ARGS1 =
         new String[] {
             "-d", BUG_ID + "-1", "-sourcepath", SRC_DIR,
             SRC_DIR + FS + "com" + FS + "pkg" + FS + "C.java"
         };
-        
+
     private static final String[] ARGS2 =
         new String[] {
             "-d", BUG_ID + "-2", "-sourcepath", SRC_DIR,
             "com.pkg", "pkg2"
-        };  
-    
+        };
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -98,14 +98,14 @@ public class TestPackagePage extends JavadocTester {
         run(tester, ARGS2, TEST2, NO_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

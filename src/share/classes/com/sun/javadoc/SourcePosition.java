@@ -28,14 +28,14 @@ package com.sun.javadoc;
 import java.io.File;
 
 /**
- * This interface describes a source position: filename, line number, 
+ * This interface describes a source position: filename, line number,
  * and column number.
  *
  * @since 1.4
  * @author Neal M Gafter
  */
 public interface SourcePosition {
-    /** The source file. Returns null if no file information is 
+    /** The source file. Returns null if no file information is
      *  available. */
     File file();
 

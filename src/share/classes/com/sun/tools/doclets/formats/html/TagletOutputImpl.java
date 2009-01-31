@@ -35,36 +35,36 @@ import com.sun.tools.doclets.internal.toolkit.taglets.*;
  */
 
 public class TagletOutputImpl implements TagletOutput {
-    
+
     private StringBuffer output;
-    
+
     public TagletOutputImpl(String o) {
         setOutput(o);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void setOutput (Object o) {
         output = new StringBuffer(o == null ? "" : (String) o);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void appendOutput(TagletOutput o) {
         output.append(o.toString());
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public boolean hasInheritDocTag() {
         return output.indexOf(InheritDocTaglet.INHERIT_DOC_INLINE_TAG) != -1;
     }
-    
+
     public String toString() {
         return output.toString();
     }
-    
+
 }

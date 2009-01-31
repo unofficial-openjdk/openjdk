@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,74 +50,74 @@ import java.io.*;
  * @since 1.4.2
  */
 public abstract class JavadocTester {
-    
+
     protected static final String FS = System.getProperty("file.separator");
     protected static final String PS = System.getProperty("path.separator");
     protected static final String NL = System.getProperty("line.separator");
     protected static final String SRC_DIR = System.getProperty("test.src", ".");
     protected static final String JAVA_VERSION = System.getProperty("java.version");
     protected static final String[][] NO_TEST = new String[][] {};
-    
+
     /**
      * Use this as the file name in the test array when you want to search
      * for a string in the error output.
      */
     public static final String ERROR_OUTPUT = "ERROR_OUTPUT";
-    
+
     /**
      * Use this as the file name in the test array when you want to search
      * for a string in the notice output.
      */
     public static final String NOTICE_OUTPUT = "NOTICE_OUTPUT";
-    
+
     /**
      * Use this as the file name in the test array when you want to search
      * for a string in the warning output.
      */
     public static final String WARNING_OUTPUT = "WARNING_OUTPUT";
-    
+
     /**
      * Use this as the file name in the test array when you want to search
      * for a string in standard output.
      */
     public static final String STANDARD_OUTPUT = "STANDARD_OUTPUT";
-    
+
     /**
      * The default doclet.
      */
     public static final String DEFAULT_DOCLET_CLASS = "com.sun.tools.doclets.formats.html.HtmlDoclet";
     public static final String DEFAULT_DOCLET_CLASS_OLD = "com.sun.tools.doclets.standard.Standard";
-    
+
     /**
      * The writer to write error messages.
      */
     public StringWriter errors;
-    
+
     /**
      * The writer to write notices.
      */
     public StringWriter notices;
-    
+
     /**
      * The writer to write warnings.
      */
     public StringWriter warnings;
-    
+
     /**
      * The buffer of warning output..
      */
     public StringBuffer standardOut;
-    
+
     /**
      * The current subtest number.
      */
     private static int numTestsRun = 0;
-    
+
     /**
      * The number of subtests passed.
      */
     private static int numTestsPassed = 0;
-    
+
     /**
      * The current run of javadoc
      */
@@ -128,19 +128,19 @@ public abstract class JavadocTester {
      */
     public JavadocTester() {
     }
-    
+
     /**
      * Return the bug id.
      * @return the bug id
      */
     public abstract String getBugId();
-    
+
     /**
      * Return the name of the bug.
      * @return the name of the bug
      */
     public abstract String getBugName();
-    
+
     /**
      * Execute the tests.
      *
@@ -156,7 +156,7 @@ public abstract class JavadocTester {
         tester.runTestsOnHTML(testArray, negatedTestArray);
         return returnCode;
     }
-    
+
     /**
      * Execute Javadoc using the default doclet.
      *
@@ -187,8 +187,8 @@ public abstract class JavadocTester {
                                     + javadocRunNum + ")...");
         }
         initOutputBuffers();
-        
-        ByteArrayOutputStream stdout = new ByteArrayOutputStream();        
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         PrintStream prev = System.out;
         System.setOut(new PrintStream(stdout));
         int returnCode = com.sun.tools.javadoc.Main.execute(
@@ -241,10 +241,10 @@ public abstract class JavadocTester {
 
             // Get string to find
             String stringToFind = testArray[i][1];
-           
+
             // Read contents of file into a string
             String fileString;
-            try {            
+            try {
                 fileString = readFileToString(testArray[i][0]);
             } catch (Error e) {
                 if (isNegated) {
@@ -272,7 +272,7 @@ public abstract class JavadocTester {
             }
         }
     }
-    
+
     /**
      * Iterate through the list of given file pairs and diff each file.
      *
@@ -283,7 +283,7 @@ public abstract class JavadocTester {
     public void runDiffs(String[][] filePairs) throws Error {
         runDiffs(filePairs, true);
     }
-    
+
     /**
      * Iterate through the list of given file pairs and diff each file.
      *
@@ -299,7 +299,7 @@ public abstract class JavadocTester {
             diff(filePairs[i][0], filePairs[i][1], throwErrorIfNoMatch);
         }
     }
-    
+
     /**
      * Check the exit code of Javadoc and record whether the test passed
      * or failed.
@@ -312,12 +312,12 @@ public abstract class JavadocTester {
     public void checkExitCode(int expectedExitCode, int actualExitCode) {
         numTestsRun++;
         if (expectedExitCode == actualExitCode) {
-            System.out.println( "Passed" + "\n" + " got return code " + 
+            System.out.println( "Passed" + "\n" + " got return code " +
                 actualExitCode);
             numTestsPassed++;
         } else {
             System.out.println( "FAILED" + "\n" + "for bug " + getBugId()
-                + " (" + getBugName() + ")" + "\n" + "Expected return code " + 
+                + " (" + getBugName() + ")" + "\n" + "Expected return code " +
                 expectedExitCode + " but got " + actualExitCode);
         }
     }
@@ -338,7 +338,7 @@ public abstract class JavadocTester {
                                     + " (" + getBugName() + ")" + "\n");
         }
     }
-    
+
     /**
      * Print the output stored in the buffers.
      */
@@ -363,7 +363,7 @@ public abstract class JavadocTester {
         } else if (fileName.equals(WARNING_OUTPUT)) {
             return getWarningOutput();
         } else if (fileName.equals(STANDARD_OUTPUT)) {
-            return getStandardOutput();   
+            return getStandardOutput();
         }
         try {
             File file = new File(fileName);
@@ -390,7 +390,7 @@ public abstract class JavadocTester {
             throw new Error("Error reading file: " + fileName);
         }
     }
-    
+
     /**
      * Compare the two given files.
      *
@@ -426,7 +426,7 @@ public abstract class JavadocTester {
     private boolean findString(String fileString, String stringToFind) {
         return fileString.indexOf(stringToFind) >= 0;
     }
-    
+
     /**
      * Return the standard output.
      * @return the standard output
@@ -434,7 +434,7 @@ public abstract class JavadocTester {
     public String getStandardOutput() {
         return standardOut.toString();
     }
-    
+
     /**
      * Return the error output.
      * @return the error output
@@ -442,7 +442,7 @@ public abstract class JavadocTester {
     public String getErrorOutput() {
         return errors.getBuffer().toString();
     }
-    
+
     /**
      * Return the notice output.
      * @return the notice output
@@ -450,7 +450,7 @@ public abstract class JavadocTester {
     public String getNoticeOutput() {
         return notices.getBuffer().toString();
     }
-    
+
     /**
      * Return the warning output.
      * @return the warning output
@@ -458,7 +458,7 @@ public abstract class JavadocTester {
     public String getWarningOutput() {
         return warnings.getBuffer().toString();
     }
-    
+
     /**
      * A utility to copy a directory from one place to another.
      * We may possibly want to move this to our doclet toolkit in
@@ -496,7 +496,7 @@ public abstract class JavadocTester {
             throw new Error("Could not copy " + targetDir + " to " + destDir);
         }
     }
-    
+
     /**
      * Copy source file to destination file.
      *
@@ -523,4 +523,3 @@ public abstract class JavadocTester {
         }
     }
 }
-

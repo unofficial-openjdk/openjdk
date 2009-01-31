@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,12 +35,12 @@ import com.sun.javadoc.*;
  */
 
 public class TestTagHolderMethod extends JavadocTester {
-    
+
     private static final String BUG_ID = "4706525";
     public static final String[] ARGS = new String[] {
         "-docletpath", SRC_DIR, "-doclet", "TestTagHolderMethod", "-sourcepath",
                 SRC_DIR, "pkg"};
-    
+
     /**
      * Doclet entry point.
      */
@@ -54,7 +54,7 @@ public class TestTagHolderMethod extends JavadocTester {
         }
         return true;
     }
-    
+
     private static void checkHolders(Doc[] holders) throws Exception {
         for (int i = 0; i < holders.length; i++) {
             Doc holder = holders[i];
@@ -68,7 +68,7 @@ public class TestTagHolderMethod extends JavadocTester {
             }
         }
     }
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -76,14 +76,14 @@ public class TestTagHolderMethod extends JavadocTester {
     public static void main(String[] args) {
         run(new TestTagHolderMethod(), ARGS, new String[][]{}, new String[][]{});
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

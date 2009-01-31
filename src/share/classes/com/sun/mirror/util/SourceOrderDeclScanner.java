@@ -48,112 +48,112 @@ import java.util.TreeSet;
  */
 class SourceOrderDeclScanner extends DeclarationScanner {
     static class SourceOrderComparator implements java.util.Comparator<Declaration> {
-	SourceOrderComparator(){}
+        SourceOrderComparator(){}
 
-	
-	static boolean equals(Declaration d1, Declaration d2) {
-	    return d1 == d2 || (d1 != null && d1.equals(d2));
-	}
 
-	private static class DeclPartialOrder extends com.sun.mirror.util.SimpleDeclarationVisitor {
-	    private int value = 1000;
-	    private static int staticAdjust(Declaration d) {
-		return d.getModifiers().contains(Modifier.STATIC)?0:1;
-	    }
+        static boolean equals(Declaration d1, Declaration d2) {
+            return d1 == d2 || (d1 != null && d1.equals(d2));
+        }
 
-	    DeclPartialOrder() {}
-	    
-	    public int getValue() { return value; }
+        private static class DeclPartialOrder extends com.sun.mirror.util.SimpleDeclarationVisitor {
+            private int value = 1000;
+            private static int staticAdjust(Declaration d) {
+                return d.getModifiers().contains(Modifier.STATIC)?0:1;
+            }
 
-	    @Override
-	    public void visitTypeParameterDeclaration(TypeParameterDeclaration d) {value = 0;}
+            DeclPartialOrder() {}
 
-	    @Override
-	    public void visitEnumConstantDeclaration(EnumConstantDeclaration d) {value = 1;}
+            public int getValue() { return value; }
 
-	    @Override
-	    public void visitClassDeclaration(ClassDeclaration d) {value = 2 + staticAdjust(d);}
+            @Override
+            public void visitTypeParameterDeclaration(TypeParameterDeclaration d) {value = 0;}
 
-	    @Override
-	    public void visitInterfaceDeclaration(InterfaceDeclaration d) {value = 4;}
+            @Override
+            public void visitEnumConstantDeclaration(EnumConstantDeclaration d) {value = 1;}
 
-	    @Override
-	    public void visitEnumDeclaration(EnumDeclaration d) {value = 6;}
+            @Override
+            public void visitClassDeclaration(ClassDeclaration d) {value = 2 + staticAdjust(d);}
 
-	    @Override
-	    public void visitAnnotationTypeDeclaration(AnnotationTypeDeclaration d) {value = 8;}
+            @Override
+            public void visitInterfaceDeclaration(InterfaceDeclaration d) {value = 4;}
 
-	    @Override
-	    public void visitFieldDeclaration(FieldDeclaration d) {value = 10 + staticAdjust(d);}
+            @Override
+            public void visitEnumDeclaration(EnumDeclaration d) {value = 6;}
 
-	    @Override
-	    public void visitConstructorDeclaration(ConstructorDeclaration d) {value = 12;}
+            @Override
+            public void visitAnnotationTypeDeclaration(AnnotationTypeDeclaration d) {value = 8;}
 
-	    @Override
-	    public void visitMethodDeclaration(MethodDeclaration d) {value = 14 + staticAdjust(d);} 
-	}
-	@SuppressWarnings("cast")
-	private int compareEqualPosition(Declaration d1, Declaration d2) {
-	    assert d1.getPosition() == d2.getPosition();
+            @Override
+            public void visitFieldDeclaration(FieldDeclaration d) {value = 10 + staticAdjust(d);}
 
-	    DeclPartialOrder dpo1 = new DeclPartialOrder();
-	    DeclPartialOrder dpo2 = new DeclPartialOrder();
+            @Override
+            public void visitConstructorDeclaration(ConstructorDeclaration d) {value = 12;}
 
-	    d1.accept(dpo1);
-	    d2.accept(dpo2);
+            @Override
+            public void visitMethodDeclaration(MethodDeclaration d) {value = 14 + staticAdjust(d);}
+        }
+        @SuppressWarnings("cast")
+        private int compareEqualPosition(Declaration d1, Declaration d2) {
+            assert d1.getPosition() == d2.getPosition();
 
-	    int difference = dpo1.getValue() - dpo2.getValue();
-	    if (difference != 0)
-		return difference;
-	    else {
-		int result = d1.getSimpleName().compareTo(d2.getSimpleName());
-		if (result != 0)
-		    return result;
-		return (int)( Long.signum((long)System.identityHashCode(d1) -
-					  (long)System.identityHashCode(d2)));
-	    }
-	}
+            DeclPartialOrder dpo1 = new DeclPartialOrder();
+            DeclPartialOrder dpo2 = new DeclPartialOrder();
 
-	public int compare(Declaration d1, Declaration d2) {
-	    if (equals(d1, d2))
-		return 0;
+            d1.accept(dpo1);
+            d2.accept(dpo2);
 
-	    SourcePosition p1 = d1.getPosition();
-	    SourcePosition p2 = d2.getPosition();
+            int difference = dpo1.getValue() - dpo2.getValue();
+            if (difference != 0)
+                return difference;
+            else {
+                int result = d1.getSimpleName().compareTo(d2.getSimpleName());
+                if (result != 0)
+                    return result;
+                return (int)( Long.signum((long)System.identityHashCode(d1) -
+                                          (long)System.identityHashCode(d2)));
+            }
+        }
 
-	    if (p1 == null && p2 != null)
-		return 1;
-	    else if (p1 != null && p2 == null)
-		return -1;
-	    else if(p1 == null && p2 == null)
-		return compareEqualPosition(d1, d2);
-	    else {
-		assert p1 != null && p2 != null;
-		int fileComp = p1.file().compareTo(p2.file()) ;
-		if (fileComp == 0) {
-		    long diff = (long)p1.line() - (long)p2.line();
-		    if (diff == 0) {
-			diff = Long.signum((long)p1.column() - (long)p2.column());
-			if (diff != 0)
-			    return (int)diff;
-			else { 
-			    // declarations may be two
-			    // compiler-generated members with the
-			    // same source position
-			    return compareEqualPosition(d1, d2);
-			}
-		    } else
-			return (diff<0)? -1:1;
-		} else
-		    return fileComp; 
-	    }
-	}
+        public int compare(Declaration d1, Declaration d2) {
+            if (equals(d1, d2))
+                return 0;
+
+            SourcePosition p1 = d1.getPosition();
+            SourcePosition p2 = d2.getPosition();
+
+            if (p1 == null && p2 != null)
+                return 1;
+            else if (p1 != null && p2 == null)
+                return -1;
+            else if(p1 == null && p2 == null)
+                return compareEqualPosition(d1, d2);
+            else {
+                assert p1 != null && p2 != null;
+                int fileComp = p1.file().compareTo(p2.file()) ;
+                if (fileComp == 0) {
+                    long diff = (long)p1.line() - (long)p2.line();
+                    if (diff == 0) {
+                        diff = Long.signum((long)p1.column() - (long)p2.column());
+                        if (diff != 0)
+                            return (int)diff;
+                        else {
+                            // declarations may be two
+                            // compiler-generated members with the
+                            // same source position
+                            return compareEqualPosition(d1, d2);
+                        }
+                    } else
+                        return (diff<0)? -1:1;
+                } else
+                    return fileComp;
+            }
+        }
     }
 
     final static java.util.Comparator<Declaration> comparator = new SourceOrderComparator();
 
     SourceOrderDeclScanner(DeclarationVisitor pre, DeclarationVisitor post) {
-	super(pre, post);
+        super(pre, post);
     }
 
     /**
@@ -162,31 +162,31 @@ class SourceOrderDeclScanner extends DeclarationScanner {
      * @param d the declaration to visit
      */
     public void visitTypeDeclaration(TypeDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	SortedSet<Declaration> decls = new 
-	    TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
+        SortedSet<Declaration> decls = new
+            TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
 
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
-	    decls.add(tpDecl);
-	}
-	
-	for(FieldDeclaration fieldDecl: d.getFields()) {
-	    decls.add(fieldDecl);
-	}
-	
-	for(MethodDeclaration methodDecl: d.getMethods()) {
-	    decls.add(methodDecl);
-	}
-	
-	for(TypeDeclaration typeDecl: d.getNestedTypes()) {
-	    decls.add(typeDecl);
-	}
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
+            decls.add(tpDecl);
+        }
 
-	for(Declaration decl: decls )
-	    decl.accept(this);
+        for(FieldDeclaration fieldDecl: d.getFields()) {
+            decls.add(fieldDecl);
+        }
 
-	d.accept(post);
+        for(MethodDeclaration methodDecl: d.getMethods()) {
+            decls.add(methodDecl);
+        }
+
+        for(TypeDeclaration typeDecl: d.getNestedTypes()) {
+            decls.add(typeDecl);
+        }
+
+        for(Declaration decl: decls )
+            decl.accept(this);
+
+        d.accept(post);
     }
 
     /**
@@ -195,53 +195,53 @@ class SourceOrderDeclScanner extends DeclarationScanner {
      * @param d the declaration to visit
      */
     public void visitClassDeclaration(ClassDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	SortedSet<Declaration> decls = new 
-	    TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
+        SortedSet<Declaration> decls = new
+            TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
 
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
-	    decls.add(tpDecl);
-	}
-	
-	for(FieldDeclaration fieldDecl: d.getFields()) {
-	    decls.add(fieldDecl);
-	}
-	
-	for(MethodDeclaration methodDecl: d.getMethods()) {
-	    decls.add(methodDecl);
-	}
-	
-	for(TypeDeclaration typeDecl: d.getNestedTypes()) {
-	    decls.add(typeDecl);
-	}
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters()) {
+            decls.add(tpDecl);
+        }
 
-	for(ConstructorDeclaration ctorDecl: d.getConstructors()) {
-	    decls.add(ctorDecl);
-	}
+        for(FieldDeclaration fieldDecl: d.getFields()) {
+            decls.add(fieldDecl);
+        }
 
-	for(Declaration decl: decls )
-	    decl.accept(this);
+        for(MethodDeclaration methodDecl: d.getMethods()) {
+            decls.add(methodDecl);
+        }
 
-	d.accept(post);
+        for(TypeDeclaration typeDecl: d.getNestedTypes()) {
+            decls.add(typeDecl);
+        }
+
+        for(ConstructorDeclaration ctorDecl: d.getConstructors()) {
+            decls.add(ctorDecl);
+        }
+
+        for(Declaration decl: decls )
+            decl.accept(this);
+
+        d.accept(post);
     }
-    
+
     public void visitExecutableDeclaration(ExecutableDeclaration d) {
-	d.accept(pre);
+        d.accept(pre);
 
-	SortedSet<Declaration> decls = new 
-	    TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
-	
-	for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters())
-	    decls.add(tpDecl);
+        SortedSet<Declaration> decls = new
+            TreeSet<Declaration>(SourceOrderDeclScanner.comparator) ;
 
-	for(ParameterDeclaration pDecl: d.getParameters())
-	    decls.add(pDecl);
+        for(TypeParameterDeclaration tpDecl: d.getFormalTypeParameters())
+            decls.add(tpDecl);
 
-	for(Declaration decl: decls )
-	    decl.accept(this);
+        for(ParameterDeclaration pDecl: d.getParameters())
+            decls.add(pDecl);
 
-	d.accept(post);
+        for(Declaration decl: decls )
+            decl.accept(this);
+
+        d.accept(post);
     }
 
 }

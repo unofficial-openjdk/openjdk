@@ -73,7 +73,7 @@ import java.io.IOException;
  *  &#64;Generate
  *  public class UserSource {}
  * </pre></blockquote>
- * 
+ *
  * the type element for {@code UserSource} should be passed as part of
  * the creation method call as in:
  *
@@ -139,7 +139,7 @@ public interface Filer {
      * source file for a named package, have {@code name} be the
      * package's name followed by {@code ".package-info"}; to create a
      * source file for an unnamed package, use {@code "package-info"}.
-     * 
+     *
      * <p> Note that to use a particular {@linkplain
      * java.nio.charset.Charset charset} to encode the contents of the
      * file, an {@code OutputStreamWriter} with the chosen charset can
@@ -157,7 +157,7 @@ public interface Filer {
      * for this run.
      *
      * @param name  canonical (fully qualified) name of the principal type
-     *		being declared in this file or a package name followed by 
+     *          being declared in this file or a package name followed by
      *          {@code ".package-info"} for a package information file
      * @param originatingElements type or package elements causally
      * associated with the creation of this file, may be elided or
@@ -169,7 +169,7 @@ public interface Filer {
      * @throws IOException if the file cannot be created
      */
     JavaFileObject createSourceFile(CharSequence name,
-				    Element... originatingElements) throws IOException;
+                                    Element... originatingElements) throws IOException;
 
     /**
      * Creates a new class file, and returns an object to allow
@@ -187,7 +187,7 @@ public interface Filer {
      * ProcessingEnvironment#getSourceVersion source version} being used
      * for this run.
      *
-     * @param name binary name of the type being written or a package name followed by 
+     * @param name binary name of the type being written or a package name followed by
      *          {@code ".package-info"} for a package information file
      * @param originatingElements type or package elements causally
      * associated with the creation of this file, may be elided or
@@ -199,7 +199,7 @@ public interface Filer {
      * @throws IOException if the file cannot be created
      */
     JavaFileObject createClassFile(CharSequence name,
-				   Element... originatingElements) throws IOException;
+                                   Element... originatingElements) throws IOException;
 
     /**
      * Creates a new auxiliary resource file for writing and returns a
@@ -218,10 +218,10 @@ public interface Filer {
      * annotation processing, even if the full pathname of the file
      * would correspond to the full pathname of a new source file
      * or new class file.
-     * 
+     *
      * @param location location of the new file
      * @param pkg package relative to which the file should be named,
-     *		or the empty string if none
+     *          or the empty string if none
      * @param relativeName final pathname components of the file
      * @param originatingElements type or package elements causally
      * associated with the creation of this file, may be elided or
@@ -234,9 +234,9 @@ public interface Filer {
      * @throws IllegalArgumentException if {@code relativeName} is not relative
      */
    FileObject createResource(JavaFileManager.Location location,
-			     CharSequence pkg,
-			     CharSequence relativeName,
-			     Element... originatingElements) throws IOException;
+                             CharSequence pkg,
+                             CharSequence relativeName,
+                             Element... originatingElements) throws IOException;
 
     /**
      * Returns an object for reading an existing resource.  The
@@ -246,7 +246,7 @@ public interface Filer {
      *
      * @param location location of the file
      * @param pkg package relative to which the file should be searched,
-     *		or the empty string if none
+     *          or the empty string if none
      * @param relativeName final pathname components of the file
      * @return an object to read the file
      * @throws FilerException if the same pathname has already been
@@ -256,6 +256,6 @@ public interface Filer {
      * @throws IllegalArgumentException if {@code relativeName} is not relative
      */
     FileObject getResource(JavaFileManager.Location location,
-			   CharSequence pkg,
-			   CharSequence relativeName) throws IOException;
+                           CharSequence pkg,
+                           CharSequence relativeName) throws IOException;
 }

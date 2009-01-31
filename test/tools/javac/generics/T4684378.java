@@ -34,14 +34,14 @@
 import java.util.Stack;
 public class T4684378 {
     public static void main(String[] argv) {
-	Stack<String> bar = new Stack<String>();
-	String foo;
+        Stack<String> bar = new Stack<String>();
+        String foo;
 
-	// Compiles, but causes verify error
-	foo=(bar.empty()?"":bar.peek()).intern();
+        // Compiles, but causes verify error
+        foo=(bar.empty()?"":bar.peek()).intern();
 
-	// The following two work fine
-	foo = (bar.empty()?"":bar.peek().intern());
-	foo = (bar.empty()?"":(String)bar.peek()).intern();
+        // The following two work fine
+        foo = (bar.empty()?"":bar.peek().intern());
+        foo = (bar.empty()?"":(String)bar.peek()).intern();
     }
 }

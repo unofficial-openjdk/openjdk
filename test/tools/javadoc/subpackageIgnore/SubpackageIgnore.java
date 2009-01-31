@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 4773013
  * @summary When hunting subpackages, silently ignore any directory name that
- *	    can't be part of a subpackage.
+ *          can't be part of a subpackage.
  */
 
 import com.sun.javadoc.*;
@@ -33,21 +33,21 @@ import com.sun.javadoc.*;
 public class SubpackageIgnore extends Doclet {
 
     public static void main(String[] args) {
-	if (com.sun.tools.javadoc.Main.execute(
-		"javadoc",
-		"SubpackageIgnore",
-		new String[] {"-Xwerror",
-			      "-sourcepath",
-			      System.getProperty("test.src", "."),
-			      "-subpackages",
-			      "pkg1"}) != 0)
-	    throw new Error("Javadoc encountered warnings or errors.");
+        if (com.sun.tools.javadoc.Main.execute(
+                "javadoc",
+                "SubpackageIgnore",
+                new String[] {"-Xwerror",
+                              "-sourcepath",
+                              System.getProperty("test.src", "."),
+                              "-subpackages",
+                              "pkg1"}) != 0)
+            throw new Error("Javadoc encountered warnings or errors.");
     }
 
     /*
      * The world's simplest doclet.
      */
     public static boolean start(RootDoc root) {
-	return true;
+        return true;
     }
 }

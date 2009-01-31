@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,14 +25,13 @@ package pkg;
 
 @Deprecated()
 public class DeprecatedClassByAnnotation {
-    
+
     @Deprecated()
     public int field;
-    
+
     @Deprecated()
     public DeprecatedClassByAnnotation() {}
-    
+
     @Deprecated()
     public void method() {}
 }
-

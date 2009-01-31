@@ -36,8 +36,8 @@
 
 class A {
     public void check() {
-	class Foo {
-	    enum STRENGTH{};
-	};
+        class Foo {
+            enum STRENGTH{};
+        };
     }
 }

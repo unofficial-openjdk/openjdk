@@ -33,21 +33,21 @@
 class BoundBug {
     class C {}
 
-    class B<T extends C> 
+    class B<T extends C>
     {
-	void foo() {
-	    B<? super T> con = null;   //ok
-	    B<? extends T> cov = null; //ok
-	    B<?>  biv = null;          //fails
-	    B<T>  inv = null;  
-	}
+        void foo() {
+            B<? super T> con = null;   //ok
+            B<? extends T> cov = null; //ok
+            B<?>  biv = null;          //fails
+            B<T>  inv = null;
+        }
     }
 
-    static 
+    static
     {
-    	B<? super C> con = null;    //ok
-	B<? extends C> cov = null;  //ok
-	B<?>  biv = null;           //fails
-	B<C>  inv = null; 
+        B<? super C> con = null;    //ok
+        B<? extends C> cov = null;  //ok
+        B<?>  biv = null;           //fails
+        B<C>  inv = null;
     }
 }

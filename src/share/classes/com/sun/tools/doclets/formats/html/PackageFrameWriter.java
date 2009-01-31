@@ -44,18 +44,18 @@ public class PackageFrameWriter extends HtmlDocletWriter {
      * The package being documented.
      */
     private PackageDoc packageDoc;
-    
+
     /**
      * The classes to be documented.  Use this to filter out classes
      * that will not be documented.
      */
     private Set documentedClasses;
-    
+
     /**
      * The name of the output file.
      */
     public static final String OUTPUT_FILE_NAME = "package-frame.html";
-    
+
     /**
      * Constructor to construct PackageFrameWriter object and to generate
      * "package-frame.html" file in the respective package directory.
@@ -154,11 +154,11 @@ public class PackageFrameWriter extends HtmlDocletWriter {
             fontSizeStyle("+1", "FrameHeadingFont");
             boolean printedHeader = false;
             for (int i = 0; i < arr.length; i++) {
-                if (documentedClasses != null && 
+                if (documentedClasses != null &&
                     !documentedClasses.contains(arr[i])) {
                     continue;
                 }
-                if (!Util.isCoreClass(arr[i]) || ! 
+                if (!Util.isCoreClass(arr[i]) || !
                     configuration.isGeneratedDoc(arr[i])) {
                     continue;
                 }
@@ -172,9 +172,9 @@ public class PackageFrameWriter extends HtmlDocletWriter {
                 br();
                 printLink(new LinkInfoImpl(
                     LinkInfoImpl.PACKAGE_FRAME,
-                    arr[i], 
+                    arr[i],
                     (arr[i].isInterface() ?
-                        italicsText(arr[i].name()) : 
+                        italicsText(arr[i].name()) :
                         arr[i].name()),"classFrame")
                 );
             }
@@ -195,7 +195,7 @@ public class PackageFrameWriter extends HtmlDocletWriter {
         printTargetPackageLink(packageDoc, "classFrame", heading);
         fontEnd();
     }
-   
+
     /**
      * The table for the class kind listing.
      */
@@ -204,7 +204,7 @@ public class PackageFrameWriter extends HtmlDocletWriter {
         tr();
         tdNowrap();
     }
-     
+
     /**
      * Closing Html tags for table of class kind listing.
      */
@@ -214,6 +214,3 @@ public class PackageFrameWriter extends HtmlDocletWriter {
         tableEnd();
     }
 }
-
-
-

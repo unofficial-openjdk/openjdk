@@ -137,7 +137,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         printProcessorInfo = options.get("-XprintProcessorInfo") != null;
         printRounds = options.get("-XprintRounds") != null;
         verbose = options.get("-verbose") != null;
-	lint = options.lint("processing");
+        lint = options.lint("processing");
         procOnly = options.get("-proc:only") != null ||
             options.get("-Xprint") != null;
         fatalErrors = options.get("fatalEnterError") != null;
@@ -185,12 +185,12 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             processorIterator = processors.iterator();
         } else {
             String processorNames = options.get("-processor");
-	    JavaFileManager fileManager = context.get(JavaFileManager.class);
+            JavaFileManager fileManager = context.get(JavaFileManager.class);
             try {
-		// If processorpath is not explicitly set, use the classpath.
-		ClassLoader processorCL = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
-		    ? fileManager.getClassLoader(ANNOTATION_PROCESSOR_PATH)
-		    : fileManager.getClassLoader(CLASS_PATH);
+                // If processorpath is not explicitly set, use the classpath.
+                ClassLoader processorCL = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
+                    ? fileManager.getClassLoader(ANNOTATION_PROCESSOR_PATH)
+                    : fileManager.getClassLoader(CLASS_PATH);
 
                 /*
                  * If the "-processor" option is used, search the appropriate
@@ -209,10 +209,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                  * (i.e. no processor was specified either explicitly, or implicitly,
                  * in service configuration file.) Otherwise, we cannot continue.
                  */
-		processorIterator = handleServiceLoaderUnavailability("proc.cant.create.loader", e);
-	    }
-	}
-	discoveredProcs = new DiscoveredProcessors(processorIterator);
+                processorIterator = handleServiceLoaderUnavailability("proc.cant.create.loader", e);
+            }
+        }
+        discoveredProcs = new DiscoveredProcessors(processorIterator);
     }
 
     /**
@@ -227,23 +227,23 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
      * @param e   If non-null, pass this exception to Abort
      */
     private Iterator<Processor> handleServiceLoaderUnavailability(String key, Exception e) {
-	JavaFileManager fileManager = context.get(JavaFileManager.class);
-		
-	if (fileManager instanceof JavacFileManager) {
-	    StandardJavaFileManager standardFileManager = (JavacFileManager) fileManager;
-	    Iterable<? extends File> workingPath = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
-		? standardFileManager.getLocation(ANNOTATION_PROCESSOR_PATH)
-		: standardFileManager.getLocation(CLASS_PATH);
+        JavaFileManager fileManager = context.get(JavaFileManager.class);
 
-	    if (needClassLoader(options.get("-processor"), workingPath) )
-		handleException(key, e);
-			
-	} else {
-	    handleException(key, e);
-	}
+        if (fileManager instanceof JavacFileManager) {
+            StandardJavaFileManager standardFileManager = (JavacFileManager) fileManager;
+            Iterable<? extends File> workingPath = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
+                ? standardFileManager.getLocation(ANNOTATION_PROCESSOR_PATH)
+                : standardFileManager.getLocation(CLASS_PATH);
 
-	java.util.List<Processor> pl = Collections.emptyList();
-	return pl.iterator();
+            if (needClassLoader(options.get("-processor"), workingPath) )
+                handleException(key, e);
+
+        } else {
+            handleException(key, e);
+        }
+
+        java.util.List<Processor> pl = Collections.emptyList();
+        return pl.iterator();
     }
 
     /**
@@ -251,13 +251,13 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
      * Processor iterator.
      */
     private void handleException(String key, Exception e) {
-	if (e != null) {
-	    log.error(key, e.getLocalizedMessage());
-	    throw new Abort(e);	    
-	} else {
-	    log.error(key);
-	    throw new Abort();
-	}
+        if (e != null) {
+            log.error(key, e.getLocalizedMessage());
+            throw new Abort(e);
+        } else {
+            log.error(key);
+            throw new Abort();
+        }
     }
 
     /**
@@ -267,92 +267,92 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
      * sun.misc.Service, otherwise fail if a loader is needed.
      */
     private class ServiceIterator implements Iterator<Processor> {
-	// The to-be-wrapped iterator.
-	private Iterator<?> iterator;
-	private Log log;
-	
-	ServiceIterator(ClassLoader classLoader, Log log) {
-	    Class<?> loaderClass;
-	    String loadMethodName;
-	    boolean jusl;
+        // The to-be-wrapped iterator.
+        private Iterator<?> iterator;
+        private Log log;
 
-	    this.log = log;
-	    try {
-		try {
-		    loaderClass = Class.forName("java.util.ServiceLoader");
-		    loadMethodName = "load";
-		    jusl = true;
-		} catch (ClassNotFoundException cnfe) {
-		    try {
-			loaderClass = Class.forName("sun.misc.Service");
-			loadMethodName = "providers";
-			jusl = false;
-		    } catch (ClassNotFoundException cnfe2) {
-			// Fail softly if a loader is not actually needed.
-			this.iterator = handleServiceLoaderUnavailability("proc.no.service",
-									  null);
-			return;
-		    }
-		}
+        ServiceIterator(ClassLoader classLoader, Log log) {
+            Class<?> loaderClass;
+            String loadMethodName;
+            boolean jusl;
 
-		// java.util.ServiceLoader.load or sun.misc.Service.providers
-		Method loadMethod = loaderClass.getMethod(loadMethodName,
-							  Class.class,
-							  ClassLoader.class);
+            this.log = log;
+            try {
+                try {
+                    loaderClass = Class.forName("java.util.ServiceLoader");
+                    loadMethodName = "load";
+                    jusl = true;
+                } catch (ClassNotFoundException cnfe) {
+                    try {
+                        loaderClass = Class.forName("sun.misc.Service");
+                        loadMethodName = "providers";
+                        jusl = false;
+                    } catch (ClassNotFoundException cnfe2) {
+                        // Fail softly if a loader is not actually needed.
+                        this.iterator = handleServiceLoaderUnavailability("proc.no.service",
+                                                                          null);
+                        return;
+                    }
+                }
 
-		Object result = loadMethod.invoke(null,
-						  Processor.class,
-						  classLoader);
+                // java.util.ServiceLoader.load or sun.misc.Service.providers
+                Method loadMethod = loaderClass.getMethod(loadMethodName,
+                                                          Class.class,
+                                                          ClassLoader.class);
 
-		// For java.util.ServiceLoader, we have to call another
-		// method to get the iterator.
-		if (jusl) {
-		    Method m = loaderClass.getMethod("iterator");
-		    result = m.invoke(result); // serviceLoader.iterator();
-		}
+                Object result = loadMethod.invoke(null,
+                                                  Processor.class,
+                                                  classLoader);
 
-		// The result should now be an iterator.
-		this.iterator = (Iterator<?>) result;
-	    } catch (Throwable t) {
-		log.error("proc.service.problem");
-		throw new Abort(t);
-	    }
-	}
+                // For java.util.ServiceLoader, we have to call another
+                // method to get the iterator.
+                if (jusl) {
+                    Method m = loaderClass.getMethod("iterator");
+                    result = m.invoke(result); // serviceLoader.iterator();
+                }
 
-	public boolean hasNext() {
-	    try {
-		return iterator.hasNext();
-	    } catch (Throwable t) {
-		if ("ServiceConfigurationError".
-		    equals(t.getClass().getSimpleName())) {
-		    log.error("proc.bad.config.file", t.getLocalizedMessage());
-		}
-		throw new Abort(t);
-	    }
-	}
-	    
-	public Processor next() {
-	    try {
-		return (Processor)(iterator.next());
-	    } catch (Throwable t) {
-		if ("ServiceConfigurationError".
-		    equals(t.getClass().getSimpleName())) {
-		    log.error("proc.bad.config.file", t.getLocalizedMessage());
-		} else {
-		    log.error("proc.processor.constructor.error", t.getLocalizedMessage());
-		}
-		throw new Abort(t);
-	    }
-	}
+                // The result should now be an iterator.
+                this.iterator = (Iterator<?>) result;
+            } catch (Throwable t) {
+                log.error("proc.service.problem");
+                throw new Abort(t);
+            }
+        }
 
-	public void remove() {
-	    throw new UnsupportedOperationException();
-	}
+        public boolean hasNext() {
+            try {
+                return iterator.hasNext();
+            } catch (Throwable t) {
+                if ("ServiceConfigurationError".
+                    equals(t.getClass().getSimpleName())) {
+                    log.error("proc.bad.config.file", t.getLocalizedMessage());
+                }
+                throw new Abort(t);
+            }
+        }
+
+        public Processor next() {
+            try {
+                return (Processor)(iterator.next());
+            } catch (Throwable t) {
+                if ("ServiceConfigurationError".
+                    equals(t.getClass().getSimpleName())) {
+                    log.error("proc.bad.config.file", t.getLocalizedMessage());
+                } else {
+                    log.error("proc.processor.constructor.error", t.getLocalizedMessage());
+                }
+                throw new Abort(t);
+            }
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 
     private static class NameProcessIterator implements Iterator<Processor> {
-	Processor nextProc = null;
+        Processor nextProc = null;
         Iterator<String> names;
         ClassLoader processorCL;
         Log log;
@@ -552,27 +552,27 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             }
 
             public ProcessorState next() {
-		if (!onProcInterator) {
-		    if (innerIter.hasNext())
-			return innerIter.next();
-		    else
-			onProcInterator = true;
-		}
+                if (!onProcInterator) {
+                    if (innerIter.hasNext())
+                        return innerIter.next();
+                    else
+                        onProcInterator = true;
+                }
 
-		if (psi.processorIterator.hasNext()) {
-		    ProcessorState ps = new ProcessorState(psi.processorIterator.next(),
-							   log, source, JavacProcessingEnvironment.this);
-		    psi.procStateList.add(ps);
-		    return ps;
-		} else
-		    throw new NoSuchElementException();
+                if (psi.processorIterator.hasNext()) {
+                    ProcessorState ps = new ProcessorState(psi.processorIterator.next(),
+                                                           log, source, JavacProcessingEnvironment.this);
+                    psi.procStateList.add(ps);
+                    return ps;
+                } else
+                    throw new NoSuchElementException();
             }
 
             public boolean hasNext() {
-		if (onProcInterator)
-		    return  psi.processorIterator.hasNext();
-		else
-		    return innerIter.hasNext() || psi.processorIterator.hasNext();
+                if (onProcInterator)
+                    return  psi.processorIterator.hasNext();
+                else
+                    return innerIter.hasNext() || psi.processorIterator.hasNext();
             }
 
             public void remove () {
@@ -611,8 +611,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
     private void discoverAndRunProcs(Context context,
                                      Set<TypeElement> annotationsPresent,
-				     List<ClassSymbol> topLevelClasses,
-				     List<PackageSymbol> packageInfoFiles) {
+                                     List<ClassSymbol> topLevelClasses,
+                                     List<PackageSymbol> packageInfoFiles) {
         // Writer for -XprintRounds and -XprintProcessorInfo data
         PrintWriter xout = context.get(Log.outKey);
 
@@ -635,20 +635,20 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         // were parse errors on the initial source files; however, we
         // are not doing processing in that case.
 
-	Set<Element> rootElements = new LinkedHashSet<Element>();
-	rootElements.addAll(topLevelClasses);
-	rootElements.addAll(packageInfoFiles);
-	rootElements = Collections.unmodifiableSet(rootElements);
+        Set<Element> rootElements = new LinkedHashSet<Element>();
+        rootElements.addAll(topLevelClasses);
+        rootElements.addAll(packageInfoFiles);
+        rootElements = Collections.unmodifiableSet(rootElements);
 
         RoundEnvironment renv = new JavacRoundEnvironment(false,
                                                           false,
-							  rootElements,
-							  JavacProcessingEnvironment.this);
+                                                          rootElements,
+                                                          JavacProcessingEnvironment.this);
 
         while(unmatchedAnnotations.size() > 0 && psi.hasNext() ) {
             ProcessorState ps = psi.next();
             Set<String>  matchedNames = new HashSet<String>();
-	    Set<TypeElement> typeElements = new LinkedHashSet<TypeElement>();
+            Set<TypeElement> typeElements = new LinkedHashSet<TypeElement>();
             for (String unmatchedAnnotationName : unmatchedAnnotations.keySet()) {
                 if (ps.annotationSupported(unmatchedAnnotationName) ) {
                     matchedNames.add(unmatchedAnnotationName);
@@ -664,10 +664,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 ps.removeSupportedOptions(unmatchedProcessorOptions);
 
                 if (printProcessorInfo || verbose) {
-		    xout.println(Log.getLocalizedString("x.print.processor.info",
-							ps.processor.getClass().getName(),
-							matchedNames.toString(),
-							processingResult));
+                    xout.println(Log.getLocalizedString("x.print.processor.info",
+                                                        ps.processor.getClass().getName(),
+                                                        matchedNames.toString(),
+                                                        processingResult));
                 }
 
                 if (processingResult) {
@@ -709,11 +709,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             this.elements = elements;
         }
 
-	@Override
-	public Set<TypeElement> visitPackage(PackageElement e, Set<TypeElement> p) {
-	    // Don't scan enclosed elements of a package
-	    return p;
-	}
+        @Override
+        public Set<TypeElement> visitPackage(PackageElement e, Set<TypeElement> p) {
+            // Don't scan enclosed elements of a package
+            return p;
+        }
 
         @Override
          public Set<TypeElement> scan(Element e, Set<TypeElement> p) {
@@ -731,10 +731,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                                          RoundEnvironment renv) {
         try {
             return proc.process(tes, renv);
-        } catch (CompletionFailure ex) {    
+        } catch (CompletionFailure ex) {
             StringWriter out = new StringWriter();
             ex.printStackTrace(new PrintWriter(out));
-	    log.error("proc.cant.access", ex.sym, ex.errmsg, out.toString());
+            log.error("proc.cant.access", ex.sym, ex.errmsg, out.toString());
             return false;
         } catch (Throwable t) {
             throw new AnnotationProcessingError(t);
@@ -769,7 +769,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         for (ClassSymbol classSym : classSymbols)
             topLevelClasses = topLevelClasses.prepend(classSym);
         List<PackageSymbol> packageInfoFiles =
-	    getPackageInfoFiles(roots);
+            getPackageInfoFiles(roots);
 
         Set<PackageSymbol> specifiedPackages = new LinkedHashSet<PackageSymbol>();
         for (PackageSymbol psym : pckSymbols)
@@ -781,8 +781,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         ComputeAnnotationSet annotationComputer = new ComputeAnnotationSet(elementUtils);
         for (ClassSymbol classSym : topLevelClasses)
             annotationComputer.scan(classSym, annotationsPresent);
-	for (PackageSymbol pkgSym : packageInfoFiles)
-	    annotationComputer.scan(pkgSym, annotationsPresent);
+        for (PackageSymbol pkgSym : packageInfoFiles)
+            annotationComputer.scan(pkgSym, annotationsPresent);
 
         Context currentContext = context;
 
@@ -804,7 +804,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 taskListener.started(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING_ROUND));
 
             try {
-		discoverAndRunProcs(currentContext, annotationsPresent, topLevelClasses, packageInfoFiles);
+                discoverAndRunProcs(currentContext, annotationsPresent, topLevelClasses, packageInfoFiles);
             } finally {
                 if (taskListener != null)
                     taskListener.finished(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING_ROUND));
@@ -824,7 +824,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     // annotationsPresentInSource = List.nil();
                     annotationsPresent = new LinkedHashSet<TypeElement>();
                     topLevelClasses  = List.nil();
-		    packageInfoFiles = List.nil();
+                    packageInfoFiles = List.nil();
 
                     compiler.close();
                     currentContext = contextForNextRound(currentContext, true);
@@ -863,8 +863,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                         annotationsPresent = new LinkedHashSet<TypeElement>();
                         for (ClassSymbol classSym : topLevelClasses)
                             annotationComputer.scan(classSym, annotationsPresent);
-			for (PackageSymbol pkgSym : packageInfoFiles)
-			    annotationComputer.scan(pkgSym, annotationsPresent);
+                        for (PackageSymbol pkgSym : packageInfoFiles)
+                            annotationComputer.scan(pkgSym, annotationsPresent);
 
                         updateProcessingState(currentContext, false);
                     }
@@ -940,7 +940,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         RoundEnvironment renv = new JavacRoundEnvironment(true,
                                                           errorStatus,
                                                           emptyRootElements,
-							  JavacProcessingEnvironment.this);
+                                                          JavacProcessingEnvironment.this);
         if (taskListener != null)
             taskListener.started(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING_ROUND));
 
@@ -972,11 +972,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                                 Set<TypeElement> annotationsPresent,
                                 boolean lastRound) {
         if (printRounds || verbose) {
-	    xout.println(Log.getLocalizedString("x.print.rounds",
-						roundNumber,
-						"{" + topLevelClasses.toString(", ") + "}",
-						annotationsPresent,
-						lastRound));
+            xout.println(Log.getLocalizedString("x.print.rounds",
+                                                roundNumber,
+                                                "{" + topLevelClasses.toString(", ") + "}",
+                                                annotationsPresent,
+                                                lastRound));
         }
     }
 
@@ -1007,11 +1007,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private List<ClassSymbol> getTopLevelClasses(List<? extends JCCompilationUnit> units) {
         List<ClassSymbol> classes = List.nil();
         for (JCCompilationUnit unit : units) {
-	    for (JCTree node : unit.defs) {
-		if (node.getTag() == JCTree.CLASSDEF) {
-		    classes = classes.prepend(((JCClassDecl) node).sym);
-		}
-	    }
+            for (JCTree node : unit.defs) {
+                if (node.getTag() == JCTree.CLASSDEF) {
+                    classes = classes.prepend(((JCClassDecl) node).sym);
+                }
+            }
         }
         return classes.reverse();
     }
@@ -1019,11 +1019,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private List<PackageSymbol> getPackageInfoFiles(List<? extends JCCompilationUnit> units) {
         List<PackageSymbol> packages = List.nil();
         for (JCCompilationUnit unit : units) {
-	    boolean isPkgInfo = unit.sourcefile.isNameCompatible("package-info",
-								 JavaFileObject.Kind.SOURCE);
-	    if (isPkgInfo) {
-		packages = packages.prepend(unit.packge);
-	    }
+            boolean isPkgInfo = unit.sourcefile.isNameCompatible("package-info",
+                                                                 JavaFileObject.Kind.SOURCE);
+            if (isPkgInfo) {
+                packages = packages.prepend(unit.packge);
+            }
         }
         return packages.reverse();
     }
@@ -1092,21 +1092,21 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         if (procNames != null)
             return true;
 
-	String procPath;
-	URL[] urls = new URL[1]; 
-	for(File pathElement : workingpath) {
-	    try {
-		urls[0] = pathElement.toURI().toURL();
-		if (ServiceProxy.hasService(Processor.class, urls))
-		    return true;
-	    } catch (MalformedURLException ex) {
-		throw new AssertionError(ex);
-	    }
-	    catch (ServiceProxy.ServiceConfigurationError e) {
-		log.error("proc.bad.config.file", e.getLocalizedMessage());
-		return true;
-	    }
-	}
+        String procPath;
+        URL[] urls = new URL[1];
+        for(File pathElement : workingpath) {
+            try {
+                urls[0] = pathElement.toURI().toURL();
+                if (ServiceProxy.hasService(Processor.class, urls))
+                    return true;
+            } catch (MalformedURLException ex) {
+                throw new AssertionError(ex);
+            }
+            catch (ServiceProxy.ServiceConfigurationError e) {
+                log.error("proc.bad.config.file", e.getLocalizedMessage());
+                return true;
+            }
+        }
 
         return false;
     }
@@ -1240,7 +1240,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     }
 
     public Locale getLocale() {
-	return Locale.getDefault();
+        return Locale.getDefault();
     }
 
     public Set<Symbol.PackageSymbol> getSpecifiedPackages() {
@@ -1385,4 +1385,3 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         return true;
     }
 }
-

@@ -40,7 +40,7 @@ public class SuperMeth {
 class Outer {
     Inner inner = new Inner();
     class Inner {
-	public int hashCode() { return Outer.super.hashCode(); }
+        public int hashCode() { return Outer.super.hashCode(); }
     }
     public int hashCode() { return inner.hashCode(); }
 }

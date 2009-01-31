@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,21 +33,21 @@
  */
 
 public class TestDeprecatedDocs extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4927552";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, "pkg"
     };
-    
-    private static final String TARGET_FILE  = 
+
+    private static final String TARGET_FILE  =
         BUG_ID + FS + "deprecated-list.html";
-    
-    private static final String TARGET_FILE2  = 
+
+    private static final String TARGET_FILE2  =
         BUG_ID + FS + "pkg" + FS + "DeprecatedClassByAnnotation.html";
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         {TARGET_FILE, "annotation_test1 passes"},
@@ -75,30 +75,30 @@ public class TestDeprecatedDocs extends JavadocTester {
         {TARGET_FILE, "pkg.DeprecatedClassByAnnotation()"},
         {TARGET_FILE, "pkg.DeprecatedClassByAnnotation.method()"},
         {TARGET_FILE, "pkg.DeprecatedClassByAnnotation.field"},
-        
+
         {TARGET_FILE2, "<B>Deprecated.</B>" + NL +
-        	"<P>" + NL +
+                "<P>" + NL +
             "<DL>" + NL +
             "<DT><PRE><FONT SIZE=\"-1\">@Deprecated" + NL +
             "</FONT>public class <B>DeprecatedClassByAnnotation</B>"},
-            
+
         {TARGET_FILE2, "public int <B>field</B></PRE>" + NL +
             "<DL>" + NL +
             "<DD><B>Deprecated.</B>&nbsp;<DL>"},
-            
+
         {TARGET_FILE2, "<FONT SIZE=\"-1\">@Deprecated" + NL +
             "</FONT>public <B>DeprecatedClassByAnnotation</B>()</PRE>" + NL +
             "<DL>" + NL +
             "<DD><B>Deprecated.</B>"},
-            
+
         {TARGET_FILE2, "<FONT SIZE=\"-1\">@Deprecated" + NL +
             "</FONT>public void <B>method</B>()</PRE>" + NL +
             "<DL>" + NL +
             "<DD><B>Deprecated.</B>"},
-    };    
-    
+    };
+
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -108,14 +108,14 @@ public class TestDeprecatedDocs extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

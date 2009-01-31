@@ -36,8 +36,8 @@ public class ParameterAnnotations {
                        @AnnotMarker @AnnotSimple("foo")
                        @AnnotMarker2 @AnnotSimple2("bar")
                        int baz) {
-	@AnnotShangri_la
-	int local = 0;
+        @AnnotShangri_la
+        int local = 0;
         return (double) baz;
     }
 

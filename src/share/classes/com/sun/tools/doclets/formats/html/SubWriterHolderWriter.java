@@ -45,7 +45,7 @@ import java.io.*;
  * @author Atul M Dambalkar
  */
 public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
-    
+
     public SubWriterHolderWriter(ConfigurationImpl configuration,
                                  String filename) throws IOException {
         super(configuration, filename);
@@ -85,7 +85,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         tableHeaderEnd();
         tableEnd();
     }
- 
+
     public void printInheritedSummaryHeader(AbstractMemberWriter mw, ClassDoc cd) {
         mw.printInheritedSummaryAnchor(cd);
         tableIndexSummary();
@@ -109,18 +109,18 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         tableEnd();
         space();
     }
-    
+
     protected void printIndexComment(Doc member) {
         printIndexComment(member, member.firstSentenceTags());
     }
 
     protected void printIndexComment(Doc member, Tag[] firstSentenceTags) {
         Tag[] deprs = member.tags("deprecated");
-        if (Util.isDeprecated((ProgramElementDoc) member)) {            
+        if (Util.isDeprecated((ProgramElementDoc) member)) {
             boldText("doclet.Deprecated");
             space();
-            if (deprs.length > 0) {            	
-            	printInlineDeprecatedComment(member, deprs[0]);
+            if (deprs.length > 0) {
+                printInlineDeprecatedComment(member, deprs[0]);
             }
             return;
         } else {
@@ -134,22 +134,22 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
 
     public void printSummaryLinkType(AbstractMemberWriter mw,
                                      ProgramElementDoc member) {
-        trBgcolorStyle("white", "TableRowColor");        
+        trBgcolorStyle("white", "TableRowColor");
         mw.printSummaryType(member);
         summaryRow(0);
         code();
     }
-    
+
     public void printSummaryLinkComment(AbstractMemberWriter mw,
                                         ProgramElementDoc member) {
         printSummaryLinkComment(mw, member, member.firstSentenceTags());
     }
-    
+
     public void printSummaryLinkComment(AbstractMemberWriter mw,
                                         ProgramElementDoc member,
                                         Tag[] firstSentenceTags) {
         codeEnd();
-        println(); 
+        println();
         br();
         printNbsps();
         printIndexComment(member, firstSentenceTags);
@@ -162,7 +162,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         if (! isFirst) {
             mw.print(", ");
         }
-        mw.writeInheritedSummaryLink(cd, member);       
+        mw.writeInheritedSummaryLink(cd, member);
     }
 
     public void printMemberHeader() {
@@ -173,7 +173,3 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
     }
 
 }
-
-
-
-

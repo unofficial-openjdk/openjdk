@@ -277,7 +277,7 @@ public class Attr extends JCTree.Visitor {
                     return rs.findMemberType(env, site.asType(), name, (TypeSymbol)site);
                 }
             }
-    
+
             @Override
             public Symbol visitIdentifier(IdentifierTree node, Env<AttrContext> env) {
                 return rs.findIdent(env, (Name)node.getName(), TYP | PCK);
@@ -292,7 +292,7 @@ public class Attr extends JCTree.Visitor {
         Env<AttrContext> env = enter.typeEnvs.get(sym);
         Env<AttrContext> localEnv = env.dup(node, env.info.dup());
         return attribTree(node, localEnv, Kinds.TYP, Type.noType);
-    }  
+    }
 
     public Env<AttrContext> attribExprToTree(JCTree expr, Env<AttrContext> env, JCTree tree) {
         breakTree = tree;
@@ -306,7 +306,7 @@ public class Attr extends JCTree.Visitor {
             log.useSource(prev);
         }
         return env;
-    }    
+    }
 
     public Env<AttrContext> attribStatToTree(JCTree stmt, Env<AttrContext> env, JCTree tree) {
         breakTree = tree;
@@ -321,9 +321,9 @@ public class Attr extends JCTree.Visitor {
         }
         return env;
     }
-    
+
     private JCTree breakTree = null;
-    
+
     private static class BreakAttr extends RuntimeException {
         static final long serialVersionUID = -6924771130405446405L;
         private Env<AttrContext> env;
@@ -331,7 +331,7 @@ public class Attr extends JCTree.Visitor {
             this.env = env;
         }
     }
-   
+
 
 /* ************************************************************************
  * Visitor methods
@@ -1292,7 +1292,7 @@ public class Attr extends JCTree.Visitor {
             Type restype = mtype.getReturnType();
 
             if (restype.tag == WILDCARD) {
-                restype = types.upperBound(restype); 
+                restype = types.upperBound(restype);
             }
 
             // as a special case, array.clone() has a result that is
@@ -1678,8 +1678,8 @@ public class Attr extends JCTree.Visitor {
             owntype = operator.type.getReturnType();
             int opc = chk.checkOperator(tree.lhs.pos(),
                                         (OperatorSymbol)operator,
-					tree.getTag(),
-					left,
+                                        tree.getTag(),
+                                        left,
                                         right);
 
             // If both arguments are constants, fold them.
@@ -1819,14 +1819,14 @@ public class Attr extends JCTree.Visitor {
             (sym.flags() & STATIC) == 0) {
             chk.earlyRefError(tree.pos(), sym.kind == VAR ? sym : thisSym(tree.pos(), env));
         }
-	Env<AttrContext> env1 = env;
-	if (sym.kind != ERR && sym.owner != null && sym.owner != env1.enclClass.sym) {
-	    // If the found symbol is inaccessible, then it is
-	    // accessed through an enclosing instance.  Locate this
-	    // enclosing instance:
-	    while (env1.outer != null && !rs.isAccessible(env, env1.enclClass.sym.type, sym))
-		env1 = env1.outer;
-	}
+        Env<AttrContext> env1 = env;
+        if (sym.kind != ERR && sym.owner != null && sym.owner != env1.enclClass.sym) {
+            // If the found symbol is inaccessible, then it is
+            // accessed through an enclosing instance.  Locate this
+            // enclosing instance:
+            while (env1.outer != null && !rs.isAccessible(env, env1.enclClass.sym.type, sym))
+                env1 = env1.outer;
+        }
         result = checkId(tree, env1.enclClass.sym.type, sym, env, pkind, pt, varArgs);
     }
 

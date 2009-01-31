@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 package pkg;
 
 public class TestSuperSuperClass {
-    
+
     /**
      * Test 23 passes.
      * @param <P> Test 24 passes.
@@ -36,17 +36,17 @@ public class TestSuperSuperClass {
      * @throws java.lang.NullPointerException Test 30 passes.
      */
     public <P,Q> String testSuperSuperMethod(int x1, int x2) {
-        return null; 
+        return null;
     }
-    
+
     /**
      * @param <P> Test 32 passes.
      * @param x1 Test 34 passes.
      * @return Test 36 passes.
-     * @throws java.lang.NullPointerException Test 38 passes.     
+     * @throws java.lang.NullPointerException Test 38 passes.
      */
     public <P,Q> String testSuperSuperMethod2(int x1, int x2) {
-        return null; 
+        return null;
     }
-    
+
 }

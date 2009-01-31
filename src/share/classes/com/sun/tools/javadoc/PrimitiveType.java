@@ -78,7 +78,7 @@ class PrimitiveType implements com.sun.javadoc.Type {
      * Return the simple name of this type.
      */
     public String simpleTypeName() {
-	return name;
+        return name;
     }
 
     /**
@@ -104,28 +104,28 @@ class PrimitiveType implements com.sun.javadoc.Type {
      * Return null, as this is not an annotation type.
      */
     public AnnotationTypeDoc asAnnotationTypeDoc() {
-	return null;
+        return null;
     }
 
     /**
      * Return null, as this is not an instantiation.
      */
     public ParameterizedType asParameterizedType() {
-	return null;
+        return null;
     }
 
     /**
      * Return null, as this is not a type variable.
      */
     public TypeVariable asTypeVariable() {
-	return null;
+        return null;
     }
 
     /**
      * Return null, as this is not a wildcard type;
      */
     public WildcardType asWildcardType() {
-	return null;
+        return null;
     }
 
     /**
@@ -146,6 +146,6 @@ class PrimitiveType implements com.sun.javadoc.Type {
      * Return true if this is a primitive type.
      */
     public boolean isPrimitive() {
-	return true;
+        return true;
     }
 }

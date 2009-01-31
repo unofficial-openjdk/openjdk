@@ -63,47 +63,47 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     /** Construct a list given its head and tail.
      */
     List(A head, List<A> tail) {
-	this.tail = tail;
-	this.head = head;
+        this.tail = tail;
+        this.head = head;
     }
 
     /** Construct an empty list.
      */
     @SuppressWarnings("unchecked")
     public static <A> List<A> nil() {
-	return EMPTY_LIST;
+        return EMPTY_LIST;
     }
     private static List EMPTY_LIST = new List<Object>(null,null) {
-	public List<Object> setTail(List<Object> tail) {
-	    throw new UnsupportedOperationException();
-	}
-	public boolean isEmpty() {
-	    return true;
-	}
+        public List<Object> setTail(List<Object> tail) {
+            throw new UnsupportedOperationException();
+        }
+        public boolean isEmpty() {
+            return true;
+        }
     };
 
     /** Construct a list consisting of given element.
      */
     public static <A> List<A> of(A x1) {
-	return new List<A>(x1, List.<A>nil());
+        return new List<A>(x1, List.<A>nil());
     }
 
     /** Construct a list consisting of given elements.
      */
     public static <A> List<A> of(A x1, A x2) {
-	return new List<A>(x1, of(x2));
+        return new List<A>(x1, of(x2));
     }
 
     /** Construct a list consisting of given elements.
      */
     public static <A> List<A> of(A x1, A x2, A x3) {
-	return new List<A>(x1, of(x2, x3));
+        return new List<A>(x1, of(x2, x3));
     }
 
     /** Construct a list consisting of given elements.
      */
     public static <A> List<A> of(A x1, A x2, A x3, A... rest) {
-	return new List<A>(x1, new List<A>(x2, new List<A>(x3, from(rest)))); 
+        return new List<A>(x1, new List<A>(x2, new List<A>(x3, from(rest))));
     }
 
     /**
@@ -111,11 +111,11 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      * @param array an array; if {@code null} return an empty list
      */
     public static <A> List<A> from(A[] array) {
-	List<A> xs = nil();
+        List<A> xs = nil();
         if (array != null)
             for (int i = array.length - 1; i >= 0; i--)
                 xs = new List<A>(array[i], xs);
-	return xs;
+        return xs;
     }
 
     /** Construct a list consisting of a given number of identical elements.
@@ -124,36 +124,36 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      */
     @Deprecated
     public static <A> List<A> fill(int len, A init) {
-	List<A> l = nil();
-	for (int i = 0; i < len; i++) l = new List<A>(init, l);
-	return l;
+        List<A> l = nil();
+        for (int i = 0; i < len; i++) l = new List<A>(init, l);
+        return l;
     }
 
     /** Does list have no elements?
      */
     @Override
     public boolean isEmpty() {
-	return tail == null;
+        return tail == null;
     }
 
     /** Does list have elements?
      */
     //@Deprecated
     public boolean nonEmpty() {
-	return tail != null;
+        return tail != null;
     }
 
     /** Return the number of elements in this list.
      */
     //@Deprecated
     public int length() {
-	List<A> l = this;
-	int len = 0;
-	while (l.tail != null) {
-	    l = l.tail;
-	    len++;
-	}
-	return len;
+        List<A> l = this;
+        int len = 0;
+        while (l.tail != null) {
+            l = l.tail;
+            len++;
+        }
+        return len;
     }
     @Override
     public int size() {
@@ -161,7 +161,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     }
 
     public List<A> setTail(List<A> tail) {
-	this.tail = tail;
+        this.tail = tail;
         return tail;
     }
 
@@ -169,32 +169,32 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      *  a new list.
      */
     public List<A> prepend(A x) {
-	return new List<A>(x, this);
+        return new List<A>(x, this);
     }
 
     /** Prepend given list of elements to front of list, forming and returning
      *  a new list.
      */
     public List<A> prependList(List<A> xs) {
-	if (this.isEmpty()) return xs;
-	if (xs.isEmpty()) return this;
+        if (this.isEmpty()) return xs;
+        if (xs.isEmpty()) return this;
         if (xs.tail.isEmpty()) return prepend(xs.head);
-	// return this.prependList(xs.tail).prepend(xs.head);
-	List<A> result = this;
-	List<A> rev = xs.reverse();
-        assert rev != xs; 
+        // return this.prependList(xs.tail).prepend(xs.head);
+        List<A> result = this;
+        List<A> rev = xs.reverse();
+        assert rev != xs;
         // since xs.reverse() returned a new list, we can reuse the
         // individual List objects, instead of allocating new ones.
-	while (rev.nonEmpty()) {
-	    List<A> h = rev;
-	    rev = rev.tail;
-	    h.setTail(result);
-	    result = h;
-	}
-	return result;
+        while (rev.nonEmpty()) {
+            List<A> h = rev;
+            rev = rev.tail;
+            h.setTail(result);
+            result = h;
+        }
+        return result;
     }
 
-    /** Reverse list. 
+    /** Reverse list.
      * If the list is empty or a singleton, then the same list is returned.
      * Otherwise a new list is formed.
      */
@@ -202,25 +202,25 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
         // if it is empty or a singleton, return itself
         if (isEmpty() || tail.isEmpty())
             return this;
-        
-	List<A> rev = nil();
-	for (List<A> l = this; l.nonEmpty(); l = l.tail)
-	    rev = new List<A>(l.head, rev);
-	return rev;
+
+        List<A> rev = nil();
+        for (List<A> l = this; l.nonEmpty(); l = l.tail)
+            rev = new List<A>(l.head, rev);
+        return rev;
     }
 
     /** Append given element at length, forming and returning
      *  a new list.
      */
     public List<A> append(A x) {
-	return of(x).prependList(this);
+        return of(x).prependList(this);
     }
 
     /** Append given list at length, forming and returning
      *  a new list.
      */
     public List<A> appendList(List<A> x) {
-	return x.prependList(this);
+        return x.prependList(this);
     }
 
     /**
@@ -228,7 +228,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      * list.
      */
     public List<A> appendList(ListBuffer<A> x) {
-	return appendList(x.toList());
+        return appendList(x.toList());
     }
 
     /** Copy successive elements of this list into given vector until
@@ -236,24 +236,24 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      */
     @Override @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] vec) {
-	int i = 0;
-	List<A> l = this;
-	Object[] dest = vec;
-	while (l.nonEmpty() && i < vec.length) {
-	    dest[i] = l.head;
-	    l = l.tail;
-	    i++;
-	}
-	if (l.isEmpty()) {
+        int i = 0;
+        List<A> l = this;
+        Object[] dest = vec;
+        while (l.nonEmpty() && i < vec.length) {
+            dest[i] = l.head;
+            l = l.tail;
+            i++;
+        }
+        if (l.isEmpty()) {
             if (i < vec.length)
                 vec[i] = null;
             return vec;
         }
-        
+
         vec = (T[])Array.newInstance(vec.getClass().getComponentType(), size());
         return toArray(vec);
     }
-    
+
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
@@ -263,22 +263,22 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     public String toString(String sep) {
         if (isEmpty()) {
             return "";
-	} else {
-	    StringBuffer buf = new StringBuffer();
-	    buf.append(head);
-	    for (List<A> l = tail; l.nonEmpty(); l = l.tail) {
-		buf.append(sep);
-		buf.append(l.head);
-	    }
-	    return buf.toString();
-	}
+        } else {
+            StringBuffer buf = new StringBuffer();
+            buf.append(head);
+            for (List<A> l = tail; l.nonEmpty(); l = l.tail) {
+                buf.append(sep);
+                buf.append(l.head);
+            }
+            return buf.toString();
+        }
     }
-	
+
     /** Form a string listing all elements with comma as the separator character.
      */
     @Override
     public String toString() {
-	return toString(",");
+        return toString(",");
     }
 
     /** Compute a hash code, overrides Object
@@ -286,13 +286,13 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      */
     @Override
     public int hashCode() {
-	List<A> l = this;
-	int h = 1;
-	while (l.tail != null) {
-	    h = h * 31 + (l.head == null ? 0 : l.head.hashCode());
-	    l = l.tail;
-	}
-	return h;
+        List<A> l = this;
+        int h = 1;
+        while (l.tail != null) {
+            h = h * 31 + (l.head == null ? 0 : l.head.hashCode());
+            l = l.tail;
+        }
+        return h;
     }
 
     /** Is this list the same as other list?
@@ -300,7 +300,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
      */
     @Override
     public boolean equals(Object other) {
-	if (other instanceof List<?>)
+        if (other instanceof List<?>)
             return equals(this, (List<?>)other);
         if (other instanceof java.util.List<?>) {
             List<A> t = this;
@@ -319,52 +319,52 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     /** Are the two lists the same?
      */
     public static boolean equals(List xs, List ys) {
-	while (xs.tail != null && ys.tail != null) {
-	    if (xs.head == null) {
-		if (ys.head != null) return false;
-	    } else {
-		if (!xs.head.equals(ys.head)) return false;
-	    }
-	    xs = xs.tail;
-	    ys = ys.tail;
-	}
-	return xs.tail == null && ys.tail == null;
+        while (xs.tail != null && ys.tail != null) {
+            if (xs.head == null) {
+                if (ys.head != null) return false;
+            } else {
+                if (!xs.head.equals(ys.head)) return false;
+            }
+            xs = xs.tail;
+            ys = ys.tail;
+        }
+        return xs.tail == null && ys.tail == null;
     }
 
     /** Does the list contain the specified element?
      */
     @Override
     public boolean contains(Object x) {
-	List<A> l = this;
-	while (l.tail != null) {
-	    if (x == null) {
-		if (l.head == null) return true;
-	    } else {
-		if (l.head.equals(x)) return true;
-	    }
-	    l = l.tail;
-	}
-	return false;
+        List<A> l = this;
+        while (l.tail != null) {
+            if (x == null) {
+                if (l.head == null) return true;
+            } else {
+                if (l.head.equals(x)) return true;
+            }
+            l = l.tail;
+        }
+        return false;
     }
 
     /** The last element in the list, if any, or null.
      */
     public A last() {
-	A last = null;
-	List<A> t = this;
-	while (t.tail != null) {
-	    last = t.head;
-	    t = t.tail;
-	}
-	return last;
+        A last = null;
+        List<A> t = this;
+        while (t.tail != null) {
+            last = t.head;
+            t = t.tail;
+        }
+        return last;
     }
 
     @SuppressWarnings("unchecked")
     public static <T> List<T> convert(Class<T> klass, List<?> list) {
-	if (list == null)
-	    return null;
-	for (Object o : list)
-	    klass.cast(o);
+        if (list == null)
+            return null;
+        for (Object o : list)
+            klass.cast(o);
         return (List<T>)list;
     }
 
@@ -375,54 +375,54 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
             public Object next() {
                 throw new java.util.NoSuchElementException();
             }
-	    public void remove() {
-		throw new UnsupportedOperationException();
-	    }
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
         };
 
     @SuppressWarnings("unchecked")
     private static <A> Iterator<A> emptyIterator() {
-	return EMPTYITERATOR;
+        return EMPTYITERATOR;
     }
 
     @Override
     public Iterator<A> iterator() {
         if (tail == null)
             return emptyIterator();
-	return new Iterator<A>() {
-	    List<A> elems = List.this;
-	    public boolean hasNext() {
-		return elems.tail != null;
-	    }
-	    public A next() {
+        return new Iterator<A>() {
+            List<A> elems = List.this;
+            public boolean hasNext() {
+                return elems.tail != null;
+            }
+            public A next() {
                 if (elems.tail == null)
                     throw new NoSuchElementException();
-		A result = elems.head;
-		elems = elems.tail;
-		return result;
-	    }
-	    public void remove() {
-		throw new UnsupportedOperationException();
-	    }
-	};
+                A result = elems.head;
+                elems = elems.tail;
+                return result;
+            }
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public A get(int index) {
-	if (index < 0)
-	    throw new IndexOutOfBoundsException(String.valueOf(index));
+        if (index < 0)
+            throw new IndexOutOfBoundsException(String.valueOf(index));
 
-	List<A> l = this;
-	for (int i = index; i-- > 0 && !l.isEmpty(); l = l.tail)
-	    ;
+        List<A> l = this;
+        for (int i = index; i-- > 0 && !l.isEmpty(); l = l.tail)
+            ;
 
-	if (l.isEmpty())
-	    throw new IndexOutOfBoundsException("Index: " + index + ", " +
-						"Size: " + size());
-	return l.head;
+        if (l.isEmpty())
+            throw new IndexOutOfBoundsException("Index: " + index + ", " +
+                                                "Size: " + size());
+        return l.head;
     }
 
     public boolean addAll(int index, Collection<? extends A> c) {
-        if (c.isEmpty()) 
+        if (c.isEmpty())
             return false;
         throw new UnsupportedOperationException();
     }
@@ -441,7 +441,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
 
     public int indexOf(Object o) {
         int i = 0;
-	for (List<A> l = this; l.tail != null; l = l.tail, i++) {
+        for (List<A> l = this; l.tail != null; l = l.tail, i++) {
             if (l.head == null ? o == null : l.head.equals(o))
                 return i;
         }
@@ -451,7 +451,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     public int lastIndexOf(Object o) {
         int last = -1;
         int i = 0;
-	for (List<A> l = this; l.tail != null; l = l.tail, i++) {
+        for (List<A> l = this; l.tail != null; l = l.tail, i++) {
             if (l.head == null ? o == null : l.head.equals(o))
                 last = i;
         }
@@ -469,16 +469,16 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     public java.util.List<A> subList(int fromIndex, int toIndex) {
         if  (fromIndex < 0 || toIndex > size() || fromIndex > toIndex)
             throw new IllegalArgumentException();
-        
+
         ArrayList<A> a = new ArrayList<A>(toIndex - fromIndex);
         int i = 0;
-	for (List<A> l = this; l.tail != null; l = l.tail, i++) {
+        for (List<A> l = this; l.tail != null; l = l.tail, i++) {
             if (i == toIndex)
                 break;
             if (i >= fromIndex)
                 a.add(l.head);
         }
-        
+
         return Collections.unmodifiableList(a);
     }
 }

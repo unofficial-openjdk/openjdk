@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug      4904038
- * @summary  The field detail comment should not show up in the output if there 
+ * @summary  The field detail comment should not show up in the output if there
  *           are no fields to document.
  * @author   jamieh
  * @library  ../lib/
@@ -34,22 +34,22 @@
  */
 
 public class TestHtmlComments extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4904038";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, SRC_DIR + FS + "C.java"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = {
-        {BUG_ID + FS + "C.html", 
+        {BUG_ID + FS + "C.html",
             "<!-- ============ FIELD DETAIL =========== -->"}
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -59,14 +59,14 @@ public class TestHtmlComments extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

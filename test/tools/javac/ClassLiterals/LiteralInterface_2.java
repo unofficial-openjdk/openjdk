@@ -34,6 +34,6 @@ interface LiteralInterface_2 {
     Class quux = J.class;
 
     class J {
-	Class quem = Float.class;
+        Class quem = Float.class;
     }
 }

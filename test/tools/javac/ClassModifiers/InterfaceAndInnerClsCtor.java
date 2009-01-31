@@ -25,7 +25,7 @@
  * @test
  * @bug 4221648
  * @summary If an interface has an inner class, the constructor for that inner
- * class must be accessible to the interface, regardless of whether it is 
+ * class must be accessible to the interface, regardless of whether it is
  * explicitly declared private.
  *
  * @clean InterfaceAndInnerClsCtor
@@ -37,11 +37,11 @@ public interface InterfaceAndInnerClsCtor
     // All interface memebers are implicitly public. Hence, there is no need to
     // have other inner classes with different access levels.
     public static class Inner {
-	// A constructor for each of the possible access levels.
- 	public Inner(boolean b) {}
- 	Inner(char c) {}
- 	protected Inner(int i) {}
-  	private Inner() {}
+        // A constructor for each of the possible access levels.
+        public Inner(boolean b) {}
+        Inner(char c) {}
+        protected Inner(int i) {}
+        private Inner() {}
     }
 
     // Verify that all of the constructors are accessible at compile time.

@@ -1,5 +1,5 @@
 /**
- * @test    @(#)T6589361.java	1.1 07/07/18
+ * @test    @(#)T6589361.java   1.1 07/07/18
  * @bug     6589361
  * @summary 6589361:Failing building ct.sym file as part of the control build
  */
@@ -16,7 +16,7 @@ import java.util.HashSet;
 
 public class T6589361 {
     public static void main(String [] args) throws Exception {
-     	JavacFileManager fm = null;
+        JavacFileManager fm = null;
         try {
             fm = new JavacFileManager(new Context(), false, null);
             Set<JavaFileObject.Kind> set = new HashSet<JavaFileObject.Kind>();
@@ -40,7 +40,7 @@ public class T6589361 {
                 fm.close();
             }
         }
-	throw new AssertionError("Could not fing java/lang/Object.class while compiling");
+        throw new AssertionError("Could not fing java/lang/Object.class while compiling");
     }
 
 }

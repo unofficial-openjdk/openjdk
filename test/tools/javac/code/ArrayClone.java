@@ -35,6 +35,6 @@
 /** The qualifying type in the code for array.clone() should be the array type. */
 class ArrayClone {
     public static void main(String[] args) {
-	args.clone();
+        args.clone();
     }
 }

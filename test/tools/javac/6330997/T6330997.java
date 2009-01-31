@@ -27,7 +27,7 @@
  * @summary javac should accept class files with major version of the next release
  * @author  Wei Tao
  * @clean T1 T2
- * @compile T1.java 
+ * @compile T1.java
  * @compile T2.java
  * @run main/othervm T6330997
  */
@@ -43,7 +43,7 @@ import javax.tools.ToolProvider;
 public class T6330997 {
     public static void main(String... args) {
         increaseMajor("T1.class", 1);
-        increaseMajor("T2.class", 2);        
+        increaseMajor("T2.class", 2);
         javax.tools.JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         JavacTaskImpl task = (JavacTaskImpl)tool.getTask(null, null, null, null, null, null);
         JavaCompiler compiler = JavaCompiler.instance(task.getContext());
@@ -64,8 +64,8 @@ public class T6330997 {
         }
         throw new RuntimeException("Failed: no error reported");
     }
-            
-    // Increase class file cfile's major version by delta  
+
+    // Increase class file cfile's major version by delta
     static void increaseMajor(String cfile, int delta) {
         try {
             RandomAccessFile cls = new RandomAccessFile(

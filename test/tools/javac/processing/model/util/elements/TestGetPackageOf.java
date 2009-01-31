@@ -51,31 +51,31 @@ public class TestGetPackageOf extends AbstractProcessor {
      * Check expected behavior on classes and packages.
      */
     public boolean process(Set<? extends TypeElement> annotations,
-			   RoundEnvironment roundEnv) {
+                           RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {
-	    TypeElement    stringElt   = eltUtils.getTypeElement("java.lang.String");
-	    PackageElement javaLangPkg = eltUtils.getPackageElement("java.lang");
-	    PackageElement unnamedPkg  = eltUtils.getPackageElement("");
-	    PackageElement pkg = null;
-	    
-	    if (!javaLangPkg.equals(pkg=eltUtils.getPackageOf(stringElt) ) )
-		throw new RuntimeException("Unexpected package for String: " + pkg);
+            TypeElement    stringElt   = eltUtils.getTypeElement("java.lang.String");
+            PackageElement javaLangPkg = eltUtils.getPackageElement("java.lang");
+            PackageElement unnamedPkg  = eltUtils.getPackageElement("");
+            PackageElement pkg = null;
 
-	    if (!javaLangPkg.equals(pkg=eltUtils.getPackageOf(javaLangPkg) ) )
-		throw new RuntimeException("Unexpected package for java.lang: " + pkg);
+            if (!javaLangPkg.equals(pkg=eltUtils.getPackageOf(stringElt) ) )
+                throw new RuntimeException("Unexpected package for String: " + pkg);
 
-	    if (!unnamedPkg.equals(pkg=eltUtils.getPackageOf(unnamedPkg) ) )
-		throw new RuntimeException("Unexpected package for unnamed pkg: " + pkg);
+            if (!javaLangPkg.equals(pkg=eltUtils.getPackageOf(javaLangPkg) ) )
+                throw new RuntimeException("Unexpected package for java.lang: " + pkg);
+
+            if (!unnamedPkg.equals(pkg=eltUtils.getPackageOf(unnamedPkg) ) )
+                throw new RuntimeException("Unexpected package for unnamed pkg: " + pkg);
         }
         return true;
     }
-    
+
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
-    
+
     public void init(ProcessingEnvironment processingEnv) {
-	super.init(processingEnv);
-	eltUtils = processingEnv.getElementUtils();
+        super.init(processingEnv);
+        eltUtils = processingEnv.getElementUtils();
     }
 }

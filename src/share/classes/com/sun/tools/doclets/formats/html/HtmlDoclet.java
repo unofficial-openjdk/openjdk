@@ -41,13 +41,13 @@ import java.io.*;
  *
  */
 public class HtmlDoclet extends AbstractDoclet {
-    
+
     /**
      * The global configuration information for this run.
      */
-    public ConfigurationImpl configuration = 
+    public ConfigurationImpl configuration =
         (ConfigurationImpl) configuration();
-    
+
     /**
      * The "start" method as required by Javadoc.
      *
@@ -59,7 +59,7 @@ public class HtmlDoclet extends AbstractDoclet {
         HtmlDoclet doclet = new HtmlDoclet();
         return doclet.start(doclet, root);
     }
-    
+
     /**
      * Create the configuration instance.
      * Override this method to use a different
@@ -68,7 +68,7 @@ public class HtmlDoclet extends AbstractDoclet {
     public Configuration configuration() {
         return ConfigurationImpl.getInstance();
     }
-    
+
     /**
      * Start the generation of files. Call generate methods in the individual
      * writers, which will in turn genrate the documentation files. Call the
@@ -79,7 +79,7 @@ public class HtmlDoclet extends AbstractDoclet {
      *
      * @see com.sun.javadoc.RootDoc
      */
-    protected void generateOtherFiles(RootDoc root, ClassTree classtree) 
+    protected void generateOtherFiles(RootDoc root, ClassTree classtree)
             throws Exception {
         super.generateOtherFiles(root, classtree);
         if (configuration.linksource) {
@@ -92,7 +92,7 @@ public class HtmlDoclet extends AbstractDoclet {
                     root, DocletConstants.SOURCE_OUTPUT_DIR_NAME);
             }
         }
-        
+
         if (configuration.topFile.length() == 0) {
             configuration.standardmessage.
                 error("doclet.No_Non_Deprecated_Classes_To_Document");
@@ -110,7 +110,7 @@ public class HtmlDoclet extends AbstractDoclet {
             ClassUseWriter.generate(configuration, classtree);
         }
         IndexBuilder indexbuilder = new IndexBuilder(configuration, nodeprecated);
-        
+
         if (configuration.createtree) {
             TreeWriter.generate(configuration, classtree);
         }
@@ -121,16 +121,16 @@ public class HtmlDoclet extends AbstractDoclet {
                 SingleIndexWriter.generate(configuration, indexbuilder);
             }
         }
-        
+
         if (!(configuration.nodeprecatedlist || nodeprecated)) {
             DeprecatedListWriter.generate(configuration);
         }
-        
+
         AllClassesFrameWriter.generate(configuration,
             new IndexBuilder(configuration, nodeprecated, true));
-        
+
         FrameOutputWriter.generate(configuration);
-        
+
         if (configuration.createoverview) {
             PackageIndexWriter.generate(configuration);
         }
@@ -142,7 +142,7 @@ public class HtmlDoclet extends AbstractDoclet {
             StylesheetWriter.generate(configuration);
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -161,24 +161,24 @@ public class HtmlDoclet extends AbstractDoclet {
                 arr[i+1];
             try {
                 if (curr.isAnnotationType()) {
-                    AbstractBuilder annotationTypeBuilder = 
+                    AbstractBuilder annotationTypeBuilder =
                         configuration.getBuilderFactory()
-                            .getAnnotationTypeBuilder((AnnotationTypeDoc) curr, 
+                            .getAnnotationTypeBuilder((AnnotationTypeDoc) curr,
                                 prev, next);
                     annotationTypeBuilder.build();
                 } else {
-                    AbstractBuilder classBuilder = 
+                    AbstractBuilder classBuilder =
                         configuration.getBuilderFactory()
                             .getClassBuilder(curr, prev, next, classtree);
                     classBuilder.build();
-                }                
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DocletAbortException();
             }
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -186,7 +186,7 @@ public class HtmlDoclet extends AbstractDoclet {
         PackageDoc[] packages = configuration.packages;
         if (packages.length > 1) {
             PackageIndexFrameWriter.generate(configuration);
-        }        
+        }
         PackageDoc prev = null, next;
         for(int i = 0; i < packages.length; i++) {
             PackageFrameWriter.generate(configuration, packages[i]);
@@ -207,7 +207,7 @@ public class HtmlDoclet extends AbstractDoclet {
             prev = packages[i];
         }
     }
-    
+
     /**
      * Check for doclet added options here.
      *
@@ -218,7 +218,7 @@ public class HtmlDoclet extends AbstractDoclet {
         // Construct temporary configuration for check
         return (ConfigurationImpl.getInstance()).optionLength(option);
     }
-    
+
     /**
      * Check that options have the correct arguments here.
      * <P>
@@ -235,7 +235,7 @@ public class HtmlDoclet extends AbstractDoclet {
         // Construct temporary configuration for check
         return (ConfigurationImpl.getInstance()).validOptions(options, reporter);
     }
-    
+
     private void performCopy(String configdestdir, String filename) {
         try {
             String destdir = (configdestdir.length() > 0) ?
@@ -250,7 +250,7 @@ public class HtmlDoclet extends AbstractDoclet {
                 if (!desthelpfile.getCanonicalPath().equals(
                         helpstylefile.getCanonicalPath())) {
                     configuration.message.
-                        notice((SourcePosition) null, 
+                        notice((SourcePosition) null,
                             "doclet.Copying_File_0_To_File_1",
                             helpstylefile.toString(), desthelpfile.toString());
                     Util.copyFile(desthelpfile, helpstylefile);
@@ -258,13 +258,10 @@ public class HtmlDoclet extends AbstractDoclet {
             }
         } catch (IOException exc) {
             configuration.message.
-                error((SourcePosition) null, 
+                error((SourcePosition) null,
                     "doclet.perform_copy_exception_encountered",
                     exc.toString());
             throw new DocletAbortException();
         }
     }
 }
-
-
-

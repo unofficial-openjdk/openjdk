@@ -32,39 +32,39 @@ import java.util.*;
 
 /**
  * Converts Java Source Code to HTML.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 public class SourceToHTMLConverter {
-    
+
     /**
      * The background color.
      */
     protected static final String BGCOLOR = "white";
-    
+
     /**
      * The line number color.
      */
     protected static final String LINE_NO_COLOR = "green";
-    
+
     /**
      * The number of trailing blank lines at the end of the page.
      * This is inserted so that anchors at the bottom of small pages
      * can be reached.
      */
     protected static final int NUM_BLANK_LINES = 60;
-    
-    
+
+
     /**
      * Source is converted to HTML using static methods below.
      */
     private SourceToHTMLConverter() {}
-    
+
     /**
      * Convert the Classes in the given RootDoc to an HTML.
      * @param configuration the configuration.
@@ -85,7 +85,7 @@ public class SourceToHTMLConverter {
                 getPackageOutputDir(outputdir, cds[i].containingPackage()));
         }
     }
-    
+
     /**
      * Convert the Classes in the given Package to an HTML.
      * @param configuration the configuration.
@@ -102,7 +102,7 @@ public class SourceToHTMLConverter {
             convertClass(configuration, cds[i], classOutputdir);
         }
     }
-    
+
     /**
      * Return the directory write output to for the given package.
      * @param outputDir the directory to output to.
@@ -112,7 +112,7 @@ public class SourceToHTMLConverter {
         return outputDir + File.separator +
             DirectoryManager.getDirectoryPath(pd) + File.separator;
     }
-    
+
     /**
      * Convert the given Class to an HTML.
      * @param configuration the configuration.
@@ -133,14 +133,14 @@ public class SourceToHTMLConverter {
             String line;
             StringBuffer output = new StringBuffer();
             LineNumberReader reader = new LineNumberReader(new FileReader(file));
-	    try {
-		while ((line = reader.readLine()) != null) {
-		    output.append(formatLine(line, configuration.sourcetab, lineno));
-		    lineno++;
-		}
-	    } finally {
-		reader.close();
-	    }
+            try {
+                while ((line = reader.readLine()) != null) {
+                    output.append(formatLine(line, configuration.sourcetab, lineno));
+                    lineno++;
+                }
+            } finally {
+                reader.close();
+            }
             output = addLineNumbers(output.toString());
             output.insert(0, getHeader());
             output.append(getFooter());
@@ -149,7 +149,7 @@ public class SourceToHTMLConverter {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Write the output to the file.
      * @param output the string to output.
@@ -168,11 +168,11 @@ public class SourceToHTMLConverter {
         bw.close();
         fout.close();
     }
-    
+
     /**
      * Given a <code>String</code>, add line numbers.
      * @param s the text to add line numbers to.
-     * 
+     *
      * @return the string buffer with the line numbering for each line.
      */
     private static StringBuffer addLineNumbers(String s) {
@@ -189,7 +189,7 @@ public class SourceToHTMLConverter {
         }
         return sb;
     }
-    
+
     /**
      * Get the header.
      * @return the header to the output file
@@ -200,7 +200,7 @@ public class SourceToHTMLConverter {
         result.append("<PRE>" + DocletConstants.NL);
         return result.toString();
     }
-    
+
     /**
      * Get the footer
      * @return the footer to the output file
@@ -210,18 +210,18 @@ public class SourceToHTMLConverter {
         for (int i = 0; i < NUM_BLANK_LINES; i++) {
             footer.append(DocletConstants.NL);
         }
-        footer.append("</PRE>" + DocletConstants.NL + "</BODY>" + 
+        footer.append("</PRE>" + DocletConstants.NL + "</BODY>" +
             DocletConstants.NL + "</HTML>" + DocletConstants.NL);
         return footer.toString();
     }
-    
+
     /**
      * Get the HTML for the lines.
      * @param lineno The line number
      * @return the HTML code for the line
      */
     protected static String getHTMLLineNo(int lineno) {
-        StringBuffer result = new StringBuffer("<FONT color=\"" + LINE_NO_COLOR 
+        StringBuffer result = new StringBuffer("<FONT color=\"" + LINE_NO_COLOR
             + "\">");
         if (lineno < 10) {
             result.append("00" + ((new Integer(lineno)).toString()));
@@ -233,10 +233,10 @@ public class SourceToHTMLConverter {
         result.append("</FONT>    ");
         return result.toString();
     }
-    
+
     /**
      * Format a given line of source. <br>
-     * Note:  In the future, we will add special colors for constructs in the 
+     * Note:  In the future, we will add special colors for constructs in the
      * language.
      * @param line the string to format.
      * @param tabLength the number of spaces for each tab.
@@ -253,7 +253,7 @@ public class SourceToHTMLConverter {
         Util.replaceTabs(tabLength, lineBuffer);
         return lineBuffer.toString();
     }
-    
+
     /**
      * Given an array of <code>Doc</code>s, add to the given <code>HashMap</code> the
      * line numbers and anchors that should be inserted in the output at those lines.
@@ -268,7 +268,7 @@ public class SourceToHTMLConverter {
             hash.put(new Integer(docs[i].position().line()), getAnchor(docs[i]));
         }
     }
-    
+
     /**
      * Given a <code>Doc</code>, return an anchor for it.
      * @param d the <code>Doc</code> to check.
@@ -277,7 +277,7 @@ public class SourceToHTMLConverter {
     protected static String getAnchor(Doc d) {
         return "    <a name=\"" + getAnchorName(d) + "\"></a>";
     }
-    
+
     /**
      * Given a <code>Doc</code>, return an anchor name for it.
      * @param d the <code>Doc</code> to check.
@@ -287,4 +287,3 @@ public class SourceToHTMLConverter {
         return "line." + d.position().line();
     }
 }
-

@@ -9,16 +9,16 @@ import java.io.Serializable;
  * Any label would be ignored.
  */
 public class X implements Serializable {
-    
+
     private int f;
-    
+
     private X(){}
-    
+
     private void m() {}
 
     /** @see X#m() */
     private static class P implements Serializable {}
-    
+
     /**
      * {@link #X()}<br/>
      * {@link #m()}<br/>

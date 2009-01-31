@@ -44,6 +44,6 @@ interface B {
 
 class C {
     void f() {
-	int x = K; // ambiguous
+        int x = K; // ambiguous
     }
 }

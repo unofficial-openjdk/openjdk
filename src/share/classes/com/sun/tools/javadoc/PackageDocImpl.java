@@ -62,7 +62,7 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
  */
 
 public class PackageDocImpl extends DocImpl implements PackageDoc {
-    
+
     private static final String PACKAGE_HTML_FILE_NAME = "package.html";
 
     protected PackageSymbol sym;
@@ -71,39 +71,39 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
     public String docPath = null;
     public String zipDocPath = null;
     public String zipDocEntry = null;
-    private boolean foundDoc;	// found a doc comment in either
-				// package.html or package-info.java
-    
+    private boolean foundDoc;   // found a doc comment in either
+                                // package.html or package-info.java
+
     boolean isIncluded = false;  // Set in RootDocImpl.
     public boolean setDocPath = false;  //Flag to avoid setting doc path multiple times.
-    
+
     /**
      * Constructor
      */
     public PackageDocImpl(DocEnv env, PackageSymbol sym) {
         this(env, sym, null, null);
     }
-    
+
     /**
      * Constructor
      */
     public PackageDocImpl(DocEnv env, PackageSymbol sym,
-			  String documentation, JCTree tree) {
+                          String documentation, JCTree tree) {
         super(env, documentation);
         this.sym = sym;
-	this.tree = (JCCompilationUnit) tree;
-	foundDoc = (documentation != null);
+        this.tree = (JCCompilationUnit) tree;
+        foundDoc = (documentation != null);
     }
 
     void setTree(JCTree tree) {
-	this.tree = (JCCompilationUnit) tree;
+        this.tree = (JCCompilationUnit) tree;
     }
 
     public void setRawCommentText(String rawDocumentation) {
-	super.setRawCommentText(rawDocumentation);
-	checkDoc();
+        super.setRawCommentText(rawDocumentation);
+        checkDoc();
     }
-    
+
     /**
      * Do lazy initialization of "documentation" string.
      */
@@ -115,7 +115,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
                 ZipEntry entry = f.getEntry(zipDocEntry);
                 if (entry != null) {
                     InputStream s = f.getInputStream(entry);
-                    return (documentation = readHTMLDocumentation(s, 
+                    return (documentation = readHTMLDocumentation(s,
                         zipDocPath + File.separatorChar + zipDocEntry));
                 }
             } catch (IOException exc) {
@@ -139,7 +139,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
         }
         return documentation;
     }
-    
+
     /**
      * Cache of all classes contained in this package, including
      * member classes of those classes, and their member classes, etc.
@@ -147,13 +147,13 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * and weaker.
      */
     private List<ClassDocImpl> allClassesFiltered = null;
-    
+
     /**
      * Cache of all classes contained in this package, including
      * member classes of those classes, and their member classes, etc.
      */
     private List<ClassDocImpl> allClasses = null;
-    
+
     /**
      * Return a list of all classes contained in this package, including
      * member classes of those classes, and their member classes, etc.
@@ -179,7 +179,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
         else
             return allClasses = classes.toList();
     }
-    
+
     /**
      * Add all included classes (including Exceptions and Errors)
      * and interfaces.
@@ -187,7 +187,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
     public void addAllClassesTo(ListBuffer<ClassDocImpl> list) {
         list.appendList(getClasses(true));
     }
-    
+
     /**
      * Get all classes (including Exceptions and Errors)
      * and interfaces.
@@ -200,7 +200,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
         List<ClassDocImpl> classes = getClasses(filter);
         return classes.toArray(new ClassDocImpl[classes.length()]);
     }
-    
+
     /**
      * Get all included classes (including Exceptions and Errors)
      * and interfaces.  Same as allClasses(true).
@@ -210,7 +210,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
     public ClassDoc[] allClasses() {
         return allClasses(true);
     }
-    
+
     /**
      * Get ordinary classes (that is, exclude exceptions, errors,
      * enums, interfaces, and annotation types) in this package.
@@ -219,14 +219,14 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc[] ordinaryClasses() {
         ListBuffer<ClassDocImpl> ret = new ListBuffer<ClassDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isOrdinaryClass()) {
                 ret.append(c);
             }
         }
         return ret.toArray(new ClassDocImpl[ret.length()]);
     }
-    
+
     /**
      * Get Exception classes in this package.
      *
@@ -234,14 +234,14 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc[] exceptions() {
         ListBuffer<ClassDocImpl> ret = new ListBuffer<ClassDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isException()) {
                 ret.append(c);
             }
         }
         return ret.toArray(new ClassDocImpl[ret.length()]);
     }
-    
+
     /**
      * Get Error classes in this package.
      *
@@ -249,7 +249,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc[] errors() {
         ListBuffer<ClassDocImpl> ret = new ListBuffer<ClassDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isError()) {
                 ret.append(c);
             }
@@ -264,14 +264,14 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc[] enums() {
         ListBuffer<ClassDocImpl> ret = new ListBuffer<ClassDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isEnum()) {
                 ret.append(c);
             }
         }
         return ret.toArray(new ClassDocImpl[ret.length()]);
     }
-    
+
     /**
      * Get included interfaces in this package, omitting annotation types.
      *
@@ -279,7 +279,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc[] interfaces() {
         ListBuffer<ClassDocImpl> ret = new ListBuffer<ClassDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isInterface()) {
                 ret.append(c);
             }
@@ -294,8 +294,8 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public AnnotationTypeDoc[] annotationTypes() {
         ListBuffer<AnnotationTypeDocImpl> ret =
-	    new ListBuffer<AnnotationTypeDocImpl>();
-	for (ClassDocImpl c : getClasses(true)) {
+            new ListBuffer<AnnotationTypeDocImpl>();
+        for (ClassDocImpl c : getClasses(true)) {
             if (c.isAnnotationType()) {
                 ret.append((AnnotationTypeDocImpl)c);
             }
@@ -308,15 +308,15 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * Return an empty array if there are none.
      */
     public AnnotationDesc[] annotations() {
-	AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
-	int i = 0;
-	for (Attribute.Compound a : sym.getAnnotationMirrors()) {
-	    res[i++] = new AnnotationDescImpl(env, a);
-	}
-	return res;
+        AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
+        int i = 0;
+        for (Attribute.Compound a : sym.getAnnotationMirrors()) {
+            res[i++] = new AnnotationDescImpl(env, a);
+        }
+        return res;
     }
-    
-    
+
+
     /**
      * Lookup for a class within this package.
      *
@@ -324,21 +324,21 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public ClassDoc findClass(String className) {
         final boolean filtered = true;
-	for (ClassDocImpl c : getClasses(filtered)) {
+        for (ClassDocImpl c : getClasses(filtered)) {
             if (c.name().equals(className)) {
                 return c;
             }
         }
         return null;
     }
-    
+
     /**
      * Return true if this package is included in the active set.
      */
     public boolean isIncluded() {
         return isIncluded;
     }
-    
+
     /**
      * Get package name.
      *
@@ -349,40 +349,40 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
     public String name() {
         return qualifiedName();
     }
-    
+
     /**
      * Get package name.
      */
     public String qualifiedName() {
-	Name fullname = sym.getQualifiedName();
-	// Some bogus tests depend on the interned "" being returned.
-	// See 6457276.
-	return fullname.isEmpty() ? "" : fullname.toString();
+        Name fullname = sym.getQualifiedName();
+        // Some bogus tests depend on the interned "" being returned.
+        // See 6457276.
+        return fullname.isEmpty() ? "" : fullname.toString();
     }
-    
+
     /**
      * set doc path for an unzipped directory
      */
-    public void setDocPath(String path) {        
-	setDocPath = true;
-	if (path == null)
-	    return;
-	String newDocPath = path + File.separatorChar + PACKAGE_HTML_FILE_NAME;
-	if (!newDocPath.equals(docPath)) {
-	    docPath = newDocPath;
-	    checkDoc();
-	}
+    public void setDocPath(String path) {
+        setDocPath = true;
+        if (path == null)
+            return;
+        String newDocPath = path + File.separatorChar + PACKAGE_HTML_FILE_NAME;
+        if (!newDocPath.equals(docPath)) {
+            docPath = newDocPath;
+            checkDoc();
+        }
     }
-    
+
     /**
      * set the doc path for zipped directory
      */
     public void setDocPath(String path, String entry) {
-	if (!path.equals(zipDocPath)) {
-	    zipDocPath = path;
-	    zipDocEntry = entry + PACKAGE_HTML_FILE_NAME;
-	    checkDoc();
-	}
+        if (!path.equals(zipDocPath)) {
+            zipDocPath = path;
+            zipDocEntry = entry + PACKAGE_HTML_FILE_NAME;
+            checkDoc();
+        }
     }
 
     // Has checkDoc() sounded off yet?
@@ -393,23 +393,23 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * Emits a diagnostic if this is the second one.
      */
     private void checkDoc() {
-	if (foundDoc) {
-	    if (!checkDocWarningEmitted) {
-		env.warning(null, "javadoc.Multiple_package_comments", name());
-		checkDocWarningEmitted = true;
-	    }
-	} else {
-	    foundDoc = true;
-	}
+        if (foundDoc) {
+            if (!checkDocWarningEmitted) {
+                env.warning(null, "javadoc.Multiple_package_comments", name());
+                checkDocWarningEmitted = true;
+            }
+        } else {
+            foundDoc = true;
+        }
     }
-    
+
     /**
      * Return the source position of the entity, or null if
      * no position is available.
      */
     public SourcePosition position() {
-	return (tree != null)
-		? SourcePositionImpl.make(tree.sourcefile + "", tree.pos, tree.lineMap)
-		: SourcePositionImpl.make(docPath, Position.NOPOS, null);
+        return (tree != null)
+                ? SourcePositionImpl.make(tree.sourcefile + "", tree.pos, tree.lineMap)
+                : SourcePositionImpl.make(docPath, Position.NOPOS, null);
     }
 }

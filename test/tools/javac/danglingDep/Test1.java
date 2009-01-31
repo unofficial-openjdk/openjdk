@@ -30,11 +30,11 @@
 class Test1
 {
     void foo() {
-	// the following doc comment should not affect the following class declaration
-	/**
-	 * @deprecated
-	 */
-	int x;
+        // the following doc comment should not affect the following class declaration
+        /**
+         * @deprecated
+         */
+        int x;
     }
 }
 

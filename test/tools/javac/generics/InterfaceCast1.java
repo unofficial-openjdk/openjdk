@@ -49,7 +49,7 @@ interface SortedSet<E> extends Set<E> {
 class TreeSet<E> {
     public void addAll(Collection<E> c) {
         if (c instanceof SortedSet) {
-	    SortedSet<E> ss = (SortedSet<E>) c;
-	}
+            SortedSet<E> ss = (SortedSet<E>) c;
+        }
     }
 }

@@ -38,7 +38,7 @@ import java.io.*;
  * @author Atul M Dambalkar
  */
 public class HtmlWriter extends PrintWriter {
-    
+
     /**
      * Name of the file, to which this writer is writing to.
      */
@@ -54,7 +54,7 @@ public class HtmlWriter extends PrintWriter {
      */
     public static final String fileseparator =
          DirectoryManager.URL_FILE_SEPERATOR;
-    
+
     /**
      * The configuration
      */
@@ -127,7 +127,7 @@ public class HtmlWriter extends PrintWriter {
     public void scriptEnd() {
         println("</SCRIPT>");
     }
-    
+
     /**
      * Print the Javascript &lt;NOSCRIPT&gt; start tag.
      */
@@ -389,7 +389,7 @@ public class HtmlWriter extends PrintWriter {
     public void pre() {
         println("<PRE>");
     }
-    
+
     /**
      * Print &lt;PRE&gt; tag without adding new line character at th eend.
      */
@@ -403,7 +403,7 @@ public class HtmlWriter extends PrintWriter {
     public void preEnd() {
         println("</PRE>");
     }
-    
+
     /**
      * Print &lt;HR&gt; tag. Add a newline character at the end.
      */
@@ -474,7 +474,7 @@ public class HtmlWriter extends PrintWriter {
         print(text);
         boldEnd();
     }
-    
+
     /**
      * Print text passed, in Italics using &lt;I&gt; and &lt;/I&gt; tags.
      *
@@ -555,7 +555,7 @@ public class HtmlWriter extends PrintWriter {
     public void supEnd() {
         println("</SUP>");
     }
-    
+
     /**
      * Print &lt;FONT SIZE="size"&gt; tag. Add a newline character at the end.
      *
@@ -564,7 +564,7 @@ public class HtmlWriter extends PrintWriter {
     public void font(String size) {
         println("<FONT SIZE=\"" + size + "\">");
     }
-    
+
     /**
      * Print &lt;FONT SIZE="size"&gt; tag.
      *
@@ -582,7 +582,7 @@ public class HtmlWriter extends PrintWriter {
     public void fontStyle(String stylename) {
         print("<FONT CLASS=\"" + stylename + "\">");
     }
-   
+
     /**
      * Print &lt;FONT SIZE="size" CLASS="stylename"&gt; tag. Add a newline character
      * at the end.
@@ -593,14 +593,14 @@ public class HtmlWriter extends PrintWriter {
     public void fontSizeStyle(String size, String stylename) {
         println("<FONT size=\"" + size + "\" CLASS=\"" + stylename + "\">");
     }
-    
+
     /**
      * Print &lt;/FONT&gt; tag.
      */
     public void fontEnd() {
         print("</FONT>");
     }
-   
+
     /**
      * Get the "&lt;FONT COLOR="color"&gt;" string.
      *
@@ -633,13 +633,13 @@ public class HtmlWriter extends PrintWriter {
     public void centerEnd() {
         println("</CENTER>");
     }
-    
+
     /**
      * Print anchor &lt;A NAME="name"&gt; tag.
      *
      * @param name Name String.
      */
-    public void aName(String name) {        
+    public void aName(String name) {
         print("<A NAME=\"" + name + "\">");
     }
 
@@ -694,7 +694,7 @@ public class HtmlWriter extends PrintWriter {
         println();
         println("<P>");
     }
-    
+
     /**
      * Print newline and then print &lt;/P&gt; tag. Add a newline character at the
      * end.
@@ -754,7 +754,7 @@ public class HtmlWriter extends PrintWriter {
     public void codeEnd() {
         print("</CODE>");
     }
-    
+
     /**
      * Print &lt;EM&gt; tag. Add a newline character at the end.
      */
@@ -787,7 +787,7 @@ public class HtmlWriter extends PrintWriter {
                 "\" CELLSPACING=\"" + cellspacing +
                 "\" SUMMARY=\"\">");
     }
- 
+
     /**
      * Print HTML &lt;TABLE BORDER="border" CELLPADDING="cellpadding"
      * CELLSPACING="cellspacing"&gt; tag.
@@ -823,7 +823,7 @@ public class HtmlWriter extends PrintWriter {
     public void table() {
         table(0, "100%");
     }
-    
+
     /**
      * Print &lt;/TABLE&gt; tag. Add a newline character at the end.
      */
@@ -844,7 +844,7 @@ public class HtmlWriter extends PrintWriter {
     public void trEnd() {
         println("</TR>");
     }
-   
+
     /**
      * Print &lt;TD&gt; tag.
      */
@@ -890,7 +890,7 @@ public class HtmlWriter extends PrintWriter {
     public void commentStart() {
          print("<!-- ");
     }
- 
+
     /**
      * Print "--&gt;" comment end string. Add a newline character at the end.
      */
@@ -928,16 +928,16 @@ public class HtmlWriter extends PrintWriter {
     public void trAlignVAlign(String align, String valign) {
         println("<TR ALIGN=\"" + align + "\" VALIGN=\"" + valign + "\">");
     }
-    
+
     /**
-     * Print &lt;TH ALIGN="align"&gt; tag. 
+     * Print &lt;TH ALIGN="align"&gt; tag.
      *
      * @param align the align attribute.
      */
     public void thAlign(String align) {
         print("<TH ALIGN=\"" + align + "\">");
     }
-    
+
     /**
      * Print &lt;TH align="align" COLSPAN=i&gt; tag.
      *
@@ -947,16 +947,16 @@ public class HtmlWriter extends PrintWriter {
     public void thAlignColspan(String align, int i) {
         print("<TH ALIGN=\"" + align + "\" COLSPAN=\"" + i + "\">");
     }
-    
+
     /**
      * Print &lt;TH align="align" NOWRAP&gt; tag.
-     * 
+     *
      * @param align the align attribute.
      */
     public void thAlignNowrap(String align) {
         print("<TH ALIGN=\"" + align + "\" NOWRAP>");
     }
-    
+
     /**
      * Print &lt;/TH&gt; tag. Add a newline character at the end.
      */
@@ -982,7 +982,7 @@ public class HtmlWriter extends PrintWriter {
     public void tdBgcolorStyle(String color, String stylename) {
         print("<TD BGCOLOR=\"" + color + "\" CLASS=\"" + stylename + "\">");
     }
- 
+
     /**
      * Print &lt;TD COLSPAN=i BGCOLOR="color" CLASS="stylename"&gt; tag.
      *
@@ -1088,7 +1088,7 @@ public class HtmlWriter extends PrintWriter {
     public String getCodeEnd() {
         return "</CODE>";
     }
- 
+
     /**
      * Print &lt;NOFRAMES&gt; tag. Add a newline character at the end.
      */

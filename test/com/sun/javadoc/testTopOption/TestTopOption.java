@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,28 +33,28 @@
  */
 
 public class TestTopOption extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "6227616";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-overview", "SRC_DIR + FS + overview.html", "-use", "-top", "TOP TEXT", "-d", BUG_ID, "-sourcepath",
         SRC_DIR, "pkg"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "AnnotationType.html",
             "TOP TEXT"},
         {BUG_ID + FS + "pkg" + FS + "class-use" + FS + "AnnotationType.html",
             "TOP TEXT"},
-            
+
         {BUG_ID + FS + "pkg" + FS + "Cl.html",
             "TOP TEXT"},
         {BUG_ID + FS + "pkg" + FS + "class-use" + FS + "Cl.html",
             "TOP TEXT"},
-            
+
         {BUG_ID + FS + "pkg" + FS + "package-summary.html",
             "TOP TEXT"},
         {BUG_ID + FS + "pkg" + FS + "package-use.html",
@@ -70,7 +70,7 @@ public class TestTopOption extends JavadocTester {
             "TOP TEXT"},
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -80,14 +80,14 @@ public class TestTopOption extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

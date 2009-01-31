@@ -35,15 +35,15 @@ public class InnerClassLiterals {
 
     // Should not generate access errors.
     public static void main(String[] args) {
-	Class x1 = int.class;
-	Class x2 = float.class;
-	Class x3 = void.class;
-	Class x4 = String.class;
-	Class x5 = Integer.class;
-	Class x6 = InnerClassLiterals.class;
-	// Bug 4030384: Compiler did not allow this.
-	Class x7 = InnerClassLiterals.Inner1.class;
-	Class x8 = InnerClassLiterals.Inner2.class;
+        Class x1 = int.class;
+        Class x2 = float.class;
+        Class x3 = void.class;
+        Class x4 = String.class;
+        Class x5 = Integer.class;
+        Class x6 = InnerClassLiterals.class;
+        // Bug 4030384: Compiler did not allow this.
+        Class x7 = InnerClassLiterals.Inner1.class;
+        Class x8 = InnerClassLiterals.Inner2.class;
     }
 
     class Inner1 {}

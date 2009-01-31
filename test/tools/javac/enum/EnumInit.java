@@ -41,7 +41,7 @@ class AnnotationDriverTest {}
 
 @Retention(RetentionPolicy.RUNTIME)
 @interface NestedEnum {
-    enum Vehicles { 
+    enum Vehicles {
         sports {
         };
     }

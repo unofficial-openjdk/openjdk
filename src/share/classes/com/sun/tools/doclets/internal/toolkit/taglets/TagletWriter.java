@@ -37,23 +37,23 @@ import com.sun.javadoc.*;
  */
 
 public abstract class TagletWriter {
-    
+
     /**
      * True if we only want to write the first sentence.
      */
     protected boolean isFirstSentence = false;
-    
+
     /**
      * @return an instance of the output object.
      */
     public abstract TagletOutput getOutputInstance();
-    
+
     /**
      * Returns the output for the DocRoot inline tag.
      * @return the output for the DocRoot inline tag.
      */
     protected abstract TagletOutput getDocRootOutput();
-    
+
     /**
      * Return the deprecated tag output.
      *
@@ -61,14 +61,14 @@ public abstract class TagletWriter {
      * @return the output of the deprecated tag.
      */
     protected abstract TagletOutput deprecatedTagOutput(Doc doc);
-    
+
     /**
      * Returns {@link MessageRetriever} for output purposes.
      *
      * @return {@link MessageRetriever} for output purposes.
      */
     protected abstract MessageRetriever getMsgRetriever();
-    
+
     /**
      * Return the header for the param tags.
      *
@@ -76,7 +76,7 @@ public abstract class TagletWriter {
      * @return the header for the param tags.
      */
     protected abstract TagletOutput getParamHeader(String header);
-    
+
     /**
      * Return the output for param tags.
      *
@@ -86,7 +86,7 @@ public abstract class TagletWriter {
      */
     protected abstract TagletOutput paramTagOutput(ParamTag paramTag,
         String paramName);
-    
+
     /**
      * Return the return tag output.
      *
@@ -94,7 +94,7 @@ public abstract class TagletWriter {
      * @return the output of the return tag.
      */
     protected abstract TagletOutput returnTagOutput(Tag returnTag);
-    
+
     /**
      * Return the see tag output.
      *
@@ -102,16 +102,16 @@ public abstract class TagletWriter {
      * @return the output of the see tags.
      */
     protected abstract TagletOutput seeTagOutput(Doc holder, SeeTag[] seeTags);
-    
+
     /**
-     * Return the output for a simple tag. 
+     * Return the output for a simple tag.
      *
      * @param simpleTags the array of simple tags.
      * @return the output of the simple tags.
      */
     protected abstract TagletOutput simpleTagOutput(Tag[] simpleTags,
         String header);
-    
+
     /**
      * Return the output for a simple tag.
      *
@@ -119,14 +119,14 @@ public abstract class TagletWriter {
      * @return the output of the simple tag.
      */
     protected abstract TagletOutput simpleTagOutput(Tag simpleTag, String header);
-    
+
     /**
      * Return the header for the throws tag.
      *
      * @return the header for the throws tag.
      */
     protected abstract TagletOutput getThrowsHeader();
-    
+
     /**
      * Return the header for the throws tag.
      *
@@ -134,7 +134,7 @@ public abstract class TagletWriter {
      * @return the output of the throws tag.
      */
     protected abstract TagletOutput throwsTagOutput(ThrowsTag throwsTag);
-    
+
     /**
      * Return the output for the throws tag.
      *
@@ -142,19 +142,19 @@ public abstract class TagletWriter {
      * @return the output of the throws type.
      */
     protected abstract TagletOutput throwsTagOutput(Type throwsType);
-    
+
     /**
      * Return the output for the value tag.
      *
      * @param field       the constant field that holds the value tag.
      * @param constantVal the constant value to document.
-     * @param includeLink true if we should link the constant text to the 
+     * @param includeLink true if we should link the constant text to the
      *                    constant field itself.
      * @return the output of the value tag.
      */
-    protected abstract TagletOutput valueTagOutput(FieldDoc field, 
+    protected abstract TagletOutput valueTagOutput(FieldDoc field,
         String constantVal, boolean includeLink);
-    
+
     /**
      * Given an output object, append to it the tag documentation for
      * the given member.
@@ -177,7 +177,7 @@ public abstract class TagletWriter {
                 continue;
             }
             if (taglets[i] instanceof DeprecatedTaglet) {
-                //Deprecated information is documented "inline", not in tag info 
+                //Deprecated information is documented "inline", not in tag info
                 //section.
                 continue;
             }
@@ -197,7 +197,7 @@ public abstract class TagletWriter {
             }
         }
     }
-    
+
     /**
      * Given an inline tag, return its output.
      * @param tagletManager The taglet manager for the current doclet.
@@ -225,7 +225,7 @@ public abstract class TagletWriter {
         }
         return null;
     }
-    
+
     /**
      * Converts inline tags and text to TagOutput, expanding the
      * inline tags along the way.  Called wherever text can contain
@@ -251,7 +251,7 @@ public abstract class TagletWriter {
      * @return the {@link TagletOutput} representing the comments.
      */
     public abstract TagletOutput commentTagsToOutput(Doc holderDoc, Tag[] tags);
-    
+
     /**
      * Converts inline tags and text to TagOutput, expanding the
      * inline tags along the way.  Called wherever text can contain
@@ -267,12 +267,12 @@ public abstract class TagletWriter {
      */
     public abstract TagletOutput commentTagsToOutput(Tag holderTag,
         Doc holderDoc, Tag[] tags, boolean isFirstSentence);
-    
+
     /**
      * @return an instance of the configuration used for this doclet.
      */
     public abstract Configuration configuration();
-    
+
     /**
      * @return an instance of the taglet output object.
      */

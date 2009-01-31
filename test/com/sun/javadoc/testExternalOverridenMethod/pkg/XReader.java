@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,7 +26,7 @@ package pkg;
 import java.io.*;
 
 public abstract class XReader extends FilterReader implements DataInput {
-   
+
    /**
     * This tests overridding an external method.
     */

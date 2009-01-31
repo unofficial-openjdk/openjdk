@@ -37,7 +37,7 @@ package com.sun.source.tree;
  * {@code NullPointerException} if the additional parameter {@code p}
  * is {@code null}; see documentation of the implementing class for
  * details.
- * 
+ *
  * <p> <b>WARNING:</b> It is possible that methods will be added to
  * this interface to accommodate new, currently unknown, language
  * structures added to future versions of the Java&trade; programming
@@ -46,7 +46,7 @@ package com.sun.source.tree;
  * platform.
  *
  * @param <R> the return type of this visitor's methods.  Use {@link
- * 	      Void} for visitors that do not need to return results.
+ *            Void} for visitors that do not need to return results.
  * @param <P> the type of the additional parameter to this visitor's
  *            methods.  Use {@code Void} for visitors that do not need an
  *            additional parameter.

@@ -22,5 +22,5 @@
  */
 
 class A {
-    Object o = new Object() { enum STRENGTH{}; };         
+    Object o = new Object() { enum STRENGTH{}; };
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,10 +30,10 @@
 public class BadSuper {
 
     public static void main(String[] args) {
-	String srcpath = System.getProperty("test.src", ".");
+        String srcpath = System.getProperty("test.src", ".");
 
-	if (com.sun.tools.javadoc.Main.execute(
-		new String[] {"-d", "doc", "-sourcepath", srcpath, "p"}) != 0)
-	    throw new Error("Javadoc encountered warnings or errors.");
+        if (com.sun.tools.javadoc.Main.execute(
+                new String[] {"-d", "doc", "-sourcepath", srcpath, "p"}) != 0)
+            throw new Error("Javadoc encountered warnings or errors.");
     }
 }

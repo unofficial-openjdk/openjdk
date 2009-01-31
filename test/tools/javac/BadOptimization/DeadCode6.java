@@ -40,22 +40,21 @@ import java.awt.event.*;
 public class DeadCode6 extends Window
 {
     public DeadCode6( Frame parent ) {
-	super( parent );
+        super( parent );
     }
 
     public void init() {
-	final DeadCode6 wndThis = this;
+        final DeadCode6 wndThis = this;
 
-	/*******************************************************************
-	 * add window listener
-	 ******************************************************************/
- 	addWindowListener( new WindowAdapter () {
- 	    public void windowClosing( WindowEvent evt ) {
- 		wndThis.doCancelAction();
- 	    }
- 	} );
+        /*******************************************************************
+         * add window listener
+         ******************************************************************/
+        addWindowListener( new WindowAdapter () {
+            public void windowClosing( WindowEvent evt ) {
+                wndThis.doCancelAction();
+            }
+        } );
     }
 
     public void doCancelAction() { }
 }
-

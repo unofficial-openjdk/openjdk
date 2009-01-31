@@ -72,7 +72,7 @@ public interface Filer {
      * the platform's default encoding if none is specified.
      *
      * @param name  canonical (fully qualified) name of the principal type
-     *		being declared in this file
+     *          being declared in this file
      * @return a writer for the new file
      * @throws IOException if the file cannot be created
      */
@@ -105,17 +105,17 @@ public interface Filer {
      *
      * @param loc location of the new file
      * @param pkg package relative to which the file should be named,
-     *		or the empty string if none
+     *          or the empty string if none
      * @param relPath final pathname components of the file
      * @param charsetName the name of the charset to use, or null if none
-     *		is being explicitly specified
+     *          is being explicitly specified
      * @return a writer for the new file
      * @throws IOException if the file cannot be created
      */
     PrintWriter createTextFile(Location loc,
-			       String pkg,
-			       File relPath,
-			       String charsetName) throws IOException;
+                               String pkg,
+                               File relPath,
+                               String charsetName) throws IOException;
 
     /**
      * Creates a new binary file, and returns a stream for writing to it.
@@ -128,23 +128,23 @@ public interface Filer {
      *
      * @param loc location of the new file
      * @param pkg package relative to which the file should be named,
-     *		or the empty string if none
+     *          or the empty string if none
      * @param relPath final pathname components of the file
      * @return a stream for writing to the new file
      * @throws IOException if the file cannot be created
      */
     OutputStream createBinaryFile(Location loc,
-				  String pkg,
-				  File relPath) throws IOException;
+                                  String pkg,
+                                  File relPath) throws IOException;
 
 
     /**
      * Locations (subtrees within the file system) where new files are created.
      */
     enum Location {
-	/** The location of new source files. */
-	SOURCE_TREE,
-	/** The location of new class files. */
-	CLASS_TREE
+        /** The location of new source files. */
+        SOURCE_TREE,
+        /** The location of new class files. */
+        CLASS_TREE
     }
 }

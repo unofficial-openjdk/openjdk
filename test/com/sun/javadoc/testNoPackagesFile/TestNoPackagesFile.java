@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,16 +34,16 @@
  */
 
 public class TestNoPackagesFile extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4475679";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR,
         SRC_DIR + FS + "C.java"
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -57,14 +57,14 @@ public class TestNoPackagesFile extends JavadocTester {
             System.out.println("Test passes:  packages.html not found.");
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

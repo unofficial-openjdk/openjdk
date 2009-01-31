@@ -61,9 +61,9 @@ public interface Name extends CharSequence {
      *
      * @param obj  the object to be compared with this element
      * @return {@code true} if the specified object represents the same
-     *		name as this
+     *          name as this
      * @see Element#equals
-     */ 
+     */
     boolean equals(Object obj);
 
     /**
@@ -82,7 +82,7 @@ public interface Name extends CharSequence {
      * of {@code char} values as the specified sequence, {@code false}
      * otherwise
      *
-     * @param cs The sequence to compare this name against 
+     * @param cs The sequence to compare this name against
      * @see String#contentEquals(CharSequence)
      */
     boolean contentEquals(CharSequence cs);

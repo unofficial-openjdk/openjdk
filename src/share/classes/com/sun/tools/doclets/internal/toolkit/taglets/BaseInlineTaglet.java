@@ -31,13 +31,13 @@ package com.sun.tools.doclets.internal.toolkit.taglets;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 
 public abstract class BaseInlineTaglet extends BaseTaglet {
-    
+
     /**
      * Will return true since this is an inline tag.
      * @return true since this is an inline tag.

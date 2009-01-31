@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,7 +27,7 @@ public class Test {
        * Test1 for first sentence<p> This is second sentence.
        */
       public String testStr1;
-  
+
       /**
        * Test2 for first sentence</p> This is second sentence.
        */
@@ -67,7 +67,7 @@ public class Test {
        * Test9 for first sentence<hr> This is second sentence.
        */
       public String testStr9;
- 
+
       /**
        * <h1>Test10 for first sentence</h1> This is second sentence.
        */
@@ -77,5 +77,5 @@ public class Test {
        * <h2>Test11 for first sentence</h2> This is second sentence.
        */
       public String testStr11;
-  
+
 }

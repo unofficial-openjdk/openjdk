@@ -26,8 +26,8 @@ package foo.bar;
 
 public class Quux {
     public class Xxyzzy {
-	public class Wombat {
-	}
+        public class Wombat {
+        }
     }
 
 }

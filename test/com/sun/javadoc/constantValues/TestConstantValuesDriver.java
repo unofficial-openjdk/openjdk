@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,8 +22,8 @@
  */
 
 /*
- * @test   @(#)TestConstantValuesDriver.java	1.1 02/11/03
- * @bug 4504730 4526070 5077317 
+ * @test   @(#)TestConstantValuesDriver.java    1.1 02/11/03
+ * @bug 4504730 4526070 5077317
  * @summary Test the generation of constant-values.html.
  * @author jamieh
  * @library ../lib/
@@ -39,7 +39,7 @@ public class TestConstantValuesDriver extends JavadocTester {
         SRC_DIR + FS + "TestConstantValues2.java",
         SRC_DIR + FS + "A.java"
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -56,21 +56,21 @@ public class TestConstantValuesDriver extends JavadocTester {
         run(tester, ARGS, tests, NO_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugName() {
         return getClass().getName();
     }
-    
+
     /**
      * @throws java.io.IOException Test 1 passes
      * @throws java.io.IOException Test 2 passes

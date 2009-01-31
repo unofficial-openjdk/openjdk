@@ -32,6 +32,6 @@
 
 class CompoundBox {
     {
-	Float f = 3;
+        Float f = 3;
     }
 }

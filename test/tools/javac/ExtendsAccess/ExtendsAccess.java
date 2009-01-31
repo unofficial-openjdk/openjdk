@@ -251,4 +251,3 @@ class ExtendsAccess3442 extends p.ExtendsAccess {
 class ExtendsAccess3452 extends p.ExtendsAccess {
     class N implements p.ExtendsAccess.privateInterface { }     // ERROR - cannot access 'privateInterface'
 }
-

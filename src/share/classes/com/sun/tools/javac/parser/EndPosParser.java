@@ -46,9 +46,9 @@ import static com.sun.tools.javac.tree.JCTree.*;
 public class EndPosParser extends Parser {
 
     public EndPosParser(Factory fac, Lexer S, boolean keepDocComments) {
-	super(fac, S, keepDocComments);
-	this.S = S;
-	endPositions = new HashMap<JCTree,Integer>();
+        super(fac, S, keepDocComments);
+        this.S = S;
+        endPositions = new HashMap<JCTree,Integer>();
     }
 
     private Lexer S;
@@ -63,36 +63,36 @@ public class EndPosParser extends Parser {
     @Override
     protected void storeEnd(JCTree tree, int endpos) {
         int errorEndPos = getErrorEndPos();
-	endPositions.put(tree, errorEndPos > endpos ? errorEndPos : endpos);
+        endPositions.put(tree, errorEndPos > endpos ? errorEndPos : endpos);
     }
 
     /** {@inheritDoc} */
     @Override
     protected <T extends JCTree> T to(T t) {
-	storeEnd(t, S.endPos());
-	return t;
+        storeEnd(t, S.endPos());
+        return t;
     }
 
     /** {@inheritDoc} */
     @Override
     protected <T extends JCTree> T toP(T t) {
-	storeEnd(t, S.prevEndPos());
-	return t;
+        storeEnd(t, S.prevEndPos());
+        return t;
     }
 
     @Override
     public JCCompilationUnit compilationUnit() {
-	JCCompilationUnit t = super.compilationUnit();
-	t.endPositions = endPositions;
-	return t;
+        JCCompilationUnit t = super.compilationUnit();
+        t.endPositions = endPositions;
+        return t;
     }
 
     /** {@inheritDoc} */
     @Override
     JCExpression parExpression() {
-	int pos = S.pos();
-	JCExpression t = super.parExpression();
-	return toP(F.at(pos).Parens(t));
+        int pos = S.pos();
+        JCExpression t = super.parExpression();
+        return toP(F.at(pos).Parens(t));
     }
 
     /** {@inheritDoc} */

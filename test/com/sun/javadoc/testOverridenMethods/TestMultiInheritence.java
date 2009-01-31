@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug      4933335
- * @summary  Make sure that all inherited methods from multiple extended 
+ * @summary  Make sure that all inherited methods from multiple extended
  *           interfaces are documented
  * @author   jamieh
  * @library  ../lib/
@@ -34,41 +34,41 @@
  */
 
 public class TestMultiInheritence extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4933335";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg3"
     };
-    
+
     //Method foo() is inherited from BOTH I2 and I3
     private static final String[][] TEST = {
-       {BUG_ID + FS + "pkg3" + FS + "I1.html", 
+       {BUG_ID + FS + "pkg3" + FS + "I1.html",
         "Methods inherited from interface pkg3." +        "<A HREF=\"../pkg3/I2.html\" title=\"interface in pkg3\">I2</A>"},
-        {BUG_ID + FS + "pkg3" + FS +"I1.html", 
+        {BUG_ID + FS + "pkg3" + FS +"I1.html",
         "Methods inherited from interface pkg3." +
         "<A HREF=\"../pkg3/I3.html\" title=\"interface in pkg3\">I3</A>"},
-        {BUG_ID + FS + "pkg3" + FS + "I0.html", 
+        {BUG_ID + FS + "pkg3" + FS + "I0.html",
         "Methods inherited from interface pkg3." +
         "<A HREF=\"../pkg3/I2.html\" title=\"interface in pkg3\">I2</A>"},
-        {BUG_ID + FS + "pkg3" + FS +"I0.html", 
+        {BUG_ID + FS + "pkg3" + FS +"I0.html",
         "Methods inherited from interface pkg3." +
-        "<A HREF=\"../pkg3/I3.html\" title=\"interface in pkg3\">I3</A>"}, 
+        "<A HREF=\"../pkg3/I3.html\" title=\"interface in pkg3\">I3</A>"},
     };
-    
+
     //Method foo() is NOT inherited from I4 because it is overriden by
     //I3.
     private static final String[][] NEGATED_TEST = {
-        {BUG_ID + FS + "pkg3" + FS + "I1.html", 
+        {BUG_ID + FS + "pkg3" + FS + "I1.html",
         "Methods inherited from interface pkg3." +
         "<A HREF=\"../pkg3/I4.html\" title=\"interface in pkg3\">I4</A>"},
-        {BUG_ID + FS + "pkg3" + FS + "I0.html", 
+        {BUG_ID + FS + "pkg3" + FS + "I0.html",
         "Methods inherited from interface pkg3." +
         "<A HREF=\"../pkg3/I4.html\" title=\"interface in pkg3\">I4</A>"},
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -78,14 +78,14 @@ public class TestMultiInheritence extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

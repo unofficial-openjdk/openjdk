@@ -56,16 +56,16 @@ public abstract class Tester {
     static Tester activeTester;
 
     private static final String[] DEFAULT_ARGS = {
-	"-nocompile",
-	"-XPrintAptRounds",
-	"-XListDeclarations",
+        "-nocompile",
+        "-XPrintAptRounds",
+        "-XListDeclarations",
     };
     private static final String[] NO_STRINGS = {};
 
     // Force processor and factory to be compiled
     private static Class dummy = TestProcessorFactory.class;
 
-    private final String testSrc =     System.getProperty("test.src",	  ".");
+    private final String testSrc =     System.getProperty("test.src",     ".");
     private final String testClasses = System.getProperty("test.classes", ".");
 
     // apt command-line args
@@ -73,35 +73,35 @@ public abstract class Tester {
 
 
     static {
-	// Enable assertions in the unnamed package.
-	ClassLoader loader = Tester.class.getClassLoader();
-	if (loader != null) {
-	    loader.setPackageAssertionStatus(null, true);
-	}
+        // Enable assertions in the unnamed package.
+        ClassLoader loader = Tester.class.getClassLoader();
+        if (loader != null) {
+            loader.setPackageAssertionStatus(null, true);
+        }
     }
 
 
     protected Tester(String... additionalArgs) {
-	String sourceFile = testSrc + File.separator +
-			    getClass().getName() + ".java";
+        String sourceFile = testSrc + File.separator +
+                            getClass().getName() + ".java";
 
-	ArrayList<String> as = new ArrayList<String>();
-	Collections.addAll(as, DEFAULT_ARGS);
-	as.add("-sourcepath");	as.add(testSrc);
-	as.add("-factory");	as.add(TestProcessorFactory.class.getName());
-	Collections.addAll(as, additionalArgs);
-	as.add(sourceFile);
-	args = as.toArray(NO_STRINGS);
+        ArrayList<String> as = new ArrayList<String>();
+        Collections.addAll(as, DEFAULT_ARGS);
+        as.add("-sourcepath");  as.add(testSrc);
+        as.add("-factory");     as.add(TestProcessorFactory.class.getName());
+        Collections.addAll(as, additionalArgs);
+        as.add(sourceFile);
+        args = as.toArray(NO_STRINGS);
     }
 
     /**
      * Run apt.
      */
     protected void run() {
-	activeTester = this;
-	if (com.sun.tools.apt.Main.process(args) != 0) {
-	    throw new Error("apt errors encountered.");
-	}
+        activeTester = this;
+        if (com.sun.tools.apt.Main.process(args) != 0) {
+            throw new Error("apt errors encountered.");
+        }
     }
 
     /**
@@ -118,12 +118,12 @@ public abstract class Tester {
      * Returns null if no method is found.
      */
     protected MethodDeclaration getMethod(String methodName) {
-	for (MethodDeclaration m : thisClassDecl.getMethods()) {
-	    if (methodName.equals(m.getSimpleName())) {
-		return m;
-	    }
-	}
-	return null;
+        for (MethodDeclaration m : thisClassDecl.getMethods()) {
+            if (methodName.equals(m.getSimpleName())) {
+                return m;
+            }
+        }
+        return null;
     }
 
     /**
@@ -131,12 +131,12 @@ public abstract class Tester {
      * Returns null if no field is found.
      */
     protected FieldDeclaration getField(String fieldName) {
-	for (FieldDeclaration f : thisClassDecl.getFields()) {
-	    if (fieldName.equals(f.getSimpleName())) {
-		return f;
-	    }
-	}
-	return null;
+        for (FieldDeclaration f : thisClassDecl.getFields()) {
+            if (fieldName.equals(f.getSimpleName())) {
+                return f;
+            }
+        }
+        return null;
     }
 
     /**
@@ -146,15 +146,15 @@ public abstract class Tester {
      * is found.
      */
     protected AnnotationMirror getAnno(String methodName, String annoType) {
-	MethodDeclaration m = getMethod(methodName);
-	if (m != null) {
-	    TypeDeclaration at = env.getTypeDeclaration(annoType);
-	    for (AnnotationMirror a : m.getAnnotationMirrors()) {
-		if (at == a.getAnnotationType().getDeclaration()) {
-		    return a;
-		}
-	    }
-	}
-	return null;
+        MethodDeclaration m = getMethod(methodName);
+        if (m != null) {
+            TypeDeclaration at = env.getTypeDeclaration(annoType);
+            for (AnnotationMirror a : m.getAnnotationMirrors()) {
+                if (at == a.getAnnotationType().getDeclaration()) {
+                    return a;
+                }
+            }
+        }
+        return null;
     }
 }

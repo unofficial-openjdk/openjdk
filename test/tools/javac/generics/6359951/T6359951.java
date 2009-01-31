@@ -2,7 +2,7 @@
  * @test  /nodynamiccopyright/
  * @bug     6359951
  * @summary Crash when using class field
- * 
+ *
  *
  * @compile/fail/ref=T6359951.out -XDstdout -XDrawDiagnostics T6359951.java
  */

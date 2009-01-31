@@ -39,15 +39,15 @@ public class Dep1 {
 
     // Parameters can't be deprecated.
     public void method3(/**
-			 * TODO re-deprecate once bug 6404756 is fixed.
-			 * @ deprecated
-			 */
-			@ExpectedDeprecation(false)
-			Object method3_param0) {}
+                         * TODO re-deprecate once bug 6404756 is fixed.
+                         * @ deprecated
+                         */
+                        @ExpectedDeprecation(false)
+                        Object method3_param0) {}
 
     public void method4(// @Deprecated -- TODO uncomment once bug 6404756 is fixed.
-			@ExpectedDeprecation(false)
-			Object method4_param0, Object method4_param1) {}
+                        @ExpectedDeprecation(false)
+                        Object method4_param0, Object method4_param1) {}
 
     @ExpectedDeprecation(false)
     public void methodn() {}

@@ -32,7 +32,7 @@
 
 class Parens2 {
     void f() {
-	int i;
-	(i = 2);
+        int i;
+        (i = 2);
     }
 }

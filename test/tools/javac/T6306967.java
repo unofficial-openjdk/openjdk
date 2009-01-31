@@ -41,4 +41,3 @@ public class T6306967 {
         System.out.println(x);
     }
 }
-

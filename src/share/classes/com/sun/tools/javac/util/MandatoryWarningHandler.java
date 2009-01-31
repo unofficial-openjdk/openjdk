@@ -36,7 +36,7 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
  * A handler to process mandatory warnings, setting up a deferred diagnostic
  * to be printed at the end of the compilation if some warnings get suppressed
  * because too many warnings have already been generated.
- * 
+ *
  * Note that the SuppressWarnings annotation can be used to suppress warnings
  * about conditions that would otherwise merit a warning. Such processing
  * is done when the condition is detected, and in those cases, no call is
@@ -54,43 +54,43 @@ public class MandatoryWarningHandler {
      * The kinds of different deferred diagnostics that might be generated
      * if a mandatory warning is suppressed because too many warnings have
      * already been output.
-     * 
+     *
      * The parameter is a fragment used to build an I18N message key for Log.
      */
     private enum DeferredDiagnosticKind {
-	/** 
-	 * This kind is used when a single specific file is found to have warnings
-	 * and no similar warnings have already been given. 
-	 * It generates a message like:
-	 * 	FILE has ISSUES
-	 */
-	IN_FILE(".filename"),
-	/** 
-	 * This kind is used when a single specific file is found to have warnings
-	 * and when similar warnings have already been reported for the file.
-	 * It generates a message like:
-	 * 	FILE has additional ISSUES
-	 */
-	ADDITIONAL_IN_FILE(".filename.additional"),
-	/**
-	 * This kind is used when multiple files have been found to have warnings,
-	 * and none of them have had any similar warnings.
-	 * It generates a message like:
-	 * 	Some files have ISSUES
-	 */
-	IN_FILES(".plural"),
-	/**
-	 * This kind is used when multiple files have been found to have warnings,
-	 * and some of them have had already had specific similar warnings.
-	 * It generates a message like:
-	 * 	Some files have additional ISSUES
-	 */
-	ADDITIONAL_IN_FILES(".plural.additional");
+        /**
+         * This kind is used when a single specific file is found to have warnings
+         * and no similar warnings have already been given.
+         * It generates a message like:
+         *      FILE has ISSUES
+         */
+        IN_FILE(".filename"),
+        /**
+         * This kind is used when a single specific file is found to have warnings
+         * and when similar warnings have already been reported for the file.
+         * It generates a message like:
+         *      FILE has additional ISSUES
+         */
+        ADDITIONAL_IN_FILE(".filename.additional"),
+        /**
+         * This kind is used when multiple files have been found to have warnings,
+         * and none of them have had any similar warnings.
+         * It generates a message like:
+         *      Some files have ISSUES
+         */
+        IN_FILES(".plural"),
+        /**
+         * This kind is used when multiple files have been found to have warnings,
+         * and some of them have had already had specific similar warnings.
+         * It generates a message like:
+         *      Some files have additional ISSUES
+         */
+        ADDITIONAL_IN_FILES(".plural.additional");
 
-	DeferredDiagnosticKind(String v) { value = v; }
-	String getKey(String prefix) { return prefix + value; }
+        DeferredDiagnosticKind(String v) { value = v; }
+        String getKey(String prefix) { return prefix + value; }
 
-	private String value;
+        private String value;
     }
 
 
@@ -106,81 +106,81 @@ public class MandatoryWarningHandler {
      * @param prefix  A common prefix for the set of message keys for
      *                the messages that may be generated.
      */
-    public MandatoryWarningHandler(Log log, boolean verbose, 
-				   boolean enforceMandatory, String prefix) {
-	this.log = log;
-	this.verbose = verbose;
+    public MandatoryWarningHandler(Log log, boolean verbose,
+                                   boolean enforceMandatory, String prefix) {
+        this.log = log;
+        this.verbose = verbose;
         this.enforceMandatory = enforceMandatory;
-	this.prefix = prefix;
+        this.prefix = prefix;
     }
 
     /**
      * Report a mandatory warning.
      */
     public void report(DiagnosticPosition pos, String msg, Object... args) {
-	JavaFileObject currentSource = log.currentSource();
+        JavaFileObject currentSource = log.currentSource();
 
-	if (verbose) {
-	    if (sourcesWithReportedWarnings == null)
-		sourcesWithReportedWarnings = new HashSet<JavaFileObject>();
+        if (verbose) {
+            if (sourcesWithReportedWarnings == null)
+                sourcesWithReportedWarnings = new HashSet<JavaFileObject>();
 
-	    if (log.nwarnings < log.MaxWarnings) {
-		// generate message and remember the source file
-		logMandatoryWarning(pos, msg, args);
-		sourcesWithReportedWarnings.add(currentSource);
-	    } else if (deferredDiagnosticKind == null) {
-		// set up deferred message
-		if (sourcesWithReportedWarnings.contains(currentSource)) {
-		    // more errors in a file that already has reported warnings
-		    deferredDiagnosticKind = DeferredDiagnosticKind.ADDITIONAL_IN_FILE;
-		} else {
-		    // warnings in a new source file
-		    deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILE;
-		}
-		deferredDiagnosticSource = currentSource;
-		deferredDiagnosticArg = currentSource;
-	    } else if ((deferredDiagnosticKind == DeferredDiagnosticKind.IN_FILE
-			|| deferredDiagnosticKind == DeferredDiagnosticKind.ADDITIONAL_IN_FILE)
-		       && !equal(deferredDiagnosticSource, currentSource)) {
-		// additional errors in more than one source file
-		deferredDiagnosticKind = DeferredDiagnosticKind.ADDITIONAL_IN_FILES;
-		deferredDiagnosticArg = null;
-	    }
-	} else {
-	    if (deferredDiagnosticKind == null) {
-		// warnings in a single source
-		deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILE;
-		deferredDiagnosticSource = currentSource;
- 		deferredDiagnosticArg = currentSource;
-	    }  else if (deferredDiagnosticKind == DeferredDiagnosticKind.IN_FILE &&
-			!equal(deferredDiagnosticSource, currentSource)) {
-		// warnings in multiple source files
-		deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILES;
-		deferredDiagnosticArg = null;
-	    }
-	}
+            if (log.nwarnings < log.MaxWarnings) {
+                // generate message and remember the source file
+                logMandatoryWarning(pos, msg, args);
+                sourcesWithReportedWarnings.add(currentSource);
+            } else if (deferredDiagnosticKind == null) {
+                // set up deferred message
+                if (sourcesWithReportedWarnings.contains(currentSource)) {
+                    // more errors in a file that already has reported warnings
+                    deferredDiagnosticKind = DeferredDiagnosticKind.ADDITIONAL_IN_FILE;
+                } else {
+                    // warnings in a new source file
+                    deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILE;
+                }
+                deferredDiagnosticSource = currentSource;
+                deferredDiagnosticArg = currentSource;
+            } else if ((deferredDiagnosticKind == DeferredDiagnosticKind.IN_FILE
+                        || deferredDiagnosticKind == DeferredDiagnosticKind.ADDITIONAL_IN_FILE)
+                       && !equal(deferredDiagnosticSource, currentSource)) {
+                // additional errors in more than one source file
+                deferredDiagnosticKind = DeferredDiagnosticKind.ADDITIONAL_IN_FILES;
+                deferredDiagnosticArg = null;
+            }
+        } else {
+            if (deferredDiagnosticKind == null) {
+                // warnings in a single source
+                deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILE;
+                deferredDiagnosticSource = currentSource;
+                deferredDiagnosticArg = currentSource;
+            }  else if (deferredDiagnosticKind == DeferredDiagnosticKind.IN_FILE &&
+                        !equal(deferredDiagnosticSource, currentSource)) {
+                // warnings in multiple source files
+                deferredDiagnosticKind = DeferredDiagnosticKind.IN_FILES;
+                deferredDiagnosticArg = null;
+            }
+        }
     }
 
     /**
      * Report any diagnostic that might have been deferred by previous calls of report().
      */
     public void reportDeferredDiagnostic() {
-	if (deferredDiagnosticKind != null) {
-	    if (deferredDiagnosticArg == null)
-		logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix));
-	    else
-		logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix), deferredDiagnosticArg);
+        if (deferredDiagnosticKind != null) {
+            if (deferredDiagnosticArg == null)
+                logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix));
+            else
+                logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix), deferredDiagnosticArg);
 
-	    if (!verbose)
-		logMandatoryNote(deferredDiagnosticSource, prefix + ".recompile");
-	}
+            if (!verbose)
+                logMandatoryNote(deferredDiagnosticSource, prefix + ".recompile");
+        }
     }
 
     /**
      * Check two objects, each possibly null, are either both null or are equal.
      */
     private static boolean equal(Object o1, Object o2) {
-	return ((o1 == null || o2 == null) ? (o1 == o2) : o1.equals(o2));
+        return ((o1 == null || o2 == null) ? (o1 == o2) : o1.equals(o2));
     }
 
     /**
@@ -189,7 +189,7 @@ public class MandatoryWarningHandler {
     private Log log;
 
     /**
-     * Whether or not to report individual warnings, or simply to report a 
+     * Whether or not to report individual warnings, or simply to report a
      * single aggregate warning at the end of the compilation.
      */
     private boolean verbose;
@@ -222,7 +222,7 @@ public class MandatoryWarningHandler {
     private JavaFileObject deferredDiagnosticSource;
 
     /**
-     * An optional argument to be used when constructing the 
+     * An optional argument to be used when constructing the
      * deferred diagnostic message, based on deferredDiagnosticKind.
      * This variable should normally be set/updated whenever
      * deferredDiagnosticKind is updated.

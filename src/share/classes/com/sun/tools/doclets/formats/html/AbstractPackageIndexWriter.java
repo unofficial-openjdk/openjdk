@@ -31,7 +31,7 @@ import java.util.*;
 
 /**
  * Abstract class to generate the overview files in
- * Frame and Non-Frame format. This will be sub-classed by to 
+ * Frame and Non-Frame format. This will be sub-classed by to
  * generate overview-frame.html as well as overview-summary.html.
  *
  * @author Atul M Dambalkar
@@ -56,29 +56,29 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
     }
 
     protected abstract void printNavigationBarHeader();
- 
+
     protected abstract void printNavigationBarFooter();
 
     protected abstract void printOverviewHeader();
- 
+
     protected abstract void printIndexHeader(String text);
- 
+
     protected abstract void printIndexRow(PackageDoc pkg);
- 
+
     protected abstract void printIndexFooter();
- 
+
     /**
      * Generate the contants in the package index file. Call appropriate
      * methods from the sub-class in order to generate Frame or Non
      * Frame format.
      * @param title the title of the window.
      * @param includeScript boolean set true if windowtitle script is to be included
-     */ 
+     */
     protected void generatePackageIndexFile(String title, boolean includeScript) throws IOException {
         String windowOverview = configuration.getText(title);
-        printHtmlHeader(windowOverview, 
-            configuration.metakeywords.getOverviewMetaKeywords(title, 
-                configuration.doctitle), 
+        printHtmlHeader(windowOverview,
+            configuration.metakeywords.getOverviewMetaKeywords(title,
+                configuration.doctitle),
             includeScript);
         printNavigationBarHeader();
         printOverviewHeader();
@@ -90,7 +90,7 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
         printNavigationBarFooter();
         printBodyHtmlEnd();
     }
-    
+
     /**
      * Default to no overview, overwrite to add overview.
      */
@@ -103,7 +103,7 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
     protected void generateIndex() {
         printIndexContents(packages, "doclet.Package_Summary");
     }
- 
+
     /**
      * Generate code for package index contents. Call appropriate methods from
      * the sub-classes.
@@ -154,6 +154,3 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
     protected void printAllClassesPackagesLink() {
     }
 }
-
-
-

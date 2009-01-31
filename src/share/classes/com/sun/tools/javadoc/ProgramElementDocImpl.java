@@ -53,28 +53,28 @@ import java.text.CollationKey;
  * @author Scott Seligman (generics, enums, annotations)
  */
 public abstract class ProgramElementDocImpl
-	extends DocImpl implements ProgramElementDoc {
+        extends DocImpl implements ProgramElementDoc {
 
     private final Symbol sym;
 
     // For source position information.
     JCTree tree = null;
     Position.LineMap lineMap = null;
-	    
+
 
     // Cache for getModifiers().
     private int modifiers = -1;
 
     protected ProgramElementDocImpl(DocEnv env, Symbol sym,
-				    String doc, JCTree tree, Position.LineMap lineMap) {
-	super(env, doc);
-	this.sym = sym;
-	this.tree = tree;
-	this.lineMap = lineMap;
+                                    String doc, JCTree tree, Position.LineMap lineMap) {
+        super(env, doc);
+        this.sym = sym;
+        this.tree = tree;
+        this.lineMap = lineMap;
     }
 
     void setTree(JCTree tree) {
-	this.tree = tree;
+        this.tree = tree;
     }
 
     /**
@@ -91,10 +91,10 @@ public abstract class ProgramElementDocImpl
      * Returns the modifier flags in terms of java.lang.reflect.Modifier.
      */
     protected int getModifiers() {
-	if (modifiers == -1) {
-	    modifiers = DocEnv.translateModifiers(getFlags());
-	}
-	return modifiers;
+        if (modifiers == -1) {
+            modifiers = DocEnv.translateModifiers(getFlags());
+        }
+        return modifiers;
     }
 
     /**
@@ -105,8 +105,8 @@ public abstract class ProgramElementDocImpl
      */
     public ClassDoc containingClass() {
         if (getContainingClass() == null) {
-	    return null;
-	}
+            return null;
+        }
         return env.getClassDoc(getContainingClass());
     }
 
@@ -124,11 +124,11 @@ public abstract class ProgramElementDocImpl
      * @see java.lang.reflect.Modifier
      */
     public int modifierSpecifier() {
-	int modifiers = getModifiers();
-	if (isMethod() && containingClass().isInterface()) 
-	    // Remove the implicit abstract modifier.
-	    return modifiers & ~Modifier.ABSTRACT;
-	return modifiers;
+        int modifiers = getModifiers();
+        if (isMethod() && containingClass().isInterface())
+            // Remove the implicit abstract modifier.
+            return modifiers & ~Modifier.ABSTRACT;
+        return modifiers;
     }
 
     /**
@@ -142,14 +142,14 @@ public abstract class ProgramElementDocImpl
      * Annotations are not included.
      */
     public String modifiers() {
-	int modifiers = getModifiers();
-	if (isAnnotationTypeElement() ||
-		(isMethod() && containingClass().isInterface())) {
-	    // Remove the implicit abstract modifier.
-	    return Modifier.toString(modifiers & ~Modifier.ABSTRACT);
-	} else {
-	    return Modifier.toString(modifiers);
-	} 
+        int modifiers = getModifiers();
+        if (isAnnotationTypeElement() ||
+                (isMethod() && containingClass().isInterface())) {
+            // Remove the implicit abstract modifier.
+            return Modifier.toString(modifiers & ~Modifier.ABSTRACT);
+        } else {
+            return Modifier.toString(modifiers);
+        }
     }
 
     /**
@@ -157,19 +157,19 @@ public abstract class ProgramElementDocImpl
      * Return an empty array if there are none.
      */
     public AnnotationDesc[] annotations() {
-	AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
-	int i = 0;
-	for (Attribute.Compound a : sym.getAnnotationMirrors()) {
-	    res[i++] = new AnnotationDescImpl(env, a);
-	}
-	return res;
+        AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
+        int i = 0;
+        for (Attribute.Compound a : sym.getAnnotationMirrors()) {
+            res[i++] = new AnnotationDescImpl(env, a);
+        }
+        return res;
     }
 
     /**
      * Return true if this program element is public
      */
     public boolean isPublic() {
-	int modifiers = getModifiers();
+        int modifiers = getModifiers();
         return Modifier.isPublic(modifiers);
     }
 
@@ -177,7 +177,7 @@ public abstract class ProgramElementDocImpl
      * Return true if this program element is protected
      */
     public boolean isProtected() {
-	int modifiers = getModifiers();
+        int modifiers = getModifiers();
         return Modifier.isProtected(modifiers);
     }
 
@@ -185,7 +185,7 @@ public abstract class ProgramElementDocImpl
      * Return true if this program element is private
      */
     public boolean isPrivate() {
-	int modifiers = getModifiers();
+        int modifiers = getModifiers();
         return Modifier.isPrivate(modifiers);
     }
 
@@ -200,7 +200,7 @@ public abstract class ProgramElementDocImpl
      * Return true if this program element is static
      */
     public boolean isStatic() {
-	int modifiers = getModifiers();
+        int modifiers = getModifiers();
         return Modifier.isStatic(modifiers);
     }
 
@@ -208,7 +208,7 @@ public abstract class ProgramElementDocImpl
      * Return true if this program element is final
      */
     public boolean isFinal() {
-	int modifiers = getModifiers();
+        int modifiers = getModifiers();
         return Modifier.isFinal(modifiers);
     }
 
@@ -216,8 +216,8 @@ public abstract class ProgramElementDocImpl
      * Generate a key for sorting.
      */
     CollationKey generateKey() {
-	String k = name();
-	// System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
+        String k = name();
+        // System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
         return env.doclocale.collator.getCollationKey(k);
     }
 

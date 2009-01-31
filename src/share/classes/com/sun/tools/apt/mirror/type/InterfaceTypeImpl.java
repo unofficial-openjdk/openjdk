@@ -38,10 +38,10 @@ import com.sun.tools.javac.code.Type;
  */
 
 public class InterfaceTypeImpl extends DeclaredTypeImpl
-			       implements InterfaceType {
+                               implements InterfaceType {
 
     InterfaceTypeImpl(AptEnv env, Type.ClassType type) {
-	super(env, type);
+        super(env, type);
     }
 
 
@@ -49,13 +49,13 @@ public class InterfaceTypeImpl extends DeclaredTypeImpl
      * {@inheritDoc}
      */
     public InterfaceDeclaration getDeclaration() {
-	return (InterfaceDeclaration) super.getDeclaration();
+        return (InterfaceDeclaration) super.getDeclaration();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-	v.visitInterfaceType(this);
+        v.visitInterfaceType(this);
     }
 }

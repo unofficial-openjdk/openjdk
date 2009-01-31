@@ -36,7 +36,7 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @see java.util.HashMap
  * @see java.util.List
  * @see com.sun.javadoc.Type
@@ -44,7 +44,7 @@ import java.util.*;
  * @author Atul M Dambalkar
  */
 public class ClassTree {
-    
+
     /**
      * List of baseclasses. Contains only java.lang.Object. Can be used to get
      * the mapped listing of sub-classes.
@@ -67,10 +67,10 @@ public class ClassTree {
     * Mapping for each Interface with their SubInterfaces
     */
     private Map subinterfaces = new HashMap();
-    
+
     private List baseEnums = new ArrayList();
     private Map subEnums = new HashMap();
-    
+
     private List baseAnnotationTypes = new ArrayList();
     private Map subAnnotationTypes = new HashMap();
 
@@ -90,7 +90,7 @@ public class ClassTree {
         configuration.message.notice("doclet.Building_Tree");
         buildTree(configuration.root.classes(), configuration);
     }
-    
+
     /**
      * Constructor. Build the Tree using the Root of this Javadoc run.
      *
@@ -110,7 +110,7 @@ public class ClassTree {
     public ClassTree(ClassDoc[] classes, Configuration configuration) {
         buildTree(classes, configuration);
     }
-        
+
     /**
      * Generate mapping for the sub-classes for every class in this run.
      * Return the sub-class list for java.lang.Object which will be having
@@ -122,7 +122,7 @@ public class ClassTree {
      */
     private void buildTree(ClassDoc[] classes, Configuration configuration) {
         for (int i = 0; i < classes.length; i++) {
-            if (configuration.nodeprecated && 
+            if (configuration.nodeprecated &&
                     classes[i].tags("deprecated").length > 0) {
                 continue;
             }
@@ -137,7 +137,7 @@ public class ClassTree {
                     Collections.sort(list);
                 }
             } else if (classes[i].isAnnotationType()) {
-                processType(classes[i], configuration, baseAnnotationTypes, 
+                processType(classes[i], configuration, baseAnnotationTypes,
                     subAnnotationTypes);
             }
         }
@@ -163,7 +163,7 @@ public class ClassTree {
      * @param cd class for which sub-class mapping to be generated.
      * @param configuration the current configurtation of the doclet.
      */
-    private void processType(ClassDoc cd, Configuration configuration, 
+    private void processType(ClassDoc cd, Configuration configuration,
             List bases, Map subs) {
         ClassDoc superclass = Util.getFirstVisibleSuperClassCD(cd, configuration);
         if (superclass != null) {
@@ -176,9 +176,9 @@ public class ClassTree {
             if (!bases.contains(cd)) {
                 bases.add(cd);
             }
-        }        
+        }
         List intfacs = Util.getAllInterfaces(cd, configuration);
-        for (Iterator iter = intfacs.iterator(); iter.hasNext();) {            
+        for (Iterator iter = intfacs.iterator(); iter.hasNext();) {
             add(implementingclasses, ((Type) iter.next()).asClassDoc(), cd);
         }
     }
@@ -275,7 +275,7 @@ public class ClassTree {
     public List implementingclasses(ClassDoc cd) {
         List result = get(implementingclasses, cd);
         List subinterfaces = allSubs(cd, false);
-        
+
         //If class x implements a subinterface of cd, then it follows
         //that class x implements cd.
         Iterator implementingClassesIter, subInterfacesIter = subinterfaces.listIterator();
@@ -313,7 +313,7 @@ public class ClassTree {
         } else {
             return null;
         }
-        
+
     }
 
     /**
@@ -356,7 +356,7 @@ public class ClassTree {
     public List baseinterfaces() {
         return baseinterfaces;
     }
-    
+
     /**
      *  Return the list of base enums. This is the list of enums
      *  which do not have super-enums.
@@ -364,9 +364,9 @@ public class ClassTree {
     public List baseEnums() {
         return baseEnums;
     }
-    
+
     /**
-     *  Return the list of base annotation types. This is the list of 
+     *  Return the list of base annotation types. This is the list of
      *  annotation types which do not have super-annotation types.
      */
     public List baseAnnotationTypes() {

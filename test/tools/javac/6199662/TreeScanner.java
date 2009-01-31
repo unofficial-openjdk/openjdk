@@ -30,7 +30,6 @@ public class TreeScanner<E extends Throwable> extends Visitor<E> {
     /** Visitor method: Scan a single node.
      */
     public void scan(Tree tree) throws E {
-	if(tree!=null) tree.accept(this);
+        if(tree!=null) tree.accept(this);
     }
 }
-

@@ -26,11 +26,11 @@
 package com.sun.javadoc;
 
 /**
- * Represents the root of the program structure information 
+ * Represents the root of the program structure information
  * for one run of javadoc.  From this root all other program
- * structure information can be extracted. 
- * Also represents the command line information -- the 
- * packages, classes and options specified by the user. 
+ * structure information can be extracted.
+ * Also represents the command line information -- the
+ * packages, classes and options specified by the user.
  *
  * @since 1.2
  * @author Robert Field
@@ -57,10 +57,10 @@ public interface RootDoc extends Doc, DocErrorReporter {
     String[][] options();
 
     /**
-     * Return the packages 
+     * Return the packages
      * <a href="package-summary.html#included">specified</a>
      * on the command line.
-     * If <code>-subpackages</code> and <code>-exclude</code> options 
+     * If <code>-subpackages</code> and <code>-exclude</code> options
      * are used, return all the non-excluded packages.
      *
      * @return packages specified on the command line.
@@ -68,7 +68,7 @@ public interface RootDoc extends Doc, DocErrorReporter {
     PackageDoc[] specifiedPackages();
 
     /**
-     * Return the classes and interfaces 
+     * Return the classes and interfaces
      * <a href="package-summary.html#included">specified</a>
      * as source file names on the command line.
      *
@@ -77,7 +77,7 @@ public interface RootDoc extends Doc, DocErrorReporter {
     ClassDoc[] specifiedClasses();
 
     /**
-     * Return the 
+     * Return the
      * <a href="package-summary.html#included">included</a>
       classes and interfaces in all packages.
      *
@@ -98,8 +98,8 @@ public interface RootDoc extends Doc, DocErrorReporter {
     /**
      * Return a ClassDoc for the specified class or interface name.
      *
-     * @param qualifiedName 
-     * <a href="package-summary.html#qualified">qualified</a> 
+     * @param qualifiedName
+     * <a href="package-summary.html#qualified">qualified</a>
      * class or package name
      *
      * @return a ClassDoc holding the specified class, null if

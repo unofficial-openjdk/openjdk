@@ -64,7 +64,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitPackageDeclaration(PackageDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 
     /**
@@ -74,7 +74,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitMemberDeclaration(MemberDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 
     /**
@@ -84,7 +84,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitTypeDeclaration(TypeDeclaration d) {
-	visitMemberDeclaration(d);
+        visitMemberDeclaration(d);
     }
 
     /**
@@ -94,7 +94,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitClassDeclaration(ClassDeclaration d) {
-	visitTypeDeclaration(d);
+        visitTypeDeclaration(d);
     }
 
     /**
@@ -104,7 +104,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitEnumDeclaration(EnumDeclaration d) {
-	visitClassDeclaration(d);
+        visitClassDeclaration(d);
     }
 
     /**
@@ -114,7 +114,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitInterfaceDeclaration(InterfaceDeclaration d) {
-	visitTypeDeclaration(d);
+        visitTypeDeclaration(d);
     }
 
     /**
@@ -124,7 +124,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitAnnotationTypeDeclaration(AnnotationTypeDeclaration d) {
-	visitInterfaceDeclaration(d);
+        visitInterfaceDeclaration(d);
     }
 
     /**
@@ -134,7 +134,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitFieldDeclaration(FieldDeclaration d) {
-	visitMemberDeclaration(d);
+        visitMemberDeclaration(d);
     }
 
     /**
@@ -144,7 +144,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitEnumConstantDeclaration(EnumConstantDeclaration d) {
-	visitFieldDeclaration(d);
+        visitFieldDeclaration(d);
     }
 
     /**
@@ -154,7 +154,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitExecutableDeclaration(ExecutableDeclaration d) {
-	visitMemberDeclaration(d);
+        visitMemberDeclaration(d);
     }
 
     /**
@@ -164,7 +164,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitConstructorDeclaration(ConstructorDeclaration d) {
-	visitExecutableDeclaration(d);
+        visitExecutableDeclaration(d);
     }
 
     /**
@@ -174,7 +174,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitMethodDeclaration(MethodDeclaration d) {
-	visitExecutableDeclaration(d);
+        visitExecutableDeclaration(d);
     }
 
     /**
@@ -184,8 +184,8 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitAnnotationTypeElementDeclaration(
-	    AnnotationTypeElementDeclaration d) {
-	visitMethodDeclaration(d);
+            AnnotationTypeElementDeclaration d) {
+        visitMethodDeclaration(d);
     }
 
     /**
@@ -195,7 +195,7 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitParameterDeclaration(ParameterDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 
     /**
@@ -205,6 +205,6 @@ public class SimpleDeclarationVisitor implements DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitTypeParameterDeclaration(TypeParameterDeclaration d) {
-	visitDeclaration(d);
+        visitDeclaration(d);
     }
 }

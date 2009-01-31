@@ -26,4 +26,3 @@
 public @interface MySimple {
     String value() default "default";
 }
-

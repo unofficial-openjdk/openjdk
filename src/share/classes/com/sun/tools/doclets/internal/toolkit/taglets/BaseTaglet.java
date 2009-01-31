@@ -30,18 +30,18 @@ import com.sun.javadoc.*;
 
 /**
  * An abstract class for that implements the {@link Taglet} interface.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 public abstract class BaseTaglet implements Taglet {
-    
+
     protected String name = "Default";
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in constructor documentation.
@@ -52,7 +52,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inConstructor() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in field documentation.
@@ -63,7 +63,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inField() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in method documentation.
@@ -74,7 +74,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inMethod() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in overview documentation.
@@ -85,7 +85,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inOverview() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in package documentation.
@@ -96,7 +96,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inPackage() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is used in type documentation (classes or interfaces).
@@ -107,7 +107,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean inType() {
         return true;
     }
-    
+
     /**
      * Return true if this <code>Taglet</code>
      * is an inline tag.
@@ -117,7 +117,7 @@ public abstract class BaseTaglet implements Taglet {
     public boolean isInlineTag() {
         return false;
     }
-    
+
     /**
      * Return the name of this custom tag.
      * @return the name of this custom tag.
@@ -125,7 +125,7 @@ public abstract class BaseTaglet implements Taglet {
     public String getName() {
         return name;
     }
-    
+
     /**
      * {@inheritDoc}
      * @throws IllegalArgumentException thrown when the method is not supported by the taglet.
@@ -133,7 +133,7 @@ public abstract class BaseTaglet implements Taglet {
     public TagletOutput getTagletOutput(Tag tag, TagletWriter writer) {
         throw new IllegalArgumentException("Method not supported in taglet " + getName() + ".");
     }
-    
+
     /**
      * {@inheritDoc}
      * @throws IllegalArgumentException thrown when the method is not supported by the taglet.

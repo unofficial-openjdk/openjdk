@@ -36,10 +36,10 @@ public class NewBeforeOuterConstructed2 {
             super(null);
         }
         Middle() {
-	    // The 'new' below is illegal, as the outer
-	    // constructor has not been called when the
-	    // implicit reference to 'this' is evaluated
-	    // during the new instance expression.
+            // The 'new' below is illegal, as the outer
+            // constructor has not been called when the
+            // implicit reference to 'this' is evaluated
+            // during the new instance expression.
             super(/*Middle.this.*/new Middle(1));
         }
         class Inner {}
@@ -48,8 +48,8 @@ public class NewBeforeOuterConstructed2 {
         }
     }
     public static void main(String[] args) {
-	NewBeforeOuterConstructed2 c = new NewBeforeOuterConstructed2(new Object());
+        NewBeforeOuterConstructed2 c = new NewBeforeOuterConstructed2(new Object());
         Middle m = c.new Middle();
-	m.f();
+        m.f();
     }
 }

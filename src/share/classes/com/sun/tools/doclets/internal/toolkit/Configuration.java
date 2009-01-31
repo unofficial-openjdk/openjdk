@@ -41,70 +41,70 @@ import java.io.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Robert Field.
  * @author Atul Dambalkar.
  * @author Jamie Ho
  */
 public abstract class Configuration {
-    
+
     /**
      * The factory for builders.
      */
     protected BuilderFactory builderFactory;
-    
+
     /**
      * The taglet manager.
      */
     public TagletManager tagletManager;
-    
+
     /**
      * The path to the builder XML input file.
      */
     public String builderXMLPath;
-    
+
     /**
      * The default path to the builder XML.
      */
     private static final String DEFAULT_BUILDER_XML = "resources/doclet.xml";
-    
+
     /**
      * The path to Taglets
      */
     public String tagletpath = "";
-    
+
     /**
      * This is true if option "-serialwarn" is used. Defualt value is false to
      * supress excessive warnings about serial tag.
      */
     public boolean serialwarn = false;
-    
+
     /**
      * The specified amount of space between tab stops.
      */
     public int sourcetab = DocletConstants.DEFAULT_TAB_STOP_LENGTH;
-    
+
     /**
      * True if we should generate browsable sources.
      */
     public boolean linksource = false;
-    
+
     /**
      * True if command line option "-nosince" is used. Default value is
      * false.
      */
     public boolean nosince = false;
-    
+
     /**
      * True if we should recursively copy the doc-file subdirectories
      */
     public boolean copydocfilesubdirs = false;
-    
+
     /**
      * The META charset tag used for cross-platform viewing.
      */
     public String charset = "";
-    
+
     /**
      * True if user wants to add member names as meta keywords.
      * Set to false because meta keywords are ignored in general
@@ -121,45 +121,45 @@ public abstract class Configuration {
      * The list of doc-file subdirectories to exclude
      */
     protected Set excludedDocFileDirs;
-    
+
     /**
      * The list of qualifiers to exclude
      */
     protected Set excludedQualifiers;
-    
+
     /**
      * The Root of the generated Program Structure from the Doclet API.
      */
     public RootDoc root;
-    
+
     /**
      * Destination directory name, in which doclet will generate the entire
      * documentation. Default is current directory.
      */
     public String destDirName = "";
-    
+
     /**
      * Destination directory name, in which doclet will copy the doc-files to.
      */
     public String docFileDestDirName = "";
-    
+
     /**
      * Encoding for this document. Default is default encoding for this
      * platform.
      */
     public String docencoding = null;
-    
+
     /**
      * True if user wants to suppress descriptions and tags.
      */
     public boolean nocomment = false;
-    
+
     /**
      * Encoding for this document. Default is default encoding for this
      * platform.
      */
     public String encoding = null;
-    
+
     /**
      * Generate author specific information for all the classes if @author
      * tag is used in the doc comment and if -author option is used.
@@ -167,7 +167,7 @@ public abstract class Configuration {
      * Default is don't show author information.
      */
     public boolean showauthor = false;
-    
+
     /**
      * Generate version specific information for the all the classes
      * if @version tag is used in the doc comment and if -version option is
@@ -175,13 +175,13 @@ public abstract class Configuration {
      * used.Default is don't show version information.
      */
     public boolean showversion = false;
-    
+
     /**
      * Sourcepath from where to read the source files. Default is classpath.
      *
      */
     public String sourcepath = "";
-    
+
     /**
      * Don't generate deprecated API information at all, if -nodeprecated
      * option is used. <code>nodepracted</code> is set to true if
@@ -189,12 +189,12 @@ public abstract class Configuration {
      * information.
      */
     public boolean nodeprecated = false;
-    
+
     /**
      * The catalog of classes specified on the command-line
      */
     public ClassDocCatalog classDocCatalog;
-    
+
     /**
      * Message Retriever for the doclet, to retrieve message from the resource
      * file for this Configuration, which is common for 1.1 and standard
@@ -203,28 +203,28 @@ public abstract class Configuration {
      * TODO:  Make this private!!!
      */
     public MessageRetriever message = null;
-    
+
     /**
      * True if user wants to suppress time stamp in output.
      * Default is false.
      */
     public boolean notimestamp= false;
-    
+
     /**
      * The package grouping sole-instance.
      */
     public final Group group = Group.getInstance(this);
-    
+
     /**
      * The tracker of external package links (sole-instance).
      */
     public final Extern extern = new Extern(this);
-    
+
     /**
      * Return the build date for the doclet.
      */
     public abstract String getDocletSpecificBuildDate();
-    
+
     /**
      * This method should be defined in all those doclets(configurations),
      * which want to derive themselves from this Configuration. This method
@@ -234,20 +234,20 @@ public abstract class Configuration {
      * @throws DocletAbortException
      */
     public abstract void setSpecificDocletOptions(String[][] options);
-    
+
     /**
      * Return the doclet specific {@link MessageRetriever}
      * @return the doclet specific MessageRetriever.
      */
     public abstract MessageRetriever getDocletSpecificMsg();
-    
+
     /**
      * An array of the packages specified on the command-line merged
      * with the array of packages that contain the classes specified on the
      * command-line.  The array is sorted.
      */
     public PackageDoc[] packages;
-    
+
     /**
      * Constructor. Constructs the message retriever with resource file.
      */
@@ -258,7 +258,7 @@ public abstract class Configuration {
         excludedDocFileDirs = new HashSet();
         excludedQualifiers = new HashSet();
     }
-    
+
     /**
      * Return the builder factory for this doclet.
      *
@@ -270,7 +270,7 @@ public abstract class Configuration {
         }
         return builderFactory;
     }
-    
+
     /**
      * This method should be defined in all those doclets
      * which want to inherit from this Configuration. This method
@@ -318,16 +318,16 @@ public abstract class Configuration {
             return -1;  // indicate we don't know about it
         }
     }
-    
+
     /**
      * Perform error checking on the given options.
      *
      * @param options  the given options to check.
      * @param reporter the reporter used to report errors.
      */
-    public abstract boolean validOptions(String options[][], 
+    public abstract boolean validOptions(String options[][],
         DocErrorReporter reporter);
-    
+
     private void initPackageArray() {
         Set set = new HashSet(Arrays.asList(root.specifiedPackages()));
         ClassDoc[] classes = root.specifiedClasses();
@@ -338,7 +338,7 @@ public abstract class Configuration {
         Collections.sort(results);
         packages = (PackageDoc[]) results.toArray(new PackageDoc[] {});
     }
-    
+
     /**
      * Set the command line options supported by this configuration.
      *
@@ -412,17 +412,17 @@ public abstract class Configuration {
             }
         }
         if (sourcepath.length() == 0) {
-            sourcepath = System.getProperty("env.class.path") == null ? "" : 
+            sourcepath = System.getProperty("env.class.path") == null ? "" :
                 System.getProperty("env.class.path");
         }
         if (docencoding == null) {
             docencoding = encoding;
         }
-        
+
         classDocCatalog = new ClassDocCatalog(root.specifiedClasses());
         initTagletManager(customTagStrs);
     }
-    
+
     /**
      * Set the command line options supported by this configuration.
      *
@@ -433,8 +433,8 @@ public abstract class Configuration {
         setOptions(root.options());
         setSpecificDocletOptions(root.options());
     }
-    
-    
+
+
     /**
      * Initialize the taglet manager.  The strings to initialize the simple custom tags should
      * be in the following format:  "[tag name]:[location str]:[heading]".
@@ -442,8 +442,8 @@ public abstract class Configuration {
      * either -tag or -taglet arguments.
      */
     private void initTagletManager(Set customTagStrs) {
-        tagletManager = tagletManager == null ? 
-            new TagletManager(nosince, showversion, showauthor, message) : 
+        tagletManager = tagletManager == null ?
+            new TagletManager(nosince, showversion, showauthor, message) :
             tagletManager;
         String[] args;
         for (Iterator it = customTagStrs.iterator(); it.hasNext(); ) {
@@ -452,8 +452,8 @@ public abstract class Configuration {
                 tagletManager.addCustomTag(args[1], tagletpath);
                 continue;
             }
-            String[] tokens = Util.tokenize(args[1], 
-                TagletManager.SIMPLE_TAGLET_OPT_SEPERATOR, 3);            
+            String[] tokens = Util.tokenize(args[1],
+                TagletManager.SIMPLE_TAGLET_OPT_SEPERATOR, 3);
             if (tokens.length == 1) {
                 String tagName = args[1];
                 if (tagletManager.isKnownCustomTag(tagName)) {
@@ -475,7 +475,7 @@ public abstract class Configuration {
             }
         }
     }
-    
+
     private void addToSet(Set s, String str){
         StringTokenizer st = new StringTokenizer(str, ":");
         String current;
@@ -484,7 +484,7 @@ public abstract class Configuration {
             s.add(current);
         }
     }
-    
+
     /**
      * Add a traliling file separator, if not found or strip off extra trailing
      * file separators if any.
@@ -504,7 +504,7 @@ public abstract class Configuration {
             path += fs;
         return path;
     }
-    
+
     /**
      * This checks for the validity of the options used by the user.
      * This works exactly like
@@ -518,7 +518,7 @@ public abstract class Configuration {
      * @param reporter used to report errors.
      * @return true if all the options are valid.
      */
-    public boolean generalValidOptions(String options[][], 
+    public boolean generalValidOptions(String options[][],
             DocErrorReporter reporter) {
         boolean docencodingfound = false;
         String encoding = "";
@@ -530,7 +530,7 @@ public abstract class Configuration {
                 File destDir = new File(destdirname);
                 if (!destDir.exists()) {
                     //Create the output directory (in case it doesn't exist yet)
-                    reporter.printNotice(getText("doclet.dest_dir_create", 
+                    reporter.printNotice(getText("doclet.dest_dir_create",
                         destdirname));
                     (new File(destdirname)).mkdirs();
                 } else if (!destDir.isDirectory()) {
@@ -560,7 +560,7 @@ public abstract class Configuration {
         }
         return true;
     }
-    
+
     /**
      * Check the validity of the given Source or Output File encoding on this
      * platform.
@@ -568,14 +568,14 @@ public abstract class Configuration {
      * @param docencoding output file encoding.
      * @param reporter    used to report errors.
      */
-    private boolean checkOutputFileEncoding(String docencoding, 
+    private boolean checkOutputFileEncoding(String docencoding,
             DocErrorReporter reporter) {
         OutputStream ost= new ByteArrayOutputStream();
         OutputStreamWriter osw = null;
         try {
             osw = new OutputStreamWriter(ost, docencoding);
         } catch (UnsupportedEncodingException exc) {
-            reporter.printError(getText("doclet.Encoding_not_supported", 
+            reporter.printError(getText("doclet.Encoding_not_supported",
                 docencoding));
             return false;
         } finally {
@@ -588,7 +588,7 @@ public abstract class Configuration {
         }
         return true;
     }
-    
+
     /**
      * Return true if the given doc-file subdirectory should be excluded and
      * false otherwise.
@@ -601,7 +601,7 @@ public abstract class Configuration {
             return false;
         }
     }
-    
+
     /**
      * Return true if the given qualifier should be excluded and false otherwise.
      * @param qualifier the qualifier to check.
@@ -621,13 +621,13 @@ public abstract class Configuration {
             return false;
         }
     }
-    
+
     /**
      * Return the qualified name of the <code>ClassDoc</code> if it's qualifier is not excluded.  Otherwise,
      * return the unqualified <code>ClassDoc</code> name.
      * @param cd the <code>ClassDoc</code> to check.
      */
-    public String getClassName(ClassDoc cd) {        
+    public String getClassName(ClassDoc cd) {
         PackageDoc pd = cd.containingPackage();
         if (pd != null && shouldExcludeQualifier(cd.containingPackage().name())) {
             return cd.name();
@@ -635,7 +635,7 @@ public abstract class Configuration {
             return cd.qualifiedName();
         }
     }
-    
+
     public String getText(String key) {
         try {
             //Check the doclet specific properties file.
@@ -645,7 +645,7 @@ public abstract class Configuration {
             return message.getText(key);
         }
     }
-    
+
     public String getText(String key, String a1) {
         try {
             //Check the doclet specific properties file.
@@ -655,7 +655,7 @@ public abstract class Configuration {
             return message.getText(key, a1);
         }
     }
-    
+
     public String getText(String key, String a1, String a2) {
         try {
             //Check the doclet specific properties file.
@@ -665,7 +665,7 @@ public abstract class Configuration {
             return message.getText(key, a1, a2);
         }
     }
-    
+
     public String getText(String key, String a1, String a2, String a3) {
         try {
             //Check the doclet specific properties file.
@@ -675,7 +675,7 @@ public abstract class Configuration {
             return message.getText(key, a1, a2, a3);
         }
     }
-    
+
     /**
      * Return true if the doc element is getting documented, depending upon
      * -nodeprecated option and @deprecated tag used. Return true if
@@ -687,13 +687,13 @@ public abstract class Configuration {
         }
         return (doc.tags("deprecated")).length == 0;
     }
-    
+
     /**
      * Return the doclet specific instance of a writer factory.
      * @return the {@link WriterFactory} for the doclet.
      */
     public abstract WriterFactory getWriterFactory();
-    
+
     /**
      * Return the input stream to the builder XML.
      *
@@ -705,7 +705,7 @@ public abstract class Configuration {
             Configuration.class.getResourceAsStream(DEFAULT_BUILDER_XML) :
             new FileInputStream(new File(builderXMLPath));
     }
-    
+
     /**
      * Return the comparator that will be used to sort member documentation.
      * To no do any sorting, return null.
@@ -714,5 +714,3 @@ public abstract class Configuration {
      */
     public abstract Comparator getMemberComparator();
 }
-
-

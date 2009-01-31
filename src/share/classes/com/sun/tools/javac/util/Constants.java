@@ -46,16 +46,16 @@ public class Constants {
      * null) are returned unchanged.
      */
     public static Object decode(Object value, Type type) {
-	if (value instanceof Integer) {
-	    int i = (Integer) value;
-	    switch (type.tag) {
-	    case BOOLEAN:  return i != 0;
-	    case CHAR:	   return (char) i;
-	    case BYTE:	   return (byte) i;
-	    case SHORT:	   return (short) i;
-	    }
-	}
-	return value;
+        if (value instanceof Integer) {
+            int i = (Integer) value;
+            switch (type.tag) {
+            case BOOLEAN:  return i != 0;
+            case CHAR:     return (char) i;
+            case BYTE:     return (byte) i;
+            case SHORT:    return (short) i;
+            }
+        }
+        return value;
     }
 
     /**
@@ -63,17 +63,17 @@ public class Constants {
      * internal representation), quoted and formatted as in Java source.
      */
     public static String format(Object value, Type type) {
-	value = decode(value, type);
-	switch (type.tag) {
-	case BYTE:	return formatByte((Byte) value);
-	case LONG:	return formatLong((Long) value);
-	case FLOAT:	return formatFloat((Float) value);
-	case DOUBLE:	return formatDouble((Double) value);
-	case CHAR:	return formatChar((Character) value);
-	}
-	if (value instanceof String)
-	    return formatString((String) value);
-	return value + "";
+        value = decode(value, type);
+        switch (type.tag) {
+        case BYTE:      return formatByte((Byte) value);
+        case LONG:      return formatLong((Long) value);
+        case FLOAT:     return formatFloat((Float) value);
+        case DOUBLE:    return formatDouble((Double) value);
+        case CHAR:      return formatChar((Character) value);
+        }
+        if (value instanceof String)
+            return formatString((String) value);
+        return value + "";
     }
 
     /**
@@ -82,46 +82,46 @@ public class Constants {
      * Java source.
      */
     public static String format(Object value) {
-	if (value instanceof Byte)	return formatByte((Byte) value);
-	if (value instanceof Long)	return formatLong((Long) value);
-	if (value instanceof Float)	return formatFloat((Float) value);
-	if (value instanceof Double)	return formatDouble((Double) value);
-	if (value instanceof Character)	return formatChar((Character) value);
-	if (value instanceof String)	return formatString((String) value);
-	return value + "";
+        if (value instanceof Byte)      return formatByte((Byte) value);
+        if (value instanceof Long)      return formatLong((Long) value);
+        if (value instanceof Float)     return formatFloat((Float) value);
+        if (value instanceof Double)    return formatDouble((Double) value);
+        if (value instanceof Character) return formatChar((Character) value);
+        if (value instanceof String)    return formatString((String) value);
+        return value + "";
     }
 
     private static String formatByte(byte b) {
-	return String.format("0x%02x", b);
+        return String.format("0x%02x", b);
     }
 
     private static String formatLong(long lng) {
-	return lng + "L";
+        return lng + "L";
     }
 
     private static String formatFloat(float f) {
-	if (Float.isNaN(f))
-	    return "0.0f/0.0f";
-	else if (Float.isInfinite(f))
-	    return (f < 0) ? "-1.0f/0.0f" : "1.0f/0.0f";
-	else
-	    return f + "f";
+        if (Float.isNaN(f))
+            return "0.0f/0.0f";
+        else if (Float.isInfinite(f))
+            return (f < 0) ? "-1.0f/0.0f" : "1.0f/0.0f";
+        else
+            return f + "f";
     }
 
     private static String formatDouble(double d) {
-	if (Double.isNaN(d))
-	    return "0.0/0.0";
-	else if (Double.isInfinite(d))
-	    return (d < 0) ? "-1.0/0.0" : "1.0/0.0";
-	else
-	    return d + "";
+        if (Double.isNaN(d))
+            return "0.0/0.0";
+        else if (Double.isInfinite(d))
+            return (d < 0) ? "-1.0/0.0" : "1.0/0.0";
+        else
+            return d + "";
     }
 
     private static String formatChar(char c) {
-	return '\'' + Convert.quote(c) + '\'';
+        return '\'' + Convert.quote(c) + '\'';
     }
 
     private static String formatString(String s) {
-	return '"' + Convert.quote(s) + '"';
+        return '"' + Convert.quote(s) + '"';
     }
 }

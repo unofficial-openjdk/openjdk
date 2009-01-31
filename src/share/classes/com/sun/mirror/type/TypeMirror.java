@@ -66,7 +66,7 @@ public interface TypeMirror {
      *
      * @param obj the object to be compared with this type
      * @return <tt>true</tt> if the specified object represents the same
-     *		type as this.
+     *          type as this.
      */
     boolean equals(Object obj);
 

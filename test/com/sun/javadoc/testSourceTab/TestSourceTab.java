@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test   @(#)TestSourceTab.java	1.1 02/11/03
+ * @test   @(#)TestSourceTab.java       1.1 02/11/03
  * @bug 4510979
  * @summary Test to make sure that the source documentation is indented properly
  * when -linksourcetab is used.
@@ -34,20 +34,20 @@
  */
 
 public class TestSourceTab extends JavadocTester {
-    
+
     private static final String BUG_ID = "4510979";
     private static final String OUTPUT_DIR1 = BUG_ID + "-tabLengthEight";
     private static final String OUTPUT_DIR2 = BUG_ID + "-tabLengthFour";
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     //Run Javadoc on a source file with that is indented with a single tab per line
     private static final String[] ARGS1 =
         new String[] {
             "-d", OUTPUT_DIR1, "-sourcepath", SRC_DIR,
             "-notimestamp", "-linksource", SRC_DIR + FS + "SingleTab" + FS + "C.java"
         };
-    
+
     //Run Javadoc on a source file with that is indented with a two tab per line
     //If we double the tabs and decrease the tab length by a half, the output should
     //be the same as the one generated above.
@@ -56,18 +56,18 @@ public class TestSourceTab extends JavadocTester {
             "-d", OUTPUT_DIR2, "-sourcepath", SRC_DIR,
             "-notimestamp", "-sourcetab", "4", SRC_DIR + FS + "DoubleTab" + FS + "C.java"
         };
-    
+
     //Files to diff
     private static final String[][] FILES_TO_DIFF = {
         {OUTPUT_DIR1 + FS + "src-html" + FS + "C.html",
          OUTPUT_DIR2 + FS + "src-html" + FS + "C.html"
-        }, 
+        },
         {OUTPUT_DIR1 + FS + "C.html",
          OUTPUT_DIR2 + FS + "C.html"
         }
-        
+
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -78,14 +78,14 @@ public class TestSourceTab extends JavadocTester {
         run(tester, ARGS2, TEST, NEGATED_TEST);
         tester.runDiffs(FILES_TO_DIFF);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

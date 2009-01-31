@@ -41,18 +41,18 @@ public class DeadCode3
         DeadCode3 r1 = null;
         fun1();
 
-	// we expect an NullPointerException because of this line
+        // we expect an NullPointerException because of this line
         r1.fun1();
     }
 
     public static void main( String[] args ) {
-	try {
-	    new DeadCode3() . fun2();
-	    // if we got past the constructor, then there must be a problem
-	    throw new RuntimeException("accidental removal of live code");
-	} catch (NullPointerException e) {
-	    System.out.println("NullPointerException correctly thrown");
-	    e.printStackTrace();
-	}
+        try {
+            new DeadCode3() . fun2();
+            // if we got past the constructor, then there must be a problem
+            throw new RuntimeException("accidental removal of live code");
+        } catch (NullPointerException e) {
+            System.out.println("NullPointerException correctly thrown");
+            e.printStackTrace();
+        }
     }
 }

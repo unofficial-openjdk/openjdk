@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,21 +34,21 @@
  */
 
 public class TestHelpOption extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4934778-4777599";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", BUG_ID, "-sourcepath", SRC_DIR, "-help", 
+        "-d", BUG_ID, "-sourcepath", SRC_DIR, "-help",
             SRC_DIR + FS + "TestHelpOption.java"
     };
-    
+
     private static final String[] ARGS2 = new String[] {
-        "-d", BUG_ID, "-sourcepath", SRC_DIR, 
+        "-d", BUG_ID, "-sourcepath", SRC_DIR,
             SRC_DIR + FS + "TestHelpOption.java"
     };
-    
+
     private static final String[][] TEST = {
         {STANDARD_OUTPUT, "-d "},
         {STANDARD_OUTPUT, "-use "},
@@ -88,17 +88,17 @@ public class TestHelpOption extends JavadocTester {
         {STANDARD_OUTPUT, "-docencoding "},
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     private static final String[][] TEST2 = {
-        {BUG_ID + FS + "TestHelpOption.html", 
+        {BUG_ID + FS + "TestHelpOption.html",
             "<A HREF=\"help-doc.html\"><FONT CLASS=\"NavBarFont1\">" +            "<B>Help</B></FONT></A>"
         },
     };
     private static final String[][] NEGATED_TEST2 = NO_TEST;
-    
+
     //The help option should not crash the doclet.
     private static final int EXPECTED_EXIT_CODE = 0;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -110,14 +110,14 @@ public class TestHelpOption extends JavadocTester {
         run(tester, ARGS2, TEST2, NEGATED_TEST2);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

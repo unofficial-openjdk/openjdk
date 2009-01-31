@@ -37,44 +37,44 @@ import com.sun.mirror.util.*;
 public class TestProcessorFactory implements AnnotationProcessorFactory {
 
     public Collection<String> supportedOptions() {
-	return new ArrayList<String>();
+        return new ArrayList<String>();
     }
 
     public Collection<String> supportedAnnotationTypes() {
-	ArrayList<String> res = new ArrayList<String>();
-	res.add("Test");
-	res.add("Ignore");
-	return res;
+        ArrayList<String> res = new ArrayList<String>();
+        res.add("Test");
+        res.add("Ignore");
+        return res;
     }
 
     public AnnotationProcessor getProcessorFor(
-					Set<AnnotationTypeDeclaration> as,
-					AnnotationProcessorEnvironment env) {
-	// The tester that's running.
-	Tester tester = Tester.activeTester;
+                                        Set<AnnotationTypeDeclaration> as,
+                                        AnnotationProcessorEnvironment env) {
+        // The tester that's running.
+        Tester tester = Tester.activeTester;
 
-	try {
-	    // Find the tester's class declaration.
-	    ClassDeclaration testerDecl = null;
-	    for (TypeDeclaration decl : env.getSpecifiedTypeDeclarations()) {
-		if (decl.getQualifiedName().equals(
-					       tester.getClass().getName())) {
-		    testerDecl = (ClassDeclaration) decl;
-		    break;
-		}
-	    }
+        try {
+            // Find the tester's class declaration.
+            ClassDeclaration testerDecl = null;
+            for (TypeDeclaration decl : env.getSpecifiedTypeDeclarations()) {
+                if (decl.getQualifiedName().equals(
+                                               tester.getClass().getName())) {
+                    testerDecl = (ClassDeclaration) decl;
+                    break;
+                }
+            }
 
-	    // Give the tester access to its own declaration and to the env.
-	    tester.thisClassDecl = testerDecl;
-	    tester.env = env;
+            // Give the tester access to its own declaration and to the env.
+            tester.thisClassDecl = testerDecl;
+            tester.env = env;
 
-	    // Initializer the tester.
-	    tester.init();
+            // Initializer the tester.
+            tester.init();
 
-	    return new TestProcessor(env, tester);
+            return new TestProcessor(env, tester);
 
-	} catch (Exception e) {
-	    throw new Error("Couldn't create test annotation processor", e);
-	}
+        } catch (Exception e) {
+            throw new Error("Couldn't create test annotation processor", e);
+        }
     }
 }

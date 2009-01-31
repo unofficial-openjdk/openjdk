@@ -33,13 +33,13 @@
 import pkg.SuperClass;
 
 class ProtectedMemberAccess1a extends SuperClass {
-  
+
   // Access to a protected member via its simple name
   // is always legal in a subclass of the class in
   // which the member is declared.
 
   int i = pi;
-  int j = spi; 
+  int j = spi;
 
   int x = pm();
   int y = spm();
@@ -126,10 +126,10 @@ class ProtectedMemberAccess1a extends SuperClass {
 
     pC  obj1;
     spC obj2;
-    
+
     pI  obj3;
     spI obj4;
-    
+
     Object o1 = (pC) null;
     Object o2 = (spC) null;
 
@@ -185,10 +185,10 @@ class ProtectedMemberAccess2a extends pkg.SuperClass {
   // in which the reference occurs.
 
   ProtectedMemberAccess2a x =
-	new ProtectedMemberAccess2a();
+        new ProtectedMemberAccess2a();
 
   static ProtectedMemberAccess2a sx =
-  	new ProtectedMemberAccess2a();
+        new ProtectedMemberAccess2a();
 
   int i = x.pi;
   int j = x.spi;
@@ -269,7 +269,7 @@ class ProtectedMemberAccess2a extends pkg.SuperClass {
   void m() {
 
     ProtectedMemberAccess2a lx =
-	new ProtectedMemberAccess2a();
+        new ProtectedMemberAccess2a();
 
     x.pi  = 1;
     x.spi = 2;
@@ -359,7 +359,7 @@ class ProtectedMemberAccess2a extends pkg.SuperClass {
     void m() {
 
       ProtectedMemberAccess2a lx =
-	new ProtectedMemberAccess2a();
+        new ProtectedMemberAccess2a();
 
       x.pi  = 1;
       x.spi = 2;
@@ -497,7 +497,7 @@ class ProtectedMemberAccess3a extends pkg.SuperClass {
 
     //class C1 extends SubClass.pC {}
     class C2 extends SubClass.spC {}
-    
+
     //interface I1 extends SubClass.pI {}
     //interface I2 extends SubClass.spI {}
 

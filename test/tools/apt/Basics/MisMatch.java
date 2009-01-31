@@ -34,22 +34,22 @@ public class MisMatch {
     }
 
     protected abstract class AbstractNestedClass {
-	/**
-	 * Another doc comment.
-	 *
-	 * This one has multiple lines.
-	 */
-	void myMethod() throws RuntimeException , Error {}
+        /**
+         * Another doc comment.
+         *
+         * This one has multiple lines.
+         */
+        void myMethod() throws RuntimeException , Error {}
 
-	abstract void myAbstractMethod();
+        abstract void myAbstractMethod();
     }
 
     void VarArgsMethod1(Number... num) {
-	;
+        ;
     }
 
     void VarArgsMethod2(float f, double d, Number... num) {
-	;
+        ;
     }
 }
 

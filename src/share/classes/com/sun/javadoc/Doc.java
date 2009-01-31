@@ -30,8 +30,8 @@ import java.util.Locale;
 
 /**
  * Represents Java language constructs (package, class, constructor,
- * method, field) which have comments and have been processed by this 
- * run of javadoc.  All Doc objects are unique, that is, they 
+ * method, field) which have comments and have been processed by this
+ * run of javadoc.  All Doc objects are unique, that is, they
  * are == comparable.
  *
  * @since 1.2
@@ -49,13 +49,13 @@ public interface Doc extends Comparable<Object> {
     /**
      * Return all tags in this Doc item.
      *
-     * @return an array of {@link Tag} objects containing all tags on 
+     * @return an array of {@link Tag} objects containing all tags on
      *         this Doc item.
      */
     Tag[] tags();
 
     /**
-     * Return tags of the specified {@linkplain Tag#kind() kind} in 
+     * Return tags of the specified {@linkplain Tag#kind() kind} in
      * this Doc item.
      *
      * For example, if 'tagname' has value "@serial", all tags in
@@ -237,7 +237,7 @@ public interface Doc extends Comparable<Object> {
     boolean isOrdinaryClass();
 
     /**
-     * Is this Doc item a 
+     * Is this Doc item a
      * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#class">class</a>
      * (and not an interface or annotation type)?
      * This includes ordinary classes, enums, errors and exceptions.
@@ -247,15 +247,15 @@ public interface Doc extends Comparable<Object> {
     boolean isClass();
 
     /**
-     * Return true if this Doc item is 
+     * Return true if this Doc item is
      * <a href="{@docRoot}/com/sun/javadoc/package-summary.html#included">included</a>
      * in the result set.
      */
     boolean isIncluded();
 
     /**
-     * Return the source position of the first line of the 
-     * corresponding declaration, or null if 
+     * Return the source position of the first line of the
+     * corresponding declaration, or null if
      * no position is available.  A default constructor returns
      * null because it has no location in the source file.
      *

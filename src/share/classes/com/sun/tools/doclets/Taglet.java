@@ -155,4 +155,3 @@ public interface Taglet {
     public abstract String toString(Tag[] tags);
 
 }
-

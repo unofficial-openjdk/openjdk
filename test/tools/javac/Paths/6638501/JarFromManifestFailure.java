@@ -5,7 +5,7 @@
 
 /*
  * @test
- * @bug 6638501 
+ * @bug 6638501
  * @summary REGRESSION:  Java Compiler cannot find jar files referenced by other
  * @run main JarFromManifestFailure
  */
@@ -20,7 +20,7 @@ import javax.tools.StandardJavaFileManager.*;
 public class JarFromManifestFailure {
     static File testSrc = new File(System.getProperty("test.src", "."));
     static File testClasses = new File(System.getProperty("test.classes", "."));
-    
+
     public static void main(String... args) throws Exception {
         compile(testClasses, null, new File(testSrc, "HelloLib/test/HelloImpl.java"), new File(testSrc, "WsCompileExample.java"));
         File libFile = new File(testClasses, "lib");
@@ -41,7 +41,7 @@ public class JarFromManifestFailure {
         }
 
         System.err.println("Second compile!!!");
-        
+
         args1 = new String[3];
         args1[0] = "-cp";
         args1[1] = new File(libFile, "JarPointer.jar").toString().replace('\\', '/');
@@ -50,14 +50,14 @@ public class JarFromManifestFailure {
             throw new AssertionError("Failure in second compile!");
         }
     }
-    
+
     static void compile(File classOutDir, Iterable<File> classPath, File... files) {
         System.err.println("compile...");
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
-        Iterable<? extends JavaFileObject> fileObjects = 
+        Iterable<? extends JavaFileObject> fileObjects =
                     fm.getJavaFileObjectsFromFiles(Arrays.asList(files));
-        
+
         List<String> options = new ArrayList<String>();
         if (classOutDir != null) {
             options.add("-d");
@@ -68,14 +68,14 @@ public class JarFromManifestFailure {
             options.add(join(classPath, File.pathSeparator));
         }
         options.add("-verbose");
-        
-        JavaCompiler.CompilationTask task = 
+
+        JavaCompiler.CompilationTask task =
             compiler.getTask(null, fm, null, options, null, fileObjects);
         if (!task.call())
             throw new AssertionError("compilation failed");
     }
-    
-    static void jar(File jar, Iterable<File> classPath, File base, File... files) 
+
+    static void jar(File jar, Iterable<File> classPath, File base, File... files)
             throws IOException {
         System.err.println("jar...");
         Manifest m = new Manifest();
@@ -89,20 +89,20 @@ public class JarFromManifestFailure {
         add(j, base, files);
         j.close();
     }
-    
+
     static void add(JarOutputStream j, File base, File... files) throws IOException {
         if (files == null)
             return;
-        
-        for (File f: files) 
+
+        for (File f: files)
             add(j, base, f);
     }
-    
+
     static void add(JarOutputStream j, File base, File file) throws IOException {
         File f = new File(base, file.getPath());
         if (f.isDirectory()) {
             JarEntry e = new JarEntry(new String(file.getPath() + File.separator).replace('\\', '/'));
-            e.setSize(file.length());            
+            e.setSize(file.length());
             j.putNextEntry(e);
             String[] children = f.list();
             if (children != null) {
@@ -117,9 +117,9 @@ public class JarFromManifestFailure {
             j.write(read(f));
             j.closeEntry();
         }
-        
+
     }
-    
+
     static byte[] read(File f) throws IOException {
         byte[] buf = new byte[(int) f.length()];
         BufferedInputStream in = new BufferedInputStream(new FileInputStream(f));
@@ -129,18 +129,18 @@ public class JarFromManifestFailure {
             if (n < 0)
                 throw new EOFException();
             offset += n;
-        } 
+        }
         return buf;
     }
-    
+
     static <T> Iterable<T> iterable(T single) {
         return Collections.singleton(single);
     }
-    
+
     static <T> String join(Iterable<T> iter, String sep) {
         StringBuilder p = new StringBuilder();
         for (T t: iter) {
-            if (p.length() > 0) 
+            if (p.length() > 0)
                 p.append(' ');
             p.append(t);
         }

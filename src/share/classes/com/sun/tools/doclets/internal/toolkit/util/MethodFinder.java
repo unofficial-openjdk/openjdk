@@ -32,7 +32,7 @@ import com.sun.javadoc.*;
  * comment and documentation tags. The method is searched in all the
  * superclasses and interfaces(subsequently super-interfaces also)
  * recursively.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API.
@@ -40,7 +40,7 @@ import com.sun.javadoc.*;
 public abstract class MethodFinder {
 
     abstract boolean isCorrectMethod(MethodDoc method);
-    
+
     public MethodDoc search(ClassDoc cd, MethodDoc method) {
         MethodDoc meth = searchInterfaces(cd, method);
         if (meth != null) {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,14 +33,14 @@
  */
 
 public class TestRecurseSubPackages extends JavadocTester {
-    
+
     private static final String BUG_ID = "4074234";
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
             "-subpackages", "pkg1", "-exclude", "pkg1.pkg2.packageToExclude"
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -58,14 +58,14 @@ public class TestRecurseSubPackages extends JavadocTester {
         run(tester, ARGS, tests, negatedTests);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

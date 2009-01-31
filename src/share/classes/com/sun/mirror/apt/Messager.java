@@ -51,7 +51,7 @@ public interface Messager {
     /**
      * Prints an error message.
      * @param pos  the position where the error occured, or null if it is
-     *			unknown or not applicable
+     *                  unknown or not applicable
      * @param msg  the message, or an empty string if none
      */
     void printError(SourcePosition pos, String msg);
@@ -66,7 +66,7 @@ public interface Messager {
     /**
      * Prints a warning message.
      * @param pos  the position where the warning occured, or null if it is
-     *			unknown or not applicable
+     *                  unknown or not applicable
      * @param msg  the message, or an empty string if none
      */
     void printWarning(SourcePosition pos, String msg);
@@ -81,7 +81,7 @@ public interface Messager {
     /**
      * Prints a notice.
      * @param pos  the position where the noticed occured, or null if it is
-     *			unknown or not applicable
+     *                  unknown or not applicable
      * @param msg  the message, or an empty string if none
      */
     void printNotice(SourcePosition pos, String msg);

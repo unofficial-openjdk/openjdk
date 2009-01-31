@@ -133,7 +133,7 @@ public class HelpWriter extends HtmlDocletWriter {
         ulEnd();
         printText("doclet.Help_line_13");
         blockquoteEnd();
-        
+
         //Annotation Types
         blockquoteEnd();
         h3(); printText("doclet.AnnotationType"); h3End();
@@ -146,7 +146,7 @@ public class HelpWriter extends HtmlDocletWriter {
         li(); printText("doclet.Annotation_Type_Member_Detail");
         ulEnd();
         blockquoteEnd();
-        
+
         //Enums
         blockquoteEnd();
         h3(); printText("doclet.Enum"); h3End();
@@ -158,7 +158,7 @@ public class HelpWriter extends HtmlDocletWriter {
         li(); printText("doclet.Enum_Constant_Detail");
         ulEnd();
         blockquoteEnd();
-        
+
         if (configuration.classuse) {
             h3(); printText("doclet.Help_line_14"); h3End();
             blockquote();
@@ -204,13 +204,13 @@ public class HelpWriter extends HtmlDocletWriter {
         printText("doclet.Help_line_24");
         h3(); printText("doclet.Help_line_25"); h3End();
         printText("doclet.Help_line_26"); p();
-        
+
         h3(); printText("doclet.Serialized_Form"); h3End();
         printText("doclet.Help_line_27"); p();
-        
+
         h3(); printText("doclet.Constants_Summary"); h3End();
         printText("doclet.Help_line_28"); p();
-        
+
         font("-1"); em();
         printText("doclet.Help_line_29");
         emEnd(); fontEnd(); br();
@@ -228,6 +228,3 @@ public class HelpWriter extends HtmlDocletWriter {
         navCellEnd();
     }
 }
-
-
-

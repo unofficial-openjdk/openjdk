@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,16 +33,16 @@
  */
 
 public class TestHref extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4663254";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, "-linkoffline", 
+        "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, "-linkoffline",
         "http://java.sun.com/j2se/1.4/docs/api/", SRC_DIR, "pkg"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
         //External link.
@@ -69,22 +69,22 @@ public class TestHref extends JavadocTester {
         {BUG_ID + FS + "pkg" + FS + "C2.html",
             "See Also:</B><DD><A HREF=\"../pkg/C1.html#method(int, int, java.util.ArrayList)\">"
         },
-        
+
         //Header does not link to the page itself.
         {BUG_ID + FS + "pkg" + FS + "C4.html",
             "Class C4&lt;E extends C4&lt;E&gt;&gt;</H2>"
         },
-        
+
         //Signature does not link to the page itself.
         {BUG_ID + FS + "pkg" + FS + "C4.html",
             "public abstract class <B>C4&lt;E extends C4&lt;E&gt;&gt;</B>"
         },
     };
-    private static final String[][] NEGATED_TEST = 
+    private static final String[][] NEGATED_TEST =
     {
-    	{WARNING_OUTPUT,  "<a> tag is malformed"}
+        {WARNING_OUTPUT,  "<a> tag is malformed"}
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -94,14 +94,14 @@ public class TestHref extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

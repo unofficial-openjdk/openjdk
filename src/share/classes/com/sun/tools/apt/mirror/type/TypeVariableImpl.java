@@ -47,8 +47,8 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
 
 
     TypeVariableImpl(AptEnv env, Type.TypeVar type) {
-	super(env, type);
-	this.type = type;
+        super(env, type);
+        this.type = type;
     }
 
 
@@ -57,21 +57,21 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
      * not included.
      */
     public String toString() {
-	return type.tsym.name.toString();
+        return type.tsym.name.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public TypeParameterDeclaration getDeclaration() {
-	TypeSymbol sym = (TypeSymbol) type.tsym;
-	return env.declMaker.getTypeParameterDeclaration(sym);
+        TypeSymbol sym = (TypeSymbol) type.tsym;
+        return env.declMaker.getTypeParameterDeclaration(sym);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-	v.visitTypeVariable(this);
+        v.visitTypeVariable(this);
     }
 }

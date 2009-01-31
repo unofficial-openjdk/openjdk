@@ -59,89 +59,89 @@ import static com.sun.tools.javac.code.Flags.*;
 class Start {
     /** Context for this invocation. */
     private final Context context;
-    
+
     /**
      * Name of the program
      */
     private final String defaultDocletClassName;
-    
+
     private static final String javadocName = "javadoc";
-    
+
     private static final String standardDocletClassName =
         "com.sun.tools.doclets.standard.Standard";
-    
+
     private ListBuffer<String[]> options = new ListBuffer<String[]>();
-    
+
     private ModifierFilter showAccess = null;
-    
+
     private long defaultFilter = PUBLIC | PROTECTED;
-    
+
     private Messager messager;
-    
+
     String docLocale = "";
-    
+
     boolean breakiterator = false;
     boolean quiet = false;
     String encoding = null;
-    
+
     private DocletInvoker docletInvoker;
-    
+
     private static final int F_VERBOSE = 1 << 0;
     private static final int F_WARNINGS = 1 << 2;
 
     /* Treat warnings as errors. */
     private boolean rejectWarnings = false;
-    
+
     Start(String programName,
           PrintWriter errWriter,
           PrintWriter warnWriter,
           PrintWriter noticeWriter,
           String defaultDocletClassName) {
-	context = new Context();
+        context = new Context();
         messager = new Messager(context, programName, errWriter, warnWriter, noticeWriter);
         this.defaultDocletClassName = defaultDocletClassName;
     }
-    
+
     Start(String programName, String defaultDocletClassName) {
-	context = new Context();
+        context = new Context();
         messager = new Messager(context, programName);
         this.defaultDocletClassName = defaultDocletClassName;
     }
-    
+
     Start(String programName) {
         this(programName, standardDocletClassName);
     }
-    
+
     Start() {
         this(javadocName);
     }
-    
+
     /**
      * Usage
      */
     private void usage() {
         messager.notice("main.usage");
-        
+
         // let doclet print usage information (does nothing on error)
         if (docletInvoker != null) {
             docletInvoker.optionLength("-help");
         }
     }
-    
+
     /**
      * Exit
      */
     private void exit() {
         messager.exit();
     }
-    
-    
+
+
     /**
      * Main program - external wrapper
      */
     int begin(String argv[]) {
         boolean failed = false;
-        
+
         try {
             failed = !parseAndExecute(argv);
         } catch(Messager.ExitJavadoc exc) {
@@ -161,11 +161,11 @@ class Start {
             messager.exitNotice();
             messager.flush();
         }
-	failed |= messager.nerrors() > 0;
-	failed |= rejectWarnings && messager.nwarnings() > 0;
+        failed |= messager.nerrors() > 0;
+        failed |= rejectWarnings && messager.nwarnings() > 0;
         return failed ? 1 : 0;
     }
-    
+
     private void addToList(ListBuffer<String> list, String str){
         StringTokenizer st = new StringTokenizer(str, ":");
         String current;
@@ -179,27 +179,27 @@ class Start {
      * Main program - internal
      */
     private boolean parseAndExecute(String argv[]) throws IOException {
-	long tm = System.currentTimeMillis();
+        long tm = System.currentTimeMillis();
 
-	ListBuffer<String> javaNames = new ListBuffer<String>();
+        ListBuffer<String> javaNames = new ListBuffer<String>();
 
-	// Preprocess @file arguments
-	try {
-	    argv = CommandLine.parse(argv);
-	} catch (FileNotFoundException e) {
-	    messager.error(null, "main.cant.read", e.getMessage());
-	    exit();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	    exit();
-	}
+        // Preprocess @file arguments
+        try {
+            argv = CommandLine.parse(argv);
+        } catch (FileNotFoundException e) {
+            messager.error(null, "main.cant.read", e.getMessage());
+            exit();
+        } catch (IOException e) {
+            e.printStackTrace();
+            exit();
+        }
 
         setDocletInvoker(argv);
         ListBuffer<String> subPackages = new ListBuffer<String>();
         ListBuffer<String> excludedPackages = new ListBuffer<String>();
         Options compOpts = Options.instance(context);
-	boolean docClasses = false;
-        
+        boolean docClasses = false;
+
         // Parse arguments
         for (int i = 0 ; i < argv.length ; i++) {
             String arg = argv[i];
@@ -207,7 +207,7 @@ class Start {
                 oneArg(argv, i++);
                 addToList(subPackages, argv[i]);
             } else if (arg.equals("-exclude")){
-                oneArg(argv, i++);   
+                oneArg(argv, i++);
                 addToList(excludedPackages, argv[i]);
             } else if (arg.equals("-verbose")) {
                 setOption(arg);
@@ -227,17 +227,17 @@ class Start {
                 exit();
             } else if (arg.equals("-Xclasses")) {
                 setOption(arg);
-		docClasses = true;
+                docClasses = true;
             } else if (arg.equals("-Xwerror")) {
                 setOption(arg);
-		rejectWarnings = true;
+                rejectWarnings = true;
             } else if (arg.equals("-private")) {
                 setOption(arg);
                 setFilter(ModifierFilter.ALL_ACCESS);
             } else if (arg.equals("-package")) {
                 setOption(arg);
                 setFilter(PUBLIC | PROTECTED |
-			  ModifierFilter.PACKAGE );
+                          ModifierFilter.PACKAGE );
             } else if (arg.equals("-protected")) {
                 setOption(arg);
                 setFilter(PUBLIC | PROTECTED );
@@ -251,59 +251,59 @@ class Start {
                 }
                 compOpts.put("-source", argv[i]);
             } else if (arg.equals("-prompt")) {
-		compOpts.put("-prompt", "-prompt");
-		messager.promptOnError = true;
+                compOpts.put("-prompt", "-prompt");
+                messager.promptOnError = true;
             } else if (arg.equals("-sourcepath")) {
-		oneArg(argv, i++);
+                oneArg(argv, i++);
                 if (compOpts.get("-sourcepath") != null) {
                     usageError("main.option.already.seen", arg);
                 }
-		compOpts.put("-sourcepath", argv[i]);
+                compOpts.put("-sourcepath", argv[i]);
             } else if (arg.equals("-classpath")) {
-		oneArg(argv, i++);
-		if (compOpts.get("-classpath") != null) {
+                oneArg(argv, i++);
+                if (compOpts.get("-classpath") != null) {
                     usageError("main.option.already.seen", arg);
                 }
-		compOpts.put("-classpath", argv[i]);
+                compOpts.put("-classpath", argv[i]);
             } else if (arg.equals("-sysclasspath")) {
-		oneArg(argv, i++);
+                oneArg(argv, i++);
                 if (compOpts.get("-bootclasspath") != null) {
                     usageError("main.option.already.seen", arg);
                 }
                 compOpts.put("-bootclasspath", argv[i]);
             } else if (arg.equals("-bootclasspath")) {
-		oneArg(argv, i++);
+                oneArg(argv, i++);
                 if (compOpts.get("-bootclasspath") != null) {
                     usageError("main.option.already.seen", arg);
                 }
                 compOpts.put("-bootclasspath", argv[i]);
             } else if (arg.equals("-extdirs")) {
-		oneArg(argv, i++);
+                oneArg(argv, i++);
                 if (compOpts.get("-extdirs") != null) {
                     usageError("main.option.already.seen", arg);
                 }
                 compOpts.put("-extdirs", argv[i]);
-	    } else if (arg.equals("-overview")) {
-		oneArg(argv, i++);
-	    } else if (arg.equals("-doclet")) {
-		i++;  // handled in setDocletInvoker
-	    } else if (arg.equals("-docletpath")) {
-		i++;  // handled in setDocletInvoker
-	    } else if (arg.equals("-locale")) {
-		if (i != 0)
-		    usageError("main.locale_first");
-		oneArg(argv, i++);
-		docLocale = argv[i];
+            } else if (arg.equals("-overview")) {
+                oneArg(argv, i++);
+            } else if (arg.equals("-doclet")) {
+                i++;  // handled in setDocletInvoker
+            } else if (arg.equals("-docletpath")) {
+                i++;  // handled in setDocletInvoker
+            } else if (arg.equals("-locale")) {
+                if (i != 0)
+                    usageError("main.locale_first");
+                oneArg(argv, i++);
+                docLocale = argv[i];
             } else if (arg.startsWith("-XD")) {
-		String s = arg.substring("-XD".length());
-		int eq = s.indexOf('=');
-		String key = (eq < 0) ? s : s.substring(0, eq);
-		String value = (eq < 0) ? s : s.substring(eq+1);
-		compOpts.put(key, value);
-	    }
+                String s = arg.substring("-XD".length());
+                int eq = s.indexOf('=');
+                String key = (eq < 0) ? s : s.substring(0, eq);
+                String value = (eq < 0) ? s : s.substring(eq+1);
+                compOpts.put(key, value);
+            }
             // call doclet for its options
-	    // other arg starts with - is invalid
-	    else if ( arg.startsWith("-") ) { 
+            // other arg starts with - is invalid
+            else if ( arg.startsWith("-") ) {
                 int optionLength;
                 optionLength = docletInvoker.optionLength(arg);
                 if (optionLength < 0) {
@@ -327,49 +327,49 @@ class Start {
                 javaNames.append(arg);
             }
         }
-        
+
         if (javaNames.isEmpty() && subPackages.isEmpty()) {
             usageError("main.No_packages_or_classes_specified");
         }
-        
+
         if (!docletInvoker.validOptions(options.toList())) {
             // error message already displayed
             exit();
         }
 
-	JavadocTool comp = JavadocTool.make0(context);
-	if (comp == null) return false;
+        JavadocTool comp = JavadocTool.make0(context);
+        if (comp == null) return false;
 
-	if (showAccess == null) {
-	    setFilter(defaultFilter);
-	}
+        if (showAccess == null) {
+            setFilter(defaultFilter);
+        }
 
         LanguageVersion languageVersion = docletInvoker.languageVersion();
         RootDocImpl root = comp.getRootDocImpl(
-		docLocale, encoding, showAccess,
+                docLocale, encoding, showAccess,
                 javaNames.toList(), options.toList(), breakiterator,
                 subPackages.toList(), excludedPackages.toList(),
-		docClasses,
+                docClasses,
                 // legacy?
                 languageVersion == null || languageVersion == LanguageVersion.JAVA_1_1, quiet);
 
-	// pass off control to the doclet
-	boolean ok = root != null;
-	if (ok) ok = docletInvoker.start(root);
-	
-	// We're done.
-	if (compOpts.get("-verbose") != null) {
-	    tm = System.currentTimeMillis() - tm;
-	    messager.notice("main.done_in", Long.toString(tm));
-	}
+        // pass off control to the doclet
+        boolean ok = root != null;
+        if (ok) ok = docletInvoker.start(root);
 
-	return ok;
+        // We're done.
+        if (compOpts.get("-verbose") != null) {
+            tm = System.currentTimeMillis() - tm;
+            messager.notice("main.done_in", Long.toString(tm));
+        }
+
+        return ok;
     }
-    
+
     private void setDocletInvoker(String[] argv) {
         String docletClassName = null;
         String docletPath = null;
-        
+
         // Parse doclet specifying arguments
         for (int i = 0 ; i < argv.length ; i++) {
             String arg = argv[i];
@@ -389,16 +389,16 @@ class Start {
                 }
             }
         }
-        
+
         if (docletClassName == null) {
             docletClassName = defaultDocletClassName;
         }
-        
+
         // attempt to find doclet
         docletInvoker = new DocletInvoker(messager,
                                           docletClassName, docletPath);
     }
-    
+
     private void setFilter(long filterBits) {
         if (showAccess != null) {
             messager.error(null, "main.incompatible.access.flags");
@@ -407,7 +407,7 @@ class Start {
         }
         showAccess = new ModifierFilter(filterBits);
     }
-    
+
     /**
      * Set one arg option.
      * Error and exit if one argument is not provided.
@@ -419,25 +419,25 @@ class Start {
             usageError("main.requires_argument", args[index]);
         }
     }
-    
+
     private void usageError(String key) {
         messager.error(null, key);
         usage();
         exit();
     }
-    
+
     private void usageError(String key, String a1) {
         messager.error(null, key, a1);
         usage();
         exit();
     }
-    
+
     private void usageError(String key, String a1, String a2) {
         messager.error(null, key, a1, a2);
         usage();
         exit();
     }
-    
+
     /**
      * indicate an option with no arguments was given.
      */
@@ -445,7 +445,7 @@ class Start {
         String[] option = { opt };
         options.append(option);
     }
-    
+
     /**
      * indicate an option with one argument was given.
      */
@@ -453,7 +453,7 @@ class Start {
         String[] option = { opt, argument };
         options.append(option);
     }
-    
+
     /**
      * indicate an option with the specified list of arguments was given.
      */
@@ -466,5 +466,5 @@ class Start {
         }
         options = options.append(args);
     }
-    
+
 }

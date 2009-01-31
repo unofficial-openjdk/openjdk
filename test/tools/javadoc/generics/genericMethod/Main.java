@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,22 +38,22 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-	tester.run();
-	tester.verify();
+        tester.run();
+        tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-	try {
-	    for (ClassDoc cd : root.classes()) {
-		for (ConstructorDoc c : cd.constructors())
-		    tester.printConstructor(c);
-		for (MethodDoc m : cd.methods())
-		    tester.printMethod(m);
-	    }
+        try {
+            for (ClassDoc cd : root.classes()) {
+                for (ConstructorDoc c : cd.constructors())
+                    tester.printConstructor(c);
+                for (MethodDoc m : cd.methods())
+                    tester.printMethod(m);
+            }
 
-	    return true;
-	} catch (IOException e) {
-	    return false;
-	}
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

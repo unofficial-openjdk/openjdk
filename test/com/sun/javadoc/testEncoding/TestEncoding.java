@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,10 +34,10 @@
  */
 
 public class TestEncoding extends JavadocTester {
-    
+
     private static final String BUG_ID = "4661481";
     private static final String[][] TEST = NO_TEST;
-    
+
     //If ??? is found in the output, the source file was not read with the correct encoding setting.
     private static final String[][] NEGATED_TEST = {
         {BUG_ID + FS + "EncodeTest.html", "???"}
@@ -47,7 +47,7 @@ public class TestEncoding extends JavadocTester {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
             "-encoding", "SJIS", SRC_DIR + FS + "EncodeTest.java"
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -57,14 +57,14 @@ public class TestEncoding extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

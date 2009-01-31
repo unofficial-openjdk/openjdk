@@ -34,7 +34,7 @@ import javax.lang.model.element.Modifier;
  *
  * For example:
  * <pre>
- *   <em>flags</em> 
+ *   <em>flags</em>
  *
  *   <em>flags</em> <em>annotations</em>
  * </pre>

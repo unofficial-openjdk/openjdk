@@ -55,7 +55,7 @@ import static com.sun.tools.javac.main.OptionName.*;
  * or deletion without notice.</b></p>
  */
 public class RecognizedOptions {
-    
+
     private RecognizedOptions() {}
 
     public interface OptionHelper {
@@ -79,39 +79,39 @@ public class RecognizedOptions {
     }
 
     public static class GrumpyHelper implements OptionHelper {
-        
+
         public void setOut(PrintWriter out) {
             throw new IllegalArgumentException();
         }
-        
+
         public void error(String key, Object... args) {
             throw new IllegalArgumentException(Main.getLocalizedString(key, args));
         }
-        
+
         public void printVersion() {
             throw new IllegalArgumentException();
         }
-        
+
         public void printFullVersion() {
             throw new IllegalArgumentException();
         }
-        
+
         public void printHelp() {
             throw new IllegalArgumentException();
         }
-        
+
         public void printXhelp() {
             throw new IllegalArgumentException();
         }
-        
+
         public void addFile(File f) {
             throw new IllegalArgumentException(f.getPath());
         }
-        
+
         public void addClassName(String s) {
             throw new IllegalArgumentException(s);
         }
-        
+
     }
 
     static Set<OptionName> javacOptions = EnumSet.of(
@@ -184,7 +184,7 @@ public class RecognizedOptions {
         D,
         S,
         ENCODING,
-	SOURCE);
+        SOURCE);
 
     static Set<OptionName> javacToolOptions = EnumSet.of(
         G,
@@ -243,127 +243,127 @@ public class RecognizedOptions {
                 options.append(option);
         return options.toArray(new Option[options.length()]);
     }
-    
+
     /**
      * @param out the writer to use for diagnostic output
      */
     public static Option[] getAll(final OptionHelper helper) {
         return new Option[]{
-	new Option(G,                                           "opt.g"),
-	new Option(G_NONE,					"opt.g.none") {
-	    public boolean process(Options options, String option) {
-		options.put("-g:", "none");
-		return false;
-	    }
-	},
-
-	new Option(G_CUSTOM,                                    "opt.g.lines.vars.source") {
-	    public boolean matches(String s) {
-		return s.startsWith("-g:");
-	    }
-	    public boolean process(Options options, String option) {
-		String suboptions = option.substring(3);
-		options.put("-g:", suboptions);
-		// enter all the -g suboptions as "-g:suboption"
-		for (StringTokenizer t = new StringTokenizer(suboptions, ","); t.hasMoreTokens(); ) {
-		    String tok = t.nextToken();
-		    String opt = "-g:" + tok;
-		    options.put(opt, opt);
-		}
-		return false;
-	    }
-	},
-
-	new XOption(XLINT,					"opt.Xlint"),
-	new XOption(XLINT_CUSTOM,                               "opt.Xlint.suboptlist") {
-	    public boolean matches(String s) {
-		return s.startsWith("-Xlint:");
-	    }
-	    public boolean process(Options options, String option) {
-		String suboptions = option.substring(7);
-		options.put("-Xlint:", suboptions);
-		// enter all the -Xlint suboptions as "-Xlint:suboption"
-		for (StringTokenizer t = new StringTokenizer(suboptions, ","); t.hasMoreTokens(); ) {
-		    String tok = t.nextToken();
-		    String opt = "-Xlint:" + tok;
-		    options.put(opt, opt);
-		}
-		return false;
-	    }
-	},
-
-	// -nowarn is retained for command-line backward compatibility
-	new Option(NOWARN,					"opt.nowarn") {
-		public boolean process(Options options, String option) {
-		    options.put("-Xlint:none", option);
-		    return false;
-		}
-	    },
-
-	new Option(VERBOSE,					"opt.verbose"),
-
-	// -deprecation is retained for command-line backward compatibility
-	new Option(DEPRECATION,                                 "opt.deprecation") {
-		public boolean process(Options options, String option) {
-		    options.put("-Xlint:deprecation", option);
-		    return false;
-		}
-	    },
-
-	new Option(CLASSPATH,              "opt.arg.path",	"opt.classpath"),
-	new Option(CP,                     "opt.arg.path",	"opt.classpath") {
-	    public boolean process(Options options, String option, String arg) {
-		return super.process(options, "-classpath", arg);
-	    }
-	},
-	new Option(SOURCEPATH,             "opt.arg.path",	"opt.sourcepath"),
-	new Option(BOOTCLASSPATH,	   "opt.arg.path",	"opt.bootclasspath") {
-	    public boolean process(Options options, String option, String arg) {
-	 	options.remove("-Xbootclasspath/p:");
-	 	options.remove("-Xbootclasspath/a:");
-		return super.process(options, option, arg);
-	    }
-	},
-	new XOption(XBOOTCLASSPATH_PREPEND,"opt.arg.path", "opt.Xbootclasspath.p"),
-	new XOption(XBOOTCLASSPATH_APPEND, "opt.arg.path", "opt.Xbootclasspath.a"),
-	new XOption(XBOOTCLASSPATH,        "opt.arg.path", "opt.bootclasspath") {
-	    public boolean process(Options options, String option, String arg) {
-	 	options.remove("-Xbootclasspath/p:");
-	 	options.remove("-Xbootclasspath/a:");
-	 	return super.process(options, "-bootclasspath", arg);
-	    }
-	},
-	new Option(EXTDIRS,		   "opt.arg.dirs",	"opt.extdirs"),
-	new XOption(DJAVA_EXT_DIRS,	   "opt.arg.dirs",	"opt.extdirs") {
-	    public boolean process(Options options, String option, String arg) {
-	 	return super.process(options, "-extdirs", arg);
-	    }
-	},
-	new Option(ENDORSEDDIRS,	    "opt.arg.dirs",	"opt.endorseddirs"),
-	new XOption(DJAVA_ENDORSED_DIRS,    "opt.arg.dirs",	"opt.endorseddirs") {
-	    public boolean process(Options options, String option, String arg) {
-	 	return super.process(options, "-endorseddirs", arg);
-	    }
-	},
-	new Option(PROC_CUSTOM,                                 "opt.proc.none.only") {
-	    public boolean matches(String s) {
-		return s.equals("-proc:none") || s.equals("-proc:only");
-	    }
-
-	    public boolean process(Options options, String option) {
-		if (option.equals("-proc:none")) {
-		    options.remove("-proc:only");
-		} else {
-		    options.remove("-proc:none");
-		}
-		options.put(option, option);
-		return false;
-	    }
+        new Option(G,                                           "opt.g"),
+        new Option(G_NONE,                                      "opt.g.none") {
+            public boolean process(Options options, String option) {
+                options.put("-g:", "none");
+                return false;
+            }
         },
-	new Option(PROCESSOR,           "opt.arg.class.list",	"opt.processor"),
-	new Option(PROCESSORPATH,       "opt.arg.path",		"opt.processorpath"),
-	new Option(D,                   "opt.arg.directory",	"opt.d"),
-	new Option(S,                   "opt.arg.directory",	"opt.sourceDest"),
+
+        new Option(G_CUSTOM,                                    "opt.g.lines.vars.source") {
+            public boolean matches(String s) {
+                return s.startsWith("-g:");
+            }
+            public boolean process(Options options, String option) {
+                String suboptions = option.substring(3);
+                options.put("-g:", suboptions);
+                // enter all the -g suboptions as "-g:suboption"
+                for (StringTokenizer t = new StringTokenizer(suboptions, ","); t.hasMoreTokens(); ) {
+                    String tok = t.nextToken();
+                    String opt = "-g:" + tok;
+                    options.put(opt, opt);
+                }
+                return false;
+            }
+        },
+
+        new XOption(XLINT,                                      "opt.Xlint"),
+        new XOption(XLINT_CUSTOM,                               "opt.Xlint.suboptlist") {
+            public boolean matches(String s) {
+                return s.startsWith("-Xlint:");
+            }
+            public boolean process(Options options, String option) {
+                String suboptions = option.substring(7);
+                options.put("-Xlint:", suboptions);
+                // enter all the -Xlint suboptions as "-Xlint:suboption"
+                for (StringTokenizer t = new StringTokenizer(suboptions, ","); t.hasMoreTokens(); ) {
+                    String tok = t.nextToken();
+                    String opt = "-Xlint:" + tok;
+                    options.put(opt, opt);
+                }
+                return false;
+            }
+        },
+
+        // -nowarn is retained for command-line backward compatibility
+        new Option(NOWARN,                                      "opt.nowarn") {
+                public boolean process(Options options, String option) {
+                    options.put("-Xlint:none", option);
+                    return false;
+                }
+            },
+
+        new Option(VERBOSE,                                     "opt.verbose"),
+
+        // -deprecation is retained for command-line backward compatibility
+        new Option(DEPRECATION,                                 "opt.deprecation") {
+                public boolean process(Options options, String option) {
+                    options.put("-Xlint:deprecation", option);
+                    return false;
+                }
+            },
+
+        new Option(CLASSPATH,              "opt.arg.path",      "opt.classpath"),
+        new Option(CP,                     "opt.arg.path",      "opt.classpath") {
+            public boolean process(Options options, String option, String arg) {
+                return super.process(options, "-classpath", arg);
+            }
+        },
+        new Option(SOURCEPATH,             "opt.arg.path",      "opt.sourcepath"),
+        new Option(BOOTCLASSPATH,          "opt.arg.path",      "opt.bootclasspath") {
+            public boolean process(Options options, String option, String arg) {
+                options.remove("-Xbootclasspath/p:");
+                options.remove("-Xbootclasspath/a:");
+                return super.process(options, option, arg);
+            }
+        },
+        new XOption(XBOOTCLASSPATH_PREPEND,"opt.arg.path", "opt.Xbootclasspath.p"),
+        new XOption(XBOOTCLASSPATH_APPEND, "opt.arg.path", "opt.Xbootclasspath.a"),
+        new XOption(XBOOTCLASSPATH,        "opt.arg.path", "opt.bootclasspath") {
+            public boolean process(Options options, String option, String arg) {
+                options.remove("-Xbootclasspath/p:");
+                options.remove("-Xbootclasspath/a:");
+                return super.process(options, "-bootclasspath", arg);
+            }
+        },
+        new Option(EXTDIRS,                "opt.arg.dirs",      "opt.extdirs"),
+        new XOption(DJAVA_EXT_DIRS,        "opt.arg.dirs",      "opt.extdirs") {
+            public boolean process(Options options, String option, String arg) {
+                return super.process(options, "-extdirs", arg);
+            }
+        },
+        new Option(ENDORSEDDIRS,            "opt.arg.dirs",     "opt.endorseddirs"),
+        new XOption(DJAVA_ENDORSED_DIRS,    "opt.arg.dirs",     "opt.endorseddirs") {
+            public boolean process(Options options, String option, String arg) {
+                return super.process(options, "-endorseddirs", arg);
+            }
+        },
+        new Option(PROC_CUSTOM,                                 "opt.proc.none.only") {
+            public boolean matches(String s) {
+                return s.equals("-proc:none") || s.equals("-proc:only");
+            }
+
+            public boolean process(Options options, String option) {
+                if (option.equals("-proc:none")) {
+                    options.remove("-proc:only");
+                } else {
+                    options.remove("-proc:none");
+                }
+                options.put(option, option);
+                return false;
+            }
+        },
+        new Option(PROCESSOR,           "opt.arg.class.list",   "opt.processor"),
+        new Option(PROCESSORPATH,       "opt.arg.path",         "opt.processorpath"),
+        new Option(D,                   "opt.arg.directory",    "opt.d"),
+        new Option(S,                   "opt.arg.directory",    "opt.sourceDest"),
         new Option(IMPLICIT,                                    "opt.implicit") {
             public boolean matches(String s) {
                 return s.equals("-implicit:none") || s.equals("-implicit:class");
@@ -375,169 +375,169 @@ public class RecognizedOptions {
                 return false;
             }
         },
-	new Option(ENCODING,		"opt.arg.encoding",	"opt.encoding"),
-	new Option(SOURCE,		"opt.arg.release",	"opt.source") {
-	    public boolean process(Options options, String option, String operand) {
-		Source source = Source.lookup(operand);
-		if (source == null) {
-		    helper.error("err.invalid.source", operand);
-		    return true;
-		}
-		return super.process(options, option, operand);
-	    }
-	},
-	new Option(TARGET,		"opt.arg.release",	"opt.target") {
-	    public boolean process(Options options, String option, String operand) {
-		Target target = Target.lookup(operand);
-		if (target == null) {
-		    helper.error("err.invalid.target", operand);
-		    return true;
-		}
-		return super.process(options, option, operand);
-	    }
-	},
-	new Option(VERSION,					"opt.version") {
-	    public boolean process(Options options, String option) {
+        new Option(ENCODING,            "opt.arg.encoding",     "opt.encoding"),
+        new Option(SOURCE,              "opt.arg.release",      "opt.source") {
+            public boolean process(Options options, String option, String operand) {
+                Source source = Source.lookup(operand);
+                if (source == null) {
+                    helper.error("err.invalid.source", operand);
+                    return true;
+                }
+                return super.process(options, option, operand);
+            }
+        },
+        new Option(TARGET,              "opt.arg.release",      "opt.target") {
+            public boolean process(Options options, String option, String operand) {
+                Target target = Target.lookup(operand);
+                if (target == null) {
+                    helper.error("err.invalid.target", operand);
+                    return true;
+                }
+                return super.process(options, option, operand);
+            }
+        },
+        new Option(VERSION,                                     "opt.version") {
+            public boolean process(Options options, String option) {
                 helper.printVersion();
-		return super.process(options, option);
-	    }
-	},
-	new HiddenOption(FULLVERSION) {
-	    public boolean process(Options options, String option) {
+                return super.process(options, option);
+            }
+        },
+        new HiddenOption(FULLVERSION) {
+            public boolean process(Options options, String option) {
                 helper.printFullVersion();
-		return super.process(options, option);
-	    }
-	},
-	new Option(HELP,					"opt.help") {
-	    public boolean process(Options options, String option) {
+                return super.process(options, option);
+            }
+        },
+        new Option(HELP,                                        "opt.help") {
+            public boolean process(Options options, String option) {
                 helper.printHelp();
-		return super.process(options, option);
-	    }
-	},
-	new Option(A,                "opt.arg.key.equals.value","opt.A") {
-		String helpSynopsis() {
-		    hasSuffix = true;
-		    return super.helpSynopsis();
-		}
+                return super.process(options, option);
+            }
+        },
+        new Option(A,                "opt.arg.key.equals.value","opt.A") {
+                String helpSynopsis() {
+                    hasSuffix = true;
+                    return super.helpSynopsis();
+                }
 
-		public boolean matches(String arg) {
-		    return arg.startsWith("-A");
-		}
-		
-		public boolean hasArg() {
-		    return false;
-		}
-		// Mapping for processor options created in
-		// JavacProcessingEnvironment
-		public boolean process(Options options, String option) {
-		    int argLength = option.length();
-		    if (argLength == 2) {
-			helper.error("err.empty.A.argument");
-			return true;
-		    }
-		    int sepIndex = option.indexOf('=');
-		    String key = option.substring(2, (sepIndex != -1 ? sepIndex : argLength) );
-		    if (!JavacProcessingEnvironment.isValidOptionName(key)) {
-			helper.error("err.invalid.A.key", option);
-			return true;
-		    }
-		    return process(options, option, option);
-		}
-	},
-	new Option(X,   					"opt.X") {
-	    public boolean process(Options options, String option) {
-		helper.printXhelp();
-		return super.process(options, option);
-	    }
-	},
+                public boolean matches(String arg) {
+                    return arg.startsWith("-A");
+                }
 
-	// This option exists only for the purpose of documenting itself.
-	// It's actually implemented by the launcher.
-	new Option(J,   		"opt.arg.flag",		"opt.J") {
-	    String helpSynopsis() {
-		hasSuffix = true;
-		return super.helpSynopsis();
-	    }
-	    public boolean process(Options options, String option) {
-		throw new AssertionError
-		    ("the -J flag should be caught by the launcher.");
-	    }
-	},
+                public boolean hasArg() {
+                    return false;
+                }
+                // Mapping for processor options created in
+                // JavacProcessingEnvironment
+                public boolean process(Options options, String option) {
+                    int argLength = option.length();
+                    if (argLength == 2) {
+                        helper.error("err.empty.A.argument");
+                        return true;
+                    }
+                    int sepIndex = option.indexOf('=');
+                    String key = option.substring(2, (sepIndex != -1 ? sepIndex : argLength) );
+                    if (!JavacProcessingEnvironment.isValidOptionName(key)) {
+                        helper.error("err.invalid.A.key", option);
+                        return true;
+                    }
+                    return process(options, option, option);
+                }
+        },
+        new Option(X,                                           "opt.X") {
+            public boolean process(Options options, String option) {
+                helper.printXhelp();
+                return super.process(options, option);
+            }
+        },
 
-	// stop after parsing and attributing.
-	// new HiddenOption("-attrparseonly"),
+        // This option exists only for the purpose of documenting itself.
+        // It's actually implemented by the launcher.
+        new Option(J,                   "opt.arg.flag",         "opt.J") {
+            String helpSynopsis() {
+                hasSuffix = true;
+                return super.helpSynopsis();
+            }
+            public boolean process(Options options, String option) {
+                throw new AssertionError
+                    ("the -J flag should be caught by the launcher.");
+            }
+        },
 
-	// new Option("-moreinfo",					"opt.moreinfo") {
-	new HiddenOption(MOREINFO) {
-	    public boolean process(Options options, String option) {
-		Type.moreInfo = true;
-		return super.process(options, option);
-	    }
-	},
+        // stop after parsing and attributing.
+        // new HiddenOption("-attrparseonly"),
 
-	// treat warnings as errors
-	new HiddenOption(WERROR),
+        // new Option("-moreinfo",                                      "opt.moreinfo") {
+        new HiddenOption(MOREINFO) {
+            public boolean process(Options options, String option) {
+                Type.moreInfo = true;
+                return super.process(options, option);
+            }
+        },
 
-	// use complex inference from context in the position of a method call argument
-	new HiddenOption(COMPLEXINFERENCE),
+        // treat warnings as errors
+        new HiddenOption(WERROR),
 
-	// generare source stubs
-	// new HiddenOption("-stubs"),
+        // use complex inference from context in the position of a method call argument
+        new HiddenOption(COMPLEXINFERENCE),
 
-	// relax some constraints to allow compiling from stubs
-	// new HiddenOption("-relax"),
+        // generare source stubs
+        // new HiddenOption("-stubs"),
 
-	// output source after translating away inner classes
-	// new Option("-printflat",				"opt.printflat"),
-	// new HiddenOption("-printflat"),
+        // relax some constraints to allow compiling from stubs
+        // new HiddenOption("-relax"),
 
-	// display scope search details
-	// new Option("-printsearch",				"opt.printsearch"),
-	// new HiddenOption("-printsearch"),
+        // output source after translating away inner classes
+        // new Option("-printflat",                             "opt.printflat"),
+        // new HiddenOption("-printflat"),
 
-	// prompt after each error
-	// new Option("-prompt",					"opt.prompt"),
-	new HiddenOption(PROMPT),
+        // display scope search details
+        // new Option("-printsearch",                           "opt.printsearch"),
+        // new HiddenOption("-printsearch"),
 
-	// dump stack on error
-	new HiddenOption(DOE),
+        // prompt after each error
+        // new Option("-prompt",                                        "opt.prompt"),
+        new HiddenOption(PROMPT),
 
-	// output source after type erasure
-	// new Option("-s",					"opt.s"),
-	new HiddenOption(PRINTSOURCE),
+        // dump stack on error
+        new HiddenOption(DOE),
 
-	// output shrouded class files
-	// new Option("-scramble",				"opt.scramble"),
-	// new Option("-scrambleall",				"opt.scrambleall"),
+        // output source after type erasure
+        // new Option("-s",                                     "opt.s"),
+        new HiddenOption(PRINTSOURCE),
 
-	// display warnings for generic unchecked operations
-	new HiddenOption(WARNUNCHECKED) {
-	    public boolean process(Options options, String option) {
-		options.put("-Xlint:unchecked", option);
-		return false;
-	    }
-	},
+        // output shrouded class files
+        // new Option("-scramble",                              "opt.scramble"),
+        // new Option("-scrambleall",                           "opt.scrambleall"),
 
-	new XOption(XMAXERRS,   	"opt.arg.number",	"opt.maxerrs"),
-	new XOption(XMAXWARNS,  	"opt.arg.number",	"opt.maxwarns"),
-	new XOption(XSTDOUT,		"opt.arg.file",		"opt.Xstdout") {
-	    public boolean process(Options options, String option, String arg) {
-		try {
-		    helper.setOut(new PrintWriter(new FileWriter(arg), true));
-		} catch (java.io.IOException e) {
-		    helper.error("err.error.writing.file", arg, e);
-		    return true;
-		}
-		return super.process(options, option, arg);
-	    }
-	},
+        // display warnings for generic unchecked operations
+        new HiddenOption(WARNUNCHECKED) {
+            public boolean process(Options options, String option) {
+                options.put("-Xlint:unchecked", option);
+                return false;
+            }
+        },
 
-	new XOption(XPRINT,   					"opt.print"),
+        new XOption(XMAXERRS,           "opt.arg.number",       "opt.maxerrs"),
+        new XOption(XMAXWARNS,          "opt.arg.number",       "opt.maxwarns"),
+        new XOption(XSTDOUT,            "opt.arg.file",         "opt.Xstdout") {
+            public boolean process(Options options, String option, String arg) {
+                try {
+                    helper.setOut(new PrintWriter(new FileWriter(arg), true));
+                } catch (java.io.IOException e) {
+                    helper.error("err.error.writing.file", arg, e);
+                    return true;
+                }
+                return super.process(options, option, arg);
+            }
+        },
 
-	new XOption(XPRINTROUNDS,   				"opt.printRounds"),
+        new XOption(XPRINT,                                     "opt.print"),
 
-	new XOption(XPRINTPROCESSORINFO,			"opt.printProcessorInfo"),
-        
+        new XOption(XPRINTROUNDS,                               "opt.printRounds"),
+
+        new XOption(XPRINTPROCESSORINFO,                        "opt.printProcessorInfo"),
+
         new XOption(XPREFER,                                     "opt.prefer") {
             public boolean matches(String s) {
                 return s.equals("-Xprefer:source") || s.equals("-Xprefer:newer");
@@ -550,49 +550,49 @@ public class RecognizedOptions {
             }
         },
 
-	/* -O is a no-op, accepted for backward compatibility. */
-	new HiddenOption(O),
+        /* -O is a no-op, accepted for backward compatibility. */
+        new HiddenOption(O),
 
-	/* -Xjcov produces tables to support the code coverage tool jcov. */
-	new HiddenOption(XJCOV),
+        /* -Xjcov produces tables to support the code coverage tool jcov. */
+        new HiddenOption(XJCOV),
 
-	/* This is a back door to the compiler's option table.
-	 * -XDx=y sets the option x to the value y.
-	 * -XDx sets the option x to the value x.
-	 */
-	new HiddenOption(XD) {
-	    String s;
-	    public boolean matches(String s) {
-		this.s = s;
-		return s.startsWith(name.optionName);
-	    }
-	    public boolean process(Options options, String option) {
-		s = s.substring(name.optionName.length());
-		int eq = s.indexOf('=');
-		String key = (eq < 0) ? s : s.substring(0, eq);
-		String value = (eq < 0) ? s : s.substring(eq+1);
-		options.put(key, value);
-		return false;
-	    }
-	},
+        /* This is a back door to the compiler's option table.
+         * -XDx=y sets the option x to the value y.
+         * -XDx sets the option x to the value x.
+         */
+        new HiddenOption(XD) {
+            String s;
+            public boolean matches(String s) {
+                this.s = s;
+                return s.startsWith(name.optionName);
+            }
+            public boolean process(Options options, String option) {
+                s = s.substring(name.optionName.length());
+                int eq = s.indexOf('=');
+                String key = (eq < 0) ? s : s.substring(0, eq);
+                String value = (eq < 0) ? s : s.substring(eq+1);
+                options.put(key, value);
+                return false;
+            }
+        },
 
-	/*
-	 * TODO: With apt, the matches method accepts anything if
-	 * -XclassAsDecls is used; code elsewhere does the lookup to
-	 * see if the class name is both legal and found.
-	 *
-	 * In apt, the process method adds the candiate class file
-	 * name to a separate list.
-	 */
-	new HiddenOption(SOURCEFILE) {
-	    String s;
-	    public boolean matches(String s) {
-		this.s = s;
-		return s.endsWith(".java")  // Java source file
-		    || SourceVersion.isName(s);   // Legal type name
-	    }
-	    public boolean process(Options options, String option) {
-		if (s.endsWith(".java") ) {
+        /*
+         * TODO: With apt, the matches method accepts anything if
+         * -XclassAsDecls is used; code elsewhere does the lookup to
+         * see if the class name is both legal and found.
+         *
+         * In apt, the process method adds the candiate class file
+         * name to a separate list.
+         */
+        new HiddenOption(SOURCEFILE) {
+            String s;
+            public boolean matches(String s) {
+                this.s = s;
+                return s.endsWith(".java")  // Java source file
+                    || SourceVersion.isName(s);   // Legal type name
+            }
+            public boolean process(Options options, String option) {
+                if (s.endsWith(".java") ) {
                     File f = new File(s);
                     if (!f.exists()) {
                         helper.error("err.file.not.found", f);
@@ -604,12 +604,12 @@ public class RecognizedOptions {
                     }
                     helper.addFile(f);
                 }
-		else
+                else
                     helper.addClassName(s);
-		return false;
-	    }
-	},
-    };        
+                return false;
+            }
+        },
+    };
     }
-    
+
 }

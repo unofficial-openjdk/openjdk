@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,8 +29,8 @@ import java.util.*;
  * @see java.lang.Object#wait(long, int)
  */
 public class C1 {
-    
+
     public <E> void method(int param1, int param2, ArrayList<E> param3) {
-        
-    }    
+
+    }
 }

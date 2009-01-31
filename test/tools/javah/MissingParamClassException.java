@@ -25,11 +25,11 @@
 /*
  * ParamClassTest has a native method param which subclasses
  * this class
- * 
+ *
  */
 
 public class MissingParamClassException extends Exception {
     public MissingParamClassException() {
-	System.out.println("MissingParamClassException constructor called");
+        System.out.println("MissingParamClassException constructor called");
     }
 }

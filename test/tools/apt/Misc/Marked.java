@@ -25,25 +25,25 @@
 class Marked {
 
     @Marker
-	class marked1 {};
+        class marked1 {};
 
 
     class Unmarked1 {};
 
     @Marker
-	class marked2 {};
+        class marked2 {};
 
 
     class Unmarked2 {};
 
     @Marker
-	class marked3 {};
+        class marked3 {};
 
 
     class Unmarked3 {};
 
     @Marker
-	class marked4 {};
+        class marked4 {};
 
 
     class Unmarked4 {};

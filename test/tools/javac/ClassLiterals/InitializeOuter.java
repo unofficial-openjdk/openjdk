@@ -33,17 +33,17 @@
 
 public class InitializeOuter {
     public static void main(String[] args) {
-	new A.B();
+        new A.B();
     }
 }
 
 class A {
     static {
-	if (true) throw new Error();
+        if (true) throw new Error();
     }
     public static class B {
-	B() {
-	    Object o = InitializeOuter.class;
-	}
+        B() {
+            Object o = InitializeOuter.class;
+        }
     };
 }

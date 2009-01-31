@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug      4766385
  * @summary  Test that the header option for upper left frame
- *           is present for three sets of options: (1) -header, 
+ *           is present for three sets of options: (1) -header,
  *           (2) -packagesheader, and (3) -header -packagesheader
  * @author   dkramer
  * @library  ../lib/
@@ -35,7 +35,7 @@
  */
 
 public class PackagesHeader extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4766385";
     private static final String OUTPUT_DIR = "docs-" + BUG_ID;
@@ -43,7 +43,7 @@ public class PackagesHeader extends JavadocTester {
     private static final String OUTPUT_DIR1 = "docs1-" + BUG_ID + FS;
     private static final String OUTPUT_DIR2 = "docs2-" + BUG_ID + FS;
     private static final String OUTPUT_DIR3 = "docs3-" + BUG_ID + FS;
-    
+
     /**
      * Assign value for [ fileToSearch, stringToFind ]
      */
@@ -73,7 +73,7 @@ public class PackagesHeader extends JavadocTester {
         { OUTPUT_DIR3 + "overview-summary.html",
                  "Main Frame Header" }
     };
-    
+
     // First test with -header only
     private static final String[] JAVADOC_ARGS1 = new String[] {
             "-d", OUTPUT_DIR1,
@@ -96,7 +96,7 @@ public class PackagesHeader extends JavadocTester {
             "-sourcepath", SRC_DIR,
             "p1", "p2"};
 
-    
+
     //Input for string search tests.
     private static final String[][] NEGATED_TEST = NO_TEST;
 
@@ -113,14 +113,14 @@ public class PackagesHeader extends JavadocTester {
 
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

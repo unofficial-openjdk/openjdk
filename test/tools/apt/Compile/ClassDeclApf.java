@@ -58,7 +58,7 @@ public class ClassDeclApf implements AnnotationProcessorFactory {
     }
 
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-					       AnnotationProcessorEnvironment env) {
+                                               AnnotationProcessorEnvironment env) {
         return new ClassDeclAp(env);
     }
 
@@ -67,54 +67,54 @@ public class ClassDeclApf implements AnnotationProcessorFactory {
         ClassDeclAp(AnnotationProcessorEnvironment env) {
             this.env = env;
         }
-	
-	// Simple inefficient drain
-	void drain(InputStream is, OutputStream os) {
-	    try {
-	    while (is.available() > 0 )
-		os.write(is.read());
-	    } catch (java.io.IOException ioe) {
-		throw new RuntimeException(ioe);
-	    }
-		
-	}
+
+        // Simple inefficient drain
+        void drain(InputStream is, OutputStream os) {
+            try {
+            while (is.available() > 0 )
+                os.write(is.read());
+            } catch (java.io.IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+
+        }
 
         public void process() {
-	    int size = env.getSpecifiedTypeDeclarations().size();
+            int size = env.getSpecifiedTypeDeclarations().size();
 
-	    try {
-		round++;
-		switch (size) {
-		case 0:
-		    if (round == 0) {
-			drain(new FileInputStream("./tmp/classes/Round1Class.class"),
-			      env.getFiler().createClassFile("Round1Class"));
-		    } else
-			throw new RuntimeException("Got " + size + " decl's in round " + round);
-		    break;
+            try {
+                round++;
+                switch (size) {
+                case 0:
+                    if (round == 0) {
+                        drain(new FileInputStream("./tmp/classes/Round1Class.class"),
+                              env.getFiler().createClassFile("Round1Class"));
+                    } else
+                        throw new RuntimeException("Got " + size + " decl's in round " + round);
+                    break;
 
-		case 1:
-		    if (round == 1) {
-			drain(new FileInputStream("./tmp/classes/AhOneClass.class"),
-			      env.getFiler().createClassFile("AhOneClass"));
+                case 1:
+                    if (round == 1) {
+                        drain(new FileInputStream("./tmp/classes/AhOneClass.class"),
+                              env.getFiler().createClassFile("AhOneClass"));
 
-			drain(new FileInputStream("./tmp/classes/AndAhTwoClass.class"),
-			      env.getFiler().createClassFile("AndAhTwoClass"));
-		    } else
-			throw new RuntimeException("Got " + size + " decl's in round " + round);
-		    break;
-		case 2:
-		    if (round != 2) {
-			throw new RuntimeException("Got " + size + " decl's in round " + round);
-		    } 
-		    break;
-		}
+                        drain(new FileInputStream("./tmp/classes/AndAhTwoClass.class"),
+                              env.getFiler().createClassFile("AndAhTwoClass"));
+                    } else
+                        throw new RuntimeException("Got " + size + " decl's in round " + round);
+                    break;
+                case 2:
+                    if (round != 2) {
+                        throw new RuntimeException("Got " + size + " decl's in round " + round);
+                    }
+                    break;
+                }
 
-	    } catch (java.io.IOException ioe) {
-		    throw new RuntimeException();
-		}
+            } catch (java.io.IOException ioe) {
+                    throw new RuntimeException();
+                }
 
-	    }
+            }
 
     }
 }

@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @ bug 
+ * @ bug
  * @summary Regression test from odersky
  * @author odersky
  *
@@ -42,14 +42,14 @@ class BadTest2 {
 
     static class Main {
 
-	static C c = new C();
-	static D d = new D();
+        static C c = new C();
+        static D d = new D();
 
-	static <A> boolean equals(A x, A y) { return x.equals(y); }
+        static <A> boolean equals(A x, A y) { return x.equals(y); }
 
-	public static void main(String[] args) {
-	    equals(c, d); // infer A=I&J
-	}
+        public static void main(String[] args) {
+            equals(c, d); // infer A=I&J
+        }
     }
 
 }

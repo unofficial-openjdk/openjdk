@@ -54,7 +54,7 @@ import java.io.File;
  * (Since the facility objects manage shared state, the implementation
  * of a wrapper class must know whether or not the same base facility
  * object has been wrapped before.)
- * 
+ *
  * @author Joseph D. Darcy
  * @author Scott Seligman
  * @author Peter von der Ah&eacute;

@@ -46,7 +46,7 @@ public interface AnnotationValue {
      *     <li> {@code EnumConstantDeclaration}
      *     <li> {@code AnnotationMirror}
      *     <li> {@code Collection<AnnotationValue>}
-     *		(representing the elements, in order, if the value is an array)
+     *          (representing the elements, in order, if the value is an array)
      * </ul>
      *
      * @return the value

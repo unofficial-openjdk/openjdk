@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,15 +35,15 @@
  */
 
 public class TestDocRootInlineTag extends JavadocTester {
-    
+
     private static final String BUG_ID = "4369014-4851991";
     private static final String[][] TEST = {
-        {BUG_ID + FS + "TestDocRootTag.html", 
-            "<A HREF=\"http://www.java.sun.com/j2se/1.4/docs/api/java/io/File.html?is-external=true\" " + 
+        {BUG_ID + FS + "TestDocRootTag.html",
+            "<A HREF=\"http://www.java.sun.com/j2se/1.4/docs/api/java/io/File.html?is-external=true\" " +
             "title=\"class or interface in java.io\"><CODE>File</CODE></A>"},
-        {BUG_ID + FS + "TestDocRootTag.html", 
+        {BUG_ID + FS + "TestDocRootTag.html",
             "<a href=\"./glossary.html\">glossary</a>"},
-        {BUG_ID + FS + "TestDocRootTag.html", 
+        {BUG_ID + FS + "TestDocRootTag.html",
             "<A HREF=\"http://www.java.sun.com/j2se/1.4/docs/api/java/io/File.html?is-external=true\" " +
             "title=\"class or interface in java.io\"><CODE>Second File Link</CODE></A>"},
         {BUG_ID + FS + "TestDocRootTag.html", "The value of @docRoot is \"./\""},
@@ -58,7 +58,7 @@ public class TestDocRootInlineTag extends JavadocTester {
             "-linkoffline", "http://www.java.sun.com/j2se/1.4/docs/api",
             SRC_DIR, SRC_DIR + FS + "TestDocRootTag.java", "pkg"
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -68,14 +68,14 @@ public class TestDocRootInlineTag extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

@@ -12,19 +12,19 @@ import pack1.P1;
 
 class A {
     private static class B {
-	static class Inner {}
+        static class Inner {}
     }
 }
 
 class X extends pack1.P1 {
     X() { super("bar"); }
     void foo() {
-	/*-----------------*
-	// BOGUS: Reports matching constructor not found.
-	// OK if 'Q' is made a public constructor.
-	Object y = new Q("foo");// ERROR - protected constructor Q inaccessible
-	*------------------*/
-	// Reports 'P1.R.S' not found at all. (private)
+        /*-----------------*
+        // BOGUS: Reports matching constructor not found.
+        // OK if 'Q' is made a public constructor.
+        Object y = new Q("foo");// ERROR - protected constructor Q inaccessible
+        *------------------*/
+        // Reports 'P1.R.S' not found at all. (private)
         Object z = new R.S.T();         // ERROR - S is inaccessible
     }
 }
@@ -32,17 +32,17 @@ class X extends pack1.P1 {
 class Y {
 
     class Foo {
-	class Bar {}
+        class Bar {}
     }
 
     class C extends A.B {}              // ERROR - B is inaccessible
     class D extends A.B.Inner {}        // ERROR - B is inaccessible
 
     static class Quux {
-	private static class Quem {
+        private static class Quem {
             P1.Foo.Bar x;               // ERROR - Foo is inaccessible
-	    static class MyError extends Error {}
-	}
+            static class MyError extends Error {}
+        }
     }
 }
 
@@ -53,9 +53,3 @@ class Z {
                                 // ERROR - type of Quux not accesible (private)
     }
 }
-
-
-
-
-
-

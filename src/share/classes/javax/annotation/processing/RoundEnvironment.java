@@ -35,7 +35,7 @@ import java.lang.annotation.Annotation;
  * Processor#process provide an annotation processor with an object
  * implementing this interface} so that the processor can query for
  * information about a round of annotation processing.
- * 
+ *
  * @author Joseph D. Darcy
  * @author Scott Seligman
  * @author Peter von der Ah&eacute;
@@ -52,11 +52,11 @@ public interface RoundEnvironment {
      * returns {@code false} otherwise
      */
     boolean processingOver();
- 
+
     /**
      * Returns {@code true} if an error was raised in the prior round
      * of processing; returns {@code false} otherwise.
-     * 
+     *
      * @return {@code true} if an error was raised in the prior round
      * of processing; returns {@code false} otherwise
      */

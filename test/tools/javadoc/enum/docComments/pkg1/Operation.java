@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,17 +33,17 @@ package pkg1;
 public abstract enum Operation {
     /** Addition */
     plus {
-	/** Add 'em up. */
-	double eval(double x, double y) { return x + y; }
+        /** Add 'em up. */
+        double eval(double x, double y) { return x + y; }
     },
     minus {
-	double eval(double x, double y) { return x - y; }
+        double eval(double x, double y) { return x - y; }
     },
     times {
-	double eval(double x, double y) { return x * y; }
+        double eval(double x, double y) { return x * y; }
     },
     divided_by {
-	double eval(double x, double y) { return x / y; }
+        double eval(double x, double y) { return x / y; }
     };
 
     /**

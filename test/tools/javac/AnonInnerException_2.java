@@ -36,18 +36,18 @@
 
 class AnonInnerException_2 {
 
-    boolean done = true;    
+    boolean done = true;
 
     void foo() throws Exception {
 
-	AnonInnerExceptionAux y =
-	    new AnonInnerExceptionAux() {
-	      // instance initializer
-	      {
-		  if (done) 
-		      throw new java.io.IOException();
-	      }
-	};
+        AnonInnerExceptionAux y =
+            new AnonInnerExceptionAux() {
+              // instance initializer
+              {
+                  if (done)
+                      throw new java.io.IOException();
+              }
+        };
     }
 }
 

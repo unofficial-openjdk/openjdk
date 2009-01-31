@@ -36,21 +36,21 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @see com.sun.javadoc.PackageDoc
  * @author Atul M Dambalkar
  */
 public class PackageListWriter extends PrintWriter {
 
     private Configuration configuration;
-    
+
     /**
      * Constructor.
      *
      * @param configuration the current configuration of the doclet.
      */
     public PackageListWriter(Configuration configuration) throws IOException {
-        super(Util.genWriter(configuration, configuration.destDirName, 
+        super(Util.genWriter(configuration, configuration.destDirName,
             DocletConstants.PACKAGE_LIST_FILE_NAME, configuration.docencoding));
         this.configuration = configuration;
     }

@@ -37,8 +37,8 @@ enum EnumProtectedConstructor {
 
     private int r, g, b;
     protected EnumProtectedConstructor(int r, int g, int b) {
-	this.r = r;
-	this.g = g;
-	this.b = b;
+        this.r = r;
+        this.g = g;
+        this.b = b;
     }
 }

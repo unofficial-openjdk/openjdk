@@ -55,18 +55,18 @@ public class WsCompileExample {
         }
 
         if (sourceFiles.size() > 0) {
-				String classDir = destDir.getAbsolutePath();
+                                String classDir = destDir.getAbsolutePath();
             String classpathString = createClasspathString();
             System.out.println("classpathString: " + classpathString);
 
-				String[] args = new String[4 + (compilerDebug == true ? 1 : 0) +
+                                String[] args = new String[4 + (compilerDebug == true ? 1 : 0) +
                 (compilerOptimize == true ? 1 : 0) +
                 sourceFiles.size()];
             args[0] = "-d";
             args[1] = classDir;
             args[2] = "-classpath";
             args[3] = classpathString;
-//				args[4]="-DnonBatchMode";
+//                              args[4]="-DnonBatchMode";
             int baseIndex = 4;
             if (compilerDebug) {
                 args[baseIndex++] = "-g";
@@ -91,77 +91,76 @@ public class WsCompileExample {
         if (userClasspath == null) {
             userClasspath = "";
         }
-			  String jcp = userClasspath + File.pathSeparator + System.getProperty("java.class.path");
-		  return jcp;
+                          String jcp = userClasspath + File.pathSeparator + System.getProperty("java.class.path");
+                  return jcp;
     }
 }
 ///////////////////////////////////////////////////////////////////
 class JavaCompilerHelper {
     public JavaCompilerHelper(OutputStream out) {
-		this.out = out;
-	}
+                this.out = out;
+        }
 
-	public boolean compile(String[] args) {
-		return internalCompile(args);
-	}
+        public boolean compile(String[] args) {
+                return internalCompile(args);
+        }
 
-	protected boolean internalCompile(String[] args) {
+        protected boolean internalCompile(String[] args) {
 
-		System.out.println("Args: ");
-		for(String arg : args){
-			System.out.print(arg+" ");
-		}
+                System.out.println("Args: ");
+                for(String arg : args){
+                        System.out.print(arg+" ");
+                }
         System.out.println();
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Class comSunToolsJavacMainClass = null;
-		try {
-			/* try to use the new compiler */
-			comSunToolsJavacMainClass =
-				cl.loadClass("com.sun.tools.javac.Main");
-			try {
-				Method compileMethod =
-					comSunToolsJavacMainClass.getMethod(
-						"compile",
-						compile141MethodSignature);
-				try {
-					Object result =
-						compileMethod.invoke(
-							null,
-							new Object[] { args, new PrintWriter(out)});
-					if (!(result instanceof Integer)) {
-						return false;
-					}
-					return ((Integer) result).intValue() == 0;
-				} catch (IllegalAccessException e3) {
-					return false;
-				} catch (IllegalArgumentException e3) {
-					return false;
-				} catch (InvocationTargetException e3) {
-					return false;
-				}
-			} catch (NoSuchMethodException e2) {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                Class comSunToolsJavacMainClass = null;
+                try {
+                        /* try to use the new compiler */
+                        comSunToolsJavacMainClass =
+                                cl.loadClass("com.sun.tools.javac.Main");
+                        try {
+                                Method compileMethod =
+                                        comSunToolsJavacMainClass.getMethod(
+                                                "compile",
+                                                compile141MethodSignature);
+                                try {
+                                        Object result =
+                                                compileMethod.invoke(
+                                                        null,
+                                                        new Object[] { args, new PrintWriter(out)});
+                                        if (!(result instanceof Integer)) {
+                                                return false;
+                                        }
+                                        return ((Integer) result).intValue() == 0;
+                                } catch (IllegalAccessException e3) {
+                                        return false;
+                                } catch (IllegalArgumentException e3) {
+                                        return false;
+                                } catch (InvocationTargetException e3) {
+                                        return false;
+                                }
+                        } catch (NoSuchMethodException e2) {
               System.out.println("ERROR: Compile failed with error:" + e2.toString() );
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			return false;
-		} catch (SecurityException e) {
-			return false;
-		}
+                        }
+                } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                        return false;
+                } catch (SecurityException e) {
+                        return false;
+                }
                 return true;
-	}
+        }
 
-	protected String getGenericErrorMessage() {return "javacompiler.error";	}
-	protected void run() {	}
-	protected boolean parseArguments(String[] args) {return false;}
-	protected OutputStream out;
+        protected String getGenericErrorMessage() {return "javacompiler.error"; }
+        protected void run() {  }
+        protected boolean parseArguments(String[] args) {return false;}
+        protected OutputStream out;
 
-	protected static final Class[] compile141MethodSignature;
-	static
-	{
-		compile141MethodSignature = new Class[2];
-		compile141MethodSignature[0] = (new String[0]).getClass();
-		compile141MethodSignature[1] = PrintWriter.class;
-	}
+        protected static final Class[] compile141MethodSignature;
+        static
+        {
+                compile141MethodSignature = new Class[2];
+                compile141MethodSignature[0] = (new String[0]).getClass();
+                compile141MethodSignature[1] = PrintWriter.class;
+        }
 }
-

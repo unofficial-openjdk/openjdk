@@ -47,7 +47,7 @@ import javax.lang.model.SourceVersion;
  * added to this class in the future; to avoid incompatibilities,
  * classes which extend this class should not declare any instance
  * methods with names beginning with {@code "visit"}.
- * 
+ *
  * <p>When such a new visit method is added, the default
  * implementation in this class will be to call the {@link
  * #visitUnknown visitUnknown} method.  A new abstract element visitor
@@ -57,7 +57,7 @@ import javax.lang.model.SourceVersion;
  * or portions of this visitor may be deprecated.
  *
  * @param <R> the return type of this visitor's methods.  Use {@link
- * 	      Void} for visitors that do not need to return results.
+ *            Void} for visitors that do not need to return results.
  * @param <P> the type of the additional parameter to this visitor's
  *            methods.  Use {@code Void} for visitors that do not need an
  *            additional parameter.
@@ -85,7 +85,7 @@ public abstract class AbstractElementVisitor6<R, P> implements ElementVisitor<R,
      * @return a visitor-specified result
      */
     public final R visit(Element e, P p) {
-	return e.accept(this, p);
+        return e.accept(this, p);
     }
 
     /**
@@ -99,7 +99,7 @@ public abstract class AbstractElementVisitor6<R, P> implements ElementVisitor<R,
      * @return a visitor-specified result
      */
     public final R visit(Element e) {
-	return e.accept(this, null);
+        return e.accept(this, null);
     }
 
     /**
@@ -114,9 +114,9 @@ public abstract class AbstractElementVisitor6<R, P> implements ElementVisitor<R,
      * @param p  a visitor-specified parameter
      * @return a visitor-specified result
      * @throws UnknownElementException
-     *		a visitor implementation may optionally throw this exception
+     *          a visitor implementation may optionally throw this exception
      */
     public R visitUnknown(Element e, P p) {
-	throw new UnknownElementException(e, p);
+        throw new UnknownElementException(e, p);
     }
 }

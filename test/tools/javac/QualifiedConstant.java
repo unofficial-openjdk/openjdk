@@ -36,7 +36,7 @@ public class QualifiedConstant {
     public void processMouseEvent (MouseEvent event) {
         switch (event.getID ()) {
           case event.MOUSE_RELEASED: // Not constant by JLS 15.27
-	      break;
+              break;
         }
     }
 }

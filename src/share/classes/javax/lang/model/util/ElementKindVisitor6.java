@@ -47,7 +47,7 @@ import javax.lang.model.SourceVersion;
  * general contract.  Note that annotating methods in concrete
  * subclasses with {@link java.lang.Override @Override} will help
  * ensure that methods are overridden as intended.
- * 
+ *
  * <p> <b>WARNING:</b> The {@code ElementVisitor} interface
  * implemented by this class may have methods added to it or the
  * {@code ElementKind} {@code enum} used in this case may have
@@ -58,7 +58,7 @@ import javax.lang.model.SourceVersion;
  * future; to avoid incompatibilities, classes which extend this class
  * should not declare any instance methods with names beginning with
  * {@code "visit"}.
- * 
+ *
  * <p>When such a new visit method is added, the default
  * implementation in this class will be to call the {@link
  * #visitUnknown visitUnknown} method.  A new abstract element kind
@@ -68,7 +68,7 @@ import javax.lang.model.SourceVersion;
  * introduced, all or portions of this visitor may be deprecated.
  *
  * @param <R> the return type of this visitor's methods.  Use {@link
- * 	      Void} for visitors that do not need to return results.
+ *            Void} for visitors that do not need to return results.
  * @param <P> the type of the additional parameter to this visitor's
  *            methods.  Use {@code Void} for visitors that do not need an
  *            additional parameter.
@@ -79,14 +79,14 @@ import javax.lang.model.SourceVersion;
  * @since 1.6
  */
 @SupportedSourceVersion(RELEASE_6)
-public class ElementKindVisitor6<R, P> 
+public class ElementKindVisitor6<R, P>
                   extends SimpleElementVisitor6<R, P> {
     /**
      * Constructor for concrete subclasses; uses {@code null} for the
      * default value.
      */
     protected ElementKindVisitor6() {
-	super(null);
+        super(null);
     }
 
     /**
@@ -96,7 +96,7 @@ public class ElementKindVisitor6<R, P>
      * @param defaultValue the value to assign to {@link #DEFAULT_VALUE}
      */
     protected ElementKindVisitor6(R defaultValue) {
-	super(defaultValue);
+        super(defaultValue);
     }
 
     /**
@@ -110,8 +110,8 @@ public class ElementKindVisitor6<R, P>
      */
     @Override
     public R visitPackage(PackageElement e, P p) {
-	assert e.getKind() == PACKAGE: "Bad kind on PackageElement";
-	return defaultAction(e, p);
+        assert e.getKind() == PACKAGE: "Bad kind on PackageElement";
+        return defaultAction(e, p);
     }
 
     /**
@@ -126,23 +126,23 @@ public class ElementKindVisitor6<R, P>
      */
     @Override
     public R visitType(TypeElement e, P p) {
-	ElementKind k = e.getKind();
-	switch(k) {
-	case ANNOTATION_TYPE:
-	    return visitTypeAsAnnotationType(e, p);
+        ElementKind k = e.getKind();
+        switch(k) {
+        case ANNOTATION_TYPE:
+            return visitTypeAsAnnotationType(e, p);
 
-	case CLASS:
-	    return visitTypeAsClass(e, p);
+        case CLASS:
+            return visitTypeAsClass(e, p);
 
-	case ENUM:
-	    return visitTypeAsEnum(e, p);
-	    
-	case INTERFACE:
-	    return visitTypeAsInterface(e, p);
-	    
-	default:
-	    throw new AssertionError("Bad kind " + k + " for TypeElement" + e);
-	}
+        case ENUM:
+            return visitTypeAsEnum(e, p);
+
+        case INTERFACE:
+            return visitTypeAsInterface(e, p);
+
+        default:
+            throw new AssertionError("Bad kind " + k + " for TypeElement" + e);
+        }
     }
 
     /**
@@ -153,8 +153,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitTypeAsAnnotationType(TypeElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitTypeAsAnnotationType(TypeElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -165,8 +165,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitTypeAsClass(TypeElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitTypeAsClass(TypeElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -177,8 +177,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitTypeAsEnum(TypeElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitTypeAsEnum(TypeElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -189,8 +189,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitTypeAsInterface(TypeElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitTypeAsInterface(TypeElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -204,26 +204,26 @@ public class ElementKindVisitor6<R, P>
      */
     @Override
     public R visitVariable(VariableElement e, P p) {
-	ElementKind k = e.getKind();
-	switch(k) {
-	case ENUM_CONSTANT:
-	    return visitVariableAsEnumConstant(e, p);
+        ElementKind k = e.getKind();
+        switch(k) {
+        case ENUM_CONSTANT:
+            return visitVariableAsEnumConstant(e, p);
 
-	case EXCEPTION_PARAMETER:
-	    return visitVariableAsExceptionParameter(e, p);
+        case EXCEPTION_PARAMETER:
+            return visitVariableAsExceptionParameter(e, p);
 
-	case FIELD:
-	    return visitVariableAsField(e, p);
+        case FIELD:
+            return visitVariableAsField(e, p);
 
-	case LOCAL_VARIABLE:
-	    return visitVariableAsLocalVariable(e, p);
+        case LOCAL_VARIABLE:
+            return visitVariableAsLocalVariable(e, p);
 
-	case PARAMETER:
-	    return visitVariableAsParameter(e, p);
+        case PARAMETER:
+            return visitVariableAsParameter(e, p);
 
-	default:
-	    throw new AssertionError("Bad kind " + k + " for VariableElement" + e);
-	}
+        default:
+            throw new AssertionError("Bad kind " + k + " for VariableElement" + e);
+        }
 
     }
 
@@ -235,8 +235,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitVariableAsEnumConstant(VariableElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitVariableAsEnumConstant(VariableElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -247,8 +247,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitVariableAsExceptionParameter(VariableElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitVariableAsExceptionParameter(VariableElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -259,8 +259,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitVariableAsField(VariableElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitVariableAsField(VariableElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -271,8 +271,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitVariableAsLocalVariable(VariableElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitVariableAsLocalVariable(VariableElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -283,8 +283,8 @@ public class ElementKindVisitor6<R, P>
      * @param p a visitor-specified parameter
      * @return  the result of {@code defaultAction}
      */
-    public R visitVariableAsParameter(VariableElement e, P p) { 
-	return defaultAction(e, p);
+    public R visitVariableAsParameter(VariableElement e, P p) {
+        return defaultAction(e, p);
     }
 
     /**
@@ -299,23 +299,23 @@ public class ElementKindVisitor6<R, P>
      */
     @Override
     public R visitExecutable(ExecutableElement e, P p) {
-	ElementKind k = e.getKind();
-	switch(k) {
-	case CONSTRUCTOR:
-	    return visitExecutableAsConstructor(e, p);
+        ElementKind k = e.getKind();
+        switch(k) {
+        case CONSTRUCTOR:
+            return visitExecutableAsConstructor(e, p);
 
-	case INSTANCE_INIT:
-	    return visitExecutableAsInstanceInit(e, p);
+        case INSTANCE_INIT:
+            return visitExecutableAsInstanceInit(e, p);
 
-	case METHOD:
-	    return visitExecutableAsMethod(e, p);
+        case METHOD:
+            return visitExecutableAsMethod(e, p);
 
-	case STATIC_INIT:
-	    return visitExecutableAsStaticInit(e, p);
+        case STATIC_INIT:
+            return visitExecutableAsStaticInit(e, p);
 
-	default:
-	    throw new AssertionError("Bad kind " + k + " for ExecutableElement" + e);
-	}
+        default:
+            throw new AssertionError("Bad kind " + k + " for ExecutableElement" + e);
+        }
     }
 
     /**
@@ -327,7 +327,7 @@ public class ElementKindVisitor6<R, P>
      * @return  the result of {@code defaultAction}
      */
     public R visitExecutableAsConstructor(ExecutableElement e, P p) {
-	return defaultAction(e, p);
+        return defaultAction(e, p);
     }
 
     /**
@@ -339,7 +339,7 @@ public class ElementKindVisitor6<R, P>
      * @return  the result of {@code defaultAction}
      */
     public R visitExecutableAsInstanceInit(ExecutableElement e, P p) {
-	return defaultAction(e, p);
+        return defaultAction(e, p);
     }
 
     /**
@@ -351,7 +351,7 @@ public class ElementKindVisitor6<R, P>
      * @return  the result of {@code defaultAction}
      */
     public R visitExecutableAsMethod(ExecutableElement e, P p) {
-	return defaultAction(e, p);
+        return defaultAction(e, p);
     }
 
     /**
@@ -363,7 +363,7 @@ public class ElementKindVisitor6<R, P>
      * @return  the result of {@code defaultAction}
      */
     public R visitExecutableAsStaticInit(ExecutableElement e, P p) {
-	return defaultAction(e, p);
+        return defaultAction(e, p);
     }
 
 
@@ -378,7 +378,7 @@ public class ElementKindVisitor6<R, P>
      */
     @Override
     public R visitTypeParameter(TypeParameterElement e, P p) {
-	assert e.getKind() == TYPE_PARAMETER: "Bad kind on TypeParameterElement";
-	return defaultAction(e, p);
+        assert e.getKind() == TYPE_PARAMETER: "Bad kind on TypeParameterElement";
+        return defaultAction(e, p);
     }
 }

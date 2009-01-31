@@ -35,6 +35,6 @@ class Err<T> {
     void put(Err<T> t) {}
 
     static void f(Err<? extends String> e) {
-	e.put(e.get());
+        e.put(e.get());
     }
 }

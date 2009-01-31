@@ -32,10 +32,10 @@ import java.util.List;
  *
  * For example:
  * <pre>
- *   case <em>expression</em> : 
+ *   case <em>expression</em> :
  *       <em>statements</em>
  *
- *   default : 
+ *   default :
  *       <em>statements</em>
  * </pre>
  *

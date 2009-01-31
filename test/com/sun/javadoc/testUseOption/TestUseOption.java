@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,9 +33,9 @@
  */
 
 public class TestUseOption extends JavadocTester {
-    
+
     private static final String BUG_ID = "4496290-4985072";
-    
+
     //Input for string search tests.
     private static final String[] TEST2 = {
         "Field in C1.",
@@ -53,15 +53,15 @@ public class TestUseOption extends JavadocTester {
         "Method in C7.",
         "Method in C8.",
     };
-    
+
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "-use", "pkg1", "pkg2"
     };
-    
+
     private static final String[] ARGS2 = new String[] {
         "-d", BUG_ID+"-2", "-sourcepath", SRC_DIR, "-use", "pkg1", "pkg2"
     };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -82,7 +82,7 @@ public class TestUseOption extends JavadocTester {
         run(tester, ARGS, tests, NO_TEST);
         tester.printSummary();
         run(tester, ARGS2, NO_TEST, NO_TEST);
-        String usePageContents = tester.readFileToString(BUG_ID +"-2" + FS + "pkg1" + FS + "class-use" + FS + "UsedClass.html"); 
+        String usePageContents = tester.readFileToString(BUG_ID +"-2" + FS + "pkg1" + FS + "class-use" + FS + "UsedClass.html");
         int prevIndex = -1;
         int currentIndex = -1;
         for (int i = 0; i < TEST2.length; i++) {
@@ -94,14 +94,14 @@ public class TestUseOption extends JavadocTester {
         }
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

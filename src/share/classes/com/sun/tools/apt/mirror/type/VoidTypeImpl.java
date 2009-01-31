@@ -38,13 +38,13 @@ import com.sun.tools.apt.mirror.AptEnv;
 class VoidTypeImpl extends TypeMirrorImpl implements VoidType {
 
     VoidTypeImpl(AptEnv env) {
-	super(env, env.symtab.voidType);
+        super(env, env.symtab.voidType);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-	v.visitVoidType(this);
+        v.visitVoidType(this);
     }
 }

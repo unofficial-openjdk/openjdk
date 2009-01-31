@@ -40,10 +40,10 @@ public class DefAssignAfterThis_2 {
 
     DefAssignAfterThis_2() {
         this(0);
-	// 'x' should be definitely assigned here
+        // 'x' should be definitely assigned here
     }
 
     DefAssignAfterThis_2(int i) {
-	x = 1;
+        x = 1;
     }
 }

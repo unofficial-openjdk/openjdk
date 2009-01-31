@@ -57,112 +57,112 @@ public class TestElementsAnnotatedWith extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
-	Elements elementUtils = processingEnv.getElementUtils();
+        Elements elementUtils = processingEnv.getElementUtils();
 
-	TypeElement annotatedElementInfoElement = 
-	    elementUtils.getTypeElement("AnnotatedElementInfo");
-	Set<? extends Element> resultsMeta = Collections.emptySet();
-	Set<? extends Element> resultsBase = Collections.emptySet();
+        TypeElement annotatedElementInfoElement =
+            elementUtils.getTypeElement("AnnotatedElementInfo");
+        Set<? extends Element> resultsMeta = Collections.emptySet();
+        Set<? extends Element> resultsBase = Collections.emptySet();
 
         if (!roundEnvironment.processingOver()) {
-	    testNonAnnotations(roundEnvironment);
+            testNonAnnotations(roundEnvironment);
 
-	    // Verify AnnotatedElementInfo is present on the first
-	    // specified type.
+            // Verify AnnotatedElementInfo is present on the first
+            // specified type.
 
-	    TypeElement firstType = typesIn(roundEnvironment.getRootElements()).iterator().next();
-	    
-	    AnnotatedElementInfo annotatedElementInfo = firstType.getAnnotation(AnnotatedElementInfo.class);
+            TypeElement firstType = typesIn(roundEnvironment.getRootElements()).iterator().next();
 
-	    boolean failed = false;
+            AnnotatedElementInfo annotatedElementInfo = firstType.getAnnotation(AnnotatedElementInfo.class);
 
-	    if (annotatedElementInfo == null)
-		throw new IllegalArgumentException("Missing AnnotatedElementInfo annotation on " +
-						  firstType);
-	    else {
-		// Verify that the annotation information is as
-		// expected.
-		
-		Set<String> expectedNames = new HashSet<String>(Arrays.asList(annotatedElementInfo.names()));
+            boolean failed = false;
 
-		resultsMeta = 
-		    roundEnvironment.
-		    getElementsAnnotatedWith(elementUtils.
-					     getTypeElement(annotatedElementInfo.
-							    annotationName())) ;
+            if (annotatedElementInfo == null)
+                throw new IllegalArgumentException("Missing AnnotatedElementInfo annotation on " +
+                                                  firstType);
+            else {
+                // Verify that the annotation information is as
+                // expected.
 
-		System.err.println("Results: " + resultsMeta);
+                Set<String> expectedNames = new HashSet<String>(Arrays.asList(annotatedElementInfo.names()));
 
-		if (resultsMeta.size() != annotatedElementInfo.expectedSize()) {
-		    failed = true;
-		    System.err.printf("Bad number of elements; expected %d, got %d%n",
-				      annotatedElementInfo.expectedSize(), resultsMeta.size());
-		} else {
-		    for(Element element : resultsMeta) {
-			String simpleName = element.getSimpleName().toString();
-			if (!expectedNames.contains(simpleName) ) {
-			    failed = true;
-			    System.err.println("Name ``" + simpleName + "'' not expected.");
-			}
-		    }
-		}
-	    }
+                resultsMeta =
+                    roundEnvironment.
+                    getElementsAnnotatedWith(elementUtils.
+                                             getTypeElement(annotatedElementInfo.
+                                                            annotationName())) ;
 
-	    resultsBase = computeResultsBase(roundEnvironment, annotatedElementInfo.annotationName());
+                System.err.println("Results: " + resultsMeta);
 
-	    if (!resultsMeta.equals(resultsBase)) {
-		failed = true;
-		System.err.println("Base and Meta sets unequal;\n meta: " + resultsMeta + 
-				   "\nbase: " + resultsBase);
-	    }
+                if (resultsMeta.size() != annotatedElementInfo.expectedSize()) {
+                    failed = true;
+                    System.err.printf("Bad number of elements; expected %d, got %d%n",
+                                      annotatedElementInfo.expectedSize(), resultsMeta.size());
+                } else {
+                    for(Element element : resultsMeta) {
+                        String simpleName = element.getSimpleName().toString();
+                        if (!expectedNames.contains(simpleName) ) {
+                            failed = true;
+                            System.err.println("Name ``" + simpleName + "'' not expected.");
+                        }
+                    }
+                }
+            }
 
-	    if (failed) {
-		System.err.println("AnnotatedElementInfo: " + annotatedElementInfo);
-		throw new RuntimeException();
-	    }
-	} else {
-	    // If processing is over without an error, the specified
-	    // elements should be empty so an empty set should be returned.
-	    resultsMeta = roundEnvironment.getElementsAnnotatedWith(annotatedElementInfoElement);
-	    resultsBase = roundEnvironment.getElementsAnnotatedWith(AnnotatedElementInfo.class);
-	    if (!resultsMeta.isEmpty())
-		throw new RuntimeException("Nonempty resultsMeta: " + resultsMeta);
-	    if (!resultsBase.isEmpty())
-		throw new RuntimeException("Nonempty resultsBase: " + resultsBase);
+            resultsBase = computeResultsBase(roundEnvironment, annotatedElementInfo.annotationName());
 
-	}
+            if (!resultsMeta.equals(resultsBase)) {
+                failed = true;
+                System.err.println("Base and Meta sets unequal;\n meta: " + resultsMeta +
+                                   "\nbase: " + resultsBase);
+            }
+
+            if (failed) {
+                System.err.println("AnnotatedElementInfo: " + annotatedElementInfo);
+                throw new RuntimeException();
+            }
+        } else {
+            // If processing is over without an error, the specified
+            // elements should be empty so an empty set should be returned.
+            resultsMeta = roundEnvironment.getElementsAnnotatedWith(annotatedElementInfoElement);
+            resultsBase = roundEnvironment.getElementsAnnotatedWith(AnnotatedElementInfo.class);
+            if (!resultsMeta.isEmpty())
+                throw new RuntimeException("Nonempty resultsMeta: " + resultsMeta);
+            if (!resultsBase.isEmpty())
+                throw new RuntimeException("Nonempty resultsBase: " + resultsBase);
+
+        }
         return true;
     }
 
     private Set<? extends Element> computeResultsBase(RoundEnvironment roundEnvironment, String name) {
-	try {
-	    return roundEnvironment.
-		getElementsAnnotatedWith(Class.forName(name).asSubclass(Annotation.class));
-	} catch(ClassNotFoundException cnfe) {
-	    throw new RuntimeException(cnfe);
-	}
+        try {
+            return roundEnvironment.
+                getElementsAnnotatedWith(Class.forName(name).asSubclass(Annotation.class));
+        } catch(ClassNotFoundException cnfe) {
+            throw new RuntimeException(cnfe);
+        }
     }
-    
+
     /**
      * Verify non-annotation types result in
      * IllegalArgumentExceptions.
      */
     private void testNonAnnotations(RoundEnvironment roundEnvironment) {
-	try {
-	    Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith((Class)Object.class );
-	    throw new RuntimeException("Illegal argument exception not thrown");
-	} catch(IllegalArgumentException iae) {}
+        try {
+            Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith((Class)Object.class );
+            throw new RuntimeException("Illegal argument exception not thrown");
+        } catch(IllegalArgumentException iae) {}
 
-	try {
-	    Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(processingEnv.
-											getElementUtils().
-											getTypeElement("java.lang.Object") );
-	    throw new RuntimeException("Illegal argument exception not thrown");
-	} catch(IllegalArgumentException iae) {}
+        try {
+            Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(processingEnv.
+                                                                                        getElementUtils().
+                                                                                        getTypeElement("java.lang.Object") );
+            throw new RuntimeException("Illegal argument exception not thrown");
+        } catch(IllegalArgumentException iae) {}
     }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
-	return SourceVersion.latest();
+        return SourceVersion.latest();
     }
 }

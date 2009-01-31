@@ -52,28 +52,28 @@ import static com.sun.javadoc.LanguageVersion.*;
  */
 public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     DocEnv docenv;
-    
+
     final Context context;
     final Messager messager;
     final JavadocClassReader reader;
     final JavadocEnter enter;
     final Annotate annotate;
     private final Paths paths;
-    
+
     /**
      * Construct a new JavaCompiler processor, using appropriately
      * extended phases of the underlying compiler.
      */
     protected JavadocTool(Context context) {
         super(context);
-	this.context = context;
+        this.context = context;
         messager = Messager.instance0(context);
-	reader = JavadocClassReader.instance0(context);
-	enter = JavadocEnter.instance0(context);
-	annotate = Annotate.instance(context);
-	paths = Paths.instance(context);
+        reader = JavadocClassReader.instance0(context);
+        enter = JavadocEnter.instance0(context);
+        annotate = Annotate.instance(context);
+        paths = Paths.instance(context);
     }
-    
+
     /**
      * For javadoc, the parser needs to keep comments. Overrides method from JavaCompiler.
      */
@@ -85,25 +85,25 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
      *  Construct a new javadoc tool.
      */
     public static JavadocTool make0(Context context) {
-	Messager messager = null;
+        Messager messager = null;
         try {
-	    // force the use of Javadoc's class reader
-	    JavadocClassReader.preRegister(context);
+            // force the use of Javadoc's class reader
+            JavadocClassReader.preRegister(context);
 
-	    // force the use of Javadoc's own enter phase
-	    JavadocEnter.preRegister(context);
+            // force the use of Javadoc's own enter phase
+            JavadocEnter.preRegister(context);
 
-	    // force the use of Javadoc's own member enter phase
-	    JavadocMemberEnter.preRegister(context);
+            // force the use of Javadoc's own member enter phase
+            JavadocMemberEnter.preRegister(context);
 
-	    // force the use of Javadoc's own todo phase
-	    JavadocTodo.preRegister(context);
+            // force the use of Javadoc's own todo phase
+            JavadocTodo.preRegister(context);
 
-	    // force the use of Messager as a Log
-	    messager = Messager.instance0(context);
+            // force the use of Messager as a Log
+            messager = Messager.instance0(context);
 
-	    // force the use of the scanner that captures Javadoc comments
-	    DocCommentScanner.Factory.preRegister(context);
+            // force the use of the scanner that captures Javadoc comments
+            DocCommentScanner.Factory.preRegister(context);
 
             return new JavadocTool(context);
         } catch (CompletionFailure ex) {
@@ -111,7 +111,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             return null;
         }
     }
-    
+
     public RootDocImpl getRootDocImpl(String doclocale,
                                       String encoding,
                                       ModifierFilter filter,
@@ -120,23 +120,23 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
                                       boolean breakiterator,
                                       List<String> subPackages,
                                       List<String> excludedPackages,
-				      boolean docClasses,
-				      boolean legacyDoclet,
+                                      boolean docClasses,
+                                      boolean legacyDoclet,
                       boolean quiet) throws IOException {
-	docenv = DocEnv.instance(context);
-	docenv.showAccess = filter;
+        docenv = DocEnv.instance(context);
+        docenv.showAccess = filter;
     docenv.quiet = quiet;
-	docenv.breakiterator = breakiterator;
+        docenv.breakiterator = breakiterator;
         docenv.setLocale(doclocale);
         docenv.setEncoding(encoding);
-	docenv.docClasses = docClasses;
-	docenv.legacyDoclet = legacyDoclet;
-	reader.sourceCompleter = docClasses ? null : this;
-        
+        docenv.docClasses = docClasses;
+        docenv.legacyDoclet = legacyDoclet;
+        reader.sourceCompleter = docClasses ? null : this;
+
         ListBuffer<String> names = new ListBuffer<String>();
         ListBuffer<JCCompilationUnit> classTrees = new ListBuffer<JCCompilationUnit>();
         ListBuffer<JCCompilationUnit> packTrees = new ListBuffer<JCCompilationUnit>();
-        
+
         try {
             for (List<String> it = javaNames; it.nonEmpty(); it = it.tail) {
                 String name = it.head;
@@ -145,54 +145,54 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
                         JCCompilationUnit tree = parse(name);
                         classTrees.append(tree);
                 } else if (isValidPackageName(name)) {
-		    names = names.append(name);
+                    names = names.append(name);
                 } else if (name.endsWith(".java")) {
-		    docenv.error(null, "main.file_not_found", name);;
-		} else {
-		    docenv.error(null, "main.illegal_package_name", name);
-		}
+                    docenv.error(null, "main.file_not_found", name);;
+                } else {
+                    docenv.error(null, "main.illegal_package_name", name);
+                }
             }
 
             if (!docClasses) {
-		// Recursively search given subpackages.  If any packages
-		//are found, add them to the list.
-		searchSubPackages(subPackages, names, excludedPackages);
-            
-		// Parse the packages
-		for (List<String> packs = names.toList(); packs.nonEmpty(); packs = packs.tail) {
-		    // Parse sources ostensibly belonging to package.
-		    parsePackageClasses(packs.head, packTrees, excludedPackages);
-		}
-            
-		if (messager.nerrors() != 0) return null;
-            
-		// Enter symbols for all files
-		docenv.notice("main.Building_tree");
-		enter.main(classTrees.toList().appendList(packTrees.toList()));
-	    }
+                // Recursively search given subpackages.  If any packages
+                //are found, add them to the list.
+                searchSubPackages(subPackages, names, excludedPackages);
+
+                // Parse the packages
+                for (List<String> packs = names.toList(); packs.nonEmpty(); packs = packs.tail) {
+                    // Parse sources ostensibly belonging to package.
+                    parsePackageClasses(packs.head, packTrees, excludedPackages);
+                }
+
+                if (messager.nerrors() != 0) return null;
+
+                // Enter symbols for all files
+                docenv.notice("main.Building_tree");
+                enter.main(classTrees.toList().appendList(packTrees.toList()));
+            }
         } catch (Abort ex) {}
-        
+
         if (messager.nerrors() != 0) return null;
-        
-	if (docClasses)
-	    return new RootDocImpl(docenv, javaNames, options);
-	else
-	    return new RootDocImpl(docenv, listClasses(classTrees.toList()), names.toList(), options);
+
+        if (docClasses)
+            return new RootDocImpl(docenv, javaNames, options);
+        else
+            return new RootDocImpl(docenv, listClasses(classTrees.toList()), names.toList(), options);
     }
 
     /** Is the given string a valid package name? */
     boolean isValidPackageName(String s) {
-	int index;
-	while ((index = s.indexOf('.')) != -1) {
-	    if (!isValidClassName(s.substring(0, index))) return false;
-	    s = s.substring(index+1);
-	}
-	return isValidClassName(s);
+        int index;
+        while ((index = s.indexOf('.')) != -1) {
+            if (!isValidClassName(s.substring(0, index))) return false;
+            s = s.substring(index+1);
+        }
+        return isValidClassName(s);
     }
 
 
     private final static char pathSep = File.pathSeparatorChar;
-    
+
     /**
      * search all directories in path for subdirectory name. Add all
      * .java files found in such a directory to args.
@@ -200,14 +200,14 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     private void parsePackageClasses(String name,
                                      ListBuffer<JCCompilationUnit> trees,
                                      List<String> excludedPackages)
-	throws IOException {
+        throws IOException {
         if (excludedPackages.contains(name)) {
             return;
         }
         boolean hasFiles = false;
         docenv.notice("main.Loading_source_files_for_package", name);
         name = name.replace('.', File.separatorChar);
-	for (File pathname : paths.sourceSearchPath()) {
+        for (File pathname : paths.sourceSearchPath()) {
             File f = new File(pathname, name);
             String names[] = f.list();
             // if names not null, then found directory with source files
@@ -226,10 +226,10 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             }
         }
         if (!hasFiles)
-            messager.warning(null, "main.no_source_files_for_package", 
-			     name.replace(File.separatorChar, '.'));
+            messager.warning(null, "main.no_source_files_for_package",
+                             name.replace(File.separatorChar, '.'));
     }
-    
+
     /**
      * Recursively search all directories in path for subdirectory name.
      * Add all packages found in such a directory to packages list.
@@ -237,50 +237,50 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     private void searchSubPackages(List<String> subPackages,
                                    ListBuffer<String> packages,
                                    List<String> excludedPackages) {
-	// FIXME: This search path is bogus.
-	// Only the effective source path should be searched for sources.
-	// Only the effective class path should be searched for classes.
-	// Should the bootclasspath/extdirs also be searched for classes?
-	java.util.List<File> pathnames = new java.util.ArrayList<File>();
-	if (paths.sourcePath() != null)
-	    for (File elt : paths.sourcePath())
-		pathnames.add(elt);
-	for (File elt : paths.userClassPath())
-	    pathnames.add(elt);
+        // FIXME: This search path is bogus.
+        // Only the effective source path should be searched for sources.
+        // Only the effective class path should be searched for classes.
+        // Should the bootclasspath/extdirs also be searched for classes?
+        java.util.List<File> pathnames = new java.util.ArrayList<File>();
+        if (paths.sourcePath() != null)
+            for (File elt : paths.sourcePath())
+                pathnames.add(elt);
+        for (File elt : paths.userClassPath())
+            pathnames.add(elt);
 
         for (String subPackage : subPackages)
             searchSubPackage(subPackage, packages, excludedPackages, pathnames);
     }
-    
+
     /**
      * Recursively search all directories in path for subdirectory name.
      * Add all packages found in such a directory to packages list.
      */
     private void searchSubPackage(String packageName,
-				  ListBuffer<String> packages,
-				  List<String> excludedPackages,
-				  Collection<File> pathnames) {
+                                  ListBuffer<String> packages,
+                                  List<String> excludedPackages,
+                                  Collection<File> pathnames) {
         if (excludedPackages.contains(packageName))
             return;
 
         String packageFilename = packageName.replace('.', File.separatorChar);
         boolean addedPackage = false;
-	for (File pathname : pathnames) {
+        for (File pathname : pathnames) {
             File f = new File(pathname, packageFilename);
             String filenames[] = f.list();
             // if filenames not null, then found directory
             if (filenames != null) {
-		for (String filename : filenames) {
+                for (String filename : filenames) {
                     if (!addedPackage
                             && (isValidJavaSourceFile(filename) ||
-				isValidJavaClassFile(filename))
+                                isValidJavaClassFile(filename))
                             && !packages.contains(packageName)) {
                         packages.append(packageName);
                         addedPackage = true;
                     } else if (isValidClassName(filename) &&
-			       (new File(f, filename)).isDirectory()) {
+                               (new File(f, filename)).isDirectory()) {
                         searchSubPackage(packageName + "." + filename,
-					 packages, excludedPackages, pathnames);
+                                         packages, excludedPackages, pathnames);
                     }
                 }
             }
@@ -332,7 +332,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
      */
     public static boolean isValidClassName(String s) {
         if (s.length() < 1) return false;
-	if (s.equals("package-info")) return true;
+        if (s.equals("package-info")) return true;
         if (surrogatesSupported) {
             int cp = s.codePointAt(0);
             if (!Character.isJavaIdentifierStart(cp))
@@ -351,20 +351,19 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         }
         return true;
     }
-    
+
     /**
      * From a list of top level trees, return the list of contained class definitions
      */
     List<JCClassDecl> listClasses(List<JCCompilationUnit> trees) {
         ListBuffer<JCClassDecl> result = new ListBuffer<JCClassDecl>();
-	for (JCCompilationUnit t : trees) {
-	    for (JCTree def : t.defs) {
-		if (def.getTag() == JCTree.CLASSDEF)
-		    result.append((JCClassDecl)def);
-	    }
+        for (JCCompilationUnit t : trees) {
+            for (JCTree def : t.defs) {
+                if (def.getTag() == JCTree.CLASSDEF)
+                    result.append((JCClassDecl)def);
+            }
         }
         return result.toList();
     }
-    
-}
 
+}

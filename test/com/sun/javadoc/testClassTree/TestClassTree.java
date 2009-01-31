@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,28 +36,28 @@
  */
 
 public class TestClassTree extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4632553-4973607";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-source",  "1.5","-sourcepath", SRC_DIR, "pkg"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = {
-        {BUG_ID + FS + "pkg" + FS + "package-tree.html", 
+        {BUG_ID + FS + "pkg" + FS + "package-tree.html",
             "<LI TYPE=\"circle\">pkg.<A HREF=\"../pkg/ParentClass.html\" " +
             "title=\"class in pkg\"><B>ParentClass</B></A><UL>"},
-            
-        {BUG_ID + FS + "pkg" + FS + "package-tree.html", 
-            "Annotation Type Hierarchy" + NL + "</H2>" + NL + "<UL>" + NL + 
+
+        {BUG_ID + FS + "pkg" + FS + "package-tree.html",
+            "Annotation Type Hierarchy" + NL + "</H2>" + NL + "<UL>" + NL +
             "<LI TYPE=\"circle\">pkg.<A HREF=\"../pkg/AnnotationType.html\" " +
             "title=\"annotation in pkg\"><B>AnnotationType</B></A> " +
             "(implements java.lang.annotation.Annotation)" + NL + "</UL>"},
-            
-        {BUG_ID + FS + "pkg" + FS + "package-tree.html", 
+
+        {BUG_ID + FS + "pkg" + FS + "package-tree.html",
             "<H2>" + NL +
             "Enum Hierarchy" + NL +
             "</H2>" + NL +
@@ -71,11 +71,11 @@ public class TestClassTree extends JavadocTester {
         },
     };
     private static final String[][] NEGATED_TEST = {
-        {BUG_ID + FS + "pkg" + FS + "package-tree.html", 
+        {BUG_ID + FS + "pkg" + FS + "package-tree.html",
             "<LI TYPE=\"circle\">class pkg.<A HREF=\"../pkg/ParentClass.html\" " +
             "title=\"class in pkg\"><B>ParentClass</B></A><UL>"}
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -85,14 +85,14 @@ public class TestClassTree extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

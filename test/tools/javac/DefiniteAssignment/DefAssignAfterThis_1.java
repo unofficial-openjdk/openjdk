@@ -40,6 +40,6 @@ public class DefAssignAfterThis_1 {
     }
 
     DefAssignAfterThis_1(int i) {
-	x = 1;
+        x = 1;
     }
 }

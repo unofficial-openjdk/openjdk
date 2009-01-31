@@ -34,12 +34,12 @@ import javax.tools.*;
 public class A extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-	Messager m = processingEnv.getMessager();
-	for (TypeElement anno: annotations) {
-	    for (Element e: roundEnv.getElementsAnnotatedWith(anno)) 
-		m.printMessage(Diagnostic.Kind.ERROR, "test", e);
+        Messager m = processingEnv.getMessager();
+        for (TypeElement anno: annotations) {
+            for (Element e: roundEnv.getElementsAnnotatedWith(anno))
+                m.printMessage(Diagnostic.Kind.ERROR, "test", e);
 
-	}
-	return true;
+        }
+        return true;
     }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,14 +29,14 @@
  * due to some anomaly in ordering in which all the class and package objects
  * get constructed, few classes were getting marked as "not included", even
  * thought they were included in this run and hence documentation for those
- * packages was wrong. The test case for which javadoc was failing is given 
- * in bug# 4197513.  
+ * packages was wrong. The test case for which javadoc was failing is given
+ * in bug# 4197513.
  *
- * @bug 4197513 
+ * @bug 4197513
  * @summary Javadoc does not process base class.
  * @build BaseClass.java
- * @run shell BaseClassWrapper.sh 
- * @author Atul M Dambalkar 
+ * @run shell BaseClassWrapper.sh
+ * @author Atul M Dambalkar
  */
 
 import com.sun.javadoc.*;
@@ -49,5 +49,5 @@ public class BaseClass {
      }
      return true;
   }
-     
+
 }

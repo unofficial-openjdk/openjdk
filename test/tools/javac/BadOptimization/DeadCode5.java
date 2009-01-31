@@ -44,11 +44,11 @@ public class DeadCode5
         DeadCode5 t = null;
         try {
             int dummy = t.fld;
-	    // if we got here, then there must be a problem
-	    throw new RuntimeException("accidental removal of live code");
+            // if we got here, then there must be a problem
+            throw new RuntimeException("accidental removal of live code");
         } catch (NullPointerException e) {
-	    System.out.println("NullPointerException correctly thrown");
-	    e.printStackTrace();
+            System.out.println("NullPointerException correctly thrown");
+            e.printStackTrace();
         }
     }
 }

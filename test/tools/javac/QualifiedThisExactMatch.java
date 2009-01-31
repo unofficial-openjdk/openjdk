@@ -26,7 +26,7 @@
  * @bug 4102393 4133457
  * @summary Verify that <class>.this  matches <class> exactly, not a subclass.
  * @author maddox
- * 
+ *
  * @run compile QualifiedThisExactMatch.java
  * @run main QualifiedThisExactMatch
  */
@@ -36,46 +36,46 @@ public class QualifiedThisExactMatch {
     void test() throws Exception {}
 
     void checkIt1() throws Exception {
-	QualifiedThisExactMatch z = new QualifiedThisExactMatch() {
+        QualifiedThisExactMatch z = new QualifiedThisExactMatch() {
             void test() throws Exception {
-		if (this == QualifiedThisExactMatch.this) {
-		    throw new Exception("anonymous");
-		}
+                if (this == QualifiedThisExactMatch.this) {
+                    throw new Exception("anonymous");
+                }
             }
-	};
-	z.test();
+        };
+        z.test();
     }
 
     //---
-    
+
     class A  {
-	Object getThisA() { return A.this; }
-	class B extends A {
-	    Object getThisA() { return A.this; }
-	    Object getThisB() { return B.this; }
-	}
+        Object getThisA() { return A.this; }
+        class B extends A {
+            Object getThisA() { return A.this; }
+            Object getThisB() { return B.this; }
+        }
     }
 
     void check(Object x, Object y) throws Exception {
-	if (x != y) {
-	    throw new Exception("named");
-	}
+        if (x != y) {
+            throw new Exception("named");
+        }
     }
 
     void checkIt2 () throws Exception {
-	A a = new A();
-	A.B b = a.new B();
+        A a = new A();
+        A.B b = a.new B();
 
-	check(a, a.getThisA());
-	check(a, b.getThisA());
-	check(b, b.getThisB());
+        check(a, a.getThisA());
+        check(a, b.getThisA());
+        check(b, b.getThisB());
     }
 
     //---
 
     public static void main(String[] s) throws Exception {
-	QualifiedThisExactMatch x = new QualifiedThisExactMatch();
-	x.checkIt1();
-	x.checkIt2();
+        QualifiedThisExactMatch x = new QualifiedThisExactMatch();
+        x.checkIt1();
+        x.checkIt2();
     }
 }

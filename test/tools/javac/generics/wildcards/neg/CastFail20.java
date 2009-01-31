@@ -41,9 +41,9 @@ class CastTest {
     private interface DC<T> extends DA<Integer> { }
 
     private <N extends Number, I extends Integer, R extends Runnable, S extends String> void disjointness() {
-	Object o;
+        Object o;
 
-	o = (DA<S>) (DA<R>) null; // <<fail 20>>
+        o = (DA<S>) (DA<R>) null; // <<fail 20>>
     }
 
 }

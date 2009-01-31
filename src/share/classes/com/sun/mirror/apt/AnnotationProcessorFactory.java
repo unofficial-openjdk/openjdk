@@ -95,9 +95,9 @@ public interface AnnotationProcessorFactory {
      * @param atds type declarations of the annotation types to be processed
      * @param env  environment to use during processing
      * @return an annotation processor for the given annotation types,
-     *		or <tt>null</tt> if the types are not supported or the
-     *		processor cannot be created
+     *          or <tt>null</tt> if the types are not supported or the
+     *          processor cannot be created
      */
     AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-					AnnotationProcessorEnvironment env);
+                                        AnnotationProcessorEnvironment env);
 }

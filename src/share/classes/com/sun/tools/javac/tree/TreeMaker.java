@@ -120,16 +120,16 @@ public class TreeMaker implements JCTree.Factory {
      * @param defs a list of ClassDef, Import, and Skip
      */
     public JCCompilationUnit TopLevel(List<JCAnnotation> packageAnnotations,
-				      JCExpression pid,
-				      List<JCTree> defs) {
+                                      JCExpression pid,
+                                      List<JCTree> defs) {
         assert packageAnnotations != null;
         for (JCTree node : defs)
             assert node instanceof JCClassDecl
-		|| node instanceof JCImport
-		|| node instanceof JCSkip
+                || node instanceof JCImport
+                || node instanceof JCSkip
                 || node instanceof JCErroneous
-		|| (node instanceof JCExpressionStatement
-		    && ((JCExpressionStatement)node).expr instanceof JCErroneous)
+                || (node instanceof JCExpressionStatement
+                    && ((JCExpressionStatement)node).expr instanceof JCErroneous)
                  : node.getClass().getSimpleName();
         JCCompilationUnit tree = new JCCompilationUnit(packageAnnotations, pid, defs,
                                      null, null, null, null);
@@ -144,19 +144,19 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     public JCClassDecl ClassDef(JCModifiers mods,
-				Name name,
-				List<JCTypeParameter> typarams,
-				JCTree extending,
-				List<JCExpression> implementing,
-				List<JCTree> defs)
+                                Name name,
+                                List<JCTypeParameter> typarams,
+                                JCTree extending,
+                                List<JCExpression> implementing,
+                                List<JCTree> defs)
     {
         JCClassDecl tree = new JCClassDecl(mods,
-				     name,
-				     typarams,
-				     extending,
-				     implementing,
-				     defs,
-				     null);
+                                     name,
+                                     typarams,
+                                     extending,
+                                     implementing,
+                                     defs,
+                                     null);
         tree.pos = pos;
         return tree;
     }
@@ -317,8 +317,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     public JCMethodInvocation Apply(List<JCExpression> typeargs,
-		       JCExpression fn,
-		       List<JCExpression> args)
+                       JCExpression fn,
+                       List<JCExpression> args)
     {
         JCMethodInvocation tree = new JCMethodInvocation(typeargs, fn, args);
         tree.pos = pos;
@@ -337,8 +337,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     public JCNewArray NewArray(JCExpression elemtype,
-			     List<JCExpression> dims,
-			     List<JCExpression> elems)
+                             List<JCExpression> dims,
+                             List<JCExpression> elems)
     {
         JCNewArray tree = new JCNewArray(elemtype, dims, elems);
         tree.pos = pos;
@@ -485,14 +485,14 @@ public class TreeMaker implements JCTree.Factory {
  ****************************************************************************/
 
     public JCClassDecl AnonymousClassDef(JCModifiers mods,
-					 List<JCTree> defs)
+                                         List<JCTree> defs)
     {
-	return ClassDef(mods,
-			names.empty,
-			List.<JCTypeParameter>nil(),
-			null,
-			List.<JCExpression>nil(),
-			defs);
+        return ClassDef(mods,
+                        names.empty,
+                        List.<JCTypeParameter>nil(),
+                        null,
+                        List.<JCExpression>nil(),
+                        defs);
     }
 
     public LetExpr LetExpr(JCVariableDecl def, JCTree expr) {
@@ -505,8 +505,8 @@ public class TreeMaker implements JCTree.Factory {
      */
     public JCIdent Ident(Symbol sym) {
         return (JCIdent)new JCIdent((sym.name != names.empty)
-				? sym.name
-				: sym.flatName(), sym)
+                                ? sym.name
+                                : sym.flatName(), sym)
             .setPos(pos)
             .setType(sym.type);
     }
@@ -888,4 +888,3 @@ public class TreeMaker implements JCTree.Factory {
      */
     public Name typaramName(int i) { return names.fromString("A" + i); }
 }
-    

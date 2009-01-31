@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,4 +30,3 @@ public class Foo {
     public void method(Vector<Object> o){}
 
 }
-

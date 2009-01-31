@@ -29,15 +29,14 @@ import com.sun.javadoc.*;
 
 /**
  * Find a commented method.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  */
 public class CommentedMethodFinder extends MethodFinder {
     public boolean isCorrectMethod(MethodDoc method) {
         return method.inlineTags().length > 0;
     }
 }
- 

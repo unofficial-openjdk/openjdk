@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,33 +35,33 @@
  */
 
 public class TestExternalOverridenMethod extends JavadocTester {
-    
+
     private static final String BUG_ID = "4857717";
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "XReader.html",
-            "<B>Overrides:</B><DD><CODE><A HREF=\"" + 
-            "http://java.sun.com/j2se/1.4.1/docs/api/java/io/FilterReader.html?is-external=true#read()\"" + 
+            "<B>Overrides:</B><DD><CODE><A HREF=\"" +
+            "http://java.sun.com/j2se/1.4.1/docs/api/java/io/FilterReader.html?is-external=true#read()\"" +
                 " title=\"class or interface in java.io\">read</A></CODE> in class " +
-                "<CODE><A HREF=\"http://java.sun.com/j2se/1.4.1/docs/api/java/io/FilterReader.html?is-external=true\"" + 
+                "<CODE><A HREF=\"http://java.sun.com/j2se/1.4.1/docs/api/java/io/FilterReader.html?is-external=true\"" +
                 " title=\"class or interface in java.io\">FilterReader</A>"},
         {BUG_ID + FS + "pkg" + FS + "XReader.html",
-            "<B>Specified by:</B><DD><CODE><A HREF=\"" + 
-            "http://java.sun.com/j2se/1.4.1/docs/api/java/io/DataInput.html?is-external=true#readInt()\"" + 
-            " title=\"class or interface in java.io\">readInt</A></CODE> in interface " + 
-            "<CODE><A HREF=\"http://java.sun.com/j2se/1.4.1/docs/api/java/io/DataInput.html?is-external=true\"" + 
-            " title=\"class or interface in java.io\">DataInput</A>"}};         
-                
-                
-                
+            "<B>Specified by:</B><DD><CODE><A HREF=\"" +
+            "http://java.sun.com/j2se/1.4.1/docs/api/java/io/DataInput.html?is-external=true#readInt()\"" +
+            " title=\"class or interface in java.io\">readInt</A></CODE> in interface " +
+            "<CODE><A HREF=\"http://java.sun.com/j2se/1.4.1/docs/api/java/io/DataInput.html?is-external=true\"" +
+            " title=\"class or interface in java.io\">DataInput</A>"}};
+
+
+
     private static final String[][] NEGATED_TEST = NO_TEST;
-                
+
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
             "-linkoffline", "http://java.sun.com/j2se/1.4.1/docs/api", SRC_DIR,
             "pkg"
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -71,14 +71,14 @@ public class TestExternalOverridenMethod extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

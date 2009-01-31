@@ -30,7 +30,7 @@ import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.javadoc.*;
 import java.io.*;
 import java.util.*;
-import com.sun.tools.doclets.internal.toolkit.util.*; 
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 
 /**
@@ -44,7 +44,7 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  * @author Robert Field
  */
 public abstract class HtmlDocWriter extends HtmlWriter {
-    
+
     /**
      * Constructor. Initializes the destination file name through the super
      * class HtmlWriter.
@@ -59,7 +59,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
         configuration.message.notice("doclet.Generating_0",
                                      configuration.destDirName + filename);
     }
-    
+
     public HtmlDocWriter(Configuration configuration,
                          String path, String filename) throws IOException {
         super(configuration,
@@ -70,12 +70,12 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                          ((path.length() > 0)?
                                               path + File.separator: "") + filename);
     }
-    
+
     /**
      * Accessor for configuration.
      */
     public abstract Configuration configuration();
-    
+
     /**
      * Print Html Hyper Link.
      *
@@ -89,7 +89,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String label, boolean bold) {
         print(getHyperLink(link, where, label, bold, "", "", ""));
     }
-    
+
     /**
      * Print Html Hyper Link.
      *
@@ -101,7 +101,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
     public void printHyperLink(String link, String where, String label) {
         printHyperLink(link, where, label, false);
     }
-    
+
     /**
      * Print Html Hyper Link.
      *
@@ -117,7 +117,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String stylename) {
         print(getHyperLink(link, where, label, bold, stylename, "", ""));
     }
-    
+
     /**
      * Return Html Hyper Link string.
      *
@@ -132,7 +132,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String label, boolean bold) {
         return getHyperLink(link, where, label, bold, "", "", "");
     }
-    
+
     /**
      * Get Html Hyper Link string.
      *
@@ -149,7 +149,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String stylename) {
         return getHyperLink(link, where, label, bold, stylename, "", "");
     }
-    
+
     /**
      * Get Html Hyper Link string.
      *
@@ -167,7 +167,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String label, boolean bold,
                                String stylename, String title, String target) {
         StringBuffer retlink = new StringBuffer();
-        retlink.append("<A HREF=\"");        
+        retlink.append("<A HREF=\"");
         retlink.append(link);
         if (where != null && where.length() != 0) {
             retlink.append("#");
@@ -199,7 +199,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
         retlink.append("</A>");
         return retlink.toString();
     }
-    
+
     /**
      * Print link without positioning in the file.
      *
@@ -209,7 +209,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
     public void printHyperLink(String link, String label) {
         print(getHyperLink(link, "", label, false));
     }
-    
+
     /**
      * Get link string without positioning in the file.
      *
@@ -220,7 +220,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
     public String getHyperLink(String link, String label) {
         return getHyperLink(link, "", label, false);
     }
-    
+
     /**
      * Print the name of the package, this class is in.
      *
@@ -229,7 +229,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
     public void printPkgName(ClassDoc cd) {
         print(getPkgName(cd));
     }
-    
+
     /**
      * Get the name of the package, this class is in.
      *
@@ -243,7 +243,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
         }
         return "";
     }
-    
+
     /**
      * Print the frameset version of the Html file header.
      * Called only when generating an HTML frameset file.
@@ -253,7 +253,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
     public void printFramesetHeader(String title) {
         printFramesetHeader(title, false);
     }
-    
+
     /**
      * Print the frameset version of the Html file header.
      * Called only when generating an HTML frameset file.
@@ -283,21 +283,21 @@ public abstract class HtmlDocWriter extends HtmlWriter {
         //Script to set the classFrame if necessary.
         script();
         println("    targetPage = \"\" + window.location.search;");
-        println("    if (targetPage != \"\" && targetPage != \"undefined\")"); 
-        println("        targetPage = targetPage.substring(1);");   
-        println("    if (targetPage.indexOf(\":\") != -1)");   
-        println("        targetPage = \"undefined\";");   
+        println("    if (targetPage != \"\" && targetPage != \"undefined\")");
+        println("        targetPage = targetPage.substring(1);");
+        println("    if (targetPage.indexOf(\":\") != -1)");
+        println("        targetPage = \"undefined\";");
 
         println("    function loadFrames() {");
-        println("        if (targetPage != \"\" && targetPage != \"undefined\")"); 
+        println("        if (targetPage != \"\" && targetPage != \"undefined\")");
         println("             top.classFrame.location = top.targetPage;");
-        println("    }");    
+        println("    }");
         scriptEnd();
         noScript();
         noScriptEnd();
         headEnd();
     }
-    
+
     /**
      * Print the appropriate spaces to format the class tree in the class page.
      *
@@ -305,13 +305,13 @@ public abstract class HtmlDocWriter extends HtmlWriter {
      */
     public String spaces(int len) {
         String space = "";
-        
+
         for (int i = 0; i < len; i++) {
             space += " ";
         }
         return space;
     }
-    
+
     /**
      * Print the closing &lt;/body&gt; and &lt;/html&gt; tags.
      */
@@ -320,28 +320,28 @@ public abstract class HtmlDocWriter extends HtmlWriter {
         bodyEnd();
         htmlEnd();
     }
-    
+
     /**
      * Calls {@link #printBodyHtmlEnd()} method.
      */
     public void printFooter() {
         printBodyHtmlEnd();
     }
-    
+
     /**
      * Print closing &lt;/html&gt; tag.
      */
     public void printFrameFooter() {
         htmlEnd();
     }
-    
+
     /**
      * Print ten non-breaking spaces("&#38;nbsp;").
      */
     public void printNbsps() {
         print("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
     }
-    
+
     /**
      * Get the day and date information for today, depending upon user option.
      *

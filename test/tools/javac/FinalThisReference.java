@@ -33,7 +33,7 @@
 class A {
     B b = new B();
     {
-	System.out.println(b.value);
+        System.out.println(b.value);
     }
 }
 

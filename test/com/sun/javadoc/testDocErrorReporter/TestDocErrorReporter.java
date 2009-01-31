@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug      4927928
- * @summary  Make sure that option validation errors and sent to the 
+ * @summary  Make sure that option validation errors and sent to the
  *           DocErrorReporter.
  * @author   jamieh
  * @library  ../lib/
@@ -34,23 +34,23 @@
  */
 
 public class TestDocErrorReporter extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4927928";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", BUG_ID, "-sourcepath", SRC_DIR, "-encoding", "xyz", 
+        "-d", BUG_ID, "-sourcepath", SRC_DIR, "-encoding", "xyz",
             SRC_DIR + FS + "TestDocErrorReporter.java"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     //Input for Javadoc return code test.
     private static final int EXPECTED_EXIT_CODE = 1;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -61,14 +61,14 @@ public class TestDocErrorReporter extends JavadocTester {
         tester.checkExitCode(EXPECTED_EXIT_CODE, actualExitCode);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

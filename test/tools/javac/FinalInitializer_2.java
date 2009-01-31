@@ -34,7 +34,7 @@ public class FinalInitializer_2 {
     // customer-supplied test case
     public void doKMDiscard()
     {
- 
+
       //the problem will be gone by deleting any of the following
       //5 lines. (just comment them out works too)
       {
@@ -42,7 +42,7 @@ public class FinalInitializer_2 {
         final int degCnns[][]=null;
         int sklTmpGrps=0;
       }
- 
+
       final int sklGrpCnt;
       //the problem will be gone by deleting the loop or
       //the final line or just delete the word 'final'

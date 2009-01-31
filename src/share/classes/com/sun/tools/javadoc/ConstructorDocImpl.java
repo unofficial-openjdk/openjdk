@@ -41,21 +41,21 @@ import com.sun.tools.javac.util.Position;
  */
 
 public class ConstructorDocImpl
-	extends ExecutableMemberDocImpl implements ConstructorDoc {
+        extends ExecutableMemberDocImpl implements ConstructorDoc {
 
     /**
      * constructor.
      */
     public ConstructorDocImpl(DocEnv env, MethodSymbol sym) {
-	super(env, sym);
+        super(env, sym);
     }
 
     /**
      * constructor.
      */
     public ConstructorDocImpl(DocEnv env, MethodSymbol sym,
-			      String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
-	super(env, sym, docComment, tree, lineMap);
+                              String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
+        super(env, sym, docComment, tree, lineMap);
     }
 
     /**
@@ -64,7 +64,7 @@ public class ConstructorDocImpl
      * @return true
      */
     public boolean isConstructor() {
-	return true;
+        return true;
     }
 
     /**
@@ -75,10 +75,10 @@ public class ConstructorDocImpl
     public String name() {
         ClassSymbol c = sym.enclClass();
         String n = c.name.toString();
-	for (c = c.owner.enclClass(); c != null; c = c.owner.enclClass()) {
-	    n = c.name.toString() + "." + n;
-	}
-	return n;
+        for (c = c.owner.enclClass(); c != null; c = c.owner.enclClass()) {
+            n = c.name.toString() + "." + n;
+        }
+        return n;
     }
 
     /**
@@ -99,6 +99,6 @@ public class ConstructorDocImpl
      * parameters.)
      */
     public String toString() {
-	return typeParametersString() + qualifiedName() + signature();
+        return typeParametersString() + qualifiedName() + signature();
     }
 }

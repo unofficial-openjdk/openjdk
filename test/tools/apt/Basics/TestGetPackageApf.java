@@ -67,52 +67,52 @@ public class TestGetPackageApf implements AnnotationProcessorFactory {
         }
 
         public void process() {
-	    boolean failed = false;
-	    String packageNames[] = {
-		"", // unnamed package
-		"java.lang.annotation",
-		"java.lang",
-		"java.util",
-		"java.awt.image.renderable",
-		"foo.bar",
-		"foo",
-		"p1",
-		// "p1.p2", // class p1.p2 obscures package p1.p2
-	    };
+            boolean failed = false;
+            String packageNames[] = {
+                "", // unnamed package
+                "java.lang.annotation",
+                "java.lang",
+                "java.util",
+                "java.awt.image.renderable",
+                "foo.bar",
+                "foo",
+                "p1",
+                // "p1.p2", // class p1.p2 obscures package p1.p2
+            };
 
-	    for(String packageName: packageNames) {
-		PackageDeclaration p = env.getPackage(packageName);
-		if (p == null) {
-		    failed = true;
-		    System.err.println("ERROR: No declaration found for ``" + packageName + "''."); 
-		}
-		else if (!packageName.equals(p.getQualifiedName())) {
-		    failed = true;
-		    System.err.println("ERROR: Unexpected package name; expected " + packageName +
-				       "got " + p.getQualifiedName()); 
-		}
-	    }
+            for(String packageName: packageNames) {
+                PackageDeclaration p = env.getPackage(packageName);
+                if (p == null) {
+                    failed = true;
+                    System.err.println("ERROR: No declaration found for ``" + packageName + "''.");
+                }
+                else if (!packageName.equals(p.getQualifiedName())) {
+                    failed = true;
+                    System.err.println("ERROR: Unexpected package name; expected " + packageName +
+                                       "got " + p.getQualifiedName());
+                }
+            }
 
-	    String notPackageNames[] = {
-		"XXYZZY",
-		"java.lang.String",
-		"1",
-		"1.2",
-		"3.14159",
-		"To be or not to be is a tautology",
-		"1+2=3",
-	    };
+            String notPackageNames[] = {
+                "XXYZZY",
+                "java.lang.String",
+                "1",
+                "1.2",
+                "3.14159",
+                "To be or not to be is a tautology",
+                "1+2=3",
+            };
 
-	    for(String notPackageName: notPackageNames) {
-		PackageDeclaration p = env.getPackage(notPackageName);
-		if (p != null) {
-		    failed = true;
-		    System.err.println("ERROR: Unexpected declaration: ``" + p + "''.");
-		}
-	    }
+            for(String notPackageName: notPackageNames) {
+                PackageDeclaration p = env.getPackage(notPackageName);
+                if (p != null) {
+                    failed = true;
+                    System.err.println("ERROR: Unexpected declaration: ``" + p + "''.");
+                }
+            }
 
-	    if (failed)
-		throw new RuntimeException("Errors found testing getPackage.");
+            if (failed)
+                throw new RuntimeException("Errors found testing getPackage.");
         }
     }
 }

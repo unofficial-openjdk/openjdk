@@ -13,14 +13,14 @@ public class T6253161 {
     @SuppressWarnings("unchecked")
     public void anonymousMethod(){
            List list = new ArrayList<String>(){
-           static final long serialVersionUID = 1;  
+           static final long serialVersionUID = 1;
            List list = new ArrayList<Integer>();
            public List<Integer> getMyList(){
                 final List floatList = new ArrayList<Float>(){
                     List integerList = new ArrayList<Float>();
                     public List<Float> getMyList(){
                         for(int i=0;i<10;i++)
-                            integerList.add((int)((Float.parseFloat(i+""))+(1.11F)));          
+                            integerList.add((int)((Float.parseFloat(i+""))+(1.11F)));
                         return (List)(Object)integerList;
                     }
                     public void testMethods(){

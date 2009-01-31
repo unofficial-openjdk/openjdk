@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,16 +35,16 @@ import java.util.Map;
  */
 
 public class UnderlineTaglet implements Taglet {
-    
+
     private String NAME = "underline";
-    
+
     /**
      * Return the name of this custom tag.
      */
     public String getName() {
         return NAME;
     }
-    
+
     /**
      * Will return false since this is an inline tag.
      * @return false since this is an inline tag.
@@ -60,7 +60,7 @@ public class UnderlineTaglet implements Taglet {
     public boolean inConstructor() {
         return true;
     }
-    
+
     /**
      * Will return false since this is an inline tag.
      * @return false since this is an inline tag.
@@ -68,7 +68,7 @@ public class UnderlineTaglet implements Taglet {
     public boolean inMethod() {
         return false;
     }
-    
+
     /**
      * Will return false since this is an inline tag.
      * @return false since this is an inline tag.
@@ -92,16 +92,16 @@ public class UnderlineTaglet implements Taglet {
     public boolean inType() {
         return false;
     }
-    
+
     /**
      * Will return true since this is an inline tag.
      * @return true since this is an inline tag.
      */
-    
+
     public boolean isInlineTag() {
         return true;
     }
-    
+
     /**
      * Register this Taglet.
      * @param tagletMap  the map to register this tag to.
@@ -123,7 +123,7 @@ public class UnderlineTaglet implements Taglet {
     public String toString(Tag tag) {
         return "<u>" + tag.text() + "</u>";
     }
-    
+
     /**
      * This method should not be called since arrays of inline tags do not
      * exist.  Method {@link #tostring(Tag)} should be used to convert this

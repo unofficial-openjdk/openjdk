@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,34 +34,34 @@
  */
 
 public class TestGroupOption extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4924383";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS1 = new String[] {
-        "-d", BUG_ID, "-sourcepath", SRC_DIR, 
-        "-group", "Package One", "pkg1", 
+        "-d", BUG_ID, "-sourcepath", SRC_DIR,
+        "-group", "Package One", "pkg1",
         "-group", "Package Two", "pkg2",
         "-group", "Package Three", "pkg3",
         "pkg1", "pkg2", "pkg3"
     };
-    
+
     private static final String[] ARGS2 = new String[] {
-        "-d", BUG_ID, "-sourcepath", SRC_DIR, 
-        "-group", "Package One", "pkg1", 
+        "-d", BUG_ID, "-sourcepath", SRC_DIR,
+        "-group", "Package One", "pkg1",
         "-group", "Package One", "pkg2",
         "-group", "Package One", "pkg3",
         "pkg1", "pkg2", "pkg3"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST1 = NO_TEST;
     private static final String[][] NEGATED_TEST1 = {{WARNING_OUTPUT, "-group"}};
-    
+
     private static final String[][] TEST2 = {{WARNING_OUTPUT, "-group"}};
     private static final String[][] NEGATED_TEST2 = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -71,20 +71,20 @@ public class TestGroupOption extends JavadocTester {
         TestGroupOption tester = new TestGroupOption();
         run(tester, ARGS1, TEST1, NEGATED_TEST1);
         tester.printSummary();
-        
+
         //Make sure the warning is printed when -group is not used correctly.
         tester = new TestGroupOption();
         run(tester, ARGS2, TEST2, NEGATED_TEST2);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

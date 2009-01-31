@@ -38,11 +38,11 @@ public class WrongNew
 {
     public static void main(String[] ps)
     {
-	WrongNewList<String> list = getList();
+        WrongNewList<String> list = getList();
     }
-    
+
     public static WrongNewList<String> getList()
     {
-	return new WrongNewArrayList();
+        return new WrongNewArrayList();
     }
 }

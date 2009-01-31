@@ -30,9 +30,9 @@
 
 public class T5073060a {
     static class C1 {
-	void c1m1() {
-	    System.out.println("FISK");
-	}
+        void c1m1() {
+            System.out.println("FISK");
+        }
     }
     static interface I {}
 
@@ -43,13 +43,13 @@ public class T5073060a {
     public <T> T m1(T t1, T t2) { return t1; }
 
     public <T extends C1 & I> void test(C2 c2, C3 c3, T t) {
-	m1(c2, c3).c1m1(); // error
-	t.c1m1(); // error
-	(t != null ? c2 : c3).c1m1(); // error
+        m1(c2, c3).c1m1(); // error
+        t.c1m1(); // error
+        (t != null ? c2 : c3).c1m1(); // error
     }
 
     public static void main(String... args) {
-	T5073060a t = new T5073060a();
-	t.test(new C2(), new C3(), new C2());
+        T5073060a t = new T5073060a();
+        t.test(new C2(), new C3(), new C2());
     }
 }

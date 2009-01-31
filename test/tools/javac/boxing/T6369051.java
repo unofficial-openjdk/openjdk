@@ -36,7 +36,7 @@ class Value<T> {
 
 class IntegerValue extends Value<Integer> {
     void increment() {
-	value = value + 1;
-	value += 1;
+        value = value + 1;
+        value += 1;
     }
 }

@@ -41,14 +41,14 @@ public class T6194785 extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment)
     {
-	final Messager log = processingEnv.getMessager();
-	final Elements elements = processingEnv.getElementUtils();
+        final Messager log = processingEnv.getMessager();
+        final Elements elements = processingEnv.getElementUtils();
         class Scan extends ElementScanner6<Void,Void> {
             @Override
             public Void visitExecutable(ExecutableElement e, Void ignored) {
-		for (VariableElement p : e.getParameters())
-		    if ("arg0".equals(p.getSimpleName().toString()))
-			throw new AssertionError(e);
+                for (VariableElement p : e.getParameters())
+                    if ("arg0".equals(p.getSimpleName().toString()))
+                        throw new AssertionError(e);
                 return null;
             }
         }

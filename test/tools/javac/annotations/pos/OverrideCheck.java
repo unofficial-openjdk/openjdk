@@ -32,11 +32,11 @@
 
 class OverrideCheck {
     static class A {
-	public void f() {}
+        public void f() {}
     }
 
     static class B extends A {
-	@Override
-	public void f() {}
+        @Override
+        public void f() {}
     }
 }

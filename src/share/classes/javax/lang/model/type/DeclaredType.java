@@ -91,7 +91,7 @@ public interface DeclaredType extends ReferenceType {
      * arguments of the innermost type are included.
      *
      * @return the actual type arguments of this type, or an empty list
-     *		 if none
+     *           if none
      */
     List<? extends TypeMirror> getTypeArguments();
 }

@@ -47,12 +47,12 @@ import com.sun.mirror.util.*;
 public class ClassDecl extends Tester {
 
     public static void main(String[] args) {
-	(new ClassDecl()).run();
+        (new ClassDecl()).run();
     }
 
 
-    private ClassDeclaration nested = null;	// a nested type
-    private ClassDeclaration object = null;	// java.lang.object
+    private ClassDeclaration nested = null;     // a nested type
+    private ClassDeclaration object = null;     // java.lang.object
 
     // A constructor to be found
     private ClassDecl() {
@@ -60,7 +60,7 @@ public class ClassDecl extends Tester {
 
     // Another constructor to be found
     private ClassDecl(int i) {
-	this();
+        this();
     }
 
     // An extra field to be found
@@ -68,21 +68,21 @@ public class ClassDecl extends Tester {
 
     // Static initializer isn't among this class's methods.
     static {
-	i = 7;
+        i = 7;
     }
 
     // A nested class with some accoutrements
     private static strictfp class NestedClass<T> implements Serializable {
-	void m1() {}
-	void m2() {}
-	void m2(int i) {}
+        void m1() {}
+        void m2() {}
+        void m2(int i) {}
     }
 
     protected void init() {
-	nested = (ClassDeclaration)
-	    thisClassDecl.getNestedTypes().iterator().next();
-	object = (ClassDeclaration)
-	    env.getTypeDeclaration("java.lang.Object");
+        nested = (ClassDeclaration)
+            thisClassDecl.getNestedTypes().iterator().next();
+        object = (ClassDeclaration)
+            env.getTypeDeclaration("java.lang.Object");
     }
 
 
@@ -90,57 +90,57 @@ public class ClassDecl extends Tester {
 
     @Test(result="class")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	thisClassDecl.accept(new SimpleDeclarationVisitor() {
-	    public void visitTypeDeclaration(TypeDeclaration t) {
-		res.add("type");
-	    }
-	    public void visitClassDeclaration(ClassDeclaration c) {
-		res.add("class");
-	    }
-	    public void visitEnumDeclaration(EnumDeclaration e) {
-		res.add("enum");
-	    }
-	});
-	return res;
+        thisClassDecl.accept(new SimpleDeclarationVisitor() {
+            public void visitTypeDeclaration(TypeDeclaration t) {
+                res.add("type");
+            }
+            public void visitClassDeclaration(ClassDeclaration c) {
+                res.add("class");
+            }
+            public void visitEnumDeclaration(EnumDeclaration e) {
+                res.add("enum");
+            }
+        });
+        return res;
     }
 
     @Test(result={"@AT1", "@AT2"})
     Collection<AnnotationMirror> getAnnotationMirrors() {
-	return thisClassDecl.getAnnotationMirrors();
+        return thisClassDecl.getAnnotationMirrors();
     }
 
     @Test(result=" Sed Quis custodiet ipsos custodes?\n")
     String getDocComment() {
-	return thisClassDecl.getDocComment();
+        return thisClassDecl.getDocComment();
     }
 
     @Test(result={"public"})
     Collection<Modifier> getModifiers1() {
-	return thisClassDecl.getModifiers();
+        return thisClassDecl.getModifiers();
     }
 
     // Check that static nested class has "static" modifier, even though
     // the VM doesn't set that bit.
     @Test(result={"private", "static", "strictfp"})
     Collection<Modifier> getModifiers2() {
-	return nested.getModifiers();
+        return nested.getModifiers();
     }
 
     @Test(result="ClassDecl.java")
     String getPosition() {
-	return thisClassDecl.getPosition().file().getName();
+        return thisClassDecl.getPosition().file().getName();
     }
 
     @Test(result="ClassDecl")
     String getSimpleName1() {
-	return thisClassDecl.getSimpleName();
+        return thisClassDecl.getSimpleName();
     }
 
     @Test(result="NestedClass")
     String getSimpleName2() {
-	return nested.getSimpleName();
+        return nested.getSimpleName();
     }
 
 
@@ -148,12 +148,12 @@ public class ClassDecl extends Tester {
 
     @Test(result="null")
     TypeDeclaration getDeclaringType1() {
-	return thisClassDecl.getDeclaringType();
+        return thisClassDecl.getDeclaringType();
     }
 
     @Test(result="ClassDecl")
     TypeDeclaration getDeclaringType2() {
-	return nested.getDeclaringType();
+        return nested.getDeclaringType();
     }
 
 
@@ -161,52 +161,52 @@ public class ClassDecl extends Tester {
 
     @Test(result={"nested", "object", "i"})
     Collection<FieldDeclaration> getFields() {
-	return thisClassDecl.getFields();
+        return thisClassDecl.getFields();
     }
 
     @Test(result={})
     Collection<TypeParameterDeclaration> getFormalTypeParameters1() {
-	return thisClassDecl.getFormalTypeParameters();
+        return thisClassDecl.getFormalTypeParameters();
     }
 
     @Test(result="T")
     Collection<TypeParameterDeclaration> getFormalTypeParameters2() {
-	return nested.getFormalTypeParameters();
+        return nested.getFormalTypeParameters();
     }
 
     @Test(result="ClassDecl.NestedClass<T>")
     Collection<TypeDeclaration> getNestedTypes() {
-	return thisClassDecl.getNestedTypes();
+        return thisClassDecl.getNestedTypes();
     }
 
     @Test(result="")
     PackageDeclaration getPackage1() {
-	return thisClassDecl.getPackage();
+        return thisClassDecl.getPackage();
     }
 
     @Test(result="java.lang")
     PackageDeclaration getPackage2() {
-	return object.getPackage();
+        return object.getPackage();
     }
 
     @Test(result="ClassDecl")
     String getQualifiedName1() {
-	return thisClassDecl.getQualifiedName();
+        return thisClassDecl.getQualifiedName();
     }
 
     @Test(result="ClassDecl.NestedClass")
     String getQualifiedName2() {
-	return nested.getQualifiedName();
+        return nested.getQualifiedName();
     }
 
     @Test(result="java.lang.Object")
     String getQualifiedName3() {
-	return object.getQualifiedName();
+        return object.getQualifiedName();
     }
 
     @Test(result="java.io.Serializable")
     Collection<InterfaceType> getSuperinterfaces() {
-	return nested.getSuperinterfaces();
+        return nested.getSuperinterfaces();
     }
 
 
@@ -214,29 +214,29 @@ public class ClassDecl extends Tester {
 
     @Test(result={"ClassDecl()", "ClassDecl(int)"})
     Collection<ConstructorDeclaration> getConstructors1() {
-	return thisClassDecl.getConstructors();
+        return thisClassDecl.getConstructors();
     }
 
     // Check for default constructor.
     // 4997614: visitConstructionDeclaration reports info when there is no ctor
     @Test(result={"NestedClass()"})
     Collection<ConstructorDeclaration> getConstructors2() {
-	return nested.getConstructors();
+        return nested.getConstructors();
     }
 
     @Test(result={"m1()", "m2()", "m2(int)"})
     Collection<MethodDeclaration> getMethods() {
-	return nested.getMethods();
+        return nested.getMethods();
     }
 
     @Test(result={"Tester"})
     ClassType getSuperclass() {
-	return thisClassDecl.getSuperclass();
+        return thisClassDecl.getSuperclass();
     }
 
     @Test(result={"null"})
     ClassType objectHasNoSuperclass() {
-	return object.getSuperclass();
+        return object.getSuperclass();
     }
 }
 

@@ -41,7 +41,7 @@ import static javax.lang.model.SourceVersion.*;
 
 public class T6395981 {
     public static void main(String... args) {
-	Tool compiler = ToolProvider.getSystemJavaCompiler();
+        Tool compiler = ToolProvider.getSystemJavaCompiler();
         Set<SourceVersion> expected = EnumSet.noneOf(SourceVersion.class);
         for (String arg : args)
             expected.add(SourceVersion.valueOf(arg));

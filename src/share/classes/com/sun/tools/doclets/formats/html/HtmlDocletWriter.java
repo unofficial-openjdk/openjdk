@@ -46,7 +46,7 @@ import java.util.*;
  * @author Robert Field
  */
 public class HtmlDocletWriter extends HtmlDocWriter {
-    
+
     /**
      * Relative path from the file getting generated to the destination
      * directory. For example, if the file getting generated is
@@ -55,13 +55,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * the destination directory.
      */
     public String relativePath = "";
-    
+
     /**
      * Same as relativepath, but normalized to never be empty or
      * end with a slash.
      */
     public String relativepathNoSlash = "";
-    
+
     /**
      * Platform-dependent directory path from the current or the
      * destination directory to the file getting generated.
@@ -70,23 +70,23 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * "java/lang/Object.html", then the path string is "java/lang".
      */
     public String path = "";
-    
+
     /**
      * Name of the file getting generated. If the file getting generated is
      * "java/lang/Object.html", then the filename is "Object.html".
      */
     public String filename = "";
-    
+
     /**
      * The display length used for indentation while generating the class page.
      */
     public int displayLength = 0;
-    
+
     /**
      * The global configuration information for this run.
      */
     public ConfigurationImpl configuration;
-    
+
     /**
      * Constructor to construct the HtmlStandardWriter object.
      *
@@ -98,7 +98,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         this.configuration = configuration;
         this.filename = filename;
     }
-    
+
     /**
      * Constructor to construct the HtmlStandardWriter object.
      *
@@ -118,7 +118,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             DirectoryManager.getPathNoTrailingSlash(this.relativePath);
         this.filename = filename;
     }
-    
+
     /**
      * Replace {&#064;docRoot} tag used in options that accept HTML text, such
      * as -header, -footer, -top and -bottom, and when converting a relative
@@ -167,14 +167,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             // Insert relative path where {@docRoot} was located
             buf.append(relativepathNoSlash);
             // Append slash if next character is not a slash
-            if (relativepathNoSlash.length() > 0 && previndex < htmlstr.length() 
+            if (relativepathNoSlash.length() > 0 && previndex < htmlstr.length()
                     && htmlstr.charAt(previndex) != '/') {
                 buf.append(DirectoryManager.URL_FILE_SEPERATOR);
             }
         }
         return buf.toString();
     }
-    
+
     /**
      * Print Html Hyper Link, with target frame.  This
      * link will only appear if page is not in a frame.
@@ -201,7 +201,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         noScriptEnd();
         println(DocletConstants.NL);
     }
-    
+
     private void printMethodInfo(MethodDoc method) {
         ClassDoc[] intfacs = method.containingClass().interfaces();
         MethodDoc overriddenMethod = method.overriddenMethod();
@@ -210,7 +210,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             printTagsInfoHeader();
             MethodWriterImpl.printImplementsInfo(this, method);
             if (overriddenMethod != null) {
-                MethodWriterImpl.printOverridden(this, 
+                MethodWriterImpl.printOverridden(this,
                     method.overriddenType(), overriddenMethod);
             }
             printTagsInfoFooter();
@@ -218,7 +218,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         dd();
     }
-    
+
     protected void printTags(Doc doc) {
         if(configuration.nocomment){
             return;
@@ -234,7 +234,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             printTagsInfoHeader();
             print(output.toString());
             printTagsInfoFooter();
-        } else if (! (doc instanceof ConstructorDoc || 
+        } else if (! (doc instanceof ConstructorDoc ||
             doc instanceof RootDoc || doc instanceof ClassDoc)) {
             //To be consistent with 1.4.2 output.
             //I hate to do this but we have to pass the diff test to prove
@@ -243,7 +243,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             printTagsInfoFooter();
         }
     }
-    
+
     /**
      * Returns a TagletWriter that knows how to write HTML.
      *
@@ -252,15 +252,15 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public TagletWriter getTagletWriterInstance(boolean isFirstSentence) {
         return new TagletWriterImpl(this, isFirstSentence);
     }
-    
+
     protected void printTagsInfoHeader() {
         dl();
     }
-    
+
     protected void printTagsInfoFooter() {
         dlEnd();
     }
-    
+
     /**
      * Print Package link, with target frame.
      *
@@ -269,10 +269,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param target Name of the target frame.
      * @param label Tag for the link.
      */
-    public void printTargetPackageLink(PackageDoc pd, String target, 
-        String label) {     
-        print(getHyperLink(pathString(pd, "package-summary.html"), "", label, 
-            false, "", "", target));        
+    public void printTargetPackageLink(PackageDoc pd, String target,
+        String label) {
+        print(getHyperLink(pathString(pd, "package-summary.html"), "", label,
+            false, "", "", target));
     }
 
     /**
@@ -286,7 +286,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param includeScript boolean true if printing windowtitle script.
      *             False for files that appear in the left-hand frames.
      */
-    public void printHtmlHeader(String title, String[] metakeywords, 
+    public void printHtmlHeader(String title, String[] metakeywords,
             boolean includeScript) {
         println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 " +
                     "Transitional//EN\" " +
@@ -311,9 +311,9 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         titleEnd();
         println("");
         if (! configuration.notimestamp) {
-	        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-	        println("<META NAME=\"date\" "
-	                            + "CONTENT=\"" + dateFormat.format(new Date()) + "\">");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                println("<META NAME=\"date\" "
+                                    + "CONTENT=\"" + dateFormat.format(new Date()) + "\">");
         }
         if ( metakeywords != null ) {
             for ( int i=0; i < metakeywords.length; i++ ) {
@@ -334,7 +334,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         println("");
         body("white", includeScript);
     }
-    
+
     /**
      * Print user specified header and the footer.
      *
@@ -354,7 +354,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         emEnd();
     }
-    
+
     /**
      * Print the user specified top.
      */
@@ -362,7 +362,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         print(replaceDocRootDir(configuration.top));
         hr();
     }
-    
+
     /**
      * Print the user specified bottom.
      */
@@ -370,7 +370,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         hr();
         print(replaceDocRootDir(configuration.bottom));
     }
-    
+
     /**
      * Print the navigation bar for the Html page at the top and and the bottom.
      *
@@ -405,19 +405,19 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             table(0, 0, 3);
             print("  ");
             trAlignVAlign("center", "top");
-            
+
             if (configuration.createoverview) {
                 navLinkContents();
             }
-            
+
             if (configuration.packages.length == 1) {
                 navLinkPackage(configuration.packages[0]);
             } else if (configuration.packages.length > 1) {
                 navLinkPackage();
             }
-            
+
             navLinkClass();
-            
+
             if(configuration.classuse) {
                 navLinkClassUse();
             }
@@ -438,14 +438,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             trEnd();
             tableEnd();
             tdEnd();
-            
+
             tdAlignVAlignRowspan("right", "top", 3);
-            
+
             printUserHeaderFooter(header);
             tdEnd();
             trEnd();
             println("");
-            
+
             tr();
             tdBgcolorStyle("white", "NavBarCell2");
             font("-2");
@@ -457,7 +457,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             navLinkNext();
             fontEnd();
             tdEnd();
-            
+
             tdBgcolorStyle("white", "NavBarCell2");
             font("-2");
             print("  ");
@@ -474,11 +474,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             navLinkClassIndex();
             fontEnd();
             tdEnd();
-            
+
             trEnd();
-            
+
             printSummaryDetailLinks();
-            
+
             tableEnd();
             if (header) {
                 aName("skip-navbar_top");
@@ -492,7 +492,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             println("");
         }
     }
-    
+
     /**
      * Print the word "NEXT" to indicate that no link is available.  Override
      * this method to customize next link.
@@ -500,7 +500,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected void navLinkNext() {
         navLinkNext(null);
     }
-    
+
     /**
      * Print the word "PREV" to indicate that no link is available.  Override
      * this method to customize prev link.
@@ -508,13 +508,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected void navLinkPrevious() {
         navLinkPrevious(null);
     }
-    
+
     /**
      * Do nothing. This is the default method.
      */
     protected void printSummaryDetailLinks() {
     }
-    
+
     /**
      * Print link to the "overview-summary.html" page.
      */
@@ -524,7 +524,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                        configuration.getText("doclet.Overview"), true, "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Description for a cell in the navigation bar.
      */
@@ -533,7 +533,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         tdBgcolorStyle("#EEEEFF", "NavBarCell1");
         print("    ");
     }
-    
+
     /**
      * Description for a cell in the navigation bar, but with reverse
      * high-light effect.
@@ -544,7 +544,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         print(" ");
         space();
     }
-    
+
     /**
      * Closing tag for navigation bar cell.
      */
@@ -552,7 +552,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         space();
         tdEnd();
     }
-    
+
     /**
      * Print link to the "package-summary.html" page for the package passed.
      *
@@ -564,7 +564,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Print the word "Package" in the navigation bar cell, to indicate that
      * link is not available here.
@@ -576,7 +576,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         fontEnd();
         navCellEnd();
     }
-    
+
     /**
      * Print the word "Use" in the navigation bar cell, to indicate that link
      * is not available.
@@ -588,7 +588,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         fontEnd();
         navCellEnd();
     }
-    
+
     /**
      * Print link for previous file.
      *
@@ -602,9 +602,9 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             print(tag);
         }
     }
-    
+
     /**
-     * Print link for next file.  If next is null, just print the label 
+     * Print link for next file.  If next is null, just print the label
      * without linking it anywhere.
      *
      * @param next File name for the next link.
@@ -617,34 +617,34 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             print(tag);
         }
     }
-    
+
     /**
      * Print "FRAMES" link, to switch to the frame version of the output.
      *
      * @param link File to be linked, "index.html".
      */
     protected void navShowLists(String link) {
-        print(getHyperLink(link + "?" + path + filename, "", 
+        print(getHyperLink(link + "?" + path + filename, "",
             configuration.getText("doclet.FRAMES"), true, "", "", "_top"));
     }
-    
+
     /**
      * Print "FRAMES" link, to switch to the frame version of the output.
      */
     protected void navShowLists() {
         navShowLists(relativePath + "index.html");
     }
-    
+
     /**
      * Print "NO FRAMES" link, to switch to the non-frame version of the output.
      *
      * @param link File to be linked.
      */
     protected void navHideLists(String link) {
-        print(getHyperLink(link, "", configuration.getText("doclet.NO_FRAMES"), 
+        print(getHyperLink(link, "", configuration.getText("doclet.NO_FRAMES"),
             true, "", "", "_top"));
     }
-    
+
     /**
      * Print "Tree" link in the navigation bar. If there is only one package
      * specified on the command line, then the "Tree" link will be to the
@@ -663,14 +663,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         navCellEnd();
     }
-    
+
     /**
      * Print "Tree" link to the "overview-tree.html" file.
      */
     protected void navLinkMainTree(String label) {
         printHyperLink(relativePath + "overview-tree.html", label);
     }
-    
+
     /**
      * Print the word "Class" in the navigation bar cell, to indicate that
      * class link is not available.
@@ -682,7 +682,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         fontEnd();
         navCellEnd();
     }
-    
+
     /**
      * Print "Deprecated" API link in the navigation bar.
      */
@@ -692,14 +692,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                        configuration.getText("doclet.navDeprecated"), true, "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Print link for generated index. If the user has used "-splitindex"
      * command line option, then link to file "index-files/index-1.html" is
      * generated otherwise link to file "index-all.html" is generated.
      */
     protected void navLinkClassIndex() {
-        printNoFramesTargetHyperLink(relativePath + 
+        printNoFramesTargetHyperLink(relativePath +
                 AllClassesFrameWriter.OUTPUT_FILE_NAME_NOFRAMES,
             "", "", configuration.getText("doclet.All_Classes"), true);
     }
@@ -717,7 +717,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                        configuration.getText("doclet.Index"), true, "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Print help file link. If user has provided a help file, then generate a
      * link to the user given file, which is already copied to current or
@@ -738,21 +738,21 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                        configuration.getText("doclet.Help"), true, "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Print the word "Detail" in the navigation bar. No link is available.
      */
     protected void navDetail() {
         printText("doclet.Detail");
     }
-    
+
     /**
      * Print the word "Summary" in the navigation bar. No link is available.
      */
     protected void navSummary() {
         printText("doclet.Summary");
     }
-    
+
     /**
      * Print the Html table tag for the index summary tables. The table tag
      * printed is
@@ -761,14 +761,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void tableIndexSummary() {
         table(1, "100%", 3, 0);
     }
-    
+
     /**
      * Same as {@link #tableIndexSummary()}.
      */
     public void tableIndexDetail() {
         table(1, "100%", 3, 0);
     }
-    
+
     /**
      * Print Html tag for table elements. The tag printed is
      * &lt;TD ALIGN="right" VALIGN="top" WIDTH="1%"&gt;.
@@ -776,7 +776,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void tdIndex() {
         print("<TD ALIGN=\"right\" VALIGN=\"top\" WIDTH=\"1%\">");
     }
-    
+
     /**
      * Prine table header information about color, column span and the font.
      *
@@ -788,7 +788,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         thAlignColspan("left", span);
         font("+2");
     }
-    
+
     /**
      * Print table header for the inherited members summary tables. Print the
      * background color information.
@@ -799,7 +799,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         trBgcolorStyle(color, "TableSubHeadingColor");
         thAlign("left");
     }
-    
+
     /**
      * Print "Use" table header. Print the background color and the column span.
      *
@@ -809,7 +809,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         trBgcolorStyle(color, "TableSubHeadingColor");
         thAlignColspan("left", 2);
     }
-    
+
     /**
      * Print table header with the background color with default column span 2.
      *
@@ -818,7 +818,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void tableHeaderStart(String color) {
         tableHeaderStart(color, 2);
     }
-    
+
     /**
      * Print table header with the column span, with the default color #CCCCFF.
      *
@@ -827,14 +827,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void tableHeaderStart(int span) {
         tableHeaderStart("#CCCCFF", span);
     }
-    
+
     /**
      * Print table header with default column span 2 and default color #CCCCFF.
      */
     public void tableHeaderStart() {
         tableHeaderStart(2);
     }
-    
+
     /**
      * Print table header end tags for font, column and row.
      */
@@ -843,7 +843,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         thEnd();
         trEnd();
     }
-    
+
     /**
      * Print table header end tags in inherited tables for column and row.
      */
@@ -851,7 +851,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         thEnd();
         trEnd();
     }
-    
+
     /**
      * Print the summary table row cell attribute width.
      *
@@ -864,14 +864,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             td();
         }
     }
-    
+
     /**
      * Print the summary table row cell end tag.
      */
     public void summaryRowEnd() {
         tdEnd();
     }
-    
+
     /**
      * Print the heading in Html &lt;H2> format.
      *
@@ -882,7 +882,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         print(str);
         h2End();
     }
-    
+
     /**
      * Print Html tag &lt;FRAMESET=arg&gt;.
      *
@@ -891,14 +891,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void frameSet(String arg) {
         println("<FRAMESET " + arg + ">");
     }
-    
+
     /**
      * Print Html closing tag &lt;/FRAMESET&gt;.
      */
     public void frameSetEnd() {
         println("</FRAMESET>");
     }
-    
+
     /**
      * Print Html tag &lt;FRAME=arg&gt;.
      *
@@ -907,14 +907,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void frame(String arg) {
         println("<FRAME " + arg + ">");
     }
-    
+
     /**
      * Print Html closing tag &lt;/FRAME&gt;.
      */
     public void frameEnd() {
         println("</FRAME>");
     }
-    
+
     /**
      * Return path to the class page for a classdoc. For example, the class
      * name is "java.lang.Object" and if the current file getting generated is
@@ -926,7 +926,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected String pathToClass(ClassDoc cd) {
         return pathString(cd.containingPackage(), cd.name() + ".html");
     }
-    
+
     /**
      * Return the path to the class page for a classdoc. Works same as
      * {@link #pathToClass(ClassDoc)}.
@@ -937,7 +937,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected String pathString(ClassDoc cd, String name) {
         return pathString(cd.containingPackage(), name);
     }
-    
+
     /**
      * Return path to the given file name in the given package. So if the name
      * passed is "Object.html" and the name of the package is "java.lang", and
@@ -952,7 +952,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         buf.append(DirectoryManager.getPathToPackage(pd, name));
         return buf.toString();
     }
-    
+
     /**
      * Print the link to the given package.
      *
@@ -963,7 +963,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void printPackageLink(PackageDoc pkg, String label, boolean isBold) {
         print(getPackageLink(pkg, label, isBold));
     }
-    
+
     /**
      * Print the link to the given package.
      *
@@ -976,7 +976,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             String style) {
         print(getPackageLink(pkg, label, isBold, style));
     }
-    
+
     /**
      * Return the link to the given package.
      *
@@ -987,9 +987,9 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public String getPackageLink(PackageDoc pkg, String label,
                                  boolean isBold) {
-        return getPackageLink(pkg, label, isBold, "");                             
+        return getPackageLink(pkg, label, isBold, "");
     }
-    
+
     /**
      * Return the link to the given package.
      *
@@ -999,7 +999,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param style  the font of the package link label.
      * @return the link to the given package.
      */
-    public String getPackageLink(PackageDoc pkg, String label, boolean isBold, 
+    public String getPackageLink(PackageDoc pkg, String label, boolean isBold,
             String style) {
         boolean included = pkg != null && pkg.isIncluded();
         if (! included) {
@@ -1023,12 +1023,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             }
         }
     }
-    
+
     public String italicsClassName(ClassDoc cd, boolean qual) {
         String name = (qual)? cd.qualifiedName(): cd.name();
         return (cd.isInterface())?  italicsText(name): name;
     }
-    
+
     public void printSrcLink(ProgramElementDoc d, String label) {
         if (d == null) {
             return;
@@ -1043,7 +1043,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             + cd.name() + ".html#" + SourceToHTMLConverter.getAnchorName(d);
         printHyperLink(href, "", label, true);
     }
-    
+
     /**
      * Return the link to the given class.
      *
@@ -1057,26 +1057,26 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         displayLength += linkInfo.displayLength;
         return link;
     }
-    
+
     /**
      * Return the type parameters for the given class.
-     * 
+     *
      * @param linkInfo the information about the link.
      * @return the type for the given class.
      */
-    public String getTypeParameterLinks(LinkInfoImpl linkInfo) {        
+    public String getTypeParameterLinks(LinkInfoImpl linkInfo) {
         LinkFactoryImpl factory = new LinkFactoryImpl(this);
-        return ((LinkOutputImpl) 
+        return ((LinkOutputImpl)
             factory.getTypeParameterLinks(linkInfo, false)).toString();
     }
-    
+
     /**
      * Print the link to the given class.
      */
     public void printLink(LinkInfoImpl linkInfo) {
         print(getLink(linkInfo));
     }
-    
+
     /*************************************************************
      * Return a class cross link to external class documentation.
      * The name must be fully qualified to determine which package
@@ -1109,8 +1109,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 //exists, but no way to determine if the external class exists.  We just
                 //have to assume that it does.
                 return getHyperLink(
-                    configuration.extern.getExternalLink(packageName, relativePath, 
-                    		className + ".html?is-external=true"),
+                    configuration.extern.getExternalLink(packageName, relativePath,
+                                className + ".html?is-external=true"),
                     refMemName == null ? "" : refMemName,
                     label == null || label.length() == 0 ? defaultLabel : label,
                     bold, style,
@@ -1120,24 +1120,24 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         return null;
     }
-    
+
     public boolean isClassLinkable(ClassDoc cd) {
         if (cd.isIncluded()) {
             return configuration.isGeneratedDoc(cd);
         }
         return configuration.extern.isExternal(cd);
     }
-    
+
     public String getCrossPackageLink(String pkgName) {
         return configuration.extern.getExternalLink(pkgName, relativePath,
             "package-summary.html?is-external=true");
     }
-    
+
     public void printQualifiedClassLink(int context, ClassDoc cd) {
-        printLink(new LinkInfoImpl(context, cd, 
+        printLink(new LinkInfoImpl(context, cd,
             configuration.getClassName(cd), ""));
     }
-    
+
     /**
      * Print Class link, with only class name as the link and prefixing
      * plain package name.
@@ -1145,7 +1145,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void printPreQualifiedClassLink(int context, ClassDoc cd) {
         print(getPreQualifiedClassLink(context, cd, false));
     }
-    
+
     /**
      * Retrieve the class link with the package portion of the label in
      * plain text.  If the qualifier is excluded, it willnot be included in the
@@ -1155,7 +1155,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param isBold true if the link should be bold.
      * @return the link with the package portion of the label in plain text.
      */
-    public String getPreQualifiedClassLink(int context, 
+    public String getPreQualifiedClassLink(int context,
             ClassDoc cd, boolean isBold) {
         String classlink = "";
         PackageDoc pd = cd.containingPackage();
@@ -1165,8 +1165,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         classlink += getLink(new LinkInfoImpl(context, cd, cd.name(), isBold));
         return classlink;
     }
-    
-    
+
+
     /**
      * Print Class link, with only class name as the bold link and prefixing
      * plain package name.
@@ -1174,81 +1174,81 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public void printPreQualifiedBoldClassLink(int context, ClassDoc cd) {
         print(getPreQualifiedClassLink(context, cd, true));
     }
-    
+
     public void printText(String key) {
         print(configuration.getText(key));
     }
-    
+
     public void printText(String key, String a1) {
         print(configuration.getText(key, a1));
     }
-    
+
     public void printText(String key, String a1, String a2) {
         print(configuration.getText(key, a1, a2));
     }
-    
+
     public void boldText(String key) {
         bold(configuration.getText(key));
     }
-    
+
     public void boldText(String key, String a1) {
         bold(configuration.getText(key, a1));
     }
-    
+
     public void boldText(String key, String a1, String a2) {
         bold(configuration.getText(key, a1, a2));
     }
-    
+
     /**
      * Print the link for the given member.
-     * 
+     *
      * @param context the id of the context where the link will be printed.
      * @param doc the member being linked to.
      * @param label the label for the link.
      * @param bold true if the link should be bold.
      */
-    public void printDocLink(int context, MemberDoc doc, String label, 
+    public void printDocLink(int context, MemberDoc doc, String label,
             boolean bold) {
         print(getDocLink(context, doc, label, bold));
     }
-    
+
     /**
      * Print the link for the given member.
-     * 
+     *
      * @param context the id of the context where the link will be printed.
-     * @param classDoc the classDoc that we should link to.  This is not 
+     * @param classDoc the classDoc that we should link to.  This is not
      *                 necessarily equal to doc.containingClass().  We may be
-     *                 inheriting comments. 
+     *                 inheriting comments.
      * @param doc the member being linked to.
      * @param label the label for the link.
      * @param bold true if the link should be bold.
      */
-    public void printDocLink(int context, ClassDoc classDoc, MemberDoc doc, 
+    public void printDocLink(int context, ClassDoc classDoc, MemberDoc doc,
             String label, boolean bold) {
         print(getDocLink(context, classDoc, doc, label, bold));
     }
-    
+
     /**
      * Return the link for the given member.
-     * 
+     *
      * @param context the id of the context where the link will be printed.
      * @param doc the member being linked to.
      * @param label the label for the link.
      * @param bold true if the link should be bold.
      * @return the link for the given member.
      */
-    public String getDocLink(int context, MemberDoc doc, String label, 
+    public String getDocLink(int context, MemberDoc doc, String label,
                 boolean bold) {
         return getDocLink(context, doc.containingClass(), doc, label, bold);
     }
-    
+
     /**
      * Return the link for the given member.
-     * 
+     *
      * @param context the id of the context where the link will be printed.
-     * @param classDoc the classDoc that we should link to.  This is not 
+     * @param classDoc the classDoc that we should link to.  This is not
      *                 necessarily equal to doc.containingClass().  We may be
-     *                 inheriting comments. 
+     *                 inheriting comments.
      * @param doc the member being linked to.
      * @param label the label for the link.
      * @param bold true if the link should be bold.
@@ -1256,7 +1256,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public String getDocLink(int context, ClassDoc classDoc, MemberDoc doc,
         String label, boolean bold) {
-        if (! (doc.isIncluded() || 
+        if (! (doc.isIncluded() ||
             Util.isLinkable(classDoc, configuration()))) {
             return label;
         } else if (doc instanceof ExecutableMemberDoc) {
@@ -1264,17 +1264,17 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             return getLink(new LinkInfoImpl(context, classDoc,
                 getAnchor(emd), label, bold));
         } else if (doc instanceof MemberDoc) {
-            return getLink(new LinkInfoImpl(context, classDoc, 
+            return getLink(new LinkInfoImpl(context, classDoc,
                 doc.name(), label, bold));
         } else {
             return label;
         }
     }
-    
+
     public void anchor(ExecutableMemberDoc emd) {
-        anchor(getAnchor(emd));   
+        anchor(getAnchor(emd));
     }
-    
+
     public String getAnchor(ExecutableMemberDoc emd) {
         StringBuilder signature = new StringBuilder(emd.signature());
         StringBuilder signatureParsed = new StringBuilder();
@@ -1291,7 +1291,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         return emd.name() + signatureParsed.toString();
     }
-    
+
     public String seeTagToString(SeeTag see) {
         String tagName = see.name();
         if (! (tagName.startsWith("@link") || tagName.equals("@see"))) {
@@ -1304,16 +1304,16 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             ((isplaintext) ? label :
                  getCode() + label + getCodeEnd()):"";
         String seetext = replaceDocRootDir(see.text());
-        
+
         //Check if @see is an href or "string"
         if (seetext.startsWith("<") || seetext.startsWith("\"")) {
             result.append(seetext);
             return result.toString();
         }
-        
+
         //The text from the @see tag.  We will output this text when a label is not specified.
         String text = (isplaintext) ? seetext : getCode() + seetext + getCodeEnd();
-        
+
         ClassDoc refClass = see.referencedClass();
         String refClassName = see.referencedClassName();
         MemberDoc refMem = see.referencedMember();
@@ -1361,15 +1361,15 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             // Must be a member reference since refClass is not null and refMemName is not null.
             // refMem is not null, so this @see tag must be referencing a valid member.
             ClassDoc containing = refMem.containingClass();
-            if (see.text().trim().startsWith("#") && 
-                ! (containing.isPublic() || 
+            if (see.text().trim().startsWith("#") &&
+                ! (containing.isPublic() ||
                 Util.isLinkable(containing, configuration()))) {
                 // Since the link is relative and the holder is not even being
                 // documented, this must be an inherited link.  Redirect it.
                 // The current class either overrides the referenced member or
                 // inherits it automatically.
                 containing = ((ClassWriterImpl) this).getClassDoc();
-            } 
+            }
             if (configuration.currentcd != containing) {
                 refMemName = containing.name() + "." + refMemName;
             }
@@ -1378,48 +1378,48 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     refMemName += ((ExecutableMemberDoc)refMem).signature();
                 }
             }
-            text = (isplaintext) ? 
+            text = (isplaintext) ?
                 refMemName : getCode() + refMemName + getCodeEnd();
-            
-            result.append(getDocLink(LinkInfoImpl.CONTEXT_SEE_TAG, containing, 
+
+            result.append(getDocLink(LinkInfoImpl.CONTEXT_SEE_TAG, containing,
                 refMem, (label.length() == 0)? text: label, false));
         }
         return result.toString();
     }
-    
+
     public void printInlineComment(Doc doc, Tag tag) {
         printCommentTags(doc, tag.inlineTags(), false, false);
     }
-    
+
     public void printInlineDeprecatedComment(Doc doc, Tag tag) {
         printCommentTags(doc, tag.inlineTags(), true, false);
     }
-    
+
     public void printSummaryComment(Doc doc) {
         printSummaryComment(doc, doc.firstSentenceTags());
     }
-    
+
     public void printSummaryComment(Doc doc, Tag[] firstSentenceTags) {
         printCommentTags(doc, firstSentenceTags, false, true);
     }
-    
+
     public void printSummaryDeprecatedComment(Doc doc) {
         printCommentTags(doc, doc.firstSentenceTags(), true, true);
     }
-    
+
     public void printSummaryDeprecatedComment(Doc doc, Tag tag) {
         printCommentTags(doc, tag.firstSentenceTags(), true, true);
     }
-    
+
     public void printInlineComment(Doc doc) {
         printCommentTags(doc, doc.inlineTags(), false, false);
         p();
     }
-    
+
     public void printInlineDeprecatedComment(Doc doc) {
         printCommentTags(doc, doc.inlineTags(), true, false);
     }
-    
+
     private void printCommentTags(Doc doc, Tag[] tags, boolean depr, boolean first) {
         if(configuration.nocomment){
             return;
@@ -1436,7 +1436,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             space();
         }
     }
-    
+
     /**
      * Converts inline tags and text to text strings, expanding the
      * inline tags along the way.  Called wherever text can contain
@@ -1460,21 +1460,21 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             if (tagelem instanceof SeeTag) {
                 result.append(seeTagToString((SeeTag)tagelem));
             } else if (! tagName.equals("Text")) {
-            	int originalLength = result.length();
+                int originalLength = result.length();
                 TagletOutput output = TagletWriter.getInlineTagOuput(
                     configuration.tagletManager, holderTag,
                     (Tag) tagelem, getTagletWriterInstance(isFirstSentence));
                 result.append(output == null ? "" : output.toString());
                 if (originalLength == 0 && isFirstSentence && tagelem.name().equals("@inheritDoc") && result.length() > 0) {
                     break;
-                } else {                	
-                	continue;
+                } else {
+                        continue;
                 }
             } else {
                 //This is just a regular text tag.  The text may contain html links (<a>)
                 //or inline tag {@docRoot}, which will be handled as special cases.
                 String text = redirectRelativeLinks(tagelem.holder(), tagelem.text());
-                
+
                 // Replace @docRoot only if not represented by an instance of DocRootTaglet,
                 // that is, only if it was not present in a source file doc comment.
                 // This happens when inserted by the doclet (a few lines
@@ -1496,18 +1496,18 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         return result.toString();
     }
-    
+
     /**
      * Return true if relative links should not be redirected.
-     * 
+     *
      * @return Return true if a relative link should not be redirected.
      */
     private boolean shouldNotRedirectRelativeLinks() {
         return  this instanceof AnnotationTypeWriter ||
                 this instanceof ClassWriter ||
-                this instanceof PackageSummaryWriter; 
+                this instanceof PackageSummaryWriter;
     }
-    
+
     /**
      * Suppose a piece of documentation has a relative link.  When you copy
      * that documetation to another place such as the index or class-use page,
@@ -1523,51 +1523,51 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * <p>
      * If this link appeared in the index, we would redirect
      * the link like this:
-     * 
+     *
      * &lt;a href="./com/sun/javadoc/package-summary.html"&gt;The package Page&lt;/a&gt;
-     * 
+     *
      * @param doc the Doc object whose documentation is being written.
      * @param text the text being written.
-     * 
+     *
      * @return the text, with all the relative links redirected to work.
      */
     private String redirectRelativeLinks(Doc doc, String text) {
         if (doc == null || shouldNotRedirectRelativeLinks()) {
             return text;
         }
-        
+
         String redirectPathFromRoot;
         if (doc instanceof ClassDoc) {
-            redirectPathFromRoot = DirectoryManager.getDirectoryPath(((ClassDoc) doc).containingPackage());   
+            redirectPathFromRoot = DirectoryManager.getDirectoryPath(((ClassDoc) doc).containingPackage());
         } else if (doc instanceof MemberDoc) {
             redirectPathFromRoot = DirectoryManager.getDirectoryPath(((MemberDoc) doc).containingPackage());
         } else if (doc instanceof PackageDoc) {
-            redirectPathFromRoot = DirectoryManager.getDirectoryPath((PackageDoc) doc); 
+            redirectPathFromRoot = DirectoryManager.getDirectoryPath((PackageDoc) doc);
         } else {
             return text;
         }
-        
+
         if (! redirectPathFromRoot.endsWith(DirectoryManager.URL_FILE_SEPERATOR)) {
-            redirectPathFromRoot += DirectoryManager.URL_FILE_SEPERATOR;   
+            redirectPathFromRoot += DirectoryManager.URL_FILE_SEPERATOR;
         }
-        
+
         //Redirect all relative links.
-        int end, begin = text.toLowerCase().indexOf("<a");        
+        int end, begin = text.toLowerCase().indexOf("<a");
         if(begin >= 0){
             StringBuffer textBuff = new StringBuffer(text);
-            
+
             while(begin >=0){
                 if (textBuff.length() > begin + 2 && ! Character.isWhitespace(textBuff.charAt(begin+2))) {
                     begin = textBuff.toString().toLowerCase().indexOf("<a", begin + 1);
                     continue;
                 }
-                
+
                 begin = textBuff.indexOf("=", begin) + 1;
                 end = textBuff.indexOf(">", begin +1);
                 if(begin == 0){
                     //Link has no equal symbol.
                     configuration.root.printWarning(
-                        doc.position(), 
+                        doc.position(),
                         configuration.getText("doclet.malformed_html_link_tag", text));
                     break;
                 }
@@ -1587,10 +1587,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 String relativeLink = textBuff.substring(begin, end);
                 if(!(relativeLink.toLowerCase().startsWith("mailto:") ||
                      relativeLink.toLowerCase().startsWith("http:") ||
-                     relativeLink.toLowerCase().startsWith("https:") || 
-                     relativeLink.toLowerCase().startsWith("file:"))){                    
-                     relativeLink = "{@"+(new DocRootTaglet()).getName() + "}" 
-                        + redirectPathFromRoot 
+                     relativeLink.toLowerCase().startsWith("https:") ||
+                     relativeLink.toLowerCase().startsWith("file:"))){
+                     relativeLink = "{@"+(new DocRootTaglet()).getName() + "}"
+                        + redirectPathFromRoot
                         + relativeLink;
                     textBuff.replace(begin, end, relativeLink);
                 }
@@ -1600,7 +1600,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         return text;
     }
-    
+
     public String removeNonInlineHtmlTags(String text) {
         if (text.indexOf('<') < 0) {
             return text;
@@ -1637,7 +1637,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
         return text;
     }
-    
+
     public String replace(String text, String tobe, String by) {
         while (true) {
             int startindex = text.indexOf(tobe);
@@ -1656,7 +1656,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             text = replaced.toString();
         }
     }
-    
+
     public void printStyleSheetProperties() {
         String filename = configuration.stylesheetfile;
         if (filename.length() > 0) {
@@ -1672,7 +1672,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         link("REL =\"stylesheet\" TYPE=\"text/css\" HREF=\"" +
                  filename + "\" " + "TITLE=\"Style\"");
     }
-    
+
     /**
      * According to the Java Language Specifications, all the outer classes
      * and static nested classes are core classes.
@@ -1680,28 +1680,28 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public boolean isCoreClass(ClassDoc cd) {
         return cd.containingClass() == null || cd.isStatic();
     }
-    
+
     /**
      * Write the annotatation types for the given packageDoc.
-     * 
+     *
      * @param packageDoc the package to write annotations for.
      */
     public void writeAnnotationInfo(PackageDoc packageDoc) {
         writeAnnotationInfo(packageDoc, packageDoc.annotations());
     }
-    
+
     /**
      * Write the annotatation types for the given doc.
-     * 
+     *
      * @param doc the doc to write annotations for.
      */
     public void writeAnnotationInfo(ProgramElementDoc doc) {
         writeAnnotationInfo(doc, doc.annotations());
     }
-    
+
     /**
      * Write the annotatation types for the given doc and parameter.
-     * 
+     *
      * @param indent the number of spaced to indent the parameters.
      * @param doc the doc to write annotations for.
      * @param param the parameter to write annotations for.
@@ -1709,20 +1709,20 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public boolean writeAnnotationInfo(int indent, Doc doc, Parameter param) {
         return writeAnnotationInfo(indent, doc, param.annotations(), false);
     }
-    
+
     /**
      * Write the annotatation types for the given doc.
-     * 
+     *
      * @param doc the doc to write annotations for.
      * @param descList the array of {@link AnnotationDesc}.
      */
     private void writeAnnotationInfo(Doc doc, AnnotationDesc[] descList) {
-    	writeAnnotationInfo(0, doc, descList, true);
+        writeAnnotationInfo(0, doc, descList, true);
     }
-    
+
     /**
      * Write the annotatation types for the given doc.
-     * 
+     *
      * @param indent the number of extra spaces to indent the annotations.
      * @param doc the doc to write annotations for.
      * @param descList the array of {@link AnnotationDesc}.
@@ -1731,7 +1731,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         List annotations = getAnnotations(indent, descList, lineBreak);
         if (annotations.size() == 0) {
             return false;
-        }        
+        }
         fontNoNewLine("-1");
         for (Iterator iter = annotations.iterator(); iter.hasNext();) {
             print((String) iter.next());
@@ -1739,11 +1739,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         fontEnd();
         return true;
     }
-    
+
     /**
      * Return the string representations of the annotation types for
      * the given doc.
-     * 
+     *
      * @param indent the number of extra spaces to indent the annotations.
      * @param descList the array of {@link AnnotationDesc}.
      * @param linkBreak if true, add new line between each member value.
@@ -1751,8 +1751,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      *         documented.
      */
     private List getAnnotations(int indent, AnnotationDesc[] descList, boolean linkBreak) {
-        List results = new ArrayList(); 
-        StringBuffer annotation;   
+        List results = new ArrayList();
+        StringBuffer annotation;
         for (int i = 0; i < descList.length; i++) {
             AnnotationTypeDoc annotationDoc = descList[i].annotationType();
             if (! Util.isDocumentedAnnotation(annotationDoc)){
@@ -1763,13 +1763,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 LinkInfoImpl.CONTEXT_ANNOTATION, annotationDoc);
             linkInfo.label = "@" + annotationDoc.name();
             annotation.append(getLink(linkInfo));
-            AnnotationDesc.ElementValuePair[] pairs = descList[i].elementValues();            
+            AnnotationDesc.ElementValuePair[] pairs = descList[i].elementValues();
             if (pairs.length > 0) {
                 annotation.append('(');
                 for (int j = 0; j < pairs.length; j++) {
                     if (j > 0) {
                         annotation.append(",");
-                        if (linkBreak) {                        
+                        if (linkBreak) {
                             annotation.append(DocletConstants.NL);
                             int spaces = annotationDoc.name().length() + 2;
                             for (int k = 0; k < (spaces + indent); k++) {
@@ -1777,13 +1777,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                             }
                         }
                     }
-                    annotation.append(getDocLink(LinkInfoImpl.CONTEXT_ANNOTATION, 
+                    annotation.append(getDocLink(LinkInfoImpl.CONTEXT_ANNOTATION,
                         pairs[j].element(), pairs[j].element().name(), false));
                     annotation.append('=');
                     AnnotationValue annotationValue = pairs[j].value();
                     List annotationTypeValues = new ArrayList();
                     if (annotationValue.value() instanceof AnnotationValue[]) {
-                        AnnotationValue[] annotationArray = 
+                        AnnotationValue[] annotationArray =
                             (AnnotationValue[]) annotationValue.value();
                         for (int k = 0; k < annotationArray.length; k++) {
                             annotationTypeValues.add(annotationArray[k]);
@@ -1794,26 +1794,26 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     annotation.append(annotationTypeValues.size() == 1 ? "" : "{");
                     for (Iterator iter = annotationTypeValues.iterator(); iter.hasNext(); ) {
                         annotation.append(annotationValueToString((AnnotationValue) iter.next()));
-                        annotation.append(iter.hasNext() ? "," : "");                     
+                        annotation.append(iter.hasNext() ? "," : "");
                     }
-                    annotation.append(annotationTypeValues.size() == 1 ? "" : "}");                   
+                    annotation.append(annotationTypeValues.size() == 1 ? "" : "}");
                 }
                 annotation.append(")");
-            }            
+            }
             annotation.append(linkBreak ? DocletConstants.NL : "");
-            results.add(annotation.toString());            
+            results.add(annotation.toString());
         }
         return results;
     }
-    
+
     private String annotationValueToString(AnnotationValue annotationValue) {
         if (annotationValue.value() instanceof Type) {
             Type type = (Type) annotationValue.value();
             if (type.asClassDoc() != null) {
                 LinkInfoImpl linkInfo = new LinkInfoImpl(
                     LinkInfoImpl.CONTEXT_ANNOTATION, type);
-                    linkInfo.label = (type.asClassDoc().isIncluded() ? 
-                        type.typeName() : 
+                    linkInfo.label = (type.asClassDoc().isIncluded() ?
+                        type.typeName() :
                         type.qualifiedTypeName()) + type.dimension() + ".class";
                 return getLink(linkInfo);
             } else {
@@ -1825,18 +1825,18 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     false);
             StringBuffer buf = new StringBuffer();
             for (Iterator iter = list.iterator(); iter.hasNext(); ) {
-                buf.append(iter.next());   
+                buf.append(iter.next());
             }
             return buf.toString();
         } else if (annotationValue.value() instanceof MemberDoc) {
-            return getDocLink(LinkInfoImpl.CONTEXT_ANNOTATION, 
-                (MemberDoc) annotationValue.value(), 
+            return getDocLink(LinkInfoImpl.CONTEXT_ANNOTATION,
+                (MemberDoc) annotationValue.value(),
                 ((MemberDoc) annotationValue.value()).name(), false);
          } else {
             return annotationValue.toString();
-         }    
+         }
     }
-        
+
     /**
      * Return the configuation for this doclet.
      *
@@ -1846,5 +1846,3 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         return configuration;
     }
 }
-
-

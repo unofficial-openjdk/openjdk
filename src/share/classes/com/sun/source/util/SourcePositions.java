@@ -40,8 +40,8 @@ public interface SourcePositions {
     /**
      * Gets the starting position of tree within file.  If tree is not found within
      * file, or if the starting position is not available,
-     * return {@link javax.tools.Diagnostic#NOPOS}.  
-     * The returned position must be at the start of the yield of this tree, that 
+     * return {@link javax.tools.Diagnostic#NOPOS}.
+     * The returned position must be at the start of the yield of this tree, that
      * is for any sub-tree of this tree, the following must hold:
      *
      * <p>
@@ -59,8 +59,8 @@ public interface SourcePositions {
     /**
      * Gets the ending position of tree within file.  If tree is not found within
      * file, or if the starting position is not available,
-     * return {@link javax.tools.Diagnostic#NOPOS}.  
-     * The returned position must be at the end of the yield of this tree, 
+     * return {@link javax.tools.Diagnostic#NOPOS}.
+     * The returned position must be at the end of the yield of this tree,
      * that is for any sub-tree of this tree, the following must hold:
      *
      * <p>

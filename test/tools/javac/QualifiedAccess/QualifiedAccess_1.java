@@ -35,12 +35,12 @@ public class QualifiedAccess_1 {
 
     void test1() {
 
-	// Inaccessible types in local variable declarations.
-	// These exercise 'FieldExpression.checkCommon'.
-	//
-	// Fields 'P3' and 'P5' are inaccessible.
+        // Inaccessible types in local variable declarations.
+        // These exercise 'FieldExpression.checkCommon'.
+        //
+        // Fields 'P3' and 'P5' are inaccessible.
 
-	P1 foo = null;
+        P1 foo = null;
         P1.P3 bar = null;                       // ERROR
         P1.P3.P4 baz = null;                    // ERROR
         P1.P3.P4.P5 quux = null;                // ERROR
@@ -48,12 +48,12 @@ public class QualifiedAccess_1 {
 
     void test2() {
 
-	// Inaccessible types in casts.
-	// These exercise 'FieldExpression.checkCommon'.
-	//
-	// Fields 'P3' and 'P5' are inaccessible.
+        // Inaccessible types in casts.
+        // These exercise 'FieldExpression.checkCommon'.
+        //
+        // Fields 'P3' and 'P5' are inaccessible.
 
-	Object foo = (P1)null;
+        Object foo = (P1)null;
         Object bar = (P1.P3)null;               // ERROR
         Object baz = (P1.P3.P4)null;            // ERROR
         Object quux = (P1.P3.P4.P5)null;        // ERROR
@@ -61,16 +61,15 @@ public class QualifiedAccess_1 {
 
     void test3() {
 
-	// Inaccessible types in 'instanceof' expressions.
-	// These exercise 'FieldExpression.checkCommon'.
-	//
-	// Fields 'P3' and 'P5' are inaccessible.
+        // Inaccessible types in 'instanceof' expressions.
+        // These exercise 'FieldExpression.checkCommon'.
+        //
+        // Fields 'P3' and 'P5' are inaccessible.
 
-	boolean foo = null instanceof P1;
+        boolean foo = null instanceof P1;
         boolean bar = null instanceof P1.P3;            // ERROR
         boolean baz = null instanceof P1.P3.P4;         // ERROR
         boolean quux = null instanceof P1.P3.P4.P5;     // ERROR
     }
 
 }
-

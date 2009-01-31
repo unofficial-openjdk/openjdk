@@ -44,7 +44,7 @@ public class T6245699b {
 
     static class Bar extends Foo<String> implements IBar {
         public String doIt() { // assert that a final method can't be overridden
-	    return null;
-	}
+            return null;
+        }
     }
 }

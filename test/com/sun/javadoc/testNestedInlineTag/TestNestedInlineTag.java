@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -52,30 +52,30 @@ public class TestNestedInlineTag extends JavadocTester {
      * This should be green, underlined and bold (Method): {@underline {@bold {@green My test}}} .
      */
     public void method(){}
-    
+
     private static final String BUG_ID = "no-bug-id";
     private static final String[][] TEST = {
         //Test nested inline tag in class description.
         {BUG_ID + FS + "TestNestedInlineTag.html",
          "This should be green, underlined and bold (Class): <u><b><font color=\"green\">My test</font></b></u>"
         },
-        
+
         //Test nested inline tag in field description.
         {BUG_ID + FS + "TestNestedInlineTag.html",
          "This should be green, underlined and bold (Field): <u><b><font color=\"green\">My test</font></b></u>"
         },
-            
+
         //Test nested inline tag in constructor description.
         {BUG_ID + FS + "TestNestedInlineTag.html",
          "This should be green, underlined and bold (Constructor): <u><b><font color=\"green\">My test</font></b></u>"
         },
-            
+
         //Test nested inline tag in method description.
         {BUG_ID + FS + "TestNestedInlineTag.html",
          "This should be green, underlined and bold (Method): <u><b><font color=\"green\">My test</font></b></u>"
         }
     };
-    
+
     private static final String[][] NEGATED_TEST = NO_TEST;
     private static final String[] ARGS =
         new String[] {
@@ -85,7 +85,7 @@ public class TestNestedInlineTag extends JavadocTester {
             "-taglet", "testtaglets.GreenTaglet",
             SRC_DIR + FS + "TestNestedInlineTag.java"
         };
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -95,14 +95,14 @@ public class TestNestedInlineTag extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

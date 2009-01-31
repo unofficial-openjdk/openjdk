@@ -1,4 +1,4 @@
-/* /nodynamiccopyright/ */ 
+/* /nodynamiccopyright/ */
 // combinations of methods defined in an interface
 // and overridden in subtypes
 
@@ -6,7 +6,7 @@
 
 abstract class B2 extends A implements I {
     @Deprecated public void iDep_aDep_bDep() { }
-                public void iDep_aDep_bUnd() { } // warn x 2, because of I and A 
+                public void iDep_aDep_bUnd() { } // warn x 2, because of I and A
     //          public void iDep_aDep_bInh() { }
     @Deprecated public void iDep_aUnd_bDep() { }
                 public void iDep_aUnd_bUnd() { } // warn

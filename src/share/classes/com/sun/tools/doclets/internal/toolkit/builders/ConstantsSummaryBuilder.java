@@ -38,48 +38,48 @@ import java.lang.reflect.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.5
  */
 public class ConstantsSummaryBuilder extends AbstractBuilder {
-    
+
     /**
      * The root element of the constant summary XML is {@value}.
      */
     public static final String ROOT = "ConstantSummary";
-    
+
     /**
      * The maximum number of package directories shown in the constant
-     * value index.  
+     * value index.
      */
     public static final int MAX_CONSTANT_VALUE_INDEX_LENGTH = 2;
-    
+
     /**
      * The writer used to write the results.
      */
     protected ConstantsSummaryWriter writer;
-    
+
     /**
      * The set of ClassDocs that have constant fields.
      */
     protected Set classDocsWithConstFields;
-    
+
     /**
      * The set of printed package headers.
      */
     protected Set printedPackageHeaders;
-    
+
     /**
      * The current package being documented.
      */
     private PackageDoc currentPackage;
-    
+
     /**
      * The current class being documented.
      */
     private ClassDoc currentClass;
-    
+
     /**
      * Construct a new ConstantsSummaryBuilder.
      *
@@ -89,7 +89,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
     private ConstantsSummaryBuilder(Configuration configuration) {
         super(configuration);
     }
-    
+
     /**
      * Construct a ConstantsSummaryBuilder.
      *
@@ -105,21 +105,21 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         builder.classDocsWithConstFields = new HashSet();
         return builder;
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public void invokeMethod(String methodName, Class[] paramClasses, 
-            Object[] params) 
+    public void invokeMethod(String methodName, Class[] paramClasses,
+            Object[] params)
     throws Exception {
         if (DEBUG) {
-            configuration.root.printError("DEBUG: " + this.getClass().getName() 
+            configuration.root.printError("DEBUG: " + this.getClass().getName()
                 + "." + methodName);
         }
         Method method = this.getClass().getMethod(methodName, paramClasses);
         method.invoke(this, params);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -127,17 +127,17 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         if (writer == null) {
             //Doclet does not support this output.
             return;
-        }       
+        }
         build(LayoutParser.getInstance(configuration).parseXML(ROOT));
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getName() {
         return ROOT;
     }
-    
+
     /**
      * Build the constant summary.
      *
@@ -148,21 +148,21 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         build(elements);
         writer.close();
     }
-    
+
     /**
      * Build the header.
      */
     public void buildHeader() {
         writer.writeHeader();
     }
-    
+
     /**
      * Build the footer.
      */
     public void buildFooter() {
         writer.writeFooter();
     }
-    
+
     /**
      * Build the table of contents.
      */
@@ -172,14 +172,14 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         printedPackageHeaders = new HashSet();
         for (int i = 0; i < packages.length; i++) {
             if (hasConstantField(packages[i]) && ! hasPrintedPackageIndex(packages[i].name())) {
-                writer.writeLinkToPackageContent(packages[i], 
-                    parsePackageName(packages[i].name()), 
+                writer.writeLinkToPackageContent(packages[i],
+                    parsePackageName(packages[i].name()),
                     printedPackageHeaders);
             }
         }
         writer.writeContentsFooter();
     }
-    
+
     /**
      * Build the summary for each documented package.
      *
@@ -190,24 +190,24 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         PackageDoc[] packages = configuration.packages;
         printedPackageHeaders = new HashSet();
         for (int i = 0; i < packages.length; i++) {
-            if (hasConstantField(packages[i])) {                
+            if (hasConstantField(packages[i])) {
                 currentPackage = packages[i];
                 //Build the documentation for the current package.
                 build(elements);
             }
         }
     }
-    
+
     /**
      * Build the summary for the current package.
      *
-     * @param elements the list of XML elements that make up package 
+     * @param elements the list of XML elements that make up package
      *                 documentation.
      */
     public void buildPackageConstantSummary(List elements) {
         build(elements);
     }
-    
+
     /**
      * Build the summary for the current class.
      *
@@ -230,26 +230,26 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
             build(elements);
         }
     }
-    
+
     /**
      * Build the header for the given class.
      */
     public void buildPackageHeader() {
         String parsedPackageName = parsePackageName(currentPackage.name());
         if (! printedPackageHeaders.contains(parsedPackageName)) {
-            writer.writePackageName(currentPackage, 
+            writer.writePackageName(currentPackage,
                 parsePackageName(currentPackage.name()));
             printedPackageHeaders.add(parsedPackageName);
         }
     }
-    
+
     /**
      * Build the header for the given class.
      */
     public void buildClassHeader() {
         writer.writeConstantMembersHeader(currentClass);
     }
-    
+
     /**
      * Print summary of constant members in the
      * class.
@@ -257,14 +257,14 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
     public void buildConstantMembers() {
         new ConstantFieldBuilder(currentClass).buildMembersSummary();
     }
-    
+
     /**
      * Build the footer for the given class.
      */
     public void buildClassFooter() {
         writer.writeConstantMembersFooter(currentClass);
     }
-    
+
     /**
      * Return true if the given package has constant fields to document.
      *
@@ -287,7 +287,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         }
         return found;
     }
-    
+
     /**
      * Return true if the given class has constant fields to document.
      *
@@ -295,7 +295,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
      * @return true if the given package has constant fields to document.
      */
     private boolean hasConstantField (ClassDoc classDoc) {
-        VisibleMemberMap visibleMemberMapFields = new VisibleMemberMap(classDoc, 
+        VisibleMemberMap visibleMemberMapFields = new VisibleMemberMap(classDoc,
             VisibleMemberMap.FIELDS, configuration.nodeprecated);
         List fields = visibleMemberMapFields.getLeafClassMembers(configuration);
         for (Iterator iter = fields.iterator(); iter.hasNext(); ) {
@@ -306,8 +306,8 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
             }
         }
         return false;
-    }   
-    
+    }
+
     /**
      * Return true if the given package name has been printed.  Also
      * return true if the root of this package has been printed.
@@ -323,7 +323,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         }
         return false;
     }
-    
+
     /**
      * Print the table of constants.
      *
@@ -331,34 +331,34 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
      * @since 1.4
      */
     private class ConstantFieldBuilder {
-        
+
         /**
          * The map used to get the visible variables.
          */
         protected VisibleMemberMap visibleMemberMapFields = null;
-        
+
         /**
          * The map used to get the visible variables.
          */
         protected VisibleMemberMap visibleMemberMapEnumConst = null;
-        
+
         /**
          * The classdoc that we are examining constants for.
          */
         protected ClassDoc classdoc;
-        
+
         /**
          * Construct a ConstantFieldSubWriter.
          * @param classdoc the classdoc that we are examining constants for.
          */
         public ConstantFieldBuilder(ClassDoc classdoc) {
             this.classdoc = classdoc;
-            visibleMemberMapFields = new VisibleMemberMap(classdoc, 
+            visibleMemberMapFields = new VisibleMemberMap(classdoc,
                 VisibleMemberMap.FIELDS, configuration.nodeprecated);
-            visibleMemberMapEnumConst = new VisibleMemberMap(classdoc, 
+            visibleMemberMapEnumConst = new VisibleMemberMap(classdoc,
                 VisibleMemberMap.ENUM_CONSTANTS, configuration.nodeprecated);
         }
-        
+
         /**
          * Builds the table of constants for a given class.
          */
@@ -369,7 +369,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
                 writer.writeConstantMembers(classdoc, members);
             }
         }
-        
+
         /**
          * Return the list of visible constant fields for the given classdoc.
          * @param cd the classdoc to examine.
@@ -379,7 +379,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
             List l = visibleMemberMapFields.getLeafClassMembers(configuration);
             l.addAll(visibleMemberMapEnumConst.getLeafClassMembers(configuration));
             Iterator iter;
-            
+
             if(l != null){
                 iter = l.iterator();
             } else {
@@ -396,7 +396,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
             return inclList;
         }
     }
-    
+
     /**
      * Parse the package name.  We only want to display package name up to
      * 2 levels.

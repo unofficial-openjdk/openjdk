@@ -35,18 +35,18 @@
 public class EmptyBreak {
 
     public void emptyDefault(int i) {
-	switch (i) {
-	    default:
-		// empty!
-		break;
-	}
+        switch (i) {
+            default:
+                // empty!
+                break;
+        }
     }
 
     public void emptyCase(int i) {
-	switch (i) {
-	    case 1:
-		// empty!
-		break;
-	}
+        switch (i) {
+            case 1:
+                // empty!
+                break;
+        }
     }
 }

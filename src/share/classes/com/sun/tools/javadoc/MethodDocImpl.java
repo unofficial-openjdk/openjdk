@@ -45,36 +45,36 @@ import java.lang.reflect.Modifier;
  */
 
 public class MethodDocImpl
-	extends ExecutableMemberDocImpl implements MethodDoc {
+        extends ExecutableMemberDocImpl implements MethodDoc {
 
     /**
      * constructor.
      */
     public MethodDocImpl(DocEnv env, MethodSymbol sym) {
-	super(env, sym);
+        super(env, sym);
     }
 
     /**
      * constructor.
      */
     public MethodDocImpl(DocEnv env, MethodSymbol sym,
-			 String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
-	super(env, sym, docComment, tree, lineMap);
+                         String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
+        super(env, sym, docComment, tree, lineMap);
     }
 
-    /** 
-     * Return true if it is a method, which it is. 
+    /**
+     * Return true if it is a method, which it is.
      * Note: constructors are not methods.
      * This method is overridden by AnnotationTypeElementDocImpl.
      *
      * @return true
      */
-    public boolean isMethod() { 
-	return true;
+    public boolean isMethod() {
+        return true;
     }
 
-    /** 
-     * Return true if this method is abstract 
+    /**
+     * Return true if this method is abstract
      */
     public boolean isAbstract() {
         //### This is dubious, but old 'javadoc' apparently does it.
@@ -82,24 +82,24 @@ public class MethodDocImpl
         //### doclet API as a proper compile-time reflection facility.
         //### (maddox 09/26/2000)
         if (containingClass().isInterface()) {
-	    //### Don't force creation of ClassDocImpl for super here.
-	    // Abstract modifier is implicit.  Strip/canonicalize it.
-	    return false;
-	}
-	return Modifier.isAbstract(getModifiers());
+            //### Don't force creation of ClassDocImpl for super here.
+            // Abstract modifier is implicit.  Strip/canonicalize it.
+            return false;
+        }
+        return Modifier.isAbstract(getModifiers());
     }
 
     /**
-     * Get return type. 
+     * Get return type.
      *
      * @return the return type of this method, null if it
      * is a constructor.
      */
     public com.sun.javadoc.Type returnType() {
-	return TypeMaker.getType(env, sym.type.getReturnType(), false);
+        return TypeMaker.getType(env, sym.type.getReturnType(), false);
     }
 
-    /** 
+    /**
      * Return the class that originally defined the method that
      * is overridden by the current definition, or null if no
      * such class exists.
@@ -109,8 +109,8 @@ public class MethodDocImpl
      * not override a definition in a superclass.
      */
     public ClassDoc overriddenClass() {
-	com.sun.javadoc.Type t = overriddenType();
-	return (t != null) ? t.asClassDoc() : null;
+        com.sun.javadoc.Type t = overriddenType();
+        return (t != null) ? t.asClassDoc() : null;
     }
 
     /**
@@ -119,22 +119,22 @@ public class MethodDocImpl
      */
     public com.sun.javadoc.Type overriddenType() {
 
-	if ((sym.flags() & Flags.STATIC) != 0) {
-	    return null;
-	}
+        if ((sym.flags() & Flags.STATIC) != 0) {
+            return null;
+        }
 
-	ClassSymbol origin = (ClassSymbol)sym.owner;
-	for (Type t = env.types.supertype(origin.type);
-	     t.tag == TypeTags.CLASS;
-	     t = env.types.supertype(t)) {
-	    ClassSymbol c = (ClassSymbol)t.tsym;
-	    for (Scope.Entry e = c.members().lookup(sym.name); e.scope != null; e = e.next()) {
-		if (sym.overrides(e.sym, origin, env.types, true)) {
-		    return TypeMaker.getType(env, t);
-		}
-	    }
-	}
-	return null;
+        ClassSymbol origin = (ClassSymbol)sym.owner;
+        for (Type t = env.types.supertype(origin.type);
+             t.tag == TypeTags.CLASS;
+             t = env.types.supertype(t)) {
+            ClassSymbol c = (ClassSymbol)t.tsym;
+            for (Scope.Entry e = c.members().lookup(sym.name); e.scope != null; e = e.next()) {
+                if (sym.overrides(e.sym, origin, env.types, true)) {
+                    return TypeMaker.getType(env, t);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -146,27 +146,27 @@ public class MethodDocImpl
      */
     public MethodDoc overriddenMethod() {
 
-	// Real overriding only.  Static members are simply hidden.
+        // Real overriding only.  Static members are simply hidden.
         // Likewise for constructors, but the MethodSymbol.overrides
         // method takes this into account.
-	if ((sym.flags() & Flags.STATIC) != 0) {
-	    return null;
-	}
+        if ((sym.flags() & Flags.STATIC) != 0) {
+            return null;
+        }
 
-	// Derived from  com.sun.tools.javac.comp.Check.checkOverride .
+        // Derived from  com.sun.tools.javac.comp.Check.checkOverride .
 
-	ClassSymbol origin = (ClassSymbol)sym.owner;
-	for (Type t = env.types.supertype(origin.type);
-	     t.tag == TypeTags.CLASS;
-	     t = env.types.supertype(t)) {
-	    ClassSymbol c = (ClassSymbol)t.tsym;
-	    for (Scope.Entry e = c.members().lookup(sym.name); e.scope != null; e = e.next()) {
-		if (sym.overrides(e.sym, origin, env.types, true)) {
-		    return env.getMethodDoc((MethodSymbol)e.sym);
-		}
-	    }
-	}
-	return null;
+        ClassSymbol origin = (ClassSymbol)sym.owner;
+        for (Type t = env.types.supertype(origin.type);
+             t.tag == TypeTags.CLASS;
+             t = env.types.supertype(t)) {
+            ClassSymbol c = (ClassSymbol)t.tsym;
+            for (Scope.Entry e = c.members().lookup(sym.name); e.scope != null; e = e.next()) {
+                if (sym.overrides(e.sym, origin, env.types, true)) {
+                    return env.getMethodDoc((MethodSymbol)e.sym);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -181,29 +181,29 @@ public class MethodDocImpl
      * @return <tt>true</tt> if this method overrides the other
      */
     public boolean overrides(MethodDoc meth) {
-	MethodSymbol overridee = ((MethodDocImpl) meth).sym;
-	ClassSymbol origin = (ClassSymbol) sym.owner;
+        MethodSymbol overridee = ((MethodDocImpl) meth).sym;
+        ClassSymbol origin = (ClassSymbol) sym.owner;
 
-	return sym.name == overridee.name &&
+        return sym.name == overridee.name &&
 
-	       // not reflexive as per JLS
-	       sym != overridee &&
+               // not reflexive as per JLS
+               sym != overridee &&
 
-	       // we don't care if overridee is static, though that wouldn't
-	       // compile
-	       !sym.isStatic() &&
+               // we don't care if overridee is static, though that wouldn't
+               // compile
+               !sym.isStatic() &&
 
-	       // sym, whose declaring type is the origin, must be
-	       // in a subtype of overridee's type
-	       env.types.asSuper(origin.type, overridee.owner) != null &&
+               // sym, whose declaring type is the origin, must be
+               // in a subtype of overridee's type
+               env.types.asSuper(origin.type, overridee.owner) != null &&
 
-	       // check access and signatures; don't check return types
-	       sym.overrides(overridee, origin, env.types, false);
+               // check access and signatures; don't check return types
+               sym.overrides(overridee, origin, env.types, false);
     }
 
 
     public String name() {
-	return sym.name.toString();
+        return sym.name.toString();
     }
 
     public String qualifiedName() {
@@ -217,7 +217,7 @@ public class MethodDocImpl
      * in the syntax for invoking methods with explicit type parameters.
      */
     public String toString() {
-	return sym.enclClass().getQualifiedName() +
-		"." + typeParametersString() + name() + signature();
+        return sym.enclClass().getQualifiedName() +
+                "." + typeParametersString() + name() + signature();
     }
 }

@@ -48,7 +48,7 @@ import javax.lang.model.type.TypeMirror;
  * {@code NullPointerException} if the additional parameter {@code p}
  * is {@code null}; see documentation of the implementing class for
  * details.
- * 
+ *
  * <p> <b>WARNING:</b> It is possible that methods will be added to
  * this interface to accommodate new, currently unknown, language
  * structures added to future versions of the Java&trade; programming
@@ -196,7 +196,7 @@ public interface AnnotationValueVisitor<R, P> {
      * @param  p a visitor-specified parameter
      * @return the result of the visit
      * @throws UnknownAnnotationValueException
-     *	a visitor implementation may optionally throw this exception
+     *  a visitor implementation may optionally throw this exception
      */
     R visitUnknown(AnnotationValue av, P p);
 }

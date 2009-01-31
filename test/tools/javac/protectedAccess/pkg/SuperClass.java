@@ -32,7 +32,7 @@ public class SuperClass {
   protected int pm() { return 1; }
 
   static protected int spm() { return 1; }
-  
+
   protected class pC { }
 
   static protected class spC { }

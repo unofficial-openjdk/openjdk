@@ -34,31 +34,31 @@ import java.util.Collections;
 
 public class Dee implements AnnotationProcessorFactory {
     static class DeeProc implements AnnotationProcessor {
-	DeeProc(AnnotationProcessorEnvironment ape) {}
-    
-	public void process() {
-	    return;
-	}
+        DeeProc(AnnotationProcessorEnvironment ape) {}
+
+        public void process() {
+            return;
+        }
     }
 
     static Collection<String> supportedTypes;
     static {
-	String types[] = {"dum"};
-	supportedTypes = Collections.unmodifiableCollection(Arrays.asList(types));
+        String types[] = {"dum"};
+        supportedTypes = Collections.unmodifiableCollection(Arrays.asList(types));
     }
 
     static Collection<String> supportedOptions;
     static {
-	String options[] = {""};
-	supportedOptions = Collections.unmodifiableCollection(Arrays.asList(options));
+        String options[] = {""};
+        supportedOptions = Collections.unmodifiableCollection(Arrays.asList(options));
     }
 
     public Collection<String> supportedOptions() {
-	return supportedOptions;
+        return supportedOptions;
     }
 
     public Collection<String> supportedAnnotationTypes() {
-	return supportedTypes;
+        return supportedTypes;
     }
 
     /*
@@ -66,7 +66,7 @@ public class Dee implements AnnotationProcessorFactory {
      * present, if any.
      */
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-					AnnotationProcessorEnvironment env) {
-	return new DeeProc(env);
+                                        AnnotationProcessorEnvironment env) {
+        return new DeeProc(env);
     }
 }

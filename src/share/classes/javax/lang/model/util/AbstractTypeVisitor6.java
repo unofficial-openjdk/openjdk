@@ -30,7 +30,7 @@ import javax.lang.model.type.*;
 /**
  * A skeletal visitor of types with default behavior appropriate for
  * the version 6 language level.
- * 
+ *
  * <p> <b>WARNING:</b> The {@code TypeVisitor} interface implemented
  * by this class may have methods added to it in the future to
  * accommodate new, currently unknown, language structures added to
@@ -39,7 +39,7 @@ import javax.lang.model.type.*;
  * added to this class in the future; to avoid incompatibilities,
  * classes which extend this class should not declare any instance
  * methods with names beginning with {@code "visit"}.
- * 
+ *
  * <p>When such a new visit method is added, the default
  * implementation in this class will be to call the {@link
  * #visitUnknown visitUnknown} method.  A new abstract type visitor
@@ -58,7 +58,7 @@ import javax.lang.model.type.*;
  * @author Scott Seligman
  * @author Peter von der Ah&eacute;
  * @since 1.6
- */ 
+ */
 public abstract class AbstractTypeVisitor6<R, P> implements TypeVisitor<R, P> {
     /**
      * Constructor for concrete subclasses to call.
@@ -76,7 +76,7 @@ public abstract class AbstractTypeVisitor6<R, P> implements TypeVisitor<R, P> {
      * @return a visitor-specified result
      */
     public final R visit(TypeMirror t, P p) {
-	return t.accept(this, p);
+        return t.accept(this, p);
     }
 
     /**
@@ -89,7 +89,7 @@ public abstract class AbstractTypeVisitor6<R, P> implements TypeVisitor<R, P> {
      * @return a visitor-specified result
      */
     public final R visit(TypeMirror t) {
-	return t.accept(this, null);
+        return t.accept(this, null);
     }
 
     /**
@@ -103,9 +103,9 @@ public abstract class AbstractTypeVisitor6<R, P> implements TypeVisitor<R, P> {
      * @param t  the type to visit
      * @return a visitor-specified result
      * @throws UnknownTypeException
-     *	a visitor implementation may optionally throw this exception
+     *  a visitor implementation may optionally throw this exception
      */
     public R visitUnknown(TypeMirror t, P p) {
-	throw new UnknownTypeException(t, p);
+        throw new UnknownTypeException(t, p);
     }
 }

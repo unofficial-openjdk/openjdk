@@ -21,6 +21,6 @@
  * have any questions.
  */
 
-class A { 
+class A {
     B b;
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test @(#)WindowTitles.java	1.18	02/05/16
+ * @test @(#)WindowTitles.java  1.18    02/05/16
  * @bug 4530730
  * @summary stddoclet: With frames off, window titles have "()" appended
  * @author dkramer
@@ -34,12 +34,12 @@ import com.sun.javadoc.*;
 import java.util.*;
 import java.io.*;
 
-// If needing regular expression pattern matching, 
+// If needing regular expression pattern matching,
 // see /java/pubs/dev/linkfix/src/LinkFix.java
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily 
+ * It reads each file, complete with newlines, into a string to easily
  * find strings that contain newlines.
  */
 public class WindowTitles
@@ -65,7 +65,7 @@ public class WindowTitles
 
         // Test for all cases except the split index page
         runJavadoc(new String[] {"-d", TMPDIR_STRING1,
-                                 "-use", 
+                                 "-use",
                                  "-sourcepath", srcdir,
                                  "p1", "p2"});
         runTestsOnHTML(testArray);
@@ -73,8 +73,8 @@ public class WindowTitles
         // Test only for the split-index case (and run on only one package)
         System.out.println("");  // blank line
         runJavadoc(new String[] {"-d", TMPDIR_STRING2,
-                                 "-splitindex", 
-                                 "-sourcepath", System.getProperty("test.src", "."), 
+                                 "-splitindex",
+                                 "-sourcepath", System.getProperty("test.src", "."),
                                  "p1"});
         runTestsOnHTML(testSplitIndexArray);
 
@@ -83,8 +83,8 @@ public class WindowTitles
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-	    throw new Error("Javadoc failed to execute");
+        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+            throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -97,49 +97,49 @@ public class WindowTitles
             { "<TITLE>" + LS + "Overview" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "overview-summary.html"                  },
 
-            { "<TITLE>" + LS + "Class Hierarchy" + LS + "</TITLE>",       
+            { "<TITLE>" + LS + "Class Hierarchy" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "overview-tree.html"                     },
 
-            { "<TITLE>" + LS + "Overview List" + LS + "</TITLE>",              
+            { "<TITLE>" + LS + "Overview List" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "overview-frame.html"                    },
 
-            { "<TITLE>" + LS + "p1" + LS + "</TITLE>",                    
+            { "<TITLE>" + LS + "p1" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "package-summary.html"       },
 
-            { "<TITLE>" + LS + "p1" + LS + "</TITLE>",                    
+            { "<TITLE>" + LS + "p1" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "package-frame.html"         },
 
-            { "<TITLE>" + LS + "p1 Class Hierarchy" + LS + "</TITLE>",    
+            { "<TITLE>" + LS + "p1 Class Hierarchy" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "package-tree.html"          },
 
-            { "<TITLE>" + LS + "Uses of Package p1" + LS + "</TITLE>",    
+            { "<TITLE>" + LS + "Uses of Package p1" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "package-use.html"           },
 
-            { "<TITLE>" + LS + "C1" + LS + "</TITLE>",                    
+            { "<TITLE>" + LS + "C1" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "C1.html"                    },
 
-            { "<TITLE>" + LS + "All Classes" + LS + "</TITLE>",           
+            { "<TITLE>" + LS + "All Classes" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "allclasses-frame.html"                  },
 
-            { "<TITLE>" + LS + "All Classes" + LS + "</TITLE>",           
+            { "<TITLE>" + LS + "All Classes" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "allclasses-noframe.html"                },
 
-            { "<TITLE>" + LS + "Constant Field Values" + LS + "</TITLE>", 
+            { "<TITLE>" + LS + "Constant Field Values" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "constant-values.html"                   },
 
-            { "<TITLE>" + LS + "Deprecated List" + LS + "</TITLE>",        
+            { "<TITLE>" + LS + "Deprecated List" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "deprecated-list.html"                   },
 
-            { "<TITLE>" + LS + "Serialized Form" + LS + "</TITLE>",   
+            { "<TITLE>" + LS + "Serialized Form" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "serialized-form.html"                   },
 
-            { "<TITLE>" + LS + "API Help" + LS + "</TITLE>",              
+            { "<TITLE>" + LS + "API Help" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "help-doc.html"                          },
 
-            { "<TITLE>" + LS + "Index" + LS + "</TITLE>",                 
+            { "<TITLE>" + LS + "Index" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "index-all.html"                         },
 
-            { "<TITLE>" + LS + "Uses of Class p1.C1" + LS + "</TITLE>",   
+            { "<TITLE>" + LS + "Uses of Class p1.C1" + LS + "</TITLE>",
                     TMPDIR_STRING1 + "p1" + FS + "class-use" + FS + "C1.html" },
         };
 
@@ -165,7 +165,7 @@ public class WindowTitles
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum) 
+                System.out.println("\nSub-test " + (subtestNum)
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -180,7 +180,7 @@ public class WindowTitles
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

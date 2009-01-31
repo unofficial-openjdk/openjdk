@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,5 +27,5 @@ public interface I {
      * @throws java.lang.NullPointerException Test 1 fails
      */
     public void method() throws NullPointerException;
-    
+
 }

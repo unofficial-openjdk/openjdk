@@ -36,7 +36,7 @@ import java.util.*;
  * @author Robert G. Field
  */
 public class ClassUseWriter extends SubWriterHolderWriter {
-    
+
     final ClassDoc classdoc;
     Set pkgToPackageAnnotations = null;
     final Map pkgToClassTypeParameter;
@@ -65,8 +65,8 @@ public class ClassUseWriter extends SubWriterHolderWriter {
     final ConstructorWriterImpl constrSubWriter;
     final FieldWriterImpl fieldSubWriter;
     final NestedClassWriterImpl classSubWriter;
-    
-    
+
+
     /**
      * Constructor.
      *
@@ -81,7 +81,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         super(configuration, path, filename, relpath);
         this.classdoc = classdoc;
         if (mapper.classToPackageAnnotations.containsKey(classdoc.qualifiedName()))
-        	pkgToPackageAnnotations = new HashSet((List) mapper.classToPackageAnnotations.get(classdoc.qualifiedName()));
+                pkgToPackageAnnotations = new HashSet((List) mapper.classToPackageAnnotations.get(classdoc.qualifiedName()));
         configuration.currentcd = classdoc;
         this.pkgSet = new TreeSet();
         this.pkgToClassTypeParameter = pkgDivide(mapper.classToClassTypeParam);
@@ -106,7 +106,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         this.pkgToConstructorArgTypeParameter = pkgDivide(mapper.classToConstructorDocArgTypeParam);
         this.pkgToConstructorThrows = pkgDivide(mapper.classToConstructorThrows);
         //tmp test
-        if (pkgSet.size() > 0 && 
+        if (pkgSet.size() > 0 &&
             mapper.classToPackage.containsKey(classdoc.qualifiedName()) &&
             !pkgSet.equals(mapper.classToPackage.get(classdoc.qualifiedName()))) {
             configuration.root.printWarning("Internal error: package sets don't match: " + pkgSet + " with: " +
@@ -117,7 +117,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         fieldSubWriter = new FieldWriterImpl(this);
         classSubWriter = new NestedClassWriterImpl(this);
     }
-    
+
     /**
      * Write out class use pages.
      * @throws DocletAbortException
@@ -134,7 +134,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             PackageUseWriter.generate(configuration, mapper, pkgs[i]);
         }
     }
-    
+
     private Map pkgDivide(Map classMap) {
         Map map = new HashMap();
         List list= (List)classMap.get(classdoc.qualifiedName());
@@ -155,7 +155,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         }
         return map;
     }
-    
+
     /**
      * Generate a class page.
      */
@@ -185,14 +185,14 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             throw new DocletAbortException();
         }
     }
-    
+
     /**
      * Print the class use list.
      */
     protected void generateClassUseFile() throws IOException {
-        
+
         printClassUseHeader();
-        
+
         if (pkgSet.size() > 0) {
             generateClassUse();
         } else {
@@ -200,10 +200,10 @@ public class ClassUseWriter extends SubWriterHolderWriter {
                       classdoc.qualifiedName());
             p();
         }
-        
+
         printClassUseFooter();
     }
-    
+
     protected void generateClassUse() throws IOException {
         if (configuration.packages.length > 1) {
             generatePackageList();
@@ -211,15 +211,15 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         }
         generateClassList();
     }
-    
+
     protected void generatePackageList() throws IOException {
         tableIndexSummary();
         tableHeaderStart("#CCCCFF");
         printText("doclet.ClassUse_Packages.that.use.0",
-            getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc, 
+            getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc,
                 false)));
         tableHeaderEnd();
-        
+
         for (Iterator it = pkgSet.iterator(); it.hasNext();) {
             PackageDoc pkg = (PackageDoc)it.next();
             generatePackageUse(pkg);
@@ -228,16 +228,16 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         space();
         p();
     }
-    
+
     protected void generatePackageAnnotationList() throws IOException {
-        if ((! classdoc.isAnnotationType()) || 
-               pkgToPackageAnnotations == null || 
+        if ((! classdoc.isAnnotationType()) ||
+               pkgToPackageAnnotations == null ||
                pkgToPackageAnnotations.size() == 0)
             return;
         tableIndexSummary();
         tableHeaderStart("#CCCCFF");
         printText("doclet.ClassUse_PackageAnnotation",
-            getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc, 
+            getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc,
                 false)));
         tableHeaderEnd();
         for (Iterator it = pkgToPackageAnnotations.iterator(); it.hasNext();) {
@@ -257,7 +257,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         space();
         p();
     }
-    
+
     protected void generateClassList() throws IOException {
         for (Iterator it = pkgSet.iterator(); it.hasNext();) {
             PackageDoc pkg = (PackageDoc)it.next();
@@ -265,7 +265,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             tableIndexSummary();
             tableHeaderStart("#CCCCFF");
             printText("doclet.ClassUse_Uses.of.0.in.1",
-                getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, 
+                getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER,
                     classdoc, false)),
                 getPackageLink(pkg, Util.getPackageName(pkg), false));
             tableHeaderEnd();
@@ -275,7 +275,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             generateClassUse(pkg);
         }
     }
-    
+
     /**
      * Print the package use list.
      */
@@ -291,7 +291,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         summaryRowEnd();
         trEnd();
     }
-    
+
     /**
      * Print the class use list.
      */
@@ -300,14 +300,14 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc, false));
         String pkgLink = getPackageLink(pkg, Util.getPackageName(pkg), false);
         classSubWriter.printUseInfo(pkgToClassAnnotations.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_Annotation", classLink, 
+            configuration.getText("doclet.ClassUse_Annotation", classLink,
             pkgLink));
-        
+
         classSubWriter.printUseInfo(pkgToClassTypeParameter.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_TypeParameter", classLink, 
+            configuration.getText("doclet.ClassUse_TypeParameter", classLink,
             pkgLink));
         classSubWriter.printUseInfo(pkgToSubclass.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_Subclass", classLink, 
+            configuration.getText("doclet.ClassUse_Subclass", classLink,
             pkgLink));
         classSubWriter.printUseInfo(pkgToSubinterface.get(pkg.name()),
                                     configuration.getText("doclet.ClassUse_Subinterface",
@@ -330,20 +330,20 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             classLink,
             pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodAnnotations.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_MethodAnnotations", classLink, 
+            configuration.getText("doclet.ClassUse_MethodAnnotations", classLink,
             pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodParameterAnnotations.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_MethodParameterAnnotations", classLink, 
+            configuration.getText("doclet.ClassUse_MethodParameterAnnotations", classLink,
             pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodTypeParameter.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_MethodTypeParameter", classLink, 
-            pkgLink));      
+            configuration.getText("doclet.ClassUse_MethodTypeParameter", classLink,
+            pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodReturn.get(pkg.name()),
                                      configuration.getText("doclet.ClassUse_MethodReturn",
                                              classLink,
                                              pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodReturnTypeParameter.get(pkg.name()),
-            configuration.getText("doclet.ClassUse_MethodReturnTypeParameter", classLink, 
+            configuration.getText("doclet.ClassUse_MethodReturnTypeParameter", classLink,
             pkgLink));
         methodSubWriter.printUseInfo(pkgToMethodArgs.get(pkg.name()),
                                      configuration.getText("doclet.ClassUse_MethodArgs",
@@ -356,7 +356,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         methodSubWriter.printUseInfo(pkgToMethodThrows.get(pkg.name()),
                                      configuration.getText("doclet.ClassUse_MethodThrows",
                                              classLink,
-                                             pkgLink));        
+                                             pkgLink));
         constrSubWriter.printUseInfo(pkgToConstructorAnnotations.get(pkg.name()),
             configuration.getText("doclet.ClassUse_ConstructorAnnotations",
                 classLink,
@@ -378,7 +378,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
                                              classLink,
                                              pkgLink));
     }
-    
+
     /**
      * Print the header for the class use Listing.
      */
@@ -398,7 +398,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         h2End();
         centerEnd();
     }
-    
+
     /**
      * Print the footer for the class use Listing.
      */
@@ -408,8 +408,8 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         printBottom();
         printBodyHtmlEnd();
     }
-    
-    
+
+
     /**
      * Print this package link
      */
@@ -419,17 +419,17 @@ public class ClassUseWriter extends SubWriterHolderWriter {
                        configuration.getText("doclet.Package"), true, "NavBarFont1");
         navCellEnd();
     }
-    
+
     /**
      * Print class page indicator
      */
     protected void navLinkClass() {
         navCellStart();
-        printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc, "", 
+        printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_USE_HEADER, classdoc, "",
             configuration.getText("doclet.Class"), true, "NavBarFont1"));
         navCellEnd();
     }
-    
+
     /**
      * Print class use link
      */
@@ -440,11 +440,11 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         fontEnd();
         navCellEnd();
     }
-    
+
     protected void navLinkTree() {
         navCellStart();
         if (classdoc.containingPackage().isIncluded()) {
-            printHyperLink("../package-tree.html", "", 
+            printHyperLink("../package-tree.html", "",
                 configuration.getText("doclet.Tree"), true, "NavBarFont1");
         } else {
             printHyperLink(relativePath + "overview-tree.html", "",
@@ -452,6 +452,5 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         }
         navCellEnd();
     }
-    
-}
 
+}

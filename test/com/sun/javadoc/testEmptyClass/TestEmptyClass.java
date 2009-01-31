@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,14 +34,14 @@
  */
 
 public class TestEmptyClass extends JavadocTester {
-    
+
     private static final String OUTPUT_DIR = "tmp";
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = {
-        
+
         //The overview tree should not link to classes that were not documented
         {OUTPUT_DIR + FS + "overview-tree.html", "<A HREF=\"TestEmptyClass.html\">"},
-        
+
         //The index page should not link to classes that were not documented
         {OUTPUT_DIR + FS + "index-all.html", "<A HREF=\"TestEmptyClass.html\">"},
     };
@@ -52,7 +52,7 @@ public class TestEmptyClass extends JavadocTester {
             SRC_DIR + FS + "src" + FS + "Empty.java"
         };
     private static final String BUG_ID = "4483401 4483407 4483409 4483413 4494343";
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -65,14 +65,14 @@ public class TestEmptyClass extends JavadocTester {
             throw new Error("Error found while executing Javadoc");
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

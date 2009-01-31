@@ -23,8 +23,8 @@
 
 /**
  * @test
- * @bug 4269441 
- * @summary Verify that we can access inherited, protected method from 
+ * @bug 4269441
+ * @summary Verify that we can access inherited, protected method from
  * an inner class.
  *
  * @run compile pkg2/Sub.java
@@ -34,4 +34,3 @@
 //
 // The code necessary for this test is all contained within pkg1/Base.java
 // and pgk2/Sub.java.
-

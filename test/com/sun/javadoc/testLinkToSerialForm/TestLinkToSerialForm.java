@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,7 +34,7 @@
  */
 
 public class TestLinkToSerialForm extends JavadocTester {
-    
+
     private static final String BUG_ID = "4521661";
     private static final String[][] TEST = {
         {BUG_ID + FS + "serialized-form.html", "<A NAME=\"pkg.C\">"},
@@ -44,7 +44,7 @@ public class TestLinkToSerialForm extends JavadocTester {
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"};
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -54,14 +54,14 @@ public class TestLinkToSerialForm extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

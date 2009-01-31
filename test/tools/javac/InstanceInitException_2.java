@@ -26,7 +26,7 @@
  * @bug 4054256
  * @summary Verify that exceptions in instance initializer must be declared in all constructors.
  * @author William Maddox
- * 
+ *
  * @run compile/fail InstanceInitException_2.java
  */
 
@@ -39,14 +39,14 @@ public class InstanceInitException_2 {
 
     class Inner {
 
-	Inner() throws Exn1 {}
+        Inner() throws Exn1 {}
 
-	Inner(int x) throws Exn1, Exn2 {}
-	
-	{
-	    if (x > 0) throw new Exn1();
-	    if (x > 0) throw new Exn2();  // error -- not declared in Inner()
-	}
+        Inner(int x) throws Exn1, Exn2 {}
+
+        {
+            if (x > 0) throw new Exn1();
+            if (x > 0) throw new Exn2();  // error -- not declared in Inner()
+        }
 
     }
 

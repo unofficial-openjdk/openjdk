@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* @test 
+/* @test
    @bug 4668238 4721069
    @summary compiler must reject interface "overriding" final Object meth.
    @compile/fail InterfaceOverrideFinal.java

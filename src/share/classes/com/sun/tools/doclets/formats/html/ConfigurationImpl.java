@@ -50,136 +50,136 @@ import java.io.*;
  * @author Jamie Ho
  */
 public class ConfigurationImpl extends Configuration {
-    
+
     private static final ConfigurationImpl instance = new ConfigurationImpl();
-    
+
     /**
      * The build date.  Note: For now, we will use
      * a version number instead of a date.
      */
     public static final String BUILD_DATE = System.getProperty("java.version");
-    
+
     /**
      * The name of the constant values file.
      */
     public static final String CONSTANTS_FILE_NAME = "constant-values.html";
-    
+
     /**
      * Argument for command line option "-header".
      */
     public String header = "";
-    
+
     /**
      * Argument for command line option "-packagesheader".
      */
     public String packagesheader = "";
-    
+
     /**
      * Argument for command line option "-footer".
      */
     public String footer = "";
-    
+
     /**
      * Argument for command line option "-doctitle".
      */
     public String doctitle = "";
-    
+
     /**
      * Argument for command line option "-windowtitle".
      */
     public String windowtitle = "";
-    
+
     /**
      * Argument for command line option "-top".
      */
     public String top = "";
-    
+
     /**
      * Argument for command line option "-bottom".
      */
     public String bottom = "";
-    
+
     /**
      * Argument for command line option "-helpfile".
      */
     public String helpfile = "";
-    
+
     /**
      * Argument for command line option "-stylesheetfile".
      */
     public String stylesheetfile = "";
-    
+
     /**
      * True if command line option "-nohelp" is used. Default value is false.
      */
     public boolean nohelp = false;
-    
+
     /**
      * True if command line option "-splitindex" is used. Default value is
      * false.
      */
     public boolean splitindex = false;
-    
+
     /**
      * False if command line option "-noindex" is used. Default value is true.
      */
     public boolean createindex = true;
-    
+
     /**
      * True if command line option "-use" is used. Default value is false.
      */
     public boolean classuse = false;
-    
+
     /**
      * False if command line option "-notree" is used. Default value is true.
      */
     public boolean createtree = true;
-    
+
     /**
      * True if command line option "-nodeprecated" is used. Default value is
      * false.
      */
     public boolean nodeprecatedlist = false;
-    
+
     /**
      * True if command line option "-nonavbar" is used. Default value is false.
      */
     public boolean nonavbar = false;
-    
+
     /**
      * True if command line option "-nooverview" is used. Default value is
      * false
      */
     private boolean nooverview = false;
-    
+
     /**
      * True if command line option "-overview" is used. Default value is false.
      */
     public boolean overview = false;
-    
+
     /**
      * This is true if option "-overview" is used or option "-overview" is not
      * used and number of packages is more than one.
      */
     public boolean createoverview = false;
-    
+
     /**
      * Unique Resource Handler for this package.
      */
     public final MessageRetriever standardmessage;
-    
+
     /**
      * First file to appear in the right-hand frame in the generated
      * documentation.
      */
     public String topFile = "";
-    
+
     /**
      * The classdoc for the class file getting generated.
      */
     public ClassDoc currentcd = null;  // Set this classdoc in the
     // ClassWriter.
-        
+
     /**
      * Constructor. Initialises resource for the
      * {@link com.sun.tools.doclets.MessageRetriever}.
@@ -188,18 +188,18 @@ public class ConfigurationImpl extends Configuration {
         standardmessage = new MessageRetriever(this,
             "com.sun.tools.doclets.formats.html.resources.standard");
     }
-    
+
     public static ConfigurationImpl getInstance() {
         return instance;
     }
-    
+
     /**
      * Return the build date for the doclet.
      */
     public String getDocletSpecificBuildDate() {
         return BUILD_DATE;
     }
-    
+
     /**
      * Depending upon the command line options provided by the user, set
      * configure the output generation environment.
@@ -250,7 +250,7 @@ public class ConfigurationImpl extends Configuration {
                 nooverview = true;
             } else  if (opt.equals("-overview")) {
                 overview = true;
-            } 
+            }
         }
         if (root.specifiedClasses().length > 0) {
             Map map = new HashMap();
@@ -266,7 +266,7 @@ public class ConfigurationImpl extends Configuration {
         setCreateOverview();
         setTopFile(root);
     }
-        
+
     /**
      * Returns the "length" of a given option. If an option takes no
      * arguments, its length is one. If it takes one argument, it's
@@ -319,11 +319,11 @@ public class ConfigurationImpl extends Configuration {
             return 0;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public boolean validOptions(String options[][], 
+    public boolean validOptions(String options[][],
             DocErrorReporter reporter) {
         boolean helpfile = false;
         boolean nohelp = false;
@@ -341,12 +341,12 @@ public class ConfigurationImpl extends Configuration {
             String opt = os[0].toLowerCase();
             if (opt.equals("-helpfile")) {
                 if (nohelp == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-helpfile", "-nohelp"));
                     return false;
                 }
                 if (helpfile == true) {
-                    reporter.printError(getText("doclet.Option_reuse", 
+                    reporter.printError(getText("doclet.Option_reuse",
                         "-helpfile"));
                     return false;
                 }
@@ -358,56 +358,56 @@ public class ConfigurationImpl extends Configuration {
                 helpfile = true;
             } else  if (opt.equals("-nohelp")) {
                 if (helpfile == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-nohelp", "-helpfile"));
                     return false;
                 }
                 nohelp = true;
             } else if (opt.equals("-overview")) {
                 if (nooverview == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-overview", "-nooverview"));
                     return false;
                 }
                 if (overview == true) {
-                    reporter.printError(getText("doclet.Option_reuse", 
+                    reporter.printError(getText("doclet.Option_reuse",
                         "-overview"));
                     return false;
                 }
                 overview = true;
             } else  if (opt.equals("-nooverview")) {
                 if (overview == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-nooverview", "-overview"));
                     return false;
                 }
                 nooverview = true;
             } else if (opt.equals("-splitindex")) {
                 if (noindex == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-splitindex", "-noindex"));
                     return false;
                 }
                 splitindex = true;
             } else if (opt.equals("-noindex")) {
                 if (splitindex == true) {
-                    reporter.printError(getText("doclet.Option_conflict", 
+                    reporter.printError(getText("doclet.Option_conflict",
                         "-noindex", "-splitindex"));
                     return false;
                 }
                 noindex = true;
-            } 
+            }
         }
         return true;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public MessageRetriever getDocletSpecificMsg() {
         return standardmessage;
     }
-    
+
     /**
      * Decide the page which will appear first in the right-hand frame. It will
      * be "overview-summary.html" if "-overview" option is used or no
@@ -438,7 +438,7 @@ public class ConfigurationImpl extends Configuration {
             }
         }
     }
-    
+
     protected ClassDoc getValidClass(ClassDoc[] classarr) {
         if (!nodeprecated) {
             return classarr[0];
@@ -450,7 +450,7 @@ public class ConfigurationImpl extends Configuration {
         }
         return null;
     }
-    
+
     protected boolean checkForDeprecation(RootDoc root) {
         ClassDoc[] classarr = root.classes();
         for (int i = 0; i < classarr.length; i++) {
@@ -460,7 +460,7 @@ public class ConfigurationImpl extends Configuration {
         }
         return false;
     }
-    
+
     /**
      * Generate "overview.html" page if option "-overview" is used or number of
      * packages is more than one. Sets {@link #createoverview} field to true.
@@ -470,14 +470,14 @@ public class ConfigurationImpl extends Configuration {
             createoverview = true;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public WriterFactory getWriterFactory() {
         return WriterFactoryImpl.getInstance();
     }
-        
+
     /**
      * {@inheritDoc}
      */
@@ -485,5 +485,3 @@ public class ConfigurationImpl extends Configuration {
         return null;
     }
 }
-
-

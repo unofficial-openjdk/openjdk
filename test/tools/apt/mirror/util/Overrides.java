@@ -39,35 +39,35 @@ import com.sun.mirror.util.*;
 public class Overrides extends Tester {
 
     public static void main(String[] args) {
-	(new Overrides()).run();
+        (new Overrides()).run();
     }
 
 
     // Declarations used by tests
 
     static class A {
-	void m1(int i) {};		// does not override itself
-	void m2(int i) {};
-	static void m3(int i) {};
+        void m1(int i) {};              // does not override itself
+        void m2(int i) {};
+        static void m3(int i) {};
     }
 
-	static class B extends A {
-	    void m1(int j) {};		// overrides A.m1
-	    void m1(String i) {};	// does not override A.m1
-	    void m4(int i) {};		// does not override A.m1
-	}
+        static class B extends A {
+            void m1(int j) {};          // overrides A.m1
+            void m1(String i) {};       // does not override A.m1
+            void m4(int i) {};          // does not override A.m1
+        }
 
-	    static class C extends B {
-		void m1(int i) {};	// overrides A.m1 and B.m1
-		void m2(int i) {};	// overrides A.m2
-	    }
+            static class C extends B {
+                void m1(int i) {};      // overrides A.m1 and B.m1
+                void m2(int i) {};      // overrides A.m2
+            }
 
-	static class D extends A {
-	    static void m3(int i) {};	// does not override A.m3
-	}
+        static class D extends A {
+            static void m3(int i) {};   // does not override A.m3
+        }
 
     static class E {
-	void m1(int i) {};		// does not override A.m1
+        void m1(int i) {};              // does not override A.m1
     }
 
 
@@ -91,61 +91,61 @@ public class Overrides extends Tester {
     private MethodDeclaration Em1;
 
     protected void init() {
-	decls = env.getDeclarationUtils();
+        decls = env.getDeclarationUtils();
 
-	A = env.getTypeDeclaration("Overrides.A");
-	B = env.getTypeDeclaration("Overrides.B");
-	C = env.getTypeDeclaration("Overrides.C");
-	D = env.getTypeDeclaration("Overrides.D");
-	E = env.getTypeDeclaration("Overrides.E");
+        A = env.getTypeDeclaration("Overrides.A");
+        B = env.getTypeDeclaration("Overrides.B");
+        C = env.getTypeDeclaration("Overrides.C");
+        D = env.getTypeDeclaration("Overrides.D");
+        E = env.getTypeDeclaration("Overrides.E");
 
-	Am1  = getMethod(A, "m1", "i");
-	Am2  = getMethod(A, "m2", "i");
-	Am3  = getMethod(A, "m3", "i");
-	Bm1  = getMethod(B, "m1", "j");
-	Bm1b = getMethod(B, "m1", "i");
-	Bm4  = getMethod(B, "m4", "i");
-	Cm1  = getMethod(C, "m1", "i");
-	Cm2  = getMethod(C, "m2", "i");
-	Dm3  = getMethod(D, "m3", "i");
-	Em1  = getMethod(E, "m1", "i");
+        Am1  = getMethod(A, "m1", "i");
+        Am2  = getMethod(A, "m2", "i");
+        Am3  = getMethod(A, "m3", "i");
+        Bm1  = getMethod(B, "m1", "j");
+        Bm1b = getMethod(B, "m1", "i");
+        Bm4  = getMethod(B, "m4", "i");
+        Cm1  = getMethod(C, "m1", "i");
+        Cm2  = getMethod(C, "m2", "i");
+        Dm3  = getMethod(D, "m3", "i");
+        Em1  = getMethod(E, "m1", "i");
     }
 
     private MethodDeclaration getMethod(TypeDeclaration t,
-					String methodName, String paramName) {
-	for (MethodDeclaration m : t.getMethods()) {
-	    if (methodName.equals(m.getSimpleName()) &&
-		    paramName.equals(m.getParameters().iterator().next()
-							.getSimpleName())) {
-		return m;
-	    }
-	}
-	throw new AssertionError();
+                                        String methodName, String paramName) {
+        for (MethodDeclaration m : t.getMethods()) {
+            if (methodName.equals(m.getSimpleName()) &&
+                    paramName.equals(m.getParameters().iterator().next()
+                                                        .getSimpleName())) {
+                return m;
+            }
+        }
+        throw new AssertionError();
     }
 
 
     // Declarations methods
 
     @Test(result={"false",
-		  "true",
-		  "false",
-		  "false",
-		  "true",
-		  "true",
-		  "true",
-		  "false",
-		  "false"},
-	  ordered=true)
+                  "true",
+                  "false",
+                  "false",
+                  "true",
+                  "true",
+                  "true",
+                  "false",
+                  "false"},
+          ordered=true)
     List<Boolean> overrides() {
-	return Arrays.asList(
-		decls.overrides(Am1, Am1),
-		decls.overrides(Bm1, Am1),
-		decls.overrides(Bm1b,Am1),
-		decls.overrides(Bm4, Am1),
-		decls.overrides(Cm1, Am1),
-		decls.overrides(Cm1, Bm1),
-		decls.overrides(Cm2, Am2),
-		decls.overrides(Dm3, Am3),
-		decls.overrides(Em1, Am1));
+        return Arrays.asList(
+                decls.overrides(Am1, Am1),
+                decls.overrides(Bm1, Am1),
+                decls.overrides(Bm1b,Am1),
+                decls.overrides(Bm4, Am1),
+                decls.overrides(Cm1, Am1),
+                decls.overrides(Cm1, Bm1),
+                decls.overrides(Cm2, Am2),
+                decls.overrides(Dm3, Am3),
+                decls.overrides(Em1, Am1));
     }
 }

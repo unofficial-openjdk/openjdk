@@ -26,7 +26,7 @@
  * @bug 4254215
  * @summary Verify rejection of illegal cyclically-scoped class.
  * @author maddox
- * 
+ *
  * @run compile/fail CyclicScoping_2.java
  */
 
@@ -35,9 +35,9 @@ class B {
 }
 
 class A extends B implements A.I {
-    
+
     interface I extends K {
-	class J {}
+        class J {}
     }
 
     J j;

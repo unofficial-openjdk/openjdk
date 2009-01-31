@@ -32,7 +32,7 @@
 
 class Tclass<T> {
     T data;
-    public Tclass(T... t){} 
+    public Tclass(T... t){}
 }
 
 public class BadSyntax2 {

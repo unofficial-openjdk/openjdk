@@ -62,24 +62,24 @@ public class CompileFromString {
      * @throws java.lang.Exception exceptions are ignored for brevity
      */
     public static Object evalExpression(JavaCompiler compiler,
-					DiagnosticListener<JavaFileObject> listener,
-					List<String> flags,
-					String expression)
-	throws Exception
+                                        DiagnosticListener<JavaFileObject> listener,
+                                        List<String> flags,
+                                        String expression)
+        throws Exception
     {
         // Use a customized file manager
         MemoryFileManager mfm =
-	    new MemoryFileManager(compiler.getStandardFileManager(listener, null, null));
-        
+            new MemoryFileManager(compiler.getStandardFileManager(listener, null, null));
+
         // Create a file object from a string
         JavaFileObject fileObject = mfm.makeSource(CLASS_NAME,
             "public class " + CLASS_NAME + " {\n" +
             "    public static Object eval() throws Throwable {\n" +
             "        return " + expression + ";\n" +
             "    }\n}\n");
-        
-	JavaCompiler.CompilationTask task =
-	    compiler.getTask(null, mfm, listener, flags, null, Arrays.asList(fileObject));
+
+        JavaCompiler.CompilationTask task =
+            compiler.getTask(null, mfm, listener, flags, null, Arrays.asList(fileObject));
         if (task.call()) {
             // Obtain a class loader for the compiled classes
             ClassLoader cl = mfm.getClassLoader(CLASS_OUTPUT);
@@ -94,9 +94,9 @@ public class CompileFromString {
             return ERROR;
         }
     }
-    
+
     /**
-     * Main entry point for program; ask user for expressions, 
+     * Main entry point for program; ask user for expressions,
      * compile, evaluate, and print them.
      *
      * @param args ignored
@@ -105,8 +105,8 @@ public class CompileFromString {
     public static void main(String... args) throws Exception {
         // Get a compiler tool
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-	final List<String> compilerFlags = new ArrayList();
-	compilerFlags.add("-Xlint:all"); // report all warnings
+        final List<String> compilerFlags = new ArrayList();
+        compilerFlags.add("-Xlint:all"); // report all warnings
         compilerFlags.add("-g:none"); // don't generate debug info
         String expression = "System.getProperty(\"java.vendor\")";
         while (true) {

@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-abstract class B implements A { 
-    public void foo() { // a function 
-    } 
+abstract class B implements A {
+    public void foo() { // a function
+    }
 }

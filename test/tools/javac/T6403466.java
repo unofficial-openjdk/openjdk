@@ -50,94 +50,94 @@ public class T6403466 extends AbstractProcessor {
     static PrintWriter out = new PrintWriter(System.err, true);
 
     public static void main(String[] args) throws IOException {
-	JavacTool tool = JavacTool.create();
+        JavacTool tool = JavacTool.create();
 
-	StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
-	Iterable<? extends JavaFileObject> files = 
-	    fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
+        StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
+        Iterable<? extends JavaFileObject> files =
+            fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrcDir, self + ".java")));
 
-	Iterable<String> options = Arrays.asList("-processorpath", testClassDir, 
-						 "-processor", self,
-						 "-s", ".",
+        Iterable<String> options = Arrays.asList("-processorpath", testClassDir,
+                                                 "-processor", self,
+                                                 "-s", ".",
                                                  "-d", ".");
-	JavacTask task = tool.getTask(out, fm, null, options, null, files);
+        JavacTask task = tool.getTask(out, fm, null, options, null, files);
 
-	VerifyingTaskListener vtl = new VerifyingTaskListener(new File(testSrcDir, self + ".out"));
-	task.setTaskListener(vtl);
+        VerifyingTaskListener vtl = new VerifyingTaskListener(new File(testSrcDir, self + ".out"));
+        task.setTaskListener(vtl);
 
         if (!task.call())
-	    throw new AssertionError("compilation failed");
+            throw new AssertionError("compilation failed");
 
-	if (vtl.iter.hasNext() || vtl.errors)
-	    throw new AssertionError("comparison against golden file failed.");
+        if (vtl.iter.hasNext() || vtl.errors)
+            throw new AssertionError("comparison against golden file failed.");
     }
 
     public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
-	Filer filer = processingEnv.getFiler();
-	for (TypeElement anno: annos) {
-	    Set<? extends Element> elts = rEnv.getElementsAnnotatedWith(anno);
-	    System.err.println("anno: " + anno);
-	    System.err.println("elts: " + elts);
-	    for (TypeElement te: ElementFilter.typesIn(elts)) {
-		try {
-		    Writer out = filer.createSourceFile(te.getSimpleName() + "Wrapper").openWriter();
-		    out.write("class " + te.getSimpleName() + "Wrapper { }");
-		    out.close();
-		} catch (IOException ex) {
-		    ex.printStackTrace();
-		}
-	    }
-							 
-	}
-	return true;
+        Filer filer = processingEnv.getFiler();
+        for (TypeElement anno: annos) {
+            Set<? extends Element> elts = rEnv.getElementsAnnotatedWith(anno);
+            System.err.println("anno: " + anno);
+            System.err.println("elts: " + elts);
+            for (TypeElement te: ElementFilter.typesIn(elts)) {
+                try {
+                    Writer out = filer.createSourceFile(te.getSimpleName() + "Wrapper").openWriter();
+                    out.write("class " + te.getSimpleName() + "Wrapper { }");
+                    out.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        }
+        return true;
     }
 }
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
-@interface Wrap { 
+@interface Wrap {
 }
 
 
 class VerifyingTaskListener implements TaskListener {
     VerifyingTaskListener(File ref) throws IOException {
-	BufferedReader in = new BufferedReader(new FileReader(ref));
-	String line;
-	List<String> lines = new ArrayList<String>();
-	while ((line = in.readLine()) != null)
-	    lines.add(line);
-	in.close();
-	iter = lines.iterator();
+        BufferedReader in = new BufferedReader(new FileReader(ref));
+        String line;
+        List<String> lines = new ArrayList<String>();
+        while ((line = in.readLine()) != null)
+            lines.add(line);
+        in.close();
+        iter = lines.iterator();
     }
 
     public void started(TaskEvent e) {
-	check("Started " + toString(e));
+        check("Started " + toString(e));
     }
     public void finished(TaskEvent e) {
-	check("Finished " + toString(e));
+        check("Finished " + toString(e));
     }
-    
+
     // similar to TaskEvent.toString(), but just prints basename of the file
     private String toString(TaskEvent e) {
-	JavaFileObject file = e.getSourceFile();
-	return "TaskEvent[" 
-	    + e.getKind() + "," 
-	    + (file == null ? null : new File(file.toUri().getPath()).getName()) + ","
-	    // the compilation unit is identified by the file
-	    + e.getTypeElement() + "]";
+        JavaFileObject file = e.getSourceFile();
+        return "TaskEvent["
+            + e.getKind() + ","
+            + (file == null ? null : new File(file.toUri().getPath()).getName()) + ","
+            // the compilation unit is identified by the file
+            + e.getTypeElement() + "]";
     }
 
     private void check(String s) {
-	System.out.println(s); // write a reference copy of expected output to stdout
+        System.out.println(s); // write a reference copy of expected output to stdout
 
-	String ref = iter.hasNext() ? iter.next() : null;
-	line++;
-	if (!s.equals(ref)) {
-	    if (ref != null)
-		System.err.println(line + ": expected: " + ref);
-	    System.err.println(line + ":    found: " + s);
-	    errors = true;
-	}
+        String ref = iter.hasNext() ? iter.next() : null;
+        line++;
+        if (!s.equals(ref)) {
+            if (ref != null)
+                System.err.println(line + ": expected: " + ref);
+            System.err.println(line + ":    found: " + s);
+            errors = true;
+        }
     }
 
     Iterator<String> iter;

@@ -41,14 +41,14 @@ import com.sun.mirror.util.*;
 public class EnumDecl extends Tester {
 
     public static void main(String[] args) {
-	(new EnumDecl()).run();
+        (new EnumDecl()).run();
     }
 
 
     private EnumDeclaration eDecl;
 
     protected void init() {
-	eDecl = (EnumDeclaration) env.getTypeDeclaration("E");
+        eDecl = (EnumDeclaration) env.getTypeDeclaration("E");
     }
 
 
@@ -56,20 +56,20 @@ public class EnumDecl extends Tester {
 
     @Test(result="enum")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	eDecl.accept(new SimpleDeclarationVisitor() {
-	    public void visitTypeDeclaration(TypeDeclaration t) {
-		res.add("type");
-	    }
-	    public void visitClassDeclaration(ClassDeclaration c) {
-		res.add("class");
-	    }
-	    public void visitEnumDeclaration(EnumDeclaration e) {
-		res.add("enum");
-	    }
-	});
-	return res;
+        eDecl.accept(new SimpleDeclarationVisitor() {
+            public void visitTypeDeclaration(TypeDeclaration t) {
+                res.add("type");
+            }
+            public void visitClassDeclaration(ClassDeclaration c) {
+                res.add("class");
+            }
+            public void visitEnumDeclaration(EnumDeclaration e) {
+                res.add("enum");
+            }
+        });
+        return res;
     }
 
 
@@ -78,29 +78,29 @@ public class EnumDecl extends Tester {
     // 4989987: Verify synthetic enum constructor parameters are not visible
     @Test(result={"E(java.lang.String)"})
     Collection<ConstructorDeclaration> getConstructors() {
-	return eDecl.getConstructors();
+        return eDecl.getConstructors();
     }
 
     // 4989987: Verify synthetic enum constructor parameters are not visible
     @Test(result={"java.lang.String color"})
     Collection<ParameterDeclaration> getConstructorParams() {
-	return eDecl.getConstructors().iterator().next().getParameters();
+        return eDecl.getConstructors().iterator().next().getParameters();
     }
 
     @Test(result={"values()", "valueOf(java.lang.String)"})
     Collection<MethodDeclaration> getMethods() {
-	return eDecl.getMethods();
+        return eDecl.getMethods();
     }
 
     // 5010050: Cannot find parameter names for valueOf(String name) method...
     @Test(result={"java.lang.String name"})
     Collection<ParameterDeclaration> getMethodParams() {
-	for (MethodDeclaration m : eDecl.getMethods()) {
-	    if (m.getSimpleName().equals("valueOf")) {
-		return m.getParameters();
-	    }
-	}
-	throw new AssertionError();
+        for (MethodDeclaration m : eDecl.getMethods()) {
+            if (m.getSimpleName().equals("valueOf")) {
+                return m.getParameters();
+            }
+        }
+        throw new AssertionError();
     }
 
 
@@ -108,7 +108,7 @@ public class EnumDecl extends Tester {
 
     @Test(result={"stop", "slow", "go"})
     Collection<EnumConstantDeclaration> getEnumConstants() {
-	return eDecl.getEnumConstants();
+        return eDecl.getEnumConstants();
     }
 }
 
@@ -122,6 +122,6 @@ enum E {
 
     private String color;
     E(String color) {
-	this.color = color;
+        this.color = color;
     }
 }

@@ -67,7 +67,7 @@ public interface FieldDeclaration extends MemberDeclaration {
      * in source code.
      *
      * @return the text of a constant expression if this field is a
-     *		compile-time constant, or <tt>null</tt> otherwise
+     *          compile-time constant, or <tt>null</tt> otherwise
      */
     String getConstantExpression();
 }

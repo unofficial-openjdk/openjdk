@@ -31,7 +31,7 @@
  */
 
 class ForwardReference_4 {
-  
+
   {
     System.out.println(x);  //illegal forward reference
   }
@@ -39,4 +39,3 @@ class ForwardReference_4 {
   int x = 1;
 
 }
-

@@ -40,22 +40,22 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
 
     private static final String[] ANCHORS = new String[] {
         "interface", "class", "enum", "exception", "error", "annotation_type",
-         "field", "method", "constructor", "enum_constant", 
+         "field", "method", "constructor", "enum_constant",
         "annotation_type_member"
     };
-    
+
     private static final String[] HEADING_KEYS = new String[] {
         "doclet.Deprecated_Interfaces", "doclet.Deprecated_Classes",
         "doclet.Deprecated_Enums", "doclet.Deprecated_Exceptions",
         "doclet.Deprecated_Errors",
-        "doclet.Deprecated_Annotation_Types", 
+        "doclet.Deprecated_Annotation_Types",
         "doclet.Deprecated_Fields",
         "doclet.Deprecated_Methods", "doclet.Deprecated_Constructors",
         "doclet.Deprecated_Enum_Constants",
         "doclet.Deprecated_Annotation_Type_Members"
     };
-    
-    private AbstractMemberWriter[] writers; 
+
+    private AbstractMemberWriter[] writers;
 
     private ConfigurationImpl configuration;
 
@@ -69,13 +69,13 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
         super(configuration, filename);
         this.configuration = configuration;
         NestedClassWriterImpl classW = new NestedClassWriterImpl(this);
-        writers = new AbstractMemberWriter[] 
+        writers = new AbstractMemberWriter[]
             {classW, classW, classW, classW, classW, classW,
             new FieldWriterImpl(this),
             new MethodWriterImpl(this),
             new ConstructorWriterImpl(this),
             new EnumConstantWriterImpl(this),
-            new AnnotationTypeOptionalMemberWriterImpl(this, null)};        
+            new AnnotationTypeOptionalMemberWriterImpl(this, null)};
     }
 
     /**
@@ -110,7 +110,7 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
     protected void generateDeprecatedListFile(DeprecatedAPIListBuilder deprapi)
              throws IOException {
         writeHeader();
-        
+
         bold(configuration.getText("doclet.Contents"));
         ul();
         for (int i = 0; i < DeprecatedAPIListBuilder.NUM_TYPES; i++) {
@@ -118,29 +118,29 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
         }
         ulEnd();
         println();
-        
+
         for (int i = 0; i < DeprecatedAPIListBuilder.NUM_TYPES; i++) {
             if (deprapi.hasDocumentation(i)) {
                 writeAnchor(deprapi, i);
-                writers[i].printDeprecatedAPI(deprapi.getList(i), 
+                writers[i].printDeprecatedAPI(deprapi.getList(i),
                     HEADING_KEYS[i]);
             }
         }
         printDeprecatedFooter();
     }
-    
-    private void writeIndexLink(DeprecatedAPIListBuilder builder, 
+
+    private void writeIndexLink(DeprecatedAPIListBuilder builder,
             int type) {
-        if (builder.hasDocumentation(type)) {        
+        if (builder.hasDocumentation(type)) {
             li();
-            printHyperLink("#" + ANCHORS[type], 
+            printHyperLink("#" + ANCHORS[type],
                 configuration.getText(HEADING_KEYS[type]));
             println();
         }
     }
-    
+
     private void writeAnchor(DeprecatedAPIListBuilder builder, int type) {
-        if (builder.hasDocumentation(type)) {        
+        if (builder.hasDocumentation(type)) {
             anchor(ANCHORS[type]);
         }
     }
@@ -159,7 +159,7 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
         boldText("doclet.Deprecated_API");
         h2End();
         centerEnd();
-        
+
         hr(4, "noshade");
     }
 

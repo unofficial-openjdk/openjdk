@@ -3,15 +3,15 @@ package java.lang;
 public class Float extends Number
 {
     public static Float valueOf(float v) {
-	return new Float(v);
+        return new Float(v);
     }
 
     public Float(float v) {
-	value = v;
+        value = v;
     }
 
     public float floatValue() {
-	return value;
+        return value;
     }
 
     private float value;

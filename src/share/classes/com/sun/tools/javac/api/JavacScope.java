@@ -74,7 +74,7 @@ import static com.sun.source.tree.Tree.Kind.*;
  */
 public class JavacScope implements com.sun.source.tree.Scope {
     protected final Env<AttrContext> env;
-    
+
     /** Creates a new instance of JavacScope */
     JavacScope(Env<AttrContext> env) {
         env.getClass(); // null-check
@@ -106,30 +106,30 @@ public class JavacScope implements com.sun.source.tree.Scope {
     }
 
     public ExecutableElement getEnclosingMethod() {
-	return (env.enclMethod == null ? null : env.enclMethod.sym);
+        return (env.enclMethod == null ? null : env.enclMethod.sym);
     }
 
     public Iterable<? extends Element> getLocalElements() {
         return env.info.getLocalElements();
     }
-    
+
     public Env<AttrContext> getEnv() {
         return env;
     }
-    
+
     public boolean isStarImportScope() {
         return false;
     }
-    
+
     public boolean equals(Object other) {
         if (other instanceof JavacScope) {
             JavacScope s = (JavacScope) other;
-            return (env.equals(s.env) 
+            return (env.equals(s.env)
                 && isStarImportScope() == s.isStarImportScope());
         } else
             return false;
     }
-    
+
     public int hashCode() {
         return env.hashCode() + (isStarImportScope() ? 1 : 0);
     }
@@ -138,4 +138,3 @@ public class JavacScope implements com.sun.source.tree.Scope {
         return "JavacScope[env=" + env + ",starImport=" + isStarImportScope() + "]";
     }
 }
-

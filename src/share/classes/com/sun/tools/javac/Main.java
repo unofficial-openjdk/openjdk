@@ -44,9 +44,9 @@ import java.lang.reflect.*;
 public class Main {
 
     static {
-	ClassLoader loader = Main.class.getClassLoader();
-	if (loader != null)
-	    loader.setPackageAssertionStatus("com.sun.tools.javac", true);
+        ClassLoader loader = Main.class.getClassLoader();
+        if (loader != null)
+            loader.setPackageAssertionStatus("com.sun.tools.javac", true);
     }
 
     /** Unsupported command line interface.
@@ -77,13 +77,13 @@ public class Main {
      * javac, see the man page for details.
      */
     public static int compile(String[] args) {
-	com.sun.tools.javac.main.Main compiler =
-	    new com.sun.tools.javac.main.Main("javac");
-	return compiler.compile(args);
+        com.sun.tools.javac.main.Main compiler =
+            new com.sun.tools.javac.main.Main("javac");
+        return compiler.compile(args);
     }
 
-     
- 
+
+
     /** Programmatic interface to the Java Programming Language
      * compiler, javac.
      *
@@ -95,8 +95,8 @@ public class Main {
      * javac, see the man page for details.
      */
     public static int compile(String[] args, PrintWriter out) {
-	com.sun.tools.javac.main.Main compiler =
-	    new com.sun.tools.javac.main.Main("javac", out);
-	return compiler.compile(args);
+        com.sun.tools.javac.main.Main compiler =
+            new com.sun.tools.javac.main.Main("javac", out);
+        return compiler.compile(args);
     }
 }

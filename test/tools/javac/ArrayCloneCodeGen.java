@@ -38,6 +38,6 @@ public class ArrayCloneCodeGen {
     private String[] args = null;
 
     public String[] getArgs() {
-	return (String []) (args.clone());
+        return (String []) (args.clone());
     }
 }

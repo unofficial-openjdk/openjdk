@@ -26,66 +26,66 @@ class ProtectedMemberAccess4 extends pkg.SuperClass {
 
   static pkg.SuperClass sx = new pkg.SuperClass();
 
-  int i = x.pi;					// illegal
-  int j = x.spi;				// ok
+  int i = x.pi;                                 // illegal
+  int j = x.spi;                                // ok
 
-  int n = sx.pi;				// illegal
-  int m = sx.spi;				// ok
+  int n = sx.pi;                                // illegal
+  int m = sx.spi;                               // ok
 
-  static int sn = sx.pi;			// illegal
-  static int sm = sx.spi;			// ok
+  static int sn = sx.pi;                        // illegal
+  static int sm = sx.spi;                       // ok
 
-  int w = x.pm();				// illegal
-  int y = x.spm();				// ok
+  int w = x.pm();                               // illegal
+  int y = x.spm();                              // ok
 
-  int u = sx.pm();				// illegal
-  int v = sx.spm();				// ok
+  int u = sx.pm();                              // illegal
+  int v = sx.spm();                             // ok
 
-  pkg.SuperClass.pC  obj1;			// ok
-  pkg.SuperClass.spC obj2;			// ok
+  pkg.SuperClass.pC  obj1;                      // ok
+  pkg.SuperClass.spC obj2;                      // ok
 
-  pkg.SuperClass.pI  obj3;		        // ok
-  pkg.SuperClass.spI obj4;			// ok
+  pkg.SuperClass.pI  obj3;                      // ok
+  pkg.SuperClass.spI obj4;                      // ok
 
-  Object o1 = (pkg.SuperClass.pC) null;	        // ok
-  Object o2 = (pkg.SuperClass.spC) null;	// ok
+  Object o1 = (pkg.SuperClass.pC) null;         // ok
+  Object o2 = (pkg.SuperClass.spC) null;        // ok
 
-  Object o3 = (pkg.SuperClass.pI) null;		// ok
-  Object o4 = (pkg.SuperClass.spI) null;	// ok
+  Object o3 = (pkg.SuperClass.pI) null;         // ok
+  Object o4 = (pkg.SuperClass.spI) null;        // ok
 
-  class C1 extends pkg.SuperClass.pC {}	        // ok
-  class C2 extends pkg.SuperClass.spC {}	// ok
+  class C1 extends pkg.SuperClass.pC {}         // ok
+  class C2 extends pkg.SuperClass.spC {}        // ok
 
-  interface I1 extends pkg.SuperClass.pI {}	// ok
-  interface I2 extends pkg.SuperClass.spI {}	// ok
+  interface I1 extends pkg.SuperClass.pI {}     // ok
+  interface I2 extends pkg.SuperClass.spI {}    // ok
 
   static {
 
     pkg.SuperClass lx = new pkg.SuperClass();
 
-    sx.pi  = 1;					// illegal
-    sx.spi = 2;					// ok
+    sx.pi  = 1;                                 // illegal
+    sx.spi = 2;                                 // ok
 
-    lx.pi  = 1;					// illegal
-    lx.spi = 2;					// ok
+    lx.pi  = 1;                                 // illegal
+    lx.spi = 2;                                 // ok
 
-    int n = sx.pi;				// illegal
-    int m = sx.spi;				// ok
+    int n = sx.pi;                              // illegal
+    int m = sx.spi;                             // ok
 
-    int k = lx.pi;				// illegal
-    int l = lx.spi;				// ok
+    int k = lx.pi;                              // illegal
+    int l = lx.spi;                             // ok
 
-    int u = sx.pm();				// illegal
-    int v = sx.spm();				// ok
+    int u = sx.pm();                            // illegal
+    int v = sx.spm();                           // ok
 
-    int w = lx.pm();   	       	       	       	// illegal
-    int z = lx.spm();			        // ok
+    int w = lx.pm();                            // illegal
+    int z = lx.spm();                           // ok
 
-    pkg.SuperClass.pC  obj1;		        // ok
-    pkg.SuperClass.spC obj2;		        // ok
+    pkg.SuperClass.pC  obj1;                    // ok
+    pkg.SuperClass.spC obj2;                    // ok
 
-    pkg.SuperClass.pI  obj3;		        // ok
-    pkg.SuperClass.spI obj4;		        // ok
+    pkg.SuperClass.pI  obj3;                    // ok
+    pkg.SuperClass.spI obj4;                    // ok
 
     Object o1 = (pkg.SuperClass.pC) null;       // ok
     Object o2 = (pkg.SuperClass.spC) null;      // ok
@@ -105,47 +105,47 @@ class ProtectedMemberAccess4 extends pkg.SuperClass {
 
     pkg.SuperClass lx = new pkg.SuperClass();
 
-    x.pi  = 1;				        // illegal
-    x.spi = 2;				        // ok
+    x.pi  = 1;                                  // illegal
+    x.spi = 2;                                  // ok
 
-    sx.pi  = 1;					// illegal
-    sx.spi = 2;					// ok
+    sx.pi  = 1;                                 // illegal
+    sx.spi = 2;                                 // ok
 
-    lx.pi  = 1;					// illegal
-    lx.spi = 2;					// ok
+    lx.pi  = 1;                                 // illegal
+    lx.spi = 2;                                 // ok
 
-    int t = x.pm();				// illegal
-    int y = x.spm();				// ok
+    int t = x.pm();                             // illegal
+    int y = x.spm();                            // ok
 
-    int u = sx.pm();			        // illegal
-    int v = sx.spm();			       	// ok
+    int u = sx.pm();                            // illegal
+    int v = sx.spm();                           // ok
 
-    int w = lx.pm();				// illegal
-    int z = lx.spm();				// ok
+    int w = lx.pm();                            // illegal
+    int z = lx.spm();                           // ok
 
-    int i = x.pi;				// illegal
-    int j = x.spi;				// ok
+    int i = x.pi;                               // illegal
+    int j = x.spi;                              // ok
 
-    int n = sx.pi;				// illegal
-    int m = sx.spi;				// ok
+    int n = sx.pi;                              // illegal
+    int m = sx.spi;                             // ok
 
-    int k = lx.pi;			        // illegal
-    int l = lx.spi;				// ok
+    int k = lx.pi;                              // illegal
+    int l = lx.spi;                             // ok
 
-    pkg.SuperClass.pC  obj1;		        // ok
-    pkg.SuperClass.spC obj2;		        // ok
+    pkg.SuperClass.pC  obj1;                    // ok
+    pkg.SuperClass.spC obj2;                    // ok
 
-    pkg.SuperClass.pI  obj3;		        // ok
-    pkg.SuperClass.spI obj4;			// ok
+    pkg.SuperClass.pI  obj3;                    // ok
+    pkg.SuperClass.spI obj4;                    // ok
 
     Object o1 = (pkg.SuperClass.pC) null;       // ok
-    Object o2 = (pkg.SuperClass.spC) null;	// ok
+    Object o2 = (pkg.SuperClass.spC) null;      // ok
 
-    Object o3 = (pkg.SuperClass.pI) null;	// ok
-    Object o4 = (pkg.SuperClass.spI) null;	// ok
+    Object o3 = (pkg.SuperClass.pI) null;       // ok
+    Object o4 = (pkg.SuperClass.spI) null;      // ok
 
     class C1 extends pkg.SuperClass.pC {}       // ok
-    class C2 extends pkg.SuperClass.spC {}	// ok
+    class C2 extends pkg.SuperClass.spC {}      // ok
 
     //interface I1 extends pkg.SuperClass.pI {}
     //interface I2 extends pkg.SuperClass.spI {}
@@ -154,35 +154,35 @@ class ProtectedMemberAccess4 extends pkg.SuperClass {
 
   class Inner {
 
-    int i = x.pi;				// illegal
-    int j = x.spi;				// ok
+    int i = x.pi;                               // illegal
+    int j = x.spi;                              // ok
 
-    int n = sx.pi;				// illegal
-    int m = sx.spi;				// ok
+    int n = sx.pi;                              // illegal
+    int m = sx.spi;                             // ok
 
     //static int sn = sx.pi;
     //static int sm = sx.spi;
 
-    int w = x.pm();				// illegal
-    int y = x.spm();			        // ok
+    int w = x.pm();                             // illegal
+    int y = x.spm();                            // ok
 
-    int u = sx.pm();				// illegal
-    int v = sx.spm();			        // ok
+    int u = sx.pm();                            // illegal
+    int v = sx.spm();                           // ok
 
-    pkg.SuperClass.pC  obj1;		        // ok
-    pkg.SuperClass.spC obj2;		        // ok
+    pkg.SuperClass.pC  obj1;                    // ok
+    pkg.SuperClass.spC obj2;                    // ok
 
-    pkg.SuperClass.pI  obj3;			// ok
-    pkg.SuperClass.spI obj4;		        // ok
+    pkg.SuperClass.pI  obj3;                    // ok
+    pkg.SuperClass.spI obj4;                    // ok
 
     Object o1 = (pkg.SuperClass.pC) null;       // ok
-    Object o2 = (pkg.SuperClass.spC) null;	// ok
+    Object o2 = (pkg.SuperClass.spC) null;      // ok
 
-    Object o3 = (pkg.SuperClass.pI) null;	// ok
+    Object o3 = (pkg.SuperClass.pI) null;       // ok
     Object o4 = (pkg.SuperClass.spI) null;      // ok
 
     class C1 extends pkg.SuperClass.pC {}       // ok
-    class C2 extends pkg.SuperClass.spC {}	// ok
+    class C2 extends pkg.SuperClass.spC {}      // ok
 
     //interface I1 extends pkg.SuperClass.pI {}
     //interface I2 extends pkg.SuperClass.spI {}
@@ -194,47 +194,47 @@ class ProtectedMemberAccess4 extends pkg.SuperClass {
 
       pkg.SuperClass lx = new pkg.SuperClass();
 
-      x.pi  = 1;				// illegal
-      x.spi = 2;				// ok
+      x.pi  = 1;                                // illegal
+      x.spi = 2;                                // ok
 
-      sx.pi  = 1;				// illegal
-      sx.spi = 2;				// ok
+      sx.pi  = 1;                               // illegal
+      sx.spi = 2;                               // ok
 
-      lx.pi  = 1;				// illegal
-      lx.spi = 2;				// ok
+      lx.pi  = 1;                               // illegal
+      lx.spi = 2;                               // ok
 
-      int t = x.pm();			        // illegal
-      int y = x.spm();				// ok
+      int t = x.pm();                           // illegal
+      int y = x.spm();                          // ok
 
       int u = sx.pm();                          // illegal
-      int v = sx.spm();			        // ok
+      int v = sx.spm();                         // ok
 
-      int w = lx.pm();				// illegal
-      int z = lx.spm();				// ok
+      int w = lx.pm();                          // illegal
+      int z = lx.spm();                         // ok
 
-      int i = x.pi;			        // illegal
-      int j = x.spi;				// ok
+      int i = x.pi;                             // illegal
+      int j = x.spi;                            // ok
 
-      int n = sx.pi;				// illegal
-      int m = sx.spi;				// ok
+      int n = sx.pi;                            // illegal
+      int m = sx.spi;                           // ok
 
-      int k = lx.pi;			       	// illegal
-      int l = lx.spi;				// ok
+      int k = lx.pi;                            // illegal
+      int l = lx.spi;                           // ok
 
-      pkg.SuperClass.pC  obj1;		        // ok
-      pkg.SuperClass.spC obj2;		        // ok
+      pkg.SuperClass.pC  obj1;                  // ok
+      pkg.SuperClass.spC obj2;                  // ok
 
-      pkg.SuperClass.pI  obj3;		        // ok
-      pkg.SuperClass.spI obj4;			// ok
+      pkg.SuperClass.pI  obj3;                  // ok
+      pkg.SuperClass.spI obj4;                  // ok
 
-      Object o1 = (pkg.SuperClass.pC) null;	// ok
+      Object o1 = (pkg.SuperClass.pC) null;     // ok
       Object o2 = (pkg.SuperClass.spC) null;    // ok
 
       Object o3 = (pkg.SuperClass.pI) null;     // ok
-      Object o4 = (pkg.SuperClass.spI) null;	// ok
+      Object o4 = (pkg.SuperClass.spI) null;    // ok
 
-      class C1 extends pkg.SuperClass.pC {}	// ok
-      class C2 extends pkg.SuperClass.spC {}	// ok
+      class C1 extends pkg.SuperClass.pC {}     // ok
+      class C2 extends pkg.SuperClass.spC {}    // ok
 
       //interface I1 extends pkg.SuperClass.pI {}
       //interface I2 extends pkg.SuperClass.spI {}

@@ -201,7 +201,7 @@ public class Main {
             ac++;
 
             int j;
-            // quick hack to speed up file processing: 
+            // quick hack to speed up file processing:
             // if the option does not begin with '-', there is no need to check
             // most of the compiler options.
             int firstOptionToCheck = flag.charAt(0) == '-' ? 0 : recognizedOptions.length-1;
@@ -228,7 +228,7 @@ public class Main {
                     return null;
             }
         }
-        
+
         if (!checkDirectory("-d"))
             return null;
         if (!checkDirectory("-s"))

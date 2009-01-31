@@ -42,12 +42,12 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 
-public class ValueTaglet extends BaseInlineTaglet {    
+public class ValueTaglet extends BaseInlineTaglet {
 
     /**
      * Construct a new ValueTaglet.
@@ -55,7 +55,7 @@ public class ValueTaglet extends BaseInlineTaglet {
     public ValueTaglet() {
         name = "value";
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Fields.
@@ -64,7 +64,7 @@ public class ValueTaglet extends BaseInlineTaglet {
     public boolean inMethod() {
         return true;
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Fields.
@@ -73,7 +73,7 @@ public class ValueTaglet extends BaseInlineTaglet {
     public boolean inConstructor() {
         return true;
     }
-    
+
     /**
      * Will return false because this inline tag may
      * only appear in Fields.
@@ -100,17 +100,17 @@ public class ValueTaglet extends BaseInlineTaglet {
     public boolean inType() {
         return true;
     }
-    
+
     /**
      * Given the name of the field, return the corresponding FieldDoc.
      *
      * @param config the current configuration of the doclet.
      * @param tag the value tag.
-     * @param name the name of the field to search for.  The name should be in 
-     * <qualified class name>#<field name> format. If the class name is omitted, 
+     * @param name the name of the field to search for.  The name should be in
+     * <qualified class name>#<field name> format. If the class name is omitted,
      * it is assumed that the field is in the current class.
      *
-     * @return the corresponding FieldDoc. If the name is null or empty string, 
+     * @return the corresponding FieldDoc. If the name is null or empty string,
      * return field that the value tag was used in.
      *
      * @throws DocletAbortException if the value tag does not specify a name to
@@ -131,14 +131,14 @@ public class ValueTaglet extends BaseInlineTaglet {
         ClassDoc cd = null;
         if (st.countTokens() == 1) {
             //Case 2:  @value in same class.
-            Doc holder = tag.holder();          
+            Doc holder = tag.holder();
             if (holder instanceof MemberDoc) {
                 cd = ((MemberDoc) holder).containingClass();
             } else if (holder instanceof ClassDoc) {
                 cd = (ClassDoc) holder;
             }
             memberName = st.nextToken();
-        } else { 
+        } else {
             //Case 3: @value in different class.
             cd = config.root.classNamed(st.nextToken());
             memberName = st.nextToken();
@@ -163,16 +163,16 @@ public class ValueTaglet extends BaseInlineTaglet {
             writer.configuration(), tag, tag.text());
         if (field == null) {
             //Reference is unknown.
-            writer.getMsgRetriever().warning(tag.holder().position(), 
+            writer.getMsgRetriever().warning(tag.holder().position(),
                 "doclet.value_tag_invalid_reference", tag.text());
         } else if (field.constantValue() != null) {
-            return writer.valueTagOutput(field, 
-                Util.escapeHtmlChars(field.constantValueExpression()), 
+            return writer.valueTagOutput(field,
+                Util.escapeHtmlChars(field.constantValueExpression()),
                 ! field.equals(tag.holder()));
         } else {
             //Referenced field is not a constant.
-            writer.getMsgRetriever().warning(tag.holder().position(), 
-                "doclet.value_tag_invalid_constant", field.name());            
+            writer.getMsgRetriever().warning(tag.holder().position(),
+                "doclet.value_tag_invalid_constant", field.name());
         }
         return writer.getOutputInstance();
     }

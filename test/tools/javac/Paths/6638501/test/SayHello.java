@@ -6,4 +6,3 @@ public class SayHello extends HelloImpl {
 }
 
 }
-

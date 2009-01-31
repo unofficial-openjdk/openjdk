@@ -39,33 +39,33 @@ import com.sun.javadoc.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @since 1.5
  * @author Jamie Ho
  */
 
 public class LegacyTaglet implements Taglet {
-    
+
     private com.sun.tools.doclets.Taglet legacyTaglet;
-    
+
     public LegacyTaglet(com.sun.tools.doclets.Taglet t) {
         legacyTaglet = t;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public boolean inField() {
         return legacyTaglet.isInlineTag() || legacyTaglet.inField();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public boolean inConstructor() {
         return legacyTaglet.isInlineTag() || legacyTaglet.inConstructor();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -79,7 +79,7 @@ public class LegacyTaglet implements Taglet {
     public boolean inOverview() {
         return legacyTaglet.isInlineTag() || legacyTaglet.inOverview();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -103,18 +103,18 @@ public class LegacyTaglet implements Taglet {
     public boolean isInlineTag() {
         return legacyTaglet.isInlineTag();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getName() {
         return legacyTaglet.getName();
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public TagletOutput getTagletOutput(Tag tag, TagletWriter writer) 
+    public TagletOutput getTagletOutput(Tag tag, TagletWriter writer)
             throws IllegalArgumentException {
         TagletOutput output = writer.getOutputInstance();
         output.setOutput(legacyTaglet.toString(tag));
@@ -124,11 +124,10 @@ public class LegacyTaglet implements Taglet {
     /**
      * {@inheritDoc}
      */
-    public TagletOutput getTagletOutput(Doc holder, TagletWriter writer) 
+    public TagletOutput getTagletOutput(Doc holder, TagletWriter writer)
             throws IllegalArgumentException {
         TagletOutput output = writer.getOutputInstance();
         output.setOutput(legacyTaglet.toString(holder.tags(getName())));
         return output;
     }
 }
-

@@ -135,7 +135,7 @@ public class Pretty extends JCTree.Visitor {
 
     /** Exception to propogate IOException through visitXXX methods */
     private static class UncheckedIOException extends Error {
-	static final long serialVersionUID = -4032692679158424751L;
+        static final long serialVersionUID = -4032692679158424751L;
         UncheckedIOException(IOException e) {
             super(e.getMessage(), e);
         }
@@ -1048,12 +1048,12 @@ public class Pretty extends JCTree.Visitor {
                             String.valueOf((char)((Number)tree.value).intValue())) +
                             "\'");
                     break;
-		case TypeTags.BOOLEAN:
-		    print(((Number)tree.value).intValue() == 1 ? "true" : "false");
-		    break;
-		case TypeTags.BOT:
-		    print("null");
-		    break;
+                case TypeTags.BOOLEAN:
+                    print(((Number)tree.value).intValue() == 1 ? "true" : "false");
+                    break;
+                case TypeTags.BOT:
+                    print("null");
+                    break;
                 default:
                     print("\"" + Convert.quote(tree.value.toString()) + "\"");
                     break;

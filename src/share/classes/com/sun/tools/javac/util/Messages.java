@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.text.MessageFormat;
 
-/** 
+/**
  *  Support for localized messages.
  *
  *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
@@ -40,14 +40,14 @@ import java.text.MessageFormat;
 public class Messages {
     /** The context key for the Messages object. */
     protected static final Context.Key<Messages> messagesKey =
-	new Context.Key<Messages>();
+        new Context.Key<Messages>();
 
     /** Get the Messages instance for this context. */
     public static Messages instance(Context context) {
-	Messages instance = context.get(messagesKey);
-	if (instance == null)
-	    instance = new Messages(context);
-	return instance;
+        Messages instance = context.get(messagesKey);
+        if (instance == null)
+            instance = new Messages(context);
+        return instance;
     }
 
     private List<ResourceBundle> bundles = List.nil();
@@ -55,103 +55,103 @@ public class Messages {
     /** Creates a Messages object.
      */
     public Messages(Context context) {
-	context.put(messagesKey, this);
-	add(getDefaultBundle());
+        context.put(messagesKey, this);
+        add(getDefaultBundle());
     }
 
     /** Creates a Messages object.
      * @param bundle the name to identify the resource buundle of localized messages.
      */
     public Messages(String bundleName) throws MissingResourceException {
-	add(bundleName);
+        add(bundleName);
     }
 
     /** Creates a Messages object.
      * @param bundle the name to identif the resource buundle of localized messages.
      */
     public Messages(ResourceBundle bundle) throws MissingResourceException {
-	add(bundle);
+        add(bundle);
     }
 
     /** Add a new resource bundle to the list that is searched for localized messages.
      * @param bundle the name to identify the resource bundle of localized messages.
      */
     public void add(String bundleName) throws MissingResourceException {
-	add(ResourceBundle.getBundle(bundleName));
+        add(ResourceBundle.getBundle(bundleName));
     }
-    
+
     /** Add a new resource bundle to the list that is searched for localized messages.
      * Resource bundles will be searched in reverse order in which they are added.
      * @param bundle the bundle of localized messages.
      */
     public void add(ResourceBundle bundle) {
-	bundles = bundles.prepend(bundle);
+        bundles = bundles.prepend(bundle);
     }
-    
+
     /** Gets the localized string corresponding to a key, formatted with a set of args.
      */
     public String getLocalizedString(String key, Object... args) {
-	return getLocalizedString(bundles, key, args);
+        return getLocalizedString(bundles, key, args);
     }
 
 
     /* Static access:
      * javac has a firmly entrenched notion of a default message bundle
      * which it can access from any static context. This is used to get
-     * easy access to simple localized strings. 
+     * easy access to simple localized strings.
      */
 
     private static final String defaultBundleName =
-	"com.sun.tools.javac.resources.compiler";
+        "com.sun.tools.javac.resources.compiler";
     private static ResourceBundle defaultBundle;
     private static Messages defaultMessages;
-    
 
-    /** 
+
+    /**
      * Gets a localized string from the compiler's default bundle.
      */
     // used to support legacy Log.getLocalizedString
     static String getDefaultLocalizedString(String key, Object... args) {
-	return getLocalizedString(List.of(getDefaultBundle()), key, args);
+        return getLocalizedString(List.of(getDefaultBundle()), key, args);
     }
 
     // used to support legacy static Diagnostic.fragment
     static Messages getDefaultMessages() {
-	if (defaultMessages == null)
-	    defaultMessages = new Messages(getDefaultBundle());
-	return defaultMessages;
+        if (defaultMessages == null)
+            defaultMessages = new Messages(getDefaultBundle());
+        return defaultMessages;
     }
 
     public static ResourceBundle getDefaultBundle() {
-	try {
-	    if (defaultBundle == null) 
-		defaultBundle = ResourceBundle.getBundle(defaultBundleName);
-	    return defaultBundle;
-	}
-	catch (MissingResourceException e) {
-	    throw new Error("Fatal: Resource for compiler is missing", e);
-	}
+        try {
+            if (defaultBundle == null)
+                defaultBundle = ResourceBundle.getBundle(defaultBundleName);
+            return defaultBundle;
+        }
+        catch (MissingResourceException e) {
+            throw new Error("Fatal: Resource for compiler is missing", e);
+        }
     }
 
     private static String getLocalizedString(List<ResourceBundle> bundles,
-					     String key,
-					     Object... args) {
+                                             String key,
+                                             Object... args) {
        String msg = null;
-	for (List<ResourceBundle> l = bundles; l.nonEmpty() && msg == null; l = l.tail) {
-	    ResourceBundle rb = l.head;
-	    try {
-		msg = rb.getString(key);
-	    } 
-	    catch (MissingResourceException e) {
-		// ignore, try other bundles in list
-	    }
-	}
-	if (msg == null) {
-	    msg = "compiler message file broken: key=" + key +
-		" arguments={0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}";
-	}
-	return MessageFormat.format(msg, args);
+        for (List<ResourceBundle> l = bundles; l.nonEmpty() && msg == null; l = l.tail) {
+            ResourceBundle rb = l.head;
+            try {
+                msg = rb.getString(key);
+            }
+            catch (MissingResourceException e) {
+                // ignore, try other bundles in list
+            }
+        }
+        if (msg == null) {
+            msg = "compiler message file broken: key=" + key +
+                " arguments={0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}";
+        }
+        return MessageFormat.format(msg, args);
     }
 
-    
+
 }

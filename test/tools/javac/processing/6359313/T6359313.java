@@ -40,6 +40,6 @@ import javax.lang.model.element.TypeElement;
 public class T6359313 extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
-	return true;
+        return true;
     }
 }

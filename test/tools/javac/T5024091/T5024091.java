@@ -12,4 +12,3 @@ public class T5024091 {
         String str = "S = " + stringArray[0];
     }
 }
-

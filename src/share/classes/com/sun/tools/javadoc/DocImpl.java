@@ -53,10 +53,10 @@ abstract class DocImpl implements Doc, Comparable<Object> {
     /**
      *  The complex comment object, lazily initialized.
      */
-    private Comment comment;  
+    private Comment comment;
 
     /**
-     * The cached sort key, to take care of Natural Language Text sorting. 
+     * The cached sort key, to take care of Natural Language Text sorting.
      */
     private CollationKey collationkey = null;
 
@@ -84,11 +84,11 @@ abstract class DocImpl implements Doc, Comparable<Object> {
     }
 
     /**
-     * So subclasses have the option to do lazy initialization of 
+     * So subclasses have the option to do lazy initialization of
      * "documentation" string.
      */
     String documentation() {
-	if (documentation == null) documentation = "";
+        if (documentation == null) documentation = "";
         return documentation;
     }
 
@@ -132,7 +132,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
 
     /**
      * Return the see also tags in this Doc item.
-     * 
+     *
      * @return an array of SeeTag containing all &#64see tags.
      */
     public SeeTag[] seeTags() {
@@ -169,8 +169,8 @@ abstract class DocImpl implements Doc, Comparable<Object> {
         input.read(filecontents, 0, filesize);
         input.close();
         String encoding = env.getEncoding();
-        String rawDoc = (encoding!=null) 
-            ? new String(filecontents, encoding) 
+        String rawDoc = (encoding!=null)
+            ? new String(filecontents, encoding)
             : new String(filecontents);
         String upper = null;
         int bodyIdx = rawDoc.indexOf("<body");
@@ -181,7 +181,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
                 bodyIdx = upper.indexOf("<BODY");
                 if (bodyIdx == -1) {
                     env.error(SourcePositionImpl.make(filename, Position.NOPOS, null),
-				       "javadoc.Body_missing_from_html_file");
+                                       "javadoc.Body_missing_from_html_file");
                     return "";
                 }
             }
@@ -189,7 +189,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
         bodyIdx = rawDoc.indexOf('>', bodyIdx);
         if (bodyIdx == -1) {
             env.error(SourcePositionImpl.make(filename, Position.NOPOS, null),
-			       "javadoc.Body_missing_from_html_file");
+                               "javadoc.Body_missing_from_html_file");
             return "";
         }
         ++bodyIdx;
@@ -203,7 +203,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
                 endIdx = upper.indexOf("</BODY", bodyIdx);
                 if (endIdx == -1) {
                     env.error(SourcePositionImpl.make(filename, Position.NOPOS, null),
-				       "javadoc.End_body_missing_from_html_file");
+                                       "javadoc.End_body_missing_from_html_file");
                     return "";
                 }
             }
@@ -214,16 +214,16 @@ abstract class DocImpl implements Doc, Comparable<Object> {
     /**
      * Return the full unprocessed text of the comment.  Tags
      * are included as text.  Used mainly for store and retrieve
-     * operations like internalization. 
+     * operations like internalization.
      */
     public String getRawCommentText() {
         return documentation();
     }
-    
+
     /**
      * Set the full unprocessed text of the comment.  Tags
      * are included as text.  Used mainly for store and retrieve
-     * operations like internalization. 
+     * operations like internalization.
      */
     public void setRawCommentText(String rawDocumentation) {
         documentation = rawDocumentation;
@@ -241,13 +241,13 @@ abstract class DocImpl implements Doc, Comparable<Object> {
     }
 
     /**
-     * Generate a key for sorting. 
+     * Generate a key for sorting.
      * <p>
      * Default is name().
      */
     CollationKey generateKey() {
-	String k = name();
-	// System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
+        String k = name();
+        // System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
         return env.doclocale.collator.getCollationKey(k);
     }
 
@@ -278,15 +278,15 @@ abstract class DocImpl implements Doc, Comparable<Object> {
      * than, equal to, or greater than the given Object.
      * <p>
      * Included so that Doc item are java.lang.Comparable.
-     * 
+     *
      * @param   o the <code>Object</code> to be compared.
      * @return  a negative integer, zero, or a positive integer as this Object
-     *		is less than, equal to, or greater than the given Object.
+     *          is less than, equal to, or greater than the given Object.
      * @exception ClassCastException the specified Object's type prevents it
-     *		  from being compared to this Object. 
+     *            from being compared to this Object.
      */
     public int compareTo(Object obj) {
-	// System.out.println("COMPARE \"" + this + "\" to \"" + obj + "\" = " + key().compareTo(((DocImpl)obj).key()));
+        // System.out.println("COMPARE \"" + this + "\" to \"" + obj + "\" = " + key().compareTo(((DocImpl)obj).key()));
         return key().compareTo(((DocImpl)obj).key());
     }
 
@@ -305,7 +305,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
      * @return true if it represents an enum constant
      */
     public boolean isEnumConstant() {
-	return false;
+        return false;
     }
 
     /**
@@ -335,7 +335,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
      * @return true if it represents an annotation type element
      */
     public boolean isAnnotationTypeElement() {
-	return false;
+        return false;
     }
 
     /**
@@ -407,15 +407,14 @@ abstract class DocImpl implements Doc, Comparable<Object> {
         return false;
     }
 
-    /** 
+    /**
      * return true if this Doc is include in the active set.
      */
     public abstract boolean isIncluded();
 
     /**
-     * Return the source position of the entity, or null if 
+     * Return the source position of the entity, or null if
      * no position is available.
      */
     public SourcePosition position() { return null; }
 }
-

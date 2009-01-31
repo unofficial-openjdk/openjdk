@@ -40,19 +40,19 @@ import static com.sun.mirror.util.DeclarationVisitors.*;
  */
 public class ErrorAPF implements AnnotationProcessorFactory {
     static class ErrorAP implements AnnotationProcessor {
-	AnnotationProcessorEnvironment env;
-	ErrorAP(AnnotationProcessorEnvironment env) {
-	    this.env = env;
-	}
+        AnnotationProcessorEnvironment env;
+        ErrorAP(AnnotationProcessorEnvironment env) {
+            this.env = env;
+        }
 
-	public void process() {
-	    Messager messager = env.getMessager();
-	    messager.printError("It's a mad, mad, mad, mad world");
-	    messager.printError("Something wicked this way comes");
-	    
-	    for(TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations())
-		messager.printError(typeDecl.getPosition(), "Boring class name");
-	}
+        public void process() {
+            Messager messager = env.getMessager();
+            messager.printError("It's a mad, mad, mad, mad world");
+            messager.printError("Something wicked this way comes");
+
+            for(TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations())
+                messager.printError(typeDecl.getPosition(), "Boring class name");
+        }
     }
 
     static Collection<String> supportedTypes;

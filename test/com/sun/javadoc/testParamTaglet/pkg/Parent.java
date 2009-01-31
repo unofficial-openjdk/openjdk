@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 package pkg;
 
 public class Parent {
-    
+
     /**
      * Just a dummy method that is here for inheritDoc testing purposes.
      */

@@ -56,13 +56,13 @@ import com.sun.tools.javac.util.Position;
  */
 public class DocEnv {
     protected static final Context.Key<DocEnv> docEnvKey =
-	new Context.Key<DocEnv>();
+        new Context.Key<DocEnv>();
 
     public static DocEnv instance(Context context) {
-	DocEnv instance = context.get(docEnvKey);
-	if (instance == null)
-	    instance = new DocEnv(context);
-	return instance;
+        DocEnv instance = context.get(docEnvKey);
+        if (instance == null)
+            instance = new DocEnv(context);
+        return instance;
     }
 
     private Messager messager;
@@ -75,7 +75,7 @@ public class DocEnv {
     /** Referenced directly in RootDocImpl. */
     JavadocClassReader reader;
 
-    /** The compiler's attribution phase (needed to evaluate 
+    /** The compiler's attribution phase (needed to evaluate
      *  constant initializers). */
     Attr attr;
 
@@ -93,11 +93,11 @@ public class DocEnv {
     /** Access filter (public, protected, ...).  */
     ModifierFilter showAccess;
 
-    private ClassDocImpl runtimeException; 
+    private ClassDocImpl runtimeException;
 
     /** True if we are using a sentence BreakIterator. */
     boolean breakiterator;
-    
+
     /**
      * True if we do not want to print any notifications at all.
      */
@@ -111,9 +111,9 @@ public class DocEnv {
 
     /** Does the doclet only expect pre-1.5 doclet API? */
     boolean legacyDoclet = true;
-    
+
     /**
-     * Set this to true if you would like to not emit any errors, warnings and 
+     * Set this to true if you would like to not emit any errors, warnings and
      * notices.
      */
     private boolean silent = false;
@@ -124,49 +124,49 @@ public class DocEnv {
      * @param context      Context for this javadoc instance.
      */
     private DocEnv(Context context) {
-	context.put(docEnvKey, this);
+        context.put(docEnvKey, this);
 
         messager = Messager.instance0(context);
-	syms = Symtab.instance(context);
-	reader = JavadocClassReader.instance0(context);
-	enter = JavadocEnter.instance0(context);
-	attr = Attr.instance(context);
-	names = Name.Table.instance(context);
-	externalizableSym = reader.enterClass(names.fromString("java.io.Externalizable"));
-	chk = Check.instance(context);
-	types = Types.instance(context);
+        syms = Symtab.instance(context);
+        reader = JavadocClassReader.instance0(context);
+        enter = JavadocEnter.instance0(context);
+        attr = Attr.instance(context);
+        names = Name.Table.instance(context);
+        externalizableSym = reader.enterClass(names.fromString("java.io.Externalizable"));
+        chk = Check.instance(context);
+        types = Types.instance(context);
 
-	// Default.  Should normally be reset with setLocale.
+        // Default.  Should normally be reset with setLocale.
         this.doclocale = new DocLocale(this, "", breakiterator);
     }
-    
+
     public void setSilent(boolean silent) {
         this.silent = silent;
     }
 
-    /** 
+    /**
      * Look up ClassDoc by qualified name.
      */
     public ClassDocImpl lookupClass(String name) {
-	ClassSymbol c = getClassSymbol(name);
-	if (c != null) {
-	    return getClassDoc(c);
-	} else {
-	    return null;
-	}
+        ClassSymbol c = getClassSymbol(name);
+        if (c != null) {
+            return getClassDoc(c);
+        } else {
+            return null;
+        }
     }
 
-    /** 
+    /**
      * Load ClassDoc by qualified name.
      */
     public ClassDocImpl loadClass(String name) {
-	try {
-	    ClassSymbol c = reader.loadClass(names.fromString(name));
-	    return getClassDoc(c);
-	} catch (CompletionFailure ex) {
-	    chk.completionError(null, ex);
-	    return null;
-	}
+        try {
+            ClassSymbol c = reader.loadClass(names.fromString(name));
+            return getClassDoc(c);
+        } catch (CompletionFailure ex) {
+            chk.completionError(null, ex);
+            return null;
+        }
     }
 
     /**
@@ -178,96 +178,96 @@ public class DocEnv {
         //### instead a dummy created for error recovery.
         //### Should investigate this.
         PackageSymbol p = syms.packages.get(names.fromString(name));
-	ClassSymbol c = getClassSymbol(name);
-	if (p != null && c == null) {
-	    return getPackageDoc(p);
-	} else {
-	    return null;
-	}
+        ClassSymbol c = getClassSymbol(name);
+        if (p != null && c == null) {
+            return getPackageDoc(p);
+        } else {
+            return null;
+        }
     }
-	// where
-	/** Retrieve class symbol by fully-qualified name.
-	 */
-	ClassSymbol getClassSymbol(String name) {
-	    // Name may contain nested class qualification.
-	    // Generate candidate flatnames with successively shorter
-	    // package qualifiers and longer nested class qualifiers.
-	    int nameLen = name.length();
-	    char[] nameChars = name.toCharArray();
-	    int idx = name.length();
-	    for (;;) {
-		ClassSymbol s = syms.classes.get(names.fromChars(nameChars, 0, nameLen));
-		if (s != null) 
-		    return s; // found it!
-		idx = name.substring(0, idx).lastIndexOf('.');
-		if (idx < 0) break;
-		nameChars[idx] = '$';
-	    }
-	    return null;
-	}
+        // where
+        /** Retrieve class symbol by fully-qualified name.
+         */
+        ClassSymbol getClassSymbol(String name) {
+            // Name may contain nested class qualification.
+            // Generate candidate flatnames with successively shorter
+            // package qualifiers and longer nested class qualifiers.
+            int nameLen = name.length();
+            char[] nameChars = name.toCharArray();
+            int idx = name.length();
+            for (;;) {
+                ClassSymbol s = syms.classes.get(names.fromChars(nameChars, 0, nameLen));
+                if (s != null)
+                    return s; // found it!
+                idx = name.substring(0, idx).lastIndexOf('.');
+                if (idx < 0) break;
+                nameChars[idx] = '$';
+            }
+            return null;
+        }
 
     /**
      * Set the locale.
      */
     public void setLocale(String localeName) {
         // create locale specifics
-        doclocale = new DocLocale(this, localeName, breakiterator);        
+        doclocale = new DocLocale(this, localeName, breakiterator);
         // reset Messager if locale has changed.
         messager.reset();
     }
 
     /** Check whether this member should be documented. */
     public boolean shouldDocument(VarSymbol sym) {
-	long mod = sym.flags();
+        long mod = sym.flags();
 
-	if ((mod & Flags.SYNTHETIC) != 0) {
-	    return false;
-	}
+        if ((mod & Flags.SYNTHETIC) != 0) {
+            return false;
+        }
 
-	return showAccess.checkModifier(translateModifiers(mod));
+        return showAccess.checkModifier(translateModifiers(mod));
     }
 
     /** Check whether this member should be documented. */
     public boolean shouldDocument(MethodSymbol sym) {
-	long mod = sym.flags();
+        long mod = sym.flags();
 
-	if ((mod & Flags.SYNTHETIC) != 0) {
-	    return false;
-	}
+        if ((mod & Flags.SYNTHETIC) != 0) {
+            return false;
+        }
 
-	return showAccess.checkModifier(translateModifiers(mod));
+        return showAccess.checkModifier(translateModifiers(mod));
     }
 
     /** check whether this class should be documented. */
     public boolean shouldDocument(ClassSymbol sym) {
-	return
-	    (sym.flags_field&Flags.SYNTHETIC) == 0 && // no synthetics
-	    (docClasses || getClassDoc(sym).tree != null) &&
-	    isVisible(sym);
+        return
+            (sym.flags_field&Flags.SYNTHETIC) == 0 && // no synthetics
+            (docClasses || getClassDoc(sym).tree != null) &&
+            isVisible(sym);
     }
 
     //### Comment below is inaccurate wrt modifier filter testing
     /**
-     * Check the visibility if this is an nested class. 
+     * Check the visibility if this is an nested class.
      * if this is not a nested class, return true.
      * if this is an static visible nested class,
      *    return true.
-     * if this is an visible nested class 
+     * if this is an visible nested class
      *    if the outer class is visible return true.
      *    else return false.
-     * IMPORTANT: This also allows, static nested classes 
-     * to be defined inside an nested class, which is not 
-     * allowed by the compiler. So such an test case will 
+     * IMPORTANT: This also allows, static nested classes
+     * to be defined inside an nested class, which is not
+     * allowed by the compiler. So such an test case will
      * not reach upto this method itself, but if compiler
      * allows it, then that will go through.
      */
     protected boolean isVisible(ClassSymbol sym) {
-	long mod = sym.flags_field;
+        long mod = sym.flags_field;
         if (!showAccess.checkModifier(translateModifiers(mod))) {
             return false;
         }
-	ClassSymbol encl = sym.owner.enclClass();
-	return (encl == null || (mod & Flags.STATIC) != 0 || isVisible(encl));
+        ClassSymbol encl = sym.owner.enclClass();
+        return (encl == null || (mod & Flags.STATIC) != 0 || isVisible(encl));
     }
 
     //---------------- print forwarders ----------------//
@@ -282,7 +282,7 @@ public class DocEnv {
             return;
         messager.printError(msg);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -293,7 +293,7 @@ public class DocEnv {
             return;
         messager.error(doc==null ? null : doc.position(), key);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -304,7 +304,7 @@ public class DocEnv {
             return;
         messager.error(pos, key);
     }
-    
+
     /**
      * Print error message, increment error count.
      *
@@ -376,7 +376,7 @@ public class DocEnv {
             return;
         messager.warning(doc==null ? null : doc.position(), key);
     }
-    
+
     /**
      * Print warning message, increment warning count.
      *
@@ -435,13 +435,13 @@ public class DocEnv {
      * @param a2 second argument
      * @param a3 third argument
      */
-    public void warning(DocImpl doc, String key, String a1, String a2, String a3, 
+    public void warning(DocImpl doc, String key, String a1, String a2, String a3,
                         String a4) {
         if (silent)
             return;
         messager.warning(doc==null ? null : doc.position(), key, a1, a2, a3, a4);
     }
-    
+
     /**
      * Print a message.
      *
@@ -452,7 +452,7 @@ public class DocEnv {
             return;
         messager.printNotice(msg);
     }
-    
+
 
     /**
      * Print a message.
@@ -464,7 +464,7 @@ public class DocEnv {
             return;
         messager.notice(key);
     }
-    
+
     /**
      * Print a message.
      *
@@ -526,118 +526,118 @@ public class DocEnv {
     }
 
     private Map<PackageSymbol, PackageDocImpl> packageMap =
-	    new HashMap<PackageSymbol, PackageDocImpl>();
+            new HashMap<PackageSymbol, PackageDocImpl>();
     /**
      * Return the PackageDoc of this package symbol.
      */
     public PackageDocImpl getPackageDoc(PackageSymbol pack) {
-	PackageDocImpl result = packageMap.get(pack);
-	if (result != null) return result;
-	result = new PackageDocImpl(this, pack);
-	packageMap.put(pack, result);
-	return result;
+        PackageDocImpl result = packageMap.get(pack);
+        if (result != null) return result;
+        result = new PackageDocImpl(this, pack);
+        packageMap.put(pack, result);
+        return result;
     }
 
     /**
      * Create the PackageDoc (or a subtype) for a package symbol.
      */
     void makePackageDoc(PackageSymbol pack, String docComment, JCCompilationUnit tree) {
-	PackageDocImpl result = packageMap.get(pack);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	} else {
-	    result = new PackageDocImpl(this, pack, docComment, tree);
-	    packageMap.put(pack, result);
-	}
+        PackageDocImpl result = packageMap.get(pack);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+        } else {
+            result = new PackageDocImpl(this, pack, docComment, tree);
+            packageMap.put(pack, result);
+        }
     }
 
-	 
+
     private Map<ClassSymbol, ClassDocImpl> classMap =
-	    new HashMap<ClassSymbol, ClassDocImpl>();
+            new HashMap<ClassSymbol, ClassDocImpl>();
     /**
      * Return the ClassDoc (or a subtype) of this class symbol.
      */
     ClassDocImpl getClassDoc(ClassSymbol clazz) {
-	ClassDocImpl result = classMap.get(clazz);
-	if (result != null) return result;
-	if (isAnnotationType(clazz)) {
-	    result = new AnnotationTypeDocImpl(this, clazz);
-	} else {
-	    result = new ClassDocImpl(this, clazz);
-	}
-	classMap.put(clazz, result);
-	return result;
+        ClassDocImpl result = classMap.get(clazz);
+        if (result != null) return result;
+        if (isAnnotationType(clazz)) {
+            result = new AnnotationTypeDocImpl(this, clazz);
+        } else {
+            result = new ClassDocImpl(this, clazz);
+        }
+        classMap.put(clazz, result);
+        return result;
     }
 
     /**
      * Create the ClassDoc (or a subtype) for a class symbol.
      */
     void makeClassDoc(ClassSymbol clazz, String docComment, JCClassDecl tree, Position.LineMap lineMap) {
-	ClassDocImpl result = classMap.get(clazz);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	    return;
-	}
-	if (isAnnotationType(tree)) {	// flags of clazz may not yet be set
-	    result = new AnnotationTypeDocImpl(this, clazz, docComment, tree, lineMap);
-	} else {
-	    result = new ClassDocImpl(this, clazz, docComment, tree, lineMap);
-	}
-	classMap.put(clazz, result);
+        ClassDocImpl result = classMap.get(clazz);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+            return;
+        }
+        if (isAnnotationType(tree)) {   // flags of clazz may not yet be set
+            result = new AnnotationTypeDocImpl(this, clazz, docComment, tree, lineMap);
+        } else {
+            result = new ClassDocImpl(this, clazz, docComment, tree, lineMap);
+        }
+        classMap.put(clazz, result);
     }
 
     private static boolean isAnnotationType(ClassSymbol clazz) {
-	return ClassDocImpl.isAnnotationType(clazz);
+        return ClassDocImpl.isAnnotationType(clazz);
     }
 
     private static boolean isAnnotationType(JCClassDecl tree) {
-	return (tree.mods.flags & Flags.ANNOTATION) != 0;
+        return (tree.mods.flags & Flags.ANNOTATION) != 0;
     }
 
     private Map<VarSymbol, FieldDocImpl> fieldMap =
-	    new HashMap<VarSymbol, FieldDocImpl>();
+            new HashMap<VarSymbol, FieldDocImpl>();
     /**
      * Return the FieldDoc of this var symbol.
      */
     FieldDocImpl getFieldDoc(VarSymbol var) {
-	FieldDocImpl result = fieldMap.get(var);
-	if (result != null) return result;
-	result = new FieldDocImpl(this, var);
-	fieldMap.put(var, result);
-	return result;
+        FieldDocImpl result = fieldMap.get(var);
+        if (result != null) return result;
+        result = new FieldDocImpl(this, var);
+        fieldMap.put(var, result);
+        return result;
     }
     /**
      * Create a FieldDoc for a var symbol.
      */
     void makeFieldDoc(VarSymbol var, String docComment, JCVariableDecl tree, Position.LineMap lineMap) {
-	FieldDocImpl result = fieldMap.get(var);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	} else {
-	    result = new FieldDocImpl(this, var, docComment, tree, lineMap);
-	    fieldMap.put(var, result);
-	}
+        FieldDocImpl result = fieldMap.get(var);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+        } else {
+            result = new FieldDocImpl(this, var, docComment, tree, lineMap);
+            fieldMap.put(var, result);
+        }
     }
 
     private Map<MethodSymbol, ExecutableMemberDocImpl> methodMap =
-	    new HashMap<MethodSymbol, ExecutableMemberDocImpl>();
+            new HashMap<MethodSymbol, ExecutableMemberDocImpl>();
     /**
      * Create a MethodDoc for this MethodSymbol.
      * Should be called only on symbols representing methods.
      */
     void makeMethodDoc(MethodSymbol meth, String docComment,
-		       JCMethodDecl tree, Position.LineMap lineMap) {
-	MethodDocImpl result = (MethodDocImpl)methodMap.get(meth);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	} else {
-	    result = new MethodDocImpl(this, meth, docComment, tree, lineMap);
-	    methodMap.put(meth, result);
-	}
+                       JCMethodDecl tree, Position.LineMap lineMap) {
+        MethodDocImpl result = (MethodDocImpl)methodMap.get(meth);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+        } else {
+            result = new MethodDocImpl(this, meth, docComment, tree, lineMap);
+            methodMap.put(meth, result);
+        }
     }
 
     /**
@@ -645,11 +645,11 @@ public class DocEnv {
      * Should be called only on symbols representing methods.
      */
     public MethodDocImpl getMethodDoc(MethodSymbol meth) {
-	MethodDocImpl result = (MethodDocImpl)methodMap.get(meth);
-	if (result != null) return result;
-	result = new MethodDocImpl(this, meth);
-	methodMap.put(meth, result);
-	return result;
+        MethodDocImpl result = (MethodDocImpl)methodMap.get(meth);
+        if (result != null) return result;
+        result = new MethodDocImpl(this, meth);
+        methodMap.put(meth, result);
+        return result;
     }
 
     /**
@@ -657,15 +657,15 @@ public class DocEnv {
      * Should be called only on symbols representing constructors.
      */
     void makeConstructorDoc(MethodSymbol meth, String docComment,
-			    JCMethodDecl tree, Position.LineMap lineMap) {
-	ConstructorDocImpl result = (ConstructorDocImpl)methodMap.get(meth);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	} else {
-	    result = new ConstructorDocImpl(this, meth, docComment, tree, lineMap);
-	    methodMap.put(meth, result);
-	}
+                            JCMethodDecl tree, Position.LineMap lineMap) {
+        ConstructorDocImpl result = (ConstructorDocImpl)methodMap.get(meth);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+        } else {
+            result = new ConstructorDocImpl(this, meth, docComment, tree, lineMap);
+            methodMap.put(meth, result);
+        }
     }
 
     /**
@@ -673,11 +673,11 @@ public class DocEnv {
      * Should be called only on symbols representing constructors.
      */
     public ConstructorDocImpl getConstructorDoc(MethodSymbol meth) {
-	ConstructorDocImpl result = (ConstructorDocImpl)methodMap.get(meth);
-	if (result != null) return result;
-	result = new ConstructorDocImpl(this, meth);
-	methodMap.put(meth, result);
-	return result;
+        ConstructorDocImpl result = (ConstructorDocImpl)methodMap.get(meth);
+        if (result != null) return result;
+        result = new ConstructorDocImpl(this, meth);
+        methodMap.put(meth, result);
+        return result;
     }
 
     /**
@@ -685,17 +685,17 @@ public class DocEnv {
      * Should be called only on symbols representing annotation type elements.
      */
     void makeAnnotationTypeElementDoc(MethodSymbol meth,
-				      String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
-	AnnotationTypeElementDocImpl result =
-	    (AnnotationTypeElementDocImpl)methodMap.get(meth);
-	if (result != null) {
-	    if (docComment != null) result.setRawCommentText(docComment);
-	    if (tree != null) result.setTree(tree);
-	} else {
-	    result =
-		new AnnotationTypeElementDocImpl(this, meth, docComment, tree, lineMap);
-	    methodMap.put(meth, result);
-	}
+                                      String docComment, JCMethodDecl tree, Position.LineMap lineMap) {
+        AnnotationTypeElementDocImpl result =
+            (AnnotationTypeElementDocImpl)methodMap.get(meth);
+        if (result != null) {
+            if (docComment != null) result.setRawCommentText(docComment);
+            if (tree != null) result.setTree(tree);
+        } else {
+            result =
+                new AnnotationTypeElementDocImpl(this, meth, docComment, tree, lineMap);
+            methodMap.put(meth, result);
+        }
     }
 
     /**
@@ -703,30 +703,30 @@ public class DocEnv {
      * Should be called only on symbols representing annotation type elements.
      */
     public AnnotationTypeElementDocImpl getAnnotationTypeElementDoc(
-	    MethodSymbol meth) {
+            MethodSymbol meth) {
 
-	AnnotationTypeElementDocImpl result =
-	    (AnnotationTypeElementDocImpl)methodMap.get(meth);
-	if (result != null) return result;
-	result = new AnnotationTypeElementDocImpl(this, meth);
-	methodMap.put(meth, result);
-	return result;
+        AnnotationTypeElementDocImpl result =
+            (AnnotationTypeElementDocImpl)methodMap.get(meth);
+        if (result != null) return result;
+        result = new AnnotationTypeElementDocImpl(this, meth);
+        methodMap.put(meth, result);
+        return result;
     }
 
 //  private Map<ClassType, ParameterizedTypeImpl> parameterizedTypeMap =
-//	    new HashMap<ClassType, ParameterizedTypeImpl>();
+//          new HashMap<ClassType, ParameterizedTypeImpl>();
     /**
      * Return the ParameterizedType of this instantiation.
 //   * ### Could use Type.sameTypeAs() instead of equality matching in hashmap
 //   * ### to avoid some duplication.
      */
     ParameterizedTypeImpl getParameterizedType(ClassType t) {
-	return new ParameterizedTypeImpl(this, t);
-//	ParameterizedTypeImpl result = parameterizedTypeMap.get(t);
-//	if (result != null) return result;
-//	result = new ParameterizedTypeImpl(this, t);
-//	parameterizedTypeMap.put(t, result);
-//	return result;
+        return new ParameterizedTypeImpl(this, t);
+//      ParameterizedTypeImpl result = parameterizedTypeMap.get(t);
+//      if (result != null) return result;
+//      result = new ParameterizedTypeImpl(this, t);
+//      parameterizedTypeMap.put(t, result);
+//      return result;
     }
 
     /**
@@ -749,28 +749,28 @@ public class DocEnv {
      */
     static int translateModifiers(long flags) {
         int result = 0;
- 	if ((flags & Flags.ABSTRACT) != 0) 
-	    result |= Modifier.ABSTRACT;
-	if ((flags & Flags.FINAL) != 0) 
-	    result |= Modifier.FINAL;
-	if ((flags & Flags.INTERFACE) != 0) 
-	    result |= Modifier.INTERFACE;
-	if ((flags & Flags.NATIVE) != 0) 
-	    result |= Modifier.NATIVE;
-	if ((flags & Flags.PRIVATE) != 0) 
-	    result |= Modifier.PRIVATE;
-	if ((flags & Flags.PROTECTED) != 0) 
-	    result |= Modifier.PROTECTED;
-	if ((flags & Flags.PUBLIC) != 0) 
-	    result |= Modifier.PUBLIC;
-	if ((flags & Flags.STATIC) != 0) 
-	    result |= Modifier.STATIC;
-	if ((flags & Flags.SYNCHRONIZED) != 0) 
-	    result |= Modifier.SYNCHRONIZED;
-	if ((flags & Flags.TRANSIENT) != 0) 
-	    result |= Modifier.TRANSIENT;
-	if ((flags & Flags.VOLATILE) != 0) 
-	    result |= Modifier.VOLATILE;
-	return result;
+        if ((flags & Flags.ABSTRACT) != 0)
+            result |= Modifier.ABSTRACT;
+        if ((flags & Flags.FINAL) != 0)
+            result |= Modifier.FINAL;
+        if ((flags & Flags.INTERFACE) != 0)
+            result |= Modifier.INTERFACE;
+        if ((flags & Flags.NATIVE) != 0)
+            result |= Modifier.NATIVE;
+        if ((flags & Flags.PRIVATE) != 0)
+            result |= Modifier.PRIVATE;
+        if ((flags & Flags.PROTECTED) != 0)
+            result |= Modifier.PROTECTED;
+        if ((flags & Flags.PUBLIC) != 0)
+            result |= Modifier.PUBLIC;
+        if ((flags & Flags.STATIC) != 0)
+            result |= Modifier.STATIC;
+        if ((flags & Flags.SYNCHRONIZED) != 0)
+            result |= Modifier.SYNCHRONIZED;
+        if ((flags & Flags.TRANSIENT) != 0)
+            result |= Modifier.TRANSIENT;
+        if ((flags & Flags.VOLATILE) != 0)
+            result |= Modifier.VOLATILE;
+        return result;
     }
 }

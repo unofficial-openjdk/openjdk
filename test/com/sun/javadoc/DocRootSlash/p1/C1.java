@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -79,7 +79,7 @@ package p1;
  *
  * Sub-test 11 Actual: <A HREF="{@docRoot}../docs1/p2/package-summary.html#package_description">{&#064;docRoot}/../docs1/p2/package-summary.html#package_description</A> <br>
  * Sub-test 11 Expect: <A HREF="..../docs1/p2/package-summary.html#package_description">../../docs1/p2/package-summary.html#package_description</A>
- * 
+ *
  */
 public class C1 {
 }

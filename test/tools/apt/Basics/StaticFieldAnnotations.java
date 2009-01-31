@@ -36,12 +36,12 @@ public class StaticFieldAnnotations {
     }
 
     private double bar(int baz) {
-	@AnnotShangri_la
-	int local = 0;
-	return (double) baz;
+        @AnnotShangri_la
+        int local = 0;
+        return (double) baz;
     }
 
     static class NestedClass {
-	protected int field;
+        protected int field;
     }
 }

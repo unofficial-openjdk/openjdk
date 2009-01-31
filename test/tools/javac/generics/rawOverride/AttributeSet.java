@@ -72,8 +72,8 @@ interface I1<T> {
 class C1 implements I1<String> {
     public void f(Attribute l) { }
     void test() {
-	Attribute<Number> n = null;
-	f(n);
+        Attribute<Number> n = null;
+        f(n);
     }
 }
 
@@ -87,6 +87,6 @@ class B2 {
 
 class C2 extends B2 implements A2 {
     void test(Attribute<Number> a) {
-	f(a);
+        f(a);
     }
 }

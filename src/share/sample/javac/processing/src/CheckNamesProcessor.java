@@ -74,7 +74,7 @@ import static javax.tools.Diagnostic.Kind.*;
  * {@code javac -processorpath procdir -proc:only CheckNamesProcessor.java}
  *
  * </ol>
- * 
+ *
  * For some notes on how to run an annotation processor inside
  * NetBeans, see http://wiki.java.net/bin/view/Netbeans/FaqApt.
  *
@@ -106,7 +106,7 @@ import static javax.tools.Diagnostic.Kind.*;
 @SupportedAnnotationTypes("*")     // Process (check) everything
 public class CheckNamesProcessor extends AbstractProcessor {
     private NameChecker nameChecker;
-    
+
     /**
      * Check that the names of the root elements (and their enclosed
      * elements) follow the appropriate naming conventions.  This
@@ -127,13 +127,13 @@ public class CheckNamesProcessor extends AbstractProcessor {
         }
         return false; // Allow other processors to examine files too.
     }
-    
+
     @Override
     public void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         nameChecker = new NameChecker(processingEnv);
     }
-    
+
     @Override
     public SourceVersion getSupportedSourceVersion() {
         /*
@@ -147,7 +147,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
          */
         return SourceVersion.latest();
     }
-    
+
     /**
      * Provide checks that an element and its enclosed elements follow
      * the usual naming conventions.
@@ -169,14 +169,14 @@ public class CheckNamesProcessor extends AbstractProcessor {
     private static class NameChecker {
         private final Messager messager;
         private final Types typeUtils;
-        
+
         NameCheckScanner nameCheckScanner = new NameCheckScanner();
-        
+
         NameChecker(ProcessingEnvironment processsingEnv) {
             this.messager  = processsingEnv.getMessager();
             this.typeUtils = processsingEnv.getTypeUtils();
         }
-        
+
         /**
          * If the name of the argument or its enclosed elements
          * violates the naming conventions, report a warning.
@@ -186,7 +186,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
             // functionality through this method instead.
             nameCheckScanner.scan(element);
         }
-        
+
         /**
          * Visitor to implement name checks.
          */
@@ -208,7 +208,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
             // If greater control is needed over traversal order, a
             // SimpleElementVisitor can be extended instead of an
             // ElementScanner.
-            
+
             /**
              * Check the name of a type and its enclosed elements and
              * type parameters.
@@ -220,7 +220,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
                 super.visitType(e, p);          // Check the names of any enclosed elements
                 return null;
             }
-            
+
             /**
              * Check the name of an executable (method, constructor,
              * etc.) and its type parameters.
@@ -228,7 +228,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
             @Override
             public Void visitExecutable(ExecutableElement e, Void p) {
                 scan(e.getTypeParameters(), p); // Check the names of any type parameters
-                
+
                 // Check the name of the executable
                 if (e.getKind() == METHOD) {
                     // Make sure that a method does not have the same
@@ -241,14 +241,14 @@ public class CheckNamesProcessor extends AbstractProcessor {
                     checkCamelCase(e, false);
                 }
                 // else constructors and initializers don't have user-defined names
-                
+
                 // At this point, could use the Tree API,
                 // com.sun.source, to examine the names of entities
                 // inside a method.
                 super.visitExecutable(e, p);
                 return null;
             }
-            
+
             /**
              * Check the name of a field, parameter, etc.
              */
@@ -257,8 +257,8 @@ public class CheckNamesProcessor extends AbstractProcessor {
                 if (!checkForSerial(e)) { // serialVersionUID checks
                     // Is the variable a constant?
                     if (e.getKind() == ENUM_CONSTANT ||
-                        e.getConstantValue() != null || 
-			heuristicallyConstant(e) )
+                        e.getConstantValue() != null ||
+                        heuristicallyConstant(e) )
                         checkAllCaps(e); // includes enum constants
                     else
                         checkCamelCase(e, false);
@@ -278,7 +278,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
                 // super.visitTypeParameter(e, p);
                 return null;
             }
-            
+
             /**
              * Check the name of a package.
              */
@@ -289,7 +289,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
                  * as an exercise for the reader, see JLSv3 section
                  * 7.7 for conventions.
                  */
-                
+
                 // Whether or not this method should call
                 // super.visitPackage, to visit the packages enclosed
                 // elements, is a design decision based on what a
@@ -308,7 +308,7 @@ public class CheckNamesProcessor extends AbstractProcessor {
                 // too.
                 return null;
             }
-            
+
             @Override
             public Void visitUnknown(Element e, Void p) {
                 // This method will be called if a kind of element
@@ -320,10 +320,10 @@ public class CheckNamesProcessor extends AbstractProcessor {
                                       ", no name checking performed.", e);
                 return null;
             }
-            
+
             // All the name checking methods assume the examined names
             // are syntactically well-formed identifiers.
-            
+
             /**
              * Return {@code true} if this variable is a field named
              * "serialVersionUID"; false otherwise.  A true
@@ -332,56 +332,56 @@ public class CheckNamesProcessor extends AbstractProcessor {
              *
              * <p>To check that a Serializable class defines a proper
              * serialVersionUID, run javac with -Xlint:serial.
-	     *
-	     * @return true if this variable is a serialVersionUID field and false otherwise
+             *
+             * @return true if this variable is a serialVersionUID field and false otherwise
              */
             private boolean checkForSerial(VariableElement e) {
                 // If a field is named "serialVersionUID" ...
                 if (e.getKind() == FIELD &&
-		    e.getSimpleName().contentEquals("serialVersionUID")) {
+                    e.getSimpleName().contentEquals("serialVersionUID")) {
                     // ... issue a warning if it does not act as a serialVersionUID
                     if (!(e.getModifiers().containsAll(EnumSet.of(STATIC, FINAL)) &&
                             typeUtils.isSameType(e.asType(), typeUtils.getPrimitiveType(LONG)) &&
                             e.getEnclosingElement().getKind() == CLASS )) // could check that class implements Serializable
                         messager.printMessage(WARNING,
-					      "Field named ``serialVersionUID'' is not acting as such.", e);
+                                              "Field named ``serialVersionUID'' is not acting as such.", e);
                     return true;
                 }
                 return false;
             }
-            
-	    /**
-	     * Using heuristics, return {@code true} is the variable
-	     * should follow the naming conventions for constants and
-	     * {@code false} otherwise.  For example, the public
-	     * static final fields ZERO, ONE, and TEN in
-	     * java.math.BigDecimal are logically constants (and named
-	     * as constants) even though BigDecimal values are not
-	     * regarded as constants by the language specification.
-	     * However, some final fields may not act as constants
-	     * since the field may be a reference to a mutable object.
-	     *
-	     * <p> These heuristics could be tweaked to provide better
-	     * fidelity.
-	     *
-	     * @return true if the current heuristics regard the
-	     * variable as a constant and false otherwise.
-	     */
-	    private boolean heuristicallyConstant(VariableElement e) {
-		// Fields declared in interfaces are logically
-		// constants, JLSv3 section 9.3.
-		if (e.getEnclosingElement().getKind() == INTERFACE)
-		    return true;
-		else if (e.getKind() == FIELD &&
-			 e.getModifiers().containsAll(EnumSet.of(PUBLIC, STATIC, FINAL)))
-		    return true;
-		else {
-		    // A parameter declared final should not be named like
-		    // a constant, neither should exception parameters.
-		    return false;
-		}
-	    }
-            
+
+            /**
+             * Using heuristics, return {@code true} is the variable
+             * should follow the naming conventions for constants and
+             * {@code false} otherwise.  For example, the public
+             * static final fields ZERO, ONE, and TEN in
+             * java.math.BigDecimal are logically constants (and named
+             * as constants) even though BigDecimal values are not
+             * regarded as constants by the language specification.
+             * However, some final fields may not act as constants
+             * since the field may be a reference to a mutable object.
+             *
+             * <p> These heuristics could be tweaked to provide better
+             * fidelity.
+             *
+             * @return true if the current heuristics regard the
+             * variable as a constant and false otherwise.
+             */
+            private boolean heuristicallyConstant(VariableElement e) {
+                // Fields declared in interfaces are logically
+                // constants, JLSv3 section 9.3.
+                if (e.getEnclosingElement().getKind() == INTERFACE)
+                    return true;
+                else if (e.getKind() == FIELD &&
+                         e.getModifiers().containsAll(EnumSet.of(PUBLIC, STATIC, FINAL)))
+                    return true;
+                else {
+                    // A parameter declared final should not be named like
+                    // a constant, neither should exception parameters.
+                    return false;
+                }
+            }
+
             /**
              * Print a warning if an element's simple name is not in
              * camel case.  If there are two adjacent uppercase
@@ -395,8 +395,8 @@ public class CheckNamesProcessor extends AbstractProcessor {
                 String name = e.getSimpleName().toString();
                 boolean previousUpper = false;
                 boolean conventional = true;
-		int firstCodePoint = name.codePointAt(0);
-                
+                int firstCodePoint = name.codePointAt(0);
+
                 if (Character.isUpperCase(firstCodePoint)) {
                     previousUpper = true;
                     if (!initialCaps) {
@@ -412,13 +412,13 @@ public class CheckNamesProcessor extends AbstractProcessor {
                     }
                 } else // underscore, etc.
                     conventional = false;
-                
+
                 if (conventional) {
-		    int cp = firstCodePoint;
-		    for (int i = Character.charCount(cp);
-			 i < name.length();
-			 i += Character.charCount(cp)) {
-			cp = name.codePointAt(i);
+                    int cp = firstCodePoint;
+                    for (int i = Character.charCount(cp);
+                         i < name.length();
+                         i += Character.charCount(cp)) {
+                        cp = name.codePointAt(i);
                         if (Character.isUpperCase(cp)){
                             if (previousUpper) {
                                 conventional = false;
@@ -429,12 +429,12 @@ public class CheckNamesProcessor extends AbstractProcessor {
                             previousUpper = false;
                     }
                 }
-                
+
                 if (!conventional)
                     messager.printMessage(WARNING,
                                           "Name, ``" + name + "'', should be in camel case.", e);
             }
-            
+
             /**
              * Print a warning if the element's name is not a sequence
              * of uppercase letters separated by underscores ("_").
@@ -448,12 +448,12 @@ public class CheckNamesProcessor extends AbstractProcessor {
                         // Assume names are non-empty
                         !Character.isUpperCase(name.codePointAt(0)))
                         messager.printMessage(WARNING,
-                                              "A type variable's name,``" + name + 
+                                              "A type variable's name,``" + name +
                                               "'', should be a single uppercace character.",
                                               e);
                 } else {
                     boolean conventional = true;
-		    int firstCodePoint = name.codePointAt(0);
+                    int firstCodePoint = name.codePointAt(0);
 
                     // Starting with an underscore is not conventional
                     if (!Character.isUpperCase(firstCodePoint))
@@ -461,11 +461,11 @@ public class CheckNamesProcessor extends AbstractProcessor {
                     else {
                         // Was the previous character an underscore?
                         boolean previousUnderscore = false;
-			int cp = firstCodePoint;
-			for (int i = Character.charCount(cp);
-			     i < name.length();
-			     i += Character.charCount(cp)) {
-			    cp = name.codePointAt(i);
+                        int cp = firstCodePoint;
+                        for (int i = Character.charCount(cp);
+                             i < name.length();
+                             i += Character.charCount(cp)) {
+                            cp = name.codePointAt(i);
                             if (cp == (int) '_') {
                                 if (previousUnderscore) {
                                     conventional = false;
@@ -481,14 +481,14 @@ public class CheckNamesProcessor extends AbstractProcessor {
                             }
                         }
                     }
-                    
+
                     if (!conventional)
                         messager.printMessage(WARNING,
                                               "A constant's name, ``" + name + "'', should be ALL_CAPS.",
                                               e);
                 }
             }
-            
+
         }
     }
 }
@@ -502,21 +502,21 @@ class BADLY_NAMED_CODE {
         blue,
         green;
     }
-    
+
     // Don't start the name of a constant with an underscore
     static final int _FORTY_TWO = 42;
-    
+
     // Non-constants shouldn't use ALL_CAPS
     public static int NOT_A_CONSTANT = _FORTY_TWO;
-    
+
     // *Not* a serialVersionUID
     private static final int serialVersionUID = _FORTY_TWO;
-    
+
     // Not a constructor
     protected void BADLY_NAMED_CODE() {
         return;
     }
-    
+
     public void NOTcamelCASEmethodNAME() {
         return;
     }

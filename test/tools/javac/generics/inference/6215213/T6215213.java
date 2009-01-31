@@ -38,7 +38,7 @@ public class T6215213 {
     static class Triple1<T extends T6215213, S, U extends T6215213> {}
     static class Quad<T, S, U, V> {}
     static class Quad1<T extends T6215213, S, U extends T6215213, V> {}
-    
+
     <T> Box<T> testBox(T t) { return null; }
     <T extends T6215213> Box1<T> testBox1(T t) { return null; }
     <T> Pair<T, T> testPair(T t) { return null; }
@@ -49,13 +49,13 @@ public class T6215213 {
     <T extends T6215213> Quad1<T, T, T, T> testQuad1(T t) { return null; }
 
     void testAll() {
-	Box<?> box = testBox(null);
-	Box1<?> box1 = testBox1(null);
-	Pair<?, ?> pair = testPair(null);
-	Pair1<?, ?> pair1 = testPair1(null);
-	Triple<?, ?, ?> triple = testTriple(null);
-	Triple1<?, ?, ?> triple1 = testTriple1(null);
-	Quad<?, ?, ?, ?> quad = testQuad(null);
-	Quad1<?, ?, ?, ?> quad1 = testQuad1(null);
+        Box<?> box = testBox(null);
+        Box1<?> box1 = testBox1(null);
+        Pair<?, ?> pair = testPair(null);
+        Pair1<?, ?> pair1 = testPair1(null);
+        Triple<?, ?, ?> triple = testTriple(null);
+        Triple1<?, ?, ?> triple1 = testTriple1(null);
+        Quad<?, ?, ?, ?> quad = testQuad(null);
+        Quad1<?, ?, ?, ?> quad1 = testQuad1(null);
     }
 }

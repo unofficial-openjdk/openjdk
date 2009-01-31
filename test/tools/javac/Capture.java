@@ -41,6 +41,6 @@ public class Capture {
         int k1 = new Capture(2 + (j=3)){
                          int get () {return k+j;}
                      }.get();
-	if (k1 != 8) throw new Error("k1 = " + k1);
-    } 
+        if (k1 != 8) throw new Error("k1 = " + k1);
+    }
 }

@@ -84,7 +84,7 @@ public interface Element {
 
     /**
      * Returns the {@code kind} of this element.
-     * 
+     *
      * @return the kind of this element
      */
     ElementKind getKind();
@@ -96,9 +96,9 @@ public interface Element {
      * {@link Elements#getAllAnnotationMirrors(Element) getAllAnnotationMirrors}.
      *
      * @see ElementFilter
-     * 
+     *
      * @return the annotations directly present on this element;
-     *		an empty list if there are none
+     *          an empty list if there are none
      */
     List<? extends AnnotationMirror> getAnnotationMirrors();
 
@@ -135,7 +135,7 @@ public interface Element {
      *
      * @param <A>  the annotation type
      * @param annotationType  the {@code Class} object corresponding to
-     *		the annotation type
+     *          the annotation type
      * @return this element's annotation for the specified annotation
      *         type if present on this element, else {@code null}
      *
@@ -143,7 +143,7 @@ public interface Element {
      * @see java.lang.reflect.AnnotatedElement#getAnnotation
      * @see EnumConstantNotPresentException
      * @see AnnotationTypeMismatchException
-     * @see IncompleteAnnotationException 
+     * @see IncompleteAnnotationException
      * @see MirroredTypeException
      * @see MirroredTypesException
      */
@@ -194,14 +194,14 @@ public interface Element {
 
     /**
      * Returns the elements that are, loosely speaking, directly
-     * enclosed by this element.  
+     * enclosed by this element.
      *
      * A class or interface is considered to enclose the fields,
      * methods, constructors, and member types that it directly
      * declares.  This includes any (implicit) default constructor and
      * the implicit {@code values} and {@code valueOf} methods of an
      * enum type.
-     * 
+     *
      * A package encloses the top-level classes and interfaces within
      * it, but is not considered to enclose subpackages.
      *
@@ -234,8 +234,8 @@ public interface Element {
      *
      * @param obj  the object to be compared with this element
      * @return {@code true} if the specified object represents the same
-     *		element as this
-     */ 
+     *          element as this
+     */
     boolean equals(Object obj);
 
     /**

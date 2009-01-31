@@ -3,27 +3,27 @@
  * @bug 4095568 4277286 4785453
  * @summary Verify rejection of illegal static variables in inner classes.
  * @author William Maddox (maddox)
- * 
+ *
  * @run shell InnerNamedConstant_2.sh
  */
 
 public class InnerNamedConstant_2 {
 
     static class Inner1 {
-	static int x = 1;		   // OK - class is top-level
-	static final int y = x * 5;	   // OK - class is top-level
-	static final String z;		   // OK - class is top-level
-	static {
-	    z = "foobar";
-	}
+        static int x = 1;                  // OK - class is top-level
+        static final int y = x * 5;        // OK - class is top-level
+        static final String z;             // OK - class is top-level
+        static {
+            z = "foobar";
+        }
     }
 
     class Inner2 {
         static int x = 1;                  // ERROR - static not final
         static final String z;             // ERROR - static blank final
-	{
+        {
             z = "foobar";                  // Error may be reported here. See 4278961.
-	}
+        }
     }
 
     // This case must go in a separate class, as otherwise the detection
@@ -35,5 +35,3 @@ public class InnerNamedConstant_2 {
     }
 
 }
-
-

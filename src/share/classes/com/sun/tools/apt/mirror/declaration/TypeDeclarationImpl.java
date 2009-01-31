@@ -42,7 +42,7 @@ import com.sun.tools.javac.util.Name;
  */
 
 public class TypeDeclarationImpl extends MemberDeclarationImpl
-				 implements TypeDeclaration {
+                                 implements TypeDeclaration {
 
     public ClassSymbol sym;
 
@@ -51,8 +51,8 @@ public class TypeDeclarationImpl extends MemberDeclarationImpl
      * "sym" should be completed before this constructor is called.
      */
      protected TypeDeclarationImpl(AptEnv env, ClassSymbol sym) {
-	super(env, sym);
-	this.sym = sym;
+        super(env, sym);
+        this.sym = sym;
     }
 
 
@@ -61,78 +61,78 @@ public class TypeDeclarationImpl extends MemberDeclarationImpl
      * of outer classes).  Type names are qualified.
      */
     public String toString() {
-	return toString(env, sym);
+        return toString(env, sym);
     }
 
     /**
      * {@inheritDoc}
      */
     public PackageDeclaration getPackage() {
-	return env.declMaker.getPackageDeclaration(sym.packge());
+        return env.declMaker.getPackageDeclaration(sym.packge());
     }
 
     /**
      * {@inheritDoc}
      */
     public String getQualifiedName() {
-	return sym.toString();
+        return sym.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<InterfaceType> getSuperinterfaces() {
-	return env.typeMaker.getTypes(env.jctypes.interfaces(sym.type),
-				      InterfaceType.class);
+        return env.typeMaker.getTypes(env.jctypes.interfaces(sym.type),
+                                      InterfaceType.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<FieldDeclaration> getFields() {
-	ArrayList<FieldDeclaration> res = new ArrayList<FieldDeclaration>();
-	for (Symbol s : getMembers(true)) {
-	    if (s.kind == Kinds.VAR) {
-		res.add(env.declMaker.getFieldDeclaration((VarSymbol) s));
-	    }
-	}
-	return res;
+        ArrayList<FieldDeclaration> res = new ArrayList<FieldDeclaration>();
+        for (Symbol s : getMembers(true)) {
+            if (s.kind == Kinds.VAR) {
+                res.add(env.declMaker.getFieldDeclaration((VarSymbol) s));
+            }
+        }
+        return res;
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<? extends MethodDeclaration> getMethods() {
-	ArrayList<MethodDeclaration> res = new ArrayList<MethodDeclaration>();
-	for (Symbol s : getMembers(true)) {
-	    if (s.kind == Kinds.MTH && !s.isConstructor() && 
-		!env.names.clinit.equals(s.name) ) { // screen out static initializers
-		MethodSymbol m = (MethodSymbol) s;
-		res.add((MethodDeclaration)
-			env.declMaker.getExecutableDeclaration(m));
-	    }
-	}
-	return res;
+        ArrayList<MethodDeclaration> res = new ArrayList<MethodDeclaration>();
+        for (Symbol s : getMembers(true)) {
+            if (s.kind == Kinds.MTH && !s.isConstructor() &&
+                !env.names.clinit.equals(s.name) ) { // screen out static initializers
+                MethodSymbol m = (MethodSymbol) s;
+                res.add((MethodDeclaration)
+                        env.declMaker.getExecutableDeclaration(m));
+            }
+        }
+        return res;
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<TypeDeclaration> getNestedTypes() {
-	ArrayList<TypeDeclaration> res = new ArrayList<TypeDeclaration>();
-	for (Symbol s : getMembers(true)) {
-	    if (s.kind == Kinds.TYP) {
-		res.add(env.declMaker.getTypeDeclaration((ClassSymbol) s));
-	    }
-	}
-	return res;
+        ArrayList<TypeDeclaration> res = new ArrayList<TypeDeclaration>();
+        for (Symbol s : getMembers(true)) {
+            if (s.kind == Kinds.TYP) {
+                res.add(env.declMaker.getTypeDeclaration((ClassSymbol) s));
+            }
+        }
+        return res;
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitTypeDeclaration(this);
+        v.visitTypeDeclaration(this);
     }
 
 
@@ -141,17 +141,17 @@ public class TypeDeclarationImpl extends MemberDeclarationImpl
      * of outer classes).  Type names are qualified.
      */
     static String toString(AptEnv env, ClassSymbol c) {
-	StringBuilder sb = new StringBuilder();
-	if (c.isInner()) {
-	    // c is an inner class, so include type params of outer.
-	    ClassSymbol enclosing = c.owner.enclClass();
-	    sb.append(toString(env, enclosing))
-	      .append('.')
-	      .append(c.name);
-	} else {
-	    sb.append(c);
-	}
-	sb.append(typeParamsToString(env, c));
-	return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        if (c.isInner()) {
+            // c is an inner class, so include type params of outer.
+            ClassSymbol enclosing = c.owner.enclClass();
+            sb.append(toString(env, enclosing))
+              .append('.')
+              .append(c.name);
+        } else {
+            sb.append(c);
+        }
+        sb.append(typeParamsToString(env, c));
+        return sb.toString();
     }
 }

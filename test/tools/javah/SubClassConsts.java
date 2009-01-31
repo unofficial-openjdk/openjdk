@@ -35,6 +35,6 @@ public class SubClassConsts extends SuperClassConsts {
     private final static boolean SUB_BOOLEAN_CONSTANT = true;
 
     public SubClassConsts(String p) {
-	super(p);
+        super(p);
     }
 }

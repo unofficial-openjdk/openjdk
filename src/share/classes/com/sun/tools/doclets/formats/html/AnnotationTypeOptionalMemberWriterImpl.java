@@ -35,30 +35,30 @@ import java.io.*;
  *
  * @author Jamie Ho
  */
-public class AnnotationTypeOptionalMemberWriterImpl extends 
-        AnnotationTypeRequiredMemberWriterImpl 
+public class AnnotationTypeOptionalMemberWriterImpl extends
+        AnnotationTypeRequiredMemberWriterImpl
     implements AnnotationTypeOptionalMemberWriter, MemberSummaryWriter {
-    
+
     /**
      * Construct a new AnnotationTypeOptionalMemberWriterImpl.
-     * 
+     *
      * @param writer         the writer that will write the output.
      * @param annotationType the AnnotationType that holds this member.
-     */   
-    public AnnotationTypeOptionalMemberWriterImpl(SubWriterHolderWriter writer, 
+     */
+    public AnnotationTypeOptionalMemberWriterImpl(SubWriterHolderWriter writer,
         AnnotationTypeDoc annotationType) {
         super(writer, annotationType);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void writeMemberSummaryHeader(ClassDoc classDoc) {
-        writer.println("<!-- =========== ANNOTATION TYPE OPTIONAL MEMBER SUMMARY =========== -->"); 
+        writer.println("<!-- =========== ANNOTATION TYPE OPTIONAL MEMBER SUMMARY =========== -->");
         writer.println();
         writer.printSummaryHeader(this, classDoc);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -72,39 +72,37 @@ public class AnnotationTypeOptionalMemberWriterImpl extends
         writer.ddEnd();
         writer.dlEnd();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void close() throws IOException {
         writer.close();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void printSummaryLabel(ClassDoc cd) {
         writer.boldText("doclet.Annotation_Type_Optional_Member_Summary");
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void printSummaryAnchor(ClassDoc cd) {
         writer.anchor("annotation_type_optional_element_summary");
     }
-    
+
     /**
      * {@inheritDoc}
      */
     protected void printNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
             writer.printHyperLink("", "annotation_type_optional_element_summary",
-                    configuration().getText("doclet.navAnnotationTypeOptionalMember"));        
+                    configuration().getText("doclet.navAnnotationTypeOptionalMember"));
         } else {
             writer.printText("doclet.navAnnotationTypeOptionalMember");
         }
     }
 }
-
-

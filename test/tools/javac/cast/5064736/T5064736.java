@@ -33,8 +33,8 @@ public class T5064736 {
     class B extends A {}
 
     public class Foo<T> {
-	public <U extends B> void foo(Foo<? super A> param) {
-	    Foo<U> foo = (Foo<U>)param;
-	}
+        public <U extends B> void foo(Foo<? super A> param) {
+            Foo<U> foo = (Foo<U>)param;
+        }
     }
 }

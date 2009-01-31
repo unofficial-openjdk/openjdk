@@ -41,7 +41,7 @@ import com.sun.mirror.util.*;
 public class TypeVar<T, S extends Number & Runnable> extends Tester {
 
     public static void main(String[] args) {
-	(new TypeVar()).run();
+        (new TypeVar()).run();
     }
 
 
@@ -51,12 +51,12 @@ public class TypeVar<T, S extends Number & Runnable> extends Tester {
     private S s;
 
 
-    private TypeVariable tvT;	// type variable T
-    private TypeVariable tvS;	// type variable S
+    private TypeVariable tvT;   // type variable T
+    private TypeVariable tvS;   // type variable S
 
     protected void init() {
-	tvT = (TypeVariable) getField("t").getType();
-	tvS = (TypeVariable) getField("s").getType();
+        tvT = (TypeVariable) getField("t").getType();
+        tvS = (TypeVariable) getField("s").getType();
     }
 
 
@@ -64,30 +64,30 @@ public class TypeVar<T, S extends Number & Runnable> extends Tester {
 
     @Test(result="type var")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	tvT.accept(new SimpleTypeVisitor() {
-	    public void visitTypeMirror(TypeMirror t) {
-		res.add("type");
-	    }
-	    public void visitReferenceType(ReferenceType t) {
-		res.add("ref type");
-	    }
-	    public void visitTypeVariable(TypeVariable t) {
-		res.add("type var");
-	    }
-	});
-	return res;
+        tvT.accept(new SimpleTypeVisitor() {
+            public void visitTypeMirror(TypeMirror t) {
+                res.add("type");
+            }
+            public void visitReferenceType(ReferenceType t) {
+                res.add("ref type");
+            }
+            public void visitTypeVariable(TypeVariable t) {
+                res.add("type var");
+            }
+        });
+        return res;
     }
 
     @Test(result="T")
     String toStringTest1() {
-	return tvT.toString();
+        return tvT.toString();
     }
 
     @Test(result="S")
     String toStringTest2() {
-	return tvS.toString();
+        return tvS.toString();
     }
 
 
@@ -95,6 +95,6 @@ public class TypeVar<T, S extends Number & Runnable> extends Tester {
 
     @Test(result="S extends java.lang.Number & java.lang.Runnable")
     TypeParameterDeclaration getDeclaration() {
-	return tvS.getDeclaration();
+        return tvS.getDeclaration();
     }
 }

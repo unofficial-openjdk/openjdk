@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,8 +30,7 @@ public class A {
    public static final String THIS_IS_OK= "y < abs(x)";
 
    public static final String DEMO_STRING = "<Hello World>";
-   
+
    public A() {
    }
 }
- 

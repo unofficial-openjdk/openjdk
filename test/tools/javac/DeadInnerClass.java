@@ -35,15 +35,15 @@ class DeadInnerClass {
     public String val = "test value";
 
     void method() {
-	if (false) {
-	    // Dead code.
-	    class Inner {
-		Inner() {
-		    System.out.println(val);
-		}
-	    }
+        if (false) {
+            // Dead code.
+            class Inner {
+                Inner() {
+                    System.out.println(val);
+                }
+            }
 
-	    new DeadInnerClass();
-	}
+            new DeadInnerClass();
+        }
     }
 }

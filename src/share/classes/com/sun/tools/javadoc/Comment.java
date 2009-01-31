@@ -42,28 +42,28 @@ import com.sun.tools.javac.util.ListBuffer;
  * @author Neal Gafter (rewrite)
  */
 class Comment {
-    
+
     /**
      * sorted comments with different tags.
      */
     private final ListBuffer<Tag> tagList = new ListBuffer<Tag>();
-    
+
     /**
      * text minus any tags.
      */
     private String text;
-    
+
     /**
      * Doc environment
      */
     private final DocEnv docenv;
-    
+
     /**
      * constructor of Comment.
      */
     Comment(final DocImpl holder, final String commentString) {
         this.docenv = holder.env;
-        
+
         /**
          * Separate the comment into the text part and zero to N tags.
          * Simple state machine is in one of three states:
@@ -135,7 +135,7 @@ class Comment {
                         break;
                 };
             }
-            
+
             /**
              * Save away the last parsed item.
              */
@@ -173,32 +173,32 @@ class Comment {
                     tagList.append(tag);
                 }
             }
-            
+
             void warnIfEmpty(String tagName, String tx) {
                 if (tx.length() == 0) {
                     docenv.warning(holder, "tag.tag_has_no_arguments", tagName);
                 }
             }
-            
+
         }
-        
+
         new CommentStringParser().parseCommentStateMachine();
     }
-    
+
     /**
      * Return the text of the comment.
      */
     String commentText() {
         return text;
     }
-    
+
     /**
      * Return all tags in this comment.
      */
     Tag[] tags() {
         return tagList.toArray(new Tag[tagList.length()]);
     }
-    
+
     /**
      * Return tags of the specified kind in this comment.
      */
@@ -208,41 +208,41 @@ class Comment {
         if (target.charAt(0) != '@') {
             target = "@" + target;
         }
-	for (Tag tag : tagList) {
+        for (Tag tag : tagList) {
             if (tag.kind().equals(target)) {
                 found.append(tag);
             }
         }
         return found.toArray(new Tag[found.length()]);
     }
-    
+
     /**
      * Return throws tags in this comment.
      */
     ThrowsTag[] throwsTags() {
         ListBuffer<ThrowsTag> found = new ListBuffer<ThrowsTag>();
-	for (Tag next : tagList) {
+        for (Tag next : tagList) {
             if (next instanceof ThrowsTag) {
                 found.append((ThrowsTag)next);
             }
         }
         return found.toArray(new ThrowsTag[found.length()]);
     }
-    
+
     /**
      * Return param tags (excluding type param tags) in this comment.
      */
     ParamTag[] paramTags() {
-	return paramTags(false);
+        return paramTags(false);
     }
-    
+
     /**
      * Return type param tags in this comment.
      */
     ParamTag[] typeParamTags() {
-	return paramTags(true);
+        return paramTags(true);
     }
-    
+
     /**
      * Return param tags in this comment.  If typeParams is true
      * include only type param tags, otherwise include only ordinary
@@ -250,43 +250,43 @@ class Comment {
      */
     private ParamTag[] paramTags(boolean typeParams) {
         ListBuffer<ParamTag> found = new ListBuffer<ParamTag>();
-	for (Tag next : tagList) {
+        for (Tag next : tagList) {
             if (next instanceof ParamTag) {
-		ParamTag p = (ParamTag)next;
-		if (typeParams == p.isTypeParameter()) {
-		    found.append(p);
-		}
+                ParamTag p = (ParamTag)next;
+                if (typeParams == p.isTypeParameter()) {
+                    found.append(p);
+                }
             }
         }
         return found.toArray(new ParamTag[found.length()]);
     }
-    
+
     /**
      * Return see also tags in this comment.
      */
     SeeTag[] seeTags() {
         ListBuffer<SeeTag> found = new ListBuffer<SeeTag>();
-	for (Tag next : tagList) {
+        for (Tag next : tagList) {
             if (next instanceof SeeTag) {
                 found.append((SeeTag)next);
             }
         }
         return found.toArray(new SeeTag[found.length()]);
     }
-    
+
     /**
      * Return serialField tags in this comment.
      */
     SerialFieldTag[] serialFieldTags() {
         ListBuffer<SerialFieldTag> found = new ListBuffer<SerialFieldTag>();
-	for (Tag next : tagList) {
+        for (Tag next : tagList) {
             if (next instanceof SerialFieldTag) {
                 found.append((SerialFieldTag)next);
             }
         }
         return found.toArray(new SerialFieldTag[found.length()]);
     }
-    
+
     /**
      * Return array of tags with text and inline See Tags for a Doc comment.
      */
@@ -294,7 +294,7 @@ class Comment {
         ListBuffer<Tag> taglist = new ListBuffer<Tag>();
         int delimend = 0, textstart = 0, len = inlinetext.length();
         DocEnv docenv = holder.env;
-        
+
         if (len == 0) {
             return taglist.toArray(new Tag[taglist.length()]);
         }
@@ -386,7 +386,7 @@ class Comment {
             return delimEnd;
         }
     }
-    
+
     /**
      * Recursively search for the string "{@" followed by
      * name of inline tag and white space,
@@ -411,7 +411,7 @@ class Comment {
         }
     }
 
-    
+
     /**
      * Return array of tags for the locale specific first sentence in the text.
      */
@@ -420,7 +420,7 @@ class Comment {
         return getInlineTags(holder,
                              doclocale.localeSpecificFirstSentence(holder, text));
     }
-    
+
     /**
      * Return text for this Doc comment.
      */

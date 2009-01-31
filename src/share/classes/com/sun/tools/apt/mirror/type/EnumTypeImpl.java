@@ -40,7 +40,7 @@ import com.sun.tools.javac.code.Type;
 public class EnumTypeImpl extends ClassTypeImpl implements EnumType {
 
     EnumTypeImpl(AptEnv env, Type.ClassType type) {
-	super(env, type);
+        super(env, type);
     }
 
 
@@ -48,13 +48,13 @@ public class EnumTypeImpl extends ClassTypeImpl implements EnumType {
      * {@inheritDoc}
      */
     public EnumDeclaration getDeclaration() {
-	return (EnumDeclaration) super.getDeclaration();
+        return (EnumDeclaration) super.getDeclaration();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-	v.visitEnumType(this);
+        v.visitEnumType(this);
     }
 }

@@ -47,8 +47,8 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
     protected Type.WildcardType type;
 
     WildcardTypeImpl(AptEnv env, Type.WildcardType type) {
-	super(env, type);
-	this.type = type;
+        super(env, type);
+        this.type = type;
     }
 
 
@@ -58,25 +58,25 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
      * Delimiting brackets are not included.  Class names are qualified.
      */
     public String toString() {
-	return toString(env, type);
+        return toString(env, type);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<ReferenceType> getUpperBounds() {
-	return type.isSuperBound()
-		? Collections.<ReferenceType>emptyList()
-		: typeToCollection(type.type);
+        return type.isSuperBound()
+                ? Collections.<ReferenceType>emptyList()
+                : typeToCollection(type.type);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<ReferenceType> getLowerBounds() {
-	return type.isExtendsBound()
-		? Collections.<ReferenceType>emptyList()
-		: typeToCollection(type.type);
+        return type.isExtendsBound()
+                ? Collections.<ReferenceType>emptyList()
+                : typeToCollection(type.type);
     }
 
     /**
@@ -85,18 +85,18 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
      * collection.
      */
     private Collection<ReferenceType> typeToCollection(Type type) {
-	ArrayList<ReferenceType> res = new ArrayList<ReferenceType>(1);
-	if (type != null) {
-	    res.add((ReferenceType) env.typeMaker.getType(type));
-	}
-	return res;
+        ArrayList<ReferenceType> res = new ArrayList<ReferenceType>(1);
+        if (type != null) {
+            res.add((ReferenceType) env.typeMaker.getType(type));
+        }
+        return res;
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-	v.visitWildcardType(this);
+        v.visitWildcardType(this);
     }
 
 
@@ -106,6 +106,6 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
      * See {@link #toString()} for details.
      */
     static String toString(AptEnv env, Type.WildcardType wildThing) {
-	return wildThing.toString();
+        return wildThing.toString();
     }
 }

@@ -94,8 +94,8 @@ public interface Messager {
      * @param v    the annotation value to use as a position hint
      */
     void printMessage(Diagnostic.Kind kind,
-		      CharSequence msg,
-		      Element e,
-		      AnnotationMirror a,
-		      AnnotationValue v);
+                      CharSequence msg,
+                      Element e,
+                      AnnotationMirror a,
+                      AnnotationValue v);
 }

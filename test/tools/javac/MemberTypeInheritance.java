@@ -60,13 +60,13 @@ class Y extends L implements M {
 class Outer {
 
     class C {
-	class D {}
-	// Inner class cannot have member interface (static member).
+        class D {}
+        // Inner class cannot have member interface (static member).
     }
 
     interface I {
-	class J {}
-	interface K{}
+        class J {}
+        interface K{}
     }
 
     class L extends C {}
@@ -74,35 +74,35 @@ class Outer {
     interface M extends I {}
 
     class X extends C implements I {
-	D d;
-	J j;
-	K k;
+        D d;
+        J j;
+        K k;
     }
 
     class Y extends L implements M {
-	D d;
-	J j;
-	K k;
+        D d;
+        J j;
+        K k;
     }
 
     void test() {
 
-	// Blocks may not contain local interfaces.
+        // Blocks may not contain local interfaces.
 
-	class C {
-	    class D {}
-	    // Inner class cannot have member interface (static member).
-	}
+        class C {
+            class D {}
+            // Inner class cannot have member interface (static member).
+        }
 
-	class L extends C {}
-	
-	class X extends C {
-	    D d;
-	}
+        class L extends C {}
 
-	class Y extends L {
-	    D d;
-	}
+        class X extends C {
+            D d;
+        }
+
+        class Y extends L {
+            D d;
+        }
 
     }
 

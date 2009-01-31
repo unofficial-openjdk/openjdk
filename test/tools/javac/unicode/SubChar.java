@@ -40,9 +40,9 @@ not insert a newline after that trailing line.
 */
 
 /** \u001A */
-class SubChar { 
-    public static void main(String args[]) { 
-	return;
+class SubChar {
+    public static void main(String args[]) {
+        return;
     }
 }
 /* \u001A */

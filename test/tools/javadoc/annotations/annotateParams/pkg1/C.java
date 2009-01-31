@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,7 +29,7 @@ public class C {
     }
 
     public void m(@A("p1") int p1,
-		  int p2,
-		  @Deprecated @A("p3") String p3) {
+                  int p2,
+                  @Deprecated @A("p3") String p3) {
     }
 }

@@ -30,10 +30,10 @@
 @Deprecated
 abstract class B3 extends A implements I {
     @Deprecated public void iDep_aDep_bDep() { }
-                public void iDep_aDep_bUnd() { } // potential warning x 2, suppressed 
+                public void iDep_aDep_bUnd() { } // potential warning x 2, suppressed
     //          public void iDep_aDep_bInh() { }
     @Deprecated public void iDep_aUnd_bDep() { }
-                public void iDep_aUnd_bUnd() { } // potential warning, suppressed 
+                public void iDep_aUnd_bUnd() { } // potential warning, suppressed
     //          public void iDep_aUnd_bInh() { } // potential warning, suppressed
     @Deprecated public void iDep_aInh_bDep() { }
                 public void iDep_aInh_bUnd() { } // potential warning, suppressed

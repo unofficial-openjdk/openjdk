@@ -41,24 +41,24 @@ import com.sun.mirror.util.*;
 public class EnumTyp extends Tester {
 
     public static void main(String[] args) {
-	(new EnumTyp()).run();
+        (new EnumTyp()).run();
     }
 
 
     // Declarations used by tests
 
     enum Suit {
-	CIVIL,
-	CRIMINAL
+        CIVIL,
+        CRIMINAL
     }
 
     private Suit s;
 
 
-    private EnumType e;		// an enum type
+    private EnumType e;         // an enum type
 
     protected void init() {
-	e = (EnumType) getField("s").getType();
+        e = (EnumType) getField("s").getType();
     }
 
 
@@ -66,26 +66,26 @@ public class EnumTyp extends Tester {
 
     @Test(result="enum")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	e.accept(new SimpleTypeVisitor() {
-	    public void visitTypeMirror(TypeMirror t) {
-		res.add("type");
-	    }
-	    public void visitReferenceType(ReferenceType t) {
-		res.add("ref type");
-	    }
-	    public void visitClassType(ClassType t) {
-		res.add("class");
-	    }
-	    public void visitEnumType(EnumType t) {
-		res.add("enum");
-	    }
-	    public void visitInterfaceType(InterfaceType t) {
-		res.add("interface");
-	    }
-	});
-	return res;
+        e.accept(new SimpleTypeVisitor() {
+            public void visitTypeMirror(TypeMirror t) {
+                res.add("type");
+            }
+            public void visitReferenceType(ReferenceType t) {
+                res.add("ref type");
+            }
+            public void visitClassType(ClassType t) {
+                res.add("class");
+            }
+            public void visitEnumType(EnumType t) {
+                res.add("enum");
+            }
+            public void visitInterfaceType(InterfaceType t) {
+                res.add("interface");
+            }
+        });
+        return res;
     }
 
 
@@ -93,6 +93,6 @@ public class EnumTyp extends Tester {
 
     @Test(result="EnumTyp.Suit")
     EnumDeclaration getDeclaration() {
-	return e.getDeclaration();
+        return e.getDeclaration();
     }
 }

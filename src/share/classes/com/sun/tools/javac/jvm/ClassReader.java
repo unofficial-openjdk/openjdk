@@ -104,9 +104,9 @@ public class ClassReader extends ClassFile implements Completer {
      * Switch: cache completion failures unless -XDdev is used
      */
     private boolean cacheCompletionFailure;
-    
+
     /**
-     * Switch: prefer source files instead of newer when both source 
+     * Switch: prefer source files instead of newer when both source
      * and class are available
      **/
     public boolean preferSource;
@@ -1645,7 +1645,7 @@ public class ClassReader extends ClassFile implements Completer {
             majorVersion * 1000 + minorVersion <
             Target.MIN().majorVersion * 1000 + Target.MIN().minorVersion)
         {
-            if (majorVersion == (maxMajor + 1)) 
+            if (majorVersion == (maxMajor + 1))
                 log.warning("big.major.version",
                             currentClassFile,
                             majorVersion,
@@ -1752,8 +1752,8 @@ public class ClassReader extends ClassFile implements Completer {
         }
         Name packageName = Convert.packagePart(flatName);
         PackageSymbol owner = packageName.isEmpty()
-				? syms.unnamedPackage
-				: enterPackage(packageName);
+                                ? syms.unnamedPackage
+                                : enterPackage(packageName);
         cs = defineClass(Convert.shortName(flatName), owner);
         cs.classfile = classFile;
         classes.put(flatName, cs);
@@ -2051,7 +2051,7 @@ public class ClassReader extends ClassFile implements Completer {
      */
     protected JavaFileObject preferredFileObject(JavaFileObject a,
                                            JavaFileObject b) {
-        
+
         if (preferSource)
             return (a.getKind() == JavaFileObject.Kind.SOURCE) ? a : b;
         else {

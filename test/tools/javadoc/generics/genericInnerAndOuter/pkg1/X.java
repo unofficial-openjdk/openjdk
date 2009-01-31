@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,8 +25,8 @@ package pkg1;
 
 public class X<T> {
     public class Y {
-	public class Z<S> {
-	    public void m1(X<String>.Y.Z<Number> a) {}
-	}
+        public class Z<S> {
+            public void m1(X<String>.Y.Z<Number> a) {}
+        }
     }
 }

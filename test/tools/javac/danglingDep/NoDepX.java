@@ -24,16 +24,16 @@
 /*
  * control test (1): verify that compiler handles (lack of) at-deprecated correctly
  * @test
- * @clean NoDepX X RefX 
+ * @clean NoDepX X RefX
  * @compile/ref=NoDepX.out -XDstdout -XDrawDiagnostics NoDepX.java RefX.java
  */
 class NoDepX
 {
 }
 
-/** 
+/**
  * X.
- * not deprecated 
+ * not deprecated
  */
 class X {
 }

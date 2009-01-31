@@ -41,10 +41,10 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
  */
 
 public class ConstructorDeclarationImpl extends ExecutableDeclarationImpl
-					implements ConstructorDeclaration {
+                                        implements ConstructorDeclaration {
 
     ConstructorDeclarationImpl(AptEnv env, MethodSymbol sym) {
-	super(env, sym);
+        super(env, sym);
     }
 
 
@@ -53,13 +53,13 @@ public class ConstructorDeclarationImpl extends ExecutableDeclarationImpl
      * Returns the simple name of the declaring class.
      */
     public String getSimpleName() {
-	return sym.enclClass().name.toString();
+        return sym.enclClass().name.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitConstructorDeclaration(this);
+        v.visitConstructorDeclaration(this);
     }
 }

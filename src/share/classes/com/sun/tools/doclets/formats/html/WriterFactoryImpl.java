@@ -36,15 +36,15 @@ import com.sun.javadoc.*;
  * @since 1.5
  */
 public class WriterFactoryImpl implements WriterFactory {
-    
+
     private static WriterFactoryImpl instance;
-    
+
     private ConfigurationImpl configuration;
-    
+
     private WriterFactoryImpl(ConfigurationImpl configuration) {
         this.configuration = configuration;
     }
-    
+
     /**
      * Return an instance of this factory.
      *
@@ -56,14 +56,14 @@ public class WriterFactoryImpl implements WriterFactory {
         }
         return instance;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public ConstantsSummaryWriter getConstantsSummaryWriter() throws Exception {
         return new ConstantsSummaryWriterImpl(configuration);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -72,16 +72,16 @@ public class WriterFactoryImpl implements WriterFactory {
         return new PackageWriterImpl(ConfigurationImpl.getInstance(), packageDoc,
             prevPkg, nextPkg);
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public ClassWriter getClassWriter(ClassDoc classDoc, ClassDoc prevClass, 
+    public ClassWriter getClassWriter(ClassDoc classDoc, ClassDoc prevClass,
             ClassDoc nextClass, ClassTree classTree)
             throws Exception {
         return new ClassWriterImpl(classDoc, prevClass, nextClass, classTree);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -90,64 +90,64 @@ public class WriterFactoryImpl implements WriterFactory {
     throws Exception {
         return new AnnotationTypeWriterImpl(annotationType, prevType, nextType);
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public AnnotationTypeOptionalMemberWriter 
+    public AnnotationTypeOptionalMemberWriter
             getAnnotationTypeOptionalMemberWriter(
         AnnotationTypeWriter annotationTypeWriter) throws Exception {
         return new AnnotationTypeOptionalMemberWriterImpl(
-            (SubWriterHolderWriter) annotationTypeWriter, 
+            (SubWriterHolderWriter) annotationTypeWriter,
             annotationTypeWriter.getAnnotationTypeDoc());
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public AnnotationTypeRequiredMemberWriter 
+    public AnnotationTypeRequiredMemberWriter
             getAnnotationTypeRequiredMemberWriter(AnnotationTypeWriter annotationTypeWriter) throws Exception {
         return new AnnotationTypeRequiredMemberWriterImpl(
-            (SubWriterHolderWriter) annotationTypeWriter, 
+            (SubWriterHolderWriter) annotationTypeWriter,
             annotationTypeWriter.getAnnotationTypeDoc());
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public EnumConstantWriter getEnumConstantWriter(ClassWriter classWriter)
             throws Exception {
-        return new EnumConstantWriterImpl((SubWriterHolderWriter) classWriter, 
+        return new EnumConstantWriterImpl((SubWriterHolderWriter) classWriter,
             classWriter.getClassDoc());
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public FieldWriter getFieldWriter(ClassWriter classWriter)
             throws Exception {
-        return new FieldWriterImpl((SubWriterHolderWriter) classWriter, 
+        return new FieldWriterImpl((SubWriterHolderWriter) classWriter,
             classWriter.getClassDoc());
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public  MethodWriter getMethodWriter(ClassWriter classWriter)
             throws Exception {
-        return new MethodWriterImpl((SubWriterHolderWriter) classWriter, 
+        return new MethodWriterImpl((SubWriterHolderWriter) classWriter,
             classWriter.getClassDoc());
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public ConstructorWriter getConstructorWriter(ClassWriter classWriter)
             throws Exception {
-        return new ConstructorWriterImpl((SubWriterHolderWriter) classWriter, 
+        return new ConstructorWriterImpl((SubWriterHolderWriter) classWriter,
             classWriter.getClassDoc());
-    }    
-    
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -162,7 +162,7 @@ public class WriterFactoryImpl implements WriterFactory {
             case VisibleMemberMap.FIELDS:
                 return (FieldWriterImpl) getFieldWriter(classWriter);
             case VisibleMemberMap.INNERCLASSES:
-                return new NestedClassWriterImpl((SubWriterHolderWriter) 
+                return new NestedClassWriterImpl((SubWriterHolderWriter)
                     classWriter, classWriter.getClassDoc());
             case VisibleMemberMap.METHODS:
                 return (MethodWriterImpl) getMethodWriter(classWriter);
@@ -170,7 +170,7 @@ public class WriterFactoryImpl implements WriterFactory {
                 return null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -179,16 +179,16 @@ public class WriterFactoryImpl implements WriterFactory {
     throws Exception {
         switch (memberType) {
             case VisibleMemberMap.ANNOTATION_TYPE_MEMBER_OPTIONAL:
-                return (AnnotationTypeOptionalMemberWriterImpl) 
+                return (AnnotationTypeOptionalMemberWriterImpl)
                     getAnnotationTypeOptionalMemberWriter(annotationTypeWriter);
             case VisibleMemberMap.ANNOTATION_TYPE_MEMBER_REQUIRED:
-                return (AnnotationTypeRequiredMemberWriterImpl) 
+                return (AnnotationTypeRequiredMemberWriterImpl)
                     getAnnotationTypeRequiredMemberWriter(annotationTypeWriter);
             default:
                 return null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */

@@ -41,18 +41,18 @@ import com.sun.mirror.util.*;
 public class FieldDecl extends Tester {
 
     public static void main(String[] args) {
-	(new FieldDecl()).run();
+        (new FieldDecl()).run();
     }
 
 
-    private FieldDeclaration f1 = null;		// a field
-    private FieldDeclaration f2 = null;		// a static field
-    private FieldDeclaration f3 = null;		// a constant field
+    private FieldDeclaration f1 = null;         // a field
+    private FieldDeclaration f2 = null;         // a static field
+    private FieldDeclaration f3 = null;         // a constant field
 
     protected void init() {
-	f1 = getField("aField");
-	f2 = getField("aStaticField");
-	f3 = getField("aConstantField");
+        f1 = getField("aField");
+        f2 = getField("aStaticField");
+        f3 = getField("aConstantField");
     }
 
 
@@ -60,46 +60,46 @@ public class FieldDecl extends Tester {
 
     @Test(result="field")
     Collection<String> accept() {
-	final Collection<String> res = new ArrayList<String>();
+        final Collection<String> res = new ArrayList<String>();
 
-	f1.accept(new SimpleDeclarationVisitor() {
-	    public void visitTypeDeclaration(TypeDeclaration t) {
-		res.add("type");
-	    }
-	    public void visitFieldDeclaration(FieldDeclaration f) {
-		res.add("field");
-	    }
-	    public void visitEnumConstantDeclaration(
-						EnumConstantDeclaration e) {
-		res.add("enum const");
-	    }
-	});
-	return res;
+        f1.accept(new SimpleDeclarationVisitor() {
+            public void visitTypeDeclaration(TypeDeclaration t) {
+                res.add("type");
+            }
+            public void visitFieldDeclaration(FieldDeclaration f) {
+                res.add("field");
+            }
+            public void visitEnumConstantDeclaration(
+                                                EnumConstantDeclaration e) {
+                res.add("enum const");
+            }
+        });
+        return res;
     }
 
     @Test(result={"@FieldDecl.AT1"})
     Collection<AnnotationMirror> getAnnotationMirrors() {
-	return f1.getAnnotationMirrors();
+        return f1.getAnnotationMirrors();
     }
 
     @Test(result=" Sed Quis custodiet ipsos custodes?\n")
     String getDocComment() {
-	return f1.getDocComment();
+        return f1.getDocComment();
     }
 
     @Test(result={"public"})
     Collection<Modifier> getModifiers() {
-	return f1.getModifiers();
+        return f1.getModifiers();
     }
 
     @Test(result="FieldDecl.java")
     String getPosition() {
-	return f1.getPosition().file().getName();
+        return f1.getPosition().file().getName();
     }
 
     @Test(result="aField")
     String getSimpleName() {
-	return f1.getSimpleName();
+        return f1.getSimpleName();
     }
 
 
@@ -107,7 +107,7 @@ public class FieldDecl extends Tester {
 
     @Test(result="FieldDecl")
     TypeDeclaration getDeclaringType() {
-	return f1.getDeclaringType();
+        return f1.getDeclaringType();
     }
 
 
@@ -115,23 +115,23 @@ public class FieldDecl extends Tester {
 
     @Test(result="java.util.List<java.lang.String>")
     TypeMirror getType1() {
-	return f1.getType();
+        return f1.getType();
     }
 
     @Test(result="int")
     TypeMirror getType2() {
-	return f2.getType();
+        return f2.getType();
     }
 
     @Test(result="null")
     Object getConstantValue1() {
-	return f1.getConstantValue();
+        return f1.getConstantValue();
     }
 
     // 5008309: FieldDeclaration.getConstantValue() doesn't return anything
     @Test(result="true")
     Object getConstantValue2() {
-	return f3.getConstantValue();
+        return f3.getConstantValue();
     }
 
 
@@ -139,7 +139,7 @@ public class FieldDecl extends Tester {
 
     @Test(result="aField")
     String toStringTest() {
-	return f1.toString();
+        return f1.toString();
     }
 
 

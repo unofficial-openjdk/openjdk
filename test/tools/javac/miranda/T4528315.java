@@ -45,9 +45,9 @@ interface I3 extends I1, I2 {
 }
 class Blah {
     public void foo(I3 i3) {
-	try {
-	    i3.foo();
-	} catch (E4 e4) {
-	}
+        try {
+            i3.foo();
+        } catch (E4 e4) {
+        }
     }
 }

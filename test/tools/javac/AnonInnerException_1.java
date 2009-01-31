@@ -33,25 +33,25 @@
 
 class AnonInnerException_1 {
 
-    boolean done = true;    
+    boolean done = true;
 
     void foo() throws Exception {
 
-	AnonInnerExceptionAux x =
-	    new AnonInnerExceptionAux(){};
+        AnonInnerExceptionAux x =
+            new AnonInnerExceptionAux(){};
 
-	/**** This related case should pass, but does not!
-	AnonInnerExceptionAux y =
-	    new AnonInnerExceptionAux() {
-	      // instance initializer
-	      {
-		  if (done) 
-		      throw new Exception();
-		  if (done) 
-		      throw new MyException();
-	      }
-	};
-	****/
+        /**** This related case should pass, but does not!
+        AnonInnerExceptionAux y =
+            new AnonInnerExceptionAux() {
+              // instance initializer
+              {
+                  if (done)
+                      throw new Exception();
+                  if (done)
+                      throw new MyException();
+              }
+        };
+        ****/
     }
 }
 

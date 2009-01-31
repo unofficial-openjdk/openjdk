@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,28 +34,28 @@ import java.util.*;
 public class DupOk extends Doclet
 {
     public static void main(String[] args) {
-	// run javadoc on package p
-	if (com.sun.tools.javadoc.Main.
-	    execute("javadoc", "DupOk",
-		    new String[]
-		{"-sourcepath", 
-		 System.getProperty("test.src", ".") + java.io.File.separatorChar + "sp1" +
-		 System.getProperty("path.separator") +
-		 System.getProperty("test.src", ".") + java.io.File.separatorChar + "sp2",
-		 "p"
-		}) != 0)
-	    throw new Error();
+        // run javadoc on package p
+        if (com.sun.tools.javadoc.Main.
+            execute("javadoc", "DupOk",
+                    new String[]
+                {"-sourcepath",
+                 System.getProperty("test.src", ".") + java.io.File.separatorChar + "sp1" +
+                 System.getProperty("path.separator") +
+                 System.getProperty("test.src", ".") + java.io.File.separatorChar + "sp2",
+                 "p"
+                }) != 0)
+            throw new Error();
     }
 
     public static boolean start(com.sun.javadoc.RootDoc root) {
-	ClassDoc[] classes = root.classes();
-	if (classes.length != 2)
-	    throw new Error("1 " + Arrays.asList(classes));
-	for (int i=0; i<classes.length; i++) {
-	    ClassDoc clazz = classes[i];
-	    if (clazz.fields().length != 1)
-		throw new Error("2 " + clazz + " " + Arrays.asList(clazz.fields()));
-	}
-	return true;
+        ClassDoc[] classes = root.classes();
+        if (classes.length != 2)
+            throw new Error("1 " + Arrays.asList(classes));
+        for (int i=0; i<classes.length; i++) {
+            ClassDoc clazz = classes[i];
+            if (clazz.fields().length != 1)
+                throw new Error("2 " + clazz + " " + Arrays.asList(clazz.fields()));
+        }
+        return true;
     }
 }

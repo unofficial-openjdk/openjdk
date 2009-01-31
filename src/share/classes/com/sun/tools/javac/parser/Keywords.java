@@ -33,7 +33,7 @@ import static com.sun.tools.javac.parser.Token.*;
 
 /**
  * Map from Name to Token and Token to String.
- * 
+ *
  * <p><b>This is NOT part of any API supported by Sun Microsystems.
  * If you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
@@ -41,41 +41,41 @@ import static com.sun.tools.javac.parser.Token.*;
  */
 public class Keywords {
     public static final Context.Key<Keywords> keywordsKey =
-	new Context.Key<Keywords>();
+        new Context.Key<Keywords>();
 
     public static Keywords instance(Context context) {
-	Keywords instance = context.get(keywordsKey);
-	if (instance == null)
-	    instance = new Keywords(context);
-	return instance;
+        Keywords instance = context.get(keywordsKey);
+        if (instance == null)
+            instance = new Keywords(context);
+        return instance;
     }
 
     private final Log log;
     private final Name.Table names;
 
     protected Keywords(Context context) {
-	context.put(keywordsKey, this);
-	log = Log.instance(context);
-	names = Name.Table.instance(context);
+        context.put(keywordsKey, this);
+        log = Log.instance(context);
+        names = Name.Table.instance(context);
 
-	for (Token t : Token.values()) {
-	    if (t.name != null)
-		enterKeyword(t.name, t);
-	    else
-		tokenName[t.ordinal()] = null;
-	}
+        for (Token t : Token.values()) {
+            if (t.name != null)
+                enterKeyword(t.name, t);
+            else
+                tokenName[t.ordinal()] = null;
+        }
 
-	key = new Token[maxKey+1];
-	for (int i = 0; i <= maxKey; i++) key[i] = IDENTIFIER;
-	for (Token t : Token.values()) {
-	    if (t.name != null)
-		key[tokenName[t.ordinal()].index] = t;
-	}
+        key = new Token[maxKey+1];
+        for (int i = 0; i <= maxKey; i++) key[i] = IDENTIFIER;
+        for (Token t : Token.values()) {
+            if (t.name != null)
+                key[tokenName[t.ordinal()].index] = t;
+        }
     }
 
 
     public Token key(Name name) {
-	return (name.index > maxKey) ? IDENTIFIER : key[name.index];
+        return (name.index > maxKey) ? IDENTIFIER : key[name.index];
     }
 
     /**
@@ -83,7 +83,7 @@ public class Keywords {
      */
     private final Token[] key;
 
-    /**	 The number of the last entered keyword.
+    /**  The number of the last entered keyword.
      */
     private int maxKey = 0;
 
@@ -92,36 +92,36 @@ public class Keywords {
     private Name[] tokenName = new Name[Token.values().length];
 
     public String token2string(Token token) {
-	switch (token) {
-	case IDENTIFIER:
-	    return log.getLocalizedString("token.identifier");
-	case CHARLITERAL:
-	    return log.getLocalizedString("token.character");
-	case STRINGLITERAL:
-	    return log.getLocalizedString("token.string");
-	case INTLITERAL:
-	    return log.getLocalizedString("token.integer");
-	case LONGLITERAL:
-	    return log.getLocalizedString("token.long-integer");
-	case FLOATLITERAL:
-	    return log.getLocalizedString("token.float");
-	case DOUBLELITERAL:
-	    return log.getLocalizedString("token.double");
-	case ERROR:
-	    return log.getLocalizedString("token.bad-symbol");
-	case EOF:
-	    return log.getLocalizedString("token.end-of-input");
-	case DOT: case COMMA: case SEMI: case LPAREN: case RPAREN:
-	case LBRACKET: case RBRACKET: case LBRACE: case RBRACE:
-	    return "'" + token.name + "'";
-	default:
-	    return token.name;
-	}
+        switch (token) {
+        case IDENTIFIER:
+            return log.getLocalizedString("token.identifier");
+        case CHARLITERAL:
+            return log.getLocalizedString("token.character");
+        case STRINGLITERAL:
+            return log.getLocalizedString("token.string");
+        case INTLITERAL:
+            return log.getLocalizedString("token.integer");
+        case LONGLITERAL:
+            return log.getLocalizedString("token.long-integer");
+        case FLOATLITERAL:
+            return log.getLocalizedString("token.float");
+        case DOUBLELITERAL:
+            return log.getLocalizedString("token.double");
+        case ERROR:
+            return log.getLocalizedString("token.bad-symbol");
+        case EOF:
+            return log.getLocalizedString("token.end-of-input");
+        case DOT: case COMMA: case SEMI: case LPAREN: case RPAREN:
+        case LBRACKET: case RBRACKET: case LBRACE: case RBRACE:
+            return "'" + token.name + "'";
+        default:
+            return token.name;
+        }
     }
 
     private void enterKeyword(String s, Token token) {
-	Name n = names.fromString(s);
-	tokenName[token.ordinal()] = n;
-	if (n.index > maxKey) maxKey = n.index;
+        Name n = names.fromString(s);
+        tokenName[token.ordinal()] = n;
+        if (n.index > maxKey) maxKey = n.index;
     }
 }

@@ -36,62 +36,62 @@ import java.util.Collections;
 
 public class Scanner implements AnnotationProcessorFactory {
     static class ScannerProc implements AnnotationProcessor {
-	AnnotationProcessorEnvironment env;
-	ScannerProc(AnnotationProcessorEnvironment env) {
-	    this.env = env;
-	}
+        AnnotationProcessorEnvironment env;
+        ScannerProc(AnnotationProcessorEnvironment env) {
+            this.env = env;
+        }
 
-	static class CountingVisitor extends SimpleDeclarationVisitor {
-	    int count;
-	    CountingVisitor() {
-		count = 0;
-	    }
+        static class CountingVisitor extends SimpleDeclarationVisitor {
+            int count;
+            CountingVisitor() {
+                count = 0;
+            }
 
-	    public void visitDeclaration(Declaration d) {
-		count++;
+            public void visitDeclaration(Declaration d) {
+                count++;
 
-		Collection<AnnotationMirror> ams = d.getAnnotationMirrors();
-		if (ams == null)
-		    throw new RuntimeException("Declaration " + d + 
-					       " not annotated with visit order.");
-		else {
-		    if (ams.size() != 1) 
-			throw new RuntimeException("Declaration " + d + 
-						   " has wrong number of declarations.");
-		    else {
-			for(AnnotationMirror am: ams) {
-			    Map<AnnotationTypeElementDeclaration,AnnotationValue> elementValues = am.getElementValues();
-			    for(AnnotationTypeElementDeclaration atmd: elementValues.keySet()) {
-				if (!atmd.getDeclaringType().toString().equals("VisitOrder"))
-				    throw new RuntimeException("Annotation " + atmd + 
-							       " is the wrong type.");
-				else {
-				    AnnotationValue av = 
-					elementValues.get(atmd);
-				    Integer value = (Integer) av.getValue();
-				    if (value.intValue() != count)
-					throw new RuntimeException("Expected declaration " + d + 
-								   " to be in position " + count +
-								   " instead of " + value.intValue());
+                Collection<AnnotationMirror> ams = d.getAnnotationMirrors();
+                if (ams == null)
+                    throw new RuntimeException("Declaration " + d +
+                                               " not annotated with visit order.");
+                else {
+                    if (ams.size() != 1)
+                        throw new RuntimeException("Declaration " + d +
+                                                   " has wrong number of declarations.");
+                    else {
+                        for(AnnotationMirror am: ams) {
+                            Map<AnnotationTypeElementDeclaration,AnnotationValue> elementValues = am.getElementValues();
+                            for(AnnotationTypeElementDeclaration atmd: elementValues.keySet()) {
+                                if (!atmd.getDeclaringType().toString().equals("VisitOrder"))
+                                    throw new RuntimeException("Annotation " + atmd +
+                                                               " is the wrong type.");
+                                else {
+                                    AnnotationValue av =
+                                        elementValues.get(atmd);
+                                    Integer value = (Integer) av.getValue();
+                                    if (value.intValue() != count)
+                                        throw new RuntimeException("Expected declaration " + d +
+                                                                   " to be in position " + count +
+                                                                   " instead of " + value.intValue());
 
-				    System.out.println("Declaration " + d + 
-						       ": visit order " + value.intValue());
-				}
-			    }
+                                    System.out.println("Declaration " + d +
+                                                       ": visit order " + value.intValue());
+                                }
+                            }
 
-			}
-		    }
-		}
+                        }
+                    }
+                }
 
-	    }
-	}
+            }
+        }
 
-	public void process() {
-	    for(TypeDeclaration td: env.getSpecifiedTypeDeclarations() ) {
-		td.accept(DeclarationVisitors.getSourceOrderDeclarationScanner(new CountingVisitor(),
-									       DeclarationVisitors.NO_OP));
-	    }
-	}
+        public void process() {
+            for(TypeDeclaration td: env.getSpecifiedTypeDeclarations() ) {
+                td.accept(DeclarationVisitors.getSourceOrderDeclarationScanner(new CountingVisitor(),
+                                                                               DeclarationVisitors.NO_OP));
+            }
+        }
     }
 
 
@@ -119,5 +119,5 @@ public class Scanner implements AnnotationProcessorFactory {
                                         AnnotationProcessorEnvironment env) {
         return new ScannerProc(env);
     }
-   
+
 }

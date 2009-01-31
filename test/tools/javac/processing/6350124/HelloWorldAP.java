@@ -37,51 +37,51 @@ public class HelloWorldAP extends AbstractProcessor {
     boolean DONE=false;
 
     @Override
-    public void init(ProcessingEnvironment penv) {	
-	processingEnv = penv;
-	msgr=penv.getMessager();
-	filer=penv.getFiler();
+    public void init(ProcessingEnvironment penv) {
+        processingEnv = penv;
+        msgr=penv.getMessager();
+        filer=penv.getFiler();
     }
 
     public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv ) {
-	boolean ret = true;
-	if(!renv.processingOver() && !DONE) {
-	    msgr.printMessage(NOTE, "running process to create HelloWorld.");
-	    try {
-	        Writer pw = filer.createSourceFile("HelloWorld").openWriter();
-		pw.write("public class HelloWorld {\n"); 
-		pw.write("  public static void main (String argv[]) {\n"); 
-		pw.write("    System.out.println(\"Hello apt world.\");\n"); 
-		pw.write("  }\n");
-		pw.write("}\n"); 
-		pw.flush();
-		pw.close();
+        boolean ret = true;
+        if(!renv.processingOver() && !DONE) {
+            msgr.printMessage(NOTE, "running process to create HelloWorld.");
+            try {
+                Writer pw = filer.createSourceFile("HelloWorld").openWriter();
+                pw.write("public class HelloWorld {\n");
+                pw.write("  public static void main (String argv[]) {\n");
+                pw.write("    System.out.println(\"Hello apt world.\");\n");
+                pw.write("  }\n");
+                pw.write("}\n");
+                pw.flush();
+                pw.close();
 
-		OutputStream os = filer.createClassFile("HelloWorldAP").openOutputStream();
-		// the easiest way to create a class file is to copy another one
-		InputStream is = getClass().getResourceAsStream("HelloWorldAP.class");
-		copy(is, os);
-		is.close();
-		os.flush();
-		os.close();
-		DONE=true;
-	    } 
-	    catch (IOException ioe) {
-		msgr.printMessage(ERROR, ioe.getMessage());
-		ret = false;
-	    }
-	    catch (Exception e) {
-		msgr.printMessage(ERROR, e.getMessage());
-		ret = false;
-	    }
-	}
-	return ret;
+                OutputStream os = filer.createClassFile("HelloWorldAP").openOutputStream();
+                // the easiest way to create a class file is to copy another one
+                InputStream is = getClass().getResourceAsStream("HelloWorldAP.class");
+                copy(is, os);
+                is.close();
+                os.flush();
+                os.close();
+                DONE=true;
+            }
+            catch (IOException ioe) {
+                msgr.printMessage(ERROR, ioe.getMessage());
+                ret = false;
+            }
+            catch (Exception e) {
+                msgr.printMessage(ERROR, e.getMessage());
+                ret = false;
+            }
+        }
+        return ret;
     }
 
     void copy(InputStream is, OutputStream os) throws IOException {
-	byte[] buf = new byte[8192];
-	int n;
-	while ((n = is.read(buf, 0, buf.length)) > 0)
-	    os.write(buf, 0, n);
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = is.read(buf, 0, buf.length)) > 0)
+            os.write(buf, 0, n);
     }
 }

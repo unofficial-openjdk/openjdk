@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,35 +35,35 @@
  */
 
 public class TestTypeParameters extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4927167-4974929";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, 
+        "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR,
             "pkg"
     };
-    
+
     //Input for string search tests.
-    private static final String[][] TEST = 
+    private static final String[][] TEST =
     {
-        {BUG_ID + FS + "pkg" + FS + "C.html", 
+        {BUG_ID + FS + "pkg" + FS + "C.html",
             "<CODE>&lt;W extends java.lang.String,V extends java.util.List&gt; " + NL +
             "<BR>" + NL +
-            "java.lang.Object</CODE>"}, 
-        {BUG_ID + FS + "pkg" + FS + "C.html", 
+            "java.lang.Object</CODE>"},
+        {BUG_ID + FS + "pkg" + FS + "C.html",
             "<CODE>&lt;T&gt; java.lang.Object</CODE>"},
-        {BUG_ID + FS + "pkg" + FS + "package-summary.html", 
+        {BUG_ID + FS + "pkg" + FS + "package-summary.html",
             "C&lt;E extends Parent&gt;"},
-        //Nested type parameters 
-        {BUG_ID + FS + "pkg" + FS + "C.html", 
-            "<A NAME=\"formatDetails(java.util.Collection, java.util.Collection)\"><!-- --></A>"},   
-            
+        //Nested type parameters
+        {BUG_ID + FS + "pkg" + FS + "C.html",
+            "<A NAME=\"formatDetails(java.util.Collection, java.util.Collection)\"><!-- --></A>"},
+
     };
-    private static final String[][] NEGATED_TEST = NO_TEST;    
-    
-    
+    private static final String[][] NEGATED_TEST = NO_TEST;
+
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -73,14 +73,14 @@ public class TestTypeParameters extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

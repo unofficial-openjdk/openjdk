@@ -43,7 +43,7 @@ public class UnreachableVar {
             i = 2;
             result += i + " ";
         }
-	result += args.getClass().getName();
-	if (!result.equals("2 [Ljava.lang.String;")) throw new Error(result);
+        result += args.getClass().getName();
+        if (!result.equals("2 [Ljava.lang.String;")) throw new Error(result);
     }
 }

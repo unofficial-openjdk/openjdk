@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,19 +34,19 @@
  */
 
 public class TestBadSourceFile extends JavadocTester {
-    
+
     //Test information.
     private static final String BUG_ID = "4835749";
-    
+
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, SRC_DIR + FS + "C2.java"
     };
-    
+
     //Input for string search tests.
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = NO_TEST;
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -57,14 +57,14 @@ public class TestBadSourceFile extends JavadocTester {
         tester.checkExitCode(0, exitCode);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

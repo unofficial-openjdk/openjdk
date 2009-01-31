@@ -43,9 +43,9 @@ class Serial implements Serializable
 
     @SuppressWarnings("serial")
     void m() {
-	class Inner implements Serializable
-	{
-	}
+        class Inner implements Serializable
+        {
+        }
     }
 }
 
@@ -67,9 +67,9 @@ class Serial2
 
     @SuppressWarnings("serial")
     void m() {
-	class Inner implements Serializable
-	{
-	}
+        class Inner implements Serializable
+        {
+        }
     }
 }
 

@@ -41,20 +41,20 @@ import java.util.*;
 public class HtmlSerialFieldWriter extends FieldWriterImpl
     implements SerializedFormWriter.SerialFieldWriter {
     ProgramElementDoc[] members = null;
-    
+
     private boolean printedOverallAnchor = false;
-    
+
     private boolean printedFirstMember = false;
-    
+
     public HtmlSerialFieldWriter(SubWriterHolderWriter writer,
                                     ClassDoc classdoc) {
         super(writer, classdoc);
     }
-    
+
     public List members(ClassDoc cd) {
         return Util.asList(cd.serializableFields());
     }
-    
+
     protected void printTypeLinkNoDimension(Type type) {
         ClassDoc cd = type.asClassDoc();
         //Linking to package private classes in serialized for causes
@@ -66,7 +66,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
                 LinkInfoImpl.CONTEXT_SERIAL_MEMBER, type));
         }
     }
-    
+
     public void writeHeader(String heading) {
         if (! printedOverallAnchor) {
             writer.anchor("serializedForm");
@@ -82,7 +82,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
             writer.println();
         }
     }
-    
+
     public void writeMemberHeader(ClassDoc fieldType, String fieldTypeStr,
             String fieldDimensions, String fieldName) {
         if (printedFirstMember) {
@@ -96,7 +96,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
         if (fieldType == null) {
             writer.print(fieldTypeStr);
         } else {
-            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_SERIAL_MEMBER, 
+            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_SERIAL_MEMBER,
                 fieldType));
         }
         print(fieldDimensions + ' ');
@@ -104,7 +104,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
         writer.preEnd();
         writer.dl();
     }
-    
+
     /**
      * Write the deprecated information for this member.
      *
@@ -112,10 +112,10 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
      */
     public void writeMemberDeprecatedInfo(FieldDoc field) {
         print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(field, 
+            (new DeprecatedTaglet()).getTagletOutput(field,
             writer.getTagletWriterInstance(false))).toString());
     }
-    
+
     /**
      * Write the description text for this member.
      *
@@ -130,21 +130,21 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
         if (tags.length > 0) {
             writer.dt();
             writer.dd();
-            writer.printInlineComment(field, tags[0]);            
-        }        
+            writer.printInlineComment(field, tags[0]);
+        }
     }
-    
+
     /**
      * Write the description text for this member represented by the tag.
      *
      * @param serialFieldTag the field to document (represented by tag).
      */
-    public void writeMemberDescription(SerialFieldTag serialFieldTag) {        
+    public void writeMemberDescription(SerialFieldTag serialFieldTag) {
         writer.dd();
         writer.print(serialFieldTag.description());
         writer.dlEnd();
     }
-    
+
     /**
      * Write the tag information for this member.
      *
@@ -160,10 +160,8 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
             print(output.toString());
         }
         writer.dlEnd();
-    }    
+    }
     public void writeMemberFooter(FieldDoc member) {
         writer.dlEnd();
     }
 }
-
-

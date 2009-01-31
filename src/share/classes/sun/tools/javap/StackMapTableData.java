@@ -40,15 +40,15 @@ class StackMapTableData {
     StackMapTableData(int frameType) {
         this.frameType = frameType;
     }
-    
+
     void print(JavapPrinter p) {
         p.out.print("   frame_type = " + frameType);
     }
-    
+
     static class SameFrame extends StackMapTableData {
-        SameFrame(int frameType, int offsetDelta) { 
+        SameFrame(int frameType, int offsetDelta) {
             super(frameType);
-            this.offsetDelta = offsetDelta; 
+            this.offsetDelta = offsetDelta;
         }
         void print(JavapPrinter p) {
             super.print(p);
@@ -79,11 +79,11 @@ class StackMapTableData {
             p.printMap("     stack = [", stack);
         }
     }
-    
+
     static class ChopFrame extends StackMapTableData {
-        ChopFrame(int frameType, int offsetDelta) { 
+        ChopFrame(int frameType, int offsetDelta) {
             super(frameType);
-            this.offsetDelta = offsetDelta; 
+            this.offsetDelta = offsetDelta;
         }
         void print(JavapPrinter p) {
             super.print(p);
@@ -91,7 +91,7 @@ class StackMapTableData {
             p.out.println("     offset_delta = " + offsetDelta);
         }
     }
-    
+
     static class AppendFrame extends StackMapTableData {
         final int[] locals;
         AppendFrame(int frameType, int offsetDelta, int[] locals) {
@@ -106,7 +106,7 @@ class StackMapTableData {
             p.printMap("     locals = [", locals);
         }
     }
-    
+
     static class FullFrame extends StackMapTableData {
         final int[] locals;
         final int[] stack;
@@ -115,7 +115,7 @@ class StackMapTableData {
             this.offsetDelta = offsetDelta;
             this.locals = locals;
             this.stack = stack;
-        }        
+        }
         void print(JavapPrinter p) {
             super.print(p);
             p.out.println(" /* full_frame */");
@@ -124,46 +124,45 @@ class StackMapTableData {
             p.printMap("     stack = [", stack);
         }
     }
-    
-    static StackMapTableData getInstance(DataInputStream in, MethodData method) 
+
+    static StackMapTableData getInstance(DataInputStream in, MethodData method)
                   throws IOException {
         int frameType = in.readUnsignedByte();
 
         if (frameType < SAME_FRAME_BOUND) {
-	    // same_frame
-	    return new SameFrame(frameType, frameType);
+            // same_frame
+            return new SameFrame(frameType, frameType);
         } else if (SAME_FRAME_BOUND <= frameType && frameType < SAME_LOCALS_1_STACK_ITEM_BOUND) {
             // same_locals_1_stack_item_frame
             // read additional single stack element
-            return new SameLocals1StackItem(frameType, 
-                                            (frameType - SAME_FRAME_BOUND), 
+            return new SameLocals1StackItem(frameType,
+                                            (frameType - SAME_FRAME_BOUND),
                                             StackMapData.readTypeArray(in, 1, method));
         } else if (frameType == SAME_LOCALS_1_STACK_ITEM_EXTENDED) {
-	    // same_locals_1_stack_item_extended
-            return new SameLocals1StackItem(frameType, 
-                                            in.readUnsignedShort(), 
+            // same_locals_1_stack_item_extended
+            return new SameLocals1StackItem(frameType,
+                                            in.readUnsignedShort(),
                                             StackMapData.readTypeArray(in, 1, method));
         } else if (SAME_LOCALS_1_STACK_ITEM_EXTENDED < frameType  && frameType < SAME_FRAME_EXTENDED) {
-            // chop_frame or same_frame_extended 
+            // chop_frame or same_frame_extended
             return new ChopFrame(frameType, in.readUnsignedShort());
         } else if (frameType == SAME_FRAME_EXTENDED) {
-            // chop_frame or same_frame_extended 
+            // chop_frame or same_frame_extended
             return new SameFrame(frameType, in.readUnsignedShort());
         } else if (SAME_FRAME_EXTENDED < frameType  && frameType < FULL_FRAME) {
             // append_frame
-            return new AppendFrame(frameType, in.readUnsignedShort(), 
+            return new AppendFrame(frameType, in.readUnsignedShort(),
                                    StackMapData.readTypeArray(in, frameType - SAME_FRAME_EXTENDED, method));
         } else if (frameType == FULL_FRAME) {
             // full_frame
             int offsetDelta = in.readUnsignedShort();
-	    int locals_size = in.readUnsignedShort();
+            int locals_size = in.readUnsignedShort();
             int[] locals = StackMapData.readTypeArray(in, locals_size, method);
-	    int stack_size = in.readUnsignedShort();
+            int stack_size = in.readUnsignedShort();
             int[] stack = StackMapData.readTypeArray(in, stack_size, method);
             return new FullFrame(offsetDelta, locals, stack);
         } else {
-	    throw new ClassFormatError("unrecognized frame_type in StackMapTable");
+            throw new ClassFormatError("unrecognized frame_type in StackMapTable");
         }
     }
 }
-

@@ -42,7 +42,7 @@ import javax.tools.JavaFileObject.Kind;
  * A file manager for compiling strings to byte arrays.
  * This file manager delegates to another file manager
  * to lookup classes on boot class path.
- * 
+ *
  * <p><b>This is NOT part of any API supported by Sun Microsystems.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
@@ -64,7 +64,7 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
     public static JavaFileObject makeSource(String name, String code) {
         return new JavaSourceFromString(name, code);
     }
-    
+
     /**
      * Construct a memory file manager which delegates to the specified
      * file manager for unknown sources.
@@ -74,7 +74,7 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
         super(fileManager);
         classes = new HashMap<String, byte[]>();
     }
-    
+
     /**
      * Get a class loader which first search the classes stored
      * by this file mananger.
@@ -87,9 +87,9 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
 
     @Override
     public JavaFileObject getJavaFileForOutput(Location location,
-					       String name,
-					       Kind kind,
-					       FileObject originatingSource)
+                                               String name,
+                                               Kind kind,
+                                               FileObject originatingSource)
         throws UnsupportedOperationException
     {
         if (originatingSource instanceof JavaSourceFromString) {
@@ -100,11 +100,11 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
     }
 
     protected static URI uriFromString(String uri) {
-	try {
-	    return new URI(uri);
-	} catch (URISyntaxException e) {
-	    throw new IllegalArgumentException(e);
-	}
+        try {
+            return new URI(uri);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**
@@ -112,7 +112,7 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
      */
     private class JavaClassInArray extends SimpleJavaFileObject {
 
-	private String name;
+        private String name;
 
         /**
          * Constructs a JavaClassInArray object.
@@ -120,8 +120,8 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
          */
         JavaClassInArray(String name) {
             super(uriFromString("mfm:///" + name.replace('.','/') + Kind.CLASS.extension),
-		  Kind.CLASS);
-	    this.name = name;
+                  Kind.CLASS);
+            this.name = name;
         }
 
         public OutputStream openOutputStream() {
@@ -144,7 +144,7 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
          * The source code of this "file".
          */
         final String code;
-        
+
         /**
          * Constructs a new JavaSourceFromString.
          * @param name the name of the compilation unit represented by this file object
@@ -152,11 +152,11 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
          */
         JavaSourceFromString(String name, String code) {
             super(uriFromString("mfm:///" + name.replace('.','/') + Kind.SOURCE.extension),
-		  Kind.SOURCE);
+                  Kind.SOURCE);
             this.code = code;
         }
 
-	@Override
+        @Override
         public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return code;
         }

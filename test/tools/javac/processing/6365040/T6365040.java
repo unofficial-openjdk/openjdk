@@ -47,9 +47,9 @@ import static javax.tools.Diagnostic.Kind.*;
 public class T6365040 extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
-	if (!roundEnvironment.processingOver())
-	    processingEnv.getMessager().printMessage(NOTE,
-						     "Hello from T6365040");
+        if (!roundEnvironment.processingOver())
+            processingEnv.getMessager().printMessage(NOTE,
+                                                     "Hello from T6365040");
         return true;
     }
 }

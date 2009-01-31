@@ -48,15 +48,15 @@ public class JavacTypes implements javax.lang.model.util.Types {
     private Types types;
 
     private static final Context.Key<JavacTypes> KEY =
-	    new Context.Key<JavacTypes>();
+            new Context.Key<JavacTypes>();
 
     public static JavacTypes instance(Context context) {
-	JavacTypes instance = context.get(KEY);
-	if (instance == null) {
-	    instance = new JavacTypes(context);
-	    context.put(KEY, instance);
-	}
-	return instance;
+        JavacTypes instance = context.get(KEY);
+        if (instance == null) {
+            instance = new JavacTypes(context);
+            context.put(KEY, instance);
+        }
+        return instance;
     }
 
     /**
@@ -64,7 +64,7 @@ public class JavacTypes implements javax.lang.model.util.Types {
      */
     // TODO JavacTypes constructor should be protected
     public JavacTypes(Context context) {
-	setContext(context);
+        setContext(context);
     }
 
     /**
@@ -74,188 +74,188 @@ public class JavacTypes implements javax.lang.model.util.Types {
      */
     public void setContext(Context context) {
         syms = Symtab.instance(context);
-	types = Types.instance(context);
+        types = Types.instance(context);
     }
 
     public Element asElement(TypeMirror t) {
-	Type type = cast(Type.class, t);
-	if (type.tag != TypeTags.CLASS && type.tag != TypeTags.TYPEVAR)
-	    return null;
-	return type.asElement();
+        Type type = cast(Type.class, t);
+        if (type.tag != TypeTags.CLASS && type.tag != TypeTags.TYPEVAR)
+            return null;
+        return type.asElement();
     }
 
     public boolean isSameType(TypeMirror t1, TypeMirror t2) {
-	return types.isSameType((Type) t1, (Type) t2);
+        return types.isSameType((Type) t1, (Type) t2);
     }
 
     public boolean isSubtype(TypeMirror t1, TypeMirror t2) {
-	validateTypeNotIn(t1, EXEC_OR_PKG);
-	validateTypeNotIn(t2, EXEC_OR_PKG);
-	return types.isSubtype((Type) t1, (Type) t2);
+        validateTypeNotIn(t1, EXEC_OR_PKG);
+        validateTypeNotIn(t2, EXEC_OR_PKG);
+        return types.isSubtype((Type) t1, (Type) t2);
     }
 
     public boolean isAssignable(TypeMirror t1, TypeMirror t2) {
-	validateTypeNotIn(t1, EXEC_OR_PKG);
-	validateTypeNotIn(t2, EXEC_OR_PKG);
-	return types.isAssignable((Type) t1, (Type) t2);
+        validateTypeNotIn(t1, EXEC_OR_PKG);
+        validateTypeNotIn(t2, EXEC_OR_PKG);
+        return types.isAssignable((Type) t1, (Type) t2);
     }
 
     public boolean contains(TypeMirror t1, TypeMirror t2) {
-	validateTypeNotIn(t1, EXEC_OR_PKG);
-	validateTypeNotIn(t2, EXEC_OR_PKG);
-	return ((Type) t1).contains((Type) t2);
+        validateTypeNotIn(t1, EXEC_OR_PKG);
+        validateTypeNotIn(t2, EXEC_OR_PKG);
+        return ((Type) t1).contains((Type) t2);
     }
 
     public boolean isSubsignature(ExecutableType m1, ExecutableType m2) {
-	return types.isSubSignature((Type) m1, (Type) m2);
+        return types.isSubSignature((Type) m1, (Type) m2);
     }
 
     public List<Type> directSupertypes(TypeMirror t) {
-	validateTypeNotIn(t, EXEC_OR_PKG);
-	Type type = (Type) t;
-	Type sup = types.supertype(type);
-	return (sup == Type.noType || sup == type || sup == null)
-	      ? types.interfaces(type)
-	      : types.interfaces(type).prepend(sup);
+        validateTypeNotIn(t, EXEC_OR_PKG);
+        Type type = (Type) t;
+        Type sup = types.supertype(type);
+        return (sup == Type.noType || sup == type || sup == null)
+              ? types.interfaces(type)
+              : types.interfaces(type).prepend(sup);
     }
 
     public TypeMirror erasure(TypeMirror t) {
-	if (t.getKind() == TypeKind.PACKAGE)
-	    throw new IllegalArgumentException(t.toString());
-	return types.erasure((Type) t);
+        if (t.getKind() == TypeKind.PACKAGE)
+            throw new IllegalArgumentException(t.toString());
+        return types.erasure((Type) t);
     }
 
     public TypeElement boxedClass(PrimitiveType p) {
-	return types.boxedClass((Type) p);
+        return types.boxedClass((Type) p);
     }
 
     public PrimitiveType unboxedType(TypeMirror t) {
-	if (t.getKind() != TypeKind.DECLARED)
-	    throw new IllegalArgumentException(t.toString());
-	Type unboxed = types.unboxedType((Type) t);
-	if (! unboxed.isPrimitive())	// only true primitives, not void
-	    throw new IllegalArgumentException(t.toString());
-	return unboxed;
+        if (t.getKind() != TypeKind.DECLARED)
+            throw new IllegalArgumentException(t.toString());
+        Type unboxed = types.unboxedType((Type) t);
+        if (! unboxed.isPrimitive())    // only true primitives, not void
+            throw new IllegalArgumentException(t.toString());
+        return unboxed;
     }
 
     public TypeMirror capture(TypeMirror t) {
-	validateTypeNotIn(t, EXEC_OR_PKG);
-	return types.capture((Type) t);
+        validateTypeNotIn(t, EXEC_OR_PKG);
+        return types.capture((Type) t);
     }
 
     public PrimitiveType getPrimitiveType(TypeKind kind) {
-	switch (kind) {
-	case BOOLEAN:	return syms.booleanType;
-	case BYTE:	return syms.byteType;
-	case SHORT:	return syms.shortType;
-	case INT:	return syms.intType;
-	case LONG:	return syms.longType;
-	case CHAR:	return syms.charType;
-	case FLOAT:	return syms.floatType;
-	case DOUBLE:	return syms.doubleType;
-	default:
-	    throw new IllegalArgumentException("Not a primitive type: " + kind);
-	}
+        switch (kind) {
+        case BOOLEAN:   return syms.booleanType;
+        case BYTE:      return syms.byteType;
+        case SHORT:     return syms.shortType;
+        case INT:       return syms.intType;
+        case LONG:      return syms.longType;
+        case CHAR:      return syms.charType;
+        case FLOAT:     return syms.floatType;
+        case DOUBLE:    return syms.doubleType;
+        default:
+            throw new IllegalArgumentException("Not a primitive type: " + kind);
+        }
     }
 
     public NullType getNullType() {
-	return (NullType) syms.botType;
+        return (NullType) syms.botType;
     }
 
     public NoType getNoType(TypeKind kind) {
-	switch (kind) {
-	case VOID:	return syms.voidType;
-	case NONE:	return Type.noType;
-	default:
-	    throw new IllegalArgumentException(kind.toString());
-	}
+        switch (kind) {
+        case VOID:      return syms.voidType;
+        case NONE:      return Type.noType;
+        default:
+            throw new IllegalArgumentException(kind.toString());
+        }
     }
 
     public ArrayType getArrayType(TypeMirror componentType) {
-	switch (componentType.getKind()) {
-	case VOID:
-	case EXECUTABLE:
-	case WILDCARD:	// heh!
-	case PACKAGE:
-	    throw new IllegalArgumentException(componentType.toString());
-	}
-	return new Type.ArrayType((Type) componentType, syms.arrayClass);
+        switch (componentType.getKind()) {
+        case VOID:
+        case EXECUTABLE:
+        case WILDCARD:  // heh!
+        case PACKAGE:
+            throw new IllegalArgumentException(componentType.toString());
+        }
+        return new Type.ArrayType((Type) componentType, syms.arrayClass);
     }
 
     public WildcardType getWildcardType(TypeMirror extendsBound,
-					TypeMirror superBound) {
-	BoundKind bkind;
-	Type bound;
-	if (extendsBound == null && superBound == null) {
-	    bkind = BoundKind.UNBOUND;
-	    bound = syms.objectType;
-	} else if (superBound == null) {
-	    bkind = BoundKind.EXTENDS;
-	    bound = (Type) extendsBound;
-	} else if (extendsBound == null) {
-	    bkind = BoundKind.SUPER;
-	    bound = (Type) superBound;
-	} else {
-	    throw new IllegalArgumentException(
-		    "Extends and super bounds cannot both be provided");
-	}
-	switch (bound.getKind()) {
-	case ARRAY:
-	case DECLARED:
-	case ERROR:
-	case TYPEVAR:
-	    return new Type.WildcardType(bound, bkind, syms.boundClass);
-	default:
-	    throw new IllegalArgumentException(bound.toString());
-	}
+                                        TypeMirror superBound) {
+        BoundKind bkind;
+        Type bound;
+        if (extendsBound == null && superBound == null) {
+            bkind = BoundKind.UNBOUND;
+            bound = syms.objectType;
+        } else if (superBound == null) {
+            bkind = BoundKind.EXTENDS;
+            bound = (Type) extendsBound;
+        } else if (extendsBound == null) {
+            bkind = BoundKind.SUPER;
+            bound = (Type) superBound;
+        } else {
+            throw new IllegalArgumentException(
+                    "Extends and super bounds cannot both be provided");
+        }
+        switch (bound.getKind()) {
+        case ARRAY:
+        case DECLARED:
+        case ERROR:
+        case TYPEVAR:
+            return new Type.WildcardType(bound, bkind, syms.boundClass);
+        default:
+            throw new IllegalArgumentException(bound.toString());
+        }
     }
 
     public DeclaredType getDeclaredType(TypeElement typeElem,
-					TypeMirror... typeArgs) {
-	ClassSymbol sym = (ClassSymbol) typeElem;
+                                        TypeMirror... typeArgs) {
+        ClassSymbol sym = (ClassSymbol) typeElem;
 
-	if (typeArgs.length == 0)
-	    return (DeclaredType) sym.erasure(types);
-	if (sym.type.getEnclosingType().isParameterized())
-	    throw new IllegalArgumentException(sym.toString());
+        if (typeArgs.length == 0)
+            return (DeclaredType) sym.erasure(types);
+        if (sym.type.getEnclosingType().isParameterized())
+            throw new IllegalArgumentException(sym.toString());
 
-	return getDeclaredType0(sym.type.getEnclosingType(), sym, typeArgs);
+        return getDeclaredType0(sym.type.getEnclosingType(), sym, typeArgs);
     }
 
     public DeclaredType getDeclaredType(DeclaredType enclosing,
-					TypeElement typeElem,
-					TypeMirror... typeArgs) {
-	if (enclosing == null)
-	    return getDeclaredType(typeElem, typeArgs);
+                                        TypeElement typeElem,
+                                        TypeMirror... typeArgs) {
+        if (enclosing == null)
+            return getDeclaredType(typeElem, typeArgs);
 
-	ClassSymbol sym = (ClassSymbol) typeElem;
-	Type outer = (Type) enclosing;
+        ClassSymbol sym = (ClassSymbol) typeElem;
+        Type outer = (Type) enclosing;
 
-	if (outer.tsym != sym.owner.enclClass())
-	    throw new IllegalArgumentException(enclosing.toString());
-	if (!outer.isParameterized())
-	    return getDeclaredType(typeElem, typeArgs);
+        if (outer.tsym != sym.owner.enclClass())
+            throw new IllegalArgumentException(enclosing.toString());
+        if (!outer.isParameterized())
+            return getDeclaredType(typeElem, typeArgs);
 
-	return getDeclaredType0(outer, sym, typeArgs);
+        return getDeclaredType0(outer, sym, typeArgs);
     }
     // where
         private DeclaredType getDeclaredType0(Type outer,
-					      ClassSymbol sym,
-					      TypeMirror... typeArgs) {
-	    if (typeArgs.length != sym.type.getTypeArguments().length())
-		throw new IllegalArgumentException(
-		"Incorrect number of type arguments");
-	    
-	    ListBuffer<Type> targs = new ListBuffer<Type>();
-	    for (TypeMirror t : typeArgs) {
-		if (!(t instanceof ReferenceType || t instanceof WildcardType))
-		    throw new IllegalArgumentException(t.toString());
-		targs.append((Type) t);
-	    }
-	    // TODO: Would like a way to check that type args match formals.
-	    
-	    return (DeclaredType) new Type.ClassType(outer, targs.toList(), sym);
-	}
+                                              ClassSymbol sym,
+                                              TypeMirror... typeArgs) {
+            if (typeArgs.length != sym.type.getTypeArguments().length())
+                throw new IllegalArgumentException(
+                "Incorrect number of type arguments");
+
+            ListBuffer<Type> targs = new ListBuffer<Type>();
+            for (TypeMirror t : typeArgs) {
+                if (!(t instanceof ReferenceType || t instanceof WildcardType))
+                    throw new IllegalArgumentException(t.toString());
+                targs.append((Type) t);
+            }
+            // TODO: Would like a way to check that type args match formals.
+
+            return (DeclaredType) new Type.ClassType(outer, targs.toList(), sym);
+        }
 
     /**
      * Returns the type of an element when that element is viewed as
@@ -269,26 +269,26 @@ public class JavacTypes implements javax.lang.model.util.Types {
      * @param element     the element
      * @return the type of the element as viewed from the containing type
      * @throws IllegalArgumentException if the element is not a valid one
-     *		for the given type
+     *          for the given type
      */
     public TypeMirror asMemberOf(DeclaredType containing, Element element) {
         Type site = (Type)containing;
-	Symbol sym = (Symbol)element;
-	if (types.asSuper(site, sym.getEnclosingElement()) == null)
-	    throw new IllegalArgumentException(sym + "@" + site);
-	return types.memberType(site, sym);
+        Symbol sym = (Symbol)element;
+        if (types.asSuper(site, sym.getEnclosingElement()) == null)
+            throw new IllegalArgumentException(sym + "@" + site);
+        return types.memberType(site, sym);
     }
 
 
     private static final Set<TypeKind> EXEC_OR_PKG =
-	    EnumSet.of(TypeKind.EXECUTABLE, TypeKind.PACKAGE);
+            EnumSet.of(TypeKind.EXECUTABLE, TypeKind.PACKAGE);
 
     /**
      * Throws an IllegalArgumentException if a type's kind is one of a set.
      */
     private void validateTypeNotIn(TypeMirror t, Set<TypeKind> invalidKinds) {
-	if (invalidKinds.contains(t.getKind()))
-	    throw new IllegalArgumentException(t.toString());
+        if (invalidKinds.contains(t.getKind()))
+            throw new IllegalArgumentException(t.toString());
     }
 
     /**
@@ -297,8 +297,8 @@ public class JavacTypes implements javax.lang.model.util.Types {
      * @throws IllegalArgumentException if the object is of the wrong type
      */
     private static <T> T cast(Class<T> clazz, Object o) {
-	if (! clazz.isInstance(o))
-	    throw new IllegalArgumentException(o.toString());
-	return clazz.cast(o);
+        if (! clazz.isInstance(o))
+            throw new IllegalArgumentException(o.toString());
+        return clazz.cast(o);
     }
 }

@@ -16,25 +16,25 @@ import static javax.tools.Diagnostic.Kind.*;
 @SupportedAnnotationTypes("*")
 public class T6362067 extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annos,
-			   RoundEnvironment roundEnv) {
-	Messager msgr = processingEnv.getMessager();
-	for (Element e: roundEnv.getRootElements()) {
-	    msgr.printMessage(NOTE, "note:elem", e);
-	    for (AnnotationMirror a: e.getAnnotationMirrors()) {
-		msgr.printMessage(NOTE, "note:anno", e, a);
-		for (AnnotationValue v: a.getElementValues().values()) {
-		    msgr.printMessage(NOTE, "note:value", e, a, v);
-		}
-			 
-	    }
-	}
-	if (roundEnv.processingOver())
-	    msgr.printMessage(NOTE, "note:nopos");
-	return true;
+                           RoundEnvironment roundEnv) {
+        Messager msgr = processingEnv.getMessager();
+        for (Element e: roundEnv.getRootElements()) {
+            msgr.printMessage(NOTE, "note:elem", e);
+            for (AnnotationMirror a: e.getAnnotationMirrors()) {
+                msgr.printMessage(NOTE, "note:anno", e, a);
+                for (AnnotationValue v: a.getElementValues().values()) {
+                    msgr.printMessage(NOTE, "note:value", e, a, v);
+                }
+
+            }
+        }
+        if (roundEnv.processingOver())
+            msgr.printMessage(NOTE, "note:nopos");
+        return true;
     }
-    
+
     @Override
     public javax.lang.model.SourceVersion getSupportedSourceVersion() {
-	return javax.lang.model.SourceVersion.latest();
+        return javax.lang.model.SourceVersion.latest();
     }
 }

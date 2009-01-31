@@ -45,8 +45,8 @@ public class MirroredTypesException extends RuntimeException {
 
     private static final long serialVersionUID = 1;
 
-    private transient Collection<TypeMirror> types;	// cannot be serialized
-    private Collection<String> names;		// types' qualified "names"
+    private transient Collection<TypeMirror> types;     // cannot be serialized
+    private Collection<String> names;           // types' qualified "names"
 
     /**
      * Constructs a new MirroredTypesException for the specified types.
@@ -54,12 +54,12 @@ public class MirroredTypesException extends RuntimeException {
      * @param types  an ordered collection of the types being accessed
      */
     public MirroredTypesException(Collection<TypeMirror> types) {
-	super("Attempt to access Class objects for TypeMirrors " + types);
-	this.types = types;
-	names = new ArrayList<String>();
-	for (TypeMirror t : types) {
-	    names.add(t.toString());
-	}
+        super("Attempt to access Class objects for TypeMirrors " + types);
+        this.types = types;
+        names = new ArrayList<String>();
+        for (TypeMirror t : types) {
+            names.add(t.toString());
+        }
     }
 
     /**
@@ -70,9 +70,9 @@ public class MirroredTypesException extends RuntimeException {
      * @return the type mirrors in order, or <tt>null</tt> if unavailable
      */
     public Collection<TypeMirror> getTypeMirrors() {
-	return (types != null)
-		? Collections.unmodifiableCollection(types)
-		: null;
+        return (types != null)
+                ? Collections.unmodifiableCollection(types)
+                : null;
     }
 
     /**
@@ -82,9 +82,9 @@ public class MirroredTypesException extends RuntimeException {
      * the pseudo-type representing the type of <tt>void</tt>.
      *
      * @return the fully qualified names, in order, of the types being
-     *		accessed
+     *          accessed
      */
     public Collection<String> getQualifiedNames() {
-	return Collections.unmodifiableCollection(names);
+        return Collections.unmodifiableCollection(names);
     }
 }

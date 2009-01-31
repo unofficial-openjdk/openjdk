@@ -46,9 +46,9 @@ class CastTest {
     private class AG<T> extends AA<String> { }
 
     private void parameterTransfer() {
-	Object o;
+        Object o;
 
-	o = (AC<String>) (AA<Vector<Number>>) null; // <<fail 2>>
+        o = (AC<String>) (AA<Vector<Number>>) null; // <<fail 2>>
     }
 
 }

@@ -82,49 +82,49 @@ public interface TypeVisitor {
 
     /**
      * Visits a class type.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitClassType(ClassType t);
 
     /**
      * Visits an enum type.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitEnumType(EnumType t);
 
     /**
      * Visits an interface type.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitInterfaceType(InterfaceType t);
 
     /**
      * Visits an annotation type.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitAnnotationType(AnnotationType t);
 
     /**
      * Visits an array type.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitArrayType(ArrayType t);
 
     /**
      * Visits a type variable.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitTypeVariable(TypeVariable t);
 
     /**
      * Visits a wildcard.
-     * 
+     *
      * @param t the type to visit
      */
     public void visitWildcardType(WildcardType t);

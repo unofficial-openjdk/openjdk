@@ -36,41 +36,41 @@ import java.util.Collections;
 
 public class Misc implements AnnotationProcessorFactory {
     static class MiscCheck implements AnnotationProcessor {
-	AnnotationProcessorEnvironment ape;
-	MiscCheck(AnnotationProcessorEnvironment ape) {
-	    this.ape = ape;
-	}
-    
-	public void process() {
-	    Collection<Declaration> decls = ape.
-		getDeclarationsAnnotatedWith((AnnotationTypeDeclaration)
-					     ape.getTypeDeclaration("Marker"));
+        AnnotationProcessorEnvironment ape;
+        MiscCheck(AnnotationProcessorEnvironment ape) {
+            this.ape = ape;
+        }
 
-	    // Should write more robust test that examines the
-	    // annotation mirrors for the declaration in question.
-	    for(Declaration decl: decls) {
-		if (!decl.getSimpleName().startsWith("marked") )
-		    throw new RuntimeException();
-	    }
-	}
+        public void process() {
+            Collection<Declaration> decls = ape.
+                getDeclarationsAnnotatedWith((AnnotationTypeDeclaration)
+                                             ape.getTypeDeclaration("Marker"));
+
+            // Should write more robust test that examines the
+            // annotation mirrors for the declaration in question.
+            for(Declaration decl: decls) {
+                if (!decl.getSimpleName().startsWith("marked") )
+                    throw new RuntimeException();
+            }
+        }
     }
 
 
     static Collection<String> supportedTypes;
     static {
-	String types[] = {"*"};
-	supportedTypes = Collections.unmodifiableCollection(Arrays.asList(types));
+        String types[] = {"*"};
+        supportedTypes = Collections.unmodifiableCollection(Arrays.asList(types));
     }
 
-    Collection<String> supportedOptions = 
-	Collections.unmodifiableCollection(new HashSet<String>());
+    Collection<String> supportedOptions =
+        Collections.unmodifiableCollection(new HashSet<String>());
 
     public Collection<String> supportedOptions() {
-	return supportedOptions;
+        return supportedOptions;
     }
 
     public Collection<String> supportedAnnotationTypes() {
-	return supportedTypes;
+        return supportedTypes;
     }
 
     /*
@@ -78,7 +78,7 @@ public class Misc implements AnnotationProcessorFactory {
      * present, if any.
      */
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-					       AnnotationProcessorEnvironment ape) {
-	return new MiscCheck(ape);
+                                               AnnotationProcessorEnvironment ape) {
+        return new MiscCheck(ape);
     }
 }

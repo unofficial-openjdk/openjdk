@@ -44,19 +44,19 @@ import static javax.tools.Diagnostic.Kind.*;
 public class T6341534 extends AbstractProcessor {
     Elements elements;
     Messager messager;
-    public void init(ProcessingEnvironment penv)  { 
-	super.init(penv);
-	elements = penv.getElementUtils();
-	messager = processingEnv.getMessager();
+    public void init(ProcessingEnvironment penv)  {
+        super.init(penv);
+        elements = penv.getElementUtils();
+        messager = processingEnv.getMessager();
     }
 
     public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv)  {
-	messager.printMessage(NOTE,
-			      String.valueOf(elements.getPackageElement("no.such.package")));
-	PackageElement dir = elements.getPackageElement("dir");
-	messager.printMessage(NOTE, dir.getQualifiedName().toString());
-	for (Element e : dir.getEnclosedElements())
-	    messager.printMessage(NOTE, e.toString());
-	return true;
+        messager.printMessage(NOTE,
+                              String.valueOf(elements.getPackageElement("no.such.package")));
+        PackageElement dir = elements.getPackageElement("dir");
+        messager.printMessage(NOTE, dir.getQualifiedName().toString());
+        for (Element e : dir.getEnclosedElements())
+            messager.printMessage(NOTE, e.toString());
+        return true;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * @test  /nodynamiccopyright/ 
+ * @test  /nodynamiccopyright/
  * @bug 4980495 6260444
  * @compile/fail/ref=Test.out -XDstdout -XDrawDiagnostics Test.java p1/A1.java p2/A2.java
  *

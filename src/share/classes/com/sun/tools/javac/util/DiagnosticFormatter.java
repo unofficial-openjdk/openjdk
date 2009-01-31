@@ -30,7 +30,7 @@ import javax.tools.JavaFileObject;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticSource;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
 
-/** 
+/**
  * A formatter for diagnostic messages.
  * The formatter will format a diagnostic according to one of two format strings, depending on whether
  * or not the source name and position are set. The format is a printf-like string,
@@ -64,189 +64,189 @@ public class DiagnosticFormatter {
     protected String noPosFormat;
 
     /**
-     * A value to indicate whether to output the i18n key and args, instead of 
+     * A value to indicate whether to output the i18n key and args, instead of
      * the derived l10n message.
      */
     protected boolean raw;
 
     /** The context key for the formatter. */
     protected static final Context.Key<DiagnosticFormatter> formatterKey =
-	new Context.Key<DiagnosticFormatter>();
+        new Context.Key<DiagnosticFormatter>();
 
     /** Get the DiagnosticFormatter instance for this context. */
     public static DiagnosticFormatter instance(Context context) {
-	DiagnosticFormatter instance = context.get(formatterKey);
-	if (instance == null)
-	    instance = new DiagnosticFormatter(context);
-	return instance;
+        DiagnosticFormatter instance = context.get(formatterKey);
+        if (instance == null)
+            instance = new DiagnosticFormatter(context);
+        return instance;
     }
 
     /**
      * Create a formatter based on the supplied options.
      */
     protected DiagnosticFormatter(Context context) {
-	Options options = Options.instance(context);
-	raw = options.get("rawDiagnostics") != null;
-	String fmt = options.get("diags");
-	if (fmt != null) {
-	    int sep = fmt.indexOf('|');
-	    if (sep == -1)
-		posFormat = noPosFormat = fmt;
-	    else {
-		posFormat = fmt.substring(0, sep);
-		noPosFormat = fmt.substring(sep + 1);
-	    }
-	}
-	else {
-	    posFormat = DEFAULT_POS_FORMAT;
-	    noPosFormat = DEFAULT_NO_POS_FORMAT;
-	}
+        Options options = Options.instance(context);
+        raw = options.get("rawDiagnostics") != null;
+        String fmt = options.get("diags");
+        if (fmt != null) {
+            int sep = fmt.indexOf('|');
+            if (sep == -1)
+                posFormat = noPosFormat = fmt;
+            else {
+                posFormat = fmt.substring(0, sep);
+                noPosFormat = fmt.substring(sep + 1);
+            }
+        }
+        else {
+            posFormat = DEFAULT_POS_FORMAT;
+            noPosFormat = DEFAULT_NO_POS_FORMAT;
+        }
     }
 
-    public static final String DEFAULT_POS_FORMAT = "%f:%l: %t%m"; 
-    public static final String DEFAULT_CLASS_FORMAT = "%f: %t%m"; 
+    public static final String DEFAULT_POS_FORMAT = "%f:%l: %t%m";
+    public static final String DEFAULT_CLASS_FORMAT = "%f: %t%m";
     public static final String DEFAULT_NO_POS_FORMAT = "%p%m";
 
     public DiagnosticFormatter() {
-	posFormat = DEFAULT_POS_FORMAT;
-	noPosFormat = DEFAULT_NO_POS_FORMAT;
-	raw = false;
+        posFormat = DEFAULT_POS_FORMAT;
+        noPosFormat = DEFAULT_NO_POS_FORMAT;
+        raw = false;
     }
 
     public DiagnosticFormatter(String pos, String noPos) {
-	posFormat = pos;
-	noPosFormat = noPos;
-	raw = false;
+        posFormat = pos;
+        noPosFormat = noPos;
+        raw = false;
     }
 
     String format(JCDiagnostic d) {
-	return (raw ? format_raw(d) : format_std(d));
+        return (raw ? format_raw(d) : format_std(d));
     }
 
     private String format_raw(JCDiagnostic d) {
-	DiagnosticSource source = d.getDiagnosticSource();
-	int position = d.getIntPosition();
+        DiagnosticSource source = d.getDiagnosticSource();
+        int position = d.getIntPosition();
 
-	StringBuilder sb = new StringBuilder();
-	if (position == Position.NOPOS)
-	    sb.append("-");
-	else {
-	    sb.append(source.getName() + ":" + source.getLineNumber(position) + ":" + source.getColumnNumber(position) + ":");
-	}
-	sb.append(" ");
-	sb.append(d.getCode());
-	String sep = ": ";
-	for (Object arg: d.getArgs()) {
-	    sb.append(sep);
-	    if (arg instanceof JCDiagnostic) {
-		sb.append('(');
-		sb.append(format_raw((JCDiagnostic) arg));
-		sb.append(')');
-	    }
-	    else if (arg instanceof JavaFileObject)
-		sb.append(JavacFileManager.getJavacBaseFileName((JavaFileObject) arg));
-	    else
-		sb.append(arg);
-	    sep = ", ";
-	}
-	return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        if (position == Position.NOPOS)
+            sb.append("-");
+        else {
+            sb.append(source.getName() + ":" + source.getLineNumber(position) + ":" + source.getColumnNumber(position) + ":");
+        }
+        sb.append(" ");
+        sb.append(d.getCode());
+        String sep = ": ";
+        for (Object arg: d.getArgs()) {
+            sb.append(sep);
+            if (arg instanceof JCDiagnostic) {
+                sb.append('(');
+                sb.append(format_raw((JCDiagnostic) arg));
+                sb.append(')');
+            }
+            else if (arg instanceof JavaFileObject)
+                sb.append(JavacFileManager.getJavacBaseFileName((JavaFileObject) arg));
+            else
+                sb.append(arg);
+            sep = ", ";
+        }
+        return sb.toString();
     }
 
     private String format_std(JCDiagnostic d) {
-	DiagnosticSource source = d.getDiagnosticSource();
-	DiagnosticType type = d.getType();
-	int position = d.getIntPosition();
+        DiagnosticSource source = d.getDiagnosticSource();
+        DiagnosticType type = d.getType();
+        int position = d.getIntPosition();
 
-	
-	String format = noPosFormat;
-	if (source != null) {
-	    if (position != Position.NOPOS) {
-		format = posFormat;
-	    } else if (source.getFile() != null &&
-		       source.getFile().getKind() == JavaFileObject.Kind.CLASS) {
-		format = classFormat;
-	    }
-	}
 
-	StringBuilder sb = new StringBuilder();
+        String format = noPosFormat;
+        if (source != null) {
+            if (position != Position.NOPOS) {
+                format = posFormat;
+            } else if (source.getFile() != null &&
+                       source.getFile().getKind() == JavaFileObject.Kind.CLASS) {
+                format = classFormat;
+            }
+        }
 
-	for (int i = 0; i < format.length(); i++) {
-	    char c = format.charAt(i);
-	    if (c == '%' && i < format.length() - 1) {
-		c = format.charAt(++i);
-		switch (c) {
-		case 'b': 
-		    sb.append(source == null ? "-" : source.getName()); 
-		    break;
+        StringBuilder sb = new StringBuilder();
 
-		case 'e': 
-		    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getEndPosition())); 
-		    break;
+        for (int i = 0; i < format.length(); i++) {
+            char c = format.charAt(i);
+            if (c == '%' && i < format.length() - 1) {
+                c = format.charAt(++i);
+                switch (c) {
+                case 'b':
+                    sb.append(source == null ? "-" : source.getName());
+                    break;
 
-		case 'f': 
-		    sb.append(source == null ? "-" : d.getSourceName()); 
-		    break;
+                case 'e':
+                    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getEndPosition()));
+                    break;
 
-		case 'l': 
-		    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getLineNumber())); 
-		    break;
+                case 'f':
+                    sb.append(source == null ? "-" : d.getSourceName());
+                    break;
 
-		case 'c':
-		    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getColumnNumber())); 
-		    break;
+                case 'l':
+                    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getLineNumber()));
+                    break;
 
-		case 'o': 
-		    sb.append(position == Position.NOPOS ? "-" : String.valueOf(position)); 
-		    break;
+                case 'c':
+                    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getColumnNumber()));
+                    break;
 
-		case 'p': 
-		    sb.append(d.getPrefix()); 
-		    break;
+                case 'o':
+                    sb.append(position == Position.NOPOS ? "-" : String.valueOf(position));
+                    break;
 
-		case 's': 
-		    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getStartPosition())); 
-		    break;
+                case 'p':
+                    sb.append(d.getPrefix());
+                    break;
 
-		case 't': {
-		    boolean usePrefix;
-		    switch (type) {
-		    case FRAGMENT:
-			usePrefix = false;
-			break;
+                case 's':
+                    sb.append(position == Position.NOPOS ? "-" : String.valueOf(d.getStartPosition()));
+                    break;
 
-		    case ERROR:
-			usePrefix = (position == Position.NOPOS);
-			break;
+                case 't': {
+                    boolean usePrefix;
+                    switch (type) {
+                    case FRAGMENT:
+                        usePrefix = false;
+                        break;
 
-		    default:
-			usePrefix = true;
-		    }
+                    case ERROR:
+                        usePrefix = (position == Position.NOPOS);
+                        break;
 
-		    if (usePrefix)
-			sb.append(d.getPrefix()); 
-		    break;
-		}
+                    default:
+                        usePrefix = true;
+                    }
 
-		case 'm': 
-		    sb.append(d.getMessage(null)); 
-		    break;
+                    if (usePrefix)
+                        sb.append(d.getPrefix());
+                    break;
+                }
 
-		case '_': 
-		    sb.append(' '); 
-		    break;
+                case 'm':
+                    sb.append(d.getMessage(null));
+                    break;
 
-		case '%': 
-		    sb.append('%'); 
-		    break;
+                case '_':
+                    sb.append(' ');
+                    break;
 
-		default:  
-		    sb.append(c); 
-		    break;
-		}
-	    }
-	    else
-		sb.append(c);
-	}
-	return sb.toString();
+                case '%':
+                    sb.append('%');
+                    break;
+
+                default:
+                    sb.append(c);
+                    break;
+                }
+            }
+            else
+                sb.append(c);
+        }
+        return sb.toString();
     }
 }

@@ -6,7 +6,7 @@
 
 abstract class B extends A {
     @Deprecated public void iDep_aDep_bDep() { }
-                public void iDep_aDep_bUnd() { } // warn 
+                public void iDep_aDep_bUnd() { } // warn
     //          public void iDep_aDep_bInh() { }
     @Deprecated public void iDep_aUnd_bDep() { }
                 public void iDep_aUnd_bUnd() { }

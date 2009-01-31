@@ -34,13 +34,13 @@ import com.sun.javadoc.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.4
  */
 
 public interface WriterFactory {
-    
+
     /**
      * Return the writer for the constant summary.
      *
@@ -49,7 +49,7 @@ public interface WriterFactory {
      */
     public abstract ConstantsSummaryWriter getConstantsSummaryWriter()
         throws Exception;
-    
+
     /**
      * Return the writer for the package summary.
      *
@@ -60,9 +60,9 @@ public interface WriterFactory {
      * writer is not supported by the doclet.
      */
     public abstract PackageSummaryWriter getPackageSummaryWriter(PackageDoc
-        packageDoc, PackageDoc prevPkg, PackageDoc nextPkg) 
+        packageDoc, PackageDoc prevPkg, PackageDoc nextPkg)
     throws Exception;
-    
+
     /**
      * Return the writer for a class.
      *
@@ -76,7 +76,7 @@ public interface WriterFactory {
     public abstract ClassWriter getClassWriter(ClassDoc classDoc,
         ClassDoc prevClass, ClassDoc nextClass, ClassTree classTree)
             throws Exception;
-            
+
     /**
      * Return the writer for an annotation type.
      *
@@ -89,7 +89,7 @@ public interface WriterFactory {
     public abstract AnnotationTypeWriter getAnnotationTypeWriter(
         AnnotationTypeDoc annotationType, Type prevType, Type nextType)
             throws Exception;
-    
+
     /**
      * Return the method writer for a given class.
      *
@@ -99,32 +99,32 @@ public interface WriterFactory {
      */
     public abstract MethodWriter getMethodWriter(ClassWriter classWriter)
             throws Exception;
-    
+
     /**
-     * Return the annotation type optional member writer for a given annotation 
+     * Return the annotation type optional member writer for a given annotation
      * type.
      *
      * @param annotationTypeWriter the writer for the annotation type
      *        being documented.
-     * @return the member writer for the given annotation type.  Return null if 
+     * @return the member writer for the given annotation type.  Return null if
      *         this writer is not supported by the doclet.
      */
-    public abstract AnnotationTypeOptionalMemberWriter 
+    public abstract AnnotationTypeOptionalMemberWriter
             getAnnotationTypeOptionalMemberWriter(
         AnnotationTypeWriter annotationTypeWriter) throws Exception;
-        
+
     /**
      * Return the annotation type required member writer for a given annotation type.
      *
      * @param annotationTypeWriter the writer for the annotation type
      *        being documented.
-     * @return the member writer for the given annotation type.  Return null if 
+     * @return the member writer for the given annotation type.  Return null if
      *         this writer is not supported by the doclet.
      */
-    public abstract AnnotationTypeRequiredMemberWriter 
+    public abstract AnnotationTypeRequiredMemberWriter
             getAnnotationTypeRequiredMemberWriter(
         AnnotationTypeWriter annotationTypeWriter) throws Exception;
-    
+
     /**
      * Return the enum constant writer for a given class.
      *
@@ -134,7 +134,7 @@ public interface WriterFactory {
      */
     public abstract EnumConstantWriter getEnumConstantWriter(
         ClassWriter classWriter) throws Exception;
-    
+
     /**
      * Return the field writer for a given class.
      *
@@ -144,7 +144,7 @@ public interface WriterFactory {
      */
     public abstract FieldWriter getFieldWriter(ClassWriter classWriter)
             throws Exception;
-    
+
     /**
      * Return the constructor writer for a given class.
      *
@@ -153,9 +153,9 @@ public interface WriterFactory {
      * writer is not supported by the doclet.
      */
     public abstract ConstructorWriter getConstructorWriter(
-        ClassWriter classWriter) 
+        ClassWriter classWriter)
     throws Exception;
-    
+
     /**
      * Return the specified member summary writer for a given class.
      *
@@ -171,11 +171,11 @@ public interface WriterFactory {
     public abstract MemberSummaryWriter getMemberSummaryWriter(
         ClassWriter classWriter, int memberType)
     throws Exception;
-    
+
     /**
      * Return the specified member summary writer for a given annotation type.
      *
-     * @param annotationTypeWriter the writer for the annotation type being 
+     * @param annotationTypeWriter the writer for the annotation type being
      *                             documented.
      * @param memberType  the {@link VisibleMemberMap} member type indicating
      *                    the type of member summary that should be returned.
@@ -188,7 +188,7 @@ public interface WriterFactory {
     public abstract MemberSummaryWriter getMemberSummaryWriter(
         AnnotationTypeWriter annotationTypeWriter, int memberType)
     throws Exception;
-    
+
     /**
      * Return the writer for the serialized form.
      *

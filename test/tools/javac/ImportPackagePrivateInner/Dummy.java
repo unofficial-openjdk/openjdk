@@ -27,7 +27,7 @@
  * @summary Package accessible inner classes were not visible to
  *          import directive in same package.
  * @author turnidge
- * 
+ *
  * @clean foo.Accessee foo.Accessee$Inside
  * @compile -classpath . foo/Accessor.java foo/Accessee.java
  */

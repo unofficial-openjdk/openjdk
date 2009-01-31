@@ -37,4 +37,3 @@ class JBug<T> {
 }
 
 interface Set<T> {}
-

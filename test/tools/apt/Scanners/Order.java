@@ -36,11 +36,11 @@ public class Order {
 
     @VisitOrder(5)
     static class InnerOrder {
-	@VisitOrder(6)
-	InnerOrder(){}
+        @VisitOrder(6)
+        InnerOrder(){}
 
-	@VisitOrder(7)
-	String toString() {return "";}
+        @VisitOrder(7)
+        String toString() {return "";}
     }
 
     @VisitOrder(8)

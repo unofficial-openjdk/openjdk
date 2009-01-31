@@ -60,83 +60,83 @@ public class TestPackageInfo extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
-	round++;
+        round++;
 
-	// Verify annotations are as expected
-	Set<TypeElement> expectedAnnotations = new HashSet<TypeElement>();
-	if (round == 1)
-	    expectedAnnotations.add(eltUtils.
-				    getTypeElement("javax.annotation.processing.SupportedAnnotationTypes"));
-	expectedAnnotations.add(eltUtils.
-				getTypeElement("java.lang.SuppressWarnings"));
+        // Verify annotations are as expected
+        Set<TypeElement> expectedAnnotations = new HashSet<TypeElement>();
+        if (round == 1)
+            expectedAnnotations.add(eltUtils.
+                                    getTypeElement("javax.annotation.processing.SupportedAnnotationTypes"));
+        expectedAnnotations.add(eltUtils.
+                                getTypeElement("java.lang.SuppressWarnings"));
 
-	if (!roundEnv.processingOver()) {
-	    System.out.println("\nRound " + round);
-	    int rootElementSize = roundEnv.getRootElements().size();
-	    
-	    for(Element elt : roundEnv.getRootElements()) {
-		System.out.printf("%nElement %s\tkind: %s%n", elt.getSimpleName(), elt.getKind());
-		eltUtils.printElements(new PrintWriter(System.out), elt);
-	    }
+        if (!roundEnv.processingOver()) {
+            System.out.println("\nRound " + round);
+            int rootElementSize = roundEnv.getRootElements().size();
 
-	    switch (round) {
-	    case 1:
-		if (rootElementSize != 2)
-		    throw new RuntimeException("Unexpected root element size " + rootElementSize);
+            for(Element elt : roundEnv.getRootElements()) {
+                System.out.printf("%nElement %s\tkind: %s%n", elt.getSimpleName(), elt.getKind());
+                eltUtils.printElements(new PrintWriter(System.out), elt);
+            }
 
-		// Note that foo.bar.FuBar, an element of package
-		// foo.bar, contains @Deprecated which should *not* be
-		// included in the set of annotations to process
- 		if (!expectedAnnotations.equals(annotations)) {
- 		    throw new RuntimeException("Unexpected annotations: " + annotations);
- 		}
+            switch (round) {
+            case 1:
+                if (rootElementSize != 2)
+                    throw new RuntimeException("Unexpected root element size " + rootElementSize);
 
-		try {
-		    try {
-			filer.createClassFile("package-info");
-			throw new RuntimeException("Created class file for \"package-info\".");
-		    } catch(FilerException fe) {}
+                // Note that foo.bar.FuBar, an element of package
+                // foo.bar, contains @Deprecated which should *not* be
+                // included in the set of annotations to process
+                if (!expectedAnnotations.equals(annotations)) {
+                    throw new RuntimeException("Unexpected annotations: " + annotations);
+                }
 
-		    PrintWriter pw = new PrintWriter(filer.createSourceFile("foo.package-info").openWriter());
-		    pw.println("@SuppressWarnings(\"\")");
-		    pw.println("package foo;");
-		    pw.close();
+                try {
+                    try {
+                        filer.createClassFile("package-info");
+                        throw new RuntimeException("Created class file for \"package-info\".");
+                    } catch(FilerException fe) {}
 
-		} catch(IOException ioe) {
-		    throw new RuntimeException(ioe);
-		}
-		break;
+                    PrintWriter pw = new PrintWriter(filer.createSourceFile("foo.package-info").openWriter());
+                    pw.println("@SuppressWarnings(\"\")");
+                    pw.println("package foo;");
+                    pw.close();
 
-	    case 2:
-		// Expect foo.package-info
+                } catch(IOException ioe) {
+                    throw new RuntimeException(ioe);
+                }
+                break;
 
-		Set<Element> expectedElement = new HashSet<Element>();
-		expectedElement.add(eltUtils.getPackageElement("foo"));
-		if (!expectedElement.equals(roundEnv.getRootElements()))
-		    throw new RuntimeException("Unexpected root element set " + roundEnv.getRootElements());
+            case 2:
+                // Expect foo.package-info
 
-		if (!expectedAnnotations.equals(annotations)) {
-		    throw new RuntimeException("Unexpected annotations: " + annotations);
-		}
+                Set<Element> expectedElement = new HashSet<Element>();
+                expectedElement.add(eltUtils.getPackageElement("foo"));
+                if (!expectedElement.equals(roundEnv.getRootElements()))
+                    throw new RuntimeException("Unexpected root element set " + roundEnv.getRootElements());
 
-		break;
-		
-	    default:
-		throw new RuntimeException("Unexpected round number " + round);
-	    }
-	}
-	return false;
+                if (!expectedAnnotations.equals(annotations)) {
+                    throw new RuntimeException("Unexpected annotations: " + annotations);
+                }
+
+                break;
+
+            default:
+                throw new RuntimeException("Unexpected round number " + round);
+            }
+        }
+        return false;
     }
-    
+
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
 
     public void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-	eltUtils = processingEnv.getElementUtils();
+        eltUtils = processingEnv.getElementUtils();
         messager = processingEnv.getMessager();
         filer    = processingEnv.getFiler();
-	options  = processingEnv.getOptions();
+        options  = processingEnv.getOptions();
     }
 }

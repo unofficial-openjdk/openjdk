@@ -22,7 +22,7 @@
  */
 
 /*
- * @test 
+ * @test
  * @bug 6557865
  * @summary -target 5 should not put ACC_SYNTHETIC on package-info
  * @author Wei Tao
@@ -40,7 +40,6 @@ public class T6557865 {
     int mod = pkginfo_cls.getModifiers();
     if ((mod & 0x1000) != 0) {
       throw new AssertionError("Test failed: interface package-info shouldn't be synthetic in -target 5.");
-    } 
+    }
   }
 }
-

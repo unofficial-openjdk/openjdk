@@ -51,13 +51,13 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Atul M Dambalkar
  */
 public class Group {
 
     private static Group instance;
-    
+
     /**
      * Map of regular expressions with the corresponding group name.
      */
@@ -99,14 +99,14 @@ public class Group {
     private Group(Configuration configuration) {
         this.configuration = configuration;
     }
-    
+
     public static Group getInstance(Configuration configuration) {
         if (instance == null) {
             instance = new Group(configuration);
         }
         return instance;
     }
-     
+
     /**
      * Depending upon the format of the package name provided in the "-group"
      * option, generate two separate maps. There will be a map for mapping
@@ -210,7 +210,7 @@ public class Group {
         }
         return groupPackageMap;
     }
-     
+
     /**
      * Search for package name in the sorted regular expression
      * list, if found return the group name.  If not, return null.
@@ -252,5 +252,3 @@ public class Group {
         return groupList;
     }
 }
-        
-

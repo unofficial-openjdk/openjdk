@@ -37,25 +37,25 @@ import com.sun.javadoc.*;
  */
 public class HtmlSerialMethodWriter extends MethodWriterImpl implements
         SerializedFormWriter.SerialMethodWriter{
-    
+
     private boolean printedFirstMember = false;
-    
-    public HtmlSerialMethodWriter(SubWriterHolderWriter writer, 
+
+    public HtmlSerialMethodWriter(SubWriterHolderWriter writer,
             ClassDoc classdoc) {
         super(writer, classdoc);
     }
-    
+
     public void writeHeader(String heading) {
         writer.anchor("serialized_methods");
         writer.printTableHeadingBackground(heading);
         writer.p();
     }
-            
+
     public void writeNoCustomizationMsg(String msg) {
         writer.print(msg);
         writer.p();
     }
-            
+
     public void writeMemberHeader(MethodDoc member) {
         if (printedFirstMember) {
             writer.printMemberHeader();
@@ -63,28 +63,28 @@ public class HtmlSerialMethodWriter extends MethodWriterImpl implements
         printedFirstMember = true;
         writer.anchor(member);
         printHead(member);
-        writeSignature(member); 
+        writeSignature(member);
     }
-            
-    public void writeMemberFooter(MethodDoc member) {       
+
+    public void writeMemberFooter(MethodDoc member) {
         writer.dlEnd();
     }
-    
+
     public void writeDeprecatedMemberInfo(MethodDoc member) {
         print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(member, 
+            (new DeprecatedTaglet()).getTagletOutput(member,
             writer.getTagletWriterInstance(false))).toString());
     }
-    
+
     public void writeMemberDescription(MethodDoc member) {
         printComment(member);
     }
-    
+
     public void writeMemberTags(MethodDoc member) {
         writer.dd();
         writer.dl();
         TagletOutputImpl output = new TagletOutputImpl("");
-        TagletManager tagletManager = 
+        TagletManager tagletManager =
             ConfigurationImpl.getInstance().tagletManager;
         TagletWriter.genTagOuput(tagletManager, member,
             tagletManager.getSerializedFormTags(),
@@ -99,7 +99,7 @@ public class HtmlSerialMethodWriter extends MethodWriterImpl implements
         writer.ddEnd();
         writer.dlEnd();
     }
-    
+
     protected void printTypeLinkNoDimension(Type type) {
         ClassDoc cd = type.asClassDoc();
         if (type.isPrimitive() || cd.isPackagePrivate()) {
@@ -110,6 +110,3 @@ public class HtmlSerialMethodWriter extends MethodWriterImpl implements
         }
     }
 }
-
-
-

@@ -9,32 +9,32 @@ import java.util.List;
 
 class T6304921 {
     void m1(int i) {
-	switch (i) {
-	case 1:
-	    i++;
-	    // fallthrough
-	default:
-	}
+        switch (i) {
+        case 1:
+            i++;
+            // fallthrough
+        default:
+        }
 
-	try {
-	    i++;
-	}
-	finally {
-	    throw new Error();
-	    // finally does not complete normally
-	}
+        try {
+            i++;
+        }
+        finally {
+            throw new Error();
+            // finally does not complete normally
+        }
     }
 
     void m2() {
-	List<Integer> list = new ArrayList();
+        List<Integer> list = new ArrayList();
     }
 }
 
 class X {
     void m1() {
-	System.orr.println("abc"); // name not found
+        System.orr.println("abc"); // name not found
     }
     boolean m2() {
-	return 123 + true; // bad binary expression
+        return 123 + true; // bad binary expression
     }
 }

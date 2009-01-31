@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 6400872 
+ * @bug 6400872
  * @summary REGRESSION:  Java Compiler cannot find jar files referenced by other
  * @run main T6400872
  */
@@ -43,7 +43,7 @@ import javax.tools.StandardJavaFileManager.*;
 public class T6400872 {
     static File testSrc = new File(System.getProperty("test.src", "."));
     static File testClasses = new File(System.getProperty("test.classes", "."));
-    
+
     public static void main(String... args) throws Exception {
         // compile A.java and B.java
         compile(testClasses, null, new File(testSrc, "A.java"), new File(testSrc, "B.java"));
@@ -53,37 +53,37 @@ public class T6400872 {
         // verify we can successfully use the class path entries in the jar files
         compile(new File("."), iterable(new File("A.jar")), new File(testSrc, "C.java"));
     }
-    
-    static void compile(File classOutDir, Iterable<File> classPath, File... files) 
-		throws IOException {
+
+    static void compile(File classOutDir, Iterable<File> classPath, File... files)
+                throws IOException {
         System.err.println("compile...");
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
-	try {
-	    Iterable<? extends JavaFileObject> fileObjects = 
-		fm.getJavaFileObjectsFromFiles(Arrays.asList(files));
-	    
-	    List<String> options = new ArrayList<String>();
-	    if (classOutDir != null) {
-		options.add("-d");
-		options.add(classOutDir.getPath());
-	    }
-	    if (classPath != null) {
-		options.add("-classpath");
-		options.add(join(classPath, File.pathSeparator));
-	    }
-	    options.add("-verbose");
-	    
-	    JavaCompiler.CompilationTask task = 
-		compiler.getTask(null, fm, null, options, null, fileObjects);
-	    if (!task.call())
-		throw new AssertionError("compilation failed");
-	} finally {
-	    fm.close();
-	}
+        try {
+            Iterable<? extends JavaFileObject> fileObjects =
+                fm.getJavaFileObjectsFromFiles(Arrays.asList(files));
+
+            List<String> options = new ArrayList<String>();
+            if (classOutDir != null) {
+                options.add("-d");
+                options.add(classOutDir.getPath());
+            }
+            if (classPath != null) {
+                options.add("-classpath");
+                options.add(join(classPath, File.pathSeparator));
+            }
+            options.add("-verbose");
+
+            JavaCompiler.CompilationTask task =
+                compiler.getTask(null, fm, null, options, null, fileObjects);
+            if (!task.call())
+                throw new AssertionError("compilation failed");
+        } finally {
+            fm.close();
+        }
     }
-    
-    static void jar(File jar, Iterable<File> classPath, File base, File... files) 
+
+    static void jar(File jar, Iterable<File> classPath, File base, File... files)
             throws IOException {
         System.err.println("jar...");
         Manifest m = new Manifest();
@@ -97,21 +97,21 @@ public class T6400872 {
         add(j, base, files);
         j.close();
     }
-    
+
     static void add(JarOutputStream j, File base, File... files) throws IOException {
         if (files == null)
             return;
-        
-        for (File f: files) 
+
+        for (File f: files)
             add(j, base, f);
     }
-    
+
     static void add(JarOutputStream j, File base, File file) throws IOException {
         File f = new File(base, file.getPath());
         if (f.isDirectory()) {
             String[] children = f.list();
             if (children != null)
-                for (String c: children) 
+                for (String c: children)
                     add(j, base, new File(file, c));
         } else {
             JarEntry e = new JarEntry(file.getPath());
@@ -120,9 +120,9 @@ public class T6400872 {
             j.write(read(f));
             j.closeEntry();
         }
-        
+
     }
-    
+
     static byte[] read(File f) throws IOException {
         byte[] buf = new byte[(int) f.length()];
         BufferedInputStream in = new BufferedInputStream(new FileInputStream(f));
@@ -132,18 +132,18 @@ public class T6400872 {
             if (n < 0)
                 throw new EOFException();
             offset += n;
-        } 
+        }
         return buf;
     }
-    
+
     static <T> Iterable<T> iterable(T single) {
         return Collections.singleton(single);
     }
-    
+
     static <T> String join(Iterable<T> iter, String sep) {
         StringBuilder p = new StringBuilder();
         for (T t: iter) {
-            if (p.length() > 0) 
+            if (p.length() > 0)
                 p.append(' ');
             p.append(t);
         }

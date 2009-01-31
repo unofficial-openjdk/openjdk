@@ -92,4 +92,3 @@ public interface MethodDoc extends ExecutableMemberDoc {
      */
     boolean overrides(MethodDoc meth);
 }
-

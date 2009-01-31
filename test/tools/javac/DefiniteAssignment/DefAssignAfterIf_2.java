@@ -32,8 +32,8 @@
 
 class DefAssignAfterIf_2 {
     void test () {
-	int i;
-	if (false) i = 3;
-	System.out.println(i);	// ERROR -- 'i' is not definitely assigned
+        int i;
+        if (false) i = 3;
+        System.out.println(i);  // ERROR -- 'i' is not definitely assigned
     }
 }

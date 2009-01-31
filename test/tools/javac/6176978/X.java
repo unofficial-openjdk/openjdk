@@ -25,7 +25,7 @@ import com.sun.javadoc.*;
 
 public class X {
     public static boolean start(RootDoc root) {
-	System.out.println("X.start");
+        System.out.println("X.start");
         return true;
     }
 }

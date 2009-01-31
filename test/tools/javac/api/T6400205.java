@@ -33,7 +33,7 @@ import static javax.tools.StandardLocation.*;
 
 public class T6400205 {
     public static void main(String... args) {
-	JavaFileManager fm =
+        JavaFileManager fm =
             ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null);
         try {
             fm.getClassLoader(null);

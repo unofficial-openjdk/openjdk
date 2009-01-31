@@ -34,30 +34,30 @@ import java.io.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.5
  */
 
 public interface PackageSummaryWriter {
-    
+
     /**
      * Return the name of the output file.
      *
      * @return the name of the output file.
      */
     public abstract String getOutputFileName();
-    
+
     /**
      * Write the header for the package summary.
      */
     public abstract void writeSummaryHeader();
-    
+
     /**
      * Write the footer for the package summary.
      */
     public abstract void writeSummaryFooter();
-    
+
     /**
      * Write the table of classes in this package.
      *
@@ -65,33 +65,33 @@ public interface PackageSummaryWriter {
      * @param label the label for this table.
      */
     public abstract void writeClassesSummary(ClassDoc[] classes, String label);
-    
+
     /**
      * Write the header for the summary.
      *
      * @param heading Package name.
      */
     public abstract void writePackageHeader(String heading);
-        
+
     /**
      * Print the package description from the "packages.html" file.
      */
     public abstract void writePackageDescription();
-    
+
     /**
      * Print the tag information from the "packages.html" file.
      */
     public abstract void writePackageTags();
-    
+
     /**
      * Write the footer for the summary.
      *
      */
     public abstract void writePackageFooter();
-    
+
     /**
      * Close the writer.
      */
     public abstract void close() throws IOException;
-    
+
 }

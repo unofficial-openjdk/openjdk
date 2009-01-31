@@ -37,32 +37,32 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
  */
 
 public class AnnotationTypeElementDeclarationImpl extends MethodDeclarationImpl
-				  implements AnnotationTypeElementDeclaration {
+                                  implements AnnotationTypeElementDeclaration {
 
     AnnotationTypeElementDeclarationImpl(AptEnv env, MethodSymbol sym) {
-	super(env, sym);
+        super(env, sym);
     }
 
     /**
      * {@inheritDoc}
      */
     public AnnotationTypeDeclaration getDeclaringType() {
-	return (AnnotationTypeDeclaration) super.getDeclaringType();
+        return (AnnotationTypeDeclaration) super.getDeclaringType();
     }
 
     /**
      * {@inheritDoc}
      */
     public AnnotationValue getDefaultValue() {
-	return (sym.defaultValue == null)
-	       ? null
-	       : new AnnotationValueImpl(env, sym.defaultValue, null);
+        return (sym.defaultValue == null)
+               ? null
+               : new AnnotationValueImpl(env, sym.defaultValue, null);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-	v.visitAnnotationTypeElementDeclaration(this);
+        v.visitAnnotationTypeElementDeclaration(this);
     }
 }

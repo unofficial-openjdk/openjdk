@@ -138,7 +138,7 @@ public interface AnnotationProcessorEnvironment {
      * or an empty collection if there are none
      */
     Collection<Declaration> getDeclarationsAnnotatedWith(
-						AnnotationTypeDeclaration a);
+                                                AnnotationTypeDeclaration a);
 
     /**
      * Returns an implementation of some utility methods for
@@ -164,8 +164,8 @@ public interface AnnotationProcessorEnvironment {
      * @throws NullPointerException if the listener is null
      */
     void addListener(AnnotationProcessorListener listener);
- 
- 
+
+
     /**
      * Remove a listener.  If the listener is not currently listening,
      * the method call does nothing.

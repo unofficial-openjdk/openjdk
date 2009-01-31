@@ -28,18 +28,17 @@ import a.*;
 public class B extends A {
 
     interface Caller {
-	void call();
+        void call();
     }
 
     public void precall() {
-	foo();
+        foo();
 
-	Caller caller = new Caller() {
-		public void call() {
-		    foo();
-		}
-	    };
-	caller.call();
+        Caller caller = new Caller() {
+                public void call() {
+                    foo();
+                }
+            };
+        caller.call();
     }
 }
-

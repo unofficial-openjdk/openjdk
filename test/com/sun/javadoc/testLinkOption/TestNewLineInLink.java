@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,19 +34,19 @@
  */
 
 public class TestNewLineInLink extends JavadocTester {
-    
+
     private static final String BUG_ID = "4739870";
     private static final String[][] NEGATED_TEST =
         new String[][] {
             {ERROR_OUTPUT,
                 "illegal character"}
         };
-    
+
     private static final String[] ARGS = new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
                 "-linkoffline", "http://www.java.sun.com/j2se/1.4/docs/api",
                 SRC_DIR, "testNewLineInLink"};
-    
+
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -56,14 +56,14 @@ public class TestNewLineInLink extends JavadocTester {
         run(tester, ARGS, new String[][] {}, NEGATED_TEST);
         tester.printSummary();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-    
+
     /**
      * {@inheritDoc}
      */

@@ -36,7 +36,7 @@ import java.io.*;
  */
 
 public class FieldData implements RuntimeConstants  {
-    
+
     ClassData cls;
     int access;
     int name_index;
@@ -45,122 +45,119 @@ public class FieldData implements RuntimeConstants  {
     int value_cpx=0;
     boolean isSynthetic=false;
     boolean isDeprecated=false;
-    Vector attrs; 
-    
+    Vector attrs;
+
     public FieldData(ClassData cls){
-	this.cls=cls;
+        this.cls=cls;
     }
-    
+
     /**
      * Read and store field info.
      */
     public void read(DataInputStream in) throws IOException {
-	access = in.readUnsignedShort();
-	name_index = in.readUnsignedShort();
-	descriptor_index = in.readUnsignedShort();
-	// Read the attributes
-	int attributes_count = in.readUnsignedShort();
-	attrs=new Vector(attributes_count);
-	for (int i = 0; i < attributes_count; i++) {
-	    int attr_name_index=in.readUnsignedShort();
-	    if (cls.getTag(attr_name_index)!=CONSTANT_UTF8) continue;
-	    String attr_name=cls.getString(attr_name_index);
-	    if (attr_name.equals("ConstantValue")){
-		if (in.readInt()!=2) 
-		    throw new ClassFormatError("invalid ConstantValue attr length");
-		value_cpx=in.readUnsignedShort();
-		AttrData attr=new AttrData(cls);
-		attr.read(attr_name_index);
-		attrs.addElement(attr);
-	    } else if (attr_name.equals("Synthetic")){
-		if (in.readInt()!=0) 
-		    throw new ClassFormatError("invalid Synthetic attr length");
-		isSynthetic=true;
-		AttrData attr=new AttrData(cls);
-		attr.read(attr_name_index);
-		attrs.addElement(attr);
-	    } else if (attr_name.equals("Deprecated")){ 
-		if (in.readInt()!=0) 
-		    throw new ClassFormatError("invalid Synthetic attr length");
-		isDeprecated = true;
-		AttrData attr=new AttrData(cls);
-		attr.read(attr_name_index);
-		attrs.addElement(attr);
-	    } else {
-		AttrData attr=new AttrData(cls);
-		attr.read(attr_name_index, in);
-		attrs.addElement(attr);
-	    }
-	}
-	
+        access = in.readUnsignedShort();
+        name_index = in.readUnsignedShort();
+        descriptor_index = in.readUnsignedShort();
+        // Read the attributes
+        int attributes_count = in.readUnsignedShort();
+        attrs=new Vector(attributes_count);
+        for (int i = 0; i < attributes_count; i++) {
+            int attr_name_index=in.readUnsignedShort();
+            if (cls.getTag(attr_name_index)!=CONSTANT_UTF8) continue;
+            String attr_name=cls.getString(attr_name_index);
+            if (attr_name.equals("ConstantValue")){
+                if (in.readInt()!=2)
+                    throw new ClassFormatError("invalid ConstantValue attr length");
+                value_cpx=in.readUnsignedShort();
+                AttrData attr=new AttrData(cls);
+                attr.read(attr_name_index);
+                attrs.addElement(attr);
+            } else if (attr_name.equals("Synthetic")){
+                if (in.readInt()!=0)
+                    throw new ClassFormatError("invalid Synthetic attr length");
+                isSynthetic=true;
+                AttrData attr=new AttrData(cls);
+                attr.read(attr_name_index);
+                attrs.addElement(attr);
+            } else if (attr_name.equals("Deprecated")){
+                if (in.readInt()!=0)
+                    throw new ClassFormatError("invalid Synthetic attr length");
+                isDeprecated = true;
+                AttrData attr=new AttrData(cls);
+                attr.read(attr_name_index);
+                attrs.addElement(attr);
+            } else {
+                AttrData attr=new AttrData(cls);
+                attr.read(attr_name_index, in);
+                attrs.addElement(attr);
+            }
+        }
+
     }  // end read
-    
+
     /**
      * Returns access of a field.
      */
     public String[] getAccess(){
-	Vector v = new Vector();
-	if ((access & ACC_PUBLIC)   !=0) v.addElement("public");
-	if ((access & ACC_PRIVATE)   !=0) v.addElement("private");
-	if ((access & ACC_PROTECTED)   !=0) v.addElement("protected");
-	if ((access & ACC_STATIC)   !=0) v.addElement("static");
-	if ((access & ACC_FINAL)    !=0) v.addElement("final");
-	if ((access & ACC_VOLATILE) !=0) v.addElement("volatile");
-	if ((access & ACC_TRANSIENT) !=0) v.addElement("transient");
-	String[] accflags = new String[v.size()];
-	v.copyInto(accflags);
-	return accflags;
+        Vector v = new Vector();
+        if ((access & ACC_PUBLIC)   !=0) v.addElement("public");
+        if ((access & ACC_PRIVATE)   !=0) v.addElement("private");
+        if ((access & ACC_PROTECTED)   !=0) v.addElement("protected");
+        if ((access & ACC_STATIC)   !=0) v.addElement("static");
+        if ((access & ACC_FINAL)    !=0) v.addElement("final");
+        if ((access & ACC_VOLATILE) !=0) v.addElement("volatile");
+        if ((access & ACC_TRANSIENT) !=0) v.addElement("transient");
+        String[] accflags = new String[v.size()];
+        v.copyInto(accflags);
+        return accflags;
     }
-    
+
     /**
      * Returns name of a field.
      */
     public String getName(){
-	return cls.getStringValue(name_index);
+        return cls.getStringValue(name_index);
     }
-    
+
     /**
      * Returns internal signature of a field
      */
     public String getInternalSig(){
-	return cls.getStringValue(descriptor_index);
+        return cls.getStringValue(descriptor_index);
     }
-    
+
     /**
      * Returns java type signature of a field.
      */
     public String getType(){
-	return new TypeSignature(getInternalSig()).getFieldType();
+        return new TypeSignature(getInternalSig()).getFieldType();
     }
-    
+
     /**
      * Returns true if field is synthetic.
      */
     public boolean isSynthetic(){
-	return isSynthetic;
+        return isSynthetic;
     }
-    
+
     /**
      * Returns true if field is deprecated.
      */
     public boolean isDeprecated(){
-	return isDeprecated;
+        return isDeprecated;
     }
-    
+
     /**
      * Returns index of constant value in cpool.
      */
     public int getConstantValueIndex(){
-	return (value_cpx);
+        return (value_cpx);
     }
-    
+
     /**
      * Returns list of attributes of field.
      */
     public Vector getAttributes(){
-	return attrs;
+        return attrs;
     }
 }
-
-   
-

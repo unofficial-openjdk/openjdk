@@ -8,7 +8,7 @@
 
 interface LibInterface {
     /** @deprecated */
-	void m();
+        void m();
 }
 
 class LibClass {

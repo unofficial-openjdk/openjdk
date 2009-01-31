@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,19 +27,19 @@ import java.lang.annotation.*;
 
 /**
  * This is just a test annotation type.
- * 
+ *
  * @author Jamie Ho.
  * @since 1.5
  */
 @Documented public @interface AnnotationType {
-    
+
     /**
-     * The copyright holder. 
+     * The copyright holder.
      */
     String optional() default "unknown";
 
-   /** 
-    * The year of the copyright. 
+   /**
+    * The year of the copyright.
     */
-    int required();    
+    int required();
 }

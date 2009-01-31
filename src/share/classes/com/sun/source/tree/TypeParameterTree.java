@@ -33,8 +33,8 @@ import javax.lang.model.element.Name;
  *
  * For example:
  * <pre>
- *   <em>name</em> 
- * 
+ *   <em>name</em>
+ *
  *   <em>name</em> extends <em>bounds</em>
  * </pre>
  *

@@ -31,12 +31,12 @@
 public class AssignmentSameType5 {
 
     public static void main(String[] args) {
-	Ref<B> exact = null;
-	Ref<? extends B> ebound = null;
-	Ref<? super B> sbound = null;
-	Ref<?> unbound = null;
+        Ref<B> exact = null;
+        Ref<? extends B> ebound = null;
+        Ref<? super B> sbound = null;
+        Ref<?> unbound = null;
 
-	ebound = sbound;        // <<fail>> <? extends A> = <? super A>
+        ebound = sbound;        // <<fail>> <? extends A> = <? super A>
     }
 }
 

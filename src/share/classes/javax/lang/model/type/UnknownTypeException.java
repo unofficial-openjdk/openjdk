@@ -56,9 +56,9 @@ public class UnknownTypeException extends RuntimeException {
      * @param p an additional parameter, may be {@code null}
      */
     public UnknownTypeException(TypeMirror t, Object p) {
-	super("Unknown type: " + t);
-	type = t;
-	this.parameter = p;
+        super("Unknown type: " + t);
+        type = t;
+        this.parameter = p;
     }
 
     /**
@@ -69,7 +69,7 @@ public class UnknownTypeException extends RuntimeException {
      * @return the unknown type, or {@code null} if unavailable
      */
     public TypeMirror getUnknownType() {
-	return type;
+        return type;
     }
 
     /**
@@ -78,6 +78,6 @@ public class UnknownTypeException extends RuntimeException {
      * @return the additional argument
      */
     public Object getArgument() {
-	return parameter;
+        return parameter;
     }
 }

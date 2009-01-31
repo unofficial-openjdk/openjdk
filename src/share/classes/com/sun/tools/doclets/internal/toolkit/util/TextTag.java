@@ -29,11 +29,11 @@ import com.sun.javadoc.*;
 /**
  * A tag that holds nothing but plain text.  This is useful for passing
  * text to methods that only accept inline tags as a parameter.
- * 
+ *
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- * 
+ *
  * @author Jamie Ho
  * @since 1.5
  */
@@ -57,7 +57,7 @@ public class TextTag implements Tag {
     public String name() {
         return name;
     }
-    
+
     /**
      * {@inheritDoc}
      */

@@ -30,7 +30,7 @@
  */
 
 /*
-  The following is required to compile without error.  javac rejects it, 
+  The following is required to compile without error.  javac rejects it,
   because javac thinks the i is referring to the current class which has
   not been initialized yet.  But C has no member i - private members are
   not inherited.  i therefore refers to the one from the enclosing scope.
@@ -39,7 +39,7 @@
 class WhichImplicitThis7 {
     static private int i;
     static class B extends WhichImplicitThis7 {
-	private int i;
+        private int i;
     }
     class C extends B {
         C(int j) {}
@@ -52,4 +52,3 @@ class WhichImplicitThis7 {
         }
     }
 }
-

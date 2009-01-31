@@ -31,7 +31,7 @@
  */
 public class NonasciiDigit {
     public static void main(String[] args) {
-	// error: floating literals use ascii only
-	float f = 0.\uff11;
+        // error: floating literals use ascii only
+        float f = 0.\uff11;
     }
 }

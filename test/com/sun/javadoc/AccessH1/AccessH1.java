@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test   @(#)AccessH1.java	1.2 02/07/29
+ * @test   @(#)AccessH1.java    1.2 02/07/29
  * @bug 4636667
  * @summary  Use <H1, <H2>, and <H3> in proper sequence for accessibility
  * @author dkramer
@@ -37,7 +37,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily 
+ * It reads each file, complete with newlines, into a string to easily
  * find strings that contain newlines.
  */
 public class AccessH1 {
@@ -73,8 +73,8 @@ public class AccessH1 {
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-	    throw new Error("Javadoc failed to execute");
+        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+            throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -85,12 +85,12 @@ public class AccessH1 {
     private static final String[][] testArray = {
 
             // Test the style sheet
-            { 
+            {
                "h1 { font-size: 145% }",
                      TMPDEST_DIR1 + "stylesheet.css"              },
 
             // Test the doc title in the overview page
-            { 
+            {
                "<H1>" + LS + "Document Title" + LS + "</H1>",
                           TMPDEST_DIR1 + "overview-summary.html"  }
 
@@ -110,7 +110,7 @@ public class AccessH1 {
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum) 
+                System.out.println("\nSub-test " + (subtestNum)
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -125,7 +125,7 @@ public class AccessH1 {
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

@@ -159,18 +159,18 @@ public abstract class Trees {
      * Returns null if the Scope is not available.
      */
     public abstract Scope getScope(TreePath path);
-    
+
     /**
      * Checks whether a given type is accessible in a given scope.
      * @param scope the scope to be checked
      * @param type the type to be checked
-     * @return true if {@code type} is accessible 
+     * @return true if {@code type} is accessible
      */
     public abstract boolean isAccessible(Scope scope, TypeElement type);
 
     /**
-     * Checks whether the given element is accessible as a member of the given 
-     * type in a given scope. 
+     * Checks whether the given element is accessible as a member of the given
+     * type in a given scope.
      * @param scope the scope to be checked
      * @param member the member to be checked
      * @param type the type for which to check if the member is accessible

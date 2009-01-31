@@ -1,5 +1,5 @@
 /*
- * @test    
+ * @test
  * @bug     6507179
  * @summary Ensure that "-source" option isn't ignored.
  * @author  Scott Seligman

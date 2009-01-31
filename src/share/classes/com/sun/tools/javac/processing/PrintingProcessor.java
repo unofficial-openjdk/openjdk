@@ -38,7 +38,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.*;
 
-/** 
+/**
  * A processor which prints out elements.  Used to implement the
  * -Xprint option; the included visitor class is used to implement
  * Elements.printElements.
@@ -51,500 +51,500 @@ import java.util.*;
 @SupportedAnnotationTypes("*")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class PrintingProcessor extends AbstractProcessor {
-    PrintWriter writer; 
+    PrintWriter writer;
 
     public PrintingProcessor() {
-	super();
-	writer = new PrintWriter(System.out);
+        super();
+        writer = new PrintWriter(System.out);
     }
 
     public void setWriter(Writer w) {
-	writer = new PrintWriter(w);
+        writer = new PrintWriter(w);
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> tes,
-			   RoundEnvironment renv) {
+                           RoundEnvironment renv) {
 
-	for(Element element : renv.getRootElements()) {
-	    print(element);
-	}
-	
-	// Just print the elements, nothing more to do.
-	return true;
+        for(Element element : renv.getRootElements()) {
+            print(element);
+        }
+
+        // Just print the elements, nothing more to do.
+        return true;
     }
 
     void print(Element element) {
-	new PrintingElementVisitor(writer, processingEnv.getElementUtils()).
-	    visit(element).flush();
+        new PrintingElementVisitor(writer, processingEnv.getElementUtils()).
+            visit(element).flush();
     }
 
     /**
      * Used for the -Xprint option and called by Elements.printElements
      */
     public static class PrintingElementVisitor
-	extends SimpleElementVisitor6<PrintingElementVisitor, Boolean> {
-	int indentation; // Indentation level;
-	final PrintWriter writer;
-	final Elements elementUtils;
+        extends SimpleElementVisitor6<PrintingElementVisitor, Boolean> {
+        int indentation; // Indentation level;
+        final PrintWriter writer;
+        final Elements elementUtils;
 
-	public PrintingElementVisitor(Writer w, Elements elementUtils) {
-	    super();
-	    this.writer = new PrintWriter(w);
-	    this.elementUtils = elementUtils;
-	    indentation = 0;
-	}
+        public PrintingElementVisitor(Writer w, Elements elementUtils) {
+            super();
+            this.writer = new PrintWriter(w);
+            this.elementUtils = elementUtils;
+            indentation = 0;
+        }
 
-	@Override
-	protected PrintingElementVisitor defaultAction(Element e, Boolean newLine) {
-	    if (newLine != null && newLine)
-		writer.println();
-	    printDocComment(e);
-	    printModifiers(e);
-	    return this;
-	}
+        @Override
+        protected PrintingElementVisitor defaultAction(Element e, Boolean newLine) {
+            if (newLine != null && newLine)
+                writer.println();
+            printDocComment(e);
+            printModifiers(e);
+            return this;
+        }
 
-	@Override
-	public PrintingElementVisitor visitExecutable(ExecutableElement e, Boolean p) {
-	    ElementKind kind = e.getKind();
-	     
-	    if (kind != STATIC_INIT && 
-		kind != INSTANCE_INIT) {
-		Element enclosing = e.getEnclosingElement();
-		
-		// Don't print out the constructor of an anonymous class
-		if (kind == CONSTRUCTOR && 
-		    enclosing != null && 
-		    NestingKind.ANONYMOUS == 
-		    // Use an anonymous class to determine anonymity!
-		    (new SimpleElementVisitor6<NestingKind, Void>() {
-			@Override
-			public NestingKind visitType(TypeElement e, Void p) {
-			    return e.getNestingKind();
-			}
-		    }).visit(enclosing))
-		    return this;
+        @Override
+        public PrintingElementVisitor visitExecutable(ExecutableElement e, Boolean p) {
+            ElementKind kind = e.getKind();
 
-		defaultAction(e, true);
-		printFormalTypeParameters(e);
+            if (kind != STATIC_INIT &&
+                kind != INSTANCE_INIT) {
+                Element enclosing = e.getEnclosingElement();
 
-		switch(kind) {
-		    case CONSTRUCTOR:
-		    // Print out simple name of the class
-		    writer.print(e.getEnclosingElement().getSimpleName());
-		    break;
-		    
-		    case METHOD:
-		    writer.print(e.getReturnType().toString());
-		    writer.print(" ");
-		    writer.print(e.getSimpleName().toString());
-		    break;
-		}
+                // Don't print out the constructor of an anonymous class
+                if (kind == CONSTRUCTOR &&
+                    enclosing != null &&
+                    NestingKind.ANONYMOUS ==
+                    // Use an anonymous class to determine anonymity!
+                    (new SimpleElementVisitor6<NestingKind, Void>() {
+                        @Override
+                        public NestingKind visitType(TypeElement e, Void p) {
+                            return e.getNestingKind();
+                        }
+                    }).visit(enclosing))
+                    return this;
 
-		writer.print("(");
-		printParameters(e);
-		writer.print(")");
-		AnnotationValue defaultValue = e.getDefaultValue();
-		if (defaultValue != null) 
-		    writer.print(" default " + defaultValue);
+                defaultAction(e, true);
+                printFormalTypeParameters(e);
 
-		printThrows(e);
-		writer.println(";");
-	    }
-	    return this;
-	}
+                switch(kind) {
+                    case CONSTRUCTOR:
+                    // Print out simple name of the class
+                    writer.print(e.getEnclosingElement().getSimpleName());
+                    break;
+
+                    case METHOD:
+                    writer.print(e.getReturnType().toString());
+                    writer.print(" ");
+                    writer.print(e.getSimpleName().toString());
+                    break;
+                }
+
+                writer.print("(");
+                printParameters(e);
+                writer.print(")");
+                AnnotationValue defaultValue = e.getDefaultValue();
+                if (defaultValue != null)
+                    writer.print(" default " + defaultValue);
+
+                printThrows(e);
+                writer.println(";");
+            }
+            return this;
+        }
 
 
-	@Override
-	public PrintingElementVisitor visitType(TypeElement e, Boolean p) {
-	    ElementKind kind = e.getKind();
-	    NestingKind nestingKind = e.getNestingKind();
-	    
-	    if (NestingKind.ANONYMOUS == nestingKind) {
-		// Print out an anonymous class in the style of a
-		// class instance creation expression rather than a
-		// class declaration.
-		writer.print("new ");
+        @Override
+        public PrintingElementVisitor visitType(TypeElement e, Boolean p) {
+            ElementKind kind = e.getKind();
+            NestingKind nestingKind = e.getNestingKind();
 
-		// If the anonymous class implements an interface
-		// print that name, otherwise print the superclass.
-		List<? extends TypeMirror> interfaces = e.getInterfaces();
-		if (!interfaces.isEmpty())
-		    writer.print(interfaces.get(0));
-		else 
-		    writer.print(e.getSuperclass());
+            if (NestingKind.ANONYMOUS == nestingKind) {
+                // Print out an anonymous class in the style of a
+                // class instance creation expression rather than a
+                // class declaration.
+                writer.print("new ");
 
-		writer.print("(");
-		// Anonymous classes that implement an interface can't
-		// have any constructor arguments.
-		if (interfaces.isEmpty()) {
-		    // Print out the parameter list from the sole
-		    // constructor.  For now, don't try to elide any
-		    // synthetic parameters by determining if the
-		    // anonymous class is in a static context, etc.
-		    List<? extends ExecutableElement> constructors = 
-			ElementFilter.constructorsIn(e.getEnclosedElements());
-		
-		    if (!constructors.isEmpty())
-			printParameters(constructors.get(0));
-		}
-		writer.print(")");
-	    } else {
-		if (nestingKind == TOP_LEVEL) {
-		    PackageElement pkg = elementUtils.getPackageOf(e);
-		    if (!pkg.isUnnamed())
-			writer.print("package " + pkg.getQualifiedName() + ";\n");
-		}
+                // If the anonymous class implements an interface
+                // print that name, otherwise print the superclass.
+                List<? extends TypeMirror> interfaces = e.getInterfaces();
+                if (!interfaces.isEmpty())
+                    writer.print(interfaces.get(0));
+                else
+                    writer.print(e.getSuperclass());
 
-		defaultAction(e, true);
+                writer.print("(");
+                // Anonymous classes that implement an interface can't
+                // have any constructor arguments.
+                if (interfaces.isEmpty()) {
+                    // Print out the parameter list from the sole
+                    // constructor.  For now, don't try to elide any
+                    // synthetic parameters by determining if the
+                    // anonymous class is in a static context, etc.
+                    List<? extends ExecutableElement> constructors =
+                        ElementFilter.constructorsIn(e.getEnclosedElements());
 
-		switch(kind) {
-		case ANNOTATION_TYPE:
-		    writer.print("@interface");
-		    break;
-		default:
-		    writer.print(kind.toString().toLowerCase());
-		}
-		writer.print(" ");
-		writer.print(e.getSimpleName());
+                    if (!constructors.isEmpty())
+                        printParameters(constructors.get(0));
+                }
+                writer.print(")");
+            } else {
+                if (nestingKind == TOP_LEVEL) {
+                    PackageElement pkg = elementUtils.getPackageOf(e);
+                    if (!pkg.isUnnamed())
+                        writer.print("package " + pkg.getQualifiedName() + ";\n");
+                }
 
-		printFormalTypeParameters(e);
+                defaultAction(e, true);
 
-		// Print superclass information if informative
-		if (kind == CLASS) {
-		    TypeMirror supertype = e.getSuperclass();
-		    if (supertype.getKind() != TypeKind.NONE) {
-			TypeElement e2 = (TypeElement)
-			    ((DeclaredType) supertype).asElement();
-			if (e2.getSuperclass().getKind() != TypeKind.NONE)
-			    writer.print(" extends " + supertype);
-		    }
-		}
-	    
-		printInterfaces(e);
-	    }
-	    writer.println(" {");
-	    indentation++;
-	    
-	    if (kind == ENUM) {
-		List<Element> enclosedElements = 
-		    new ArrayList<Element>(e.getEnclosedElements());
-		List<Element> enumConstants = new ArrayList<Element>();
-		for(Element element : enclosedElements) {
-		    if (element.getKind() == ENUM_CONSTANT)
-			enumConstants.add(element);
-		}
-		
-		int i;
-		for(i = 0; i < enumConstants.size()-1; i++) {
-		    this.visit(enumConstants.get(i), true);
-		    writer.print(",");
-		}
-		if (i >= 0 ) {
-		    this.visit(enumConstants.get(i), true);
-		    writer.print(";");
-		}
-		
-		enclosedElements.removeAll(enumConstants);
-		for(Element element : enclosedElements)
-		    this.visit(element);
-	    } else {
-		for(Element element : e.getEnclosedElements())
-		    this.visit(element);
-	    }
+                switch(kind) {
+                case ANNOTATION_TYPE:
+                    writer.print("@interface");
+                    break;
+                default:
+                    writer.print(kind.toString().toLowerCase());
+                }
+                writer.print(" ");
+                writer.print(e.getSimpleName());
 
-	    indentation--;
-	    indent();
-	    writer.println("}");
-	    return this;
-	}
+                printFormalTypeParameters(e);
 
-	@Override
-	public PrintingElementVisitor visitVariable(VariableElement e, Boolean newLine) {
-	    ElementKind kind = e.getKind();
-	    defaultAction(e, newLine);
+                // Print superclass information if informative
+                if (kind == CLASS) {
+                    TypeMirror supertype = e.getSuperclass();
+                    if (supertype.getKind() != TypeKind.NONE) {
+                        TypeElement e2 = (TypeElement)
+                            ((DeclaredType) supertype).asElement();
+                        if (e2.getSuperclass().getKind() != TypeKind.NONE)
+                            writer.print(" extends " + supertype);
+                    }
+                }
 
-	    if (kind == ENUM_CONSTANT)
-		writer.print(e.getSimpleName());
-	    else {
-		writer.print(e.asType().toString() + " " + e.getSimpleName() );
-		Object constantValue  = e.getConstantValue();
-		if (constantValue != null) {
-		    writer.print(" = ");
-		    writer.print(elementUtils.getConstantExpression(constantValue));
-		}
-		writer.println(";");
-	    }
-	    return this;
-	}
+                printInterfaces(e);
+            }
+            writer.println(" {");
+            indentation++;
 
-	@Override
-	public PrintingElementVisitor visitTypeParameter(TypeParameterElement e, Boolean p) {
-	    writer.print(e.getSimpleName());
-	    return this;
-	}
+            if (kind == ENUM) {
+                List<Element> enclosedElements =
+                    new ArrayList<Element>(e.getEnclosedElements());
+                List<Element> enumConstants = new ArrayList<Element>();
+                for(Element element : enclosedElements) {
+                    if (element.getKind() == ENUM_CONSTANT)
+                        enumConstants.add(element);
+                }
 
-	// Should we do more here?
-	@Override
-	public PrintingElementVisitor visitPackage(PackageElement e, Boolean p) {
-	    defaultAction(e, false);
-	    if (!e.isUnnamed())
-		writer.println("package " + e.getQualifiedName() + ";");
-	    else
-		writer.println("// Unnamed package");
-	    return this;
-	}
+                int i;
+                for(i = 0; i < enumConstants.size()-1; i++) {
+                    this.visit(enumConstants.get(i), true);
+                    writer.print(",");
+                }
+                if (i >= 0 ) {
+                    this.visit(enumConstants.get(i), true);
+                    writer.print(";");
+                }
 
-	public void flush() {
-	    writer.flush();
-	}
+                enclosedElements.removeAll(enumConstants);
+                for(Element element : enclosedElements)
+                    this.visit(element);
+            } else {
+                for(Element element : e.getEnclosedElements())
+                    this.visit(element);
+            }
 
-	private void printDocComment(Element e) {
-	    String docComment = elementUtils.getDocComment(e);
+            indentation--;
+            indent();
+            writer.println("}");
+            return this;
+        }
 
-	    if (docComment != null) {
-		// Break comment into lines 
-		java.util.StringTokenizer st = new StringTokenizer(docComment,
-								  "\n\r");
-		indent();
-		writer.println("/**");
-		
-		while(st.hasMoreTokens()) {
-		    indent();
-		    writer.print(" *");
-		    writer.println(st.nextToken());
-		}
+        @Override
+        public PrintingElementVisitor visitVariable(VariableElement e, Boolean newLine) {
+            ElementKind kind = e.getKind();
+            defaultAction(e, newLine);
 
-		indent();
-		writer.println(" */");
-	    }
-	}
+            if (kind == ENUM_CONSTANT)
+                writer.print(e.getSimpleName());
+            else {
+                writer.print(e.asType().toString() + " " + e.getSimpleName() );
+                Object constantValue  = e.getConstantValue();
+                if (constantValue != null) {
+                    writer.print(" = ");
+                    writer.print(elementUtils.getConstantExpression(constantValue));
+                }
+                writer.println(";");
+            }
+            return this;
+        }
 
-	private void printModifiers(Element e) {
-	    ElementKind kind = e.getKind();
-	    if (kind == PARAMETER) {
-		printAnnotationsInline(e);
-	    } else {
-		printAnnotations(e);
-		indent();
-	    }
+        @Override
+        public PrintingElementVisitor visitTypeParameter(TypeParameterElement e, Boolean p) {
+            writer.print(e.getSimpleName());
+            return this;
+        }
 
-	    if (kind == ENUM_CONSTANT)
-		return;
+        // Should we do more here?
+        @Override
+        public PrintingElementVisitor visitPackage(PackageElement e, Boolean p) {
+            defaultAction(e, false);
+            if (!e.isUnnamed())
+                writer.println("package " + e.getQualifiedName() + ";");
+            else
+                writer.println("// Unnamed package");
+            return this;
+        }
 
-	    Set<Modifier> modifiers = new LinkedHashSet<Modifier>();
-	    modifiers.addAll(e.getModifiers());
+        public void flush() {
+            writer.flush();
+        }
 
-	    switch (kind) {
-	    case ANNOTATION_TYPE:
-	    case INTERFACE:
-		modifiers.remove(Modifier.ABSTRACT);
-		break;
+        private void printDocComment(Element e) {
+            String docComment = elementUtils.getDocComment(e);
 
-	    case ENUM:
-		modifiers.remove(Modifier.FINAL);
-		modifiers.remove(Modifier.ABSTRACT);
-		break;
+            if (docComment != null) {
+                // Break comment into lines
+                java.util.StringTokenizer st = new StringTokenizer(docComment,
+                                                                  "\n\r");
+                indent();
+                writer.println("/**");
 
-	    case METHOD:
-	    case FIELD:
-		Element enclosingElement = e.getEnclosingElement();
-		if (enclosingElement != null && 
-		    enclosingElement.getKind().isInterface()) {
-		    modifiers.remove(Modifier.PUBLIC);
-		    modifiers.remove(Modifier.ABSTRACT); // only for methods
-		    modifiers.remove(Modifier.STATIC);   // only for fields
-		    modifiers.remove(Modifier.FINAL);    // only for fields
-		}
-		break;
+                while(st.hasMoreTokens()) {
+                    indent();
+                    writer.print(" *");
+                    writer.println(st.nextToken());
+                }
 
-	    }
+                indent();
+                writer.println(" */");
+            }
+        }
 
-	    for(Modifier m: modifiers) {
-		writer.print(m.toString() + " ");
-	    }
-	}
-	
-	private void printFormalTypeParameters(ExecutableElement executable) {
-	    printFormalTypeParameters(executable.getTypeParameters(), true);
-	}
+        private void printModifiers(Element e) {
+            ElementKind kind = e.getKind();
+            if (kind == PARAMETER) {
+                printAnnotationsInline(e);
+            } else {
+                printAnnotations(e);
+                indent();
+            }
 
-	private void printFormalTypeParameters(TypeElement type) {
-	    printFormalTypeParameters(type.getTypeParameters(), false);
-	}
+            if (kind == ENUM_CONSTANT)
+                return;
 
-	private void printFormalTypeParameters(List<? extends TypeParameterElement> typeParams,
-					       boolean pad) {
-	    if (typeParams.size() > 0) {
-		writer.print("<");
+            Set<Modifier> modifiers = new LinkedHashSet<Modifier>();
+            modifiers.addAll(e.getModifiers());
 
-		boolean first = true;
-		for(TypeParameterElement tpe: typeParams) {
-		    if (!first)
-			writer.print(", ");
-		    writer.print(tpe.toString());
-		    first = false;
-		}
+            switch (kind) {
+            case ANNOTATION_TYPE:
+            case INTERFACE:
+                modifiers.remove(Modifier.ABSTRACT);
+                break;
 
-		writer.print(">");
-		if (pad)
-		    writer.print(" ");
-	    }
-	}
+            case ENUM:
+                modifiers.remove(Modifier.FINAL);
+                modifiers.remove(Modifier.ABSTRACT);
+                break;
 
-	private void printAnnotationsInline(Element e) {
-	    List<? extends AnnotationMirror> annots = e.getAnnotationMirrors();
-	    for(AnnotationMirror annotationMirror : annots) {
-		writer.print(annotationMirror);
-		writer.print(" ");
-	    }
-	}
+            case METHOD:
+            case FIELD:
+                Element enclosingElement = e.getEnclosingElement();
+                if (enclosingElement != null &&
+                    enclosingElement.getKind().isInterface()) {
+                    modifiers.remove(Modifier.PUBLIC);
+                    modifiers.remove(Modifier.ABSTRACT); // only for methods
+                    modifiers.remove(Modifier.STATIC);   // only for fields
+                    modifiers.remove(Modifier.FINAL);    // only for fields
+                }
+                break;
 
-	private void printAnnotations(Element e) {
-	    List<? extends AnnotationMirror> annots = e.getAnnotationMirrors();
-	    for(AnnotationMirror annotationMirror : annots) {
-		indent();
-		writer.println(annotationMirror);
-	    }
-	}
+            }
 
-	// TODO: Refactor
-	private void printParameters(ExecutableElement e) {
-	    List<? extends VariableElement> parameters = e.getParameters();
-	    int size = parameters.size();
+            for(Modifier m: modifiers) {
+                writer.print(m.toString() + " ");
+            }
+        }
 
-	    switch (size) {
-	    case 0:
-		break;
-		
-	    case 1:
-		for(VariableElement parameter: parameters) {
-		    printModifiers(parameter);
+        private void printFormalTypeParameters(ExecutableElement executable) {
+            printFormalTypeParameters(executable.getTypeParameters(), true);
+        }
 
-		    if (e.isVarArgs() ) {
-			TypeMirror tm = parameter.asType();
-			if (tm.getKind() != TypeKind.ARRAY)
-			    throw new AssertionError("Var-args parameter is not an array type: " + tm);
-			writer.print((ArrayType.class.cast(tm)).getComponentType() );
-			writer.print("...");
-		    } else
-			writer.print(parameter.asType());
-		    writer.print(" " + parameter.getSimpleName());
-		}
-		break;
+        private void printFormalTypeParameters(TypeElement type) {
+            printFormalTypeParameters(type.getTypeParameters(), false);
+        }
 
-	    default:
-		{
-		    int i = 1;
-		    for(VariableElement parameter: parameters) {
-			if (i == 2)
-			    indentation++;
+        private void printFormalTypeParameters(List<? extends TypeParameterElement> typeParams,
+                                               boolean pad) {
+            if (typeParams.size() > 0) {
+                writer.print("<");
 
-			if (i > 1)
-			    indent();
+                boolean first = true;
+                for(TypeParameterElement tpe: typeParams) {
+                    if (!first)
+                        writer.print(", ");
+                    writer.print(tpe.toString());
+                    first = false;
+                }
 
-			printModifiers(parameter);
+                writer.print(">");
+                if (pad)
+                    writer.print(" ");
+            }
+        }
 
-			if (i == size && e.isVarArgs() ) {
-			    TypeMirror tm = parameter.asType();
-			    if (tm.getKind() != TypeKind.ARRAY)
-				throw new AssertionError("Var-args parameter is not an array type: " + tm);
-				    writer.print((ArrayType.class.cast(tm)).getComponentType() );
+        private void printAnnotationsInline(Element e) {
+            List<? extends AnnotationMirror> annots = e.getAnnotationMirrors();
+            for(AnnotationMirror annotationMirror : annots) {
+                writer.print(annotationMirror);
+                writer.print(" ");
+            }
+        }
 
-			    writer.print("...");
-			} else
-			    writer.print(parameter.asType());
-			writer.print(" " + parameter.getSimpleName());
+        private void printAnnotations(Element e) {
+            List<? extends AnnotationMirror> annots = e.getAnnotationMirrors();
+            for(AnnotationMirror annotationMirror : annots) {
+                indent();
+                writer.println(annotationMirror);
+            }
+        }
 
-			if (i < size)
-			    writer.println(",");
-			    
-			i++;
-		    }
-		    
-		    if (parameters.size() >= 2) 
-			indentation--;
-		}
-		break;
-	    }
-	}
+        // TODO: Refactor
+        private void printParameters(ExecutableElement e) {
+            List<? extends VariableElement> parameters = e.getParameters();
+            int size = parameters.size();
 
-	private void printInterfaces(TypeElement e) {
-	    ElementKind kind = e.getKind();
-	    
-	    if(kind != ANNOTATION_TYPE) { 
-		List<? extends TypeMirror> interfaces = e.getInterfaces();
-		if (interfaces.size() > 0) {
-		    writer.print((kind.isClass() ? " implements" : " extends"));
-		
-		    boolean first = true;
-		    for(TypeMirror interf: interfaces) {
-			if (!first)
-			    writer.print(",");
-			writer.print(" ");
-			writer.print(interf.toString());
-			first = false;
-		    }
-		}
-	    }
-	}
+            switch (size) {
+            case 0:
+                break;
 
-	private void printThrows(ExecutableElement e) {
-	    List<? extends TypeMirror> thrownTypes = e.getThrownTypes();
-	    final int size = thrownTypes.size();
-	    if (size != 0) {
-		writer.print(" throws");
+            case 1:
+                for(VariableElement parameter: parameters) {
+                    printModifiers(parameter);
 
-		int i = 1;
-		for(TypeMirror thrownType: thrownTypes) {
-		    if (i == 1)
-			writer.print(" ");
+                    if (e.isVarArgs() ) {
+                        TypeMirror tm = parameter.asType();
+                        if (tm.getKind() != TypeKind.ARRAY)
+                            throw new AssertionError("Var-args parameter is not an array type: " + tm);
+                        writer.print((ArrayType.class.cast(tm)).getComponentType() );
+                        writer.print("...");
+                    } else
+                        writer.print(parameter.asType());
+                    writer.print(" " + parameter.getSimpleName());
+                }
+                break;
 
-		    if (i == 2)
-			indentation++;
+            default:
+                {
+                    int i = 1;
+                    for(VariableElement parameter: parameters) {
+                        if (i == 2)
+                            indentation++;
 
-		    if (i >= 2)
-			indent();
+                        if (i > 1)
+                            indent();
 
-		    writer.print(thrownType);
-		    
-		    if (i != size)
-			writer.println(", ");
+                        printModifiers(parameter);
 
-		    i++;
-		}
+                        if (i == size && e.isVarArgs() ) {
+                            TypeMirror tm = parameter.asType();
+                            if (tm.getKind() != TypeKind.ARRAY)
+                                throw new AssertionError("Var-args parameter is not an array type: " + tm);
+                                    writer.print((ArrayType.class.cast(tm)).getComponentType() );
 
-		if (size >= 2)
-		    indentation--;
-	    }
-	}
+                            writer.print("...");
+                        } else
+                            writer.print(parameter.asType());
+                        writer.print(" " + parameter.getSimpleName());
 
-	private static final String [] spaces = {
-	    "",
-	    "  ",
-	    "    ",
-	    "      ",
-	    "        ",
-	    "          ",
-	    "            ",
-	    "              ",
-	    "                ",
-	    "                  ",
-	    "                    "
-	};
+                        if (i < size)
+                            writer.println(",");
 
-	private void indent() {
-	    int indentation = this.indentation;
-	    if (indentation < 0)
-		return;
-	    final int maxIndex = spaces.length - 1;
-	    
-	    while (indentation > maxIndex) {
-		writer.print(spaces[maxIndex]);
-		indentation -= maxIndex;
-	    }
-	    writer.print(spaces[indentation]);
-	}
+                        i++;
+                    }
+
+                    if (parameters.size() >= 2)
+                        indentation--;
+                }
+                break;
+            }
+        }
+
+        private void printInterfaces(TypeElement e) {
+            ElementKind kind = e.getKind();
+
+            if(kind != ANNOTATION_TYPE) {
+                List<? extends TypeMirror> interfaces = e.getInterfaces();
+                if (interfaces.size() > 0) {
+                    writer.print((kind.isClass() ? " implements" : " extends"));
+
+                    boolean first = true;
+                    for(TypeMirror interf: interfaces) {
+                        if (!first)
+                            writer.print(",");
+                        writer.print(" ");
+                        writer.print(interf.toString());
+                        first = false;
+                    }
+                }
+            }
+        }
+
+        private void printThrows(ExecutableElement e) {
+            List<? extends TypeMirror> thrownTypes = e.getThrownTypes();
+            final int size = thrownTypes.size();
+            if (size != 0) {
+                writer.print(" throws");
+
+                int i = 1;
+                for(TypeMirror thrownType: thrownTypes) {
+                    if (i == 1)
+                        writer.print(" ");
+
+                    if (i == 2)
+                        indentation++;
+
+                    if (i >= 2)
+                        indent();
+
+                    writer.print(thrownType);
+
+                    if (i != size)
+                        writer.println(", ");
+
+                    i++;
+                }
+
+                if (size >= 2)
+                    indentation--;
+            }
+        }
+
+        private static final String [] spaces = {
+            "",
+            "  ",
+            "    ",
+            "      ",
+            "        ",
+            "          ",
+            "            ",
+            "              ",
+            "                ",
+            "                  ",
+            "                    "
+        };
+
+        private void indent() {
+            int indentation = this.indentation;
+            if (indentation < 0)
+                return;
+            final int maxIndex = spaces.length - 1;
+
+            while (indentation > maxIndex) {
+                writer.print(spaces[maxIndex]);
+                indentation -= maxIndex;
+            }
+            writer.print(spaces[indentation]);
+        }
 
     }
 }
