@@ -33,9 +33,9 @@ package sun.tools.javap;
  */
 class CPX2 {
     int cpx1,cpx2;
-
+    
     CPX2 (int cpx1, int cpx2) {
-        this.cpx1=cpx1;
-        this.cpx2=cpx2;
+	this.cpx1=cpx1;
+	this.cpx2=cpx2;
     }
 }

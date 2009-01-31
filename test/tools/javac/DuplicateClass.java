@@ -37,7 +37,7 @@
  */
 public class DuplicateClass {
     protected void clone() {
-        super.clone();
+	super.clone();
     }
 }
 

@@ -24,7 +24,7 @@
 class A
 {
     A() {
-        D d = new D();
+	D d = new D();
     }
 }
 

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,51 +35,51 @@
  */
 
 public class TestIndex extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4852280-4517115-4973608-4994589";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, "pkg", SRC_DIR + FS + "NoPackage.java"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         //Make sure the horizontal scroll bar does not appear in class frame.
-        {BUG_ID + FS + "index.html",
+        {BUG_ID + FS + "index.html", 
             "<FRAME src=\"overview-summary.html\" name=\"classFrame\" " +
             "title=\"Package, class and interface descriptions\" " +
             "scrolling=\"yes\">"},
-
+            
         //Test index-all.html
-        {BUG_ID + FS + "index-all.html",
+        {BUG_ID + FS + "index-all.html", 
             "<A HREF=\"./pkg/C.html\" title=\"class in pkg\"><B>C</B></A>" +
             " - Class in <A HREF=\"./pkg/package-summary.html\">pkg</A>"},
-        {BUG_ID + FS + "index-all.html",
+        {BUG_ID + FS + "index-all.html", 
             "<A HREF=\"./pkg/Interface.html\" title=\"interface in pkg\">" +
             "<B>Interface</B></A> - Interface in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
-        {BUG_ID + FS + "index-all.html",
+        {BUG_ID + FS + "index-all.html", 
             "<A HREF=\"./pkg/AnnotationType.html\" title=\"annotation in pkg\">" +
             "<B>AnnotationType</B></A> - Annotation Type in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
-        {BUG_ID + FS + "index-all.html",
+        {BUG_ID + FS + "index-all.html", 
             "<A HREF=\"./pkg/Coin.html\" title=\"enum in pkg\">" +
             "<B>Coin</B></A> - Enum in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
-        {BUG_ID + FS + "index-all.html",
+        {BUG_ID + FS + "index-all.html", 
             "Class in <A HREF=\"./package-summary.html\">&lt;Unnamed&gt;</A>"},
-        {BUG_ID + FS + "index-all.html",
-            "<DT><A HREF=\"./pkg/C.html#Java\"><B>Java</B></A> - " + NL +
-            "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL +
-            "<DD>&nbsp;" + NL +
-            "<DT><A HREF=\"./pkg/C.html#JDK\"><B>JDK</B></A> - " + NL +
-            "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL +
+        {BUG_ID + FS + "index-all.html",     
+            "<DT><A HREF=\"./pkg/C.html#Java\"><B>Java</B></A> - " + NL + 
+            "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL + 
+            "<DD>&nbsp;" + NL + 
+            "<DT><A HREF=\"./pkg/C.html#JDK\"><B>JDK</B></A> - " + NL + 
+            "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL + 
             "<DD>&nbsp;"},
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -89,14 +89,14 @@ public class TestIndex extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

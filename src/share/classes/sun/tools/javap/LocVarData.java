@@ -36,19 +36,20 @@ import java.io.*;
  */
 class LocVarData {
     short start_pc, length, name_cpx, sig_cpx, slot;
-
+    
     public LocVarData() {
     }
-
+    
     /**
      * Read LocalVariableTable attribute.
      */
     public LocVarData(DataInputStream in) throws IOException {
-        start_pc = in.readShort();
-        length=in.readShort();
-        name_cpx=in.readShort();
-        sig_cpx=in.readShort();
-        slot=in.readShort();
-
+	start_pc = in.readShort();
+	length=in.readShort();
+	name_cpx=in.readShort();
+	sig_cpx=in.readShort();
+	slot=in.readShort();
+	
     }
 }
+

@@ -26,7 +26,7 @@
  * @bug 4307565
  * @summary Verify that access to inaccessable protected inner class is rejected.
  * @author William Maddox (maddox)
- *
+ * 
  * @run compile p1/ProtectedInnerClass1.java
  * @run compile/fail p2/ProtectedInnerClass3.java
  */

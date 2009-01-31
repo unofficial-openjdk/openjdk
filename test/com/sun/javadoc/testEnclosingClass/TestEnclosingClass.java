@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug      5008230
- * @summary  Check the outer class when documenting enclosing class/interface.
+ * @summary  Check the outer class when documenting enclosing class/interface. 
  * @author   jamieh
  * @library  ../lib/
  * @build    JavadocTester
@@ -33,21 +33,21 @@
  */
 
 public class TestEnclosingClass extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "5008230";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "MyClass.MyInterface.html", "Enclosing class:"}
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -57,14 +57,14 @@ public class TestEnclosingClass extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

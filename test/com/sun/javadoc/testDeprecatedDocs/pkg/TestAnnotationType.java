@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * @deprecated annotation_test1 passes.
  */
 @Documented public @interface TestAnnotationType {
-
+    
     /**
      * @deprecated annotation_test2 passes.
      */
@@ -38,5 +38,5 @@ import java.lang.annotation.*;
    /**
      * @deprecated annotation_test3 passes.
      */
-    int required();
+    int required();    
 }

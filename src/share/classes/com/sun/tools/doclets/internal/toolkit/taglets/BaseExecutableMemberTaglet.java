@@ -28,16 +28,16 @@ package com.sun.tools.doclets.internal.toolkit.taglets;
 /**
  * An abstract class for that implements the {@link Taglet} interface
  * for tags in <code>ExecutableMembers</code>.
- *
+ * 
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API.
- *
+ * 
  * @author Jamie Ho
  * @since 1.4
  */
 public abstract class BaseExecutableMemberTaglet extends BaseTaglet {
-
+        
     /**
      * Return true if this <code>Taglet</code>
      * is used in field documentation.
@@ -48,7 +48,7 @@ public abstract class BaseExecutableMemberTaglet extends BaseTaglet {
     public boolean inField() {
         return false;
     }
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in overview documentation.
@@ -59,7 +59,7 @@ public abstract class BaseExecutableMemberTaglet extends BaseTaglet {
     public boolean inOverview() {
         return false;
     }
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in package documentation.
@@ -70,7 +70,7 @@ public abstract class BaseExecutableMemberTaglet extends BaseTaglet {
     public boolean inPackage() {
         return false;
     }
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in type documentation (classes or interfaces).
@@ -81,7 +81,7 @@ public abstract class BaseExecutableMemberTaglet extends BaseTaglet {
     public boolean inType() {
         return false;
     }
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is an inline tag.

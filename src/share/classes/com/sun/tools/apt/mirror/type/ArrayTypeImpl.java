@@ -42,8 +42,8 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
 
 
     ArrayTypeImpl(AptEnv env, Type.ArrayType type) {
-        super(env, type);
-        this.type = type;
+	super(env, type);
+	this.type = type;
     }
 
 
@@ -51,13 +51,13 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
      * {@inheritDoc}
      */
     public TypeMirror getComponentType() {
-        return env.typeMaker.getType(type.elemtype);
+	return env.typeMaker.getType(type.elemtype);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-        v.visitArrayType(this);
+	v.visitArrayType(this);
     }
 }

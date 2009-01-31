@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4607420
- * @summary A bug in the original JSR14 generics specification
+ * @summary A bug in the original JSR14 generics specification 
  *          created a loophole in the type system.
  *
  * @compile/fail -source 1.5 Nonlinear.java
@@ -43,7 +43,7 @@ public class Nonlinear {
     // This code compiles, but produces a ClassCastException
     // when executed, even though there are no explicit casts in
     // the program.
-
+    
     public static void main (String [] args) {
         Integer x = new Integer (5);
         String y = castit (x);
@@ -55,7 +55,7 @@ public class Nonlinear {
         // Oh dear.  This shouldn't type check, but does
         // because build () returns a type Ref<*>
         // which is a subtype of RWRef<A,B>.
-        final RWRef<A,B> r = build ();
+	final RWRef<A,B> r = build ();
         r.set (x);
         return r.get ();
     }
@@ -73,7 +73,7 @@ public class Nonlinear {
     //     return new Pair<A,A> (x,x);
     // }
     //
-    // which breaks the requirement that a type variable
+    // which breaks the requirement that a type variable 
     // instantiated by * only occurs once in the result type.
     //
     // However, we can achieve the same result with a different
@@ -96,7 +96,7 @@ public class Nonlinear {
         return p.fst.get ();
     }
 
-
+ 
 }
 
 interface RWRef<A,B> {
@@ -123,3 +123,5 @@ class Pair<A,B> {
     Pair (A fst, B snd) { this.fst = fst; this.snd = snd; }
 
 }
+
+

@@ -27,12 +27,12 @@ package com.sun.javadoc;
 
 /**
  * This is an example of a starting class for a doclet,
- * showing the entry-point methods.  A starting class must
- * import com.sun.javadoc.* and implement the
- * <code>start(RootDoc)</code> method, as described in the
- * <a href="package-summary.html#package_description">package
- * description</a>.  If the doclet takes command line options,
- * it must also implement <code>optionLength</code> and
+ * showing the entry-point methods.  A starting class must 
+ * import com.sun.javadoc.* and implement the 
+ * <code>start(RootDoc)</code> method, as described in the 
+ * <a href="package-summary.html#package_description">package 
+ * description</a>.  If the doclet takes command line options, 
+ * it must also implement <code>optionLength</code> and 
  * <code>validOptions</code>.
  *
  * <p> A doclet supporting the language features added since 1.1
@@ -61,12 +61,12 @@ public abstract class Doclet {
     }
 
     /**
-     * Check for doclet-added options.  Returns the number of
+     * Check for doclet-added options.  Returns the number of 
      * arguments you must specify on the command line for the
      * given option.  For example, "-d docs" would return 2.
      * <P>
      * This method is required if the doclet contains any options.
-     * If this method is missing, Javadoc will print an invalid flag
+     * If this method is missing, Javadoc will print an invalid flag 
      * error for every option.
      *
      * @return number of arguments on the command line for an option
@@ -82,7 +82,7 @@ public abstract class Doclet {
      * <P>
      * This method is not required, but is recommended,
      * as every option will be considered valid if this method
-     * is not present.  It will default gracefully (to true)
+     * is not present.  It will default gracefully (to true) 
      * if absent.
      * <P>
      * Printing option related error messages (using the provided
@@ -102,10 +102,11 @@ public abstract class Doclet {
      * This method is required by any doclet supporting a language version
      * newer than 1.1.
      *
-     * @return  the language version supported by this doclet.
+     * @return	the language version supported by this doclet.
      * @since 1.5
      */
     public static LanguageVersion languageVersion() {
-        return LanguageVersion.JAVA_1_1;
+	return LanguageVersion.JAVA_1_1;
     }
 }
+

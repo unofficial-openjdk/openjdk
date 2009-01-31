@@ -90,7 +90,7 @@ public class JavacFileManager implements StandardJavaFileManager {
 
     private static final String[] symbolFileLocation = { "lib", "ct.sym" };
     private static final String symbolFilePrefix = "META-INF/sym/rt.jar/";
-
+    
     boolean useZipFileIndex;
 
     private static int symbolFilePrefixLength = 0;
@@ -354,7 +354,7 @@ public class JavacFileManager implements StandardJavaFileManager {
                     else {
                         subdirectory = subdirectory.replace('/', '\\');
                     }
-
+                
                     if (!subdirectory.endsWith(File.separator)) subdirectory = subdirectory + File.separator;
                 }
             }
@@ -620,7 +620,7 @@ public class JavacFileManager implements StandardJavaFileManager {
                     usePreindexedCache = options.get("usezipindex") != null;
                     preindexCacheLocation = options.get("java.io.tmpdir");
                     String optCacheLoc = options.get("cachezipindexdir");
-
+                    
                     if (optCacheLoc != null && optCacheLoc.length() != 0) {
                         if (optCacheLoc.startsWith("\"")) {
                             if (optCacheLoc.endsWith("\"")) {
@@ -1567,7 +1567,7 @@ public class JavacFileManager implements StandardJavaFileManager {
             this.zfIndex = zfIndex;
             this.entry = entry;
             this.zipName = zipFileName;
-            defFileManager = fileManager;
+            defFileManager = fileManager;        
         }
 
         public InputStream openInputStream() throws IOException {

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,10 +27,10 @@ package checkPkg;
  * @see A
  */
 public class B {
-
-        /**
+	
+	/**
      * @see A#m()
      */
-        public void m2();
-
+	public void m2();
+	
 }

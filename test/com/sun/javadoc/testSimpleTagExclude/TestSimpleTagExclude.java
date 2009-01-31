@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,7 +34,7 @@
  */
 
 public class TestSimpleTagExclude extends JavadocTester {
-
+    
     private static final String BUG_ID = "4628181";
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = {
@@ -44,7 +44,7 @@ public class TestSimpleTagExclude extends JavadocTester {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "-tag", "todo:X",
         SRC_DIR + FS + "DummyClass.java"
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -56,14 +56,14 @@ public class TestSimpleTagExclude extends JavadocTester {
         }
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

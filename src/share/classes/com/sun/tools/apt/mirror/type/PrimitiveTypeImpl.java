@@ -41,12 +41,12 @@ import static com.sun.mirror.type.PrimitiveType.Kind.*;
 
 class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
 
-    private final Kind kind;    // the kind of primitive
+    private final Kind kind;	// the kind of primitive
 
 
     PrimitiveTypeImpl(AptEnv env, Kind kind) {
-        super(env, getType(env, kind));
-        this.kind = kind;
+	super(env, getType(env, kind));
+	this.kind = kind;
     }
 
 
@@ -54,14 +54,14 @@ class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
      * {@inheritDoc}
      */
     public Kind getKind() {
-        return kind;
+	return kind;
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-        v.visitPrimitiveType(this);
+	v.visitPrimitiveType(this);
     }
 
 
@@ -69,16 +69,16 @@ class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
      * Returns the javac type corresponding to a kind of primitive type.
      */
     private static Type getType(AptEnv env, Kind kind) {
-        switch (kind) {
-        case BOOLEAN:   return env.symtab.booleanType;
-        case BYTE:      return env.symtab.byteType;
-        case SHORT:     return env.symtab.shortType;
-        case INT:       return env.symtab.intType;
-        case LONG:      return env.symtab.longType;
-        case CHAR:      return env.symtab.charType;
-        case FLOAT:     return env.symtab.floatType;
-        case DOUBLE:    return env.symtab.doubleType;
-        default:        throw new AssertionError();
-        }
+	switch (kind) {
+	case BOOLEAN:	return env.symtab.booleanType;
+	case BYTE:	return env.symtab.byteType;
+	case SHORT:	return env.symtab.shortType;
+	case INT:	return env.symtab.intType;
+	case LONG:	return env.symtab.longType;
+	case CHAR:	return env.symtab.charType;
+	case FLOAT:	return env.symtab.floatType;
+	case DOUBLE:	return env.symtab.doubleType;
+	default:	throw new AssertionError();
+	}
     }
 }

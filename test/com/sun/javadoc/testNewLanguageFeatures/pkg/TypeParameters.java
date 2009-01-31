@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,7 +35,7 @@ import java.util.*;
  */
 
 public class TypeParameters<E> implements SubInterface<E> {
-
+    
     /**
      * This method uses the type parameter of this class.
      * @param param an object that is of type E.
@@ -44,7 +44,7 @@ public class TypeParameters<E> implements SubInterface<E> {
     public E methodThatUsesTypeParameter(E param) {
         return param;
     }
-
+    
     /**
      * This method has type parameters.  The list of type parameters is long
      * so there should be a line break in the member summary table.
@@ -54,11 +54,11 @@ public class TypeParameters<E> implements SubInterface<E> {
      * @param <BadMethodTypeParam> this should cause a warning.
      * @param param1 just a parameter.
      * @param param2 just another parameter.
-     *
+     * 
      */
-    public <T extends List, V> String[] methodThatHasTypeParameters(T param1,
+    public <T extends List, V> String[] methodThatHasTypeParameters(T param1, 
         V param2) { return null;}
-
+        
     /**
      * This method has type parameters.  The list of type parameters is short
      * so there should not be a line break in the member summary table.

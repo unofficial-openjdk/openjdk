@@ -14,12 +14,12 @@
 
 class C1 extends C1 {}                  // ERROR - Cyclic inheritance
 
-class C11 extends C12 {}                // ERROR - Cyclic inheritance
+class C11 extends C12 {}		// ERROR - Cyclic inheritance
 class C12 extends C11 {}                // error in previous line could correctly be reported here as well
 
 interface I1 extends I1 {}              // ERROR - Cyclic inheritance
 
-interface I11 extends I12 {}            // ERROR - Cyclic inheritance
+interface I11 extends I12 {}		// ERROR - Cyclic inheritance
 interface I12 extends I11 {}            // error in previous line could correctly be reported here as well
 
 //-----
@@ -45,13 +45,13 @@ class C222 extends C222.C {             // ERROR - Cannot access C22 (private)
 
 class C3 {
     class A {
-        class B extends A {}
+	class B extends A {}
     }
 }
 
 class C4 {
     class A extends B {}
     class B {
-        class C extends A {}
+	class C extends A {}
     }
 }

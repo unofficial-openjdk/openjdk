@@ -148,11 +148,12 @@ public enum Token {
     CUSTOM;
 
     Token() {
-        this(null);
+	this(null);
     }
     Token(String name) {
-        this.name = name;
+	this.name = name;
     }
 
     public final String name;
 }
+

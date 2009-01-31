@@ -36,13 +36,13 @@ class ExceptionalFinally2 {
     public void t() throws E {}
 
     void f() {
-        try {
-            try {
-                t();
-            } finally {
-                return;
-            }
-        } catch (E x) { // error: E can't be thrown in try block
-        }
+	try {
+	    try {
+		t();
+	    } finally {
+		return;
+	    }
+	} catch (E x) { // error: E can't be thrown in try block
+	}
     }
 }

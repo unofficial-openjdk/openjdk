@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,7 +34,7 @@
  */
 
 public class TestConstantValuesPage extends JavadocTester {
-
+    
     private static final String BUG_ID = "4681599";
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = {
@@ -43,7 +43,7 @@ public class TestConstantValuesPage extends JavadocTester {
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR, "foo"};
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -53,14 +53,14 @@ public class TestConstantValuesPage extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

@@ -28,22 +28,22 @@ import java.util.Collections;
 
 class CompileTest2 {
 
-        class Request<R extends Request<R, V>,V> {}
+	class Request<R extends Request<R, V>,V> {}
+	
+	class DeltaRequest extends Request<DeltaRequest, double[]> {}
 
-        class DeltaRequest extends Request<DeltaRequest, double[]> {}
+	class RequestMap<V> {
+		public <R extends Request<R, W>, W extends V> R test (Collection<R> c) {
+			// In my real code I make use of W of course
+			return null;
+		}
 
-        class RequestMap<V> {
-                public <R extends Request<R, W>, W extends V> R test (Collection<R> c) {
-                        // In my real code I make use of W of course
-                        return null;
-                }
+	}
 
-        }
-
-        public void f () {
-                RequestMap<Object> m = new RequestMap<Object> ();
-                Collection<DeltaRequest> c = Collections.singleton (new DeltaRequest ());
-                // This line not compile?
-                DeltaRequest o = m.<DeltaRequest, double[]>test (c);
-        }
+	public void f () {
+		RequestMap<Object> m = new RequestMap<Object> ();
+		Collection<DeltaRequest> c = Collections.singleton (new DeltaRequest ());
+		// This line not compile?
+		DeltaRequest o = m.<DeltaRequest, double[]>test (c);
+	}
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test   @(#)AccessSummary.java
  * @bug      4637604 4775148
  * @summary  Test the tables for summary=""
  * @author   dkramer
@@ -36,7 +36,7 @@ public class AccessSummary extends JavadocTester {
 
     private static final String BUG_ID = "4637604-4775148";
     private static final String OUTPUT_DIR1 = "docs1-" + BUG_ID + FS;
-
+    
     /**
      * Assign value for [ fileToSearch, stringToFind ]
      */
@@ -70,14 +70,14 @@ public class AccessSummary extends JavadocTester {
         run(tester, JAVADOC_ARGS,  TESTARRAY1, new String[][] {});
         tester.printSummary();       // Necessary for string search
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

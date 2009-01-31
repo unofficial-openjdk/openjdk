@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,21 +35,21 @@
  */
 
 public class TestSummaryHeading extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4904036";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, SRC_DIR + FS + "C.java"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "C.html",  "<B>Method Summary</B>"}
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -59,14 +59,14 @@ public class TestSummaryHeading extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

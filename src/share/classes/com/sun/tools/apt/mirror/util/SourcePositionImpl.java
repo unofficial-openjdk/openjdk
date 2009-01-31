@@ -40,24 +40,24 @@ import com.sun.tools.javac.util.Position;
 public class SourcePositionImpl implements SourcePosition {
 
     private JavaFileObject sourcefile;
-    private int pos;            // file position, in javac's internal format
+    private int pos;		// file position, in javac's internal format
     private Position.LineMap linemap;
 
 
     public SourcePositionImpl(JavaFileObject sourcefile, int pos, Position.LineMap linemap) {
-        this.sourcefile = sourcefile;
-        this.pos = pos;
-        this.linemap = linemap;
-        assert sourcefile != null;
-        assert linemap != null;
+	this.sourcefile = sourcefile;
+	this.pos = pos;
+	this.linemap = linemap;
+	assert sourcefile != null;
+	assert linemap != null;
     }
 
     public int getJavacPosition() {
-        return pos;
+	return pos;
     }
 
     public JavaFileObject getSource() {
-        return sourcefile;
+	return sourcefile;
     }
 
     /**
@@ -65,30 +65,30 @@ public class SourcePositionImpl implements SourcePosition {
      * form "sourcefile:line", or "sourcefile" if no line number is available.
      */
     public String toString() {
-        int ln = line();
-        return (ln == Position.NOPOS)
-                ? sourcefile.toString()
-                : sourcefile + ":" + ln;
+	int ln = line();
+	return (ln == Position.NOPOS)
+		? sourcefile.toString()
+		: sourcefile + ":" + ln;
     }
 
     /**
      * {@inheritDoc}
      */
     public File file() {
-        return new File(sourcefile.toString());
+	return new File(sourcefile.toString());
     }
 
     /**
      * {@inheritDoc}
      */
     public int line() {
-        return linemap.getLineNumber(pos);
+	return linemap.getLineNumber(pos);
     }
 
     /**
      * {@inheritDoc}
      */
     public int column() {
-        return linemap.getColumnNumber(pos);
+	return linemap.getColumnNumber(pos);
     }
 }

@@ -71,7 +71,7 @@ class DocLocale {
      * to compute first sentence.
      */
     private boolean useBreakIterator = false;
-
+    
     /**
      * The HTML sentence terminators.
      */
@@ -99,7 +99,7 @@ class DocLocale {
         collator = Collator.getInstance(locale);
         sentenceBreaker = BreakIterator.getSentenceInstance(locale);
     }
-
+  
     /**
      * Get the locale if specified on the command line
      * else return null and if locale option is not used
@@ -165,7 +165,7 @@ class DocLocale {
         }
         return null;
     }
-
+    
     String localeSpecificFirstSentence(DocImpl doc, String s) {
         if (s == null || s.length() == 0) {
             return "";
@@ -175,12 +175,12 @@ class DocLocale {
             return localeSpecificFirstSentence(doc, s.substring(index + 3, s.length()));
         }
         if (useBreakIterator || !locale.getLanguage().equals("en")) {
-            sentenceBreaker.setText(s.replace('\n', ' '));
-            int start = sentenceBreaker.first();
-            int end = sentenceBreaker.next();
-            return s.substring(start, end).trim();
-        } else {
-            return englishLanguageFirstSentence(s).trim();
+	    sentenceBreaker.setText(s.replace('\n', ' '));
+	    int start = sentenceBreaker.first();
+	    int end = sentenceBreaker.next();
+	    return s.substring(start, end).trim();
+	} else {
+	    return englishLanguageFirstSentence(s).trim();
         }
     }
 

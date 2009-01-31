@@ -2,13 +2,13 @@ CyclicInheritance.java:15: cyclic inheritance involving C1
 class C1 extends C1 {}                  // ERROR - Cyclic inheritance
 ^
 CyclicInheritance.java:17: cyclic inheritance involving C11
-class C11 extends C12 {}                // ERROR - Cyclic inheritance
+class C11 extends C12 {}		// ERROR - Cyclic inheritance
 ^
 CyclicInheritance.java:20: cyclic inheritance involving I1
 interface I1 extends I1 {}              // ERROR - Cyclic inheritance
 ^
 CyclicInheritance.java:22: cyclic inheritance involving I11
-interface I11 extends I12 {}            // ERROR - Cyclic inheritance
+interface I11 extends I12 {}		// ERROR - Cyclic inheritance
 ^
 CyclicInheritance.java:27: cyclic inheritance involving C211
 class C211 implements C211.I {          // ERROR - may change pending resoluation of 4087020

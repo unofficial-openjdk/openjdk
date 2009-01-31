@@ -39,7 +39,7 @@ import com.sun.tools.javac.util.Pair;
  * An annotation associates a value with each element of an annotation type.
  * Sure it ought to be called "Annotation", but that clashes with
  * java.lang.annotation.Annotation.
- *
+ * 
  * @author Scott Seligman
  * @since 1.5
  */
@@ -51,16 +51,16 @@ public class AnnotationDescImpl implements AnnotationDesc {
 
 
     AnnotationDescImpl(DocEnv env, Attribute.Compound annotation) {
-        this.env = env;
-        this.annotation = annotation;
+	this.env = env;
+	this.annotation = annotation;
     }
 
     /**
      * Returns the annotation type of this annotation.
      */
     public AnnotationTypeDoc annotationType() {
-        ClassSymbol atsym = (ClassSymbol)annotation.type.tsym;
-        return (AnnotationTypeDoc)env.getClassDoc(atsym);
+	ClassSymbol atsym = (ClassSymbol)annotation.type.tsym;
+	return (AnnotationTypeDoc)env.getClassDoc(atsym);
     }
 
     /**
@@ -70,13 +70,13 @@ public class AnnotationDescImpl implements AnnotationDesc {
      * Returns an empty array if there are none.
      */
     public ElementValuePair[] elementValues() {
-        List<Pair<MethodSymbol,Attribute>> vals = annotation.values;
-        ElementValuePair res[] = new ElementValuePair[vals.length()];
-        int i = 0;
-        for (Pair<MethodSymbol,Attribute> val : vals) {
-            res[i++] = new ElementValuePairImpl(env, val.fst, val.snd);
-        }
-        return res;
+	List<Pair<MethodSymbol,Attribute>> vals = annotation.values;
+	ElementValuePair res[] = new ElementValuePair[vals.length()];
+	int i = 0;
+	for (Pair<MethodSymbol,Attribute> val : vals) {
+	    res[i++] = new ElementValuePairImpl(env, val.fst, val.snd);
+	}
+	return res;
     }
 
     /**
@@ -88,29 +88,29 @@ public class AnnotationDescImpl implements AnnotationDesc {
      * Omit parens for marker annotations, and omit "value=" when allowed.
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer("@");
-        sb.append(annotation.type.tsym);
+	StringBuffer sb = new StringBuffer("@");
+	sb.append(annotation.type.tsym);
 
-        ElementValuePair vals[] = elementValues();
-        if (vals.length > 0) {          // omit parens for marker annotation
-            sb.append('(');
-            boolean first = true;
-            for (ElementValuePair val : vals) {
-                if (!first) {
-                    sb.append(", ");
-                }
-                first = false;
+	ElementValuePair vals[] = elementValues();
+	if (vals.length > 0) {		// omit parens for marker annotation
+	    sb.append('(');
+	    boolean first = true;
+	    for (ElementValuePair val : vals) {
+		if (!first) {
+		    sb.append(", ");
+		}
+		first = false;
 
-                String name = val.element().name();
-                if (vals.length == 1 && name.equals("value")) {
-                    sb.append(val.value());
-                } else {
-                    sb.append(val);
-                }
-            }
-            sb.append(')');
-        }
-        return sb.toString();
+		String name = val.element().name();
+		if (vals.length == 1 && name.equals("value")) {
+		    sb.append(val.value());
+		} else {
+		    sb.append(val);
+		}
+	    }
+	    sb.append(')');
+	}
+	return sb.toString();
     }
 
 
@@ -120,36 +120,36 @@ public class AnnotationDescImpl implements AnnotationDesc {
      */
     public static class ElementValuePairImpl implements ElementValuePair {
 
-        private final DocEnv env;
-        private final MethodSymbol meth;
-        private final Attribute value;
+	private final DocEnv env;
+	private final MethodSymbol meth;
+	private final Attribute value;
 
-        ElementValuePairImpl(DocEnv env, MethodSymbol meth, Attribute value) {
-            this.env = env;
-            this.meth = meth;
-            this.value = value;
-        }
+	ElementValuePairImpl(DocEnv env, MethodSymbol meth, Attribute value) {
+	    this.env = env;
+	    this.meth = meth;
+	    this.value = value;
+	}
 
-        /**
-         * Returns the annotation type element.
-         */
-        public AnnotationTypeElementDoc element() {
-            return env.getAnnotationTypeElementDoc(meth);
-        }
+	/**
+	 * Returns the annotation type element.
+	 */
+	public AnnotationTypeElementDoc element() {
+	    return env.getAnnotationTypeElementDoc(meth);
+	}
 
-        /**
-         * Returns the value associated with the annotation type element.
-         */
-        public AnnotationValue value() {
-            return new AnnotationValueImpl(env, value);
-        }
+	/**
+	 * Returns the value associated with the annotation type element.
+	 */
+	public AnnotationValue value() {
+	    return new AnnotationValueImpl(env, value);
+	}
 
-        /**
-         * Returns a string representation of this pair
-         * of the form "name=value".
-         */
-        public String toString() {
-            return meth.name + "=" + value();
-        }
+	/**
+	 * Returns a string representation of this pair
+	 * of the form "name=value".
+	 */
+	public String toString() {
+	    return meth.name + "=" + value();
+	}
     }
 }

@@ -37,3 +37,4 @@ class LocalClasses_2 {
         }
     }
 }
+

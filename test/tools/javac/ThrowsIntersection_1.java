@@ -34,7 +34,7 @@ class Ex1 extends Exception {}
 class Ex2 extends Exception {}
 
 interface a {
-  int m1() throws Ex1;
+  int m1() throws Ex1;  
 }
 
 interface b {

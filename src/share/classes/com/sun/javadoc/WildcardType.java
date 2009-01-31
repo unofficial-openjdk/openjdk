@@ -28,7 +28,7 @@ package com.sun.javadoc;
 
 /**
  * Represents a wildcard type argument.
- * Examples include:    <pre>
+ * Examples include:	<pre>
  * {@code <?>}
  * {@code <? extends E>}
  * {@code <? super T>}

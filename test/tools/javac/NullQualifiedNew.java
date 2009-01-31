@@ -27,7 +27,7 @@
  * @summary Verify exception thrown for null outer instance
  * in qualifed new instance expression.
  * @author William Maddox, Gilad Bracha
- *
+ * 
  * @run compile NullQualifiedNew.java
  * @run main/fail NullQualifiedNew
  */

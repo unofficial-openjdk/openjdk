@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,7 +34,7 @@
  */
 
 public class TestBaseClass extends JavadocTester {
-
+    
     private static final String BUG_ID = "4197513";
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = NO_TEST;
@@ -43,7 +43,7 @@ public class TestBaseClass extends JavadocTester {
             "-sourcepath", SRC_DIR,
             "-docletpath", SRC_DIR, "-doclet", "BaseClass",
             SRC_DIR + FS + "Bar.java", "baz"};
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -54,14 +54,14 @@ public class TestBaseClass extends JavadocTester {
             throw new Error("Javadoc failed to execute.");
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

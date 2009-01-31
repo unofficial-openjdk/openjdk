@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,7 +30,7 @@ import com.sun.tools.doclets.internal.toolkit.Configuration;
 /*
  * @test
  * @bug      4034096 4764726 6235799
- * @summary  Add support for HTML keywords via META tag for
+ * @summary  Add support for HTML keywords via META tag for 
  *           class and member names to improve API search
  * @author   dkramer
  * @library  ../lib/
@@ -40,12 +40,12 @@ import com.sun.tools.doclets.internal.toolkit.Configuration;
  */
 
 public class MetaTag extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4034096-4764726-6235799";
     private static final String OUTPUT_DIR = "docs-" + BUG_ID;
     private static final SimpleDateFormat m_dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", OUTPUT_DIR,
@@ -54,7 +54,7 @@ public class MetaTag extends JavadocTester {
         "-doctitle", "Sample Packages",
         "p1", "p2"
     };
-
+    
     private static final String[] ARGS_NO_TIMESTAMP_NO_KEYWORDS = new String[] {
         "-d", OUTPUT_DIR + "-2",
         "-sourcepath", SRC_DIR,
@@ -62,7 +62,7 @@ public class MetaTag extends JavadocTester {
         "-doctitle", "Sample Packages",
         "p1", "p2"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
 
@@ -86,7 +86,7 @@ public class MetaTag extends JavadocTester {
 
         { OUTPUT_DIR + FS + "overview-summary.html",
            "<META NAME=\"keywords\" CONTENT=\"Overview, Sample Packages\">" },
-
+        
         //NOTE: Hopefully, this regression test is not run at midnight.  If the output
         //was generated yesterday and this test is run today, the test will fail.
         {OUTPUT_DIR + FS + "overview-summary.html",
@@ -95,7 +95,7 @@ public class MetaTag extends JavadocTester {
     };
 
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     private static final String[][] TEST2 = NO_TEST;
     private static final String[][] NEGATED_TEST2 = {
         //No keywords when -keywords is not used.
@@ -119,16 +119,16 @@ public class MetaTag extends JavadocTester {
 
         { OUTPUT_DIR + "-2" + FS + "overview-summary.html",
            "<META NAME=\"keywords\" CONTENT=\"Overview Summary, Sample Packages\">" },
-
-        //The date metatag should not show up when -notimestamp is used.
-
-        //NOTE: Hopefully, this regression test is not run at midnight.  If the output
+           
+    	//The date metatag should not show up when -notimestamp is used.
+    	
+    	//NOTE: Hopefully, this regression test is not run at midnight.  If the output
         //was generated yesterday and this test is run today, the test will fail.
         {OUTPUT_DIR + "-2" + FS + "overview-summary.html",
            "<META NAME=\"date\" "
                             + "CONTENT=\"" + m_dateFormat.format(new Date()) + "\">"},
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -140,19 +140,19 @@ public class MetaTag extends JavadocTester {
         boolean defaultTimestampSetting = config.notimestamp;
         run(tester, ARGS, TEST, NEGATED_TEST);
         //Variable needs to be reset because Configuration is a singleton.
-        config.keywords = defaultKeywordsSetting;
+        config.keywords = defaultKeywordsSetting; 
         config.notimestamp = defaultTimestampSetting;
         run(tester, ARGS_NO_TIMESTAMP_NO_KEYWORDS, TEST2, NEGATED_TEST2);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

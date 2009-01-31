@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,8 +25,8 @@
  * @test
  * @bug 4904495 5008037
  * @summary Test annotations of methods, fields, enum constants, and
- *          annotation type elements.
- *          Test an annotation type with a type nested within.
+ *	    annotation type elements.
+ *	    Test an annotation type with a type nested within.
  * @library ../../lib
  * @compile -source 1.5 ../../lib/Tester.java Main.java
  * @run main Main
@@ -40,40 +40,40 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
-        tester.verify();
+	tester.run();
+	tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-        try {
-            for (PackageDoc p : root.specifiedPackages()) {
-                for (AnnotationTypeDoc a : p.annotationTypes()) {
-                    for (AnnotationTypeElementDoc e : a.elements()) {
-                        tester.printAnnotationTypeElement(e);
-                    }
-                    tester.println();
-                }
-                for (ClassDoc e : p.enums()) {
-                    for (FieldDoc ec : e.enumConstants()) {
-                        tester.printField(ec);
-                    }
-                    tester.println();
-                }
-                for (ClassDoc cd : p.ordinaryClasses()) {
-                    for (FieldDoc f : cd.fields()) {
-                        tester.printField(f);
-                    }
-                    tester.println();
-                    for (MethodDoc m : cd.methods()) {
-                        tester.printMethod(m);
-                    }
-                    tester.println();
-                }
-            }
+	try {
+	    for (PackageDoc p : root.specifiedPackages()) {
+		for (AnnotationTypeDoc a : p.annotationTypes()) {
+		    for (AnnotationTypeElementDoc e : a.elements()) {
+			tester.printAnnotationTypeElement(e);
+		    }
+		    tester.println();
+		}
+		for (ClassDoc e : p.enums()) {
+		    for (FieldDoc ec : e.enumConstants()) {
+			tester.printField(ec);
+		    }
+		    tester.println();
+		}
+		for (ClassDoc cd : p.ordinaryClasses()) {
+		    for (FieldDoc f : cd.fields()) {
+			tester.printField(f);
+		    }
+		    tester.println();
+		    for (MethodDoc m : cd.methods()) {
+			tester.printMethod(m);
+		    }
+		    tester.println();
+		}
+	    }
 
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+	    return true;
+	} catch (IOException e) {
+	    return false;
+	}
     }
 }

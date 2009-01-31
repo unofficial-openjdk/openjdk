@@ -38,12 +38,12 @@ import java.io.*;
  * @author Atul M Dambalkar
  * @author Jamie Ho (rewrite)
  */
-public class NestedClassWriterImpl extends AbstractMemberWriter
+public class NestedClassWriterImpl extends AbstractMemberWriter 
     implements MemberSummaryWriter {
 
     private boolean printedSummaryHeader = false;
-
-    public NestedClassWriterImpl(SubWriterHolderWriter writer,
+    
+    public NestedClassWriterImpl(SubWriterHolderWriter writer, 
             ClassDoc classdoc) {
         super(writer, classdoc);
     }
@@ -51,7 +51,7 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     public NestedClassWriterImpl(SubWriterHolderWriter writer) {
         super(writer);
     }
-
+    
     /**
      * Write the classes summary header for the given class.
      *
@@ -59,11 +59,11 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
      */
     public void writeMemberSummaryHeader(ClassDoc classDoc) {
         printedSummaryHeader = true;
-        writer.println("<!-- ======== NESTED CLASS SUMMARY ======== -->");
+        writer.println("<!-- ======== NESTED CLASS SUMMARY ======== -->"); 
         writer.println();
         writer.printSummaryHeader(this, classDoc);
     }
-
+    
     /**
      * Write the classes summary footer for the given class.
      *
@@ -72,13 +72,13 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     public void writeMemberSummaryFooter(ClassDoc classDoc) {
         writer.printSummaryFooter(this, classDoc);
     }
-
+    
     /**
      * Write the inherited classes summary header for the given class.
      *
      * @param classDoc the class the summary belongs to.
      */
-    public void writeInheritedMemberSummaryHeader(ClassDoc classDoc) {
+    public void writeInheritedMemberSummaryHeader(ClassDoc classDoc) {        
         if(! printedSummaryHeader){
             //We don't want inherited summary to not be under heading.
             writeMemberSummaryHeader(classDoc);
@@ -87,15 +87,15 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         }
         writer.printInheritedSummaryHeader(this, classDoc);
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void writeInheritedMemberSummary(ClassDoc classDoc,
+    public void writeInheritedMemberSummary(ClassDoc classDoc, 
             ProgramElementDoc nestedClass, boolean isFirst, boolean isLast) {
         writer.printInheritedSummaryMember(this, classDoc, nestedClass, isFirst);
     }
-
+    
     /**
      * Write the inherited classes summary footer for the given class.
      *
@@ -105,7 +105,7 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         writer.printInheritedSummaryFooter(this, classDoc);
         writer.println();
     }
-
+    
     /**
      * Write the header for the nested class documentation.
      *
@@ -115,12 +115,12 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         writer.anchor("nested class_detail");
         writer.printTableHeadingBackground(header);
     }
-
+    
     /**
      * Write the nested class header for the given nested class.
      *
      * @param nestedClass the nested class being documented.
-     * @param isFirst the flag to indicate whether or not the nested class is the
+     * @param isFirst the flag to indicate whether or not the nested class is the 
      *        first to be documented.
      */
     public void writeClassHeader(ClassDoc nestedClass, boolean isFirst) {
@@ -134,9 +134,9 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         writer.print(nestedClass.name());
         writer.h3End();
     }
-
-
-
+    
+    
+    
     /**
      * Close the writer.
      */
@@ -155,19 +155,19 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     public void printSummaryAnchor(ClassDoc cd) {
         writer.anchor("nested_class_summary");
     }
-
+    
     public void printInheritedSummaryAnchor(ClassDoc cd) {
         writer.anchor("nested_classes_inherited_from_class_" +
                        cd.qualifiedName());
     }
-
+    
     public void printInheritedSummaryLabel(ClassDoc cd) {
         String clslink = writer.getPreQualifiedClassLink(
             LinkInfoImpl.CONTEXT_MEMBER, cd, false);
         writer.bold();
         writer.printText(cd.isInterface() ?
             "doclet.Nested_Classes_Interface_Inherited_From_Interface" :
-            "doclet.Nested_Classes_Interfaces_Inherited_From_Class",
+            "doclet.Nested_Classes_Interfaces_Inherited_From_Class", 
             clslink);
         writer.boldEnd();
     }
@@ -180,10 +180,10 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
 
     protected void writeInheritedSummaryLink(ClassDoc cd,
             ProgramElementDoc member) {
-        writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
+        writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, 
             (ClassDoc)member, false));
     }
-
+  
     protected void printSummaryType(ProgramElementDoc member) {
         ClassDoc cd = (ClassDoc)member;
         printModifierAndType(cd, null);
@@ -202,7 +202,7 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     }
 
     protected void writeDeprecatedLink(ProgramElementDoc member) {
-        writer.printQualifiedClassLink(LinkInfoImpl.CONTEXT_MEMBER,
+        writer.printQualifiedClassLink(LinkInfoImpl.CONTEXT_MEMBER, 
             (ClassDoc)member);
     }
 
@@ -238,3 +238,5 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         }
     }
 }
+    
+    

@@ -34,155 +34,155 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @since 1.2
  * @author Robert G. Field
  */
 public class ClassUseMapper {
-
+    
     private final ClassTree classtree;
-
+    
     /**
      * Mapping of ClassDocs to set of PackageDoc used by that class.
      * Entries may be null.
      */
     public Map classToPackage = new HashMap();
-
+    
     /**
      * Mapping of Annotations to set of PackageDoc that use the annotation.
      */
     public Map classToPackageAnnotations = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to set of ClassDoc used by that class.
      * Entries may be null.
      */
     public Map classToClass = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of ClassDoc which are direct or
      * indirect subclasses of that class.
      * Entries may be null.
      */
     public Map classToSubclass = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of ClassDoc which are direct or
      * indirect subinterfaces of that interface.
      * Entries may be null.
      */
     public Map classToSubinterface = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of ClassDoc which implement
      * this interface.
      * Entries may be null.
      */
     public Map classToImplementingClass = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of FieldDoc declared as that class.
      * Entries may be null.
      */
     public Map classToField = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of MethodDoc returning that class.
      * Entries may be null.
      */
     public Map classToMethodReturn = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of MethodDoc having that class
      * as an arg.
      * Entries may be null.
      */
     public Map classToMethodArgs = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of MethodDoc which throws that class.
      * Entries may be null.
      */
     public Map classToMethodThrows = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of ConstructorDoc having that class
      * as an arg.
      * Entries may be null.
      */
     public Map classToConstructorArgs = new HashMap();
-
+    
     /**
      * Mapping of ClassDocs to list of ConstructorDoc which throws that class.
      * Entries may be null.
      */
     public Map classToConstructorThrows = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to constructors that use them.
      */
     public Map classToConstructorAnnotations = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to Constructor parameters that use them.
      */
     public Map classToConstructorParamAnnotation = new HashMap();
-
+    
     /**
      * The mapping of ClassDocs to Constructor arguments that use them as type parameters.
      */
     public Map classToConstructorDocArgTypeParam = new HashMap();
-
+    
     /**
      * The mapping of ClassDocs to ClassDocs that use them as type parameters.
      */
     public Map classToClassTypeParam = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to ClassDocs that use them.
      */
     public Map classToClassAnnotations = new HashMap();
-
+    
     /**
      * The mapping of ClassDocs to ExecutableMemberDocs that use them as type parameters.
      */
     public Map classToExecMemberDocTypeParam = new HashMap();
-
+    
     /**
      * The mapping of ClassDocs to ExecutableMemberDocs arguments that use them as type parameters.
      */
     public Map classToExecMemberDocArgTypeParam = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to ExecutableMemberDocs that use them.
      */
     public Map classToExecMemberDocAnnotations = new HashMap();
-
+    
     /**
-     * The mapping of ClassDocs to ExecutableMemberDocs that have return type
+     * The mapping of ClassDocs to ExecutableMemberDocs that have return type 
      * with type parameters of that class.
      */
     public Map classToExecMemberDocReturnTypeParam = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to MethodDoc parameters that use them.
      */
     public Map classToExecMemberDocParamAnnotation = new HashMap();
-
+    
     /**
      * The mapping of ClassDocs to FieldDocs that use them as type parameters.
      */
     public Map classToFieldDocTypeParam = new HashMap();
-
+    
     /**
      * The mapping of AnnotationTypeDocs to FieldDocs that use them.
      */
     public Map annotationToFieldDoc = new HashMap();
-
-
+    
+    
     public ClassUseMapper(RootDoc root, ClassTree classtree) {
         this.classtree = classtree;
-
+        
         // Map subclassing, subinterfacing implementing, ...
         for (Iterator it = classtree.baseclasses().iterator(); it.hasNext();) {
             subclasses((ClassDoc)it.next());
@@ -220,14 +220,14 @@ public class ClassUseMapper {
                 mapTypeParameters(classToExecMemberDocTypeParam, md, md);
                 mapAnnotations(classToExecMemberDocAnnotations, md, md);
                 if (! (md.returnType().isPrimitive() || md.returnType() instanceof TypeVariable)) {
-                    mapTypeParameters(classToExecMemberDocReturnTypeParam,
-                        md.returnType(), md);
+                    mapTypeParameters(classToExecMemberDocReturnTypeParam, 
+                        md.returnType(), md);   
                     add(classToMethodReturn, md.returnType().asClassDoc(), md);
-                }
+                }                
             }
         }
     }
-
+    
     /**
      * Return all subclasses of a class AND fill-in classToSubclass map.
      */
@@ -246,7 +246,7 @@ public class ClassUseMapper {
         }
         return ret;
     }
-
+    
     /**
      * Return all subinterfaces of an interface AND fill-in classToSubinterface map.
      */
@@ -265,7 +265,7 @@ public class ClassUseMapper {
         }
         return ret;
     }
-
+    
     /**
      * Return all implementing classes of an interface (including
      * all subclasses of implementing classes and all classes
@@ -290,7 +290,7 @@ public class ClassUseMapper {
         }
         return ret;
     }
-
+    
     /**
      * Determine classes used by a method or constructor, so they can be
      * inverse mapped.
@@ -302,18 +302,18 @@ public class ClassUseMapper {
         for (int k = 0; k < params.length; k++) {
             Type pcd = params[k].type();
             // primitives don't get mapped, also avoid dups
-            if ((! params[k].type().isPrimitive()) &&
+            if ((! params[k].type().isPrimitive()) && 
                  ! classArgs.contains(pcd) &&
                  ! (pcd instanceof TypeVariable)) {
                 add(isConstructor? classToConstructorArgs :classToMethodArgs,
                         pcd.asClassDoc(), em);
                 classArgs.add(pcd);
-                mapTypeParameters(isConstructor?
+                mapTypeParameters(isConstructor? 
                    classToConstructorDocArgTypeParam : classToExecMemberDocArgTypeParam,
                    pcd, em);
             }
             mapAnnotations(
-                isConstructor ?
+                isConstructor ? 
                     classToConstructorParamAnnotation :
                     classToExecMemberDocParamAnnotation,
                 params[k], em);
@@ -324,7 +324,7 @@ public class ClassUseMapper {
                     thr[k], em);
         }
     }
-
+    
     private List refList(Map map, ClassDoc cd) {
         List list = (List)map.get(cd.qualifiedName());
         if (list == null) {
@@ -333,7 +333,7 @@ public class ClassUseMapper {
         }
         return list;
     }
-
+    
     private Set packageSet(ClassDoc cd) {
         Set pkgSet = (Set)classToPackage.get(cd.qualifiedName());
         if (pkgSet == null) {
@@ -342,7 +342,7 @@ public class ClassUseMapper {
         }
         return pkgSet;
     }
-
+    
     private Set classSet(ClassDoc cd) {
         Set clsSet = (Set)classToClass.get(cd.qualifiedName());
         if (clsSet == null) {
@@ -351,26 +351,26 @@ public class ClassUseMapper {
         }
         return clsSet;
     }
-
+    
     private void add(Map map, ClassDoc cd, ProgramElementDoc ref) {
         // add to specified map
         refList(map, cd).add(ref);
-
+        
         // add ref's package to package map and class map
         packageSet(cd).add(ref.containingPackage());
-
+        
         classSet(cd).add(ref instanceof MemberDoc?
                 ((MemberDoc)ref).containingClass() :
                     ref);
     }
-
+    
     private void addAll(Map map, ClassDoc cd, Collection refs) {
         if (refs == null) {
             return;
         }
         // add to specified map
         refList(map, cd).addAll(refs);
-
+        
         Set pkgSet = packageSet(cd);
         Set clsSet = classSet(cd);
         // add ref's package to package map and class map
@@ -380,19 +380,19 @@ public class ClassUseMapper {
             clsSet.add(pedoc instanceof MemberDoc?
                     ((MemberDoc)pedoc).containingClass() :
                         pedoc);
-
-        }
+            
+        }        
     }
-
+    
     /**
-     * Map the ClassDocs to the ProgramElementDocs that use them as
+     * Map the ClassDocs to the ProgramElementDocs that use them as 
      * type parameters.
-     *
+     * 
      * @param map the map the insert the information into.
      * @param doc the doc whose type parameters are being checked.
-     * @param holder the holder that owns the type parameters.
+     * @param holder the holder that owns the type parameters. 
      */
-    private void mapTypeParameters(Map map, Object doc,
+    private void mapTypeParameters(Map map, Object doc, 
             ProgramElementDoc holder) {
         TypeVariable[] typeVariables;
         if (doc instanceof ClassDoc) {
@@ -420,7 +420,7 @@ public class ClassUseMapper {
             mapTypeParameters(map, fieldType, holder);
             return;
         } else {
-            return;
+            return;   
         }
         for (int i = 0; i < typeVariables.length; i++) {
             Type[] bounds = typeVariables[i].bounds();
@@ -429,16 +429,16 @@ public class ClassUseMapper {
             }
         }
     }
-
+    
     /**
-     * Map the AnnotationType to the ProgramElementDocs that use them as
+     * Map the AnnotationType to the ProgramElementDocs that use them as 
      * type parameters.
-     *
+     * 
      * @param map the map the insert the information into.
      * @param doc the doc whose type parameters are being checked.
-     * @param holder the holder that owns the type parameters.
+     * @param holder the holder that owns the type parameters. 
      */
-    private void mapAnnotations(Map map, Object doc,
+    private void mapAnnotations(Map map, Object doc, 
             Object holder) {
         TypeVariable[] typeVariables;
         AnnotationDesc[] annotations;
@@ -451,24 +451,24 @@ public class ClassUseMapper {
         } else if (doc instanceof Parameter) {
             annotations = ((Parameter) doc).annotations();
         } else {
-            throw new DocletAbortException();
+            throw new DocletAbortException();   
         }
         for (int i = 0; i < annotations.length; i++) {
             AnnotationTypeDoc annotationDoc = annotations[i].annotationType();
             if (isPackage)
                 refList(map, annotationDoc).add(holder);
             else
-                add(map, annotationDoc, (ProgramElementDoc) holder);
+            	add(map, annotationDoc, (ProgramElementDoc) holder);
         }
     }
-
-    private void addTypeParameterToMap(Map map, Type type,
+    
+    private void addTypeParameterToMap(Map map, Type type, 
             ProgramElementDoc holder) {
         if (type instanceof ClassDoc) {
             add(map, (ClassDoc) type, holder);
         } else if (type instanceof ParameterizedType) {
             add(map, ((ParameterizedType) type).asClassDoc(), holder);
-        }
+        } 
         mapTypeParameters(map, type, holder);
     }
 }

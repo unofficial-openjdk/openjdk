@@ -42,66 +42,66 @@ public class Options {
 
     /** The context key for the options. */
     public static final Context.Key<Options> optionsKey =
-        new Context.Key<Options>();
-
+	new Context.Key<Options>();
+    
     private LinkedHashMap<String,String> values;
 
     /** Get the Options instance for this context. */
     public static Options instance(Context context) {
-        Options instance = context.get(optionsKey);
-        if (instance == null)
-            instance = new Options(context);
-        return instance;
+	Options instance = context.get(optionsKey);
+	if (instance == null)
+	    instance = new Options(context);
+	return instance;
     }
 
     protected Options(Context context) {
 // DEBUGGING -- Use LinkedHashMap for reproducability
-        values = new LinkedHashMap<String,String>();
-        context.put(optionsKey, this);
+	values = new LinkedHashMap<String,String>();
+	context.put(optionsKey, this);
     }
-
+    
     public String get(String name) {
-        return values.get(name);
+	return values.get(name);
     }
-
+    
     public String get(OptionName name) {
-        return values.get(name.optionName);
+	return values.get(name.optionName);
     }
-
+    
     public void put(String name, String value) {
-        values.put(name, value);
+	values.put(name, value);
     }
-
+    
     public void put(OptionName name, String value) {
-        values.put(name.optionName, value);
+	values.put(name.optionName, value);
     }
-
+    
     public void putAll(Options options) {
-        values.putAll(options.values);
+	values.putAll(options.values);
     }
-
+    
     public void remove(String name) {
-        values.remove(name);
+	values.remove(name);
     }
-
+    
     public Set<String> keySet() {
-        return values.keySet();
+	return values.keySet();
     }
-
+    
     public int size() {
-        return values.size();
+	return values.size();
     }
 
     static final String LINT = "-Xlint";
 
     /** Check for a lint suboption. */
     public boolean lint(String s) {
-        // return true if either the specific option is enabled, or
-        // they are all enabled without the specific one being
-        // disabled
-        return
-            get(LINT + ":" + s)!=null ||
-            (get(LINT)!=null || get(LINT + ":all")!=null) &&
-                get(LINT+":-"+s)==null;
+	// return true if either the specific option is enabled, or
+	// they are all enabled without the specific one being
+	// disabled
+	return
+	    get(LINT + ":" + s)!=null ||
+	    (get(LINT)!=null || get(LINT + ":all")!=null) &&
+	        get(LINT+":-"+s)==null;
     }
 }

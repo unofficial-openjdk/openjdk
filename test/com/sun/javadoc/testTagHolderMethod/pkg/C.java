@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,20 +33,22 @@ public class C {
      * @see www.yahoo.com
      */
     public int field;
-
+    
     /**
      * @see www.yahoo.com
      */
     public C() {}
-
+    
     /**
      * @see www.yahoo.com
      */
     public void method(){}
-
+    
     /**
      * @see www.yahoo.com
      */
     public class innerClass {}
 
 }
+
+

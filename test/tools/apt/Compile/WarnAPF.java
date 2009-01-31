@@ -41,43 +41,43 @@ import static com.sun.mirror.util.DeclarationVisitors.*;
  */
 public class WarnAPF implements AnnotationProcessorFactory {
     static class WarnAP implements AnnotationProcessor {
-        AnnotationProcessorEnvironment env;
-        WarnAP(AnnotationProcessorEnvironment env) {
-            this.env = env;
-        }
+	AnnotationProcessorEnvironment env;
+	WarnAP(AnnotationProcessorEnvironment env) {
+	    this.env = env;
+	}
 
-        public void process() {
-            Messager messager = env.getMessager();
-            messager.printWarning("Beware the ides of March!");
+	public void process() {
+	    Messager messager = env.getMessager();
+	    messager.printWarning("Beware the ides of March!");
 
-            for(TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations()) {
-                messager.printNotice(typeDecl.getPosition(),  "You are about to be warned");
-                messager.printWarning(typeDecl.getPosition(), "Strange class name");
+	    for(TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations()) {
+		messager.printNotice(typeDecl.getPosition(),  "You are about to be warned");
+		messager.printWarning(typeDecl.getPosition(), "Strange class name");
 
-                for(AnnotationMirror annotMirror : typeDecl.getAnnotationMirrors()) {
-                    messager.printNotice("MIRROR " + annotMirror.getPosition().toString());
+		for(AnnotationMirror annotMirror : typeDecl.getAnnotationMirrors()) {
+		    messager.printNotice("MIRROR " + annotMirror.getPosition().toString());
 
-                     Map<AnnotationTypeElementDeclaration,AnnotationValue> map =
-                         annotMirror.getElementValues();
-                     if (map.keySet().size() > 0)
-                         for(AnnotationTypeElementDeclaration key : map.keySet() ) {
-                             AnnotationValue annotValue = map.get(key);
-                             Object o = annotValue.getValue();
-                             // asserting getPosition is non-null
-                             messager.printNotice("VALUE " + annotValue.getPosition().toString());
-                         }
-                     else {
-                         Collection<AnnotationTypeElementDeclaration> ateds =
-                         annotMirror.getAnnotationType().getDeclaration().getMethods();
-                         for(AnnotationTypeElementDeclaration ated : ateds ) {
-                             AnnotationValue annotValue = ated.getDefaultValue();
-                             Object o = annotValue.getValue();
-                             messager.printNotice("VALUE " + "HelloAnnotation.java:5");
-                         }
-                     }
-                }
-            }
-        }
+		     Map<AnnotationTypeElementDeclaration,AnnotationValue> map = 
+			 annotMirror.getElementValues();
+		     if (map.keySet().size() > 0) 
+			 for(AnnotationTypeElementDeclaration key : map.keySet() ) {
+			     AnnotationValue annotValue = map.get(key);
+			     Object o = annotValue.getValue();
+			     // asserting getPosition is non-null
+			     messager.printNotice("VALUE " + annotValue.getPosition().toString());
+			 }
+		     else {
+			 Collection<AnnotationTypeElementDeclaration> ateds = 
+			 annotMirror.getAnnotationType().getDeclaration().getMethods();
+			 for(AnnotationTypeElementDeclaration ated : ateds ) {
+			     AnnotationValue annotValue = ated.getDefaultValue();
+			     Object o = annotValue.getValue();
+			     messager.printNotice("VALUE " + "HelloAnnotation.java:5");
+			 }
+		     }
+		}
+	    }
+	}
     }
 
     static final Collection<String> supportedTypes;

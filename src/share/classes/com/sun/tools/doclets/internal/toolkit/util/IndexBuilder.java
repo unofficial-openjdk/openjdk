@@ -38,7 +38,7 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @since 1.2
  * @see java.lang.Character
  * @author Atul M Dambalkar
@@ -84,7 +84,7 @@ public class IndexBuilder {
             }
         }
     }
-
+    
     /**
      * Constructor. Build the index map.
      *
@@ -176,7 +176,7 @@ public class IndexBuilder {
         adjustIndexMap(classdoc.methods());
         adjustIndexMap(classdoc.constructors());
     }
-
+        
 
     /**
      * Adjust list of members according to their names. Check the first
@@ -202,14 +202,14 @@ public class IndexBuilder {
             }
         }
     }
-
+    
     /**
      * Should this doc element be added to the index map?
      */
     protected boolean shouldAddToIndexMap(Doc element) {
         return !(noDeprecated && element.tags("deprecated").length > 0);
     }
-
+ 
     /**
      * Return a map of all the individual member lists with Unicode character.
      *

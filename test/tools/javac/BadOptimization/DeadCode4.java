@@ -49,19 +49,19 @@ public class DeadCode4
     final int x = 9;
 
     private final void fun1() {
-        try {
-            int i = cls.arr[3];
-            // if we got here, then there must be a problem
-            throw new RuntimeException("accidental removal of live code");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("ArrayIndexOutOfBoundsException correctly thrown");
-            e.printStackTrace();
-        }
+	try {
+	    int i = cls.arr[3];
+	    // if we got here, then there must be a problem
+	    throw new RuntimeException("accidental removal of live code");
+	} catch (ArrayIndexOutOfBoundsException e) {
+	    System.out.println("ArrayIndexOutOfBoundsException correctly thrown");
+	    e.printStackTrace();
+	}
     }
 
     public static void main( String[] args )
     {
-        DeadCode4 r1 = new DeadCode4();
+	DeadCode4 r1 = new DeadCode4();
         r1.fun1();
     }
 }

@@ -33,7 +33,7 @@ class DepX
 
 /**
  * X.
- * @deprecated
+ * @deprecated 
  */
 class X {
 }

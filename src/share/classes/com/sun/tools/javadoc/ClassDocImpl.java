@@ -82,79 +82,79 @@ import java.lang.reflect.Modifier;
  */
 
 public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
-
-    public final ClassType type;        // protected->public for debugging
+    
+    public final ClassType type;	// protected->public for debugging
     protected final ClassSymbol tsym;
-
+    
     boolean isIncluded = false;         // Set in RootDocImpl
-
+    
     private SerializedForm serializedForm;
-
+    
     /**
      * Constructor
      */
     public ClassDocImpl(DocEnv env, ClassSymbol sym) {
         this(env, sym, null, null, null);
     }
-
+    
     /**
      * Constructor
      */
     public ClassDocImpl(DocEnv env, ClassSymbol sym, String documentation,
-                        JCClassDecl tree, Position.LineMap lineMap) {
+			JCClassDecl tree, Position.LineMap lineMap) {
         super(env, sym, documentation, tree, lineMap);
         this.type = (ClassType)sym.type;
         this.tsym = sym;
     }
-
+    
     /**
      * Returns the flags in terms of javac's flags
      */
     protected long getFlags() {
-        return getFlags(tsym);
+	return getFlags(tsym);
     }
 
     /**
      * Returns the flags of a ClassSymbol in terms of javac's flags
      */
     static long getFlags(ClassSymbol clazz) {
-        while (true) {
-            try {
-                return clazz.flags();
-            } catch (CompletionFailure ex) {
-                // quietly ignore completion failures
-            }
-        }
+	while (true) {
+	    try {
+		return clazz.flags();
+	    } catch (CompletionFailure ex) {
+		// quietly ignore completion failures
+	    }
+	}
     }
 
     /**
      * Is a ClassSymbol an annotation type?
      */
     static boolean isAnnotationType(ClassSymbol clazz) {
-        return (getFlags(clazz) & Flags.ANNOTATION) != 0;
+	return (getFlags(clazz) & Flags.ANNOTATION) != 0;
     }
-
+    
     /**
      * Identify the containing class
      */
     protected ClassSymbol getContainingClass() {
         return tsym.owner.enclClass();
     }
-
+    
     /**
      * Return true if this is a class, not an interface.
      */
     public boolean isClass() {
         return !Modifier.isInterface(getModifiers());
     }
-
+    
     /**
      * Return true if this is a ordinary class,
      * not an enumeration, exception, an error, or an interface.
      */
     public boolean isOrdinaryClass() {
         if (isEnum() || isInterface() || isAnnotationType()) {
-            return false;
+	    return false;
         }
         for (Type t = type; t.tag == TypeTags.CLASS; t = env.types.supertype(t)) {
             if (t.tsym == env.syms.errorType.tsym ||
@@ -164,17 +164,17 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return true;
     }
-
+    
     /**
      * Return true if this is an enumeration.
      * (For legacy doclets, return false.)
      */
     public boolean isEnum() {
-        return (getFlags() & Flags.ENUM) != 0
-               &&
-               !env.legacyDoclet;
+	return (getFlags() & Flags.ENUM) != 0
+	       &&
+	       !env.legacyDoclet;
     }
-
+    
     /**
      * Return true if this is an interface, but not an annotation type.
      * Overridden by AnnotationTypeDocImpl.
@@ -182,7 +182,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public boolean isInterface() {
         return Modifier.isInterface(getModifiers());
     }
-
+    
     /**
      * Return true if this is an exception class
      */
@@ -197,7 +197,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return false;
     }
-
+    
     /**
      * Return true if this is an error class
      */
@@ -212,7 +212,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return false;
     }
-
+    
     /**
      * Return true if this is a throwable class
      */
@@ -227,21 +227,21 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return false;
     }
-
+    
     /**
      * Return true if this class is abstract
      */
     public boolean isAbstract() {
         return Modifier.isAbstract(getModifiers());
     }
-
+    
     /**
      * Returns true if this class was synthesized by the compiler.
      */
     public boolean isSynthetic() {
         return (getFlags() & Flags.SYNTHETIC) != 0;
     }
-
+    
     /**
      * Return true if this class is included in the active set.
      * A ClassDoc is included iff either it is specified on the
@@ -249,7 +249,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * on the command line, or if it is a member class of an
      * included class.
      */
-
+    
     public boolean isIncluded() {
         if (isIncluded) {
             return true;
@@ -268,7 +268,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return false;
     }
-
+    
     /**
      * Return the package that this class is contained in.
      */
@@ -287,7 +287,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         }
         return p;
     }
-
+    
     /**
      * Return the class name without package qualifier - but with
      * enclosing class qualifier - as a String.
@@ -300,9 +300,9 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * </pre>
      */
     public String name() {
-        return getClassName(tsym, false);
+	return getClassName(tsym, false);
     }
-
+    
     /**
      * Return the qualified class name as a String.
      * <pre>
@@ -313,9 +313,9 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * </pre>
      */
     public String qualifiedName() {
-        return getClassName(tsym, true);
+	return getClassName(tsym, true);
     }
-
+    
     /**
      * Return unqualified name of type excluding any dimension information.
      * <p>
@@ -324,7 +324,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public String typeName() {
         return name();
     }
-
+    
     /**
      * Return qualified name of type excluding any dimension information.
      *<p>
@@ -339,7 +339,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Return the simple name of this type.
      */
     public String simpleTypeName() {
-        return tsym.name.toString();
+	return tsym.name.toString();
     }
 
     /**
@@ -347,7 +347,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Each parameter is a type variable with optional bounds.
      */
     public String toString() {
-        return classToString(env, tsym, true);
+	return classToString(env, tsym, true);
     }
 
     /**
@@ -355,15 +355,15 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * qualified, otherwise it is qualified by its enclosing class(es) only.
      */
     static String getClassName(ClassSymbol c, boolean full) {
-        if (full) {
-            return c.getQualifiedName().toString();
-        } else {
-            String n = "";
-            for ( ; c != null; c = c.owner.enclClass()) {
-                n = c.name + (n.equals("") ? "" : ".") + n;
-            }
-            return n;
-        }
+	if (full) {
+	    return c.getQualifiedName().toString();
+	} else {
+	    String n = "";
+	    for ( ; c != null; c = c.owner.enclClass()) {
+		n = c.name + (n.equals("") ? "" : ".") + n;
+	    }
+	    return n;
+	}
     }
 
     /**
@@ -373,18 +373,18 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * qualified by their enclosing class(es) only.
      */
     static String classToString(DocEnv env, ClassSymbol c, boolean full) {
-        StringBuffer s = new StringBuffer();
-        if (!c.isInner()) {             // if c is not an inner class
-            s.append(getClassName(c, full));
-        } else {
-            // c is an inner class, so include type params of outer.
-            ClassSymbol encl = c.owner.enclClass();
-            s.append(classToString(env, encl, full))
-             .append('.')
-             .append(c.name);
-        }
-        s.append(TypeMaker.typeParametersString(env, c, full));
-        return s.toString();
+	StringBuffer s = new StringBuffer();
+	if (!c.isInner()) {		// if c is not an inner class
+	    s.append(getClassName(c, full));
+	} else {
+	    // c is an inner class, so include type params of outer.
+	    ClassSymbol encl = c.owner.enclClass();
+	    s.append(classToString(env, encl, full))
+	     .append('.')
+	     .append(c.name);
+	}
+	s.append(TypeMaker.typeParametersString(env, c, full));
+	return s.toString();
     }
 
     /**
@@ -392,7 +392,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * it have type parameters?
      */
     static boolean isGeneric(ClassSymbol c) {
-        return c.type.allparams().nonEmpty();
+	return c.type.allparams().nonEmpty();
     }
 
     /**
@@ -400,23 +400,23 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Return an empty array if there are none.
      */
     public TypeVariable[] typeParameters() {
-        if (env.legacyDoclet) {
-            return new TypeVariable[0];
-        }
-        TypeVariable res[] = new TypeVariable[type.getTypeArguments().length()];
-        TypeMaker.getTypes(env, type.getTypeArguments(), res);
-        return res;
+	if (env.legacyDoclet) {
+	    return new TypeVariable[0];
+	}
+	TypeVariable res[] = new TypeVariable[type.getTypeArguments().length()];
+	TypeMaker.getTypes(env, type.getTypeArguments(), res);
+	return res;
     }
 
     /**
      * Return the type parameter tags of this class or interface.
      */
     public ParamTag[] typeParamTags() {
-        return (env.legacyDoclet)
-            ? new ParamTag[0]
-            : comment().typeParamTags();
+	return (env.legacyDoclet)
+	    ? new ParamTag[0]
+	    : comment().typeParamTags();
     }
-
+    
     /**
      * Return the modifier string for this class. If it's an interface
      * exclude 'abstract' keyword from the modifier string
@@ -424,14 +424,14 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public String modifiers() {
         return Modifier.toString(modifierSpecifier());
     }
-
+    
     public int modifierSpecifier() {
         int modifiers = getModifiers();
         return (isInterface() || isAnnotationType())
-                ? modifiers & ~Modifier.ABSTRACT
-                : modifiers;
+		? modifiers & ~Modifier.ABSTRACT
+		: modifiers;
     }
-
+    
     /**
      * Return the superclass of this class
      *
@@ -453,13 +453,13 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      */
     public com.sun.javadoc.Type superclassType() {
         if (isInterface() || isAnnotationType() ||
-                (tsym == env.syms.objectType.tsym))
-            return null;
-        Type sup = env.types.supertype(type);
-        return TypeMaker.getType(env,
-                                 (sup != type) ? sup : env.syms.objectType);
+		(tsym == env.syms.objectType.tsym))
+	    return null;
+	Type sup = env.types.supertype(type);
+	return TypeMaker.getType(env,
+				 (sup != type) ? sup : env.syms.objectType);
     }
-
+    
     /**
      * Test whether this class is a subclass of the specified class.
      *
@@ -469,7 +469,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public boolean subclassOf(ClassDoc cd) {
         return tsym.isSubClass(((ClassDocImpl)cd).tsym, env.types);
     }
-
+    
     /**
      * Return interfaces implemented by this class or interfaces
      * extended by this interface.
@@ -479,7 +479,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      */
     public ClassDoc[] interfaces() {
         ListBuffer<ClassDocImpl> ta = new ListBuffer<ClassDocImpl>();
-        for (Type t : env.types.interfaces(type)) {
+	for (Type t : env.types.interfaces(type)) {
             ta.append(env.getClassDoc((ClassSymbol)t.tsym));
         }
         //### Cache ta here?
@@ -494,17 +494,17 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      */
     public com.sun.javadoc.Type[] interfaceTypes() {
         //### Cache result here?
-        return TypeMaker.getTypes(env, env.types.interfaces(type));
+	return TypeMaker.getTypes(env, env.types.interfaces(type));
     }
-
+    
     /**
      * Return fields in class.
      * @param filter include only the included fields if filter==true
      */
     public FieldDoc[] fields(boolean filter) {
-        return fields(filter, false);
+	return fields(filter, false);
     }
-
+    
     /**
      * Return included fields in class.
      */
@@ -516,7 +516,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Return the enum constants if this is an enum type.
      */
     public FieldDoc[] enumConstants() {
-        return fields(false, true);
+	return fields(false, true);
     }
 
     /**
@@ -529,10 +529,10 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         for (Scope.Entry e = tsym.members().elems; e != null; e = e.sibling) {
             if (e.sym != null && e.sym.kind == VAR) {
                 VarSymbol s = (VarSymbol)e.sym;
-                boolean isEnum = ((s.flags() & Flags.ENUM) != 0) &&
-                                 !env.legacyDoclet;
+		boolean isEnum = ((s.flags() & Flags.ENUM) != 0) &&
+				 !env.legacyDoclet;
                 if (isEnum == enumConstants &&
-                        (!filter || env.shouldDocument(s))) {
+			(!filter || env.shouldDocument(s))) {
                     fields = fields.prepend(env.getFieldDoc(s));
                 }
             }
@@ -563,7 +563,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         //### Cache methods here?
         return methods.toArray(new MethodDocImpl[methods.length()]);
     }
-
+    
     /**
      * Return included methods in class.
      *
@@ -573,7 +573,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public MethodDoc[] methods() {
         return methods(true);
     }
-
+    
     /**
      * Return constructors in class.
      *
@@ -596,7 +596,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         //### Cache constructors here?
         return constructors.toArray(new ConstructorDocImpl[constructors.length()]);
     }
-
+    
     /**
      * Return included constructors in class.
      *
@@ -606,7 +606,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public ConstructorDoc[] constructors() {
         return constructors(true);
     }
-
+    
     /**
      * Adds all inner classes of this class, and their
      * inner classes recursively, to the list l.
@@ -614,8 +614,8 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     void addAllClasses(ListBuffer<ClassDocImpl> l, boolean filtered) {
         try {
             if (isSynthetic()) return;
-            // sometimes synthetic classes are not marked synthetic
-            if (!JavadocTool.isValidClassName(tsym.name.toString())) return;
+	    // sometimes synthetic classes are not marked synthetic
+	    if (!JavadocTool.isValidClassName(tsym.name.toString())) return;
             if (filtered && !env.shouldDocument(tsym)) return;
             if (l.contains(this)) return;
             l.append(this);
@@ -637,7 +637,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             // quietly ignore completion failures
         }
     }
-
+    
     /**
      * Return inner classes within this class.
      *
@@ -651,16 +651,16 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         for (Scope.Entry e = tsym.members().elems; e != null; e = e.sibling) {
             if (e.sym != null && e.sym.kind == Kinds.TYP) {
                 ClassSymbol s = (ClassSymbol)e.sym;
-                if ((s.flags_field & Flags.SYNTHETIC) != 0) continue;
-                if (!filter || env.isVisible(s)) {
-                    innerClasses.prepend(env.getClassDoc(s));
-                }
+		if ((s.flags_field & Flags.SYNTHETIC) != 0) continue;
+		if (!filter || env.isVisible(s)) {
+		    innerClasses.prepend(env.getClassDoc(s));
+		}
             }
         }
         //### Cache classes here?
         return innerClasses.toArray(new ClassDocImpl[innerClasses.length()]);
     }
-
+    
     /**
      * Return included inner classes within this class.
      *
@@ -671,7 +671,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public ClassDoc[] innerClasses() {
         return innerClasses(true);
     }
-
+    
     /**
      * Find a class within the context of this class.
      * Search order: qualified name, in this class (inner),
@@ -682,28 +682,28 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     //### The specified search order is not the normal rule the
     //### compiler would use.  Leave as specified or change it?
     public ClassDoc findClass(String className) {
-        ClassDoc searchResult = searchClass(className);
+        ClassDoc searchResult = searchClass(className);        
         if (searchResult == null) {
             ClassDocImpl enclosingClass = (ClassDocImpl)containingClass();
-            //Expand search space to include enclosing class.
+            //Expand search space to include enclosing class.            
             while (enclosingClass != null && enclosingClass.containingClass() != null) {
                 enclosingClass = (ClassDocImpl)enclosingClass.containingClass();
             }
-            searchResult = enclosingClass == null ?
+            searchResult = enclosingClass == null ? 
                 null : enclosingClass.searchClass(className);
         }
         return searchResult;
     }
-
+    
     private ClassDoc searchClass(String className) {
         Name.Table names = tsym.name.table;
-
+        
         // search by qualified name first
         ClassDoc cd = env.lookupClass(className);
         if (cd != null) {
             return cd;
         }
-
+        
         // search inner classes
         //### Add private entry point to avoid creating array?
         //### Replicate code in innerClasses here to avoid consing?
@@ -723,50 +723,50 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 }
             }
         }
-
+        
         // check in this package
         cd = containingPackage().findClass(className);
         if (cd != null) {
             return cd;
         }
-
+        
         // make sure that this symbol has been completed
         if (tsym.completer != null) {
             tsym.complete();
         }
-
+        
         // search imports
-
+        
         if (tsym.sourcefile != null) {
-
+            
             //### This information is available only for source classes.
-
+            
             Env<AttrContext> compenv = env.enter.getEnv(tsym);
             if (compenv == null) return null;
-
+            
             Scope s = compenv.toplevel.namedImportScope;
             for (Scope.Entry e = s.lookup(names.fromString(className)); e.scope != null; e = e.next()) {
                 if (e.sym.kind == Kinds.TYP) {
                     ClassDoc c = env.getClassDoc((ClassSymbol)e.sym);
-                    return c;
+		    return c;
                 }
             }
-
+            
             s = compenv.toplevel.starImportScope;
             for (Scope.Entry e = s.lookup(names.fromString(className)); e.scope != null; e = e.next()) {
                 if (e.sym.kind == Kinds.TYP) {
                     ClassDoc c = env.getClassDoc((ClassSymbol)e.sym);
-                    return c;
+		    return c;
                 }
             }
         }
-
+        
         return null; // not found
     }
-
-
+    
+    
     private boolean hasParameterTypes(MethodSymbol method, String[] argTypes) {
-
+        
         if (argTypes == null) {
             // wildcard
             return true;
@@ -774,18 +774,18 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
 
         int i = 0;
         List<Type> types = method.type.getParameterTypes();
-
+        
         if (argTypes.length != types.length()) {
             return false;
         }
 
-        for (Type t : types) {
-            String argType = argTypes[i++];
-            // For vararg method, "T..." matches type T[].
-            if (i == argTypes.length) {
-                argType = argType.replace("...", "[]");
-            }
-            if (!hasTypeName(env.types.erasure(t), argType)) {  //###(gj)
+	for (Type t : types) {
+	    String argType = argTypes[i++];
+	    // For vararg method, "T..." matches type T[].
+	    if (i == argTypes.length) {
+		argType = argType.replace("...", "[]");
+	    }
+            if (!hasTypeName(env.types.erasure(t), argType)) {	//###(gj)
                 return false;
             }
         }
@@ -800,9 +800,9 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             ||
             (qualifiedName() + "." + name).equals(TypeMaker.getTypeName(t, true));
     }
-
-
-
+    
+    
+    
     /**
      * Find a method in this class scope.
      * Search order: this class, interfaces, superclasses, outerclasses.
@@ -817,19 +817,19 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         //### It is not clear how this could happen.
         return searchMethod(methodName, paramTypes, new HashSet<ClassDocImpl>());
     }
-
+    
     private MethodDocImpl searchMethod(String methodName,
                                        String[] paramTypes, Set<ClassDocImpl> searched) {
         //### Note that this search is not necessarily what the compiler would do!
-
+        
         ClassDocImpl cdi;
         MethodDocImpl mdi;
-
+        
         if (searched.contains(this)) {
             return null;
         }
         searched.add(this);
-
+        
         //DEBUG
         /*---------------------------------*
          System.out.print("searching " + this + " for " + methodName);
@@ -846,15 +846,15 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
          System.out.println(")");
          }
          *---------------------------------*/
-
+        
         // search current class
         Name.Table names = tsym.name.table;
         Scope.Entry e = tsym.members().lookup(names.fromString(methodName));
-
+        
         //### Using modifier filter here isn't really correct,
         //### but emulates the old behavior.  Instead, we should
         //### apply the normal rules of visibility and inheritance.
-
+        
         if (paramTypes == null) {
             // If no parameters specified, we are allowed to return
             // any method with a matching name.  In practice, the old
@@ -863,13 +863,13 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             // attempt to emulate the old behavior.
             MethodSymbol lastFound = null;
             for (; e.scope != null; e = e.next()) {
-                if (e.sym.kind == Kinds.MTH) {
+		if (e.sym.kind == Kinds.MTH) {
                     //### Should intern methodName as Name.
                     if (e.sym.name.toString().equals(methodName)) {
                         lastFound = (MethodSymbol)e.sym;
                     }
-                }
-            }
+		}
+	    }
             if (lastFound != null) {
                 return env.getMethodDoc(lastFound);
             }
@@ -884,10 +884,10 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 }
             }
         }
-
+        
         //### If we found a MethodDoc above, but which did not pass
         //### the modifier filter, we should return failure here!
-
+        
         // search superclass
         cdi = (ClassDocImpl)superclass();
         if (cdi != null) {
@@ -896,7 +896,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 return mdi;
             }
         }
-
+        
         // search interfaces
         ClassDoc intf[] = interfaces();
         for (int i = 0; i < intf.length; i++) {
@@ -906,7 +906,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 return mdi;
             }
         }
-
+        
         // search enclosing class
         cdi = (ClassDocImpl)containingClass();
         if (cdi != null) {
@@ -916,17 +916,17 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             }
         }
 
-        //###(gj) As a temporary measure until type variables are better
-        //### handled, try again without the parameter types.
-        //### This should most often find the right method, and occassionally
-        //### find the wrong one.
-        //if (paramTypes != null) {
-        //    return findMethod(methodName, null);
-        //}
-
+	//###(gj) As a temporary measure until type variables are better
+	//### handled, try again without the parameter types.
+	//### This should most often find the right method, and occassionally
+	//### find the wrong one.
+	//if (paramTypes != null) {
+	//    return findMethod(methodName, null);
+	//}
+        
         return null;
     }
-
+    
     /**
      * Find constructor in this class.
      *
@@ -945,17 +945,17 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             }
         }
 
-        //###(gj) As a temporary measure until type variables are better
-        //### handled, try again without the parameter types.
-        //### This will often find the right constructor, and occassionally
-        //### find the wrong one.
-        //if (paramTypes != null) {
-        //    return findConstructor(constrName, null);
-        //}
+	//###(gj) As a temporary measure until type variables are better
+	//### handled, try again without the parameter types.
+	//### This will often find the right constructor, and occassionally
+	//### find the wrong one.
+	//if (paramTypes != null) {
+	//    return findConstructor(constrName, null);
+	//}
 
         return null;
     }
-
+    
     /**
      * Find a field in this class scope.
      * Search order: this class, outerclasses, interfaces,
@@ -971,24 +971,24 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public FieldDoc findField(String fieldName) {
         return searchField(fieldName, new HashSet<ClassDocImpl>());
     }
-
+    
     private FieldDocImpl searchField(String fieldName, Set<ClassDocImpl> searched) {
         Name.Table names = tsym.name.table;
         if (searched.contains(this)) {
             return null;
         }
         searched.add(this);
-
+        
         for (Scope.Entry e = tsym.members().lookup(names.fromString(fieldName)); e.scope != null; e = e.next()) {
             if (e.sym.kind == Kinds.VAR) {
                 //### Should intern fieldName as Name.
                 return env.getFieldDoc((VarSymbol)e.sym);
             }
         }
-
+        
         //### If we found a FieldDoc above, but which did not pass
         //### the modifier filter, we should return failure here!
-
+        
         ClassDocImpl cdi = (ClassDocImpl)containingClass();
         if (cdi != null) {
             FieldDocImpl fdi = cdi.searchField(fieldName, searched);
@@ -996,7 +996,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 return fdi;
             }
         }
-
+        
         // search superclass
         cdi = (ClassDocImpl)superclass();
         if (cdi != null) {
@@ -1005,7 +1005,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 return fdi;
             }
         }
-
+        
         // search interfaces
         ClassDoc intf[] = interfaces();
         for (int i = 0; i < intf.length; i++) {
@@ -1015,10 +1015,10 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 return fdi;
             }
         }
-
+        
         return null;
     }
-
+    
     /**
      * Get the list of classes declared as imported.
      * These are called "single-type-import declarations" in the JLS.
@@ -1027,34 +1027,34 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * @return an array of ClassDocImpl representing the imported classes.
      *
      * @deprecated  Import declarations are implementation details that
-     *          should not be exposed here.  In addition, not all imported
-     *          classes are imported through single-type-import declarations.
+     *		should not be exposed here.  In addition, not all imported
+     *		classes are imported through single-type-import declarations.
      */
     @Deprecated
     public ClassDoc[] importedClasses() {
         // information is not available for binary classfiles
         if (tsym.sourcefile == null) return new ClassDoc[0];
-
+        
         ListBuffer<ClassDocImpl> importedClasses = new ListBuffer<ClassDocImpl>();
-
+        
         Env<AttrContext> compenv = env.enter.getEnv(tsym);
         if (compenv == null) return new ClassDocImpl[0];
-
+        
         Name asterisk = tsym.name.table.asterisk;
-        for (JCTree t : compenv.toplevel.defs) {
+	for (JCTree t : compenv.toplevel.defs) {
             if (t.getTag() == JCTree.IMPORT) {
                 JCTree imp = ((JCImport) t).qualid;
                 if ((TreeInfo.name(imp) != asterisk) &&
-                        (imp.type.tsym.kind & Kinds.TYP) != 0) {
-                    importedClasses.append(
-                            env.getClassDoc((ClassSymbol)imp.type.tsym));
+			(imp.type.tsym.kind & Kinds.TYP) != 0) {
+		    importedClasses.append(
+			    env.getClassDoc((ClassSymbol)imp.type.tsym));
                 }
             }
         }
-
+        
         return importedClasses.toArray(new ClassDocImpl[importedClasses.length()]);
     }
-
+    
     /**
      * Get the list of packages declared as imported.
      * These are called "type-import-on-demand declarations" in the JLS.
@@ -1064,25 +1064,25 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      *
      * ###NOTE: the syntax supports importing all inner classes from a class as well.
      * @deprecated  Import declarations are implementation details that
-     *          should not be exposed here.  In addition, this method's
-     *          return type does not allow for all type-import-on-demand
-     *          declarations to be returned.
+     *		should not be exposed here.  In addition, this method's
+     *		return type does not allow for all type-import-on-demand
+     *		declarations to be returned.
      */
     @Deprecated
     public PackageDoc[] importedPackages() {
         // information is not available for binary classfiles
         if (tsym.sourcefile == null) return new PackageDoc[0];
-
+        
         ListBuffer<PackageDocImpl> importedPackages = new ListBuffer<PackageDocImpl>();
-
+        
         //### Add the implicit "import java.lang.*" to the result
         Name.Table names = tsym.name.table;
         importedPackages.append(env.getPackageDoc(env.reader.enterPackage(names.java_lang)));
-
+        
         Env<AttrContext> compenv = env.enter.getEnv(tsym);
         if (compenv == null) return new PackageDocImpl[0];
 
-        for (JCTree t : compenv.toplevel.defs) {
+	for (JCTree t : compenv.toplevel.defs) {
             if (t.getTag() == JCTree.IMPORT) {
                 JCTree imp = ((JCImport) t).qualid;
                 if (TreeInfo.name(imp) == names.asterisk) {
@@ -1094,10 +1094,10 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
                 }
             }
         }
-
+        
         return importedPackages.toArray(new PackageDocImpl[importedPackages.length()]);
     }
-
+    
     /**
      * Return the type's dimension information.
      * Always return "", as this is not an array type.
@@ -1105,14 +1105,14 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     public String dimension() {
         return "";
     }
-
+    
     /**
      * Return this type as a class, which it already is.
      */
     public ClassDoc asClassDoc() {
         return this;
     }
-
+    
     /**
      * Return null (unless overridden), as this is not an annotation type.
      */
@@ -1124,34 +1124,34 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Return null, as this is not a class instantiation.
      */
     public ParameterizedType asParameterizedType() {
-        return null;
+	return null;
     }
 
     /**
      * Return null, as this is not a type variable.
      */
     public TypeVariable asTypeVariable() {
-        return null;
+	return null;
     }
 
     /**
      * Return null, as this is not a wildcard type.
      */
     public WildcardType asWildcardType() {
-        return null;
+	return null;
     }
-
+    
     /**
      * Return false, as this is not a primitive type.
      */
     public boolean isPrimitive() {
         return false;
     }
-
+    
     //--- Serialization ---
-
+    
     //### These methods ignore modifier filter.
-
+    
     /**
      * Return true if this class implements <code>java.io.Serializable</code>.
      *
@@ -1167,7 +1167,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             return false;
         }
     }
-
+    
     /**
      * Return true if this class implements
      * <code>java.io.Externalizable</code>.
@@ -1180,7 +1180,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             return false;
         }
     }
-
+    
     /**
      * Return the serialization methods for this class.
      *
@@ -1194,7 +1194,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         //### Clone this?
         return serializedForm.methods();
     }
-
+    
     /**
      * Return the Serializable fields of class.<p>
      *
@@ -1219,7 +1219,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
         //### Clone this?
         return serializedForm.fields();
     }
-
+    
     /**
      * Return true if Serializable fields are explicitly defined with
      * the special class member <code>serialPersistentFields</code>.
@@ -1238,7 +1238,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             return serializedForm.definesSerializableFields();
         }
     }
-
+    
     /**
      * Determine if a class is a RuntimeException.
      * <p>
@@ -1247,15 +1247,15 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     boolean isRuntimeException() {
         return tsym.isSubClass(env.syms.runtimeExceptionType.tsym, env.types);
     }
-
+    
     /**
      * Return the source position of the entity, or null if
      * no position is available.
      */
     public SourcePosition position() {
         if (tsym.sourcefile == null) return null;
-        return SourcePositionImpl.make(tsym.sourcefile.toString(),
-                                       (tree==null) ? Position.NOPOS : tree.pos,
-                                       lineMap);
+	return SourcePositionImpl.make(tsym.sourcefile.toString(),
+				       (tree==null) ? Position.NOPOS : tree.pos,
+				       lineMap);
     }
 }

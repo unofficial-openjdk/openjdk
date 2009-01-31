@@ -32,7 +32,7 @@ import java.util.List;
  *
  * For example:
  * <pre>
- *   try
+ *   try 
  *       <em>block</em>
  *   <em>catches</em>
  *   finally

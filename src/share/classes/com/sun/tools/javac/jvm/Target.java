@@ -61,24 +61,21 @@ public enum Target {
     JDK1_5("1.5", 49, 0),
 
     /** JDK 6. */
-    JDK1_6("1.6", 50, 0),
-
-    /** JDK 7. */
-    JDK1_7("1.7", 51, 0);
+    JDK1_6("1.6", 50, 0);
 
     private static final Context.Key<Target> targetKey =
-        new Context.Key<Target>();
+	new Context.Key<Target>();
 
     public static Target instance(Context context) {
-        Target instance = context.get(targetKey);
-        if (instance == null) {
-            Options options = Options.instance(context);
-            String targetString = options.get("-target");
-            if (targetString != null) instance = lookup(targetString);
-            if (instance == null) instance = DEFAULT;
-            context.put(targetKey, instance);
-        }
-        return instance;
+	Target instance = context.get(targetKey);
+	if (instance == null) {
+	    Options options = Options.instance(context);
+	    String targetString = options.get("-target");
+	    if (targetString != null) instance = lookup(targetString);
+	    if (instance == null) instance = DEFAULT;
+	    context.put(targetKey, instance);
+	}
+	return instance;
     }
 
     private static Target MIN;
@@ -89,29 +86,28 @@ public enum Target {
 
     private static Map<String,Target> tab = new HashMap<String,Target>();
     static {
-        for (Target t : values()) {
-            if (MIN == null) MIN = t;
-            MAX = t;
-            tab.put(t.name, t);
-        }
-        tab.put("5", JDK1_5);
-        tab.put("6", JDK1_6);
-        tab.put("7", JDK1_7);
+	for (Target t : values()) {
+	    if (MIN == null) MIN = t;
+	    MAX = t;
+	    tab.put(t.name, t);
+	}
+	tab.put("5", JDK1_5);
+	tab.put("6", JDK1_6);
     }
 
     public final String name;
     public final int majorVersion;
     public final int minorVersion;
     private Target(String name, int majorVersion, int minorVersion) {
-        this.name = name;
-        this.majorVersion = majorVersion;
-        this.minorVersion = minorVersion;
+	this.name = name;
+	this.majorVersion = majorVersion;
+	this.minorVersion = minorVersion;
     }
 
     public static final Target DEFAULT = JDK1_6;
 
     public static Target lookup(String name) {
-        return tab.get(name);
+	return tab.get(name);
     }
 
     /** In -target 1.1 and earlier, the compiler is required to emit
@@ -119,7 +115,7 @@ public enum Target {
      *  methods that are not overridden.  We call them "Miranda" methods.
      */
     public boolean requiresIproxy() {
-        return compareTo(JDK1_1) <= 0;
+	return compareTo(JDK1_1) <= 0;
     }
 
     /** Beginning in 1.4, we take advantage of the possibility of emitting
@@ -129,7 +125,7 @@ public enum Target {
      *  inner classes.  See, for example, 4030374.
      */
     public boolean initializeFieldsBeforeSuper() {
-        return compareTo(JDK1_4) >= 0;
+	return compareTo(JDK1_4) >= 0;
     }
 
     /** Beginning with -target 1.2 we obey the JLS rules for binary
@@ -140,7 +136,7 @@ public enum Target {
      *  *binaryCompatibility() indicate places where we vary from this
      *  general rule. */
     public boolean obeyBinaryCompatibility() {
-        return compareTo(JDK1_2) >= 0;
+	return compareTo(JDK1_2) >= 0;
     }
 
     /** Starting in 1.5, the compiler uses an array type as
@@ -149,7 +145,7 @@ public enum Target {
      *  qualified them by Object.
      */
     public boolean arrayBinaryCompatibility() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
 
     /** Beginning after 1.2, we follow the binary compatibility rules for
@@ -158,7 +154,7 @@ public enum Target {
      *  an accommodation to them.
      */
     public boolean interfaceFieldsBinaryCompatibility() {
-        return compareTo(JDK1_2) > 0;
+	return compareTo(JDK1_2) > 0;
     }
 
     /** Beginning in -target 1.5, we follow the binary compatibility
@@ -168,7 +164,7 @@ public enum Target {
      *  The VMs were fixed during or soon after 1.4.  See 4392595.
      */
     public boolean interfaceObjectOverridesBinaryCompatibility() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
 
     /** Beginning in -target 1.4.2, we make synthetic variables
@@ -178,7 +174,7 @@ public enum Target {
      *  execution.
      */
     public boolean usePrivateSyntheticFields() {
-        return compareTo(JDK1_4_2) < 0;
+	return compareTo(JDK1_4_2) < 0;
     }
 
     /** Sometimes we need to create a field to cache a value like a
@@ -187,18 +183,18 @@ public enum Target {
      *  using the outermost class.  See 4401576.
      */
     public boolean useInnerCacheClass() {
-        return compareTo(JDK1_4_2) >= 0;
+	return compareTo(JDK1_4_2) >= 0;
     }
 
     /** Return true if cldc-style stack maps need to be generated. */
     public boolean generateCLDCStackmap() {
-        return false;
+	return false;
     }
 
     /** Beginning in -target 6, we generate stackmap attribute in
      *  compact format. */
     public boolean generateStackMapTable() {
-        return compareTo(JDK1_6) >= 0;
+	return compareTo(JDK1_6) >= 0;
     }
 
     /** Beginning in -target 6, package-info classes are marked synthetic.
@@ -206,11 +202,11 @@ public enum Target {
     public boolean isPackageInfoSynthetic() {
         return compareTo(JDK1_6) >= 0;
     }
-
+    
     /** Do we generate "empty" stackmap slots after double and long?
      */
     public boolean generateEmptyAfterBig() {
-        return false;
+	return false;
     }
 
     /** Beginning in 1.5, we have an unsynchronized version of
@@ -218,26 +214,26 @@ public enum Target {
      *  compiler for string concatenation.
      */
     public boolean useStringBuilder() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
 
     /** Beginning in 1.5, we have flag bits we can use instead of
      *  marker attributes.
      */
     public boolean useSyntheticFlag() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
     public boolean useEnumFlag() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
     public boolean useAnnotationFlag() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
     public boolean useVarargsFlag() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
     public boolean useBridgeFlag() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
 
     /** Return the character to be used in constructing synthetic
@@ -250,7 +246,7 @@ public enum Target {
     /** Does the VM have direct support for class literals?
      */
     public boolean hasClassLiterals() {
-        return compareTo(JDK1_5) >= 0;
+	return compareTo(JDK1_5) >= 0;
     }
 
     /** Although we may not have support for class literals, should we
@@ -258,14 +254,14 @@ public enum Target {
      *  See 4468823
      */
     public boolean classLiteralsNoInit() {
-        return compareTo(JDK1_4_2) >= 0;
+	return compareTo(JDK1_4_2) >= 0;
     }
 
     /** Although we may not have support for class literals, when we
      *  throw a NoClassDefFoundError, should we initialize its cause?
      */
     public boolean hasInitCause() {
-        return compareTo(JDK1_4) >= 0;
+	return compareTo(JDK1_4) >= 0;
     }
 
     /** For bootstrapping, we use J2SE1.4's wrapper class constructors

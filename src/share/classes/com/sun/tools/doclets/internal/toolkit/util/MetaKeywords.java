@@ -38,11 +38,11 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Doug Kramer
  */
 public class MetaKeywords {
-
+    
     private static MetaKeywords instance = null;
 
     /**
@@ -56,7 +56,7 @@ public class MetaKeywords {
     private MetaKeywords(Configuration configuration) {
         this.configuration = configuration;
     }
-
+    
     /**
      * Return an instance of MetaKeywords.  This class is a singleton.
      *
@@ -103,7 +103,7 @@ public class MetaKeywords {
         metakeywords.add(classdoc.qualifiedName() + " " + cltypelower);
         return metakeywords;
     }
-
+    
     /**
      * Get the package keywords.
      */
@@ -112,10 +112,10 @@ public class MetaKeywords {
             String pkgName = Util.getPackageName(packageDoc);
             return new String[] { pkgName + " " + "package" };
         } else {
-            return new String[] {};
+            return new String[] {}; 
         }
     }
-
+    
     /**
      * Get the overview keywords.
      */
@@ -128,7 +128,7 @@ public class MetaKeywords {
             }
             return metakeywords;
         } else {
-            return new String[] {};
+            return new String[] {}; 
         }
     }
 

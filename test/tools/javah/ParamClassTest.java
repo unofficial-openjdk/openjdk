@@ -36,6 +36,6 @@ public class ParamClassTest {
 
 class Param extends MissingParamClassException {
     Param() {
-        System.out.println("Param constructor");
+	System.out.println("Param constructor");
     }
 }

@@ -121,3 +121,4 @@
  * @summary javac -nowarn improperly suppresses JLS-mandated warnings
  * @compile/ref=Test4d.out -XDstdout -XDrawDiagnostics -nowarn -Xlint:unchecked -Xmaxwarns 3 A.java B.java
  */
+

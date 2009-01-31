@@ -41,6 +41,6 @@ interface N2 {
 
 abstract class GenericMerge implements N1, N2 {
     void f(Object o) {
-        box(o);
+	box(o);
     }
 }

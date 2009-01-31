@@ -9,6 +9,6 @@
 public enum T4994049 {
     FOO {
     }
-
+ 
     BAR;
 }

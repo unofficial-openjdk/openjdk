@@ -149,9 +149,9 @@ public abstract class Symbol implements Element {
      */
     public String location() {
         if (owner.name == null || (owner.name.len == 0 && owner.kind != PCK)) {
-            return "";
-        }
-        return owner.toString();
+	    return "";
+	}
+	return owner.toString();
     }
 
     public String location(Type site, Types types) {
@@ -617,9 +617,9 @@ public abstract class Symbol implements Element {
             return fullname;
         }
 
-        public boolean isUnnamed() {
-            return name.isEmpty() && owner != null;
-        }
+	public boolean isUnnamed() {
+	    return name.isEmpty() && owner != null;
+	}
 
         public Scope members() {
             if (completer != null) complete();
@@ -801,10 +801,10 @@ public abstract class Symbol implements Element {
                 ClassType t = (ClassType)type;
                 if (t.supertype_field == null) // FIXME: shouldn't be null
                     t.supertype_field = Type.noType;
-                // An interface has no superclass; its supertype is Object.
-                return t.isInterface()
-                    ? Type.noType
-                    : t.supertype_field;
+		// An interface has no superclass; its supertype is Object.
+		return t.isInterface()
+		    ? Type.noType
+		    : t.supertype_field;
             } else {
                 return Type.noType;
             }

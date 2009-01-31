@@ -37,7 +37,7 @@ import javax.tools.Diagnostic;
 import javax.annotation.processing.*;
 import java.util.*;
 
-/**
+/** 
  * An implementation of the Messager built on top of log.
  *
  * <p><b>This is NOT part of any API supported by Sun Microsystems.
@@ -51,19 +51,19 @@ public class JavacMessager implements Messager {
     int errorCount = 0;
 
     JavacMessager(Context context, JavacProcessingEnvironment processingEnv) {
-        log = Log.instance(context);
-        this.processingEnv = processingEnv;
+	log = Log.instance(context);
+	this.processingEnv = processingEnv;
     }
 
     // processingEnv.getElementUtils()
 
     public void printMessage(Diagnostic.Kind kind, CharSequence msg) {
-        printMessage(kind, msg, null, null, null);
+	printMessage(kind, msg, null, null, null);
     }
 
     public void printMessage(Diagnostic.Kind kind, CharSequence msg,
-                      Element e) {
-        printMessage(kind, msg, e, null, null);
+		      Element e) {
+	printMessage(kind, msg, e, null, null);
     }
 
     /**
@@ -76,8 +76,8 @@ public class JavacMessager implements Messager {
      * @param a    the annotation to use as a position hint
      */
     public void printMessage(Diagnostic.Kind kind, CharSequence msg,
-                      Element e, AnnotationMirror a) {
-        printMessage(kind, msg, e, a, null);
+		      Element e, AnnotationMirror a) {
+	printMessage(kind, msg, e, a, null);
     }
 
     /**
@@ -92,23 +92,23 @@ public class JavacMessager implements Messager {
      * @param v    the annotation value to use as a position hint
      */
     public void printMessage(Diagnostic.Kind kind, CharSequence msg,
-                      Element e, AnnotationMirror a, AnnotationValue v) {
-        JavaFileObject oldSource = null;
-        JavaFileObject newSource = null;
-        JCDiagnostic.DiagnosticPosition pos = null;
-        JavacElements elemUtils = processingEnv.getElementUtils();
-        Pair<JCTree, JCCompilationUnit> treeTop = elemUtils.getTreeAndTopLevel(e, a, v);
-        if (treeTop != null) {
-            newSource = treeTop.snd.sourcefile;
-            if (newSource != null) {
-                oldSource = log.useSource(newSource);
-                pos = treeTop.fst.pos();
-            }
-        }
-        try {
-            switch (kind) {
-            case ERROR:
-                errorCount++;
+		      Element e, AnnotationMirror a, AnnotationValue v) {
+	JavaFileObject oldSource = null;
+	JavaFileObject newSource = null;
+	JCDiagnostic.DiagnosticPosition pos = null;
+	JavacElements elemUtils = processingEnv.getElementUtils();
+	Pair<JCTree, JCCompilationUnit> treeTop = elemUtils.getTreeAndTopLevel(e, a, v);
+	if (treeTop != null) {
+	    newSource = treeTop.snd.sourcefile;
+	    if (newSource != null) {
+		oldSource = log.useSource(newSource);
+		pos = treeTop.fst.pos();
+	    }
+	}
+	try {
+	    switch (kind) {
+	    case ERROR:
+		errorCount++;
                 boolean prev = log.multipleErrors;
                 log.multipleErrors = true;
                 try {
@@ -116,24 +116,24 @@ public class JavacMessager implements Messager {
                 } finally {
                     log.multipleErrors = prev;
                 }
-                break;
+		break;
 
-            case WARNING:
-                log.warning(pos, "proc.messager", msg.toString());
+	    case WARNING:
+		log.warning(pos, "proc.messager", msg.toString());
                 break;
+                
+	    case MANDATORY_WARNING:
+		log.mandatoryWarning(pos, "proc.messager", msg.toString());
+		break;
 
-            case MANDATORY_WARNING:
-                log.mandatoryWarning(pos, "proc.messager", msg.toString());
-                break;
-
-            default:
-                log.note(pos, "proc.messager", msg.toString());
-                break;
-            }
-        } finally {
-            if (oldSource != null)
-                log.useSource(oldSource);
-        }
+	    default:
+		log.note(pos, "proc.messager", msg.toString());
+		break;
+	    }
+	} finally {
+	    if (oldSource != null)
+		log.useSource(oldSource);
+	}
     }
 
     /**
@@ -142,7 +142,7 @@ public class JavacMessager implements Messager {
      * @param msg  the message, or an empty string if none
      */
     public void printError(String msg) {
-        printMessage(Diagnostic.Kind.ERROR, msg);
+	printMessage(Diagnostic.Kind.ERROR, msg);
     }
 
     /**
@@ -151,7 +151,7 @@ public class JavacMessager implements Messager {
      * @param msg  the message, or an empty string if none
      */
     public void printWarning(String msg) {
-        printMessage(Diagnostic.Kind.WARNING, msg);
+	printMessage(Diagnostic.Kind.WARNING, msg);
     }
 
     /**
@@ -159,23 +159,23 @@ public class JavacMessager implements Messager {
      * @param msg  the message, or an empty string if none
      */
     public void printNotice(String msg) {
-        printMessage(Diagnostic.Kind.NOTE, msg);
+	printMessage(Diagnostic.Kind.NOTE, msg);
     }
 
     public boolean errorRaised() {
-        return errorCount > 0;
+	return errorCount > 0;
     }
 
     public int errorCount() {
-        return errorCount;
+	return errorCount;
     }
 
     public void newRound(Context context) {
-        log = Log.instance(context);
-        errorCount = 0;
+	log = Log.instance(context);
+	errorCount = 0;
     }
 
     public String toString() {
-        return "javac Messager";
+	return "javac Messager";
     }
 }

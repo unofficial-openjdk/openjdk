@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4402864
- * @summary Verify that assertions are enabled before the class is initialized
+ * @summary Verify that assertions are enabled before the class is initialized 
  * and not thereafter
  * @author gafter
  *
@@ -38,23 +38,23 @@
 
 class EASuper {
     static {
-        EarlyAssert.foo();
+	EarlyAssert.foo();
     }
 }
 
 public class EarlyAssert extends EASuper {
     static public void foo() {
-        boolean assertionStatus = false;
-        assert assertionStatus = true;
-        if (!assertionStatus) {
-            throw new Error("Assertions are not enabled before initialization as they should be.");
-        }
+	boolean assertionStatus = false;
+	assert assertionStatus = true;
+	if (!assertionStatus) {
+	    throw new Error("Assertions are not enabled before initialization as they should be.");
+	}
     }
     public static void main(String[] args) {
-        boolean assertionStatus = false;
-        assert assertionStatus = true;
-        if (assertionStatus) {
-            throw new Error("Assertions are not disabled after initialization as they should be.");
-        }
+	boolean assertionStatus = false;
+	assert assertionStatus = true;
+	if (assertionStatus) {
+	    throw new Error("Assertions are not disabled after initialization as they should be.");
+	}
     }
 }

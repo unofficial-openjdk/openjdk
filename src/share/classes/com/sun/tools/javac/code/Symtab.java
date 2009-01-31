@@ -50,26 +50,26 @@ import static com.sun.tools.javac.code.Flags.*;
 public class Symtab {
     /** The context key for the symbol table. */
     protected static final Context.Key<Symtab> symtabKey =
-        new Context.Key<Symtab>();
+	new Context.Key<Symtab>();
 
     /** Get the symbol table instance. */
     public static Symtab instance(Context context) {
-        Symtab instance = context.get(symtabKey);
-        if (instance == null)
-            instance = new Symtab(context);
-        return instance;
+	Symtab instance = context.get(symtabKey);
+	if (instance == null)
+	    instance = new Symtab(context);
+	return instance;
     }
 
     /** Builtin types.
      */
-    public final Type byteType = new Type(TypeTags.BYTE, null);
-    public final Type charType = new Type(TypeTags.CHAR, null);
-    public final Type shortType = new Type(TypeTags.SHORT, null);
-    public final Type intType = new Type(TypeTags.INT, null);
-    public final Type longType = new Type(TypeTags.LONG, null);
-    public final Type floatType = new Type(TypeTags.FLOAT, null);
-    public final Type doubleType = new Type(TypeTags.DOUBLE, null);
-    public final Type booleanType = new Type(TypeTags.BOOLEAN, null);
+    public final Type byteType = new Type(TypeTags.BYTE, null);       
+    public final Type charType = new Type(TypeTags.CHAR, null);       
+    public final Type shortType = new Type(TypeTags.SHORT, null);     
+    public final Type intType = new Type(TypeTags.INT, null);         
+    public final Type longType = new Type(TypeTags.LONG, null);       
+    public final Type floatType = new Type(TypeTags.FLOAT, null);     
+    public final Type doubleType = new Type(TypeTags.DOUBLE, null);   
+    public final Type booleanType = new Type(TypeTags.BOOLEAN, null); 
     public final Type botType = new BottomType();
     public final JCNoType voidType = new JCNoType(TypeTags.VOID);
 
@@ -177,20 +177,20 @@ public class Symtab {
     public final Map<Name, PackageSymbol> packages = new HashMap<Name, PackageSymbol>();
 
     public void initType(Type type, ClassSymbol c) {
-        type.tsym = c;
-        typeOfTag[type.tag] = type;
+	type.tsym = c;
+	typeOfTag[type.tag] = type;
     }
 
     public void initType(Type type, String name) {
-        initType(
-            type,
-            new ClassSymbol(
-                PUBLIC, names.fromString(name), type, rootPackage));
+	initType(
+	    type,
+	    new ClassSymbol(
+		PUBLIC, names.fromString(name), type, rootPackage));
     }
 
     public void initType(Type type, String name, String bname) {
-        initType(type, name);
-        boxedName[type.tag] = names.fromString("java.lang." + bname);
+	initType(type, name);
+	boxedName[type.tag] = names.fromString("java.lang." + bname);
     }
 
     /** The class symbol that owns all predefined symbols.
@@ -203,13 +203,13 @@ public class Symtab {
      */
     private VarSymbol enterConstant(String name, Type type) {
         VarSymbol c = new VarSymbol(
-            PUBLIC | STATIC | FINAL,
-            names.fromString(name),
-            type,
-            predefClass);
-        c.setData(type.constValue());
+	    PUBLIC | STATIC | FINAL,
+	    names.fromString(name),
+	    type,
+	    predefClass);
+	c.setData(type.constValue());
         predefClass.members().enter(c);
-        return c;
+	return c;
     }
 
     /** Enter a binary operation into symbol table.
@@ -220,15 +220,15 @@ public class Symtab {
      *  @param opcode   The operation's bytecode instruction.
      */
     private void enterBinop(String name,
-                            Type left, Type right, Type res,
-                            int opcode) {
+			    Type left, Type right, Type res,
+			    int opcode) {
         predefClass.members().enter(
             new OperatorSymbol(
-                names.fromString(name),
-                new MethodType(List.of(left, right), res,
-                               List.<Type>nil(), methodClass),
-                opcode,
-                predefClass));
+		names.fromString(name),
+		new MethodType(List.of(left, right), res,
+			       List.<Type>nil(), methodClass),
+		opcode,
+		predefClass));
     }
 
     /** Enter a binary operation, as above but with two opcodes,
@@ -237,10 +237,10 @@ public class Symtab {
      *  @param opcode2     Second opcode.
      */
     private void enterBinop(String name,
-                            Type left, Type right, Type res,
-                            int opcode1, int opcode2) {
-        enterBinop(
-            name, left, right, res, (opcode1 << ByteCodes.preShift) | opcode2);
+			    Type left, Type right, Type res,
+			    int opcode1, int opcode2) {
+	enterBinop(
+	    name, left, right, res, (opcode1 << ByteCodes.preShift) | opcode2);
     }
 
     /** Enter a unary operation into symbol table.
@@ -250,83 +250,83 @@ public class Symtab {
      *  @param opcode   The operation's bytecode instruction.
      */
     private OperatorSymbol enterUnop(String name,
-                                     Type arg,
-                                     Type res,
-                                     int opcode) {
-        OperatorSymbol sym =
-            new OperatorSymbol(names.fromString(name),
-                               new MethodType(List.of(arg),
-                                              res,
-                                              List.<Type>nil(),
-                                              methodClass),
-                               opcode,
-                               predefClass);
+				     Type arg,
+				     Type res,
+				     int opcode) {
+	OperatorSymbol sym =
+	    new OperatorSymbol(names.fromString(name),
+			       new MethodType(List.of(arg),
+					      res,
+					      List.<Type>nil(),
+					      methodClass),
+			       opcode,
+			       predefClass);
         predefClass.members().enter(sym);
-        return sym;
+	return sym;
     }
 
     /** Enter a class into symbol table.
      *  @param    The name of the class.
      */
     private Type enterClass(String s) {
-        return reader.enterClass(names.fromString(s)).type;
+	return reader.enterClass(names.fromString(s)).type;
     }
 
     /** Constructor; enters all predefined identifiers and operators
      *  into symbol table.
      */
     protected Symtab(Context context) throws CompletionFailure {
-        context.put(symtabKey, this);
+	context.put(symtabKey, this);
 
-        names = Name.Table.instance(context);
+	names = Name.Table.instance(context);
 
-        // Create the unknown type
-        unknownType = new Type(TypeTags.UNKNOWN, null);
+	// Create the unknown type
+	unknownType = new Type(TypeTags.UNKNOWN, null);
 
-        // create the basic builtin symbols
-        rootPackage = new PackageSymbol(names.empty, null);
+	// create the basic builtin symbols
+	rootPackage = new PackageSymbol(names.empty, null);
         final Messages messages = Messages.instance(context);
         unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
                 }
             };
-        noSymbol = new TypeSymbol(0, names.empty, Type.noType, rootPackage);
-        noSymbol.kind = Kinds.NIL;
+	noSymbol = new TypeSymbol(0, names.empty, Type.noType, rootPackage);
+	noSymbol.kind = Kinds.NIL;
 
-        // create the error symbols
-        errSymbol = new ClassSymbol(PUBLIC|STATIC|ACYCLIC, names.any, null, rootPackage);
-        errType = new ErrorType(errSymbol);
+	// create the error symbols
+	errSymbol = new ClassSymbol(PUBLIC|STATIC|ACYCLIC, names.any, null, rootPackage);
+	errType = new ErrorType(errSymbol);
 
-        // initialize builtin types
-        initType(byteType, "byte", "Byte");
-        initType(shortType, "short", "Short");
-        initType(charType, "char", "Character");
-        initType(intType, "int", "Integer");
-        initType(longType, "long", "Long");
-        initType(floatType, "float", "Float");
-        initType(doubleType, "double", "Double");
-        initType(booleanType, "boolean", "Boolean");
-        initType(voidType, "void", "Void");
-        initType(botType, "<nulltype>");
-        initType(errType, errSymbol);
-        initType(unknownType, "<any?>");
+	// initialize builtin types
+	initType(byteType, "byte", "Byte");
+	initType(shortType, "short", "Short");
+	initType(charType, "char", "Character");
+	initType(intType, "int", "Integer");
+	initType(longType, "long", "Long");
+	initType(floatType, "float", "Float");
+	initType(doubleType, "double", "Double");
+	initType(booleanType, "boolean", "Boolean");
+	initType(voidType, "void", "Void");
+	initType(botType, "<nulltype>");
+	initType(errType, errSymbol);
+	initType(unknownType, "<any?>");
 
-        // the builtin class of all arrays
-        arrayClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Array, noSymbol);
+	// the builtin class of all arrays
+	arrayClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Array, noSymbol);
 
-        // VGJ
-        boundClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Bound, noSymbol);
+	// VGJ
+	boundClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Bound, noSymbol);
 
-        // the builtin class of all methods
-        methodClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Method, noSymbol);
+	// the builtin class of all methods
+	methodClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Method, noSymbol);
 
-        // Create class to hold all predefined constants and operations.
+	// Create class to hold all predefined constants and operations.
         predefClass = new ClassSymbol(PUBLIC|ACYCLIC, names.empty, rootPackage);
-        Scope scope = new Scope(predefClass);
-        predefClass.members_field = scope;
+	Scope scope = new Scope(predefClass);
+	predefClass.members_field = scope;
 
-        // Enter symbols for basic types.
+	// Enter symbols for basic types.
         scope.enter(byteType.tsym);
         scope.enter(shortType.tsym);
         scope.enter(charType.tsym);
@@ -337,52 +337,52 @@ public class Symtab {
         scope.enter(booleanType.tsym);
         scope.enter(errType.tsym);
 
-        classes.put(predefClass.fullname, predefClass);
+	classes.put(predefClass.fullname, predefClass);
 
-        reader = ClassReader.instance(context);
-        reader.init(this);
+	reader = ClassReader.instance(context);
+	reader.init(this);
 
-        // Enter predefined classes.
-        objectType = enterClass("java.lang.Object");
-        classType = enterClass("java.lang.Class");
-        stringType = enterClass("java.lang.String");
-        stringBufferType = enterClass("java.lang.StringBuffer");
-        stringBuilderType = enterClass("java.lang.StringBuilder");
-        cloneableType = enterClass("java.lang.Cloneable");
-        throwableType = enterClass("java.lang.Throwable");
-        serializableType = enterClass("java.io.Serializable");
-        errorType = enterClass("java.lang.Error");
-        illegalArgumentExceptionType = enterClass("java.lang.IllegalArgumentException");
-        exceptionType = enterClass("java.lang.Exception");
-        runtimeExceptionType = enterClass("java.lang.RuntimeException");
-        classNotFoundExceptionType = enterClass("java.lang.ClassNotFoundException");
-        noClassDefFoundErrorType = enterClass("java.lang.NoClassDefFoundError");
-        noSuchFieldErrorType = enterClass("java.lang.NoSuchFieldError");
-        assertionErrorType = enterClass("java.lang.AssertionError");
+	// Enter predefined classes.
+	objectType = enterClass("java.lang.Object");
+	classType = enterClass("java.lang.Class");
+	stringType = enterClass("java.lang.String");
+	stringBufferType = enterClass("java.lang.StringBuffer");
+	stringBuilderType = enterClass("java.lang.StringBuilder");
+	cloneableType = enterClass("java.lang.Cloneable");
+	throwableType = enterClass("java.lang.Throwable");
+	serializableType = enterClass("java.io.Serializable");
+	errorType = enterClass("java.lang.Error");
+	illegalArgumentExceptionType = enterClass("java.lang.IllegalArgumentException");
+	exceptionType = enterClass("java.lang.Exception");
+	runtimeExceptionType = enterClass("java.lang.RuntimeException");
+	classNotFoundExceptionType = enterClass("java.lang.ClassNotFoundException");
+	noClassDefFoundErrorType = enterClass("java.lang.NoClassDefFoundError");
+	noSuchFieldErrorType = enterClass("java.lang.NoSuchFieldError");
+	assertionErrorType = enterClass("java.lang.AssertionError");
         cloneNotSupportedExceptionType = enterClass("java.lang.CloneNotSupportedException");
-        annotationType = enterClass("java.lang.annotation.Annotation");
-        classLoaderType = enterClass("java.lang.ClassLoader");
-        enumSym = reader.enterClass(names.java_lang_Enum);
-        enumFinalFinalize =
-            new MethodSymbol(PROTECTED|FINAL|HYPOTHETICAL,
-                             names.finalize,
-                             new MethodType(List.<Type>nil(), voidType,
-                                            List.<Type>nil(), methodClass),
-                             enumSym);
-        listType = enterClass("java.util.List");
-        collectionsType = enterClass("java.util.Collections");
-        comparableType = enterClass("java.lang.Comparable");
-        arraysType = enterClass("java.util.Arrays");
-        iterableType = Target.instance(context).hasIterable()
+	annotationType = enterClass("java.lang.annotation.Annotation");
+	classLoaderType = enterClass("java.lang.ClassLoader");
+	enumSym = reader.enterClass(names.java_lang_Enum);
+	enumFinalFinalize =
+	    new MethodSymbol(PROTECTED|FINAL|HYPOTHETICAL,
+			     names.finalize,
+			     new MethodType(List.<Type>nil(), voidType,
+					    List.<Type>nil(), methodClass),
+			     enumSym);
+	listType = enterClass("java.util.List");
+	collectionsType = enterClass("java.util.Collections");
+	comparableType = enterClass("java.lang.Comparable");
+	arraysType = enterClass("java.util.Arrays");
+	iterableType = Target.instance(context).hasIterable()
             ? enterClass("java.lang.Iterable")
             : enterClass("java.util.Collection");
-        iteratorType = enterClass("java.util.Iterator");
-        annotationTargetType = enterClass("java.lang.annotation.Target");
-        overrideType = enterClass("java.lang.Override");
-        retentionType = enterClass("java.lang.annotation.Retention");
-        deprecatedType = enterClass("java.lang.Deprecated");
-        suppressWarningsType = enterClass("java.lang.SuppressWarnings");
-        inheritedType = enterClass("java.lang.annotation.Inherited");
+	iteratorType = enterClass("java.util.Iterator");
+	annotationTargetType = enterClass("java.lang.annotation.Target");
+	overrideType = enterClass("java.lang.Override");
+	retentionType = enterClass("java.lang.annotation.Retention");
+	deprecatedType = enterClass("java.lang.Deprecated");
+	suppressWarningsType = enterClass("java.lang.SuppressWarnings");
+	inheritedType = enterClass("java.lang.annotation.Inherited");
 
         // Enter a synthetic class that is used to mark Sun
         // proprietary classes in ct.sym.  This class does not have a
@@ -399,28 +399,28 @@ public class Symtab {
         proprietaryType.supertype_field = annotationType;
         proprietaryType.interfaces_field = List.nil();
 
-        // Enter a class for arrays.
-        // The class implements java.lang.Cloneable and java.io.Serializable.
-        // It has a final length field and a clone method.
-        ClassType arrayClassType = (ClassType)arrayClass.type;
-        arrayClassType.supertype_field = objectType;
-        arrayClassType.interfaces_field = List.of(cloneableType, serializableType);
-        arrayClass.members_field = new Scope(arrayClass);
+	// Enter a class for arrays.
+	// The class implements java.lang.Cloneable and java.io.Serializable.
+	// It has a final length field and a clone method.
+	ClassType arrayClassType = (ClassType)arrayClass.type;
+	arrayClassType.supertype_field = objectType;
+	arrayClassType.interfaces_field = List.of(cloneableType, serializableType);
+	arrayClass.members_field = new Scope(arrayClass);
         lengthVar = new VarSymbol(
-            PUBLIC | FINAL,
-            names.length,
-            intType,
-            arrayClass);
+	    PUBLIC | FINAL,
+	    names.length,
+	    intType,
+	    arrayClass);
         arrayClass.members().enter(lengthVar);
-        arrayCloneMethod = new MethodSymbol(
-            PUBLIC,
-            names.clone,
-            new MethodType(List.<Type>nil(), objectType,
-                           List.<Type>nil(), methodClass),
-            arrayClass);
-        arrayClass.members().enter(arrayCloneMethod);
+	arrayCloneMethod = new MethodSymbol(
+	    PUBLIC,
+	    names.clone,
+	    new MethodType(List.<Type>nil(), objectType,
+			   List.<Type>nil(), methodClass),
+	    arrayClass);
+	arrayClass.members().enter(arrayCloneMethod);
 
-        // Enter operators.
+	// Enter operators.
         enterUnop("+", doubleType, doubleType, nop);
         enterUnop("+", floatType, floatType, nop);
         enterUnop("+", longType, longType, nop);
@@ -451,9 +451,9 @@ public class Symtab {
         enterUnop("--", byteType, byteType, isub);
 
         enterUnop("!", booleanType, booleanType, bool_not);
-        nullcheck = enterUnop("<*nullchk*>", objectType, objectType, nullchk);
+	nullcheck = enterUnop("<*nullchk*>", objectType, objectType, nullchk);
 
-        // string concatenation
+	// string concatenation
         enterBinop("+", stringType, objectType, stringType, string_add);
         enterBinop("+", objectType, stringType, stringType, string_add);
         enterBinop("+", stringType, stringType, stringType, string_add);
@@ -469,8 +469,8 @@ public class Symtab {
         enterBinop("+", doubleType, stringType, stringType, string_add);
         enterBinop("+", booleanType, stringType, stringType, string_add);
         enterBinop("+", botType, stringType, stringType, string_add);
-
-        // these errors would otherwise be matched as string concatenation
+	
+	// these errors would otherwise be matched as string concatenation
         enterBinop("+", botType, botType, botType, error);
         enterBinop("+", botType, intType, botType, error);
         enterBinop("+", botType, longType, botType, error);

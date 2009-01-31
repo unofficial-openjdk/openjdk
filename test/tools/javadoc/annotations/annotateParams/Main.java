@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,36 +38,36 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
-        tester.verify();
+	tester.run();
+	tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-        try {
-            for (PackageDoc pkg : root.specifiedPackages()) {
-                for (ClassDoc cd : pkg.ordinaryClasses()) {
-                    for (ConstructorDoc c : cd.constructors()) {
-                        tester.println(c);
-                        tester.println();
-                        for (Parameter p : c.parameters()) {
-                            tester.printParameter(p);
-                        }
-                        tester.println();
-                    }
-                    for (MethodDoc m : cd.methods()) {
-                        tester.println(m);
-                        tester.println();
-                        for (Parameter p : m.parameters()) {
-                            tester.printParameter(p);
-                        }
-                        tester.println();
-                    }
-                }
-            }
+	try {
+	    for (PackageDoc pkg : root.specifiedPackages()) {
+		for (ClassDoc cd : pkg.ordinaryClasses()) {
+		    for (ConstructorDoc c : cd.constructors()) {
+			tester.println(c);
+			tester.println();
+			for (Parameter p : c.parameters()) {
+			    tester.printParameter(p);
+			}
+			tester.println();
+		    }
+		    for (MethodDoc m : cd.methods()) {
+			tester.println(m);
+			tester.println();
+			for (Parameter p : m.parameters()) {
+			    tester.printParameter(p);
+			}
+			tester.println();
+		    }
+		}
+	    }
 
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+	    return true;
+	} catch (IOException e) {
+	    return false;
+	}
     }
 }

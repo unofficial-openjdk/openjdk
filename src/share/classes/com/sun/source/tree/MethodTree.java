@@ -34,7 +34,7 @@ import javax.lang.model.element.Name;
  * For example:
  * <pre>
  *   <em>modifiers</em> <em>typeParameters</em> <em>type</em> <em>name</em>
- *      ( <em>parameters</em> )
+ *      ( <em>parameters</em> ) 
  *      <em>body</em>
  *
  *   <em>modifiers</em> <em>type</em> <em>name</em> () default <em>defaultValue</em>

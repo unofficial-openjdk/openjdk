@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,15 +29,15 @@ public class CustomTagUsage {
      * @todo the value of this constant is {@value}.
      */
     public static final int CONSTANT_INT = 55;
-
+    
     /**
      * @todo the value of this constant is {@value}.
      */
-    public int nonConstant = 55;
-
+    public int nonConstant = 55; 
+    
     /**
      * Here is a bad value reference: {@value UnknownClass#unknownConstant}.
      */
-    public int badReference = 55;
-
+    public int badReference = 55; 
+   
 }

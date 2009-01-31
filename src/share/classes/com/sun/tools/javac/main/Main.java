@@ -200,26 +200,20 @@ public class Main {
             String flag = flags[ac];
             ac++;
 
-            Option option = null;
+            int j;
+            // quick hack to speed up file processing: 
+            // if the option does not begin with '-', there is no need to check
+            // most of the compiler options.
+            int firstOptionToCheck = flag.charAt(0) == '-' ? 0 : recognizedOptions.length-1;
+            for (j=firstOptionToCheck; j<recognizedOptions.length; j++)
+                if (recognizedOptions[j].matches(flag)) break;
 
-            if (flag.length() > 0) {
-                // quick hack to speed up file processing:
-                // if the option does not begin with '-', there is no need to check
-                // most of the compiler options.
-                int firstOptionToCheck = flag.charAt(0) == '-' ? 0 : recognizedOptions.length-1;
-                for (int j=firstOptionToCheck; j<recognizedOptions.length; j++) {
-                    if (recognizedOptions[j].matches(flag)) {
-                        option = recognizedOptions[j];
-                        break;
-                    }
-                }
-            }
-
-            if (option == null) {
+            if (j == recognizedOptions.length) {
                 error("err.invalid.flag", flag);
                 return null;
             }
 
+            Option option = recognizedOptions[j];
             if (option.hasArg()) {
                 if (ac == flags.length) {
                     error("err.req.arg", flag);
@@ -234,7 +228,7 @@ public class Main {
                     return null;
             }
         }
-
+        
         if (!checkDirectory("-d"))
             return null;
         if (!checkDirectory("-s"))

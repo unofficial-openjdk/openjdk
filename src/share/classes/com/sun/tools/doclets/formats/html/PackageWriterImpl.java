@@ -39,7 +39,7 @@ import java.util.*;
  *
  * @author Atul M Dambalkar
  */
-public class PackageWriterImpl extends HtmlDocletWriter
+public class PackageWriterImpl extends HtmlDocletWriter 
     implements PackageSummaryWriter {
 
     /**
@@ -51,12 +51,12 @@ public class PackageWriterImpl extends HtmlDocletWriter
      * The next package name in the alpha-order list.
      */
     protected PackageDoc next;
-
+    
     /**
      * The package being documented.
      */
     protected PackageDoc packageDoc;
-
+    
     /**
      * The name of the output file.
      */
@@ -84,7 +84,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
         this.next = next;
         this.packageDoc = packageDoc;
     }
-
+    
     /**
      * Return the name of the output file.
      *
@@ -93,17 +93,17 @@ public class PackageWriterImpl extends HtmlDocletWriter
     public String getOutputFileName() {
         return OUTPUT_FILE_NAME;
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void writeSummaryHeader() {}
-
+    
     /**
      * {@inheritDoc}
      */
     public void writeSummaryFooter() {}
-
+    
     /**
      * {@inheritDoc}
      */
@@ -117,14 +117,14 @@ public class PackageWriterImpl extends HtmlDocletWriter
                     printFirstRow(label);
                     printedHeading = true;
                 }
-                if (!Util.isCoreClass(classes[i]) ||
+                if (!Util.isCoreClass(classes[i]) || 
                     !configuration.isGeneratedDoc(classes[i])) {
                     continue;
                 }
                 trBgcolorStyle("white", "TableRowColor");
                 summaryRow(15);
                 bold();
-                printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_PACKAGE,
+                printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_PACKAGE, 
                     classes[i], false));
                 boldEnd();
                 summaryRowEnd();
@@ -158,7 +158,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
         bold(label);
         tableHeaderEnd();
     }
-
+   
     /**
      * {@inheritDoc}
      */
@@ -169,16 +169,16 @@ public class PackageWriterImpl extends HtmlDocletWriter
             p();
             printInlineComment(packageDoc);
             p();
-        }
+        }        
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void writePackageTags() {
         printTags(packageDoc);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -188,7 +188,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
             configuration.metakeywords.getMetaKeywords(packageDoc), true);
         printTop();
         navLinks(true);
-        hr();
+        hr();        
         writeAnnotationInfo(packageDoc);
         h2(configuration.getText("doclet.Package") + " " + heading);
         if (packageDoc.inlineTags().length > 0 && ! configuration.nocomment) {
@@ -212,7 +212,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
         printBottom();
         printBodyHtmlEnd();
     }
-
+                
     /**
      * Print "Use" link for this pacakge in the navigation bar.
      */
@@ -236,7 +236,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
                 configuration.getText("doclet.Prev_Package"), true);
         }
     }
-
+                                
     /**
      * Print "NEXT PACKAGE" link in the navigation bar.
      */
@@ -261,7 +261,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
                        true, "NavBarFont1");
         navCellEnd();
     }
-
+    
     /**
      * Highlight "Package" in the navigation bar, as this is the package page.
      */
@@ -273,3 +273,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
         navCellEnd();
     }
 }
+
+
+
+

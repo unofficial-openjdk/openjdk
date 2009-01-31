@@ -61,3 +61,5 @@ public interface LayoutCharacters {
      */
     final static byte EOI   = 0x1A;
 }
+
+

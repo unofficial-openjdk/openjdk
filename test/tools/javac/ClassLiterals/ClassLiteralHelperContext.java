@@ -42,10 +42,10 @@ public class ClassLiteralHelperContext extends SuperClass {
     Class c = C.class;
 
     public static void main(String[] args) {
-        // Evaluation of literal 'C.class' will fail
-        // during initialization if the (package private)
-        // cache cell or helper method is inherited.
-        ClassLiteralHelperContext x = new ClassLiteralHelperContext();
-        System.out.println(x.c);
+	// Evaluation of literal 'C.class' will fail
+	// during initialization if the (package private)
+	// cache cell or helper method is inherited.
+	ClassLiteralHelperContext x = new ClassLiteralHelperContext();
+	System.out.println(x.c);
     }
 }

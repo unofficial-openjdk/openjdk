@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @ bug
+ * @ bug 
  * @summary Positive regression test from odersky
  * @author odersky
  *
@@ -53,8 +53,8 @@ class Test4 {
     static Number n = i;
 
     public static void main(String[] args) {
-        Number x = f(n, i);
-        String xy = g(cons("abc", Test4.<String>nil()), Test4.<String>nil());
-        System.out.println(g(cons("abc", nil()), nil()));
+	Number x = f(n, i);
+	String xy = g(cons("abc", Test4.<String>nil()), Test4.<String>nil());
+	System.out.println(g(cons("abc", nil()), nil()));
     }
 }

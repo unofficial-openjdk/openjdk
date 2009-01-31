@@ -43,20 +43,20 @@ import com.sun.javadoc.*;
  */
 public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         implements AnnotationTypeWriter {
-
+    
     protected AnnotationTypeDoc annotationType;
-
+    
     protected Type prev;
-
+    
     protected Type next;
-
+    
     /**
      * @param annotationType the annotation type being documented.
      * @param prevType the previous class that was documented.
      * @param nextType the next class being documented.
      */
     public AnnotationTypeWriterImpl (AnnotationTypeDoc annotationType,
-            Type prevType, Type nextType)
+            Type prevType, Type nextType) 
     throws Exception {
         super(ConfigurationImpl.getInstance(),
               DirectoryManager.getDirectoryPath(annotationType.containingPackage()),
@@ -67,17 +67,17 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         this.prev = prevType;
         this.next = nextType;
     }
-
+    
     /**
      * Print this package link
      */
     protected void navLinkPackage() {
         navCellStart();
-        printHyperLink("package-summary.html", "",
+        printHyperLink("package-summary.html", "", 
             configuration.getText("doclet.Package"), true, "NavBarFont1");
         navCellEnd();
     }
-
+    
     /**
      * Print class page indicator
      */
@@ -88,7 +88,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         fontEnd();
         navCellEnd();
     }
-
+    
     /**
      * Print class use link
      */
@@ -98,7 +98,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
                        configuration.getText("doclet.navClassUse"), true, "NavBarFont1");
         navCellEnd();
     }
-
+    
     /**
      * Print previous package link
      */
@@ -106,12 +106,12 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (prev == null) {
             printText("doclet.Prev_Class");
         } else {
-            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS,
-                prev.asClassDoc(), "",
+            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, 
+                prev.asClassDoc(), "", 
                 configuration.getText("doclet.Prev_Class"), true));
         }
     }
-
+    
     /**
      * Print next package link
      */
@@ -119,21 +119,21 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (next == null) {
             printText("doclet.Next_Class");
         } else {
-            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS,
-                next.asClassDoc(), "",
+            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, 
+                next.asClassDoc(), "", 
                 configuration.getText("doclet.Next_Class"), true));
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void writeHeader(String header) {
-
+        
         String pkgname = (annotationType.containingPackage() != null)?
             annotationType.containingPackage().name(): "";
         String clname = annotationType.name();
-
+        
         printHtmlHeader(clname,
             configuration.metakeywords.getMetaKeywords(annotationType), true);
         printTop();
@@ -145,11 +145,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             font("-1"); print(pkgname); fontEnd(); br();
         }
         print(header + getTypeParameterLinks(new LinkInfoImpl(
-            LinkInfoImpl.CONTEXT_CLASS_HEADER,
+            LinkInfoImpl.CONTEXT_CLASS_HEADER, 
             annotationType, false)));
         h2End();
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -160,7 +160,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         printBottom();
         printBodyHtmlEnd();
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -170,23 +170,23 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         preNoNewLine();
         writeAnnotationInfo(annotationType);
         print(modifiers);
-        String name = annotationType.name() +
+        String name = annotationType.name() + 
             getTypeParameterLinks(new LinkInfoImpl(
-                LinkInfoImpl.CONTEXT_CLASS_SIGNATURE, annotationType, false));
+                LinkInfoImpl.CONTEXT_CLASS_SIGNATURE, annotationType, false));       
         if (configuration().linksource) {
             printSrcLink(annotationType, name);
         } else {
-            bold(name);
+            bold(name);            
         }
         dlEnd();
         preEnd();
         p();
-    }
-
+    }    
+    
     /**
      * {@inheritDoc}
      */
-    public void writeAnnotationTypeDescription() {
+    public void writeAnnotationTypeDescription() {        
         if(!configuration.nocomment) {
             // generate documentation for the class.
             if (annotationType.inlineTags().length > 0) {
@@ -195,7 +195,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             }
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -212,7 +212,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             hr();
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -224,22 +224,22 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             if (deprs.length > 0) {
                 Tag[] commentTags = deprs[0].inlineTags();
                 if (commentTags.length > 0) {
-
+                    
                     space();
                     printInlineDeprecatedComment(annotationType, deprs[0]);
-                }
+                }                
             }
             p();
-        }
-    }
-
+        }                
+    }    
+    
     protected void navLinkTree() {
         navCellStart();
-        printHyperLink("package-tree.html", "",
+        printHyperLink("package-tree.html", "", 
             configuration.getText("doclet.Tree"), true, "NavBarFont1");
         navCellEnd();
     }
-
+    
     protected void printSummaryDetailLinks() {
         try {
             tr();
@@ -249,7 +249,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             navSummaryLinks();
             fontEnd();
             tdEnd();
-
+            
             tdVAlignClass("top", "NavBarCell3");
             font("-2");
             navDetailLinks();
@@ -261,33 +261,33 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             throw new DocletAbortException();
         }
     }
-
+    
     protected void navSummaryLinks() throws Exception {
         printText("doclet.Summary");
         space();
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
             configuration.getBuilderFactory().getMemberSummaryBuilder(this);
-        writeNavSummaryLink(memberSummaryBuilder,
+        writeNavSummaryLink(memberSummaryBuilder, 
             "doclet.navAnnotationTypeRequiredMember",
             VisibleMemberMap.ANNOTATION_TYPE_MEMBER_REQUIRED);
         navGap();
-        writeNavSummaryLink(memberSummaryBuilder,
+        writeNavSummaryLink(memberSummaryBuilder, 
             "doclet.navAnnotationTypeOptionalMember",
-            VisibleMemberMap.ANNOTATION_TYPE_MEMBER_OPTIONAL);
+            VisibleMemberMap.ANNOTATION_TYPE_MEMBER_OPTIONAL);        
     }
-
-    private void writeNavSummaryLink(MemberSummaryBuilder builder,
+    
+    private void writeNavSummaryLink(MemberSummaryBuilder builder, 
             String label, int type) {
         AbstractMemberWriter writer = ((AbstractMemberWriter) builder.
             getMemberSummaryWriter(type));
         if (writer == null) {
-              printText(label);
+              printText(label);          
         } else {
-            writer.printNavSummaryLink(null,
+            writer.printNavSummaryLink(null, 
                 ! builder.getVisibleMemberMap(type).noVisibleMembers());
         }
     }
-
+    
     /**
      * Method navDetailLinks
      *
@@ -299,10 +299,10 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         space();
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
             configuration.getBuilderFactory().getMemberSummaryBuilder(this);
-        AbstractMemberWriter writerOptional =
+        AbstractMemberWriter writerOptional = 
             ((AbstractMemberWriter) memberSummaryBuilder.
                 getMemberSummaryWriter(VisibleMemberMap.ANNOTATION_TYPE_MEMBER_OPTIONAL));
-        AbstractMemberWriter writerRequired =
+        AbstractMemberWriter writerRequired = 
             ((AbstractMemberWriter) memberSummaryBuilder.
                 getMemberSummaryWriter(VisibleMemberMap.ANNOTATION_TYPE_MEMBER_REQUIRED));
         if (writerOptional != null){
@@ -313,13 +313,13 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             printText("doclet.navAnnotationTypeMember");
         }
     }
-
+    
     protected void navGap() {
         space();
         print('|');
         space();
     }
-
+    
     /**
      * If this is an inner class or interface, write the enclosing class or
      * interface.
@@ -335,20 +335,20 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
                 boldText("doclet.Enclosing_Class");
             }
             dd();
-            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, outerClass,
+            printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, outerClass, 
                 false));
             ddEnd();
             dlEnd();
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public AnnotationTypeDoc getAnnotationTypeDoc() {
         return annotationType;
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -356,3 +356,8 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         p();
     }
 }
+
+
+
+
+

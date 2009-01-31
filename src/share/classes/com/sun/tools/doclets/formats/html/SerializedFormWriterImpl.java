@@ -37,7 +37,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     implements com.sun.tools.doclets.internal.toolkit.SerializedFormWriter {
 
     private static final String FILE_NAME = "serialized-form.html";
-
+    
     /**
      * @throws IOException
      * @throws DocletAbortException
@@ -45,7 +45,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     public SerializedFormWriterImpl() throws IOException {
         super(ConfigurationImpl.getInstance(), FILE_NAME);
     }
-
+        
     /**
      * Writes the given header.
      *
@@ -62,7 +62,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         h1End();
         centerEnd();
     }
-
+        
     /**
      * Write the given package header.
      *
@@ -78,7 +78,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         bold(packageName);
         tableFooter();
     }
-
+        
     /**
      * Write the serial UID info.
      *
@@ -90,7 +90,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         println(serialUID);
         p();
     }
-
+        
     /**
      * Write the footer.
      */
@@ -101,8 +101,8 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         printBottom();
         printBodyHtmlEnd();
     }
-
-
+    
+    
     /**
      * Write the serializable class heading.
      *
@@ -110,24 +110,24 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
      */
     public void writeClassHeader(ClassDoc classDoc) {
         String classLink = (classDoc.isPublic() || classDoc.isProtected())?
-            getLink(new LinkInfoImpl(classDoc,
+            getLink(new LinkInfoImpl(classDoc, 
                 configuration.getClassName(classDoc))):
             classDoc.qualifiedName();
         p();
         anchor(classDoc.qualifiedName());
-        String superClassLink =
-            classDoc.superclassType() != null ?
-                getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_SERIALIZED_FORM,
-                    classDoc.superclassType())) :
+        String superClassLink = 
+            classDoc.superclassType() != null ? 
+                getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_SERIALIZED_FORM, 
+                    classDoc.superclassType())) : 
                 null;
-
+            
         //Print the heading.
         String className = superClassLink == null ?
             configuration.getText(
                 "doclet.Class_0_implements_serializable", classLink) :
             configuration.getText(
                 "doclet.Class_0_extends_implements_serializable", classLink,
-                    superClassLink);
+                    superClassLink);        
         tableHeader();
         thAlignColspan("left", 2);
         font("+2");
@@ -135,17 +135,17 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         tableFooter();
         p();
     }
-
+    
     private void tableHeader() {
         tableIndexSummary();
         trBgcolorStyle("#CCCCFF", "TableSubHeadingColor");
     }
-
+    
     private void tableFooter() {
         fontEnd();
         thEnd(); trEnd(); tableEnd();
     }
-
+        
     /**
      * Return an instance of a SerialFieldWriter.
      *
@@ -154,7 +154,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     public SerialFieldWriter getSerialFieldWriter(ClassDoc classDoc) {
         return new HtmlSerialFieldWriter(this, classDoc);
     }
-
+    
     /**
      * Return an instance of a SerialMethodWriter.
      *

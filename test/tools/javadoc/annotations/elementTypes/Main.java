@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 4904495
  * @summary Test an annotation type and annotations with elements of various
- *          types.
+ *	    types.
  * @library ../../lib
  * @compile -source 1.5 ../../lib/Tester.java Main.java
  * @run main Main
@@ -41,22 +41,22 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
-        tester.verify();
+	tester.run();
+	tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-        try {
-            ClassDoc[] cds = root.classes();
-            Arrays.sort(cds);
-            for (ClassDoc cd : cds) {
-                tester.printClass(cd);
-                tester.println();
-            }
+	try {
+	    ClassDoc[] cds = root.classes();
+	    Arrays.sort(cds);
+	    for (ClassDoc cd : cds) {
+		tester.printClass(cd);
+		tester.println();
+	    }
 
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+	    return true;
+	} catch (IOException e) {
+	    return false;
+	}
     }
 }

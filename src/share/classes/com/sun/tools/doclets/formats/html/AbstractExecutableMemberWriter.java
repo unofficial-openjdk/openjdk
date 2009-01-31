@@ -43,17 +43,17 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
     public AbstractExecutableMemberWriter(SubWriterHolderWriter writer) {
         super(writer);
     }
-
+    
     /**
      * Write the type parameters for the executable member.
-     *
+     * 
      * @param member the member to write type parameters for.
      * @return the display length required to write this information.
      */
     protected int writeTypeParameters(ExecutableMemberDoc member) {
         LinkInfoImpl linkInfo = new LinkInfoImpl(
             LinkInfoImpl.CONTEXT_MEMBER_TYPE_PARAMS, member, false);
-        String typeParameters = writer.getTypeParameterLinks(linkInfo);
+        String typeParameters = writer.getTypeParameterLinks(linkInfo);      
         if (linkInfo.displayLength > 0) {
             writer.print(typeParameters + " ");
             writer.displayLength += linkInfo.displayLength + 1;
@@ -77,35 +77,35 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
         writeExceptions(member);
         writer.preEnd();
     }
-
+      
     protected void writeDeprecatedLink(ProgramElementDoc member) {
         ExecutableMemberDoc emd = (ExecutableMemberDoc)member;
-        writer.printDocLink(LinkInfoImpl.CONTEXT_MEMBER, (MemberDoc) emd,
+        writer.printDocLink(LinkInfoImpl.CONTEXT_MEMBER, (MemberDoc) emd, 
             emd.qualifiedName() + emd.flatSignature(), false);
     }
-
+  
     protected void writeSummaryLink(int context, ClassDoc cd, ProgramElementDoc member) {
         ExecutableMemberDoc emd = (ExecutableMemberDoc)member;
         String name = emd.name();
         writer.bold();
-        writer.printDocLink(context, cd, (MemberDoc) emd,
+        writer.printDocLink(context, cd, (MemberDoc) emd, 
             name, false);
         writer.boldEnd();
         writer.displayLength = name.length();
         writeParameters(emd, false);
     }
-
+ 
     protected void writeInheritedSummaryLink(ClassDoc cd,
             ProgramElementDoc member) {
-        writer.printDocLink(LinkInfoImpl.CONTEXT_MEMBER, cd, (MemberDoc) member,
+        writer.printDocLink(LinkInfoImpl.CONTEXT_MEMBER, cd, (MemberDoc) member, 
             member.name(), false);
     }
 
-    protected void writeParam(ExecutableMemberDoc member, Parameter param,
+    protected void writeParam(ExecutableMemberDoc member, Parameter param, 
         boolean isVarArg) {
         if (param.type() != null) {
             writer.printLink(new LinkInfoImpl(
-                LinkInfoImpl.CONTEXT_EXECUTABLE_MEMBER_PARAM, param.type(),
+                LinkInfoImpl.CONTEXT_EXECUTABLE_MEMBER_PARAM, param.type(), 
                 isVarArg));
         }
         if(param.name().length() > 0) {
@@ -113,12 +113,12 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             writer.print(param.name());
         }
     }
-
+    
     protected void writeParameters(ExecutableMemberDoc member) {
-        writeParameters(member, true);
+    	writeParameters(member, true);        
     }
 
-    protected void writeParameters(ExecutableMemberDoc member,
+    protected void writeParameters(ExecutableMemberDoc member, 
             boolean includeAnnotations) {
         print('(');
         Parameter[] params = member.parameters();
@@ -132,14 +132,14 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             Parameter param = params[paramstart];
             if (!param.name().startsWith("this$")) {
                 if (includeAnnotations) {
-                        boolean foundAnnotations =
-                                writer.writeAnnotationInfo(indent.length(), member, param);
-                        if (foundAnnotations) {
-                                writer.println();
-                                writer.print(indent);
+                	boolean foundAnnotations = 
+                		writer.writeAnnotationInfo(indent.length(), member, param);
+                	if (foundAnnotations) {
+                		writer.println();
+                		writer.print(indent);
                     }
                 }
-                writeParam(member, param,
+                writeParam(member, param, 
                     (paramstart == params.length - 1) && member.isVarArgs());
                 break;
             }
@@ -150,7 +150,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             writer.println();
             writer.print(indent);
             if (includeAnnotations) {
-                boolean foundAnnotations =
+                boolean foundAnnotations = 
                     writer.writeAnnotationInfo(indent.length(), member, params[i]);
                 if (foundAnnotations) {
                     writer.println();
@@ -191,7 +191,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
     protected int getReturnTypeLength(ExecutableMemberDoc member) {
         if (member instanceof MethodDoc) {
             MethodDoc method = (MethodDoc)member;
-            Type rettype = method.returnType();
+            Type rettype = method.returnType();            
             if (rettype.isPrimitive()) {
                 return rettype.typeName().length() +
                        rettype.dimension().length();
@@ -221,12 +221,12 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
         }
         return null;
     }
-
+    
     /**
      * For backward compatibility, include an anchor using the erasures of the
-     * parameters.  NOTE:  We won't need this method anymore after we fix
+     * parameters.  NOTE:  We won't need this method anymore after we fix 
      * see tags so that they use the type instead of the erasure.
-     *
+     * 
      * @param emd the ExecutableMemberDoc to anchor to.
      * @return the 1.4.x style anchor for the ExecutableMemberDoc.
      */
@@ -240,7 +240,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             }
             Type t = params[i].type();
             foundTypeVariable = foundTypeVariable || t.asTypeVariable() != null;
-            buf.append(t.isPrimitive() ?
+            buf.append(t.isPrimitive() ? 
                 t.typeName() : t.asClassDoc().qualifiedName());
             buf.append(t.dimension());
         }

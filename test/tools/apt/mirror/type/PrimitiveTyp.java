@@ -41,7 +41,7 @@ import com.sun.mirror.util.*;
 public class PrimitiveTyp extends Tester {
 
     public static void main(String[] args) {
-        (new PrimitiveTyp()).run();
+	(new PrimitiveTyp()).run();
     }
 
 
@@ -50,10 +50,10 @@ public class PrimitiveTyp extends Tester {
     private boolean b;
 
 
-    private PrimitiveType prim;         // a primitive type
+    private PrimitiveType prim;		// a primitive type
 
     protected void init() {
-        prim = (PrimitiveType) getField("b").getType();
+	prim = (PrimitiveType) getField("b").getType();
     }
 
 
@@ -61,25 +61,25 @@ public class PrimitiveTyp extends Tester {
 
     @Test(result="primitive")
     Collection<String> accept() {
-        final Collection<String> res = new ArrayList<String>();
+	final Collection<String> res = new ArrayList<String>();
 
-        prim.accept(new SimpleTypeVisitor() {
-            public void visitTypeMirror(TypeMirror t) {
-                res.add("type");
-            }
-            public void visitPrimitiveType(PrimitiveType t) {
-                res.add("primitive");
-            }
-            public void visitReferenceType(ReferenceType t) {
-                res.add("ref type");
-            }
-        });
-        return res;
+	prim.accept(new SimpleTypeVisitor() {
+	    public void visitTypeMirror(TypeMirror t) {
+		res.add("type");
+	    }
+	    public void visitPrimitiveType(PrimitiveType t) {
+		res.add("primitive");
+	    }
+	    public void visitReferenceType(ReferenceType t) {
+		res.add("ref type");
+	    }
+	});
+	return res;
     }
 
     @Test(result="boolean")
     String toStringTest() {
-        return prim.toString();
+	return prim.toString();
     }
 
 
@@ -87,6 +87,6 @@ public class PrimitiveTyp extends Tester {
 
     @Test(result="BOOLEAN")
     PrimitiveType.Kind getKind() {
-        return prim.getKind();
+	return prim.getKind();
     }
 }

@@ -72,8 +72,8 @@ public abstract class AbstractMemberWriter {
     protected void writeSummaryLink(ClassDoc cd, ProgramElementDoc member) {
         writeSummaryLink(LinkInfoImpl.CONTEXT_MEMBER, cd, member);
     }
-
-    protected abstract void writeSummaryLink(int context,
+    
+    protected abstract void writeSummaryLink(int context, 
                                              ClassDoc cd,
                                              ProgramElementDoc member);
 
@@ -125,8 +125,8 @@ public abstract class AbstractMemberWriter {
         }
         return type;
     }
-
-    protected void printModifiers(MemberDoc member) {
+ 
+    protected void printModifiers(MemberDoc member) {        
         String mod = modifierString(member);
         // According to JLS, we should not be showing public modifier for
         // interface methods.
@@ -162,7 +162,7 @@ public abstract class AbstractMemberWriter {
         }
         writer.space();
         if (type != null) {
-            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
+            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, 
                 type));
         }
         writer.printTypeSummaryFooter();
@@ -170,7 +170,7 @@ public abstract class AbstractMemberWriter {
 
     /**
      * Print the modifier and type for the member in the member summary.
-     *
+     * 
      * @param member the member to print the type for.
      * @param type   the type to print.
      */
@@ -185,14 +185,14 @@ public abstract class AbstractMemberWriter {
                 print("interface");
             }
         } else {
-            if (member instanceof ExecutableMemberDoc &&
+            if (member instanceof ExecutableMemberDoc && 
                     ((ExecutableMemberDoc) member).typeParameters().length > 0) {
-                //Code to avoid ugly wrapping in member summary table.
-                writer.table(0,0,0);
+                //Code to avoid ugly wrapping in member summary table.                    
+                writer.table(0,0,0); 
                 writer.trAlignVAlign("right", "");
                 writer.tdNowrap();
                 writer.font("-1");
-                writer.code();
+                writer.code();   
                 int displayLength = ((AbstractExecutableMemberWriter) this).
                 writeTypeParameters((ExecutableMemberDoc) member);
                 if (displayLength > 10) {
@@ -203,14 +203,14 @@ public abstract class AbstractMemberWriter {
                 writer.codeEnd();
                 writer.fontEnd();
                 writer.tdEnd();
-                writer.trEnd();
-                writer.tableEnd();
+                writer.trEnd();                  
+                writer.tableEnd();                 
             } else {
                 writer.space();
                 writer.printLink(new LinkInfoImpl(
                     LinkInfoImpl.CONTEXT_SUMMARY_RETURN_TYPE, type));
             }
-
+            
         }
         writer.printTypeSummaryFooter();
     }
@@ -229,7 +229,7 @@ public abstract class AbstractMemberWriter {
         }
         if (member.isStatic()) {
             print("static");
-        }
+        }        
     }
 
     protected void printComment(ProgramElementDoc member) {
@@ -242,7 +242,7 @@ public abstract class AbstractMemberWriter {
     protected String name(ProgramElementDoc member) {
         return member.name();
     }
-
+  
     protected void printHead(MemberDoc member) {
         writer.h3();
         writer.print(member.name());
@@ -255,7 +255,7 @@ public abstract class AbstractMemberWriter {
         }
         writer.dl();
         print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(member,
+            (new DeprecatedTaglet()).getTagletOutput(member, 
             writer.getTagletWriterInstance(false))).toString());
         printCommentAndTags(member);
         writer.dlEnd();
@@ -310,7 +310,7 @@ public abstract class AbstractMemberWriter {
         }
         return true;
     }
-
+    
 
     /**
      * Generate the code for listing the deprecated APIs. Create the table
@@ -366,8 +366,8 @@ public abstract class AbstractMemberWriter {
                     writer.bold(cd.name() + ".");
                 }
                 writeSummaryLink(
-                    pgmdoc instanceof ClassDoc ?
-                        LinkInfoImpl.CONTEXT_CLASS_USE : LinkInfoImpl.CONTEXT_MEMBER,
+                    pgmdoc instanceof ClassDoc ? 
+                        LinkInfoImpl.CONTEXT_CLASS_USE : LinkInfoImpl.CONTEXT_MEMBER, 
                     cd, pgmdoc);
                 writer.printSummaryLinkComment(this, pgmdoc);
             }
@@ -376,13 +376,13 @@ public abstract class AbstractMemberWriter {
             writer.p();
         }
     }
-
+    
     protected void navDetailLink(List members) {
             printNavDetailLink(members.size() > 0? true: false);
     }
 
 
-    protected void navSummaryLink(List members,
+    protected void navSummaryLink(List members, 
             VisibleMemberMap visibleMemberMap) {
         if (members.size() > 0) {
             printNavSummaryLink(null, true);
@@ -414,14 +414,16 @@ public abstract class AbstractMemberWriter {
     public ConfigurationImpl configuration() {
         return writer.configuration;
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void writeMemberSummary(ClassDoc classDoc, ProgramElementDoc member,
+    public void writeMemberSummary(ClassDoc classDoc, ProgramElementDoc member, 
         Tag[] firstSentenceTags, boolean isFirst, boolean isLast) {
         writer.printSummaryLinkType(this, member);
         writeSummaryLink(classDoc, member);
         writer.printSummaryLinkComment(this, member, firstSentenceTags);
     }
 }
+    
+    

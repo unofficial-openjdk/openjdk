@@ -64,8 +64,8 @@ public class PackageTreeWriter extends AbstractTreeWriter {
                       throws IOException {
         super(configuration, path, filename,
               new ClassTree(
-                configuration.classDocCatalog.allClasses(packagedoc),
-                configuration),
+              	configuration.classDocCatalog.allClasses(packagedoc),
+                configuration), 
               packagedoc);
         this.packagedoc = packagedoc;
         this.prev = prev;
@@ -106,7 +106,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      * Generate a separate tree file for each package.
      */
     protected void generatePackageTreeFile() throws IOException {
-        printHtmlHeader(packagedoc.name() + " "
+        printHtmlHeader(packagedoc.name() + " " 
             + configuration.getText("doclet.Window_Class_Hierarchy"), null, true);
 
         printPackageTreeHeader();
@@ -133,7 +133,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
         navLinks(true);
         hr();
         center();
-        h2(configuration.getText("doclet.Hierarchy_For_Package",
+        h2(configuration.getText("doclet.Hierarchy_For_Package", 
             Util.getPackageName(packagedoc)));
         centerEnd();
     }
@@ -171,7 +171,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
             navLinkPrevious(path + "package-tree.html");
         }
     }
-
+    
     /**
      * Link for the next package tree file.
      */

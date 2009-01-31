@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 5012972
  * @summary ClassDoc.getImportedClasses should return a class even if
- *          it's not in the classpath.
+ *	    it's not in the classpath.
  */
 
 import com.sun.javadoc.*;
@@ -34,27 +34,27 @@ import com.sun.javadoc.*;
 public class MissingImport extends Doclet {
 
     public static void main(String[] args) {
-        String thisFile = "" +
-            new java.io.File(System.getProperty("test.src", "."),
-                             "I.java");
+	String thisFile = "" +
+	    new java.io.File(System.getProperty("test.src", "."),
+			     "I.java");
 
-        if (com.sun.tools.javadoc.Main.execute(
-                "javadoc",
-                "MissingImport",
-                new String[] {thisFile}) != 0)
-            throw new Error("Javadoc encountered warnings or errors.");
+	if (com.sun.tools.javadoc.Main.execute(
+		"javadoc",
+		"MissingImport",
+		new String[] {thisFile}) != 0)
+	    throw new Error("Javadoc encountered warnings or errors.");
     }
 
     /*
      * The world's simplest doclet.
      */
     public static boolean start(RootDoc root) {
-        ClassDoc c = root.classNamed("I");
-        ClassDoc[] imps = c.importedClasses();
-        if (imps.length == 0 ||
-            !imps[0].qualifiedName().equals("bo.o.o.o.Gus")) {
-            throw new Error("Import bo.o.o.o.Gus not found");
-        }
-        return true;
+	ClassDoc c = root.classNamed("I");
+	ClassDoc[] imps = c.importedClasses();
+	if (imps.length == 0 ||
+	    !imps[0].qualifiedName().equals("bo.o.o.o.Gus")) {
+	    throw new Error("Import bo.o.o.o.Gus not found");
+	}
+	return true;
     }
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 public class Child extends Parent {
-
+    
     /**
      * {@inheritDoc}
      */

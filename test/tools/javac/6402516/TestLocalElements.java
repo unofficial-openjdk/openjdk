@@ -37,10 +37,10 @@ class Test {
                 return (this == other);
             }
         };
-    }
-
+    } 
+    
     String s = "super, this; List, Test2, Test; java.io.*, java.lang.*";
-
+    
     boolean b = new Object() {
             public boolean equals(Object other) {
                 String p = "p, other, super, this; super, this; List, Test2, Test; java.io.*, java.lang.*";
@@ -48,7 +48,7 @@ class Test {
                 String r = "r, q, p, other, super, this; super, this; List, Test2, Test; java.io.*, java.lang.*";
                 return (this == other);
             }
-
+        
     }.equals(null);
 }
 

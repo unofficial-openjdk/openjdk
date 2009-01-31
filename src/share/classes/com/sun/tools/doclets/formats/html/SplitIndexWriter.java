@@ -109,19 +109,19 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      * index.
      */
     protected void generateIndexFile(Character unicode) throws IOException {
-        printHtmlHeader(configuration.getText("doclet.Window_Split_Index",
+        printHtmlHeader(configuration.getText("doclet.Window_Split_Index", 
             unicode.toString()), null, true);
         printTop();
         navLinks(true);
         printLinksForIndexes();
-
+        
         hr();
-
+        
         generateContents(unicode, indexbuilder.getMemberList(unicode));
 
         navLinks(false);
         printLinksForIndexes();
-
+        
         printBottom();
         printBodyHtmlEnd();
     }
@@ -137,7 +137,7 @@ public class SplitIndexWriter extends AbstractIndexWriter {
             print(' ');
         }
     }
-
+  
     /**
      * Print the previous unicode character index link.
      */

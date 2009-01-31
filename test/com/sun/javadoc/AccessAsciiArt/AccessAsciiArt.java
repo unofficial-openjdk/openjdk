@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test 
  * @bug 4706779 4956908
  * @summary  Add text equivalent of class tree ASCII art for accessibility
  * @author dkramer
@@ -37,7 +37,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class AccessAsciiArt {
@@ -71,8 +71,8 @@ public class AccessAsciiArt {
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -83,7 +83,7 @@ public class AccessAsciiArt {
     private static final String[][] testArray = {
 
             // Test the top line of the class tree
-            {
+            { 
 "  <IMG SRC=\"../../resources/inherit.gif\" ALT=\"extended by \"><A HREF=\"../../p1/C.html\" title=\"class in p1\">p1.C</A>",
                      TMPDEST_DIR1 + "p1" + FS + "subpkg" + FS + "SSC.html" },
 
@@ -113,7 +113,7 @@ public class AccessAsciiArt {
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum)
+                System.out.println("\nSub-test " + (subtestNum) 
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -128,7 +128,7 @@ public class AccessAsciiArt {
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

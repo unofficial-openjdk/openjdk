@@ -36,18 +36,18 @@ import com.sun.tools.javac.util.*;
 public class JavadocTodo extends Todo {
     public static void preRegister(final Context context) {
         context.put(todoKey, new Context.Factory<Todo>() {
-               public Todo make() {
-                   return new JavadocTodo(context);
-               }
+	       public Todo make() {
+		   return new JavadocTodo(context);
+	       }
         });
     }
 
     protected JavadocTodo(Context context) {
-        super(context);
+	super(context);
     }
 
     public ListBuffer<Env<AttrContext>> append(Env<AttrContext> e) {
-        // do nothing; Javadoc doesn't perform attribution.
-        return this;
+	// do nothing; Javadoc doesn't perform attribution.
+	return this;
     }
 }

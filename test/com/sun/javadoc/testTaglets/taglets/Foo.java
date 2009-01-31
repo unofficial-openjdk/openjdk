@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,7 +31,7 @@ import com.sun.javadoc.*;
 import java.util.*;
 
 public class Foo extends BaseTaglet {
-
+    
     public Foo() {
         name = "foo";
     }
@@ -44,7 +44,7 @@ public class Foo extends BaseTaglet {
        }
        tagletMap.put(tag.getName(), tag);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -53,7 +53,7 @@ public class Foo extends BaseTaglet {
         inlineTags.add(new TextTag(tag.holder(), "<DT><B>Foo:</B><DD>"));
         inlineTags.addAll(Arrays.asList(tag.inlineTags()));
         inlineTags.add(new TextTag(tag.holder(), "</DD>"));
-        return writer.commentTagsToOutput(tag,
+        return writer.commentTagsToOutput(tag, 
                 (Tag[]) inlineTags.toArray(new Tag[] {}));
     }
 }

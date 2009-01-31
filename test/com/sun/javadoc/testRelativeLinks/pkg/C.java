@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,28 +24,28 @@
 package pkg;
 
 /**
- * Here is a relative link in a class:
+ * Here is a relative link in a class: 
  * <a href="relative-class-link.html">relative class link</a>.
  */
 public class C {
-
+    
     /**
-     * Here is a relative link in a field:
+     * Here is a relative link in a field: 
      * <a href="relative-field-link.html">relative field link</a>.
      */
     public C field = null;
-
+    
     /**
-     * Here is a relative link in a method:
+     * Here is a relative link in a method: 
      * <a href="relative-method-link.html">relative method link</a>.
      */
     public C method() { return null;}
-
+    
     /**
-     * Here is a relative link in a method:
+     * Here is a relative link in a method: 
      * <a
      * href="relative-multi-line-link.html">relative-multi-line-link</a>.
      */
     public C multipleLineTest() { return null;}
-
+    
 }

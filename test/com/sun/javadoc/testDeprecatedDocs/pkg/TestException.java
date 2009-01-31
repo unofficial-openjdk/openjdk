@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,17 +27,17 @@ package pkg;
  * @deprecated exception_test1 passes.
  */
 public class TestException extends Exception {
-
+    
     /**
      * @deprecated exception_test2 passes.
      */
     public int field;
-
+    
     /**
      * @deprecated exception_test3 passes.
      */
     public TestException() {}
-
+    
     /**
      * @deprecated exception_test4 passes.
      */

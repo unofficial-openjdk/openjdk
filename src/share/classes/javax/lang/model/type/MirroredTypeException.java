@@ -45,7 +45,7 @@ public class MirroredTypeException extends RuntimeException {
 
     private static final long serialVersionUID = 269;
 
-    private transient TypeMirror type;          // cannot be serialized
+    private transient TypeMirror type;		// cannot be serialized
 
     /**
      * Constructs a new MirroredTypeException for the specified type.
@@ -53,8 +53,8 @@ public class MirroredTypeException extends RuntimeException {
      * @param type  the type being accessed
      */
     public MirroredTypeException(TypeMirror type) {
-        super("Attempt to access Class object for TypeMirror " + type);
-        this.type = type;
+	super("Attempt to access Class object for TypeMirror " + type);
+	this.type = type;
     }
 
     /**
@@ -65,6 +65,6 @@ public class MirroredTypeException extends RuntimeException {
      * @return the type mirror, or {@code null} if unavailable
      */
     public TypeMirror getTypeMirror() {
-        return type;
+	return type;
     }
 }

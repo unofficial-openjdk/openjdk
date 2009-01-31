@@ -36,40 +36,40 @@ import javax.tools.StandardLocation;
 
 public class T6351767 {
     public static void main(String... args) throws Exception {
+	
+	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+	JavaFileManager jfm = compiler.getStandardFileManager(null, null, null);
 
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        JavaFileManager jfm = compiler.getStandardFileManager(null, null, null);
+	// test null
+	try {
+	    jfm.list(StandardLocation.SOURCE_PATH, null, EnumSet.of(Kind.SOURCE), false);
+	    error("NPE not thrown");
+	}
+	catch (NullPointerException e) {
+	    // expected
+	}
 
-        // test null
-        try {
-            jfm.list(StandardLocation.SOURCE_PATH, null, EnumSet.of(Kind.SOURCE), false);
-            error("NPE not thrown");
-        }
-        catch (NullPointerException e) {
-            // expected
-        }
+	// test null fileKinds
+	try {
+	    jfm.list(StandardLocation.SOURCE_PATH, "", null, false);
+	    error("NPE not thrown");
+	}
+	catch (NullPointerException e) {
+	    // expected
+	}
 
-        // test null fileKinds
-        try {
-            jfm.list(StandardLocation.SOURCE_PATH, "", null, false);
-            error("NPE not thrown");
-        }
-        catch (NullPointerException e) {
-            // expected
-        }
-
-        // test good package
-        boolean found = false;
-        for (JavaFileObject jfo : jfm.list(StandardLocation.PLATFORM_CLASS_PATH,
-                                           "java.lang",
-                                           EnumSet.of(Kind.CLASS),
-                                           false)) {
-            System.err.println("found " + jfo.toUri());
-            if (jfo.isNameCompatible("Object", Kind.CLASS))
-                found = true;
-        }
-        if (!found)
-            error("expected file, java/lang/Object.class, not found");
+	// test good package
+	boolean found = false;
+	for (JavaFileObject jfo : jfm.list(StandardLocation.PLATFORM_CLASS_PATH,
+					   "java.lang",
+					   EnumSet.of(Kind.CLASS),
+					   false)) {
+	    System.err.println("found " + jfo.toUri());
+	    if (jfo.isNameCompatible("Object", Kind.CLASS))
+		found = true;
+	}
+	if (!found)
+	    error("expected file, java/lang/Object.class, not found");
 
         found = false;
         // test good package (VM name)
@@ -87,6 +87,6 @@ public class T6351767 {
     }
 
     static void error(String msg) {
-        throw new AssertionError(msg);
+	throw new AssertionError(msg);
     }
 }

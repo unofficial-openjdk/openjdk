@@ -28,8 +28,8 @@ package com.sun.source.tree;
 import java.util.List;
 
 /**
- * A tree node for an annotation.
- *
+ * A tree node for an annotation. 
+ * 
  * For example:
  * <pre>
  *    {@code @}<em>annotationType</em>

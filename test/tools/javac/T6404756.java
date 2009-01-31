@@ -30,7 +30,7 @@
 
 public class T6404756 {
     public void foo(Foo f) {
-        @Deprecated String s1 = f.foo;
+	@Deprecated String s1 = f.foo;
     }
 
 }
@@ -38,3 +38,4 @@ public class T6404756 {
 class Foo {
     @Deprecated String foo;
 }
+

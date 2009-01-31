@@ -28,7 +28,7 @@ package com.sun.javadoc;
 
 /**
  * Represents an element of an annotation type.
- *
+ * 
  * @author Scott Seligman
  * @since 1.5
  */

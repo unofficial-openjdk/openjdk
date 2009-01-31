@@ -34,71 +34,71 @@ import javax.tools.ToolProvider;
 
 public class T6350124 {
     public static void main(String[] args) {
-        String classpath = System.getProperty("java.class.path");
+	String classpath = System.getProperty("java.class.path");
         File srcDir = new File(System.getProperty("test.src"));
 
-        // ensure the output directories are empty
-        mkCleanDir(new File("aClasses"));
-        mkCleanDir(new File("newClasses"));
-        mkCleanDir(new File("newSrc"));
+	// ensure the output directories are empty
+	mkCleanDir(new File("aClasses"));
+	mkCleanDir(new File("newClasses"));
+	mkCleanDir(new File("newSrc"));
 
-        // compile the annotation processor
-        compile("-cp", classpath,
-                "-d", "aClasses", path(srcDir, "HelloWorldAP.java"));
+	// compile the annotation processor
+	compile("-cp", classpath,
+		"-d", "aClasses", path(srcDir, "HelloWorldAP.java"));
 
-        // compile the test program, invoking the anotation processor
-        compile("-cp", classpath,
-                "-sourcepath", srcDir.getPath(),
-                "-d", "newClasses",
-                "-s", "newSrc",
-                "-processorpath", "aClasses",
-                "-processor", "HelloWorldAP", // specify processor for simplicity
-                "-proc:only",
-                path(srcDir, "Marked.java"));
+	// compile the test program, invoking the anotation processor
+	compile("-cp", classpath,
+		"-sourcepath", srcDir.getPath(),
+		"-d", "newClasses",
+		"-s", "newSrc",
+		"-processorpath", "aClasses", 
+		"-processor", "HelloWorldAP", // specify processor for simplicity
+		"-proc:only",
+		path(srcDir, "Marked.java"));
 
-        File hw = new File("newSrc", "HelloWorld.java");
-        if (!hw.exists())
-            throw new AssertionError("generated source file not found");
+	File hw = new File("newSrc", "HelloWorld.java");
+	if (!hw.exists())
+	    throw new AssertionError("generated source file not found");
 
-        File dc = new File("newClasses", "HelloWorldAP.class");
-        if (!dc.exists())
-            throw new AssertionError("generated class file not found");
+	File dc = new File("newClasses", "HelloWorldAP.class");
+	if (!dc.exists())
+	    throw new AssertionError("generated class file not found");
     }
 
     //--- the following can be considered "library code" for the test
 
     // note: jtreg @clean will only clean class files; not source files
     static void clean(File file) {
-        if (!file.exists())
-            return;
-        if (file.isDirectory()) {
-            for (File f: file.listFiles())
-                clean(f);
-        }
-        file.delete();
+	if (!file.exists())
+	    return;
+	if (file.isDirectory()) {
+	    for (File f: file.listFiles())
+		clean(f);
+	}
+	file.delete();
     }
 
     static void mkCleanDir(File dir) {
-        clean(dir);
-        dir.mkdirs();
+	clean(dir);
+	dir.mkdirs();
     }
 
     // note: jtreg @compile does not allow -d to be specified
     static void compile(String... args) {
-        StringBuffer sb = new StringBuffer("compile:");
-        for (String a: args)
-            sb.append(' ').append(a);
-        System.err.println(sb);
+	StringBuffer sb = new StringBuffer("compile:");
+	for (String a: args)
+	    sb.append(' ').append(a);
+	System.err.println(sb);
 
-        Tool t = ToolProvider.getSystemJavaCompiler();
-        int rc = t.run(System.in, System.out, System.err, args);
-        System.out.flush();
-        System.err.flush();
-        if (rc != 0)
-            throw new Error("compilation failed");
+	Tool t = ToolProvider.getSystemJavaCompiler();
+	int rc = t.run(System.in, System.out, System.err, args);
+	System.out.flush();
+	System.err.flush();
+	if (rc != 0)
+	    throw new Error("compilation failed");
     }
 
     static String path(File dir, String name) {
-        return new File(dir, name).getPath();
+	return new File(dir, name).getPath();
     }
 }

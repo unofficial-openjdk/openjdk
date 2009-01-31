@@ -33,6 +33,7 @@ import com.sun.javadoc.*;
  * Represents a see also documentation tag.
  * The @see tag can be plain text, or reference a class or member.
  *
+ * @version 06/10/97
  * @author Kaiyang Liu (original)
  * @author Robert Field (rewrite)
  * @author Atul M Dambalkar
@@ -65,8 +66,8 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
         if (where != null) {
             ClassDocImpl container = null;
             if (holder instanceof MemberDoc) {
-                container =
-                  (ClassDocImpl)((ProgramElementDoc)holder).containingClass();
+	        container =
+		  (ClassDocImpl)((ProgramElementDoc)holder).containingClass();
             } else if (holder instanceof ClassDoc) {
                 container = (ClassDocImpl)holder;
             }
@@ -84,15 +85,15 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
     public String referencedClassName() {
         return where;
     }
-
+      
     /**
-     * get the package referenced by  @see. For instance,
-     * if the comment is @see java.lang
+     * get the package referenced by  @see. For instance, 
+     * if the comment is @see java.lang  
      *      This function returns a PackageDocImpl for java.lang
      * Returns null if no known package found.
      */
     public PackageDoc referencedPackage() {
-        return referencedPackage;
+	return referencedPackage;
     }
 
     /**
@@ -102,7 +103,7 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
      * Returns null if class is not a class specified on the javadoc command line..
      */
     public ClassDoc referencedClass() {
-        return referencedClass;
+	return referencedClass;
     }
 
     /**
@@ -114,7 +115,7 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
      * Return empty string if member name was not specified..
      */
     public String referencedMemberName() {
-        return what;
+	return what;
     }
 
     /**
@@ -125,7 +126,7 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
      * Returns null if member could not be determined.
      */
     public MemberDoc referencedMember() {
-        return referencedMember;
+	return referencedMember;
     }
 
 
@@ -140,16 +141,16 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
         switch (text.charAt(0)) {
             case '<':
                 if (text.charAt(len-1) != '>') {
-                    docenv().warning(holder,
-                                     "tag.see.no_close_bracket_on_url",
-                                     name, text);
+		    docenv().warning(holder,
+				     "tag.see.no_close_bracket_on_url",
+				     name, text);
                 }
                 return;
             case '"':
                 if (len == 1 || text.charAt(len-1) != '"') {
-                    docenv().warning(holder,
-                                     "tag.see.no_close_quote",
-                                     name, text);
+                    docenv().warning(holder, 
+				     "tag.see.no_close_quote",
+				     name, text);
                 } else {
 //                    text = text.substring(1,len-1); // strip quotes
                 }
@@ -175,8 +176,8 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                 case ',':
                     if (parens <= 0) {
                         docenv().warning(holder,
-                                         "tag.see.malformed_see_tag",
-                                         name, text);
+					 "tag.see.malformed_see_tag",
+					 name, text);
                         return;
                     }
                     break;
@@ -188,17 +189,17 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                     break;
                 default:
                     if (!Character.isJavaIdentifierPart(cp)) {
-                        docenv().warning(holder,
-                                         "tag.see.illegal_character",
-                                         name, ""+cp, text);
+                        docenv().warning(holder, 
+					 "tag.see.illegal_character",
+					 name, ""+cp, text);
                     }
                     break;
             }
         }
         if (parens != 0) {
             docenv().warning(holder,
-                             "tag.see.malformed_see_tag",
-                             name, text);
+			     "tag.see.malformed_see_tag",
+			     name, text);
             return;
         }
 
@@ -226,19 +227,19 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
         if (sharp >= 0) {
             // class#member
             where = seetext.substring(0, sharp);
-            what = seetext.substring(sharp + 1);
+	    what = seetext.substring(sharp + 1);
         } else {
             if (seetext.indexOf('(') >= 0) {
-                docenv().warning(holder,
-                                 "tag.see.missing_sharp",
-                                 name, text);
+                docenv().warning(holder, 
+				 "tag.see.missing_sharp", 
+				 name, text);
                 where = "";
-                what = seetext;
+		what = seetext;
             }
             else {
                 // no member specified, text names class
                 where = seetext;
-                what = null;
+		what = null;
             }
         }
     }
@@ -261,19 +262,19 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                 referencedClass = docenv().lookupClass(
                     ((ProgramElementDoc) holder()).containingPackage().name() + "." + where);
             }
-
+            
             if (referencedClass == null) { /* may just not be in this run */
 //                docenv().warning(holder, "tag.see.class_not_found",
-//                                 where, text);
+//	                           where, text);
                 // check if it's a package name
                 referencedPackage = docenv().lookupPackage(where);
                 return;
             }
         } else {
             if (containingClass == null) {
-                docenv().warning(holder,
-                                 "tag.see.class_not_specified",
-                                 name, text);
+                docenv().warning(holder, 
+				 "tag.see.class_not_specified",
+				 name, text);
                 return;
             } else {
                 referencedClass = containingClass;
@@ -288,7 +289,7 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
             String memName = (paren >= 0 ? what.substring(0, paren) : what);
             String[] paramarr;
             if (paren > 0) {
-                // has parameter list -- should be method or constructor
+	        // has parameter list -- should be method or constructor
                 paramarr = new ParameterParseMachine(what.
                         substring(paren, what.length())).parseParameters();
                 if (paramarr != null) {
@@ -298,23 +299,23 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                     referencedMember = null;
                 }
             } else {
-                // no parameter list -- should be field
+	        // no parameter list -- should be field
                 referencedMember = findExecutableMember(memName, null,
                                                         referencedClass);
                 FieldDoc fd = ((ClassDocImpl)referencedClass).
                                                             findField(memName);
-                // when no args given, prefer fields over methods
+		// when no args given, prefer fields over methods
                 if (referencedMember == null ||
-                    (fd != null &&
-                     fd.containingClass()
-                         .subclassOf(referencedMember.containingClass()))) {
-                    referencedMember = fd;
+		    (fd != null &&
+		     fd.containingClass()
+		         .subclassOf(referencedMember.containingClass()))) {
+		    referencedMember = fd;
                 }
             }
             if (referencedMember == null) {
-                docenv().warning(holder,
-                                 "tag.see.can_not_find_member",
-                                 name, what, where);
+                docenv().warning(holder, 
+				 "tag.see.can_not_find_member",
+				 name, what, where);
             }
         }
     }
@@ -324,7 +325,7 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
         MemberDoc meth = findExecutableMember(memName, paramarr, referencedClass);
         ClassDoc[] nestedclasses = referencedClass.innerClasses();
         if (meth == null) {
-            for (int i = 0; i < nestedclasses.length; i++) {
+   	    for (int i = 0; i < nestedclasses.length; i++) {
                 meth = findReferencedMethod(memName, paramarr, nestedclasses[i]);
                 if (meth != null) {
                     return meth;
@@ -333,18 +334,18 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
         }
         return null;
     }
-
+        
     private MemberDoc findExecutableMember(String memName, String[] paramarr,
                                            ClassDoc referencedClass) {
         if (memName.equals(referencedClass.name())) {
-            return ((ClassDocImpl)referencedClass).findConstructor(memName,
+            return ((ClassDocImpl)referencedClass).findConstructor(memName, 
                                                                    paramarr);
         } else {   // it's a method.
-            return ((ClassDocImpl)referencedClass).findMethod(memName,
+            return ((ClassDocImpl)referencedClass).findMethod(memName, 
                                                               paramarr);
         }
-    }
-
+    } 
+ 
     // separate "int, String" from "(int, String)"
     // (int i, String s) ==> [0] = "int",  [1] = String
     // (int[][], String[]) ==> [0] = "int[][]" // [1] = "String[]"
@@ -404,9 +405,9 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                         if (Character.isJavaIdentifierStart(cp)) { // name
                             if (prevstate == ARRAYDECORATION) {
                                 docenv().warning(holder,
-                                                 "tag.missing_comma_space",
-                                                 name,
-                                                 "(" + parameters + ")");
+						 "tag.missing_comma_space", 
+						 name,
+						 "(" + parameters + ")");
                                 return (String[])null;
                             }
                             addTypeToParamList();
@@ -425,10 +426,10 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
                             typeId.append(']');
                             state = TNSPACE;
                         } else if (!Character.isWhitespace(cp)) {
-                            docenv().warning(holder,
-                                             "tag.illegal_char_in_arr_dim",
-                                             name,
-                                             "(" + parameters + ")");
+                            docenv().warning(holder, 
+					     "tag.illegal_char_in_arr_dim",
+					     name,
+					     "(" + parameters + ")");
                             return (String[])null;
                         }
                         prevstate = ARRAYDECORATION;
@@ -443,9 +444,9 @@ class SeeTagImpl extends TagImpl implements SeeTag, LayoutCharacters {
             }
             if (state == ARRAYDECORATION ||
                 (state == START && prevstate == TNSPACE)) {
-                docenv().warning(holder,
-                                 "tag.illegal_see_tag",
-                                 "(" + parameters + ")");
+                docenv().warning(holder, 
+				 "tag.illegal_see_tag",
+				 "(" + parameters + ")");
             }
             if (typeId.length() > 0) {
                 paramList.append(typeId.toString());

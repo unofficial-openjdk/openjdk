@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,6 +23,6 @@
 
 package pkg;
 
-public class T7 extends Exception
+public class T7 extends Exception 
 {
 }

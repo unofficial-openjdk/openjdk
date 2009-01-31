@@ -36,17 +36,17 @@ public class T5094318 {
 
     // Tiger
     public static void method(int[] array){
-        System.out.println("You gave me an array of ints");
-        throw new RuntimeException();
+	System.out.println("You gave me an array of ints");
+	throw new RuntimeException();
     }
 
     // Pre-Tiger
     public static void method(Object obj){
-        System.out.println("You gave me an object");
+	System.out.println("You gave me an object");
     }
 
     public static void main(String[] args){
-        method(new int[0].clone());
+	method(new int[0].clone());
     }
 
 }

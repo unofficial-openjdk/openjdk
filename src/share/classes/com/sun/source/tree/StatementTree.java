@@ -26,7 +26,7 @@
 package com.sun.source.tree;
 
 /**
- * A tree node used as the base class for the different kinds of
+ * A tree node used as the base class for the different kinds of 
  * statements.
  *
  * @see "The Java Language Specification, 3rd ed, chapter 14"

@@ -48,7 +48,7 @@ import java.nio.charset.Charset;
  * the Filer contract are maintained:
  *
  * <blockquote>
- *
+ * 
  *  During each run of an annotation processing tool, a file with a
  *  given pathname may be created only once. If that file already
  *  exists before the first attempt to create it, the old contents
@@ -57,9 +57,9 @@ import java.nio.charset.Charset;
  *  open both a class file and source file for the same type name.
  *
  * </blockquote>
- *
+ * 
  * Specific checks will include:
- *
+ * 
  * <ul>
  *
  * <li> Source and class files can be written to from either a Writer or an OutputStream.
@@ -82,91 +82,91 @@ public class TestFilerConstraints extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
-        round++;
+	round++;
 
-        try {
-            switch(round) {
-                // Open two source files
-            case 1:
-                pw_src1 = new PrintWriter(filer.createSourceFile("Src1").openWriter());
-                pw_src1.println("class Src1 {}");
-                pw_src1.close();
+	try {
+	    switch(round) {
+		// Open two source files
+	    case 1:
+		pw_src1 = new PrintWriter(filer.createSourceFile("Src1").openWriter());
+		pw_src1.println("class Src1 {}");
+		pw_src1.close();
 
-                // Hold open across rounds
-                pw_src2 = new PrintWriter(new OutputStreamWriter(filer.createSourceFile("Src2").openOutputStream()));
-                break;
+		// Hold open across rounds
+		pw_src2 = new PrintWriter(new OutputStreamWriter(filer.createSourceFile("Src2").openOutputStream()));
+		break;
 
-            case 2:
-                testExpectedType(roundEnv, "Src1");
+	    case 2:
+		testExpectedType(roundEnv, "Src1");
 
-                // Close Src1 a second time
-                pw_src1.close();
+		// Close Src1 a second time
+		pw_src1.close();
 
-                pw_src2.println("class Src2 {}");
-                pw_src2.close();
+		pw_src2.println("class Src2 {}");
+		pw_src2.close();
+	    
+		break;
 
-                break;
+	    case 3:
+		testExpectedType(roundEnv, "Src2");
 
-            case 3:
-                testExpectedType(roundEnv, "Src2");
+		// Close Src2 a second time
+		pw_src2.close();
+	    
+		os_classFile1 = filer.createClassFile("ClassFile1").openOutputStream();
+		for (int value : classFile1Bytes)
+		    os_classFile1.write((byte)value);
+		os_classFile1.close();
 
-                // Close Src2 a second time
-                pw_src2.close();
+		break;
 
-                os_classFile1 = filer.createClassFile("ClassFile1").openOutputStream();
-                for (int value : classFile1Bytes)
-                    os_classFile1.write((byte)value);
-                os_classFile1.close();
+	    case 4:
+		testExpectedType(roundEnv, "ClassFile1");
 
-                break;
+		// Close a second time
+		os_classFile1.close();
 
-            case 4:
-                testExpectedType(roundEnv, "ClassFile1");
+		testReopening();
 
-                // Close a second time
-                os_classFile1.close();
+ 		pw_classFile2 = new PrintWriter(filer.createClassFile("ClassFile2",
+								      (Element[])null).openWriter());
 
-                testReopening();
+ 		for(int byteVal : classFile2Bytes) {
+ 		    // int value = (0xff00 & (classFile2Bytes[i]<<8)) | classFile2Bytes[i+1];
+ 		    // System.out.print(Integer.toHexString(value));
+ 		    //if ((i % 4) == 0)
+		    // System.out.println();
+ 		    pw_classFile2.write((char) (0xff & byteVal));
+ 		}
+ 		pw_classFile2.close();
 
-                pw_classFile2 = new PrintWriter(filer.createClassFile("ClassFile2",
-                                                                      (Element[])null).openWriter());
-
-                for(int byteVal : classFile2Bytes) {
-                    // int value = (0xff00 & (classFile2Bytes[i]<<8)) | classFile2Bytes[i+1];
-                    // System.out.print(Integer.toHexString(value));
-                    //if ((i % 4) == 0)
-                    // System.out.println();
-                    pw_classFile2.write((char) (0xff & byteVal));
-                }
-                pw_classFile2.close();
-
-                break;
-
-
-
-            case 5:
-                testExpectedType(roundEnv, "ClassFile2");
-                // Close a second time
-                pw_classFile2.close();
+ 		break;
 
 
-                break;
 
-            case 6:
-                if (!roundEnv.processingOver() && !roundEnv.errorRaised())
-                    throw new RuntimeException("Bad round state: " + roundEnv);
-                break;
+	    case 5:
+ 		testExpectedType(roundEnv, "ClassFile2");
+ 		// Close a second time
+ 		pw_classFile2.close();
 
-            default:
-                throw new RuntimeException("Unexpected round number!");
-            }
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
+
+ 		break;
+
+ 	    case 6:
+		if (!roundEnv.processingOver() && !roundEnv.errorRaised())
+		    throw new RuntimeException("Bad round state: " + roundEnv);
+		break;
+
+	    default:
+		throw new RuntimeException("Unexpected round number!");
+	    }
+	} catch (IOException ioe) {
+	    throw new RuntimeException(ioe);
+	}
 
         return true;
     }
-
+    
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
@@ -183,44 +183,44 @@ public class TestFilerConstraints extends AbstractProcessor {
      * element.
      */
     private void testExpectedType(RoundEnvironment roundEnv, String name) {
-        if (!roundEnv.getRootElements().isEmpty()) {
-            for(TypeElement type : typesIn(roundEnv.getRootElements())) {
-                if (!name.contentEquals(type.getSimpleName()))
-                    throw new RuntimeException("Unexpected type " +  type.getSimpleName());
-            }
-        } else
-            throw new RuntimeException("Unexpected empty root elements.");
+	if (!roundEnv.getRootElements().isEmpty()) {
+	    for(TypeElement type : typesIn(roundEnv.getRootElements())) {
+		if (!name.contentEquals(type.getSimpleName()))
+		    throw new RuntimeException("Unexpected type " +  type.getSimpleName());
+	    } 
+	} else
+	    throw new RuntimeException("Unexpected empty root elements.");
     }
 
     private void testReopening() throws IOException {
-        String[] names = {"Src1", "Src2", "ClassFile1"};
-        for (String name : names) {
-            try {
-                filer.createSourceFile(name);
-                throw new RuntimeException("Opened a source file for type " + name);
-            } catch (FilerException fe) {;}
+	String[] names = {"Src1", "Src2", "ClassFile1"};
+	for (String name : names) {
+	    try {
+		filer.createSourceFile(name);
+		throw new RuntimeException("Opened a source file for type " + name);
+	    } catch (FilerException fe) {;}
 
-            try {
-                filer.createClassFile(name);
-                throw new RuntimeException("Opened a class file for type " + name);
-            } catch (FilerException fe) {;}
-        }
+	    try {
+		filer.createClassFile(name);
+		throw new RuntimeException("Opened a class file for type " + name);
+	    } catch (FilerException fe) {;}
+	}
 
-        // Try to open a resource over a source file
-        try {
-            filer.createResource(SOURCE_OUTPUT, "", "Src1.java");
-            throw new RuntimeException("Opened a text file over Src1.java!");
-        } catch (FilerException fe) {;}
-
-        // Try to open a resource over a class file
-        try {
-            filer.createResource(CLASS_OUTPUT, "", "ClassFile1.class");
-            throw new RuntimeException("Opened a text file over Src1.java!");
-        } catch (FilerException fe) {;}
-
+	// Try to open a resource over a source file
+	try {
+	    filer.createResource(SOURCE_OUTPUT, "", "Src1.java");
+	    throw new RuntimeException("Opened a text file over Src1.java!");
+	} catch (FilerException fe) {;}
+	
+	// Try to open a resource over a class file
+	try {
+	    filer.createResource(CLASS_OUTPUT, "", "ClassFile1.class");
+	    throw new RuntimeException("Opened a text file over Src1.java!");
+	} catch (FilerException fe) {;}
+	
     }
 
-    private int[] classFile1Bytes =
+    private int[] classFile1Bytes = 
     {202, 254, 186, 190,   0,   0,   0,  50,
        0,  13,  10,   0,   3,   0,  10,   7,
        0,  11,   7,   0,  12,   1,   0,   6,
@@ -247,7 +247,7 @@ public class TestFilerConstraints extends AbstractProcessor {
        0,   1,   0,   8,   0,   0,   0,   2,
        0,   9,};
 
-    private int[] classFile2Bytes =
+    private int[] classFile2Bytes = 
     {202, 254, 186, 190,   0,   0,   0,  50,
        0,  13,  10,   0,   3,   0,  10,   7,
        0,  11,   7,   0,  12,   1,   0,   6,

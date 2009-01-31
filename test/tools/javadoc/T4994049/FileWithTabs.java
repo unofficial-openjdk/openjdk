@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,5 +22,5 @@
  */
 
 public class FileWithTabs {
-        public void tabbedMethod() {}
+	public void tabbedMethod() {}
 }

@@ -39,7 +39,7 @@ import com.sun.mirror.util.*;
 public class ParameterDecl extends Tester {
 
     public static void main(String[] args) {
-        (new ParameterDecl()).run();
+	(new ParameterDecl()).run();
     }
 
 
@@ -49,7 +49,7 @@ public class ParameterDecl extends Tester {
     }
 
     @interface AT2 {
-        boolean value();
+	boolean value();
     }
 
     private void m1(@AT1 @AT2(true) final int p1) {
@@ -59,10 +59,10 @@ public class ParameterDecl extends Tester {
     }
 
 
-    private ParameterDeclaration p1 = null;     // a parameter
+    private ParameterDeclaration p1 = null;	// a parameter
 
     protected void init() {
-        p1 = getMethod("m1").getParameters().iterator().next();
+	p1 = getMethod("m1").getParameters().iterator().next();
     }
 
 
@@ -70,37 +70,37 @@ public class ParameterDecl extends Tester {
 
     @Test(result="param")
     Collection<String> accept() {
-        final Collection<String> res = new ArrayList<String>();
+	final Collection<String> res = new ArrayList<String>();
 
-        p1.accept(new SimpleDeclarationVisitor() {
-            public void visitFieldDeclaration(FieldDeclaration f) {
-                res.add("field");
-            }
-            public void visitParameterDeclaration(ParameterDeclaration p) {
-                res.add("param");
-            }
-        });
-        return res;
+	p1.accept(new SimpleDeclarationVisitor() {
+	    public void visitFieldDeclaration(FieldDeclaration f) {
+		res.add("field");
+	    }
+	    public void visitParameterDeclaration(ParameterDeclaration p) {
+		res.add("param");
+	    }
+	});
+	return res;
     }
 
     @Test(result={"@ParameterDecl.AT1", "@ParameterDecl.AT2(true)"})
     Collection<AnnotationMirror> getAnnotationMirrors() {
-        return p1.getAnnotationMirrors();
+	return p1.getAnnotationMirrors();
     }
 
     @Test(result={"final"})
     Collection<Modifier> getModifiers() {
-        return p1.getModifiers();
+	return p1.getModifiers();
     }
 
     @Test(result="ParameterDecl.java")
     String getPosition() {
-        return p1.getPosition().file().getName();
+	return p1.getPosition().file().getName();
     }
 
     @Test(result="p1")
     String getSimpleName() {
-        return p1.getSimpleName();
+	return p1.getSimpleName();
     }
 
 
@@ -108,7 +108,7 @@ public class ParameterDecl extends Tester {
 
     @Test(result="int")
     TypeMirror getType() {
-        return p1.getType();
+	return p1.getType();
     }
 
 
@@ -116,21 +116,21 @@ public class ParameterDecl extends Tester {
 
     @Test(result="int p1")
     String toStringTest() {
-        return p1.toString();
+	return p1.toString();
     }
 
     @Test(result="true")
     boolean equalsTest1() {
-        ParameterDeclaration p =
-            getMethod("m1").getParameters().iterator().next();
-        return p1.equals(p);
+	ParameterDeclaration p =
+	    getMethod("m1").getParameters().iterator().next();
+	return p1.equals(p);
     }
 
     // Not all p1's are equal.
     @Test(result="false")
     boolean equalsTest2() {
-        ParameterDeclaration p2 =
-            getMethod("m2").getParameters().iterator().next();
-        return p1.equals(p2);
+	ParameterDeclaration p2 =
+	    getMethod("m2").getParameters().iterator().next();
+	return p1.equals(p2);
     }
 }

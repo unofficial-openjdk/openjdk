@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,17 +27,17 @@ package pkg;
  * @deprecated interface_test1 passes.
  */
 public class TestInterface {
-
+    
     /**
      * @deprecated interface_test2 passes.
      */
     public int field;
-
+    
     /**
      * @deprecated interface_test3 passes.
      */
     public TestInterface() {}
-
+    
     /**
      * @deprecated interface_test4 passes.
      */

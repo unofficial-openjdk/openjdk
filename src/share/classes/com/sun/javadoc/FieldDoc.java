@@ -72,7 +72,7 @@ public interface FieldDoc extends MemberDoc {
      *
      * @return the text of a Java language expression whose value
      * is the value of the constant. The expression uses no identifiers
-     * other than primitive literals. If the field is
+     * other than primitive literals. If the field is 
      * not constant, returns null.
      */
     String constantValueExpression();

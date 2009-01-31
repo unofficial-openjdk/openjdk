@@ -76,8 +76,8 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
     protected void printIndexRow(PackageDoc pd) {
         fontStyle("FrameItemFont");
         if (pd.name().length() > 0) {
-            print(getHyperLink(pathString(pd, "package-frame.html"), "",
-                pd.name(), false, "", "", "packageFrame"));
+            print(getHyperLink(pathString(pd, "package-frame.html"), "", 
+                pd.name(), false, "", "", "packageFrame"));         
         } else {
             print(getHyperLink("package-frame.html", "", "&lt;unnamed package>",
                 false, "", "", "packageFrame"));
@@ -130,9 +130,9 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
      */
     protected void printAllClassesPackagesLink() {
         fontStyle("FrameItemFont");
-        print(getHyperLink("allclasses-frame.html", "",
-            configuration.getText("doclet.All_Classes"), false, "", "",
-            "packageFrame"));
+        print(getHyperLink("allclasses-frame.html", "", 
+            configuration.getText("doclet.All_Classes"), false, "", "", 
+            "packageFrame"));       
         fontEnd();
         p();
         fontSizeStyle("+1", "FrameHeadingFont");
@@ -151,7 +151,7 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
 
     /**
      * Print Html closing tags for the table for package index.
-     *
+     * 
      * @param isHeading true if this is a table for a heading.
      */
     private void printTableFooter(boolean isHeading) {
@@ -166,7 +166,7 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
 
     /**
      * Print Html tags for the table for package index.
-     *
+     * 
      * @param isHeading true if this is a table for a heading.
      */
     private void printTableHeader(boolean isHeading) {
@@ -177,6 +177,10 @@ public class PackageIndexFrameWriter extends AbstractPackageIndexWriter {
         } else {
             tdNowrap();
         }
-
+        
     }
 }
+
+
+
+

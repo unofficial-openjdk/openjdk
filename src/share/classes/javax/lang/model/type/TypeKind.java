@@ -145,19 +145,19 @@ public enum TypeKind {
      * @return {@code true} if this kind corresponds to a primitive type
      */
     public boolean isPrimitive() {
-        switch(this) {
-        case BOOLEAN:
-        case BYTE:
-        case SHORT:
-        case INT:
-        case LONG:
-        case CHAR:
-        case FLOAT:
-        case DOUBLE:
-            return true;
-
-        default:
-            return false;
-        }
+	switch(this) {
+	case BOOLEAN:
+	case BYTE:
+	case SHORT:
+	case INT:
+	case LONG:
+	case CHAR:
+	case FLOAT:
+	case DOUBLE:
+	    return true;
+	    
+	default:
+	    return false;
+	}
     }
 }

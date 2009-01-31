@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,25 +25,25 @@ package pkg;
 
 /**
  * This is a sample Enum.
- *
+ * 
  * @author Jamie Ho
  */
 public enum Coin {
 
   Penny, Nickel, Dime;
-
+  
   /**
-   * Overloaded valueOf() method has correct documentation.
+   * Overloaded valueOf() method has correct documentation. 
    */
   public static Coin valueOf(int foo) {
       return null;
   }
-
+  
   /**
    * Overloaded values method  has correct documentation.
    */
   public static final Coin[] values(int foo) {
       return null;
   }
-
+  
 }

@@ -78,9 +78,9 @@ public interface SerialFieldTag extends Tag, Comparable<Object> {
      *
      * @param   obj the <code>Object</code> to be compared.
      * @return  a negative integer, zero, or a positive integer as this Object
-     *          is less than, equal to, or greater than the given Object.
+     *		is less than, equal to, or greater than the given Object.
      * @exception ClassCastException the specified Object's type prevents it
-     *            from being compared to this Object.
+     *		  from being compared to this Object.
      * @since 1.2
      */
     public int compareTo(Object obj);

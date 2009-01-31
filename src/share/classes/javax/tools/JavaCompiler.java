@@ -61,7 +61,7 @@ import javax.annotation.processing.Processor;
  * <p>An instance implementing this interface must conform to the Java
  * Language Specification and generate class files conforming to the
  * Java Virtual Machine specification.  The versions of these
- * specifications are defined in the {@linkplain Tool} interface.
+ * specifications are defined in the {@linkplain Tool} interface.  
  *
  * Additionally, an instance of this interface supporting {@link
  * javax.lang.model.SourceVersion#RELEASE_6 SourceVersion.RELEASE_6}

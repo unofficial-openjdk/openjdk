@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,17 +34,17 @@ import java.util.*;
 public class CompletionFailure extends Doclet
 {
     public static void main(String[] args) {
-        // run javadoc on package pkg
-        if (com.sun.tools.javadoc.Main.execute("javadoc",
-                                               "CompletionFailure",
-                                               new String[]{"pkg"}) != 0)
-            throw new Error();
+	// run javadoc on package pkg
+	if (com.sun.tools.javadoc.Main.execute("javadoc",
+					       "CompletionFailure",
+					       new String[]{"pkg"}) != 0)
+	    throw new Error();
     }
 
     public static boolean start(com.sun.javadoc.RootDoc root) {
-        ClassDoc[] classes = root.classes();
-        if (classes.length != 1)
-            throw new Error("1 " + Arrays.asList(classes));
-        return true;
+	ClassDoc[] classes = root.classes();
+	if (classes.length != 1)
+	    throw new Error("1 " + Arrays.asList(classes));
+	return true;
     }
 }

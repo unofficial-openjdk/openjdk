@@ -56,19 +56,19 @@ public class TestSourceVersion extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
-        SourceVersion expectedVersion =
-            SourceVersion.valueOf(processingEnv.getOptions().get("ExpectedVersion"));
-        SourceVersion actualVersion =  processingEnv.getSourceVersion();
-        System.out.println("Expected SourceVersion " + expectedVersion +
-                           " actual SourceVersion "  + actualVersion);
-        if (expectedVersion != actualVersion)
-            throw new RuntimeException();
+	SourceVersion expectedVersion =  
+	    SourceVersion.valueOf(processingEnv.getOptions().get("ExpectedVersion"));
+	SourceVersion actualVersion =  processingEnv.getSourceVersion();
+	System.out.println("Expected SourceVersion " + expectedVersion + 
+			   " actual SourceVersion "  + actualVersion);
+	if (expectedVersion != actualVersion)
+	    throw new RuntimeException();
 
-        return true;
+	return true;
     }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latest();
+	return SourceVersion.latest();
     }
 }

@@ -62,37 +62,37 @@ public class TestGetResource extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
-        try {
-            if (!roundEnv.processingOver()) {
-                String phase = options.get("phase");
+	try {
+	    if (!roundEnv.processingOver()) {
+		String phase = options.get("phase");
 
-                if (phase.equals("write")) {
-                    PrintWriter pw =
-                        new PrintWriter(filer.createResource(CLASS_OUTPUT, PKG, RESOURCE_NAME).openWriter());
-                    pw.print(CONTENTS);
-                    pw.close();
-                } else if (phase.equals("read")) {
-                    String contents = filer.getResource(CLASS_OUTPUT,
-                                                       PKG,
-                                                       RESOURCE_NAME).getCharContent(false).toString();
-                    if (!contents.equals(CONTENTS))
-                        throw new RuntimeException("Expected \n\t" + CONTENTS +
-                                                   "\nbut instead got \n\t" +
-                                                   contents);
-                    // Now try to open the file for writing
-                    filer.createResource(CLASS_OUTPUT,
-                                         PKG,
-                                         RESOURCE_NAME);
-                } else {
-                    throw new RuntimeException("Unexpected phase: " + phase);
-                }
-            }
-        } catch(IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-        return false;
+		if (phase.equals("write")) {
+		    PrintWriter pw = 
+			new PrintWriter(filer.createResource(CLASS_OUTPUT, PKG, RESOURCE_NAME).openWriter());
+		    pw.print(CONTENTS);
+		    pw.close();
+		} else if (phase.equals("read")) {
+		    String contents = filer.getResource(CLASS_OUTPUT,
+						       PKG,
+						       RESOURCE_NAME).getCharContent(false).toString();
+		    if (!contents.equals(CONTENTS))
+			throw new RuntimeException("Expected \n\t" + CONTENTS +
+						   "\nbut instead got \n\t" + 
+						   contents);
+		    // Now try to open the file for writing
+		    filer.createResource(CLASS_OUTPUT,
+					 PKG,
+					 RESOURCE_NAME);
+		} else {
+		    throw new RuntimeException("Unexpected phase: " + phase);
+		}
+	    }
+	} catch(IOException ioe) {
+	    throw new RuntimeException(ioe);
+	}
+	return false;
     }
-
+    
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
@@ -101,6 +101,6 @@ public class TestGetResource extends AbstractProcessor {
         super.init(processingEnv);
         messager = processingEnv.getMessager();
         filer    = processingEnv.getFiler();
-        options  = processingEnv.getOptions();
+	options  = processingEnv.getOptions();
     }
 }

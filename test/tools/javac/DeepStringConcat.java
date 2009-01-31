@@ -32,7 +32,7 @@
 
 public class DeepStringConcat {
     public static void main(String[] args) {
-        if (X.length() != 32001) throw new Error();
+	if (X.length() != 32001) throw new Error();
     }
     public static final String X =
 "a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+
@@ -1955,6 +1955,6 @@ public class DeepStringConcat {
 "a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+
 "a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+"a"+
 
-        "b";
-        /**/
+	"b";
+	/**/
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,12 +33,12 @@
  */
 
 public class TestAbsLinkPath extends JavadocTester {
-
+    
     private static final String BUG_ID = "4640745";
     private static final String[][] TEST = {
         {"tmp" + FS + "pkg1" + FS + "C1.html", "C2.html"}};
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     private static final String[] ARGS1 =
         new String[] {
             "-d", "tmp2", "-sourcepath", SRC_DIR, "pkg2"};
@@ -46,7 +46,7 @@ public class TestAbsLinkPath extends JavadocTester {
         new String[] {
             "-d", "tmp", "-sourcepath", SRC_DIR,
             "-link", ".." + FS + "tmp2", "pkg1"};
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -57,14 +57,14 @@ public class TestAbsLinkPath extends JavadocTester {
         run(tester, ARGS2,  TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

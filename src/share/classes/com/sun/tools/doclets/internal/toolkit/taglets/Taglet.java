@@ -60,7 +60,7 @@ import com.sun.javadoc.*;
  */
 
 public interface Taglet {
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in field documentation.
@@ -69,7 +69,7 @@ public interface Taglet {
      * otherwise.
      */
     public abstract boolean inField();
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in constructor documentation.
@@ -78,7 +78,7 @@ public interface Taglet {
      * otherwise.
      */
     public abstract boolean inConstructor();
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in method documentation.
@@ -96,7 +96,7 @@ public interface Taglet {
      * otherwise.
      */
     public abstract boolean inOverview();
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is used in package documentation.
@@ -115,7 +115,7 @@ public interface Taglet {
      * otherwise.
      */
     public abstract boolean inType();
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is an inline tag. Return false otherwise.
@@ -129,7 +129,7 @@ public interface Taglet {
      * @return the name of this custom tag.
      */
     public abstract String getName();
-
+    
     /**
      * Given the <code>Tag</code> representation of this custom
      * tag, return its TagletOutput representation, which is output
@@ -153,3 +153,4 @@ public interface Taglet {
     public abstract TagletOutput getTagletOutput(Doc holder, TagletWriter writer) throws IllegalArgumentException;
 
 }
+

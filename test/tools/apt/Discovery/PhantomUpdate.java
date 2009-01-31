@@ -35,50 +35,50 @@ import javax.lang.model.util.*;
 import java.util.*;
 import java.io.*;
 
-@SupportedAnnotationTypes("*")  // Process all annotations
+@SupportedAnnotationTypes("*")	// Process all annotations
 @SupportedSourceVersion(RELEASE_6)
 public class PhantomUpdate extends AbstractProcessor {
     boolean firstRound = true;
 
     public boolean process(Set<? extends TypeElement> annotations,
-                           RoundEnvironment roundEnv) {
-        if (firstRound) {
-            verifyOptions();
-            printGoodbyeWorld();
-            firstRound = false;
-        }
-        return true; // Claim all annotations
+			   RoundEnvironment roundEnv) {
+	if (firstRound) {
+	    verifyOptions();
+	    printGoodbyeWorld();
+	    firstRound = false;
+	}
+	return true; // Claim all annotations
     }
 
     /*
      * Expected options are "foo" and "bar=baz".
      */
     private void verifyOptions() {
-        Map<String, String> actualOptions = processingEnv.getOptions();
-        Map<String, String> expectedOptions = new LinkedHashMap<String, String>();
-        expectedOptions.put("foo", null);
-        expectedOptions.put("bar", "baz");
-
-        if (!actualOptions.equals(expectedOptions) ) {
-            System.err.println("Expected options " + expectedOptions +
-                               "\n but got " + actualOptions);
-            throw new RuntimeException("Options mismatch");
-        }
+	Map<String, String> actualOptions = processingEnv.getOptions();
+	Map<String, String> expectedOptions = new LinkedHashMap<String, String>();
+	expectedOptions.put("foo", null);
+	expectedOptions.put("bar", "baz");
+	
+	if (!actualOptions.equals(expectedOptions) ) {
+	    System.err.println("Expected options " + expectedOptions + 
+			       "\n but got " + actualOptions);
+	    throw new RuntimeException("Options mismatch");
+	}
     }
 
     private void printGoodbyeWorld() {
-        try {
-            // Create new source file
-            PrintWriter pw = new PrintWriter(processingEnv.getFiler().createSourceFile("GoodbyeWorld").openWriter());
-            pw.println("public class GoodbyeWorld {");
-            pw.println("  // PhantomUpdate Goodbye world");
-            pw.println("  public static void main(String argv[]) {");
-            pw.println("    System.out.println(\"Goodbye World\");");
-            pw.println("  }");
-            pw.println("}");
-            pw.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+	try {
+	    // Create new source file
+	    PrintWriter pw = new PrintWriter(processingEnv.getFiler().createSourceFile("GoodbyeWorld").openWriter());
+	    pw.println("public class GoodbyeWorld {");
+	    pw.println("  // PhantomUpdate Goodbye world");
+	    pw.println("  public static void main(String argv[]) {");
+	    pw.println("    System.out.println(\"Goodbye World\");");
+	    pw.println("  }");
+	    pw.println("}");
+	    pw.close();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
     }
 }

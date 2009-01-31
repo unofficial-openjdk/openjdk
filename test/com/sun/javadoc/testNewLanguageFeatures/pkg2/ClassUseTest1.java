@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,7 +26,7 @@ package pkg2;
 public class ClassUseTest1 <T extends Foo & Foo2> {
 
     public ParamTest<Foo> field;
-
+    
     public <T extends Foo & Foo2> T method(T t) {
         return null;
     }

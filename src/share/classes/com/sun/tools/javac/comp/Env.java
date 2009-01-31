@@ -80,49 +80,49 @@ public class Env<A> implements Iterable<Env<A>> {
      *  with a given info field.
      */
     public Env(JCTree tree, A info) {
-        this.next = null;
-        this.outer = null;
-        this.tree = tree;
-        this.toplevel = null;
-        this.enclClass = null;
-        this.enclMethod = null;
-        this.info = info;
+	this.next = null;
+	this.outer = null;
+	this.tree = tree;
+	this.toplevel = null;
+	this.enclClass = null;
+	this.enclMethod = null;
+	this.info = info;
     }
 
     /** Duplicate this environment, updating with given tree and info,
      *  and copying all other fields.
      */
     public Env<A> dup(JCTree tree, A info) {
-        return dupto(new Env<A>(tree, info));
+	return dupto(new Env<A>(tree, info));
     }
 
     /** Duplicate this environment into a given Environment,
      *  using its tree and info, and copying all other fields.
      */
     public Env<A> dupto(Env<A> that) {
-        that.next = this;
-        that.outer = this.outer;
-        that.toplevel = this.toplevel;
-        that.enclClass = this.enclClass;
-        that.enclMethod = this.enclMethod;
-        return that;
+	that.next = this;
+	that.outer = this.outer;
+	that.toplevel = this.toplevel;
+ 	that.enclClass = this.enclClass;
+	that.enclMethod = this.enclMethod;
+	return that;
     }
 
     /** Duplicate this environment, updating with given tree,
      *  and copying all other fields.
      */
     public Env<A> dup(JCTree tree) {
-        return dup(tree, this.info);
+	return dup(tree, this.info);
     }
 
     /** Return closest enclosing environment which points to a tree with given tag.
      */
     public Env<A> enclosing(int tag) {
-        Env<A> env1 = this;
-        while (env1 != null && env1.tree.getTag() != tag) env1 = env1.next;
-        return env1;
+	Env<A> env1 = this;
+	while (env1 != null && env1.tree.getTag() != tag) env1 = env1.next;
+	return env1;
     }
-
+    
     public String toString() {
         return "Env[" + info + (outer == null ? "" : ",outer=" + outer) + "]";
     }

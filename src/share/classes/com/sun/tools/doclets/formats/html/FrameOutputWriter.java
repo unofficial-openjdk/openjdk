@@ -46,7 +46,7 @@ public class FrameOutputWriter extends HtmlDocletWriter {
      * Number of packages specified on the command line.
      */
     int noOfPackages;
-
+  
     /**
      * Constructor to construct FrameOutputWriter object.
      *
@@ -149,7 +149,7 @@ public class FrameOutputWriter extends HtmlDocletWriter {
     private void printAllClassesFrameTag() {
         frame("src=\"" + "allclasses-frame.html" + "\""
             + " name=\"packageFrame\""
-            + " title=\"" + configuration.getText("doclet.All_classes_and_interfaces")
+            + " title=\"" + configuration.getText("doclet.All_classes_and_interfaces") 
             + "\"");
     }
 
@@ -160,8 +160,11 @@ public class FrameOutputWriter extends HtmlDocletWriter {
         frame("src=\"" + configuration.topFile + "\""
             + " name=\"classFrame\""
             + " title=\""
-            + configuration.getText("doclet.Package_class_and_interface_descriptions")
+            + configuration.getText("doclet.Package_class_and_interface_descriptions") 
             + "\" scrolling=\"yes\"");
     }
 
 }
+
+
+

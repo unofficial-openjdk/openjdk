@@ -4,21 +4,21 @@ import java.io.File;
 
 public final class ZipFileIndexEntry implements Comparable<ZipFileIndexEntry> {
     public static final ZipFileIndexEntry[] EMPTY_ARRAY = {};
-
+    
     // Directory related
     String dir;
     boolean isDir;
-
+    
     // File related
     String name;
-
+    
     int offset;
     int size;
     int compressedSize;
     long javatime;
-
+    
     private int nativetime;
-
+    
     public ZipFileIndexEntry(String path) {
         int separator = path.lastIndexOf(File.separatorChar);
         if (separator == -1) {
@@ -29,28 +29,28 @@ public final class ZipFileIndexEntry implements Comparable<ZipFileIndexEntry> {
             name = path.substring(separator + 1);
         }
     }
-
+    
     public ZipFileIndexEntry(String directory, String name) {
         this.dir = directory.intern();
         this.name = name;
     }
-
+    
     public String getName() {
         if (dir == null || dir.length() == 0) {
             return name;
         }
-
+        
         StringBuilder sb = new StringBuilder();
         sb.append(dir);
         sb.append(File.separatorChar);
         sb.append(name);
         return sb.toString();
     }
-
+   
     public String getFileName() {
         return name;
     }
-
+    
     public long getLastModified() {
         if (javatime == 0) {
                 javatime = dosToJavaTime(nativetime);
@@ -64,15 +64,15 @@ public final class ZipFileIndexEntry implements Comparable<ZipFileIndexEntry> {
         // Convert the raw/native time to a long for now
         return (long)nativetime;
     }
-
+    
     void setNativeTime(int natTime) {
         nativetime = natTime;
     }
-
+    
     public boolean isDirectory() {
         return isDir;
     }
-
+    
     public int compareTo(ZipFileIndexEntry other) {
         String otherD = other.dir;
         if (dir != otherD) {
@@ -82,8 +82,8 @@ public final class ZipFileIndexEntry implements Comparable<ZipFileIndexEntry> {
         }
         return name.compareTo(other.name);
     }
-
-
+    
+    
     public String toString() {
         return isDir ? ("Dir:" + dir + " : " + name) :
             (dir + ":" + name);

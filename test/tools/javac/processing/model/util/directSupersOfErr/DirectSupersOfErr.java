@@ -43,21 +43,21 @@ public class DirectSupersOfErr extends AbstractProcessor {
     Types types;
 
     public void init(ProcessingEnvironment penv) {
-        super.init(penv);
-        types = penv.getTypeUtils();
+	super.init(penv);
+	types = penv.getTypeUtils();
     }
 
     public boolean process(Set<? extends TypeElement> tes,
-                           RoundEnvironment round) {
-        if (round.processingOver()) return true;
+			   RoundEnvironment round) {
+	if (round.processingOver()) return true;
 
-        for (TypeElement te : typesIn(round.getRootElements())) {
-            TypeMirror sup = te.getSuperclass();
-            for (TypeMirror supOfSup : types.directSupertypes(sup)) {
-                if (sup == supOfSup)
-                    throw new AssertionError("I'm my own supertype.");
-            }
-        }
-        return true;
+	for (TypeElement te : typesIn(round.getRootElements())) {
+	    TypeMirror sup = te.getSuperclass();
+	    for (TypeMirror supOfSup : types.directSupertypes(sup)) {
+		if (sup == supOfSup)
+		    throw new AssertionError("I'm my own supertype.");
+	    }
+	}
+	return true;
     }
 }

@@ -37,21 +37,21 @@ import com.sun.tools.javac.util.Position;
 
 /**
  * Represents an element of an annotation type.
- *
+ * 
  * @author Scott Seligman
  * @since 1.5
  */
 
 public class AnnotationTypeElementDocImpl
-        extends MethodDocImpl implements AnnotationTypeElementDoc {
+	extends MethodDocImpl implements AnnotationTypeElementDoc {
 
     AnnotationTypeElementDocImpl(DocEnv env, MethodSymbol sym) {
-        super(env, sym);
+	super(env, sym);
     }
 
     AnnotationTypeElementDocImpl(DocEnv env, MethodSymbol sym,
-                                 String doc, JCMethodDecl tree, Position.LineMap lineMap) {
-        super(env, sym, doc, tree, lineMap);
+				 String doc, JCMethodDecl tree, Position.LineMap lineMap) {
+	super(env, sym, doc, tree, lineMap);
     }
 
     /**
@@ -59,7 +59,7 @@ public class AnnotationTypeElementDocImpl
      * (For legacy doclets, return false.)
      */
     public boolean isAnnotationTypeElement() {
-        return !isMethod();
+	return !isMethod();
     }
 
     /**
@@ -68,7 +68,7 @@ public class AnnotationTypeElementDocImpl
      * (For legacy doclets, return true.)
      */
     public boolean isMethod() {
-        return env.legacyDoclet;
+	return env.legacyDoclet;
     }
 
     /**
@@ -76,7 +76,7 @@ public class AnnotationTypeElementDocImpl
      * MethodDocImpl.isAbstract() for the (il)logic behind this.
      */
     public boolean isAbstract() {
-        return false;
+	return false;
     }
 
     /**
@@ -84,8 +84,8 @@ public class AnnotationTypeElementDocImpl
      * Returns null if this element has no default.
      */
     public AnnotationValue defaultValue() {
-        return (sym.defaultValue == null)
-               ? null
-               : new AnnotationValueImpl(env, sym.defaultValue);
+	return (sym.defaultValue == null)
+	       ? null
+	       : new AnnotationValueImpl(env, sym.defaultValue);
     }
 }

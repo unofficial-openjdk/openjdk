@@ -67,24 +67,24 @@ public class FreshnessApf implements AnnotationProcessorFactory {
         }
 
         public void process() {
-            System.out.println("Testing for freshness.");
-            boolean empty = true;
-            for (TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations()) {
-                for (FieldDeclaration fieldDecl: typeDecl.getFields() ) {
-                    empty = false;
-                    System.out.println(typeDecl.getQualifiedName() +
-                                       "." + fieldDecl.getSimpleName());
-
-                    // Verify the declaration for the type of the
-                    // field is a class with an annotation.
-                    System.out.println(((DeclaredType) fieldDecl.getType()).getDeclaration().getAnnotationMirrors());
-                    if (((DeclaredType) fieldDecl.getType()).getDeclaration().getAnnotationMirrors().size() == 0)
-                        env.getMessager().printError("Expected an annotation.");
-                }
-            }
-
-            if (empty)
-                env.getMessager().printError("No fields encountered.");
+	    System.out.println("Testing for freshness.");
+	    boolean empty = true;
+	    for (TypeDeclaration typeDecl : env.getSpecifiedTypeDeclarations()) {
+		for (FieldDeclaration fieldDecl: typeDecl.getFields() ) {
+		    empty = false;
+		    System.out.println(typeDecl.getQualifiedName() + 
+				       "." + fieldDecl.getSimpleName());
+		    
+		    // Verify the declaration for the type of the
+		    // field is a class with an annotation.
+		    System.out.println(((DeclaredType) fieldDecl.getType()).getDeclaration().getAnnotationMirrors());
+		    if (((DeclaredType) fieldDecl.getType()).getDeclaration().getAnnotationMirrors().size() == 0)
+			env.getMessager().printError("Expected an annotation.");
+		}
+	    }
+	    
+	    if (empty)
+		env.getMessager().printError("No fields encountered.");
         }
     }
 }

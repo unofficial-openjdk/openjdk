@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,4 +26,4 @@ package pkg;
 /**
  * <action>
  */
-public class C3 {}
+public class C3 {} 

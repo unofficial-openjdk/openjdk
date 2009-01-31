@@ -27,7 +27,7 @@
  * @summary Verify that clash between user-defined class and
  * flatname of member class is detected.
  * @author William Maddox
- *
+ * 
  * @run compile/fail FlatnameClash.java
  */
 

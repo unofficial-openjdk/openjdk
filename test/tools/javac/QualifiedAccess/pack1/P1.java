@@ -37,27 +37,27 @@ public class P1 {
 
     // Not accessible outside package 'pack1'.
     class P3 {
-        // Cannot be accessed via qualified name from 'P3'
-        // outside of 'pack1', as 'P3' is not accessible.
-        public class P4 {
-            // Not accessible outside package 'pack1'.
-            class P5 {}
-        }
+	// Cannot be accessed via qualified name from 'P3'
+	// outside of 'pack1', as 'P3' is not accessible.
+	public class P4 {
+	    // Not accessible outside package 'pack1'.
+	    class P5 {}
+	}
     }
 
     static class Foo {
-        public static class Bar {}
+	public static class Bar {}
     }
 
     public Foo a[] = null;
 
     protected static class Q {
-        protected Q (String s) {}
+	protected Q (String s) {}
     }
 
     protected static class R {
-        private static class S {
-            public static class T {}
-        }
+	private static class S {
+	    public static class T {}
+	}
     }
 }

@@ -31,17 +31,17 @@
 public class AssignmentDifferentTypes1 {
 
     public static void main(String[] args) {
-        Ref<Der> derexact = null;
-        Ref<Base> baseexact = null;
-        Ref<? extends Der> derext = null;
-        Ref<? extends Base> baseext = null;
-        Ref<? super Der> dersuper = null;
-        Ref<? super Base> basesuper = null;
+	Ref<Der> derexact = null;
+	Ref<Base> baseexact = null;
+	Ref<? extends Der> derext = null;
+	Ref<? extends Base> baseext = null;
+	Ref<? super Der> dersuper = null;
+	Ref<? super Base> basesuper = null;
 
-        baseext = derext;       // <<pass>> <? extends Base> = <? extends Der>
-        baseext = derexact;     // <<pass>> <? extends Base> = <Der>
-        dersuper = basesuper;   // <<pass>> <? super Der> = <? super Base>
-        dersuper = baseexact;   // <<pass>> <? super Der> = <Base>
+	baseext = derext;	// <<pass>> <? extends Base> = <? extends Der>
+	baseext = derexact;	// <<pass>> <? extends Base> = <Der>
+	dersuper = basesuper;	// <<pass>> <? super Der> = <? super Base>
+	dersuper = baseexact;	// <<pass>> <? super Der> = <Base>
     }
 }
 

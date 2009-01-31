@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @bug 4986256
+ * @bug 4986256 
  * @compile DepAnn.java
  * @compile -Xlint:dep-ann DepAnn.java
  * @compile -Xlint:all DepAnn.java
@@ -48,8 +48,8 @@ class DepAnn1
 {
     /** @deprecated */
     void m1(int i) {
-        /** @deprecated */
-        int x = 3;
+	/** @deprecated */
+	int x = 3;
     }
 }
 
@@ -58,9 +58,9 @@ class DepAnn2
     @SuppressWarnings("dep-ann")
     /** @deprecated */
     class Bar {
-        /** @deprecated */
-        void m1(int i) {
-        }
+	/** @deprecated */
+	void m1(int i) {
+	}
     }
 
     @SuppressWarnings("dep-ann")
@@ -71,12 +71,12 @@ class DepAnn2
 
     @SuppressWarnings("dep-ann")
     static int x = new DepAnn2() {
-            /** @deprecated */
-            int m1(int i) {
-                return 0;
-            }
-        }.m1(0);
-
+	    /** @deprecated */
+	    int m1(int i) {
+		return 0;
+	    }
+	}.m1(0);
+		
 }
 
 // this class should produce warnings because @SuppressWarnings should not be inherited

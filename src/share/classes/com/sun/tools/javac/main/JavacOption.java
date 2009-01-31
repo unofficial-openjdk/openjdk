@@ -56,7 +56,7 @@ public interface JavacOption {
     /** Process the option (without arg). Return true if error detected.
      */
     boolean process(Options options, String option);
-
+    
     OptionName getName();
 
     enum OptionKind {
@@ -64,121 +64,121 @@ public interface JavacOption {
         EXTENDED,
         HIDDEN,
     }
-
+    
     /** This class represents an option recognized by the main program
      */
     static class Option implements JavacOption {
 
-        /** Option string.
-         */
-        OptionName name;
+	/** Option string.
+	 */
+	OptionName name;
 
-        /** Documentation key for arguments.
-         */
-        String argsNameKey;
+	/** Documentation key for arguments.
+	 */
+	String argsNameKey;
 
-        /** Documentation key for description.
-         */
-        String descrKey;
+	/** Documentation key for description.
+	 */
+	String descrKey;
 
-        /** Suffix option (-foo=bar or -foo:bar)
-         */
-        boolean hasSuffix;
+	/** Suffix option (-foo=bar or -foo:bar)
+	 */
+	boolean hasSuffix;
 
-        Option(OptionName name, String argsNameKey, String descrKey) {
-            this.name = name;
-            this.argsNameKey = argsNameKey;
-            this.descrKey = descrKey;
-            char lastChar = name.optionName.charAt(name.optionName.length()-1);
-            hasSuffix = lastChar == ':' || lastChar == '=';
-        }
-        Option(OptionName name, String descrKey) {
-            this(name, null, descrKey);
-        }
+	Option(OptionName name, String argsNameKey, String descrKey) {
+	    this.name = name;
+	    this.argsNameKey = argsNameKey;
+	    this.descrKey = descrKey;
+	    char lastChar = name.optionName.charAt(name.optionName.length()-1);
+	    hasSuffix = lastChar == ':' || lastChar == '=';
+	}
+	Option(OptionName name, String descrKey) {
+	    this(name, null, descrKey);
+	}
 
-        public String toString() {
-            return name.optionName;
-        }
+	public String toString() {
+	    return name.optionName;
+	}
 
-        /** Does this option take a (separate) operand?
-         */
-        public boolean hasArg() {
-            return argsNameKey != null && !hasSuffix;
-        }
+	/** Does this option take a (separate) operand?
+	 */
+	public boolean hasArg() {
+	    return argsNameKey != null && !hasSuffix;
+	}
 
-        /** Does argument string match option pattern?
-         *  @param arg        The command line argument string.
-         */
+	/** Does argument string match option pattern?
+	 *  @param arg        The command line argument string.
+	 */
         public boolean matches(String arg) {
-            return hasSuffix ? arg.startsWith(name.optionName) : arg.equals(name.optionName);
-        }
+	    return hasSuffix ? arg.startsWith(name.optionName) : arg.equals(name.optionName);
+	}
 
-        /** Print a line of documentation describing this option, if standard.
-         */
-        void help(PrintWriter out) {
-            String s = "  " + helpSynopsis();
-            out.print(s);
-            for (int j = s.length(); j < 29; j++) out.print(" ");
-            Log.printLines(out, Main.getLocalizedString(descrKey));
-        }
-        String helpSynopsis() {
-            return name +
-                (argsNameKey == null ? "" :
-                 ((hasSuffix ? "" : " ") +
-                  Main.getLocalizedString(argsNameKey)));
-        }
+	/** Print a line of documentation describing this option, if standard.
+	 */
+	void help(PrintWriter out) {
+	    String s = "  " + helpSynopsis();
+	    out.print(s);
+	    for (int j = s.length(); j < 29; j++) out.print(" ");
+	    Log.printLines(out, Main.getLocalizedString(descrKey));
+	}
+	String helpSynopsis() {
+	    return name +
+		(argsNameKey == null ? "" :
+		 ((hasSuffix ? "" : " ") +
+		  Main.getLocalizedString(argsNameKey)));
+	}
 
-        /** Print a line of documentation describing this option, if non-standard.
-         */
-        void xhelp(PrintWriter out) {}
+	/** Print a line of documentation describing this option, if non-standard.
+	 */
+	void xhelp(PrintWriter out) {}
 
-        /** Process the option (with arg). Return true if error detected.
-         */
-        public boolean process(Options options, String option, String arg) {
+	/** Process the option (with arg). Return true if error detected.
+	 */
+	public boolean process(Options options, String option, String arg) {
             if (options != null)
                 options.put(option, arg);
-            return false;
-        }
+	    return false;
+	}
 
-        /** Process the option (without arg). Return true if error detected.
-         */
-        public boolean process(Options options, String option) {
-            if (hasSuffix)
-                return process(options, name.optionName, option.substring(name.optionName.length()));
-            else
-                return process(options, option, option);
-        }
-
+	/** Process the option (without arg). Return true if error detected.
+	 */
+	public boolean process(Options options, String option) {
+	    if (hasSuffix)
+		return process(options, name.optionName, option.substring(name.optionName.length()));
+	    else
+		return process(options, option, option);
+	}
+        
         public OptionKind getKind() { return OptionKind.NORMAL; }
-
+        
         public OptionName getName() { return name; }
     };
 
     /** A nonstandard or extended (-X) option
      */
     static class XOption extends Option {
-        XOption(OptionName name, String argsNameKey, String descrKey) {
-            super(name, argsNameKey, descrKey);
-        }
-        XOption(OptionName name, String descrKey) {
-            this(name, null, descrKey);
-        }
-        void help(PrintWriter out) {}
-        void xhelp(PrintWriter out) { super.help(out); }
+	XOption(OptionName name, String argsNameKey, String descrKey) {
+	    super(name, argsNameKey, descrKey);
+	}
+	XOption(OptionName name, String descrKey) {
+	    this(name, null, descrKey);
+	}
+	void help(PrintWriter out) {}
+	void xhelp(PrintWriter out) { super.help(out); }
         public OptionKind getKind() { return OptionKind.EXTENDED; }
     };
 
     /** A hidden (implementor) option
      */
     static class HiddenOption extends Option {
-        HiddenOption(OptionName name) {
-            super(name, null, null);
-        }
-        HiddenOption(OptionName name, String argsNameKey) {
-            super(name, argsNameKey, null);
-        }
-        void help(PrintWriter out) {}
-        void xhelp(PrintWriter out) {}
+	HiddenOption(OptionName name) {
+	    super(name, null, null);
+	}
+	HiddenOption(OptionName name, String argsNameKey) {
+	    super(name, argsNameKey, null);
+	}
+	void help(PrintWriter out) {}
+	void xhelp(PrintWriter out) {}
         public OptionKind getKind() { return OptionKind.HIDDEN; }
     };
 

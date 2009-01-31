@@ -7,6 +7,6 @@
 class P
 {
     Q q = new Q() {
-            void foo() { } // warning: override deprecated method
-        };
+	    void foo() { } // warning: override deprecated method
+	};
 };

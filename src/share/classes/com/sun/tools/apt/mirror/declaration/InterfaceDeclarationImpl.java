@@ -37,16 +37,16 @@ import com.sun.tools.javac.code.Symbol.*;
  */
 
 public class InterfaceDeclarationImpl extends TypeDeclarationImpl
-                                      implements InterfaceDeclaration {
+				      implements InterfaceDeclaration {
 
     InterfaceDeclarationImpl(AptEnv env, ClassSymbol sym) {
-        super(env, sym);
+	super(env, sym);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-        v.visitInterfaceDeclaration(this);
+	v.visitInterfaceDeclaration(this);
     }
 }

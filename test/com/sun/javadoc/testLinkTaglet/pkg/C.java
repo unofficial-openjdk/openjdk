@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,24 +32,24 @@ package pkg;
  * Unqualified Link: {@link #method(InnerC, InnerC2)}.<br/>
  */
 public class C {
-
+ 
     public InnerC MEMBER = new InnerC();
-
+    
     /**
      * Link to member in outer class: {@link #MEMBER} <br/>
      * Link to member in inner class: {@link InnerC2#MEMBER2} <br/>
      * Link to another inner class: {@link InnerC2}
      */
-    public class InnerC {}
-
+    public class InnerC {} 
+    
     /**
      * Link to conflicting member in inner class: {@link #MEMBER} <br/>
      */
     public class InnerC2 {
         public static final int MEMBER = 1;
         public static final int MEMBER2 = 1;
-    }
-
-    public void method(InnerC p1, InnerC2 p2){}
-
+    } 
+    
+    public void method(InnerC p1, InnerC2 p2){}   
+    
 }

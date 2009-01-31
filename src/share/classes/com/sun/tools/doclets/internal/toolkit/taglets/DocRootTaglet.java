@@ -35,14 +35,14 @@ import com.sun.javadoc.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Jamie Ho
  * @author Doug Kramer
  * @since 1.4
  */
 
 public class DocRootTaglet extends BaseInlineTaglet {
-
+    
 
     /**
      * Construct a new DocRootTaglet.

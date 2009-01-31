@@ -34,7 +34,7 @@ public enum BoundKind {
     private final String name;
 
     BoundKind(String name) {
-        this.name = name;
+	this.name = name;
     }
 
     public String toString() { return name; }

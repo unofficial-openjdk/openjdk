@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test    @(#)VersionNumber.java	1.1 02/09/27
  * @bug 4720849
  * @summary  com.sun.tools.doclets.standard.Standard contains hard-coded version number
  * @author dkramer
@@ -37,7 +37,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class VersionNumber {
@@ -71,8 +71,8 @@ public class VersionNumber {
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -103,7 +103,7 @@ public class VersionNumber {
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum)
+                System.out.println("\nSub-test " + (subtestNum) 
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -118,7 +118,7 @@ public class VersionNumber {
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

@@ -56,7 +56,7 @@ public abstract class MemberDocImpl
         super(env, sym, doc, tree, lineMap);
     }
 
-    /**
+    /** 
      * Returns true if this field was synthesized by the compiler.
      */
     public abstract boolean isSynthetic();

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,17 +27,17 @@ package pkg;
  * @deprecated error_test1 passes.
  */
 public class TestError extends Error {
-
+    
     /**
      * @deprecated error_test2 passes.
      */
     public int field;
-
+    
     /**
      * @deprecated error_test3 passes.
      */
     public TestError() {}
-
+    
     /**
      * @deprecated error_test4 passes.
      */

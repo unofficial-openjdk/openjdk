@@ -59,15 +59,15 @@ public abstract class DeclarationImpl implements Declaration {
     public final Symbol sym;
 
     protected static DeclarationFilter identityFilter =
-            new DeclarationFilter();
+	    new DeclarationFilter();
 
 
     /**
      * "sym" should be completed before this constructor is called.
      */
     protected DeclarationImpl(AptEnv env, Symbol sym) {
-        this.env = env;
-        this.sym = sym;
+	this.env = env;
+	this.sym = sym;
     }
 
 
@@ -76,12 +76,12 @@ public abstract class DeclarationImpl implements Declaration {
      * <p> ParameterDeclarationImpl overrides this implementation.
      */
     public boolean equals(Object obj) {
-        if (obj instanceof DeclarationImpl) {
-            DeclarationImpl that = (DeclarationImpl) obj;
-            return sym == that.sym && env == that.env;
-        } else {
-            return false;
-        }
+	if (obj instanceof DeclarationImpl) {
+	    DeclarationImpl that = (DeclarationImpl) obj;
+	    return sym == that.sym && env == that.env;
+	} else {
+	    return false;
+	}
     }
 
     /**
@@ -89,34 +89,34 @@ public abstract class DeclarationImpl implements Declaration {
      * <p> ParameterDeclarationImpl overrides this implementation.
      */
     public int hashCode() {
-        return sym.hashCode() + env.hashCode();
+	return sym.hashCode() + env.hashCode();
     }
 
     /**
      * {@inheritDoc}
      */
     public String getDocComment() {
-        // Our doc comment is contained in a map in our toplevel,
-        // indexed by our tree.  Find our enter environment, which gives
-        // us our toplevel.  It also gives us a tree that contains our
-        // tree:  walk it to find our tree.  This is painful.
-        Env<AttrContext> enterEnv = getEnterEnv();
-        if (enterEnv == null)
-            return null;
-        JCTree tree = TreeInfo.declarationFor(sym, enterEnv.tree);
-        return enterEnv.toplevel.docComments.get(tree);
+	// Our doc comment is contained in a map in our toplevel,
+	// indexed by our tree.  Find our enter environment, which gives
+	// us our toplevel.  It also gives us a tree that contains our
+	// tree:  walk it to find our tree.  This is painful.
+	Env<AttrContext> enterEnv = getEnterEnv();
+	if (enterEnv == null)
+	    return null;
+	JCTree tree = TreeInfo.declarationFor(sym, enterEnv.tree);
+	return enterEnv.toplevel.docComments.get(tree);
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<AnnotationMirror> getAnnotationMirrors() {
-        Collection<AnnotationMirror> res =
-            new ArrayList<AnnotationMirror>();
-        for (Attribute.Compound a : sym.getAnnotationMirrors()) {
-            res.add(env.declMaker.getAnnotationMirror(a, this));
-        }
-        return res;
+	Collection<AnnotationMirror> res =
+	    new ArrayList<AnnotationMirror>();
+	for (Attribute.Compound a : sym.getAnnotationMirrors()) {
+	    res.add(env.declMaker.getAnnotationMirror(a, this));
+	}
+	return res;
     }
 
     /**
@@ -124,23 +124,23 @@ public abstract class DeclarationImpl implements Declaration {
      * Overridden by ClassDeclarationImpl to handle @Inherited.
      */
     public <A extends Annotation> A getAnnotation(Class<A> annoType) {
-        return getAnnotation(annoType, sym);
+	return getAnnotation(annoType, sym);
     }
 
     protected <A extends Annotation> A getAnnotation(Class<A> annoType,
-                                                     Symbol annotated) {
-        if (!annoType.isAnnotation()) {
-            throw new IllegalArgumentException(
-                                "Not an annotation type: " + annoType);
-        }
-        String name = annoType.getName();
-        for (Attribute.Compound attr : annotated.getAnnotationMirrors()) {
-            if (name.equals(attr.type.tsym.flatName().toString())) {
-                return AnnotationProxyMaker.generateAnnotation(env, attr,
-                                                               annoType);
-            }
-        }
-        return null;
+						     Symbol annotated) {
+	if (!annoType.isAnnotation()) {
+	    throw new IllegalArgumentException(
+				"Not an annotation type: " + annoType);
+	}
+	String name = annoType.getName();
+	for (Attribute.Compound attr : annotated.getAnnotationMirrors()) {
+	    if (name.equals(attr.type.tsym.flatName().toString())) {
+		return AnnotationProxyMaker.generateAnnotation(env, attr,
+							       annoType);
+	    }
+	}
+	return null;
     }
 
     // Cache for modifiers.
@@ -150,23 +150,23 @@ public abstract class DeclarationImpl implements Declaration {
      * {@inheritDoc}
      */
     public Collection<Modifier> getModifiers() {
-        if (modifiers == null) {
-            modifiers = EnumSet.noneOf(Modifier.class);
-            long flags = AptEnv.getFlags(sym);
+	if (modifiers == null) {
+	    modifiers = EnumSet.noneOf(Modifier.class);
+	    long flags = AptEnv.getFlags(sym);
 
-            if (0 != (flags & Flags.PUBLIC))       modifiers.add(PUBLIC);
-            if (0 != (flags & Flags.PROTECTED))    modifiers.add(PROTECTED);
-            if (0 != (flags & Flags.PRIVATE))      modifiers.add(PRIVATE);
-            if (0 != (flags & Flags.ABSTRACT))     modifiers.add(ABSTRACT);
-            if (0 != (flags & Flags.STATIC))       modifiers.add(STATIC);
-            if (0 != (flags & Flags.FINAL))        modifiers.add(FINAL);
-            if (0 != (flags & Flags.TRANSIENT))    modifiers.add(TRANSIENT);
-            if (0 != (flags & Flags.VOLATILE))     modifiers.add(VOLATILE);
-            if (0 != (flags & Flags.SYNCHRONIZED)) modifiers.add(SYNCHRONIZED);
-            if (0 != (flags & Flags.NATIVE))       modifiers.add(NATIVE);
-            if (0 != (flags & Flags.STRICTFP))     modifiers.add(STRICTFP);
-        }
-        return modifiers;
+	    if (0 != (flags & Flags.PUBLIC))	   modifiers.add(PUBLIC);
+	    if (0 != (flags & Flags.PROTECTED))	   modifiers.add(PROTECTED);
+	    if (0 != (flags & Flags.PRIVATE))	   modifiers.add(PRIVATE);
+	    if (0 != (flags & Flags.ABSTRACT))	   modifiers.add(ABSTRACT);
+	    if (0 != (flags & Flags.STATIC))	   modifiers.add(STATIC);
+	    if (0 != (flags & Flags.FINAL))	   modifiers.add(FINAL);
+	    if (0 != (flags & Flags.TRANSIENT))    modifiers.add(TRANSIENT);
+	    if (0 != (flags & Flags.VOLATILE))	   modifiers.add(VOLATILE);
+	    if (0 != (flags & Flags.SYNCHRONIZED)) modifiers.add(SYNCHRONIZED);
+	    if (0 != (flags & Flags.NATIVE))	   modifiers.add(NATIVE);
+	    if (0 != (flags & Flags.STRICTFP))	   modifiers.add(STRICTFP);
+	}
+	return modifiers;
     }
 
     /**
@@ -174,25 +174,25 @@ public abstract class DeclarationImpl implements Declaration {
      * Overridden in some subclasses.
      */
     public String getSimpleName() {
-        return sym.name.toString();
+	return sym.name.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public SourcePosition getPosition() {
-        // Find the toplevel.  From there use a tree-walking utility
-        // that finds the tree for our symbol, and with it the position.
-        Env<AttrContext> enterEnv = getEnterEnv();
-        if (enterEnv == null)
-            return null;
-        JCTree.JCCompilationUnit toplevel = enterEnv.toplevel;
-        JavaFileObject sourcefile = toplevel.sourcefile;
-        if (sourcefile == null)
-            return null;
-        int pos = TreeInfo.positionFor(sym, toplevel);
+	// Find the toplevel.  From there use a tree-walking utility
+	// that finds the tree for our symbol, and with it the position.
+	Env<AttrContext> enterEnv = getEnterEnv();
+	if (enterEnv == null)
+	    return null;
+	JCTree.JCCompilationUnit toplevel = enterEnv.toplevel;
+	JavaFileObject sourcefile = toplevel.sourcefile;
+	if (sourcefile == null)
+	    return null;
+	int pos = TreeInfo.positionFor(sym, toplevel);
 
-        return new SourcePositionImpl(sourcefile, pos, toplevel.lineMap);
+	return new SourcePositionImpl(sourcefile, pos, toplevel.lineMap);
     }
 
     /**
@@ -201,11 +201,11 @@ public abstract class DeclarationImpl implements Declaration {
      * @param v the visitor operating on this declaration
      */
     public void accept(DeclarationVisitor v) {
-        v.visitDeclaration(this);
+	v.visitDeclaration(this);
     }
 
 
-    private Collection<Symbol> members = null;  // cache for getMembers()
+    private Collection<Symbol> members = null;	// cache for getMembers()
 
     /**
      * Returns the symbols of type or package members (and constructors)
@@ -213,16 +213,16 @@ public abstract class DeclarationImpl implements Declaration {
      * Caches the result if "cache" is true.
      */
     protected Collection<Symbol> getMembers(boolean cache) {
-        if (members != null) {
-            return members;
-        }
-        LinkedList<Symbol> res = new LinkedList<Symbol>();
-        for (Scope.Entry e = sym.members().elems; e != null; e = e.sibling) {
-            if (e.sym != null && !unwanted(e.sym)) {
-                res.addFirst(e.sym);
-            }
-        }
-        return cache ? (members = res) : res;
+	if (members != null) {
+	    return members;
+	}
+	LinkedList<Symbol> res = new LinkedList<Symbol>();
+	for (Scope.Entry e = sym.members().elems; e != null; e = e.sibling) {
+	    if (e.sym != null && !unwanted(e.sym)) {
+		res.addFirst(e.sym);
+	    }
+	}
+	return cache ? (members = res) : res;
     }
 
     /**
@@ -232,9 +232,9 @@ public abstract class DeclarationImpl implements Declaration {
      * synthetic:  see bugid 4959932.
      */
     private static boolean unwanted(Symbol s) {
-        return AptEnv.hasFlag(s, Flags.SYNTHETIC) ||
-               (s.kind == TYP &&
-                !DeclarationMaker.isJavaIdentifier(s.name.toString()));
+	return AptEnv.hasFlag(s, Flags.SYNTHETIC) ||
+	       (s.kind == TYP &&
+		!DeclarationMaker.isJavaIdentifier(s.name.toString()));
     }
 
     /**
@@ -242,13 +242,13 @@ public abstract class DeclarationImpl implements Declaration {
      * has none.
      */
     private Env<AttrContext> getEnterEnv() {
-        // Get enclosing class of sym, or sym itself if it is a class
-        // or package.
-        TypeSymbol ts = (sym.kind != PCK)
-                        ? sym.enclClass()
-                        : (PackageSymbol) sym;
-        return (ts != null)
-                ? env.enter.getEnv(ts)
-                : null;
+	// Get enclosing class of sym, or sym itself if it is a class
+	// or package.
+	TypeSymbol ts = (sym.kind != PCK)
+			? sym.enclClass()
+			: (PackageSymbol) sym;
+	return (ts != null)
+		? env.enter.getEnv(ts)
+		: null;
     }
 }

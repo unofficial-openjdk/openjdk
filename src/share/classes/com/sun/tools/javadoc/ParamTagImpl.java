@@ -32,7 +32,7 @@ import com.sun.javadoc.*;
 /**
  * Represents an @param documentation tag.
  * Parses and stores the name and comment parts of the parameter tag.
- *
+ * 
  * @author Robert Field
  *
  */
@@ -48,12 +48,12 @@ class ParamTagImpl extends TagImpl implements ParamTag {
         super(holder, name, text);
         String[] sa = divideAtWhite();
 
-        Matcher m = typeParamRE.matcher(sa[0]);
-        isTypeParameter = m.matches();
-        parameterName = isTypeParameter ? m.group(1) : sa[0];
+	Matcher m = typeParamRE.matcher(sa[0]);
+	isTypeParameter = m.matches();
+	parameterName = isTypeParameter ? m.group(1) : sa[0];
         parameterComment = sa[1];
     }
-
+    
     /**
      * Return the parameter name.
      */
@@ -79,7 +79,7 @@ class ParamTagImpl extends TagImpl implements ParamTag {
      * Return true if this ParamTag corresponds to a type parameter.
      */
     public boolean isTypeParameter() {
-        return isTypeParameter;
+	return isTypeParameter;
     }
 
     /**

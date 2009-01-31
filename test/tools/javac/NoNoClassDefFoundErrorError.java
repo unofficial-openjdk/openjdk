@@ -31,6 +31,6 @@
 
 class NoNoClassDefFoundErrorError {
     public static void main() {
-        Class self = NoNoClassDefFoundErrorError.class;
+	Class self = NoNoClassDefFoundErrorError.class;
     }
 }

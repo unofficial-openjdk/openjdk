@@ -49,7 +49,7 @@ class ParameterImpl implements Parameter {
      * Constructor of parameter info class.
      */
     ParameterImpl(DocEnv env, VarSymbol sym) {
-        this.env = env;
+	this.env = env;
         this.sym = sym;
         this.type = TypeMaker.getType(env, sym.type, false);
     }
@@ -66,7 +66,7 @@ class ParameterImpl implements Parameter {
      * For example if parameter is the short 'index', returns "index".
      */
     public String name() {
-        return sym.toString();
+	return sym.toString();
     }
 
     /**
@@ -74,9 +74,9 @@ class ParameterImpl implements Parameter {
      * For example if parameter is the short 'index', returns "short".
      */
     public String typeName() {
-        return (type instanceof ClassDoc || type instanceof TypeVariable)
-                ? type.typeName()       // omit formal type params or bounds
-                : type.toString();
+	return (type instanceof ClassDoc || type instanceof TypeVariable)
+		? type.typeName()	// omit formal type params or bounds
+		: type.toString();
     }
 
     /**
@@ -87,7 +87,7 @@ class ParameterImpl implements Parameter {
      * @return type name and parameter name of this parameter.
      */
     public String toString() {
-        return typeName() + " " + sym;
+	return typeName() + " " + sym;
     }
 
     /**
@@ -95,11 +95,11 @@ class ParameterImpl implements Parameter {
      * Return an empty array if there are none.
      */
     public AnnotationDesc[] annotations() {
-        AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
-        int i = 0;
-        for (Attribute.Compound a : sym.getAnnotationMirrors()) {
-            res[i++] = new AnnotationDescImpl(env, a);
-        }
-        return res;
+	AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
+	int i = 0;
+	for (Attribute.Compound a : sym.getAnnotationMirrors()) {
+	    res[i++] = new AnnotationDescImpl(env, a);
+	}
+	return res;
     }
 }

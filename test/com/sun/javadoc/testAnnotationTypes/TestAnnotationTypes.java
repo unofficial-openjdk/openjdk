@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,23 +34,23 @@
  */
 
 public class TestAnnotationTypes extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4973609";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "-source", "1.5", "pkg"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = NO_TEST;
     private static final String[][] NEGATED_TEST = {
-        {BUG_ID + FS + "pkg" + FS + "AnnotationType.html",
-            "<HR>" + NL + NL + "<P>" + NL + NL + "<P>" +
+        {BUG_ID + FS + "pkg" + FS + "AnnotationType.html", 
+            "<HR>" + NL + NL + "<P>" + NL + NL + "<P>" + 
             "<!-- ========= END OF CLASS DATA ========= -->" + "<HR>"}
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -60,14 +60,14 @@ public class TestAnnotationTypes extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

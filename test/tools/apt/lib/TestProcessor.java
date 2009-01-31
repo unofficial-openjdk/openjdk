@@ -42,9 +42,9 @@ public class TestProcessor implements AnnotationProcessor {
     Tester tester = Tester.activeTester;
 
     TestProcessor(AnnotationProcessorEnvironment env,
-                  Tester tester) {
-        this.env = env;
-        this.tester = tester;
+		  Tester tester) {
+	this.env = env;
+	this.tester = tester;
     }
 
 
@@ -55,45 +55,45 @@ public class TestProcessor implements AnnotationProcessor {
      * reading the live annotations.  Convoluted, you say?
      */
     public void process() {
-        System.out.printf("\n> Processing %s\n", tester.getClass());
+	System.out.printf("\n> Processing %s\n", tester.getClass());
 
-        boolean failed = false;         // true if a test returns wrong result
+	boolean failed = false;		// true if a test returns wrong result
 
-        for (Method m : tester.getClass().getDeclaredMethods()) {
-            Test anno = m.getAnnotation(Test.class);
-            Ignore ignore = m.getAnnotation(Ignore.class);
-            if (anno != null) {
-                if (ignore == null) {
-                    System.out.println(">> Invoking test " + m.getName());
-                    Object result;
-                    try {
-                        result = m.invoke(tester);
-                    } catch (Exception e) {
-                        throw new Error("Test invocation failed", e);
-                    }
-                    boolean ok = true;  // result of this test
-                    if (Collection.class.isAssignableFrom(m.getReturnType())) {
-                        ok = verifyResults((Collection) result,
-                                           anno.result(), anno.ordered());
-                    } else if (m.getReturnType() != void.class) {
-                        ok = verifyResult(result, anno.result());
-                    }
-                    if (!ok) {
-                        System.out.println(">>> Expected: " + anno);
-                        System.out.println(">>> Got: " + result);
-                        failed = true;
-                    }
-                } else {
-                    System.out.println(">> Ignoring test " + m.getName());
-                    if (ignore.value().length() > 0) {
-                        System.out.println(">>> Reason: " + ignore.value());
-                    }
-                }
-            }
-        }
-        if (failed) {
-            throw new Error("Test(s) returned unexpected result");
-        }
+	for (Method m : tester.getClass().getDeclaredMethods()) {
+	    Test anno = m.getAnnotation(Test.class);
+	    Ignore ignore = m.getAnnotation(Ignore.class);
+	    if (anno != null) {
+		if (ignore == null) {
+		    System.out.println(">> Invoking test " + m.getName());
+		    Object result;
+		    try {
+			result = m.invoke(tester);
+		    } catch (Exception e) {
+			throw new Error("Test invocation failed", e);
+		    }
+		    boolean ok = true;	// result of this test
+		    if (Collection.class.isAssignableFrom(m.getReturnType())) {
+			ok = verifyResults((Collection) result,
+					   anno.result(), anno.ordered());
+		    } else if (m.getReturnType() != void.class) {
+			ok = verifyResult(result, anno.result());
+		    }
+		    if (!ok) {
+			System.out.println(">>> Expected: " + anno);
+			System.out.println(">>> Got: " + result);
+			failed = true;
+		    }
+		} else {
+		    System.out.println(">> Ignoring test " + m.getName());
+		    if (ignore.value().length() > 0) {
+			System.out.println(">>> Reason: " + ignore.value());
+		    }
+		}
+	    }
+	}
+	if (failed) {
+	    throw new Error("Test(s) returned unexpected result");
+	}
     }
 
     /**
@@ -101,9 +101,9 @@ public class TestProcessor implements AnnotationProcessor {
      * its expected value.
      */
     private boolean verifyResult(Object result, String[] expected) {
-        assert expected.length == 1 :
-            "Single-valued test expecting " + expected.length + " results";
-        return expected[0].equals(String.valueOf(result));
+	assert expected.length == 1 :
+	    "Single-valued test expecting " + expected.length + " results";
+	return expected[0].equals(String.valueOf(result));
     }
 
     /**
@@ -111,22 +111,22 @@ public class TestProcessor implements AnnotationProcessor {
      * its expected values.
      */
     private boolean verifyResults(Collection result,
-                                  String[] expected, boolean ordered) {
-        if (result.size() != expected.length) {
-            return false;
-        }
+				  String[] expected, boolean ordered) {
+	if (result.size() != expected.length) {
+	    return false;
+	}
 
-        // Convert result to an array of strings.
-        String[] res = new String[result.size()];
-        int i = 0;
-        for (Object e : result) {
-            res[i++] = String.valueOf(e);
-        }
+	// Convert result to an array of strings.
+	String[] res = new String[result.size()];
+	int i = 0;
+	for (Object e : result) {
+	    res[i++] = String.valueOf(e);
+	}
 
-        if (!ordered) {
-            Arrays.sort(res);
-            Arrays.sort(expected);
-        }
-        return Arrays.equals(res, expected);
+	if (!ordered) {
+	    Arrays.sort(res);
+	    Arrays.sort(expected);
+	}
+	return Arrays.equals(res, expected);
     }
 }

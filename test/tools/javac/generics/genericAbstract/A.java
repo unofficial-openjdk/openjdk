@@ -30,6 +30,6 @@
  * @compile -source 1.5 A.java B.java
  */
 
-interface A {
-    <D> D clone(D obj);
+interface A { 
+    <D> D clone(D obj); 
 }

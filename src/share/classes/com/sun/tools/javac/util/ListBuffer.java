@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
 public class ListBuffer<A> implements Collection<A> {
 
     public static <T> ListBuffer<T> lb() {
-        return new ListBuffer<T>();
+	return new ListBuffer<T>();
     }
 
     /** The list of elements of this buffer.
@@ -62,160 +62,160 @@ public class ListBuffer<A> implements Collection<A> {
     /** Create a new initially empty list buffer.
      */
     public ListBuffer() {
-        clear();
+	clear();
     }
 
     public final void clear() {
-        this.elems = new List<A>(null,null);
-        this.last = this.elems;
-        count = 0;
-        shared = false;
+	this.elems = new List<A>(null,null);
+	this.last = this.elems;
+	count = 0;
+	shared = false;
     }
 
     /** Return the number of elements in this buffer.
      */
     public int length() {
-        return count;
+	return count;
     }
     public int size() {
-        return count;
+	return count;
     }
 
     /** Is buffer empty?
      */
     public boolean isEmpty() {
-        return count == 0;
+	return count == 0;
     }
 
     /** Is buffer not empty?
      */
     public boolean nonEmpty() {
-        return count != 0;
+	return count != 0;
     }
 
     /** Copy list and sets last.
      */
     private void copy() {
-        List<A> p = elems = new List<A>(elems.head, elems.tail);
-        while (true) {
-            List<A> tail = p.tail;
-            if (tail == null) break;
-            tail = new List<A>(tail.head, tail.tail);
-            p.setTail(tail);
-            p = tail;
-        }
-        last = p;
-        shared = false;
+	List<A> p = elems = new List<A>(elems.head, elems.tail);
+	while (true) {
+	    List<A> tail = p.tail;
+	    if (tail == null) break;
+	    tail = new List<A>(tail.head, tail.tail);
+	    p.setTail(tail);
+	    p = tail;
+	}
+	last = p;
+	shared = false;
     }
 
     /** Prepend an element to buffer.
      */
     public ListBuffer<A> prepend(A x) {
-        elems = elems.prepend(x);
-        count++;
-        return this;
+	elems = elems.prepend(x);
+	count++;
+	return this;
     }
 
     /** Append an element to buffer.
      */
     public ListBuffer<A> append(A x) {
-        if (shared) copy();
-        last.head = x;
-        last.setTail(new List<A>(null,null));
-        last = last.tail;
-        count++;
-        return this;
+	if (shared) copy();
+	last.head = x;
+	last.setTail(new List<A>(null,null));
+	last = last.tail;
+	count++;
+	return this;
     }
 
     /** Append all elements in a list to buffer.
      */
     public ListBuffer<A> appendList(List<A> xs) {
-        while (xs.nonEmpty()) {
-            append(xs.head);
-            xs = xs.tail;
-        }
-        return this;
+	while (xs.nonEmpty()) {
+	    append(xs.head);
+	    xs = xs.tail;
+	}
+	return this;
     }
 
     /** Append all elements in a list to buffer.
      */
     public ListBuffer<A> appendList(ListBuffer<A> xs) {
-        return appendList(xs.toList());
+	return appendList(xs.toList());
     }
 
     /** Append all elements in an array to buffer.
      */
     public ListBuffer<A> appendArray(A[] xs) {
-        for (int i = 0; i < xs.length; i++) {
-            append(xs[i]);
-        }
-        return this;
+	for (int i = 0; i < xs.length; i++) {
+	    append(xs[i]);
+	}
+	return this;
     }
 
     /** Convert buffer to a list of all its elements.
      */
     public List<A> toList() {
-        shared = true;
-        return elems;
+	shared = true;
+	return elems;
     }
 
     /** Does the list contain the specified element?
      */
     public boolean contains(Object x) {
-        return elems.contains(x);
+	return elems.contains(x);
     }
 
     /** Convert buffer to an array
      */
     public <T> T[] toArray(T[] vec) {
-        return elems.toArray(vec);
+	return elems.toArray(vec);
     }
     public Object[] toArray() {
-        return toArray(new Object[size()]);
+	return toArray(new Object[size()]);
     }
 
     /** The first element in this buffer.
      */
     public A first() {
-        return elems.head;
+	return elems.head;
     }
 
     /** Remove the first element in this buffer.
      */
     public void remove() {
-        if (elems != last) {
-            elems = elems.tail;
-            count--;
-        }
+	if (elems != last) {
+	    elems = elems.tail;
+	    count--;
+	}
     }
 
     /** Return first element in this buffer and remove
      */
     public A next() {
         A x = elems.head;
-        remove();
-        return x;
+	remove();
+	return x;
     }
 
     /** An enumeration of all elements in this buffer.
      */
     public Iterator<A> iterator() {
-        return new Iterator<A>() {
-            List<A> elems = ListBuffer.this.elems;
-            public boolean hasNext() {
-                return elems != last;
-            }
-            public A next() {
+	return new Iterator<A>() {
+	    List<A> elems = ListBuffer.this.elems;
+	    public boolean hasNext() {
+		return elems != last;
+	    }
+	    public A next() {
                 if (elems == last)
                     throw new NoSuchElementException();
-                A elem = elems.head;
-                elems = elems.tail;
-                return elem;
-            }
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+		A elem = elems.head;
+		elems = elems.tail;
+		return elem;
+	    }
+	    public void remove() {
+		throw new UnsupportedOperationException();
+	    }
+	};
     }
 
     public boolean add(A a) {

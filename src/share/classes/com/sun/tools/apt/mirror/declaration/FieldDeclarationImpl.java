@@ -42,13 +42,13 @@ import com.sun.tools.javac.code.TypeTags;
  */
 
 class FieldDeclarationImpl extends MemberDeclarationImpl
-                                  implements FieldDeclaration {
+				  implements FieldDeclaration {
 
     protected VarSymbol sym;
 
     FieldDeclarationImpl(AptEnv env, VarSymbol sym) {
-        super(env, sym);
-        this.sym = sym;
+	super(env, sym);
+	this.sym = sym;
     }
 
 
@@ -56,43 +56,43 @@ class FieldDeclarationImpl extends MemberDeclarationImpl
      * Returns the field's name.
      */
     public String toString() {
-        return getSimpleName();
+	return getSimpleName();
     }
 
     /**
      * {@inheritDoc}
      */
     public TypeMirror getType() {
-        return env.typeMaker.getType(sym.type);
+	return env.typeMaker.getType(sym.type);
     }
 
     /**
      * {@inheritDoc}
      */
     public Object getConstantValue() {
-        Object val = sym.getConstValue();
-        // val may be null, indicating that this is not a constant.
+	Object val = sym.getConstValue();
+	// val may be null, indicating that this is not a constant.
 
-        return Constants.decodeConstant(val, sym.type);
+	return Constants.decodeConstant(val, sym.type);
     }
 
     /**
      * {@inheritDoc}
      */
     public String getConstantExpression() {
-        Object val = getConstantValue();
-        if (val == null) {
-            return null;
-        }
-        Constants.Formatter fmtr = Constants.getFormatter();
-        fmtr.append(val);
-        return fmtr.toString();
+	Object val = getConstantValue();
+	if (val == null) {
+	    return null;
+	}
+	Constants.Formatter fmtr = Constants.getFormatter();
+	fmtr.append(val);
+	return fmtr.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-        v.visitFieldDeclaration(this);
+	v.visitFieldDeclaration(this);
     }
 }

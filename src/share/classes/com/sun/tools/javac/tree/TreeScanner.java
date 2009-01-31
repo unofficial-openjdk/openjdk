@@ -46,15 +46,15 @@ public class TreeScanner extends Visitor {
     /** Visitor method: Scan a single node.
      */
     public void scan(JCTree tree) {
-        if(tree!=null) tree.accept(this);
+	if(tree!=null) tree.accept(this);
     }
 
     /** Visitor method: scan a list of nodes.
      */
     public void scan(List<? extends JCTree> trees) {
-        if (trees != null)
-        for (List<? extends JCTree> l = trees; l.nonEmpty(); l = l.tail)
-            scan(l.head);
+	if (trees != null)
+	for (List<? extends JCTree> l = trees; l.nonEmpty(); l = l.tail)
+	    scan(l.head);
     }
 
 
@@ -63,112 +63,112 @@ public class TreeScanner extends Visitor {
  ****************************************************************************/
 
     public void visitTopLevel(JCCompilationUnit tree) {
-        scan(tree.packageAnnotations);
-        scan(tree.pid);
-        scan(tree.defs);
+	scan(tree.packageAnnotations);
+	scan(tree.pid);
+	scan(tree.defs);
     }
 
     public void visitImport(JCImport tree) {
-        scan(tree.qualid);
+	scan(tree.qualid);
     }
 
     public void visitClassDef(JCClassDecl tree) {
-        scan(tree.mods);
-        scan(tree.typarams);
-        scan(tree.extending);
-        scan(tree.implementing);
-        scan(tree.defs);
+	scan(tree.mods);
+	scan(tree.typarams);
+	scan(tree.extending);
+	scan(tree.implementing);
+	scan(tree.defs);
     }
 
     public void visitMethodDef(JCMethodDecl tree) {
-        scan(tree.mods);
-        scan(tree.restype);
-        scan(tree.typarams);
-        scan(tree.params);
-        scan(tree.thrown);
-        scan(tree.body);
+	scan(tree.mods);
+	scan(tree.restype);
+	scan(tree.typarams);
+	scan(tree.params);
+	scan(tree.thrown);
+	scan(tree.body);
     }
-
+	
     public void visitVarDef(JCVariableDecl tree) {
-        scan(tree.mods);
-        scan(tree.vartype);
-        scan(tree.init);
+	scan(tree.mods);
+	scan(tree.vartype);
+	scan(tree.init);
     }
-
+	
     public void visitSkip(JCSkip tree) {
     }
 
     public void visitBlock(JCBlock tree) {
-        scan(tree.stats);
+	scan(tree.stats);
     }
 
     public void visitDoLoop(JCDoWhileLoop tree) {
-        scan(tree.body);
-        scan(tree.cond);
+	scan(tree.body);
+	scan(tree.cond);
     }
 
     public void visitWhileLoop(JCWhileLoop tree) {
-        scan(tree.cond);
-        scan(tree.body);
+	scan(tree.cond);
+	scan(tree.body);
     }
 
     public void visitForLoop(JCForLoop tree) {
-        scan(tree.init);
-        scan(tree.cond);
-        scan(tree.step);
-        scan(tree.body);
+	scan(tree.init);
+	scan(tree.cond);
+	scan(tree.step);
+	scan(tree.body);
     }
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {
-        scan(tree.var);
-        scan(tree.expr);
-        scan(tree.body);
+	scan(tree.var);
+	scan(tree.expr);
+	scan(tree.body);
     }
 
     public void visitLabelled(JCLabeledStatement tree) {
-        scan(tree.body);
+	scan(tree.body);
     }
 
     public void visitSwitch(JCSwitch tree) {
-        scan(tree.selector);
-        scan(tree.cases);
+	scan(tree.selector);
+	scan(tree.cases);
     }
 
     public void visitCase(JCCase tree) {
-        scan(tree.pat);
-        scan(tree.stats);
+	scan(tree.pat);
+	scan(tree.stats);
     }
 
     public void visitSynchronized(JCSynchronized tree) {
-        scan(tree.lock);
-        scan(tree.body);
+	scan(tree.lock);
+	scan(tree.body);
     }
 
     public void visitTry(JCTry tree) {
-        scan(tree.body);
-        scan(tree.catchers);
-        scan(tree.finalizer);
+	scan(tree.body);
+	scan(tree.catchers);
+	scan(tree.finalizer);
     }
 
     public void visitCatch(JCCatch tree) {
-        scan(tree.param);
-        scan(tree.body);
+	scan(tree.param);
+	scan(tree.body);
     }
 
     public void visitConditional(JCConditional tree) {
-        scan(tree.cond);
-        scan(tree.truepart);
-        scan(tree.falsepart);
+	scan(tree.cond);
+	scan(tree.truepart);
+	scan(tree.falsepart);
     }
 
     public void visitIf(JCIf tree) {
-        scan(tree.cond);
-        scan(tree.thenpart);
-        scan(tree.elsepart);
+	scan(tree.cond);
+	scan(tree.thenpart);
+	scan(tree.elsepart);
     }
 
     public void visitExec(JCExpressionStatement tree) {
-        scan(tree.expr);
+	scan(tree.expr);
     }
 
     public void visitBreak(JCBreak tree) {
@@ -178,76 +178,76 @@ public class TreeScanner extends Visitor {
     }
 
     public void visitReturn(JCReturn tree) {
-        scan(tree.expr);
+	scan(tree.expr);
     }
 
     public void visitThrow(JCThrow tree) {
-        scan(tree.expr);
+	scan(tree.expr);
     }
 
     public void visitAssert(JCAssert tree) {
-        scan(tree.cond);
-        scan(tree.detail);
+	scan(tree.cond);
+	scan(tree.detail);
     }
 
     public void visitApply(JCMethodInvocation tree) {
-        scan(tree.meth);
-        scan(tree.args);
+	scan(tree.meth);
+	scan(tree.args);
     }
 
     public void visitNewClass(JCNewClass tree) {
-        scan(tree.encl);
-        scan(tree.clazz);
-        scan(tree.args);
-        scan(tree.def);
+	scan(tree.encl);
+	scan(tree.clazz);
+	scan(tree.args);
+	scan(tree.def);
     }
 
     public void visitNewArray(JCNewArray tree) {
-        scan(tree.elemtype);
-        scan(tree.dims);
-        scan(tree.elems);
+	scan(tree.elemtype);
+	scan(tree.dims);
+	scan(tree.elems);
     }
 
     public void visitParens(JCParens tree) {
-        scan(tree.expr);
+	scan(tree.expr);
     }
 
     public void visitAssign(JCAssign tree) {
-        scan(tree.lhs);
-        scan(tree.rhs);
+	scan(tree.lhs);
+	scan(tree.rhs);
     }
 
     public void visitAssignop(JCAssignOp tree) {
-        scan(tree.lhs);
-        scan(tree.rhs);
+	scan(tree.lhs);
+	scan(tree.rhs);
     }
 
     public void visitUnary(JCUnary tree) {
-        scan(tree.arg);
+	scan(tree.arg);
     }
 
     public void visitBinary(JCBinary tree) {
-        scan(tree.lhs);
-        scan(tree.rhs);
+	scan(tree.lhs);
+	scan(tree.rhs);
     }
 
     public void visitTypeCast(JCTypeCast tree) {
-        scan(tree.clazz);
-        scan(tree.expr);
+	scan(tree.clazz);
+	scan(tree.expr);
     }
 
     public void visitTypeTest(JCInstanceOf tree) {
-        scan(tree.expr);
-        scan(tree.clazz);
+	scan(tree.expr);
+	scan(tree.clazz);
     }
 
     public void visitIndexed(JCArrayAccess tree) {
-        scan(tree.indexed);
-        scan(tree.index);
+	scan(tree.indexed);
+	scan(tree.index);
     }
 
     public void visitSelect(JCFieldAccess tree) {
-        scan(tree.selected);
+	scan(tree.selected);
     }
 
     public void visitIdent(JCIdent tree) {
@@ -260,16 +260,16 @@ public class TreeScanner extends Visitor {
     }
 
     public void visitTypeArray(JCArrayTypeTree tree) {
-        scan(tree.elemtype);
+	scan(tree.elemtype);
     }
 
     public void visitTypeApply(JCTypeApply tree) {
-        scan(tree.clazz);
-        scan(tree.arguments);
+	scan(tree.clazz);
+	scan(tree.arguments);
     }
 
     public void visitTypeParameter(JCTypeParameter tree) {
-        scan(tree.bounds);
+	scan(tree.bounds);
     }
 
     @Override
@@ -284,23 +284,23 @@ public class TreeScanner extends Visitor {
     }
 
     public void visitModifiers(JCModifiers tree) {
-        scan(tree.annotations);
+	scan(tree.annotations);
     }
 
     public void visitAnnotation(JCAnnotation tree) {
-        scan(tree.annotationType);
-        scan(tree.args);
+	scan(tree.annotationType);
+	scan(tree.args);
     }
 
     public void visitErroneous(JCErroneous tree) {
     }
 
     public void visitLetExpr(LetExpr tree) {
-        scan(tree.defs);
-        scan(tree.expr);
+	scan(tree.defs);
+	scan(tree.expr);
     }
 
     public void visitTree(JCTree tree) {
-        assert false;
+	assert false;
     }
 }

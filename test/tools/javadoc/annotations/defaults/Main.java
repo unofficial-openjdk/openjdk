@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 4904495
  * @summary Test an annotation type with default element values, and
- *          annotations that use them.
+ *	    annotations that use them.
  * @library ../../lib
  * @compile -source 1.5 ../../lib/Tester.java Main.java
  * @run main Main
@@ -40,29 +40,29 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
-        tester.verify();
+	tester.run();
+	tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-        try {
-            for (AnnotationTypeDoc at :
-                     root.specifiedPackages()[0].annotationTypes()) {
-                tester.printAnnotationType(at);
-                tester.println();
-            }
+	try {
+	    for (AnnotationTypeDoc at :
+		     root.specifiedPackages()[0].annotationTypes()) {
+		tester.printAnnotationType(at);
+		tester.println();
+	    }
 
-            for (ClassDoc cd :
-                     root.specifiedPackages()[0].interfaces()) {
-                for (MethodDoc m : cd.methods()) {
-                    tester.printMethod(m);
-                }
-                tester.println();
-            }
+	    for (ClassDoc cd :
+		     root.specifiedPackages()[0].interfaces()) {
+		for (MethodDoc m : cd.methods()) {
+		    tester.printMethod(m);
+		}
+		tester.println();
+	    }
 
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+	    return true;
+	} catch (IOException e) {
+	    return false;
+	}
     }
 }

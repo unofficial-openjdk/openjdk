@@ -145,15 +145,15 @@ public class AbstractIndexWriter extends HtmlDocletWriter {
     }
 
     /**
-     * Print the classkind(class, interface, exception, error of the class
+     * Print the classkind(class, interface, exception, error of the class 
      * passed.
      *
      * @param cd ClassDoc.
      */
     protected void printClassInfo(ClassDoc cd) {
-        print(configuration.getText("doclet.in",
-            Util.getTypeName(configuration, cd, false),
-            getPackageLink(cd.containingPackage(),
+        print(configuration.getText("doclet.in", 
+            Util.getTypeName(configuration, cd, false), 
+            getPackageLink(cd.containingPackage(), 
                 Util.getPackageName(cd.containingPackage()), false)));
     }
 
@@ -170,7 +170,7 @@ public class AbstractIndexWriter extends HtmlDocletWriter {
             member.name() + ((ExecutableMemberDoc)member).flatSignature() :
             member.name();
         if (name.indexOf("<") != -1 || name.indexOf(">") != -1) {
-                name = Util.escapeHtmlChars(name);
+        	name = Util.escapeHtmlChars(name);
         }
         ClassDoc containing = member.containingClass();
         dt();
@@ -196,8 +196,8 @@ public class AbstractIndexWriter extends HtmlDocletWriter {
         Tag[] tags;
         if (Util.isDeprecated(element)) {
             boldText("doclet.Deprecated"); space();
-            if ((tags = element.tags("deprecated")).length > 0)
-                printInlineDeprecatedComment(element, tags[0]);
+            if ((tags = element.tags("deprecated")).length > 0) 
+            	printInlineDeprecatedComment(element, tags[0]);
         } else {
             ClassDoc cont = element.containingClass();
             while (cont != null) {
@@ -221,7 +221,7 @@ public class AbstractIndexWriter extends HtmlDocletWriter {
     protected void printMemberDesc(MemberDoc member) {
         ClassDoc containing = member.containingClass();
         String classdesc = Util.getTypeName(configuration, containing, true) + " " +
-            getPreQualifiedClassLink(LinkInfoImpl.CONTEXT_INDEX, containing,
+            getPreQualifiedClassLink(LinkInfoImpl.CONTEXT_INDEX, containing, 
                 false);
         if (member.isField()) {
             if (member.isStatic()) {

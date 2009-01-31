@@ -34,7 +34,7 @@ import java.util.*;
 
 class T {
     void f(Map<?,?> m) {
-        for ( Map.Entry e : m.entrySet() ) { }
+	for ( Map.Entry e : m.entrySet() ) { }
     }
 }
 class Box<T> {

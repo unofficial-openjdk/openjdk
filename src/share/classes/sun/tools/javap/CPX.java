@@ -33,8 +33,8 @@ package sun.tools.javap;
  */
 class CPX {
     int cpx;
-
+    
     CPX (int cpx) {
-        this.cpx=cpx;
+	this.cpx=cpx;
     }
 }

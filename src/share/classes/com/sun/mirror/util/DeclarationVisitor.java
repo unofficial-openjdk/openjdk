@@ -127,7 +127,7 @@ public interface DeclarationVisitor {
      * @param d the declaration to visit
      */
     public void visitAnnotationTypeElementDeclaration(
-                                     AnnotationTypeElementDeclaration d);
+				     AnnotationTypeElementDeclaration d);
 
     /**
      * Visits a parameter declaration.

@@ -56,56 +56,56 @@ public class TestNames extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnv) {
-        round++;
-        if (!roundEnv.processingOver()) {
-            boolean failed = false;
+	round++;
+	if (!roundEnv.processingOver()) {
+	    boolean failed = false;
 
-            switch(round) {
-            case 1:
+	    switch(round) {
+	    case 1:
 
-            TypeElement stringMirror = eltUtils.getTypeElement(stringStringName);
-            stringName = stringMirror.getQualifiedName();
-            Name stringPseudoName = Pseudonym.getName(stringName.toString());
+	    TypeElement stringMirror = eltUtils.getTypeElement(stringStringName);
+	    stringName = stringMirror.getQualifiedName();
+	    Name stringPseudoName = Pseudonym.getName(stringName.toString());
+	    
+
+	    if (stringName.equals(stringPseudoName))
+		failed = true;
+	    if (!stringName.contentEquals(stringStringName))
+		failed = true;
+	    if (!stringName.contentEquals(stringPseudoName))
+		failed = true;
 
 
-            if (stringName.equals(stringPseudoName))
-                failed = true;
-            if (!stringName.contentEquals(stringStringName))
-                failed = true;
-            if (!stringName.contentEquals(stringPseudoName))
-                failed = true;
+	    try {
+		// Force another round with a new context
+		PrintWriter pw = new PrintWriter(filer.createSourceFile("Foo").openWriter());
+		pw.println("public class Foo {}");
+		pw.close();
+	    } catch (IOException ioe) {
+		throw new RuntimeException();
+	    }
+	    break;
 
+	    case 2:
+		Name stringStringAsName = eltUtils.getName(stringStringName);
+		TypeElement stringMirror2 = eltUtils.getTypeElement(stringStringName);		
+		Name stringName2 = stringMirror2.getQualifiedName();
 
-            try {
-                // Force another round with a new context
-                PrintWriter pw = new PrintWriter(filer.createSourceFile("Foo").openWriter());
-                pw.println("public class Foo {}");
-                pw.close();
-            } catch (IOException ioe) {
-                throw new RuntimeException();
-            }
-            break;
+		if (stringStringAsName != stringName ||
+		    stringName != stringName2)
+		    failed = true;
+		break;
 
-            case 2:
-                Name stringStringAsName = eltUtils.getName(stringStringName);
-                TypeElement stringMirror2 = eltUtils.getTypeElement(stringStringName);
-                Name stringName2 = stringMirror2.getQualifiedName();
+	    default:
+		throw new RuntimeException("Unexpected round " + round);
+	    }
 
-                if (stringStringAsName != stringName ||
-                    stringName != stringName2)
-                    failed = true;
-                break;
-
-            default:
-                throw new RuntimeException("Unexpected round " + round);
-            }
-
-            if (failed)
-                throw new RuntimeException("Invalid name equality checks.");
-        }
+	    if (failed)
+		throw new RuntimeException("Invalid name equality checks.");
+	}
         return true;
     }
-
+    
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
@@ -113,38 +113,38 @@ public class TestNames extends AbstractProcessor {
     public void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         filer    = processingEnv.getFiler();
-        eltUtils = processingEnv.getElementUtils();
+	eltUtils = processingEnv.getElementUtils();
     }
 
     private static class Pseudonym implements Name {
-        private String name;
+	private String name;
+	
+	private Pseudonym(String name) {
+	    this.name = name;
+	} 
 
-        private Pseudonym(String name) {
-            this.name = name;
-        }
+	public static Pseudonym getName(String name) {
+	    return new Pseudonym(name);
+	}
 
-        public static Pseudonym getName(String name) {
-            return new Pseudonym(name);
-        }
+	public boolean contentEquals(CharSequence cs) {
+	    return name.contentEquals(cs);
+	}
+	
+	public char charAt(int index) {
+	    return name.charAt(index);
+	}
 
-        public boolean contentEquals(CharSequence cs) {
-            return name.contentEquals(cs);
-        }
+	public int length() {
+	    return name.length();
+	}
 
-        public char charAt(int index) {
-            return name.charAt(index);
-        }
+	public CharSequence subSequence(int start, int end) {
+	    return name.subSequence(start, end);
+	}
 
-        public int length() {
-            return name.length();
-        }
-
-        public CharSequence subSequence(int start, int end) {
-            return name.subSequence(start, end);
-        }
-
-        public String toString() {
-            return name;
-        }
+	public String toString() {
+	    return name;
+	}
     }
 }

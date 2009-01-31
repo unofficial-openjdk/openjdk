@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,25 +38,25 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
+	tester.run();
     }
 
     public static boolean start(RootDoc root) {
-        ClassDoc cd = root.classes()[0];
-        System.out.println("*** " + cd);
-        TypeVariable E = cd.typeParameters()[0];
-        System.out.println("*** " + E);
-        Type bound = E.bounds()[0];
-        System.out.println("*** " + bound);
+	ClassDoc cd = root.classes()[0];
+	System.out.println("*** " + cd);
+	TypeVariable E = cd.typeParameters()[0];
+	System.out.println("*** " + E);
+	Type bound = E.bounds()[0];
+	System.out.println("*** " + bound);
 
-        // Verify that we have an instantiation of Enum<E>, and not
-        // the generic interface.
-        ParameterizedType enumE = (ParameterizedType)bound;
+	// Verify that we have an instantiation of Enum<E>, and not
+	// the generic interface.
+	ParameterizedType enumE = (ParameterizedType)bound;
 
-        if (enumE.asClassDoc() != cd) {
-            throw new Error("Type declaration and type use don't match up.");
-        } else {
-            return true;
-        }
+	if (enumE.asClassDoc() != cd) {
+	    throw new Error("Type declaration and type use don't match up.");
+	} else {
+	    return true;
+	}
     }
 }

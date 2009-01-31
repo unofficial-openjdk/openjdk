@@ -31,23 +31,23 @@
 public class AssignmentSameType1 {
 
     public static void main(String[] args) {
-        Ref<B> exact = null;
-        Ref<? extends B> ebound = null;
-        Ref<? super B> sbound = null;
-        Ref<?> unbound = null;
+	Ref<B> exact = null;
+	Ref<? extends B> ebound = null;
+	Ref<? super B> sbound = null;
+	Ref<?> unbound = null;
 
-;       exact = exact;          // <<pass>> <A> = <A>
+;	exact = exact;		// <<pass>> <A> = <A>
 
-        ebound = exact;         // <<pass>> <? extends A> = <A>
-        ebound = ebound;        // <<pass>> <? extends A> = <? extends A>
+	ebound = exact;		// <<pass>> <? extends A> = <A>
+	ebound = ebound;        // <<pass>> <? extends A> = <? extends A>
 
-        sbound = exact;         // <<pass>> <? super A> = <A>
-        sbound = sbound;        // <<pass>> <? super A> = <? super A>
+	sbound = exact;		// <<pass>> <? super A> = <A>
+	sbound = sbound;	// <<pass>> <? super A> = <? super A>
 
-        unbound = exact;        // <<pass>> <?> = <A>
-        unbound = ebound;       // <<pass>> <?> = <? extends A>
-        unbound = sbound;       // <<pass>> <?> = <? super A>
-        unbound = unbound;      // <<pass>> <?> = <?>
+	unbound = exact;	// <<pass>> <?> = <A>
+	unbound = ebound;	// <<pass>> <?> = <? extends A>
+	unbound = sbound;	// <<pass>> <?> = <? super A>
+	unbound = unbound;	// <<pass>> <?> = <?>
     }
 }
 

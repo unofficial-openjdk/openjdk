@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,8 +26,8 @@ package pkg;
 import java.lang.annotation.*;
 
 public interface BaseInterface {
-
+ 
     public class NestedClassFromInterface{}
-
+    
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 }

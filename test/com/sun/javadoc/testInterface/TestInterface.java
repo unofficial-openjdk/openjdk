@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,9 +24,9 @@
 /*
  * @test
  * @bug      4682448 4947464 5029946
- * @summary  Verify that the public modifier does not show up in the
+ * @summary  Verify that the public modifier does not show up in the 
  *           documentation for public methods, as recommended by the JLS.
- *           If A implements I and B extends A, B should be in the list of
+ *           If A implements I and B extends A, B should be in the list of 
  *           implementing classes in the documentation for I.
  * @author   jamieh
  * @library  ../lib/
@@ -36,23 +36,23 @@
  */
 
 public class TestInterface extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4682448-4947464-5029946";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-source", "1.5", "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
-        {BUG_ID + FS + "pkg" + FS + "Interface.html",
+        {BUG_ID + FS + "pkg" + FS + "Interface.html", 
             "int <B>method</B>()"},
-        {BUG_ID + FS + "pkg" + FS + "Interface.html",
+        {BUG_ID + FS + "pkg" + FS + "Interface.html", 
             "static final int <B>field</B>"},
-
-
+                
+                
         // Make sure known implementing class list is correct and omits type parameters.
         {BUG_ID + FS + "pkg" + FS + "Interface.html",
             "<DT><B>All Known Implementing Classes:</B> " +
@@ -60,7 +60,7 @@ public class TestInterface extends JavadocTester {
             "title=\"class in pkg\">Child</A>, " +
             "<A HREF=\"../pkg/Parent.html\" title=\"class in pkg\">" +
             "Parent</A></DD>"},
-
+                
          // Make sure "All Implemented Interfaces": has substituted type parameters
          {BUG_ID + FS + "pkg" + FS + "Child.html",
             "<B>All Implemented Interfaces:</B> <DD><A HREF=\"../pkg/Interface.html\" title=\"interface in pkg\">Interface</A>&lt;T&gt;"
@@ -84,15 +84,15 @@ public class TestInterface extends JavadocTester {
         //Make sure "Overrides" has substituted type parameters.
         {BUG_ID + FS + "pkg" + FS + "Child.html",
             "<B>Overrides:</B><DD><CODE><A HREF=\"../pkg/Parent.html#method()\">method</A></CODE> in class <CODE><A HREF=\"../pkg/Parent.html\" title=\"class in pkg\">Parent</A>&lt;<A HREF=\"../pkg/Child.html\" title=\"type parameter in Child\">T</A>&gt;</CODE>"
-         },
+         }, 
     };
     private static final String[][] NEGATED_TEST = {
-        {BUG_ID + FS + "pkg" + FS + "Interface.html",
+        {BUG_ID + FS + "pkg" + FS + "Interface.html", 
             "public int <B>method</B>()"},
-        {BUG_ID + FS + "pkg" + FS + "Interface.html",
+        {BUG_ID + FS + "pkg" + FS + "Interface.html", 
             "public static final int <B>field</B>"},
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -102,14 +102,14 @@ public class TestInterface extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

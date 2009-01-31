@@ -41,29 +41,29 @@ import com.sun.mirror.util.*;
 public class AnnoTypeElemDecl extends Tester {
 
     public static void main(String[] args) {
-        (new AnnoTypeElemDecl()).run();
+	(new AnnoTypeElemDecl()).run();
     }
 
 
     // Some annotation type elements to use.
-    private AnnotationTypeElementDeclaration elem1 = null;      // s()
-    private AnnotationTypeElementDeclaration elem2 = null;      // i()
-    private AnnotationTypeElementDeclaration elem3 = null;      // b()
+    private AnnotationTypeElementDeclaration elem1 = null;	// s()
+    private AnnotationTypeElementDeclaration elem2 = null;	// i()	
+    private AnnotationTypeElementDeclaration elem3 = null;	// b()	
 
     protected void init() {
-        for (TypeDeclaration at : thisClassDecl.getNestedTypes()) {
-            for (MethodDeclaration meth : at.getMethods()) {
-                AnnotationTypeElementDeclaration elem =
-                    (AnnotationTypeElementDeclaration) meth;
-                if (elem.getSimpleName().equals("s")) {
-                    elem1 = elem;       // s()
-                } else if (elem.getSimpleName().equals("i")) {
-                    elem2 = elem;       // i()
-                } else {
-                    elem3 = elem;       // b()
-                }
-            }
-        }
+	for (TypeDeclaration at : thisClassDecl.getNestedTypes()) {
+	    for (MethodDeclaration meth : at.getMethods()) {
+		AnnotationTypeElementDeclaration elem =
+		    (AnnotationTypeElementDeclaration) meth;
+		if (elem.getSimpleName().equals("s")) {
+		    elem1 = elem;	// s()
+		} else if (elem.getSimpleName().equals("i")) {
+		    elem2 = elem;	// i()
+		} else {
+		    elem3 = elem;	// b()
+		}
+	    }
+	}
     }
 
 
@@ -71,49 +71,49 @@ public class AnnoTypeElemDecl extends Tester {
 
     @Test(result="anno type element")
     Collection<String> accept() {
-        final Collection<String> res = new ArrayList<String>();
+	final Collection<String> res = new ArrayList<String>();
 
-        elem1.accept(new SimpleDeclarationVisitor() {
-            public void visitTypeDeclaration(TypeDeclaration t) {
-                res.add("type");
-            }
-            public void visitExecutableDeclaration(ExecutableDeclaration e) {
-                res.add("executable");
-            }
-            public void visitMethodDeclaration(MethodDeclaration m) {
-                res.add("method");
-            }
-            public void visitAnnotationTypeElementDeclaration(
-                                        AnnotationTypeElementDeclaration a) {
-                res.add("anno type element");
-            }
-        });
-        return res;
+	elem1.accept(new SimpleDeclarationVisitor() {
+	    public void visitTypeDeclaration(TypeDeclaration t) {
+		res.add("type");
+	    }
+	    public void visitExecutableDeclaration(ExecutableDeclaration e) {
+		res.add("executable");
+	    }
+	    public void visitMethodDeclaration(MethodDeclaration m) {
+		res.add("method");
+	    }
+	    public void visitAnnotationTypeElementDeclaration(
+					AnnotationTypeElementDeclaration a) {
+		res.add("anno type element");
+	    }
+	});
+	return res;
     }
 
     @Test(result={"@AnnoTypeElemDecl.AT2"})
     Collection<AnnotationMirror> getAnnotationMirrors() {
-        return elem1.getAnnotationMirrors();
+	return elem1.getAnnotationMirrors();
     }
 
     @Test(result=" Sed Quis custodiet ipsos custodes?\n")
     String getDocComment() {
-        return elem1.getDocComment();
+	return elem1.getDocComment();
     }
 
     @Test(result={"public", "abstract"})
     Collection<Modifier> getModifiers() {
-        return elem1.getModifiers();
+	return elem1.getModifiers();
     }
 
     @Test(result="AnnoTypeElemDecl.java")
     String getPosition() {
-        return elem1.getPosition().file().getName();
+	return elem1.getPosition().file().getName();
     }
 
     @Test(result="s")
     String getSimpleName() {
-        return elem1.getSimpleName();
+	return elem1.getSimpleName();
     }
 
 
@@ -121,7 +121,7 @@ public class AnnoTypeElemDecl extends Tester {
 
     @Test(result="AnnoTypeElemDecl.AT1")
     TypeDeclaration getDeclaringType() {
-        return elem1.getDeclaringType();
+	return elem1.getDeclaringType();
     }
 
 
@@ -129,22 +129,22 @@ public class AnnoTypeElemDecl extends Tester {
 
     @Test(result={})
     Collection<TypeParameterDeclaration> getFormalTypeParameters() {
-        return elem1.getFormalTypeParameters();
+	return elem1.getFormalTypeParameters();
     }
 
     @Test(result={})
     Collection<ParameterDeclaration> getParameters() {
-        return elem1.getParameters();
+	return elem1.getParameters();
     }
 
     @Test(result={})
     Collection<ReferenceType> getThrownTypes() {
-        return elem1.getThrownTypes();
+	return elem1.getThrownTypes();
     }
 
     @Test(result="false")
     Boolean isVarArgs() {
-        return elem1.isVarArgs();
+	return elem1.isVarArgs();
     }
 
 
@@ -152,18 +152,18 @@ public class AnnoTypeElemDecl extends Tester {
 
     @Test(result="\"default\"")
     AnnotationValue getDefaultValue1() {
-        return elem1.getDefaultValue();
+	return elem1.getDefaultValue();
     }
 
     @Test(result="null")
     AnnotationValue getDefaultValue2() {
-        return elem2.getDefaultValue();
+	return elem2.getDefaultValue();
     }
 
     // 5010385: getValue() returns null for boolean type elements
     @Test(result="false")
     Boolean getDefaultValue3() {
-        return (Boolean) elem3.getDefaultValue().getValue();
+	return (Boolean) elem3.getDefaultValue().getValue();
     }
 
 
@@ -171,22 +171,22 @@ public class AnnoTypeElemDecl extends Tester {
 
     @Test(result="s()")
     String toStringTest() {
-        return elem1.toString();
+	return elem1.toString();
     }
 
 
     // Declarations used by tests.
 
     @interface AT1 {
-        /**
-         * Sed Quis custodiet ipsos custodes?
-         */
-        @AT2
-        String s() default "default";
+	/**
+	 * Sed Quis custodiet ipsos custodes?
+	 */
+	@AT2
+	String s() default "default";
 
-        int i();
+	int i();
 
-        boolean b() default false;
+	boolean b() default false;
     }
 
     @interface AT2 {

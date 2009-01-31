@@ -37,12 +37,12 @@ import java.io.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @since 1.2
  * @author Atul M Dambalkar
  */
 public class DirectoryManager {
-
+  
     /**
      * The file separator string, "/", used in the formation of the URL path.
      */
@@ -99,7 +99,7 @@ public class DirectoryManager {
     public static String getDirectoryPath(PackageDoc pd) {
         return pd == null || pd.name().length() == 0 ? "" : getDirectoryPath(pd.name());
     }
-
+    
     /**
      * Given a package name, return the corresponding directory name
      * with the platform-dependent file separator between subdirectory names.
@@ -204,7 +204,7 @@ public class DirectoryManager {
     public static String getRelativePath(PackageDoc from) {
         return from == null || from.name().length() == 0 ? "" : getRelativePath(from.name());
     }
-
+    
     /**
      * Given a package name as a string, return relative path string
      * from the corresponding package directory to the root of

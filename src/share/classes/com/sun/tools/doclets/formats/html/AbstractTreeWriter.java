@@ -61,7 +61,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
         super(configuration, filename);
         this.classtree = classtree;
     }
-
+    
     /**
      * Create appropriate directory for the package and also initilise the
      * relative path from this generated file to the current or
@@ -96,7 +96,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
      * @param list list of the sub-classes at this level.
      * @param isEnum true if we are generating a tree for enums.
      */
-    protected void generateLevelInfo(ClassDoc parent, List list,
+    protected void generateLevelInfo(ClassDoc parent, List list, 
             boolean isEnum) {
         if (list.size() > 0) {
             ul();
@@ -104,7 +104,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
                 ClassDoc local = (ClassDoc)list.get(i);
                 printPartialInfo(local);
                 printExtendsImplements(parent, local);
-                generateLevelInfo(local, classtree.subs(local, isEnum),
+                generateLevelInfo(local, classtree.subs(local, isEnum), 
                     isEnum);   // Recurse
             }
             ulEnd();
@@ -123,7 +123,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
         if (list.size() > 0) {
             ClassDoc firstClassDoc = (ClassDoc)list.get(0);
             printTreeHeading(heading);
-            generateLevelInfo(!firstClassDoc.isInterface()? firstClassDoc : null,
+            generateLevelInfo(!firstClassDoc.isInterface()? firstClassDoc : null, 
                 list,
                 list == classtree.baseEnums());
         }
@@ -138,7 +138,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
     protected void printExtendsImplements(ClassDoc parent, ClassDoc cd) {
         ClassDoc[] interfaces = cd.interfaces();
         if (interfaces.length > (cd.isInterface()? 1 : 0)) {
-            Arrays.sort(interfaces);
+            Arrays.sort(interfaces);            
             int counter = 0;
             for (int i = 0; i < interfaces.length; i++) {
                 if (parent != interfaces[i]) {
@@ -155,7 +155,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
                     } else {
                         print(", ");
                     }
-                    printPreQualifiedClassLink(LinkInfoImpl.CONTEXT_TREE,
+                    printPreQualifiedClassLink(LinkInfoImpl.CONTEXT_TREE, 
                         interfaces[i]);
                     counter++;
                 }

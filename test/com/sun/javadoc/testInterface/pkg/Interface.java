@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,19 +24,19 @@
 package pkg;
 
 public interface Interface<E> {
-
+    
     /**
      * The public modifier of this interface field should not show up
      * in the documentation.
      */
     public final int field = 1;
-
+    
     /**
-     * The public modifier of this interface method should not show up in the
+     * The public modifier of this interface method should not show up in the 
      * documentation.
-     *
+     * 
      * @return some dummy integer.
      */
     public int method();
-
+    
 }

@@ -42,37 +42,37 @@ import com.sun.tools.javac.util.Position;
 public class Bark extends Log {
     /** The context key for the bark. */
     protected static final Context.Key<Bark> barkKey =
-        new Context.Key<Bark>();
+	new Context.Key<Bark>();
 
     /**
      * Preregisters factories to create and use a Bark object for use as
      * both a Log and a Bark.
      */
     public static void preRegister(final Context context) {
-        context.put(barkKey, new Context.Factory<Bark>() {
-            public Bark make() {
-                return new Bark(context);
-            }
-        });
-        context.put(Log.logKey, new Context.Factory<Log>() {
-            public Log make() {
-                return Bark.instance(context);
-            }
-        });
+	context.put(barkKey, new Context.Factory<Bark>() {
+	    public Bark make() {
+		return new Bark(context);
+	    }
+	});
+	context.put(Log.logKey, new Context.Factory<Log>() {
+	    public Log make() {
+		return Bark.instance(context);
+	    }
+	});
     }
 
     /** Get the Bark instance for this context. */
     public static Bark instance(Context context) {
-        Bark instance = context.get(barkKey);
-        if (instance == null)
-            instance = new Bark(context);
-        return instance;
+	Bark instance = context.get(barkKey);
+	if (instance == null)
+	    instance = new Bark(context);
+	return instance;
     }
 
     /** Specifies whether or not to ignore any diagnostics that are reported.
      */
     private boolean ignoreDiagnostics;
-
+    
     /**
      * Factory for APT-specific diagnostics.
      */
@@ -83,15 +83,15 @@ public class Bark extends Log {
      * Creates a Bark.
      */
     protected Bark(Context context) {
-        super(context); // will register this object in context with Log.logKey
-        context.put(barkKey, this);
+	super(context); // will register this object in context with Log.logKey
+	context.put(barkKey, this);
 
-        // register additional resource bundle for APT messages.
-        Messages aptMessages = new Messages(Messages.getDefaultBundle());
-        aptMessages.add("com.sun.tools.apt.resources.apt");
-        aptDiags = new JCDiagnostic.Factory(aptMessages, "apt");
+	// register additional resource bundle for APT messages.
+	Messages aptMessages = new Messages(Messages.getDefaultBundle());
+	aptMessages.add("com.sun.tools.apt.resources.apt");
+	aptDiags = new JCDiagnostic.Factory(aptMessages, "apt");
 
-        multipleErrors = true;
+	multipleErrors = true;
     }
 
     /**
@@ -102,9 +102,9 @@ public class Bark extends Log {
      * @return the previous state of the flag
      */
     public boolean setDiagnosticsIgnored(boolean b) {
-        boolean prev = ignoreDiagnostics;
-        ignoreDiagnostics = b;
-        return prev;
+	boolean prev = ignoreDiagnostics;
+	ignoreDiagnostics = b;
+	return prev;
     }
 
     /**
@@ -112,10 +112,10 @@ public class Bark extends Log {
      */
     @Override
     public void report(JCDiagnostic diagnostic) {
-        if (ignoreDiagnostics)
-            return;
+	if (ignoreDiagnostics)
+	    return;
 
-        super.report(diagnostic);
+	super.report(diagnostic);
     }
 
     /** Report an error.
@@ -123,7 +123,7 @@ public class Bark extends Log {
      *  @param args   Fields of the error message.
      */
     public void aptError(String key, Object... args) {
-        aptError(Position.NOPOS, key, args);
+	aptError(Position.NOPOS, key, args);
     }
 
     /** Report an error, unless another error was already reported at same
@@ -133,7 +133,7 @@ public class Bark extends Log {
      *  @param args   Fields of the error message.
      */
     public void aptError(int pos, String key, Object ... args) {
-        report(aptDiags.error(source, new SimpleDiagnosticPosition(pos), key, args));
+	report(aptDiags.error(source, new SimpleDiagnosticPosition(pos), key, args));
     }
 
     /** Report a warning, unless suppressed by the  -nowarn option or the
@@ -142,7 +142,7 @@ public class Bark extends Log {
      *  @param args   Fields of the warning message.
      */
     public void aptWarning(String key, Object... args) {
-        aptWarning(Position.NOPOS, key, args);
+	aptWarning(Position.NOPOS, key, args);
     }
 
     /** Report a warning, unless suppressed by the  -nowarn option or the
@@ -160,7 +160,7 @@ public class Bark extends Log {
      *  @param args   Fields of the note message.
      */
     public void aptNote(String key, Object... args) {
-        aptNote(Position.NOPOS, key, args);
+	aptNote(Position.NOPOS, key, args);
     }
 
     /** Report a note, unless suppressed by the  -nowarn option.

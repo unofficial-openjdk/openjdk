@@ -40,14 +40,14 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
  */
 
 abstract class DeclaredTypeImpl extends TypeMirrorImpl
-                                implements DeclaredType {
+			        implements DeclaredType {
 
     protected Type.ClassType type;
 
 
     protected DeclaredTypeImpl(AptEnv env, Type.ClassType type) {
-        super(env, type);
-        this.type = type;
+	super(env, type);
+	this.type = type;
     }
 
 
@@ -57,48 +57,48 @@ abstract class DeclaredTypeImpl extends TypeMirrorImpl
      * Type names are qualified.
      */
     public String toString() {
-        return toString(env, type);
+	return toString(env, type);
     }
 
     /**
      * {@inheritDoc}
      */
     public TypeDeclaration getDeclaration() {
-        return env.declMaker.getTypeDeclaration((ClassSymbol) type.tsym);
+	return env.declMaker.getTypeDeclaration((ClassSymbol) type.tsym);
     }
 
     /**
      * {@inheritDoc}
      */
     public DeclaredType getContainingType() {
-        if (type.getEnclosingType().tag == TypeTags.CLASS) {
-            // This is the type of an inner class.
-            return (DeclaredType) env.typeMaker.getType(type.getEnclosingType());
-        }
-        ClassSymbol enclosing = type.tsym.owner.enclClass();
-        if (enclosing != null) {
-            // Nested but not inner.  Return the raw type of the enclosing
-            // class or interface.
-            // See java.lang.reflect.ParameterizedType.getOwnerType().
-            return (DeclaredType) env.typeMaker.getType(
-                                        env.jctypes.erasure(enclosing.type));
-        }
-        return null;
+	if (type.getEnclosingType().tag == TypeTags.CLASS) {
+	    // This is the type of an inner class.
+	    return (DeclaredType) env.typeMaker.getType(type.getEnclosingType());
+	}
+	ClassSymbol enclosing = type.tsym.owner.enclClass();
+	if (enclosing != null) {
+	    // Nested but not inner.  Return the raw type of the enclosing
+	    // class or interface.
+	    // See java.lang.reflect.ParameterizedType.getOwnerType().
+	    return (DeclaredType) env.typeMaker.getType(
+					env.jctypes.erasure(enclosing.type));
+	}
+	return null;
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<TypeMirror> getActualTypeArguments() {
-        return env.typeMaker.getTypes(type.getTypeArguments());
+	return env.typeMaker.getTypes(type.getTypeArguments());
     }
 
     /**
      * {@inheritDoc}
      */
     public Collection<InterfaceType> getSuperinterfaces() {
-        return env.typeMaker.getTypes(env.jctypes.interfaces(type),
-                                      InterfaceType.class);
+	return env.typeMaker.getTypes(env.jctypes.interfaces(type),
+				      InterfaceType.class);
     }
 
 
@@ -107,6 +107,6 @@ abstract class DeclaredTypeImpl extends TypeMirrorImpl
      * See {@link #toString()} for details.
      */
     static String toString(AptEnv env, Type.ClassType c) {
-        return c.toString();
+	return c.toString();
     }
 }

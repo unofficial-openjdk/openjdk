@@ -8,8 +8,8 @@ class B
 
 class B1
 {
-    B1() {
-        x = 1;
+    B1() { 
+	x = 1;
     }
 }
 

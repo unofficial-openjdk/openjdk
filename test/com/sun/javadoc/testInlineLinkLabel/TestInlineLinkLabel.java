@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,12 +33,12 @@
  */
 
 public class TestInlineLinkLabel extends JavadocTester {
-
+    
     private static final String BUG_ID = "4524136";
     private static final String[][] TEST = {
         //Search for the label to the package link.
         {BUG_ID + FS + "pkg" + FS + "C1.html" , "<A HREF=\"../pkg/package-summary.html\"><CODE>Here is a link to a package</CODE></A>"},
-
+        
         //Search for the label to the class link
         {BUG_ID + FS + "pkg" + FS + "C1.html" , "<A HREF=\"../pkg/C2.html\" title=\"class in pkg\"><CODE>Here is a link to a class</CODE></A>"}
     };
@@ -46,7 +46,7 @@ public class TestInlineLinkLabel extends JavadocTester {
     private static final String[] ARGS =
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"};
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -56,14 +56,14 @@ public class TestInlineLinkLabel extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

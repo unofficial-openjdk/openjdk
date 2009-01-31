@@ -12,8 +12,8 @@ enum Season1 {
 }
 class T6245591 {
     void m() {
-        Season s1 = Season.WINTER;    // ref to WINTER should be deprecated
-        Season1 s2 = Season1.WINTER;  // nothing here should be deprecated;
-                                      // @deprecated should not leak out of Season
+	Season s1 = Season.WINTER;    // ref to WINTER should be deprecated
+	Season1 s2 = Season1.WINTER;  // nothing here should be deprecated; 
+	                              // @deprecated should not leak out of Season
     }
 }

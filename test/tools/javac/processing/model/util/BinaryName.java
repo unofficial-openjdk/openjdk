@@ -45,31 +45,31 @@ public class BinaryName extends AbstractProcessor {
     Elements elements;
 
     public void init(ProcessingEnvironment penv) {
-        super.init(penv);
-        elements = penv.getElementUtils();
+	super.init(penv);
+	elements = penv.getElementUtils();
     }
 
     public boolean process(Set<? extends TypeElement> tes,
-                           RoundEnvironment round) {
-        if (round.processingOver()) return true;
+			   RoundEnvironment round) {
+	if (round.processingOver()) return true;
 
-        Set<? extends TypeElement> ts = typesIn(round.getElementsAnnotatedWith(
-                elements.getTypeElement("HelloIm")));
+	Set<? extends TypeElement> ts = typesIn(round.getElementsAnnotatedWith(
+		elements.getTypeElement("HelloIm")));
 
-        boolean success = true;
-        for (TypeElement t : ts) {
-            String expected = t.getAnnotation(HelloIm.class).value();
-            CharSequence found = elements.getBinaryName(t);
-            if (expected.contentEquals(found)) {
-                System.out.println(expected + " == " + found);
-            } else {
-                success = false;
-                System.out.println(expected + " != " + found + "  [FAIL]");
-            }
-        }
-        if (! success)
-            throw new AssertionError();
-        return true;
+	boolean success = true;
+	for (TypeElement t : ts) {
+	    String expected = t.getAnnotation(HelloIm.class).value();
+	    CharSequence found = elements.getBinaryName(t);
+	    if (expected.contentEquals(found)) {
+		System.out.println(expected + " == " + found);
+	    } else {
+		success = false;
+		System.out.println(expected + " != " + found + "  [FAIL]");
+	    }
+	}
+	if (! success)
+	    throw new AssertionError();
+	return true;
     }
 
     @HelloIm("BinaryName$Nested")

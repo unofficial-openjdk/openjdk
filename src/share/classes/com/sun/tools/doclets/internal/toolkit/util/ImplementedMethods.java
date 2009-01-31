@@ -36,23 +36,23 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Atul M Dambalkar
  */
 public class ImplementedMethods {
-
+    
     private Map interfaces = new HashMap();
     private List methlist = new ArrayList();
     private Configuration configuration;
     private final ClassDoc classdoc;
     private final MethodDoc method;
-
-    public ImplementedMethods(MethodDoc method, Configuration configuration) {
+    
+    public ImplementedMethods(MethodDoc method, Configuration configuration) {      
         this.method = method;
         this.configuration = configuration;
         classdoc = method.containingClass();
     }
-
+    
     /**
      * Return the array of interface methods which the method passed in the
      * constructor is implementing. The search/build order is as follows:
@@ -69,15 +69,15 @@ public class ImplementedMethods {
         buildImplementedMethodList(sort);
         return (MethodDoc[])methlist.toArray(new MethodDoc[methlist.size()]);
     }
-
+    
     public MethodDoc[] build() {
         return build(true);
     }
-
+    
     public Type getMethodHolder(MethodDoc methodDoc) {
         return (Type) interfaces.get(methodDoc);
     }
-
+    
     /**
      * Search for the method in the array of interfaces. If found check if it is
      * overridden by any other subinterface method which this class
@@ -99,7 +99,7 @@ public class ImplementedMethods {
             }
         }
     }
-
+    
     /**
      * Search in the method list and check if it contains a method which
      * is overridden by the method as parameter.  If found, remove the
@@ -119,7 +119,7 @@ public class ImplementedMethods {
             }
         }
     }
-
+    
     /**
      * Search in the already found methods' list and check if it contains
      * a method which is overriding the method parameter or is the method
@@ -147,3 +147,4 @@ public class ImplementedMethods {
         return false;
     }
 }
+

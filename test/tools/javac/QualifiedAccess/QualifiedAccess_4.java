@@ -36,10 +36,12 @@ import pack1.P1;
 class CMain {
 
     class Foo {
-        class Bar {}
+	class Bar {}
     }
 
     // NOTE: Error localization and recovery is bad here,
     // eliciting two other spurious complaints.
-    Foo.Bar yy  = x.new Foo.Bar();      // ERROR - Type in qualified 'new' must be unqualified
+    Foo.Bar yy  = x.new Foo.Bar();	// ERROR - Type in qualified 'new' must be unqualified
 }
+
+

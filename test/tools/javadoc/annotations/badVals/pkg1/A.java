@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,20 +27,20 @@ import java.lang.annotation.*;
 
 public class A {
 
-    @Retention(BOGUS)           // illegal
+    @Retention(BOGUS)		// illegal
     public @interface A1 {}
 
-    @Target({BOGUS})            // illegal
+    @Target({BOGUS})		// illegal
     public @interface A2 {}
 
-    @Retention(true)            // illegal
+    @Retention(true)		// illegal
     public @interface A3 {}
 
     public @interface A4 {
-        ElementType value() default BOGUS;      // illegal
+	ElementType value() default BOGUS;	// illegal
     }
 
     public @interface A5 {
-        int[] value() default {true};           // illegal
+	int[] value() default {true};		// illegal
     }
 }

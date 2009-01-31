@@ -51,39 +51,39 @@ public class Messager extends Log implements DocErrorReporter {
 
     /** Get the current messager, which is also the compiler log. */
     public static Messager instance0(Context context) {
-        Log instance = context.get(logKey);
-        if (instance == null || !(instance instanceof Messager))
-            throw new InternalError("no messager instance!");
-        return (Messager)instance;
+	Log instance = context.get(logKey);
+	if (instance == null || !(instance instanceof Messager))
+	    throw new InternalError("no messager instance!");
+	return (Messager)instance;
     }
 
     public static void preRegister(final Context context,
-                                   final String programName) {
-        context.put(logKey, new Context.Factory<Log>() {
-            public Log make() {
-                return new Messager(context,
-                                    programName);
-            }
-        });
+				   final String programName) {
+	context.put(logKey, new Context.Factory<Log>() {
+	    public Log make() {
+		return new Messager(context,
+				    programName);
+	    }
+	});
     }
     public static void preRegister(final Context context,
-                                   final String programName,
-                                   final PrintWriter errWriter,
-                                   final PrintWriter warnWriter,
-                                   final PrintWriter noticeWriter) {
-        context.put(logKey, new Context.Factory<Log>() {
-            public Log make() {
-                return new Messager(context,
-                                    programName,
-                                    errWriter,
-                                    warnWriter,
-                                    noticeWriter);
-            }
-        });
+				   final String programName,
+				   final PrintWriter errWriter,
+				   final PrintWriter warnWriter,
+				   final PrintWriter noticeWriter) {
+	context.put(logKey, new Context.Factory<Log>() {
+	    public Log make() {
+		return new Messager(context,
+				    programName,
+				    errWriter,
+				    warnWriter,
+				    noticeWriter);
+	    }
+	});
     }
 
     public class ExitJavadoc extends Error {
-        private static final long serialVersionUID = 0;
+	private static final long serialVersionUID = 0;
     }
 
     private final String programName;
@@ -101,7 +101,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param programName  Name of the program (for error messages).
      */
     protected Messager(Context context, String programName) {
-        this(context, programName, defaultErrWriter, defaultWarnWriter, defaultNoticeWriter);
+	this(context, programName, defaultErrWriter, defaultWarnWriter, defaultNoticeWriter);
     }
 
     /**
@@ -111,12 +111,12 @@ public class Messager extends Log implements DocErrorReporter {
      * @param warnWriter   Stream for warnings
      * @param noticeWriter Stream for other messages
      */
-    protected Messager(Context context,
-                       String programName,
-                       PrintWriter errWriter,
-                       PrintWriter warnWriter,
-                       PrintWriter noticeWriter) {
-        super(context, errWriter, warnWriter, noticeWriter);
+    protected Messager(Context context, 
+		       String programName,
+		       PrintWriter errWriter, 
+		       PrintWriter warnWriter, 
+		       PrintWriter noticeWriter) {
+	super(context, errWriter, warnWriter, noticeWriter);
         this.programName = programName;
     }
 
@@ -151,7 +151,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param key selects message from resource
      */
     String getText(String key) {
-        return getText(key, (String)null);
+	return getText(key, (String)null);
     }
 
     /**
@@ -161,7 +161,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param a1 first argument
      */
     String getText(String key, String a1) {
-        return getText(key, a1, null);
+	return getText(key, a1, null);
     }
 
     /**
@@ -172,7 +172,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param a2 second argument
      */
     String getText(String key, String a1, String a2) {
-        return getText(key, a1, a2, null);
+	return getText(key, a1, a2, null);
     }
 
     /**
@@ -184,7 +184,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param a3 third argument
      */
     String getText(String key, String a1, String a2, String a3) {
-        return getText(key, a1, a2, a3, null);
+	return getText(key, a1, a2, a3, null);
     }
 
     /**
@@ -196,20 +196,20 @@ public class Messager extends Log implements DocErrorReporter {
      * @param a3 third argument
      * @param a4 fourth argument
      */
-    String getText(String key, String a1, String a2, String a3,
+    String getText(String key, String a1, String a2, String a3, 
                           String a4) {
-        try {
-            String message = getString(key);
-            String[] args = new String[4];
-            args[0] = a1;
-            args[1] = a2;
-            args[2] = a3;
-            args[3] = a4;
-            return MessageFormat.format(message, (Object[])args);
-        } catch (MissingResourceException e) {
-            return "********** Resource for javadoc is broken. There is no " +
-                key + " key in resource.";
-        }
+	try {
+	    String message = getString(key);
+	    String[] args = new String[4];
+	    args[0] = a1;
+	    args[1] = a2;
+	    args[2] = a3;
+	    args[3] = a4;
+	    return MessageFormat.format(message, (Object[])args);
+	} catch (MissingResourceException e) {
+	    return "********** Resource for javadoc is broken. There is no " + 
+		key + " key in resource.";
+	}
     }
 
     /**
@@ -219,7 +219,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printError(String msg) {
-        printError(null, msg);
+	printError(null, msg);
     }
 
     /**
@@ -230,11 +230,11 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printError(SourcePosition pos, String msg) {
-        String prefix = (pos == null) ? programName : pos.toString();
+	String prefix = (pos == null) ? programName : pos.toString();
         errWriter.println(prefix + ": " + getText("javadoc.error") + " - " + msg);
-        errWriter.flush();
-        prompt();
-        nerrors++;
+	errWriter.flush();
+	prompt();
+	nerrors++;
     }
 
     /**
@@ -244,7 +244,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printWarning(String msg) {
-        printWarning(null, msg);
+	printWarning(null, msg);
     }
 
     /**
@@ -255,10 +255,10 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printWarning(SourcePosition pos, String msg) {
-        String prefix = (pos == null) ? programName : pos.toString();
+	String prefix = (pos == null) ? programName : pos.toString();
         warnWriter.println(prefix +  ": " + getText("javadoc.warning") +" - " + msg);
-        warnWriter.flush();
-        nwarnings++;
+	warnWriter.flush();
+	nwarnings++;
     }
 
     /**
@@ -268,7 +268,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printNotice(String msg) {
-        printNotice(null, msg);
+	printNotice(null, msg);
     }
 
     /**
@@ -279,11 +279,11 @@ public class Messager extends Log implements DocErrorReporter {
      * @param msg message to print
      */
     public void printNotice(SourcePosition pos, String msg) {
-        if (pos == null)
-            noticeWriter.println(msg);
-        else
-            noticeWriter.println(pos + ": " + msg);
-        noticeWriter.flush();
+	if (pos == null)
+	    noticeWriter.println(msg);
+	else
+	    noticeWriter.println(pos + ": " + msg);
+	noticeWriter.flush();
     }
 
     /**
@@ -292,7 +292,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param key selects message from resource
      */
     public void error(SourcePosition pos, String key) {
-        printError(pos, getText(key));
+	printError(pos, getText(key));
     }
 
     /**
@@ -378,7 +378,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param a2 second argument
      * @param a3 third argument
      */
-    public void warning(SourcePosition pos, String key, String a1, String a2, String a3,
+    public void warning(SourcePosition pos, String key, String a1, String a2, String a3, 
                         String a4) {
         printWarning(pos, getText(key, a1, a2, a3, a4));
     }
@@ -442,10 +442,10 @@ public class Messager extends Log implements DocErrorReporter {
      */
     public void exitNotice() {
         int nerrors = nerrors();
-        int nwarnings = nwarnings();
+	int nwarnings = nwarnings();
         if (nerrors > 0) {
-            notice((nerrors > 1) ? "main.errors" : "main.error",
-                   "" + nerrors);
+            notice((nerrors > 1) ? "main.errors" : "main.error", 
+		   "" + nerrors);
         }
         if (nwarnings > 0) {
             notice((nwarnings > 1) ?  "main.warnings" : "main.warning",

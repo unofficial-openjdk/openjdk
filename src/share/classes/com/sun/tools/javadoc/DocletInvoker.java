@@ -54,9 +54,9 @@ public class DocletInvoker {
     private final ClassLoader appClassLoader;
 
     private final Messager messager;
-
+  
     private static class DocletInvokeException extends Exception {
-        private static final long serialVersionUID = 0;
+	private static final long serialVersionUID = 0;
     }
 
     private String appendPath(String path1, String path2) {
@@ -69,8 +69,8 @@ public class DocletInvoker {
         }
     }
 
-    public DocletInvoker(Messager messager,
-                         String docletClassName, String docletPath) {
+    public DocletInvoker(Messager messager, 
+			 String docletClassName, String docletPath) {
         this.messager = messager;
         this.docletClassName = docletClassName;
 
@@ -103,7 +103,7 @@ public class DocletInvoker {
         String methodName = "start";
         Class[] paramTypes = new Class[1];
         Object[] params = new Object[1];
-        paramTypes[0] = RootDoc.class;
+	paramTypes[0] = RootDoc.class;
         params[0] = root;
         try {
             retVal = invoke(methodName, null, paramTypes, params);
@@ -114,7 +114,7 @@ public class DocletInvoker {
             return ((Boolean)retVal).booleanValue();
         } else {
             messager.error(null, "main.must_return_boolean",
-                           docletClassName, methodName);
+			   docletClassName, methodName);
             return false;
         }
     }
@@ -140,7 +140,7 @@ public class DocletInvoker {
             return ((Integer)retVal).intValue();
         } else {
             messager.error(null, "main.must_return_int",
-                           docletClassName, methodName);
+			   docletClassName, methodName);
             return -1;
         }
     }
@@ -151,13 +151,13 @@ public class DocletInvoker {
      */
     public boolean validOptions(List<String[]> optlist) {
         Object retVal;
-        String options[][] = optlist.toArray(new String[optlist.length()][]);
+	String options[][] = optlist.toArray(new String[optlist.length()][]);
         String methodName = "validOptions";
         DocErrorReporter reporter = messager;
         Class[] paramTypes = new Class[2];
         Object[] params = new Object[2];
         paramTypes[0] = options.getClass();
-        paramTypes[1] = DocErrorReporter.class;
+	paramTypes[1] = DocErrorReporter.class;
         params[0] = options;
         params[1] = reporter;
         try {
@@ -169,7 +169,7 @@ public class DocletInvoker {
             return ((Boolean)retVal).booleanValue();
         } else {
             messager.error(null, "main.must_return_boolean",
-                           docletClassName, methodName);
+			   docletClassName, methodName);
             return false;
         }
     }
@@ -213,19 +213,19 @@ public class DocletInvoker {
             } catch (NoSuchMethodException exc) {
                 if (returnValueIfNonExistent == null) {
                     messager.error(null, "main.doclet_method_not_found",
-                                   docletClassName, methodName);
+				   docletClassName, methodName);
                     throw new DocletInvokeException();
                 } else {
                     return returnValueIfNonExistent;
                 }
             } catch (SecurityException exc) {
                 messager.error(null, "main.doclet_method_not_accessible",
-                               docletClassName, methodName);
+			       docletClassName, methodName);
                 throw new DocletInvokeException();
             }
             if (!Modifier.isStatic(meth.getModifiers())) {
                 messager.error(null, "main.doclet_method_must_be_static",
-                               docletClassName, methodName);
+			       docletClassName, methodName);
                 throw new DocletInvokeException();
             }
             try {
@@ -233,15 +233,15 @@ public class DocletInvoker {
                 return meth.invoke(null , params);
             } catch (IllegalArgumentException exc) {
                 messager.error(null, "main.internal_error_exception_thrown",
-                               docletClassName, methodName, exc.toString());
+			       docletClassName, methodName, exc.toString());
                 throw new DocletInvokeException();
             } catch (IllegalAccessException exc) {
                 messager.error(null, "main.doclet_method_not_accessible",
-                               docletClassName, methodName);
+			       docletClassName, methodName);
                 throw new DocletInvokeException();
             } catch (NullPointerException exc) {
                 messager.error(null, "main.internal_error_exception_thrown",
-                               docletClassName, methodName, exc.toString());
+			       docletClassName, methodName, exc.toString());
                 throw new DocletInvokeException();
             } catch (InvocationTargetException exc) {
                 Throwable err = exc.getTargetException();
@@ -249,11 +249,11 @@ public class DocletInvoker {
                     messager.error(null, "main.out.of.memory");
                 } else {
                 messager.error(null, "main.exception_thrown",
-                               docletClassName, methodName, exc.toString());
+			       docletClassName, methodName, exc.toString());
                     exc.getTargetException().printStackTrace();
                 }
                 throw new DocletInvokeException();
-            }
+            } 
     }
 
     /**
@@ -310,3 +310,6 @@ public class DocletInvoker {
         }
     }
 }
+
+
+

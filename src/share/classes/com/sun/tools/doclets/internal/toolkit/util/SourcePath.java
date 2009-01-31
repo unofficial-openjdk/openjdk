@@ -35,31 +35,31 @@ import java.io.File;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Atul M Dambalkar
  */
 public
     class SourcePath {
     private final char dirSeparator = File.pathSeparatorChar;
-
+    
     /**
      * The original class path string
      */
     private String pathstr;
-
+    
     /**
      * List of source path entries. Each entry is a directory.
      */
     private File[] sourcePath;
-
-
+    
+    
     /**
      * Build a source path from the specified path string on the command line.
      */
     public SourcePath(String pathstr) {
         init(pathstr);
     }
-
+    
     /**
      * Build a default source path from the path strings specified by
      * the properties env.class.path.
@@ -67,22 +67,22 @@ public
     public SourcePath() {
         init(System.getProperty("env.class.path"));
     }
-
+    
     /**
      * Initialize the SourcePath File array, which will contain only the
      * directory names from the given path string.
      *
      * @param pathstr Path String.
      */
-    private void init(String pathstr) {
+    private void init(String pathstr) {        
         if (pathstr == null ||  pathstr.length() == 0) {
             pathstr = ".";
         }
-
+        
         int noOfFileSep = 0;
         int index = 0;
         this.pathstr = pathstr; // Save original class path string
-
+        
         // Count the number of path separators
         while ((index = pathstr.indexOf(dirSeparator, index)) != -1) {
             noOfFileSep++;
@@ -107,7 +107,7 @@ public
         System.arraycopy((Object)tempPath, 0, (Object)sourcePath,
                          0, tempPathIndex);
     }
-
+    
     /**
      * Find the specified directory in the source path.
      *
@@ -123,7 +123,7 @@ public
         }
         return null;
     }
-
+    
     /**
      * Return original source path string.
      */
@@ -131,3 +131,4 @@ public
         return pathstr;
     }
 }
+

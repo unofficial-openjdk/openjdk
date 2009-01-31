@@ -13,7 +13,7 @@ public class T6253161a {
     @SuppressWarnings("unchecked")
     public void anonymousMethod(){
            List list = new ArrayList<String>(){
-           static final long serialVersionUID = 1;
+           static final long serialVersionUID = 1;  
            List list = new ArrayList<Integer>();
            public List<Integer> getMyList(){
                 final List floatList = new ArrayList<Float>(){

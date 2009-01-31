@@ -38,17 +38,17 @@ public class StandaloneQualifiedSuper {
     public class CS { }
 
     public class A extends AS {
-        A() { super(); }
-        public class B extends BS {
-            B() { super(); }
-            public class C extends CS {
-                C() { super(); }
-                void test() {
-                    // '<class>.super' must qualify another field or
-                    // method -- it cannot stand alone.
-                    System.out.println(B.super);  // ERROR
-                }
-            }
-        }
+	A() { super(); }
+	public class B extends BS {
+	    B() { super(); }
+	    public class C extends CS {
+		C() { super(); }
+		void test() {
+		    // '<class>.super' must qualify another field or
+		    // method -- it cannot stand alone.
+		    System.out.println(B.super);  // ERROR
+		}
+	    }
+	}
     }
 }

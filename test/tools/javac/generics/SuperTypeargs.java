@@ -56,26 +56,26 @@ class B {
 }
 
 class Test1<T,E> {
-
+  
     public static <T,E> void check1(T val1, E val2) {
         val1.toString();
         val2.toString();
         System.out.println("Static check1 method being invoked from class Test1");
     }
-
+   
     public <T,E> Test1(){
         System.out.println("The Default Test1 constructor is being called");
     }
     public <T,E> Test1(T val1, E val2) {
         System.out.println("The parameter Test1 constructor is being called");
-    }
+    } 
     public <T,E> int check2(T val1, E val2) {
         val1.toString();
         val2.toString();
         System.out.println("Instance method check2 being invoked from class Test1");
         return 1;
     }
-
+   
 }
 
 class Test2<T,E> extends Test1<T,E> {
@@ -85,7 +85,7 @@ class Test2<T,E> extends Test1<T,E> {
         val2.toString();
         System.out.println("Static check1 method being invoked from class Test2");
     }
-
+      
     public Test2() {
         <T,E>super();
         System.out.println("The Default Test2 constructor is being called");
@@ -134,7 +134,7 @@ class Test2<T,E> extends Test1<T,E> {
 }
 
 class ParametericMethodsTest14 {
-
+     
     public void assertion1() {
         Test2.<A,B>check1(new A(), new B());
         Test1.<A,B>check1(new A(), new B());
@@ -162,7 +162,7 @@ class ParametericMethodsTest14 {
         tRef.assertion1();
         tRef.assertion2();
         tRef.assertion3();
-        tRef.assertion4();
+        tRef.assertion4();  
     }
 
 }

@@ -49,15 +49,15 @@ class ConcreteQ<E> extends AbstractQ<E> {
 
 public class SuperfluousAbstract {
     public static void main(String[] args) {
-        try {
-            Q<Integer> q = new ConcreteQ<Integer>() ;
-            for (Integer i : q) {}
-        }
-        catch (AbstractMethodError e) {
-            e.printStackTrace(System.err);
-        }
-        catch (NullPointerException e) {
-            // expected, since iterator() returns null
-        }
+	try {
+	    Q<Integer> q = new ConcreteQ<Integer>() ;
+	    for (Integer i : q) {}
+	}
+	catch (AbstractMethodError e) {
+	    e.printStackTrace(System.err);
+	}
+	catch (NullPointerException e) {
+	    // expected, since iterator() returns null
+	}
     }
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,16 +29,16 @@ package p;
 public class SourceOnly extends com.sun.javadoc.Doclet
 {
     public static void main(String[] args) {
-        // run javadoc on package p
-        int result = com.sun.tools.javadoc.Main.
-            execute("javadoc", "p.SourceOnly", new String[] {"p"});
-        if (result != 0)
-            throw new Error();
+	// run javadoc on package p
+	int result = com.sun.tools.javadoc.Main.
+	    execute("javadoc", "p.SourceOnly", new String[] {"p"});
+	if (result != 0)
+	    throw new Error();
     }
 
     public static boolean start(com.sun.javadoc.RootDoc root) {
-        if (root.classes().length != 1)
-            throw new Error("wrong set of classes documented: " + java.util.Arrays.asList(root.classes()));
-        return true;
+	if (root.classes().length != 1)
+	    throw new Error("wrong set of classes documented: " + java.util.Arrays.asList(root.classes()));
+	return true;
     }
 }

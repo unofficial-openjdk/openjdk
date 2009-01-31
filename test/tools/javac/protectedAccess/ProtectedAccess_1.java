@@ -43,7 +43,7 @@ import p.SuperClass;
 
 class ProtectedAccess_1 extends SuperClass {
     {
-        SuperClass.i = 5;        // OK
-        new SuperClass().i = 5;  // OK
+	SuperClass.i = 5;        // OK
+	new SuperClass().i = 5;  // OK
     }
 }

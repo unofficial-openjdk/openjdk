@@ -40,21 +40,23 @@ public class FatalError extends Error {
     /** Construct a <code>FatalError</code> with no detail message.
      */
     public FatalError() {
-        super();
+	super();
     }
 
     /** Construct a <code>FatalError</code> with the specified detail message.
      *  @param d A diagnostic containing the reason for failure.
      */
     public FatalError(JCDiagnostic d) {
-        super(d.toString());
+	super(d.toString());
     }
 
     /** Construct a <code>FatalError</code> with the specified detail message.
      *  @param s An English(!) string describing the failure, typically because
-     *           the diagnostic resources are missing.
+     *		 the diagnostic resources are missing.
      */
     public FatalError(String s) {
-        super(s);
+	super(s);
     }
 }
+
+

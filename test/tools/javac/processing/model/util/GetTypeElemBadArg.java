@@ -44,30 +44,30 @@ public class GetTypeElemBadArg extends AbstractProcessor {
     Elements elements;
 
     public void init(ProcessingEnvironment penv) {
-        super.init(penv);
-        elements = penv.getElementUtils();
+	super.init(penv);
+	elements = penv.getElementUtils();
     }
 
     public boolean process(Set<? extends TypeElement> tes,
-                           RoundEnvironment round) {
-        if (round.processingOver()) return true;
+			   RoundEnvironment round) {
+	if (round.processingOver()) return true;
 
-        // A missing superclass should be tolerated.
-        TypeElement te = elements.getTypeElement("Superless");
-        tellAbout(te);
+	// A missing superclass should be tolerated.
+	TypeElement te = elements.getTypeElement("Superless");
+	tellAbout(te);
 
-        te = elements.getTypeElement("Bo.o.o.gus");
-        if (te != null) {
-            tellAbout(te);
-            throw new AssertionError();
-        }
-        return true;
+	te = elements.getTypeElement("Bo.o.o.gus");
+	if (te != null) {
+	    tellAbout(te);
+	    throw new AssertionError();
+	}
+	return true;
     }
 
     private static void tellAbout(TypeElement t) {
-        System.out.println(t);
-        System.out.println(t.getClass());
-        System.out.println(t.getKind());
-        System.out.println();
+	System.out.println(t);
+	System.out.println(t.getClass());
+	System.out.println(t.getKind());
+	System.out.println();
     }
 }

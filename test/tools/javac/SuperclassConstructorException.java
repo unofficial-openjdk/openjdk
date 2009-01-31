@@ -39,7 +39,7 @@ class Subclass extends SuperclassConstructorException {}
 
 class SuperclassConstructorException {
 
-  public static void main(String args[]) {
+  public static void main(String args[]) {        
     try {
       Object x = new Superclass(){};
       Object y = new Subclass();

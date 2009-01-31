@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,23 +34,23 @@
  */
 
 public class TestSerialVersionUID extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4525039";
     private static final String OUTPUT_DIR = "docs-" + BUG_ID;
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", OUTPUT_DIR,
         SRC_DIR + FS + "C.java"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         {OUTPUT_DIR + FS + "serialized-form.html", "-111111111111111L"}
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -60,14 +60,14 @@ public class TestSerialVersionUID extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

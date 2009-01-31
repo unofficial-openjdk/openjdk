@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,7 +38,7 @@ import java.util.*;
  */
 
 public class BoldTaglet extends BaseInlineTaglet {
-
+    
     public BoldTaglet() {
         name = "bold";
     }
@@ -51,7 +51,7 @@ public class BoldTaglet extends BaseInlineTaglet {
        }
        tagletMap.put(tag.getName(), tag);
     }
-
+    
     /**
      * {@inheritDoc}
      */

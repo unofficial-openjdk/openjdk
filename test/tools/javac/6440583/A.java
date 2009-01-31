@@ -23,6 +23,6 @@
 
 class A {
     public static void m() {
-        1+1
+	1+1
     }
 }

@@ -36,7 +36,7 @@ import com.sun.tools.javac.code.TypeTags;
 
 /**
  * Represents a value of an annotation type element.
- *
+ * 
  * @author Scott Seligman
  * @since 1.5
  */
@@ -48,8 +48,8 @@ public class AnnotationValueImpl implements AnnotationValue {
 
 
     AnnotationValueImpl(DocEnv env, Attribute attr) {
-        this.env = env;
-        this.attr = attr;
+	this.env = env;
+	this.attr = attr;
     }
 
     /**
@@ -64,109 +64,109 @@ public class AnnotationValueImpl implements AnnotationValue {
      * </ul>
      */
     public Object value() {
-        ValueVisitor vv = new ValueVisitor();
-        attr.accept(vv);
-        return vv.value;
+	ValueVisitor vv = new ValueVisitor();
+	attr.accept(vv);
+	return vv.value;
     }
 
     private class ValueVisitor implements Attribute.Visitor {
-        public Object value;
+	public Object value;
+	
+	public void visitConstant(Attribute.Constant c) {
+	    if (c.type.tag == TypeTags.BOOLEAN) {
+		// javac represents false and true as integers 0 and 1
+		value = Boolean.valueOf(
+				((Integer)c.value).intValue() != 0);
+	    } else {
+		value = c.value;
+	    }
+	}
 
-        public void visitConstant(Attribute.Constant c) {
-            if (c.type.tag == TypeTags.BOOLEAN) {
-                // javac represents false and true as integers 0 and 1
-                value = Boolean.valueOf(
-                                ((Integer)c.value).intValue() != 0);
-            } else {
-                value = c.value;
-            }
-        }
+	public void visitClass(Attribute.Class c) {
+	    value = TypeMaker.getType(env,
+				      env.types.erasure(c.type));
+	}
 
-        public void visitClass(Attribute.Class c) {
-            value = TypeMaker.getType(env,
-                                      env.types.erasure(c.type));
-        }
+	public void visitEnum(Attribute.Enum e) {
+	    value = env.getFieldDoc(e.value);
+	}
 
-        public void visitEnum(Attribute.Enum e) {
-            value = env.getFieldDoc(e.value);
-        }
+	public void visitCompound(Attribute.Compound c) {
+	    value = new AnnotationDescImpl(env, c);
+	}
 
-        public void visitCompound(Attribute.Compound c) {
-            value = new AnnotationDescImpl(env, c);
-        }
+	public void visitArray(Attribute.Array a) {
+	    AnnotationValue vals[] = new AnnotationValue[a.values.length];
+	    for (int i = 0; i < vals.length; i++) {
+		vals[i] = new AnnotationValueImpl(env, a.values[i]);
+	    }
+	    value = vals;
+	}
 
-        public void visitArray(Attribute.Array a) {
-            AnnotationValue vals[] = new AnnotationValue[a.values.length];
-            for (int i = 0; i < vals.length; i++) {
-                vals[i] = new AnnotationValueImpl(env, a.values[i]);
-            }
-            value = vals;
-        }
-
-        public void visitError(Attribute.Error e) {
-            value = "<error>";
-        }
+	public void visitError(Attribute.Error e) {
+	    value = "<error>";
+	}
     }
 
     /**
      * Returns a string representation of the value.
      *
      * @return the text of a Java language annotation value expression
-     *          whose value is the value of this annotation type element.
+     *		whose value is the value of this annotation type element.
      */
     public String toString() {
-        ToStringVisitor tv = new ToStringVisitor();
-        attr.accept(tv);
-        return tv.toString();
+	ToStringVisitor tv = new ToStringVisitor();
+	attr.accept(tv);
+	return tv.toString();
     }
 
     private class ToStringVisitor implements Attribute.Visitor {
-        private final StringBuffer sb = new StringBuffer();
+	private final StringBuffer sb = new StringBuffer();
 
-        public String toString() {
-            return sb.toString();
-        }
+	public String toString() {
+	    return sb.toString();
+	}
+	
+	public void visitConstant(Attribute.Constant c) {
+	    if (c.type.tag == TypeTags.BOOLEAN) {
+		// javac represents false and true as integers 0 and 1
+		sb.append(((Integer)c.value).intValue() != 0);
+	    } else {
+		sb.append(FieldDocImpl.constantValueExpression(c.value));
+	    }
+	}
 
-        public void visitConstant(Attribute.Constant c) {
-            if (c.type.tag == TypeTags.BOOLEAN) {
-                // javac represents false and true as integers 0 and 1
-                sb.append(((Integer)c.value).intValue() != 0);
-            } else {
-                sb.append(FieldDocImpl.constantValueExpression(c.value));
-            }
-        }
+	public void visitClass(Attribute.Class c) {
+	    sb.append(c);
+	}
 
-        public void visitClass(Attribute.Class c) {
-            sb.append(c);
-        }
+	public void visitEnum(Attribute.Enum e) {
+	    sb.append(e);
+	}
 
-        public void visitEnum(Attribute.Enum e) {
-            sb.append(e);
-        }
+	public void visitCompound(Attribute.Compound c) {
+	    sb.append(new AnnotationDescImpl(env, c));
+	}
 
-        public void visitCompound(Attribute.Compound c) {
-            sb.append(new AnnotationDescImpl(env, c));
-        }
+	public void visitArray(Attribute.Array a) {
+	    // Omit braces from singleton.
+	    if (a.values.length != 1) sb.append('{');
 
-        public void visitArray(Attribute.Array a) {
-            // Omit braces from singleton.
-            if (a.values.length != 1) sb.append('{');
+	    boolean first = true;
+	    for (Attribute elem : a.values) {
+		if (first) {
+		    first = false;
+		} else {
+		    sb.append(", ");
+		}
+		elem.accept(this);
+	    }
+	    // Omit braces from singleton.
+	    if (a.values.length != 1) sb.append('}');
+	}
 
-            boolean first = true;
-            for (Attribute elem : a.values) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
-                elem.accept(this);
-            }
-            // Omit braces from singleton.
-            if (a.values.length != 1) sb.append('}');
-        }
-
-        public void visitError(Attribute.Error e) {
-            sb.append("<error>");
-        }
+	public void visitError(Attribute.Error e) {
+	    sb.append("<error>");
+	}
     }
 }

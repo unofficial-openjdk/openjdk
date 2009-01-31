@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,31 +24,31 @@
 package pkg1;
 
 public class C2 {
-
+    
     /**
-     * Field in C2.
+     * Field in C2. 
      */
-    public UsedClass fieldInC2;
-
+    public UsedClass fieldInC2;  
+    
     /**
      * Test 3 passes.
      */
     public C1 field = null;
-
+    
     /**
      * Test 4 passes.
      */
     public C1 method2() {
         return null;
     }
-
+    
     /**
      * Test 5 passes.
      */
     public void method(pkg1.C1 c1) {}
-
+    
     /**
-     * Method in C2.
+     * Method in C2. 
      */
     public UsedClass methodInC2(UsedClass p) {
         return p;

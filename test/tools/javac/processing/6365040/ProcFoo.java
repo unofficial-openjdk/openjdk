@@ -35,9 +35,9 @@ import static javax.tools.Diagnostic.Kind.*;
 public class ProcFoo extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
-        if (!roundEnvironment.processingOver())
-            processingEnv.getMessager().printMessage(NOTE,
-                                                     "Hello from ProcFoo");
+	if (!roundEnvironment.processingOver())
+	    processingEnv.getMessager().printMessage(NOTE,
+						     "Hello from ProcFoo");
         return false;
     }
 }

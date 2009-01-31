@@ -39,10 +39,10 @@ import com.sun.tools.javac.code.Symbol.*;
  */
 
 public class EnumDeclarationImpl extends ClassDeclarationImpl
-                                 implements EnumDeclaration {
+				 implements EnumDeclaration {
 
     EnumDeclarationImpl(AptEnv env, ClassSymbol sym) {
-        super(env, sym);
+	super(env, sym);
     }
 
 
@@ -50,14 +50,14 @@ public class EnumDeclarationImpl extends ClassDeclarationImpl
      * {@inheritDoc}
      */
     public Collection<EnumConstantDeclaration> getEnumConstants() {
-        return identityFilter.filter(getFields(),
-                                     EnumConstantDeclaration.class);
+	return identityFilter.filter(getFields(),
+				     EnumConstantDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-        v.visitEnumDeclaration(this);
+	v.visitEnumDeclaration(this);
     }
 }

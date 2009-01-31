@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug     6346453
+ * @bug     6346453 
  * @summary directSupertypes should return empty list if arg has no supertypes
  * @author  Scott Seligman
  * @build   NoSupers
@@ -42,17 +42,17 @@ public class NoSupers extends AbstractProcessor {
     Types types;
 
     public void init(ProcessingEnvironment penv) {
-        super.init(penv);
-        types = penv.getTypeUtils();
+	super.init(penv);
+	types = penv.getTypeUtils();
     }
 
     public boolean process(Set<? extends TypeElement> tes,
-                           RoundEnvironment round) {
-        if (round.processingOver()) return true;
-
-        PrimitiveType intType = types.getPrimitiveType(TypeKind.INT);
-        if (! types.directSupertypes(intType).isEmpty())
-            throw new AssertionError();
-        return true;
+			   RoundEnvironment round) {
+	if (round.processingOver()) return true;
+	
+	PrimitiveType intType = types.getPrimitiveType(TypeKind.INT);
+	if (! types.directSupertypes(intType).isEmpty())
+	    throw new AssertionError();
+	return true;
     }
 }

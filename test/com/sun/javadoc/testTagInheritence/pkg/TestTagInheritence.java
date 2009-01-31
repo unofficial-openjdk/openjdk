@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -69,19 +69,19 @@ java.lang.NullPointerException
 java.lang.NullPointerException {
       return null;
   }
-
+    
     /**
      * Here is the documentation that I should inherit from
      * the interface implemented by my superclass.
      * {@inheritDoc}
      */
     public void methodInTestInterfaceForAbstractClass() {}
-
+    
     /**
      * {@inheritDoc}
      */
     public void testSuperSuperMethod() {}
-
+    
     /**
      * Test inheritDoc warning message:
      * {@inheritDoc}
@@ -99,12 +99,12 @@ java.lang.NullPointerException {
      * @throws java.lang.NullPointerException {@inheritDoc}
      */
     public <X,Y> String testSuperSuperMethod(int p1, int p2) {
-        return null;
+        return null; 
     }
-
-    public <X,Y> String testSuperSuperMethod2(int p1, int p2)
+    
+    public <X,Y> String testSuperSuperMethod2(int p1, int p2) 
     throws java.io.IOException, java.lang.NullPointerException {
-        return null;
+        return null; 
     }
 
 }

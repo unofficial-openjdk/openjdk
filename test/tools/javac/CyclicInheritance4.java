@@ -32,16 +32,16 @@
 
 class AX1 {
     static class Z {
-        Z() {
-            throw new Error("WRONG");
-        }
+	Z() {
+	    throw new Error("WRONG");
+	}
     }
 }
 class AX {
     static class Z {
-        Z() {
-            System.out.println("correct");
-        }
+	Z() {
+	    System.out.println("correct");
+	}
     }
 }
 class Y extends AX.Z {
@@ -51,6 +51,6 @@ class Y extends AX.Z {
 
 public class CyclicInheritance4 {
     public static void main(String[] args) {
-        new Y();
+	new Y();
     }
 }

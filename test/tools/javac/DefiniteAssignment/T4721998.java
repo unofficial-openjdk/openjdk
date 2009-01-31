@@ -33,13 +33,13 @@
 class T4721998 {
     final int i;
     public T4721998(boolean e) {
-        b: try {
-            if (e)
-                break b; // ok: i defined in finally
-            else
-                return; // ok: i defined in finally
-        } finally {
-            i = 3;
-        }
+	b: try {
+	    if (e)
+		break b; // ok: i defined in finally
+	    else
+		return; // ok: i defined in finally
+	} finally {
+	    i = 3;
+	}
     }
 }

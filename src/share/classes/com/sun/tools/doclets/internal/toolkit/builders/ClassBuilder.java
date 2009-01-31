@@ -38,37 +38,37 @@ import java.lang.reflect.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Jamie Ho
  * @since 1.5
  */
 public class ClassBuilder extends AbstractBuilder {
-
+    
     /**
      * The root element of the class XML is {@value}.
      */
     public static final String ROOT = "ClassDoc";
-
+    
     /**
      * The class being documented.
      */
     private ClassDoc classDoc;
-
+    
     /**
      * The doclet specific writer.
      */
     private ClassWriter writer;
-
+    
     /**
      * Keep track of whether or not this classdoc is an interface.
      */
     private boolean isInterface = false;
-
+    
     /**
      * Keep track of whether or not this classdoc is an enum.
      */
     private boolean isEnum = false;
-
+    
     /**
      * Construct a new ClassBuilder.
      *
@@ -78,7 +78,7 @@ public class ClassBuilder extends AbstractBuilder {
     private ClassBuilder(Configuration configuration) {
         super(configuration);
     }
-
+    
     /**
      * Construct a new ClassBuilder.
      *
@@ -86,8 +86,8 @@ public class ClassBuilder extends AbstractBuilder {
      * @param classDoc the class being documented.
      * @param writer the doclet specific writer.
      */
-    public static ClassBuilder getInstance(Configuration configuration,
-        ClassDoc classDoc, ClassWriter writer)
+    public static ClassBuilder getInstance(Configuration configuration, 
+        ClassDoc classDoc, ClassWriter writer) 
     throws Exception {
         ClassBuilder builder = new ClassBuilder(configuration);
         builder.configuration = configuration;
@@ -104,35 +104,35 @@ public class ClassBuilder extends AbstractBuilder {
         }
         return builder;
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void invokeMethod(String methodName, Class[] paramClasses,
-            Object[] params)
+    public void invokeMethod(String methodName, Class[] paramClasses, 
+            Object[] params) 
     throws Exception {
         if (DEBUG) {
-            configuration.root.printError("DEBUG: " + this.getClass().getName()
+            configuration.root.printError("DEBUG: " + this.getClass().getName() 
                 + "." + methodName);
         }
         Method method = this.getClass().getMethod(methodName, paramClasses);
         method.invoke(this, params);
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void build() throws IOException {
         build(LayoutParser.getInstance(configuration).parseXML(ROOT));
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getName() {
         return ROOT;
     }
-
+     
      /**
       * Handles the &lt;ClassDoc> tag.
       *
@@ -141,10 +141,10 @@ public class ClassBuilder extends AbstractBuilder {
      public void buildClassDoc(List elements) throws Exception {
         build(elements);
         writer.close();
-        copyDocFiles();
+        copyDocFiles(); 
      }
-
-
+    
+    
      /**
       * Copy the doc files for the current ClassDoc if necessary.
       */
@@ -163,9 +163,9 @@ public class ClassBuilder extends AbstractBuilder {
                 DirectoryManager.getDirectoryPath(classDoc.containingPackage())
                     + File.separator, DocletConstants.DOC_FILES_DIR_NAME, true);
             containingPackagesSeen.add(containingPackage.name());
-        }
+        } 
      }
-
+    
     /**
      * Build the header of the page.
      */
@@ -174,64 +174,64 @@ public class ClassBuilder extends AbstractBuilder {
         if (isInterface) {
             key =  "doclet.Interface";
         } else if (isEnum) {
-            key = "doclet.Enum";
+            key = "doclet.Enum";            
         } else {
             key =  "doclet.Class";
         }
-
+        		
         writer.writeHeader(configuration.getText(key) + " " + classDoc.name());
     }
-
+    
     /**
      * Build the class tree documentation.
      */
     public void buildClassTree() {
         writer.writeClassTree();
     }
-
+    
     /**
-     * If this is a class, list all interfaces
+     * If this is a class, list all interfaces 
      * implemented by this class.
      */
     public void buildImplementedInterfacesInfo() {
         writer.writeImplementedInterfacesInfo();
     }
-
+    
     /**
      * If this is an interface, list all super interfaces.
      */
     public void buildSuperInterfacesInfo() {
         writer.writeSuperInterfacesInfo();
     }
-
+    
     /**
      * List the parameters of this class.
      */
     public void buildTypeParamInfo() {
         writer.writeTypeParamInfo();
     }
-
+    
     /**
      * List all the classes extend this one.
      */
     public void buildSubClassInfo() {
         writer.writeSubClassInfo();
     }
-
+    
     /**
      * List all the interfaces that extend this one.
      */
     public void buildSubInterfacesInfo() {
         writer.writeSubInterfacesInfo();
     }
-
+    
     /**
      * If this is an interface, list all classes that implement this interface.
      */
     public void buildInterfaceUsageInfo () {
         writer.writeInterfaceUsageInfo();
     }
-
+    
     /**
      * If this is an inner class or interface, list the enclosing class or
      * interface.
@@ -239,14 +239,14 @@ public class ClassBuilder extends AbstractBuilder {
     public void buildNestedClassInfo () {
         writer.writeNestedClassInfo();
     }
-
+    
     /**
      * If this class is deprecated, print the appropriate information.
      */
     public void buildDeprecationInfo () {
         writer.writeClassDeprecationInfo();
     }
-
+    
     /**
      * Build the signature of the current class.
      */
@@ -267,26 +267,26 @@ public class ClassBuilder extends AbstractBuilder {
             }
         //} else if (classDoc.isAnnotationType()) {
             //modifiers.append("@interface ");
-        } else if (! isInterface) {
+        } else if (! isInterface) {          
             modifiers.append("class ");
         }
         writer.writeClassSignature(modifiers.toString());
     }
-
+    
     /**
      * Build the class description.
      */
     public void buildClassDescription() {
        writer.writeClassDescription();
     }
-
+    
     /**
      * Build the tag information for the current class.
      */
     public void buildClassTagInfo() {
        writer.writeClassTagInfo();
     }
-
+    
     /**
      * Build the contents of the page.
      *
@@ -298,7 +298,7 @@ public class ClassBuilder extends AbstractBuilder {
             getMemberSummaryBuilder(writer).build(elements);
         writer.completeMemberSummaryBuild();
     }
-
+    
     /**
      * Build the enum constants documentation.
      *
@@ -309,7 +309,7 @@ public class ClassBuilder extends AbstractBuilder {
         configuration.getBuilderFactory().
             getEnumConstantsBuilder(writer).build(elements);
     }
-
+    
     /**
      * Build the field documentation.
      *
@@ -319,18 +319,18 @@ public class ClassBuilder extends AbstractBuilder {
         configuration.getBuilderFactory().
             getFieldBuilder(writer).build(elements);
     }
-
+    
     /**
      * Build the constructor documentation.
      *
-     * @param elements the XML elements that specify how to document a
+     * @param elements the XML elements that specify how to document a 
      * constructor.
      */
     public void buildConstructorDetails(List elements) throws Exception {
         configuration.getBuilderFactory().
             getConstructorBuilder(writer).build(elements);
     }
-
+    
     /**
      * Build the method documentation.
      *
@@ -340,7 +340,7 @@ public class ClassBuilder extends AbstractBuilder {
         configuration.getBuilderFactory().
                 getMethodBuilder(writer).build(elements);
     }
-
+    
     /**
      * Build the footer of the page.
      */

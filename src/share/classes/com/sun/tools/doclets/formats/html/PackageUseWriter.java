@@ -36,10 +36,10 @@ import java.util.*;
  * @author Robert G. Field
  */
 public class PackageUseWriter extends SubWriterHolderWriter {
-
+    
     final PackageDoc pkgdoc;
     final SortedMap usingPackageToUsedClasses = new TreeMap();
-
+    
     /**
      * Constructor.
      *
@@ -54,7 +54,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
               filename,
               DirectoryManager.getRelativePath(pkgdoc.name()));
         this.pkgdoc = pkgdoc;
-
+        
         // by examining all classes in this package, find what packages
         // use these classes - produce a map between using package and
         // used classes.
@@ -78,7 +78,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             }
         }
     }
-
+    
     /**
      * Generate a class page.
      *
@@ -102,24 +102,24 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             throw new DocletAbortException();
         }
     }
-
-
+    
+    
     /**
      * Print the class use list.
      */
     protected void generatePackageUseFile() throws IOException {
         printPackageUseHeader();
-
+        
         if (usingPackageToUsedClasses.isEmpty()) {
             printText("doclet.ClassUse_No.usage.of.0", pkgdoc.name());
             p();
         } else {
             generatePackageUse();
         }
-
+        
         printPackageUseFooter();
     }
-
+    
     /**
      * Print the class use list.
      */
@@ -129,7 +129,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         }
         generateClassList();
     }
-
+    
     protected void generatePackageList() throws IOException {
         tableIndexSummary();
         tableHeaderStart("#CCCCFF");
@@ -145,7 +145,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         space();
         p();
     }
-
+    
     protected void generateClassList() throws IOException {
         Iterator itp = usingPackageToUsedClasses.keySet().iterator();
         while (itp.hasNext()) {
@@ -157,7 +157,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             tableIndexSummary();
             tableHeaderStart("#CCCCFF");
             printText("doclet.ClassUse_Classes.in.0.used.by.1",
-                getPackageLink(pkgdoc, Util.getPackageName(pkgdoc), false),
+                getPackageLink(pkgdoc, Util.getPackageName(pkgdoc), false), 
                 getPackageLink(usingPackage,Util.getPackageName(usingPackage), false));
             tableHeaderEnd();
             Iterator itc =
@@ -171,11 +171,11 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             p();
         }
     }
-
+    
     protected void printClassRow(ClassDoc usedClass, String packageName) {
         String path = pathString(usedClass,
                                  "class-use/" + usedClass.name() + ".html");
-
+        
         trBgcolorStyle("white", "TableRowColor");
         summaryRow(0);
         bold();
@@ -187,7 +187,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         summaryRowEnd();
         trEnd();
     }
-
+    
     /**
      * Print the package use list.
      */
@@ -205,7 +205,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         summaryRowEnd();
         trEnd();
     }
-
+    
     /**
      * Print the header for the class use Listing.
      */
@@ -223,7 +223,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         h2End();
         centerEnd();
     }
-
+    
     /**
      * Print the footer for the class use Listing.
      */
@@ -233,8 +233,8 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         printBottom();
         printBodyHtmlEnd();
     }
-
-
+    
+    
     /**
      * Print this package link
      */
@@ -244,7 +244,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
                        true, "NavBarFont1");
         navCellEnd();
     }
-
+    
     /**
      * Print class use link
      */
@@ -255,12 +255,12 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         fontEnd();
         navCellEnd();
     }
-
+    
     protected void navLinkTree() {
         navCellStart();
         printHyperLink("package-tree.html", "", configuration.getText("doclet.Tree"),
                        true, "NavBarFont1");
         navCellEnd();
     }
-
+    
 }

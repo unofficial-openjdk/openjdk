@@ -39,119 +39,119 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Jamie Ho
  * @since 1.4
  */
 
 public class TagletManager {
-
+    
     /**
      * The default seperator for the simple tag option.
      */
     public static final char SIMPLE_TAGLET_OPT_SEPERATOR = ':';
-
+    
     /**
      * The alternate seperator for simple tag options.  Use this
      * with you want the default seperator to be in the name of the
      * custom tag.
      */
     public static final String ALT_SIMPLE_TAGLET_OPT_SEPERATOR = "-";
-
+    
     /**
      * The map of custom tags.
      */
     private LinkedHashMap customTags;
-
+    
     /**
      * The array of custom tags that can appear in packages.
      */
     private Taglet[] packageTags;
-
+    
     /**
      * The array of custom tags that can appear in classes or interfaces.
      */
     private Taglet[] typeTags;
-
+    
     /**
      * The array of custom tags that can appear in fields.
      */
     private Taglet[] fieldTags;
-
+    
     /**
      * The array of custom tags that can appear in constructors.
      */
     private Taglet[] constructorTags;
-
+    
     /**
      * The array of custom tags that can appear in methods.
      */
     private Taglet[] methodTags;
-
+    
     /**
      * The array of custom tags that can appear in the overview.
      */
     private Taglet[] overviewTags;
-
+    
     /**
      * The array of custom tags that can appear in comments.
      */
     private Taglet[] inlineTags;
-
+    
     /**
      * The array of custom tags that can appear in the serialized form.
      */
     private Taglet[] serializedFormTags;
-
+    
     /**
      * The message retriever that will be used to print error messages.
      */
     private MessageRetriever message;
-
+    
     /**
      * Keep track of standard tags.
      */
     private Set standardTags;
-
+    
     /**
      * Keep track of standard tags in lowercase to compare for better
      * error messages when a tag like @docRoot is mistakenly spelled
      * lowercase @docroot.
      */
     private Set standardTagsLowercase;
-
+    
     /**
      * Keep track of overriden standard tags.
      */
     private Set overridenStandardTags;
-
+    
     /**
      * Keep track of the tags that may conflict
      * with standard tags in the future (any custom tag without
      * a period in its name).
      */
     private Set potentiallyConflictingTags;
-
+    
     /**
      * The set of unseen custom tags.
      */
     private Set unseenCustomTags;
-
+    
     /**
      * True if we do not want to use @since tags.
      */
     private boolean nosince;
-
+    
     /**
      * True if we want to use @version tags.
      */
     private boolean showversion;
-
+    
     /**
      * True if we want to use @author tags.
      */
     private boolean showauthor;
-
+    
     /**
      * Construct a new <code>TagletManager</code>.
      * @param nosince true if we do not want to use @since tags.
@@ -174,7 +174,7 @@ public class TagletManager {
         initStandardTags();
         initStandardTagsLowercase();
     }
-
+    
     /**
      * Add a new <code>CustomTag</code>.  This is used to add a Taglet from within
      * a Doclet.  No message is printed to indicate that the Taglet is properly
@@ -192,7 +192,7 @@ public class TagletManager {
             checkTagName(name);
         }
     }
-
+    
     /**
      * Add a new <code>Taglet</code>.  Print a message to indicate whether or not
      * the Taglet was registered properly.
@@ -204,7 +204,7 @@ public class TagletManager {
             Class customTagClass = null;
             // construct class loader
             String cpString = null;   // make sure env.class.path defaults to dot
-
+            
             // do prepends to get correct ordering
             cpString = appendPath(System.getProperty("env.class.path"), cpString);
             cpString = appendPath(System.getProperty("java.class.path"), cpString);
@@ -232,9 +232,9 @@ public class TagletManager {
         } catch (Exception exc) {
             message.error("doclet.Error_taglet_not_registered", exc.getClass().getName(), classname);
         }
-
+        
     }
-
+    
     private String appendPath(String path1, String path2) {
         if (path1 == null || path1.length() == 0) {
             return path2 == null ? "." : path2;
@@ -244,7 +244,7 @@ public class TagletManager {
             return path1  + File.pathSeparator + path2;
         }
     }
-
+    
     /**
      * Utility method for converting a search path string to an array
      * of directory and JAR file URLs.
@@ -269,7 +269,7 @@ public class TagletManager {
         }
         return urls;
     }
-
+    
     /**
      * Returns the directory or JAR file URL corresponding to the specified
      * local file name.
@@ -298,8 +298,8 @@ public class TagletManager {
             throw new IllegalArgumentException("file");
         }
     }
-
-
+    
+    
     /**
      * Add a new <code>SimpleTaglet</code>.  If this tag already exists
      * and the header passed as an argument is null, move tag to the back of the
@@ -329,7 +329,7 @@ public class TagletManager {
             customTags.put(tagName, tag);
         }
     }
-
+    
     /**
      * Given a tag name, add it to the set of tags it belongs to.
      */
@@ -343,7 +343,7 @@ public class TagletManager {
             unseenCustomTags.add(name);
         }
     }
-
+    
     /**
      * Check the taglet to see if it is a legacy taglet.  Also
      * check its name for errors.
@@ -360,7 +360,7 @@ public class TagletManager {
             throw new IllegalArgumentException("Given object is not a taglet.");
         }
     }
-
+    
     /**
      * Given a name of a seen custom tag, remove it from the set of unseen
      * custom tags.
@@ -369,7 +369,7 @@ public class TagletManager {
     public void seenCustomTag(String name) {
         unseenCustomTags.remove(name);
     }
-
+    
     /**
      * Given an array of <code>Tag</code>s, check for spelling mistakes.
      * @param doc the Doc object that holds the tags.
@@ -475,7 +475,7 @@ public class TagletManager {
         }
         return packageTags;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in classes or interfaces.
@@ -488,7 +488,7 @@ public class TagletManager {
         }
         return typeTags;
     }
-
+    
     /**
      * Return the array of inline <code>Taglet</code>s that can
      * appear in comments.
@@ -501,7 +501,7 @@ public class TagletManager {
         }
         return inlineTags;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in fields.
@@ -514,7 +514,7 @@ public class TagletManager {
         }
         return fieldTags;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in the serialized form.
@@ -527,7 +527,7 @@ public class TagletManager {
         }
         return serializedFormTags;
     }
-
+    
     /**
      * @return the array of <code>Taglet</code>s that can
      * appear in the given Doc.
@@ -548,7 +548,7 @@ public class TagletManager {
         }
         return null;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in constructors.
@@ -561,7 +561,7 @@ public class TagletManager {
         }
         return constructorTags;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in methods.
@@ -574,7 +574,7 @@ public class TagletManager {
         }
         return methodTags;
     }
-
+    
     /**
      * Return the array of <code>Taglet</code>s that can
      * appear in an overview.
@@ -587,7 +587,7 @@ public class TagletManager {
         }
         return overviewTags;
     }
-
+    
     /**
      * Initialize the custom tag arrays.
      */
@@ -632,7 +632,7 @@ public class TagletManager {
         methodTags =  (Taglet[]) mTags.toArray(new Taglet[] {});
         overviewTags = (Taglet[]) oTags.toArray(new Taglet[] {});
         inlineTags =  (Taglet[]) iTags.toArray(new Taglet[] {});
-
+        
         //Init the serialized form tags
         serializedFormTags = new Taglet[4];
         serializedFormTags[0] = (Taglet) customTags.get("serialData");
@@ -640,7 +640,7 @@ public class TagletManager {
         serializedFormTags[2] = (Taglet) customTags.get("since");
         serializedFormTags[3] = (Taglet) customTags.get("see");
     }
-
+    
     /**
      * Initialize standard Javadoc tags for ordering purposes.
      */
@@ -672,11 +672,11 @@ public class TagletManager {
         customTags.put((temp = new DocRootTaglet()).getName(), temp);
         customTags.put((temp = new InheritDocTaglet()).getName(), temp);
         customTags.put((temp = new ValueTaglet()).getName(), temp);
-        customTags.put((temp = new LegacyTaglet(new LiteralTaglet())).getName(),
+        customTags.put((temp = new LegacyTaglet(new LiteralTaglet())).getName(), 
             temp);
-        customTags.put((temp = new LegacyTaglet(new CodeTaglet())).getName(),
+        customTags.put((temp = new LegacyTaglet(new CodeTaglet())).getName(), 
             temp);
-
+        
         //Keep track of the names of standard tags for error
         //checking purposes.
         standardTags.add("param");
@@ -700,7 +700,7 @@ public class TagletManager {
         standardTags.add("literal");
         standardTags.add("code");
     }
-
+    
     /**
      * Initialize lowercase version of standard Javadoc tags.
      */
@@ -710,7 +710,7 @@ public class TagletManager {
             standardTagsLowercase.add(((String)it.next()).toLowerCase());
         }
     }
-
+    
     public boolean isKnownCustomTag(String tagName) {
         return customTags.containsKey(tagName);
     }
@@ -725,7 +725,7 @@ public class TagletManager {
         printReportHelper("doclet.Notice_taglet_overriden", overridenStandardTags);
         printReportHelper("doclet.Notice_taglet_unseen", unseenCustomTags);
     }
-
+    
     private void printReportHelper(String noticeKey, Set names) {
         if (names.size() > 0) {
             String[] namesArray =
@@ -740,13 +740,13 @@ public class TagletManager {
             message.notice(noticeKey, result);
         }
     }
-
+    
     /**
      * Given the name of a tag, return the corresponding taglet.
      * Return null if the tag is unknown.
-     *
+     * 
      * @param name the name of the taglet to retrieve.
-     * @return return the corresponding taglet. Return null if the tag is
+     * @return return the corresponding taglet. Return null if the tag is 
      *         unknown.
      */
     public Taglet getTaglet(String name) {
@@ -755,6 +755,8 @@ public class TagletManager {
         } else {
             return (Taglet) customTags.get(name);
         }
-
+        
     }
 }
+
+

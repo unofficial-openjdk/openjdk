@@ -38,19 +38,19 @@ public interface RoundState {
      * processing; returns <tt>false</tt> if there will be a subsequent round.
      */
     boolean finalRound();
-
+ 
     /**
      * Returns <tt>true</tt> if an error was raised in this round of processing;
      * returns <tt>false</tt> otherwise.
      */
     boolean errorRaised();
-
+ 
     /**
      * Returns <tt>true</tt> if new source files were created in this round of
      * processing; returns <tt>false</tt> otherwise.
      */
     boolean sourceFilesCreated();
-
+ 
     /**
      * Returns <tt>true</tt> if new class files were created in this round of
      * processing; returns <tt>false</tt> otherwise.

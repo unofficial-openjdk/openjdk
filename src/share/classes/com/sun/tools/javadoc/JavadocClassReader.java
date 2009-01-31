@@ -41,38 +41,38 @@ import javax.tools.JavaFileObject;
 class JavadocClassReader extends ClassReader {
 
     public static JavadocClassReader instance0(Context context) {
-        ClassReader instance = context.get(classReaderKey);
-        if (instance == null)
-            instance = new JavadocClassReader(context);
-        return (JavadocClassReader)instance;
+	ClassReader instance = context.get(classReaderKey);
+	if (instance == null) 
+	    instance = new JavadocClassReader(context);
+	return (JavadocClassReader)instance;
     }
 
     public static void preRegister(final Context context) {
-        context.put(classReaderKey, new Context.Factory<ClassReader>() {
-            public ClassReader make() {
-                return new JavadocClassReader(context);
-            }
-        });
+	context.put(classReaderKey, new Context.Factory<ClassReader>() {
+	    public ClassReader make() {
+		return new JavadocClassReader(context);
+	    }
+	});
     }
 
     private DocEnv docenv;
     private EnumSet<JavaFileObject.Kind> all = EnumSet.of(JavaFileObject.Kind.CLASS,
-                                                          JavaFileObject.Kind.SOURCE,
-                                                          JavaFileObject.Kind.HTML);
+							  JavaFileObject.Kind.SOURCE,
+							  JavaFileObject.Kind.HTML);
     private EnumSet<JavaFileObject.Kind> noSource = EnumSet.of(JavaFileObject.Kind.CLASS,
-                                                               JavaFileObject.Kind.HTML);
+							       JavaFileObject.Kind.HTML);
 
     private JavadocClassReader(Context context) {
-        super(context, true);
-        docenv = DocEnv.instance(context);
+	super(context, true);
+	docenv = DocEnv.instance(context);
     }
 
     /**
-     * Override getPackageFileKinds to include search for package.html
+     * Override getPackageFileKinds to include search for package.html 
      */
     @Override
     protected EnumSet<JavaFileObject.Kind> getPackageFileKinds() {
-        return docenv.docClasses ? noSource : all;
+	return docenv.docClasses ? noSource : all;
     }
 
     /**
@@ -80,32 +80,32 @@ class JavadocClassReader extends ClassReader {
      */
     @Override
     protected void extraFileActions(PackageSymbol pack, JavaFileObject fo) {
-        CharSequence fileName = Old199.getName(fo);
-        if (docenv != null && fileName.equals("package.html")) {
-            if (fo instanceof JavacFileManager.ZipFileObject) {
-                JavacFileManager.ZipFileObject zfo = (JavacFileManager.ZipFileObject) fo;
-                String zipName = zfo.getZipName();
-                String entryName = zfo.getZipEntryName();
-                int lastSep = entryName.lastIndexOf("/");
-                String classPathName = entryName.substring(0, lastSep + 1);
-                docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
-            }
+	CharSequence fileName = Old199.getName(fo);
+	if (docenv != null && fileName.equals("package.html")) {
+	    if (fo instanceof JavacFileManager.ZipFileObject) {
+		JavacFileManager.ZipFileObject zfo = (JavacFileManager.ZipFileObject) fo;
+		String zipName = zfo.getZipName();
+		String entryName = zfo.getZipEntryName();
+		int lastSep = entryName.lastIndexOf("/");
+		String classPathName = entryName.substring(0, lastSep + 1);
+		docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
+	    }
             else if (fo instanceof JavacFileManager.ZipFileIndexFileObject) {
-                JavacFileManager.ZipFileIndexFileObject zfo = (JavacFileManager.ZipFileIndexFileObject) fo;
-                String zipName = zfo.getZipName();
-                String entryName = zfo.getZipEntryName();
+		JavacFileManager.ZipFileIndexFileObject zfo = (JavacFileManager.ZipFileIndexFileObject) fo;
+		String zipName = zfo.getZipName();
+		String entryName = zfo.getZipEntryName();
                 if (File.separatorChar != '/') {
                     entryName = entryName.replace(File.separatorChar, '/');
                 }
-
-                int lastSep = entryName.lastIndexOf("/");
-                String classPathName = entryName.substring(0, lastSep + 1);
-                docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
-            }
+                
+		int lastSep = entryName.lastIndexOf("/");
+		String classPathName = entryName.substring(0, lastSep + 1);
+		docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
+	    }
             else {
-                File fileDir = new File(Old199.getPath(fo)).getParentFile();
-                docenv.getPackageDoc(pack).setDocPath(fileDir.getAbsolutePath());
-            }
+		File fileDir = new File(Old199.getPath(fo)).getParentFile();
+		docenv.getPackageDoc(pack).setDocPath(fileDir.getAbsolutePath());
+	    }
         }
     }
 }

@@ -1,6 +1,6 @@
 /**
  * @test  /nodynamiccopyright/
- * @bug 4759494 4986256
+ * @bug 4759494 4986256 
  * @compile/ref=DivZero.noLint.out -XDstdout                   -XDrawDiagnostics DivZero.java
  * @compile/ref=DivZero.lint.out -XDstdout    -Xlint:divzero   -XDrawDiagnostics DivZero.java
  * @compile/ref=DivZero.lint.out -XDstdout    -Xlint:all,-path -XDrawDiagnostics DivZero.java
@@ -42,17 +42,17 @@ class DivZero
 
 
     static void m() {
-        int mi1 = 1 / 0;
-        int mi2 = 1 % 0;
+	int mi1 = 1 / 0;
+	int mi2 = 1 % 0;
 
         mi1 /= 0;
-        mi1 %= 0;
+	mi1 %= 0;
 
-        long ml1 = 1L / 0L;
-        long ml2 = 1L % 0L;
+	long ml1 = 1L / 0L;
+	long ml2 = 1L % 0L;
 
         ml1 /= 0L;
-        ml1 %= 0L;
+	ml1 %= 0L;
     }
 }
 
@@ -93,17 +93,17 @@ class DivZero2
 
 
     static void m() {
-        int mi1 = 1 / 0;
-        int mi2 = 1 % 0;
+	int mi1 = 1 / 0;
+	int mi2 = 1 % 0;
 
         mi1 /= 0;
-        mi1 %= 0;
+	mi1 %= 0;
 
-        long ml1 = 1L / 0L;
-        long ml2 = 1L % 0L;
+	long ml1 = 1L / 0L;
+	long ml2 = 1L % 0L;
 
         ml1 /= 0L;
-        ml1 %= 0L;
+	ml1 %= 0L;
     }
 }
 
@@ -132,16 +132,16 @@ class DivZero3
 
     @SuppressWarnings("divzero")
     static void m() {
-        int mi1 = 1 / 0;
-        int mi2 = 1 % 0;
+	int mi1 = 1 / 0;
+	int mi2 = 1 % 0;
 
         mi1 /= 0;
-        mi1 %= 0;
+	mi1 %= 0;
 
-        long ml1 = 1L / 0L;
-        long ml2 = 1L % 0L;
+	long ml1 = 1L / 0L;
+	long ml2 = 1L % 0L;
 
         ml1 /= 0L;
-        ml1 %= 0L;
+	ml1 %= 0L;
     }
 }

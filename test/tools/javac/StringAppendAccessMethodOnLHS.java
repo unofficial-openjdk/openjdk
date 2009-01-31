@@ -28,7 +28,7 @@
  * @summary Verify that the compiler does not crash if a method in an inner
  * class appends a character to a string declared private in the enclosing
  * class.  Execute the example just for good measure.
- *
+ * 
  * @run compile StringAppendAccessMethodOnLHS.java
  * @run main StringAppendAccessMethodOnLHS
  */
@@ -40,21 +40,21 @@ public class StringAppendAccessMethodOnLHS {
     private String s = "";
 
     class Inner {
-        void m() {
-            s += "a";
-            s += 'a';  // this is the case that failed in 4318526
-        }
+ 	void m() {
+	    s += "a";
+ 	    s += 'a';  // this is the case that failed in 4318526
+ 	}
     }
 
     void test () {
-        Inner o = new Inner();
-        o.m();
+	Inner o = new Inner();
+	o.m();
     }
 
     public static void main(String[] args) throws Exception {
-        StringAppendAccessMethodOnLHS o = new StringAppendAccessMethodOnLHS();
-        o.test();
-        if (!o.s.equals("aa")) throw new Exception();
+	StringAppendAccessMethodOnLHS o = new StringAppendAccessMethodOnLHS();
+	o.test();
+	if (!o.s.equals("aa")) throw new Exception();
     }
 
 }

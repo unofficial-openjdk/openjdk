@@ -34,9 +34,9 @@ class AnonInnerException_3 {
 
     void foo() throws Exception {
 
-        class Inner extends AnonInnerExceptionAux {};
+	class Inner extends AnonInnerExceptionAux {};
 
-        AnonInnerExceptionAux x = new Inner();
+	AnonInnerExceptionAux x = new Inner();
 
     }
 }

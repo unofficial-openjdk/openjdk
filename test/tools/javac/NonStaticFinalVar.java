@@ -41,25 +41,25 @@ public class NonStaticFinalVar {
 
     // 4062064
     NonStaticFinalVar(int i) {
-        switch(i) {
-        case constant:
-            System.out.println("constructor ok " + constant);
-            break;
-        }
+	switch(i) {
+	case constant:
+	    System.out.println("constructor ok " + constant);
+	    break;
+	}
     }
 
     // 4233660
     void methodA() {
-        class Inner {
-            final int constant = 0; // crashes compiler
+ 	class Inner {
+ 	    final int constant = 0; // crashes compiler
 
-            public void otherMethod(int i) {
-                switch (i) {
-                case constant:
-                    System.out.println("method ok " + constant);
-                    break;
-                }
-            }
-        }
+   	    public void otherMethod(int i) {
+  		switch (i) {
+  		case constant:
+  		    System.out.println("method ok " + constant);
+  		    break;
+  		}
+  	    }
+ 	}
     }
 }

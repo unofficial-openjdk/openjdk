@@ -37,11 +37,11 @@ import java.util.*;
  */
 
 public class TypeSignature{
-
+    
     RootDoc root  = null;
-
+    
     /* Signature Characters */
-
+    
     private static final String SIG_VOID                   = "V";
     private static final String SIG_BOOLEAN                = "Z";
     private static final String SIG_BYTE                   = "B";
@@ -53,173 +53,173 @@ public class TypeSignature{
     private static final String SIG_DOUBLE                 = "D";
     private static final String SIG_ARRAY                  = "[";
     private static final String SIG_CLASS                  = "L";
-
-
-
+    
+    
+    
     public TypeSignature(RootDoc root){
-        this.root = root;
+	this.root = root;
     }
-
+    
     /*
      * Returns the type signature of a field according to JVM specs
      */
     public String getTypeSignature(String javasignature){
-        return getParamJVMSignature(javasignature);
+	return getParamJVMSignature(javasignature);
     }
-
+    
     /*
      * Returns the type signature of a method according to JVM specs
      */
     public String getTypeSignature(String javasignature, Type returnType){
-
-        String signature = null; //Java type signature.
-        String typeSignature = null; //Internal type signature.
-        Vector params = new Vector(); //List of parameters.
-        String paramsig = null; //Java parameter signature.
-        String paramJVMSig = null; //Internal parameter signature.
-        String returnSig = null; //Java return type signature.
-        String returnJVMType = null; //Internal return type signature.
-        String dimension = null; //Array dimension.
-
-        int startIndex = -1;
-        int endIndex = -1;
-        StringTokenizer st = null;
-        int i = 0;
-
-        // Gets the actual java signature without parentheses.
-        if(javasignature != null){
-            startIndex = javasignature.indexOf("(");
-            endIndex = javasignature.indexOf(")");
-        }
-
-        if(((startIndex != -1) && (endIndex != -1))
-           &&(startIndex+1 < javasignature.length())
-           &&(endIndex < javasignature.length())) {
-
-            signature = javasignature.substring(startIndex+1, endIndex);
-        }
-
-        // Separates parameters.
-        if(signature != null){
-            if(signature.indexOf(",") != -1){
-                st = new StringTokenizer(signature, ",");
-                if(st != null){
-                    while (st.hasMoreTokens()) {
-                        params.add(st.nextToken());
-                    }
-                }
-            }else {
-                params.add(signature);
-            }
-        }
-
-        /* JVM type signature. */
-        typeSignature = "(";
-
-        // Gets indivisual internal parameter signature.
-        while(params.isEmpty() != true){
-            paramsig =((String)params.remove(i)).trim();
-            paramJVMSig  = getParamJVMSignature(paramsig);
-            if(paramJVMSig != null){
-                typeSignature += paramJVMSig;
-            }
-        }
-
-        typeSignature += ")";
-
-        // Get internal return type signature.
-
-        returnJVMType = "";
-        if(returnType != null){
-            dimension = returnType.dimension();
-        }
-
-        if(dimension != null){
-
-            //Gets array dimension of return type.
-            while(dimension.indexOf("[]") != -1){
-                returnJVMType += "[";
-                int stindex = dimension.indexOf("]") + 1;
-                if(stindex <= dimension.length()){
-                    dimension = dimension.substring(stindex);
-                }else dimension = "";
-            }
-        }
-        if(returnType != null){
-            returnSig = returnType.qualifiedTypeName();
-            returnJVMType += getComponentType(returnSig);
-        }else {
-            System.out.println("Invalid return type.");
-        }
-
-        typeSignature += returnJVMType;
-        return typeSignature;
+	
+	String signature = null; //Java type signature.
+	String typeSignature = null; //Internal type signature.
+	Vector params = new Vector(); //List of parameters.
+	String paramsig = null; //Java parameter signature.
+	String paramJVMSig = null; //Internal parameter signature.
+	String returnSig = null; //Java return type signature.
+	String returnJVMType = null; //Internal return type signature.
+	String dimension = null; //Array dimension.
+	
+	int startIndex = -1;
+	int endIndex = -1;
+	StringTokenizer st = null;
+	int i = 0;
+	
+	// Gets the actual java signature without parentheses.
+	if(javasignature != null){
+	    startIndex = javasignature.indexOf("(");
+	    endIndex = javasignature.indexOf(")");
+	}
+	
+	if(((startIndex != -1) && (endIndex != -1))
+	   &&(startIndex+1 < javasignature.length())
+	   &&(endIndex < javasignature.length())) {
+	    
+	    signature = javasignature.substring(startIndex+1, endIndex);
+	}
+	
+	// Separates parameters.
+	if(signature != null){
+	    if(signature.indexOf(",") != -1){
+		st = new StringTokenizer(signature, ",");
+		if(st != null){
+		    while (st.hasMoreTokens()) {
+			params.add(st.nextToken());
+		    }
+		}
+	    }else {
+		params.add(signature);
+	    }
+	}
+	
+	/* JVM type signature. */
+	typeSignature = "(";
+	
+	// Gets indivisual internal parameter signature. 
+	while(params.isEmpty() != true){
+	    paramsig =((String)params.remove(i)).trim();
+	    paramJVMSig  = getParamJVMSignature(paramsig);
+	    if(paramJVMSig != null){
+		typeSignature += paramJVMSig;
+	    }
+	}
+	
+	typeSignature += ")";
+	
+	// Get internal return type signature.
+	
+	returnJVMType = "";
+	if(returnType != null){
+	    dimension = returnType.dimension();
+	}
+	
+	if(dimension != null){
+	    
+	    //Gets array dimension of return type.
+	    while(dimension.indexOf("[]") != -1){
+		returnJVMType += "[";
+		int stindex = dimension.indexOf("]") + 1;
+		if(stindex <= dimension.length()){
+		    dimension = dimension.substring(stindex);
+		}else dimension = "";
+	    }
+	}
+	if(returnType != null){
+	    returnSig = returnType.qualifiedTypeName();
+	    returnJVMType += getComponentType(returnSig);
+	}else {
+	    System.out.println("Invalid return type.");
+	}
+	
+	typeSignature += returnJVMType;
+	return typeSignature;
     }
-
+    
     /*
      * Returns internal signature of a parameter.
      */
     private String getParamJVMSignature(String paramsig){
-        String paramJVMSig = "";
-        String componentType ="";
-
-        if(paramsig != null){
-
-            if(paramsig.indexOf("[]") != -1) {
-                // Gets array dimension.
-                int endindex = paramsig.indexOf("[]");
-                componentType = paramsig.substring(0, endindex);
-                String dimensionString =  paramsig.substring(endindex);
-                if(dimensionString != null){
-                    while(dimensionString.indexOf("[]") != -1){
-                        paramJVMSig += "[";
-                        int beginindex = dimensionString.indexOf("]") + 1;
-                        if(beginindex < dimensionString.length()){
-                            dimensionString = dimensionString.substring(beginindex);
-                        }else
-                            dimensionString = "";
-                    }
-                }
-            } else componentType = paramsig;
-
-            paramJVMSig += getComponentType(componentType);
-        }
-        return paramJVMSig;
+	String paramJVMSig = "";
+	String componentType ="";
+	
+	if(paramsig != null){
+	    
+	    if(paramsig.indexOf("[]") != -1) {
+		// Gets array dimension. 
+		int endindex = paramsig.indexOf("[]");
+		componentType = paramsig.substring(0, endindex);
+		String dimensionString =  paramsig.substring(endindex);
+		if(dimensionString != null){
+		    while(dimensionString.indexOf("[]") != -1){
+			paramJVMSig += "[";
+			int beginindex = dimensionString.indexOf("]") + 1;
+			if(beginindex < dimensionString.length()){
+			    dimensionString = dimensionString.substring(beginindex);
+			}else 
+			    dimensionString = "";
+		    }
+		}
+	    } else componentType = paramsig;
+	    
+	    paramJVMSig += getComponentType(componentType);
+	}
+	return paramJVMSig;
     }
-
+    
     /*
      * Returns internal signature of a component.
      */
     private String getComponentType(String componentType){
-
-        String JVMSig = "";
-
-        if(componentType != null){
-            if(componentType.equals("void")) JVMSig += SIG_VOID ;
-            else if(componentType.equals("boolean"))  JVMSig += SIG_BOOLEAN ;
-            else if(componentType.equals("byte")) JVMSig += SIG_BYTE ;
-            else if(componentType.equals("char"))  JVMSig += SIG_CHAR ;
-            else if(componentType.equals("short"))  JVMSig += SIG_SHORT ;
-            else if(componentType.equals("int"))  JVMSig += SIG_INT ;
-            else if(componentType.equals("long"))  JVMSig += SIG_LONG ;
-            else if(componentType.equals("float")) JVMSig += SIG_FLOAT ;
-            else if(componentType.equals("double"))  JVMSig += SIG_DOUBLE ;
-            else {
-                if(!componentType.equals("")){
-                    ClassDoc classNameDoc = root.classNamed(componentType);
-
-                    if(classNameDoc == null){
-                        System.out.println("Invalid class type");
-                    }else {
-                        String classname = classNameDoc.qualifiedName();
-                        String newclassname = classname.replace('.', '/');
-                        JVMSig += "L";
-                        JVMSig += newclassname;
-                        JVMSig += ";";
-                    }
-                }
-            }
-        }
-        return JVMSig;
+	
+	String JVMSig = "";
+	
+	if(componentType != null){
+	    if(componentType.equals("void")) JVMSig += SIG_VOID ;
+	    else if(componentType.equals("boolean"))  JVMSig += SIG_BOOLEAN ;
+	    else if(componentType.equals("byte")) JVMSig += SIG_BYTE ;
+	    else if(componentType.equals("char"))  JVMSig += SIG_CHAR ;
+	    else if(componentType.equals("short"))  JVMSig += SIG_SHORT ;
+	    else if(componentType.equals("int"))  JVMSig += SIG_INT ;
+	    else if(componentType.equals("long"))  JVMSig += SIG_LONG ;
+	    else if(componentType.equals("float")) JVMSig += SIG_FLOAT ;
+	    else if(componentType.equals("double"))  JVMSig += SIG_DOUBLE ;
+	    else {
+		if(!componentType.equals("")){
+		    ClassDoc classNameDoc = root.classNamed(componentType);
+		    
+		    if(classNameDoc == null){
+			System.out.println("Invalid class type");
+		    }else {
+			String classname = classNameDoc.qualifiedName();
+			String newclassname = classname.replace('.', '/');
+			JVMSig += "L";
+			JVMSig += newclassname;
+			JVMSig += ";";
+		    }
+		}
+	    }
+	}
+	return JVMSig;
     }
 }

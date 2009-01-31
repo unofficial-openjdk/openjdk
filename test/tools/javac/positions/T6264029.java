@@ -13,6 +13,6 @@ class T6264029A<T,K> {
 
 public class T6264029 {
     T6264029A a = new T6264029A("saaa") {
-            public void getNoneTest() {}
-        };
+	    public void getNoneTest() {}
+	};
 }

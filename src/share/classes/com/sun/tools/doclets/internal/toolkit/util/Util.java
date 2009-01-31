@@ -36,19 +36,19 @@ import java.io.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Atul M Dambalkar
  * @author Jamie Ho
  */
-public class Util {
-
+public class Util {    
+    
     /**
      * A mapping between characters and their
      * corresponding HTML escape character.
      */
     public static final String[][] HTML_ESCAPE_CHARS =
     {{"&", "&amp;"}, {"<", "&lt;"}, {">", "&gt;"}};
-
+    
     /**
      * Return array of class members whose documentation is to be generated.
      * If the member is deprecated do not include such a member in the
@@ -63,7 +63,7 @@ public class Util {
         return
             toProgramElementDocArray(excludeDeprecatedMembersAsList(members));
     }
-
+    
     /**
      * Return array of class members whose documentation is to be generated.
      * If the member is deprecated do not include such a member in the
@@ -84,7 +84,7 @@ public class Util {
         Collections.sort(list);
         return list;
     }
-
+    
     /**
      * Return the list of ProgramElementDoc objects as Array.
      */
@@ -95,7 +95,7 @@ public class Util {
         }
         return pgmarr;
     }
-
+    
     /**
      * Return true if a non-public member found in the given array.
      *
@@ -110,7 +110,7 @@ public class Util {
         }
         return false;
     }
-
+    
     /**
      * Search for the given method in the given class.
      *
@@ -122,17 +122,17 @@ public class Util {
         MethodDoc[] methods = cd.methods();
         for (int i = 0; i < methods.length; i++) {
             if (executableMembersEqual(method, methods[i])) {
-                return methods[i];
-
+                return methods[i];                
+                
             }
         }
         return null;
     }
-
+    
     /**
      * @param member1 the first method to compare.
      * @param member2 the second method to compare.
-     * @return true if member1 overrides/hides or is overriden/hidden by member2.
+     * @return true if member1 overrides/hides or is overriden/hidden by member2.  
      */
     public static boolean executableMembersEqual(ExecutableMemberDoc member1,
             ExecutableMemberDoc member2) {
@@ -145,12 +145,12 @@ public class Util {
             Parameter[] targetParams = method1.parameters();
             Parameter[] currentParams;
             if (method1.name().equals(method2.name()) &&
-                   (currentParams = method2.parameters()).length ==
+                   (currentParams = method2.parameters()).length == 
                 targetParams.length) {
                 int j;
                 for (j = 0; j < targetParams.length; j++) {
                     if (! (targetParams[j].typeName().equals(
-                              currentParams[j].typeName()) ||
+                              currentParams[j].typeName()) || 
                                    currentParams[j].type() instanceof TypeVariable ||
                                    targetParams[j].type() instanceof TypeVariable)) {
                         break;
@@ -158,16 +158,16 @@ public class Util {
                 }
                 if (j == targetParams.length) {
                     return true;
-                }
+                }                
             }
             return false;
         } else {
-                return method1.overrides(method2) ||
-                method2.overrides(method1) ||
-                                member1 == member2;
+        	return method1.overrides(method2) ||
+                method2.overrides(method1) || 
+				member1 == member2;
         }
     }
-
+    
     /**
      * According to the Java Language Specifications, all the outer classes
      * and static inner classes are core classes.
@@ -175,7 +175,7 @@ public class Util {
     public static boolean isCoreClass(ClassDoc cd) {
         return cd.containingClass() == null || cd.isStatic();
     }
-
+    
     public static boolean matches(ProgramElementDoc doc1,
             ProgramElementDoc doc2) {
         if (doc1 instanceof ExecutableMemberDoc &&
@@ -187,7 +187,7 @@ public class Util {
             return doc1.name().equals(doc2.name());
         }
     }
-
+    
     /**
      * Copy source file to destination file.
      *
@@ -213,7 +213,7 @@ public class Util {
             output.close();
         }
     }
-
+    
     /**
      * Copy the given directory contents from the source package directory
      * to the generated documentation directory. For example for a package
@@ -273,7 +273,7 @@ public class Util {
             throw new DocletAbortException();
         }
     }
-
+    
     /**
      * Given the parameters for copying doc-files, check for errors.
      *
@@ -307,7 +307,7 @@ public class Util {
         }
         return false;
     }
-
+    
     /**
      * Copy a file in the resources directory to the destination
      * directory (if it is not there already).  If
@@ -329,48 +329,48 @@ public class Util {
         File destfile = new File(destresourcesdir, resourcefile);
         if(destfile.exists() && (! overwrite)) return;
         try {
-
+            
             InputStream in = Configuration.class.getResourceAsStream(
                 "resources/" + resourcefile);
-
+            
             if(in==null) return;
-
+            
             OutputStream out = new FileOutputStream(destfile);
             byte[] buf = new byte[2048];
             int n;
             while((n = in.read(buf))>0) out.write(buf,0,n);
-
+            
             in.close();
             out.close();
         } catch(Throwable t) {}
     }
-
+    
     /**
      * Given a PackageDoc, return the source path for that package.
      * @param configuration The Configuration for the current Doclet.
      * @param pkgDoc The package to seach the path for.
      * @return A string representing the path to the given package.
      */
-    public static String getPackageSourcePath(Configuration configuration,
+    public static String getPackageSourcePath(Configuration configuration, 
             PackageDoc pkgDoc){
         try{
             String pkgPath = DirectoryManager.getDirectoryPath(pkgDoc);
             String completePath = new SourcePath(configuration.sourcepath).
                 getDirectory(pkgPath) + DirectoryManager.URL_FILE_SEPERATOR;
             //Make sure that both paths are using the same seperators.
-            completePath = Util.replaceText(completePath, File.separator,
+            completePath = Util.replaceText(completePath, File.separator, 
                     DirectoryManager.URL_FILE_SEPERATOR);
-            pkgPath = Util.replaceText(pkgPath, File.separator,
+            pkgPath = Util.replaceText(pkgPath, File.separator, 
                     DirectoryManager.URL_FILE_SEPERATOR);
             return completePath.substring(0, completePath.indexOf(pkgPath));
         } catch (Exception e){
             return "";
         }
     }
-
+    
     /**
      * We want the list of types in alphabetical order.  However, types are not
-     * comparable.  We need a comparator for now.
+     * comparable.  We need a comparator for now. 
      */
     private static class TypeComparator implements Comparator {
         public int compare(Object type1, Object type2) {
@@ -378,7 +378,7 @@ public class Util {
                 ((Type) type2).qualifiedTypeName().toLowerCase());
         }
     }
-
+    
     /**
      * For the class return all implemented interfaces including the
      * superinterfaces of the implementing interfaces, also iterate over for
@@ -390,8 +390,8 @@ public class Util {
      * @param  configuration the current configuration of the doclet.
      * @param  sort if true, return list of interfaces sorted alphabetically.
      * @return List of all the required interfaces.
-     */
-    public static List getAllInterfaces(Type type,
+     */    
+    public static List getAllInterfaces(Type type, 
             Configuration configuration, boolean sort) {
         Map results = sort ? new TreeMap() : new LinkedHashMap();
         Type[] interfaceTypes = null;
@@ -406,12 +406,12 @@ public class Util {
             interfaceTypes = type.asClassDoc().interfaceTypes();
             superType = type.asClassDoc().superclassType();
         }
-
+        
         for (int i = 0; i < interfaceTypes.length; i++) {
             Type interfaceType = interfaceTypes[i];
             ClassDoc interfaceClassDoc = interfaceType.asClassDoc();
-            if (! (interfaceClassDoc.isPublic() ||
-                (configuration == null ||
+            if (! (interfaceClassDoc.isPublic() || 
+                (configuration == null || 
                 isLinkable(interfaceClassDoc, configuration)))) {
                 continue;
             }
@@ -421,28 +421,28 @@ public class Util {
                 Type t = (Type) iter.next();
                 results.put(t.asClassDoc(), t);
             }
-        }
+        } 
         if (superType == null)
             return new ArrayList(results.values());
         //Try walking the tree.
-        addAllInterfaceTypes(results,
-            superType,
+        addAllInterfaceTypes(results,  
+            superType, 
             superType instanceof ClassDoc ?
                 ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+                ((ParameterizedType) superType).interfaceTypes(), 
             false, configuration);
         List resultsList = new ArrayList(results.values());
         if (sort) {
-                Collections.sort(resultsList, new TypeComparator());
+        	Collections.sort(resultsList, new TypeComparator());
         }
         return resultsList;
     }
-
+    
     public static List getAllInterfaces(Type type, Configuration configuration) {
-        return getAllInterfaces(type, configuration, true);
+    	return getAllInterfaces(type, configuration, true);
     }
-
-    private static void findAllInterfaceTypes(Map results, ClassDoc c, boolean raw,
+    
+    private static void findAllInterfaceTypes(Map results, ClassDoc c, boolean raw, 
             Configuration configuration) {
         Type superType = c.superclassType();
         if (superType == null)
@@ -450,11 +450,11 @@ public class Util {
         addAllInterfaceTypes(results, superType,
                 superType instanceof ClassDoc ?
                 ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+                ((ParameterizedType) superType).interfaceTypes(), 
                 raw, configuration);
     }
-
-    private static void findAllInterfaceTypes(Map results, ParameterizedType p,
+    
+    private static void findAllInterfaceTypes(Map results, ParameterizedType p, 
             Configuration configuration) {
         Type superType = p.superclassType();
         if (superType == null)
@@ -462,18 +462,18 @@ public class Util {
         addAllInterfaceTypes(results, superType,
                 superType instanceof ClassDoc ?
                 ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+                ((ParameterizedType) superType).interfaceTypes(), 
                 false, configuration);
     }
-
-    private static void addAllInterfaceTypes(Map results, Type type,
-            Type[] interfaceTypes, boolean raw,
+    
+    private static void addAllInterfaceTypes(Map results, Type type, 
+            Type[] interfaceTypes, boolean raw, 
             Configuration configuration) {
         for (int i = 0; i < interfaceTypes.length; i++) {
             Type interfaceType = interfaceTypes[i];
             ClassDoc interfaceClassDoc = interfaceType.asClassDoc();
-            if (! (interfaceClassDoc.isPublic() ||
-                (configuration != null &&
+            if (! (interfaceClassDoc.isPublic() || 
+                (configuration != null && 
                 isLinkable(interfaceClassDoc, configuration)))) {
                 continue;
             }
@@ -493,8 +493,8 @@ public class Util {
         else
             findAllInterfaceTypes(results, (ClassDoc) type, true, configuration);
     }
-
-
+    
+    
     public static List asList(ProgramElementDoc[] members) {
         List list = new ArrayList();
         for (int i = 0; i < members.length; i++) {
@@ -502,14 +502,14 @@ public class Util {
         }
         return list;
     }
-
+    
     /**
      * Enclose in quotes, used for paths and filenames that contains spaces
      */
     public static String quote(String filepath) {
         return ("\"" + filepath + "\"");
     }
-
+    
     /**
      * Given a package, return it's name.
      * @param packageDoc the package to check.
@@ -519,7 +519,7 @@ public class Util {
         return packageDoc == null || packageDoc.name().length() == 0 ?
             DocletConstants.DEFAULT_PACKAGE_NAME : packageDoc.name();
     }
-
+    
     /**
      * Given a package, return it's file name without the extension.
      * @param packageDoc the package to check.
@@ -529,14 +529,14 @@ public class Util {
         return packageDoc == null || packageDoc.name().length() == 0 ?
             DocletConstants.DEFAULT_PACKAGE_FILE_NAME : packageDoc.name();
     }
-
+    
     /**
      * Given a string, replace all occurraces of 'newStr' with 'oldStr'.
      * @param originalStr the string to modify.
      * @param oldStr the string to replace.
      * @param newStr the string to insert in place of the old string.
      */
-    public static String replaceText(String originalStr, String oldStr,
+    public static String replaceText(String originalStr, String oldStr, 
             String newStr) {
         if (oldStr == null || newStr == null || oldStr.equals(newStr)) {
             return originalStr;
@@ -544,13 +544,13 @@ public class Util {
         StringBuffer result = new StringBuffer(originalStr);
         int startIndex = 0;
         while ((startIndex = result.indexOf(oldStr, startIndex)) != -1) {
-            result = result.replace(startIndex, startIndex + oldStr.length(),
+            result = result.replace(startIndex, startIndex + oldStr.length(), 
                     newStr);
             startIndex += newStr.length();
         }
         return result.toString();
     }
-
+    
     /**
      * Given a string, escape all special html characters and
      * return the result.
@@ -569,7 +569,7 @@ public class Util {
         }
         return result;
     }
-
+    
     /**
      * Create the directory path for the file to be generated, construct
      * FileOutputStream and OutputStreamWriter depending upon docencoding.
@@ -605,13 +605,13 @@ public class Util {
             return new OutputStreamWriter(fos, docencoding);
         }
     }
-
+    
     /**
      * Given an annotation, return true if it should be documented and false
      * otherwise.
-     *
+     * 
      * @param annotationDoc the annotation to check.
-     *
+     * 
      * @return true return true if it should be documented and false otherwise.
      */
     public static boolean isDocumentedAnnotation(AnnotationTypeDoc annotationDoc) {
@@ -624,18 +624,18 @@ public class Util {
         }
         return false;
     }
-
+    
     /**
-     * Given a string, return an array of tokens.  The separator can be escaped
+     * Given a string, return an array of tokens.  The separator can be escaped 
      * with the '\' character.  The '\' character may also be escaped by the
      * '\' character.
-     *
+     * 
      * @param s         the string to tokenize.
      * @param separator the separator char.
      * @param maxTokens the maxmimum number of tokens returned.  If the
      *                  max is reached, the remaining part of s is appended
      *                  to the end of the last token.
-     *
+     * 
      * @return an array of tokens.
      */
     public static String[] tokenize(String s, char separator, int maxTokens) {
@@ -651,7 +651,7 @@ public class Util {
             } else if (currentChar == separator && tokens.size() < maxTokens-1) {
                 // Case 2:  separator
                 tokens.add(token.toString());
-                token = new StringBuilder();
+                token = new StringBuilder();                
             } else if (currentChar == '\\') {
                 // Case 3:  escape character
                 prevIsEscapeChar = true;
@@ -665,28 +665,28 @@ public class Util {
         }
         return (String[]) tokens.toArray(new String[] {});
     }
-
+    
     /**
      * Return true if this class is linkable and false if we can't link to the
      * desired class.
      * <br>
-     * <b>NOTE:</b>  You can only link to external classes if they are public or
+     * <b>NOTE:</b>  You can only link to external classes if they are public or 
      * protected.
      *
      * @param classDoc the class to check.
      * @param configuration the current configuration of the doclet.
-     *
+     * 
      * @return true if this class is linkable and false if we can't link to the
      * desired class.
      */
-    public static boolean isLinkable(ClassDoc classDoc,
+    public static boolean isLinkable(ClassDoc classDoc, 
             Configuration configuration) {
-        return
+        return 
             ((classDoc.isIncluded() && configuration.isGeneratedDoc(classDoc))) ||
-            (configuration.extern.isExternal(classDoc) &&
+            (configuration.extern.isExternal(classDoc) && 
                 (classDoc.isPublic() || classDoc.isProtected()));
     }
-
+    
     /**
      * Given a class, return the closest visible super class.
      *
@@ -702,7 +702,7 @@ public class Util {
         }
         Type sup = classDoc.superclassType();
         ClassDoc supClassDoc = classDoc.superclass();
-        while (sup != null &&
+        while (sup != null && 
                   (! (supClassDoc.isPublic() ||
                               isLinkable(supClassDoc, configuration))) ) {
             if (supClassDoc.superclass().qualifiedName().equals(supClassDoc.qualifiedName()))
@@ -715,7 +715,7 @@ public class Util {
         }
         return sup;
     }
-
+    
     /**
      * Given a class, return the closest visible super class.
      *
@@ -730,9 +730,9 @@ public class Util {
             return null;
         }
         ClassDoc supClassDoc = classDoc.superclass();
-        while (supClassDoc != null &&
+        while (supClassDoc != null && 
                   (! (supClassDoc.isPublic() ||
-                              isLinkable(supClassDoc, configuration))) ) {
+                              isLinkable(supClassDoc, configuration))) ) {            
             supClassDoc = supClassDoc.superclass();
         }
         if (classDoc.equals(supClassDoc)) {
@@ -740,12 +740,12 @@ public class Util {
         }
         return supClassDoc;
     }
-
+    
     /**
      * Given a ClassDoc, return the name of its type (Class, Interface, etc.).
-     *
+     * 
      * @param cd the ClassDoc to check.
-     * @param lowerCaseOnly true if you want the name returned in lower case.
+     * @param lowerCaseOnly true if you want the name returned in lower case. 
      *                      If false, the first letter of the name is capatilized.
      * @return
      */
@@ -768,7 +768,7 @@ public class Util {
         return config.getText(
             lowerCaseOnly ? typeName.toLowerCase() : typeName);
     }
-
+    
     /**
      * Given a string, replace all tabs with the appropriate
      * number of spaces.
@@ -788,21 +788,21 @@ public class Util {
             s.replace(index, index+1, whitespace.toString());
         }
     }
-
+    
     /**
-     * The documentation for values() and valueOf() in Enums are set by the
+     * The documentation for values() and valueOf() in Enums are set by the 
      * doclet.
      */
-    public static void setEnumDocumentation(Configuration configuration,
+    public static void setEnumDocumentation(Configuration configuration, 
             ClassDoc classDoc) {
         MethodDoc[] methods = classDoc.methods();
         for (int j = 0; j < methods.length; j++) {
             MethodDoc currentMethod = methods[j];
-            if (currentMethod.name().equals("values") &&
+            if (currentMethod.name().equals("values") && 
                 currentMethod.parameters().length == 0) {
                 currentMethod.setRawCommentText(
                     configuration.getText("doclet.enum_values_doc", classDoc.name()));
-            } else if (currentMethod.name().equals("valueOf") &&
+            } else if (currentMethod.name().equals("valueOf") && 
                 currentMethod.parameters().length == 1) {
                 Type paramType = currentMethod.parameters()[0].type();
                 if (paramType != null &&
@@ -813,11 +813,11 @@ public class Util {
             }
         }
     }
-
+    
     /**
      *  Return true if the given Doc is deprecated.
-     *
-     * @param doc the Doc to check.
+     * 
+     * @param doc the Doc to check. 
      * @return true if the given Doc is deprecated.
      */
     public static boolean isDeprecated(ProgramElementDoc doc) {
@@ -834,3 +834,4 @@ public class Util {
         return false;
     }
 }
+

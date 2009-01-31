@@ -30,9 +30,9 @@ import javax.lang.model.element.*;
     @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class Anno extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
-                                    RoundEnvironment roundEnv) {
-        //if (!roundEnv.processingOver())
-        //    System.err.println("annotation processing");
-        return true;
+				    RoundEnvironment roundEnv) {
+	//if (!roundEnv.processingOver()) 
+	//    System.err.println("annotation processing");
+	return true;
     }
 }

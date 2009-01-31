@@ -36,7 +36,7 @@ public class T6271292 extends SuperClass {
 class SuperClass {
     double d;
     SuperClass(double dd) { d = dd; }
-
+    
     double test() {
         if (d == 0) {
             return d;
@@ -47,3 +47,4 @@ class SuperClass {
         }
     }
 }
+

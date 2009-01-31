@@ -32,15 +32,15 @@
 
 public class ReturnAfterIfThenElse {
     int method() {
-        if (false) {
-            // no return here
-        } else {
-            return 1;
-        }
-        // ERROR
-        // A return statement is required here,
-        // becase, according to the special rules
-        // for if-then-else in JLS 14.19, the
-        // preceding statement *can* complete normally.
+	if (false) {
+	    // no return here
+	} else {
+	    return 1;
+	}
+	// ERROR
+	// A return statement is required here,
+	// becase, according to the special rules
+	// for if-then-else in JLS 14.19, the
+	// preceding statement *can* complete normally.
     }
 }

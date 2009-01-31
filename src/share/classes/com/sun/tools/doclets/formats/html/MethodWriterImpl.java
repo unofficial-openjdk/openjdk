@@ -39,11 +39,11 @@ import com.sun.javadoc.*;
  * @author Atul M Dambalkar
  * @author Jamie Ho (rewrite)
  */
-public class MethodWriterImpl extends AbstractExecutableMemberWriter
+public class MethodWriterImpl extends AbstractExecutableMemberWriter 
         implements MethodWriter, MemberSummaryWriter {
-
+    
     private boolean printedSummaryHeader = false;
-
+    
     /**
      * Construct a new MethodWriterImpl.
      *
@@ -51,9 +51,9 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      * @param classDoc the class being documented.
      */
     public MethodWriterImpl(SubWriterHolderWriter writer, ClassDoc classDoc) {
-        super(writer, classDoc);
+        super(writer, classDoc);        
     }
-
+    
     /**
      * Construct a new MethodWriterImpl.
      *
@@ -62,7 +62,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public MethodWriterImpl(SubWriterHolderWriter writer) {
         super(writer);
     }
-
+    
     /**
      * Write the methods summary header for the given class.
      *
@@ -71,11 +71,11 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeMemberSummaryHeader(ClassDoc classDoc) {
         printedSummaryHeader = true;
         writer.println();
-        writer.println("<!-- ========== METHOD SUMMARY =========== -->");
+        writer.println("<!-- ========== METHOD SUMMARY =========== -->"); 
         writer.println();
         writer.printSummaryHeader(this, classDoc);
     }
-
+    
     /**
      * Write the methods summary footer for the given class.
      *
@@ -84,7 +84,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeMemberSummaryFooter(ClassDoc classDoc) {
         writer.printSummaryFooter(this, classDoc);
     }
-
+    
     /**
      * Write the inherited methods summary header for the given class.
      *
@@ -99,15 +99,15 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         }
         writer.printInheritedSummaryHeader(this, classDoc);
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void writeInheritedMemberSummary(ClassDoc classDoc,
+    public void writeInheritedMemberSummary(ClassDoc classDoc, 
         ProgramElementDoc method, boolean isFirst, boolean isLast) {
         writer.printInheritedSummaryMember(this, classDoc, method, isFirst);
     }
-
+    
     /**
      * Write the inherited methods summary footer for the given class.
      *
@@ -116,7 +116,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeInheritedMemberSummaryFooter(ClassDoc classDoc) {
         writer.printInheritedSummaryFooter(this, classDoc);        ;
     }
-
+    
     /**
      * Write the header for the method documentation.
      *
@@ -124,34 +124,34 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     public void writeHeader(ClassDoc classDoc, String header) {
         writer.println();
-        writer.println("<!-- ============ METHOD DETAIL ========== -->");
+        writer.println("<!-- ============ METHOD DETAIL ========== -->"); 
         writer.println();
         writer.anchor("method_detail");
         writer.printTableHeadingBackground(header);
     }
-
+    
     /**
      * Write the method header for the given method.
      *
      * @param method the method being documented.
-     * @param isFirst the flag to indicate whether or not the method is the
+     * @param isFirst the flag to indicate whether or not the method is the 
      *        first to be documented.
      */
-    public void writeMethodHeader(MethodDoc method, boolean isFirst) {
+    public void writeMethodHeader(MethodDoc method, boolean isFirst) {        
         if (! isFirst) {
-            writer.printMemberHeader();
+            writer.printMemberHeader();            
         }
         writer.println();
         String erasureAnchor;
         if ((erasureAnchor = getErasureAnchor(method)) != null) {
             writer.anchor(erasureAnchor);
-        }
+        }        
         writer.anchor(method);
         writer.h3();
         writer.print(method.name());
         writer.h3End();
     }
-
+    
     /**
      * Write the signature for the given method.
      *
@@ -174,7 +174,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         writer.preEnd();
         writer.dl();
     }
-
+    
     /**
      * Write the deprecated output for the given method.
      *
@@ -182,13 +182,13 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     public void writeDeprecated(MethodDoc method) {
         String output = ((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(method,
+            (new DeprecatedTaglet()).getTagletOutput(method, 
             writer.getTagletWriterInstance(false))).toString();
-        if (output != null && output.trim().length() > 0) {
+        if (output != null && output.trim().length() > 0) {            
             writer.print(output);
         }
     }
-
+    
     /**
      * Write the comments for the given method.
      *
@@ -198,16 +198,16 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         ClassDoc holderClassDoc = holder.asClassDoc();
         if (method.inlineTags().length > 0) {
             if (holder.asClassDoc().equals(classdoc) ||
-                (! (holderClassDoc.isPublic() ||
+                (! (holderClassDoc.isPublic() || 
                     Util.isLinkable(holderClassDoc, configuration())))) {
                 writer.dd();
                 writer.printInlineComment(method);
             } else {
                 String classlink = writer.codeText(
                     writer.getDocLink(LinkInfoImpl.CONTEXT_METHOD_DOC_COPY,
-                        holder.asClassDoc(), method,
-                        holder.asClassDoc().isIncluded() ?
-                            holder.typeName() : holder.qualifiedTypeName(),
+                        holder.asClassDoc(), method, 
+                        holder.asClassDoc().isIncluded() ? 
+                            holder.typeName() : holder.qualifiedTypeName(), 
                         false));
                 writer.dd();
                 writer.boldText(holder.asClassDoc().isClass()?
@@ -220,7 +220,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             }
         }
     }
-
+    
     /**
      * Write the tag output for the given method.
      *
@@ -229,7 +229,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeTags(MethodDoc method) {
         writer.printTags(method);
     }
-
+    
     /**
      * Write the method footer.
      */
@@ -237,7 +237,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         writer.ddEnd();
         writer.dlEnd();
     }
-
+    
     /**
      * Write the footer for the method documentation.
      *
@@ -246,31 +246,31 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeFooter(ClassDoc classDoc) {
         //No footer to write for method documentation
     }
-
+    
     /**
      * Close the writer.
      */
     public void close() throws IOException {
         writer.close();
     }
-
+    
     public int getMemberKind() {
         return VisibleMemberMap.METHODS;
     }
-
+    
     public void printSummaryLabel(ClassDoc cd) {
         writer.boldText("doclet.Method_Summary");
     }
-
+    
     public void printSummaryAnchor(ClassDoc cd) {
         writer.anchor("method_summary");
     }
-
+    
     public void printInheritedSummaryAnchor(ClassDoc cd) {
-        writer.anchor("methods_inherited_from_class_" +
+        writer.anchor("methods_inherited_from_class_" + 
             ConfigurationImpl.getInstance().getClassName(cd));
     }
-
+    
     public void printInheritedSummaryLabel(ClassDoc cd) {
         String classlink = writer.getPreQualifiedClassLink(
             LinkInfoImpl.CONTEXT_MEMBER, cd, false);
@@ -281,19 +281,19 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         writer.printText(key, classlink);
         writer.boldEnd();
     }
-
+    
     protected void printSummaryType(ProgramElementDoc member) {
         MethodDoc meth = (MethodDoc)member;
         printModifierAndType(meth, meth.returnType());
     }
-
-    protected static void printOverridden(HtmlDocletWriter writer,
+    
+    protected static void printOverridden(HtmlDocletWriter writer, 
             Type overriddenType, MethodDoc method) {
         if(writer.configuration.nocomment){
             return;
         }
         ClassDoc holderClassDoc = overriddenType.asClassDoc();
-        if (! (holderClassDoc.isPublic() ||
+        if (! (holderClassDoc.isPublic() || 
             Util.isLinkable(holderClassDoc, writer.configuration()))) {
             //This is an implementation detail that should not be documented.
             return;
@@ -305,7 +305,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         }
         String label = "doclet.Overrides";
         int context = LinkInfoImpl.CONTEXT_METHOD_OVERRIDES;
-
+        
         if (method != null) {
             if(overriddenType.asClassDoc().isAbstract() && method.isAbstract()){
                 //Abstract method is implemented from abstract class,
@@ -321,14 +321,14 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             writer.dd();
             String methLink = writer.codeText(
                 writer.getLink(
-                    new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
+                    new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, 
                         overriddenType.asClassDoc(),
                         writer.getAnchor(method), name, false)
                 ));
             writer.printText("doclet.in_class", methLink, overriddenTypeLink);
         }
     }
-
+    
     /**
      * Parse the &lt;Code&gt; tag and return the text.
      */
@@ -336,7 +336,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         if(tag == null){
             return "";
         }
-
+        
         String lc = tag.toLowerCase();
         int begin = lc.indexOf("<code>");
         int end = lc.indexOf("</code>");
@@ -346,8 +346,8 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             return tag.substring(begin + 6, end);
         }
     }
-
-    protected static void printImplementsInfo(HtmlDocletWriter writer,
+    
+    protected static void printImplementsInfo(HtmlDocletWriter writer, 
             MethodDoc method) {
         if(writer.configuration.nocomment){
             return;
@@ -366,22 +366,22 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             writer.boldText("doclet.Specified_By");
             writer.dd();
             methlink = writer.codeText(writer.getDocLink(
-                LinkInfoImpl.CONTEXT_MEMBER, implementedMeth,
+                LinkInfoImpl.CONTEXT_MEMBER, implementedMeth, 
                 implementedMeth.name(), false));
             writer.printText("doclet.in_interface", methlink, intfaclink);
         }
-
+        
     }
-
+    
     protected void printReturnType(MethodDoc method) {
         Type type = method.returnType();
-        if (type != null) {
-            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_RETURN_TYPE,
+        if (type != null) {      
+            writer.printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_RETURN_TYPE, 
                 type));
             print(' ');
         }
     }
-
+    
     protected void printNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
             writer.printHyperLink("", (cd == null)?
@@ -393,7 +393,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             writer.printText("doclet.navMethod");
         }
     }
-
+    
     protected void printNavDetailLink(boolean link) {
         if (link) {
             writer.printHyperLink("", "method_detail",
@@ -403,3 +403,5 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         }
     }
 }
+
+

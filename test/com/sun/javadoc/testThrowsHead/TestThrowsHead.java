@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,7 +35,7 @@
  */
 
 public class TestThrowsHead extends JavadocTester {
-
+    
     private static final String BUG_ID = "4530727";
     private static final String[][] TEST = {
         {BUG_ID + FS + "C.html", "<DT><B>Throws:</B>"}
@@ -44,7 +44,7 @@ public class TestThrowsHead extends JavadocTester {
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, SRC_DIR + FS + "C.java"
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -54,14 +54,14 @@ public class TestThrowsHead extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

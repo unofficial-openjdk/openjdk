@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test @(#)Rare7.java	1.1 04/04/02
  * @bug 5024308
  * @summary "rare" types
  * @author gafter

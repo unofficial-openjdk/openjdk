@@ -36,15 +36,15 @@ public class NestedClassAnnotations {
     }
 
     private double bar(int baz) {
-        @AnnotShangri_la
-        int local = 0;
-        return (double) baz;
+	@AnnotShangri_la
+	int local = 0;
+	return (double) baz;
     }
 
     @MySimple("value") @MyMarker
     @AnnotMarker @AnnotSimple("foo")
     @AnnotMarker2 @AnnotSimple2("bar")
     static class NestedClass {
-        protected int field;
+	protected int field;
     }
 }

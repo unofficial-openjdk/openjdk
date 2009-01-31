@@ -40,10 +40,10 @@ class StringLength {
     public static final String l5e3 = l1e3 + l1e3 + l1e3 + l1e3 + l1e3;
     public static final String l1e4 = l5e3 + l5e3;
     public static final String l6e4 = l1e4 + l1e4 + l1e4 + l1e4 + l1e4 + l1e4;
-
+    
     public static final String l65530 = l6e4 + l5e3 + l5e2 + l3e1;
     public static String X = l65530 + "abcdef"; // length 65536
     public static void main(String[] args) {
-        System.out.println(X.length());
+	System.out.println(X.length());
     }
 }

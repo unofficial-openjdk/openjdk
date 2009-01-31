@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,14 +31,14 @@ public class C3 {
      * Test 6 passes.
      */
     public C1 field = null;
-
+    
     /**
      * Test 7 passes.
      */
     public C1 method2() {
         return null;
     }
-
+    
     /**
      * Test 8 passes.
      */

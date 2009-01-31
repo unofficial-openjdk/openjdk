@@ -39,6 +39,6 @@ import util.Hashtable; // this is necessary to reproduce the bug!
 public class RetroLexer extends antlr.CharScanner
 {
     public RetroLexer() {
-        literals.put("Foo", new Integer(5));
+	literals.put("Foo", new Integer(5));
     }
 }

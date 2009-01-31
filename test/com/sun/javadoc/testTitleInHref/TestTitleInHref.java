@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,28 +33,28 @@
  */
 
 public class TestTitleInHref extends JavadocTester {
-
+    
     private static final String BUG_ID = "4714257";
-
+    
     private static final String[][] TEST = {
         //Test to make sure that the title shows up in a class link.
         {BUG_ID + FS + "pkg" + FS + "Links.html", "<A HREF=\"../pkg/Class.html\" title=\"class in pkg\">"},
-
+            
         //Test to make sure that the title shows up in an interface link.
         {BUG_ID + FS + "pkg" + FS + "Links.html", "<A HREF=\"../pkg/Interface.html\" title=\"interface in pkg\">"},
-
+            
         //Test to make sure that the title shows up in cross link shows up
         {BUG_ID + FS + "pkg" + FS + "Links.html", "<A HREF=\"http://java.sun.com/j2se/1.4/docs/api/java/io/File.html?is-external=true\" title=\"class or interface in java.io\"><CODE>This is a cross link to class File</CODE></A>"},
-
+    
     };
-
+    
     private static final String[][] NEGATED_TEST = NO_TEST;
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR,
         "-linkoffline", "http://java.sun.com/j2se/1.4/docs/api",
         SRC_DIR, "pkg"
     };
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -64,14 +64,14 @@ public class TestTitleInHref extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

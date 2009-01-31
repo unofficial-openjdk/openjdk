@@ -37,9 +37,9 @@ class TryInInstanceInit {
         try {
         }
         catch (Exception e) {}
-        finally {}
-        synchronized (this) {
-        }
-
+	finally {}
+	synchronized (this) {
+	}
+	
     }
 }

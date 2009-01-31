@@ -41,7 +41,7 @@ import com.sun.mirror.util.*;
 public class ArrayTyp extends Tester {
 
     public static void main(String[] args) {
-        (new ArrayTyp()).run();
+	(new ArrayTyp()).run();
     }
 
 
@@ -51,12 +51,12 @@ public class ArrayTyp extends Tester {
     private String[][] bss;
 
 
-    private ArrayType arr;              // an array type
-    private ArrayType arrarr;           // a multi-dimensional array type
+    private ArrayType arr;		// an array type
+    private ArrayType arrarr;		// a multi-dimensional array type
 
     protected void init() {
-        arr = (ArrayType) getField("bs").getType();
-        arrarr = (ArrayType) getField("bss").getType();
+	arr = (ArrayType) getField("bs").getType();
+	arrarr = (ArrayType) getField("bss").getType();
     }
 
 
@@ -64,30 +64,30 @@ public class ArrayTyp extends Tester {
 
     @Test(result="array")
     Collection<String> accept() {
-        final Collection<String> res = new ArrayList<String>();
+	final Collection<String> res = new ArrayList<String>();
 
-        arr.accept(new SimpleTypeVisitor() {
-            public void visitTypeMirror(TypeMirror t) {
-                res.add("type");
-            }
-            public void visitArrayType(ArrayType t) {
-                res.add("array");
-            }
-            public void visitReferenceType(ReferenceType t) {
-                res.add("ref type");
-            }
-        });
-        return res;
+	arr.accept(new SimpleTypeVisitor() {
+	    public void visitTypeMirror(TypeMirror t) {
+		res.add("type");
+	    }
+	    public void visitArrayType(ArrayType t) {
+		res.add("array");
+	    }
+	    public void visitReferenceType(ReferenceType t) {
+		res.add("ref type");
+	    }
+	});
+	return res;
     }
 
     @Test(result="boolean[]")
     String toStringTest() {
-        return arr.toString();
+	return arr.toString();
     }
 
     @Test(result="java.lang.String[][]")
     String toStringTestMulti() {
-        return arrarr.toString();
+	return arrarr.toString();
     }
 
 
@@ -95,11 +95,11 @@ public class ArrayTyp extends Tester {
 
     @Test(result="boolean")
     TypeMirror getComponentType() {
-        return (PrimitiveType) arr.getComponentType();
+	return (PrimitiveType) arr.getComponentType();
     }
 
     @Test(result="java.lang.String[]")
     TypeMirror getComponentTypeMulti() {
-        return (ArrayType) arrarr.getComponentType();
+	return (ArrayType) arrarr.getComponentType();
     }
 }

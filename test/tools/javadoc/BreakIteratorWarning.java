@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,8 +25,8 @@
  * @test
  * @bug 4959985
  * @summary Verify that (verbose) warnings are no longer generated when
- *          the default first-sentence algorithm doesn't match the
- *          BreakIterator algorithm.
+ *	    the default first-sentence algorithm doesn't match the
+ *	    BreakIterator algorithm.
  */
 
 import com.sun.javadoc.*;
@@ -34,22 +34,22 @@ import com.sun.javadoc.*;
 public class BreakIteratorWarning extends Doclet {
 
     public static void main(String[] args) {
-        String thisFile = "" +
-            new java.io.File(System.getProperty("test.src", "."),
-                             "BreakIteratorWarning.java");
+	String thisFile = "" +
+	    new java.io.File(System.getProperty("test.src", "."),
+			     "BreakIteratorWarning.java");
 
-        if (com.sun.tools.javadoc.Main.execute(
-                "javadoc",
-                "BreakIteratorWarning",
-                new String[] {"-Xwerror", thisFile}) != 0)
-            throw new Error("Javadoc encountered warnings or errors.");
+	if (com.sun.tools.javadoc.Main.execute(
+		"javadoc",
+		"BreakIteratorWarning",
+		new String[] {"-Xwerror", thisFile}) != 0)
+	    throw new Error("Javadoc encountered warnings or errors.");
     }
 
     public static boolean start(RootDoc root) {
-        ClassDoc cd = root.classes()[0];
-        FieldDoc fd = cd.fields()[0];
-        fd.firstSentenceTags();
-        return true;
+	ClassDoc cd = root.classes()[0];
+	FieldDoc fd = cd.fields()[0];
+	fd.firstSentenceTags();
+	return true;
     }
 
 

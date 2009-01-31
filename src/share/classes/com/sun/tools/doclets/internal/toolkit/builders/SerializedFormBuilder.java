@@ -38,58 +38,58 @@ import java.util.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Jamie Ho
  * @since 1.5
  */
 public class SerializedFormBuilder extends AbstractBuilder {
-
+    
     /**
      * The root element of the serialized form XML is {@value}.
      */
     public static final String NAME = "SerializedForm";
-
+    
     /**
      * The writer for this builder.
      */
     private SerializedFormWriter writer;
-
+    
     /**
      * The writer for serializable fields.
      */
-    private SerializedFormWriter.SerialFieldWriter fieldWriter;
-
+    private SerializedFormWriter.SerialFieldWriter fieldWriter; 
+    
     /**
      * The writer for serializable method documentation.
      */
     private SerializedFormWriter.SerialMethodWriter methodWriter;
-
+    
     /**
      * The header for the serial version UID.  Save the string
      * here instead of the properties file because we do not want
      * this string to be localized.
      */
     private static final String SERIAL_VERSION_UID_HEADER = "serialVersionUID:";
-
+    
     /**
      * The current package being documented.
      */
     private PackageDoc currentPackage;
-
+    
     /**
      * The current class being documented.
      */
     private ClassDoc currentClass;
-
+    
     /**
      * The current member being documented.
      */
     protected MemberDoc currentMember;
-
+    
     private SerializedFormBuilder(Configuration configuration) {
         super(configuration);
     }
-
+    
     /**
      * Construct a new SerializedFormBuilder.
      * @param configuration the current configuration of the doclet.
@@ -98,7 +98,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         SerializedFormBuilder builder = new SerializedFormBuilder(configuration);
         return builder;
     }
-
+    
     /**
      * Build the serialized form.
      */
@@ -119,14 +119,14 @@ public class SerializedFormBuilder extends AbstractBuilder {
         build(LayoutParser.getInstance(configuration).parseXML(NAME));
         writer.close();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getName() {
         return NAME;
     }
-
+    
     /**
      * Build the serialized form.
      */
@@ -134,28 +134,28 @@ public class SerializedFormBuilder extends AbstractBuilder {
         build(elements);
         writer.close();
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void invokeMethod(String methodName, Class[] paramClasses,
-            Object[] params)
+    public void invokeMethod(String methodName, Class[] paramClasses, 
+            Object[] params) 
     throws Exception {
         if (DEBUG) {
-            configuration.root.printError("DEBUG: " + this.getClass().getName()
+            configuration.root.printError("DEBUG: " + this.getClass().getName() 
                 + "." + methodName);
         }
         Method method = this.getClass().getMethod(methodName, paramClasses);
         method.invoke(this, params);
     }
-
+    
     /**
      * Build the header.
      */
     public void buildHeader() {
         writer.writeHeader(configuration.getText("doclet.Serialized_Form"));
     }
-
+    
     /**
      * Build the contents.
      */
@@ -166,7 +166,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             build(elements);
         }
     }
-
+    
     /**
      * Build the package serialized for for the current package being processed.
      */
@@ -184,11 +184,11 @@ public class SerializedFormBuilder extends AbstractBuilder {
         }
         build(elements);
     }
-
+    
     public void buildPackageHeader() {
         writer.writePackageHeader(Util.getPackageName(currentPackage));
     }
-
+    
     public void buildClassSerializedForm(List elements) {
         ClassDoc[] classes = currentPackage.allClasses(false);
         Arrays.sort(classes);
@@ -204,11 +204,11 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     public void buildClassHeader() {
         writer.writeClassHeader(currentClass);
     }
-
+    
     /**
      * Build the serial UID information for the given class.
      */
@@ -223,14 +223,14 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     /**
      * Build the footer.
      */
     public void buildFooter() {
         writer.writeFooter();
     }
-
+    
     /**
      * Return true if the given Doc should be included
      * in the serialized form.
@@ -245,7 +245,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             serialClassInclude((ClassDoc)doc) :
             serialDocInclude(doc);
     }
-
+    
     /**
      * Return true if the given ClassDoc should be included
      * in the serialized form.
@@ -273,7 +273,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         }
         return false;
     }
-
+    
     /**
      * Return true if the given Doc should be included
      * in the serialized form.
@@ -295,7 +295,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         }
         return true;
     }
-
+    
     /**
      * Return true if any of the given classes have a @serialinclude tag.
      *
@@ -310,7 +310,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         }
         return false;
     }
-
+    
     /**
      * Build the method header.
      */
@@ -318,7 +318,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         if (currentClass.serializationMethods().length > 0) {
             methodWriter.writeHeader(
                 configuration.getText("doclet.Serialized_Form_methods"));
-            if (currentClass.isSerializable() && !currentClass.isExternalizable()) {
+            if (currentClass.isSerializable() && !currentClass.isExternalizable()) { 
                 if (currentClass.serializationMethods().length == 0) {
                     methodWriter.writeNoCustomizationMsg(
                         configuration.getText(
@@ -327,28 +327,28 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     /**
      * Build the method sub header.
      */
     public void buildMethodSubHeader()  {
         methodWriter.writeMemberHeader((MethodDoc) currentMember);
     }
-
+    
     /**
      * Build the deprecated method description.
      */
     public void buildDeprecatedMethodInfo() {
         methodWriter.writeDeprecatedMemberInfo((MethodDoc) currentMember);
     }
-
+    
     /**
      * Build method tags.
      */
     public void buildMethodDescription() {
         methodWriter.writeMemberDescription((MethodDoc) currentMember);
     }
-
+    
     /**
      * Build the method tags.
      */
@@ -364,7 +364,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     /**
      * build the information for the method.
      */
@@ -372,16 +372,16 @@ public class SerializedFormBuilder extends AbstractBuilder {
         if(configuration.nocomment){
             return;
         }
-        build(elements);
+        build(elements);        
     }
-
+    
     /**
      * Build the method footer.
      */
     public void buildMethodFooter() {
         methodWriter.writeMemberFooter((MethodDoc) currentMember);
     }
-
+    
     /**
      * Build the field header.
      */
@@ -392,7 +392,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 "doclet.Serialized_Form_fields"));
         }
     }
-
+    
     /**
      * If possible, build the serialization overview for the given
      * class.
@@ -416,7 +416,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     /**
      * Build the field sub header.
      */
@@ -427,7 +427,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 field.type().typeName(), field.type().dimension(), field.name());
         }
     }
-
+    
     /**
      * Build the field information.
      */
@@ -448,10 +448,10 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 fieldWriter.writeMemberHeader(tags[i].fieldTypeDoc(),
                         tags[i].fieldType(), "", tags[i].fieldName());
                 fieldWriter.writeMemberDescription(tags[i]);
-
+                
             }
         } else {
-
+            
             // Process default Serializable field.
             if ((field.tags("serial").length == 0) && ! field.isSynthetic()
                 && configuration.serialwarn) {
@@ -464,7 +464,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             fieldWriter.writeMemberTags(field);
         }
     }
-
+    
     /**
      * Build the field footer.
      */
@@ -473,12 +473,12 @@ public class SerializedFormBuilder extends AbstractBuilder {
             fieldWriter.writeMemberFooter((FieldDoc) currentMember);
         }
     }
-
+    
     /**
      * Build the summaries for the methods that belong to the given
      * class.
      */
-    public void buildSerializableMethods(List elements) {
+    public void buildSerializableMethods(List elements) {        
         MemberDoc[] members = currentClass.serializationMethods();
         if (members.length > 0) {
             for (int i = 0; i < members.length; i++) {
@@ -487,7 +487,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             }
         }
     }
-
+    
     /**
      * Build the summaries for the fields that belong to the given
      * class.

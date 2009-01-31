@@ -26,7 +26,7 @@
  * @bug 4361575
  * @summary Correct scoping and diagnostics for import declarations.
  * @author gafter
- *
+ * 
  * @compile/fail foo/A.java
  */
 

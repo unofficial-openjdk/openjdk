@@ -76,7 +76,7 @@ import com.sun.tools.javac.util.Pair;
  * @author Peter von der Ah&eacute;
  */
 public class JavacTrees extends Trees {
-
+    
     private final Resolve resolve;
     private final Enter enter;
     private final Log log;
@@ -85,26 +85,26 @@ public class JavacTrees extends Trees {
     private final TreeMaker treeMaker;
     private final JavacElements elements;
     private final JavacTaskImpl javacTaskImpl;
-
+    
     public static JavacTrees instance(JavaCompiler.CompilationTask task) {
         if (!(task instanceof JavacTaskImpl))
             throw new IllegalArgumentException();
         return instance(((JavacTaskImpl)task).getContext());
     }
-
+    
     public static JavacTrees instance(ProcessingEnvironment env) {
         if (!(env instanceof JavacProcessingEnvironment))
             throw new IllegalArgumentException();
         return instance(((JavacProcessingEnvironment)env).getContext());
     }
-
+    
     public static JavacTrees instance(Context context) {
         JavacTrees instance = context.get(JavacTrees.class);
         if (instance == null)
             instance = new JavacTrees(context);
         return instance;
     }
-
+    
     private JavacTrees(Context context) {
         context.put(JavacTrees.class, this);
         attr = Attr.instance(context);
@@ -116,28 +116,28 @@ public class JavacTrees extends Trees {
         memberEnter = MemberEnter.instance(context);
         javacTaskImpl = context.get(JavacTaskImpl.class);
     }
-
+    
     public SourcePositions getSourcePositions() {
-        return new SourcePositions() {
-                public long getStartPosition(CompilationUnitTree file, Tree tree) {
-                    return TreeInfo.getStartPos((JCTree) tree);
-                }
+	return new SourcePositions() {    
+		public long getStartPosition(CompilationUnitTree file, Tree tree) {
+		    return TreeInfo.getStartPos((JCTree) tree);
+		}
 
-                public long getEndPosition(CompilationUnitTree file, Tree tree) {
-                    Map<JCTree,Integer> endPositions = ((JCCompilationUnit) file).endPositions;
-                    return TreeInfo.getEndPos((JCTree) tree, endPositions);
-                }
-            };
+		public long getEndPosition(CompilationUnitTree file, Tree tree) {
+		    Map<JCTree,Integer> endPositions = ((JCCompilationUnit) file).endPositions;
+		    return TreeInfo.getEndPos((JCTree) tree, endPositions);
+		}
+	    };
     }
 
     public JCClassDecl getTree(TypeElement element) {
         return (JCClassDecl) getTree((Element) element);
     }
-
+    
     public JCMethodDecl getTree(ExecutableElement method) {
         return (JCMethodDecl) getTree((Element) method);
     }
-
+    
     public JCTree getTree(Element element) {
         Symbol symbol = (Symbol) element;
         TypeSymbol enclosing = symbol.enclClass();
@@ -154,11 +154,11 @@ public class JavacTrees extends Trees {
         }
         return null;
     }
-
+    
     public JCTree getTree(Element e, AnnotationMirror a) {
         return getTree(e, a, null);
     }
-
+    
     public JCTree getTree(Element e, AnnotationMirror a, AnnotationValue v) {
         Pair<JCTree, JCCompilationUnit> treeTopLevel = elements.getTreeAndTopLevel(e, a, v);
         if (treeTopLevel == null)
@@ -169,32 +169,32 @@ public class JavacTrees extends Trees {
     public TreePath getPath(CompilationUnitTree unit, Tree node) {
         return TreePath.getPath(unit, node);
     }
-
+    
     public TreePath getPath(Element e) {
         return getPath(e, null, null);
     }
-
+    
     public TreePath getPath(Element e, AnnotationMirror a) {
         return getPath(e, a, null);
     }
-
+    
     public TreePath getPath(Element e, AnnotationMirror a, AnnotationValue v) {
         final Pair<JCTree, JCCompilationUnit> treeTopLevel = elements.getTreeAndTopLevel(e, a, v);
         if (treeTopLevel == null)
             return null;
         return TreePath.getPath(treeTopLevel.snd, treeTopLevel.fst);
     }
-
+    
     public Element getElement(TreePath path) {
         Tree t = path.getLeaf();
         return TreeInfo.symbolFor((JCTree) t);
     }
-
+    
     public TypeMirror getTypeMirror(TreePath path) {
         Tree t = path.getLeaf();
         return ((JCTree)t).type;
     }
-
+    
     public JavacScope getScope(TreePath path) {
         return new JavacScope(getAttrContext(path));
     }
@@ -206,21 +206,21 @@ public class JavacTrees extends Trees {
         } else
             return false;
     }
-
+    
     public boolean isAccessible(Scope scope, Element member, DeclaredType type) {
-        if (scope instanceof JavacScope
-                && member instanceof Symbol
+        if (scope instanceof JavacScope 
+                && member instanceof Symbol 
                 && type instanceof com.sun.tools.javac.code.Type) {
             Env<AttrContext> env = ((JavacScope) scope).env;
-            return resolve.isAccessible(env, (com.sun.tools.javac.code.Type)type, (Symbol)member);
-        } else
+	    return resolve.isAccessible(env, (com.sun.tools.javac.code.Type)type, (Symbol)member);  
+        } else 
             return false;
     }
-
+    
     private Env<AttrContext> getAttrContext(TreePath path) {
         if (!(path.getLeaf() instanceof JCTree))  // implicit null-check
             throw new IllegalArgumentException();
-
+        
         // if we're being invoked via from a JSR199 client, we need to make sure
         // all the classes have been entered; if we're being invoked from JSR269,
         // then the classes will already have been entered.
@@ -228,25 +228,25 @@ public class JavacTrees extends Trees {
             try {
                 javacTaskImpl.enter(null);
             } catch (IOException e) {
-                throw new Error("unexpected error while entering symbols: " + e);
+                throw new Error("unexpected error while entering symbols: " + e); 
             }
         }
-
-
+        
+        
         JCCompilationUnit unit = (JCCompilationUnit) path.getCompilationUnit();
         Copier copier = new Copier(treeMaker.forToplevel(unit));
-
+        
         Env<AttrContext> env = null;
         JCMethodDecl method = null;
         JCVariableDecl field = null;
-
+        
         List<Tree> l = List.nil();
         TreePath p = path;
         while (p != null) {
             l = l.prepend(p.getLeaf());
             p = p.getParentPath();
         }
-
+        
         for ( ; l.nonEmpty(); l = l.tail) {
             Tree tree = l.head;
             switch (tree.getKind()) {
@@ -286,7 +286,7 @@ public class JavacTrees extends Trees {
         }
         return field != null ? memberEnter.getInitEnv(field, env) : env;
     }
-
+    
     private Env<AttrContext> attribStatToTree(JCTree stat, Env<AttrContext>env, JCTree tree) {
         JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
         try {
@@ -295,7 +295,7 @@ public class JavacTrees extends Trees {
             log.useSource(prev);
         }
     }
-
+    
     private Env<AttrContext> attribExprToTree(JCExpression expr, Env<AttrContext>env, JCTree tree) {
         JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
         try {
@@ -304,17 +304,17 @@ public class JavacTrees extends Trees {
             log.useSource(prev);
         }
     }
-
+    
     /**
      * Makes a copy of a tree, noting the value resulting from copying a particular leaf.
      **/
     static class Copier extends TreeCopier<JCTree> {
         JCTree leafCopy = null;
-
+        
         Copier(TreeMaker M) {
             super(M);
         }
-
+        
         public <T extends JCTree> T copy(T t, JCTree leaf) {
             T t2 = super.copy(t, leaf);
             if (t == leaf)

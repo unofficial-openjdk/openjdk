@@ -45,98 +45,98 @@ import javax.tools.*;
 import javax.tools.JavaFileManager;
 
 public class TestJavacTaskScanner implements Runnable {
-
+    
     final JavacTaskImpl task;
     final Elements elements;
     final Types types;
 
     TestJavacTaskScanner(JavacTaskImpl task) {
-        this.task = task;
-        elements = task.getElements();
-        types = task.getTypes();
+	this.task = task;
+	elements = task.getElements();
+	types = task.getTypes();
     }
-
+    
     public void run() {
-        Iterable<? extends TypeElement> toplevels;
-        try {
-            toplevels = task.enter(task.parse());
-        } catch (IOException ex) {
-            throw new AssertionError(ex);
-        }
-        for (TypeElement clazz : toplevels) {
-            System.out.format("Testing %s:%n%n", clazz.getSimpleName());
-            testParseType(clazz);
-            testGetAllMembers(clazz);
-            System.out.println();
-            System.out.println();
-            System.out.println();
-        }
+	Iterable<? extends TypeElement> toplevels;
+	try {
+	    toplevels = task.enter(task.parse());
+	} catch (IOException ex) {
+	    throw new AssertionError(ex);
+	}
+	for (TypeElement clazz : toplevels) {
+	    System.out.format("Testing %s:%n%n", clazz.getSimpleName());
+	    testParseType(clazz);
+	    testGetAllMembers(clazz);
+	    System.out.println();
+	    System.out.println();
+	    System.out.println();
+	}
     }
-
+    
     void testParseType(TypeElement clazz) {
-        DeclaredType type = (DeclaredType)task.parseType("List<String>", clazz);
-        for (Element member : elements.getAllMembers((TypeElement)type.asElement())) {
-            TypeMirror mt = types.asMemberOf(type, member);
-            System.out.format("%s : %s -> %s%n", member.getSimpleName(), member.asType(), mt);
-        }
+	DeclaredType type = (DeclaredType)task.parseType("List<String>", clazz);
+	for (Element member : elements.getAllMembers((TypeElement)type.asElement())) {
+	    TypeMirror mt = types.asMemberOf(type, member);
+	    System.out.format("%s : %s -> %s%n", member.getSimpleName(), member.asType(), mt);
+	}
     }
-
+    
     public static void main(String... args) throws IOException {
-        JavaCompilerTool tool = ToolProvider.defaultJavaCompiler();
-        JavaFileManager fm = tool.getStandardFileManager();
-        String srcdir = System.getProperty("test.src");
-        File file = new File(srcdir, args[0]);
-        JavacTaskImpl task = (JavacTaskImpl)tool.run(null, fm.getFileForInput(file.toString()));
-        MyScanner.Factory.preRegister(task.getContext());
-        TestJavacTaskScanner tester = new TestJavacTaskScanner(task);
-        tester.run();
+	JavaCompilerTool tool = ToolProvider.defaultJavaCompiler();
+	JavaFileManager fm = tool.getStandardFileManager();
+	String srcdir = System.getProperty("test.src");
+	File file = new File(srcdir, args[0]);
+	JavacTaskImpl task = (JavacTaskImpl)tool.run(null, fm.getFileForInput(file.toString()));
+	MyScanner.Factory.preRegister(task.getContext());
+	TestJavacTaskScanner tester = new TestJavacTaskScanner(task);
+	tester.run();
     }
-
+    
     private void testGetAllMembers(TypeElement clazz) {
-        for (Element member : elements.getAllMembers(clazz)) {
-            System.out.format("%s : %s", member.getSimpleName(), member.asType());
-        }
+	for (Element member : elements.getAllMembers(clazz)) {
+	    System.out.format("%s : %s", member.getSimpleName(), member.asType());
+	}
     }
 }
 
 class MyScanner extends Scanner {
-
+    
     public static class Factory extends Scanner.Factory {
-        public static void preRegister(final Context context) {
-            context.put(scannerFactoryKey, new Context.Factory<Scanner.Factory>() {
-                public Factory make() {
-                    return new Factory(context);
-                }
-            });
-        }
-        public Factory(Context context) {
-            super(context);
-        }
-
-        @Override
-        public Scanner newScanner(CharSequence input) {
-            if (input instanceof CharBuffer) {
-                return new MyScanner(this, (CharBuffer)input);
-            } else {
-                char[] array = input.toString().toCharArray();
-                return newScanner(array, array.length);
-            }
-        }
-
-        @Override
-        public Scanner newScanner(char[] input, int inputLength) {
-            return new MyScanner(this, input, inputLength);
-        }
+	public static void preRegister(final Context context) {
+	    context.put(scannerFactoryKey, new Context.Factory<Scanner.Factory>() {
+		public Factory make() {
+		    return new Factory(context);
+		}
+	    });
+	}
+	public Factory(Context context) {
+	    super(context);
+	}
+	
+	@Override
+	public Scanner newScanner(CharSequence input) {
+	    if (input instanceof CharBuffer) {
+		return new MyScanner(this, (CharBuffer)input);
+	    } else {
+		char[] array = input.toString().toCharArray();
+		return newScanner(array, array.length);
+	    }
+	}
+	
+	@Override
+	public Scanner newScanner(char[] input, int inputLength) {
+	    return new MyScanner(this, input, inputLength);
+	}
     }
     protected MyScanner(Factory fac, CharBuffer buffer) {
-        super(fac, buffer);
+	super(fac, buffer);
     }
     protected MyScanner(Factory fac, char[] input, int inputLength) {
-        super(fac, input, inputLength);
+	super(fac, input, inputLength);
     }
-
+    
     public void nextToken() {
-        super.nextToken();
-        System.err.format("Saw token %s (%s)%n", token(), name());
+	super.nextToken();
+	System.err.format("Saw token %s (%s)%n", token(), name());
     }
 }

@@ -51,8 +51,8 @@ class CastTest {
     private interface CK<S, T> extends CI<S>, CJ<T> { }
 
     private void supertypeParameterTransfer() {
-        Object o;
-        o = (CE<Number>) (CD<String>) null; // <<fail 13>>
+	Object o;
+	o = (CE<Number>) (CD<String>) null; // <<fail 13>>
     }
 
 }

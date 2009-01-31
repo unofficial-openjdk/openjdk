@@ -35,7 +35,6 @@
  * @compile/ref=gold_sv_warn_5_6.out   -XDrawDiagnostics -XDstdout -processor TestSourceVersionWarnings -proc:only -ASourceVersion=RELEASE_5 -source 1.6 HelloWorld.java
  * @compile/ref=gold_sv_none.out       -XDrawDiagnostics -XDstdout -processor TestSourceVersionWarnings -proc:only -ASourceVersion=RELEASE_6 -source 1.6 HelloWorld.java
  * @compile/ref=gold_unsp_warn.out     -XDrawDiagnostics -XDstdout -processor TestSourceVersionWarnings -proc:only -ASourceVersion=RELEASE_6 -source 1.6 -Aunsupported HelloWorld.java
- * @compile/ref=gold_sv_none.out       -XDrawDiagnostics -XDstdout -processor TestSourceVersionWarnings -proc:only -ASourceVersion=RELEASE_7 -source 1.7 HelloWorld.java
  */
 
 import java.util.Set;
@@ -55,21 +54,22 @@ import static javax.tools.Diagnostic.Kind.*;
 @SupportedAnnotationTypes("*")
 @SupportedOptions("SourceVersion")
 public class TestSourceVersionWarnings extends AbstractProcessor {
-
+    
     @Override
     public SourceVersion getSupportedSourceVersion() {
-        String sourceVersion = processingEnv.getOptions().get("SourceVersion");
-        if (sourceVersion == null) {
-            processingEnv.getMessager().printMessage(WARNING,
-                                                     "No SourceVersion option given");
-            return SourceVersion.RELEASE_6;
-        } else {
-            return SourceVersion.valueOf(sourceVersion);
-        }
+	String sourceVersion = processingEnv.getOptions().get("SourceVersion");
+	if (sourceVersion == null) {
+	    processingEnv.getMessager().printMessage(WARNING,
+						     "No SourceVersion option given");
+	    return SourceVersion.RELEASE_6;
+	} else {
+	    return SourceVersion.valueOf(sourceVersion);
+	}
     }
-
+    
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment) {
         return true;
     }
 }
+

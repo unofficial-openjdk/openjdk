@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test @(#)DocRootSlash.java	1.3	02/04/17
  * @bug 4524350 4662945 4633447
  * @summary stddoclet: {@docRoot} inserts an extra trailing "/"
  * @author dkramer
@@ -37,7 +37,7 @@ import java.util.regex.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class DocRootSlash
@@ -71,8 +71,8 @@ public class DocRootSlash
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -119,7 +119,7 @@ public class DocRootSlash
             result = "succeeded";
             numOfSubtestsPassed += 1;
         }
-        System.out.println("\nSub-test " + (subtestNum)
+        System.out.println("\nSub-test " + (subtestNum) 
             + " for bug " + BUGID + " (" + BUGNAME + ") " + result + "\n"
             + "when searching for:\n"
             + stringToFind + "\n"
@@ -134,7 +134,7 @@ public class DocRootSlash
             result = "succeeded";
             numOfSubtestsPassed += 1;
         }
-        System.out.println("\nSub-test " + (subtestNum)
+        System.out.println("\nSub-test " + (subtestNum) 
             + " for bug " + BUGID + " (" + BUGNAME + ") " + result + "\n"
             + "when searching for:\n"
             + stringToFind + "\n"
@@ -146,7 +146,7 @@ public class DocRootSlash
         if ( numOfSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numOfSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numOfSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numOfSubtestsPassed) + " of " + (subtestNum) 
                             + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }
@@ -203,14 +203,14 @@ public class DocRootSlash
     static String ref2   = ")(\\S+?)([^<>]*>)";   // no quotes    (end group1, group2, group3)
     static String label  = "(.*?)";               // text label   (group4)
     static String end    = "(</a>)";              // </a>         (group5)
-
+    
     /**
      * Compares the actual string to the expected string in the specified string
      * str   String to search through
      */
     static void compareActualToExpected(String str) {
         // Pattern must be compiled each run because subtestNum is incremented
-        Pattern actualLinkPattern1 =
+        Pattern actualLinkPattern1 = 
             Pattern.compile("Sub-test " + subtestNum + " Actual: " + prefix + ref1, Pattern.DOTALL);
         Pattern expectLinkPattern1 =
             Pattern.compile("Sub-test " + subtestNum + " Expect: " + prefix + ref1, Pattern.DOTALL);
@@ -236,12 +236,12 @@ public class DocRootSlash
             } else {
                 result = "FAILED";
             }
-            System.out.println("\nSub-test " + (subtestNum)
+            System.out.println("\nSub-test " + (subtestNum) 
                 + " for bug " + BUGID + " (" + BUGNAME + ") " + result + "\n"
                 + "Actual: \"" + actualRef + "\"" + "\n"
                 + "Expect: \"" + expectRef + "\"");
         } else {
-            System.out.println("Didn't find <A HREF> that fits the pattern: "
+            System.out.println("Didn't find <A HREF> that fits the pattern: " 
                   + expectLinkPattern1.pattern() );
         }
     }

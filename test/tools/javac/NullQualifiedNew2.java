@@ -26,7 +26,7 @@
  * @bug 4725678
  * @summary null pointer check too late for qualifying expr of anon class creation
  * @author gafter
- *
+ * 
  * @run compile NullQualifiedNew2.java
  * @run main NullQualifiedNew2
  */
@@ -41,8 +41,8 @@ public class NullQualifiedNew2 {
             NullQualifiedNew2 c = null;
             c.new Inner(i++) {};
         } catch (NullPointerException e) {
-            break a;
+	    break a;
         }
-        if (i != 1) throw new Error("i = " + i);
+	if (i != 1) throw new Error("i = " + i);
     }
 }

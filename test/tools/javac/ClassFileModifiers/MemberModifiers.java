@@ -50,11 +50,11 @@ class MemberModifiersAux {
 
     final class Foo {
 
-        //Should not be final.
-        int f;
-        void m() {};
-        class c {};
+	//Should not be final.
+	int f;
+	void m() {};
+	class c {};
 
     }
-
+    
 }

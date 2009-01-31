@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,11 +22,11 @@
  */
 
 /*
- * @test
+ * @test   @(#)ValidHtml.java	1.2 02/07/29
  * @bug 4275630 4749453 4625400 4753048 4415270
  * @summary  Generated HTML is invalid with frameset DTD.
  *           Displays unnecessary horizontal scroll bars.
- *           Missing whitespace in DOCTYPE declaration
+ *           Missing whitespace in DOCTYPE declaration      
  *           <NOFRAMES> not allowed outside <FRAMESET> element
  *           HTML table tags inserted in wrong place in pakcage use page
  * @author dkramer
@@ -41,7 +41,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class ValidHtml {
@@ -80,8 +80,8 @@ public class ValidHtml {
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -152,7 +152,7 @@ public class ValidHtml {
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum)
+                System.out.println("\nSub-test " + (subtestNum) 
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -167,7 +167,7 @@ public class ValidHtml {
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

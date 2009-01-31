@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -37,7 +37,7 @@ public class SubClass extends BaseClass {
 
   /*************************************************
    * This method should not override the same package
-   * private method in the base class because they
+   * private method in the base class because they 
    * are in different packages.
    */
   public void packagePrivateMethod() {}

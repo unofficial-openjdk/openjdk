@@ -40,7 +40,7 @@ import com.sun.tools.javac.code.Type;
 public class ClassTypeImpl extends DeclaredTypeImpl implements ClassType {
 
     ClassTypeImpl(AptEnv env, Type.ClassType type) {
-        super(env, type);
+	super(env, type);
     }
 
 
@@ -48,25 +48,25 @@ public class ClassTypeImpl extends DeclaredTypeImpl implements ClassType {
      * {@inheritDoc}
      */
     public ClassDeclaration getDeclaration() {
-        return (ClassDeclaration) super.getDeclaration();
+	return (ClassDeclaration) super.getDeclaration();
     }
 
     /**
      * {@inheritDoc}
      */
     public ClassType getSuperclass() {
-        //  java.lang.Object has no superclass
-        if (type.tsym == env.symtab.objectType.tsym) {
-            return null;
-        }
-        Type sup = env.jctypes.supertype(type);
-        return (ClassType) env.typeMaker.getType(sup);
+	//  java.lang.Object has no superclass
+	if (type.tsym == env.symtab.objectType.tsym) {
+	    return null;
+	}
+	Type sup = env.jctypes.supertype(type);
+	return (ClassType) env.typeMaker.getType(sup);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-        v.visitClassType(this);
+	v.visitClassType(this);
     }
 }

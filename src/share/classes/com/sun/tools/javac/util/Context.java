@@ -48,19 +48,19 @@ import java.util.*;
  * <p><pre>
  * public class Phase {
  *     protected static final Context.Key<Phase> phaseKey =
- *         new Context.Key<Phase>();
+ *	   new Context.Key<Phase>();
  *
  *     public static Phase instance(Context context) {
- *         Phase instance = context.get(phaseKey);
- *         if (instance == null)
- *             // the phase has not been overridden
- *             instance = new Phase(context);
- *         return instance;
+ *	   Phase instance = context.get(phaseKey);
+ *	   if (instance == null)
+ *	       // the phase has not been overridden
+ *	       instance = new Phase(context);
+ *	   return instance;
  *     }
  *
  *     protected Phase(Context context) {
- *         context.put(phaseKey, this);
- *         // other intitialization follows...
+ *	   context.put(phaseKey, this);
+ *	   // other intitialization follows...
  *     }
  * }
  * </pre>
@@ -74,13 +74,13 @@ import java.util.*;
  * <p><pre>
  * public class NewPhase extends Phase {
  *     protected NewPhase(Context context) {
- *         super(context);
+ *	   super(context);
  *     }
  *     public static void preRegister(final Context context) {
  *         context.put(phaseKey, new Context.Factory<Phase>() {
- *             public Phase make() {
- *                 return new NewPhase(context);
- *             }
+ *	       public Phase make() {
+ *		   return new NewPhase(context);
+ *	       }
  *         });
  *     }
  * }
@@ -101,7 +101,7 @@ public class Context {
     /** The client creates an instance of this class for each key.
      */
     public static class Key<T> {
-        // note: we inherit identity equality from Object.
+	// note: we inherit identity equality from Object.
     }
 
     /**
@@ -109,7 +109,7 @@ public class Context {
      * instance.
      */
     public static interface Factory<T> {
-        T make();
+	T make();
     };
 
     /**
@@ -121,65 +121,65 @@ public class Context {
 
     /** Set the factory for the key in this context. */
     public <T> void put(Key<T> key, Factory<T> fac) {
-        checkState(ht);
-        Object old = ht.put(key, fac);
-        if (old != null)
-            throw new AssertionError("duplicate context value");
+	checkState(ht);
+	Object old = ht.put(key, fac);
+	if (old != null)
+	    throw new AssertionError("duplicate context value");
     }
 
     /** Set the value for the key in this context. */
     public <T> void put(Key<T> key, T data) {
-        if (data instanceof Factory)
-            throw new AssertionError("T extends Context.Factory");
-        checkState(ht);
-        Object old = ht.put(key, data);
-        if (old != null && !(old instanceof Factory) && old != data && data != null)
-            throw new AssertionError("duplicate context value");
+	if (data instanceof Factory)
+	    throw new AssertionError("T extends Context.Factory");
+	checkState(ht);
+	Object old = ht.put(key, data);
+	if (old != null && !(old instanceof Factory) && old != data && data != null)
+	    throw new AssertionError("duplicate context value");
     }
 
     /** Get the value for the key in this context. */
     public <T> T get(Key<T> key) {
-        checkState(ht);
-        Object o = ht.get(key);
-        if (o instanceof Factory) {
-            Factory fac = (Factory)o;
-            o = fac.make();
-            if (o instanceof Factory)
-                throw new AssertionError("T extends Context.Factory");
-            assert ht.get(key) == o;
-        }
+	checkState(ht);
+	Object o = ht.get(key);
+	if (o instanceof Factory) {
+	    Factory fac = (Factory)o;
+	    o = fac.make();
+	    if (o instanceof Factory)
+		throw new AssertionError("T extends Context.Factory");
+	    assert ht.get(key) == o;
+	}
 
-        /* The following cast can't fail unless there was
-         * cheating elsewhere, because of the invariant on ht.
-         * Since we found a key of type Key<T>, the value must
-         * be of type T.
-         */
-        return Context.<T>uncheckedCast(o);
+	/* The following cast can't fail unless there was
+	 * cheating elsewhere, because of the invariant on ht.
+	 * Since we found a key of type Key<T>, the value must
+	 * be of type T.
+	 */
+	return Context.<T>uncheckedCast(o);
     }
 
     public Context() {}
 
     private Map<Class<?>, Key<?>> kt = new HashMap<Class<?>, Key<?>>();
-
+    
     private <T> Key<T> key(Class<T> clss) {
-        checkState(kt);
-        Key<T> k = uncheckedCast(kt.get(clss));
-        if (k == null) {
-            k = new Key<T>();
-            kt.put(clss, k);
-        }
-        return k;
+	checkState(kt);
+	Key<T> k = uncheckedCast(kt.get(clss));
+	if (k == null) {
+	    k = new Key<T>();
+	    kt.put(clss, k);
+	}
+	return k;
     }
 
     public <T> T get(Class<T> clazz) {
-        return get(key(clazz));
+	return get(key(clazz));
     }
 
     public <T> void put(Class<T> clazz, T data) {
-        put(key(clazz), data);
+	put(key(clazz), data);
     }
     public <T> void put(Class<T> clazz, Factory<T> fac) {
-        put(key(clazz), fac);
+	put(key(clazz), fac);
     }
 
     /**
@@ -192,17 +192,17 @@ public class Context {
     }
 
     public void dump() {
-        for (Object value : ht.values())
-            System.err.println(value == null ? null : value.getClass());
+	for (Object value : ht.values())
+	    System.err.println(value == null ? null : value.getClass());
     }
 
     public void clear() {
-        ht = null;
-        kt = null;
+	ht = null;
+	kt = null;
     }
-
+    
     private static void checkState(Map<?,?> t) {
-        if (t == null)
-            throw new IllegalStateException();
+	if (t == null)
+	    throw new IllegalStateException();
     }
 }

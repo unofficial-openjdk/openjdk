@@ -25,6 +25,6 @@
 class RefX
 {
     void refX() {
-        X x = new X();
+	X x = new X();
     }
 }

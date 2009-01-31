@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test   @(#)TestSourceTab.java	1.1 02/11/03
  * @bug 4510979
  * @summary Test to make sure that the source documentation is indented properly
  * when -linksourcetab is used.

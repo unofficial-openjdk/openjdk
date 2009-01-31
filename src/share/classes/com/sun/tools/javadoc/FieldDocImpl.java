@@ -54,42 +54,42 @@ import java.lang.reflect.Modifier;
 public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
 
     protected final VarSymbol sym;
-
+	    
     /**
      * Constructor.
      */
     public FieldDocImpl(DocEnv env, VarSymbol sym,
-                        String rawDocs, JCVariableDecl tree, Position.LineMap lineMap) {
+			String rawDocs, JCVariableDecl tree, Position.LineMap lineMap) {
         super(env, sym, rawDocs, tree, lineMap);
-        this.sym = sym;
+	this.sym = sym;
     }
-
+	    
     /**
      * Constructor.
      */
     public FieldDocImpl(DocEnv env, VarSymbol sym) {
-        this(env, sym, null, null, null);
+	this(env, sym, null, null, null);
     }
-
+	    
     /**
      * Returns the flags in terms of javac's flags
      */
     protected long getFlags() {
-        return sym.flags();
+	return sym.flags();
     }
 
     /**
      * Identify the containing class
      */
     protected ClassSymbol getContainingClass() {
-        return sym.enclClass();
+	return sym.enclClass();
     }
 
     /**
      * Get type of this field.
      */
     public com.sun.javadoc.Type type() {
-        return TypeMaker.getType(env, sym.type, false);
+	return TypeMaker.getType(env, sym.type, false);
     }
 
     /**
@@ -100,11 +100,11 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      * If the field is not constant, returns null.
      */
     public Object constantValue() {
-        Object result = sym.getConstValue();
-        if (result != null && sym.type.tag == TypeTags.BOOLEAN)
-            // javac represents false and true as Integers 0 and 1
-            result = Boolean.valueOf(((Integer)result).intValue() != 0);
-        return result;
+	Object result = sym.getConstValue();
+	if (result != null && sym.type.tag == TypeTags.BOOLEAN)
+	    // javac represents false and true as Integers 0 and 1
+	    result = Boolean.valueOf(((Integer)result).intValue() != 0);
+	return result;
     }
 
     /**
@@ -112,98 +112,98 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      *
      * @return the text of a Java language expression whose value
      * is the value of the constant. The expression uses no identifiers
-     * other than primitive literals. If the field is
+     * other than primitive literals. If the field is 
      * not constant, returns null.
      */
     public String constantValueExpression() {
-        return constantValueExpression(constantValue());
+	return constantValueExpression(constantValue());
     }
 
     /**
      * A static version of the above.
      */
     static String constantValueExpression(Object cb) {
-        if (cb == null) return null;
-        if (cb instanceof Character) return sourceForm(((Character)cb).charValue());
-        if (cb instanceof Byte) return sourceForm(((Byte)cb).byteValue());
-        if (cb instanceof String) return sourceForm((String)cb);
-        if (cb instanceof Double) return sourceForm(((Double)cb).doubleValue(), 'd');
-        if (cb instanceof Float) return sourceForm(((Float)cb).doubleValue(), 'f');
-        if (cb instanceof Long) return cb + "L";
-        return cb.toString(); // covers int, short
+	if (cb == null) return null;
+	if (cb instanceof Character) return sourceForm(((Character)cb).charValue());
+	if (cb instanceof Byte) return sourceForm(((Byte)cb).byteValue());
+	if (cb instanceof String) return sourceForm((String)cb);
+	if (cb instanceof Double) return sourceForm(((Double)cb).doubleValue(), 'd');
+	if (cb instanceof Float) return sourceForm(((Float)cb).doubleValue(), 'f');
+	if (cb instanceof Long) return cb + "L";
+	return cb.toString(); // covers int, short
     }
-        // where
-        private static String sourceForm(double v, char suffix) {
-            if (Double.isNaN(v))
-                return "0" + suffix + "/0" + suffix;
-            if (v == Double.POSITIVE_INFINITY)
-                return "1" + suffix + "/0" + suffix;
-            if (v == Double.NEGATIVE_INFINITY)
-                return "-1" + suffix + "/0" + suffix;
-            return v + (suffix == 'f' || suffix == 'F' ? "" + suffix : "");
-        }
-        private static String sourceForm(char c) {
-            StringBuffer buf = new StringBuffer(8);
-            buf.append('\'');
-            sourceChar(c, buf);
-            buf.append('\'');
-            return buf.toString();
-        }
-        private static String sourceForm(byte c) {
-            return "0x" + Integer.toString(c & 0xff, 16);
-        }
-        private static String sourceForm(String s) {
-            StringBuffer buf = new StringBuffer(s.length() + 5);
-            buf.append('\"');
-            for (int i=0; i<s.length(); i++) {
-                char c = s.charAt(i);
-                sourceChar(c, buf);
-            }
-            buf.append('\"');
-            return buf.toString();
-        }
-        private static void sourceChar(char c, StringBuffer buf) {
-            switch (c) {
-            case '\b': buf.append("\\b"); return;
-            case '\t': buf.append("\\t"); return;
-            case '\n': buf.append("\\n"); return;
-            case '\f': buf.append("\\f"); return;
-            case '\r': buf.append("\\r"); return;
-            case '\"': buf.append("\\\""); return;
-            case '\'': buf.append("\\\'"); return;
-            case '\\': buf.append("\\\\"); return;
-            default:
-                if (isPrintableAscii(c)) {
-                    buf.append(c); return;
-                }
-                unicodeEscape(c, buf);
-                return;
-            }
-        }
-        private static void unicodeEscape(char c, StringBuffer buf) {
-            final String chars = "0123456789abcdef";
-            buf.append("\\u");
-            buf.append(chars.charAt(15 & (c>>12)));
-            buf.append(chars.charAt(15 & (c>>8)));
-            buf.append(chars.charAt(15 & (c>>4)));
-            buf.append(chars.charAt(15 & (c>>0)));
-        }
-        private static boolean isPrintableAscii(char c) {
-            return c >= ' ' && c <= '~';
-        }
+	// where
+	private static String sourceForm(double v, char suffix) {
+	    if (Double.isNaN(v))
+		return "0" + suffix + "/0" + suffix;
+	    if (v == Double.POSITIVE_INFINITY)
+		return "1" + suffix + "/0" + suffix;
+	    if (v == Double.NEGATIVE_INFINITY)
+		return "-1" + suffix + "/0" + suffix;
+	    return v + (suffix == 'f' || suffix == 'F' ? "" + suffix : "");
+	}
+	private static String sourceForm(char c) {
+	    StringBuffer buf = new StringBuffer(8);
+	    buf.append('\'');
+	    sourceChar(c, buf);
+	    buf.append('\'');
+	    return buf.toString();
+	}
+	private static String sourceForm(byte c) {
+	    return "0x" + Integer.toString(c & 0xff, 16);
+	}
+	private static String sourceForm(String s) {
+	    StringBuffer buf = new StringBuffer(s.length() + 5);
+	    buf.append('\"');
+	    for (int i=0; i<s.length(); i++) {
+		char c = s.charAt(i);
+		sourceChar(c, buf);
+	    }
+	    buf.append('\"');
+	    return buf.toString();
+	}
+	private static void sourceChar(char c, StringBuffer buf) {
+	    switch (c) {
+	    case '\b': buf.append("\\b"); return;
+	    case '\t': buf.append("\\t"); return;
+	    case '\n': buf.append("\\n"); return;
+	    case '\f': buf.append("\\f"); return;
+	    case '\r': buf.append("\\r"); return;
+	    case '\"': buf.append("\\\""); return;
+	    case '\'': buf.append("\\\'"); return;
+	    case '\\': buf.append("\\\\"); return;
+	    default:
+		if (isPrintableAscii(c)) {
+		    buf.append(c); return;
+		}
+		unicodeEscape(c, buf);
+		return;
+	    }
+	}
+	private static void unicodeEscape(char c, StringBuffer buf) {
+	    final String chars = "0123456789abcdef";
+	    buf.append("\\u");
+	    buf.append(chars.charAt(15 & (c>>12)));
+	    buf.append(chars.charAt(15 & (c>>8)));
+	    buf.append(chars.charAt(15 & (c>>4)));
+	    buf.append(chars.charAt(15 & (c>>0)));
+	}
+	private static boolean isPrintableAscii(char c) {
+	    return c >= ' ' && c <= '~';
+	}
 
     /**
      * Return true if this field is included in the active set.
      */
     public boolean isIncluded() {
-        return containingClass().isIncluded() && env.shouldDocument(sym);
+	return containingClass().isIncluded() && env.shouldDocument(sym);
     }
 
     /**
      * Is this Doc item a field (but not an enum constant?
      */
     public boolean isField() {
-        return !isEnumConstant();
+	return !isEnumConstant();
     }
 
     /**
@@ -211,25 +211,25 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      * (For legacy doclets, return false.)
      */
     public boolean isEnumConstant() {
-        return (getFlags() & Flags.ENUM) != 0 &&
-               !env.legacyDoclet;
+	return (getFlags() & Flags.ENUM) != 0 &&
+	       !env.legacyDoclet;
     }
-
+	    
     /**
      * Return true if this field is transient
      */
     public boolean isTransient() {
-        return Modifier.isTransient(getModifiers());
+	return Modifier.isTransient(getModifiers());
     }
 
     /**
      * Return true if this field is volatile
      */
     public boolean isVolatile() {
-        return Modifier.isVolatile(getModifiers());
+	return Modifier.isVolatile(getModifiers());
     }
 
-    /**
+    /** 
      * Returns true if this field was synthesized by the compiler.
      */
     public boolean isSynthetic() {
@@ -243,11 +243,11 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      *         <code>&#64serialField</code> tags.
      */
     public SerialFieldTag[] serialFieldTags() {
-        return comment().serialFieldTags();
+	return comment().serialFieldTags();
     }
 
     public String name() {
-        return sym.name.toString();
+	return sym.name.toString();
     }
 
     public String qualifiedName() {
@@ -255,13 +255,13 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
     }
 
     /**
-     * Return the source position of the entity, or null if
+     * Return the source position of the entity, or null if 
      * no position is available.
      */
-    public SourcePosition position() {
-        if (sym.enclClass().sourcefile == null) return null;
-        return SourcePositionImpl.make(sym.enclClass().sourcefile.toString(),
-                                       (tree==null) ? 0 : tree.pos,
-                                       lineMap);
+    public SourcePosition position() { 
+	if (sym.enclClass().sourcefile == null) return null;
+	return SourcePositionImpl.make(sym.enclClass().sourcefile.toString(), 
+				       (tree==null) ? 0 : tree.pos,
+				       lineMap);
     }
 }

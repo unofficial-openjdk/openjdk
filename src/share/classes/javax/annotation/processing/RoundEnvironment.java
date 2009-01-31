@@ -35,7 +35,7 @@ import java.lang.annotation.Annotation;
  * Processor#process provide an annotation processor with an object
  * implementing this interface} so that the processor can query for
  * information about a round of annotation processing.
- *
+ * 
  * @author Joseph D. Darcy
  * @author Scott Seligman
  * @author Peter von der Ah&eacute;
@@ -52,11 +52,11 @@ public interface RoundEnvironment {
      * returns {@code false} otherwise
      */
     boolean processingOver();
-
+ 
     /**
      * Returns {@code true} if an error was raised in the prior round
      * of processing; returns {@code false} otherwise.
-     *
+     * 
      * @return {@code true} if an error was raised in the prior round
      * of processing; returns {@code false} otherwise
      */
@@ -76,8 +76,8 @@ public interface RoundEnvironment {
      * The annotation may appear directly or be inherited.  Only
      * package elements and type elements <i>included</i> in this
      * round of annotation processing, or declarations of members,
-     * constructors, parameters, or type parameters declared within
-     * those, are returned.  Included type elements are {@linkplain
+     * parameters, or type parameters declared within those, are
+     * returned.  Included type elements are {@linkplain
      * #getRootElements root types} and any member types nested within
      * them.  Elements in a package are not considered included simply
      * because a {@code package-info} file for that package was
@@ -96,8 +96,8 @@ public interface RoundEnvironment {
      * The annotation may appear directly or be inherited.  Only
      * package elements and type elements <i>included</i> in this
      * round of annotation processing, or declarations of members,
-     * constructors, parameters, or type parameters declared within
-     * those, are returned.  Included type elements are {@linkplain
+     * parameters, or type parameters declared within those, are
+     * returned.  Included type elements are {@linkplain
      * #getRootElements root types} and any member types nested within
      * them.  Elements in a package are not considered included simply
      * because a {@code package-info} file for that package was

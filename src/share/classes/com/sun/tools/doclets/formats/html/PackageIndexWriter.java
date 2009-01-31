@@ -91,7 +91,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
             throw new DocletAbortException();
         }
     }
-
+  
     /**
      * Print each package in separate rows in the index table. Generate link
      * to each package.
@@ -128,7 +128,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
             }
         }
     }
-
+ 
     /**
      * Print the overview summary comment for this documentation. Print one line
      * summary at the top of the page and generate a link to the description,
@@ -200,7 +200,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         hr();
         printConfigurationTitle();
     }
-
+ 
     /**
      * Print the lower navigation bar and the bottom text
      * (from the -bottom option) at the bottom of page.
@@ -211,3 +211,6 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         printBottom();
     }
 }
+
+
+

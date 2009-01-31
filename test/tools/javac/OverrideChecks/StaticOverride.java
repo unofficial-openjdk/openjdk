@@ -36,7 +36,7 @@ interface I{
 
 class C {
     public static int f() {
-        return 7;
+	return 7;
     }
 }
 

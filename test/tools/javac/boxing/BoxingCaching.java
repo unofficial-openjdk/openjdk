@@ -34,188 +34,188 @@
 public class BoxingCaching {
 
     static boolean verifyBooleanCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Boolean results[] = new Boolean[2];
+	Boolean results[] = new Boolean[2];
 
-        results[0] = false;
-        results[1] = true;
+	results[0] = false;
+	results[1] = true;
 
-        Boolean B;
+	Boolean B;
 
-        B = false;
-        if (B != results[0]) {
-                cached = false;
-                System.err.println("Boolean value " + B +
-                                   " is not cached appropriately.");
-        }
+	B = false;
+	if (B != results[0]) {
+		cached = false;
+		System.err.println("Boolean value " + B + 
+				   " is not cached appropriately.");
+	}
 
-        B = true;
-        if (B != results[1]) {
-                cached = false;
-                System.err.println("Boolean value " + B +
-                                   " is not cached appropriately.");
-        }
+	B = true;
+	if (B != results[1]) {
+		cached = false;
+		System.err.println("Boolean value " + B + 
+				   " is not cached appropriately.");
+	}
 
-        return cached;
+	return cached;
     }
 
     static boolean verifyByteCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Byte results[] = new Byte[-(-128) + 127 +1];
-        for(int i = 0; i < results.length; i++)
-            results[i] = (byte)(i-128);
+	Byte results[] = new Byte[-(-128) + 127 +1];
+	for(int i = 0; i < results.length; i++)
+	    results[i] = (byte)(i-128);
 
-        for(int i = 0; i < results.length; i++) {
-            Byte B = (byte)(i-128);
-            if (B != results[i]) {
-                cached = false;
-                System.err.println("Byte value " + B +
-                                   " is not cached appropriately.");
-            }
-        }
+	for(int i = 0; i < results.length; i++) {
+	    Byte B = (byte)(i-128);
+	    if (B != results[i]) {
+		cached = false;
+		System.err.println("Byte value " + B + 
+				   " is not cached appropriately.");
+	    }
+	}
 
-        for(int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++) {
-            Byte B;
-            B = (byte)i;
-            if (B.byteValue() != i) {
-                cached = false;
-                System.err.println("Erroneous autoboxing conversion for " +
-                                   "byte value " + i + " .");
-            }
-        }
+	for(int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++) {
+	    Byte B;
+	    B = (byte)i;
+	    if (B.byteValue() != i) {
+		cached = false;
+		System.err.println("Erroneous autoboxing conversion for " + 
+				   "byte value " + i + " .");
+	    }
+	}
 
-        return cached;
+	return cached;
     }
 
     static boolean verifyCharacterCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Character results[] = new Character[127 +1];
-        for(int i = 0; i < results.length; i++)
-            results[i] = (char)i;
+	Character results[] = new Character[127 +1];
+	for(int i = 0; i < results.length; i++)
+	    results[i] = (char)i;
 
-        for(int i = 0; i < results.length; i++) {
-            Character C = (char)i;
-            if (C != results[i]) {
-                cached = false;
-                System.err.println("Char value " + C +
-                                   " is not cached appropriately.");
-            }
-        }
+	for(int i = 0; i < results.length; i++) {
+	    Character C = (char)i;
+	    if (C != results[i]) {
+		cached = false;
+		System.err.println("Char value " + C + 
+				   " is not cached appropriately.");
+	    }
+	}
 
-        for(int i = Character.MIN_VALUE; i < Character.MAX_VALUE; i++) {
-            Character C;
-            C = (char)i;
-            if (C.charValue() != i) {
-                cached = false;
-                System.err.println("Erroneous autoboxing conversion for " +
-                                   "char value " + i + " .");
-            }
-        }
+	for(int i = Character.MIN_VALUE; i < Character.MAX_VALUE; i++) {
+	    Character C;
+	    C = (char)i;
+	    if (C.charValue() != i) {
+		cached = false;
+		System.err.println("Erroneous autoboxing conversion for " + 
+				   "char value " + i + " .");
+	    }
+	}
 
-        return cached;
+	return cached;
     }
 
     static boolean verifyIntegerCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Integer results[] = new Integer[-(-128) + 127 +1];
-        for(int i = 0; i < results.length; i++)
-            results[i] = (i-128);
+	Integer results[] = new Integer[-(-128) + 127 +1];
+	for(int i = 0; i < results.length; i++)
+	    results[i] = (i-128);
 
-        for(int i = 0; i < results.length; i++) {
-            Integer I = (i-128);
-            if (I != results[i]) {
-                cached = false;
-                System.err.println("Integer value " + I +
-                                   " is not cached appropriately.");
-            }
-        }
+	for(int i = 0; i < results.length; i++) {
+	    Integer I = (i-128);
+	    if (I != results[i]) {
+		cached = false;
+		System.err.println("Integer value " + I + 
+				   " is not cached appropriately.");
+	    }
+	}
 
-        for(int i = -256; i < 255; i++) {
-            Integer I;
-            I = i;
-            if (I.intValue() != i) {
-                cached = false;
-                System.err.println("Erroneous autoboxing conversion for " +
-                                   "int value " + i + " .");
-            }
-        }
+	for(int i = -256; i < 255; i++) {
+	    Integer I;
+	    I = i;
+	    if (I.intValue() != i) {
+		cached = false;
+		System.err.println("Erroneous autoboxing conversion for " + 
+				   "int value " + i + " .");
+	    }
+	}
 
-        return cached;
+	return cached;
     }
 
     static boolean verifyLongCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Long results[] = new Long[-(-128) + 127 +1];
-        for(int i = 0; i < results.length; i++)
-            results[i] = (long)(i-128);
+	Long results[] = new Long[-(-128) + 127 +1];
+	for(int i = 0; i < results.length; i++)
+	    results[i] = (long)(i-128);
 
-        for(int i = 0; i < results.length; i++) {
-            Long L = (long)(i-128);
-            if (L != results[i]) {
-                cached = false;
-                System.err.println("Integer value " + L +
-                                   " is not cached appropriately.");
-            }
-        }
+	for(int i = 0; i < results.length; i++) {
+	    Long L = (long)(i-128);
+	    if (L != results[i]) {
+		cached = false;
+		System.err.println("Integer value " + L + 
+				   " is not cached appropriately.");
+	    }
+	}
 
-        for(int i = -256; i < 255; i++) {
-            Integer L;
-            L = i;
-            if (L.longValue() != i) {
-                cached = false;
-                System.err.println("Erroneous autoboxing conversion for " +
-                                   "int value " + i + " .");
-            }
-        }
+	for(int i = -256; i < 255; i++) {
+	    Integer L;
+	    L = i;
+	    if (L.longValue() != i) {
+		cached = false;
+		System.err.println("Erroneous autoboxing conversion for " + 
+				   "int value " + i + " .");
+	    }
+	}
 
-        return cached;
+	return cached;
     }
 
     static boolean verifyShortCaching() {
-        boolean cached = true;
+	boolean cached = true;
 
-        Short results[] = new Short[-(-128) + 127 +1];
-        for(int i = 0; i < results.length; i++)
-            results[i] = (short)(i-128);
+	Short results[] = new Short[-(-128) + 127 +1];
+	for(int i = 0; i < results.length; i++)
+	    results[i] = (short)(i-128);
 
-        for(int i = 0; i < results.length; i++) {
-            Short S = (short)(i-128);
-            if (S != results[i]) {
-                cached = false;
-                System.err.println("Short value " + S +
-                                   " is not cached appropriately.");
-            }
-        }
+	for(int i = 0; i < results.length; i++) {
+	    Short S = (short)(i-128);
+	    if (S != results[i]) {
+		cached = false;
+		System.err.println("Short value " + S + 
+				   " is not cached appropriately.");
+	    }
+	}
 
-        for(int i = Short.MIN_VALUE; i < Short.MAX_VALUE; i++) {
-            Short S;
-            S = (short)i;
-            if (S.shortValue() != i) {
-                cached = false;
-                System.err.println("Erroneous autoboxing conversion for " +
-                                   "short value " + i + " .");
-            }
-        }
+	for(int i = Short.MIN_VALUE; i < Short.MAX_VALUE; i++) {
+	    Short S;
+	    S = (short)i;
+	    if (S.shortValue() != i) {
+		cached = false;
+		System.err.println("Erroneous autoboxing conversion for " + 
+				   "short value " + i + " .");
+	    }
+	}
 
-        return cached;
+	return cached;
     }
 
     public static void main(String argv[]) {
-        boolean cached = true;
-
-        cached &= verifyBooleanCaching();
-        cached &= verifyByteCaching();
-        cached &= verifyCharacterCaching();
-        cached &= verifyIntegerCaching();
-        cached &= verifyLongCaching();
-        cached &= verifyShortCaching();
-
-        if (!cached)
-            throw new RuntimeException("Values not cached appropriately.");
+	boolean cached = true;
+	
+	cached &= verifyBooleanCaching();
+	cached &= verifyByteCaching();
+	cached &= verifyCharacterCaching();
+	cached &= verifyIntegerCaching();
+	cached &= verifyLongCaching();
+	cached &= verifyShortCaching();
+	
+	if (!cached)
+	    throw new RuntimeException("Values not cached appropriately.");
     }
 }

@@ -31,13 +31,13 @@ package com.sun.javadoc;
  * given the generic interface {@code List<E>}, possible invocations
  * include:
  * <pre>
- *      {@code List<String>}
- *      {@code List<T extends Number>}
- *      {@code List<?>}
+ *	{@code List<String>}
+ *	{@code List<T extends Number>}
+ *	{@code List<?>}
  * </pre>
  * A generic inner class {@code Outer<T>.Inner<S>} might be invoked as:
  * <pre>
- *      {@code Outer<Number>.Inner<String>}
+ *	{@code Outer<Number>.Inner<String>}
  * </pre>
  *
  * @author Scott Seligman

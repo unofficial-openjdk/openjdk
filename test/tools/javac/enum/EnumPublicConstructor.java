@@ -37,8 +37,8 @@ enum EnumPublicConstructor {
 
     private int r, g, b;
     public EnumPublicConstructor(int r, int g, int b) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
+	this.r = r;
+	this.g = g;
+	this.b = b;
     }
 }

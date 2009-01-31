@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test @(#)AuthorDD.java	1.1 02/04/20
  * @bug 4651598
  * @summary Javadoc wrongly inserts </DD> tags when using multiple @author tags
  * @author dkramer
@@ -37,7 +37,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class AuthorDD
@@ -47,7 +47,7 @@ public class AuthorDD
     private static final String FS = System.getProperty("file.separator");
     private static final String PS = System.getProperty("path.separator");
     private static final String NL = System.getProperty("line.separator");
-
+    
     // Subtest number.  Needed because runResultsOnHTML is run twice, and subtestNum
     // should increment across subtest runs.
     public static int subtestNum = 0;
@@ -61,8 +61,8 @@ public class AuthorDD
 
         // Test for all cases except the split index page
         runJavadoc(new String[] {"-d", BUGID,
-                                 "-author",
-                                 "-version",
+                                 "-author", 
+                                 "-version", 
                                  "-sourcepath", srcdir,
                                  "p1"});
         runTestsOnHTML(testArray);
@@ -72,8 +72,8 @@ public class AuthorDD
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -109,7 +109,7 @@ public class AuthorDD
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum)
+                System.out.println("\nSub-test " + (subtestNum) 
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -124,7 +124,7 @@ public class AuthorDD
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

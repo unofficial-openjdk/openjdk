@@ -60,7 +60,7 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @param fileManager file manager to be wrapped
      */
     protected WrappingJavaFileManager(M fileManager) {
-        super(fileManager);
+	super(fileManager);
     }
 
     /**
@@ -70,8 +70,8 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @param fileObject a file object
      */
     protected FileObject wrap(FileObject fileObject) {
-        return fileObject;
-    }
+	return fileObject;
+    } 
 
     /**
      * This implementation forwards to {@link #wrap(FileObject)}.
@@ -82,8 +82,8 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * forwarded call is not a subtype of {@linkplain JavaFileObject}
      */
     protected JavaFileObject wrap(JavaFileObject fileObject) {
-        return (JavaFileObject)wrap((FileObject)fileObject);
-    }
+	return (JavaFileObject)wrap((FileObject)fileObject);
+    } 
 
     /**
      * This implementation returns the given file object.  Subclasses
@@ -92,7 +92,7 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @param fileObject a file object
      */
     protected FileObject unwrap(FileObject fileObject) {
-        return fileObject;
+	return fileObject;
     }
 
     /**
@@ -104,7 +104,7 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * forwarded call is not a subtype of {@linkplain JavaFileObject}
      */
     protected JavaFileObject unwrap(JavaFileObject fileObject) {
-        return (JavaFileObject)unwrap((FileObject)fileObject);
+	return (JavaFileObject)unwrap((FileObject)fileObject);
     }
 
     /**
@@ -115,10 +115,10 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @return the mapping
      */
     protected Iterable<JavaFileObject> wrap(Iterable<JavaFileObject> fileObjects) {
-        List<JavaFileObject> mapped = new ArrayList<JavaFileObject>();
-        for (JavaFileObject fileObject : fileObjects)
-            mapped.add(wrap(fileObject));
-        return Collections.unmodifiableList(mapped);
+	List<JavaFileObject> mapped = new ArrayList<JavaFileObject>();
+	for (JavaFileObject fileObject : fileObjects)
+	    mapped.add(wrap(fileObject));
+	return Collections.unmodifiableList(mapped);
     }
 
     /**
@@ -128,26 +128,26 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @param uri a URI
      */
     protected URI unwrap(URI uri) {
-        return uri;
+	return uri;
     }
 
     /**
      * @throws IllegalStateException {@inheritDoc}
      */
     public Iterable<JavaFileObject> list(Location location,
-                                         String packageName,
-                                         Set<Kind> kinds,
-                                         boolean recurse)
-        throws IOException
+					 String packageName,
+					 Set<Kind> kinds,
+					 boolean recurse)
+	throws IOException
     {
-        return wrap(super.list(location, packageName, kinds, recurse));
+	return wrap(super.list(location, packageName, kinds, recurse));
     }
 
     /**
      * @throws IllegalStateException {@inheritDoc}
      */
     public String inferBinaryName(Location location, JavaFileObject file) {
-        return super.inferBinaryName(location, unwrap(file));
+	return super.inferBinaryName(location, unwrap(file));
     }
 
     /**
@@ -156,11 +156,11 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @throws IllegalStateException {@inheritDoc}
      */
     public JavaFileObject getJavaFileForInput(Location location,
-                                              String className,
-                                              Kind kind)
-        throws IOException
+					      String className,
+					      Kind kind)
+	throws IOException
     {
-        return wrap(super.getJavaFileForInput(location, className, kind));
+	return wrap(super.getJavaFileForInput(location, className, kind));
     }
 
     /**
@@ -169,40 +169,40 @@ public class WrappingJavaFileManager<M extends JavaFileManager> extends Forwardi
      * @throws IllegalStateException {@inheritDoc}
      */
     public JavaFileObject getJavaFileForOutput(Location location,
-                                               String className,
-                                               Kind kind,
-                                               FileObject sibling)
-        throws IOException
+					       String className,
+					       Kind kind,
+					       FileObject sibling)
+	throws IOException
     {
-        return wrap(super.getJavaFileForOutput(location, className, kind, unwrap(sibling)));
+	return wrap(super.getJavaFileForOutput(location, className, kind, unwrap(sibling)));
     }
 
     /**
      * @throws IllegalArgumentException {@inheritDoc}
      * @throws IllegalStateException {@inheritDoc}
      */
-    public FileObject getFileForInput(Location location,
-                                      String packageName,
-                                      String relativeName)
-        throws IOException
+    public FileObject getFileForInput(Location location, 
+				      String packageName,
+				      String relativeName)
+	throws IOException
     {
-        return wrap(super.getFileForInput(location, packageName, relativeName));
+	return wrap(super.getFileForInput(location, packageName, relativeName));
     }
 
     /**
      * @throws IllegalArgumentException {@inheritDoc}
      * @throws IllegalStateException {@inheritDoc}
      */
-    public FileObject getFileForOutput(Location location,
-                                       String packageName,
-                                       String relativeName,
-                                       FileObject sibling)
-        throws IOException
+    public FileObject getFileForOutput(Location location, 
+				       String packageName,
+				       String relativeName,
+				       FileObject sibling)
+	throws IOException
     {
-        return wrap(super.getFileForOutput(location,
-                                           packageName,
-                                           relativeName,
-                                           unwrap(sibling)));
+	return wrap(super.getFileForOutput(location,
+					   packageName,
+					   relativeName,
+					   unwrap(sibling)));
     }
 
 }

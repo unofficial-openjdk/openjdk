@@ -49,8 +49,8 @@ import java.lang.reflect.Modifier;
  * @author Scott Seligman (generics, annotations)
  */
 
-public abstract class ExecutableMemberDocImpl
-        extends MemberDocImpl implements ExecutableMemberDoc {
+public abstract class ExecutableMemberDocImpl 
+	extends MemberDocImpl implements ExecutableMemberDoc {
 
     protected final MethodSymbol sym;
 
@@ -58,41 +58,41 @@ public abstract class ExecutableMemberDocImpl
      * Constructor.
      */
     public ExecutableMemberDocImpl(DocEnv env, MethodSymbol sym,
-                                   String rawDocs, JCMethodDecl tree, Position.LineMap lineMap) {
+				   String rawDocs, JCMethodDecl tree, Position.LineMap lineMap) {
         super(env, sym, rawDocs, tree, lineMap);
-        this.sym = sym;
+	this.sym = sym;
     }
 
     /**
      * Constructor.
      */
     public ExecutableMemberDocImpl(DocEnv env, MethodSymbol sym) {
-        this(env, sym, null, null, null);
+	this(env, sym, null, null, null);
     }
 
     /**
      * Returns the flags in terms of javac's flags
      */
     protected long getFlags() {
-        return sym.flags();
+	return sym.flags();
     }
 
     /**
      * Identify the containing class
      */
     protected ClassSymbol getContainingClass() {
-        return sym.enclClass();
+	return sym.enclClass();
     }
 
-    /**
-     * Return true if this method is native
+    /** 
+     * Return true if this method is native 
      */
     public boolean isNative() {
         return Modifier.isNative(getModifiers());
     }
 
-    /**
-     * Return true if this method is synchronized
+    /** 
+     * Return true if this method is synchronized 
      */
     public boolean isSynchronized() {
         return Modifier.isSynchronized(getModifiers());
@@ -104,10 +104,10 @@ public abstract class ExecutableMemberDocImpl
      */
     public boolean isVarArgs() {
         return ((sym.flags() & Flags.VARARGS) != 0
-                && !env.legacyDoclet);
+		&& !env.legacyDoclet);
     }
 
-    /**
+    /** 
      * Returns true if this field was synthesized by the compiler.
      */
     public boolean isSynthetic() {
@@ -115,12 +115,12 @@ public abstract class ExecutableMemberDocImpl
     }
 
     public boolean isIncluded() {
-        return containingClass().isIncluded() && env.shouldDocument(sym);
+	return containingClass().isIncluded() && env.shouldDocument(sym);
     }
 
     /**
      * Return the throws tags in this method.
-     *
+     * 
      * @return an array of ThrowTagImpl containing all {@code @exception}
      * and {@code @throws} tags.
      */
@@ -131,7 +131,7 @@ public abstract class ExecutableMemberDocImpl
     /**
      * Return the param tags in this method, excluding the type
      * parameter tags.
-     *
+     * 
      * @return an array of ParamTagImpl containing all {@code @param} tags.
      */
     public ParamTag[] paramTags() {
@@ -142,27 +142,27 @@ public abstract class ExecutableMemberDocImpl
      * Return the type parameter tags in this method.
      */
     public ParamTag[] typeParamTags() {
-        return env.legacyDoclet
-            ? new ParamTag[0]
-            : comment().typeParamTags();
+	return env.legacyDoclet
+	    ? new ParamTag[0]
+	    : comment().typeParamTags();
     }
 
     /**
-     * Return exceptions this method or constructor throws.
+     * Return exceptions this method or constructor throws. 
      *
      * @return an array of ClassDoc[] representing the exceptions
      * thrown by this method.
      */
     public ClassDoc[] thrownExceptions() {
         ListBuffer<ClassDocImpl> l = new ListBuffer<ClassDocImpl>();
-        for (Type ex : sym.type.getThrownTypes()) {
-            ex = env.types.erasure(ex);
-            //### Will these casts succeed in the face of static semantic
-            //### errors in the documented code?
-            ClassDocImpl cdi = env.getClassDoc((ClassSymbol)ex.tsym);
-            if (cdi != null) l.append(cdi);
-        }
-        return l.toArray(new ClassDocImpl[l.length()]);
+	for (Type ex : sym.type.getThrownTypes()) {
+	    ex = env.types.erasure(ex);
+	    //### Will these casts succeed in the face of static semantic
+	    //### errors in the documented code?
+	    ClassDocImpl cdi = env.getClassDoc((ClassSymbol)ex.tsym);
+	    if (cdi != null) l.append(cdi);
+	}
+	return l.toArray(new ClassDocImpl[l.length()]);
     }
 
     /**
@@ -171,7 +171,7 @@ public abstract class ExecutableMemberDocImpl
      * <code>TypeVariable</code>.
      */
     public com.sun.javadoc.Type[] thrownExceptionTypes() {
-        return TypeMaker.getTypes(env, sym.type.getThrownTypes());
+	return TypeMaker.getTypes(env, sym.type.getThrownTypes());
     }
 
     /**
@@ -183,15 +183,15 @@ public abstract class ExecutableMemberDocImpl
      * in the order the arguments are present.
      */
     public Parameter[] parameters() {
-        // generate the parameters on the fly:  they're not cached
-        List<VarSymbol> params = sym.params();
-        Parameter result[] = new Parameter[params.length()];
+	// generate the parameters on the fly:  they're not cached
+	List<VarSymbol> params = sym.params();
+	Parameter result[] = new Parameter[params.length()];
 
-        int i = 0;
-        for (VarSymbol param : params) {
-            result[i++] = new ParameterImpl(env, param);
-        }
-        return result;
+	int i = 0;
+	for (VarSymbol param : params) {
+	    result[i++] = new ParameterImpl(env, param);
+	}
+	return result;
     }
 
     /**
@@ -199,17 +199,17 @@ public abstract class ExecutableMemberDocImpl
      * Return an empty array if there are none.
      */
     public TypeVariable[] typeParameters() {
-        if (env.legacyDoclet) {
-            return new TypeVariable[0];
-        }
-        TypeVariable res[] = new TypeVariable[sym.type.getTypeArguments().length()];
-        TypeMaker.getTypes(env, sym.type.getTypeArguments(), res);
-        return res;
+	if (env.legacyDoclet) {
+	    return new TypeVariable[0];
+	}
+	TypeVariable res[] = new TypeVariable[sym.type.getTypeArguments().length()];
+	TypeMaker.getTypes(env, sym.type.getTypeArguments(), res);
+	return res;
     }
 
     /**
-     * Get the signature. It is the parameter list, type is qualified.
-     * For instance, for a method <code>mymethod(String x, int y)</code>,
+     * Get the signature. It is the parameter list, type is qualified.  
+     * For instance, for a method <code>mymethod(String x, int y)</code>, 
      * it will return <code>(java.lang.String,int)</code>.
      */
     public String signature() {
@@ -219,56 +219,56 @@ public abstract class ExecutableMemberDocImpl
     /**
      * Get flat signature.  All types are not qualified.
      * Return a String, which is the flat signiture of this member.
-     * It is the parameter list, type is not qualified.
-     * For instance, for a method <code>mymethod(String x, int y)</code>,
-     * it will return <code>(String, int)</code>.
+     * It is the parameter list, type is not qualified.  
+     * For instance, for a method <code>mymethod(String x, int y)</code>, 
+     * it will return <code>(String, int)</code>. 
      */
     public String flatSignature() {
         return makeSignature(false);
     }
 
     private String makeSignature(boolean full) {
-        StringBuffer result = new StringBuffer();
-        result.append("(");
-        for (List<Type> types = sym.type.getParameterTypes(); types.nonEmpty(); ) {
-            Type t = (Type)types.head;
-            result.append(TypeMaker.getTypeString(env, t, full));
-            types = types.tail;
-            if (types.nonEmpty()) {
-                result.append(", ");
-            }
-        }
-        if (isVarArgs()) {
-            int len = result.length();
-            result.replace(len - 2, len, "...");
-        }
-        result.append(")");
-        return result.toString();
+	StringBuffer result = new StringBuffer();
+	result.append("(");
+	for (List<Type> types = sym.type.getParameterTypes(); types.nonEmpty(); ) {
+	    Type t = (Type)types.head;
+	    result.append(TypeMaker.getTypeString(env, t, full));
+	    types = types.tail;
+	    if (types.nonEmpty()) {
+	        result.append(", ");
+	    }
+	}
+	if (isVarArgs()) {
+	    int len = result.length();
+	    result.replace(len - 2, len, "...");
+	}
+	result.append(")");
+	return result.toString();
     }
-
+    
     protected String typeParametersString() {
-        return TypeMaker.typeParametersString(env, sym, true);
+	return TypeMaker.typeParametersString(env, sym, true);
     }
 
     /**
      * Generate a key for sorting.
      */
     CollationKey generateKey() {
-        String k = name() + flatSignature() + typeParametersString();
-        // ',' and '&' are between '$' and 'a':  normalize to spaces.
-        k = k.replace(',', ' ').replace('&', ' ');
-        // System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
+	String k = name() + flatSignature() + typeParametersString();
+	// ',' and '&' are between '$' and 'a':  normalize to spaces.
+	k = k.replace(',', ' ').replace('&', ' ');
+	// System.out.println("COLLATION KEY FOR " + this + " is \"" + k + "\"");
         return env.doclocale.collator.getCollationKey(k);
     }
 
     /**
-     * Return the source position of the entity, or null if
+     * Return the source position of the entity, or null if 
      * no position is available.
      */
-    public SourcePosition position() {
-        if (sym.enclClass().sourcefile == null) return null;
-        return SourcePositionImpl.make(sym.enclClass().sourcefile.toString(),
-                                       (tree==null) ? 0 : tree.pos,
-                                       lineMap);
+    public SourcePosition position() { 
+	if (sym.enclClass().sourcefile == null) return null;
+	return SourcePositionImpl.make(sym.enclClass().sourcefile.toString(), 
+				       (tree==null) ? 0 : tree.pos,
+				       lineMap);
     }
 }

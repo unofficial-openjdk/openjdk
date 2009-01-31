@@ -87,9 +87,9 @@ public class SingleIndexWriter extends AbstractIndexWriter {
         printTop();
         navLinks(true);
         printLinksForIndexes();
-
+        
         hr();
-
+    
         for (int i = 0; i < indexbuilder.elements().length; i++) {
             Character unicode = (Character)((indexbuilder.elements())[i]);
             generateContents(unicode, indexbuilder.getMemberList(unicode));
@@ -97,7 +97,7 @@ public class SingleIndexWriter extends AbstractIndexWriter {
 
         printLinksForIndexes();
         navLinks(false);
-
+        
         printBottom();
         printBodyHtmlEnd();
     }

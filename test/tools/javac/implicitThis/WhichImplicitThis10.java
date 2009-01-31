@@ -31,16 +31,16 @@
 
 public class WhichImplicitThis10 {
     static class A {
-        class Inner {}
+	class Inner {}
     }
 
     static class B extends A {
-        class Inner extends A.Inner {
-            public Inner() {
-                // this following is allowed, even though A.Inner is
-                // not a member any enclosing class.
-                /*B.this.*/super();
-            }
-        }
+	class Inner extends A.Inner {
+	    public Inner() {
+		// this following is allowed, even though A.Inner is
+		// not a member any enclosing class.
+		/*B.this.*/super();
+	    }
+	}
     }
 }

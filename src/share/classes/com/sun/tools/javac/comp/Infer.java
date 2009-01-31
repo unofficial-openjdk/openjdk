@@ -43,7 +43,7 @@ import static com.sun.tools.javac.code.TypeTags.*;
  */
 public class Infer {
     protected static final Context.Key<Infer> inferKey =
-        new Context.Key<Infer>();
+	new Context.Key<Infer>();
 
     /** A value for prototypes that admit any type, including polymorphic ones. */
     public static final Type anyPoly = new Type(NONE, null);
@@ -52,53 +52,53 @@ public class Infer {
     Types types;
 
     public static Infer instance(Context context) {
-        Infer instance = context.get(inferKey);
-        if (instance == null)
-            instance = new Infer(context);
-        return instance;
+	Infer instance = context.get(inferKey);
+	if (instance == null)
+	    instance = new Infer(context);
+	return instance;
     }
 
     protected Infer(Context context) {
-        context.put(inferKey, this);
-        syms = Symtab.instance(context);
-        types = Types.instance(context);
+	context.put(inferKey, this);
+	syms = Symtab.instance(context);
+	types = Types.instance(context);
     }
 
     public static class NoInstanceException extends RuntimeException {
-        private static final long serialVersionUID = 0;
+	private static final long serialVersionUID = 0;
 
-        boolean isAmbiguous; // exist several incomparable best instances?
+	boolean isAmbiguous; // exist several incomparable best instances?
 
-        JCDiagnostic diagnostic;
+	JCDiagnostic diagnostic;
 
-        NoInstanceException(boolean isAmbiguous) {
-            this.diagnostic = null;
-            this.isAmbiguous = isAmbiguous;
-        }
-        NoInstanceException setMessage(String key) {
-            this.diagnostic = JCDiagnostic.fragment(key);
-            return this;
-        }
-        NoInstanceException setMessage(String key, Object arg1) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1);
-            return this;
-        }
-        NoInstanceException setMessage(String key, Object arg1, Object arg2) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2);
-            return this;
-        }
-        NoInstanceException setMessage(String key, Object arg1, Object arg2, Object arg3) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2, arg3);
-            return this;
-        }
-        public JCDiagnostic getDiagnostic() {
-            return diagnostic;
-        }
+	NoInstanceException(boolean isAmbiguous) {
+	    this.diagnostic = null;
+	    this.isAmbiguous = isAmbiguous;
+	}
+	NoInstanceException setMessage(String key) {
+	    this.diagnostic = JCDiagnostic.fragment(key);
+	    return this;
+	}
+	NoInstanceException setMessage(String key, Object arg1) {
+	    this.diagnostic = JCDiagnostic.fragment(key, arg1);
+	    return this;
+	}
+	NoInstanceException setMessage(String key, Object arg1, Object arg2) {
+	    this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2);
+	    return this;
+	}
+	NoInstanceException setMessage(String key, Object arg1, Object arg2, Object arg3) {
+	    this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2, arg3);
+	    return this;
+	}
+	public JCDiagnostic getDiagnostic() {
+	    return diagnostic;
+	}
     }
     private final NoInstanceException ambiguousNoInstanceException =
-        new NoInstanceException(true);
+	new NoInstanceException(true);
     private final NoInstanceException unambiguousNoInstanceException =
-        new NoInstanceException(false);
+	new NoInstanceException(false);
 
 /***************************************************************************
  * Auxiliary type values and classes
@@ -107,34 +107,34 @@ public class Infer {
     /** A mapping that turns type variables into undetermined type variables.
      */
     Mapping fromTypeVarFun = new Mapping("fromTypeVarFun") {
-            public Type apply(Type t) {
-                if (t.tag == TYPEVAR) return new UndetVar(t);
-                else return t.map(this);
-            }
-        };
+	    public Type apply(Type t) {
+		if (t.tag == TYPEVAR) return new UndetVar(t);
+		else return t.map(this);
+	    }
+	};
 
     /** A mapping that returns its type argument with every UndetVar replaced
      *  by its `inst' field. Throws a NoInstanceException
      *  if this not possible because an `inst' field is null.
      */
     Mapping getInstFun = new Mapping("getInstFun") {
-            public Type apply(Type t) {
-                switch (t.tag) {
-                case UNKNOWN:
-                    throw ambiguousNoInstanceException
-                        .setMessage("undetermined.type");
-                case UNDETVAR:
-                    UndetVar that = (UndetVar) t;
-                    if (that.inst == null)
-                        throw ambiguousNoInstanceException
-                            .setMessage("type.variable.has.undetermined.type",
-                                        that.qtype);
-                    return apply(that.inst);
-                default:
-                    return t.map(this);
-                }
-            }
-        };
+	    public Type apply(Type t) {
+		switch (t.tag) {
+		case UNKNOWN:
+		    throw ambiguousNoInstanceException
+			.setMessage("undetermined.type");
+		case UNDETVAR:
+		    UndetVar that = (UndetVar) t;
+		    if (that.inst == null)
+			throw ambiguousNoInstanceException
+			    .setMessage("type.variable.has.undetermined.type",
+					that.qtype);
+		    return apply(that.inst);
+		default:
+		    return t.map(this);
+		}
+	    }
+	};
 
 /***************************************************************************
  * Mini/Maximization of UndetVars
@@ -144,25 +144,25 @@ public class Infer {
      *  Throw a NoInstanceException if this not possible.
      */
     void maximizeInst(UndetVar that, Warner warn) throws NoInstanceException {
-        if (that.inst == null) {
-            if (that.hibounds.isEmpty())
-                that.inst = syms.objectType;
-            else if (that.hibounds.tail.isEmpty())
-                that.inst = that.hibounds.head;
-            else {
-                for (List<Type> bs = that.hibounds;
-                     bs.nonEmpty() && that.inst == null;
-                     bs = bs.tail) {
-                    // System.out.println("hibounds = " + that.hibounds);//DEBUG
-                    if (isSubClass(bs.head, that.hibounds))
-                        that.inst = types.fromUnknownFun.apply(bs.head);
-                }
-                if (that.inst == null || !types.isSubtypeUnchecked(that.inst, that.hibounds, warn))
-                    throw ambiguousNoInstanceException
-                        .setMessage("no.unique.maximal.instance.exists",
-                                    that.qtype, that.hibounds);
-            }
-        }
+	if (that.inst == null) {
+	    if (that.hibounds.isEmpty())
+		that.inst = syms.objectType;
+	    else if (that.hibounds.tail.isEmpty())
+		that.inst = that.hibounds.head;
+	    else {
+		for (List<Type> bs = that.hibounds;
+		     bs.nonEmpty() && that.inst == null;
+		     bs = bs.tail) {
+		    // System.out.println("hibounds = " + that.hibounds);//DEBUG
+		    if (isSubClass(bs.head, that.hibounds))
+			that.inst = types.fromUnknownFun.apply(bs.head);
+		}
+		if (that.inst == null || !types.isSubtypeUnchecked(that.inst, that.hibounds, warn))
+		    throw ambiguousNoInstanceException
+			.setMessage("no.unique.maximal.instance.exists",
+				    that.qtype, that.hibounds);
+	    }
+	}
     }
     //where
         private boolean isSubClass(Type t, final List<Type> ts) {
@@ -190,36 +190,36 @@ public class Infer {
      *  Throw a NoInstanceException if this not possible.
      */
     void minimizeInst(UndetVar that, Warner warn) throws NoInstanceException {
-        if (that.inst == null) {
-            if (that.lobounds.isEmpty())
-                that.inst = syms.botType;
-            else if (that.lobounds.tail.isEmpty())
-                that.inst = that.lobounds.head;
-            else {
-                that.inst = types.lub(that.lobounds);
-                if (that.inst == null)
-                    throw ambiguousNoInstanceException
-                        .setMessage("no.unique.minimal.instance.exists",
-                                    that.qtype, that.lobounds);
-            }
-            // VGJ: sort of inlined maximizeInst() below.  Adding
-            // bounds can cause lobounds that are above hibounds.
-            if (that.hibounds.isEmpty())
-                return;
-            Type hb = null;
-            if (that.hibounds.tail.isEmpty())
-                hb = that.hibounds.head;
-            else for (List<Type> bs = that.hibounds;
-                      bs.nonEmpty() && hb == null;
-                      bs = bs.tail) {
-                if (isSubClass(bs.head, that.hibounds))
-                    hb = types.fromUnknownFun.apply(bs.head);
-            }
-            if (hb == null ||
+	if (that.inst == null) {
+	    if (that.lobounds.isEmpty())
+		that.inst = syms.botType;
+	    else if (that.lobounds.tail.isEmpty())
+		that.inst = that.lobounds.head;
+	    else {
+		that.inst = types.lub(that.lobounds);
+		if (that.inst == null)
+		    throw ambiguousNoInstanceException
+			.setMessage("no.unique.minimal.instance.exists",
+				    that.qtype, that.lobounds);
+	    }
+	    // VGJ: sort of inlined maximizeInst() below.  Adding
+	    // bounds can cause lobounds that are above hibounds.
+	    if (that.hibounds.isEmpty())
+		return;
+	    Type hb = null;
+	    if (that.hibounds.tail.isEmpty())
+		hb = that.hibounds.head;
+	    else for (List<Type> bs = that.hibounds;
+		      bs.nonEmpty() && hb == null;
+		      bs = bs.tail) {
+		if (isSubClass(bs.head, that.hibounds))
+		    hb = types.fromUnknownFun.apply(bs.head);
+	    }
+	    if (hb == null ||
                 !types.isSubtypeUnchecked(hb, that.hibounds, warn) ||
                 !types.isSubtypeUnchecked(that.inst, hb, warn))
-                throw ambiguousNoInstanceException;
-        }
+		throw ambiguousNoInstanceException;
+	}
     }
 
 /***************************************************************************
@@ -268,40 +268,40 @@ public class Infer {
      *  `tvars' so that method can be applied to `argtypes'.
      */
     public Type instantiateMethod(List<Type> tvars,
-                                  MethodType mt,
-                                  List<Type> argtypes,
-                                  boolean allowBoxing,
-                                  boolean useVarargs,
+				  MethodType mt,
+				  List<Type> argtypes,
+				  boolean allowBoxing,
+				  boolean useVarargs,
                                   Warner warn) throws NoInstanceException {
-        //-System.err.println("instantiateMethod(" + tvars + ", " + mt + ", " + argtypes + ")"); //DEBUG
-        List<Type> undetvars = Type.map(tvars, fromTypeVarFun);
-        List<Type> formals = mt.argtypes;
+	//-System.err.println("instantiateMethod(" + tvars + ", " + mt + ", " + argtypes + ")"); //DEBUG
+	List<Type> undetvars = Type.map(tvars, fromTypeVarFun);
+	List<Type> formals = mt.argtypes;
 
-        // instantiate all polymorphic argument types and
-        // set up lower bounds constraints for undetvars
-        Type varargsFormal = useVarargs ? formals.last() : null;
-        while (argtypes.nonEmpty() && formals.head != varargsFormal) {
-            Type ft = formals.head;
-            Type at = argtypes.head.baseType();
-            if (at.tag == FORALL)
-                at = instantiateArg((ForAll) at, ft, tvars, warn);
+	// instantiate all polymorphic argument types and
+	// set up lower bounds constraints for undetvars
+	Type varargsFormal = useVarargs ? formals.last() : null;
+	while (argtypes.nonEmpty() && formals.head != varargsFormal) {
+	    Type ft = formals.head;
+	    Type at = argtypes.head.baseType();
+	    if (at.tag == FORALL)
+		at = instantiateArg((ForAll) at, ft, tvars, warn);
             Type sft = types.subst(ft, tvars, undetvars);
-            boolean works = allowBoxing
+	    boolean works = allowBoxing
                 ? types.isConvertible(at, sft, warn)
                 : types.isSubtypeUnchecked(at, sft, warn);
-            if (!works) {
-                throw unambiguousNoInstanceException
-                    .setMessage("no.conforming.assignment.exists",
-                                tvars, at, ft);
-            }
-            formals = formals.tail;
-            argtypes = argtypes.tail;
+	    if (!works) {
+		throw unambiguousNoInstanceException
+		    .setMessage("no.conforming.assignment.exists",
+				tvars, at, ft);
+	    }
+	    formals = formals.tail;
+	    argtypes = argtypes.tail;
         }
-        if (formals.head != varargsFormal || // not enough args
+	if (formals.head != varargsFormal || // not enough args
             !useVarargs && argtypes.nonEmpty()) { // too many args
-            // argument lists differ in length
-            throw unambiguousNoInstanceException
-                .setMessage("arg.length.mismatch");
+	    // argument lists differ in length
+	    throw unambiguousNoInstanceException
+		.setMessage("arg.length.mismatch");
         }
 
         // for varargs arguments as well
@@ -363,25 +363,25 @@ public class Infer {
     }
     //where
 
-        /** Try to instantiate argument type `that' to given type `to'.
-         *  If this fails, try to insantiate `that' to `to' where
-         *  every occurrence of a type variable in `tvars' is replaced
-         *  by an unknown type.
-         */
-        private Type instantiateArg(ForAll that,
-                                    Type to,
-                                    List<Type> tvars,
+	/** Try to instantiate argument type `that' to given type `to'.
+	 *  If this fails, try to insantiate `that' to `to' where
+	 *  every occurrence of a type variable in `tvars' is replaced
+	 *  by an unknown type.
+	 */
+	private Type instantiateArg(ForAll that,
+				    Type to,
+				    List<Type> tvars,
                                     Warner warn) throws NoInstanceException {
-            List<Type> targs;
-            try {
-                return instantiateExpr(that, to, warn);
-            } catch (NoInstanceException ex) {
-                Type to1 = to;
-                for (List<Type> l = tvars; l.nonEmpty(); l = l.tail)
-                    to1 = types.subst(to1, List.of(l.head), List.of(syms.unknownType));
-                return instantiateExpr(that, to1, warn);
-            }
-        }
+	    List<Type> targs;
+	    try {
+		return instantiateExpr(that, to, warn);
+	    } catch (NoInstanceException ex) {
+		Type to1 = to;
+		for (List<Type> l = tvars; l.nonEmpty(); l = l.tail)
+		    to1 = types.subst(to1, List.of(l.head), List.of(syms.unknownType));
+		return instantiateExpr(that, to1, warn);
+	    }
+	}
 
     /** check that type parameters are within their bounds.
      */
@@ -389,15 +389,16 @@ public class Infer {
                                    List<Type> arguments,
                                    Warner warn)
         throws NoInstanceException {
-        for (List<Type> tvs = tvars, args = arguments;
-             tvs.nonEmpty();
-             tvs = tvs.tail, args = args.tail) {
+	for (List<Type> tvs = tvars, args = arguments;
+	     tvs.nonEmpty();
+	     tvs = tvs.tail, args = args.tail) {
             if (args.head instanceof UndetVar) continue;
             List<Type> bounds = types.subst(types.getBounds((TypeVar)tvs.head), tvars, arguments);
-            if (!types.isSubtypeUnchecked(args.head, bounds, warn))
-                throw unambiguousNoInstanceException
-                    .setMessage("inferred.do.not.conform.to.bounds",
-                                arguments, tvars);
-        }
+	    if (!types.isSubtypeUnchecked(args.head, bounds, warn))
+		throw unambiguousNoInstanceException
+		    .setMessage("inferred.do.not.conform.to.bounds",
+				arguments, tvars);
+	}
     }
 }
+

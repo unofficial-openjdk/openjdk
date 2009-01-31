@@ -148,7 +148,7 @@ public class Types {
 
             @Override
             public Type visitCapturedType(CapturedType t, Void ignored) {
-                return visit(t.getLowerBound());
+		return visit(t.getLowerBound());
             }
         };
     // </editor-fold>

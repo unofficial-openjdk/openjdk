@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,3 +36,5 @@
 // reasons having something to do with javing tools.jar
 // on the classpath.  Until that is sorted out, these tests
 // must be run in separate VM mode.
+
+

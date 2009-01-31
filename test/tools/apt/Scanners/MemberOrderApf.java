@@ -66,21 +66,21 @@ public class MemberOrderApf implements AnnotationProcessorFactory {
             this.env = env;
         }
 
-        private void verifyOrder(Collection<? extends Declaration> decls) {
-            int count = 0;
-            for(Declaration decl: decls) {
-                VisitOrder order = decl.getAnnotation(VisitOrder.class);
-                if (order.value() <= count)
-                    throw new RuntimeException("Out of order declarations");
-                count = order.value();
-            }
-        }
+	private void verifyOrder(Collection<? extends Declaration> decls) {
+	    int count = 0;
+	    for(Declaration decl: decls) {
+		VisitOrder order = decl.getAnnotation(VisitOrder.class);
+		if (order.value() <= count)
+		    throw new RuntimeException("Out of order declarations");
+		count = order.value();
+	    }
+	}
 
         public void process() {
-            for(TypeDeclaration td: env.getSpecifiedTypeDeclarations()) {
-                verifyOrder(td.getFields());
-                verifyOrder(td.getMethods());
-            }
+	    for(TypeDeclaration td: env.getSpecifiedTypeDeclarations()) {
+		verifyOrder(td.getFields());
+		verifyOrder(td.getMethods());
+	    }
         }
     }
 }

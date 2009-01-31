@@ -41,17 +41,17 @@ import javax.xml.parsers.*;
  * @see SAXParser
  */
 public class LayoutParser extends DefaultHandler {
-
+    
     /**
      * The map of XML elements that have been parsed.
      */
     private Map xmlElementsMap;
-
+    
     private Configuration configuration;
-    private static LayoutParser instance;
-    private String currentRoot;
+    private static LayoutParser instance;    
+    private String currentRoot;    
     private boolean isParsing;
-
+    
     /**
      * This class is a singleton.
      */
@@ -59,7 +59,7 @@ public class LayoutParser extends DefaultHandler {
         xmlElementsMap = new HashMap();
         this.configuration = configuration;
     }
-
+    
     /**
      * Return an instance of the BuilderXML.
      *
@@ -72,7 +72,7 @@ public class LayoutParser extends DefaultHandler {
         }
         return instance;
     }
-
+    
     /**
      * Parse the XML specifying the layout of the documentation.
      *
@@ -97,11 +97,11 @@ public class LayoutParser extends DefaultHandler {
             throw new DocletAbortException();
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
-    public void startElement(String namespaceURI, String sName, String qName,
+    public void startElement(String namespaceURI, String sName, String qName, 
         Attributes attrs)
     throws SAXException {
         if (isParsing || qName.equals(currentRoot)) {
@@ -110,14 +110,14 @@ public class LayoutParser extends DefaultHandler {
             xmlElements.add(qName);
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void endElement(String namespaceURI, String sName, String qName)
     throws SAXException {
         if (! isParsing) {
-            isParsing = false;
+            isParsing = false;          
             return;
         }
         List xmlElements = (List) xmlElementsMap.get(currentRoot);
@@ -133,7 +133,8 @@ public class LayoutParser extends DefaultHandler {
             }
             //Save the sub elements as a list.
             xmlElements.add(subElements);
-        }
+        }  
         isParsing = ! qName.equals(currentRoot);
     }
 }
+

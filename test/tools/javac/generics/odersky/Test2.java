@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @ bug
+ * @ bug 
  * @summary Positive regression test from odersky
  * @author odersky
  *
@@ -40,14 +40,14 @@ class Test2 {
     static <A> A id(A x) { return x; }
 
     public static void main(String[] args) {
-        List<Ord> xs = nil();
-        List<Ord> zs = nil().prependList(nil());
+	List<Ord> xs = nil();
+	List<Ord> zs = nil().prependList(nil());
 
-        System.out.println(nil());
-        System.out.println(nil().length());
+	System.out.println(nil());
+	System.out.println(nil().length());
 
-        List<Ord> a = args.length == 1 ? nil() : nil();
-        a = (List<Ord>) nil();
+	List<Ord> a = args.length == 1 ? nil() : nil();
+	a = (List<Ord>) nil();
     }
 
 }

@@ -32,7 +32,7 @@ import com.sun.javadoc.*;
  * Parses and holds the exception name and exception comment.
  * The exception name my be the name of a type variable.
  * Note: @exception is a backwards compatible synonymy for @throws.
- *
+ * 
  * @author Robert Field
  * @author Atul M Dambalkar
  * @see ExecutableMemberDocImpl#throwsTags()
@@ -45,9 +45,9 @@ class ThrowsTagImpl extends TagImpl implements ThrowsTag {
 
     ThrowsTagImpl(DocImpl holder, String name, String text) {
         super(holder, name, text);
-        String[] sa = divideAtWhite();
-        exceptionName = sa[0];
-        exceptionComment = sa[1];
+	String[] sa = divideAtWhite();
+	exceptionName = sa[0];
+	exceptionComment = sa[1];
     }
 
     /**
@@ -68,7 +68,7 @@ class ThrowsTagImpl extends TagImpl implements ThrowsTag {
      * Return the exception as a ClassDocImpl.
      */
     public ClassDoc exception() {
-        ClassDocImpl exceptionClass;
+	ClassDocImpl exceptionClass;
         if (!(holder instanceof ExecutableMemberDoc)) {
             exceptionClass = null;
         } else {
@@ -76,7 +76,7 @@ class ThrowsTagImpl extends TagImpl implements ThrowsTag {
             ClassDocImpl con = (ClassDocImpl)emd.containingClass();
             exceptionClass = (ClassDocImpl)con.findClass(exceptionName);
         }
-        return exceptionClass;
+	return exceptionClass;
     }
 
     /**
@@ -84,8 +84,8 @@ class ThrowsTagImpl extends TagImpl implements ThrowsTag {
      * This may be a <code>ClassDoc</code> or a <code>TypeVariable</code>.
      */
     public Type exceptionType() {
-        //###(gj) TypeVariable not yet supported.
-        return exception();
+	//###(gj) TypeVariable not yet supported.
+	return exception();
     }
 
 
@@ -109,3 +109,5 @@ class ThrowsTagImpl extends TagImpl implements ThrowsTag {
         return Comment.getInlineTags(holder, exceptionComment());
     }
 }
+
+

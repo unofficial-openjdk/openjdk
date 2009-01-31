@@ -33,8 +33,8 @@ class WhichImplicitThis6 {
     private int i;
     WhichImplicitThis6(int i) {}
     class Sub extends WhichImplicitThis6 {
-        Sub() {
-            super(i); // i is not inherited, so it is the enclosing i
-        }
+	Sub() {
+	    super(i); // i is not inherited, so it is the enclosing i
+	}
     }
 }

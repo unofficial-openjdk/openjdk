@@ -295,10 +295,10 @@ public class TransTypes extends TreeTranslator {
                            && impl.owner != origin
                            && (impl.flags() & FINAL) == 0
                            && (meth.flags() & (ABSTRACT|PUBLIC)) == PUBLIC
-                           && (origin.flags() & PUBLIC) > (impl.owner.flags() & PUBLIC)) {
-                    // this is to work around a horrible but permanent
-                    // reflection design error.
-                    addBridge(pos, meth, impl, origin, false, bridges);
+                           && (origin.flags() & PUBLIC) > (impl.owner.flags() & PUBLIC)) { 
+                    // this is to work around a horrible but permanent 
+                    // reflection design error. 
+                    addBridge(pos, meth, impl, origin, false, bridges); 
                 }
             } else if ((bridge.flags() & SYNTHETIC) != 0) {
                 MethodSymbol other = overridden.get(bridge);
@@ -475,7 +475,7 @@ public class TransTypes extends TreeTranslator {
         tree.type = erasure(tree.type);
         result = tree;
     }
-
+        
     public void visitDoLoop(JCDoWhileLoop tree) {
         tree.body = translate(tree.body);
         tree.cond = translate(tree.cond, syms.booleanType);
@@ -700,7 +700,7 @@ public class TransTypes extends TreeTranslator {
                 erasure(tree.sym.owner.type));
         } else
             tree.selected = translate(tree.selected, erasure(t));
-
+        
         // Map constants expressions to themselves.
         if (tree.type.constValue() != null) {
             result = tree;

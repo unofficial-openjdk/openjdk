@@ -28,10 +28,10 @@ package com.sun.source.tree;
 /**
  * Common interface for all nodes in an abstract syntax tree.
  *
- * <p><b>WARNING:</b> This interface and its sub-interfaces are
+ * <p><b>WARNING:</b> This interface and its sub-interfaces are 
  * subject to change as the Java&trade; programming language evolves.
- * These interfaces are implemented by Sun's Java compiler (javac)
- * and should not be implemented either directly or indirectly by
+ * These interfaces are implemented by Sun's Java compiler (javac) 
+ * and should not be implemented either directly or indirectly by 
  * other applications.
  *
  * @author Peter von der Ah&eacute;
@@ -40,7 +40,7 @@ package com.sun.source.tree;
  * @since 1.6
  */
 public interface Tree {
-
+    
     /**
      * Enumerates all kinds of trees.
      */
@@ -519,12 +519,12 @@ public interface Tree {
          * a string literal expression of type {@link String}.
          */
         STRING_LITERAL(LiteralTree.class),
-
-        /**
-         * Used for instances of {@link LiteralTree} representing
-         * the use of {@code null}.
-         */
-        NULL_LITERAL(LiteralTree.class),
+	
+	/**
+	 * Used for instances of {@link LiteralTree} representing
+	 * the use of {@code null}.
+	 */
+	NULL_LITERAL(LiteralTree.class),
 
         /**
          * Used for instances of {@link WildcardTree} representing
@@ -554,26 +554,26 @@ public interface Tree {
          * you are looking for.
          */
         OTHER(null);
-
-
+                
+        
         Kind(Class<? extends Tree> intf) {
             associatedInterface = intf;
         }
-
+                
         public Class<? extends Tree> asInterface() {
             return associatedInterface;
         }
-
+        
         private final Class<? extends Tree> associatedInterface;
     }
-
+    
     /**
      * Gets the kind of this tree.
      *
      * @return the kind of this tree.
      */
     Kind getKind();
-
+    
     /**
      * Accept method used to implement the visitor pattern.  The
      * visitor pattern is used to implement operations on trees.

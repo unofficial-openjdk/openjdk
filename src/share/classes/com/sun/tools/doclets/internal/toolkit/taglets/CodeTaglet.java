@@ -45,21 +45,21 @@ import com.sun.javadoc.Tag;
 
 public class CodeTaglet extends LiteralTaglet {
 
-        private static final String NAME = "code";
+	private static final String NAME = "code";
 
-        public static void register(Map map) {
-                map.remove(NAME);
-                map.put(NAME, new CodeTaglet());
-        }
+	public static void register(Map map) {
+		map.remove(NAME);
+		map.put(NAME, new CodeTaglet());
+	}
 
-        public String getName() {
-                return NAME;
-        }
+	public String getName() {
+		return NAME;
+	}
 
-        /*
-         * Wraps @literal's result in a <code> element.
-         */
-        public String toString(Tag tag) {
-                return "<code>" + super.toString(tag) + "</code>";
-        }
+	/*
+	 * Wraps @literal's result in a <code> element.
+	 */
+	public String toString(Tag tag) {
+		return "<code>" + super.toString(tag) + "</code>";
+	}
 }

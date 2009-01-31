@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,38 +34,38 @@
  */
 
 public class TestNavagation extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4131628-4664607";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "-source", "1.5", "pkg"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "A.html", "&nbsp;PREV CLASS&nbsp;"},
-        {BUG_ID + FS + "pkg" + FS + "A.html",
+        {BUG_ID + FS + "pkg" + FS + "A.html", 
             "<A HREF=\"../pkg/C.html\" title=\"class in pkg\"><B>NEXT CLASS</B></A>"},
-        {BUG_ID + FS + "pkg" + FS + "C.html",
+        {BUG_ID + FS + "pkg" + FS + "C.html", 
             "<A HREF=\"../pkg/A.html\" title=\"annotation in pkg\"><B>PREV CLASS</B></A>"},
-        {BUG_ID + FS + "pkg" + FS + "C.html",
+        {BUG_ID + FS + "pkg" + FS + "C.html", 
             "<A HREF=\"../pkg/E.html\" title=\"enum in pkg\"><B>NEXT CLASS</B></A>"},
-        {BUG_ID + FS + "pkg" + FS + "E.html",
+        {BUG_ID + FS + "pkg" + FS + "E.html", 
             "<A HREF=\"../pkg/C.html\" title=\"class in pkg\"><B>PREV CLASS</B></A>"},
-        {BUG_ID + FS + "pkg" + FS + "E.html",
+        {BUG_ID + FS + "pkg" + FS + "E.html", 
             "<A HREF=\"../pkg/I.html\" title=\"interface in pkg\"><B>NEXT CLASS</B></A>"},
-        {BUG_ID + FS + "pkg" + FS + "I.html",
+        {BUG_ID + FS + "pkg" + FS + "I.html", 
             "<A HREF=\"../pkg/E.html\" title=\"enum in pkg\"><B>PREV CLASS</B></A>"},
         {BUG_ID + FS + "pkg" + FS + "I.html", "&nbsp;NEXT CLASS"},
         // Test for 4664607
-        {BUG_ID + FS + "pkg" + FS + "I.html",
+        {BUG_ID + FS + "pkg" + FS + "I.html", 
             "<TD COLSPAN=2 BGCOLOR=\"#EEEEFF\" CLASS=\"NavBarCell1\">" + NL +
             "<A NAME=\"navbar_top_firstrow\"><!-- --></A>"}
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -75,14 +75,14 @@ public class TestNavagation extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

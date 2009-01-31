@@ -57,10 +57,6 @@ check 50.0 -target 1.6
 check 50.0 -target 6
 check 50.0 -source 1.6
 check 50.0 -source 6
-check 51.0 -target 1.7
-check 51.0 -target 7
-check 51.0 -source 1.7
-check 51.0 -source 7
 
 
 # Check source versions

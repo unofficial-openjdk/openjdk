@@ -33,7 +33,7 @@ import com.sun.javadoc.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Jamie Ho
  */
 
@@ -48,22 +48,22 @@ public class SimpleTaglet extends BaseTaglet {
      * The marker in the location string for packages.
      */
     public static final String PACKAGE = "p";
-
+    
     /**
      * The marker in the location string for types.
      */
     public static final String TYPE = "t";
-
+    
     /**
      * The marker in the location string for constructors.
      */
     public static final String CONSTRUCTOR = "c";
-
+    
     /**
      * The marker in the location string for fields.
      */
     public static final String FIELD = "f";
-
+    
     /**
      * The marker in the location string for methods.
      */
@@ -73,28 +73,28 @@ public class SimpleTaglet extends BaseTaglet {
      * The marker in the location string for overview.
      */
     public static final String OVERVIEW = "o";
-
+    
     /**
      * Use in location string when the tag is to
      * appear in all locations.
      */
     public static final String ALL = "a";
-
+    
     /**
      * The name of this tag.
      */
     protected String tagName;
-
+    
     /**
      * The header to output.
      */
     protected String header;
-
+    
     /**
      * The possible locations that this tag can appear in.
      */
     protected String locations;
-
+    
     /**
      * Construct a <code>SimpleTaglet</code>.
      * @param tagName the name of this tag
@@ -114,14 +114,14 @@ public class SimpleTaglet extends BaseTaglet {
             this.locations = locations;
         }
     }
-
+    
     /**
      * Return the name of this <code>Taglet</code>.
      */
     public String getName() {
         return tagName;
     }
-
+    
     /**
      * Return true if this <code>SimpleTaglet</code>
      * is used in constructor documentation.
@@ -132,7 +132,7 @@ public class SimpleTaglet extends BaseTaglet {
     public boolean inConstructor() {
         return locations.indexOf(CONSTRUCTOR) != -1 && locations.indexOf(EXCLUDED) == -1;
     }
-
+    
     /**
      * Return true if this <code>SimpleTaglet</code>
      * is used in field documentation.
@@ -143,7 +143,7 @@ public class SimpleTaglet extends BaseTaglet {
     public boolean inField() {
         return locations.indexOf(FIELD) != -1 && locations.indexOf(EXCLUDED) == -1;
     }
-
+    
     /**
      * Return true if this <code>SimpleTaglet</code>
      * is used in method documentation.
@@ -165,7 +165,7 @@ public class SimpleTaglet extends BaseTaglet {
     public boolean inOverview() {
         return locations.indexOf(OVERVIEW) != -1 && locations.indexOf(EXCLUDED) == -1;
     }
-
+    
     /**
      * Return true if this <code>SimpleTaglet</code>
      * is used in package documentation.
@@ -187,7 +187,7 @@ public class SimpleTaglet extends BaseTaglet {
     public boolean inType() {
         return locations.indexOf(TYPE) != -1&& locations.indexOf(EXCLUDED) == -1;
     }
-
+    
     /**
      * Return true if this <code>Taglet</code>
      * is an inline tag.
@@ -197,14 +197,14 @@ public class SimpleTaglet extends BaseTaglet {
     public boolean isInlineTag() {
         return false;
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput getTagletOutput(Tag tag, TagletWriter writer) {
         return header == null || tag == null ? null : writer.simpleTagOutput(tag, header);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -215,3 +215,4 @@ public class SimpleTaglet extends BaseTaglet {
         return writer.simpleTagOutput(holder.tags(getName()), header);
     }
 }
+

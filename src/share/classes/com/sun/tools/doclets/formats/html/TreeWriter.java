@@ -97,7 +97,7 @@ public class TreeWriter extends AbstractTreeWriter {
         printTreeHeader();
 
         printPageHeading();
-
+    
         printPackageTreeLinks();
 
         generateTree(classtree.baseclasses(), "doclet.Class_Hierarchy");
@@ -137,7 +137,7 @@ public class TreeWriter extends AbstractTreeWriter {
     }
 
     /**
-     * Print the top text (from the -top option) and
+     * Print the top text (from the -top option) and 
      * navigation bar at the top of page.
      */
     protected void printTreeHeader() {

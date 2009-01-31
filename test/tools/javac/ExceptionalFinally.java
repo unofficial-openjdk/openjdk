@@ -36,12 +36,12 @@ class ExceptionalFinally {
     public void t() throws E {}
 
     public void a() {
-        try {
-            t();
-        } catch (E x) {
-            t();
-        } finally {
-            return;
-        }
+	try {
+	    t();
+	} catch (E x) {
+	    t();
+	} finally {
+	    return;
+	}
     }
 }

@@ -46,20 +46,20 @@ class CastTest {
     private class AG<T> extends AA<String> { }
 
     private void parameterTransfer() {
-        Object o;
+	Object o;
 
-        o = (AB<String>) (AA<String>) null; // <<pass>>
-        o = (AC<String>) (AA<Vector<String>>) null; // <<pass>>
+	o = (AB<String>) (AA<String>) null; // <<pass>>
+	o = (AC<String>) (AA<Vector<String>>) null; // <<pass>>
 
-        o = (AD<Number>) (AA<Vector<? extends Number>>) null; // <<pass>>
-        o = (AD<?>) (AA<Vector<? extends Object>>) null; // <<pass>>
-        o = (AD<Object>) (AA<Vector<?>>) null; // <<pass>>
+	o = (AD<Number>) (AA<Vector<? extends Number>>) null; // <<pass>>
+	o = (AD<?>) (AA<Vector<? extends Object>>) null; // <<pass>>
+	o = (AD<Object>) (AA<Vector<?>>) null; // <<pass>>
 
-        o = (AE<String>) (AA<Vector<? super String>>) null; // <<pass>>
+	o = (AE<String>) (AA<Vector<? super String>>) null; // <<pass>>
 
-        o = (AF<String>) (AA<String[]>) null; // <<pass>>
+	o = (AF<String>) (AA<String[]>) null; // <<pass>>
 
-        o = (AG<?>) (AA<String>) null; // <<pass>>
+	o = (AG<?>) (AA<String>) null; // <<pass>>
     }
 
     // --- Inconsistent matches ---
@@ -69,21 +69,21 @@ class CastTest {
 
     private class BC<T> extends BA<Integer> { }
     private class BD<T> extends BB<T, T> { }
-
+    
     private void inconsistentMatches() {
-        Object o;
+	Object o;
 
-        o = (BC<?>) (BA<Integer>) null; // <<pass>>
-        o = (BD<String>) (BB<String, String>) null; // <<pass>>
+	o = (BC<?>) (BA<Integer>) null; // <<pass>>
+	o = (BD<String>) (BB<String, String>) null; // <<pass>>
     }
 
     private void whyMustEverythingBeSo_______Complicated() {
-        // This has to work...
-        BD<Number> bd = new BD<Number>();
-        BB<? extends Number, ? super Integer> bb = bd;
+	// This has to work...
+	BD<Number> bd = new BD<Number>();
+	BB<? extends Number, ? super Integer> bb = bd;
 
-        // 4916620: wildcards: legal cast is rejected
-        // bd = (BD<Number>) bb; // <<warn>> <<todo: cast-infer>>
+	// 4916620: wildcards: legal cast is rejected
+	// bd = (BD<Number>) bb; // <<warn>> <<todo: cast-infer>>
     }
 
     // --- Transferring parameters via supertypes ---
@@ -103,11 +103,11 @@ class CastTest {
     private interface CK<S, T> extends CI<S>, CJ<T> { }
 
     private void supertypeParameterTransfer() {
-        Object o;
-        o = (CE<String>) (CD<String>) null; // <<pass>>
+	Object o;
+	o = (CE<String>) (CD<String>) null; // <<pass>>
 
-        // 4916622: unnecessary warning with cast
-        // o = (CH<String, Integer>) (CK<String, Integer>) null; // <<pass>> <<todo: cast-infer>>
+	// 4916622: unnecessary warning with cast
+	// o = (CH<String, Integer>) (CK<String, Integer>) null; // <<pass>> <<todo: cast-infer>>
     }
 
     // --- Disjoint ---
@@ -117,33 +117,33 @@ class CastTest {
     private interface DC<T> extends DA<Integer> { }
 
     private <N extends Number, I extends Integer, R extends Runnable, S extends String> void disjointness() {
-        Object o;
+	Object o;
 
-        // Classes
-        o = (DA<? extends Number>) (DA<Integer>) null; // <<pass>>
-        o = (DA<? super Integer>) (DA<Number>) null; // <<pass>>
-        o = (DA<?>) (DA<Integer>) null; // <<pass>>
+	// Classes
+	o = (DA<? extends Number>) (DA<Integer>) null; // <<pass>>
+	o = (DA<? super Integer>) (DA<Number>) null; // <<pass>>
+	o = (DA<?>) (DA<Integer>) null; // <<pass>>
 
-        o = (DA<?>) (DA<? extends Integer>) null; // <<pass>>
+	o = (DA<?>) (DA<? extends Integer>) null; // <<pass>>
 
-        o = (DA<?>) (DA<? super String>) null; // <<pass>>
+	o = (DA<?>) (DA<? super String>) null; // <<pass>>
+	
+	o = (DA<?>) (DA<?>) null; // <<pass>>
 
-        o = (DA<?>) (DA<?>) null; // <<pass>>
+	// Typevars
+	o = (DA<? extends Number>) (DA<I>) null; // <<pass>>
 
-        // Typevars
-        o = (DA<? extends Number>) (DA<I>) null; // <<pass>>
+	// Raw (asymmetrical!)
+	o = (DA) (DB<Number>) null; // <<pass>>
+	o = (DA<?>) (DB) null; // <<pass>>
+	o = (DA<? extends Object>) (DB) null; // <<pass>>
 
-        // Raw (asymmetrical!)
-        o = (DA) (DB<Number>) null; // <<pass>>
-        o = (DA<?>) (DB) null; // <<pass>>
-        o = (DA<? extends Object>) (DB) null; // <<pass>>
-
-        o = (DB) (DA<Number>) null; // <<pass>>
-        o = (DB<?>) (DA) null; // <<pass>>
-        o = (DB<? extends Object>) (DA) null; // <<pass>>
+	o = (DB) (DA<Number>) null; // <<pass>>
+	o = (DB<?>) (DA) null; // <<pass>>
+	o = (DB<? extends Object>) (DA) null; // <<pass>>
 
         // reported broken (5034609)
-        // o = (DC<?>) (DA<?>) null; // <<pass>>
+	// o = (DC<?>) (DA<?>) null; // <<pass>>
     }
 
 }

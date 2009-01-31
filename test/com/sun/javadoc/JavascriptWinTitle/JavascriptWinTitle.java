@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,7 +38,7 @@ import java.io.*;
 
 /**
  * Runs javadoc and runs regression tests on the resulting HTML.
- * It reads each file, complete with newlines, into a string to easily
+ * It reads each file, complete with newlines, into a string to easily 
  * find strings that contain newlines.
  */
 public class JavascriptWinTitle {
@@ -67,7 +67,7 @@ public class JavascriptWinTitle {
                                  "-doctitle", "Document Title",
                                  "-windowtitle", "Window Title",
                                  "-overview", (srcdir + FS + "overview.html"),
-                                 "-linkoffline",
+                                 "-linkoffline", 
                                     "http://java.sun.com/j2se/1.4/docs/api", srcdir,
                                  "-sourcepath", srcdir,
                                  "p1", "p2"});
@@ -78,8 +78,8 @@ public class JavascriptWinTitle {
 
     /** Run javadoc */
     public static void runJavadoc(String[] javadocArgs) {
-        if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
-            throw new Error("Javadoc failed to execute");
+	if (com.sun.tools.javadoc.Main.execute(javadocArgs) != 0) {
+	    throw new Error("Javadoc failed to execute");
         }
     }
 
@@ -116,7 +116,7 @@ public class JavascriptWinTitle {
             // Test that "onload" is not present in BODY tag:
             {   "<BODY BGCOLOR=\"white\">",
                      TMPDEST_DIR1 + FS + "p1" + FS + "package-frame.html"  },
-
+            
             // Test that win title javascript is followed by NOSCRIPT code.
             {"<SCRIPT type=\"text/javascript\">" + LS +
                     "function windowTitle()" + LS +
@@ -127,9 +127,9 @@ public class JavascriptWinTitle {
                     "}" + LS +
              "</SCRIPT>" + LS +
              "<NOSCRIPT>" + LS +
-             "</NOSCRIPT>",
-             TMPDEST_DIR1 + FS + "p1" + FS + "C.html"
-            }
+             "</NOSCRIPT>", 
+             TMPDEST_DIR1 + FS + "p1" + FS + "C.html"            
+            }         
 
         };
 
@@ -147,7 +147,7 @@ public class JavascriptWinTitle {
 
             // Find string in file's contents
             if (findString(fileString, stringToFind) == -1) {
-                System.out.println("\nSub-test " + (subtestNum)
+                System.out.println("\nSub-test " + (subtestNum) 
                     + " for bug " + BUGID + " (" + BUGNAME + ") FAILED\n"
                     + "when searching for:\n"
                     + stringToFind);
@@ -162,7 +162,7 @@ public class JavascriptWinTitle {
         if ( numSubtestsPassed == subtestNum ) {
             System.out.println("\nAll " + numSubtestsPassed + " subtests passed");
         } else {
-            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum)
+            throw new Error("\n" + (subtestNum - numSubtestsPassed) + " of " + (subtestNum) 
                              + " subtests failed for bug " + BUGID + " (" + BUGNAME + ")\n");
         }
     }

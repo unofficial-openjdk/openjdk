@@ -48,9 +48,9 @@ public class AnnotationValueImpl implements AnnotationValue {
     protected final AnnotationMirrorImpl annotation;
 
     AnnotationValueImpl(AptEnv env, Attribute attr, AnnotationMirrorImpl annotation) {
-        this.env = env;
-        this.attr = attr;
-        this.annotation = annotation;
+	this.env = env;
+	this.attr = attr;
+	this.annotation = annotation;
     }
 
 
@@ -58,64 +58,64 @@ public class AnnotationValueImpl implements AnnotationValue {
      * {@inheritDoc}
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        Constants.Formatter fmtr = Constants.getFormatter(sb);
+	StringBuilder sb = new StringBuilder();
+	Constants.Formatter fmtr = Constants.getFormatter(sb);
 
-        fmtr.append(getValue());
-        return fmtr.toString();
+	fmtr.append(getValue());
+	return fmtr.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public Object getValue() {
-        ValueVisitor vv = new ValueVisitor();
-        attr.accept(vv);
-        return vv.value;
+	ValueVisitor vv = new ValueVisitor();
+	attr.accept(vv);
+	return vv.value;
     }
 
 
     public SourcePosition getPosition() {
-        // Imprecise implementation; just return position of enclosing
-        // annotation.
-        return (annotation == null) ? null : annotation.getPosition();
+	// Imprecise implementation; just return position of enclosing
+	// annotation.
+	return (annotation == null) ? null : annotation.getPosition();
     }
 
     private class ValueVisitor implements Attribute.Visitor {
 
-        public Object value;
+	public Object value;
+	
+	public void visitConstant(Attribute.Constant c) {
+	    value = Constants.decodeConstant(c.value, c.type);
+	}
 
-        public void visitConstant(Attribute.Constant c) {
-            value = Constants.decodeConstant(c.value, c.type);
-        }
+	public void visitClass(Attribute.Class c) {
+	    value = env.typeMaker.getType(
+			env.jctypes.erasure(c.type));
+	}
 
-        public void visitClass(Attribute.Class c) {
-            value = env.typeMaker.getType(
-                        env.jctypes.erasure(c.type));
-        }
+	public void visitEnum(Attribute.Enum e) {
+	    value = env.declMaker.getFieldDeclaration(e.value);
+	}
 
-        public void visitEnum(Attribute.Enum e) {
-            value = env.declMaker.getFieldDeclaration(e.value);
-        }
+	public void visitCompound(Attribute.Compound c) {
+	    value = new AnnotationMirrorImpl(env, c,
+					     (annotation == null) ?
+					     null :
+					     annotation.getDeclaration());
+	}
 
-        public void visitCompound(Attribute.Compound c) {
-            value = new AnnotationMirrorImpl(env, c,
-                                             (annotation == null) ?
-                                             null :
-                                             annotation.getDeclaration());
-        }
+	public void visitArray(Attribute.Array a) {
+	    ArrayList<AnnotationValue> vals =
+		new ArrayList<AnnotationValue>(a.values.length);
+	    for (Attribute elem : a.values) {
+		vals.add(new AnnotationValueImpl(env, elem, annotation));
+	    }
+	    value = vals;
+	}
 
-        public void visitArray(Attribute.Array a) {
-            ArrayList<AnnotationValue> vals =
-                new ArrayList<AnnotationValue>(a.values.length);
-            for (Attribute elem : a.values) {
-                vals.add(new AnnotationValueImpl(env, elem, annotation));
-            }
-            value = vals;
-        }
-
-        public void visitError(Attribute.Error e) {
-            value = "<error>";  // javac will already have logged an error msg
-        }
+	public void visitError(Attribute.Error e) {
+	    value = "<error>";	// javac will already have logged an error msg
+	}
     }
 }

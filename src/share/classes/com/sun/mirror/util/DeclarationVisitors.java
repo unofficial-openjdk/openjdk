@@ -55,7 +55,7 @@ public class DeclarationVisitors {
      * and post processing is needed, use {@link
      * DeclarationVisitors#NO_OP DeclarationVisitors.NO_OP} for the
      * other parameter.
-     *
+     * 
      * @param pre visitor representing processing to do before
      * visiting contained declarations.
      *
@@ -63,8 +63,8 @@ public class DeclarationVisitors {
      * visiting contained declarations.
      */
     public static DeclarationVisitor getDeclarationScanner(DeclarationVisitor pre,
-                                                           DeclarationVisitor post) {
-        return new DeclarationScanner(pre, post);
+							   DeclarationVisitor post) {
+	return new DeclarationScanner(pre, post);
     }
 
     /**
@@ -83,7 +83,7 @@ public class DeclarationVisitors {
      * after visiting the contained declarations.  If only one of pre
      * and post processing is needed, use {@link
      * DeclarationVisitors#NO_OP DeclarationVisitors.NO_OP} for the other parameter.
-     *
+     * 
      * @param pre visitor representing processing to do before
      * visiting contained declarations.
      *
@@ -91,7 +91,7 @@ public class DeclarationVisitors {
      * visiting contained declarations.
      */
     public static DeclarationVisitor getSourceOrderDeclarationScanner(DeclarationVisitor pre,
-                                                                      DeclarationVisitor post) {
-        return new SourceOrderDeclScanner(pre, post);
+								      DeclarationVisitor post) {
+	return new SourceOrderDeclScanner(pre, post);
     }
 }

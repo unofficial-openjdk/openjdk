@@ -38,10 +38,10 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
  */
 
 public class MethodDeclarationImpl extends ExecutableDeclarationImpl
-                                   implements MethodDeclaration {
+				   implements MethodDeclaration {
 
     MethodDeclarationImpl(AptEnv env, MethodSymbol sym) {
-        super(env, sym);
+	super(env, sym);
     }
 
 
@@ -49,13 +49,13 @@ public class MethodDeclarationImpl extends ExecutableDeclarationImpl
      * {@inheritDoc}
      */
     public TypeMirror getReturnType() {
-        return env.typeMaker.getType(sym.type.getReturnType());
+	return env.typeMaker.getType(sym.type.getReturnType());
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-        v.visitMethodDeclaration(this);
+	v.visitMethodDeclaration(this);
     }
 }

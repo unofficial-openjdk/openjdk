@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,7 +36,7 @@
  */
 
 public class TestBreakIterator extends JavadocTester {
-
+    
     private static final String BUG_ID = "4165985";
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "BreakIteratorTest.html",
@@ -46,7 +46,7 @@ public class TestBreakIterator extends JavadocTester {
         new String[] {
             "-d", BUG_ID, "-sourcepath", SRC_DIR,
             "-breakiterator", "pkg"};
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -56,14 +56,14 @@ public class TestBreakIterator extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

@@ -48,22 +48,22 @@ import com.sun.tools.javac.util.Position;
  * @author Neal Gafter (rewrite)
  */
 public class RootDocImpl extends DocImpl implements RootDoc {
-
+    
     /**
      * list of classes specified on the command line.
      */
     private List<ClassDocImpl> cmdLineClasses;
-
+    
     /**
      * list of packages specified on the command line.
      */
     private List<PackageDocImpl> cmdLinePackages;
-
+    
     /**
      * a collection of all options.
      */
     private List<String[]> options;
-
+    
     /**
      * Constructor used when reading source files.
      *
@@ -78,7 +78,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
         setPackages(env, packages);
         setClasses(env, classes);
     }
-
+    
     /**
      * Constructor used when reading class files.
      *
@@ -89,18 +89,18 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public RootDocImpl(DocEnv env, List<String> classes, List<String[]> options) {
         super(env, null);
         this.options = options;
-        cmdLinePackages = List.nil();
+	cmdLinePackages = List.nil();
         ListBuffer<ClassDocImpl> classList = new ListBuffer<ClassDocImpl>();
-        for (String className : classes) {
-            ClassDocImpl c = env.loadClass(className);
-            if (c == null)
-                env.error(null, "javadoc.class_not_found", className);
-            else
-                classList = classList.append(c);
-        }
-        cmdLineClasses = classList.toList();
+	for (String className : classes) {
+	    ClassDocImpl c = env.loadClass(className);
+	    if (c == null)
+		env.error(null, "javadoc.class_not_found", className);
+	    else
+		classList = classList.append(c);
+	}
+	cmdLineClasses = classList.toList();
     }
-
+    
     /**
      * Initialize classes information. Those classes are input from
      * command line.
@@ -110,7 +110,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
      */
     private void setClasses(DocEnv env, List<JCClassDecl> classes) {
         ListBuffer<ClassDocImpl> result = new ListBuffer<ClassDocImpl>();
-        for (JCClassDecl def : classes) {
+	for (JCClassDecl def : classes) {
             //### Do we want modifier check here?
             if (env.shouldDocument(def.sym)) {
                 ClassDocImpl cd = env.getClassDoc(def.sym);
@@ -122,7 +122,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
         }
         cmdLineClasses = result.toList();
     }
-
+    
     /**
      * Initialize packages information.
      *
@@ -131,7 +131,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
      */
     private void setPackages(DocEnv env, List<String> packages) {
         ListBuffer<PackageDocImpl> packlist = new ListBuffer<PackageDocImpl>();
-        for (String name : packages) {
+	for (String name : packages) {
             PackageDocImpl pkg = env.lookupPackage(name);
             if (pkg != null) {
                 pkg.isIncluded = true;
@@ -142,7 +142,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
         }
         cmdLinePackages = packlist.toList();
     }
-
+    
     /**
      * Command line options.
      *
@@ -163,7 +163,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public String[][] options() {
         return options.toArray(new String[options.length()][]);
     }
-
+    
     /**
      * Packages specified on the command line.
      */
@@ -171,33 +171,33 @@ public class RootDocImpl extends DocImpl implements RootDoc {
         return (PackageDoc[])cmdLinePackages
             .toArray(new PackageDocImpl[cmdLinePackages.length()]);
     }
-
+    
     /**
      * Classes and interfaces specified on the command line.
      */
     public ClassDoc[] specifiedClasses() {
         ListBuffer<ClassDocImpl> classesToDocument = new ListBuffer<ClassDocImpl>();
-        for (ClassDocImpl cd : cmdLineClasses) {
+	for (ClassDocImpl cd : cmdLineClasses) {
             cd.addAllClasses(classesToDocument, true);
         }
         return (ClassDoc[])classesToDocument.toArray(new ClassDocImpl[classesToDocument.length()]);
     }
-
+    
     /**
      * Return all classes and interfaces (including those inside
      * packages) to be documented.
      */
     public ClassDoc[] classes() {
         ListBuffer<ClassDocImpl> classesToDocument = new ListBuffer<ClassDocImpl>();
-        for (ClassDocImpl cd : cmdLineClasses) {
+	for (ClassDocImpl cd : cmdLineClasses) {
             cd.addAllClasses(classesToDocument, true);
         }
-        for (PackageDocImpl pd : cmdLinePackages) {
+	for (PackageDocImpl pd : cmdLinePackages) {
             pd.addAllClassesTo(classesToDocument);
         }
         return classesToDocument.toArray(new ClassDocImpl[classesToDocument.length()]);
     }
-
+    
     /**
      * Return a ClassDoc for the specified class/interface name
      *
@@ -210,7 +210,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public ClassDoc classNamed(String qualifiedName) {
         return env.lookupClass(qualifiedName);
     }
-
+    
     /**
      * Return a PackageDoc for the specified package name
      *
@@ -222,7 +222,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public PackageDoc packageNamed(String name) {
         return env.lookupPackage(name);
     }
-
+    
     /**
      * Return the name of this Doc item.
      *
@@ -231,7 +231,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public String name() {
         return "*RootDocImpl*";
     }
-
+    
     /**
      * Return the name of this Doc item.
      *
@@ -240,7 +240,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public String qualifiedName() {
         return "*RootDocImpl*";
     }
-
+    
     /**
      * Return true if this Doc is include in the active set.
      * RootDocImpl isn't even a program entity so it is always false.
@@ -248,7 +248,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public boolean isIncluded() {
         return false;
     }
-
+    
     /**
      * Print error message, increment error count.
      *
@@ -257,7 +257,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printError(String msg) {
         env.printError(msg);
     }
-
+    
     /**
      * Print error message, increment error count.
      *
@@ -266,7 +266,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printError(SourcePosition pos, String msg) {
         env.printError(pos, msg);
     }
-
+    
     /**
      * Print warning message, increment warning count.
      *
@@ -275,7 +275,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printWarning(String msg) {
         env.printWarning(msg);
     }
-
+    
     /**
      * Print warning message, increment warning count.
      *
@@ -284,7 +284,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printWarning(SourcePosition pos, String msg) {
         env.printWarning(pos, msg);
     }
-
+    
     /**
      * Print a message.
      *
@@ -293,7 +293,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printNotice(String msg) {
         env.printNotice(msg);
     }
-
+    
     /**
      * Print a message.
      *
@@ -302,20 +302,20 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     public void printNotice(SourcePosition pos, String msg) {
         env.printNotice(pos, msg);
     }
-
+    
     /**
      * Return the path of the overview file and null if it does not exist.
      * @return the path of the overview file and null if it does not exist.
      */
     private String getOverviewPath() {
-        for (String[] opt : options) {
+	for (String[] opt : options) {
             if (opt[0].equals("-overview")) {
                 return opt[1];
             }
         }
         return null;
     }
-
+    
     /**
      * Do lazy initialization of "documentation" string.
      */
@@ -340,7 +340,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
         }
         return documentation;
     }
-
+    
     /**
      * Return the source position of the entity, or null if
      * no position is available.

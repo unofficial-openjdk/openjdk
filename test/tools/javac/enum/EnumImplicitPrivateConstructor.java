@@ -53,107 +53,107 @@ public enum EnumImplicitPrivateConstructor {
 
     private int r, g, b;
     EnumImplicitPrivateConstructor(int r, int g, int b) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
+	this.r = r;
+	this.g = g;
+	this.b = b;
     }
-
+    
     /*
-     * Using reflection, Verify that
+     * Using reflection, Verify that 
      * 1. all non-synthetic constructors of enum classes are marked as private.
      * 2. top-level enum classes are marked as static
      * 3. enum's are marked final and abstract as appropriate
      * 4. enum constructors *cannot* be invoked reflectively
      */
     public static void main(String argv[]) throws Exception {
-        boolean passed = true;
+	boolean passed = true;
 
-        Collection<Class> classes = new LinkedHashSet<Class>();
+	Collection<Class> classes = new LinkedHashSet<Class>();
+	
+	classes.add(Class.forName("EnumImplicitPrivateConstructor"));
+	classes.add(Class.forName("EnumImplicitPrivateConstructor$AnotherEnum"));
+	classes.add(Class.forName("EnumImplicitPrivateConstructor$YetAnotherEnum"));
+	classes.add(Class.forName("EnumImplicitPrivateConstructor$OneMoreEnum"));
 
-        classes.add(Class.forName("EnumImplicitPrivateConstructor"));
-        classes.add(Class.forName("EnumImplicitPrivateConstructor$AnotherEnum"));
-        classes.add(Class.forName("EnumImplicitPrivateConstructor$YetAnotherEnum"));
-        classes.add(Class.forName("EnumImplicitPrivateConstructor$OneMoreEnum"));
+	// Add classes of specialized enum constants
+	for(Enum e: YetAnotherEnum.values())
+	    classes.add(e.getClass());
 
-        // Add classes of specialized enum constants
-        for(Enum e: YetAnotherEnum.values())
-            classes.add(e.getClass());
+	for(Class clazz: classes) {
+	    System.out.println("Testing class " + clazz);
+	    
+	    int classModifiers = clazz.getModifiers();
 
-        for(Class clazz: classes) {
-            System.out.println("Testing class " + clazz);
+	    // Why is this cast needed?
+	    ExpectedModifiers em = (ExpectedModifiers)clazz.getAnnotation(ExpectedModifiers.class);
+	    if (em != null) {
+		System.out.println("\tTesting expected modifiers");
+		int expected = em.value();
 
-            int classModifiers = clazz.getModifiers();
+		if (expected != (classModifiers & (Modifier.ABSTRACT|Modifier.FINAL|Modifier.STATIC))) {
+		    passed = false;
+		    System.out.println("\tFAILED: Expected 0x" + Integer.toHexString(expected) +
+				       " got 0x" +Integer.toHexString(classModifiers));
+		}
+	    }
+	    
+	    for(Constructor ctor: clazz.getDeclaredConstructors() ) {
+		System.out.println("\tTesting constructor " + ctor);
 
-            // Why is this cast needed?
-            ExpectedModifiers em = (ExpectedModifiers)clazz.getAnnotation(ExpectedModifiers.class);
-            if (em != null) {
-                System.out.println("\tTesting expected modifiers");
-                int expected = em.value();
-
-                if (expected != (classModifiers & (Modifier.ABSTRACT|Modifier.FINAL|Modifier.STATIC))) {
-                    passed = false;
-                    System.out.println("\tFAILED: Expected 0x" + Integer.toHexString(expected) +
-                                       " got 0x" +Integer.toHexString(classModifiers));
-                }
-            }
-
-            for(Constructor ctor: clazz.getDeclaredConstructors() ) {
-                System.out.println("\tTesting constructor " + ctor);
-
-                // We don't need no stinkin' access rules
+		// We don't need no stinkin' access rules
                 try {
                     ctor.setAccessible(true);
                 } catch (java.security.AccessControlException ex) {
                 }
 
-                int modifiers = ctor.getModifiers();
+		int modifiers = ctor.getModifiers();
+		
+		/*
+		 * If clazz is for a specialized enum constant, the
+		 * class will have the ENUM bit set but clazz.isEnum()
+		 * will be false.  A constructor in such a class must
+		 * be non-private to allow the parent class to call
+		 * the constructor.  Therefore, only impose the
+		 * private constructor check for genuine isEnum
+		 * classes.
+		 */
+		if (clazz.isEnum()) {
+		    if ((modifiers & Modifier.PRIVATE) == 0 &&
+			! ctor.isSynthetic() ) {
+			passed = false;
+			System.out.println("\tFAILED: Constructor not marked private: modifiers 0x" +
+					   Integer.toHexString(modifiers));
+		    }
+		}
 
-                /*
-                 * If clazz is for a specialized enum constant, the
-                 * class will have the ENUM bit set but clazz.isEnum()
-                 * will be false.  A constructor in such a class must
-                 * be non-private to allow the parent class to call
-                 * the constructor.  Therefore, only impose the
-                 * private constructor check for genuine isEnum
-                 * classes.
-                 */
-                if (clazz.isEnum()) {
-                    if ((modifiers & Modifier.PRIVATE) == 0 &&
-                        ! ctor.isSynthetic() ) {
-                        passed = false;
-                        System.out.println("\tFAILED: Constructor not marked private: modifiers 0x" +
-                                           Integer.toHexString(modifiers));
-                    }
-                }
-
-                try {
-                    // Should get exception trying to invoke
-                    Object o = null;
+		try {
+		    // Should get exception trying to invoke
+		    Object o = null;
                     try {
                         o = ctor.newInstance("abc", 123);
                     } catch (IllegalAccessException ex) {
                     }
 
-                    /*
-                     * A better test would query the number (and type)
-                     * of parameters and create an appropriate
-                     * argument list since IllegalArgumentException can be
-                     * thrown for just using the wrong number of arguments.
-                     */
+		    /*
+		     * A better test would query the number (and type)
+		     * of parameters and create an appropriate
+		     * argument list since IllegalArgumentException can be 
+		     * thrown for just using the wrong number of arguments.
+		     */
+		    
+		    if (o != null) {
+			passed = false;
+			System.err.println("Error: Created new enum object!");
+			System.err.println(o.getClass());
+			System.err.println(o.toString());
+		    }
+		} catch (IllegalArgumentException iae) {}
+		
+	    }
+	}
 
-                    if (o != null) {
-                        passed = false;
-                        System.err.println("Error: Created new enum object!");
-                        System.err.println(o.getClass());
-                        System.err.println(o.toString());
-                    }
-                } catch (IllegalArgumentException iae) {}
-
-            }
-        }
-
-        if (!passed)
-            throw new RuntimeException("Error during testing.");
+	if (!passed)
+	    throw new RuntimeException("Error during testing.");
     }
 
 
@@ -162,9 +162,9 @@ public enum EnumImplicitPrivateConstructor {
      */
     @ExpectedModifiers(Modifier.FINAL|Modifier.STATIC)
     enum AnotherEnum {
-        YELLOW,
-        CYAN,
-        MAGENTA;
+	YELLOW,
+	CYAN,
+	MAGENTA;
     }
 
     /*
@@ -172,19 +172,19 @@ public enum EnumImplicitPrivateConstructor {
      */
     @ExpectedModifiers(Modifier.STATIC)
     enum YetAnotherEnum {
-        GREEN {
-            int value(){ return 1;}
-        },
+	GREEN {
+	    int value(){ return 1;}
+	},
 
-        ORANGE {
-            int value(){ return 2;}
-        },
+	ORANGE {
+	    int value(){ return 2;}
+	},
+    
+	VIOLET {
+	    int value(){ return 3;}
+	};
 
-        VIOLET {
-            int value(){ return 3;}
-        };
-
-        int value(){ return 0;}
+	int value(){ return 0;}
     }
 
     /*
@@ -192,19 +192,19 @@ public enum EnumImplicitPrivateConstructor {
      */
     @ExpectedModifiers(Modifier.ABSTRACT|Modifier.STATIC)
     enum OneMoreEnum {
-        SANGUINE {
-            int value(){ return 1;}
-        },
+	SANGUINE {
+	    int value(){ return 1;}
+	},
+	
+	VERDANT {
+	    int value(){ return 2;}
+	},
+    
+	CERULEAN {
+	    int value(){ return 3;}
+	};
 
-        VERDANT {
-            int value(){ return 2;}
-        },
-
-        CERULEAN {
-            int value(){ return 3;}
-        };
-
-        abstract int value();
+	abstract int value();
     }
 }
 

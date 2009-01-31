@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 4904495
  * @summary Compilation may go awry if we ask a symbol for its flags during
- *          javac's Enter phase, before the flags are generally available.
+ *	    javac's Enter phase, before the flags are generally available.
  */
 
 import com.sun.javadoc.*;
@@ -33,22 +33,22 @@ import com.sun.javadoc.*;
 public class FlagsTooEarly extends Doclet {
 
     public static void main(String[] args) {
-        String thisFile = "" +
-            new java.io.File(System.getProperty("test.src", "."),
-                             "FlagsTooEarly.java");
+	String thisFile = "" +
+	    new java.io.File(System.getProperty("test.src", "."),
+			     "FlagsTooEarly.java");
 
-        if (com.sun.tools.javadoc.Main.execute(
-                "javadoc",
-                "FlagsTooEarly",
-                new String[] {"-Xwerror", thisFile}) != 0)
-            throw new Error("Javadoc encountered warnings or errors.");
+	if (com.sun.tools.javadoc.Main.execute(
+		"javadoc",
+		"FlagsTooEarly",
+		new String[] {"-Xwerror", thisFile}) != 0)
+	    throw new Error("Javadoc encountered warnings or errors.");
     }
 
     /*
      * The world's simplest doclet.
      */
     public static boolean start(RootDoc root) {
-        return true;
+	return true;
     }
 
 

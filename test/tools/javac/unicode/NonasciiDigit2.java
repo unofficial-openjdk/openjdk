@@ -31,7 +31,7 @@
  */
 public class NonasciiDigit2 {
     public static void main(String[] args) {
-        // error: only ASCII allowed in constants
-        int i = 1\uff11;
+	// error: only ASCII allowed in constants
+	int i = 1\uff11;
     }
 }

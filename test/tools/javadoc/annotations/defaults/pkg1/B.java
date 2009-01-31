@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,11 +24,11 @@
 package pkg1;
 
 public interface B {
-    @A                  void m1();
-    @A("flip")          void m2();
-    @A(value="flop")    void m3();
+    @A			void m1();
+    @A("flip")		void m2();
+    @A(value="flop")	void m3();
     @A(c=Boolean.class, w=Long.class, sa={})
-                        void m4();
-    @A(i=0, e=java.lang.annotation.ElementType.FIELD)   void m5();
-    @A(a=@A("splat"))   void m6();
+			void m4();
+    @A(i=0, e=java.lang.annotation.ElementType.FIELD)	void m5();
+    @A(a=@A("splat"))	void m6();
 }

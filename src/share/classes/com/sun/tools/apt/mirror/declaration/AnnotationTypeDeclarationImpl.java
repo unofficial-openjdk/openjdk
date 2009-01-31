@@ -39,10 +39,10 @@ import com.sun.tools.javac.code.Symbol.*;
  */
 
 public class AnnotationTypeDeclarationImpl extends InterfaceDeclarationImpl
-                                           implements AnnotationTypeDeclaration
+					   implements AnnotationTypeDeclaration
 {
     AnnotationTypeDeclarationImpl(AptEnv env, ClassSymbol sym) {
-        super(env, sym);
+	super(env, sym);
     }
 
 
@@ -50,14 +50,14 @@ public class AnnotationTypeDeclarationImpl extends InterfaceDeclarationImpl
      * {@inheritDoc}
      */
     public Collection<AnnotationTypeElementDeclaration> getMethods() {
-        return identityFilter.filter(super.getMethods(),
-                                     AnnotationTypeElementDeclaration.class);
+	return identityFilter.filter(super.getMethods(),
+				     AnnotationTypeElementDeclaration.class);
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(DeclarationVisitor v) {
-        v.visitAnnotationTypeDeclaration(this);
+	v.visitAnnotationTypeDeclaration(this);
     }
 }

@@ -37,47 +37,47 @@ import static com.sun.mirror.util.DeclarationVisitors.*;
 /*
  * Used to verify counts from different kinds of declaration scanners.
  */
-public class Counter implements AnnotationProcessorFactory {
+public class Counter implements AnnotationProcessorFactory { 
     static class CounterProc implements AnnotationProcessor {
-        static class CountingVisitor extends SimpleDeclarationVisitor {
-            int count;
-            int count() {
-                return count;
-            }
+	static class CountingVisitor extends SimpleDeclarationVisitor {
+	    int count;
+	    int count() {
+		return count;
+	    }
 
-            CountingVisitor() {
-                count = 0;
-            }
+	    CountingVisitor() {
+		count = 0;
+	    }
+		
+	    public void visitDeclaration(Declaration d) {
+		count++;
+		System.out.println(d.getSimpleName());
+	    }
+	}
 
-            public void visitDeclaration(Declaration d) {
-                count++;
-                System.out.println(d.getSimpleName());
-            }
-        }
+	AnnotationProcessorEnvironment env;
+	CounterProc(AnnotationProcessorEnvironment env) {
+	    this.env = env;
+	}
+	    
+	public void process() {
+	    for(TypeDeclaration td: env.getSpecifiedTypeDeclarations() ) {
+		CountingVisitor sourceOrder = new CountingVisitor();
+		CountingVisitor someOrder = new CountingVisitor();
 
-        AnnotationProcessorEnvironment env;
-        CounterProc(AnnotationProcessorEnvironment env) {
-            this.env = env;
-        }
+		System.out.println("Source Order Scanner");
+		td.accept(getSourceOrderDeclarationScanner(sourceOrder,
+							   NO_OP));
 
-        public void process() {
-            for(TypeDeclaration td: env.getSpecifiedTypeDeclarations() ) {
-                CountingVisitor sourceOrder = new CountingVisitor();
-                CountingVisitor someOrder = new CountingVisitor();
+		System.out.println("\nSome Order Scanner");
+		td.accept(getDeclarationScanner(someOrder,
+						NO_OP));
 
-                System.out.println("Source Order Scanner");
-                td.accept(getSourceOrderDeclarationScanner(sourceOrder,
-                                                           NO_OP));
+		if (sourceOrder.count() != someOrder.count() )
+		    throw new RuntimeException("Counts from different scanners don't agree");
+	    }
 
-                System.out.println("\nSome Order Scanner");
-                td.accept(getDeclarationScanner(someOrder,
-                                                NO_OP));
-
-                if (sourceOrder.count() != someOrder.count() )
-                    throw new RuntimeException("Counts from different scanners don't agree");
-            }
-
-        }
+	}
     }
 
     static Collection<String> supportedTypes;
@@ -101,7 +101,7 @@ public class Counter implements AnnotationProcessorFactory {
     }
 
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-                                               AnnotationProcessorEnvironment env) {
+					       AnnotationProcessorEnvironment env) {
         return new CounterProc(env);
     }
 

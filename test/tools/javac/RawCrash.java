@@ -36,7 +36,7 @@ class B<E> {
 }
 class C<E> {
     public B<E> iter() {
-        return new D(); // note type params missing
+	return new D(); // note type params missing
     }
     class D<E> extends B<E> {
     }

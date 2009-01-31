@@ -37,7 +37,7 @@ public class CastInterface2Array {
     int[] k;
 
     void foo() {
-        k = (int[])s;
+	k = (int[])s;
     }
 
     // A similar case to verify that

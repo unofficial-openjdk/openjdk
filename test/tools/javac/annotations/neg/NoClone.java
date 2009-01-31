@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test    @(#)NoObjectMethods.java	1.1 06/05/11
  * @bug     6393539
  * @summary no compile-time error for clone, etc. in annotation type
  * @author  Peter von der Ah\u00e9

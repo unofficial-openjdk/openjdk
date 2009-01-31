@@ -31,12 +31,13 @@ package com.sun.javadoc;
  * plain text.  (The plain text might be a reference
  * to something not online, such as a printed book, or be a hard-coded
  * HTML link.)  The reference can either be inline with the comment,
- * using <code>&#123;@link}</code>, or a separate block comment,
+ * using <code>&#123;@link}</code>, or a separate block comment, 
  * using <code>@see</code>.
  * Method <code>name()</code> returns "@link" (no curly braces) or
  * "@see", depending on the tag.
  * Method <code>kind()</code> returns "@see" for both tags.
  *
+ * @version 06/10/97
  * @author Kaiyang Liu (original)
  * @author Robert Field (rewrite)
  * @author Atul M Dambalkar
@@ -58,7 +59,7 @@ public interface SeeTag extends Tag {
     /**
      * Get the package doc when <code>@see</code> references only a package.
      * Return null if the package cannot be found, or if
-     * <code>@see</code> references any other element (class,
+     * <code>@see</code> references any other element (class, 
      * interface, field, constructor, method) or non-element.
      * For example, for:
      * <p>
@@ -113,7 +114,7 @@ public interface SeeTag extends Tag {
     /**
      * Get the member doc for the field, constructor or method
      * referenced by <code>@see</code>. Return null if the member cannot
-     * be found or if the reference is to any other element or to any
+     * be found or if the reference is to any other element or to any 
      * non-element.
      * References to member classes (nested classes) return null.
      * For example, for:

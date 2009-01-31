@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,7 +35,7 @@ public class SubClass extends BaseClass {
 
   /*************************************************
    * This method should override the same package
-   * private method in the base class because they
+   * private method in the base class because they 
    * are in the same package.
    */
   public void packagePrivateMethod() {}
@@ -46,6 +46,6 @@ public class SubClass extends BaseClass {
    *
    */
   public void privateMethod() {}
-
+  
   public void overridenMethodWithDocsToCopy() {}
 }

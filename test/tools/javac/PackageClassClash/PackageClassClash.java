@@ -36,6 +36,6 @@ public class PackageClassClash {
     // Problem affects synthetic names, so force an access method as well.
     private void foo() {}
     class Inner {
-        private void bar() { foo(); }
+	private void bar() { foo(); }
     }
 }

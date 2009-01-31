@@ -48,62 +48,62 @@ public class TypeParamBounds extends AbstractProcessor {
     Types types;
 
     public void init(ProcessingEnvironment penv) {
-        super.init(penv);
-        elements = penv.getElementUtils();
-        types = penv.getTypeUtils();
+	super.init(penv);
+	elements = penv.getElementUtils();
+	types = penv.getTypeUtils();
     }
 
     public boolean process(Set<? extends TypeElement> annoTypes,
-                           RoundEnvironment round) {
-        if (!round.processingOver())
-            doit(annoTypes, round);
-        return true;
+			   RoundEnvironment round) {
+	if (!round.processingOver())
+	    doit(annoTypes, round);
+	return true;
     }
 
     private void doit(Set<? extends TypeElement> annoTypes,
-                      RoundEnvironment round) {
-        TypeElement gen = elements.getTypeElement("TypeParamBounds.Gen");
+		      RoundEnvironment round) {
+	TypeElement gen = elements.getTypeElement("TypeParamBounds.Gen");
 
-        // For each type parameter of Gen, compare its bounds with the
-        // bounds that are expected.
-        //
-        for (TypeParameterElement tparam : gen.getTypeParameters()) {
-            System.out.println(tparam);
-            List<? extends TypeMirror> bounds = tparam.getBounds();
-            String[] expected = Gen.boundNames.get(tparam + "");
+	// For each type parameter of Gen, compare its bounds with the
+	// bounds that are expected.
+	//
+	for (TypeParameterElement tparam : gen.getTypeParameters()) {
+	    System.out.println(tparam);
+	    List<? extends TypeMirror> bounds = tparam.getBounds();
+	    String[] expected = Gen.boundNames.get(tparam + "");
 
-            if (bounds.size() != expected.length)
-                throw new AssertionError();
-            int i = 0;
-            for (TypeMirror bound : bounds) {
-                Name got = types.asElement(bound).getSimpleName();
-                String shoulda = expected[i++];
-                System.out.println("  " + got);
-                if (!got.contentEquals(shoulda))
-                    throw new AssertionError(shoulda);
-            }
-        }
+	    if (bounds.size() != expected.length)
+		throw new AssertionError();
+	    int i = 0;
+	    for (TypeMirror bound : bounds) {
+		Name got = types.asElement(bound).getSimpleName();
+		String shoulda = expected[i++];
+		System.out.println("  " + got);
+		if (!got.contentEquals(shoulda))
+		    throw new AssertionError(shoulda);
+	    }
+	}
     }
 
 
     // Fodder for the processor
 
     static class Gen<T, U extends Object, V extends Number, W extends U,
-                     X extends Runnable, Y extends CharSequence & Runnable,
-                     Z extends Object & Runnable> {
+		     X extends Runnable, Y extends CharSequence & Runnable,
+		     Z extends Object & Runnable> {
 
-        // The names of the bounds of each type parameter of Gen.
-        static Map<String, String[]> boundNames =
-                new HashMap<String, String[]>();
+	// The names of the bounds of each type parameter of Gen.
+	static Map<String, String[]> boundNames =
+		new HashMap<String, String[]>();
 
-        static {
-            boundNames.put("T", new String[] {"Object"});
-            boundNames.put("U", new String[] {"Object"});
-            boundNames.put("V", new String[] {"Number"});
-            boundNames.put("W", new String[] {"U"});
-            boundNames.put("X", new String[] {"Runnable"});
-            boundNames.put("Y", new String[] {"CharSequence", "Runnable"});
-            boundNames.put("Z", new String[] {"Object", "Runnable"});
-        }
+	static {
+	    boundNames.put("T", new String[] {"Object"});
+	    boundNames.put("U", new String[] {"Object"});
+	    boundNames.put("V", new String[] {"Number"});
+	    boundNames.put("W", new String[] {"U"});
+	    boundNames.put("X", new String[] {"Runnable"});
+	    boundNames.put("Y", new String[] {"CharSequence", "Runnable"});
+	    boundNames.put("Z", new String[] {"Object", "Runnable"});
+	}
     }
 }

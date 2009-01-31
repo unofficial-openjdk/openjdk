@@ -34,9 +34,9 @@ import java.util.*;
  * @author Atul M Dambalkar
  */
 public class DeprecatedAPIListBuilder {
-
+    
     public static final int NUM_TYPES = 11;
-
+    
     public static final int INTERFACE = 0;
     public static final int CLASS = 1;
     public static final int ENUM = 2;
@@ -48,12 +48,12 @@ public class DeprecatedAPIListBuilder {
     public static final int CONSTRUCTOR = 8;
     public static final int ENUM_CONSTANT = 9;
     public static final int ANNOTATION_TYPE_MEMBER = 10;
-
+    
     /**
      * List of deprecated type Lists.
      */
     private List deprecatedLists;
-
+    
 
     /**
      * Constructor.
@@ -64,7 +64,7 @@ public class DeprecatedAPIListBuilder {
         deprecatedLists = new ArrayList();
         for (int i = 0; i < NUM_TYPES; i++) {
             deprecatedLists.add(i, new ArrayList());
-        }
+        }        
         buildDeprecatedAPIInfo(root);
     }
 
@@ -101,7 +101,7 @@ public class DeprecatedAPIListBuilder {
                 composeDeprecatedList(getList(ENUM_CONSTANT), cd.enumConstants());
             }
             if (cd.isAnnotationType()) {
-                composeDeprecatedList(getList(ANNOTATION_TYPE_MEMBER),
+                composeDeprecatedList(getList(ANNOTATION_TYPE_MEMBER), 
                     ((AnnotationTypeDoc) cd).elements());
             }
         }
@@ -134,16 +134,16 @@ public class DeprecatedAPIListBuilder {
 
     /**
      * Return the list of deprecated Doc objects of a given type.
-     *
+     * 
      * @param the constant representing the type of list being returned.
      */
     public List getList(int type) {
         return (List) deprecatedLists.get(type);
     }
-
+    
     /**
      * Return true if the list of a given type has size greater than 0.
-     *
+     * 
      * @param type the type of list being checked.
      */
     public boolean hasDocumentation(int type) {

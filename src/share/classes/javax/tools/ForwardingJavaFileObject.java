@@ -47,7 +47,7 @@ public class ForwardingJavaFileObject<F extends JavaFileObject>
      * @param fileObject delegate to this file object
      */
     protected ForwardingJavaFileObject(F fileObject) {
-        super(fileObject);
+	super(fileObject);
     }
 
     public Kind getKind() {

@@ -50,16 +50,16 @@ public class MirroredTypesException extends RuntimeException {
     private static final long serialVersionUID = 269;
 
     // Should this be non-final for a custum readObject method?
-    private final transient List<? extends TypeMirror> types;   // cannot be serialized
-
+    private final transient List<? extends TypeMirror> types;	// cannot be serialized
+    
     /**
      * Constructs a new MirroredTypesException for the specified types.
      *
      * @param types  the types being accessed
      */
     public MirroredTypesException(List<? extends TypeMirror> types) {
-        super("Attempt to access Class objects for TypeMirrors " + types);
-        this.types = Collections.unmodifiableList(types);
+	super("Attempt to access Class objects for TypeMirrors " + types);
+	this.types = Collections.unmodifiableList(types);
     }
 
     /**
@@ -70,6 +70,6 @@ public class MirroredTypesException extends RuntimeException {
      * @return the type mirrors in construction order, or {@code null} if unavailable
      */
     public List<? extends TypeMirror> getTypeMirrors() {
-        return types;
+	return types;
     }
 }

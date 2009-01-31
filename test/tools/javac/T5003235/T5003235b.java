@@ -14,7 +14,7 @@ class Outer {
     }
 
     private class Inner {
-        int k = 100;
+	int k = 100;
         protected int l = 100;
         public int m = 100;
         protected int n = 100;

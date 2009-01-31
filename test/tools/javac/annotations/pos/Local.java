@@ -32,6 +32,6 @@
 
 class Local {
     {
-        @Deprecated int x;
+	@Deprecated int x;
     }
 }

@@ -45,59 +45,59 @@ abstract class AbstractTypeImpl implements com.sun.javadoc.Type {
     protected final Type type;
 
     protected AbstractTypeImpl(DocEnv env, Type type) {
-        this.env = env;
-        this.type = type;
+	this.env = env;
+	this.type = type;
     }
 
     public String typeName() {
-        return type.tsym.name.toString();
+	return type.tsym.name.toString();
     }
 
     public String qualifiedTypeName() {
-        return type.tsym.getQualifiedName().toString();
+	return type.tsym.getQualifiedName().toString();
     }
 
     public String simpleTypeName() {
-        return type.tsym.name.toString();
+	return type.tsym.name.toString();
     }
 
     public String name() {
-        return typeName();
+	return typeName();
     }
 
     public String qualifiedName() {
-        return qualifiedTypeName();
+	return qualifiedTypeName();
     }
 
     public String toString() {
-        return qualifiedTypeName();
+	return qualifiedTypeName();
     }
 
     public String dimension() {
-        return "";
+	return "";
     }
 
     public boolean isPrimitive() {
-        return false;
+	return false;
     }
 
     public ClassDoc asClassDoc() {
-        return null;
+	return null;
     }
 
     public TypeVariable asTypeVariable() {
-        return null;
+	return null;
     }
 
     public WildcardType asWildcardType() {
-        return null;
+	return null;
     }
 
     public ParameterizedType asParameterizedType() {
-        return null;
+	return null;
     }
 
     public AnnotationTypeDoc asAnnotationTypeDoc() {
-        return null;
+	return null;
     }
 }

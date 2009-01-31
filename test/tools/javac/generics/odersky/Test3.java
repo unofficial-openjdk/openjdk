@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @ bug
+ * @ bug 
  * @summary Positive regression test from odersky
  * @author odersky
  *
@@ -49,9 +49,9 @@ class Test3 {
     static <A> A id(A x) { return x; }
 
     public static void main(String[] args) {
-        I i = f(c);
-        J j = f(d);
-        f(c);
-        f(d);
+	I i = f(c);
+	J j = f(d);
+	f(c);
+	f(d);
     }
 }

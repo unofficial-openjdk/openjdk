@@ -240,65 +240,65 @@ public class TestOperators extends AbstractProcessor {
 
     @TestMe(INT_LITERAL)
     public Object test_INT_LITERAL() {
-        return 0;
+	return 0;
     }
 
     @TestMe(LONG_LITERAL)
     public Object test_LONG_LITERAL() {
-        return 0L;
+	return 0L;
     }
 
     @TestMe(FLOAT_LITERAL)
     public Object test_FLOAT_LITERAL() {
-        return 0.0F;
+	return 0.0F;
     }
 
     @TestMe(DOUBLE_LITERAL)
     public Object test_DOUBLE_LITERAL() {
-        return 0.0;
+	return 0.0;
     }
 
     @TestMe(BOOLEAN_LITERAL)
     public Object test_BOOLEAN_LITERAL() {
-        return true;
+	return true;
     }
 
     @TestMe(CHAR_LITERAL)
     public Object test_CHAR_LITERAL() {
-        return 'a';
+	return 'a';
     }
 
     @TestMe(STRING_LITERAL)
     public Object test_STRING_LITERAL() {
-        return "a";
+	return "a";
     }
 
     @TestMe(NULL_LITERAL)
     public Object test_NULL_LITERAL() {
-        return null;
+	return null;
     }
 
     @TestMe(UNBOUNDED_WILDCARD)
     public Set<?> test_UNBOUNDED_WILDCARD() {
-        return null;
+	return null;
     }
 
     @TestMe(EXTENDS_WILDCARD)
     public Set<? extends Number> test_EXTENDS_WILDCARD() {
-        return null;
+	return null;
     }
 
     @TestMe(SUPER_WILDCARD)
     public Set<? super Number> test_SUPER_WILDCARD() {
-        return null;
+	return null;
     }
 
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment)
     {
         final Trees trees = Trees.instance(processingEnv);
-        final Messager log = processingEnv.getMessager();
-        final Elements elements = processingEnv.getElementUtils();
+	final Messager log = processingEnv.getMessager();
+	final Elements elements = processingEnv.getElementUtils();
         class Scan extends ElementScanner6<Void,Void> {
             @Override
             public Void visitExecutable(ExecutableElement e, Void p) {
@@ -311,22 +311,22 @@ public class TestOperators extends AbstractProcessor {
                     Tree.Kind kind = info.value();
                     MethodTree node = trees.getTree(e);
                     debug = node;
-                    Tree testNode;
-                    switch (kind) {
-                    case UNBOUNDED_WILDCARD:
-                    case EXTENDS_WILDCARD:
-                    case SUPER_WILDCARD:
-                        ParameterizedTypeTree typeTree;
-                        typeTree = (ParameterizedTypeTree) node.getReturnType();
-                        testNode = typeTree.getTypeArguments().get(0);
-                        break;
-                    default:
-                        ReturnTree returnNode;
-                        returnNode = (ReturnTree) node.getBody().getStatements().get(0);
-                        testNode = returnNode.getExpression();
-                    }
+		    Tree testNode;
+		    switch (kind) {
+		    case UNBOUNDED_WILDCARD:
+		    case EXTENDS_WILDCARD:
+		    case SUPER_WILDCARD:
+			ParameterizedTypeTree typeTree;
+			typeTree = (ParameterizedTypeTree) node.getReturnType();
+			testNode = typeTree.getTypeArguments().get(0);
+			break;
+		    default:
+			ReturnTree returnNode;
+			returnNode = (ReturnTree) node.getBody().getStatements().get(0);
+			testNode = returnNode.getExpression();
+		    }
                     if (testNode.getKind() != kind) {
-                        log.printMessage(ERROR, testNode.getKind() + " != " + kind, e);
+			log.printMessage(ERROR, testNode.getKind() + " != " + kind, e);
                         throw new AssertionError(testNode);
                     }
                     System.err.format("OK: %32s %s%n", kind, testNode);

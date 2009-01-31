@@ -38,7 +38,7 @@ import javax.lang.model.type.*;
  *     <li> {@code VariableElement} (representing an enum constant)
  *     <li> {@code AnnotationMirror}
  *     <li> {@code List<? extends AnnotationValue>}
- *              (representing the elements, in declared order, if the value is an array)
+ *		(representing the elements, in declared order, if the value is an array)
  * </ul>
  *
  * @author Joseph D. Darcy

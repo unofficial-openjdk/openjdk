@@ -48,13 +48,13 @@ import static javax.tools.StandardLocation.SOURCE_PATH;
 public class Old199 {
 
     private Old199() {}
-
+    
     public static String getPath(FileObject jfo) {
-        return JavacFileManager.getJavacFileName(jfo);
+	return JavacFileManager.getJavacFileName(jfo);
     }
 
     public static String getName(FileObject jfo) {
-        return JavacFileManager.getJavacBaseFileName(jfo);
+	return JavacFileManager.getJavacBaseFileName(jfo);
     }
 
 }

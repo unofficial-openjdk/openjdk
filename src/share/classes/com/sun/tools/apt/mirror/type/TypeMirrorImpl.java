@@ -43,8 +43,8 @@ public abstract class TypeMirrorImpl implements TypeMirror {
 
 
     protected TypeMirrorImpl(AptEnv env, Type type) {
-        this.env = env;
-        this.type = type;
+	this.env = env;
+	this.type = type;
     }
 
 
@@ -52,25 +52,25 @@ public abstract class TypeMirrorImpl implements TypeMirror {
      * {@inheritDoc}
      */
     public String toString() {
-        return type.toString();
+	return type.toString();
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean equals(Object obj) {
-        if (obj instanceof TypeMirrorImpl) {
-            TypeMirrorImpl that = (TypeMirrorImpl) obj;
-            return env.jctypes.isSameType(this.type, that.type);
-        } else {
-            return false;
-        }
+	if (obj instanceof TypeMirrorImpl) {
+	    TypeMirrorImpl that = (TypeMirrorImpl) obj;
+	    return env.jctypes.isSameType(this.type, that.type);
+	} else {
+	    return false;
+	}
     }
 
     /**
      * {@inheritDoc}
      */
     public int hashCode() {
-        return env.jctypes.hashCode(type);
+	return env.jctypes.hashCode(type);
     }
 }

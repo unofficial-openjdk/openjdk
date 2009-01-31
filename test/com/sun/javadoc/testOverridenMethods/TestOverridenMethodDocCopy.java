@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,15 +34,15 @@
  */
 
 public class TestOverridenMethodDocCopy extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4368820";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg1", "pkg2"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg1" + FS + "SubClass.html",
@@ -52,7 +52,7 @@ public class TestOverridenMethodDocCopy extends JavadocTester {
         }
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -62,14 +62,14 @@ public class TestOverridenMethodDocCopy extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

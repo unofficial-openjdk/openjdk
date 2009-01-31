@@ -38,10 +38,10 @@ import com.sun.tools.javac.code.Type;
  */
 
 public class AnnotationTypeImpl extends InterfaceTypeImpl
-                                implements AnnotationType {
+				implements AnnotationType {
 
     AnnotationTypeImpl(AptEnv env, Type.ClassType type) {
-        super(env, type);
+	super(env, type);
     }
 
 
@@ -49,13 +49,13 @@ public class AnnotationTypeImpl extends InterfaceTypeImpl
      * {@inheritDoc}
      */
     public AnnotationTypeDeclaration getDeclaration() {
-        return (AnnotationTypeDeclaration) super.getDeclaration();
+	return (AnnotationTypeDeclaration) super.getDeclaration();
     }
 
     /**
      * {@inheritDoc}
      */
     public void accept(TypeVisitor v) {
-        v.visitAnnotationType(this);
+	v.visitAnnotationType(this);
     }
 }

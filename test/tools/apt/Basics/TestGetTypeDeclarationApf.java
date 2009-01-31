@@ -67,73 +67,73 @@ public class TestGetTypeDeclarationApf implements AnnotationProcessorFactory {
         }
 
         public void process() {
-            String classNames[] = {
-                "java.lang.String",             // should be already available
-                "java.lang.Thread.State",       // should be already available
-                "java.util.Collection",
-                "java.util.Map.Entry",
-                "foo.bar.Baz.Xxyzzy.Wombat",
-                "foo.bar.Baz.Xxyzzy",
-                "foo.bar.Baz",
-                "foo.bar.Quux",
-                "foo.bar.Quux.Xxyzzy",
-                "foo.bar.Quux.Xxyzzy.Wombat",
-                "NestedClassAnnotations",
-                "NestedClassAnnotations.NestedClass",
-            };
+	    String classNames[] = {
+		"java.lang.String",		// should be already available
+		"java.lang.Thread.State",	// should be already available
+		"java.util.Collection",
+		"java.util.Map.Entry",
+		"foo.bar.Baz.Xxyzzy.Wombat",
+		"foo.bar.Baz.Xxyzzy",
+		"foo.bar.Baz",
+		"foo.bar.Quux",
+		"foo.bar.Quux.Xxyzzy",
+		"foo.bar.Quux.Xxyzzy.Wombat",
+		"NestedClassAnnotations",
+		"NestedClassAnnotations.NestedClass",
+	    };
 
-            for(String className: classNames) {
-                TypeDeclaration t = env.getTypeDeclaration(className);
-                if (t == null)
-                    throw new RuntimeException("No declaration found for " + className);
-                if (! t.getQualifiedName().equals(className))
-                    throw new RuntimeException("Class with wrong name found for " + className);
-            }
+	    for(String className: classNames) {
+		TypeDeclaration t = env.getTypeDeclaration(className);
+		if (t == null)
+		    throw new RuntimeException("No declaration found for " + className);
+		if (! t.getQualifiedName().equals(className))
+		    throw new RuntimeException("Class with wrong name found for " + className);
+	    }
 
-            // Test obscuring behavior; i.e. nested class C1 in class
-            // p1 where p1 is member of package p2 should be favored
-            // over class C1 in package p1.p2.
-            String nonuniqueCanonicalNames[] = {
-                "p1.p2.C1",
-            };
-            for(String className: nonuniqueCanonicalNames) {
-                ClassDeclaration c1 = (ClassDeclaration) env.getTypeDeclaration(className);
-                ClassDeclaration c2 = (ClassDeclaration) c1.getDeclaringType();
-                PackageDeclaration p     = env.getPackage("p1");
+	    // Test obscuring behavior; i.e. nested class C1 in class
+	    // p1 where p1 is member of package p2 should be favored
+	    // over class C1 in package p1.p2.
+	    String nonuniqueCanonicalNames[] = {
+		"p1.p2.C1",
+	    };
+	    for(String className: nonuniqueCanonicalNames) {
+		ClassDeclaration c1 = (ClassDeclaration) env.getTypeDeclaration(className);
+		ClassDeclaration c2 = (ClassDeclaration) c1.getDeclaringType();
+		PackageDeclaration p     = env.getPackage("p1");
 
-                if (!p.equals(c1.getPackage())  ||
-                    c2 == null ||
-                    !"C1".equals(c1.getSimpleName())) {
-                    throw new RuntimeException("Bad class declaration");
-                }
-            }
+		if (!p.equals(c1.getPackage())  || 
+		    c2 == null || 
+		    !"C1".equals(c1.getSimpleName())) {
+		    throw new RuntimeException("Bad class declaration");
+		}
+	    }
 
-            String notClassNames[] = {
-                "",
-                "XXYZZY",
-                "java",
-                "java.lang",
-                "java.lang.Bogogogous",
-                "1",
-                "1.2",
-                "3.14159",
-                "To be or not to be is a tautology",
-                "1+2=3",
-                "foo+.x",
-                "foo+x",
-                "+",
-                "?",
-                "***",
-                "java.*",
-            };
+	    String notClassNames[] = {
+		"",
+		"XXYZZY",
+		"java",
+		"java.lang",
+		"java.lang.Bogogogous",
+		"1",
+		"1.2",
+		"3.14159",
+		"To be or not to be is a tautology",
+		"1+2=3",
+		"foo+.x",
+		"foo+x",
+		"+",
+		"?",
+		"***",
+		"java.*",
+	    };
 
-            for(String notClassName: notClassNames) {
-                Declaration t = env.getTypeDeclaration(notClassName);
-                if (t != null) {
-                    System.err.println("Unexpected declaration:" + t);
-                    throw new RuntimeException("Declaration found for ``" + notClassName + "''.");
-                }
-            }
+	    for(String notClassName: notClassNames) {
+		Declaration t = env.getTypeDeclaration(notClassName);
+		if (t != null) {
+		    System.err.println("Unexpected declaration:" + t);
+		    throw new RuntimeException("Declaration found for ``" + notClassName + "''."); 
+		}
+	    }
 
         }
     }

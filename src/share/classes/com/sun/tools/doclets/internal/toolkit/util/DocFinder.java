@@ -31,12 +31,12 @@ import java.util.*;
 
 /**
  * Search for the requested documentation.  Inherit documentation if necessary.
- *
+ * 
  * @author Jamie Ho
  * @since 1.5
  */
 public class DocFinder {
-
+    
     /**
      * The class that encapsulates the input.
      */
@@ -46,41 +46,41 @@ public class DocFinder {
          */
         public MethodDoc method = null;
         /**
-         * The taglet to search for documentation on behalf of. Null if we want
+         * The taglet to search for documentation on behalf of. Null if we want 
          * to search for overall documentation.
          */
         public InheritableTaglet taglet = null;
-
-        /**
-         * The id of the tag to retrieve documentation for.
+        
+        /**  
+         * The id of the tag to retrieve documentation for. 
          */
         public String tagId = null;
-
+        
         /**
          * The tag to retrieve documentation for.  This is only used for the
          * inheritDoc tag.
          */
         public Tag tag = null;
-
+        
         /**
          * True if we only want to search for the first sentence.
          */
         public boolean isFirstSentence = false;
-
-        /**
+        
+        /**                         
          * True if we are looking for documentation to replace the inheritDocTag.
          */
         public boolean isInheritDocTag = false;
-
+        
         /**
          * Used to distinguish between type variable param tags and regular
          * param tags.
          */
         public boolean isTypeVariableParamTag = false;
-
+        
         public Input() {}
-
-        public Input(MethodDoc method, InheritableTaglet taglet, Tag tag,
+        
+        public Input(MethodDoc method, InheritableTaglet taglet, Tag tag, 
                 boolean isFirstSentence, boolean isInheritDocTag) {
             this.method = method;
             this.taglet = taglet;
@@ -88,35 +88,35 @@ public class DocFinder {
             this.isFirstSentence = isFirstSentence;
             this.isInheritDocTag = isInheritDocTag;
         }
-
+        
         public Input(MethodDoc method, InheritableTaglet taglet, String tagId) {
             this.method = method;
             this.taglet = taglet;
             this.tagId = tagId;
         }
-
+        
         public Input(MethodDoc method, InheritableTaglet taglet, String tagId,
             boolean isTypeVariableParamTag) {
             this.method = method;
             this.taglet = taglet;
             this.tagId = tagId;
-            this.isTypeVariableParamTag = isTypeVariableParamTag;
+            this.isTypeVariableParamTag = isTypeVariableParamTag; 
         }
-
+        
         public Input(MethodDoc method, InheritableTaglet taglet) {
             this.method = method;
-            this.taglet = taglet;
+            this.taglet = taglet;  
         }
-
+        
         public Input(MethodDoc method) {
-            this.method = method;
+            this.method = method; 
         }
-
+        
         public Input(MethodDoc method, boolean isFirstSentence) {
             this.method = method;
-            this.isFirstSentence = isFirstSentence;
+            this.isFirstSentence = isFirstSentence; 
         }
-
+        
         public Input copy() {
             Input clone = new Input();
             clone.method = this.method;
@@ -127,10 +127,10 @@ public class DocFinder {
             clone.isInheritDocTag = this.isInheritDocTag;
             clone.isTypeVariableParamTag = this.isTypeVariableParamTag;
             return clone;
-
+            
         }
     }
-
+    
     /**
      * The class that encapsulates the output.
      */
@@ -138,24 +138,24 @@ public class DocFinder {
         /**
          * The tag that holds the documentation.  Null if documentation
          * is not held by a tag.
-         */
+         */       
         public Tag holderTag;
-
+        
         /**
          * The Doc object that holds the documentation.
          */
         public Doc holder;
-
+        
         /**
          * The inherited documentation.
          */
         public Tag[] inlineTags = new Tag[] {};
-
+        
         /**
          * False if documentation could not be inherited.
          */
         public boolean isValidInheritDocTag = true;
-
+        
         /**
          * When automatically inheriting throws tags, you sometime must inherit
          * more than one tag.  For example if the method declares that it throws
@@ -166,50 +166,50 @@ public class DocFinder {
          */
         public List tagList  = new ArrayList();
     }
-
+    
     /**
      * Search for the requested comments in the given method.  If it does not
-     * have comments, return documentation from the overriden method if possible.
+     * have comments, return documentation from the overriden method if possible. 
      * If the overriden method does not exist or does not have documentation to
      * inherit, search for documentation to inherit from implemented methods.
-     *
+     * 
      * @param input the input object used to perform the search.
-     *
+     *               
      * @return an Output object representing the documentation that was found.
      */
     public static Output search(Input input) {
-        Output output = new Output();
+        Output output = new Output();        
         if (input.isInheritDocTag) {
             //Do nothing because "method" does not have any documentation.
             //All it has it {@inheritDoc}.
         } else if (input.taglet == null) {
             //We want overall documentation.
             output.inlineTags = input.isFirstSentence ?
-                input.method.firstSentenceTags() :
+                input.method.firstSentenceTags() : 
                 input.method.inlineTags();
             output.holder = input.method;
         } else {
             input.taglet.inherit(input, output);
         }
-
+        
         if (output.inlineTags != null && output.inlineTags.length > 0) {
             return output;
-        }
+        } 
         output.isValidInheritDocTag = false;
-        Input inheritedSearchInput = input.copy();
-        inheritedSearchInput.isInheritDocTag = false;
-        if (input.method.overriddenMethod() != null) {
-            inheritedSearchInput.method = input.method.overriddenMethod();
+        Input inheritedSearchInput = input.copy(); 
+        inheritedSearchInput.isInheritDocTag = false; 
+        if (input.method.overriddenMethod() != null) {                       
+            inheritedSearchInput.method = input.method.overriddenMethod();                     
             output = search(inheritedSearchInput);
             output.isValidInheritDocTag = true;
             if (output != null && output.inlineTags.length > 0) {
                 return output;
             }
-        }
-        //NOTE:  When we fix the bug where ClassDoc.interfaceTypes() does
-        //       not pass all implemented interfaces, we will use the
+        } 
+        //NOTE:  When we fix the bug where ClassDoc.interfaceTypes() does 
+        //       not pass all implemented interfaces, we will use the 
         //       appropriate method here.
-        MethodDoc[] implementedMethods =
+        MethodDoc[] implementedMethods = 
             (new ImplementedMethods(input.method, null)).build(false);
         for (int i = 0; i < implementedMethods.length; i++) {
             inheritedSearchInput.method = implementedMethods[i];
@@ -222,3 +222,5 @@ public class DocFinder {
         return output;
     }
 }
+
+

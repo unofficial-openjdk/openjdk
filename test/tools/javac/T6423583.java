@@ -48,7 +48,7 @@ public class T6423583 extends AbstractProcessor {
     float f = 0f;
     double d = 0d;
     Void v = null;
-
+    
     public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
         Trees trees = Trees.instance(processingEnv);
         Test test = new Test();
@@ -58,21 +58,21 @@ public class T6423583 extends AbstractProcessor {
         }
         return true;
     }
-
-
+    
+    
     private static class Test extends TreeScanner<Void,Void> {
-
+        
         private static Map<Tree.Kind, Class> map = new HashMap<Tree.Kind, Class>();
         static {
             map.put(Tree.Kind.BOOLEAN_LITERAL, Boolean.class);
-            map.put(Tree.Kind.CHAR_LITERAL, Character.class);
+            map.put(Tree.Kind.CHAR_LITERAL, Character.class);  
             map.put(Tree.Kind.STRING_LITERAL, String.class);
             map.put(Tree.Kind.INT_LITERAL, Integer.class);
             map.put(Tree.Kind.LONG_LITERAL, Long.class);
             map.put(Tree.Kind.FLOAT_LITERAL, Float.class);
             map.put(Tree.Kind.DOUBLE_LITERAL, Double.class);
         }
-
+        
         public Void visitLiteral(LiteralTree tree, Void ignore) {
             System.err.println(tree);
             Class expect = map.get(tree.getKind());
@@ -85,7 +85,7 @@ public class T6423583 extends AbstractProcessor {
             }
             return null;
         }
-
+        
         private boolean check(Object value, Class<?> expectedClass) {
             return (value == null ? expectedClass == null : value.getClass().equals(expectedClass));
         }

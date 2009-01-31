@@ -108,7 +108,7 @@ public class ClassFile {
      *  converting '/' to '.'.
      */
     public static byte[] internalize(Name name) {
-        return internalize(name.table.names, name.index, name.len);
+	return internalize(name.table.names, name.index, name.len);
     }
 
     /** Return external representation of buf[offset..offset+len-1],
@@ -128,7 +128,7 @@ public class ClassFile {
      *  converting '/' to '.'.
      */
     public static byte[] externalize(Name name) {
-        return externalize(name.table.names, name.index, name.len);
+	return externalize(name.table.names, name.index, name.len);
     }
 
 /************************************************************************
@@ -138,23 +138,24 @@ public class ClassFile {
     /** A class for the name-and-type signature of a method or field.
      */
     public static class NameAndType {
-        Name name;
-        Type type;
+	Name name;
+	Type type;
 
-        NameAndType(Name name, Type type) {
-            this.name = name;
-            this.type = type;
-        }
+	NameAndType(Name name, Type type) {
+	    this.name = name;
+	    this.type = type;
+	}
 
-        public boolean equals(Object other) {
-            return
-                other instanceof NameAndType &&
-                name == ((NameAndType) other).name &&
-                type.equals(((NameAndType) other).type);
-        }
-
-        public int hashCode() {
-            return name.hashCode() * type.hashCode();
-        }
+	public boolean equals(Object other) {
+	    return
+		other instanceof NameAndType &&
+		name == ((NameAndType) other).name &&
+		type.equals(((NameAndType) other).type);
+	}
+	
+	public int hashCode() {
+	    return name.hashCode() * type.hashCode();
+	}
     }
 }
+

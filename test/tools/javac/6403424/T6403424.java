@@ -35,30 +35,30 @@ public class T6403424 {
     public static void main(String[] args) {
         File testSrc = new File(System.getProperty("test.src", "."));
 
-        File TMP = new File("TMP");
-        TMP.mkdirs();
+	File TMP = new File("TMP");
+	TMP.mkdirs();
 
-        // first, compile A to the TMP directory
-        File A_java = new File(testSrc, "A.java");
-        compile("-d", TMP.getPath(), A_java.getPath());
+	// first, compile A to the TMP directory
+	File A_java = new File(testSrc, "A.java");
+	compile("-d", TMP.getPath(), A_java.getPath());
 
-        // now compile B, which references A,
-        // with TMP on classpath and tmp on bootclasspath
-        File B_java = new File(testSrc, "B.java");
-        compile("-classpath",  TMP.getPath(),
-                "-Xbootclasspath/p:" + TMP.getPath().toLowerCase(),
-                "-d", ".",
-                B_java.getPath());
+	// now compile B, which references A, 
+	// with TMP on classpath and tmp on bootclasspath
+	File B_java = new File(testSrc, "B.java");
+	compile("-classpath",  TMP.getPath(), 
+		"-Xbootclasspath/p:" + TMP.getPath().toLowerCase(), 
+		"-d", ".",
+		B_java.getPath());
 
-        // should not get NPE from compiler
+	// should not get NPE from compiler
     }
 
     private static void compile(String... args) {
-        System.err.println("compile: " + Arrays.asList(args));
+	System.err.println("compile: " + Arrays.asList(args));
         JavacTool javac = JavacTool.create();
 
-        int rc = javac.run(null, null, null, args);
-        if (rc != 0)
-            throw new AssertionError("test compilation failed");
+	int rc = javac.run(null, null, null, args);
+	if (rc != 0)
+	    throw new AssertionError("test compilation failed");
     }
 }

@@ -41,14 +41,14 @@ import com.sun.mirror.util.*;
 public class AnnoTypeDecl extends Tester {
 
     public static void main(String[] args) {
-        (new AnnoTypeDecl()).run();
+	(new AnnoTypeDecl()).run();
     }
 
 
     private AnnotationTypeDeclaration at;
 
     protected void init() {
-        at = (AnnotationTypeDeclaration) env.getTypeDeclaration("AT");
+	at = (AnnotationTypeDeclaration) env.getTypeDeclaration("AT");
     }
 
 
@@ -56,24 +56,24 @@ public class AnnoTypeDecl extends Tester {
 
     @Test(result="annotation type")
     Collection<String> accept() {
-        final Collection<String> res = new ArrayList<String>();
+	final Collection<String> res = new ArrayList<String>();
 
-        at.accept(new SimpleDeclarationVisitor() {
-            public void visitTypeDeclaration(TypeDeclaration t) {
-                res.add("type");
-            }
-            public void visitClassDeclaration(ClassDeclaration c) {
-                res.add("class");
-            }
-            public void visitInterfaceDeclaration(InterfaceDeclaration i) {
-                res.add("interface");
-            }
-            public void visitAnnotationTypeDeclaration(
-                                                AnnotationTypeDeclaration a) {
-                res.add("annotation type");
-            }
-        });
-        return res;
+	at.accept(new SimpleDeclarationVisitor() {
+	    public void visitTypeDeclaration(TypeDeclaration t) {
+		res.add("type");
+	    }
+	    public void visitClassDeclaration(ClassDeclaration c) {
+		res.add("class");
+	    }
+	    public void visitInterfaceDeclaration(InterfaceDeclaration i) {
+		res.add("interface");
+	    }
+	    public void visitAnnotationTypeDeclaration(
+						AnnotationTypeDeclaration a) {
+		res.add("annotation type");
+	    }
+	});
+	return res;
     }
 
 
@@ -81,7 +81,7 @@ public class AnnoTypeDecl extends Tester {
 
     @Test(result={"s()"})
     Collection<AnnotationTypeElementDeclaration> getMethods() {
-        return at.getMethods();
+	return at.getMethods();
     }
 }
 

@@ -35,36 +35,36 @@ public class T6357331
 {
     public static void main(String... args) {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
-        PrintWriter out = new PrintWriter(new StringWriter());
-        final JavacTask task = (JavacTask) (tool.getTask(out, null, null, null, null, null));
+	PrintWriter out = new PrintWriter(new StringWriter());
+	final JavacTask task = (JavacTask) (tool.getTask(out, null, null, null, null, null));
 
-        // set a listener to verify that IllegalStateException is not thrown
-        // during the compilation
-        task.setTaskListener(new TaskListener() {
-                public void started(TaskEvent e) {
-                    task.getElements();
-                    task.getTypes();
-                }
-                public void finished(TaskEvent e) { }
-            });
+	// set a listener to verify that IllegalStateException is not thrown
+	// during the compilation
+	task.setTaskListener(new TaskListener() {
+		public void started(TaskEvent e) {
+		    task.getElements();
+		    task.getTypes();
+		}
+		public void finished(TaskEvent e) { }
+	    });
 
-        task.call();
+	task.call();
 
-        // now the compilation is over, we expect IllegalStateException (not NPE)
-        try {
-            task.getElements();
-            throw new AssertionError("IllegalStateException not thrown");
-        }
-        catch (IllegalStateException e) {
-            // expected
-        }
+	// now the compilation is over, we expect IllegalStateException (not NPE)
+	try {
+	    task.getElements();
+	    throw new AssertionError("IllegalStateException not thrown");
+	}
+	catch (IllegalStateException e) {
+	    // expected
+	}
 
-        try {
-            task.getTypes();
-            throw new AssertionError("IllegalStateException not thrown");
-        }
-        catch (IllegalStateException e) {
-            // expected
-        }
+	try {
+	    task.getTypes();
+	    throw new AssertionError("IllegalStateException not thrown");
+	}
+	catch (IllegalStateException e) {
+	    // expected
+	}
     }
 }

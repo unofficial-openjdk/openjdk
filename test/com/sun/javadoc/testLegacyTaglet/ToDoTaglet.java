@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -42,17 +42,17 @@ import java.util.Map;
  */
 
 public class ToDoTaglet implements Taglet {
-
+    
     private static final String NAME = "todo";
     private static final String HEADER = "To Do:";
-
+    
     /**
      * Return the name of this custom tag.
      */
     public String getName() {
         return NAME;
     }
-
+    
     /**
      * Will return true since <code>@todo</code>
      * can be used in field documentation.
@@ -74,7 +74,7 @@ public class ToDoTaglet implements Taglet {
     public boolean inConstructor() {
         return true;
     }
-
+    
     /**
      * Will return true since <code>@todo</code>
      * can be used in method documentation.
@@ -85,7 +85,7 @@ public class ToDoTaglet implements Taglet {
     public boolean inMethod() {
         return true;
     }
-
+    
     /**
      * Will return true since <code>@todo</code>
      * can be used in method documentation.
@@ -118,18 +118,18 @@ public class ToDoTaglet implements Taglet {
     public boolean inType() {
         return true;
     }
-
+    
     /**
      * Will return false since <code>@todo</code>
      * is not an inline tag.
      * @return false since <code>@todo</code>
      * is not an inline tag.
      */
-
+    
     public boolean isInlineTag() {
         return false;
     }
-
+    
     /**
      * Register this Taglet.
      * @param tagletMap  the map to register this tag to.
@@ -154,7 +154,7 @@ public class ToDoTaglet implements Taglet {
                + tag.text()
                + "</td></tr></table></DD>\n";
     }
-
+    
     /**
      * Given an array of <code>Tag</code>s representing this custom
      * tag, return its string representation.
@@ -175,3 +175,4 @@ public class ToDoTaglet implements Taglet {
         return result + "</td></tr></table></DD>\n";
     }
 }
+

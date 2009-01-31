@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,7 +30,7 @@ public class BaseClass implements BaseInterface {
   public int pubField = 1;
 
   public class pubInnerClass{}
-
+    
   public void pubMethod() {}
 
   protected int proField = 1;
@@ -38,10 +38,10 @@ public class BaseClass implements BaseInterface {
   protected class proInnerClass{}
 
   protected void proMethod() {}
-
+  
   public <B extends Annotation> B getAnnotation(Class<B> annotationClass) {
       return null;
   }
-
+  
   public static void staticMethod(){}
 }

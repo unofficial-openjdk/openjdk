@@ -14,8 +14,10 @@ class SubI implements Outer.I {
 }
 
 public class T {
-    public static void main(String argv[]){
-        SubI sub = new SubI();
+    public static void main(String argv[]){     
+        SubI sub = new SubI(); 
         Outer.I inter = (Outer.I)sub.getI();
     }
 }
+
+   

@@ -38,7 +38,7 @@ public class VerifyDA {
             x = "hello";
         } finally {
             try {
-                System.out.println("x");
+		System.out.println("x");
             } catch (RuntimeException e) {
                 e.printStackTrace();
                 x = null;

@@ -24,7 +24,7 @@
 
 /*
  * Parent class implements serializable and provides static initializers
- * for a bunch of primitive type class constants
+ * for a bunch of primitive type class constants 
  * (required for regtest 4786406, 4780341)
  */
 
@@ -32,7 +32,7 @@ import java.io.*;
 
 public class SuperClassConsts implements Serializable {
 
-    // Define class constant values, base class is serializable
+    // Define class constant values, base class is serializable 
 
     private static final long serialVersionUID = 6733861379283244755L;
     public static final int SUPER_INT_CONSTANT = 3;
@@ -45,13 +45,13 @@ public class SuperClassConsts implements Serializable {
 
     public SuperClassConsts(String p) {
     }
-
+	
     public native int numValues();
 
     private void writeObject(ObjectOutputStream s)
         throws IOException
     {
-        System.err.println("writing state");
+	System.err.println("writing state");
     }
 
     /**
@@ -61,6 +61,6 @@ public class SuperClassConsts implements Serializable {
     private void readObject(ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-        System.err.println("reading back state");
+	System.err.println("reading back state");
     }
 }

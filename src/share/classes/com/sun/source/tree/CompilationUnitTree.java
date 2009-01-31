@@ -44,7 +44,7 @@ public interface CompilationUnitTree extends Tree {
     List<? extends ImportTree> getImports();
     List<? extends Tree> getTypeDecls();
     JavaFileObject getSourceFile();
-
+    
     /**
      * Gets the line map for this compilation unit, if available.
      * Returns null if the line map is not available.

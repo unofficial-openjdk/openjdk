@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,47 +33,47 @@
  */
 
 public class TestStylesheet extends JavadocTester {
-
+    
     //Test information.
     private static final String BUG_ID = "4494033";
-
+    
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
         "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg"
     };
-
+    
     //Input for string search tests.
     private static final String[][] TEST = {
+    	{BUG_ID + FS + "stylesheet.css",
+    		"body { background-color: #FFFFFF; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                "body { background-color: #FFFFFF; color:#000000 }"},
+    		".TableHeadingColor     { background: #CCCCFF; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".TableHeadingColor     { background: #CCCCFF; color:#000000 }"},
+    		".TableSubHeadingColor  { background: #EEEEFF; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".TableSubHeadingColor  { background: #EEEEFF; color:#000000 }"},
+    		".TableRowColor         { background: #FFFFFF; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".TableRowColor         { background: #FFFFFF; color:#000000 }"},
+    		".FrameTitleFont   { font-size: 100%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".FrameTitleFont   { font-size: 100%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
+    		".FrameHeadingFont { font-size:  90%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".FrameHeadingFont { font-size:  90%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
+    		".FrameItemFont    { font-size:  90%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
         {BUG_ID + FS + "stylesheet.css",
-                ".FrameItemFont    { font-size:  90%; font-family: Helvetica, Arial, sans-serif; color:#000000 }"},
+    		".NavBarCell1    { background-color:#EEEEFF; color:#000000}"},
         {BUG_ID + FS + "stylesheet.css",
-                ".NavBarCell1    { background-color:#EEEEFF; color:#000000}"},
+    		".NavBarCell1Rev { background-color:#00008B; color:#FFFFFF}"},
         {BUG_ID + FS + "stylesheet.css",
-                ".NavBarCell1Rev { background-color:#00008B; color:#FFFFFF}"},
+    		".NavBarFont1    { font-family: Arial, Helvetica, sans-serif; color:#000000;color:#000000;}"},
         {BUG_ID + FS + "stylesheet.css",
-                ".NavBarFont1    { font-family: Arial, Helvetica, sans-serif; color:#000000;color:#000000;}"},
+    		".NavBarFont1Rev { font-family: Arial, Helvetica, sans-serif; color:#FFFFFF;color:#FFFFFF;}"},
         {BUG_ID + FS + "stylesheet.css",
-                ".NavBarFont1Rev { font-family: Arial, Helvetica, sans-serif; color:#FFFFFF;color:#FFFFFF;}"},
+    		".NavBarCell2    { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF; color:#000000}"},
         {BUG_ID + FS + "stylesheet.css",
-                ".NavBarCell2    { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF; color:#000000}"},
-        {BUG_ID + FS + "stylesheet.css",
-                ".NavBarCell3    { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF; color:#000000}"},
-
+    		".NavBarCell3    { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF; color:#000000}"},
+    	
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
-
+    
     /**
      * The entry point of the test.
      * @param args the array of command line arguments.
@@ -83,14 +83,14 @@ public class TestStylesheet extends JavadocTester {
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public String getBugId() {
         return BUG_ID;
     }
-
+    
     /**
      * {@inheritDoc}
      */

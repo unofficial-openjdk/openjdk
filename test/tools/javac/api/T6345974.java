@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 6345974
- * @summary JCPrimitiveTypeTree.getPrimitiveTypeKind() inappropriately throws an
- *              AssertionError for "void"
+ * @summary JCPrimitiveTypeTree.getPrimitiveTypeKind() inappropriately throws an 
+ *		AssertionError for "void" 
  */
 
 import com.sun.tools.javac.api.JavacTool;
@@ -43,27 +43,27 @@ import javax.tools.StandardJavaFileManager;
 
 public class T6345974 {
     public static void main(String[] args) throws Exception {
-        PrintWriter out = new PrintWriter(System.out, true);
-        JavacTool tool = JavacTool.create();
-        StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
-        File testSrc = new File(System.getProperty("test.src"));
-        Iterable<? extends JavaFileObject> f =
-            fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, "T6345974.java")));
-        JavacTask task = tool.getTask(out, fm, null, null, null, f);
-        Iterable<? extends CompilationUnitTree> trees = task.parse();
-        out.flush();
-
-        Scanner s = new Scanner();
-        for (CompilationUnitTree t: trees)
-            s.scan(t, null);
+	PrintWriter out = new PrintWriter(System.out, true);
+	JavacTool tool = JavacTool.create();
+	StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null);
+	File testSrc = new File(System.getProperty("test.src"));
+	Iterable<? extends JavaFileObject> f =
+	    fm.getJavaFileObjectsFromFiles(Arrays.asList(new File(testSrc, "T6345974.java")));
+	JavacTask task = tool.getTask(out, fm, null, null, null, f);
+	Iterable<? extends CompilationUnitTree> trees = task.parse();
+	out.flush();
+	
+	Scanner s = new Scanner();
+	for (CompilationUnitTree t: trees) 
+	    s.scan(t, null);
     }
 
     private static class Scanner extends TreeScanner<Void,Void> {
-        public Void visitPrimitiveType(PrimitiveTypeTree node, Void ignore) {
-            // The following call of getPrimitiveTypeKind should not throw an AssertionError
-            System.out.println(node + " " + node.getPrimitiveTypeKind());
-            return null;
-        }
+	public Void visitPrimitiveType(PrimitiveTypeTree node, Void ignore) {
+	    // The following call of getPrimitiveTypeKind should not throw an AssertionError
+	    System.out.println(node + " " + node.getPrimitiveTypeKind());
+	    return null;
+	}
     }
 
     boolean b;

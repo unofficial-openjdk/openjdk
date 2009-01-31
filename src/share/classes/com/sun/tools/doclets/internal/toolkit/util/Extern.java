@@ -43,7 +43,7 @@ import java.net.*;
  * This code is not part of an API.
  * It is implementation that is subject to change.
  * Do not use it as an API
- *
+ * 
  * @author Atul M Dambalkar
  * @author Robert Field
  */
@@ -74,7 +74,7 @@ public class Extern {
          * Package name, found in the "package-list" file in the {@link path}.
          */
         final String packageName;
-
+ 
         /**
          * The URL or the directory path at which the package documentation will be
          * avaliable.
@@ -175,7 +175,7 @@ public class Extern {
             return true;
         }
     }
-
+        
     /**
      * Get the Extern Item object associated with this package name.
      *
@@ -243,7 +243,7 @@ public class Extern {
      */
     private String readFileComposeExternPackageList(String path,
                                                    String pkgListPath) {
-
+        
         String link = pkgListPath + "package-list";
         if (! ((new File(pkgListPath)).isAbsolute() || linkoffline)){
             link = configuration.destDirName + link;
@@ -263,7 +263,7 @@ public class Extern {
         }
         return null;
     }
-
+     
     /**
      * Read the file "package-list" and for each package name found, create
      * Extern object and associate it with the package name in the map.
@@ -297,7 +297,7 @@ public class Extern {
             input.close();
         }
     }
-
+    
     public boolean isUrl (String urlCandidate) {
         try {
             new URL(urlCandidate);

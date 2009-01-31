@@ -36,15 +36,16 @@ import java.io.*;
  */
 class LineNumData {
     short start_pc, line_number;
-
+    
     public LineNumData() {}
-
+    
     /**
      * Read LineNumberTable attribute.
      */
     public LineNumData(DataInputStream in) throws IOException {
-        start_pc = in.readShort();
-        line_number=in.readShort();
-
+	start_pc = in.readShort();
+	line_number=in.readShort();
+	
     }
 }
+

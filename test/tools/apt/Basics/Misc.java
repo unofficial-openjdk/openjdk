@@ -32,14 +32,14 @@ public final class  Misc<T> implements Marker2, Marker3 {
     private static final long longConstant = Long.MAX_VALUE;
 
     private static final String asciispecials = "\t\n\u0007";
-
+    
     public void covar(Collection<? extends T> s) {return;}
 
     public void contravar(Collection<? super T> s) {return;}
 
     public <S> S varUse(int i) {return null;}
 
-    Object o = (new Object() {});       // verify fix for 5019108
+    Object o = (new Object() {});	// verify fix for 5019108
 }
 
 interface Marker1 {}

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,40 +40,40 @@ public class Main extends Tester.Doclet {
     private static final Tester tester = new Tester("Main", "pkg1");
 
     public static void main(String[] args) throws IOException {
-        tester.run();
-        tester.verify();
+	tester.run();
+	tester.verify();
     }
 
     public static boolean start(RootDoc root) {
-        try {
-            ClassDoc[] cds = root.classes();
-            Arrays.sort(cds);
-            for (ClassDoc cd : cds) {
-                ParameterizedType arrayList =
-                    cd.superclassType().asParameterizedType();
-                tester.println(arrayList);
-                tester.println();
+	try {
+	    ClassDoc[] cds = root.classes();
+	    Arrays.sort(cds);
+	    for (ClassDoc cd : cds) {
+		ParameterizedType arrayList =
+		    cd.superclassType().asParameterizedType();
+		tester.println(arrayList);
+		tester.println();
 
-                tester.println(arrayList.superclassType());
-                Type[] interfaces = arrayList.interfaceTypes();
-                // Sort interfaces by type name, for consistent output.
-                Arrays.sort(interfaces,
-                            new Comparator<Type>() {
-                                    public int compare(Type t1, Type t2) {
-                                        String name1 = t1.qualifiedTypeName();
-                                        String name2 = t2.qualifiedTypeName();
-                                        return name1.compareTo(name2);
-                                    }
-                                });
-                for (Type t : interfaces) {
-                    tester.println(t);
-                }
-                tester.println();
-            }
+		tester.println(arrayList.superclassType());
+		Type[] interfaces = arrayList.interfaceTypes();
+		// Sort interfaces by type name, for consistent output.
+		Arrays.sort(interfaces,
+			    new Comparator<Type>() {
+				    public int compare(Type t1, Type t2) {
+					String name1 = t1.qualifiedTypeName();
+					String name2 = t2.qualifiedTypeName();
+					return name1.compareTo(name2);
+				    }
+				});
+		for (Type t : interfaces) {
+		    tester.println(t);
+		}
+		tester.println();
+	    }
 
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+	    return true;
+	} catch (IOException e) {
+	    return false;
+	}
     }
 }

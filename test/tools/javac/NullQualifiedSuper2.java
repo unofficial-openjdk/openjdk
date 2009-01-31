@@ -26,7 +26,7 @@
  * @bug 4422082
  * @summary NullPointerException missing in an explicit constructor invocation
  * @author Neal Gafter
- *
+ * 
  * @run main/fail NullQualifiedSuper2
  */
 
@@ -41,6 +41,6 @@ public class NullQualifiedSuper2 {
         }
     }
     public static void main(String[] args) {
-        new NullQualifiedSuper2().new c();
+	new NullQualifiedSuper2().new c();
     }
 }

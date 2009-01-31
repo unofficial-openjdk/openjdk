@@ -49,11 +49,11 @@ import static javax.tools.Diagnostic.Kind.*;
 @SupportedAnnotationTypes("*")
 public class TestOptionSyntaxErrors extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
-                           RoundEnvironment roundEnvironment) {
-        return true;
+			   RoundEnvironment roundEnvironment) {
+	return true;
     }
-
+    
     public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latest();
+	return SourceVersion.latest();
     }
 }

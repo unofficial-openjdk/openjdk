@@ -39,28 +39,28 @@ import com.sun.javadoc.*;
  */
 
 public class TagletWriterImpl extends TagletWriter {
-
+    
     private HtmlDocletWriter htmlWriter;
-
+    
     public TagletWriterImpl(HtmlDocletWriter htmlWriter, boolean isFirstSentence) {
         this.htmlWriter = htmlWriter;
         this.isFirstSentence = isFirstSentence;
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput getOutputInstance() {
         return new TagletOutputImpl("");
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput getDocRootOutput() {
         return new TagletOutputImpl(htmlWriter.relativepathNoSlash);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -75,8 +75,8 @@ public class TagletWriterImpl extends TagletWriter {
                 if (deprs.length > 0) {
                     Tag[] commentTags = deprs[0].inlineTags();
                     if (commentTags.length > 0) {
-
-                        output.append(commentTagsToOutput(null, doc,
+                        
+                        output.append(commentTagsToOutput(null, doc, 
                             deprs[0].inlineTags(), false).toString()
                         );
                     }
@@ -91,12 +91,12 @@ public class TagletWriterImpl extends TagletWriter {
                             getText("doclet.Deprecated") + "</B>&nbsp;");
                 if (deprs.length > 0) {
                     output.append("<I>");
-                    output.append(commentTagsToOutput(null, doc,
+                    output.append(commentTagsToOutput(null, doc, 
                         deprs[0].inlineTags(), false).toString());
                     output.append("</I>");
                 }
                 if (member instanceof ExecutableMemberDoc) {
-                    output.append(DocletConstants.NL + "<P>" +
+                    output.append(DocletConstants.NL + "<P>" + 
                         DocletConstants.NL);
                 }
             } else {
@@ -109,14 +109,14 @@ public class TagletWriterImpl extends TagletWriter {
         }
         return new TagletOutputImpl(output.toString());
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public MessageRetriever getMsgRetriever() {
         return htmlWriter.configuration.message;
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -126,7 +126,7 @@ public class TagletWriterImpl extends TagletWriter {
         result.append("<B>" +  header + "</B>");
         return new TagletOutputImpl(result.toString());
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -135,19 +135,19 @@ public class TagletWriterImpl extends TagletWriter {
          + " - " + htmlWriter.commentTagsToString(paramTag, null, paramTag.inlineTags(), false));
         return result;
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput returnTagOutput(Tag returnTag) {
-        TagletOutput result = new TagletOutputImpl(DocletConstants.NL + "<DT>" +
-            "<B>" + htmlWriter.configuration.getText("doclet.Returns") +
+        TagletOutput result = new TagletOutputImpl(DocletConstants.NL + "<DT>" + 
+            "<B>" + htmlWriter.configuration.getText("doclet.Returns") + 
             "</B>" + "<DD>" +
-            htmlWriter.commentTagsToString(returnTag, null, returnTag.inlineTags(),
+            htmlWriter.commentTagsToString(returnTag, null, returnTag.inlineTags(), 
             false));
         return result;
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -166,9 +166,9 @@ public class TagletWriterImpl extends TagletWriter {
                 htmlWriter instanceof ClassWriterImpl) {
             //Automatically add link to constant values page for constant fields.
             result = addSeeHeader(result);
-            result += htmlWriter.getHyperLink(htmlWriter.relativePath +
+            result += htmlWriter.getHyperLink(htmlWriter.relativePath + 
                 ConfigurationImpl.CONSTANTS_FILE_NAME
-                + "#" + ((ClassWriterImpl) htmlWriter).getClassDoc().qualifiedName()
+                + "#" + ((ClassWriterImpl) htmlWriter).getClassDoc().qualifiedName() 
                 + "." + ((FieldDoc) holder).name(),
                 htmlWriter.configuration.getText("doclet.Constants_Summary"));
         }
@@ -184,7 +184,7 @@ public class TagletWriterImpl extends TagletWriter {
         }
         return result.equals("") ? null : new TagletOutputImpl(result);
     }
-
+    
     private String addSeeHeader(String result) {
         if (result != null && result.length() > 0) {
             return result + ", " + DocletConstants.NL;
@@ -192,12 +192,12 @@ public class TagletWriterImpl extends TagletWriter {
             return "<DT><B>" + htmlWriter.configuration().getText("doclet.See_Also") + "</B><DD>";
         }
      }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput simpleTagOutput(Tag[] simpleTags, String header) {
-        String result = "<DT><B>" + header + "</B></DT>" + DocletConstants.NL +
+        String result = "<DT><B>" + header + "</B></DT>" + DocletConstants.NL + 
             "  <DD>";
         for (int i = 0; i < simpleTags.length; i++) {
             if (i > 0) {
@@ -207,7 +207,7 @@ public class TagletWriterImpl extends TagletWriter {
         }
          return new TagletOutputImpl(result + "</DD>" + DocletConstants.NL);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -216,7 +216,7 @@ public class TagletWriterImpl extends TagletWriter {
             + htmlWriter.commentTagsToString(simpleTag, null, simpleTag.inlineTags(), false)
             + "</DD>" + DocletConstants.NL);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -224,26 +224,26 @@ public class TagletWriterImpl extends TagletWriter {
         return new TagletOutputImpl(DocletConstants.NL + "<DT>" + "<B>" +
             htmlWriter.configuration().getText("doclet.Throws") + "</B>");
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput throwsTagOutput(ThrowsTag throwsTag) {
         String result = DocletConstants.NL + "<DD>";
-        result += throwsTag.exceptionType() == null ?
+        result += throwsTag.exceptionType() == null ? 
             htmlWriter.codeText(throwsTag.exceptionName()) :
             htmlWriter.codeText(
                 htmlWriter.getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
                 throwsTag.exceptionType())));
         TagletOutput text = new TagletOutputImpl(
-            htmlWriter.commentTagsToString(throwsTag, null,
+            htmlWriter.commentTagsToString(throwsTag, null, 
             throwsTag.inlineTags(), false));
         if (text != null && text.toString().length() > 0) {
             result += " - " + text;
         }
         return new TagletOutputImpl(result);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -252,17 +252,17 @@ public class TagletWriterImpl extends TagletWriter {
             htmlWriter.codeText(htmlWriter.getLink(
                 new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, throwsType))));
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public TagletOutput valueTagOutput(FieldDoc field, String constantVal,
             boolean includeLink) {
-        return new TagletOutputImpl(includeLink ?
-            htmlWriter.getDocLink(LinkInfoImpl.CONTEXT_VALUE_TAG, field,
+        return new TagletOutputImpl(includeLink ? 
+            htmlWriter.getDocLink(LinkInfoImpl.CONTEXT_VALUE_TAG, field, 
                 constantVal, false) : constantVal);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -276,7 +276,7 @@ public class TagletWriterImpl extends TagletWriter {
     public TagletOutput commentTagsToOutput(Doc holderDoc, Tag[] tags) {
         return commentTagsToOutput(null, holderDoc, tags, false);
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -285,14 +285,14 @@ public class TagletWriterImpl extends TagletWriter {
         return new TagletOutputImpl(htmlWriter.commentTagsToString(
             holderTag, holderDoc, tags, isFirstSentence));
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public Configuration configuration() {
         return htmlWriter.configuration();
     }
-
+    
     /**
      * Return an instance of a TagletWriter that knows how to write HTML.
      *
@@ -302,3 +302,4 @@ public class TagletWriterImpl extends TagletWriter {
         return new TagletOutputImpl("");
     }
 }
+

@@ -40,7 +40,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 public class TestJavacTask {
-
+    
     static JavacTaskImpl getTask(JavaCompiler compiler, File... file) {
         StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
         Iterable<? extends JavaFileObject> files =
@@ -56,5 +56,5 @@ public class TestJavacTask {
         for (TypeElement clazz : task.enter(task.parse()))
             System.out.println(clazz.getSimpleName());
     }
-
+    
 }

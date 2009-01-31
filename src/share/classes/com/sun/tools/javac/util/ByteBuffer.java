@@ -49,63 +49,63 @@ public class ByteBuffer {
     /** Create a new byte buffer.
      */
     public ByteBuffer() {
-        this(64);
+	this(64);
     }
 
     /** Create a new byte buffer with an initial elements array
      *  of given size.
      */
     public ByteBuffer(int initialSize) {
-        elems = new byte[initialSize];
-        length = 0;
+	elems = new byte[initialSize];
+	length = 0;
     }
 
     private void copy(int size) {
-        byte[] newelems = new byte[size];
-        System.arraycopy(elems, 0, newelems, 0, elems.length);
-        elems = newelems;
+	byte[] newelems = new byte[size];
+	System.arraycopy(elems, 0, newelems, 0, elems.length);
+	elems = newelems;
     }
 
     /** Append byte to this buffer.
      */
     public void appendByte(int b) {
-        if (length >= elems.length) copy(elems.length * 2);
-        elems[length++] = (byte)b;
+	if (length >= elems.length) copy(elems.length * 2);
+	elems[length++] = (byte)b;
     }
 
     /** Append `len' bytes from byte array,
      *  starting at given `start' offset.
      */
     public void appendBytes(byte[] bs, int start, int len) {
-        while (length + len > elems.length) copy(elems.length * 2);
-        System.arraycopy(bs, start, elems, length, len);
-        length += len;
+	while (length + len > elems.length) copy(elems.length * 2);
+	System.arraycopy(bs, start, elems, length, len);
+	length += len;
     }
 
     /** Append all bytes from given byte array.
      */
     public void appendBytes(byte[] bs) {
-        appendBytes(bs, 0, bs.length);
+	appendBytes(bs, 0, bs.length);
     }
 
     /** Append a character as a two byte number.
      */
     public void appendChar(int x) {
-        while (length + 1 >= elems.length) copy(elems.length * 2);
-        elems[length  ] = (byte)((x >>  8) & 0xFF);
+	while (length + 1 >= elems.length) copy(elems.length * 2);
+	elems[length  ] = (byte)((x >>  8) & 0xFF);
         elems[length+1] = (byte)((x      ) & 0xFF);
-        length = length + 2;
+	length = length + 2;
     }
 
     /** Append an integer as a four byte number.
      */
     public void appendInt(int x) {
-        while (length + 3 >= elems.length) copy(elems.length * 2);
-        elems[length  ] = (byte)((x >> 24) & 0xFF);
+	while (length + 3 >= elems.length) copy(elems.length * 2);
+	elems[length  ] = (byte)((x >> 24) & 0xFF);
         elems[length+1] = (byte)((x >> 16) & 0xFF);
-        elems[length+2] = (byte)((x >>  8) & 0xFF);
+	elems[length+2] = (byte)((x >>  8) & 0xFF);
         elems[length+3] = (byte)((x      ) & 0xFF);
-        length = length + 4;
+	length = length + 4;
     }
 
     /** Append a long as an eight byte number.
@@ -150,18 +150,26 @@ public class ByteBuffer {
     /** Append a name.
      */
     public void appendName(Name name) {
-        appendBytes(name.table.names, name.index, name.len);
+	appendBytes(name.table.names, name.index, name.len);
     }
 
     /** Reset to zero length.
      */
     public void reset() {
-        length = 0;
+	length = 0;
     }
 
     /** Convert contents to name.
      */
     public Name toName(Name.Table names) {
-        return names.fromUtf(elems, 0, length);
+	return names.fromUtf(elems, 0, length);
     }
 }
+	
+	
+	
+
+
+
+
+

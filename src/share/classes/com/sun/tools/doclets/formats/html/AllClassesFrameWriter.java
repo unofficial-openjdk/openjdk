@@ -45,7 +45,7 @@ public class AllClassesFrameWriter extends HtmlDocletWriter {
      * The name of the output file with frames
      */
     public static final String OUTPUT_FILE_NAME_FRAMES = "allclasses-frame.html";
-
+   
     /**
      * The name of the output file without frames
      */

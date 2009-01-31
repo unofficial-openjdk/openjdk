@@ -33,15 +33,15 @@
 public class DeprecatedDocComment2 {
 
   public static void main(String argv[]) {
-
+    
     // should just skip over this one
     System.out.println("Hello World");
-
+    
     /* and this one too */
     System.out.println("Hello World");
-
+    
   }
-
+  
     /**
      * @deprecated The compiler should print out deprecation warning for this
    * function
@@ -49,7 +49,7 @@ public class DeprecatedDocComment2 {
     public static void deprecatedTest1() {
     System.out.println("1");
   }
-
+  
   /*
    * @deprecated The compiler should not print deprecation warning since this
    * is not a legal docComment
@@ -79,20 +79,20 @@ public class DeprecatedDocComment2 {
     System.out.println("1");
   }
 
-    /*
-     @deprecated But not for this
+    /* 
+     @deprecated But not for this 
      */
     public static void deprecatedTest7() {
-        System.out.println("1");
+	System.out.println("1");
     }
+    
+    
 
-
-
-    /**
-     * not at the beginning of line @deprecated But not for this
+    /** 
+     * not at the beginning of line @deprecated But not for this 
      */
     public static void deprecatedTest8() {
-        System.out.println("1");
+	System.out.println("1");
     }
 
 }

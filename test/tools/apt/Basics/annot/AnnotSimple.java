@@ -27,3 +27,4 @@ package annot;
 public @interface AnnotSimple {
     String value() default "default";
 }
+

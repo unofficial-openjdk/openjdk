@@ -38,6 +38,6 @@ class T<X> {
     }
 
     public static void main(String[] args) {
-        new <Integer>T<Float>("");
+	new <Integer>T<Float>("");
     }
 }

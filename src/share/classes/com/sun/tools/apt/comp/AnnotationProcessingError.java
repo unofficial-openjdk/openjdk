@@ -27,6 +27,6 @@ package com.sun.tools.apt.comp;
 
 public class AnnotationProcessingError extends Error {
     AnnotationProcessingError(Throwable cause) {
-        super(cause);
+	super(cause);
     }
 }

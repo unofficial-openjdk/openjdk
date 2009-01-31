@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,12 +30,12 @@ package pkg1;
 public class C1 {
 
     /**
-     * Field in C1.
+     * Field in C1. 
      */
     public UsedClass fieldInC1;
-
+    
     /**
-     * Method in C1.
+     * Method in C1. 
      */
     public UsedClass methodInC1(UsedClass p) {
         return p;

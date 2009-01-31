@@ -35,8 +35,8 @@ public class StaticBlock {
     {"einz", "zwei", "drei", "vier"};
 
     static {
-        for (String n : numerals) {
-            // doesn't matter what's in here
-        }
+	for (String n : numerals) {
+	    // doesn't matter what's in here
+	}
     }
 }

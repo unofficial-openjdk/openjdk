@@ -32,16 +32,16 @@
 
 class T4718134 {
     void f(int x) {
-        final int i;
-        L: {
-            if (x==0) break L;
-            try {
-                i = 3;
-                break L; // this may not exit L
-            } finally {
-                return; // because this stops it
-            }
-        }
-        i = 2; // so there is NO ERROR here
+	final int i;
+	L: {
+	    if (x==0) break L;
+	    try {
+		i = 3;
+		break L; // this may not exit L
+	    } finally {
+		return; // because this stops it
+	    }
+	}
+	i = 2; // so there is NO ERROR here
     }
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -37,27 +37,27 @@ public class T4994049 extends Doclet {
 
     public static boolean start(RootDoc root) {
         for (ClassDoc klass : root.classes()) {
-            for (MethodDoc method : klass.methods()) {
-                if (method.name().equals("tabbedMethod")) {
-                    if (method.position().column() == 21) {
-                        System.out.println(method.position().column() + ": OK!");
-                        return true;
-                    } else {
-                        System.err.println(method.position() + ": wrong tab expansion");
-                        return false;
-                    }
-                }
-            }
+	    for (MethodDoc method : klass.methods()) {
+		if (method.name().equals("tabbedMethod")) {
+		    if (method.position().column() == 21) {
+			System.out.println(method.position().column() + ": OK!");
+			return true;
+		    } else {
+			System.err.println(method.position() + ": wrong tab expansion");
+			return false;
+		    }
+		}
+	    }
         }
         return false;
     }
 
     public static void main(String... args) {
-        for (String file : args) {
-            File source = new File(System.getProperty("test.src", "."), file);
-            if (execute("javadoc", "T4994049", new String[]{source.getPath()} ) != 0)
-                throw new Error();
-        }
+	for (String file : args) {
+	    File source = new File(System.getProperty("test.src", "."), file);
+	    if (execute("javadoc", "T4994049", new String[]{source.getPath()} ) != 0)
+		throw new Error();
+	}
     }
 
 }

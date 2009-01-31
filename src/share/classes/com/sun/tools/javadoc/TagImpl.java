@@ -29,11 +29,11 @@ import com.sun.javadoc.*;
 
 /**
  * Represents a documentation tag, e.g. @since, @author, @version.
- * Given a tag (e.g. "@since 1.2"), holds tag name (e.g. "@since")
+ * Given a tag (e.g. "@since 1.2"), holds tag name (e.g. "@since") 
  * and tag text (e.g. "1.2").  TagImpls with structure or which require
  * special processing are handled by subclasses (ParamTagImpl, SeeTagImpl,
  * and ThrowsTagImpl
- *
+ * 
  * @author Robert Field
  * @author Atul M Dambalkar
  * @author Neal M Gafter
@@ -53,7 +53,7 @@ class TagImpl implements Tag {
      * Cached first sentence.
      */
     private Tag[] firstSentence;
-
+    
     /**
      * Cached inline tags.
      */
@@ -67,7 +67,7 @@ class TagImpl implements Tag {
         this.name = name;
         this.text = text;
     }
-
+    
     /**
      * Return the name of this tag.
      */
@@ -124,7 +124,7 @@ class TagImpl implements Tag {
             }
         }
         return sa;
-    }
+    }            
 
     /**
      * convert this object to a string.
@@ -137,12 +137,12 @@ class TagImpl implements Tag {
      * For documentation comment with embedded @link tags, return the array of
      * TagImpls consisting of SeeTagImpl(s) and text containing TagImpl(s).
      * Within a comment string "This is an example of inline tags for a
-     * documentation comment {@link Doc {@link Doc commentlabel}}",
-     * where inside the inner braces, the first "Doc" carries exctly the same
-     * syntax as a SeeTagImpl and the second "commentlabel" is label for the Html
-     * Link, will return an array of TagImpl(s) with first element as TagImpl with
-     * comment text "This is an example of inline tags for a documentation
-     * comment" and second element as SeeTagImpl with referenced class as "Doc"
+     * documentation comment {@link Doc {@link Doc commentlabel}}", 
+     * where inside the inner braces, the first "Doc" carries exctly the same 
+     * syntax as a SeeTagImpl and the second "commentlabel" is label for the Html 
+     * Link, will return an array of TagImpl(s) with first element as TagImpl with 
+     * comment text "This is an example of inline tags for a documentation 
+     * comment" and second element as SeeTagImpl with referenced class as "Doc" 
      * and the label for the Html Link as "commentlabel".
      *
      * @return TagImpl[] Array of tags with inline SeeTagImpls.
@@ -178,6 +178,6 @@ class TagImpl implements Tag {
      * @return the doc item to which this tag is attached.
      */
     public SourcePosition position() {
-        return holder.position();
+	return holder.position();
     }
 }

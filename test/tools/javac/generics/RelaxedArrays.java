@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test @(#)Closure1.java	1.3 02/01/24
  * @bug 5009693
  * @summary relaxed rules for array of generic type and varargs.
  * @author gafter

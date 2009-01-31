@@ -32,39 +32,39 @@
 
 class T4711570 {
     public static int fi() {
-        return fi();
+	return fi();
     }
-
+	
     public static void gi() {
-        fi();
-        gi();
+	fi();
+	gi();
     }
-
+	
     public static <T> int f() {
-        return f();
+	return f();
     }
-
+	
     public static <T> void g() {
-        f();    // incompatible.types  found: <T>int required: java.lang.Object
-        int i = f(); // workaround for f()
-        g();    // incompatible.types  found: <T>void required: java.lang.Object
+	f();	// incompatible.types  found: <T>int required: java.lang.Object
+	int i = f(); // workaround for f()
+	g();	// incompatible.types  found: <T>void required: java.lang.Object
     }
     // required type looks strange
-
+	
     public static <T> void h() {
-        g();    // incompatible.types  found: <T>void required: java.lang.Object
+	g();	// incompatible.types  found: <T>void required: java.lang.Object
     }
 
     public static <T> int f(T x) {
-        return f(x);
+	return f(x);
     }
-
+	
     public static <T> void g(T x) {
-        f(x);
-        g(x);   // incompatible.types  found: <T>void required: java.lang.Object
+	f(x);
+	g(x);	// incompatible.types  found: <T>void required: java.lang.Object
     }
-
+	
     public static <T> void h(T x) {
-        g(x);   // works fine now; why not in void g(T x)?
+	g(x);	// works fine now; why not in void g(T x)?
     }
 }

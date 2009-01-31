@@ -39,7 +39,7 @@ import javax.lang.model.element.*;
  * {@code NullPointerException} if the additional parameter {@code p}
  * is {@code null}; see documentation of the implementing class for
  * details.
- *
+ * 
  * <p> <b>WARNING:</b> It is possible that methods will be added to
  * this interface to accommodate new, currently unknown, language
  * structures added to future versions of the Java&trade; programming
@@ -159,7 +159,7 @@ public interface TypeVisitor<R, P> {
      * @param p a visitor-specified parameter
      * @return  a visitor-specified result
      * @throws UnknownTypeException
-     *  a visitor implementation may optionally throw this exception
+     *	a visitor implementation may optionally throw this exception
      */
     R visitUnknown(TypeMirror t, P p);
 }
