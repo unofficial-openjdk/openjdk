@@ -1,3 +1,28 @@
+/*
+ * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Sun designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Sun in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * CA 95054 USA or visit www.sun.com if you need additional information or
+ * have any questions.
+ */
+
 import java.util.ArrayList;
 
 import javax.sound.sampled.AudioFormat;
@@ -14,8 +39,8 @@ import com.sun.media.sound.AudioFloatConverter;
 
 /**
  * This is a SourceDataLine simulator used for testing SoftSynthesizer
- * without using real SourceDataLine / Audio Device. 
- * 
+ * without using real SourceDataLine / Audio Device.
+ *
  * @author Karl Helgason
  */
 
@@ -24,17 +49,17 @@ public class DummySourceDataLine implements SourceDataLine {
     private int bufferSize = -1;
 
     private AudioFormat format = new AudioFormat(44100.0f, 16, 2, true, false);
-    
+
     private DataLine.Info sourceLineInfo;
-    
+
     private boolean active = false;
-    
+
     private long framepos = 0;
-    
+
     private boolean opened = false;
-    
+
     private int framesize = 0;
-    
+
     public DummySourceDataLine()
     {
         ArrayList<AudioFormat> formats = new ArrayList<AudioFormat>();
@@ -77,7 +102,7 @@ public class DummySourceDataLine implements SourceDataLine {
         sourceLineInfo = new DataLine.Info(SourceDataLine.class,
                 formats_array, AudioSystem.NOT_SPECIFIED,
                 AudioSystem.NOT_SPECIFIED);
-        
+
     }
 
     public void open() throws LineUnavailableException {
@@ -95,10 +120,10 @@ public class DummySourceDataLine implements SourceDataLine {
             throws LineUnavailableException {
         this.format = format;
         this.bufferSize = bufferSize;
-        this.framesize = format.getFrameSize();        
+        this.framesize = format.getFrameSize();
         opened = true;
     }
-    
+
     public boolean isOpen() {
         return opened;
     }
@@ -113,7 +138,7 @@ public class DummySourceDataLine implements SourceDataLine {
 
         int flen = len / framesize;
         framepos += flen;
-        
+
         long time =  (long) (flen * (1000.0 / (double) getFormat()
                 .getSampleRate()));
         try {
@@ -122,7 +147,7 @@ public class DummySourceDataLine implements SourceDataLine {
             e.printStackTrace();
             return 0;
         }
-        
+
         return len;
     }
 
@@ -178,7 +203,7 @@ public class DummySourceDataLine implements SourceDataLine {
     }
 
     public void close() {
-        stop(); 
+        stop();
     }
 
     public Control getControl(Type control) {
@@ -197,7 +222,7 @@ public class DummySourceDataLine implements SourceDataLine {
     public boolean isControlSupported(Type control) {
         return false;
     }
-    
+
     public void addLineListener(LineListener listener) {
     }
 

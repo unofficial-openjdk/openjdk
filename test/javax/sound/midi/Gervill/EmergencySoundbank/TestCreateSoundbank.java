@@ -1,13 +1,3 @@
-import java.io.File;
-
-import javax.sound.midi.Instrument;
-import javax.sound.midi.Patch;
-import javax.sound.midi.Soundbank;
-
-import com.sun.media.sound.EmergencySoundbank;
-import com.sun.media.sound.ModelInstrument;
-import com.sun.media.sound.ModelPatch;
-
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -36,10 +26,20 @@ import com.sun.media.sound.ModelPatch;
 /* @test
  @summary Test EmergencySoundbank createSoundbank() method */
 
+import java.io.File;
+
+import javax.sound.midi.Instrument;
+import javax.sound.midi.Patch;
+import javax.sound.midi.Soundbank;
+
+import com.sun.media.sound.EmergencySoundbank;
+import com.sun.media.sound.ModelInstrument;
+import com.sun.media.sound.ModelPatch;
+
 public class TestCreateSoundbank {
 
     public static void main(String[] args) throws Exception {
-        
+
         Soundbank soundbank = EmergencySoundbank.createSoundbank();
         for (int i = 0; i < 128; i++) {
             Patch patch = new ModelPatch(0, i, false);
@@ -55,5 +55,5 @@ public class TestCreateSoundbank {
             throw new Exception("Drumkit instrument is missing!");
         if(ins.getPerformers().length == 0)
             throw new Exception("Drumkit instrument doesn't have any performers!");
-    }   
+    }
 }
