@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,6 +166,9 @@ public class Container extends Component {
     transient int listeningChildren;
     transient int listeningBoundsChildren;
     transient int descendantsCount;
+
+    /* Non-opaque window support -- see Window.setLayersOpaque */
+    transient Color preserveBackgroundColor = null;
 
     /**
      * JDK 1.1 serialVersionUID
@@ -503,6 +506,7 @@ public class Container extends Component {
             adjustDescendants(-(comp.countHierarchyMembers()));
 
             comp.parent = null;
+            comp.setGraphicsConfiguration(null);
             component.remove(index);
 
             invalidateIfValid();
@@ -786,6 +790,7 @@ public class Container extends Component {
                 component.add(index, comp);
             }
             comp.parent = this;
+            comp.setGraphicsConfiguration(getGraphicsConfiguration());
 
             adjustListeningChildren(AWTEvent.HIERARCHY_EVENT_MASK,
                                     comp.numListening(AWTEvent.HIERARCHY_EVENT_MASK));
@@ -1053,6 +1058,7 @@ public class Container extends Component {
                 component.add(index, comp);
             }
             comp.parent = this;
+            comp.setGraphicsConfiguration(thisGC);
 
             adjustListeningChildren(AWTEvent.HIERARCHY_EVENT_MASK,
                 comp.numListening(AWTEvent.HIERARCHY_EVENT_MASK));
@@ -1087,6 +1093,19 @@ public class Container extends Component {
                                        Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_EVENT_MASK));
             if (peer != null && layoutMgr == null && isVisible()) {
                 updateCursorImmediately();
+            }
+        }
+    }
+
+    @Override
+    void setGraphicsConfiguration(GraphicsConfiguration gc) {
+        synchronized (getTreeLock()) {
+            super.setGraphicsConfiguration(gc);
+
+            for (Component comp : component) {
+                if (comp != null) {
+                    comp.setGraphicsConfiguration(gc);
+                }
             }
         }
     }
@@ -1148,6 +1167,7 @@ public class Container extends Component {
 
             comp.parent = null;
             component.remove(index);
+            comp.setGraphicsConfiguration(null);
 
             invalidateIfValid();
             if (containerListener != null ||
@@ -1224,6 +1244,7 @@ public class Container extends Component {
                     layoutMgr.removeLayoutComponent(comp);
                 }
                 comp.parent = null;
+                comp.setGraphicsConfiguration(null);
                 if (containerListener != null ||
                    (eventMask & AWTEvent.CONTAINER_EVENT_MASK) != 0 ||
                     Toolkit.enabledOnToolkit(AWTEvent.CONTAINER_EVENT_MASK)) {

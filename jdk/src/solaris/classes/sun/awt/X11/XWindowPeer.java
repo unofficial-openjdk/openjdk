@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 
+import java.awt.image.BufferedImage;
+
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.WindowPeer;
 
@@ -42,12 +44,16 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import sun.awt.AWTAccessor;
 import sun.awt.ComponentAccessor;
 import sun.awt.WindowAccessor;
+import sun.awt.AWTAccessor;
 import sun.awt.DisplayChangedListener;
 import sun.awt.SunToolkit;
 import sun.awt.X11GraphicsDevice;
 import sun.awt.X11GraphicsEnvironment;
+
+import sun.java2d.pipe.Region;
 
 class XWindowPeer extends XPanelPeer implements WindowPeer,
                                                 DisplayChangedListener {
@@ -260,6 +266,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         setSaveUnder(true);
 
         updateIconImages();
+
+        updateShape();
+        updateOpacity();
+        // no need in updateOpaque() as it is no-op
     }
 
     public void updateIconImages() {
@@ -415,6 +425,22 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             }
         }
         return defaultIconInfo;
+    }
+
+    private void updateShape() {
+        // Shape shape = ((Window)target).getShape();
+        Shape shape = AWTAccessor.getWindowAccessor().getShape((Window)target);
+        if (shape != null) {
+            applyShape(Region.getInstance(shape, null));
+        }
+    }
+
+    private void updateOpacity() {
+        // float opacity = ((Window)target).getOpacity();
+        float opacity = AWTAccessor.getWindowAccessor().getOpacity((Window)target);
+        if (opacity < 1.0f) {
+            setOpacity(opacity);
+        }
     }
 
     public void updateMinimumSize() {
@@ -686,6 +712,7 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         int curScreenNum = ((X11GraphicsDevice)getGraphicsConfiguration().getDevice()).getScreen();
         int newScreenNum = 0;
         GraphicsDevice gds[] = XToolkit.localEnv.getScreenDevices();
+        GraphicsConfiguration newGC = null;
         Rectangle screenBounds;
 
         for (int i = 0; i < gds.length; i++) {
@@ -701,11 +728,13 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
                 if (intAmt == area) {
                     // Completely on this screen - done!
                     newScreenNum = i;
+                    newGC = gds[i].getDefaultConfiguration();
                     break;
                 }
                 if (intAmt > largestAmt) {
                     largestAmt = intAmt;
                     newScreenNum = i;
+                    newGC = gds[i].getDefaultConfiguration();
                 }
             }
         }
@@ -713,15 +742,8 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             if (log.isLoggable(Level.FINEST)) {
                 log.finest("XWindowPeer: Moved to a new screen");
             }
-            draggedToNewScreen(newScreenNum);
+            executeDisplayChangedOnEDT(newGC);
         }
-    }
-
-    /* Xinerama
-     * called to update our GC when dragged onto another screen
-     */
-    public void draggedToNewScreen(int screenNum) {
-        executeDisplayChangedOnEDT(screenNum);
     }
 
     /**
@@ -729,12 +751,11 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
      * the event dispatch thread.  This method is used in the Xinerama case
      * and after display mode change events.
      */
-    private void executeDisplayChangedOnEDT(final int screenNum) {
+    private void executeDisplayChangedOnEDT(final GraphicsConfiguration gc) {
         Runnable dc = new Runnable() {
             public void run() {
-                // Updates this window's GC and notifies all the children.
-                // See XPanelPeer/XCanvasPeer.displayChanged(int) for details.
-                displayChanged(screenNum);
+                AWTAccessor.getComponentAccessor().
+                    setGraphicsConfiguration((Component)target, gc);
             }
         };
         SunToolkit.executeOnEventHandlerThread((Component)target, dc);
@@ -745,9 +766,7 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
      * X11GraphicsDevice when the display mode has been changed.
      */
     public void displayChanged() {
-        GraphicsConfiguration gc = getGraphicsConfiguration();
-        int curScreenNum = ((X11GraphicsDevice)gc.getDevice()).getScreen();
-        executeDisplayChangedOnEDT(curScreenNum);
+        executeDisplayChangedOnEDT(getGraphicsConfiguration());
     }
 
     /**
@@ -2063,5 +2082,45 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             }
         }
         super.handleButtonPressRelease(xev);
+    }
+
+    public void print(Graphics g) {
+        // We assume we print the whole frame,
+        // so we expect no clip was set previously
+        Shape shape = AWTAccessor.getWindowAccessor().getShape((Window)target);
+        if (shape != null) {
+            g.setClip(shape);
+        }
+        super.print(g);
+    }
+
+    @Override
+    public void setOpacity(float opacity) {
+        final long maxOpacity = 0xffffffffl;
+        long iOpacity = (long)(opacity * maxOpacity);
+        if (iOpacity < 0) {
+            iOpacity = 0;
+        }
+        if (iOpacity > maxOpacity) {
+            iOpacity = maxOpacity;
+        }
+
+        XAtom netWmWindowOpacityAtom = XAtom.get("_NET_WM_WINDOW_OPACITY");
+
+        if (iOpacity == maxOpacity) {
+            netWmWindowOpacityAtom.DeleteProperty(getWindow());
+        } else {
+            netWmWindowOpacityAtom.setCard32Property(getWindow(), iOpacity);
+        }
+    }
+
+    @Override
+    public void setOpaque(boolean isOpaque) {
+        // no-op
+    }
+
+    @Override
+    public void updateWindow(BufferedImage backBuffer) {
+        // no-op
     }
 }
