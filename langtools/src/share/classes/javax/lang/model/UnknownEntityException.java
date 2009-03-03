@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,35 @@
  * have any questions.
  */
 
-/*
- * Unicode to ANSI string conversion macros, based on a slide from a
- * presentation by Asmus Freytag.  These must be macros, since the
- * alloca() has to be in the caller's stack space.
+package javax.lang.model;
+
+/**
+ * Superclass of exceptions which indicate that an unknown kind of
+ * entity was encountered.  This situation can occur if the language
+ * evolves and new kinds of constructs are introduced.  Subclasses of
+ * this exception may be thrown by visitors to indicate that the
+ * visitor was created for a prior version of the language.
+ *
+ * <p>A common superclass for those exceptions allows a single catch
+ * block to have code handling them uniformly.
+ *
+ * @author Joseph D. Darcy
+ * @see javax.lang.model.element.UnknownElementException
+ * @see javax.lang.model.element.UnknownAnnotationValueException
+ * @see javax.lang.model.type.UnknownTypeException
+ * @since 1.7
  */
+public class UnknownEntityException extends RuntimeException {
 
-#ifndef AWT_UNICODE_H
-#define AWT_UNICODE_H
+    private static final long serialVersionUID = 269L;
 
-#include <malloc.h>
-
-// Get a Unicode string copy of a Java String object (Java String aren't
-// null-terminated).
-extern LPWSTR J2WHelper(LPWSTR lpw, LPWSTR lpj, int nChars);
-extern LPWSTR J2WHelper1(LPWSTR lpw, LPWSTR lpj, int offset, int nChars);
-
-extern LPWSTR JNI_J2WHelper1(JNIEnv *env, LPWSTR lpw, jstring jstr);
-
-#define TO_WSTRING(jstr) \
-   ((jstr == NULL) ? NULL : \
-     (JNI_J2WHelper1(env, (LPWSTR) alloca((env->GetStringLength(jstr)+1)*2), \
-                     jstr) \
-    ))
-
-#endif // AWT_UNICODE_H
+    /**
+     * Creates a new {@code UnknownEntityException} with the specified
+     * detail message.
+     *
+     * @param message the detail message
+     */
+    protected UnknownEntityException(String message) {
+        super(message);
+    }
+}
