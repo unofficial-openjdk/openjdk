@@ -1,12 +1,10 @@
 /*
- * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,35 +20,29 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-package sun.awt.X11;
 
-import sun.awt.PlatformFont;
-import java.awt.GraphicsEnvironment;
+/*
+ * @test
+ * @bug 6785424
+ * @summary Test no SecurityException searching for a font.
+ * @run main FontAccess
+ *
+ * This can only test the specific bug if run on something like
+ * Windows Citrix Server where SystemDirectory and WindowsDirectory
+ * are different locations.
+ */
 
-public class XFontPeer extends PlatformFont {
+import java.awt.*;
+import java.awt.image.*;
 
-    /*
-     * XLFD name for XFontSet.
-     */
-    private String xfsname;
+public class FontAccess {
 
-    static {
-        if (!GraphicsEnvironment.isHeadless()) {
-            initIDs();
-        }
-    }
-
-    /**
-     * Initialize JNI field and method IDs for fields that may be
-       accessed from C.
-     */
-    private static native void initIDs();
-
-    public XFontPeer(String name, int style){
-        super(name, style);
-    }
-
-    protected char getMissingGlyphCharacter() {
-        return '\u274F';
-    }
+     public static void main(String[] args) {
+        System.setSecurityManager(new SecurityManager());
+        Font f = new Font("Verdana", Font.PLAIN, 12);
+        BufferedImage bi = new BufferedImage(1,1,1);
+        Graphics2D g = bi.createGraphics();
+        g.setFont(f);
+        System.out.println(g.getFontMetrics());
+     }
 }
