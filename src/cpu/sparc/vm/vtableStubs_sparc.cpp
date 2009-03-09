@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vtableStubs_sparc.cpp	1.58 07/07/19 12:19:09 JVM"
+#pragma ident "@(#)vtableStubs_sparc.cpp        1.58 07/07/19 12:19:09 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -68,7 +68,7 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
   // set methodOop (in case of interpreted method), and destination address
   int entry_offset = instanceKlass::vtable_start_offset() + vtable_index*vtableEntry::size();
 #ifndef PRODUCT
-  if (DebugVtables) { 
+  if (DebugVtables) {
     Label L;
     // check offset vs vtable length
     __ ld(G3_scratch, instanceKlass::vtable_length_offset()*wordSize, G5);
@@ -155,7 +155,7 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
 #endif /* PRODUCT */
 
   // load start of itable entries into L0 register
-  const int base = instanceKlass::vtable_start_offset() * wordSize;    
+  const int base = instanceKlass::vtable_start_offset() * wordSize;
   __ ld(Address(G3_klassOop, 0, instanceKlass::vtable_length_offset() * wordSize), L0);
 
   // %%% Could store the aligned, prescaled offset in the klassoop.
@@ -193,12 +193,16 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   // Compute itableMethodEntry and get methodOop(G5_method) and entrypoint(L0) for compiler
   const int method_offset = (itableMethodEntry::size() * wordSize * vtable_index) + itableMethodEntry::method_offset_in_bytes();
   __ add(G3_klassOop, L0, L1);
-  __ ld_ptr(L1, method_offset, G5_method);
+  if (__ is_simm13(method_offset)) {
+    __ ld_ptr(L1, method_offset, G5_method);
+  } else {
+    __ set(method_offset, G5_method);
+    __ ld_ptr(L1, G5_method, G5_method);
+  }
 
 #ifndef PRODUCT
   if (DebugVtables) {
     Label L01;
-    __ ld_ptr(L1, method_offset, G5_method);
     __ bpr(Assembler::rc_nz, false, Assembler::pt, G5_method, L01);
     __ delayed()->nop();
     __ stop("methodOop is null");
@@ -243,8 +247,8 @@ int VtableStub::pd_code_size_limit(bool is_vtable_stub) {
       const int basic = 5*BytesPerInstWord; // ld;ld;ld,jmp,nop
       return basic + slop;
     } else {
-      // save, ld, ld, sll, and, add, add, ld, cmp, br, add, ld, add, ld, ld, jmp, restore, sethi, jmpl, restore
-      const int basic = (20 LP64_ONLY(+ 6)) * BytesPerInstWord;
+      // save, ld, ld, sll, and, add, add, ld, cmp, br, add, ld, add, sethi, add, ld, ld, jmp, restore, sethi, jmpl, restore
+      const int basic = (22 LP64_ONLY(+ 12)) * BytesPerInstWord; // worst case extra 6 bytes for each sethi in 64-bit mode
       return (basic + slop);
     }
   }
