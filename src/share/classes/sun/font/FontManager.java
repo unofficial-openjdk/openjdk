@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2331,19 +2331,21 @@ public final class FontManager {
     static Vector<File> tmpFontFiles = null;
 
     public static Font2D createFont2D(File fontFile, int fontFormat,
-                                      boolean isCopy)
+                                      boolean isCopy,
+                                      CreatedFontTracker tracker)
         throws FontFormatException {
 
         String fontFilePath = fontFile.getPath();
         FileFont font2D = null;
         final File fFile = fontFile;
+        final CreatedFontTracker _tracker = tracker;
         try {
             switch (fontFormat) {
             case Font.TRUETYPE_FONT:
                 font2D = new TrueTypeFont(fontFilePath, null, 0, true);
                 break;
             case Font.TYPE1_FONT:
-                font2D = new Type1Font(fontFilePath, null);
+                font2D = new Type1Font(fontFilePath, null, isCopy);
                 break;
             default:
                 throw new FontFormatException("Unrecognised Font Format");
@@ -2353,6 +2355,9 @@ public final class FontManager {
                 java.security.AccessController.doPrivileged(
                      new java.security.PrivilegedAction() {
                           public Object run() {
+                              if (_tracker != null) {
+                                  _tracker.subBytes((int)fFile.length());
+                              }
                               fFile.delete();
                               return null;
                           }
@@ -2361,7 +2366,7 @@ public final class FontManager {
             throw(e);
         }
         if (isCopy) {
-            font2D.setFileToRemove(fontFile);
+            font2D.setFileToRemove(fontFile, tracker);
             synchronized (FontManager.class) {
 
                 if (tmpFontFiles == null) {
