@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1423,6 +1423,10 @@ char * os::local_time_string(char *buf, size_t buflen) {
                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
                t.tm_hour, t.tm_min, t.tm_sec);
   return buf;
+}
+
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -321,6 +321,10 @@ size_t os::current_stack_size() {
   address base = current_stack_base();
   address bottom = (address)align_size_up((intptr_t)(base - size), os::vm_page_size());;
   return (size_t)(base - bottom);
+}
+
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
 }
 
 // interruptible infrastructure

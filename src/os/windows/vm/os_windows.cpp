@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -325,6 +325,15 @@ size_t os::current_stack_size() {
   VirtualQuery(&minfo, &minfo, sizeof(minfo));
   sz = (size_t)os::current_stack_base() - (size_t)minfo.AllocationBase;
   return sz;
+}
+
+struct tm* os::localtime_pd(const time_t* clock, struct tm* res) {
+  const struct tm* time_struct_ptr = localtime(clock);
+  if (time_struct_ptr != NULL) {
+    *res = *time_struct_ptr;
+    return res;
+  }
+  return NULL;
 }
 
 
