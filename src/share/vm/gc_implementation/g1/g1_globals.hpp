@@ -28,7 +28,7 @@
 
 #define G1_FLAGS(develop, develop_pd, product, product_pd, diagnostic, experimental, notproduct, manageable, product_rw) \
                                                                             \
-  product(intx, ParallelGCG1AllocBufferSize, 4*K,                           \
+  product(intx, ParallelGCG1AllocBufferSize, 8*K,                           \
           "Size of parallel G1 allocation buffers in to-space.")            \
                                                                             \
   product(intx, G1TimeSliceMS, 500,                                         \
@@ -172,6 +172,9 @@
   develop(bool, G1RSBarrierUseQueue, true,                                  \
           "If true, use queueing RS barrier")                               \
                                                                             \
+  develop(bool, G1DeferredRSUpdate, true,                                   \
+          "If true, use deferred RS updates")                               \
+                                                                            \
   develop(bool, G1RSLogCheckCardTable, false,                               \
           "If true, verify that no dirty cards remain after RS log "        \
           "processing.")                                                    \
@@ -281,7 +284,25 @@
   develop(bool, G1HRRSFlushLogBuffersOnVerify, false,                       \
           "Forces flushing of log buffers before verification.")            \
                                                                             \
-  product(intx, G1MaxSurvivorRegions, 0,                                    \
-          "The maximum number of survivor regions")
+  product(bool, G1UseSurvivorSpace, true,                                   \
+          "When true, use survivor space.")                                 \
+                                                                            \
+  product(bool, G1FixedTenuringThreshold, false,                            \
+          "When set, G1 will not adjust the tenuring threshold")            \
+                                                                            \
+  product(bool, G1FixedEdenSize, false,                                     \
+          "When set, G1 will not allocate unused survivor space regions")   \
+                                                                            \
+  product(uintx, G1FixedSurvivorSpaceSize, 0,                               \
+          "If non-0 is the size of the G1 survivor space, "                 \
+          "otherwise SurvivorRatio is used to determine the size")          \
+                                                                            \
+  experimental(bool, G1EnableParallelRSetUpdating, false,                   \
+          "Enables the parallelization of remembered set updating "         \
+          "during evacuation pauses")                                       \
+                                                                            \
+  experimental(bool, G1EnableParallelRSetScanning, false,                   \
+          "Enables the parallelization of remembered set scanning "         \
+          "during evacuation pauses")
 
 G1_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG)
