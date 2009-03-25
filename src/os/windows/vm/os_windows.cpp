@@ -1523,7 +1523,7 @@ void os::print_os_info(outputStream* st) {
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
       } else { // os_vers == 6001
-        if (productType == VER_NT_WORKSTATION) {
+        if (osvi.wProductType == VER_NT_WORKSTATION) {
             st->print(" Windows 7");
         } else {
             // Unrecognized windows, print out its major and minor versions
