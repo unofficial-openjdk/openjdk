@@ -1294,6 +1294,16 @@ class CommandLineFlags {
   product(intx, ParGCArrayScanChunk, 50,                                    \
           "Scan a subset and push remainder, if array is bigger than this") \
                                                                             \
+  product(bool, ParGCTrimOverflow, true,                                    \
+          "Eagerly trim the overflow lists (useful for UseCompressedOops")  \
+                                                                            \
+  notproduct(bool, ParGCWorkQueueOverflowALot, false,                       \
+          "Whether we should simulate work queue overflow in ParNew")       \
+                                                                            \
+  notproduct(uintx, ParGCWorkQueueOverflowInterval, 1000,                   \
+          "An `interval' counter that determines how frequently"            \
+          " we simulate overflow; a smaller number increases frequency")    \
+                                                                            \
   product(intx, ParGCDesiredObjsFromOverflowList, 20,                       \
           "The desired number of objects to claim from the overflow list")  \
                                                                             \
