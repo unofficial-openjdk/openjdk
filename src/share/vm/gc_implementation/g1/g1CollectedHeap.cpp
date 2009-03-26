@@ -1693,14 +1693,20 @@ public:
   }
 };
 
-void G1CollectedHeap::oop_iterate(OopClosure* cl) {
+void G1CollectedHeap::oop_iterate(OopClosure* cl, bool do_perm) {
   IterateOopClosureRegionClosure blk(_g1_committed, cl);
   _hrs->iterate(&blk);
+  if (do_perm) {
+    perm_gen()->oop_iterate(cl);
+  }
 }
 
-void G1CollectedHeap::oop_iterate(MemRegion mr, OopClosure* cl) {
+void G1CollectedHeap::oop_iterate(MemRegion mr, OopClosure* cl, bool do_perm) {
   IterateOopClosureRegionClosure blk(mr, cl);
   _hrs->iterate(&blk);
+  if (do_perm) {
+    perm_gen()->oop_iterate(cl);
+  }
 }
 
 // Iterates an ObjectClosure over all objects within a HeapRegion.
@@ -1717,9 +1723,12 @@ public:
   }
 };
 
-void G1CollectedHeap::object_iterate(ObjectClosure* cl) {
+void G1CollectedHeap::object_iterate(ObjectClosure* cl, bool do_perm) {
   IterateObjectClosureRegionClosure blk(cl);
   _hrs->iterate(&blk);
+  if (do_perm) {
+    perm_gen()->object_iterate(cl);
+  }
 }
 
 void G1CollectedHeap::object_iterate_since_last_GC(ObjectClosure* cl) {
@@ -2346,7 +2355,7 @@ G1CollectedHeap::checkConcurrentMark() {
     VerifyMarkedObjsClosure verifycl(this);
     //    MutexLockerEx x(getMarkBitMapLock(),
     //              Mutex::_no_safepoint_check_flag);
-    object_iterate(&verifycl);
+    object_iterate(&verifycl, false);
 }
 
 void G1CollectedHeap::do_sync_mark() {
