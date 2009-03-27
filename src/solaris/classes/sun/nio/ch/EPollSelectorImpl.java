@@ -141,7 +141,6 @@ class EPollSelectorImpl
             FileDispatcher.closeIntFD(fd1);
             if (pollWrapper != null) {
 
-                pollWrapper.release(fd0);
                 pollWrapper.closeEPollFD();
                 pollWrapper = null;
                 selectedKeys = null;
@@ -163,17 +162,18 @@ class EPollSelectorImpl
     }
 
     protected void implRegister(SelectionKeyImpl ski) {
-        int fd = IOUtil.fdVal(ski.channel.getFD());
-        fdToKey.put(new Integer(fd), ski);
-        pollWrapper.add(fd);
+        SelChImpl ch = ski.channel;
+        fdToKey.put(Integer.valueOf(ch.getFDVal()), ski);
+        pollWrapper.add(ch);
         keys.add(ski);
     }
 
     protected void implDereg(SelectionKeyImpl ski) throws IOException {
         assert (ski.getIndex() >= 0);
-        int fd = ski.channel.getFDVal();
+        SelChImpl ch = ski.channel;
+        int fd = ch.getFDVal();
         fdToKey.remove(new Integer(fd));
-        pollWrapper.release(fd);
+        pollWrapper.release(ch);
         ski.setIndex(-1);
         keys.remove(ski);
         selectedKeys.remove(ski);
@@ -184,8 +184,7 @@ class EPollSelectorImpl
     }
 
     void putEventOps(SelectionKeyImpl sk, int ops) {
-        int fd = IOUtil.fdVal(sk.channel.getFD());
-        pollWrapper.setInterest(fd, ops);
+        pollWrapper.setInterest(sk.channel, ops);
     }
 
     public Selector wakeup() {
