@@ -347,6 +347,7 @@ public class VM {
     for (Iterator iter = vmInitializedObservers.iterator(); iter.hasNext(); ) {
       ((Observer) iter.next()).update(null, null);
     }
+
   }
 
   /** This is used by the debugging system */
