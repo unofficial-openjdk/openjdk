@@ -1861,6 +1861,26 @@ bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_nam
   }
 }
 
+// Returns true iff super_method can be overridden by a method in targetclassname
+// See JSL 3rd edition 8.4.6.1
+// Assumes name-signature match
+// "this" is instanceKlass of super_method which must exist
+// note that the instanceKlass of the method in the targetclassname has not always been created yet
+bool instanceKlass::is_override(methodHandle super_method, Handle targetclassloader, symbolHandle targetclassname, TRAPS) {
+   // Private methods can not be overridden
+   if (super_method->is_private()) {
+     return false;
+   }
+   // If super method is accessible, then override
+   if ((super_method->is_protected()) ||
+       (super_method->is_public())) {
+     return true;
+   }
+   // Package-private methods are not inherited outside of package
+   assert(super_method->is_package_private(), "must be package private");
+   return(is_same_class_package(targetclassloader(), targetclassname()));
+}
+
 /* defined for now in jvm.cpp, for historical reasons *--
 klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
                                                      symbolOop& simple_name_result, TRAPS) {
