@@ -3154,6 +3154,8 @@ oopsHierarchy.cpp                       thread.hpp
 oopsHierarchy.cpp                       thread_<os_family>.inline.hpp
 
 orderAccess.cpp                         orderAccess.hpp
+orderAccess.cpp                         stubRoutines.hpp
+orderAccess.cpp                         thread.hpp
 
 orderAccess.hpp                         allocation.hpp
 orderAccess.hpp                         os.hpp
@@ -4598,6 +4600,7 @@ vm_version_<arch>.cpp                   vm_version_<arch>.hpp
 vm_version_<arch>.hpp                   globals_extension.hpp
 vm_version_<arch>.hpp                   vm_version.hpp
 
+vm_version_<os_arch>.cpp                os.hpp
 vm_version_<os_arch>.cpp                vm_version_<arch>.hpp
 
 vmreg.cpp                               assembler.hpp
