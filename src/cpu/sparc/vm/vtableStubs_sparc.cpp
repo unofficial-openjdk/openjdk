@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,12 +190,16 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   // Compute itableMethodEntry and get methodOop(G5_method) and entrypoint(L0) for compiler
   const int method_offset = (itableMethodEntry::size() * wordSize * vtable_index) + itableMethodEntry::method_offset_in_bytes();
   __ add(G3_klassOop, L0, L1);
-  __ ld_ptr(L1, method_offset, G5_method);
+  if (__ is_simm13(method_offset)) {
+    __ ld_ptr(L1, method_offset, G5_method);
+  } else {
+    __ set(method_offset, G5_method);
+    __ ld_ptr(L1, G5_method, G5_method);
+  }
 
 #ifndef PRODUCT
   if (DebugVtables) {
     Label L01;
-    __ ld_ptr(L1, method_offset, G5_method);
     __ bpr(Assembler::rc_nz, false, Assembler::pt, G5_method, L01);
     __ delayed()->nop();
     __ stop("methodOop is null");
@@ -244,7 +248,7 @@ int VtableStub::pd_code_size_limit(bool is_vtable_stub) {
       return basic + slop;
     } else {
       // save, ld, ld, sll, and, add, add, ld, cmp, br, add, ld, add, ld, ld, jmp, restore, sethi, jmpl, restore
-      const int basic = (20 LP64_ONLY(+ 6)) * BytesPerInstWord +
+      const int basic = (22 LP64_ONLY(+ 12)) * BytesPerInstWord +
                         // shift;add for load_klass
                         (UseCompressedOops ? 2*BytesPerInstWord : 0);
       return (basic + slop);
