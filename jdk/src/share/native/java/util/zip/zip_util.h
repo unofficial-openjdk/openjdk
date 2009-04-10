@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,7 +174,7 @@ typedef struct jzfile {   /* Zip file */
 #ifdef USE_MMAP
     unsigned char *maddr; /* beginning address of the CEN & ENDHDR */
     jlong mlen;           /* length (in bytes) mmaped */
-    off_t offset;         /* offset of the mmapped region from the
+    jlong offset;         /* offset of the mmapped region from the
                              start of the file. */
 #else
     cencache cencache;    /* CEN header cache */
