@@ -21,6 +21,13 @@
  * have any questions.
  */
 
+/*
+  @test
+  @bug 6522586
+  @summary Enforce limits on font creation
+  @run main BigFont
+*/
+
 import java.applet.*;
 import java.awt.*;
 import java.io.*;
@@ -28,8 +35,13 @@ import java.net.*;
 
 public class BigFont extends Applet {
 
-   static private class SizedInputStream extends InputStream {
+   public static void main(String args[]) {
+        System.setSecurityManager(new SecurityManager());
+        (new BigFont()).runTest1();
+   }
 
+   static private class SizedInputStream extends InputStream {
+     
        int size;
        int cnt = 0;
 
@@ -57,9 +69,13 @@ public class BigFont extends Applet {
     public void init() {
         id = getParameter("number");
         fileName = getParameter("font");
-
         System.out.println("Applet " + id + " "+
                            Thread.currentThread().getThreadGroup());
+        runTest1();
+        runTest2();
+    }
+
+    void runTest1() {
         // Larger than size for a single font.
         int fontSize = 64 * 1000 * 1000;
         SizedInputStream sis = new SizedInputStream(fontSize);
@@ -74,6 +90,9 @@ public class BigFont extends Applet {
                 throw new RuntimeException("Allowed file to be too large.");
             }
         }
+     }
+
+     void runTest2() {
         // The following part of the test was verified manually but
         // is impractical to enable  because it requires a fairly large
         // valid font to be part of the test, and we can't easily include
