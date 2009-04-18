@@ -1,12 +1,10 @@
 /*
- * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,21 +21,33 @@
  * have any questions.
  */
 
-#ifndef AWT_KEYBOARDFOCUSMANAGER_H
-#define AWT_KEYBOARDFOCUSMANAGER_H
+/*
+ * @test
+ * @bug     6400189
+ * @summary raw types and inference
+ * @author  mcimadamore
+ * @compile T6400189d.java
+ */
 
-#include <jni.h>
+import java.util.Iterator;
 
-class AwtKeyboardFocusManager {
-public:
+class T6400189c<T> {
 
-    static jclass keyboardFocusManagerCls;
-    static jmethodID shouldNativelyFocusHeavyweightMID;
-    static jmethodID heavyweightButtonDownMID;
-    static jmethodID markClearGlobalFocusOwnerMID;
-    static jmethodID removeLastFocusRequestMID;
-    static jfieldID isProxyActive;
-    static jmethodID processSynchronousTransfer;
-};
+    interface A<X> extends Iterable<X> {
+        Iterator<X> iterator();
+    }
 
-#endif // AWT_KEYBOARDFOCUSMANAGER_H
+    interface A2<Y> extends A<Y> {
+        Iterator<Y> iterator();
+    }
+
+    static abstract class B<Z> implements A<Z> {
+        public abstract Iterator<Z> iterator();
+    }
+
+    static abstract class C<W> extends B<W> implements A2<W> {
+        Iterator<W> test() {
+            return iterator();
+        }
+    }
+}
