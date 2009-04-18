@@ -1,12 +1,10 @@
 /*
- * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,21 +21,28 @@
  * have any questions.
  */
 
-#ifndef AWT_KEYBOARDFOCUSMANAGER_H
-#define AWT_KEYBOARDFOCUSMANAGER_H
+/*
+ * @test
+ * @bug 6785424
+ * @summary Test no SecurityException searching for a font.
+ * @run main FontAccess
+ *
+ * This can only test the specific bug if run on something like
+ * Windows Citrix Server where SystemDirectory and WindowsDirectory
+ * are different locations.
+ */
 
-#include <jni.h>
+import java.awt.*;
+import java.awt.image.*;
 
-class AwtKeyboardFocusManager {
-public:
+public class FontAccess {
 
-    static jclass keyboardFocusManagerCls;
-    static jmethodID shouldNativelyFocusHeavyweightMID;
-    static jmethodID heavyweightButtonDownMID;
-    static jmethodID markClearGlobalFocusOwnerMID;
-    static jmethodID removeLastFocusRequestMID;
-    static jfieldID isProxyActive;
-    static jmethodID processSynchronousTransfer;
-};
-
-#endif // AWT_KEYBOARDFOCUSMANAGER_H
+     public static void main(String[] args) {
+        System.setSecurityManager(new SecurityManager());
+        Font f = new Font("Verdana", Font.PLAIN, 12);
+        BufferedImage bi = new BufferedImage(1,1,1);
+        Graphics2D g = bi.createGraphics();
+        g.setFont(f);
+        System.out.println(g.getFontMetrics());
+     }
+}
