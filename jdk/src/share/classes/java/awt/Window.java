@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,11 @@
 package java.awt;
 
 import java.awt.event.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.WindowPeer;
 import java.beans.PropertyChangeListener;
@@ -49,6 +52,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.accessibility.*;
+import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
 import sun.awt.CausedFocusEvent;
 import sun.awt.SunToolkit;
@@ -291,6 +295,27 @@ public class Window extends Container implements Accessible {
      */
     transient boolean isInShow = false;
 
+    /*
+     * Opacity level of the window
+     *
+     * @serial
+     * @see #setOpacity(float)
+     * @see #getOpacity()
+     * @since 1.7
+     */
+    private float opacity = 1.0f;
+
+    /*
+     * The shape assigned to this window. This field is set to null if
+     * no shape is set (rectangular window).
+     *
+     * @serial
+     * @see #getShape()
+     * @see #setShape(Shape)
+     * @since 1.7
+     */
+    private Shape shape = null;
+
     private static final String base = "win";
     private static int nameCounter = 0;
 
@@ -304,6 +329,23 @@ public class Window extends Container implements Accessible {
     private static final boolean locationByPlatformProp;
 
     transient boolean isTrayIconWindow = false;
+
+    /**
+     * These fields are initialized in the native peer code
+     * or via AWTAccessor's WindowAccessor.
+     */
+    private transient volatile int securityWarningWidth = 0;
+    private transient volatile int securityWarningHeight = 0;
+
+    /**
+     * These fields represent the desired location for the security
+     * warning if this window is untrusted.
+     * See com.sun.awt.SecurityWarning for more details.
+     */
+    private transient double securityWarningPointX = 2.0;
+    private transient double securityWarningPointY = 0.0;
+    private transient float securityWarningAlignmentX = RIGHT_ALIGNMENT;
+    private transient float securityWarningAlignmentY = TOP_ALIGNMENT;
 
     static {
         /* ensure that the necessary native libraries are loaded */
@@ -373,6 +415,18 @@ public class Window extends Container implements Accessible {
         }
     }
 
+    private GraphicsConfiguration initGC(GraphicsConfiguration gc) {
+        GraphicsEnvironment.checkHeadless();
+
+        if (gc == null) {
+            gc = GraphicsEnvironment.getLocalGraphicsEnvironment().
+                getDefaultScreenDevice().getDefaultConfiguration();
+        }
+        setGraphicsConfiguration(gc);
+
+        return gc;
+    }
+
     private void init(GraphicsConfiguration gc) {
         GraphicsEnvironment.checkHeadless();
 
@@ -384,14 +438,10 @@ public class Window extends Container implements Accessible {
         setWarningString();
         this.cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         this.visible = false;
-        if (gc == null) {
-            this.graphicsConfig =
-                GraphicsEnvironment.getLocalGraphicsEnvironment().
-             getDefaultScreenDevice().getDefaultConfiguration();
-        } else {
-            this.graphicsConfig = gc;
-        }
-        if (graphicsConfig.getDevice().getType() !=
+
+        gc = initGC(gc);
+
+        if (gc.getDevice().getType() !=
             GraphicsDevice.TYPE_RASTER_SCREEN) {
             throw new IllegalArgumentException("not a screen device");
         }
@@ -399,8 +449,8 @@ public class Window extends Container implements Accessible {
 
         /* offset the initial location with the original of the screen */
         /* and any insets                                              */
-        Rectangle screenBounds = graphicsConfig.getBounds();
-        Insets screenInsets = getToolkit().getScreenInsets(graphicsConfig);
+        Rectangle screenBounds = gc.getBounds();
+        Insets screenInsets = getToolkit().getScreenInsets(gc);
         int x = getX() + screenBounds.x + screenInsets.left;
         int y = getY() + screenBounds.y + screenInsets.top;
         if (x != this.x || y != this.y) {
@@ -2744,7 +2794,7 @@ public class Window extends Container implements Accessible {
         sun.java2d.Disposer.addRecord(anchor, new WindowDisposerRecord(appContext, this));
 
         addToWindowList();
-
+        initGC(null);
     }
 
     private void deserializeResources(ObjectInputStream s)
@@ -2849,6 +2899,15 @@ public class Window extends Container implements Accessible {
          if(aot) {
              setAlwaysOnTop(aot); // since 1.5; subject to permission check
          }
+         shape = (Shape)f.get("shape", null);
+         opacity = (Float)f.get("opacity", 1.0f);
+
+         this.securityWarningWidth = 0;
+         this.securityWarningHeight = 0;
+         this.securityWarningPointX = 2.0;
+         this.securityWarningPointY = 0.0;
+         this.securityWarningAlignmentX = RIGHT_ALIGNMENT;
+         this.securityWarningAlignmentY = TOP_ALIGNMENT;
 
          deserializeResources(s);
     }
@@ -2916,41 +2975,18 @@ public class Window extends Container implements Accessible {
 
     } // inner class AccessibleAWTWindow
 
-    /**
-     * This method returns the GraphicsConfiguration used by this Window.
-     * @since 1.3
-     */
-    public GraphicsConfiguration getGraphicsConfiguration() {
-                //NOTE: for multiscreen, this will need to take into account
-                //which screen the window is on/mostly on instead of returning the
-                //default or constructor argument config.
-        synchronized(getTreeLock()) {
-            if (graphicsConfig == null  && !GraphicsEnvironment.isHeadless()) {
-                graphicsConfig =
-                    GraphicsEnvironment. getLocalGraphicsEnvironment().
-                    getDefaultScreenDevice().
-                    getDefaultConfiguration();
-            }
-            return graphicsConfig;
-            }
-    }
-
-    /**
-     * Reset this Window's GraphicsConfiguration to match its peer.
-     */
-    void resetGC() {
-        if (!GraphicsEnvironment.isHeadless()) {
-            // use the peer's GC
-            setGCFromPeer();
-            // if it's still null, use the default
-            if (graphicsConfig == null) {
-                graphicsConfig = GraphicsEnvironment.
+    @Override
+    void setGraphicsConfiguration(GraphicsConfiguration gc) {
+        if (gc == null) {
+            gc = GraphicsEnvironment.
                     getLocalGraphicsEnvironment().
                     getDefaultScreenDevice().
                     getDefaultConfiguration();
-            }
+        }
+        synchronized (getTreeLock()) {
+            super.setGraphicsConfiguration(gc);
             if (log.isLoggable(Level.FINER)) {
-                log.finer("+ Window.resetGC(): new GC is \n+ " + graphicsConfig + "\n+ this is " + this);
+                log.finer("+ Window.setGraphicsConfiguration(): new GC is \n+ " + getGraphicsConfiguration_NoClientCode() + "\n+ this is " + this);
             }
         }
     }
@@ -3010,13 +3046,13 @@ public class Window extends Container implements Accessible {
         // target location
         int dx = 0, dy = 0;
         // target GC
-        GraphicsConfiguration gc = this.graphicsConfig;
+        GraphicsConfiguration gc = getGraphicsConfiguration_NoClientCode();
         Rectangle gcBounds = gc.getBounds();
 
         Dimension windowSize = getSize();
 
         // search a top-level of c
-        Window componentWindow = Component.getContainingWindow(c);
+        Window componentWindow = SunToolkit.getContainingWindow(c);
         if ((c == null) || (componentWindow == null)) {
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
@@ -3304,6 +3340,339 @@ public class Window extends Container implements Accessible {
     }
 
 
+    // ******************** SHAPES & TRANSPARENCY CODE ********************
+
+    /**
+     * Returns the opacity of the window.
+     *
+     * @return the opacity of the window
+     *
+     * @see Window#setOpacity
+     * @see GraphicsDevice.WindowTranslucency
+     *
+     * @since 1.7
+     */
+    public float getOpacity() {
+        synchronized (getTreeLock()) {
+            return opacity;
+        }
+    }
+
+    /**
+     * Sets the opacity of the window.
+     * <p>
+     * The opacity value is in the range [0..1]. Note that setting the opacity
+     * level of 0 may or may not disable the mouse event handling on this
+     * window. This is a platform-dependent behavior.
+     * <p>
+     * In order for this method to enable the translucency effect, the {@link
+     * GraphicsDevice#isWindowTranslucencySupported()} method must indicate that
+     * the {@link GraphicsDevice.WindowTranslucency#TRANSLUCENT TRANSLUCENT}
+     * translucency is supported.
+     * <p>
+     * Also note that the window must not be in the full-screen mode when
+     * setting the opacity value &lt; 1.0f. Otherwise the {@code
+     * IllegalComponentStateException} is thrown.
+     * <p>
+     * The translucency levels of individual pixels may also be effected by the
+     * alpha component of their color (see {@link setBackground()}) and the
+     * current shape of this window (see {@link setShape()}).
+     *
+     * @param opacity the opacity level to set to the window
+     *
+     * @throws IllegalArgumentException if the opacity is out of the range
+     *     [0..1]
+     * @throws IllegalComponentStateException if the window is in full screen
+     *     mode, and the opacity is less than 1.0f
+     * @throws UnsupportedOperationException if the {@code
+     *     GraphicsDevice.WindowTranslucency#TRANSLUCENT TRANSLUCENT}
+     *     translucency kind is not supported and the opacity is less than 1.0f
+     *
+     * @see Window#getOpacity
+     * @see Window#setBackground()
+     * @see Window#setShape()
+     * @see GraphicsDevice.WindowTranslucency
+     * @see GraphicsDevice#isWindowTranslucencySupported()
+     *
+     * @since 1.7
+     */
+    public void setOpacity(float opacity) {
+        synchronized (getTreeLock()) {
+            if (opacity < 0.0f || opacity > 1.0f) {
+                throw new IllegalArgumentException(
+                    "The value of opacity should be in the range [0.0f .. 1.0f].");
+            }
+            if (opacity < 1.0f) {
+                GraphicsConfiguration gc = getGraphicsConfiguration();
+                GraphicsDevice gd = gc.getDevice();
+                if (gc.getDevice().getFullScreenWindow() == this) {
+                    throw new IllegalComponentStateException(
+                        "Setting opacity for full-screen window is not supported.");
+                }
+                if (!gd.isWindowTranslucencySupported(
+                    GraphicsDevice.WindowTranslucency.TRANSLUCENT))
+                {
+                    throw new UnsupportedOperationException(
+                        "TRANSLUCENT translucency is not supported.");
+                }
+            }
+            this.opacity = opacity;
+            WindowPeer peer = (WindowPeer)getPeer();
+            if (peer != null) {
+                peer.setOpacity(opacity);
+            }
+        }
+    }
+
+    /**
+     * Returns the shape of the window.
+     *
+     * The value returned by this method may not be the same as
+     * previously set with {@code setShape(shape)}, but it is guaranteed
+     * to represent the same shape.
+     *
+     * @return the shape of the window or {@code null} if no
+     *     shape is specified for the window
+     *
+     * @see Window#setShape
+     * @see GraphicsDevice.WindowTranslucency
+     *
+     * @since 1.7
+     */
+    public Shape getShape() {
+        synchronized (getTreeLock()) {
+            return shape == null ? null : new Path2D.Float(shape);
+        }
+    }
+
+    /**
+     * Sets the shape of the window.
+     * <p>
+     * Setting a shape enables cutting off some parts of the window, leaving
+     * visible and clickable only those parts belonging to the given shape
+     * (see {@link Shape}). If the shape argument is null, this methods
+     * restores the default shape (making the window rectangular on most
+     * platforms.)
+     * <p>
+     * The following conditions must be met in order to set a non-null shape:
+     * <ul>
+     * <li>The {@link GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSPARENT
+     * PERPIXEL_TRANSPARENT} translucency kind must be supported by the
+     * underlying system (see {@link })
+     * <i>and</i>
+     * <li>The window must not be in the full-screen mode (see
+     * {@link GraphicsDevice#setFullScreenWindow()})
+     * </ul>
+     * If a certain condition is not met, either the {@code
+     * UnsupportedOperationException} or {@code IllegalComponentStateException}
+     * is thrown.
+     * <p>
+     * The tranlucency levels of individual pixels may also be effected by the
+     * alpha component of their color (see {@link setBackground()}) and the
+     * opacity value (see {@link setOpacity()}). See {@link
+     * GraphicsDevice#WindowTranslucency} for more details.
+     *
+     * @param shape the shape to set to the window
+     *
+     * @throws IllegalComponentStateException if the shape is not {@code
+     *     null} and the window is in full-screen mode
+     * @throws UnsupportedOperationException if the shape is not {@code
+     *     null} and {@link GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSPARENT
+     *     PERPIXEL_TRANSPARENT} translucency is not supported
+     *
+     * @see Window#getShape()
+     * @see Window#setBackgound()
+     * @see Window#setOpacity()
+     * @see GraphicsDevice.WindowTranslucency
+     * @see GraphicsDevice#isWindowTranslucencySupported()
+     *
+     * @since 1.7
+     */
+    public void setShape(Shape shape) {
+        synchronized (getTreeLock()) {
+            if (shape != null) {
+                GraphicsConfiguration gc = getGraphicsConfiguration();
+                GraphicsDevice gd = gc.getDevice();
+                if (gc.getDevice().getFullScreenWindow() == this) {
+                    throw new IllegalComponentStateException(
+                        "Setting shape for full-screen window is not supported.");
+                }
+                if (!gd.isWindowTranslucencySupported(
+                        GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT))
+                {
+                    throw new UnsupportedOperationException(
+                        "PERPIXEL_TRANSPARENT translucency is not supported.");
+                }
+            }
+            this.shape = (shape == null) ? null : new Path2D.Float(shape);
+            WindowPeer peer = (WindowPeer)getPeer();
+            if (peer != null) {
+                peer.applyShape(shape == null ? null : Region.getInstance(shape, null));
+            }
+        }
+    }
+
+    /**
+     * Gets the background color of this window.
+     * <p>
+     * Note that the alpha component of the returned color indicates whether
+     * the window is in the non-opaque (per-pixel translucent) mode.
+     *
+     * @return this component's background color
+     *
+     * @see Window#setBackground
+     * @see GraphicsDevice.WindowTranslucency
+     */
+    @Override
+    public Color getBackground() {
+        return super.getBackground();
+    }
+
+    /**
+     * Sets the background color of this window.
+     * <p>
+     * If the windowing system supports the {@link
+     * GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSLUCENT PERPIXEL_TRANSLUCENT}
+     * tranclucency, the alpha component of the given background color
+     * may effect the mode of operation for this window: it indicates whether
+     * this window must be opaque (alpha == 1.0f) or per-pixel translucent
+     * (alpha &lt; 1.0f).  All the following conditions must be met in order
+     * to be able to enable the per-pixel transparency mode for this window:
+     * <ul>
+     * <li>The {@link GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSLUCENT
+     * PERPIXEL_TRANSLUCENT} translucency must be supported
+     * by the graphics device where this window is located <i>and</i>
+     * <li>The window must not be in the full-screen mode (see {@link
+     * GraphicsDevice#setFullScreenWindow()})
+     * </ul>
+     * If a certain condition is not met at the time of calling this method,
+     * the alpha component of the given background color will not effect the
+     * mode of operation for this window.
+     * <p>
+     * When the window is per-pixel translucent, the drawing sub-system
+     * respects the alpha value of each individual pixel. If a pixel gets
+     * painted with the alpha color component equal to zero, it becomes
+     * visually transparent, if the alpha of the pixel is equal to 1.0f, the
+     * pixel is fully opaque. Interim values of the alpha color component make
+     * the pixel semi-transparent. In this mode the background of the window
+     * gets painted with the alpha value of the given background color (meaning
+     * that it is not painted at all if the alpha value of the argument of this
+     * method is equal to zero.)
+     * <p>
+     * The actual level of translucency of a given pixel also depends on window
+     * opacity (see {@link setOpacity()}), as well as the current shape of
+     * this window (see {@link setShape()}).
+     * <p>
+     * Note that painting a pixel with the alpha value of 0 may or may not
+     * disable the mouse event handling on this pixel. This is a
+     * platform-dependent behavior. To make sure the mouse clicks do not get
+     * dispatched to a particular pixel, the pixel must be excluded from the
+     * shape of the window.
+     * <p>
+     * Enabling the per-pixel translucency mode may change the graphics
+     * configuration of this window due to the native platform requirements.
+     *
+     * @param bgColor the color to become this window's background color.
+     *
+     * @throws IllegalComponentStateException if the alpha value of the given
+     *     background color is less than 1.0f and the window is in
+     *     full-screen mode
+     * @throws UnsupportedOperationException if the alpha value of the given
+     *     background color is less than 1.0f and
+     *     {@link GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSLUCENT
+     *     PERPIXEL_TRANSLUCENT} translucency is not supported
+     *
+     * @see Window#getBackground
+     * @see Window#setOpacity()
+     * @see Window#setShape()
+     * @see GraphicsDevice.WindowTranslucency
+     * @see GraphicsDevice#isWindowTranslucencySupported()
+     * @see GraphicsConfiguration#isTranslucencyCapable()
+     */
+    @Override
+    public void setBackground(Color bgColor) {
+        Color oldBg = getBackground();
+        if (oldBg != null && oldBg.equals(bgColor)) {
+            return;
+        }
+        super.setBackground(bgColor);
+        int oldAlpha = oldBg != null ? oldBg.getAlpha() : 255;
+        int alpha = bgColor.getAlpha();
+        if ((oldAlpha == 255) && (alpha < 255)) { // non-opaque window
+            GraphicsConfiguration gc = getGraphicsConfiguration();
+            GraphicsDevice gd = gc.getDevice();
+            if (gc.getDevice().getFullScreenWindow() == this) {
+                throw new IllegalComponentStateException(
+                    "Making full-screen window non opaque is not supported.");
+            }
+            if (!gc.isTranslucencyCapable()) {
+                GraphicsConfiguration capableGC = gd.getTranslucencyCapableGC();
+                if (capableGC == null) {
+                    throw new UnsupportedOperationException(
+                        "PERPIXEL_TRANSLUCENT translucency is not supported");
+                }
+                setGraphicsConfiguration(capableGC);
+            }
+            setLayersOpaque(this, false);
+        } else if ((oldAlpha < 255) && (alpha == 255)) {
+            setLayersOpaque(this, true);
+        }
+        WindowPeer peer = (WindowPeer)getPeer();
+        if (peer != null) {
+            peer.setOpaque(alpha == 255);
+        }
+    }
+
+    private void updateWindow(BufferedImage backBuffer) {
+        synchronized (getTreeLock()) {
+            WindowPeer peer = (WindowPeer)getPeer();
+            if (peer != null) {
+                peer.updateWindow(backBuffer);
+            }
+        }
+    }
+
+    private static final Color TRANSPARENT_BACKGROUND_COLOR = new Color(0, 0, 0, 0);
+
+    private static void setLayersOpaque(Component component, boolean isOpaque) {
+        // Shouldn't use instanceof to avoid loading Swing classes
+        //    if it's a pure AWT application.
+        if (Component.doesImplement(component, "javax.swing.RootPaneContainer")) {
+            javax.swing.RootPaneContainer rpc = (javax.swing.RootPaneContainer)component;
+            javax.swing.JRootPane root = rpc.getRootPane();
+            javax.swing.JLayeredPane lp = root.getLayeredPane();
+            Container c = root.getContentPane();
+            javax.swing.JComponent content =
+                (c instanceof javax.swing.JComponent) ? (javax.swing.JComponent)c : null;
+            javax.swing.JComponent gp =
+                (rpc.getGlassPane() instanceof javax.swing.JComponent) ?
+                (javax.swing.JComponent)rpc.getGlassPane() : null;
+            if (gp != null) {
+                gp.setDoubleBuffered(isOpaque);
+            }
+            lp.setOpaque(isOpaque);
+            root.setOpaque(isOpaque);
+            root.setDoubleBuffered(isOpaque);
+            if (content != null) {
+                content.setOpaque(isOpaque);
+                content.setDoubleBuffered(isOpaque);
+
+                // Iterate down one level to see whether we have a JApplet
+                // (which is also a RootPaneContainer) which requires processing
+                int numChildren = content.getComponentCount();
+                if (numChildren > 0) {
+                    Component child = content.getComponent(0);
+                    // It's OK to use instanceof here because we've
+                    // already loaded the RootPaneContainer class by now
+                    if (child instanceof javax.swing.RootPaneContainer) {
+                        setLayersOpaque(child, isOpaque);
+                    }
+                }
+            }
+        }
+    }
+
+
     // ************************** MIXING CODE *******************************
 
     // A window has a parent, but it does NOT have a container
@@ -3340,6 +3709,87 @@ public class Window extends Container implements Accessible {
     }
 
     // ****************** END OF MIXING CODE ********************************
+
+    // This method gets the window location/size as reported by the native
+    // system since the locally cached values may represent outdated data.
+    // NOTE: this method is invoked on the toolkit thread, and therefore
+    // is not supposed to become public/user-overridable.
+    private Point2D calculateSecurityWarningPosition(double x, double y,
+            double w, double h)
+    {
+        return new Point2D.Double(
+                x + w * securityWarningAlignmentX + securityWarningPointX,
+                y + h * securityWarningAlignmentY + securityWarningPointY);
+    }
+
+    static {
+        AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
+            public float getOpacity(Window window) {
+                return window.opacity;
+            }
+            public void setOpacity(Window window, float opacity) {
+                window.setOpacity(opacity);
+            }
+            public Shape getShape(Window window) {
+                return window.getShape();
+            }
+            public void setShape(Window window, Shape shape) {
+                window.setShape(shape);
+            }
+            public boolean isOpaque(Window window) {
+                Color bg = window.getBackground();
+                return (bg != null) ? bg.getAlpha() == 255 : true;
+            }
+            public void setOpaque(Window window, boolean opaque) {
+                Color bg = window.getBackground();
+                if (bg == null) {
+                    bg = new Color(0, 0, 0, 0);
+                }
+                window.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(),
+                                               opaque ? 255 : 0));
+            }
+            public void updateWindow(Window window, BufferedImage backBuffer) {
+                window.updateWindow(backBuffer);
+            }
+
+            public Dimension getSecurityWarningSize(Window window) {
+                return new Dimension(window.securityWarningWidth,
+                        window.securityWarningHeight);
+            }
+
+            public void setSecurityWarningSize(Window window, int width, int height)
+            {
+                window.securityWarningWidth = width;
+                window.securityWarningHeight = height;
+            }
+
+            public void setSecurityWarningPosition(Window window,
+                    Point2D point, float alignmentX, float alignmentY)
+            {
+                window.securityWarningPointX = point.getX();
+                window.securityWarningPointY = point.getY();
+                window.securityWarningAlignmentX = alignmentX;
+                window.securityWarningAlignmentY = alignmentY;
+
+                synchronized (window.getTreeLock()) {
+                    WindowPeer peer = (WindowPeer)window.getPeer();
+                    if (peer != null) {
+                        peer.repositionSecurityWarning();
+                    }
+                }
+            }
+
+            public Point2D calculateSecurityWarningPosition(Window window,
+                    double x, double y, double w, double h)
+            {
+                return window.calculateSecurityWarningPosition(x, y, w, h);
+            }
+        }); // WindowAccessor
+    } // static
+
+    // a window doesn't need to be updated in the Z-order.
+    @Override
+    void updateZOrder() {}
 
 } // class Window
 
