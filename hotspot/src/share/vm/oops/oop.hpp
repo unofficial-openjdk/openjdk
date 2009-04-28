@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -262,6 +262,9 @@ class oopDesc {
 
   jdouble double_field_acquire(int offset) const;
   void release_double_field_put(int offset, jdouble contents);
+
+  address address_field_acquire(int offset) const;
+  void release_address_field_put(int offset, address contents);
 
   // printing functions for VM debugging
   void print_on(outputStream* st) const;         // First level print

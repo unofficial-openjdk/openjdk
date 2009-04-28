@@ -437,6 +437,10 @@ public:
   // of the SafePoint node for which it was generated.
   virtual bool pinned() const; // { return true; }
 
+  // SafePointScalarObject depends on the SafePoint node
+  // for which it was generated.
+  virtual bool depends_only_on_test() const; // { return false; }
+
   virtual uint size_of() const { return sizeof(*this); }
 
   // Assumes that "this" is an argument to a safepoint node "s", and that
@@ -758,6 +762,7 @@ public:
   }
   virtual int Opcode() const;
   virtual uint size_of() const; // Size is bigger
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 
   // Dig the length operand out of a array allocation site.
   Node* Ideal_length() {

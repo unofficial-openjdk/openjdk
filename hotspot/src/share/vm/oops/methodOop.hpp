@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,7 +296,7 @@ class methodOopDesc : public oopDesc {
   void set_compiled_invocation_count(int count)  { _compiled_invocation_count = count; }
 #endif // not PRODUCT
 
-  // Clear (non-shared space) pointers which could not be relevent
+  // Clear (non-shared space) pointers which could not be relevant
   // if this (shared) method were mapped into another JVM.
   void remove_unshareable_info();
 
@@ -320,6 +320,7 @@ class methodOopDesc : public oopDesc {
   enum VtableIndexFlag {
     // Valid vtable indexes are non-negative (>= 0).
     // These few negative values are used as sentinels.
+    highest_unused_vtable_index_value = -5,
     invalid_vtable_index    = -4,  // distinct from any valid vtable index
     garbage_vtable_index    = -3,  // not yet linked; no vtable layout yet
     nonvirtual_vtable_index = -2   // there is no need for vtable dispatch
@@ -523,6 +524,18 @@ class methodOopDesc : public oopDesc {
   // Reflection support
   bool is_overridden_in(klassOop k) const;
 
+  // JSR 292 support
+  bool is_method_handle_invoke() const              { return access_flags().is_method_handle_invoke(); }
+  static methodHandle make_invoke_method(KlassHandle holder,
+                                         symbolHandle signature,
+                                         Handle method_type,
+                                         TRAPS);
+  // these operate only on invoke methods:
+  oop method_handle_type() const;
+  static jint* method_type_offsets_chain();  // series of pointer-offsets, terminated by -1
+  // presize interpreter frames for extra interpreter stack entries, if needed
+  static int extra_stack_entries() { return EnableMethodHandles ? (int)MethodHandlePushLimit : 0; }
+  static int extra_stack_words();  // = extra_stack_entries() * Interpreter::stackElementSize()
   // RedefineClasses() support:
   bool is_old() const                               { return access_flags().is_old(); }
   void set_is_old()                                 { _access_flags.set_is_old(); }
