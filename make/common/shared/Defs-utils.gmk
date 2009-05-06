@@ -67,15 +67,18 @@ ifeq ($(PLATFORM),windows)
   UTILS_DEVTOOL_PATH=$(DEVTOOLS_PATH)
 endif
 
-# Utilities ant and findbugs
-ifndef ANT_HOME
-  ANT_HOME = $(JDK_DEVTOOLS_DIR)/share/ant/latest
+# Ant
+ifdef ANT_HOME
+  ANT = $(ANT_HOME)/bin/ant
+  ifneq ($(shell test -x $(ANT); echo $$?), 0)
+    $(error "$(ANT) not found; please update ANT_HOME")
+  endif
+else
+  ANT = ant
+  ifneq ($(shell which $(ANT) > /dev/null; echo $$?), 0)
+    $(error "\"ant\" not found; please set ANT_HOME or put \"ant\" on your PATH")
+  endif
 endif
-ANT = $(ANT_HOME)/bin/ant
-ifndef FINDBUGS_HOME
-  FINDBUGS_HOME = $(JDK_DEVTOOLS_DIR)/share/findbugs/latest
-endif
-FINDBUGS = $(FINDBUGS_HOME)/bin/findbugs
 
 # Utilities
 ADB            = $(UTILS_COMMAND_PATH)adb

@@ -71,7 +71,6 @@ sanity-base: pre-sanity \
     sane-compiler \
     sane-cacerts \
     sane-ant_version \
-    sane-findbugs_version \
     sane-zip_version \
     sane-msvcrt_path
 
