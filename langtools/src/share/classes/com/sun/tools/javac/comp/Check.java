@@ -207,6 +207,12 @@ public class Check {
      *  @param found      The type that was found.
      */
     Type typeTagError(DiagnosticPosition pos, Object required, Object found) {
+        // this error used to be raised by the parser,
+        // but has been delayed to this point:
+        if (found instanceof Type && ((Type)found).tag == VOID) {
+            log.error(pos, "illegal.start.of.type");
+            return syms.errType;
+        }
         log.error(pos, "type.found.req", found, required);
         return types.createErrorType(found instanceof Type ? (Type)found : syms.errType);
     }
@@ -545,6 +551,20 @@ public class Check {
                                 diags.fragment("type.req.ref"),
                                 t);
         }
+    }
+
+    /** Check that each type is a reference type, i.e. a class, interface or array type
+     *  or a type variable.
+     *  @param trees         Original trees, used for error reporting.
+     *  @param types         The types to be checked.
+     */
+    List<Type> checkRefTypes(List<JCExpression> trees, List<Type> types) {
+        List<JCExpression> tl = trees;
+        for (List<Type> l = types; l.nonEmpty(); l = l.tail) {
+            l.head = checkRefType(tl.head.pos(), l.head);
+            tl = tl.tail;
+        }
+        return types;
     }
 
     /** Check that type is a null or reference type.
@@ -1458,10 +1478,14 @@ public class Check {
             while (e.scope != null) {
                 if (m.overrides(e.sym, origin, types, false))
                     checkOverride(tree, m, (MethodSymbol)e.sym, origin);
-                else if (e.sym.isInheritedIn(origin, types) && !m.isConstructor()) {
+                else if (e.sym.kind == MTH &&
+                        e.sym.isInheritedIn(origin, types) &&
+                        (e.sym.flags() & SYNTHETIC) == 0 &&
+                        !m.isConstructor()) {
                     Type er1 = m.erasure(types);
                     Type er2 = e.sym.erasure(types);
-                    if (types.isSameType(er1,er2)) {
+                    if (types.isSameTypes(er1.getParameterTypes(),
+                            er2.getParameterTypes())) {
                             log.error(TreeInfo.diagnosticPositionFor(m, tree),
                                     "name.clash.same.erasure.no.override",
                                     m, m.location(),
@@ -2088,15 +2112,25 @@ public class Check {
             if (sym != e.sym &&
                 sym.kind == e.sym.kind &&
                 sym.name != names.error &&
-                (sym.kind != MTH || types.overrideEquivalent(sym.type, e.sym.type))) {
+                (sym.kind != MTH || types.hasSameArgs(types.erasure(sym.type), types.erasure(e.sym.type)))) {
                 if ((sym.flags() & VARARGS) != (e.sym.flags() & VARARGS))
                     varargsDuplicateError(pos, sym, e.sym);
+                else if (sym.kind == MTH && !types.overrideEquivalent(sym.type, e.sym.type))
+                    duplicateErasureError(pos, sym, e.sym);
                 else
                     duplicateError(pos, e.sym);
                 return false;
             }
         }
         return true;
+    }
+    //where
+    /** Report duplicate declaration error.
+     */
+    void duplicateErasureError(DiagnosticPosition pos, Symbol sym1, Symbol sym2) {
+        if (!sym1.type.isErroneous() && !sym2.type.isErroneous()) {
+            log.error(pos, "name.clash.same.erasure", sym1, sym2);
+        }
     }
 
     /** Check that single-type import is not already imported or top-level defined,

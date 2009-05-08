@@ -232,6 +232,14 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, ciMethod* calle
     return "disallowed by CompilerOracle";
   }
 
+  if (UseStringCache) {
+    // Do not inline StringCache::profile() method used only at the beginning.
+    if (callee_method->name() == ciSymbol::profile_name() &&
+        callee_method->holder()->name() == ciSymbol::java_lang_StringCache()) {
+      return "profiling method";
+    }
+  }
+
   return NULL;
 }
 
@@ -313,7 +321,7 @@ bool pass_initial_checks(ciMethod* caller_method, int caller_bci, ciMethod* call
     // stricter than callee_holder->is_initialized()
     ciBytecodeStream iter(caller_method);
     iter.force_bci(caller_bci);
-    int index = iter.get_index_big();
+    int index = iter.get_index_int();
     if( !caller_method->is_klass_loaded(index, true) ) {
       return false;
     }

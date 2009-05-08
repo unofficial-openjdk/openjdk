@@ -117,7 +117,6 @@ SUNWprivate_1.1 {
 		Java_sun_java2d_loops_MaskBlit_MaskBlit;
 		Java_sun_java2d_loops_MaskFill_MaskFill;
                 Java_sun_java2d_pipe_BufferedRenderPipe_fillSpans;
-                Java_sun_java2d_pipe_RenderBuffer_copyFromArray;
 		Java_sun_java2d_pipe_SpanClipRenderer_initIDs;
 		sun_awt_image_GifImageDecoder_initIDs;
 
@@ -407,6 +406,7 @@ SUNWprivate_1.1 {
 		Java_sun_awt_X11GraphicsConfig_getNumColors;
 		Java_sun_awt_X11GraphicsConfig_getXResolution;
 		Java_sun_awt_X11GraphicsConfig_getYResolution;
+                Java_sun_awt_X11GraphicsConfig_isTranslucencyCapable;
 		Java_sun_awt_X11GraphicsDevice_isDBESupported;
 		Java_sun_awt_X11GraphicsDevice_getDisplay;
 		Java_sun_awt_X11GraphicsDevice_getDoubleBufferVisuals;

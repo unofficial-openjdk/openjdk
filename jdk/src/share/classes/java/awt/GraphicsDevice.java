@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,10 @@
 package java.awt;
 
 import java.awt.image.ColorModel;
+
+import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
+import sun.awt.SunToolkit;
 
 /**
  * The <code>GraphicsDevice</code> class describes the graphics devices
@@ -108,6 +111,35 @@ public abstract class GraphicsDevice {
      * or system memory but it is not physically viewable by the user.
      */
     public final static int TYPE_IMAGE_BUFFER           = 2;
+
+    /**
+     * Kinds of translucency supported by the underlying system.
+     *
+     * @see #isWindowTranslucencySupported
+     *
+     * @since 1.7
+     */
+    public static enum WindowTranslucency {
+        /**
+         * Represents support in the underlying system for windows each pixel
+         * of which is guaranteed to be either completely opaque, with
+         * an alpha value of 1.0, or completely transparent, with an alpha
+         * value of 0.0.
+         */
+        PERPIXEL_TRANSPARENT,
+        /**
+         * Represents support in the underlying system for windows all of
+         * the pixels of which have the same alpha value between or including
+         * 0.0 and 1.0.
+         */
+        TRANSLUCENT,
+        /**
+         * Represents support in the underlying system for windows that
+         * contain or might contain pixels with arbitrary alpha values
+         * between and including 0.0 and 1.0.
+         */
+        PERPIXEL_TRANSLUCENT;
+    }
 
     /**
      * Returns the type of this <code>GraphicsDevice</code>.
@@ -218,23 +250,44 @@ public abstract class GraphicsDevice {
      * full-screen window is not visible, this method will make it visible.
      * It will remain visible when returning to windowed mode.
      * <p>
-     * When returning to windowed mode from an exclusive full-screen window, any
-     * display changes made by calling <code>setDisplayMode</code> are
+     * When entering full-screen mode, all the translucency effects are reset for
+     * the window. Its shape is set to {@code null}, the opacity value is set to
+     * 1.0f, and the background color alpha is set to 255 (completely opaque).
+     * These values are not restored when returning to windowed mode.
+     * <p>
+     * When returning to windowed mode from an exclusive full-screen window,
+     * any display changes made by calling {@code setDisplayMode} are
      * automatically restored to their original state.
      *
-     * @param w a window to use as the full-screen window; <code>null</code>
+     * @param w a window to use as the full-screen window; {@code null}
      * if returning to windowed mode.  Some platforms expect the
      * fullscreen window to be a top-level component (i.e., a Frame);
      * therefore it is preferable to use a Frame here rather than a
      * Window.
+     *
      * @see #isFullScreenSupported
      * @see #getFullScreenWindow
      * @see #setDisplayMode
      * @see Component#enableInputMethods
      * @see Component#setVisible
+     *
      * @since 1.4
      */
     public void setFullScreenWindow(Window w) {
+        if (w != null) {
+            if (w.getShape() != null) {
+                w.setShape(null);
+            }
+            if (w.getOpacity() < 1.0f) {
+                w.setOpacity(1.0f);
+            }
+            Color bgColor = w.getBackground();
+            if (bgColor.getAlpha() < 255) {
+                bgColor = new Color(bgColor.getRed(), bgColor.getGreen(),
+                                    bgColor.getBlue(), 255);
+                w.setBackground(bgColor);
+            }
+        }
         if (fullScreenWindow != null && windowedModeBounds != null) {
             // if the window went into fs mode before it was realized it may
             // have (0,0) dimensions
@@ -423,5 +476,97 @@ public abstract class GraphicsDevice {
      */
     public int getAvailableAcceleratedMemory() {
         return -1;
+    }
+
+    /**
+     * Returns whether the given level of translucency is supported by
+     * this graphics device.
+     *
+     * @param translucencyKind a kind of translucency support
+     * @return whether the given translucency kind is supported
+     *
+     * @since 1.7
+     */
+    public boolean isWindowTranslucencySupported(WindowTranslucency translucencyKind) {
+        switch (translucencyKind) {
+            case PERPIXEL_TRANSPARENT:
+                return isWindowShapingSupported();
+            case TRANSLUCENT:
+                return isWindowOpacitySupported();
+            case PERPIXEL_TRANSLUCENT:
+                return isWindowPerpixelTranslucencySupported();
+        }
+        return false;
+    }
+
+    /**
+     * Returns whether the windowing system supports changing the shape
+     * of top-level windows.
+     * Note that this method may sometimes return true, but the native
+     * windowing system may still not support the concept of
+     * shaping (due to the bugs in the windowing system).
+     */
+    static boolean isWindowShapingSupported() {
+        Toolkit curToolkit = Toolkit.getDefaultToolkit();
+        if (!(curToolkit instanceof SunToolkit)) {
+            return false;
+        }
+        return ((SunToolkit)curToolkit).isWindowShapingSupported();
+    }
+
+    /**
+     * Returns whether the windowing system supports changing the opacity
+     * value of top-level windows.
+     * Note that this method may sometimes return true, but the native
+     * windowing system may still not support the concept of
+     * translucency (due to the bugs in the windowing system).
+     */
+    static boolean isWindowOpacitySupported() {
+        Toolkit curToolkit = Toolkit.getDefaultToolkit();
+        if (!(curToolkit instanceof SunToolkit)) {
+            return false;
+        }
+        return ((SunToolkit)curToolkit).isWindowOpacitySupported();
+    }
+
+    boolean isWindowPerpixelTranslucencySupported() {
+        /*
+         * Per-pixel alpha is supported if all the conditions are TRUE:
+         *    1. The toolkit is a sort of SunToolkit
+         *    2. The toolkit supports translucency in general
+         *        (isWindowTranslucencySupported())
+         *    3. There's at least one translucency-capable
+         *        GraphicsConfiguration
+         */
+        Toolkit curToolkit = Toolkit.getDefaultToolkit();
+        if (!(curToolkit instanceof SunToolkit)) {
+            return false;
+        }
+        if (!((SunToolkit)curToolkit).isWindowTranslucencySupported()) {
+            return false;
+        }
+
+        // TODO: cache translucency capable GC
+        return getTranslucencyCapableGC() != null;
+    }
+
+    GraphicsConfiguration getTranslucencyCapableGC() {
+        // If the default GC supports translucency return true.
+        // It is important to optimize the verification this way,
+        // see CR 6661196 for more details.
+        GraphicsConfiguration defaultGC = getDefaultConfiguration();
+        if (defaultGC.isTranslucencyCapable()) {
+            return defaultGC;
+        }
+
+        // ... otherwise iterate through all the GCs.
+        GraphicsConfiguration[] configs = getConfigurations();
+        for (int j = 0; j < configs.length; j++) {
+            if (configs[j].isTranslucencyCapable()) {
+                return configs[j];
+            }
+        }
+
+        return null;
     }
 }

@@ -95,7 +95,7 @@ Node *Parse::fetch_interpreter_state(int index,
   switch( bt ) {                // Signature is flattened
   case T_INT:     l = new (C, 3) LoadINode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
   case T_FLOAT:   l = new (C, 3) LoadFNode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
-  case T_ADDRESS:
+  case T_ADDRESS: l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM  ); break;
   case T_OBJECT:  l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeInstPtr::BOTTOM ); break;
   case T_LONG:
   case T_DOUBLE: {
@@ -828,6 +828,7 @@ bool Parse::can_rerun_bytecode() {
     break;
 
   case Bytecodes::_invokestatic:
+  case Bytecodes::_invokedynamic:
   case Bytecodes::_invokespecial:
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:

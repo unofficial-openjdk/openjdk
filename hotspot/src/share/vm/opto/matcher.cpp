@@ -275,6 +275,12 @@ void Matcher::match( ) {
 
   C->print_method("Before Matching");
 
+  // Create new ideal node ConP #NULL even if it does exist in old space
+  // to avoid false sharing if the corresponding mach node is not used.
+  // The corresponding mach node is only used in rare cases for derived
+  // pointers.
+  Node* new_ideal_null = ConNode::make(C, TypePtr::NULL_PTR);
+
   // Swap out to old-space; emptying new-space
   Arena *old = C->node_arena()->move_contents(C->old_arena());
 
@@ -316,7 +322,16 @@ void Matcher::match( ) {
         }
       }
 
+      // Generate new mach node for ConP #NULL
+      assert(new_ideal_null != NULL, "sanity");
+      _mach_null = match_tree(new_ideal_null);
+      // Don't set control, it will confuse GCM since there are no uses.
+      // The control will be set when this node is used first time
+      // in find_base_for_derived().
+      assert(_mach_null != NULL, "");
+
       C->set_root(xroot->is_Root() ? xroot->as_Root() : NULL);
+
 #ifdef ASSERT
       verify_new_nodes_only(xroot);
 #endif
@@ -746,6 +761,8 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
   if (nidx == Compile::AliasIdxBot && midx == Compile::AliasIdxTop) {
     switch (n->Opcode()) {
     case Op_StrComp:
+    case Op_StrEquals:
+    case Op_StrIndexOf:
     case Op_AryEq:
     case Op_MemBarVolatile:
     case Op_MemBarCPUOrder: // %%% these ideals should have narrower adr_type?
@@ -1481,8 +1498,13 @@ MachNode *Matcher::ReduceInst( State *s, int rule, Node *&mem ) {
       const Type* mach_at = mach->adr_type();
       // DecodeN node consumed by an address may have different type
       // then its input. Don't compare types for such case.
-      if (m->adr_type() != mach_at && m->in(MemNode::Address)->is_AddP() &&
-          m->in(MemNode::Address)->in(AddPNode::Address)->is_DecodeN()) {
+      if (m->adr_type() != mach_at &&
+          (m->in(MemNode::Address)->is_DecodeN() ||
+           m->in(MemNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->is_DecodeN() ||
+           m->in(MemNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->in(AddPNode::Address)->is_DecodeN())) {
         mach_at = m->adr_type();
       }
       if (m->adr_type() != mach_at) {
@@ -1783,6 +1805,8 @@ void Matcher::find_shared( Node *n ) {
         mstack.push(n->in(0), Pre_Visit);     // Visit Control input
         continue;                             // while (mstack.is_nonempty())
       case Op_StrComp:
+      case Op_StrEquals:
+      case Op_StrIndexOf:
       case Op_AryEq:
         set_shared(n); // Force result into register (it will be anyways)
         break;

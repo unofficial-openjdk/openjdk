@@ -58,6 +58,8 @@ import sun.awt.OSInfo;
 import sun.security.action.GetPropertyAction;
 import sun.swing.SwingUtilities2;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import sun.awt.AppContext;
 
 
 /**
@@ -381,6 +383,8 @@ public class UIManager implements Serializable
         ArrayList<LookAndFeelInfo> iLAFs = new ArrayList<LookAndFeelInfo>(4);
         iLAFs.add(new LookAndFeelInfo(
                       "Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
+        iLAFs.add(new LookAndFeelInfo(
+                      "Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
         iLAFs.add(new LookAndFeelInfo("CDE/Motif",
                   "com.sun.java.swing.plaf.motif.MotifLookAndFeel"));
 
@@ -1323,19 +1327,29 @@ public class UIManager implements Serializable
             return;
         }
 
-        String metalLnf = getCrossPlatformLookAndFeelClassName();
-        String lnfDefault = metalLnf;
+        // Try to get default LAF from system property, then from AppContext
+        // (6653395), then use cross-platform one by default.
+        String lafName = null;
+        HashMap lafData =
+                (HashMap) AppContext.getAppContext().remove("swing.lafdata");
+        if (lafData != null) {
+            lafName = (String) lafData.remove("defaultlaf");
+        }
+        if (lafName == null) {
+            lafName = getCrossPlatformLookAndFeelClassName();
+        }
+        lafName = swingProps.getProperty(defaultLAFKey, lafName);
 
-        String lnfName = "<undefined>" ;
         try {
-            lnfName = swingProps.getProperty(defaultLAFKey, lnfDefault);
-            setLookAndFeel(lnfName);
+            setLookAndFeel(lafName);
         } catch (Exception e) {
-            try {
-                lnfName = swingProps.getProperty(defaultLAFKey, metalLnf);
-                setLookAndFeel(lnfName);
-            } catch (Exception e2) {
-                throw new Error("can't load " + lnfName);
+            throw new Error("Cannot load " + lafName);
+        }
+
+        // Set any properties passed through AppContext (6653395).
+        if (lafData != null) {
+            for (Object key: lafData.keySet()) {
+                UIManager.put(key, lafData.get(key));
             }
         }
     }

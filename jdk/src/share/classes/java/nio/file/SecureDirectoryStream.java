@@ -5,7 +5,7 @@
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classname" exception as provided
+ * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
@@ -208,7 +208,7 @@ public abstract class SecureDirectoryStream
      * @throws  ClosedDirectoryStreamException
      *          if the directory stream is closed
      * @throws  NoSuchFileException
-     *          if the the directory does not exist <i>(optional specific exception)</i>
+     *          if the directory does not exist <i>(optional specific exception)</i>
      * @throws  DirectoryNotEmptyException
      *          if the directory could not otherwise be deleted because it is
      *          not empty <i>(optional specific exception)</i>
