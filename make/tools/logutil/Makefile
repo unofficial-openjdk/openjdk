@@ -1,5 +1,5 @@
 #
-# Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,30 +23,21 @@
 # have any questions.
 #
 
-# Properties for jprt
-jprt.tools.default.release=jdk1.7.0
+#
+# Makefile for building the idlj tool
+#
 
-# Specific platform list
-jprt.build.platforms=\
-solaris_sparc_5.10,\
-solaris_sparcv9_5.10,\
-solaris_i586_5.10,\
-solaris_x64_5.10,\
-linux_i586_2.6,\
-linux_x64_2.6,\
-windows_i586,\
-windows_x64
+BUILDDIR = ../..
+PACKAGE = com.sun.tools.corba.se.logutil
+PRODUCT = tools
+PROGRAM = MC
+include $(BUILDDIR)/common/Defs.gmk
 
-# The different build flavors we want
-jprt.build.flavors=product,fastdebug
+BUILDTOOL_SOURCE_ROOT = $(SHARE_SRC)/classes
+BUILDTOOL_MAIN        = $(PKGDIR)/MC.java
 
-# Explicitly designate what the 32bit match is for the 64bit build
-jprt.solaris_sparcv9.build.platform.match32=solaris_sparc_5.10
-jprt.solaris_sparcv9_5.10.build.platform.match32=solaris_sparc_5.10
-jprt.solaris_x64.build.platform.match32=solaris_i586_5.10
-jprt.solaris_x64_5.10.build.platform.match32=solaris_i586_5.10
-
-# Directories needed to build
-jprt.bundle.src.dirs=make src
-jprt.bundle.exclude.src.dirs=build dist
+#
+# Build tool jar rules.
+#
+include $(BUILDDIR)/common/BuildToolJar.gmk
 
