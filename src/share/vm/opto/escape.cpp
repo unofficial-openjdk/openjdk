@@ -54,21 +54,21 @@ void PointsToNode::remove_edge(uint targIdx, PointsToNode::EdgeType et) {
 }
 
 #ifndef PRODUCT
-static char *node_type_names[] = {
+static const char *node_type_names[] = {
   "UnknownType",
   "JavaObject",
   "LocalVar",
   "Field"
 };
 
-static char *esc_names[] = {
+static const char *esc_names[] = {
   "UnknownEscape",
   "NoEscape     ",
   "ArgEscape    ",
   "GlobalEscape "
 };
 
-static char *edge_type_suffix[] = {
+static const char *edge_type_suffix[] = {
  "?", // UnknownEdge
  "P", // PointsToEdge
  "D", // DeferredEdge
