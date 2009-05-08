@@ -32,7 +32,7 @@
 #define QUOTEMACRO(x) QUOTEME(x)
 #define QUOTEME(x) #x
 
-int main(char** argv, int argc) {
+int main(int argc, char** argv) {
    char v[50];
    FT_Int major, minor, patch;
    FT_Library library;
