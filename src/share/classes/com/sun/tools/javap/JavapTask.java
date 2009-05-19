@@ -40,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -66,7 +67,7 @@ import com.sun.tools.classfile.*;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class JavapTask implements DisassemblerTool.DisassemblerTask {
+public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     public class BadArgs extends Exception {
         static final long serialVersionUID = 8765093759964640721L;
         BadArgs(String key, Object... args) {
@@ -242,6 +243,56 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
             }
         },
 
+        new Option(false, "-XDdetails") {
+            void process(JavapTask task, String opt, String arg) {
+                task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
+            }
+
+        },
+
+        new Option(false, "-XDdetails:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                for (String v: opt.substring(sep + 1).split("[,: ]+")) {
+                    if (!handleArg(task, v))
+                        throw task.new BadArgs("err.invalid.arg.for.option", v);
+                }
+            }
+
+            boolean handleArg(JavapTask task, String arg) {
+                if (arg.length() == 0)
+                    return true;
+
+                if (arg.equals("all")) {
+                    task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
+                    return true;
+                }
+
+                boolean on = true;
+                if (arg.startsWith("-")) {
+                    on = false;
+                    arg = arg.substring(1);
+                }
+
+                for (InstructionDetailWriter.Kind k: InstructionDetailWriter.Kind.values()) {
+                    if (arg.equalsIgnoreCase(k.option)) {
+                        if (on)
+                            task.options.details.add(k);
+                        else
+                            task.options.details.remove(k);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        },
+
         new Option(false, "-constants") {
             void process(JavapTask task, String opt, String arg) {
                 task.options.showConstants = true;
@@ -284,6 +335,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
 
     public JavapTask() {
         context = new Context();
+        context.put(Messages.class, this);
         options = Options.instance(context);
         attributeFactory = new Attribute.Factory();
     }
@@ -489,6 +541,8 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
 
         context.put(PrintWriter.class, log);
         ClassWriter classWriter = ClassWriter.instance(context);
+        SourceWriter sourceWriter = SourceWriter.instance(context);
+        sourceWriter.setFileManager(fileManager);
 
         boolean ok = true;
 
@@ -749,11 +803,11 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
 
     }
 
-    private String getMessage(String key, Object... args) {
+    public String getMessage(String key, Object... args) {
         return getMessage(task_locale, key, args);
     }
 
-    private String getMessage(Locale locale, String key, Object... args) {
+    public String getMessage(Locale locale, String key, Object... args) {
         if (bundles == null) {
             // could make this a HashMap<Locale,SoftReference<ResourceBundle>>
             // and for efficiency, keep a hard reference to the bundle for the task
