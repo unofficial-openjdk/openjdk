@@ -65,8 +65,8 @@
                             <li><a href="#bootjdk">Bootstrap JDK</a> </li>
                             <li><a href="#binaryplugs">Binary Plugs</a> </li>
                             <li><a href="#importjdk">Optional Import JDK</a> </li>
-                            <li><a href="#cacerts">Certificate Authority File (cacert)</a> </li>
-                            <li><a href="#compilers">Compilers</a> 
+                            <li><a href="#ant">Ant</a> </li>
+                            <li><a href="#cacerts">Certificate Authority File (cacert)</a> </li>                            <li><a href="#compilers">Compilers</a> 
                                 <ul>
                                     <li><a href="#msvc">Microsoft Visual Studio</a> </li>
                                     <li><a href="#mssdk">Microsoft Platform SDK</a> </li>
@@ -133,15 +133,13 @@
                 <tbody>
                     <tr>
                         <td>Linux X86 (32bit)</td>
-                        <!-- OpenJDK 6 Specific -->
-                        <td>Redhat Enterprise Advanced Server 2.1</td>
-                        <td>gcc 3.2.2 </td>
+                        <td>Fedora 9</td>
+                        <td>gcc 4 </td>
                     </tr>
                     <tr>
                         <td>Linux X64 (64bit)</td>
-                        <!-- OpenJDK 6 Specific -->
-                        <td>SuSE 8.1</td>
-                        <td>gcc 3.2.2 </td>
+                        <td>Fedora 9</td>
+                        <td>gcc 4 </td>
                     </tr>
                     <tr>
                         <td>Solaris SPARC (32bit)</td>
@@ -217,156 +215,114 @@
         <!-- ------------------------------------------------------ -->
         <h3><a name="fedora">Fedora</a></h3>
         <blockquote>
-            TBD
-        </blockquote>
+	  <h4>Fedora 9</h4>
+	  <p>
+	    <blockquote>
+              After installing <a href="http://fedoraproject.org">Fedora</a> 9 
+	      you need to install several build dependencies. The simplest
+	      way to do it is to execute the following commands as user 
+	      <tt>root</tt>:
+	      <p/>
+	      <code>yum-builddep java-1.6.0-openjdk</code>
+	      <p/>
+	      <code>yum install gcc gcc-c++</code>
+	      <p/>
+	      In addition, it's necessary to set a few environment variables for the build:
+
+	      <p/>
+	      <code>export LANG=C ALT_BOOTDIR=/usr/lib/jvm/java-1.6.0-openjdk</code>
+            </blockquote>
+	</blockquote>
         <!-- ------------------------------------------------------ -->
         <h3><a name="debian">Debian</a></h3>
         <blockquote>
-            TBD
+            <h4>Debian 5.0 (Lenny)</h4>
+            <p>
+	      <blockquote>
+		After installing <a href="http://debian.org">Debian</a> 5 
+		you need to install several build dependencies. 
+		The simplest way to install the build dependencies is to 
+		execute the following commands as user <tt>root</tt>:
+		<p/>
+		<code>aptitude buid-dep openjdk-6</code>
+		<p/>
+		<code>aptitude install openjdk-6-jdk libmotif-dev</code>
+		<p/>
+		In addition, it's necessary to set a few environment variables for the build:
+		<p/>
+		<code>export LANG=C ALT_BOOTDIR=/usr/lib/jvm/java-6-openjdk</code>
+	      </blockquote>
         </blockquote>
         <!-- ------------------------------------------------------ -->
         <h3><a name="ubuntu">Ubuntu</a></h3>
         <blockquote>
-            In addition to needing the Bootstrap JDK and the Binary Plugs, 
-            when building on Ubuntu you will need to
-            make sure certain packages are installed.
-            In particular, certain X11 packages, make, m4, gawk, gcc 4, 
-            binutils, cups, freetype
-            and alsa.
             <!-- ------------------------------------------------------ -->
-            <h4>Ubuntu 6.06</h4>
+            <h4>Ubuntu 8.04</h4>
             <p>
-            The following list of packages for Ubuntu 6.06 is a working set that
-            does appear to work. 
+	      <blockquote>
+		After installing <a href="http://ubuntu.org">Ubuntu</a> 8.04 
+		you need to install several build dependencies. 
+		<p/>
+		First, you need to enable the universe repository in the 
+		Software Sources application and reload the repository 
+		information. The Software Sources application is available 
+		under the System/Administration menu. 
+		<p/>
+		The simplest way to install the build dependencies is to 
+		execute the following commands:
+		<p/>
+		<code>sudo aptitude buid-dep openjdk-6</code>
+		<p/>
+		<code>sudo aptitude install openjdk-6-jdk libmotif-dev</code>
+		<p/>
+		In addition, it's necessary to set a few environment variables for the build:
+		<p/>
+		<code>export LANG=C ALT_BOOTDIR=/usr/lib/jvm/java-6-openjdk</code>
+              </blockquote>
+             <!-- ------------------------------------------------------ -->
+            <h4>Ubuntu 8.10</h4>
             <p>
-            <b>Note that it's quite possible that some of these
-                packages are not required, so anyone discovering that some of the
-                packages listed below are NOT required,
-                please let the
-                OpenJDK
-            team know.</b>
+	      <blockquote>
+		After installing <a href="http://ubuntu.org">Ubuntu</a> 8.10 
+		you need to install several build dependencies. The simplest
+		way to do it is to execute the following commands:
+		<p/>
+		<code>sudo aptitude buid-dep openjdk-6</code>
+		<p/>
+		<code>sudo aptitude install openjdk-6-jdk libmotif-dev gcc-4.2 g++-4.2</code>
+		<p/>
+		In addition, it's necessary to set a few environment variables for the build:
+		<p/>
+		<code>export LANG=C ALT_BOOTDIR=/usr/lib/jvm/java-6-openjdk</code>
+		<p/>
+		Then, calling <tt>make</tt> in the top level OpenJDK source 
+		code directory with the following parameters results in a 
+		working build:
+		<p/>
+		<code>make all CC=gcc-4.2 CPP=g++-4.2</code>
+              </blockquote>
+             <!-- ------------------------------------------------------ -->
+            <h4>Ubuntu 9.04</h4>
             <p>
-            All the packages below can be installed with the
-            Synaptic Package manager provided with the base Ubuntu 6.06 release.
-            <blockquote>
-                <ul>
-                    <li>binutils (2.16.1cvs20060117-1ubuntu2.1)</li>
-                    <li>cpp (4:4.0.3-1)</li>
-                    <li>cpp-4.0 (4.0.3-1ubuntu5)</li>
-                    <li>libfreetype6-dev</li>
-                    <li>g++ (4:4.0.3-1)</li>
-                    <li>g++-4.0 (4.0.3-1ubuntu5)</li>
-                    <li>gawk (1:3.1.5-2build1)</li>
-                    <li>gcc (4:4.0.3-1)</li>
-                    <li>gcc-4.0 (4.0.3-1ubuntu5)</li>
-                    <li>libasound2-dev (1.0.10-2ubuntu4)</li>
-                    <li>libc6 (2.3.6-0ubuntu20) to 2.3.6-0ubuntu20.4</li>
-                    <li>libc6-dev (2.3.6-0ubuntu20.4)</li>
-                    <li>libc6-i686 (2.3.6-0ubuntu20) to 2.3.6-0ubuntu20.4</li>
-                    <li>libcupsys2-dev (1.2.2-0ubuntu0.6.06)</li>
-                    <li>libgcrypt11-dev (1.2.2-1)</li>
-                    <li>libgnutls-dev (1.2.9-2ubuntu1.1)</li>
-                    <li>libgnutls12 (1.2.9-2ubuntu1) to 1.2.9-2ubuntu1.1</li>
-                    <li>libgpg-error-dev (1.1-4)</li>
-                    <li>libice-dev (2:1.0.0-0ubuntu2)</li>
-                    <li>liblockfile1 (1.06.1)</li>
-                    <li>libopencdk8-dev (0.5.7-2)</li>
-                    <li>libpopt-dev (1.7-5)</li>
-                    <li>libsm-dev (2:1.0.0-0ubuntu2)</li>
-                    <li>libstdc++6-4.0-dev (4.0.3-1ubuntu5)</li>
-                    <li>libtasn1-2-dev (0.2.17-1ubuntu1)</li>
-                    <li>libx11-dev (2:1.0.0-0ubuntu9)</li>
-                    <li>libxau-dev (1:1.0.0-0ubuntu4)</li>
-                    <li>libxaw-headers (2:1.0.1-0ubuntu3)</li>
-                    <li>libxaw7-dev (2:1.0.1-0ubuntu3)</li>
-                    <li>libxdmcp-dev (1:1.0.0-0ubuntu2)</li>
-                    <li>libxext-dev (2:1.0.0-0ubuntu4)</li>
-                    <li>libxi-dev (2:1.0.0-0ubuntu3) </li>
-                    <li>libxmu-dev (2:1.0.0-0ubuntu3)</li>
-                    <li>libxmu-headers (2:1.0.0-0ubuntu3)</li>
-                    <li>libxmuu-dev (2:1.0.0-0ubuntu3)</li>
-                    <li>libxp-dev (6.8.2-11ubuntu2)</li>
-                    <li>libxpm-dev (1:3.5.4.2-0ubuntu3)</li>
-                    <li>libxrandr-dev (1:1.1.0.2-0ubuntu4)</li>
-                    <li>libxt-dev (1:1.0.0-0ubuntu3)</li>
-                    <li>libxtrap-dev (2:1.0.0-0ubuntu2)</li>
-                    <li>libxtst-dev (2:1.0.1-0ubuntu2)</li>
-                    <li>libxv-dev (2:1.0.1-0ubuntu3)</li>
-                    <li>linux-kernel-headers (2.6.11.2-0ubuntu18)</li>
-                    <li>m4 (1.4.4-1)</li>
-                    <li>make (3.80+3.81.b4-1)</li>
-                    <li>ssl-cert (1.0.13)</li>
-                    <li>x-dev (7.0.4-0ubuntu2)</li>
-                    <li>x11proto-core-dev (7.0.4-0ubuntu2)</li>
-                    <li>x11proto-input-dev (1.3.2-0ubuntu2)</li>
-                    <li>x11proto-kb-dev (1.0.2-0ubuntu2)</li>
-                    <li>x11proto-randr-dev (1.1.2-0ubuntu2)</li>
-                    <li>x11proto-record-dev (1.13.2-0ubuntu2)</li>
-                    <li>x11proto-trap-dev (3.4.3-0ubuntu2)</li>
-                    <li>x11proto-video-dev (2.2.2-0ubuntu2)</li>
-                    <li>x11proto-xext-dev (7.0.2-0ubuntu2)</li>
-                    <li>xlibs-dev (7.0.0-0ubuntu45)</li>
-                    <li>zlib1g-dev (1:1.2.3-6ubuntu4)</li>
-                </ul>
-            </blockquote>
-            <!-- ------------------------------------------------------ -->
-            <h4>Ubuntu 7.04</h4>
-            <p>
-            Using the Synaptic Package Manager, download the following
-            packages (double indented packages are automatically aquired
-            due to package dependencies):
-            <blockquote>
-                <ul>
-                    <li>build-essential</li>
-                    <ul>
-                        <li>dpkg-dev</li>
-                        <li>g++</li>
-                        <li>g++-4.1</li>
-                        <li>libc6-dev</li>
-                        <li>libstdc++6.4.1-dev</li>
-                        <li>linux-libc-dev</li>
-                    </ul>
-                    <li>gawk</li>
-                    <li>m4</li>
-                    <li>libasound2-dev</li>
-                    <!-- OpenJDK 6 Specific -->
-                    <li style="background-color:white">libmotif3-dev</li>
-                    <ul>
-                        <li style="background-color:white">libmotif3</li>
-                    </ul>
-                    <li>libcupsys2-dev</li>
-                    <ul>
-                        <li>libgcrypt11-dev</li>
-                        <li>lgnutls-dev</li>
-                        <li>libgpg-error-dev</li>
-                        <li>liblzo-dev</li>
-                        <li>libopencdk8-dev</li>
-                        <li>libpopt-dev</li>
-                        <li>libtasn1-3-dev</li>
-                        <li>zlib1g-dev</li>
-                    </ul>
-                    <li>sun-java6-jdk</li>
-                    <ul>
-                        <li>java-common</li>
-                        <li>libltdl3</li>
-                        <li>odbcinst1debian1</li>
-                        <li>sun-java6-bin</li>
-                        <li>sun-java6-jre</li>
-                        <li>unixodbc</li>
-                    </ul>
-                    <li>xlibs-dev</li>
-                    <ul>
-                        <li>(many)</li>
-                    </ul>
-                    <li>x11proto-print-dev</li>
-                    <li>libxaw7-dev</li>
-                    <ul>
-                        <li>libxaw-headers</li>
-                    </ul>
-                    <li>libxp-dev</li>
-                    <li>libfreetype6-dev</li>
-                </ul>
-            </blockquote>
+	      <blockquote>
+		After installing <a href="http://ubuntu.org">Ubuntu</a> 9.04 
+		you need to install several build dependencies. The simplest
+		way to do it is to execute the following commands:
+		<p/>
+		<code>sudo aptitude buid-dep openjdk-6</code>
+		<p/>
+		<code>sudo aptitude install openjdk-6-jdk libmotif-dev gcc-4.2 g++-4.2</code>
+		<p/>
+		In addition, it's necessary to set a few environment variables for the build:
+		</p>
+		<code>export LANG=C ALT_BOOTDIR=/usr/lib/jvm/java-6-openjdk</code>
+		<p/>
+		Then, calling <tt>make</tt> in the top level OpenJDK source 
+		code directory with the following parameters results in a 
+		working build:
+		<p/>
+		<code>make all CC=gcc-4.2 CPP=g++-4.2</code>
+              </blockquote>
         </blockquote>
         <!-- ------------------------------------------------------ -->
         <hr>
@@ -531,7 +487,7 @@
                     <tt><a href="#ALT_BOOTDIR">ALT_BOOTDIR</a></tt>.
                 </li>
                 <li>
-                    Install the
+                    Optionally install the
                     <a href="#binaryplugs">Binary Plugs</a>, set
                     <tt><a href="#ALT_BINARY_PLUGS_PATH">ALT_BINARY_PLUGS_PATH</a></tt>.
                 </li>
@@ -540,14 +496,19 @@
                     <tt><a href="#ALT_JDK_IMPORT_PATH">ALT_JDK_IMPORT_PATH</a></tt>.
                 </li>
                 <li>
-                    Install or upgrade the <a href="#freetype">FreeType development
+                  Install or upgrade the <a href="#freetype">FreeType development
                     package</a>.
                 </li>
+                <li>
+                    Install
+                    <a href="#ant">Ant</a>, 
+                    make sure it is in your PATH.
+                </li>
                 <li style="background-color:white">
-                    <!-- OpenJDK 6 Specific -->
-                    Install the
-                    <a href="#motif">Motif header files</a>, set
-                    <tt><a href="#ALT_MOTIF_DIR">ALT_MOTIF_DIR</a></tt>.
+                  <!-- OpenJDK 6 Specific -->
+                  Install the
+                  <a href="#motif">Motif header files</a>, set
+                  <tt><a href="#ALT_MOTIF_DIR">ALT_MOTIF_DIR</a></tt>.
                 </li>
             </ol>
         </blockquote>
@@ -608,6 +569,11 @@
                     Install the
                     <a href="#cups">CUPS Include files</a>, set
                     <tt><a href="#ALT_CUPS_HEADERS_PATH">ALT_CUPS_HEADERS_PATH</a></tt>.
+                </li>
+                <li>
+                    Install
+                    <a href="#ant">Ant</a>, 
+                    make sure it is in your PATH.
                 </li>
             </ol>
         </blockquote>
@@ -696,6 +662,12 @@
                     Install 
                     <a href="#dxsdk">Microsoft DirectX SDK</a>.
                 </li>
+                <li>
+                    Install
+                    <a href="#ant">Ant</a>, 
+                    make sure it is in your PATH and set
+                    <tt><a href="#ANT_HOME">ANT_HOME</a></tt>.
+                </li>
             </ol>
         </blockquote>
         <!-- ------------------------------------------------------ -->
@@ -743,16 +715,24 @@
                 directory <tt>/usr/jdk/instances</tt>.
                 If you don't set
                 <tt><a href="#ALT_BOOTDIR">ALT_BOOTDIR</a></tt>
-                the makefiles will look in that location for a JDK it can use.
+                The makefiles will look in that location for a JDK it can use.
+		<p>
+		<strong>Linux:</strong>
+		Many GNU/Linux distributions already include OpenJDK 6. OpenJDK 6
+		can be used to bootstrap itself, so installing the corresponding
+		distribution package is sufficient. You'll still need to set
+                <tt><a href="#ALT_BOOTDIR">ALT_BOOTDIR</a></tt>, though.
             </blockquote>
             <!-- ------------------------------------------------------ -->
             <h4><a name="binaryplugs">Binary Plugs</a></h4>
             <blockquote>
                 Not all of the source code that makes up the JDK is available
                 under an open-source license.
-                This is a temporary situation and these binary plugs will be
-                replaced with fully open source replacements as soon as possible.
-                So currently, in order to build a complete OpenJDK image,
+                This is a temporary situation and most of these binary plugs have
+                been replaced with fully open source replacements, except for SNMP.
+                You don't to download and use binary plugs in order to build a 
+		complete OpenJDK image, and you don't need them to create a JDK 6
+		implementation. If you insist on using the binary plugs, 
                 you must first download and install the appropriate
                 binary plug bundles for the OpenJDK, go to the
                 <a href="http://openjdk.java.net" target="_blank">OpenJDK</a> site and select
@@ -792,6 +772,20 @@
                 and the build will copy the needed files from this import area.
             </blockquote>
             <!-- ------------------------------------------------------ -->
+            <h4><a name="ant">Ant</a></h4>
+            <blockquote>
+                All OpenJDK builds require access to least Ant 1.6.5.
+                The Ant tool is available from the 
+                <a href="http://ant.apache.org" target="_blank">
+                Ant download site</a>.
+                You should always make sure <tt>ant</tt> is in your PATH, and
+                on Windows you may also need to set 
+                <tt><a href="#ANT_HOME">ANT_HOME</a></tt>
+                to point to the location of
+                the Ant installation, this is the directory pathname
+                that contains a <tt>bin and lib</tt>.
+            </blockquote>
+            <!-- ------------------------------------------------------ -->
             <h4><a name="cacerts">Certificate Authority File (cacert)</a></h4>
             <blockquote>
                 See <a href="http://en.wikipedia.org/wiki/Certificate_Authority" target="_blank">
@@ -821,25 +815,9 @@
             <blockquote>
                 <strong><a name="gcc">Linux gcc/binutils</a></strong>
                 <blockquote>
-                    The GNU gcc compiler version should be 3.2.2 or newer.
-                    The binutils package should be 2.11.93.0.2-11 or newer.
+                    The GNU gcc compiler version should be 4 or newer.
                     The compiler used should be the default compiler installed
                     in <tt>/usr/bin</tt>.
-                    <p>
-                    Older Linux systems may require a gcc and bunutils update.
-                    The Redhat Enterprise Advanced Server 2.1 update 2 system
-                    is one of these systems.
-                    RedHat Linux users can obtain this binutils package from 
-                    <a href="http://www.redhat.com" 
-                       target="_blank">Redhat web site</a>. 
-                    You will need to remove the default compiler and binutils
-                    packages and install the required packages
-                    into the default location on the system.
-                    However if you have a new video card driver, like 
-                    Geforce 4 it is best to use
-                    the same compiler as the kernel was built with to 
-                    build the new video card driver module.
-                    So you should build the modules before making this change.
                 </blockquote>
                 <strong><a name="studio">Solaris: Sun Studio</a></strong>
                 <blockquote>
@@ -1493,6 +1471,12 @@
                     <tt>windows-amd64</tt>.
                     Where each of these directories contain the binary plugs image
                     for that platform.
+                </dd>
+                <dt><a name="OPENJDK"><tt>OPENJDK</tt></a></dt>
+                <dd>
+		    Flag used to decide whether the build is a pure OpenJDK 
+		    build (when set to <code>true</code>). You usually do not
+		    need to set this variable.
                 </dd>
                 <dt><strong>Windows specific:</strong></dt>
                 <dd>
