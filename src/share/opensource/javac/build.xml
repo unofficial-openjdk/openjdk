@@ -74,7 +74,7 @@
         <!-- to compile javac, set includeAntRuntime=no to prevent javac's 
         own tools.jar incorrectly appearing on the classpath -->
         <javac srcdir="${src.classes}" destdir="${build.bootclasses}"
-            source="${compiler.source.level}"  debug="true" debuglevel="source,lines"
+            source="${compiler.source.level}"  debug="true" debuglevel="${javac.debuglevel}"
             includeAntRuntime="no">
             <patternset refid="src.javac"/>
         </javac>
