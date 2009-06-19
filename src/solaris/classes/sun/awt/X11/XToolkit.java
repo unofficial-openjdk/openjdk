@@ -1096,6 +1096,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         awtLock();
         try {
             XlibWrapper.XBell(getDisplay(), 0);
+	    XlibWrapper.XFlush(getDisplay());
         } finally {
             awtUnlock();
         }
