@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,8 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
         Logger.getLogger("org.jcp.xml.dsig.internal.dom");
     private Mac hmac;
     private int outputLength;
+    private boolean outputLengthSet;
+    private static final int DIGEST_LENGTH = 160;
 
     /**
      * Creates a <code>DOMHMACSignatureMethod</code> with the specified params
@@ -88,13 +90,12 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
                     ("params must be of type HMACParameterSpec");
             }
             outputLength = ((HMACParameterSpec) params).getOutputLength();
+            outputLengthSet = true;
             if (log.isLoggable(Level.FINE)) {
                 log.log(Level.FINE,
                     "Setting outputLength from HMACParameterSpec to: "
                     + outputLength);
             }
-        } else {
-            outputLength = -1;
         }
     }
 
@@ -102,6 +103,7 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
         throws MarshalException {
         outputLength = new Integer
             (paramsElem.getFirstChild().getNodeValue()).intValue();
+        outputLengthSet = true;
         if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "unmarshalled outputLength: " + outputLength);
         }
@@ -136,23 +138,13 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
                 throw new XMLSignatureException(nsae);
             }
         }
-        if (log.isLoggable(Level.FINE)) {
-            log.log(Level.FINE, "outputLength = " + outputLength);
+        if (outputLengthSet && outputLength < DIGEST_LENGTH) {
+            throw new XMLSignatureException
+                ("HMACOutputLength must not be less than " + DIGEST_LENGTH);
         }
         hmac.init((SecretKey) key);
         si.canonicalize(context, new MacOutputStream(hmac));
         byte[] result = hmac.doFinal();
-        if (log.isLoggable(Level.FINE)) {
-            log.log(Level.FINE, "resultLength = " + result.length);
-        }
-        if (outputLength != -1) {
-            int byteLength = outputLength/8;
-            if (result.length > byteLength) {
-                byte[] truncated = new byte[byteLength];
-                System.arraycopy(result, 0, truncated, 0, byteLength);
-                result = truncated;
-            }
-        }
 
         return MessageDigest.isEqual(sig, result);
     }
@@ -172,18 +164,13 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
                 throw new XMLSignatureException(nsae);
             }
         }
+        if (outputLengthSet && outputLength < DIGEST_LENGTH) {
+            throw new XMLSignatureException
+                ("HMACOutputLength must not be less than " + DIGEST_LENGTH);
+        }
         hmac.init((SecretKey) key);
         si.canonicalize(context, new MacOutputStream(hmac));
-        byte[] result = hmac.doFinal();
-        if (outputLength != -1) {
-            int byteLength = outputLength/8;
-            if (result.length > byteLength) {
-                byte[] truncated = new byte[byteLength];
-                System.arraycopy(result, 0, truncated, 0, byteLength);
-                result = truncated;
-            }
-        }
-        return result;
+        return hmac.doFinal();
     }
 
     boolean paramsEqual(AlgorithmParameterSpec spec) {
