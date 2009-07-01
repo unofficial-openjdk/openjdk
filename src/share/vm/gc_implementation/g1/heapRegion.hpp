@@ -227,6 +227,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // next region in the young "generation" region set
   HeapRegion* _next_young_region;
 
+  // Next region whose cards need cleaning
+  HeapRegion* _next_dirty_cards_region;
+
   // For parallel heapRegion traversal.
   jint _claimed;
 
@@ -467,6 +470,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_next_young_region(HeapRegion* hr) {
     _next_young_region = hr;
   }
+
+  HeapRegion* get_next_dirty_cards_region() const { return _next_dirty_cards_region; }
+  HeapRegion** next_dirty_cards_region_addr() { return &_next_dirty_cards_region; }
+  void set_next_dirty_cards_region(HeapRegion* hr) { _next_dirty_cards_region = hr; }
+  bool is_on_dirty_cards_region_list() const { return get_next_dirty_cards_region() != NULL; }
 
   // Allows logical separation between objects allocated before and after.
   void save_marks();
@@ -774,7 +782,16 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void print() const;
   void print_on(outputStream* st) const;
 
-  // Override
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  // NOTE: Only the "prev" marking information is guaranteed to be
+  // consistent most of the time, so most calls to this should use
+  // use_prev_marking == true. Currently, there is only one case where
+  // this is called with use_prev_marking == false, which is to verify
+  // the "next" marking information at the end of remark.
+  void verify(bool allow_dirty, bool use_prev_marking) const;
+
+  // Override; it uses the "prev" marking information
   virtual void verify(bool allow_dirty) const;
 
 #ifdef DEBUG

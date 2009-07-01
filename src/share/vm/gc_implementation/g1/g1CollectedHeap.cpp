@@ -446,8 +446,61 @@ void YoungList::print() {
   gclog_or_tty->print_cr("");
 }
 
+void G1CollectedHeap::push_dirty_cards_region(HeapRegion* hr)
+{
+  // Claim the right to put the region on the dirty cards region list
+  // by installing a self pointer.
+  HeapRegion* next = hr->get_next_dirty_cards_region();
+  if (next == NULL) {
+    HeapRegion* res = (HeapRegion*)
+      Atomic::cmpxchg_ptr(hr, hr->next_dirty_cards_region_addr(),
+                          NULL);
+    if (res == NULL) {
+      HeapRegion* head;
+      do {
+        // Put the region to the dirty cards region list.
+        head = _dirty_cards_region_list;
+        next = (HeapRegion*)
+          Atomic::cmpxchg_ptr(hr, &_dirty_cards_region_list, head);
+        if (next == head) {
+          assert(hr->get_next_dirty_cards_region() == hr,
+                 "hr->get_next_dirty_cards_region() != hr");
+          if (next == NULL) {
+            // The last region in the list points to itself.
+            hr->set_next_dirty_cards_region(hr);
+          } else {
+            hr->set_next_dirty_cards_region(next);
+          }
+        }
+      } while (next != head);
+    }
+  }
+}
+
+HeapRegion* G1CollectedHeap::pop_dirty_cards_region()
+{
+  HeapRegion* head;
+  HeapRegion* hr;
+  do {
+    head = _dirty_cards_region_list;
+    if (head == NULL) {
+      return NULL;
+    }
+    HeapRegion* new_head = head->get_next_dirty_cards_region();
+    if (head == new_head) {
+      // The last region.
+      new_head = NULL;
+    }
+    hr = (HeapRegion*)Atomic::cmpxchg_ptr(new_head, &_dirty_cards_region_list,
+                                          head);
+  } while (hr != head);
+  assert(hr != NULL, "invariant");
+  hr->set_next_dirty_cards_region(NULL);
+  return hr;
+}
+
 void G1CollectedHeap::stop_conc_gc_threads() {
-  _cg1r->cg1rThread()->stop();
+  _cg1r->stop();
   _czft->stop();
   _cmThread->stop();
 }
@@ -1001,12 +1054,8 @@ void G1CollectedHeap::do_collection(bool full, bool clear_all_soft_refs,
 
     gc_epilogue(true);
 
-    // Abandon concurrent refinement.  This must happen last: in the
-    // dirty-card logging system, some cards may be dirty by weak-ref
-    // processing, and may be enqueued.  But the whole card table is
-    // dirtied, so this should abandon those logs, and set "do_traversal"
-    // to true.
-    concurrent_g1_refine()->set_pya_restart();
+    // Discard all rset updates
+    JavaThread::dirty_card_queue_set().abandon_logs();
     assert(!G1DeferredRSUpdate
            || (G1DeferredRSUpdate && (dirty_card_queue_set().completed_buffers_num() == 0)), "Should not be any");
     assert(regions_accounted_for(), "Region leakage!");
@@ -1333,7 +1382,8 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _gc_time_stamp(0),
   _surviving_young_words(NULL),
   _in_cset_fast_test(NULL),
-  _in_cset_fast_test_base(NULL) {
+  _in_cset_fast_test_base(NULL),
+  _dirty_cards_region_list(NULL) {
   _g1h = this; // To catch bugs.
   if (_process_strong_tasks == NULL || !_process_strong_tasks->valid()) {
     vm_exit_during_initialization("Failed necessary allocation.");
@@ -1485,6 +1535,15 @@ jint G1CollectedHeap::initialize() {
   guarantee(_hrs != NULL, "Couldn't allocate HeapRegionSeq");
   guarantee(_cur_alloc_region == NULL, "from constructor");
 
+  // 6843694 - ensure that the maximum region index can fit
+  // in the remembered set structures.
+  const size_t max_region_idx = ((size_t)1 << (sizeof(RegionIdx_t)*BitsPerByte-1)) - 1;
+  guarantee((max_regions() - 1) <= max_region_idx, "too many regions");
+
+  const size_t cards_per_region = HeapRegion::GrainBytes >> CardTableModRefBS::card_shift;
+  size_t max_cards_per_region = ((size_t)1 << (sizeof(CardIdx_t)*BitsPerByte-1)) - 1;
+  guarantee(cards_per_region < max_cards_per_region, "too many cards per region");
+
   _bot_shared = new G1BlockOffsetSharedArray(_reserved,
                                              heap_word_size(init_byte_size));
 
@@ -1521,12 +1580,12 @@ jint G1CollectedHeap::initialize() {
                                                SATB_Q_FL_lock,
                                                0,
                                                Shared_SATB_Q_lock);
-  if (G1RSBarrierUseQueue) {
-    JavaThread::dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
-                                                  DirtyCardQ_FL_lock,
-                                                  G1DirtyCardQueueMax,
-                                                  Shared_DirtyCardQ_lock);
-  }
+
+  JavaThread::dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
+                                                DirtyCardQ_FL_lock,
+                                                G1DirtyCardQueueMax,
+                                                Shared_DirtyCardQ_lock);
+
   if (G1DeferredRSUpdate) {
     dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
                                       DirtyCardQ_FL_lock,
@@ -2077,17 +2136,22 @@ public:
 };
 
 class VerifyObjsInRegionClosure: public ObjectClosure {
+private:
   G1CollectedHeap* _g1h;
   size_t _live_bytes;
   HeapRegion *_hr;
+  bool _use_prev_marking;
 public:
-  VerifyObjsInRegionClosure(HeapRegion *hr) : _live_bytes(0), _hr(hr) {
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  VerifyObjsInRegionClosure(HeapRegion *hr, bool use_prev_marking)
+    : _live_bytes(0), _hr(hr), _use_prev_marking(use_prev_marking) {
     _g1h = G1CollectedHeap::heap();
   }
   void do_object(oop o) {
     VerifyLivenessOopClosure isLive(_g1h);
     assert(o != NULL, "Huh?");
-    if (!_g1h->is_obj_dead(o)) {
+    if (!_g1h->is_obj_dead_cond(o, _use_prev_marking)) {
       o->oop_iterate(&isLive);
       if (!_hr->obj_allocated_since_prev_marking(o))
         _live_bytes += (o->size() * HeapWordSize);
@@ -2126,17 +2190,22 @@ public:
 };
 
 class VerifyRegionClosure: public HeapRegionClosure {
-public:
+private:
   bool _allow_dirty;
   bool _par;
-  VerifyRegionClosure(bool allow_dirty, bool par = false)
-    : _allow_dirty(allow_dirty), _par(par) {}
+  bool _use_prev_marking;
+public:
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  VerifyRegionClosure(bool allow_dirty, bool par, bool use_prev_marking)
+    : _allow_dirty(allow_dirty), _par(par),
+      _use_prev_marking(use_prev_marking) {}
   bool doHeapRegion(HeapRegion* r) {
     guarantee(_par || r->claim_value() == HeapRegion::InitialClaimValue,
               "Should be unclaimed at verify points.");
     if (!r->continuesHumongous()) {
-      VerifyObjsInRegionClosure not_dead_yet_cl(r);
-      r->verify(_allow_dirty);
+      VerifyObjsInRegionClosure not_dead_yet_cl(r, _use_prev_marking);
+      r->verify(_allow_dirty, _use_prev_marking);
       r->object_iterate(&not_dead_yet_cl);
       guarantee(r->max_live_bytes() >= not_dead_yet_cl.live_bytes(),
                 "More live objects than counted in last complete marking.");
@@ -2149,10 +2218,13 @@ class VerifyRootsClosure: public OopsInGenClosure {
 private:
   G1CollectedHeap* _g1h;
   bool             _failures;
-
+  bool             _use_prev_marking;
 public:
-  VerifyRootsClosure() :
-    _g1h(G1CollectedHeap::heap()), _failures(false) { }
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  VerifyRootsClosure(bool use_prev_marking) :
+    _g1h(G1CollectedHeap::heap()), _failures(false),
+    _use_prev_marking(use_prev_marking) { }
 
   bool failures() { return _failures; }
 
@@ -2163,7 +2235,7 @@ public:
   void do_oop(oop* p) {
     oop obj = *p;
     if (obj != NULL) {
-      if (_g1h->is_obj_dead(obj)) {
+      if (_g1h->is_obj_dead_cond(obj, _use_prev_marking)) {
         gclog_or_tty->print_cr("Root location "PTR_FORMAT" "
                                "points to dead obj "PTR_FORMAT, p, (void*) obj);
         obj->print_on(gclog_or_tty);
@@ -2179,24 +2251,35 @@ class G1ParVerifyTask: public AbstractGangTask {
 private:
   G1CollectedHeap* _g1h;
   bool _allow_dirty;
+  bool _use_prev_marking;
 
 public:
-  G1ParVerifyTask(G1CollectedHeap* g1h, bool allow_dirty) :
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  G1ParVerifyTask(G1CollectedHeap* g1h, bool allow_dirty,
+                  bool use_prev_marking) :
     AbstractGangTask("Parallel verify task"),
-    _g1h(g1h), _allow_dirty(allow_dirty) { }
+    _g1h(g1h), _allow_dirty(allow_dirty),
+    _use_prev_marking(use_prev_marking) { }
 
   void work(int worker_i) {
     HandleMark hm;
-    VerifyRegionClosure blk(_allow_dirty, true);
+    VerifyRegionClosure blk(_allow_dirty, true, _use_prev_marking);
     _g1h->heap_region_par_iterate_chunked(&blk, worker_i,
                                           HeapRegion::ParVerifyClaimValue);
   }
 };
 
 void G1CollectedHeap::verify(bool allow_dirty, bool silent) {
+  verify(allow_dirty, silent, /* use_prev_marking */ true);
+}
+
+void G1CollectedHeap::verify(bool allow_dirty,
+                             bool silent,
+                             bool use_prev_marking) {
   if (SafepointSynchronize::is_at_safepoint() || ! UseTLAB) {
     if (!silent) { gclog_or_tty->print("roots "); }
-    VerifyRootsClosure rootsCl;
+    VerifyRootsClosure rootsCl(use_prev_marking);
     process_strong_roots(false,
                          SharedHeap::SO_AllClasses,
                          &rootsCl,
@@ -2207,7 +2290,7 @@ void G1CollectedHeap::verify(bool allow_dirty, bool silent) {
       assert(check_heap_region_claim_values(HeapRegion::InitialClaimValue),
              "sanity check");
 
-      G1ParVerifyTask task(this, allow_dirty);
+      G1ParVerifyTask task(this, allow_dirty, use_prev_marking);
       int n_workers = workers()->total_workers();
       set_par_threads(n_workers);
       workers()->run_task(&task);
@@ -2221,7 +2304,7 @@ void G1CollectedHeap::verify(bool allow_dirty, bool silent) {
       assert(check_heap_region_claim_values(HeapRegion::InitialClaimValue),
              "sanity check");
     } else {
-      VerifyRegionClosure blk(allow_dirty);
+      VerifyRegionClosure blk(allow_dirty, false, use_prev_marking);
       _hrs->iterate(&blk);
     }
     if (!silent) gclog_or_tty->print("remset ");
@@ -2249,6 +2332,15 @@ void G1CollectedHeap::print_on(outputStream* st) const {
   _hrs->iterate(&blk);
 }
 
+class PrintOnThreadsClosure : public ThreadClosure {
+  outputStream* _st;
+public:
+  PrintOnThreadsClosure(outputStream* st) : _st(st) { }
+  virtual void do_thread(Thread *t) {
+    t->print_on(_st);
+  }
+};
+
 void G1CollectedHeap::print_gc_threads_on(outputStream* st) const {
   if (ParallelGCThreads > 0) {
     workers()->print_worker_threads();
@@ -2256,8 +2348,9 @@ void G1CollectedHeap::print_gc_threads_on(outputStream* st) const {
   st->print("\"G1 concurrent mark GC Thread\" ");
   _cmThread->print();
   st->cr();
-  st->print("\"G1 concurrent refinement GC Thread\" ");
-  _cg1r->cg1rThread()->print_on(st);
+  st->print("\"G1 concurrent refinement GC Threads\" ");
+  PrintOnThreadsClosure p(st);
+  _cg1r->threads_do(&p);
   st->cr();
   st->print("\"G1 zero-fill GC Thread\" ");
   _czft->print_on(st);
@@ -2269,7 +2362,7 @@ void G1CollectedHeap::gc_threads_do(ThreadClosure* tc) const {
     workers()->threads_do(tc);
   }
   tc->do_thread(_cmThread);
-  tc->do_thread(_cg1r->cg1rThread());
+  _cg1r->threads_do(tc);
   tc->do_thread(_czft);
 }
 
@@ -4685,15 +4778,58 @@ void G1CollectedHeap::dirtyCardsForYoungRegions(CardTableModRefBS* ct_bs, HeapRe
   }
 }
 
+
+class G1ParCleanupCTTask : public AbstractGangTask {
+  CardTableModRefBS* _ct_bs;
+  G1CollectedHeap* _g1h;
+public:
+  G1ParCleanupCTTask(CardTableModRefBS* ct_bs,
+                     G1CollectedHeap* g1h) :
+    AbstractGangTask("G1 Par Cleanup CT Task"),
+    _ct_bs(ct_bs),
+    _g1h(g1h)
+  { }
+
+  void work(int i) {
+    HeapRegion* r;
+    while (r = _g1h->pop_dirty_cards_region()) {
+      clear_cards(r);
+    }
+  }
+  void clear_cards(HeapRegion* r) {
+    // Cards for Survivor and Scan-Only regions will be dirtied later.
+    if (!r->is_scan_only() && !r->is_survivor()) {
+      _ct_bs->clear(MemRegion(r->bottom(), r->end()));
+    }
+  }
+};
+
+
 void G1CollectedHeap::cleanUpCardTable() {
   CardTableModRefBS* ct_bs = (CardTableModRefBS*) (barrier_set());
   double start = os::elapsedTime();
 
-  ct_bs->clear(_g1_committed);
-
+  // Iterate over the dirty cards region list.
+  G1ParCleanupCTTask cleanup_task(ct_bs, this);
+  if (ParallelGCThreads > 0) {
+    set_par_threads(workers()->total_workers());
+    workers()->run_task(&cleanup_task);
+    set_par_threads(0);
+  } else {
+    while (_dirty_cards_region_list) {
+      HeapRegion* r = _dirty_cards_region_list;
+      cleanup_task.clear_cards(r);
+      _dirty_cards_region_list = r->get_next_dirty_cards_region();
+      if (_dirty_cards_region_list == r) {
+        // The last region.
+        _dirty_cards_region_list = NULL;
+      }
+      r->set_next_dirty_cards_region(NULL);
+    }
+  }
   // now, redirty the cards of the scan-only and survivor regions
   // (it seemed faster to do it this way, instead of iterating over
-  // all regions and then clearing / dirtying as approprite)
+  // all regions and then clearing / dirtying as appropriate)
   dirtyCardsForYoungRegions(ct_bs, _young_list->first_scan_only_region());
   dirtyCardsForYoungRegions(ct_bs, _young_list->first_survivor_region());
 
