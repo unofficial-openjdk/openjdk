@@ -1561,8 +1561,7 @@ void os::print_os_info(outputStream* st) {
         if (osvi.wProductType == VER_NT_WORKSTATION) {
             st->print(" Windows 7");
         } else {
-            // Unrecognized windows, print out its major and minor versions
-            st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+            st->print(" Windows Server 2008 R2");
         }
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
