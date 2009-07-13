@@ -119,6 +119,11 @@ public class Cursor implements java.io.Serializable {
 
     protected static Cursor predefined[] = new Cursor[14];
 
+    /**
+     * This field is a private replacement for 'predefined' array.
+     */
+    private final static Cursor[] predefinedPrivate = new Cursor[14];
+
     /* Localization names and default values */
     static final String[][] cursorProperties = {
         { "AWT.DefaultCursor", "Default Cursor" },
@@ -252,10 +257,15 @@ public class Cursor implements java.io.Serializable {
         if (type < Cursor.DEFAULT_CURSOR || type > Cursor.MOVE_CURSOR) {
             throw new IllegalArgumentException("illegal cursor type");
         }
-        if (predefined[type] == null) {
-            predefined[type] = new Cursor(type);
+        Cursor c = predefinedPrivate[type];
+        if (c == null) {
+            predefinedPrivate[type] = c = new Cursor(type);
         }
-        return predefined[type];
+        // fill 'predefined' array for backwards compatibility.
+        if (predefined[type] == null) {
+            predefined[type] = c;
+        }
+        return c;
     }
 
     /**
