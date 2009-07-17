@@ -3521,6 +3521,7 @@ public class Window extends Container implements Accessible {
      * @return this component's background color
      *
      * @see Window#setBackground
+     * @see Window#isOpaque
      * @see GraphicsDevice.WindowTranslucency
      */
     @Override
@@ -3583,6 +3584,7 @@ public class Window extends Container implements Accessible {
      *     PERPIXEL_TRANSLUCENT} translucency is not supported
      *
      * @see Window#getBackground
+     * @see Window#isOpaque
      * @see Window#setOpacity()
      * @see Window#setShape()
      * @see GraphicsDevice.WindowTranslucency
@@ -3597,7 +3599,7 @@ public class Window extends Container implements Accessible {
             return;
         }
         int oldAlpha = oldBg != null ? oldBg.getAlpha() : 255;
-        int alpha = bgColor.getAlpha();
+        int alpha = bgColor != null ? bgColor.getAlpha() : 255;
         if ((oldAlpha == 255) && (alpha < 255)) { // non-opaque window
             GraphicsConfiguration gc = getGraphicsConfiguration();
             GraphicsDevice gd = gc.getDevice();
@@ -3623,6 +3625,25 @@ public class Window extends Container implements Accessible {
         }
     }
 
+    /**
+     * Indicates if the window is currently opaque.
+     * <p>
+     * The method returns {@code false} if the background color of the window
+     * is not {@code null} and the alpha component of the color is less than
+     * 1.0f. The method returns {@code true} otherwise.
+     *
+     * @return {@code true} if the window is opaque, {@code false} otherwise
+     *
+     * @see Window#getBackground
+     * @see Window#setBackground
+     * @since 1.7
+     */
+    @Override
+    public boolean isOpaque() {
+        Color bg = getBackground();
+        return bg != null ? bg.getAlpha() == 255 : true;
+    }
+
     private void updateWindow() {
         synchronized (getTreeLock()) {
             WindowPeer peer = (WindowPeer)getPeer();
@@ -3639,12 +3660,11 @@ public class Window extends Container implements Accessible {
      */
     @Override
     public void paint(Graphics g) {
-        Color bgColor = getBackground();
-        if ((bgColor != null) && (bgColor.getAlpha() < 255)) {
+        if (!isOpaque()) {
             Graphics gg = g.create();
             try {
                 if (gg instanceof Graphics2D) {
-                    gg.setColor(bgColor);
+                    gg.setColor(getBackground());
                     ((Graphics2D)gg).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC));
                     gg.fillRect(0, 0, getWidth(), getHeight());
                 }
@@ -3658,7 +3678,7 @@ public class Window extends Container implements Accessible {
     private static void setLayersOpaque(Component component, boolean isOpaque) {
         // Shouldn't use instanceof to avoid loading Swing classes
         //    if it's a pure AWT application.
-        if (Component.doesImplement(component, "javax.swing.RootPaneContainer")) {
+        if (SunToolkit.isInstanceOf(component, "javax.swing.RootPaneContainer")) {
             javax.swing.RootPaneContainer rpc = (javax.swing.RootPaneContainer)component;
             javax.swing.JRootPane root = rpc.getRootPane();
             javax.swing.JLayeredPane lp = root.getLayeredPane();
@@ -3749,10 +3769,6 @@ public class Window extends Container implements Accessible {
             public void setShape(Window window, Shape shape) {
                 window.setShape(shape);
             }
-            public boolean isOpaque(Window window) {
-                Color bg = window.getBackground();
-                return (bg != null) ? bg.getAlpha() == 255 : true;
-            }
             public void setOpaque(Window window, boolean opaque) {
                 Color bg = window.getBackground();
                 if (bg == null) {
@@ -3796,6 +3812,10 @@ public class Window extends Container implements Accessible {
                     double x, double y, double w, double h)
             {
                 return window.calculateSecurityWarningPosition(x, y, w, h);
+            }
+
+            public void setLWRequestStatus(Window changed, boolean status) {
+                changed.syncLWRequests = status;
             }
         }); // WindowAccessor
     } // static

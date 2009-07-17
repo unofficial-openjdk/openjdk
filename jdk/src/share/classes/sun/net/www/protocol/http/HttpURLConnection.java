@@ -51,14 +51,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import sun.net.*;
 import sun.net.www.*;
 import sun.net.www.http.HttpClient;
 import sun.net.www.http.PosterOutputStream;
 import sun.net.www.http.ChunkedInputStream;
 import sun.net.www.http.ChunkedOutputStream;
+import sun.net.www.http.HttpCapture;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.net.MalformedURLException;
@@ -70,8 +69,6 @@ import java.nio.ByteBuffer;
 
 
 public class HttpURLConnection extends java.net.HttpURLConnection {
-
-    private static Logger logger = Logger.getLogger("sun.net.www.protocol.http.HttpURLConnection");
 
     static String HTTP_CONNECT = "CONNECT";
 
@@ -237,6 +234,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     /* try auth without calling Authenticator */
     private boolean tryTransparentNTLMServer = NTLMAuthentication.supportsTransparentAuth();
     private boolean tryTransparentNTLMProxy = NTLMAuthentication.supportsTransparentAuth();
+    /* Used by Windows specific code */
     Object authObj;
 
     /* Set if the user is manually setting the Authorization or Proxy-Authorization headers */
@@ -303,9 +301,16 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         return java.security.AccessController.doPrivileged(
             new java.security.PrivilegedAction<PasswordAuthentication>() {
                 public PasswordAuthentication run() {
-                    return Authenticator.requestPasswordAuthentication(
+                    if (HttpCapture.isLoggable("FINEST")) {
+                        HttpCapture.finest("Requesting Authentication: host =" + host + " url = " + url);
+                    }
+                    PasswordAuthentication pass = Authenticator.requestPasswordAuthentication(
                         host, addr, port, protocol,
                         prompt, scheme, url, authType);
+                    if (HttpCapture.isLoggable("FINEST")) {
+                        HttpCapture.finest("Authentication returned: " + (pass != null ? pass.toString() : "null"));
+                    }
+                    return pass;
                 }
             });
     }
@@ -458,8 +463,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
             setRequests=true;
         }
-        if(logger.isLoggable(Level.FINEST)) {
-            logger.fine(requests.toString());
+        if (HttpCapture.isLoggable("FINE")) {
+            HttpCapture.fine(requests.toString());
         }
         http.writeRequests(requests, poster);
         if (ps.checkError()) {
@@ -602,7 +607,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     {
         boolean redir;
         int redirects = 0;
-        InputStream in = null;
+        InputStream in;
 
         do {
             if (c instanceof HttpURLConnection) {
@@ -715,6 +720,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                         && !(cachedResponse instanceof SecureCacheResponse)) {
                         cachedResponse = null;
                     }
+                    if (HttpCapture.isLoggable("FINEST")) {
+                        HttpCapture.finest("Cache Request for " + uri + " / " + getRequestMethod());
+                        HttpCapture.finest("From cache: " + (cachedResponse != null ? cachedResponse.toString() : "null"));
+                    }
                     if (cachedResponse != null) {
                         cachedHeaders = mapToMessageHeader(cachedResponse.getHeaders());
                         cachedInputStream = cachedResponse.getBody();
@@ -750,10 +759,13 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                                      return ProxySelector.getDefault();
                                  }
                              });
-                Proxy p = null;
                 if (sel != null) {
                     URI uri = sun.net.www.ParseUtil.toURI(url);
+                    if (HttpCapture.isLoggable("FINEST")) {
+                        HttpCapture.finest("ProxySelector Request for " + uri);
+                    }
                     Iterator<Proxy> it = sel.select(uri).iterator();
+                    Proxy p;
                     while (it.hasNext()) {
                         p = it.next();
                         try {
@@ -765,6 +777,11 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                                 // attempt failed
                                 http = getNewHttpClient(url, p, connectTimeout, false);
                                 http.setReadTimeout(readTimeout);
+                            }
+                            if (HttpCapture.isLoggable("FINEST")) {
+                                if (p != null) {
+                                    HttpCapture.finest("Proxy used: " + p.toString());
+                                }
                             }
                             break;
                         } catch (IOException ioex) {
@@ -993,10 +1010,16 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
             URI uri = ParseUtil.toURI(url);
             if (uri != null) {
+                if (HttpCapture.isLoggable("FINEST")) {
+                    HttpCapture.finest("CookieHandler request for " + uri);
+                }
                 Map<String, List<String>> cookies
                     = cookieHandler.get(
                         uri, requests.getHeaders(EXCLUDE_HEADERS));
                 if (!cookies.isEmpty()) {
+                    if (HttpCapture.isLoggable("FINEST")) {
+                        HttpCapture.finest("Cookies retrieved: " + cookies.toString());
+                    }
                     for (Map.Entry<String, List<String>> entry :
                              cookies.entrySet()) {
                         String key = entry.getKey();
@@ -1126,8 +1149,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     writeRequests();
                 }
                 http.parseHTTP(responses, pi, this);
-                if(logger.isLoggable(Level.FINEST)) {
-                    logger.fine(responses.toString());
+                if (HttpCapture.isLoggable("FINE")) {
+                    HttpCapture.fine(responses.toString());
                 }
                 inputStream = http.getInputStream();
 
@@ -1571,7 +1594,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 http.parseHTTP(responses, null, this);
 
                 /* Log the response to the CONNECT */
-                logger.fine(responses.toString());
+                if (HttpCapture.isLoggable("FINE")) {
+                    HttpCapture.fine(responses.toString());
+                }
 
                 statusLine = responses.getValue(0);
                 StringTokenizer st = new StringTokenizer(statusLine);
@@ -1617,8 +1642,6 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                         reset ();
                         if (!proxyAuthentication.setHeaders(this,
                                                 authhdr.headerParser(), raw)) {
-                            proxyHost = http.getProxyHostUsed();
-                            proxyPort = http.getProxyPortUsed();
                             disconnectInternal();
                             throw new IOException ("Authentication failure");
                         }
@@ -1699,7 +1722,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         setPreemptiveProxyAuthentication(requests);
 
          /* Log the CONNECT request */
-        logger.fine(requests.toString());
+        if (HttpCapture.isLoggable("FINE")) {
+            HttpCapture.fine(requests.toString());
+        }
 
         http.writeRequests(requests, null);
         // remove CONNECT header
@@ -1842,6 +1867,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 }
             }
         }
+        if (HttpCapture.isLoggable("FINER")) {
+            HttpCapture.finer("Proxy Authentication for " + authhdr.toString() +" returned " + (ret != null ? ret.toString() : "null"));
+        }
         return ret;
     }
 
@@ -1896,21 +1924,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
             }
             if (ret == null) {
                 if (schemeID == NegotiateAuthentication.KERBEROS_AUTH) {
-                    URL url1;
-                    try {
-                        url1 = new URL (url, "/"); /* truncate the path */
-                    } catch (Exception e) {
-                        url1 = url;
-                    }
                     ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Kerberos"));
                 }
                 if (schemeID == NegotiateAuthentication.NEGOTIATE_AUTH) {
-                    URL url1;
-                    try {
-                        url1 = new URL (url, "/"); /* truncate the path */
-                    } catch (Exception e) {
-                        url1 = url;
-                    }
                     ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Negotiate"));
                 }
                 if (schemeID == BasicAuthentication.BASIC_AUTH) {
@@ -1980,6 +1996,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     ret = null;
                 }
             }
+        }
+        if (HttpCapture.isLoggable("FINER")) {
+            HttpCapture.finer("Server Authentication for " + authhdr.toString() +" returned " + (ret != null ? ret.toString() : "null"));
         }
         return ret;
     }
@@ -2053,6 +2072,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         disconnectInternal();
         if (streaming()) {
             throw new HttpRetryException (RETRY_MSG3, stat, loc);
+        }
+        if (HttpCapture.isLoggable("FINE")) {
+            HttpCapture.fine("Redirected from " + url + " to " + locUrl);
         }
 
         // clear out old response headers!!!!
@@ -2158,11 +2180,17 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     /* raw stream, which will block on read, so only read
                      * the expected number of bytes, probably 0
                      */
-                    int cl = 0, n=0;
-                    try {
-                        cl = Integer.parseInt (responses.findValue ("Content-Length"));
-                    } catch (Exception e) {}
-                    for (int i=0; i<cl; ) {
+                    long cl = 0;
+                    int n = 0;
+                    String cls = responses.findValue ("Content-Length");
+                    if (cls != null) {
+                        try {
+                            cl = Long.parseLong (cls);
+                        } catch (NumberFormatException e) {
+                            cl = 0;
+                        }
+                    }
+                    for (long i=0; i<cl; ) {
                         if ((n = is.read (cdata)) == -1) {
                             break;
                         } else {
@@ -2507,12 +2535,6 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     @Override
     public int getReadTimeout() {
         return readTimeout < 0 ? 0 : readTimeout;
-    }
-
-    @Override
-    protected void finalize() {
-        // this should do nothing.  The stream finalizer will close
-        // the fd
     }
 
     String getMethod() {
