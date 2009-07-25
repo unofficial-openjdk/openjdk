@@ -66,6 +66,8 @@ public class SoftSynthesizer implements AudioSynthesizer,
         public SoftAudioPusher pusher = null;
         public AudioInputStream jitter_stream = null;
         public SourceDataLine sourceDataLine = null;
+        public volatile long silent_samples = 0;
+        private int framesize = 0;
         private WeakReference<AudioInputStream> weak_stream_link;
         private AudioFloatConverter converter;
         private float[] silentbuffer = null;
@@ -101,6 +103,8 @@ public class SoftSynthesizer implements AudioSynthesizer,
                      silentbuffer = new float[flen];
                  converter.toByteArray(silentbuffer, flen, b, off);
 
+                 silent_samples += (long)((len / framesize));
+
                  if(pusher != null)
                  if(weak_stream_link.get() == null)
                  {
@@ -117,7 +121,7 @@ public class SoftSynthesizer implements AudioSynthesizer,
                                     _jitter_stream.close();
                                 } catch (IOException e) {
                                     e.printStackTrace();
-                                }
+                                } 
                              if(_sourceDataLine != null)
                                  _sourceDataLine.close();
                          }
@@ -136,6 +140,7 @@ public class SoftSynthesizer implements AudioSynthesizer,
             weak_stream_link = new WeakReference<AudioInputStream>(stream);
             converter = AudioFloatConverter.getConverter(stream.getFormat());
             samplesize = stream.getFormat().getFrameSize() / stream.getFormat().getChannels();
+            framesize = stream.getFormat().getFrameSize();
         }
 
         public AudioInputStream getAudioInputStream()
