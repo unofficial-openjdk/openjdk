@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,7 +93,7 @@ class EnumPersistenceDelegate extends PersistenceDelegate {
 
     protected Expression instantiate(Object oldInstance, Encoder out) {
         Enum e = (Enum) oldInstance;
-        return new Expression(e, Enum.class, "valueOf", new Object[]{e.getClass(), e.name()});
+        return new Expression(e, Enum.class, "valueOf", new Object[]{e.getDeclaringClass(), e.name()});
     }
 }
 
@@ -219,7 +219,9 @@ class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
             return new Expression(oldInstance, String.class, "getClass", new Object[]{});
         }
         else {
-            return new Expression(oldInstance, Class.class, "forName", new Object[]{c.getName()});
+            Expression newInstance = new Expression(oldInstance, Class.class, "forName", new Object[] { c.getName() });
+            newInstance.loader = c.getClassLoader();
+            return newInstance;
         }
     }
 }
