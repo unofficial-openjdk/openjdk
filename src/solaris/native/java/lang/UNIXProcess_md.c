@@ -423,9 +423,20 @@ execvp_usingParentPath(const char *file, const char *const argv[])
     return -1;
 }
 
-/* execvpe should have been included in the Unix standards. */
+/**
+ * 'execvpe' should have been included in the Unix standards,
+ * and is a GNU extension in glibc 2.10.
+ *
+ * JDK_execvpe is identical to execvp, except that the child environment is
+ * specified via the 3rd argument instead of being inherited from environ.
+ *
+ * This implementation of JDK_execvpe does not work if memory is shared
+ * with the parent, when using vfork(2), or clone(2) with CLONE_VM.
+ */
 static int
-execvpe(const char *file, const char *const argv[], const char *const envp[])
+JDK_execvpe(const char *file,
+            const char *const argv[],
+            const char *const envp[])
 {
     /* This is one of the rare times it's more portable to declare an
      * external symbol explicitly, rather than via a system header.
@@ -601,7 +612,7 @@ Java_java_lang_UNIXProcess_forkAndExec(JNIEnv *env,
         if (fcntl(FAIL_FILENO, F_SETFD, FD_CLOEXEC) == -1)
             goto WhyCantJohnnyExec;
 
-        execvpe(argv[0], argv, envv);
+        JDK_execvpe(argv[0], argv, envv);
 
     WhyCantJohnnyExec:
         /* We used to go to an awful lot of trouble to predict whether the
