@@ -42,7 +42,7 @@ import javax.xml.stream.XMLStreamWriter;
 
 /**
  * Printer of DOM to XML using StAX {@link XMLStreamWriter}.
- * 
+ *
  * @author <A href="mailto:demakov@ispras.ru">Alexey Demakov</A>
  */
 class DOMPrinter {

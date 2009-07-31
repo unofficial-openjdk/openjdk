@@ -32,7 +32,7 @@ import com.sun.xml.internal.rngom.parse.IllegalSchemaException;
 import com.sun.xml.internal.rngom.parse.Parseable;
 
 /**
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -40,7 +40,7 @@ public class IncludeHost extends GrammarSectionHost implements Include {
 
     private final Include lhs;
     private final Include rhs;
-    
+
     IncludeHost(Include lhs, Include rhs) {
         super(lhs, rhs);
         this.lhs = lhs;
@@ -50,7 +50,7 @@ public class IncludeHost extends GrammarSectionHost implements Include {
     public void endInclude(Parseable current, String uri, String ns, Location _loc, Annotations _anno) throws BuildException, IllegalSchemaException {
         LocationHost loc = cast(_loc);
         AnnotationsHost anno = cast(_anno);
-        
+
         lhs.endInclude( current, uri, ns, loc.lhs, anno.lhs );
         rhs.endInclude( current, uri, ns, loc.rhs, anno.rhs );
     }

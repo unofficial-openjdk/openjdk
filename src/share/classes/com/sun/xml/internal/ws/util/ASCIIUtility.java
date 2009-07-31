@@ -97,7 +97,7 @@ public class ASCIIUtility {
         if (negative) {
             if (i > start + 1) {
                 return result;
-            } else {	/* Only got "-" */
+            } else {    /* Only got "-" */
                 throw new NumberFormatException("illegal number");
             }
         } else {

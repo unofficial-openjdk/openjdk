@@ -44,15 +44,15 @@ import org.xml.sax.XMLReader;
  * <li>The XMLReader object obtained by the getXMLReader method shall
  *     be used only for parsing the InputSource object returned by
  *     the getInputSource method.</li>
- * <li>The InputSource object obtained by the getInputSource method shall 
- *     be used only for being parsed by the XMLReader object returned by 
+ * <li>The InputSource object obtained by the getInputSource method shall
+ *     be used only for being parsed by the XMLReader object returned by
  *     the getXMLReader method.</li>
  * </ul>
  */
 public class XMLStreamBufferSource extends SAXSource {
     protected XMLStreamBuffer _buffer;
     protected SAXBufferProcessor _bufferProcessor;
-   
+
     /**
      * XMLStreamBufferSource constructor.
      *
@@ -72,7 +72,7 @@ public class XMLStreamBufferSource extends SAXSource {
     public XMLStreamBuffer getXMLStreamBuffer() {
         return _buffer;
     }
-    
+
     /**
      * Set the {@link XMLStreamBuffer} to use.
      *
@@ -81,14 +81,14 @@ public class XMLStreamBufferSource extends SAXSource {
     public void setXMLStreamBuffer(XMLStreamBuffer buffer) {
         if (buffer == null) {
             throw new NullPointerException("buffer cannot be null");
-        }        
+        }
         _buffer = buffer;
-        
+
         if (_bufferProcessor != null) {
             _bufferProcessor.setBuffer(_buffer,false);
         }
     }
-    
+
     public XMLReader getXMLReader() {
         if (_bufferProcessor == null) {
             _bufferProcessor = new SAXBufferProcessor(_buffer,false);
@@ -98,5 +98,5 @@ public class XMLStreamBufferSource extends SAXSource {
         }
 
         return _bufferProcessor;
-    }        
+    }
 }

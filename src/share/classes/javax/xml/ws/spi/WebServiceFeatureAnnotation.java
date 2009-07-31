@@ -37,11 +37,11 @@ import javax.xml.ws.WebServiceFeature;
  * as a <code>WebServiceFeature</code>.
  *
  * Each <code>WebServiceFeature</code> annotation annotated with
- * this annotation MUST contain an 
+ * this annotation MUST contain an
  * <code>enabled</code> property of type
- * <code>boolean</code> with a default value of <code>true</code>. 
+ * <code>boolean</code> with a default value of <code>true</code>.
  * JAX-WS defines the following
- * <code>WebServiceFeature</code> annotations (<code>Addressing</code>, 
+ * <code>WebServiceFeature</code> annotations (<code>Addressing</code>,
  * <code>MTOM</code>, <code>RespectBinding</code>), however, an implementation
  * may define vendors specific annotations for other features.
  * If a JAX-WS implementation encounters an annotation annotated
@@ -59,7 +59,7 @@ import javax.xml.ws.WebServiceFeature;
 @Documented
 public @interface WebServiceFeatureAnnotation {
     /**
-     * Unique identifier for the WebServiceFeature.  This 
+     * Unique identifier for the WebServiceFeature.  This
      * identifier MUST be unique across all implementations
      * of JAX-WS.
      */

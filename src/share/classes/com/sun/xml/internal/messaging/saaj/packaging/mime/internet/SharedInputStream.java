@@ -52,7 +52,7 @@ public interface SharedInputStream {
      * Return the current position in the InputStream, as an
      * offset from the beginning of the InputStream.
      *
-     * @return	the current position
+     * @return  the current position
      */
     public long getPosition();
 
@@ -64,9 +64,9 @@ public interface SharedInputStream {
      * at the same place as this stream.  The returned InputStream
      * will also implement the SharedInputStream interface.
      *
-     * @param	start	the starting position
-     * @param	end	the ending position + 1
-     * @return		the new stream
+     * @param   start   the starting position
+     * @param   end     the ending position + 1
+     * @return          the new stream
      */
     public InputStream newStream(long start, long end);
 

@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.org.jvnet.fastinfoset;
@@ -55,14 +55,14 @@ import com.sun.xml.internal.fastinfoset.sax.SAXDocumentParser;
  *     <LI>The XMLReader object obtained by the getXMLReader method shall
  *        be used only for parsing the InputSource object returned by
  *        the getInputSource method.</LI>
- *     <LI>The InputSource object obtained by the getInputSource method shall 
- *        be used only for being parsed by the XMLReader object returned by 
+ *     <LI>The InputSource object obtained by the getInputSource method shall
+ *        be used only for being parsed by the XMLReader object returned by
  *        the getXMLReader method.</LI>
  *   </UL>
  *  </P>
  */
 public class FastInfosetSource extends SAXSource {
-   
+
     public FastInfosetSource(InputStream inputStream) {
         super(new InputSource(inputStream));
     }
@@ -76,11 +76,11 @@ public class FastInfosetSource extends SAXSource {
         ((SAXDocumentParser) reader).setInputStream(getInputStream());
         return reader;
     }
-    
+
     public InputStream getInputStream() {
         return getInputSource().getByteStream();
     }
-    
+
     public void setInputStream(InputStream inputStream) {
         setInputSource(new InputSource(inputStream));
     }

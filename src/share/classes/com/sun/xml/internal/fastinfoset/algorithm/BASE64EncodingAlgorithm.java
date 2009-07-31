@@ -35,7 +35,7 @@ import com.sun.xml.internal.org.jvnet.fastinfoset.EncodingAlgorithmException;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class BASE64EncodingAlgorithm extends BuiltInEncodingAlgorithm {
-    
+
     /* package */ static final char encodeBase64[] = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -119,31 +119,31 @@ public class BASE64EncodingAlgorithm extends BuiltInEncodingAlgorithm {
         System.arraycopy(b, start, data, 0, length);
         return data;
     }
-    
+
     public final Object decodeFromInputStream(InputStream s) throws IOException {
         throw new UnsupportedOperationException(CommonResourceBundle.getInstance().getString("message.notImplemented"));
     }
-    
-    
+
+
     public void encodeToOutputStream(Object data, OutputStream s) throws IOException {
         if (!(data instanceof byte[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotByteArray"));
         }
-        
+
         s.write((byte[])data);
     }
-    
+
     public final Object convertFromCharacters(char[] ch, int start, int length) {
         if (length == 0) {
             return new byte[0];
         }
-        
+
         StringBuffer encodedValue = removeWhitespace(ch, start, length);
         int encodedLength = encodedValue.length();
         if (encodedLength == 0) {
             return new byte[0];
         }
-        
+
         int blockCount = encodedLength / 4;
         int partialBlockLength = 3;
 
@@ -176,16 +176,16 @@ public class BASE64EncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         return value;
     }
-    
+
     public final void convertToCharacters(Object data, StringBuffer s) {
         if (data == null) {
             return;
         }
         final byte[] value = (byte[]) data;
-        
+
         convertToCharacters(value, 0, value.length, s);
     }
-    
+
     public final int getPrimtiveLengthFromOctetLength(int octetLength) throws EncodingAlgorithmException {
         return octetLength;
     }
@@ -193,10 +193,10 @@ public class BASE64EncodingAlgorithm extends BuiltInEncodingAlgorithm {
     public int getOctetLengthFromPrimitiveLength(int primitiveLength) {
         return primitiveLength;
     }
-    
+
     public final void encodeToBytes(Object array, int astart, int alength, byte[] b, int start) {
         System.arraycopy((byte[])array, astart, b, start, alength);
-    }    
+    }
 
     public final void convertToCharacters(byte[] data, int offset, int length, StringBuffer s) {
         if (data == null) {
@@ -206,10 +206,10 @@ public class BASE64EncodingAlgorithm extends BuiltInEncodingAlgorithm {
         if (length == 0) {
             return;
         }
-        
+
         final int partialBlockLength = length % 3;
-        final int blockCount = (partialBlockLength != 0) ? 
-            length / 3 + 1 : 
+        final int blockCount = (partialBlockLength != 0) ?
+            length / 3 + 1 :
             length / 3;
 
         final int encodedLength = blockCount * 4;

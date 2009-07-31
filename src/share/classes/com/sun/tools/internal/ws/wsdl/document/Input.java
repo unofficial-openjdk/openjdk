@@ -101,7 +101,7 @@ public class Input extends Entity implements TWSDLExtensible {
     public void validateThis() {
         if (_message == null) {
             errorReceiver.error(getLocator(), WsdlMessages.VALIDATION_MISSING_REQUIRED_ATTRIBUTE("name", "wsdl:message"));
-            throw new AbortException();            
+            throw new AbortException();
         }
     }
 

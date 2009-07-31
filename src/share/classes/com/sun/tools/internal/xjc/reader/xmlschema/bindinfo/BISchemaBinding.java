@@ -40,7 +40,7 @@ import com.sun.xml.internal.xsom.XSType;
 
 /**
  * Schema-wide binding customization.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -89,11 +89,11 @@ public final class BISchemaBinding extends AbstractDeclarationImpl {
      * Default naming rule, that doesn't change the name.
      */
     private static final NamingRule defaultNamingRule = new NamingRule("","");
-    
+
 
     /**
      * Default naming rules of the generated interfaces.
-     * 
+     *
      * It simply adds prefix and suffix to the name, but
      * the caller shouldn't care how the name mangling is
      * done.
@@ -103,7 +103,7 @@ public final class BISchemaBinding extends AbstractDeclarationImpl {
         private String prefix = "";
         @XmlAttribute
         private String suffix = "";
-        
+
         public NamingRule( String _prefix, String _suffix ) {
             this.prefix = _prefix;
             this.suffix = _suffix;
@@ -117,14 +117,14 @@ public final class BISchemaBinding extends AbstractDeclarationImpl {
             return prefix+originalName+suffix;
         }
     }
-    
+
     /**
      * Transforms the default name produced from XML name
      * by following the customization.
-     * 
+     *
      * This shouldn't be applied to a class name specified
      * by a customization.
-     * 
+     *
      * @param cmp
      *      The schema component from which the default name is derived.
      */
@@ -137,20 +137,20 @@ public final class BISchemaBinding extends AbstractDeclarationImpl {
             return nameXmlTransform.attributeName.mangle(name);
         if( cmp instanceof XSModelGroup || cmp instanceof XSModelGroupDecl )
             return nameXmlTransform.modelGroupName.mangle(name);
-        
+
         // otherwise no modification
         return name;
     }
-    
+
     public String mangleAnonymousTypeClassName( String name ) {
         return nameXmlTransform.anonymousTypeName.mangle(name);
     }
-    
-    
+
+
     public String getPackageName() { return packageInfo.name; }
-    
+
     public String getJavadoc() { return packageInfo.javadoc; }
-    
+
     public QName getName() { return NAME; }
     public static final QName NAME = new QName(
         Const.JAXB_NSURI, "schemaBinding" );

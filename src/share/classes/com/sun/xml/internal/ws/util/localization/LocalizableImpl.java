@@ -27,7 +27,7 @@ package com.sun.xml.internal.ws.util.localization;
 
 /**
  * Straight-forward {@link Localizable} implementation.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public final class LocalizableImpl implements Localizable {

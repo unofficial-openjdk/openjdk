@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: SOAPFactory1_1Impl.java,v 1.1.1.1 2006/01/27 13:10:57 kumarjayanti Exp $
- */
 
 
 
@@ -52,7 +49,7 @@ public class SOAPFactory1_1Impl extends SOAPFactoryImpl {
         return new Detail1_1Impl(createDocument());
     }
 
-    public SOAPFault createFault(String reasonText, QName faultCode) 
+    public SOAPFault createFault(String reasonText, QName faultCode)
         throws SOAPException {
         if (faultCode == null) {
             throw new IllegalArgumentException("faultCode argument for createFault was passed NULL");
@@ -61,10 +58,8 @@ public class SOAPFactory1_1Impl extends SOAPFactoryImpl {
             throw new IllegalArgumentException("reasonText argument for createFault was passed NULL");
         }
         Fault1_1Impl fault = new Fault1_1Impl(createDocument(), null);
-        fault.setFaultString(reasonText);
-        
         fault.setFaultCode(faultCode);
-       
+        fault.setFaultString(reasonText);
         return fault;
     }
 

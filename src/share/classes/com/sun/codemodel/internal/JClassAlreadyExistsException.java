@@ -26,20 +26,20 @@ package com.sun.codemodel.internal;
 
 /**
  * Indicates that the class is already created.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class JClassAlreadyExistsException extends Exception {
     private final JDefinedClass existing;
-    
+
     public JClassAlreadyExistsException( JDefinedClass _existing ) {
         this.existing = _existing;
     }
-    
+
     /**
      * Gets a reference to the existing {@link JDefinedClass}.
-     * 
+     *
      * @return
      *      This method always return non-null valid object.
      */

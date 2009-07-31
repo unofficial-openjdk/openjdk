@@ -32,7 +32,7 @@ import java.lang.annotation.ElementType;
 
 /**
  * Designates that a field, return value, argument, or a variable may be null.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 @Documented

@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.sax;
@@ -35,4 +35,3 @@ public class Properties {
     public static final String DTD_DECLARATION_HANDLER_PROPERTY =
             "http://xml.org/sax/properties/declaration-handler";
 }
-

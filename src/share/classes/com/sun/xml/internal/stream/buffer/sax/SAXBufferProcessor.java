@@ -52,22 +52,22 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
      * Reference to entity resolver.
      */
     protected EntityResolver _entityResolver = DEFAULT_LEXICAL_HANDLER;
-    
+
     /**
      * Reference to dtd handler.
      */
     protected DTDHandler _dtdHandler = DEFAULT_LEXICAL_HANDLER;
-    
+
     /**
      * Reference to content handler.
      */
     protected ContentHandler _contentHandler = DEFAULT_LEXICAL_HANDLER;
-    
+
     /**
      * Reference to error handler.
      */
     protected ErrorHandler _errorHandler = DEFAULT_LEXICAL_HANDLER;
-    
+
     /**
      * Reference to lexical handler.
      */
@@ -77,12 +77,12 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
      * SAX Namespace attributes features
      */
     protected boolean _namespacePrefixesFeature = false;
-    
+
     protected AttributesHolder _attributes = new AttributesHolder();
-    
+
     protected String[] _namespacePrefixes = new String[16];
     protected int _namespacePrefixesIndex;
-    
+
     protected int[] _namespaceAttributesStack = new int[16];
     protected int _namespaceAttributesStackIndex;
 
@@ -123,7 +123,7 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
                     "Feature not supported: " + name);
         }
     }
-    
+
     public void setFeature(String name, boolean value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
         if (name.equals(Features.NAMESPACES_FEATURE)) {
@@ -143,9 +143,9 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
         } else {
             throw new SAXNotRecognizedException(
                     "Feature not supported: " + name);
-        }        
+        }
     }
-    
+
     public Object getProperty(String name)
             throws SAXNotRecognizedException, SAXNotSupportedException {
         if (name.equals(Properties.LEXICAL_HANDLER_PROPERTY)) {
@@ -154,7 +154,7 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
             throw new SAXNotRecognizedException("Property not recognized: " + name);
         }
     }
-    
+
     public void setProperty(String name, Object value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
         if (name.equals(Properties.LEXICAL_HANDLER_PROPERTY)) {
@@ -167,52 +167,52 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
             throw new SAXNotRecognizedException("Property not recognized: " + name);
         }
     }
-    
+
     public void setEntityResolver(EntityResolver resolver) {
         _entityResolver = resolver;
     }
-    
+
     public EntityResolver getEntityResolver() {
         return _entityResolver;
     }
-    
+
     public void setDTDHandler(DTDHandler handler) {
         _dtdHandler = handler;
     }
-    
+
     public DTDHandler getDTDHandler() {
         return _dtdHandler;
     }
-    
+
     public void setContentHandler(ContentHandler handler) {
         _contentHandler = handler;
     }
-    
+
     public ContentHandler getContentHandler() {
         return _contentHandler;
     }
-    
+
     public void setErrorHandler(ErrorHandler handler) {
         _errorHandler = handler;
     }
-    
+
     public ErrorHandler getErrorHandler() {
         return _errorHandler;
     }
-    
+
     public void setLexicalHandler(LexicalHandler handler) {
         _lexicalHandler = handler;
     }
-    
+
     public LexicalHandler getLexicalHandler() {
         return _lexicalHandler;
     }
-    
+
     public void parse(InputSource input) throws IOException, SAXException {
         // InputSource is ignored
         process();
     }
-    
+
     public void parse(String systemId) throws IOException, SAXException {
         // systemId is ignored
         process();
@@ -267,15 +267,15 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
     /**
      * Parse the sub-tree (or a whole document) that {@link XMLStreamBuffer}
      * points to, and sends events to handlers.
-     * 
+     *
      * <p>
      * TODO:
      * We probably need two modes for a sub-tree event generation. One for
      * firing a sub-tree as if it's a whole document (in which case start/endDocument
      * and appropriate additional namespace bindings are necessary), and the other
      * mode for firing a subtree as a subtree, like it does today.
-     * A stream buffer SAX feature could be used to specify this. 
-     * 
+     * A stream buffer SAX feature could be used to specify this.
+     *
      * @throws SAXException
      *      Follow the same semantics as {@link XMLReader#parse(InputSource)}.
      */
@@ -286,7 +286,7 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
             nullLocator.setLineNumber(-1);
             nullLocator.setColumnNumber(-1);
             _contentHandler.setDocumentLocator(nullLocator);
-            
+
             _contentHandler.startDocument();
             // TODO: if we are writing a fragment stream buffer as a full XML document,
             // we need to declare in-scope namespaces as if they are on the root element.
@@ -428,7 +428,7 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
         if ((item & TYPE_MASK) == T_NAMESPACE_ATTRIBUTE) {
             hasNamespaceAttributes = true;
             item = processNamespaceAttributes(item);
-        }        
+        }
         if ((item & TYPE_MASK) == T_ATTRIBUTE) {
             hasAttributes = true;
             processAttributes(item);
@@ -520,7 +520,7 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
                     throw reportFatalError("Illegal state for child of EII: "+item);
             }
         } while(item != STATE_END);
-        
+
         _contentHandler.endElement(uri, localName, qName);
 
         if (hasNamespaceAttributes) {
@@ -542,16 +542,16 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
     private void processEndPrefixMapping() throws SAXException {
         final int end = _namespaceAttributesStack[--_namespaceAttributesStackIndex];
         final int start = (_namespaceAttributesStackIndex > 0) ? _namespaceAttributesStack[_namespaceAttributesStackIndex] : 0;
-        
+
         for (int i = end - 1; i >= start; i--) {
             _contentHandler.endPrefixMapping(_namespacePrefixes[i]);
         }
         _namespacePrefixesIndex = start;
     }
-    
+
     private int processNamespaceAttributes(int item) throws SAXException {
         do {
-            switch(_niiStateTable[item]) {
+            switch(getNIIState(item)) {
                 case STATE_NAMESPACE_ATTRIBUTE:
                     // Undeclaration of default namespace
                     processNamespaceAttribute("", "");
@@ -572,19 +572,19 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
                     throw reportFatalError("Illegal state: "+item);
             }
             readStructure();
-            
+
             item = peekStructure();
         } while((item & TYPE_MASK) == T_NAMESPACE_ATTRIBUTE);
-        
-        
+
+
         cacheNamespacePrefixIndex();
-        
+
         return item;
     }
-    
+
     private void processAttributes(int item) throws SAXException {
         do {
-            switch(_aiiStateTable[item]) {
+            switch(getAIIState(item)) {
                 case STATE_ATTRIBUTE_U_LN_QN:
                     _attributes.addAttributeWithQName(readStructureString(), readStructureString(), readStructureString(), readStructureString(), readContentString());
                     break;
@@ -599,19 +599,19 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
                 case STATE_ATTRIBUTE_U_LN: {
                     final String u = readStructureString();
                     final String ln = readStructureString();
-                    _attributes.addAttributeWithQName(u, ln, ln, readStructureString(), readContentString()); 
+                    _attributes.addAttributeWithQName(u, ln, ln, readStructureString(), readContentString());
                     break;
                 }
                 case STATE_ATTRIBUTE_LN: {
                     final String ln = readStructureString();
-                    _attributes.addAttributeWithQName("", ln, ln, readStructureString(), readContentString()); 
+                    _attributes.addAttributeWithQName("", ln, ln, readStructureString(), readContentString());
                     break;
                 }
                 default:
                     throw reportFatalError("Illegal state: "+item);
             }
             readStructure();
-            
+
             item = peekStructure();
         } while((item & TYPE_MASK) == T_ATTRIBUTE);
     }
@@ -626,25 +626,25 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
                         getQName(XMLConstants.XMLNS_ATTRIBUTE, prefix),
                         "CDATA", uri);
             } else {
-                _attributes.addAttributeWithQName(XMLConstants.XMLNS_ATTRIBUTE_NS_URI, XMLConstants.XMLNS_ATTRIBUTE, 
+                _attributes.addAttributeWithQName(XMLConstants.XMLNS_ATTRIBUTE_NS_URI, XMLConstants.XMLNS_ATTRIBUTE,
                         XMLConstants.XMLNS_ATTRIBUTE,
                         "CDATA", uri);
             }
         }
-        
+
         cacheNamespacePrefix(prefix);
     }
-    
+
     private void cacheNamespacePrefix(String prefix) {
         if (_namespacePrefixesIndex == _namespacePrefixes.length) {
             final String[] namespaceAttributes = new String[_namespacePrefixesIndex * 3 / 2 + 1];
             System.arraycopy(_namespacePrefixes, 0, namespaceAttributes, 0, _namespacePrefixesIndex);
             _namespacePrefixes = namespaceAttributes;
         }
-        
+
         _namespacePrefixes[_namespacePrefixesIndex++] = prefix;
     }
-    
+
     private void cacheNamespacePrefixIndex() {
         if (_namespaceAttributesStackIndex == _namespaceAttributesStack.length) {
             final int[] namespaceAttributesStack = new int[_namespaceAttributesStackIndex * 3 /2 + 1];
@@ -654,11 +654,11 @@ public class SAXBufferProcessor extends AbstractProcessor implements XMLReader {
 
         _namespaceAttributesStack[_namespaceAttributesStackIndex++] = _namespacePrefixesIndex;
     }
-    
+
     private void processComment(String s)  throws SAXException {
         processComment(s.toCharArray(), 0, s.length());
     }
-    
+
     private void processComment(char[] ch, int start, int length) throws SAXException {
         _lexicalHandler.comment(ch, start, length);
     }

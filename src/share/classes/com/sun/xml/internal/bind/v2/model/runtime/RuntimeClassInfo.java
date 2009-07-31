@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.runtime;
 
 import java.lang.reflect.Type;
@@ -48,7 +49,7 @@ public interface RuntimeClassInfo extends ClassInfo<Type,Class>, RuntimeNonEleme
     RuntimePropertyInfo getProperty(String name);
 
     Method getFactoryMethod();
-    
+
     /**
      * If {@link #hasAttributeWildcard()} is true,
      * returns the accessor to access the property.

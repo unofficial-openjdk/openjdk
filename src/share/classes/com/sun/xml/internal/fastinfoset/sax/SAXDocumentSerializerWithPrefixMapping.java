@@ -62,23 +62,23 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
     protected Map _prefixToPrefixMapping;
     protected String _lastCheckedNamespace;
     protected String _lastCheckedPrefix;
-    
+
     protected StringIntMap _declaredNamespaces;
-    
+
     public SAXDocumentSerializerWithPrefixMapping(Map namespaceToPrefixMapping) {
         // Use the local name to look up elements/attributes
         super(true);
         _namespaceToPrefixMapping = new HashMap(namespaceToPrefixMapping);
         _prefixToPrefixMapping = new HashMap();
-        
+
         // Empty prefix
         _namespaceToPrefixMapping.put("", "");
         // 'xml' prefix
         _namespaceToPrefixMapping.put(EncodingConstants.XML_NAMESPACE_NAME, EncodingConstants.XML_NAMESPACE_PREFIX);
-        
+
         _declaredNamespaces = new StringIntMap(4);
     }
-    
+
     public final void startPrefixMapping(String prefix, String uri) throws SAXException {
         try {
             if (_elementHasNamespaces == false) {
@@ -90,7 +90,7 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
 
                 // Write out Element byte with namespaces
                 write(EncodingConstants.ELEMENT | EncodingConstants.ELEMENT_NAMESPACES_FLAG);
-            
+
                 _declaredNamespaces.clear();
                 _declaredNamespaces.obtainIndex(uri);
             } else {
@@ -99,10 +99,10 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
                     if (p != null) {
                         _prefixToPrefixMapping.put(prefix, p);
                     }
-                    return;   
+                    return;
                 }
             }
-            
+
             final String p = getPrefix(uri);
             if (p != null) {
                 encodeNamespaceAttribute(p, uri);
@@ -111,12 +111,12 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
                 putPrefix(uri, prefix);
                 encodeNamespaceAttribute(prefix, uri);
             }
-            
+
         } catch (IOException e) {
             throw new SAXException("startElement", e);
         }
     }
-    
+
     protected final void encodeElement(String namespaceURI, String qName, String localName) throws IOException {
         LocalNameQualifiedNamesMap.Entry entry = _v.elementName.obtainEntry(localName);
         if (entry._valueIndex > 0) {
@@ -131,9 +131,9 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
         }
 
         encodeLiteralElementQualifiedNameOnThirdBit(namespaceURI, getPrefix(namespaceURI),
-                localName, entry);            
+                localName, entry);
     }
-    
+
     protected boolean encodeElementMapEntry(LocalNameQualifiedNamesMap.Entry entry, String namespaceURI) throws IOException {
         QualifiedName[] names = entry._value;
         for (int i = 0; i < entry._valueIndex; i++) {
@@ -144,10 +144,11 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
         }
         return false;
     }
-    
-    
+
+
     protected final void encodeAttributes(Attributes atts) throws IOException, FastInfosetException {
         boolean addToTable;
+        boolean mustToBeAddedToTable;
         String value;
         if (atts instanceof EncodingAlgorithmAttributes) {
             final EncodingAlgorithmAttributes eAtts = (EncodingAlgorithmAttributes)atts;
@@ -160,28 +161,24 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
                     // If data is null then there is no algorithm data
                     if (data == null) {
                         value = eAtts.getValue(i);
-                        addToTable = eAtts.getToIndex(i) || isAttributeValueLengthMatchesLimit(value.length());
-
+                        addToTable = isAttributeValueLengthMatchesLimit(value.length());
+                        mustToBeAddedToTable = eAtts.getToIndex(i);
                         alphabet = eAtts.getAlpababet(i);
                         if (alphabet == null) {
-                            if (uri == "http://www.w3.org/2001/XMLSchema-instance" || 
+                            if (uri == "http://www.w3.org/2001/XMLSchema-instance" ||
                                     uri.equals("http://www.w3.org/2001/XMLSchema-instance")) {
                                 value = convertQName(value);
                             }
-                            encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable);
-                        } else if (alphabet == RestrictedAlphabet.DATE_TIME_CHARACTERS) 
-                            encodeNonIdentifyingStringOnFirstBit(
-                                    RestrictedAlphabet.DATE_TIME_CHARACTERS_INDEX, 
-                                    DATE_TIME_CHARACTERS_TABLE,
-                                    value, addToTable);
-                        else if (alphabet == RestrictedAlphabet.DATE_TIME_CHARACTERS) 
-                            encodeNonIdentifyingStringOnFirstBit(
-                                    RestrictedAlphabet.NUMERIC_CHARACTERS_INDEX, 
-                                    NUMERIC_CHARACTERS_TABLE,
-                                    value, addToTable);
-                        else
-                            encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable);
-
+                            encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable, mustToBeAddedToTable);
+                        } else if (alphabet == RestrictedAlphabet.DATE_TIME_CHARACTERS) {
+                            encodeDateTimeNonIdentifyingStringOnFirstBit(
+                                    value, addToTable, mustToBeAddedToTable);
+                        } else if (alphabet == RestrictedAlphabet.NUMERIC_CHARACTERS) {
+                            encodeNumericNonIdentifyingStringOnFirstBit(
+                                    value, addToTable, mustToBeAddedToTable);
+                        } else {
+                            encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable, mustToBeAddedToTable);
+                        }
                     } else {
                         encodeNonIdentifyingStringOnFirstBit(eAtts.getAlgorithmURI(i),
                                 eAtts.getAlgorithmIndex(i), data);
@@ -194,19 +191,19 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
                 if (encodeAttribute(atts.getURI(i), atts.getQName(i), atts.getLocalName(i))) {
                     value = atts.getValue(i);
                     addToTable = isAttributeValueLengthMatchesLimit(value.length());
-                    
-                    if (uri == "http://www.w3.org/2001/XMLSchema-instance" || 
+
+                    if (uri == "http://www.w3.org/2001/XMLSchema-instance" ||
                             uri.equals("http://www.w3.org/2001/XMLSchema-instance")) {
                         value = convertQName(value);
                     }
-                    encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable);
+                    encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable, false);
                 }
             }
         }
         _b = EncodingConstants.TERMINATOR;
         _terminate = true;
     }
-    
+
     private String convertQName(String qName) {
         int i = qName.indexOf(':');
         String prefix = "";
@@ -215,7 +212,7 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
             prefix = qName.substring(0, i);
             localName = qName.substring(i + 1);
         }
-        
+
         String p = (String)_prefixToPrefixMapping.get(prefix);
         if (p != null) {
             if (p.length() == 0)
@@ -226,7 +223,7 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
             return qName;
         }
     }
-    
+
     protected final boolean encodeAttribute(String namespaceURI, String qName, String localName) throws IOException {
         LocalNameQualifiedNamesMap.Entry entry = _v.attributeName.obtainEntry(localName);
         if (entry._valueIndex > 0) {
@@ -241,10 +238,10 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
         }
 
         return encodeLiteralAttributeQualifiedNameOnSecondBit(namespaceURI, getPrefix(namespaceURI),
-                localName, entry);            
+                localName, entry);
     }
 
-    protected boolean encodeAttributeMapEntry(LocalNameQualifiedNamesMap.Entry entry, String namespaceURI) throws IOException {        
+    protected boolean encodeAttributeMapEntry(LocalNameQualifiedNamesMap.Entry entry, String namespaceURI) throws IOException {
         QualifiedName[] names = entry._value;
         for (int i = 0; i < entry._valueIndex; i++) {
             if ((namespaceURI == names[i].namespaceName || namespaceURI.equals(names[i].namespaceName))) {
@@ -254,17 +251,17 @@ public class SAXDocumentSerializerWithPrefixMapping extends SAXDocumentSerialize
         }
         return false;
     }
-            
+
     protected final String getPrefix(String namespaceURI) {
         if (_lastCheckedNamespace == namespaceURI) return _lastCheckedPrefix;
-        
+
         _lastCheckedNamespace = namespaceURI;
         return _lastCheckedPrefix = (String)_namespaceToPrefixMapping.get(namespaceURI);
     }
-    
+
     protected final void putPrefix(String namespaceURI, String prefix) {
         _namespaceToPrefixMapping.put(namespaceURI, prefix);
-        
+
         _lastCheckedNamespace = namespaceURI;
         _lastCheckedPrefix = prefix;
     }

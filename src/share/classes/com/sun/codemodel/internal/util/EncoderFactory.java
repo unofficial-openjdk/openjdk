@@ -22,11 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 /*
  * @(#)$Id: EncoderFactory.java,v 1.3 2005/09/10 19:07:33 kohsuke Exp $
  */
-
-
 package com.sun.codemodel.internal.util;
 
 import java.lang.reflect.Constructor;
@@ -35,9 +34,9 @@ import java.nio.charset.CharsetEncoder;
 
 /**
  * Creates {@link CharsetEncoder} from a charset name.
- * 
+ *
  * Fixes a MS1252 handling bug in JDK1.4.2.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -45,13 +44,13 @@ public class EncoderFactory {
     public static CharsetEncoder createEncoder( String encodin ) {
         Charset cs = Charset.forName(System.getProperty("file.encoding"));
         CharsetEncoder encoder = cs.newEncoder();
-        
+
         if( cs.getClass().getName().equals("sun.nio.cs.MS1252") ) {
             try {
                 // at least JDK1.4.2_01 has a bug in MS1252 encoder.
                 // specifically, it returns true for any character.
                 // return a correct encoder to workaround this problem
-                
+
                 // statically binding to MS1252Encoder will cause a Link error
                 // (at least in IBM JDK1.4.1)
                 Class ms1252encoder = Class.forName("com.sun.codemodel.internal.util.MS1252Encoder");
@@ -66,7 +65,7 @@ public class EncoderFactory {
                 return encoder;
             }
         }
-        
+
         return encoder;
     }
 }

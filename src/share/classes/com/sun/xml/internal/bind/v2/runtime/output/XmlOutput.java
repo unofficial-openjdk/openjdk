@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.output;
 
 import java.io.IOException;
@@ -122,7 +123,7 @@ public interface XmlOutput {
      *      false if we are writing the whole document.
      */
     public void endDocument(boolean fragment) throws IOException, SAXException, XMLStreamException;
-    
+
     /**
      * Writes a start tag.
      *
@@ -134,11 +135,11 @@ public interface XmlOutput {
      * This method is used for writing tags that are indexed.
      */
     public void beginStartTag(Name name) throws IOException, XMLStreamException;
-    
+
     public void beginStartTag(int prefix, String localName) throws IOException, XMLStreamException;
 
     public void attribute( Name name, String value ) throws IOException, XMLStreamException;
-    
+
     /**
      * @param prefix
      *      -1 if this attribute does not have a prefix
@@ -149,7 +150,7 @@ public interface XmlOutput {
     public void endStartTag() throws IOException, SAXException;
 
     public void endTag(Name name) throws IOException, SAXException, XMLStreamException;
-    
+
     public void endTag(int prefix, String localName) throws IOException, SAXException, XMLStreamException;
 
     /**

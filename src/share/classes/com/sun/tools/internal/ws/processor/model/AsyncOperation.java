@@ -108,7 +108,7 @@ public class AsyncOperation extends Operation {
             return new JavaSimpleType(new JAXBTypeAndAnnotation(cb));
 
         }
-        return null;        
+        return null;
     }
 
     public Operation getNormalOperation(){

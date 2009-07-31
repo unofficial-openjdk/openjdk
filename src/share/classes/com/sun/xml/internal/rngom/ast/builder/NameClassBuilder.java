@@ -32,7 +32,7 @@ import java.util.List;
 
 
 /**
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -52,7 +52,7 @@ public interface NameClassBuilder<
 //    static final String INHERIT_NS = new String("#inherit");
 
 // similarly, xmlns:* attribute should be rejected by the parser -KK
-    
+
     N makeName(String ns, String localName, String prefix, L loc, A anno);
     N makeNsName(String ns, L loc, A anno);
     /**

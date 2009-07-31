@@ -37,8 +37,8 @@ import com.sun.tools.internal.xjc.outline.FieldAccessor;
 import com.sun.tools.internal.xjc.outline.FieldOutline;
 
 /**
- * 
- * 
+ *
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -55,19 +55,19 @@ public class IsSetField extends AbstractField {
         this.core = core;
         this.generateIsSetMethod = issetMethod;
         this.generateUnSetMethod = unsetMethod;
-        
+
         generate(outline,prop);
     }
-    
-    
+
+
     private void generate( ClassOutlineImpl outline, CPropertyInfo prop ) {
         // add isSetXXX and unsetXXX.
         MethodWriter writer = outline.createMethodWriter();
-        
+
         JCodeModel codeModel = outline.parent().getCodeModel();
-        
+
         FieldAccessor acc = core.create(JExpr._this());
-        
+
         if( generateIsSetMethod ) {
             // [RESULT] boolean isSetXXX()
             JExpression hasSetValue = acc.hasSetValue();
@@ -79,7 +79,7 @@ public class IsSetField extends AbstractField {
             writer.declareMethod(codeModel.BOOLEAN,"isSet"+this.prop.getName(true))
                 .body()._return( hasSetValue );
         }
-        
+
         if( generateUnSetMethod ) {
             // [RESULT] void unsetXXX()
             acc.unsetValues(
@@ -90,20 +90,20 @@ public class IsSetField extends AbstractField {
     public JType getRawType() {
         return core.getRawType();
     }
-    
+
     public FieldAccessor create(JExpression targetObject) {
         return new Accessor(targetObject);
     }
-    
+
     private class Accessor extends AbstractField.Accessor {
-        
+
         private final FieldAccessor core;
-        
+
         Accessor( JExpression $target ) {
             super($target);
             this.core = IsSetField.this.core.create($target);
         }
-        
+
 
         public void unsetValues( JBlock body ) {
             core.unsetValues(body);

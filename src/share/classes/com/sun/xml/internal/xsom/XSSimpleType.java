@@ -22,14 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import com.sun.xml.internal.xsom.visitor.XSSimpleTypeFunction;
 import com.sun.xml.internal.xsom.visitor.XSSimpleTypeVisitor;
 
+import java.util.List;
+
 /**
  * Simple type.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -37,7 +41,7 @@ public interface XSSimpleType extends XSType, XSContentType
 {
     /**
      * Gets the base type as XSSimpleType.
-     * 
+     *
      * Equivalent to
      * <code>
      * (XSSimpleType)getBaseType()
@@ -52,7 +56,7 @@ public interface XSSimpleType extends XSType, XSContentType
      *      null if this is xs:anySimpleType. Otherwise non-null.
      */
     XSSimpleType getSimpleBaseType();
-    
+
     /**
      * Gets the variety of this simple type.
      */
@@ -97,7 +101,7 @@ public interface XSSimpleType extends XSType, XSContentType
      *      true if the type is marked final.
      */
     boolean isFinal(XSVariety v);
-    
+
     /**
      * If this {@link XSSimpleType} is redefined by another simple type,
      * return that component.
@@ -109,7 +113,7 @@ public interface XSSimpleType extends XSType, XSContentType
 
     /**
      * Gets the effective facet object of the given name.
-     * 
+     *
      * <p>
      * For example, if a simple type "foo" is derived from
      * xs:string by restriction with the "maxLength" facet and
@@ -117,32 +121,42 @@ public interface XSSimpleType extends XSType, XSContentType
      * restriction with another "maxLength" facet, this method
      * will return the latter one, because that is the most
      * restrictive, effective facet.
-     * 
+     *
      * <p>
      * For those facets that can have multiple values
      * (pattern facets and enumeration facets), this method
      * will return only the first one.
      * TODO: allow clients to access all of them by some means.
-     * 
+     *
      * @return
      *      If this datatype has a facet of the given name,
      *      return that object. If the facet is not specified
      *      anywhere in its derivation chain, null will be returned.
      */
     XSFacet getFacet( String name );
-    
-    
-    
+
+    /**
+     * For multi-valued facets (enumeration and pattern), obtain all values.
+     *
+     * @see #getFacet(String)
+     *
+     * @return
+     *      can be empty but never null.
+     */
+    List<XSFacet> getFacets( String name );
+
+
+
     void visit( XSSimpleTypeVisitor visitor );
     <T> T apply( XSSimpleTypeFunction<T> function );
-    
+
     /** Returns true if <code>this instanceof XSRestrictionSimpleType</code>. */
     boolean isRestriction();
     /** Returns true if <code>this instanceof XSListSimpleType</code>. */
     boolean isList();
     /** Returns true if <code>this instanceof XSUnionSimpleType</code>. */
     boolean isUnion();
-    
+
     XSRestrictionSimpleType asRestriction();
     XSListSimpleType asList();
     XSUnionSimpleType asUnion();

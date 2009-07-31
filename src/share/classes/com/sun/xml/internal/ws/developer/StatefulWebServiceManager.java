@@ -230,7 +230,7 @@ public interface StatefulWebServiceManager<T> {
      *      See {@link #export(Class, Object, EPRRecipe)}.
      */
     @NotNull <EPR extends EndpointReference> EPR export(Class<EPR> eprType, @NotNull Packet currentRequest, T o, EPRRecipe recipe);
-    
+
     /**
      * Exports an object.
      *
@@ -333,7 +333,7 @@ public interface StatefulWebServiceManager<T> {
      *
      * <p>
      * When you call this method multiple times, its effect on existing
-     * instances are unspecified, although deterministic. 
+     * instances are unspecified, although deterministic.
      *
      * @param milliseconds
      *      The time out interval. Specify 0 to cancel the timeout timer.

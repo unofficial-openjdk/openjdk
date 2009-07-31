@@ -36,54 +36,54 @@ import com.sun.codemodel.internal.JPackage;
 
 /**
  * Writes all the source files under the specified file folder.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class FileCodeWriter extends CodeWriter {
 
     /** The target directory to put source code. */
     private final File target;
-    
+
     /** specify whether or not to mark the generated files read-only */
     private final boolean readOnly;
 
     /** Files that shall be marked as read only. */
     private final Set<File> readonlyFiles = new HashSet<File>();
-    
+
     public FileCodeWriter( File target ) throws IOException {
         this(target,false);
     }
-    
+
     public FileCodeWriter( File target, boolean readOnly ) throws IOException {
         this.target = target;
         this.readOnly = readOnly;
         if(!target.exists() || !target.isDirectory())
             throw new IOException(target + ": non-existent directory");
     }
-    
-    
+
+
     public OutputStream openBinary(JPackage pkg, String fileName) throws IOException {
         return new FileOutputStream(getFile(pkg,fileName));
     }
-    
+
     protected File getFile(JPackage pkg, String fileName ) throws IOException {
         File dir;
         if(pkg.isUnnamed())
             dir = target;
         else
             dir = new File(target, toDirName(pkg));
-        
+
         if(!dir.exists())   dir.mkdirs();
-        
+
         File fn = new File(dir,fileName);
-        
+
         if (fn.exists()) {
             if (!fn.delete())
                 throw new IOException(fn + ": Can't delete previous version");
         }
-        
-        
+
+
         if(readOnly)        readonlyFiles.add(fn);
         return fn;
     }
@@ -93,7 +93,7 @@ public class FileCodeWriter extends CodeWriter {
         for (File f : readonlyFiles)
             f.setReadOnly();
     }
-    
+
     /** Converts a package name to the directory name. */
     private static String toDirName( JPackage pkg ) {
         return pkg.name().replace('.',File.separatorChar);

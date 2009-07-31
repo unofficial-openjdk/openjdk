@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.util.HashMap;
@@ -81,19 +82,19 @@ public final class NameBuilder {
         }
     }
 
-    private Name createName(String nsUri, String localName, boolean isAttribute, QNameMap<Integer> map) {        
+    private Name createName(String nsUri, String localName, boolean isAttribute, QNameMap<Integer> map) {
         assert nsUri.intern()==nsUri;
         assert localName.intern()==localName;
-                
+
         return new Name(
                 allocIndex(map,nsUri,localName),
                 allocIndex(uriIndexMap,nsUri),
                 nsUri,
                 allocIndex(localNameIndexMap,localName),
-                localName, 
+                localName,
                 isAttribute );
     }
-    
+
     private int allocIndex(Map<String,Integer> map, String str) {
         Integer i = map.get(str);
         if(i==null) {
@@ -111,7 +112,7 @@ public final class NameBuilder {
         }
         return i;
     }
-    
+
     /**
      * Wraps up everything and creates {@link NameList}.
      */
@@ -124,7 +125,7 @@ public final class NameBuilder {
         NameList r = new NameList(
                 list(uriIndexMap),
                 nsUriCannotBeDefaulted,
-                list(localNameIndexMap), 
+                list(localNameIndexMap),
                 elementQNameIndexMap.size(),
                 attributeQNameIndexMap.size() );
         // delete them so that the create method can never be called again
@@ -138,5 +139,5 @@ public final class NameBuilder {
         for (Map.Entry<String, Integer> e : map.entrySet())
             r[e.getValue()] = e.getKey();
         return r;
-    }    
+    }
 }

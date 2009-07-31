@@ -66,7 +66,7 @@ abstract class MUTube extends AbstractFilterTubeImpl {
 
     protected final SOAPVersion soapVersion;
     private final AddressingVersion addressingVersion;
-    
+
     protected MUTube(WSBinding binding, Tube next) {
         super(next);
         // MUPipe should n't be used for bindings other than SOAP.
@@ -103,7 +103,7 @@ abstract class MUTube extends AbstractFilterTubeImpl {
                 if (!header.isIgnorable(soapVersion, roles)) {
                     QName qName = new QName(header.getNamespaceURI(), header.getLocalPart());
                     if (! knownHeaders.contains(qName)) {
-                        logger.finest("Element not understood=" + qName);
+                        logger.info("Element not understood=" + qName);
                         if (notUnderstoodHeaders == null)
                             notUnderstoodHeaders = new HashSet<QName>();
                         notUnderstoodHeaders.add(qName);

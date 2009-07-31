@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import com.sun.tools.internal.xjc.generator.bean.ClassOutlineImpl;
@@ -29,7 +30,7 @@ import com.sun.tools.internal.xjc.model.CPropertyInfo;
 
 /**
  * {@link SingleField} that forces the primitive accessor type.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class SinglePrimitiveAccessField extends SingleField {

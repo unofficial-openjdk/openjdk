@@ -84,7 +84,7 @@ public abstract class WSToolsObjectFactory {
      * @return true if there is no error, otherwise false
      */
     public abstract boolean wsgen(OutputStream logStream, Container container, String[] args);
-    
+
     /**
      * Invokes wsgen on the endpoint implementation, and generates the necessary
      * artifacts like wrapper, exception bean classes etc.

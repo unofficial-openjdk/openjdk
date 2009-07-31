@@ -24,7 +24,6 @@
  */
 
 
-
 package com.sun.tools.internal.ws.wscompile;
 
 import com.sun.tools.internal.xjc.api.ErrorListener;
@@ -58,7 +57,7 @@ public class WsimportListener implements ErrorListener {
      * The callee is expected to add '\n'.
      */
     public void message(String msg) {}
-    
+
     public void error(SAXParseException exception) {
 
     }
@@ -75,9 +74,11 @@ public class WsimportListener implements ErrorListener {
 
     }
 
+    public void debug(SAXParseException exception){}
+
     /**
      * wsimport will periodically invoke this method to see if it should cancel a compilation.
-     * 
+     *
      * @return
      *      true if the {@link com.sun.tools.internal.ws.wscompile.WsimportListener} wants to abort the processing.
      * @since 2.1

@@ -38,9 +38,9 @@ class Messages
         String text = ResourceBundle.getBundle(Messages.class.getPackage().getName() +".MessageBundle").getString(property);
         return MessageFormat.format(text,args);
     }
-    
-    
-    
+
+
+
     static final String ERR_UNACKNOWLEDGED_CUSTOMIZATION =
         "CustomizationContextChecker.UnacknolwedgedCustomization"; // arg:1
 

@@ -30,7 +30,7 @@ import org.xml.sax.SAXParseException;
 /**
  * Implemented by the driver of the compiler engine to handle
  * errors found during the compiliation.
- * 
+ *
  * <p>
  * This class implements {@link ErrorHandler} so it can be
  * passed to anywhere where {@link ErrorHandler} is expected.
@@ -39,7 +39,7 @@ import org.xml.sax.SAXParseException;
  * However, to make the error handling easy (and make it work
  * with visitor patterns nicely), this interface is not allowed
  * to abort the processing. It merely receives errors.
- * 
+ *
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public interface ErrorListener extends com.sun.xml.internal.bind.api.ErrorListener {

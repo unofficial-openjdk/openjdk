@@ -38,11 +38,11 @@ public final class FastInfosetStreamReaderRecyclable extends StAXDocumentParser 
     public FastInfosetStreamReaderRecyclable() {
         super();
     }
-    
+
     public FastInfosetStreamReaderRecyclable(InputStream in) {
         super(in);
     }
-    
+
     public void onRecycled() {
         READER_FACTORY.doRecycle(this);
     }

@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 import com.sun.xml.internal.xsom.parser.AnnotationParser;
 
 
@@ -67,7 +67,7 @@ class annotation extends NGCCHandler {
     }
 
     private void action0()throws SAXException {
-        
+
         locator = $runtime.copyLocator();
         parser = $runtime.createAnnotationParser();
         $runtime.redirectSubtree(parser.getContentHandler(
@@ -76,7 +76,7 @@ class annotation extends NGCCHandler {
             $runtime.getErrorHandler(),
             $runtime.parser.getEntityResolver()
           ), $uri, $localName, $qname );
-      
+
 }
 
     public void enterElement(String $__uri, String $__local, String $__qname, Attributes $attrs) throws SAXException {
@@ -85,6 +85,11 @@ class annotation extends NGCCHandler {
         $localName = $__local;
         $qname = $__qname;
         switch($_ngcc_current_state) {
+        case 0:
+            {
+                revertToParentFromEnterElement(makeResult(), super._cookie, $__uri, $__local, $__qname, $attrs);
+            }
+            break;
         case 2:
             {
                 if(($__uri.equals("http://www.w3.org/2001/XMLSchema") && $__local.equals("annotation"))) {
@@ -95,11 +100,6 @@ class annotation extends NGCCHandler {
                 else {
                     unexpectedEnterElement($__qname);
                 }
-            }
-            break;
-        case 0:
-            {
-                revertToParentFromEnterElement(makeResult(), super._cookie, $__uri, $__local, $__qname, $attrs);
             }
             break;
         default:
@@ -198,16 +198,15 @@ class annotation extends NGCCHandler {
         return(($_ngcc_current_state == 0));
     }
 
-    
+
       private AnnotationParser parser;
       private Locator locator;
-      
+
       public AnnotationImpl makeResult() {
         Object e = null;
         if(existing!=null)  e=existing.getAnnotation();
-        
+
         return new AnnotationImpl( parser.getResult(e),locator);
       }
-    
-}
 
+}

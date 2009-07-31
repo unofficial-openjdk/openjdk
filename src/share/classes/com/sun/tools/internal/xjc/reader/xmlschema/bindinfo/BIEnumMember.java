@@ -33,7 +33,7 @@ import com.sun.tools.internal.xjc.reader.Const;
 
 /**
  * Enumeration member customization.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

@@ -27,24 +27,25 @@ package com.sun.xml.internal.bind;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import javax.xml.bind.JAXBException;
+
 import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
-import com.sun.xml.internal.bind.api.AccessorException;
 
 public class AccessorFactoryImpl implements AccessorFactory {
 
-    private static AccessorFactoryImpl instance = null;
+    private static AccessorFactoryImpl instance = new AccessorFactoryImpl();
     private AccessorFactoryImpl(){}
-    public static synchronized AccessorFactoryImpl getInstance(){
-        if (instance == null)
-            instance = new AccessorFactoryImpl();
+
+    public static AccessorFactoryImpl getInstance(){
         return instance;
     }
-    
+
     /**
-     * Access a field of the class. 
+     * Access a field of the class.
      *
      * @param bean the class to be processed.
-     * @param f the field within the class to be accessed.
+     * @param field the field within the class to be accessed.
      * @param readOnly  the isStatic value of the field's modifier.
      * @return Accessor the accessor for this field
      *
@@ -66,7 +67,7 @@ public class AccessorFactoryImpl implements AccessorFactory {
      *
      * @throws JAXBException reports failures of the method.
      */
-    public Accessor createPropertyAccessor(Class bean, Method getter, Method setter) {    
+    public Accessor createPropertyAccessor(Class bean, Method getter, Method setter) {
         if (getter == null) {
             return new Accessor.SetterOnlyReflection(setter);
         }

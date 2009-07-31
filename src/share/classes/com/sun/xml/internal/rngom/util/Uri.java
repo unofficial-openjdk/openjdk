@@ -44,44 +44,44 @@ public class Uri {
     for (;;) {
       int i = done;
       for (;;) {
-	if (i == len) {
-	  if (done == 0)
-	    return s;
-	  break;
-	}
-	if (isExcluded(s.charAt(i)))
-	  break;
-	i++;
+        if (i == len) {
+          if (done == 0)
+            return s;
+          break;
+        }
+        if (isExcluded(s.charAt(i)))
+          break;
+        i++;
       }
       if (buf == null)
-	buf = new StringBuffer();
+        buf = new StringBuffer();
       if (i > done) {
-	buf.append(s.substring(done, i));
-	done = i;
+        buf.append(s.substring(done, i));
+        done = i;
       }
       if (i == len)
-	break;
+        break;
       for (i++; i < len && isExcluded(s.charAt(i)); i++)
-	;
+        ;
       String tem = s.substring(done, i);
       byte[] bytes;
       try {
-	bytes = tem.getBytes(utf8);
+        bytes = tem.getBytes(utf8);
       }
       catch (UnsupportedEncodingException e) {
-	utf8 = "UTF8";
-	try {
-	  bytes = tem.getBytes(utf8);
-	}
-	catch (UnsupportedEncodingException e2) {
-	  // Give up
-	  return s;
-	}
+        utf8 = "UTF8";
+        try {
+          bytes = tem.getBytes(utf8);
+        }
+        catch (UnsupportedEncodingException e2) {
+          // Give up
+          return s;
+        }
       }
       for (int j = 0; j < bytes.length; j++) {
-	buf.append('%');
-	buf.append(HEX_DIGITS.charAt((bytes[j] & 0xFF) >> 4));
-	buf.append(HEX_DIGITS.charAt(bytes[j] & 0xF));
+        buf.append('%');
+        buf.append(HEX_DIGITS.charAt((bytes[j] & 0xFF) >> 4));
+        buf.append(HEX_DIGITS.charAt(bytes[j] & 0xF));
       }
       done = i;
     }
@@ -105,7 +105,7 @@ public class Uri {
   private static boolean isDigit(char c) {
     return '0' <= c && c <= '9';
   }
-  
+
   private static boolean isSchemeChar(char c) {
     return isAlpha(c) || isDigit(c) || c == '+' || c == '-' || c =='.';
   }
@@ -114,11 +114,11 @@ public class Uri {
     int len = s.length();
     for (int i = 0; i < len; i++)
       if (s.charAt(i) == '%') {
-	if (i + 2 >= len)
-	  return false;
-	else if (!isHexDigit(s.charAt(i + 1))
-		 || !isHexDigit(s.charAt(i + 2)))
-	  return false;
+        if (i + 2 >= len)
+          return false;
+        else if (!isHexDigit(s.charAt(i + 1))
+                 || !isHexDigit(s.charAt(i + 2)))
+          return false;
       }
     return true;
   }
@@ -133,19 +133,19 @@ public class Uri {
       return true;
     int i = s.indexOf(':');
     if (i == 0
-	|| i + 1 == s.length()
-	|| !isAlpha(s.charAt(0)))
+        || i + 1 == s.length()
+        || !isAlpha(s.charAt(0)))
       return false;
     while (--i > 0)
       if (!isSchemeChar(s.charAt(i)))
-	return false;
+        return false;
     return true;
   }
 
   public static String resolve(String baseUri, String uriReference) {
     if (!isAbsolute(uriReference) && baseUri != null && isAbsolute(baseUri)) {
       try {
-	return new URL(new URL(baseUri), uriReference).toString();
+        return new URL(new URL(baseUri), uriReference).toString();
       }
       catch (MalformedURLException e) { }
     }
@@ -165,7 +165,7 @@ public class Uri {
       case '#':
       case '/':
       case '?':
-	return false;
+        return false;
       }
     }
     return true;

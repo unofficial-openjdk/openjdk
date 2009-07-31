@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 
 
 class qualification extends NGCCHandler {
@@ -174,4 +174,3 @@ class qualification extends NGCCHandler {
 
 
 }
-

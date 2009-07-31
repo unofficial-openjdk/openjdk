@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.impl;
 
 import javax.activation.MimeType;
@@ -73,13 +74,13 @@ final class Util {
 
         return null;
     }
-    
+
     static MimeType calcExpectedMediaType(AnnotationSource primarySource,
                         ModelBuilder builder ) {
         XmlMimeType xmt = primarySource.readAnnotation(XmlMimeType.class);
         if(xmt==null)
             return null;
-        
+
         try {
             return new MimeType(xmt.value());
         } catch (MimeTypeParseException e) {

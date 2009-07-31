@@ -50,7 +50,7 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
  *
  */
 public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
-    
+
     /** Table for setting a particular bit of a byte */
     private static final int[] BIT_TABLE = {
         1 << 7,
@@ -61,7 +61,7 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
         1 << 2,
         1 << 1,
         1 << 0};
-                
+
     public int getPrimtiveLengthFromOctetLength(int octetLength) throws EncodingAlgorithmException {
         // Cannot determine the number of boolean values from just the octet length
         throw new UnsupportedOperationException();
@@ -72,27 +72,27 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             return 1;
         } else {
             final int div = primitiveLength / 8;
-            return (div == 0) ? 2 : 1 + div;             
-        }         
+            return (div == 0) ? 2 : 1 + div;
+        }
     }
-                
+
     public final Object decodeFromBytes(byte[] b, int start, int length) throws EncodingAlgorithmException {
         final int blength = getPrimtiveLengthFromOctetLength(length, b[start]);
         boolean[] data = new boolean[blength];
 
         decodeFromBytesToBooleanArray(data, 0, blength, b, start, length);
         return data;
-    }                
-                
+    }
+
     public final Object decodeFromInputStream(InputStream s) throws IOException {
         final List booleanList = new ArrayList();
 
         int value = s.read();
         if (value == -1) {
-            throw new EOFException();            
+            throw new EOFException();
         }
         final int unusedBits = (value >> 4) & 0xFF;
-                   
+
         int bitPosition = 4;
         int bitPositionEnd = 8;
         int valueNext = 0;
@@ -101,18 +101,18 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             if (valueNext == -1) {
                 bitPositionEnd -= unusedBits;
             }
-            
+
             while(bitPosition < bitPositionEnd) {
                 booleanList.add(
                         Boolean.valueOf((value & BIT_TABLE[bitPosition++]) > 0));
             }
-            
+
             value = valueNext;
         } while (value != -1);
-        
+
         return generateArrayFromList(booleanList);
     }
-                
+
     public void encodeToOutputStream(Object data, OutputStream s) throws IOException {
         if (!(data instanceof boolean[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotBoolean"));
@@ -120,10 +120,10 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         boolean array[] = (boolean[])data;
         final int alength = array.length;
-        
+
         final int mod = (alength + 4) % 8;
         final int unusedBits = (mod == 0) ? 0 : 8 - mod;
-        
+
         int bitPosition = 4;
         int value = unusedBits << 4;
         int astart = 0;
@@ -131,18 +131,18 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             if (array[astart++]) {
                 value |= BIT_TABLE[bitPosition];
             }
-            
+
             if (++bitPosition == 8) {
                 s.write(value);
                 bitPosition = value = 0;
             }
         }
-        
+
         if (bitPosition != 8) {
             s.write(value);
         }
     }
-                                
+
     public final Object convertFromCharacters(char[] ch, int start, int length) {
         if (length == 0) {
             return new boolean[0];
@@ -204,9 +204,9 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
                throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().getString("message.unusedBits8"));
            }
            return octetLength * 8 - 4 - unusedBits;
-        } 
+        }
     }
-    
+
     public final void decodeFromBytesToBooleanArray(boolean[] bdata, int bstart, int blength, byte[] b, int start, int length) {
         int value = b[start++] & 0xFF;
         int bitPosition = 4;
@@ -216,11 +216,11 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
                 value = b[start++] & 0xFF;
                 bitPosition = 0;
             }
-            
+
             bdata[bstart++] = (value & BIT_TABLE[bitPosition++]) > 0;
         }
     }
-                
+
     public void encodeToBytes(Object array, int astart, int alength, byte[] b, int start) {
         if (!(array instanceof boolean[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotBoolean"));
@@ -228,11 +228,11 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         encodeToBytesFromBooleanArray((boolean[])array, astart, alength, b, start);
     }
-    
+
     public void encodeToBytesFromBooleanArray(boolean[] array, int astart, int alength, byte[] b, int start) {
         final int mod = (alength + 4) % 8;
         final int unusedBits = (mod == 0) ? 0 : 8 - mod;
-        
+
         int bitPosition = 4;
         int value = unusedBits << 4;
         final int aend = astart + alength;
@@ -240,13 +240,13 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             if (array[astart++]) {
                 value |= BIT_TABLE[bitPosition];
             }
-            
+
             if (++bitPosition == 8) {
                 b[start++] = (byte)value;
                 bitPosition = value = 0;
             }
         }
-        
+
         if (bitPosition > 0) {
             b[start] = (byte)value;
         }
@@ -268,6 +268,5 @@ public class BooleanEncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         return bdata;
     }
-           
-}
 
+}

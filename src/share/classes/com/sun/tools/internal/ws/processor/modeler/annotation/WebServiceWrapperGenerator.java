@@ -127,8 +127,10 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
         boolean beanGenerated = false;
         for (ReferenceType thrownType : method.getThrownTypes()) {
             ClassDeclaration typeDecl = ((ClassType)thrownType).getDeclaration();
-            if (typeDecl == null)
+            if (typeDecl == null){
                 builder.onError(WebserviceapMessages.WEBSERVICEAP_COULD_NOT_FIND_TYPEDECL(thrownType.toString(), context.getRound()));
+                return false;
+            }
             boolean tmp = generateExceptionBean(typeDecl, beanPackage);
             beanGenerated = beanGenerated || tmp;
         }
@@ -195,7 +197,7 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
                 if (resWrapper.targetNamespace().length() > 0)
                     resNamespace = resWrapper.targetNamespace();
             }
-            canOverwriteResponse = builder.canOverWriteClass(requestClassName);
+            canOverwriteResponse = builder.canOverWriteClass(responseClassName);
             if (!canOverwriteResponse) {
                 builder.log("Class " + responseClassName + " exists. Not overwriting.");
             }
@@ -267,7 +269,7 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
             if (webResult.name().length() > 0) {
                 responseElementName = webResult.name();
                 responseName = JAXBRIContext.mangleNameToVariableName(webResult.name());
-                
+
                 //We wont have to do this if JAXBRIContext.mangleNameToVariableName() takes
                 //care of mangling java identifiers
                 responseName = Names.getJavaReserverVarialbeName(responseName);
@@ -278,7 +280,7 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
             isResultHeader = webResult.header();
         }
 
-        // class members 
+        // class members
         WebParam webParam;
         TypeMirror paramType;
         String paramName;
@@ -418,7 +420,7 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
                 } else {
                     field.annotate(XmlValue.class);
                 }
-                annotateParameterWithJAXBAnnotations(field, memInfo.getJaxbAnnotations());                
+                annotateParameterWithJAXBAnnotations(field, memInfo.getJaxbAnnotations());
             }
 
             // copy adapter if needed
@@ -593,7 +595,7 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
             return;
 
         String accessorName =JAXBRIContext.mangleNameToPropertyName(paramName);
-        String getterPrefix = paramType.equals("boolean") || paramType.equals("java.lang.Boolean") ? "is" : "get";
+        String getterPrefix = paramType.toString().equals("boolean")? "is" : "get";
         JType propType = getType(paramType);
         JMethod m = cls.method(JMod.PUBLIC, propType, getterPrefix+ accessorName);
         JDocComment methodDoc = m.javadoc();
@@ -610,5 +612,4 @@ public class WebServiceWrapperGenerator extends WebServiceVisitor {
         body = m.body();
         body.assign( JExpr._this().ref(paramName), param );
     }
-}      
-    
+}

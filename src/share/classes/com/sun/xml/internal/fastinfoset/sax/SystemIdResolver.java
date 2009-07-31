@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.sax;
@@ -32,15 +32,15 @@ package com.sun.xml.internal.fastinfoset.sax;
 import java.io.*;
 
 public class SystemIdResolver {
-    
+
     public SystemIdResolver() {
     }
-    
+
     public static String getAbsoluteURIFromRelative(String localPath) {
         if (localPath == null || localPath.length() == 0) {
             return "";
         }
-        
+
         String absolutePath = localPath;
         if (!isAbsolutePath(localPath)) {
             try {
@@ -50,7 +50,7 @@ public class SystemIdResolver {
                 return "file:" + localPath;
             }
         }
-        
+
         String urlString;
         if (null != absolutePath) {
             urlString = absolutePath.startsWith(File.separator) ?
@@ -60,28 +60,28 @@ public class SystemIdResolver {
         else {
             urlString = "file:" + localPath;
         }
-        
+
         return replaceChars(urlString);
     }
-    
+
     private static String getAbsolutePathFromRelativePath(String relativePath) {
         return new File(relativePath).getAbsolutePath();
     }
-    
+
     public static boolean isAbsoluteURI(String systemId) {
         if (systemId == null) {
             return false;
         }
-        
+
         if (isWindowsAbsolutePath(systemId)) {
             return false;
         }
-        
+
         final int fragmentIndex = systemId.indexOf('#');
         final int queryIndex = systemId.indexOf('?');
         final int slashIndex = systemId.indexOf('/');
         final int colonIndex = systemId.indexOf(':');
-        
+
         int index = systemId.length() -1;
         if (fragmentIndex > 0) {
             index = fragmentIndex;
@@ -92,17 +92,17 @@ public class SystemIdResolver {
         if (slashIndex > 0 && slashIndex <index) {
             index = slashIndex;
         }
-        return (colonIndex > 0) && (colonIndex < index);        
+        return (colonIndex > 0) && (colonIndex < index);
     }
-    
+
     public static boolean isAbsolutePath(String systemId) {
         if(systemId == null)
             return false;
         final File file = new File(systemId);
         return file.isAbsolute();
-        
+
     }
-    
+
     private static boolean isWindowsAbsolutePath(String systemId) {
         if(!isAbsolutePath(systemId))
             return false;
@@ -114,7 +114,7 @@ public class SystemIdResolver {
         else
             return false;
     }
-    
+
     private static String replaceChars(String str) {
         StringBuffer buf = new StringBuffer(str);
         int length = buf.length();
@@ -132,16 +132,16 @@ public class SystemIdResolver {
                 buf.setCharAt(i, '/');
             }
         }
-        
+
         return buf.toString();
     }
-    
+
     public static String getAbsoluteURI(String systemId) {
         String absoluteURI = systemId;
         if (isAbsoluteURI(systemId)) {
             if (systemId.startsWith("file:")) {
                 String str = systemId.substring(5);
-                
+
                 if (str != null && str.startsWith("/")) {
                     if (str.startsWith("///") || !str.startsWith("//")) {
                         int secondColonIndex = systemId.indexOf(':', 5);
@@ -161,7 +161,7 @@ public class SystemIdResolver {
                 else {
                     return getAbsoluteURIFromRelative(systemId.substring(5));
                 }
-                
+
                 return replaceChars(absoluteURI);
             }
             else  {

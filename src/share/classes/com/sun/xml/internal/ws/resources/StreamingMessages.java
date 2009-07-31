@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class StreamingMessages {
 
@@ -44,7 +44,7 @@ public final class StreamingMessages {
 
     /**
      * Fast Infoset decoding is not accepted
-     * 
+     *
      */
     public static String FASTINFOSET_DECODING_NOT_ACCEPTED() {
         return localizer.localize(localizableFASTINFOSET_DECODING_NOT_ACCEPTED());
@@ -56,7 +56,7 @@ public final class StreamingMessages {
 
     /**
      * Unable to create StAX reader or writer
-     * 
+     *
      */
     public static String STAX_CANT_CREATE() {
         return localizer.localize(localizableSTAX_CANT_CREATE());
@@ -68,7 +68,7 @@ public final class StreamingMessages {
 
     /**
      * XML parsing error: {0}
-     * 
+     *
      */
     public static String STREAMING_IO_EXCEPTION(Object arg0) {
         return localizer.localize(localizableSTREAMING_IO_EXCEPTION(arg0));
@@ -80,7 +80,7 @@ public final class StreamingMessages {
 
     /**
      * Unable to create reader from source "{0}"
-     * 
+     *
      */
     public static String SOURCEREADER_INVALID_SOURCE(Object arg0) {
         return localizer.localize(localizableSOURCEREADER_INVALID_SOURCE(arg0));
@@ -92,7 +92,7 @@ public final class StreamingMessages {
 
     /**
      * unexpected XML reader state. expected: {0} but found: {1}
-     * 
+     *
      */
     public static String XMLREADER_UNEXPECTED_STATE(Object arg0, Object arg1) {
         return localizer.localize(localizableXMLREADER_UNEXPECTED_STATE(arg0, arg1));
@@ -104,7 +104,7 @@ public final class StreamingMessages {
 
     /**
      * XML reader error: {0}
-     * 
+     *
      */
     public static String XMLREADER_IO_EXCEPTION(Object arg0) {
         return localizer.localize(localizableXMLREADER_IO_EXCEPTION(arg0));
@@ -116,7 +116,7 @@ public final class StreamingMessages {
 
     /**
      * Unable to locate compatible implementation of Fast Infoset in classpath
-     * 
+     *
      */
     public static String FASTINFOSET_NO_IMPLEMENTATION() {
         return localizer.localize(localizableFASTINFOSET_NO_IMPLEMENTATION());
@@ -128,7 +128,7 @@ public final class StreamingMessages {
 
     /**
      * XML writer error: {0}
-     * 
+     *
      */
     public static String XMLWRITER_IO_EXCEPTION(Object arg0) {
         return localizer.localize(localizableXMLWRITER_IO_EXCEPTION(arg0));
@@ -140,7 +140,7 @@ public final class StreamingMessages {
 
     /**
      * XML reader error: unexpected character content: "{0}"
-     * 
+     *
      */
     public static String XMLREADER_UNEXPECTED_CHARACTER_CONTENT(Object arg0) {
         return localizer.localize(localizableXMLREADER_UNEXPECTED_CHARACTER_CONTENT(arg0));
@@ -152,7 +152,7 @@ public final class StreamingMessages {
 
     /**
      * XML parsing error: {0}
-     * 
+     *
      */
     public static String STREAMING_PARSE_EXCEPTION(Object arg0) {
         return localizer.localize(localizableSTREAMING_PARSE_EXCEPTION(arg0));
@@ -164,7 +164,7 @@ public final class StreamingMessages {
 
     /**
      * XML writer error: no prefix for URI: "{0}"
-     * 
+     *
      */
     public static String XMLWRITER_NO_PREFIX_FOR_URI(Object arg0) {
         return localizer.localize(localizableXMLWRITER_NO_PREFIX_FOR_URI(arg0));
@@ -176,7 +176,7 @@ public final class StreamingMessages {
 
     /**
      * XML reader error: {0}
-     * 
+     *
      */
     public static String XMLREADER_NESTED_ERROR(Object arg0) {
         return localizer.localize(localizableXMLREADER_NESTED_ERROR(arg0));
@@ -188,7 +188,7 @@ public final class StreamingMessages {
 
     /**
      * XML stream reader exception: {0}
-     * 
+     *
      */
     public static String STAXREADER_XMLSTREAMEXCEPTION(Object arg0) {
         return localizer.localize(localizableSTAXREADER_XMLSTREAMEXCEPTION(arg0));
@@ -200,7 +200,7 @@ public final class StreamingMessages {
 
     /**
      * XML writer error: {0}
-     * 
+     *
      */
     public static String XMLWRITER_NESTED_ERROR(Object arg0) {
         return localizer.localize(localizableXMLWRITER_NESTED_ERROR(arg0));
@@ -212,7 +212,7 @@ public final class StreamingMessages {
 
     /**
      * XML reader internal error: illegal state ({0})
-     * 
+     *
      */
     public static String XMLREADER_ILLEGAL_STATE_ENCOUNTERED(Object arg0) {
         return localizer.localize(localizableXMLREADER_ILLEGAL_STATE_ENCOUNTERED(arg0));
@@ -224,7 +224,7 @@ public final class StreamingMessages {
 
     /**
      * unexpected XML tag. expected: {0} but found: {1}
-     * 
+     *
      */
     public static String XMLREADER_UNEXPECTED_STATE_TAG(Object arg0, Object arg1) {
         return localizer.localize(localizableXMLREADER_UNEXPECTED_STATE_TAG(arg0, arg1));
@@ -236,7 +236,7 @@ public final class StreamingMessages {
 
     /**
      * unexpected XML reader state. expected: {0} but found: {1}. {2}
-     * 
+     *
      */
     public static String XMLREADER_UNEXPECTED_STATE_MESSAGE(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableXMLREADER_UNEXPECTED_STATE_MESSAGE(arg0, arg1, arg2));
@@ -248,7 +248,7 @@ public final class StreamingMessages {
 
     /**
      * XML parsing error: {0}
-     * 
+     *
      */
     public static String XMLREADER_PARSE_EXCEPTION(Object arg0) {
         return localizer.localize(localizableXMLREADER_PARSE_EXCEPTION(arg0));
@@ -260,7 +260,7 @@ public final class StreamingMessages {
 
     /**
      * no more recorded elements available
-     * 
+     *
      */
     public static String XMLRECORDER_RECORDING_ENDED() {
         return localizer.localize(localizableXMLRECORDER_RECORDING_ENDED());

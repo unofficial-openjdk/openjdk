@@ -38,7 +38,7 @@ public class NsNameExceptNameClass extends NameClass {
 
   public boolean contains(QName name) {
     return (this.namespaceURI.equals(name.getNamespaceURI())
-	    && !nameClass.contains(name));
+            && !nameClass.contains(name));
   }
 
   public int containsSpecificity(QName name) {
@@ -50,7 +50,7 @@ public class NsNameExceptNameClass extends NameClass {
       return false;
     NsNameExceptNameClass other = (NsNameExceptNameClass)obj;
     return (namespaceURI.equals(other.namespaceURI)
-	    && nameClass.equals(other.nameClass));
+            && nameClass.equals(other.nameClass));
   }
 
   public int hashCode() {
@@ -65,4 +65,3 @@ public class NsNameExceptNameClass extends NameClass {
     return true;
   }
 }
-

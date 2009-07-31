@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 package com.sun.xml.internal.fastinfoset.stax.events;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -32,19 +32,19 @@ import javax.xml.stream.XMLStreamConstants;
 /** A Utility class for the StAX Events implementation.
  */
 public class Util {
-    
+
     /**
      * A string is empty if it's null or contains nothing
      *
      * @param s The string to check.
      */
     public static boolean isEmptyString(String s) {
-        if (s != null && !s.equals("")) 
+        if (s != null && !s.equals(""))
             return false;
         else
             return true;
-    } 
-    
+    }
+
     public final static String getEventTypeString(int eventType) {
         switch (eventType){
             case XMLStreamConstants.START_ELEMENT:
@@ -72,5 +72,5 @@ public class Util {
         }
         return "UNKNOWN_EVENT_TYPE";
     }
-    
+
 }

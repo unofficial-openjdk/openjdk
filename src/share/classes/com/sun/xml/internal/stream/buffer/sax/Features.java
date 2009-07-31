@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 
 
 package com.sun.xml.internal.stream.buffer.sax;
@@ -30,12 +30,12 @@ package com.sun.xml.internal.stream.buffer.sax;
 public class Features {
     public static final String NAMESPACES_FEATURE =
         "http://xml.org/sax/features/namespaces";
-    public static final String NAMESPACE_PREFIXES_FEATURE = 
+    public static final String NAMESPACE_PREFIXES_FEATURE =
         "http://xml.org/sax/features/namespace-prefixes";
-    public static final String EXTERNAL_GENERAL_ENTITIES = 
+    public static final String EXTERNAL_GENERAL_ENTITIES =
         "http://xml.org/sax/features/external-general-entities";
-    public static final String EXTERNAL_PARAMETER_ENTITIES = 
+    public static final String EXTERNAL_PARAMETER_ENTITIES =
         "http://xml.org/sax/features/external-parameter-entities";
-    public static final String STRING_INTERNING_FEATURE = 
+    public static final String STRING_INTERNING_FEATURE =
         "http://xml.org/sax/features/string-interning";
 }

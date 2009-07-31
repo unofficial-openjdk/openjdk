@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.parser;
 
 import java.io.IOException;
@@ -44,38 +46,38 @@ import com.sun.xml.internal.xsom.impl.parser.Messages;
 
 /**
  * Standard XMLParser implemented by using JAXP.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class JAXPParser implements XMLParser {
-    
+
     private final SAXParserFactory factory;
-    
+
     public JAXPParser( SAXParserFactory factory ) {
         factory.setNamespaceAware(true);    // just in case
         this.factory = factory;
     }
-    
+
     public JAXPParser() {
         this( SAXParserFactory.newInstance());
     }
-    
 
 
-    
-    
+
+
+
 
 
     public void parse( InputSource source, ContentHandler handler,
         ErrorHandler errorHandler, EntityResolver entityResolver )
-        
+
         throws SAXException, IOException {
-        
+
         try {
             XMLReader reader = factory.newSAXParser().getXMLReader();
             reader = new XMLReaderEx(reader);
-            
+
             reader.setContentHandler(handler);
             if(errorHandler!=null)
                 reader.setErrorHandler(errorHandler);
@@ -94,35 +96,35 @@ public class JAXPParser implements XMLParser {
 
     /**
      * XMLReader with improved error message for entity resolution failure.
-     * 
+     *
      * TODO: this class is completely stand-alone, so it shouldn't be
      * an inner class.
      */
     private static class XMLReaderEx extends XMLFilterImpl {
-        
+
         private Locator locator;
-        
+
         XMLReaderEx( XMLReader parent ) {
             this.setParent(parent);
         }
-        
+
         /**
          * Resolves entities and reports user-friendly error messages.
-         * 
+         *
          * <p>
          * Some XML parser (at least Xerces) does not report much information
          * when it fails to resolve an entity, which is often quite
-         * frustrating. For example, if you are behind a firewall and the 
+         * frustrating. For example, if you are behind a firewall and the
          * schema contains a reference to www.w3.org, and there is no
          * entity resolver, the parser will just throw an IOException
          * that doesn't contain any information about where that reference
          * occurs nor what it is accessing.
-         * 
+         *
          * <p>
          * By implementing an EntityResolver and resolving the reference
          * by ourselves, we can report an error message with all the
          * necessary information to fix the problem.
-         * 
+         *
          * <p>
          * Note that we still need to the client-specified entity resolver
          * to let the application handle entity resolution. Here we just catch
@@ -131,12 +133,12 @@ public class JAXPParser implements XMLParser {
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
             try {
                 InputSource is=null;
-                
+
                 // ask the client-specified entity resolver first
-                if( this.getEntityResolver()!=null)  
+                if( this.getEntityResolver()!=null)
                     is = this.getEntityResolver().resolveEntity(publicId,systemId);
                 if( is!=null )  return is;  // if that succeeds, fine.
-                
+
                 // rather than returning null, resolve it now
                 // so that we can detect errors.
                 is = new InputSource( new URL(systemId).openStream() );
@@ -155,7 +157,7 @@ public class JAXPParser implements XMLParser {
                 throw spe;
             }
         }
-        
+
         public void setDocumentLocator(Locator locator) {
             super.setDocumentLocator(locator);
             this.locator = locator;

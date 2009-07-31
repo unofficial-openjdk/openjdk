@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.core;
 
 import java.util.Map;
@@ -135,7 +136,7 @@ public interface TypeInfoSet<T,C,F,M> {
      *
      * <p>
      * This operation is expected to be only used in schema generator, so it can be slow.
-     *  
+     *
      * @return
      *      A map from prefixes to namespace URIs, which should be declared when generating a schema.
      *      Could be empty but never null.
@@ -152,7 +153,7 @@ public interface TypeInfoSet<T,C,F,M> {
      *      A map from namespace URI to the value of the location.
      *      If the entry is missing, that means a schema should be generated for that namespace.
      *      If the value is "", that means the schema location is implied
-     *      (&lt;xs:schema namespace="..."/> w/o schemaLocation.) 
+     *      (&lt;xs:schema namespace="..."/> w/o schemaLocation.)
      */
     Map<String,String> getSchemaLocations();
 

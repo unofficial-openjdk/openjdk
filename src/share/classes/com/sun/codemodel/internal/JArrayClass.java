@@ -30,26 +30,26 @@ import java.util.List;
 
 /**
  * Array class.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 final class JArrayClass extends JClass {
-    
+
     // array component type
     private final JType componentType;
-    
-    
+
+
     JArrayClass( JCodeModel owner, JType component ) {
         super(owner);
         this.componentType = component;
     }
-    
-    
+
+
     public String name() {
         return componentType.name()+"[]";
     }
-    
+
     public String fullName() {
         return componentType.fullName()+"[]";
     }
@@ -97,10 +97,10 @@ final class JArrayClass extends JClass {
 
     public boolean equals(Object obj) {
         if(!(obj instanceof JArrayClass))   return false;
-        
+
         if( componentType.equals( ((JArrayClass)obj).componentType ) )
             return true;
-        
+
         return false;
     }
 
@@ -111,11 +111,11 @@ final class JArrayClass extends JClass {
     protected JClass substituteParams(JTypeVar[] variables, List<JClass> bindings) {
         if( componentType.isPrimitive() )
             return this;
-        
+
         JClass c = ((JClass)componentType).substituteParams(variables,bindings);
         if(c==componentType)
             return this;
-        
+
         return new JArrayClass(owner(),c);
     }
 

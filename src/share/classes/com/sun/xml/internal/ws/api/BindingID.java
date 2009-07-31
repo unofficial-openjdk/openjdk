@@ -34,7 +34,10 @@ import com.sun.xml.internal.ws.binding.SOAPBindingImpl;
 import com.sun.xml.internal.ws.binding.WebServiceFeatureList;
 import com.sun.xml.internal.ws.encoding.SOAPBindingCodec;
 import com.sun.xml.internal.ws.encoding.XMLHTTPBindingCodec;
+import com.sun.xml.internal.ws.encoding.soap.streaming.SOAPNamespaceConstants;
+import com.sun.xml.internal.ws.encoding.soap.streaming.SOAP12NamespaceConstants;
 import com.sun.xml.internal.ws.util.ServiceFinder;
+import com.sun.xml.internal.ws.developer.JAXWSProperties;
 
 import javax.xml.ws.BindingType;
 import javax.xml.ws.WebServiceException;
@@ -94,6 +97,18 @@ public abstract class BindingID {
      */
     public final @NotNull WSBinding createBinding() {
         return BindingImpl.create(this);
+    }
+
+    /**
+     * Returns wsdl:binding@transport attribute. Sub classes
+     * are expected to override this method to provide their transport
+     * attribute.
+     *
+     * @return wsdl:binding@transport attribute
+     * @since JAX-WS RI 2.1.6
+     */
+    public @NotNull String getTransport() {
+        return SOAPNamespaceConstants.TRANSPORT_HTTP;
     }
 
     public final @NotNull WSBinding createBinding(WebServiceFeature... features) {
@@ -228,6 +243,8 @@ public abstract class BindingID {
     public static @NotNull BindingID parse(String lexical) {
         if(lexical.equals(XML_HTTP.toString()))
             return XML_HTTP;
+        if(lexical.equals(REST_HTTP.toString()))
+            return REST_HTTP;
         if(belongsTo(lexical,SOAP11_HTTP.toString()))
             return customize(lexical,SOAP11_HTTP);
         if(belongsTo(lexical,SOAP12_HTTP.toString()))
@@ -306,7 +323,7 @@ public abstract class BindingID {
      */
     public static final SOAPHTTPImpl X_SOAP12_HTTP = new SOAPHTTPImpl(
         SOAPVersion.SOAP_12, SOAPBindingImpl.X_SOAP12HTTP_BINDING, true);
-    
+
     /**
      * Constant that represents SOAP1.2/HTTP.
      */
@@ -328,14 +345,23 @@ public abstract class BindingID {
      */
     public static final SOAPHTTPImpl SOAP11_HTTP_MTOM = new SOAPHTTPImpl(
         SOAPVersion.SOAP_11, SOAPBinding.SOAP11HTTP_MTOM_BINDING, true, true);
-    
-    
+
+
     /**
      * Constant that represents REST.
      */
     public static final BindingID XML_HTTP = new Impl(SOAPVersion.SOAP_11, HTTPBinding.HTTP_BINDING,false) {
         public Codec createEncoder(WSBinding binding) {
-            return new XMLHTTPBindingCodec();
+            return new XMLHTTPBindingCodec(binding);
+        }
+    };
+
+    /**
+     * Constant that represents REST.
+     */
+    private static final BindingID REST_HTTP = new Impl(SOAPVersion.SOAP_11, JAXWSProperties.REST_BINDING,true) {
+        public Codec createEncoder(WSBinding binding) {
+            return new XMLHTTPBindingCodec(binding);
         }
     };
 
@@ -377,7 +403,7 @@ public abstract class BindingID {
             super(version, lexical, canGenerateWSDL);
         }
 
-        public SOAPHTTPImpl(SOAPVersion version, String lexical, boolean canGenerateWSDL, 
+        public SOAPHTTPImpl(SOAPVersion version, String lexical, boolean canGenerateWSDL,
                            boolean mtomEnabled) {
             this(version, lexical, canGenerateWSDL);
             String mtomStr = mtomEnabled ? "true" : "false";

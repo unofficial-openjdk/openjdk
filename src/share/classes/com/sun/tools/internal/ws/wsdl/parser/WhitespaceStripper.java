@@ -24,7 +24,6 @@
  */
 
 
-
 package com.sun.tools.internal.ws.wsdl.parser;
 
 import com.sun.xml.internal.bind.WhiteSpaceProcessor;
@@ -122,4 +121,3 @@ class WhitespaceStripper extends XMLFilterImpl {
         // ignore completely.
     }
 }
-

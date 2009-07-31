@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 import java.util.Set;
@@ -33,7 +34,7 @@ import com.sun.tools.internal.xjc.api.ClassNameAllocator;
 
 /**
  * {@link ClassNameAllocator} filter that performs automatic name conflict resolution.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class AutoClassNameAllocator implements ClassNameAllocator {

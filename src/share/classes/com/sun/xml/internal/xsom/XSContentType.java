@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import com.sun.xml.internal.xsom.visitor.XSContentTypeFunction;
@@ -29,7 +31,7 @@ import com.sun.xml.internal.xsom.visitor.XSContentTypeVisitor;
 
 /**
  * Content of a complex type.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

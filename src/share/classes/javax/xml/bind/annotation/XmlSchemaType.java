@@ -38,15 +38,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p> <b>Usage</b> </p>
  * <p>
  * <tt>@XmlSchemaType</tt> annotation can be used with the following program
- * elements: 
- * <ul> 
+ * elements:
+ * <ul>
  *   <li> a JavaBean property </li>
  *   <li> field </li>
  *   <li> package</li>
  * </ul>
  *
  * <p> <tt>@XmlSchemaType</tt> annotation defined for Java type
- * applies to all references to the Java type from a property/field. 
+ * applies to all references to the Java type from a property/field.
  * A <tt>@XmlSchemaType</tt> annotation specified on the
  * property/field overrides the <tt>@XmlSchemaType</tt> annotation
  * specified at the package level.
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>
  * <b>Example 1: </b> Customize mapping of XMLGregorianCalendar on the
  *  field.
- * 
+ *
  * <pre>
  *     //Example: Code fragment
  *     public class USPrice {
@@ -64,7 +64,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *         &#64;XmlSchemaType(name="date")
  *         public XMLGregorianCalendar date;
  *     }
- * 
+ *
  *     &lt;!-- Example: Local XML Schema element -->
  *     &lt;xs:complexType name="USPrice"/>
  *       &lt;xs:sequence>
@@ -81,11 +81,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *          name="date", type=javax.xml.datatype.XMLGregorianCalendar.class)
  *     }
  * </pre>
- * 
+ *
  * @since JAXB2.0
  */
 
-@Retention(RUNTIME) @Target({FIELD,METHOD,PACKAGE})        
+@Retention(RUNTIME) @Target({FIELD,METHOD,PACKAGE})
 public @interface XmlSchemaType {
     String name();
     String namespace() default "http://www.w3.org/2001/XMLSchema";
@@ -105,6 +105,3 @@ public @interface XmlSchemaType {
     static final class DEFAULT {}
 
 }
-
-
-

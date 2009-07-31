@@ -50,7 +50,7 @@ public abstract class WebModule extends Module {
      *
      * <p>
      * Notice that this method involves in determining the machine name
-     * without relying on HTTP "Host" header. 
+     * without relying on HTTP "Host" header.
      */
     public abstract @NotNull String getContextPath();
 }

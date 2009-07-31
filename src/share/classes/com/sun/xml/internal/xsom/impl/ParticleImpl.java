@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl;
 
 import com.sun.xml.internal.xsom.XSContentType;
@@ -43,7 +45,7 @@ public class ParticleImpl extends ComponentImpl implements XSParticle, ContentTy
 {
     public ParticleImpl( SchemaDocumentImpl owner, AnnotationImpl _ann,
         Ref.Term _term, Locator _loc, int _maxOccurs, int _minOccurs ) {
-            
+
         super(owner,_ann,_loc,null);
         this.term = _term;
         this.maxOccurs = _maxOccurs;
@@ -52,10 +54,10 @@ public class ParticleImpl extends ComponentImpl implements XSParticle, ContentTy
     public ParticleImpl( SchemaDocumentImpl owner, AnnotationImpl _ann, Ref.Term _term, Locator _loc ) {
         this(owner,_ann,_term,_loc,1,1);
     }
-    
+
     private Ref.Term term;
     public XSTerm getTerm() { return term.getTerm(); }
-    
+
     private int maxOccurs;
     public int getMaxOccurs() { return maxOccurs; }
 
@@ -65,8 +67,8 @@ public class ParticleImpl extends ComponentImpl implements XSParticle, ContentTy
 
     private int minOccurs;
     public int getMinOccurs() { return minOccurs; }
-    
-    
+
+
     public void redefine(ModelGroupDeclImpl oldMG) {
         if( term instanceof ModelGroupImpl ) {
             ((ModelGroupImpl)term).redefine(oldMG);
@@ -76,13 +78,13 @@ public class ParticleImpl extends ComponentImpl implements XSParticle, ContentTy
             ((DelayedRef)term).redefine(oldMG);
         }
     }
-    
-    
+
+
     public XSSimpleType asSimpleType()  { return null; }
     public XSParticle asParticle()      { return this; }
     public XSContentType asEmpty()      { return null; }
-    
-    
+
+
     public final Object apply( XSFunction function ) {
         return function.particle(this);
     }

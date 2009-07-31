@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.impl;
 
 import java.lang.reflect.Field;
@@ -51,7 +52,7 @@ import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
  */
 final class RuntimeElementInfoImpl extends ElementInfoImpl<Type,Class,Field,Method>
     implements RuntimeElementInfo {
-    
+
     public RuntimeElementInfoImpl(RuntimeModelBuilder modelBuilder, RegistryInfoImpl registry, Method method) throws IllegalAnnotationException {
         super(modelBuilder, registry, method);
 

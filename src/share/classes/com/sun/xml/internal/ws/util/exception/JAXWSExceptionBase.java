@@ -35,7 +35,7 @@ import javax.xml.ws.WebServiceException;
 /**
  * Represents a {@link WebServiceException} with
  * localizable message.
- * 
+ *
  * @author WS Development Team
  */
 public abstract class JAXWSExceptionBase
@@ -55,7 +55,7 @@ public abstract class JAXWSExceptionBase
 
     protected JAXWSExceptionBase(String message) {
         super(message);
-        msg=null;        
+        msg=null;
     }
 
     private static Object[] fixNull(Object[] x) {

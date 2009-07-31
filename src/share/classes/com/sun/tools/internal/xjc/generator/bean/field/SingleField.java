@@ -42,7 +42,7 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
 /**
  * Realizes a property through one getter and one setter.
  * This renders:
- * 
+ *
  * <pre>
  * T' field;
  * T getXXX() { ... }
@@ -55,7 +55,7 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
  *
  * This realization is only applicable to fields with (1,1)
  * or (0,1) multiplicity.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -74,9 +74,9 @@ public class SingleField extends AbstractFieldWithVar {
     protected SingleField(ClassOutlineImpl context, CPropertyInfo prop, boolean forcePrimitiveAccess ) {
         super(context, prop);
         assert !exposedType.isPrimitive() && !implType.isPrimitive();
-        
+
         createField();
-        
+
         MethodWriter writer = context.createMethodWriter();
         NameConverter nc = context.parent().getModel().getNameConverter();
 
@@ -119,7 +119,7 @@ public class SingleField extends AbstractFieldWithVar {
         writer.javadoc().addReturn()
             .append("possible object is\n")
             .append(possibleTypes);
-         
+
         // [RESULT]
         // void setXXX(Type newVal) {
         //     this.value = newVal;
@@ -131,10 +131,8 @@ public class SingleField extends AbstractFieldWithVar {
         JBlock body = $set.body();
         body.assign(JExpr._this().ref(ref()),castToImplType($value));
 
-        javadoc = prop.javadoc;
-        if(javadoc.length()==0)
-            javadoc = Messages.DEFAULT_SETTER_JAVADOC.format(nc.toVariableName(prop.getName(true)));
-        writer.javadoc().append(javadoc);
+        // setter always get the default javadoc. See issue #381
+        writer.javadoc().append(Messages.DEFAULT_SETTER_JAVADOC.format(nc.toVariableName(prop.getName(true))));
         writer.javadoc().addParam($value)
             .append("allowed object is\n")
             .append(possibleTypes);
@@ -147,12 +145,12 @@ public class SingleField extends AbstractFieldWithVar {
     public FieldAccessor create(JExpression targetObject) {
         return new Accessor(targetObject);
     }
-    
+
     protected class Accessor extends AbstractFieldWithVar.Accessor {
         protected Accessor(JExpression $target) {
             super($target);
         }
-        
+
         public void unsetValues( JBlock body ) {
             body.assign( $ref, JExpr._null() );
         }

@@ -140,7 +140,7 @@ public class JavaInterface {
     public void setInterfacesList(List l) {
         interfaces = l;
     }
-    
+
     public String getSimpleName() {
         return ClassNameInfo.getName(name);
     }

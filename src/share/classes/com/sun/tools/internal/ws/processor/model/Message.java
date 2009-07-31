@@ -172,7 +172,7 @@ public abstract class Message extends ModelObject {
     }
 
     public void addParameter(Parameter p) {
-        if (_parametersByName.containsKey(p.getName())) {            
+        if (_parametersByName.containsKey(p.getName())) {
             errorReceiver.error(getEntity().getLocator(), ModelMessages.MODEL_PARAMETER_NOTUNIQUE(p.getName(), p.getName()));
             throw new AbortException();
         }

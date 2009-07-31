@@ -99,7 +99,7 @@ final class SourceUtils {
             Node n = domSource.getNode();
             if(n.getNodeType()== Node.DOCUMENT_NODE) {
                 n = ((Document)n).getDocumentElement();
-            }            
+            }
             localName = n.getLocalName();
             namespaceUri = n.getNamespaceURI();
         }else if(isSaxSource()){

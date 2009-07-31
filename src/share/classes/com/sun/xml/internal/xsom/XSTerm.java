@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import com.sun.xml.internal.xsom.visitor.XSTermFunction;
@@ -30,19 +32,19 @@ import com.sun.xml.internal.xsom.visitor.XSTermFunctionWithParam;
 
 /**
  * A component that can be referenced from {@link XSParticle}
- * 
+ *
  * This interface provides a set of type check functions (<code>isXXX</code>),
  * which are essentially:
- * 
+ *
  * <pre>
  * boolean isXXX() {
  *     return this instanceof XXX;
  * }
  * <pre>
- * 
+ *
  * and a set of cast functions (<code>asXXX</code>), which are
  * essentially:
- * 
+ *
  * <pre>
  * XXX asXXX() {
  *     if(isXXX())  return (XXX)this;

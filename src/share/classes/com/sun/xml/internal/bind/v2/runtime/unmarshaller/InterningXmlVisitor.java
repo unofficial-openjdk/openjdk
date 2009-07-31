@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.unmarshaller;
 
 import javax.xml.namespace.NamespaceContext;
@@ -80,7 +81,7 @@ public final class InterningXmlVisitor implements XmlVisitor {
     public UnmarshallingContext getContext() {
         return next.getContext();
     }
-    
+
     public TextPredictor getPredictor() {
         return next.getPredictor();
     }

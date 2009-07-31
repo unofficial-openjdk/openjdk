@@ -28,14 +28,14 @@ package com.sun.tools.internal.xjc.model;
 
 /**
  * represents a possible number of occurence.
- * 
+ *
  * Usually, denoted by a pair of integers like (1,1) or (5,10).
  * A special value "unbounded" is allowed as the upper bound.
- * 
+ *
  * <p>
  * For example, (0,unbounded) corresponds to the '*' occurence of DTD.
  * (0,1) corresponds to the '?' occurence of DTD.
- * 
+ *
  * @author
  *    <a href="mailto:kohsuke.kawaguchi@sun.com">Kohsuke KAWAGUCHI</a>
  */
@@ -81,25 +81,25 @@ public final class Multiplicity {
         if(max==null)    return false;
         return min==1 && max==1;
     }
-    
+
     /** returns true if the multiplicity is (0,1) */
     public boolean isOptional() {
         if(max==null) return false;
         return min==0 && max==1;
     }
-        
+
     /** returns true if the multiplicity is (0,1) or (1,1). */
     public boolean isAtMostOnce() {
         if(max==null)    return false;
         return max<=1;
     }
-    
+
     /** returns true if the multiplicity is (0,0). */
     public boolean isZero() {
         if(max==null)    return false;
         return max==0;
     }
-    
+
     /**
      * Returns true if the multiplicity represented by this object
      * completely includes the multiplicity represented by the
@@ -121,20 +121,20 @@ public final class Multiplicity {
         if(max==null)       return "unbounded";
         else                return max.toString();
     }
-    
+
     /** gets the string representation.
      * mainly debug purpose.
      */
     public String toString() {
         return "("+min+','+getMaxString()+')';
     }
-    
+
     /** the constant representing the (0,0) multiplicity. */
     public static final Multiplicity ZERO = new Multiplicity(0,0);
-    
+
     /** the constant representing the (1,1) multiplicity. */
     public static final Multiplicity ONE = new Multiplicity(1,1);
-    
+
     /** the constant representing the (0,1) multiplicity. */
     public static final Multiplicity OPTIONAL = new Multiplicity(0,1);
 
@@ -192,4 +192,3 @@ public final class Multiplicity {
         return create(min,null);
     }
 }
-    

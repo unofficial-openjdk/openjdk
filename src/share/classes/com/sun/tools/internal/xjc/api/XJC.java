@@ -38,7 +38,7 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
 public final class XJC {
     /**
      * Gets a fresh {@link JavaCompiler}.
-     * 
+     *
      * @return
      *      always return non-null object.
      */
@@ -48,7 +48,7 @@ public final class XJC {
 
     /**
      * Gets a fresh {@link SchemaCompiler}.
-     * 
+     *
      * @return
      *      always return non-null object.
      */

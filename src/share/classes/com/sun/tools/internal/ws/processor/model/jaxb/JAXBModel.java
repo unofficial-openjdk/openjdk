@@ -44,7 +44,7 @@ public class JAXBModel {
     /**
      * All the mappings known to this model.
      */
-    private List<JAXBMapping> mappings;   
+    private List<JAXBMapping> mappings;
 
     // index for faster access.
     private final Map<QName,JAXBMapping> byQName = new HashMap<QName,JAXBMapping>();

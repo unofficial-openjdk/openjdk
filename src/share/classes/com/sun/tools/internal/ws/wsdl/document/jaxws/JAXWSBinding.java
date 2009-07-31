@@ -65,7 +65,7 @@ public class JAXWSBinding extends ExtensionImpl {
         // TODO Auto-generated method stub
         return JAXWSBindingsConstants.JAXWS_BINDINGS;
     }
-    
+
     public QName getWSDLElementName() {
         return getElementName();
     }
@@ -230,15 +230,6 @@ public class JAXWSBinding extends ExtensionImpl {
      */
     public void setProvider(Boolean isProvider) {
         this.isProvider = isProvider;
-    }
-
-    /* (non-Javadoc)
-     * @see Entity#getProperty(java.lang.String)
-     */
-    public Object getProperty(String key) {
-        if(key.equals(JAXWSBindingsConstants.JAXB_BINDINGS))
-            return jaxbBindings;
-        return null;
     }
 
     /**

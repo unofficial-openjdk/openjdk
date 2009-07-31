@@ -37,21 +37,21 @@ import org.xml.sax.InputSource;
 
 /**
  * Schema-to-Java compiler.
- * 
+ *
  * <p>
  * The caller can parse multiple schema documents,
  * JAXB external binding files (or potentially WSDL
  * and JSR-109.next mapping files in the future).
- * 
+ *
  * <p>
  * All the errors found during this process will be sent
  * to the registered {@link ErrorListener}.
- * 
+ *
  * <p>
  * Once all the documents are parsed, call the {@link #bind()}
  * method to get the compiled {@link JAXBModel} object.
- * 
- * 
+ *
+ *
  * <h2>Tips: namespace URI -> package customization</h2>
  * <p>
  * The caller can feed the following synthesized schema
@@ -70,7 +70,7 @@ import org.xml.sax.InputSource;
  * </xmp></pre>
  * Feed this synthesized schema document for each namespace URI
  * you need to map.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -79,18 +79,18 @@ public interface SchemaCompiler {
      * Parses schemas or external bindings
      * through SAX events by feeding events into
      * SAX {@link ContentHandler}.
-     * 
+     *
      * @param systemId
      *      The system ID of the document to be read in.
-     * 
+     *
      * @see #parseSchema(String, XMLStreamReader)
      */
     ContentHandler getParserHandler( String systemId );
-    
+
     /**
      * Parses a schema or an external binding file
      * from an external source.
-     * 
+     *
      * @param source
      *      Its system Id must be set to an absolute URI.
      */
@@ -105,20 +105,20 @@ public interface SchemaCompiler {
      * @since 2.1 EA2
      */
     void setTargetVersion( SpecVersion version );
-    
+
     /**
      * Parses a schema or an external binding file
      * from the specified DOM element.
-     * 
+     *
      * <p>
      * The given DOM element is treated as if it's the root of a
      * virtual document.
-     * 
+     *
      * <p>
      * XJC will not be able to print location information for
      * errors found in this document, since DOM doesn't have them.
      * For this reason, use of this method is strongly discouraged.
-     * 
+     *
      * @param systemId
      *      We need an absolute system ID that uniquely designates the virtual
      *      document. This should be different from the system ID of
@@ -130,30 +130,30 @@ public interface SchemaCompiler {
      *      can use an unique identifier like "foo.wsdl#types"
      */
     void parseSchema( String systemId, Element element );
-    
+
     /**
      * Parses a schema or an external binding file
      * from the given source.
-     * 
+     *
      * <p>
      * A stream reader must be pointing at the element or
      * at the start of the document.
      * XML is parsed until the corresponding end tag, then the
      * sub tree is processed as a schema document.
-     * 
+     *
      * <p>
      * When this method returns successfully, the parser is at
      * the next token of the end element.
-     * 
+     *
      * @param systemId
      *      The absolute system ID of the document that is being parsed.
      *      This information is necessary to avoid double-inclusion
      *      and etc.
-     * 
+     *
      *      Note that {@link XMLStreamReader#getLocation()} only
      *      returns the system ID of the entity it is parsing, not
      *      necessarily the system ID of the document itself.
-     * 
+     *
      * @throws XMLStreamException
      *      If an error happens while parsing a document.
      *      Note that not only the parser but also the XJC itself
@@ -161,7 +161,7 @@ public interface SchemaCompiler {
      *      for example.)
      */
     void parseSchema( String systemId, XMLStreamReader reader ) throws XMLStreamException;
-    
+
     void setErrorListener( ErrorListener errorListener );
     void setEntityResolver( EntityResolver entityResolver );
 
@@ -220,10 +220,10 @@ public interface SchemaCompiler {
 
     /**
      * Obtains the compiled schema object model.
-     * 
+     *
      * Once this method is called, no other method should be
      * invoked on the {@link SchemaCompiler}.
-     * 
+     *
      * @return
      *      null if the compilation fails. The errors should have been
      *      delivered to the registered error handler in such a case.
@@ -237,6 +237,10 @@ public interface SchemaCompiler {
      * The caller can use this method to obtain an {@link Options} instance,
      * then tweak settings on it. The updated settings will be used when the
      * {@link #bind()} method is invoked.
+     *
+     * <p>
+     * The returned {@link Options} object is useful for example to specify
+     * command-line arguments.
      *
      * @since 2.0.2
      * @deprecated

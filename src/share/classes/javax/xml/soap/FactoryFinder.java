@@ -23,9 +23,9 @@
  * have any questions.
  */
 /*
- * $Id: FactoryFinder.java,v 1.6 2005/04/05 22:28:12 mk125090 Exp $
- * $Revision: 1.6 $
- * $Date: 2005/04/05 22:28:12 $
+ * $Id: FactoryFinder.java,v 1.7 2006/03/30 00:59:38 ofung Exp $
+ * $Revision: 1.7 $
+ * $Date: 2006/03/30 00:59:38 $
  */
 
 
@@ -39,7 +39,7 @@ import java.util.Properties;
 class FactoryFinder {
 
     /**
-     * Creates an instance of the specified class using the specified 
+     * Creates an instance of the specified class using the specified
      * <code>ClassLoader</code> object.
      *
      * @exception SOAPException if the given class could not be found
@@ -124,11 +124,11 @@ class FactoryFinder {
             } else {
                 is=classLoader.getResourceAsStream(serviceId);
             }
-        
+
             if( is!=null ) {
                 BufferedReader rd =
                     new BufferedReader(new InputStreamReader(is, "UTF-8"));
-        
+
                 String factoryClassName = rd.readLine();
                 rd.close();
 

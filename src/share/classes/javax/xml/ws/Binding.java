@@ -33,7 +33,7 @@ package javax.xml.ws;
 **/
 public interface Binding {
 
-   /** 
+   /**
     * Gets a copy of the handler chain for a protocol binding instance.
     * If the returned chain is modified a call to <code>setHandlerChain</code>
     * is required to configure the binding instance with the new chain.
@@ -42,7 +42,7 @@ public interface Binding {
     */
     public java.util.List<javax.xml.ws.handler.Handler> getHandlerChain();
 
-   /** 
+   /**
     * Sets the handler chain for the protocol binding instance.
     *
     *  @param chain    A List of handler configuration entries
@@ -55,13 +55,13 @@ public interface Binding {
     */
     public void setHandlerChain(java.util.List<javax.xml.ws.handler.Handler> chain);
 
-    /** 
-     * Get the URI for this binding instance. 
+    /**
+     * Get the URI for this binding instance.
      *
      * @return String The binding identifier for the port.
      *    Never returns <code>null</code>
      *
      * @since JAX-WS 2.1
      */
-    String getBindingID();      
+    String getBindingID();
 }

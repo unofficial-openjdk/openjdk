@@ -58,7 +58,7 @@ public abstract class Codecs {
      *
      * @see ServerTubeAssemblerContext#setCodec(Codec)
      * @see ClientTubeAssemblerContext#setCodec(Codec)
-     * 
+     *
      * @param binding binding of the webservice
      * @param xmlEnvelopeCodec SOAP envelope codec
      * @return non null codec to parse entire SOAP message(including MIME parts)

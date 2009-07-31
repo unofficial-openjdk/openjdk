@@ -33,7 +33,7 @@ import java.io.IOException;
  * Provides a way to filter {@link SDDocument} infoset while writing it. These
  * filter objects can be added to {@link ServiceDefinition} using
  * {@link ServiceDefinition#addFilter(SDDocumentFilter)}
- * 
+ *
  * @author Kohsuke Kawaguchi
  * @author Jitendra Kotamraju
  */

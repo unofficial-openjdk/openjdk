@@ -79,7 +79,7 @@ public class PatternBuilder {
     if (p2 instanceof InterleavePattern) {
       InterleavePattern ip = (InterleavePattern)p2;
       if (p1.hashCode() > ip.p1.hashCode())
-	return makeInterleave(ip.p1, makeInterleave(p1, ip.p2));
+        return makeInterleave(ip.p1, makeInterleave(p1, ip.p2));
     }
     else if (p1.hashCode() > p2.hashCode())
       return makeInterleave(p2, p1);
@@ -99,8 +99,8 @@ public class PatternBuilder {
 
   Pattern makeOneOrMore(Pattern p) {
     if (p == empty
-	|| p == notAllowed
-	|| p instanceof OneOrMorePattern)
+        || p == notAllowed
+        || p instanceof OneOrMorePattern)
       return p;
     Pattern p1 = new OneOrMorePattern(p);
     return interner.intern(p1);

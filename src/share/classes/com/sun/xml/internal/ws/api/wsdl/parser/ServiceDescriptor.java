@@ -46,7 +46,7 @@ public abstract class ServiceDescriptor {
     /**
      * Gives list of schemas.
      * @return List of XML schema documents as {@link Source}. {@link javax.xml.transform.Source#getSystemId()} must be Non-null.
-     * 
+     *
      */
     public abstract @NotNull List<? extends Source> getSchemas();
 }

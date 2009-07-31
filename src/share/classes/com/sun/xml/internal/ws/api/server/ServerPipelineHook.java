@@ -70,7 +70,7 @@ public abstract class ServerPipelineHook {
     public @NotNull Pipe createMonitoringPipe(ServerPipeAssemblerContext ctxt, @NotNull Pipe tail) {
         return tail;
     }
-    
+
     /**
      * Called during the pipeline construction process once to allow a container
      * to register a pipe for security.

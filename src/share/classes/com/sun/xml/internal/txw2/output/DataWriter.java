@@ -99,7 +99,7 @@ public class DataWriter extends XMLWriter
 {
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Constructors.
     ////////////////////////////////////////////////////////////////////
@@ -110,7 +110,7 @@ public class DataWriter extends XMLWriter
      *
      * @param writer The character stream where the XML document
      *        will be written.
-     * @param encoding 
+     * @param encoding
      *      If non-null string is specified, it is written as a part
      *      of the XML declaration.
      */
@@ -121,7 +121,7 @@ public class DataWriter extends XMLWriter
 
 
     public DataWriter (Writer writer, String encoding ) {
-        this( writer, encoding, DumbEscapeHandler.theInstance ); 
+        this( writer, encoding, DumbEscapeHandler.theInstance );
     }
 
     public DataWriter (Writer writer) {
@@ -129,7 +129,7 @@ public class DataWriter extends XMLWriter
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Accessors and setters.
     ////////////////////////////////////////////////////////////////////
@@ -145,7 +145,7 @@ public class DataWriter extends XMLWriter
      * @return The number of spaces in each indentation step,
      *         or 0 or less for no indentation.
      * @see #setIndentStep(int)
-     * 
+     *
      * @deprecated
      *      Only return the length of the indent string.
      */
@@ -161,7 +161,7 @@ public class DataWriter extends XMLWriter
      * @param indentStep The new indent step (0 or less for no
      *        indentation).
      * @see #getIndentStep()
-     * 
+     *
      * @deprecated
      *      Should use the version that takes string.
      */
@@ -171,13 +171,13 @@ public class DataWriter extends XMLWriter
         for( ; indentStep>0; indentStep-- )   s.append(' ');
         setIndentStep(s.toString());
     }
-    
+
     public void setIndentStep(String s) {
         this.indentStep = s;
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Override methods from XMLWriter.
     ////////////////////////////////////////////////////////////////////
@@ -324,7 +324,7 @@ public class DataWriter extends XMLWriter
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal methods.
     ////////////////////////////////////////////////////////////////////
@@ -348,7 +348,7 @@ public class DataWriter extends XMLWriter
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Constants.
     ////////////////////////////////////////////////////////////////////
@@ -358,7 +358,7 @@ public class DataWriter extends XMLWriter
     private final static Object SEEN_DATA = new Object();
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal state.
     ////////////////////////////////////////////////////////////////////

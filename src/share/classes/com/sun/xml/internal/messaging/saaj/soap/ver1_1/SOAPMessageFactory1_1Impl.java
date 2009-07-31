@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: SOAPMessageFactory1_1Impl.java,v 1.7 2006/01/27 12:49:42 vj135062 Exp $
- */
 
 
 
@@ -49,12 +46,12 @@ public class SOAPMessageFactory1_1Impl extends MessageFactoryImpl {
         return new Message1_1Impl();
     }
 
-    public SOAPMessage createMessage(boolean isFastInfoset, 
-        boolean acceptFastInfoset) throws SOAPException 
+    public SOAPMessage createMessage(boolean isFastInfoset,
+        boolean acceptFastInfoset) throws SOAPException
     {
         return new Message1_1Impl(isFastInfoset, acceptFastInfoset);
     }
-    
+
     public SOAPMessage createMessage(MimeHeaders headers, InputStream in)
         throws IOException, SOAPExceptionImpl {
         if ((headers == null) || (getContentType(headers) == null)) {

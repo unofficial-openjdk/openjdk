@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect.opt;
 
 import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
@@ -31,7 +32,7 @@ import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
  *
  * <p>
  * All the FieldAccessors are generated from <code>FieldAccessor_B y t e</code>
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class FieldAccessor_Long extends Accessor {

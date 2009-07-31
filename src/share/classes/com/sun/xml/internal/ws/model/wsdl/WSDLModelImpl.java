@@ -147,7 +147,7 @@ public final class WSDLModelImpl extends AbstractExtensibleImpl implements WSDLM
         WSDLPort port = iter.hasNext()?iter.next():null;
         return port;
     }
-    
+
     /**
     * gets the first port in the wsdl which matches the serviceName and portType
     */

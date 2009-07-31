@@ -32,7 +32,7 @@ import com.sun.tools.internal.xjc.outline.ClassOutline;
 /**
  * {@link ClassOutline} enhanced with schema2java specific
  * information.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -43,7 +43,7 @@ public final class ClassOutlineImpl extends ClassOutline {
     public MethodWriter createMethodWriter() {
         return _parent.getModel().strategy.createMethodWriter(this);
     }
-    
+
     /**
      * Gets {@link #_package} as {@link PackageOutlineImpl},
      * since it's guaranteed to be of that type.

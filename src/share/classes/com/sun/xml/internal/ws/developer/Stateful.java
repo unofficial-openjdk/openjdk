@@ -51,5 +51,5 @@ import java.lang.annotation.Target;
 @Documented
 @WebServiceFeatureAnnotation(id = StatefulFeature.ID, bean = StatefulFeature.class)
 @InstanceResolverAnnotation(StatefulInstanceResolver.class)
-public @interface Stateful {    
+public @interface Stateful {
 }

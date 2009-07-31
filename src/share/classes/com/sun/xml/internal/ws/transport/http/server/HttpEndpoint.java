@@ -51,7 +51,7 @@ import org.w3c.dom.Element;
  *
  * @author Jitendra Kotamraju
  */
-final class HttpEndpoint {
+public final class HttpEndpoint extends com.sun.xml.internal.ws.api.server.HttpEndpoint {
     private String address;
     private HttpContext httpContext;
     private final HttpAdapter adapter;
@@ -95,7 +95,7 @@ final class HttpEndpoint {
             // httpContext.setHandler(null);
             httpContext.getServer().removeContext(httpContext);
         } else {
-            // Remove HttpContext created by JAXWS runtime 
+            // Remove HttpContext created by JAXWS runtime
             ServerMgr.getInstance().removeContext(httpContext);
         }
 

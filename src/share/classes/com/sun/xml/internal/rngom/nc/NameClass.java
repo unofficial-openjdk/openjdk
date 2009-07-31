@@ -39,24 +39,24 @@ public abstract class NameClass implements ParsedNameClass, Serializable {
     static final int SPECIFICITY_ANY_NAME = 0;
     static final int SPECIFICITY_NS_NAME = 1;
     static final int SPECIFICITY_NAME = 2;
-    
+
     /**
      * Returns true if the given {@link QName} is a valid name
      * for this QName.
      */
     public abstract boolean contains(QName name);
-    
+
     public abstract int containsSpecificity(QName name);
-    
+
     /**
      * Visitor pattern support.
      */
     public abstract <V> V accept(NameClassVisitor<V> visitor);
-    
+
     /**
      * Returns true if the name class accepts infinite number of
      * {@link QName}s.
-     * 
+     *
      * <p>
      * Intuitively, this method returns true if the name class is
      * some sort of wildcard.
@@ -87,10 +87,10 @@ public abstract class NameClass implements ParsedNameClass, Serializable {
         return OverlapDetector.overlap(this,nc2);
     }
 
-    
+
     /** Sigleton instance that represents "anyName". */
     public static final NameClass ANY = new AnyNameClass();
-    
+
     /**
      * Sigleton instance that accepts no name.
      *

@@ -35,43 +35,43 @@ import java.io.StringWriter;
 
 /**
  * This class represents an WS-Addressing EndpointReference
- * which is a remote reference to a web service endpoint. 
+ * which is a remote reference to a web service endpoint.
  * See <a href="http://www.w3.org/TR/2006/REC-ws-addr-core-20060509/">
- * Web Services Addressing 1.0 - Core</a> 
+ * Web Services Addressing 1.0 - Core</a>
  * for more information on WS-Addressing EndpointReferences.
- * <p>  
+ * <p>
  * This class is immutable as the typical web service developer
  * need not be concerned with its contents.  The web service
- * developer should use this class strictly as a mechanism to 
- * reference a remote web service endpoint. See the {@link Service} APIs 
- * that clients can use to that utilize an <code>EndpointReference</code>. 
- * See the {@link javax.xml.ws.Endpoint}, and 
- * {@link javax.xml.ws.BindingProvider} APIs on how 
- * <code>EndpointReferences</code> can be created for published 
+ * developer should use this class strictly as a mechanism to
+ * reference a remote web service endpoint. See the {@link Service} APIs
+ * that clients can use to that utilize an <code>EndpointReference</code>.
+ * See the {@link javax.xml.ws.Endpoint}, and
+ * {@link javax.xml.ws.BindingProvider} APIs on how
+ * <code>EndpointReferences</code> can be created for published
  * endpoints.
  * <p>
  * Concrete implementations of this class will represent
  * an <code>EndpointReference</code> for a particular version of Addressing.
  * For example the {@link W3CEndpointReference} is for use
- * with W3C Web Services Addressing 1.0 - Core Recommendation. 
+ * with W3C Web Services Addressing 1.0 - Core Recommendation.
  * If JAX-WS implementors need to support different versions
- * of addressing, they should write their own 
+ * of addressing, they should write their own
  * <code>EndpointReference</code> subclass for that version.
  * This will allow a JAX-WS implementation to create
  * vendor specific <code>EndpointReferences</code> that that
  * vendor can use to flag a different version of
  * addressing.
  * <p>
- * Web service developers that wish to pass or return 
+ * Web service developers that wish to pass or return
  * <code>EndpointReferences</code> in Java methods in an
  * SEI should use
  * concrete instances of an <code>EndpointReference</code> such
- * as the <code>W3CEndpointReference</code>.  This way the 
+ * as the <code>W3CEndpointReference</code>.  This way the
  * schema mapped from the SEI will be more descriptive of the
  * type of endpoint reference being passed.
  * <p>
  * JAX-WS implementors are expected to extract the XML infoset
- * from an <CODE>EndpointReferece</CODE> using the 
+ * from an <CODE>EndpointReferece</CODE> using the
  * <code>{@link EndpointReference#writeTo}</code>
  * method.
  * <p>
@@ -123,7 +123,7 @@ public abstract class EndpointReference {
 
     /**
      * The <code>getPort</code> method returns a proxy. If there
-     * are any reference parameters in the 
+     * are any reference parameters in the
      * <code>EndpointReference</code> instance, then those reference
      * parameters MUST appear as SOAP headers, indicating them to be
      * reference parameters, on all messages sent to the endpoint.
@@ -141,15 +141,15 @@ public abstract class EndpointReference {
      * <code>EndpointReference</code> instance MUST contain an implementation understood
      * <code>serviceName</code> metadata.
      * <p>
-     * Because this port is not created from a <code>Service</code> object, handlers 
-     * will not automatically be configured, and the <code>HandlerResolver</code> 
-     * and <code>Executor</code> cannot be get or set for this port. The 
+     * Because this port is not created from a <code>Service</code> object, handlers
+     * will not automatically be configured, and the <code>HandlerResolver</code>
+     * and <code>Executor</code> cannot be get or set for this port. The
      * <code>BindingProvider().getBinding().setHandlerChain()</code>
      * method can be used to manually configure handlers for this port.
      *
      *
      * @param serviceEndpointInterface Service endpoint interface
-     * @param features  An array of <code>WebServiceFeatures</code> to configure on the 
+     * @param features  An array of <code>WebServiceFeatures</code> to configure on the
      *                proxy.  Supported features not in the <code>features
      *                </code> parameter will have their default values.
      * @return Object Proxy instance that supports the
@@ -159,14 +159,14 @@ public abstract class EndpointReference {
      *                  <LI>If there is an error during creation
      *                      of the proxy
      *                  <LI>If there is any missing WSDL metadata
-     *                      as required by this method 
+     *                      as required by this method
      *                  <LI>If this
      *                      <code>endpointReference</code>
      *                      is invalid
      *                  <LI>If an illegal
      *                      <code>serviceEndpointInterface</code>
      *                      is specified
-     *                  <LI>If a feature is enabled that is not compatible with 
+     *                  <LI>If a feature is enabled that is not compatible with
      *                      this port or is unsupported.
      *                   </UL>
      *

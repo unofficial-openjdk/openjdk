@@ -29,7 +29,7 @@ import com.sun.xml.internal.rngom.ast.builder.CommentList;
 import com.sun.xml.internal.rngom.ast.om.Location;
 
 /**
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -42,7 +42,7 @@ class CommentListHost extends Base implements CommentList {
         this.lhs = lhs;
         this.rhs = rhs;
     }
-    
+
     public void addComment(String value, Location _loc) throws BuildException {
         LocationHost loc = cast(_loc);
         if(lhs!=null)

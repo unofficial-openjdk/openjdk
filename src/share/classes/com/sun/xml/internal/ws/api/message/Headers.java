@@ -155,5 +155,5 @@ public abstract class Headers {
      */
     public static Header create(QName name, String value) {
         return new StringHeader(name, value);
-    }    
+    }
 }

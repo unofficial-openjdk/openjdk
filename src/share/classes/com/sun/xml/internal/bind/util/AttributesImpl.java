@@ -27,7 +27,6 @@
 // http://www.saxproject.org
 // Written by David Megginson
 // NO WARRANTY!  This class is in the public domain.
-// $Id: AttributesImpl.java,v 1.2 2005/05/11 19:44:28 kohsuke Exp $
 package com.sun.xml.internal.bind.util;
 
 import org.xml.sax.Attributes;
@@ -44,8 +43,8 @@ import org.xml.sax.Attributes;
  * </blockquote>
  *
  * <p>This class provides a default implementation of the SAX2
- * {@link org.xml.sax.Attributes Attributes} interface, with the 
- * addition of manipulators so that the list can be modified or 
+ * {@link org.xml.sax.Attributes Attributes} interface, with the
+ * addition of manipulators so that the list can be modified or
  * reused.</p>
  *
  * <p>There are two typical uses of this class:</p>
@@ -56,11 +55,11 @@ import org.xml.sax.Attributes;
  * <li>to construct or modify an Attributes object in a SAX2 driver or filter.</li>
  * </ol>
  *
- * <p>This class replaces the now-deprecated SAX1 {@link 
+ * <p>This class replaces the now-deprecated SAX1 {@link
  * org.xml.sax.helpers.AttributeListImpl AttributeListImpl}
  * class; in addition to supporting the updated Attributes
  * interface rather than the deprecated {@link org.xml.sax.AttributeList
- * AttributeList} interface, it also includes a much more efficient 
+ * AttributeList} interface, it also includes a much more efficient
  * implementation using a single array rather than a set of Vectors.</p>
  *
  * @since JAXB1.0
@@ -71,7 +70,7 @@ import org.xml.sax.Attributes;
 public class AttributesImpl implements Attributes
 {
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Constructors.
     ////////////////////////////////////////////////////////////////////
@@ -82,8 +81,8 @@ public class AttributesImpl implements Attributes
      */
     public AttributesImpl ()
     {
-	length = 0;
-	data = null;
+        length = 0;
+        data = null;
     }
 
 
@@ -97,11 +96,11 @@ public class AttributesImpl implements Attributes
      */
     public AttributesImpl (Attributes atts)
     {
-	setAttributes(atts);
+        setAttributes(atts);
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Implementation of org.xml.sax.Attributes.
     ////////////////////////////////////////////////////////////////////
@@ -115,7 +114,7 @@ public class AttributesImpl implements Attributes
      */
     public int getLength ()
     {
-	return length;
+        return length;
     }
 
 
@@ -129,11 +128,11 @@ public class AttributesImpl implements Attributes
      */
     public String getURI (int index)
     {
-	if (index >= 0 && index < length) {
-	    return data[index*5];
-	} else {
-	    return null;
-	}
+        if (index >= 0 && index < length) {
+            return data[index*5];
+        } else {
+            return null;
+        }
     }
 
 
@@ -141,17 +140,17 @@ public class AttributesImpl implements Attributes
      * Return an attribute's local name.
      *
      * @param index The attribute's index (zero-based).
-     * @return The attribute's local name, the empty string if 
+     * @return The attribute's local name, the empty string if
      *         none is available, or null if the index if out of range.
      * @see org.xml.sax.Attributes#getLocalName(int)
      */
     public String getLocalName (int index)
     {
-	if (index >= 0 && index < length) {
-	    return data[index*5+1];
-	} else {
-	    return null;
-	}
+        if (index >= 0 && index < length) {
+            return data[index*5+1];
+        } else {
+            return null;
+        }
     }
 
 
@@ -159,17 +158,17 @@ public class AttributesImpl implements Attributes
      * Return an attribute's qualified (prefixed) name.
      *
      * @param index The attribute's index (zero-based).
-     * @return The attribute's qualified name, the empty string if 
+     * @return The attribute's qualified name, the empty string if
      *         none is available, or null if the index is out of bounds.
      * @see org.xml.sax.Attributes#getQName(int)
      */
     public String getQName (int index)
     {
-	if (index >= 0 && index < length) {
-	    return data[index*5+2];
-	} else {
-	    return null;
-	}
+        if (index >= 0 && index < length) {
+            return data[index*5+2];
+        } else {
+            return null;
+        }
     }
 
 
@@ -183,11 +182,11 @@ public class AttributesImpl implements Attributes
      */
     public String getType (int index)
     {
-	if (index >= 0 && index < length) {
-	    return data[index*5+3];
-	} else {
-	    return null;
-	}
+        if (index >= 0 && index < length) {
+            return data[index*5+3];
+        } else {
+            return null;
+        }
     }
 
 
@@ -200,11 +199,11 @@ public class AttributesImpl implements Attributes
      */
     public String getValue (int index)
     {
-	if (index >= 0 && index < length) {
-	    return data[index*5+4];
-	} else {
-	    return null;
-	}
+        if (index >= 0 && index < length) {
+            return data[index*5+4];
+        } else {
+            return null;
+        }
     }
 
 
@@ -223,13 +222,13 @@ public class AttributesImpl implements Attributes
      */
     public int getIndex (String uri, String localName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i].equals(uri) && data[i+1].equals(localName)) {
-		return i / 5;
-	    }
-	} 
-	return -1;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return i / 5;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -255,13 +254,13 @@ public class AttributesImpl implements Attributes
      */
     public int getIndex (String qName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i+2].equals(qName)) {
-		return i / 5;
-	    }
-	} 
-	return -1;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return i / 5;
+            }
+        }
+        return -1;
     }
 
 
@@ -277,13 +276,13 @@ public class AttributesImpl implements Attributes
      */
     public String getType (String uri, String localName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i].equals(uri) && data[i+1].equals(localName)) {
-		return data[i+3];
-	    }
-	} 
-	return null;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return data[i+3];
+            }
+        }
+        return null;
     }
 
 
@@ -297,13 +296,13 @@ public class AttributesImpl implements Attributes
      */
     public String getType (String qName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i+2].equals(qName)) {
-		return data[i+3];
-	    }
-	}
-	return null;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return data[i+3];
+            }
+        }
+        return null;
     }
 
 
@@ -319,13 +318,13 @@ public class AttributesImpl implements Attributes
      */
     public String getValue (String uri, String localName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i].equals(uri) && data[i+1].equals(localName)) {
-		return data[i+4];
-	    }
-	}
-	return null;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return data[i+4];
+            }
+        }
+        return null;
     }
 
 
@@ -339,17 +338,17 @@ public class AttributesImpl implements Attributes
      */
     public String getValue (String qName)
     {
-	int max = length * 5;
-	for (int i = 0; i < max; i += 5) {
-	    if (data[i+2].equals(qName)) {
-		return data[i+4];
-	    }
-	}
-	return null;
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return data[i+4];
+            }
+        }
+        return null;
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Manipulators.
     ////////////////////////////////////////////////////////////////////
@@ -359,16 +358,16 @@ public class AttributesImpl implements Attributes
      * Clear the attribute list for reuse.
      *
      * <p>Note that little memory is freed by this call:
-     * the current array is kept so it can be 
+     * the current array is kept so it can be
      * reused.</p>
      */
     public void clear ()
     {
-	if (data != null) {
-	    for (int i = 0; i < (length * 5); i++)
-		data [i] = null;
-	}
-	length = 0;
+        if (data != null) {
+            for (int i = 0; i < (length * 5); i++)
+                data [i] = null;
+        }
+        length = 0;
     }
 
 
@@ -377,7 +376,7 @@ public class AttributesImpl implements Attributes
      *
      * <p>It may be more efficient to reuse an existing object
      * rather than constantly allocating new ones.</p>
-     * 
+     *
      * @param atts The attributes to copy.
      */
     public void setAttributes (Attributes atts)
@@ -393,7 +392,7 @@ public class AttributesImpl implements Attributes
                 data[i*5+3] = atts.getType(i);
                 data[i*5+4] = atts.getValue(i);
             }
-	}
+        }
     }
 
 
@@ -415,15 +414,15 @@ public class AttributesImpl implements Attributes
      * @param value The attribute value.
      */
     public void addAttribute (String uri, String localName, String qName,
-			      String type, String value)
+                              String type, String value)
     {
-	ensureCapacity(length+1);
-	data[length*5] = uri;
-	data[length*5+1] = localName;
-	data[length*5+2] = qName;
-	data[length*5+3] = type;
-	data[length*5+4] = value;
-	length++;
+        ensureCapacity(length+1);
+        data[length*5] = uri;
+        data[length*5+1] = localName;
+        data[length*5+2] = qName;
+        data[length*5+3] = type;
+        data[length*5+4] = value;
+        length++;
     }
 
 
@@ -449,17 +448,17 @@ public class AttributesImpl implements Attributes
      *            in the list.
      */
     public void setAttribute (int index, String uri, String localName,
-			      String qName, String type, String value)
+                              String qName, String type, String value)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5] = uri;
-	    data[index*5+1] = localName;
-	    data[index*5+2] = qName;
-	    data[index*5+3] = type;
-	    data[index*5+4] = value;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5] = uri;
+            data[index*5+1] = localName;
+            data[index*5+2] = qName;
+            data[index*5+3] = type;
+            data[index*5+4] = value;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -473,21 +472,21 @@ public class AttributesImpl implements Attributes
      */
     public void removeAttribute (int index)
     {
-	if (index >= 0 && index < length) {
-	    if (index < length - 1) {
-		System.arraycopy(data, (index+1)*5, data, index*5,
-				 (length-index-1)*5);
-	    }
-	    index = (length - 1) * 5;
-	    data [index++] = null;
-	    data [index++] = null;
-	    data [index++] = null;
-	    data [index++] = null;
-	    data [index] = null;
-	    length--;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            if (index < length - 1) {
+                System.arraycopy(data, (index+1)*5, data, index*5,
+                                 (length-index-1)*5);
+            }
+            index = (length - 1) * 5;
+            data [index++] = null;
+            data [index++] = null;
+            data [index++] = null;
+            data [index++] = null;
+            data [index] = null;
+            length--;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -503,11 +502,11 @@ public class AttributesImpl implements Attributes
      */
     public void setURI (int index, String uri)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5] = uri;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5] = uri;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -523,11 +522,11 @@ public class AttributesImpl implements Attributes
      */
     public void setLocalName (int index, String localName)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5+1] = localName;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5+1] = localName;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -543,11 +542,11 @@ public class AttributesImpl implements Attributes
      */
     public void setQName (int index, String qName)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5+2] = qName;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5+2] = qName;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -562,11 +561,11 @@ public class AttributesImpl implements Attributes
      */
     public void setType (int index, String type)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5+3] = type;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5+3] = type;
+        } else {
+            badIndex(index);
+        }
     }
 
 
@@ -581,15 +580,15 @@ public class AttributesImpl implements Attributes
      */
     public void setValue (int index, String value)
     {
-	if (index >= 0 && index < length) {
-	    data[index*5+4] = value;
-	} else {
-	    badIndex(index);
-	}
+        if (index >= 0 && index < length) {
+            data[index*5+4] = value;
+        } else {
+            badIndex(index);
+        }
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal methods.
     ////////////////////////////////////////////////////////////////////
@@ -634,15 +633,15 @@ public class AttributesImpl implements Attributes
      * @exception java.lang.ArrayIndexOutOfBoundsException Always.
      */
     private void badIndex (int index)
-	throws ArrayIndexOutOfBoundsException
+        throws ArrayIndexOutOfBoundsException
     {
-	String msg =
-	    "Attempt to modify attribute at illegal index: " + index;
-	throw new ArrayIndexOutOfBoundsException(msg);
+        String msg =
+            "Attempt to modify attribute at illegal index: " + index;
+        throw new ArrayIndexOutOfBoundsException(msg);
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal state.
     ////////////////////////////////////////////////////////////////////
@@ -653,5 +652,3 @@ public class AttributesImpl implements Attributes
 }
 
 // end of AttributesImpl.java
-
-

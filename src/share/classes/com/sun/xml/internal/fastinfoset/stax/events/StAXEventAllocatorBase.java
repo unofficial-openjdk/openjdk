@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -39,13 +39,13 @@ import javax.xml.stream.util.XMLEventConsumer;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 /**
- * allows a user to register a way to allocate events given an XMLStreamReader.  
+ * allows a user to register a way to allocate events given an XMLStreamReader.
  * The XMLEventAllocator can be set on an XMLInputFactory
  * using the property "javax.xml.stream.allocator"
  *
  * This base class uses EventFactory to create events as recommended in the JavaDoc of XMLEventAllocator.
  * However, creating new object per each event reduces performance. The implementation of
- * EventReader therefore will set the Allocator to StAXEventAllocator which implements the 
+ * EventReader therefore will set the Allocator to StAXEventAllocator which implements the
  * Allocate methods without creating new objects.
  *
  * The spec for the first Allocate method states that it must NOT modify the state of the Reader
@@ -55,18 +55,18 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
  */
 public class StAXEventAllocatorBase implements XMLEventAllocator {
     XMLEventFactory factory;
-    
+
     /** Creates a new instance of XMLEventAllocator */
     public StAXEventAllocatorBase() {
         if (System.getProperty("javax.xml.stream.XMLEventFactory")==null) {
-            System.setProperty("javax.xml.stream.XMLEventFactory", 
+            System.setProperty("javax.xml.stream.XMLEventFactory",
                        "com.sun.xml.internal.fastinfoset.stax.factory.StAXEventFactory");
         }
         factory = XMLEventFactory.newInstance();
     }
 
     // ---------------------methods defined by XMLEventAllocator-----------------//
-    
+
   /**
    * This method creates an instance of the XMLEventAllocator. This
    * allows the XMLInputFactory to allocate a new instance per reader.
@@ -76,9 +76,9 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
     }
 
   /**
-   * This method allocates an event given the current state of the XMLStreamReader.  
+   * This method allocates an event given the current state of the XMLStreamReader.
    * If this XMLEventAllocator does not have a one-to-one mapping between reader state
-   * and events this method will return null.  
+   * and events this method will return null.
    * @param streamReader The XMLStreamReader to allocate from
    * @return the event corresponding to the current reader state
    */
@@ -87,11 +87,11 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
             throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.nullReader"));
         return getXMLEvent(streamReader);
     }
-    
+
   /**
-   * This method allocates an event or set of events given the current state of 
-   * the XMLStreamReader and adds the event or set of events to the consumer that 
-   * was passed in.  
+   * This method allocates an event or set of events given the current state of
+   * the XMLStreamReader and adds the event or set of events to the consumer that
+   * was passed in.
    * @param streamReader The XMLStreamReader to allocate from
    * @param consumer The XMLEventConsumer to add to.
    */
@@ -100,8 +100,8 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
 
     }
     // ---------------------end of methods defined by XMLEventAllocator-----------------//
-    
-    
+
+
     XMLEvent getXMLEvent(XMLStreamReader reader){
         XMLEvent event = null;
         //returns the current event
@@ -109,7 +109,7 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
         //this needs to be set before creating events
         factory.setLocation(reader.getLocation());
         switch(eventType){
-            
+
             case XMLEvent.START_ELEMENT:
             {
                 StartElementEvent startElement = (StartElementEvent)factory.createStartElement(reader.getPrefix(),
@@ -141,7 +141,7 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
                   event = factory.createSpace(reader.getText());
                 else
                   event = factory.createCharacters(reader.getText());
-                
+
                 break;
             }
             case XMLEvent.COMMENT:
@@ -167,10 +167,10 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
                 break;
             }
             case XMLEvent.ENTITY_REFERENCE:{
-                event = factory.createEntityReference(reader.getLocalName(), 
+                event = factory.createEntityReference(reader.getLocalName(),
                         new EntityDeclarationImpl(reader.getLocalName(),reader.getText()));
                 break;
-                
+
             }
             case XMLEvent.ATTRIBUTE:{
                 event = null ;
@@ -191,19 +191,19 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
         }
         return event ;
     }
-    
+
     //use event.addAttribute instead of addAttributes to avoid creating another list
-    protected void addAttributes(StartElementEvent event,XMLStreamReader streamReader){        
+    protected void addAttributes(StartElementEvent event,XMLStreamReader streamReader){
         AttributeBase attr = null;
         for(int i=0; i<streamReader.getAttributeCount() ;i++){
-            attr = (AttributeBase)factory.createAttribute(streamReader.getAttributeName(i), 
+            attr = (AttributeBase)factory.createAttribute(streamReader.getAttributeName(i),
                                     streamReader.getAttributeValue(i));
             attr.setAttributeType(streamReader.getAttributeType(i));
             attr.setSpecified(streamReader.isAttributeSpecified(i));
             event.addAttribute(attr);
         }
     }
-    
+
     //add namespaces to StartElement/EndElement
     protected void addNamespaces(StartElementEvent event,XMLStreamReader streamReader){
         Namespace namespace = null;
@@ -221,6 +221,6 @@ public class StAXEventAllocatorBase implements XMLEventAllocator {
             event.addNamespace(namespace);
         }
     }
-    
-    
+
+
 }

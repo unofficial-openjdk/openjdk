@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * @(#)$Id: ValidationEventLocatorExImpl.java,v 1.1 2005/04/15 20:03:50 kohsuke Exp $
- */
-
-
 package com.sun.xml.internal.bind.util;
 
 import javax.xml.bind.helpers.ValidationEventLocatorImpl;
@@ -34,25 +29,25 @@ import javax.xml.bind.helpers.ValidationEventLocatorImpl;
 import com.sun.xml.internal.bind.ValidationEventLocatorEx;
 
 /**
- * 
- * 
+ *
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class ValidationEventLocatorExImpl
     extends ValidationEventLocatorImpl implements ValidationEventLocatorEx {
-    
+
     private final String fieldName;
-        
+
     public ValidationEventLocatorExImpl( Object target, String fieldName ) {
         super(target);
         this.fieldName = fieldName;
     }
-    
+
     public String getFieldName() {
         return fieldName;
     }
-    
+
     /**
      * Returns a nice string representation for better debug experience.
      */
@@ -71,7 +66,7 @@ public class ValidationEventLocatorExImpl
         buf.append(",field=");
         buf.append(getFieldName());
         buf.append("]");
-        
+
         return buf.toString();
     }
 }

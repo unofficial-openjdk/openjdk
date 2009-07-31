@@ -27,7 +27,7 @@ package javax.xml.ws;
 
 import java.util.concurrent.Future;
 
-/** The <code>Dispatch</code> interface provides support 
+/** The <code>Dispatch</code> interface provides support
  *  for the dynamic invocation of a service endpoint operations. The
  *  <code>javax.xml.ws.Service</code>
  *  interface acts as a factory for the creation of <code>Dispatch</code>
@@ -38,7 +38,7 @@ import java.util.concurrent.Future;
 public interface Dispatch<T> extends BindingProvider {
 
     /** Invoke a service operation synchronously.
-     * 
+     *
      * The client is responsible for ensuring that the <code>msg</code> object
      * when marshalled is formed according to the requirements of the protocol
      * binding in use.
@@ -59,10 +59,10 @@ public interface Dispatch<T> extends BindingProvider {
      *  invocation, the results of the operation are obtained by polling the
      *  returned <code>Response</code>.
      * <p>
-     * The client is responsible for ensuring that the <code>msg</code> object 
+     * The client is responsible for ensuring that the <code>msg</code> object
      * when marshalled is formed according to the requirements of the protocol
      * binding in use.
-     * 
+     *
      * @param msg An object that will form the message or payload of
      *     the message used to invoke the operation.
      * @return The response message or message payload to the
@@ -77,7 +77,7 @@ public interface Dispatch<T> extends BindingProvider {
      *  invocation, the results of the operation are communicated to the client
      *  via the passed in <code>handler</code>.
      * <p>
-     * The client is responsible for ensuring that the <code>msg</code> object 
+     * The client is responsible for ensuring that the <code>msg</code> object
      * when marshalled is formed according to the requirements of the protocol
      * binding in use.
      *
@@ -102,7 +102,7 @@ public interface Dispatch<T> extends BindingProvider {
      *  the protocol in use is SOAP/HTTP, this method MUST block until
      *  an HTTP response code has been received or an error occurs.
      * <p>
-     * The client is responsible for ensuring that the <code>msg</code> object 
+     * The client is responsible for ensuring that the <code>msg</code> object
      * when marshalled is formed according to the requirements of the protocol
      * binding in use.
      *

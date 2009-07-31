@@ -38,7 +38,7 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * Receives SAX2 events and send the equivalent events to
  * {@link XMLSerializer}
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -49,14 +49,14 @@ final class ContentHandlerAdaptor extends DefaultHandler {
 
     /** Events will be sent to this object. */
     private final XMLSerializer serializer;
-    
+
     private final StringBuffer text = new StringBuffer();
-    
-    
+
+
     ContentHandlerAdaptor( XMLSerializer _serializer ) {
         this.serializer = _serializer;
     }
-    
+
     public void startDocument() {
         prefixMap.clear();
     }
@@ -89,7 +89,7 @@ final class ContentHandlerAdaptor extends DefaultHandler {
                 serializer.startElementForce(namespaceURI,localName,p,null);
             else
                 serializer.startElement(namespaceURI,localName, p,null);
-            
+
             // declare namespace events
             for( int i=0; i<prefixMap.size(); i+=2 ) {
                 // forcibly set this binding, instead of using declareNsUri.
@@ -99,7 +99,7 @@ final class ContentHandlerAdaptor extends DefaultHandler {
                 serializer.getNamespaceContext().force(
                     prefixMap.get(i+1), prefixMap.get(i) );
             }
-            // make sure namespaces needed by attributes are bound 
+            // make sure namespaces needed by attributes are bound
             for( int i=0; i<len; i++ ) {
                 String qname = atts.getQName(i);
                 if(qname.startsWith("xmlns"))
@@ -143,7 +143,7 @@ final class ContentHandlerAdaptor extends DefaultHandler {
             throw new SAXException2(e);
         }
     }
-    
+
     private void flushText() throws SAXException, IOException, XMLStreamException {
         if( text.length()!=0 ) {
             serializer.text(text.toString(),null);

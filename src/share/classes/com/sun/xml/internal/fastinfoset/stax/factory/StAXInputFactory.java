@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.stax.factory;
@@ -48,13 +48,13 @@ import javax.xml.stream.util.XMLEventAllocator ;
 import javax.xml.transform.Source;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
-public class StAXInputFactory extends XMLInputFactory {    
+public class StAXInputFactory extends XMLInputFactory {
     //List of supported properties and default values.
     private StAXManager _manager = new StAXManager(StAXManager.CONTEXT_READER) ;
-    
+
     public StAXInputFactory() {
     }
-    
+
     public static XMLInputFactory newInstance() {
         return XMLInputFactory.newInstance();
     }
@@ -62,36 +62,36 @@ public class StAXInputFactory extends XMLInputFactory {
   /**
    * Create a new XMLStreamReader from a reader
    * @param xmlfile the XML data to read from
-   * @throws XMLStreamException 
+   * @throws XMLStreamException
    */
     public XMLStreamReader createXMLStreamReader(Reader xmlfile) throws XMLStreamException {
         return getXMLStreamReader(xmlfile);
-    }    
-    
+    }
+
     public XMLStreamReader createXMLStreamReader(InputStream s) throws XMLStreamException {
         return new StAXDocumentParser(s, _manager);
     }
-    
+
     public XMLStreamReader createXMLStreamReader(String systemId, Reader xmlfile) throws XMLStreamException {
         return getXMLStreamReader(xmlfile);
     }
-    
+
     public XMLStreamReader createXMLStreamReader(Source source) throws XMLStreamException {
         return null;
     }
-    
+
     public XMLStreamReader createXMLStreamReader(String systemId, InputStream inputstream) throws XMLStreamException {
         return createXMLStreamReader(inputstream);
     }
-    
-    
+
+
     public XMLStreamReader createXMLStreamReader(InputStream inputstream, String encoding) throws XMLStreamException {
         return createXMLStreamReader(inputstream);
     }
 
-    
-    XMLStreamReader getXMLStreamReader(String systemId, InputStream inputstream, String encoding) 
-        throws XMLStreamException{        
+
+    XMLStreamReader getXMLStreamReader(String systemId, InputStream inputstream, String encoding)
+        throws XMLStreamException{
         return createXMLStreamReader(inputstream);
 
     }
@@ -100,10 +100,10 @@ public class StAXInputFactory extends XMLInputFactory {
      * @param inputstream
      * @throws XMLStreamException
      * @return
-     */    
-    XMLStreamReader getXMLStreamReader(Reader xmlfile) 
+     */
+    XMLStreamReader getXMLStreamReader(Reader xmlfile)
         throws XMLStreamException{
-        
+
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         BufferedOutputStream bufferedStream = new BufferedOutputStream(byteStream);
         StAXDocumentParser sr = null;
@@ -117,14 +117,14 @@ public class StAXInputFactory extends XMLInputFactory {
             sr.setInputStream(document);
             sr.setManager(_manager);
             return sr;
-            //return new StAXDocumentParser(document, _manager); 
+            //return new StAXDocumentParser(document, _manager);
         } catch (Exception e) {
             return null;
         }
 
     }
-           
-    
+
+
     /**
      * @param inputstream
      * @throws XMLStreamException
@@ -133,27 +133,27 @@ public class StAXInputFactory extends XMLInputFactory {
     public XMLEventReader createXMLEventReader(InputStream inputstream) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(inputstream));
     }
-    
+
     public XMLEventReader createXMLEventReader(Reader reader) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(reader));
     }
-    
+
     public XMLEventReader createXMLEventReader(Source source) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(source));
     }
-    
+
     public XMLEventReader createXMLEventReader(String systemId, InputStream inputstream) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(systemId, inputstream));
     }
-    
+
     public XMLEventReader createXMLEventReader(java.io.InputStream stream, String encoding) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(stream, encoding));
     }
-    
+
     public XMLEventReader createXMLEventReader(String systemId, Reader reader) throws XMLStreamException {
         return new StAXEventReader(createXMLStreamReader(systemId, reader));
     }
-    
+
     /** Create a new XMLEventReader from an XMLStreamReader.  After being used
      * to construct the XMLEventReader instance returned from this method
      * the XMLStreamReader must not be used.
@@ -168,25 +168,25 @@ public class StAXInputFactory extends XMLInputFactory {
     public XMLEventAllocator getEventAllocator() {
         return (XMLEventAllocator)getProperty(XMLInputFactory.ALLOCATOR);
     }
-    
+
     public XMLReporter getXMLReporter() {
         return (XMLReporter)_manager.getProperty(XMLInputFactory.REPORTER);
     }
-    
+
     public XMLResolver getXMLResolver() {
         Object object = _manager.getProperty(XMLInputFactory.RESOLVER);
         return (XMLResolver)object;
         //return (XMLResolver)_manager.getProperty(XMLInputFactory.RESOLVER);
     }
-    
+
     public void setXMLReporter(XMLReporter xmlreporter) {
         _manager.setProperty(XMLInputFactory.REPORTER, xmlreporter);
     }
-    
+
     public void setXMLResolver(XMLResolver xmlresolver) {
         _manager.setProperty(XMLInputFactory.RESOLVER, xmlresolver);
     }
-    
+
     /** Create a filtered event reader that wraps the filter around the event reader
      * @param reader the event reader to wrap
      * @param filter the filter to apply to the event reader
@@ -195,22 +195,22 @@ public class StAXInputFactory extends XMLInputFactory {
     public XMLEventReader createFilteredReader(XMLEventReader reader, EventFilter filter) throws XMLStreamException {
         return new StAXFilteredEvent(reader, filter);
     }
-    
+
     /** Create a filtered reader that wraps the filter around the reader
      * @param reader the reader to filter
      * @param filter the filter to apply to the reader
      * @throws XMLStreamException
      */
     public XMLStreamReader createFilteredReader(XMLStreamReader reader, StreamFilter filter) throws XMLStreamException {
-        
+
         if( reader != null && filter != null )
             return new StAXFilteredParser(reader,filter);
-        
+
         return null;
     }
-    
-    
-    
+
+
+
     /** Get the value of a feature/property from the underlying implementation
      * @param name The name of the property (may not be null)
      * @return The value of the property
@@ -224,7 +224,7 @@ public class StAXInputFactory extends XMLInputFactory {
             return _manager.getProperty(name);
         throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.propertyNotSupported", new Object[]{name}));
     }
-    
+
     /** Query the set of Properties that this factory supports.
      *
      * @param name The name of the property (may not be null)
@@ -236,14 +236,14 @@ public class StAXInputFactory extends XMLInputFactory {
         else
             return _manager.containsProperty(name);
     }
-    
+
     /** Set a user defined event allocator for events
      * @param allocator the user defined allocator
      */
     public void setEventAllocator(XMLEventAllocator allocator) {
         _manager.setProperty(XMLInputFactory.ALLOCATOR, allocator);
     }
-    
+
     /** Allows the user to set specific feature/property on the underlying implementation. The underlying implementation
      * is not required to support every setting of every property in the specification and may use IllegalArgumentException
      * to signal that an unsupported property may not be set with the specified value.
@@ -254,5 +254,5 @@ public class StAXInputFactory extends XMLInputFactory {
     public void setProperty(String name, Object value) throws IllegalArgumentException {
         _manager.setProperty(name,value);
     }
-    
+
 }

@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.util;
 
 import org.xml.sax.ErrorHandler;
@@ -30,7 +31,7 @@ import org.xml.sax.SAXException;
 
 /**
  * Maps an error to a fatal error.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class FatalAdapter implements ErrorHandler {

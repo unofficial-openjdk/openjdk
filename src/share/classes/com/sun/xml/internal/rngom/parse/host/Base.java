@@ -28,7 +28,7 @@ import com.sun.xml.internal.rngom.ast.builder.Annotations;
 import com.sun.xml.internal.rngom.ast.om.Location;
 
 /**
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -39,14 +39,14 @@ public class Base {
         else
             return (AnnotationsHost)ann;
     }
-    
+
     protected LocationHost cast( Location loc ) {
         if(loc==null)
             return nullLocation;
         else
             return (LocationHost)loc;
     }
-    
+
     private static final AnnotationsHost nullAnnotations = new AnnotationsHost(null,null);
     private static final LocationHost nullLocation = new LocationHost(null,null);
 }

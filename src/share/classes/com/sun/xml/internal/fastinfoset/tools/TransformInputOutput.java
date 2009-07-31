@@ -44,11 +44,11 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public abstract class TransformInputOutput {
-    
+
     /** Creates a new instance of TransformInputOutput */
     public TransformInputOutput() {
     }
-    
+
     public void parse(String[] args) throws Exception {
         InputStream in = null;
         OutputStream out = null;
@@ -64,18 +64,18 @@ public abstract class TransformInputOutput {
         } else {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.optinalFileNotSpecified"));
         }
-        
+
         parse(in, out);
     }
-    
+
     abstract public void parse(InputStream in, OutputStream out) throws Exception;
-    
+
     // parse alternative with current working directory parameter
     // is used to process xml documents, which have external imported entities
     public void parse(InputStream in, OutputStream out, String workingDirectory) throws Exception {
         throw new UnsupportedOperationException();
     }
-        
+
     private static URI currentJavaWorkingDirectory;
     static {
         currentJavaWorkingDirectory = new File(System.getProperty("user.dir")).toURI();
@@ -99,36 +99,36 @@ public abstract class TransformInputOutput {
             }
         };
     }
-    
+
     private static URI convertToNewWorkingDirectory(URI oldwd, URI newwd, URI file) throws IOException, URISyntaxException {
         String oldwdStr = oldwd.toString();
         String newwdStr = newwd.toString();
         String fileStr = file.toString();
-        
+
         String cmpStr = null;
         // In simpliest case <user.dir>/file.xml - do it faster
         if (fileStr.startsWith(oldwdStr) && (cmpStr = fileStr.substring(oldwdStr.length())).indexOf('/') == -1) {
             return new URI(newwdStr + '/' + cmpStr);
         }
-        
+
         String[] oldwdSplit = oldwdStr.split("/");
         String[] newwdSplit = newwdStr.split("/");
         String[] fileSplit = fileStr.split("/");
-        
+
         int diff;
         for(diff = 0; diff<oldwdSplit.length & diff<fileSplit.length; diff++) {
             if (!oldwdSplit[diff].equals(fileSplit[diff])) {
                 break;
             }
         }
-        
+
         int diffNew;
         for(diffNew=0; diffNew<newwdSplit.length && diffNew<fileSplit.length; diffNew++) {
             if (!newwdSplit[diffNew].equals(fileSplit[diffNew])) {
                 break;
             }
         }
-        
+
         //Workaround for case, when extrnal imported entity has imports other entity
         //in that case systemId has correct path, not based on user.dir
         if (diffNew > diff) {
@@ -141,12 +141,12 @@ public abstract class TransformInputOutput {
             resultStr.append(newwdSplit[i]);
             resultStr.append('/');
         }
-                
+
         for(int i=diff; i<fileSplit.length; i++) {
             resultStr.append(fileSplit[i]);
             if (i < fileSplit.length - 1) resultStr.append('/');
         }
-        
+
         return new URI(resultStr.toString());
     }
 }

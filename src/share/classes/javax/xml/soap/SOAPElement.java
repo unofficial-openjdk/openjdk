@@ -23,9 +23,9 @@
  * have any questions.
  */
 /*
- * $Id: SOAPElement.java,v 1.19 2005/12/13 09:20:25 vj135062 Exp $
- * $Revision: 1.19 $
- * $Date: 2005/12/13 09:20:25 $
+ * $Id: SOAPElement.java,v 1.20 2006/03/30 00:59:40 ofung Exp $
+ * $Revision: 1.20 $
+ * $Date: 2006/03/30 00:59:40 $
  */
 
 
@@ -43,7 +43,7 @@ import javax.xml.namespace.QName;
  * <p>
  * Methods in this interface that are required to return SAAJ specific objects
  * may "silently" replace nodes in the tree as required to successfully return
- * objects of the correct type. See {@link #getChildElements()} and 
+ * objects of the correct type. See {@link #getChildElements()} and
  * {@link <a HREF="package-summary.html#package_description">javax.xml.soap<a>}
  * for details.
  */
@@ -54,7 +54,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * given <code>Name</code> object and adds the new element to this
      * <code>SOAPElement</code> object.
      * <P>
-     * This method may be deprecated in a future release of SAAJ in favor of 
+     * This method may be deprecated in a future release of SAAJ in favor of
      * addChildElement(javax.xml.namespace.QName)
      *
      * @param name a <code>Name</code> object with the XML name for the
@@ -68,11 +68,11 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     public SOAPElement addChildElement(Name name) throws SOAPException;
 
     /**
-     * Creates a new <code>SOAPElement</code> object initialized with the given 
+     * Creates a new <code>SOAPElement</code> object initialized with the given
      * <code>QName</code> object and adds the new element to this <code>SOAPElement</code>
-     *  object. The  <i>namespace</i>, <i>localname</i> and <i>prefix</i> of the new 
+     *  object. The  <i>namespace</i>, <i>localname</i> and <i>prefix</i> of the new
      * <code>SOAPElement</code> are all taken  from the <code>qname</code> argument.
-     * 
+     *
      * @param qname a <code>QName</code> object with the XML name for the
      *        new element
      *
@@ -87,7 +87,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     /**
      * Creates a new <code>SOAPElement</code> object initialized with the
      * specified local name and adds the new element to this
-     * <code>SOAPElement</code> object.  
+     * <code>SOAPElement</code> object.
      * The new  <code>SOAPElement</code> inherits any in-scope default namespace.
      *
      * @param localName a <code>String</code> giving the local name for
@@ -102,7 +102,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * Creates a new <code>SOAPElement</code> object initialized with the
      * specified local name and prefix and adds the new element to this
      * <code>SOAPElement</code> object.
-     * 
+     *
      * @param localName a <code>String</code> giving the local name for
      *        the new element
      * @param prefix a <code>String</code> giving the namespace prefix for
@@ -173,12 +173,12 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     /**
      * Detaches all children of this <code>SOAPElement</code>.
      * <p>
-     * This method is useful for rolling back the construction of partially 
-     * completed <code>SOAPHeaders</code> and <code>SOAPBodys</code> in 
-     * preparation for sending a fault when an error condition is detected. It 
-     * is also useful for recycling portions of a document within a SOAP 
+     * This method is useful for rolling back the construction of partially
+     * completed <code>SOAPHeaders</code> and <code>SOAPBodys</code> in
+     * preparation for sending a fault when an error condition is detected. It
+     * is also useful for recycling portions of a document within a SOAP
      * message.
-     * 
+     *
      * @since SAAJ 1.2
      */
     public abstract void removeContents();
@@ -193,7 +193,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *         the new <code>Text</code> object was inserted
      * @exception SOAPException if there is an error in creating the
      *                    new <code>Text</code> object or if it is not legal to
-     *                      attach it as a child to this 
+     *                      attach it as a child to this
      *                      <code>SOAPElement</code>
      */
     public SOAPElement addTextNode(String text) throws SOAPException;
@@ -208,8 +208,8 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *         inserted
      *
      * @exception SOAPException if there is an error in creating the
-     *                          Attribute, or it is invalid to set 
-                                an attribute with <code>Name</code> 
+     *                          Attribute, or it is invalid to set
+                                an attribute with <code>Name</code>
                                  <code>name</code> on this SOAPElement.
      * @see SOAPElement#addAttribute(javax.xml.namespace.QName, String)
      */
@@ -227,7 +227,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *
      * @exception SOAPException if there is an error in creating the
      *                          Attribute, or it is invalid to set
-                                an attribute with <code>QName</code> 
+                                an attribute with <code>QName</code>
                                 <code>qname</code> on this SOAPElement.
      * @see SOAPElement#addAttribute(Name, String)
      * @since SAAJ 1.3
@@ -259,7 +259,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @see SOAPElement#getAttributeValue(javax.xml.namespace.QName)
      */
     public String getAttributeValue(Name name);
-    
+
     /**
      * Returns the value of the attribute with the specified qname.
      *
@@ -272,7 +272,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     public String getAttributeValue(QName qname);
 
     /**
-     * Returns an <code>Iterator</code> over all of the attribute 
+     * Returns an <code>Iterator</code> over all of the attribute
      * <code>Name</code> objects in this
      * <code>SOAPElement</code> object. The iterator can be used to get
      * the attribute names, which can then be passed to the method
@@ -286,9 +286,9 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
 
     /**
      * Returns an <code>Iterator</code> over all of the attributes
-     * in this <code>SOAPElement</code>  as <code>QName</code> objects. 
-     * The iterator can be used to get the attribute QName, which can then 
-     * be passed to the method <code>getAttributeValue</code> to retrieve 
+     * in this <code>SOAPElement</code>  as <code>QName</code> objects.
+     * The iterator can be used to get the attribute QName, which can then
+     * be passed to the method <code>getAttributeValue</code> to retrieve
      * the value of each attribute.
      *
      * @return an iterator over the QNames of the attributes
@@ -297,12 +297,12 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      */
     public Iterator getAllAttributesAsQNames();
 
-    
+
     /**
      * Returns the URI of the namespace that has the given prefix.
      *
      * @param prefix a <code>String</code> giving the prefix of the namespace
-     *        for which to search 
+     *        for which to search
      * @return a <code>String</code> with the uri of the namespace that has
      *        the given prefix
      */
@@ -327,34 +327,34 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *
      * @return an iterator over the namespace prefixes are within scope of this
      *         <code>SOAPElement</code> object
-     * 
+     *
      * @since SAAJ 1.2
      */
     public Iterator getVisibleNamespacePrefixes();
-    
+
     /**
      * Creates a <code>QName</code> whose namespace URI is the one associated
      * with the parameter, <code>prefix</code>, in the context of this
-     * <code>SOAPElement</code>. The remaining elements of the new 
-     * <code>QName</code> are taken directly from the parameters, 
-     * <code>localName</code> and <code>prefix</code>. 
-     * 
+     * <code>SOAPElement</code>. The remaining elements of the new
+     * <code>QName</code> are taken directly from the parameters,
+     * <code>localName</code> and <code>prefix</code>.
+     *
      * @param localName
      *          a <code>String</code> containing the local part of the name.
      * @param prefix
      *          a <code>String</code> containing the prefix for the name.
-     * 
+     *
      * @return a <code>QName</code> with the specified <code>localName</code>
      *          and <code>prefix</code>, and with a namespace that is associated
-     *          with the <code>prefix</code> in the context of this 
+     *          with the <code>prefix</code> in the context of this
      *          <code>SOAPElement</code>. This namespace will be the same as
-     *          the one that would be returned by 
-     *          <code>{@link #getNamespaceURI(String)}</code> if it were given 
+     *          the one that would be returned by
+     *          <code>{@link #getNamespaceURI(String)}</code> if it were given
      *          <code>prefix</code> as it's parameter.
-     * 
+     *
      * @exception SOAPException if the <code>QName</code> cannot be created.
-     * 
-     * @since SAAJ 1.3 
+     *
+     * @since SAAJ 1.3
      */
     public QName createQName(String localName, String prefix)
         throws SOAPException;
@@ -365,7 +365,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *         <code>SOAPElement</code> object
      */
     public Name getElementName();
-    
+
     /**
      * Returns the qname of this <code>SOAPElement</code> object.
      *
@@ -377,25 +377,25 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     public QName getElementQName();
 
     /**
-    * Changes the name of this <code>Element</code> to <code>newName</code> if 
-    * possible. SOAP Defined elements such as SOAPEnvelope, SOAPHeader, SOAPBody 
-    * etc. cannot have their names changed using this method. Any attempt to do 
+    * Changes the name of this <code>Element</code> to <code>newName</code> if
+    * possible. SOAP Defined elements such as SOAPEnvelope, SOAPHeader, SOAPBody
+    * etc. cannot have their names changed using this method. Any attempt to do
     * so will result in a  SOAPException being thrown.
     *<P>
-    * Callers should not rely on the element instance being renamed as is. 
-    * Implementations could end up copying the content of the 
+    * Callers should not rely on the element instance being renamed as is.
+    * Implementations could end up copying the content of the
     * <code>SOAPElement</code> to a renamed instance.
-    * 
+    *
     * @param newName the new name for the <code>Element</code>.
-    * 
+    *
     * @exception SOAPException if changing the name of this <code>Element</code>
     *                          is not allowed.
     * @return The renamed Node
-    * 
+    *
     * @since SAAJ 1.3
     */
    public SOAPElement setElementQName(QName newName) throws SOAPException;
-    
+
    /**
      * Removes the attribute with the specified name.
      *
@@ -434,14 +434,14 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * {@link Node}s of this element. This includes <code>javax.xml.soap.Text</code>
      * objects as well as <code>SOAPElement</code> objects.
      * <p>
-     * Calling this method may cause child <code>Element</code>, 
-     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be 
-     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>, 
+     * Calling this method may cause child <code>Element</code>,
+     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be
+     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>,
      * <code>SOAPBodyElement</code> or <code>javax.xml.soap.Text</code> nodes as
-     * appropriate for the type of this parent node. As a result the calling 
-     * application must treat any existing references to these child nodes that 
+     * appropriate for the type of this parent node. As a result the calling
+     * application must treat any existing references to these child nodes that
      * have been obtained through DOM APIs as invalid and either discard them or
-     * refresh them with the values returned by this <code>Iterator</code>. This 
+     * refresh them with the values returned by this <code>Iterator</code>. This
      * behavior can be avoided by calling the equivalent DOM APIs. See
      * {@link <a HREF="package-summary.html#package_description">javax.xml.soap<a>}
      * for more details.
@@ -453,21 +453,21 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
 
     /**
      * Returns an <code>Iterator</code> over all the immediate child
-     * {@link Node}s of this element with the specified name. All of these 
+     * {@link Node}s of this element with the specified name. All of these
      * children will be <code>SOAPElement</code> nodes.
      * <p>
-     * Calling this method may cause child <code>Element</code>, 
-     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be 
-     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>, 
+     * Calling this method may cause child <code>Element</code>,
+     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be
+     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>,
      * <code>SOAPBodyElement</code> or <code>javax.xml.soap.Text</code> nodes as
-     * appropriate for the type of this parent node. As a result the calling 
-     * application must treat any existing references to these child nodes that 
+     * appropriate for the type of this parent node. As a result the calling
+     * application must treat any existing references to these child nodes that
      * have been obtained through DOM APIs as invalid and either discard them or
-     * refresh them with the values returned by this <code>Iterator</code>. This 
+     * refresh them with the values returned by this <code>Iterator</code>. This
      * behavior can be avoided by calling the equivalent DOM APIs. See
      * {@link <a HREF="package-summary.html#package_description">javax.xml.soap<a>}
      * for more details.
-     * 
+     *
      * @param name a <code>Name</code> object with the name of the child
      *        elements to be returned
      *
@@ -480,21 +480,21 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
 
     /**
      * Returns an <code>Iterator</code> over all the immediate child
-     * {@link Node}s of this element with the specified qname. All of these 
+     * {@link Node}s of this element with the specified qname. All of these
      * children will be <code>SOAPElement</code> nodes.
      * <p>
-     * Calling this method may cause child <code>Element</code>, 
-     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be 
-     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>, 
+     * Calling this method may cause child <code>Element</code>,
+     * <code>SOAPElement</code> and <code>org.w3c.dom.Text</code> nodes to be
+     * replaced by <code>SOAPElement</code>, <code>SOAPHeaderElement</code>,
      * <code>SOAPBodyElement</code> or <code>javax.xml.soap.Text</code> nodes as
-     * appropriate for the type of this parent node. As a result the calling 
-     * application must treat any existing references to these child nodes that 
+     * appropriate for the type of this parent node. As a result the calling
+     * application must treat any existing references to these child nodes that
      * have been obtained through DOM APIs as invalid and either discard them or
-     * refresh them with the values returned by this <code>Iterator</code>. This 
+     * refresh them with the values returned by this <code>Iterator</code>. This
      * behavior can be avoided by calling the equivalent DOM APIs. See
      * {@link <a HREF="package-summary.html#package_description">javax.xml.soap<a>}
      * for more details.
-     * 
+     *
      * @param qname a <code>QName</code> object with the qname of the child
      *        elements to be returned
      *
@@ -502,7 +502,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *         in this <code>SOAPElement</code> object with the
      *         specified qname
      * @see SOAPElement#getChildElements(Name)
-     * @since SAAJ 1.3     
+     * @since SAAJ 1.3
      */
     public Iterator getChildElements(QName qname);
 

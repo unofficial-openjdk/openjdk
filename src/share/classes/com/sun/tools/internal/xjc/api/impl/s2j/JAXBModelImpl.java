@@ -49,7 +49,7 @@ import com.sun.tools.internal.xjc.outline.PackageOutline;
 
 /**
  * {@link JAXBModel} implementation.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

@@ -71,7 +71,7 @@ final class ActionBasedDispatcher implements EndpointMethodDispatcher {
                 action = m.getOperation().getOperation().getInput().getAction();
                 if (action != null)
                     actionMethodHandlers.put(action, handler);
-            }    
+            }
         }
     }
 

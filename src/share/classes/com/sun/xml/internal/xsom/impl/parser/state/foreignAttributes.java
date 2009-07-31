@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 
 
 class foreignAttributes extends NGCCHandler {
@@ -159,10 +159,9 @@ class foreignAttributes extends NGCCHandler {
         return(($_ngcc_current_state == 0));
     }
 
-    
+
       ForeignAttributesImpl makeResult() {
         return $runtime.parseForeignAttributes(current);
       }
-    
-}
 
+}

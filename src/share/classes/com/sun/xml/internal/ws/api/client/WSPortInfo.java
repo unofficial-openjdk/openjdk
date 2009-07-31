@@ -36,7 +36,7 @@ import javax.xml.ws.handler.PortInfo;
 
 /**
  * JAX-WS RI's extension to {@link PortInfo}.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public interface WSPortInfo extends PortInfo {

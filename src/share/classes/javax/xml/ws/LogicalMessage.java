@@ -41,14 +41,14 @@ public interface LogicalMessage {
    *  returns a new <code>Source</code> that may be used to retrieve the entire
    *  message payload.
    *
-   *  <p>If the returned <code>Source</code> is an instance of 
+   *  <p>If the returned <code>Source</code> is an instance of
    *  <code>DOMSource</code>, then
    *  modifications to the encapsulated DOM tree change the message
    *  payload in-place, there is no need to susequently call
    *  <code>setPayload</code>. Other types of <code>Source</code> provide only
    *  read access to the message payload.
    *
-   *  @return The contained message payload; returns <code>null</code> if no 
+   *  @return The contained message payload; returns <code>null</code> if no
    *          payload is present in this message.
   **/
   public Source getPayload();
@@ -69,7 +69,7 @@ public interface LogicalMessage {
    *
    *  @param  context The JAXBContext that should be used to unmarshall
    *          the message payload
-   *  @return The contained message payload; returns <code>null</code> if no 
+   *  @return The contained message payload; returns <code>null</code> if no
    *          payload is present in this message
    *  @throws WebServiceException If an error occurs when using a supplied
    *     JAXBContext to unmarshall the payload. The cause of
@@ -80,7 +80,7 @@ public interface LogicalMessage {
   /** Sets the message payload
    *
    *  @param  payload message payload
-   *  @param  context The JAXBContext that should be used to marshall 
+   *  @param  context The JAXBContext that should be used to marshall
    *          the payload
    *  @throws java.lang.UnsupportedOperationException If this
    *          operation is not supported

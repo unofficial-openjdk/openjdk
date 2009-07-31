@@ -33,23 +33,23 @@ import static java.lang.annotation.RetentionPolicy.*;
 /**
  * <p>
  * Maps a JavaBean property to XML IDREF.
- * 
+ *
  * <p>
  * To preserve referential integrity of an object graph across XML
  * serialization followed by a XML deserialization, requires an object
  * reference to be marshalled by reference or containment
  * appropriately. Annotations <tt>&#64;XmlID</tt> and <tt>&#64;XmlIDREF</tt>
  * together allow a customized mapping of a JavaBean property's
- * type by containment or reference. 
+ * type by containment or reference.
  *
  * <p><b>Usage</b> </p>
  * The <tt>&#64;XmlIDREF</tt> annotation can be used with the following
- * program elements: 
- * <ul> 
+ * program elements:
+ * <ul>
  *   <li> a JavaBean property </li>
  *   <li> non static, non transient field </li>
  * </ul>
- * 
+ *
  * <p>See "Package Specification" in javax.xml.bind.package javadoc for
  * additional common information.</p>
  *
@@ -58,18 +58,18 @@ import static java.lang.annotation.RetentionPolicy.*;
  *
  *   <li> If the type of the field or property is a collection type,
  *        then the collection item type must contain a property or
- *        field annotated with <tt>&#64;XmlID</tt>.  </li> 
+ *        field annotated with <tt>&#64;XmlID</tt>.  </li>
  *   <li> If the field or property is single valued, then the type of
  *        the property or field must contain a property or field
  *        annotated with <tt>&#64;XmlID</tt>.
  *        <p>Note: If the collection item type or the type of the
  *        property (for non collection type) is java.lang.Object, then
  *        the instance must contain a property/field annotated with
- *        <tt>&#64;XmlID</tt> attribute.  
+ *        <tt>&#64;XmlID</tt> attribute.
  *        </li>
  *   <li> This annotation can be used with the following annotations:
- *        {@link XmlElement}, {@link XmlAttribute}, {@link XmlList}, 
- *        and {@link XmlElements}.</li>  
+ *        {@link XmlElement}, {@link XmlAttribute}, {@link XmlList},
+ *        and {@link XmlElements}.</li>
  *
  * </ul>
  * <p><b>Example:</b> Map a JavaBean property to <tt>xs:IDREF</tt>
@@ -98,24 +98,24 @@ import static java.lang.annotation.RetentionPolicy.*;
  *
  * <p><b>Example 2: </b> The following is a complete example of
  * containment versus reference.
- * 
+ *
  * <pre>
  *    // By default, Customer maps to complex type <tt>xs:Customer</tt>
  *    public class Customer {
- *        
+ *
  *        // map JavaBean property type to <tt>xs:ID</tt>
  *        &#64;XmlID public String getCustomerID();
  *        public void setCustomerID(String id);
  *
- *        // .... other properties not shown 
+ *        // .... other properties not shown
  *    }
  *
  *
- *   // By default, Invoice maps to a complex type <tt>xs:Invoice</tt> 
+ *   // By default, Invoice maps to a complex type <tt>xs:Invoice</tt>
  *   public class Invoice {
- *    
+ *
  *       // map by reference
- *       &#64;XmlIDREF public Customer getCustomer();       
+ *       &#64;XmlIDREF public Customer getCustomer();
  *       public void setCustomer(Customer customer);
  *
  *      // .... other properties not shown here
@@ -125,7 +125,7 @@ import static java.lang.annotation.RetentionPolicy.*;
  *   public class Shipping {
  *
  *       // map by reference
- *       &#64;XmlIDREF public Customer getCustomer();       
+ *       &#64;XmlIDREF public Customer getCustomer();
  *       public void setCustomer(Customer customer);
  *   }
  *
@@ -136,11 +136,11 @@ import static java.lang.annotation.RetentionPolicy.*;
  *       // map reference to Customer by containment by default.
  *       public Customer getCustomer();
  *
- *       // maps reference to Shipping by containment by default. 
- *       public Shipping getShipping();     
+ *       // maps reference to Shipping by containment by default.
+ *       public Shipping getShipping();
  *
- *       // maps reference to Invoice by containment by default. 
- *       public Invoice getInvoice();     
+ *       // maps reference to Invoice by containment by default.
+ *       public Invoice getInvoice();
  *   }
  *
  *   &lt;!-- XML Schema mapping for above code frament -->
@@ -193,7 +193,7 @@ import static java.lang.annotation.RetentionPolicy.*;
  *       &lt;shipping customer="Alice">
  *           ....
  *       &lt;/shipping>
- *         
+ *
  *       &lt;invoice customer="Alice">
  *           ....
  *       &lt;/invoice>
@@ -217,7 +217,7 @@ import static java.lang.annotation.RetentionPolicy.*;
  *           &lt;xs:element name="Alice" type="xs:IDREF"/>
  *         &lt;/xs:choice>
  *       &lt;/xs:sequence>
- *     &lt;/xs:complexType> 
+ *     &lt;/xs:complexType>
  * </pre>
  *
  * <p><b>Example 4: </b> Mapping a List to a list of elements of type IDREF.
@@ -239,12 +239,12 @@ import static java.lang.annotation.RetentionPolicy.*;
  *           &lt;xs:element name="John" type="xs:IDREF"/>
  *         &lt;/xs:choice>
  *       &lt;/xs:sequence>
- *     &lt;/xs:complexType> 
+ *     &lt;/xs:complexType>
  * </pre>
- * @author Sekhar Vajjhala, Sun Microsystems, Inc. 
+ * @author Sekhar Vajjhala, Sun Microsystems, Inc.
  * @see XmlID
  * @since JAXB2.0
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 
 @Retention(RUNTIME) @Target({FIELD, METHOD})

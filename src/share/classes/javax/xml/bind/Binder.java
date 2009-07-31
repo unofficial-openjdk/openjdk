@@ -30,23 +30,23 @@ import org.w3c.dom.Node;
 import javax.xml.validation.Schema;
 
 /**
- * Enable synchronization between XML infoset nodes and JAXB objects 
+ * Enable synchronization between XML infoset nodes and JAXB objects
  * representing same XML document.
  *
  * <p>
  * An instance of this class maintains the association between XML nodes of
- * an infoset preserving view and a JAXB representation of an XML document. 
+ * an infoset preserving view and a JAXB representation of an XML document.
  * Navigation between the two views is provided by the methods
  * {@link #getXMLNode(Object)} and {@link #getJAXBNode(Object)}.
- * 
+ *
  * <p>
- * Modifications can be made to either the infoset preserving view or the 
- * JAXB representation of the document while the other view remains 
- * unmodified. The binder is able to synchronize the changes made in the 
+ * Modifications can be made to either the infoset preserving view or the
+ * JAXB representation of the document while the other view remains
+ * unmodified. The binder is able to synchronize the changes made in the
  * modified view back into the other view using the appropriate
- * Binder update methods, {@link #updateXML(Object, Object)} or 
+ * Binder update methods, {@link #updateXML(Object, Object)} or
  * {@link #updateJAXB(Object)}.
- * 
+ *
  * <p>
  * A typical usage scenario is the following:
  * <ul>
@@ -55,27 +55,27 @@ import javax.xml.validation.Schema;
  *       (Note to conserve resources, it is possible to only unmarshal a
  *       subtree of the XML infoset view to the JAXB view.)</li>
  *   <li>application access/updates JAXB view of XML document.</li>
- *   <li>{@link #updateXML(Object)} synchronizes modifications to JAXB view 
- *       back into the XML infoset view. Update operation preserves as 
+ *   <li>{@link #updateXML(Object)} synchronizes modifications to JAXB view
+ *       back into the XML infoset view. Update operation preserves as
  *       much of original XML infoset as possible (i.e. comments, PI, ...)</li>
  * </ul>
- * 
+ *
  * <p>
- * A Binder instance is created using the factory method 
+ * A Binder instance is created using the factory method
  * {@link JAXBContext#createBinder()} or {@link JAXBContext#createBinder(Class)}.
  *
  * <p>
  * The template parameter, <code>XmlNode</code>, is the
  * root interface/class for the XML infoset preserving representation.
  * A Binder implementation is required to minimally support
- * an <code>XmlNode</code> value of <code>org.w3c.dom.Node.class</code>. 
- * A Binder implementation can support alternative XML infoset 
+ * an <code>XmlNode</code> value of <code>org.w3c.dom.Node.class</code>.
+ * A Binder implementation can support alternative XML infoset
  * preserving representations.
  *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  *     Joseph Fialli
- * 
+ *
  * @since JAXB 2.0
  */
 public abstract class Binder<XmlNode> {
@@ -84,7 +84,7 @@ public abstract class Binder<XmlNode> {
      *
      * <p>
      * This method is similar to {@link Unmarshaller#unmarshal(Node)}
-     * with the addition of maintaining the association between XML nodes 
+     * with the addition of maintaining the association between XML nodes
      * and the produced JAXB objects, enabling future update operations,
      * {@link #updateXML(Object, Object)} or {@link #updateJAXB(Object)}.
      *
@@ -96,11 +96,11 @@ public abstract class Binder<XmlNode> {
      * This method throws {@link UnmarshalException} when the Binder's
      * {@link JAXBContext} does not have a mapping for the XML element name
      * or the type, specifiable via <tt>@xsi:type</tt>, of <tt>xmlNode</tt>
-     * to a JAXB mapped class. The method {@link #unmarshal(Object, Class)} 
+     * to a JAXB mapped class. The method {@link #unmarshal(Object, Class)}
      * enables an application to specify the JAXB mapped class that
-     * the <tt>xmlNode</tt> should be mapped to. 
+     * the <tt>xmlNode</tt> should be mapped to.
      *
-     * @param xmlNode 
+     * @param xmlNode
      *      the document/element to unmarshal XML data from.
      *
      * @return
@@ -110,7 +110,7 @@ public abstract class Binder<XmlNode> {
      *      If any unexpected errors occur while unmarshalling
      * @throws UnmarshalException
      *     If the {@link ValidationEventHandler ValidationEventHandler}
-     *     returns false from its <tt>handleEvent</tt> method or the 
+     *     returns false from its <tt>handleEvent</tt> method or the
      *     <tt>Binder</tt> is unable to perform the XML to Java
      *     binding.
      * @throws IllegalArgumentException
@@ -119,15 +119,15 @@ public abstract class Binder<XmlNode> {
     public abstract Object unmarshal( XmlNode xmlNode ) throws JAXBException;
 
     /**
-     * Unmarshal XML root element by provided <tt>declaredType</tt> 
+     * Unmarshal XML root element by provided <tt>declaredType</tt>
      * to a JAXB object tree.
      *
      * <p>
      * Implements <a href="Unmarshaller.html#unmarshalByDeclaredType">Unmarshal by Declared Type</a>
-     * 
+     *
      * <p>
      * This method is similar to {@link Unmarshaller#unmarshal(Node, Class)}
-     * with the addition of maintaining the association between XML nodes 
+     * with the addition of maintaining the association between XML nodes
      * and the produced JAXB objects, enabling future update operations,
      * {@link #updateXML(Object, Object)} or {@link #updateJAXB(Object)}.
      *
@@ -135,38 +135,38 @@ public abstract class Binder<XmlNode> {
      * When {@link #getSchema()} is non-null, <code>xmlNode</code>
      * and its descendants is validated during this operation.
      *
-     * @param xmlNode 
+     * @param xmlNode
      *      the document/element to unmarshal XML data from.
      * @param declaredType
      *      appropriate JAXB mapped class to hold <tt>node</tt>'s XML data.
      *
      * @return
-     * <a href="#unmarshalDeclaredTypeReturn">JAXB Element</a> representation 
+     * <a href="#unmarshalDeclaredTypeReturn">JAXB Element</a> representation
      * of <tt>node</tt>
      *
      * @throws JAXBException
      *      If any unexpected errors occur while unmarshalling
      * @throws UnmarshalException
      *     If the {@link ValidationEventHandler ValidationEventHandler}
-     *     returns false from its <tt>handleEvent</tt> method or the 
+     *     returns false from its <tt>handleEvent</tt> method or the
      *     <tt>Binder</tt> is unable to perform the XML to Java
      *     binding.
      * @throws IllegalArgumentException
      *      If any of the input parameters are null
      * @since JAXB2.0
      */
-    public abstract <T> JAXBElement<T> 
-	unmarshal( XmlNode xmlNode, Class<T> declaredType ) 
-	throws JAXBException;
+    public abstract <T> JAXBElement<T>
+        unmarshal( XmlNode xmlNode, Class<T> declaredType )
+        throws JAXBException;
 
     /**
      * Marshal a JAXB object tree to a new XML document.
      *
      * <p>
      * This method is similar to {@link Marshaller#marshal(Object, Node)}
-     * with the addition of maintaining the association between JAXB objects 
+     * with the addition of maintaining the association between JAXB objects
      * and the produced XML nodes,
-     * enabling future update operations such as 
+     * enabling future update operations such as
      * {@link #updateXML(Object, Object)} or {@link #updateJAXB(Object)}.
      *
      * <p>
@@ -174,7 +174,7 @@ public abstract class Binder<XmlNode> {
      * xml content is validated during this operation.
      *
      * @param jaxbObject
-     *      The content tree to be marshalled. 
+     *      The content tree to be marshalled.
      * @param xmlNode
      *      The parameter must be a Node that accepts children.
      *
@@ -182,10 +182,10 @@ public abstract class Binder<XmlNode> {
      *      If any unexpected problem occurs during the marshalling.
      * @throws MarshalException
      *      If the {@link ValidationEventHandler ValidationEventHandler}
-     *      returns false from its <tt>handleEvent</tt> method or the 
-     *      <tt>Binder</tt> is unable to marshal <tt>jaxbObject</tt> (or any 
+     *      returns false from its <tt>handleEvent</tt> method or the
+     *      <tt>Binder</tt> is unable to marshal <tt>jaxbObject</tt> (or any
      *      object reachable from <tt>jaxbObject</tt>).
-     * 
+     *
      * @throws IllegalArgumentException
      *      If any of the method parameters are null
      */
@@ -205,7 +205,7 @@ public abstract class Binder<XmlNode> {
      * have associated JAXB objects, and not all JAXB objects have
      * associated XML elements.
      *
-     * @param jaxbObject An instance that is reachable from a prior 
+     * @param jaxbObject An instance that is reachable from a prior
      *                   call to a bind or update method that returned
      *                   a JAXB object tree.
      *
@@ -315,7 +315,7 @@ public abstract class Binder<XmlNode> {
      *      but it maybe
      *      a different object, for example when the name of the XML
      *      element has changed.
-     * 
+     *
      * @throws JAXBException
      *      If any unexpected problem occurs updating corresponding JAXB mapped content.
      * @throws IllegalArgumentException
@@ -347,8 +347,8 @@ public abstract class Binder<XmlNode> {
      * <p>
      * The <tt>ValidationEventHandler</tt> will be called by the JAXB Provider
      * if any validation errors are encountered during calls to any of the
-     * Binder unmarshal, marshal and update methods.  
-     * 
+     * Binder unmarshal, marshal and update methods.
+     *
      * <p>
      * Calling this method with a null parameter will cause the Binder
      * to revert back to the default default event handler.
@@ -371,13 +371,13 @@ public abstract class Binder<XmlNode> {
     public abstract ValidationEventHandler getEventHandler() throws JAXBException;
 
     /**
-     * 
+     *
      * Set the particular property in the underlying implementation of
      * <tt>Binder</tt>.  This method can only be used to set one of
-     * the standard JAXB defined unmarshal/marshal properties 
+     * the standard JAXB defined unmarshal/marshal properties
      * or a provider specific property for binder, unmarshal or marshal.
      * Attempting to set an undefined property will result in
-     * a PropertyException being thrown.  See 
+     * a PropertyException being thrown.  See
      * <a href="Unmarshaller.html#supportedProps">Supported Unmarshal Properties</a>
      * and
      * <a href="Marshaller.html#supportedProps">Supported Marshal Properties</a>.
@@ -397,12 +397,12 @@ public abstract class Binder<XmlNode> {
 
     /**
      * Get the particular property in the underlying implementation of
-     * <tt>Binder</tt>.  This method can only 
+     * <tt>Binder</tt>.  This method can only
      * be used to get one of
-     * the standard JAXB defined unmarshal/marshal properties 
-     * or a provider specific property for binder, unmarshal or marshal.  
+     * the standard JAXB defined unmarshal/marshal properties
+     * or a provider specific property for binder, unmarshal or marshal.
      * Attempting to get an undefined property will result in
-     * a PropertyException being thrown.  See 
+     * a PropertyException being thrown.  See
      * <a href="Unmarshaller.html#supportedProps">Supported Unmarshal Properties</a>
      * and
      * <a href="Marshaller.html#supportedProps">Supported Marshal Properties</a>.

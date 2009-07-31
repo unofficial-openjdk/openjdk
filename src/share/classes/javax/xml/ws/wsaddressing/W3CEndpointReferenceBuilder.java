@@ -40,16 +40,16 @@ import javax.xml.ws.spi.Provider;
  * instances. The intended use of this clsss is for
  * an application component, for example a factory component,
  * to create an <code>W3CEndpointReference</code> for a
- * web service endpoint published by the same 
+ * web service endpoint published by the same
  * Java EE application. It can also be used to create
  * <code>W3CEndpointReferences</code> for an Java SE based
  * endpoint by providing the <code>address</code> property.
  * <p>
  * When creating a <code>W3CEndpointReference</code> for an
  * endpoint that is not published by the same Java EE application,
- * the <code>address</code> property MUST be specified.  
+ * the <code>address</code> property MUST be specified.
  * <p>
- * When creating a <code>W3CEndpointReference</code> for an endpoint 
+ * When creating a <code>W3CEndpointReference</code> for an endpoint
  * published by the same Java EE application, the <code>address</code>
  * property MAY be <code>null</code> but then the <code>serviceName</code>
  * and <code>endpointName</code> MUST specify an endpoint published by
@@ -57,7 +57,7 @@ import javax.xml.ws.spi.Provider;
  * <p>
  * When the <code>wsdlDocumentLocation</code> is specified it MUST refer
  * to a valid WSDL document and the <code>serviceName</code> and
- * <code>endpointName</code> (if specified) MUST match a service and port 
+ * <code>endpointName</code> (if specified) MUST match a service and port
  * in the WSDL document.
  *
  * @since JAX-WS 2.1
@@ -70,14 +70,14 @@ public final class W3CEndpointReferenceBuilder {
         referenceParameters = new ArrayList<Element>();
         metadata = new ArrayList<Element>();
     }
-    
+
     /**
      * Sets the <code>address</code> to the
      * <code>W3CEndpointReference</code> instance's
      * <code>wsa:Address</code>.
      * <p>
      * The <code>address</code> MUST be set to a non-<code>null</code>
-     * value when building a <code>W3CEndpointReference</code> for a 
+     * value when building a <code>W3CEndpointReference</code> for a
      * web service endpoint that is not published by the same
      * Java EE application or when running on Java SE.
      *
@@ -91,15 +91,15 @@ public final class W3CEndpointReferenceBuilder {
         this.address = address;
         return this;
     }
-    
+
     /**
      * Sets the <code>serviceName</code> of the endpoint to be targeted
      *      by the returned <code>W3CEndpointReference</code>.
      *
      * @param serviceName The service name of the endpoint to be targeted
      *      by the returned <code>W3CEndpointReference<code>.  This property
-     *      may also be used with the <code>endpointName</code> (portName) 
-     *      property to lookup the <code>address</code> of a web service 
+     *      may also be used with the <code>endpointName</code> (portName)
+     *      property to lookup the <code>address</code> of a web service
      *      endpoint that is published by the same Java EE application.
      *
      * @return A <code>W3CEndpointReferenceBuilder</code> instance with
@@ -110,18 +110,18 @@ public final class W3CEndpointReferenceBuilder {
         this.serviceName = serviceName;
         return this;
     }
-    
+
     /**
      * Sets the <code>endpointName</code> of the endpoint to
-     * be targeted by the returned <code>W3CEndpointRefernce</code>. 
+     * be targeted by the returned <code>W3CEndpointRefernce</code>.
      * This method can only
      * be called after the {@link #serviceName} method has been called.
      *
      * @param endpointName The name of the endpoint to be targeted
-     *      by the returned <code>W3CEndpointReference<code>. The 
+     *      by the returned <code>W3CEndpointReference<code>. The
      *      <code>endpointName</code> (portName) property may also be
-     *      used with the <code>serviceName</code> property to lookup 
-     *      the <code>address</code> of a web service 
+     *      used with the <code>serviceName</code> property to lookup
+     *      the <code>address</code> of a web service
      *      endpoint published by the same Java EE application.
      *
      * @return A <code>W3CEndpointReferenceBuilder</code> instance with
@@ -134,16 +134,16 @@ public final class W3CEndpointReferenceBuilder {
         if (serviceName == null) {
             throw new IllegalStateException("The W3CEndpointReferenceBuilder's serviceName must be set before setting the endpointName: "+endpointName);
         }
-        
+
         this.endpointName = endpointName;
         return this;
     }
-    
+
     /**
      * Sets the <code>wsdlDocumentLocation</code> associated with the targeted
      * <code>W3CEndpointReference</code>.
      *
-     * @param wsdlDocumentLocation The location of the WSDL document associated 
+     * @param wsdlDocumentLocation The location of the WSDL document associated
      * with the targeted <code>W3CEndpointReference</code>.
      *
      * @return A <code>W3CEndpointReferenceBuilder</code> instance with
@@ -154,7 +154,7 @@ public final class W3CEndpointReferenceBuilder {
         this.wsdlDocumentLocation = wsdlDocumentLocation;
         return this;
     }
-    
+
     /**
      * Adds the <code>referenceParameter</code> to the
      * <code>W3CEndpointReference</code> instance
@@ -176,7 +176,7 @@ public final class W3CEndpointReferenceBuilder {
         referenceParameters.add(referenceParameter);
         return this;
     }
-    
+
     /**
      * Adds the <code>metadataElement</code> to the
      * <code>W3CEndpointReference</code> instance's
@@ -198,7 +198,7 @@ public final class W3CEndpointReferenceBuilder {
         metadata.add(metadataElement);
         return this;
     }
-    
+
     /**
      * Builds a <code>W3CEndpointReference</code> from the accumulated
      * properties set on this <code>W3CEndpointReferenceBuilder</code>
@@ -209,15 +209,15 @@ public final class W3CEndpointReferenceBuilder {
      * with any other desired properties.  This method
      * can also be used to create a <code>W3CEndpointReference</code> for
      * an endpoint that is published by the same Java EE application.
-     * This method can automatically determine the <code>address</code> of 
-     * an endpoint published by the same Java EE application that is identified by the 
-     * <code>serviceName</code> and 
-     * <code>endpointName</code> properties.  If the <code>address</code> is 
-     * <code>null</code> and the <code>serviceName</code> and 
-     * <code>endpointName</code> 
-     * do not identify an endpoint published by the same Java EE application, a 
+     * This method can automatically determine the <code>address</code> of
+     * an endpoint published by the same Java EE application that is identified by the
+     * <code>serviceName</code> and
+     * <code>endpointName</code> properties.  If the <code>address</code> is
+     * <code>null</code> and the <code>serviceName</code> and
+     * <code>endpointName</code>
+     * do not identify an endpoint published by the same Java EE application, a
      * <code>java.lang.IllegalStateException</code> MUST be thrown.
-     * 
+     *
      *
      * @return <code>W3CEndpointReference</code> from the accumulated
      * properties set on this <code>W3CEndpointReferenceBuilder</code>
@@ -240,16 +240,16 @@ public final class W3CEndpointReferenceBuilder {
      *        <li>If the <code>wsdlDocumentLocation</code> is NOT <code>null</code>
      *            and does not represent a valid WSDL.
      *     </ul>
-     * @throws WebServiceException If an error occurs while creating the 
+     * @throws WebServiceException If an error occurs while creating the
      *                             <code>W3CEndpointReference</code>.
-     *       
+     *
      */
     public W3CEndpointReference build() {
         return Provider.provider().createW3CEndpointReference(address,
                 serviceName, endpointName, metadata, wsdlDocumentLocation,
                 referenceParameters);
     }
-    
+
     private String address;
     private List<Element> referenceParameters;
     private List<Element> metadata;

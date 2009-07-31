@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class ClientMessages {
 
@@ -43,9 +43,9 @@ public final class ClientMessages {
     }
 
     /**
-     * Failed to access the WSDL at: {0}. It failed with: 
-     * 	{1}.
-     * 
+     * Failed to access the WSDL at: {0}. It failed with:
+     *  {1}.
+     *
      */
     public static String FAILED_TO_PARSE(Object arg0, Object arg1) {
         return localizer.localize(localizableFAILED_TO_PARSE(arg0, arg1));
@@ -57,7 +57,7 @@ public final class ClientMessages {
 
     /**
      * Invalid binding id: {0}. Must be: {1}
-     * 
+     *
      */
     public static String INVALID_BINDING_ID(Object arg0, Object arg1) {
         return localizer.localize(localizableINVALID_BINDING_ID(arg0, arg1));
@@ -69,7 +69,7 @@ public final class ClientMessages {
 
     /**
      * EPR is specified without enabling WS-Addressing support.
-     * 
+     *
      */
     public static String EPR_WITHOUT_ADDRESSING_ON() {
         return localizer.localize(localizableEPR_WITHOUT_ADDRESSING_ON());
@@ -81,7 +81,7 @@ public final class ClientMessages {
 
     /**
      * No wsdl metadata for service: {0}, can't create proxy! Try creating Service by providing a WSDL URL
-     * 
+     *
      */
     public static String INVALID_SERVICE_NO_WSDL(Object arg0) {
         return localizer.localize(localizableINVALID_SERVICE_NO_WSDL(arg0));
@@ -93,7 +93,7 @@ public final class ClientMessages {
 
     /**
      * Cannot set SOAP 1.2 role "none"
-     * 
+     *
      */
     public static String INVALID_SOAP_ROLE_NONE() {
         return localizer.localize(localizableINVALID_SOAP_ROLE_NONE());
@@ -105,7 +105,7 @@ public final class ClientMessages {
 
     /**
      * Undefined binding: {0}
-     * 
+     *
      */
     public static String UNDEFINED_BINDING(Object arg0) {
         return localizer.localize(localizableUNDEFINED_BINDING(arg0));
@@ -117,7 +117,7 @@ public final class ClientMessages {
 
     /**
      * HTTP Status-Code 404: Not Found - {0}
-     * 
+     *
      */
     public static String HTTP_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableHTTP_NOT_FOUND(arg0));
@@ -129,7 +129,7 @@ public final class ClientMessages {
 
     /**
      * cannot connect to server: {0}
-     * 
+     *
      */
     public static String HTTP_CLIENT_CANNOT_CONNECT(Object arg0) {
         return localizer.localize(localizableHTTP_CLIENT_CANNOT_CONNECT(arg0));
@@ -141,7 +141,7 @@ public final class ClientMessages {
 
     /**
      * Endpoint Name specified in EPR {0}  is not a WSDL port QName, valid Ports are {1}
-     * 
+     *
      */
     public static String INVALID_EPR_PORT_NAME(Object arg0, Object arg1) {
         return localizer.localize(localizableINVALID_EPR_PORT_NAME(arg0, arg1));
@@ -152,11 +152,11 @@ public final class ClientMessages {
     }
 
     /**
-     * Failed to access the WSDL at: {0}. It failed with: 
-     * 	{1}.
-     * Retrying with MEX gave: 
-     * 	{2}
-     * 
+     * Failed to access the WSDL at: {0}. It failed with:
+     *  {1}.
+     * Retrying with MEX gave:
+     *  {2}
+     *
      */
     public static String FAILED_TO_PARSE_WITH_MEX(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableFAILED_TO_PARSE_WITH_MEX(arg0, arg1, arg2));
@@ -168,7 +168,7 @@ public final class ClientMessages {
 
     /**
      * The server sent HTTP status code {0}: {1}
-     * 
+     *
      */
     public static String HTTP_STATUS_CODE(Object arg0, Object arg1) {
         return localizer.localize(localizableHTTP_STATUS_CODE(arg0, arg1));
@@ -180,7 +180,7 @@ public final class ClientMessages {
 
     /**
      * Invalid address: {0}
-     * 
+     *
      */
     public static String INVALID_ADDRESS(Object arg0) {
         return localizer.localize(localizableINVALID_ADDRESS(arg0));
@@ -192,10 +192,22 @@ public final class ClientMessages {
 
     /**
      * Undefined port type: {0}
-     * 
+     *
      */
     public static String UNDEFINED_PORT_TYPE(Object arg0) {
         return localizer.localize(localizableUNDEFINED_PORT_TYPE(arg0));
+    }
+
+    public static Localizable localizableWSDL_CONTAINS_NO_SERVICE(Object arg0) {
+        return messageFactory.getMessage("wsdl.contains.no.service", arg0);
+    }
+
+    /**
+     * WSDL {0} contains no service definition.
+     *
+     */
+    public static String WSDL_CONTAINS_NO_SERVICE(Object arg0) {
+        return localizer.localize(localizableWSDL_CONTAINS_NO_SERVICE(arg0));
     }
 
     public static Localizable localizableINVALID_SOAP_ACTION() {
@@ -204,7 +216,7 @@ public final class ClientMessages {
 
     /**
      * A valid SOAPAction should be set in the RequestContext when Addressing is enabled, Use BindingProvider.SOAPACTION_URI_PROPERTY to set it.
-     * 
+     *
      */
     public static String INVALID_SOAP_ACTION() {
         return localizer.localize(localizableINVALID_SOAP_ACTION());
@@ -216,7 +228,7 @@ public final class ClientMessages {
 
     /**
      * Cannot set {0} on binding. Handler must be a LogicalHandler.
-     * 
+     *
      */
     public static String NON_LOGICAL_HANDLER_SET(Object arg0) {
         return localizer.localize(localizableNON_LOGICAL_HANDLER_SET(arg0));
@@ -228,7 +240,7 @@ public final class ClientMessages {
 
     /**
      * local transport error: {0}
-     * 
+     *
      */
     public static String LOCAL_CLIENT_FAILED(Object arg0) {
         return localizer.localize(localizableLOCAL_CLIENT_FAILED(arg0));
@@ -240,7 +252,7 @@ public final class ClientMessages {
 
     /**
      * Invalid WSDL {0}, expected {1} found {2} at (line{3})
-     * 
+     *
      */
     public static String RUNTIME_WSDLPARSER_INVALID_WSDL(Object arg0, Object arg1, Object arg2, Object arg3) {
         return localizer.localize(localizableRUNTIME_WSDLPARSER_INVALID_WSDL(arg0, arg1, arg2, arg3));
@@ -252,7 +264,7 @@ public final class ClientMessages {
 
     /**
      * WSDL url {0} is not accessible.
-     * 
+     *
      */
     public static String WSDL_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableWSDL_NOT_FOUND(arg0));
@@ -264,7 +276,7 @@ public final class ClientMessages {
 
     /**
      * HTTP transport error: {0}
-     * 
+     *
      */
     public static String HTTP_CLIENT_FAILED(Object arg0) {
         return localizer.localize(localizableHTTP_CLIENT_FAILED(arg0));
@@ -276,7 +288,7 @@ public final class ClientMessages {
 
     /**
      * cannot create message factory
-     * 
+     *
      */
     public static String HTTP_CLIENT_CANNOT_CREATE_MESSAGE_FACTORY() {
         return localizer.localize(localizableHTTP_CLIENT_CANNOT_CREATE_MESSAGE_FACTORY());
@@ -288,7 +300,7 @@ public final class ClientMessages {
 
     /**
      * {0} is not a valid service
-     * 
+     *
      */
     public static String INVALID_SERVICE_NAME_NULL(Object arg0) {
         return localizer.localize(localizableINVALID_SERVICE_NAME_NULL(arg0));
@@ -300,7 +312,7 @@ public final class ClientMessages {
 
     /**
      * Invalid WSDL URL: {0}
-     * 
+     *
      */
     public static String INVALID_WSDL_URL(Object arg0) {
         return localizer.localize(localizableINVALID_WSDL_URL(arg0));
@@ -312,7 +324,7 @@ public final class ClientMessages {
 
     /**
      * request requires HTTP authentication: {0}
-     * 
+     *
      */
     public static String HTTP_CLIENT_UNAUTHORIZED(Object arg0) {
         return localizer.localize(localizableHTTP_CLIENT_UNAUTHORIZED(arg0));
@@ -324,7 +336,7 @@ public final class ClientMessages {
 
     /**
      * {0} is not a valid port. Valid ports are: {1}
-     * 
+     *
      */
     public static String INVALID_PORT_NAME(Object arg0, Object arg1) {
         return localizer.localize(localizableINVALID_PORT_NAME(arg0, arg1));
@@ -336,7 +348,7 @@ public final class ClientMessages {
 
     /**
      * {0} is not a valid service. Valid services are: {1}
-     * 
+     *
      */
     public static String INVALID_SERVICE_NAME(Object arg0, Object arg1) {
         return localizer.localize(localizableINVALID_SERVICE_NAME(arg0, arg1));
@@ -348,7 +360,7 @@ public final class ClientMessages {
 
     /**
      * {0} not supported with {1}. Must be: {2}
-     * 
+     *
      */
     public static String UNSUPPORTED_OPERATION(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableUNSUPPORTED_OPERATION(arg0, arg1, arg2));
@@ -360,7 +372,7 @@ public final class ClientMessages {
 
     /**
      * Failed to parse EPR: {0}
-     * 
+     *
      */
     public static String FAILED_TO_PARSE_EPR(Object arg0) {
         return localizer.localize(localizableFAILED_TO_PARSE_EPR(arg0));

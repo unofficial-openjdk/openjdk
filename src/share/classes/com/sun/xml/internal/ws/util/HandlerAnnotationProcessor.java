@@ -30,6 +30,7 @@ import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory;
 import com.sun.xml.internal.ws.handler.HandlerChainsModel;
 import com.sun.xml.internal.ws.server.EndpointFactory;
 import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil;
+import com.sun.istack.internal.NotNull;
 
 import javax.jws.HandlerChain;
 import javax.jws.WebService;
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
  * from annotated class. The public methods all return a
  * HandlerChainInfo that contains the handlers and role information
  * needed at runtime.
- * 
+ *
  * <p>All of the handler chain descriptors follow the same schema,
  * whether they are wsdl customizations, handler files specified
  * by an annotation, or are included in the sun-jaxws.xml file.
@@ -84,7 +85,7 @@ public class HandlerAnnotationProcessor {
      * handlers and roles. Will return null if the class passed
      * in has no handler chain annotation.
      */
-    public static HandlerAnnotationInfo buildHandlerInfo(
+    public static HandlerAnnotationInfo buildHandlerInfo(@NotNull
         Class<?> clazz, QName serviceName, QName portName, WSBinding binding) {
 
 //        clazz = checkClass(clazz);

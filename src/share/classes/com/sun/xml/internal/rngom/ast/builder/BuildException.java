@@ -26,7 +26,7 @@ package com.sun.xml.internal.rngom.ast.builder;
 
 /**
  * Signals an error while building schemas.
- * 
+ *
  * <p>
  * Only {@link SchemaBuilder} can throw this exception to
  * abort the parsing in the middle.

@@ -136,7 +136,7 @@ public final class AttributesHolder implements Attributes {
 
 
     /**
-     * Add an attribute using a qualified name that contains the 
+     * Add an attribute using a qualified name that contains the
      * prefix and local name.
      *
      * @param uri

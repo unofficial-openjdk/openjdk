@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -42,10 +42,10 @@ public class NamespaceBase extends AttributeBase implements Namespace{
     static final String XMLNS_ATTRIBUTE = "xmlns";
     static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";
     static final String W3C_XML_SCHEMA_INSTANCE_NS_URI = "http://www.w3.org/2001/XMLSchema-instance";
-    
+
     //is this namespace default declaration?
     private boolean defaultDeclaration = false;
-    
+
     /** a namespace attribute has a form: xmlns:NCName="URI reference" */
     public NamespaceBase(String namespaceURI) {
         super(XMLNS_ATTRIBUTE, "", namespaceURI);
@@ -64,20 +64,20 @@ public class NamespaceBase extends AttributeBase implements Namespace{
             defaultDeclaration=true;
         }
     }
-    
+
     void setPrefix(String prefix){
         if(prefix == null)
             setName(new QName(XMLNS_ATTRIBUTE_NS_URI,DEFAULT_NS_PREFIX,XMLNS_ATTRIBUTE));
         else// new QName(uri, localpart, prefix)
             setName(new QName(XMLNS_ATTRIBUTE_NS_URI,prefix,XMLNS_ATTRIBUTE));
     }
-    
+
     public String getPrefix() {
         if (defaultDeclaration) return "";
         return super.getLocalName();
     }
-    
-    
+
+
   /**
    * set Namespace URI reference (xmlns:prefix = "uri")
    * @param uri the uri reference of a namespace is the value for an attribute
@@ -88,15 +88,15 @@ public class NamespaceBase extends AttributeBase implements Namespace{
     public String getNamespaceURI() {
         return getValue();
     }
-    
+
 
     public boolean isNamespace(){
         return true;
     }
-    
+
     public boolean isDefaultNamespaceDeclaration() {
         return defaultDeclaration;
     }
-    
+
 
 }

@@ -40,7 +40,7 @@ import javax.xml.ws.WebServiceException;
  *
  * @since JAX-WS 2.0.next
  * @author Kohsuke Kawaguchi
- * @see BindingID#parse(String) 
+ * @see BindingID#parse(String)
  */
 public abstract class BindingIDFactory {
     /**

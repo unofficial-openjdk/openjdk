@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.nav;
 
 import java.util.Collection;
@@ -138,7 +139,7 @@ public interface Navigator<T,C,F,M> {
      * Note that this method does not list methods declared on base classes.
      *
      * @return
-     *      can be empty but always non-null. 
+     *      can be empty but always non-null.
      */
     Collection<? extends M> getDeclaredMethods(C clazz);
 
@@ -334,7 +335,7 @@ public interface Navigator<T,C,F,M> {
      *
      * @return
      *      can be empty but never null.
-     */ 
+     */
     F[] getEnumConstants(C clazz);
 
     /**
@@ -386,6 +387,9 @@ public interface Navigator<T,C,F,M> {
      *
      * This is only used to improve the error diagnostics, so
      * it's OK to fail to detect some inner classes as such.
+     *
+     * Note that this method should return false for nested classes
+     * (static classes.)
      */
     boolean isInnerClass(C clazz);
 }

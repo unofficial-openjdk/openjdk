@@ -88,7 +88,7 @@ public final class JEnumConstant extends JExpressionImpl implements JDeclaration
      * @return never null.
      */
     public String getName() {
-    	return this.type.fullName().concat(".").concat(this.name);
+        return this.type.fullName().concat(".").concat(this.name);
     }
 
     /**
@@ -143,6 +143,6 @@ public final class JEnumConstant extends JExpressionImpl implements JDeclaration
     }
 
     public void generate(JFormatter f) {
-    	f.t(type).p('.').p(name);
+        f.t(type).p('.').p(name);
     }
 }

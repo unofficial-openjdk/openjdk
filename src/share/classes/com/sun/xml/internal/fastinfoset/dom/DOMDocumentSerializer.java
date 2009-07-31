@@ -48,7 +48,7 @@ import org.w3c.dom.NodeList;
  *
  */
 public class DOMDocumentSerializer extends Encoder {
-    
+
     /**
      * Serialize a {@link Node}.
      *
@@ -70,7 +70,7 @@ public class DOMDocumentSerializer extends Encoder {
                 break;
         }
     }
-    
+
     /**
      * Serialize a {@link Document}.
      *
@@ -80,7 +80,7 @@ public class DOMDocumentSerializer extends Encoder {
         reset();
         encodeHeader(false);
         encodeInitialVocabulary();
-        
+
         final NodeList nl = d.getChildNodes();
         for (int i = 0; i < nl.getLength(); i++) {
             final Node n = nl.item(i);
@@ -98,31 +98,31 @@ public class DOMDocumentSerializer extends Encoder {
         }
         encodeDocumentTermination();
     }
-    
+
     protected final void serializeElementAsDocument(Node e) throws IOException {
         reset();
         encodeHeader(false);
         encodeInitialVocabulary();
-        
+
         serializeElement(e);
-        
+
         encodeDocumentTermination();
     }
-    
+
 //    protected Node[] _namespaceAttributes = new Node[4];
-    
+
     // map which will hold all current scope prefixes and associated attributes
     // Collection of populated namespace available for current scope
     protected NamespaceContextImplementation _namespaceScopeContext = new NamespaceContextImplementation();
     protected Node[] _attributes = new Node[32];
-    
+
     protected final void serializeElement(Node e) throws IOException {
         encodeTermination();
-        
+
         int attributesSize = 0;
-        
+
         _namespaceScopeContext.pushContext();
-        
+
         if (e.hasAttributes()) {
             /*
              * Split the attribute nodes into namespace attributes
@@ -146,7 +146,7 @@ public class DOMDocumentSerializer extends Encoder {
                         _attributes = attributes;
                     }
                     _attributes[attributesSize++] = a;
-                    
+
                     String attrNamespaceURI = a.getNamespaceURI();
                     String attrPrefix = a.getPrefix();
                     if (attrPrefix != null && !_namespaceScopeContext.getNamespaceURI(attrPrefix).equals(attrNamespaceURI)) {
@@ -155,7 +155,7 @@ public class DOMDocumentSerializer extends Encoder {
                 }
             }
         }
-        
+
         String elementNamespaceURI = e.getNamespaceURI();
         String elementPrefix = e.getPrefix();
         if (elementPrefix == null)  elementPrefix = "";
@@ -163,7 +163,7 @@ public class DOMDocumentSerializer extends Encoder {
                 !_namespaceScopeContext.getNamespaceURI(elementPrefix).equals(elementNamespaceURI)) {
             _namespaceScopeContext.declarePrefix(elementPrefix, elementNamespaceURI);
         }
-        
+
         if (!_namespaceScopeContext.isCurrentContextEmpty()) {
             if (attributesSize > 0) {
                 write(EncodingConstants.ELEMENT | EncodingConstants.ELEMENT_NAMESPACES_FLAG |
@@ -171,7 +171,7 @@ public class DOMDocumentSerializer extends Encoder {
             } else {
                 write(EncodingConstants.ELEMENT | EncodingConstants.ELEMENT_NAMESPACES_FLAG);
             }
-            
+
             for (int i = _namespaceScopeContext.getCurrentContextStartIndex();
                      i < _namespaceScopeContext.getCurrentContextEndIndex(); i++) {
 
@@ -185,12 +185,12 @@ public class DOMDocumentSerializer extends Encoder {
             _b = (attributesSize > 0) ? EncodingConstants.ELEMENT | EncodingConstants.ELEMENT_ATTRIBUTE_FLAG :
                 EncodingConstants.ELEMENT;
         }
-        
+
         String namespaceURI = elementNamespaceURI;
 //        namespaceURI = (namespaceURI == null) ? _namespaceScopeContext.getNamespaceURI("") : namespaceURI;
         namespaceURI = (namespaceURI == null) ? "" : namespaceURI;
         encodeElement(namespaceURI, e.getNodeName(), e.getLocalName());
-        
+
         if (attributesSize > 0) {
             // Serialize the attributes
             for (int i = 0; i < attributesSize; i++) {
@@ -199,16 +199,16 @@ public class DOMDocumentSerializer extends Encoder {
                 namespaceURI = a.getNamespaceURI();
                 namespaceURI = (namespaceURI == null) ? "" : namespaceURI;
                 encodeAttribute(namespaceURI, a.getNodeName(), a.getLocalName());
-                
+
                 final String value = a.getNodeValue();
                 final boolean addToTable = isAttributeValueLengthMatchesLimit(value.length());
-                encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable);
+                encodeNonIdentifyingStringOnFirstBit(value, _v.attributeValue, addToTable, false);
             }
-            
+
             _b = EncodingConstants.TERMINATOR;
             _terminate = true;
         }
-        
+
         if (e.hasChildNodes()) {
             // Serialize the children
             final NodeList nl = e.getChildNodes();
@@ -236,11 +236,11 @@ public class DOMDocumentSerializer extends Encoder {
         encodeElementTermination();
         _namespaceScopeContext.popContext();
     }
-    
-    
+
+
     protected final void serializeText(Node t) throws IOException {
         final String text = t.getNodeValue();
-        
+
         final int length = (text != null) ? text.length() : 0;
         if (length == 0) {
             return;
@@ -248,22 +248,22 @@ public class DOMDocumentSerializer extends Encoder {
             text.getChars(0, length, _charBuffer, 0);
             if (getIgnoreWhiteSpaceTextContent() &&
                     isWhiteSpace(_charBuffer, 0, length)) return;
-            
+
             encodeTermination();
             encodeCharacters(_charBuffer, 0, length);
         } else {
             final char ch[] = text.toCharArray();
             if (getIgnoreWhiteSpaceTextContent() &&
                     isWhiteSpace(ch, 0, length)) return;
-            
+
             encodeTermination();
             encodeCharactersNoClone(ch, 0, length);
         }
     }
-    
+
     protected final void serializeCDATA(Node t) throws IOException {
         final String text = t.getNodeValue();
-        
+
         final int length = (text != null) ? text.length() : 0;
         if (length == 0) {
             return;
@@ -271,7 +271,7 @@ public class DOMDocumentSerializer extends Encoder {
             final char ch[] = text.toCharArray();
             if (getIgnoreWhiteSpaceTextContent() &&
                     isWhiteSpace(ch, 0, length)) return;
-            
+
             encodeTermination();
             try {
                 encodeCIIBuiltInAlgorithmDataAsCDATA(ch, 0, length);
@@ -280,14 +280,14 @@ public class DOMDocumentSerializer extends Encoder {
             }
         }
     }
-    
+
     protected final void serializeComment(Node c) throws IOException {
         if (getIgnoreComments()) return;
-        
+
         encodeTermination();
-        
+
         final String comment = c.getNodeValue();
-        
+
         final int length = (comment != null) ? comment.length() : 0;
         if (length == 0) {
             encodeComment(_charBuffer, 0, 0);
@@ -299,17 +299,17 @@ public class DOMDocumentSerializer extends Encoder {
             encodeCommentNoClone(ch, 0, length);
         }
     }
-    
+
     protected final void serializeProcessingInstruction(Node pi) throws IOException {
         if (getIgnoreProcesingInstructions()) return;
-        
+
         encodeTermination();
-        
+
         final String target = pi.getNodeName();
         final String data = pi.getNodeValue();
         encodeProcessingInstruction(target, data);
     }
-    
+
     protected final void encodeElement(String namespaceURI, String qName, String localName) throws IOException {
         LocalNameQualifiedNamesMap.Entry entry = _v.elementName.obtainEntry(qName);
         if (entry._valueIndex > 0) {
@@ -321,7 +321,7 @@ public class DOMDocumentSerializer extends Encoder {
                 }
             }
         }
-        
+
         // Was DOM node created using an NS-aware call?
         if (localName != null) {
             encodeLiteralElementQualifiedNameOnThirdBit(namespaceURI, getPrefixFromQualifiedName(qName),
@@ -330,7 +330,7 @@ public class DOMDocumentSerializer extends Encoder {
             encodeLiteralElementQualifiedNameOnThirdBit(namespaceURI, "", qName, entry);
         }
     }
-    
+
     protected final void encodeAttribute(String namespaceURI, String qName, String localName) throws IOException {
         LocalNameQualifiedNamesMap.Entry entry = _v.attributeName.obtainEntry(qName);
         if (entry._valueIndex > 0) {
@@ -342,7 +342,7 @@ public class DOMDocumentSerializer extends Encoder {
                 }
             }
         }
-        
+
         // Was DOM node created using an NS-aware call?
         if (localName != null) {
             encodeLiteralAttributeQualifiedNameOnSecondBit(namespaceURI, getPrefixFromQualifiedName(qName),

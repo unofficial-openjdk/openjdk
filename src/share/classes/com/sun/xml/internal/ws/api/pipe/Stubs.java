@@ -90,7 +90,7 @@ import java.lang.reflect.Proxy;
  * <p>
  * If you want the created {@link Dispatch} to talk to the given EPR, specify the parameter.
  * Otherwise leave it <tt>null</tt>. Note that the addressing needs to be enabled separately
- * for this to take effect. 
+ * for this to take effect.
  *
  * @author Kohsuke Kawaguchi
  * @author Kathy Walsh

@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public class IllegalAnnotationsException extends JAXBException {
     public String toString() {
         StringBuilder sb = new StringBuilder(super.toString());
         sb.append('\n');
-        
+
         for( IllegalAnnotationException error : errors )
             sb.append(error.toString()).append('\n');
 

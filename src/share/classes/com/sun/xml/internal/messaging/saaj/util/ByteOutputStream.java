@@ -22,10 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: ByteOutputStream.java,v 1.7 2006/01/27 12:49:51 vj135062 Exp $
- * $Revision: 1.7 $ $Date: 2006/01/27 12:49:51 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.util;
@@ -114,7 +110,7 @@ public final class ByteOutputStream extends OutputStream {
     }
 
     public void write(byte[] b) {
-    	write(b, 0, b.length);
+        write(b, 0, b.length);
     }
 
     /**
@@ -140,7 +136,7 @@ public final class ByteOutputStream extends OutputStream {
     }
 
     /**
-     * Evil buffer reallocation method. 
+     * Evil buffer reallocation method.
      * Don't use it unless you absolutely have to.
      *
      * @deprecated

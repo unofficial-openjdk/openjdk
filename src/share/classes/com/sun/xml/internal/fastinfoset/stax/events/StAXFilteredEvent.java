@@ -42,11 +42,11 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 public class StAXFilteredEvent implements XMLEventReader {
     private XMLEventReader eventReader;
     private EventFilter _filter;
-    
+
     /** Creates a new instance of StAXFilteredEvent */
     public StAXFilteredEvent() {
     }
-    
+
     public StAXFilteredEvent(XMLEventReader reader, EventFilter filter) throws XMLStreamException
     {
         eventReader = reader;
@@ -69,7 +69,7 @@ public class StAXFilteredEvent implements XMLEventReader {
         }
     }
 
-    public XMLEvent nextEvent() throws XMLStreamException 
+    public XMLEvent nextEvent() throws XMLStreamException
     {
         if (hasNext())
             return eventReader.nextEvent();
@@ -82,7 +82,7 @@ public class StAXFilteredEvent implements XMLEventReader {
         XMLEvent e = nextEvent();
         if (!e.isStartElement())
             throw new XMLStreamException(
-            CommonResourceBundle.getInstance().getString("message.mustBeOnSTART_ELEMENT"));            
+            CommonResourceBundle.getInstance().getString("message.mustBeOnSTART_ELEMENT"));
 
         while(hasNext()) {
             e = nextEvent();
@@ -93,7 +93,7 @@ public class StAXFilteredEvent implements XMLEventReader {
                 buffer.append(((Characters) e).getData());
             if(e.isEndElement())
                 return buffer.toString();
-        } 
+        }
         throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.END_ELEMENTnotFound"));
     }
 
@@ -107,9 +107,9 @@ public class StAXFilteredEvent implements XMLEventReader {
     }
 
 
-    public boolean hasNext() 
+    public boolean hasNext()
     {
-        try { 
+        try {
             while(eventReader.hasNext()) {
                 if (_filter.accept(eventReader.peek())) return true;
                 eventReader.nextEvent();

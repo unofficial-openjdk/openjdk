@@ -101,6 +101,7 @@ import com.sun.xml.internal.bind.v2.model.core.PropertyInfo;
 import com.sun.xml.internal.bind.v2.runtime.SwaRefAdapter;
 import com.sun.xml.internal.xsom.XmlString;
 import com.sun.istack.internal.NotNull;
+import com.sun.tools.internal.xjc.model.CReferencePropertyInfo;
 
 /**
  * Generates fields and accessors.
@@ -109,12 +110,12 @@ public final class BeanGenerator implements Outline
 {
     /** Simplifies class/interface creation and collision detection. */
     private final CodeModelClassFactory codeModelClassFactory;
-    
+
     private final ErrorReceiver errorReceiver;
 
     /** all {@link PackageOutline}s keyed by their {@link PackageOutline#_package}. */
     private final Map<JPackage,PackageOutlineImpl> packageContexts = new HashMap<JPackage,PackageOutlineImpl>();
-    
+
     /** all {@link ClassOutline}s keyed by their {@link ClassOutline#target}. */
     private final Map<CClassInfo,ClassOutlineImpl> classes = new HashMap<CClassInfo,ClassOutlineImpl>();
 
@@ -128,7 +129,7 @@ public final class BeanGenerator implements Outline
 
     /** the model object which we are processing. */
     private final Model model;
-    
+
     private final JCodeModel codeModel;
 
     /**
@@ -146,7 +147,7 @@ public final class BeanGenerator implements Outline
     /**
      * Generates beans into code model according to the BGM,
      * and produces the reflection model.
-     * 
+     *
      * @param _errorReceiver
      *      This object will receive all the errors discovered
      *      during the back-end stage.
@@ -158,15 +159,15 @@ public final class BeanGenerator implements Outline
      *      reported to the error recevier.)
      */
     public static Outline generate(Model model, ErrorReceiver _errorReceiver) {
-        
+
         try {
             return new BeanGenerator(model, _errorReceiver);
         } catch( AbortException e ) {
             return null;
         }
     }
-    
-    
+
+
     private BeanGenerator(Model _model, ErrorReceiver _errorReceiver) {
 
         this.model = _model;
@@ -371,7 +372,7 @@ public final class BeanGenerator implements Outline
     }
 
     public ErrorReceiver getErrorReceiver() { return errorReceiver; }
-    
+
     public CodeModelClassFactory getClassFactory() { return codeModelClassFactory; }
 
     public PackageOutlineImpl getPackageContext( JPackage p ) {
@@ -405,7 +406,7 @@ public final class BeanGenerator implements Outline
             usr._extends(r.implementation);
             implRef = usr;
         } else
-        	implRef = r.implementation;
+                implRef = r.implementation;
 
         return new ClassOutlineImpl(this,bean,r.exposed,r.implementation,implRef);
     }
@@ -451,11 +452,10 @@ public final class BeanGenerator implements Outline
 
     /**
      * Generates the body of a class.
-     * 
+     *
      */
     private void generateClassBody( ClassOutlineImpl cc ) {
         CClassInfo target = cc.target;
-
 
         // if serialization support is turned on, generate
         // [RESULT]
@@ -509,7 +509,10 @@ public final class BeanGenerator implements Outline
         if(target.isOrdered()) {
             for(CPropertyInfo p : target.getProperties() ) {
                 if( ! (p instanceof CAttributePropertyInfo )) {
-                    xtw.propOrder(p.getName(false));
+                    if (!( (p instanceof CReferencePropertyInfo) &&
+                           ((CReferencePropertyInfo)p).isDummy())) {
+                        xtw.propOrder(p.getName(false));
+                    }
                 }
             }
         } else {
@@ -612,7 +615,7 @@ public final class BeanGenerator implements Outline
 
         XmlEnumWriter xew = type.annotate2(XmlEnumWriter.class);
         xew.value(baseExposedType);
-        
+
 
         boolean needsValue = e.needsValueField();
 
@@ -720,7 +723,7 @@ public final class BeanGenerator implements Outline
     /**
      * Determines the FieldRenderer used for the given FieldUse,
      * then generates the field declaration and accessor methods.
-     * 
+     *
      * The <code>fields</code> map will be updated with the newly
      * created FieldRenderer.
      */
@@ -730,10 +733,9 @@ public final class BeanGenerator implements Outline
             // none is specified. use the default factory
             fr = model.options.getFieldRendererFactory().getDefault();
 
-        FieldOutline field = fr.generate(cc,prop);
+        FieldOutline field = fr.generate(cc, prop);
         fields.put(prop,field);
-       
-   
+
         return field;
     }
 

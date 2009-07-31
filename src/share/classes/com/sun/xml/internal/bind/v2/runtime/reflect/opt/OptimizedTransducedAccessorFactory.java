@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect.opt;
 
 import java.lang.reflect.Field;
@@ -80,7 +81,7 @@ public abstract class OptimizedTransducedAccessorFactory {
         TypeInfo<Type,Class> parent = prop.parent();
         if(!(parent instanceof RuntimeClassInfo))
             return null;
-        
+
         Class dc = ((RuntimeClassInfo)parent).getClazz();
         String newClassName = toVMClassName(dc)+"_JaxbXducedAccessor_"+prop.getName();
 

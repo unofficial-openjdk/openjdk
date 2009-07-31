@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.util;
@@ -33,11 +33,11 @@ import com.sun.xml.internal.fastinfoset.QualifiedName;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class QualifiedNameArray extends ValueArray {
-    
+
     public QualifiedName[] _array;
-    
+
     private QualifiedNameArray _readOnlyArray;
-        
+
     public QualifiedNameArray(int initialCapacity, int maximumCapacity) {
         _array = new QualifiedName[initialCapacity];
         _maximumCapacity = maximumCapacity;
@@ -46,7 +46,7 @@ public class QualifiedNameArray extends ValueArray {
     public QualifiedNameArray() {
         this(DEFAULT_CAPACITY, MAXIMUM_CAPACITY);
     }
-    
+
     public final void clear() {
         _size = _readOnlyArraySize;
     }
@@ -54,13 +54,13 @@ public class QualifiedNameArray extends ValueArray {
     public final QualifiedName[] getArray() {
         return _array;
     }
-    
+
     public final void setReadOnlyArray(ValueArray readOnlyArray, boolean clear) {
         if (!(readOnlyArray instanceof QualifiedNameArray)) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().
                     getString("message.illegalClass", new Object[]{readOnlyArray}));
-        }       
-        
+        }
+
         setReadOnlyArray((QualifiedNameArray)readOnlyArray, clear);
     }
 
@@ -68,11 +68,11 @@ public class QualifiedNameArray extends ValueArray {
         if (readOnlyArray != null) {
             _readOnlyArray = readOnlyArray;
             _readOnlyArraySize = readOnlyArray.getSize();
-                        
+
             if (clear) {
                 clear();
             }
-            
+
             _array = getCompleteArray();
             _size = _readOnlyArraySize;
         }
@@ -88,16 +88,16 @@ public class QualifiedNameArray extends ValueArray {
             return a;
         }
     }
- 
+
     public final QualifiedName getNext() {
         return (_size == _array.length) ? null : _array[_size];
     }
-    
+
     public final void add(QualifiedName s) {
         if (_size == _array.length) {
             resize();
         }
-            
+
        _array[_size++] = s;
     }
 

@@ -57,4 +57,3 @@ public class HeaderFault extends Fault {
     private QName _message;
     private String _part;
 }
-

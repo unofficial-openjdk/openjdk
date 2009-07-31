@@ -68,7 +68,7 @@ public class JAXBProperty {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public JAXBTypeAndAnnotation getType() {
         return type;
     }

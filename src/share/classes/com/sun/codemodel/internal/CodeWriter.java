@@ -35,21 +35,21 @@ import com.sun.codemodel.internal.util.UnicodeEscapeWriter;
 
 /**
  * Receives generated code and writes to the appropriate storage.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public abstract class CodeWriter {
-    
+
     /**
      * Called by CodeModel to store the specified file.
      * The callee must allocate a storage to store the specified file.
-     * 
+     *
      * <p>
      * The returned stream will be closed before the next file is
      * stored. So the callee can assume that only one OutputStream
      * is active at any given time.
-     * 
+     *
      * @param   pkg
      *      The package of the file to be written.
      * @param   fileName

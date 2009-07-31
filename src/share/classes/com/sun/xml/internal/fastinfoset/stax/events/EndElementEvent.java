@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events ;
 
@@ -40,18 +40,18 @@ import com.sun.xml.internal.fastinfoset.stax.events.EmptyIterator;
 
 
 public class EndElementEvent extends EventBase implements EndElement {
-    
+
     List _namespaces = null;
     QName _qname ;
-    
+
     public void reset() {
         if (_namespaces != null) _namespaces.clear();
     }
-    
+
     public EndElementEvent() {
         setEventType(END_ELEMENT);
     }
-    
+
     public EndElementEvent(String namespaceURI, String localpart, String prefix) {
         _qname = getQName(namespaceURI,localpart,prefix);
         setEventType(END_ELEMENT);
@@ -61,7 +61,7 @@ public class EndElementEvent extends EventBase implements EndElement {
         _qname = qname;
         setEventType(END_ELEMENT);
     }
-        
+
   /**
    * Get the name of this event
    * @return the qualified name of this event
@@ -69,11 +69,11 @@ public class EndElementEvent extends EventBase implements EndElement {
     public QName getName() {
         return _qname;
     }
-    
+
     public void setName(QName qname) {
         _qname = qname;
     }
-    
+
 
     /** Returns an Iterator of namespaces that have gone out
      * of scope.  Returns an empty iterator if no namespaces have gone
@@ -86,15 +86,15 @@ public class EndElementEvent extends EventBase implements EndElement {
             return _namespaces.iterator();
         return EmptyIterator.getInstance();
     }
-    
+
     public void addNamespace(Namespace namespace){
         if (_namespaces == null) {
             _namespaces = new ArrayList();
         }
         _namespaces.add(namespace);
     }
-    
-    public String toString() { 
+
+    public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("</").append(nameAsString());
         Iterator namespaces = getNamespaces();
@@ -105,7 +105,7 @@ public class EndElementEvent extends EventBase implements EndElement {
         return sb.toString();
     }
 
-    
+
     private String nameAsString() {
         if("".equals(_qname.getNamespaceURI()))
             return _qname.getLocalPart();
@@ -123,5 +123,5 @@ public class EndElementEvent extends EventBase implements EndElement {
         else if(prefix == null && uri == null)
             qn = new QName(localPart);
         return qn;
-    }    
+    }
 }

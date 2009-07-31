@@ -110,9 +110,9 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         }
         throw new IllegalSchemaException();
     }
-  
+
   /**
-   * 
+   *
    * @param eh
    *        Error handler to receive errors while building the schema.
    */
@@ -124,7 +124,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
   }
 
   /**
-   * 
+   *
    * @param eh
    *        Error handler to receive errors while building the schema.
    * @param datatypeLibraryFactory
@@ -153,7 +153,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
     this.inheritNs = inheritNs;
     this.openIncludes = new OpenIncludes(uri, parent.openIncludes);
   }
-  
+
   public NameClassBuilder getNameClassBuilder() {
       return ncb;
   }
@@ -300,7 +300,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         dtb.addParameter(name, value, new ValidationContextImpl(context, ns));
       }
       catch (DatatypeException e) {
-	String detail = e.getMessage();
+        String detail = e.getMessage();
         int pos = e.getIndex();
         String displayedParam;
         if (pos == DatatypeException.UNKNOWN)
@@ -313,10 +313,10 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
           else
             error("invalid_param_display", displayedParam, (Locator)loc);
         }
-	else if (detail != null)
-	  error("invalid_param_detail", detail, (Locator)loc);
-	else
-	  error("invalid_param", (Locator)loc);
+        else if (detail != null)
+          error("invalid_param_detail", detail, (Locator)loc);
+        else
+          error("invalid_param", (Locator)loc);
       }
     }
 
@@ -334,11 +334,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return pb.makeData(dtb.createDatatype());
       }
       catch (DatatypeException e) {
-	String detail = e.getMessage();
-	if (detail != null)
-	  error("invalid_params_detail", detail, (Locator)loc);
-	else
-	  error("invalid_params", (Locator)loc);
+        String detail = e.getMessage();
+        if (detail != null)
+          error("invalid_params_detail", detail, (Locator)loc);
+        else
+          error("invalid_params", (Locator)loc);
         return pb.makeError();
       }
     }
@@ -349,11 +349,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return pb.makeDataExcept(dtb.createDatatype(), (Pattern)except, (Locator)loc);
       }
       catch (DatatypeException e) {
-	String detail = e.getMessage();
-	if (detail != null)
-	  error("invalid_params_detail", detail, (Locator)loc);
-	else
-	  error("invalid_params", (Locator)loc);
+        String detail = e.getMessage();
+        if (detail != null)
+          error("invalid_params_detail", detail, (Locator)loc);
+        else
+          error("invalid_params", (Locator)loc);
         return pb.makeError();
       }
     }
@@ -372,11 +372,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return new DataPatternBuilderImpl(dl.createDatatypeBuilder(type));
       }
       catch (DatatypeException e) {
-	String detail = e.getMessage();
-	if (detail != null)
-	  error("unsupported_datatype_detail", datatypeLibrary, type, detail, (Locator)loc);
-	else
-	  error("unrecognized_datatype", datatypeLibrary, type, (Locator)loc);
+        String detail = e.getMessage();
+        if (detail != null)
+          error("unsupported_datatype_detail", datatypeLibrary, type, detail, (Locator)loc);
+        else
+          error("unrecognized_datatype", datatypeLibrary, type, (Locator)loc);
       }
     }
     return new DummyDataPatternBuilder();
@@ -431,7 +431,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
       startRef = g.startRef;
       defines = g.defines;
     }
-    
+
     public ParsedPattern endGrammar(Location loc, Annotations anno) throws BuildException {
       for (Enumeration e = defines.keys();
            e.hasMoreElements();) {
@@ -719,7 +719,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
 
   public void addText(String value, Location loc, CommentList comments) throws BuildException {
   }
-  
+
   public boolean usesComments() {
     return false;
   }

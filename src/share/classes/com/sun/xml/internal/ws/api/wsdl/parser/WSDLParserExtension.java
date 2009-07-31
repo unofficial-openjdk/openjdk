@@ -26,19 +26,7 @@
 package com.sun.xml.internal.ws.api.wsdl.parser;
 
 import com.sun.xml.internal.ws.api.WSService;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLBoundOperation;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLBoundPortType;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLExtensible;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLExtension;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLFault;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLInput;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLMessage;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLModel;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLOperation;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLOutput;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLPort;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLPortType;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLService;
+import com.sun.xml.internal.ws.api.model.wsdl.*;
 import com.sun.xml.internal.ws.api.pipe.Tube;
 import com.sun.xml.internal.ws.wsdl.parser.RuntimeWSDLParser;
 
@@ -180,22 +168,22 @@ public abstract class WSDLParserExtension {
     public boolean portTypeOperationFault(WSDLOperation op, XMLStreamReader reader) {
         return false;
     }
-    
+
     public boolean definitionsElements(XMLStreamReader reader) {
         return false;
     }
-    
+
     public boolean bindingElements(WSDLBoundPortType binding, XMLStreamReader reader) {
         return false;
     }
-    
+
     public void bindingAttributes(WSDLBoundPortType binding, XMLStreamReader reader) {
     }
-    
+
     public boolean portTypeElements(WSDLPortType portType, XMLStreamReader reader) {
         return false;
     }
-    
+
     public void portTypeAttributes(WSDLPortType portType, XMLStreamReader reader) {
     }
 
@@ -255,11 +243,11 @@ public abstract class WSDLParserExtension {
     public void bindingOperationOutputAttributes(WSDLBoundOperation operation, XMLStreamReader reader) {
     }
 
-    public boolean bindingOperationFaultElements(WSDLBoundOperation operation, XMLStreamReader reader) {
+    public boolean bindingOperationFaultElements(WSDLBoundFault fault, XMLStreamReader reader) {
         return false;
     }
 
-    public void bindingOperationFaultAttributes(WSDLBoundOperation operation, XMLStreamReader reader) {
+    public void bindingOperationFaultAttributes(WSDLBoundFault fault, XMLStreamReader reader) {
     }
 
     // TODO: complete the rest of the callback

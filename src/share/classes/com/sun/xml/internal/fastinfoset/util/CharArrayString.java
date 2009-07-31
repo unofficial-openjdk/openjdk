@@ -24,14 +24,14 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.util;
 
 public class CharArrayString extends CharArray {
     protected String _s;
-    
+
     public CharArrayString(String s) {
         this(s, true);
     }
@@ -44,15 +44,15 @@ public class CharArrayString extends CharArray {
             length = ch.length;
         }
     }
-    
+
     public String toString() {
         return _s;
     }
-                                                                                
+
     public int hashCode() {
         return _s.hashCode();
     }
-                                                                                
+
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

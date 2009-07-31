@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model.nav;
 
 import com.sun.codemodel.internal.JType;
@@ -32,7 +33,7 @@ import com.sun.tools.internal.xjc.outline.Outline;
  * A type.
  *
  * See the package documentaion for details.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public interface NType {

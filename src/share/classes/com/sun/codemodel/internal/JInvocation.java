@@ -80,7 +80,7 @@ public final class JInvocation extends JExpressionImpl implements JStatement {
     JInvocation(JExpression object, JMethod method) {
         this( (JGenerable)object, method );
     }
-    
+
     /**
      * Invokes a static method on a class.
      */
@@ -107,7 +107,7 @@ public final class JInvocation extends JExpressionImpl implements JStatement {
     /**
      * Invokes a constructor of an object (i.e., creates
      * a new object.)
-     * 
+     *
      * @param c
      *      Type of the object to be created. If this type is
      *      an array type, added arguments are treated as array
@@ -158,14 +158,14 @@ public final class JInvocation extends JExpressionImpl implements JStatement {
                     f.id(name).p('(');
             }
         }
-                
+
         f.g(args);
 
         if (isConstructor && type.isArray())
             f.p('}');
-        else 
+        else
             f.p(')');
-            
+
         if( type instanceof JDefinedClass && ((JDefinedClass)type).isAnonymous() ) {
             ((JAnonymousClass)type).declareBody(f);
         }

@@ -33,18 +33,18 @@ import org.xml.sax.XMLReader;
 /**
  * {@link XMLReaderCreator} that uses JAXP to create
  * {@link XMLReader}s.
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public class JAXPXMLReaderCreator implements XMLReaderCreator {
 
     private final SAXParserFactory spf;
-    
+
     public JAXPXMLReaderCreator( SAXParserFactory spf ) {
         this.spf = spf;
     }
-    
+
     /**
      * Creates a {@link JAXPXMLReaderCreator} by using
      * {@link SAXParserFactory#newInstance()}.
@@ -53,7 +53,7 @@ public class JAXPXMLReaderCreator implements XMLReaderCreator {
         spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
     }
-    
+
     /**
      * @see com.sun.xml.internal.rngom.xml.sax.XMLReaderCreator#createXMLReader()
      */

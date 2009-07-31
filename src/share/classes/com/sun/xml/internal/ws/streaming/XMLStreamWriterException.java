@@ -31,9 +31,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * <p> XMLWriterException represents an exception that occurred while writing
  * an XML document. </p>
- * 
+ *
  * @see JAXWSExceptionBase
- * 
+ *
  * @author WS Development Team
  */
 public class XMLStreamWriterException extends JAXWSExceptionBase {

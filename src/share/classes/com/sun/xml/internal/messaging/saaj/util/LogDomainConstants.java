@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: LogDomainConstants.java,v 1.5 2006/01/27 12:49:52 vj135062 Exp $
- * $Revision: 1.5 $
- * $Date: 2006/01/27 12:49:52 $
- */
 
 
 
@@ -43,34 +38,34 @@ package com.sun.xml.internal.messaging.saaj.util;
 public interface LogDomainConstants {
 
     // TBD -- this should be configurable from a properties
-    // file or something .. Leaving it as it is for now.     
-    public static String MODULE_TOPLEVEL_DOMAIN = 
+    // file or something .. Leaving it as it is for now.
+    public static String MODULE_TOPLEVEL_DOMAIN =
                     "javax.xml.messaging.saaj";
 
-    // First Level Domain 
-    public static String CLIENT_DOMAIN = 
+    // First Level Domain
+    public static String CLIENT_DOMAIN =
                 MODULE_TOPLEVEL_DOMAIN + ".client";
-    
-    public static String SOAP_DOMAIN = 
+
+    public static String SOAP_DOMAIN =
                 MODULE_TOPLEVEL_DOMAIN + ".soap";
 
-    public static String UTIL_DOMAIN = 
+    public static String UTIL_DOMAIN =
                 MODULE_TOPLEVEL_DOMAIN + ".util";
 
     // Second Level Domain
-    public static String HTTP_CONN_DOMAIN = 
+    public static String HTTP_CONN_DOMAIN =
                   CLIENT_DOMAIN + ".p2p";
-    
-    public static String NAMING_DOMAIN =  
+
+    public static String NAMING_DOMAIN =
                 SOAP_DOMAIN + ".name";
 
-    public static String SOAP_IMPL_DOMAIN = 
+    public static String SOAP_IMPL_DOMAIN =
                   SOAP_DOMAIN + ".impl";
 
-    public static String SOAP_VER1_1_DOMAIN = 
+    public static String SOAP_VER1_1_DOMAIN =
                   SOAP_DOMAIN + ".ver1_1";
-    
-    public static String SOAP_VER1_2_DOMAIN = 
+
+    public static String SOAP_VER1_2_DOMAIN =
                   SOAP_DOMAIN + ".ver1_2";
 
 }

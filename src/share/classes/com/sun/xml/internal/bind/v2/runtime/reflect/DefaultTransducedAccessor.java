@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ import org.xml.sax.SAXException;
  * The print method that works for {@link String} determines the dispatching
  * of the {@link #writeText(XMLSerializer,Object,String)} and
  * {@link #writeLeafElement(XMLSerializer, Name, Object, String)} methods,
- * so those are implemented here. 
+ * so those are implemented here.
  *
  * @author Kohsuke Kawaguchi
  */

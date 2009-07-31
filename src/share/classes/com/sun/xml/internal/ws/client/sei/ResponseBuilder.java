@@ -49,6 +49,7 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.transform.Source;
 import javax.xml.ws.Holder;
 import javax.xml.ws.WebServiceException;
@@ -95,7 +96,7 @@ abstract class ResponseBuilder {
     static final class None extends ResponseBuilder {
         private None(){
         }
-        public Object readResponse(Message msg, Object[] args) {           
+        public Object readResponse(Message msg, Object[] args) {
             msg.consume();
             return null;
         }
@@ -188,7 +189,7 @@ abstract class ResponseBuilder {
             return retVal;
         }
     }
-    
+
     /**
      * Reads an Attachment into a Java parameter.
      */
@@ -197,7 +198,7 @@ abstract class ResponseBuilder {
         protected final ParameterImpl param;
         private final String pname;
         private final String pname1;
-            
+
         AttachmentBuilder(ParameterImpl param, ValueSetter setter) {
             this.setter = setter;
             this.param = param;
@@ -229,10 +230,10 @@ abstract class ResponseBuilder {
             } else if(isXMLMimeType(param.getBinding().getMimeType())) {
                 return new JAXBBuilder(param, setter);
             } else {
-                throw new UnsupportedOperationException("Attachment is not mapped");
+                throw new UnsupportedOperationException("Unexpected Attachment type ="+type);
             }
         }
-        
+
         public Object readResponse(Message msg, Object[] args) throws JAXBException, XMLStreamException {
             // TODO not to loop
             for (Attachment att : msg.getAttachments()) {
@@ -246,77 +247,87 @@ abstract class ResponseBuilder {
             }
             return null;
         }
-        
+
         abstract Object mapAttachment(Attachment att, Object[] args) throws JAXBException;
     }
-        
+
     private static final class DataHandlerBuilder extends AttachmentBuilder {
         DataHandlerBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) {
             return setter.put(att.asDataHandler(), args);
         }
     }
-        
+
     private static final class ByteArrayBuilder extends AttachmentBuilder {
         ByteArrayBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) {
             return setter.put(att.asByteArray(), args);
         }
     }
-        
+
     private static final class SourceBuilder extends AttachmentBuilder {
         SourceBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) {
             return setter.put(att.asSource(), args);
         }
     }
-        
+
     private static final class ImageBuilder extends AttachmentBuilder {
         ImageBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) {
             Image image;
+            InputStream is = null;
             try {
-                image = ImageIO.read(att.asInputStream());
+                is = att.asInputStream();
+                image = ImageIO.read(is);
             } catch(IOException ioe) {
                 throw new WebServiceException(ioe);
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch(IOException ioe) {
+                        throw new WebServiceException(ioe);
+                    }
+                }
             }
             return setter.put(image, args);
         }
     }
-        
+
     private static final class InputStreamBuilder extends AttachmentBuilder {
         InputStreamBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) {
             return setter.put(att.asInputStream(), args);
         }
     }
-        
+
     private static final class JAXBBuilder extends AttachmentBuilder {
         JAXBBuilder(ParameterImpl param, ValueSetter setter) {
             super(param, setter);
         }
-        
+
         Object mapAttachment(Attachment att, Object[] args) throws JAXBException {
             Object obj = param.getBridge().unmarshal(att.asInputStream());
             return setter.put(obj, args);
         }
     }
-    
+
     /**
      * Gets the WSDL part name of this attachment.
      *
@@ -462,7 +473,7 @@ abstract class ResponseBuilder {
 
         private final QName wrapperName;
 
-        public DocLit(WrapperParameter wp) {
+        public DocLit(WrapperParameter wp, ValueSetterFactory setterFactory) {
             wrapperName = wp.getName();
             wrapper = wp.getBridge();
             Class wrapperType = (Class) wrapper.getTypeReference().type;
@@ -480,7 +491,7 @@ abstract class ResponseBuilder {
                             wrapperType,
                             name.getNamespaceURI(),
                             p.getName().getLocalPart()),
-                        ValueSetter.get(p)
+                        setterFactory.get(p)
                     ));
                     // wrapper parameter itself always bind to body, and
                     // so do all its children
@@ -497,7 +508,7 @@ abstract class ResponseBuilder {
         public Object readResponse(Message msg, Object[] args) throws JAXBException, XMLStreamException {
             Object retVal = null;
 
-            if(parts.length>0) {
+            if (parts.length>0) {
                 XMLStreamReader reader = msg.readPayload();
                 XMLStreamReaderUtil.verifyTag(reader,wrapperName);
                 Object wrapperBean = wrapper.unmarshal(reader, (msg.getAttachments() != null) ?
@@ -521,6 +532,8 @@ abstract class ResponseBuilder {
                 // we are done with the body
                 reader.close();
                 XMLStreamReaderFactory.recycle(reader);
+            } else {
+                msg.consume();
             }
 
             return retVal;
@@ -567,14 +580,14 @@ abstract class ResponseBuilder {
 
         private QName wrapperName;
 
-        public RpcLit(WrapperParameter wp) {
+        public RpcLit(WrapperParameter wp, ValueSetterFactory setterFactory) {
             assert wp.getTypeReference().type== CompositeStructure.class;
 
             wrapperName = wp.getName();
             List<ParameterImpl> children = wp.getWrapperChildren();
             for (ParameterImpl p : children) {
                 parts.put( p.getName(), new PartBuilder(
-                    p.getBridge(), ValueSetter.get(p)
+                    p.getBridge(), setterFactory.get(p)
                 ));
                 // wrapper parameter itself always bind to body, and
                 // so do all its children
@@ -605,6 +618,11 @@ abstract class ResponseBuilder {
                         assert retVal==null;
                         retVal = o;
                     }
+                }
+                // skip any whitespace
+                if (reader.getEventType() != XMLStreamConstants.START_ELEMENT &&
+                        reader.getEventType() != XMLStreamConstants.END_ELEMENT) {
+                    XMLStreamReaderUtil.nextElementContent(reader);
                 }
             }
 
@@ -642,8 +660,8 @@ abstract class ResponseBuilder {
 
         }
     }
-    
+
     private static boolean isXMLMimeType(String mimeType){
-        return (mimeType.equals("text/xml") || mimeType.equals("application/xml")) ? true : false;
+        return mimeType.equals("text/xml") || mimeType.equals("application/xml");
     }
 }

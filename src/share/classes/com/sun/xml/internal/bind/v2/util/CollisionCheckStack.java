@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.util;
 
 import java.util.AbstractList;
@@ -61,9 +62,9 @@ public final class CollisionCheckStack<E> extends AbstractList<E> {
     // for our purpose, there isn't much point in resizing this as we don't expect
     // the stack to grow that much.
     private final int[] initialHash;
-    
+
     public CollisionCheckStack() {
-    	initialHash = new int[17];
+        initialHash = new int[17];
         data = new Object[16];
         next = new int[16];
     }
@@ -98,7 +99,7 @@ public final class CollisionCheckStack<E> extends AbstractList<E> {
         size++;
         return r;
     }
-    
+
     /**
      * Pushes a new object to the stack without making it participate
      * with the collision check.
@@ -142,7 +143,7 @@ public final class CollisionCheckStack<E> extends AbstractList<E> {
         }
         return (E)o;
     }
-    
+
     /**
      * Returns the top of the stack.
      */
@@ -202,7 +203,7 @@ public final class CollisionCheckStack<E> extends AbstractList<E> {
             x = get(--i);
             sb.append(x);
         } while(obj!=x);
-        
+
         return sb.toString();
     }
 }

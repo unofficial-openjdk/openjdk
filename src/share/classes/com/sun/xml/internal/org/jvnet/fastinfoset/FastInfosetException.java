@@ -29,11 +29,11 @@
 package com.sun.xml.internal.org.jvnet.fastinfoset;
 
 public class FastInfosetException extends Exception {
-    
+
     public FastInfosetException(String message) {
         super(message);
     }
-    
+
     public FastInfosetException(String message, Exception e) {
         super(message, e);
     }
@@ -41,5 +41,5 @@ public class FastInfosetException extends Exception {
     public FastInfosetException(Exception e) {
         super(e);
     }
-    
+
 }

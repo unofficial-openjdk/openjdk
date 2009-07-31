@@ -50,11 +50,11 @@ import java.util.Map;
  * @author Jitendra Kotamraju
  */
 final class WSDLGenResolver implements WSDLResolver {
-    
+
     private final List<SDDocumentImpl> docs;
     private final List<SDDocumentSource> newDocs = new ArrayList<SDDocumentSource>();
     private SDDocumentSource concreteWsdlSource;
-    
+
     private SDDocumentImpl abstractWsdl;
     private SDDocumentImpl concreteWsdl;
 
@@ -88,7 +88,7 @@ final class WSDLGenResolver implements WSDLResolver {
             }
         }
     }
-    
+
     /**
      * Generates the concrete WSDL that contains service element.
      *
@@ -174,7 +174,7 @@ final class WSDLGenResolver implements WSDLResolver {
         r.setSystemId(filename.value);
         return r;
     }
-    
+
     /**
      * Converts SDDocumentSource to SDDocumentImpl and updates original docs. It
      * categories the generated documents into WSDL, Schema types.
@@ -193,5 +193,5 @@ final class WSDLGenResolver implements WSDLResolver {
         }
         return concreteWsdl;
     }
-    
+
 }

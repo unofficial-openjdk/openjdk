@@ -171,7 +171,7 @@ class ModelerUtils {
         parameter.setProperty(ModelProperties.PROPERTY_PARAM_MESSAGE_PART_NAME,
                 partName);
         parameter.setEmbedded(false);
-        parameter.setType(jaxbType);        
+        parameter.setType(jaxbType);
         parameter.setTypeName(jaxbType.getJavaType().getType().getName());
         parameter.setBlock(block);
         return parameter;

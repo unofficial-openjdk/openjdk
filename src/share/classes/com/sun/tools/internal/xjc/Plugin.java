@@ -38,11 +38,11 @@ import org.xml.sax.SAXException;
 
 /**
  * Add-on that works on the generated source code.
- * 
+ *
  * <p>
  * This add-on will be called after the default bean generation
  * has finished.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  *
@@ -221,13 +221,13 @@ public abstract class Plugin {
      * <p>
      * Note that this method is invoked only when a {@link Plugin}
      * is activated.
-     * 
+     *
      * @param outline
      *      This object allows access to various generated code.
-     * 
+     *
      * @param errorHandler
      *      Errors should be reported to this handler.
-     * 
+     *
      * @return
      *      If the add-on executes successfully, return true.
      *      If it detects some errors but those are reported and

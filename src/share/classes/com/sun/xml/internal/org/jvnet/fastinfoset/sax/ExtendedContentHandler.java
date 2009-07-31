@@ -31,7 +31,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 public interface ExtendedContentHandler extends ContentHandler {
-    
+
     /**
      * Receive notification of character data.
      *

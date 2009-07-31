@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  *
  * <p>
  * See {@link Stateful} for a real example. This annotation is only for
- * advanced users of the JAX-WS RI. 
+ * advanced users of the JAX-WS RI.
  *
  * @since JAX-WS 2.1
  * @see Stateful

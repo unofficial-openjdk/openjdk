@@ -33,25 +33,25 @@ import java.io.StringWriter;
  * Modifier groups.
  */
 public class JMods implements JGenerable {
-    
+
 //
 // mask
 //
     private static int VAR
-	= JMod.FINAL;
+        = JMod.FINAL;
 
     private static int FIELD
-	= (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED
-	   | JMod.STATIC | JMod.FINAL
-	   | JMod.TRANSIENT | JMod.VOLATILE);
+        = (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED
+           | JMod.STATIC | JMod.FINAL
+           | JMod.TRANSIENT | JMod.VOLATILE);
 
     private static int METHOD
-	= (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED | JMod.FINAL
-	   | JMod.ABSTRACT | JMod.STATIC | JMod.NATIVE | JMod.SYNCHRONIZED);
+        = (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED | JMod.FINAL
+           | JMod.ABSTRACT | JMod.STATIC | JMod.NATIVE | JMod.SYNCHRONIZED);
 
     private static int CLASS
-	= (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED
-	   | JMod.STATIC | JMod.FINAL | JMod.ABSTRACT );
+        = (JMod.PUBLIC | JMod.PRIVATE | JMod.PROTECTED
+           | JMod.STATIC | JMod.FINAL | JMod.ABSTRACT );
 
     private static int INTERFACE = JMod.PUBLIC;
 
@@ -109,17 +109,17 @@ public class JMods implements JGenerable {
     public boolean isNative() {
         return (mods & JMod.NATIVE) != 0;
     }
-    
+
     public boolean isSynchronized() {
         return (mods & JMod.SYNCHRONIZED) != 0;
     }
-    
+
     public void setSynchronized(boolean newValue) {
         setFlag( JMod.SYNCHRONIZED, newValue );
     }
-    
+
     // TODO: more
-    
+
     private void setFlag( int bit, boolean newValue ) {
         mods = (mods & ~bit) | (newValue?bit:0);
     }

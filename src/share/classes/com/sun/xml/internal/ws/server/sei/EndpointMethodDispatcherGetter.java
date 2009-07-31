@@ -42,7 +42,7 @@ import java.util.List;
  * <p>
  * {@link Message} payload's QName to obtain the handler. If no handler is
  * registered corresponding to that QName, then uses Action Message
- * Addressing Property value to get the handler. 
+ * Addressing Property value to get the handler.
  *
  * @author Arun Gupta
  */
@@ -59,6 +59,7 @@ final class EndpointMethodDispatcherGetter {
         // even when action based dispatching is in place,
         // we still need this because clients are alowed not to use addressing headers
         dispatcherList.add(new PayloadQNameBasedDispatcher(model, binding, invokerTube));
+        dispatcherList.add(new SOAPActionBasedDispatcher(model, binding, invokerTube));
     }
 
     List<EndpointMethodDispatcher> getDispatcherList() {

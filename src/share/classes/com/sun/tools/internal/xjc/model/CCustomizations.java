@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public final class CCustomizations extends ArrayList<CPluginCustomization> {
 //        // loop check
 //        for( CCustomizations c = model.customizations; c!=null; c=c.next )
 //            assert c!=this;
-        
+
         this.next = model.customizations;
         model.customizations = this;
         assert owner!=null;

@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.unmarshaller;
 
 import javax.xml.bind.ValidationEventLocator;
@@ -31,7 +32,7 @@ import org.xml.sax.Locator;
 
 /**
  * {@link LocatorEx} implemented by {@link Locator}.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 class LocatorExWrapper implements LocatorEx {

@@ -34,17 +34,17 @@ class DOMLocator {
     private static final String systemId    = "systemid";
     private static final String column      = "column";
     private static final String line        = "line";
-    
+
     /** Sets the location information to a specified element. */
     public static void setLocationInfo( Element e, Locator loc ) {
         e.setAttributeNS(locationNamespace,"loc:"+systemId,loc.getSystemId());
         e.setAttributeNS(locationNamespace,"loc:"+column,Integer.toString(loc.getLineNumber()));
         e.setAttributeNS(locationNamespace,"loc:"+line,Integer.toString(loc.getColumnNumber()));
     }
-    
+
     /**
      * Gets the location information from an element.
-     * 
+     *
      * <p>
      * For this method to work, the setLocationInfo method has to be
      * called before.
@@ -52,7 +52,7 @@ class DOMLocator {
     public static Locator getLocationInfo( final Element e ) {
         if(DOMUtil.getAttribute(e,locationNamespace,systemId)==null)
             return null;    // no location information
-        
+
         return new Locator(){
             public int getLineNumber() {
                 return Integer.parseInt(DOMUtil.getAttribute(e,locationNamespace,line));

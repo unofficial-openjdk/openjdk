@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.reader.xmlschema;
 
 import java.util.ArrayList;
@@ -73,9 +74,9 @@ import org.xml.sax.Locator;
 
 /**
  * Root of the XML Schema binder.
- * 
+ *
  * <div><img src="doc-files/binding_chart.png"/></div>
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class BGMBuilder extends BindingComponent {
@@ -247,7 +248,7 @@ public class BGMBuilder extends BindingComponent {
      */
     public @NotNull BIGlobalBinding getGlobalBinding() { return globalBinding; }
 
-    
+
     private ParticleBinder particleBinder;
 
     /**
@@ -435,6 +436,9 @@ public class BGMBuilder extends BindingComponent {
      * Gets the {@link BIDom} object that applies to the given particle.
      */
     protected final BIDom getLocalDomCustomization( XSParticle p ) {
+        if (p == null) {
+            return null;
+        }
         BIDom dom = getBindInfo(p).get(BIDom.class);
         if(dom!=null)  return dom;
 
@@ -549,4 +553,12 @@ public class BGMBuilder extends BindingComponent {
 
         return name;
     }
+
+    public boolean isGenerateMixedExtensions() {
+        if (globalBinding != null) {
+            return globalBinding.isGenerateMixedExtensions();
+        }
+        return false;
+    }
+
 }

@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  *
  * This is primarily intended to be used to produce a wrapper
  * XML element around collections. The annotation therefore supports
- * two forms of serialization shown below. 
+ * two forms of serialization shown below.
  *
  * <pre>
  *    //Example: code fragment
@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
  *    // XML Serialization Form 1 (Unwrapped collection)
  *    &lt;names> ... &lt;/names>
  *    &lt;names> ... &lt;/names>
- * 
+ *
  *    // XML Serialization Form 2 ( Wrapped collection )
  *    &lt;wrapperElement>
  *       &lt;names> value-of-item &lt;/names>
@@ -57,12 +57,12 @@ import java.lang.annotation.Target;
  * <p> The two serialized XML forms allow a null collection to be
  * represented either by absence or presence of an element with a
  * nillable attribute.
- * 
+ *
  * <p> <b>Usage</b> </p>
  * <p>
  * The <tt>@XmlElementWrapper</tt> annotation can be used with the
- * following program elements: 
- * <ul> 
+ * following program elements:
+ * <ul>
  *   <li> JavaBean property </li>
  *   <li> non static, non transient field </li>
  * </ul>
@@ -71,7 +71,7 @@ import java.lang.annotation.Target;
  * <ul>
  *   <li> The property must be a collection property </li>
  *   <li> This annotation can be used with the following annotations:
- *            {@link XmlElement}, 
+ *            {@link XmlElement},
  *            {@link XmlElements},
  *            {@link XmlElementRef},
  *            {@link XmlElementRefs},
@@ -82,7 +82,7 @@ import java.lang.annotation.Target;
  * additional common information.</p>
  *
  * @author <ul><li>Kohsuke Kawaguchi, Sun Microsystems, Inc.</li><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>
- * @see XmlElement 
+ * @see XmlElement
  * @see XmlElements
  * @see XmlElementRef
  * @see XmlElementRefs

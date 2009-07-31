@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.util;
 
@@ -38,7 +38,7 @@ import javax.xml.stream.XMLStreamException;
 
 public class StAXParserWrapper implements XMLStreamReader{
     private XMLStreamReader _reader;
-    
+
     /** Creates a new instance of StAXParserWrapper */
     public StAXParserWrapper() {
     }
@@ -53,17 +53,17 @@ public class StAXParserWrapper implements XMLStreamReader{
         return _reader;
     }
 
-    public int next() throws XMLStreamException 
+    public int next() throws XMLStreamException
     {
         return _reader.next();
     }
 
-    public int nextTag() throws XMLStreamException 
+    public int nextTag() throws XMLStreamException
     {
         return _reader.nextTag();
     }
 
-    public String getElementText() throws XMLStreamException 
+    public String getElementText() throws XMLStreamException
     {
         return _reader.getElementText();
     }
@@ -83,7 +83,7 @@ public class StAXParserWrapper implements XMLStreamReader{
         _reader.close();
     }
 
-    public String getNamespaceURI(String prefix) 
+    public String getNamespaceURI(String prefix)
     {
         return _reader.getNamespaceURI(prefix);
     }
@@ -112,14 +112,14 @@ public class StAXParserWrapper implements XMLStreamReader{
         return _reader.getAttributeName(index);
     }
 
-    public int getTextCharacters(int sourceStart, char[] target, int targetStart, 
-                               int length) throws XMLStreamException 
+    public int getTextCharacters(int sourceStart, char[] target, int targetStart,
+                               int length) throws XMLStreamException
     {
         return _reader.getTextCharacters(sourceStart, target, targetStart, length);
     }
 
     public String getAttributeValue(String namespaceUri,
-                                  String localName) 
+                                  String localName)
     {
         return _reader.getAttributeValue(namespaceUri,localName);
     }
@@ -233,5 +233,5 @@ public class StAXParserWrapper implements XMLStreamReader{
 
     public Object getProperty(String name) {
         return _reader.getProperty(name);
-    }    
+    }
 }

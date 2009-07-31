@@ -50,8 +50,8 @@ import java.util.List;
  *
  * <p>
  * There's a considerable overlap between this and {@link HttpAdapterList}.
- * The SPI really needs to be reconsidered 
- * 
+ * The SPI really needs to be reconsidered
+ *
  *
  * @see Container
  * @author Kohsuke Kawaguchi
@@ -64,7 +64,7 @@ public abstract class Module {
      * <p>
      * From the point of view of the {@link Module} implementation,
      * it really only needs to provide a {@link List} object as a data store.
-     * JAX-WS will update this list accordingly. 
+     * JAX-WS will update this list accordingly.
      *
      * @return
      *      always return the same non-null instance.

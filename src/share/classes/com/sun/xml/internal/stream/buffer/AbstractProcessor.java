@@ -30,7 +30,7 @@ package com.sun.xml.internal.stream.buffer;
  */
 public abstract class AbstractProcessor extends AbstractCreatorProcessor {
     protected  static final int STATE_ILLEGAL                       = 0;
-    
+
     protected  static final int STATE_DOCUMENT                      = 1;
     protected  static final int STATE_DOCUMENT_FRAGMENT             = 2;
     protected  static final int STATE_ELEMENT_U_LN_QN               = 3;
@@ -48,14 +48,14 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
     protected  static final int STATE_COMMENT_AS_STRING             = 15;
     protected  static final int STATE_PROCESSING_INSTRUCTION        = 16;
     protected  static final int STATE_END                           = 17;
-    protected  static final int[] _eiiStateTable = new int[256];
-    
+    private  static final int[] _eiiStateTable = new int[256];
+
     protected  static final int STATE_NAMESPACE_ATTRIBUTE           = 1;
     protected  static final int STATE_NAMESPACE_ATTRIBUTE_P         = 2;
     protected  static final int STATE_NAMESPACE_ATTRIBUTE_P_U       = 3;
     protected  static final int STATE_NAMESPACE_ATTRIBUTE_U         = 4;
-    protected  static final int[] _niiStateTable = new int[256];
-    
+    private  static final int[] _niiStateTable = new int[256];
+
     protected  static final int STATE_ATTRIBUTE_U_LN_QN             = 1;
     protected  static final int STATE_ATTRIBUTE_P_U_LN              = 2;
     protected  static final int STATE_ATTRIBUTE_U_LN                = 3;
@@ -64,8 +64,8 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
     protected  static final int STATE_ATTRIBUTE_P_U_LN_OBJECT       = 6;
     protected  static final int STATE_ATTRIBUTE_U_LN_OBJECT         = 7;
     protected  static final int STATE_ATTRIBUTE_LN_OBJECT           = 8;
-    protected  static final int[] _aiiStateTable = new int[256];
-    
+    private  static final int[] _aiiStateTable = new int[256];
+
     static {
         /*
          * Create a state table from information items and options.
@@ -90,12 +90,12 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
         _eiiStateTable[T_COMMENT_AS_STRING] = STATE_COMMENT_AS_STRING;
         _eiiStateTable[T_PROCESSING_INSTRUCTION] = STATE_PROCESSING_INSTRUCTION;
         _eiiStateTable[T_END] = STATE_END;
-        
+
         _niiStateTable[T_NAMESPACE_ATTRIBUTE] = STATE_NAMESPACE_ATTRIBUTE;
         _niiStateTable[T_NAMESPACE_ATTRIBUTE_P] = STATE_NAMESPACE_ATTRIBUTE_P;
         _niiStateTable[T_NAMESPACE_ATTRIBUTE_P_U] = STATE_NAMESPACE_ATTRIBUTE_P_U;
         _niiStateTable[T_NAMESPACE_ATTRIBUTE_U] = STATE_NAMESPACE_ATTRIBUTE_U;
-        
+
         _aiiStateTable[T_ATTRIBUTE_U_LN_QN] = STATE_ATTRIBUTE_U_LN_QN;
         _aiiStateTable[T_ATTRIBUTE_P_U_LN] = STATE_ATTRIBUTE_P_U_LN;
         _aiiStateTable[T_ATTRIBUTE_U_LN] = STATE_ATTRIBUTE_U_LN;
@@ -105,14 +105,14 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
         _aiiStateTable[T_ATTRIBUTE_U_LN_OBJECT] = STATE_ATTRIBUTE_U_LN_OBJECT;
         _aiiStateTable[T_ATTRIBUTE_LN_OBJECT] = STATE_ATTRIBUTE_LN_OBJECT;
     }
-    
+
     protected XMLStreamBuffer _buffer;
 
     /**
      * True if this processor should create a fragment of XML, without the start/end document markers.
      */
     protected boolean _fragmentMode;
-        
+
     protected boolean _stringInterningFeature = false;
 
     /**
@@ -131,7 +131,7 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
     protected final void setBuffer(XMLStreamBuffer buffer, boolean fragmentMode) {
         _buffer = buffer;
         _fragmentMode = fragmentMode;
-        
+
         _currentStructureFragment = _buffer.getStructure();
         _structure = _currentStructureFragment.getArray();
         _structurePtr = _buffer.getStructurePtr();
@@ -139,27 +139,27 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
         _currentStructureStringFragment = _buffer.getStructureStrings();
         _structureStrings = _currentStructureStringFragment.getArray();
         _structureStringsPtr = _buffer.getStructureStringsPtr();
-        
+
         _currentContentCharactersBufferFragment = _buffer.getContentCharactersBuffer();
         _contentCharactersBuffer = _currentContentCharactersBufferFragment.getArray();
         _contentCharactersBufferPtr = _buffer.getContentCharactersBufferPtr();
-        
+
         _currentContentObjectFragment = _buffer.getContentObjects();
         _contentObjects = _currentContentObjectFragment.getArray();
         _contentObjectsPtr = _buffer.getContentObjectsPtr();
-        
+
         _stringInterningFeature = _buffer.hasInternedStrings();
         _treeCount = _buffer.treeCount;
     }
-    
+
     protected final int peekStructure() {
         if (_structurePtr < _structure.length) {
             return _structure[_structurePtr] & 255;
         }
-        
+
         return readFromNextStructure(0);
     }
-    
+
     protected final int readStructure() {
         if (_structurePtr < _structure.length) {
             return _structure[_structurePtr++] & 255;
@@ -172,36 +172,48 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
         return _eiiStateTable[readStructure()];
     }
 
+    protected static int getEIIState(int item) {
+        return _eiiStateTable[item];
+    }
+
+    protected static int getNIIState(int item) {
+        return _niiStateTable[item];
+    }
+
+    protected static int getAIIState(int item) {
+        return _aiiStateTable[item];
+    }
+
     protected final int readStructure16() {
         return (readStructure() << 8) | readStructure();
     }
-    
+
     private int readFromNextStructure(int v) {
         _structurePtr = v;
         _currentStructureFragment = _currentStructureFragment.getNext();
         _structure = _currentStructureFragment.getArray();
         return _structure[0] & 255;
     }
-    
+
     protected final String readStructureString() {
         if (_structureStringsPtr < _structureStrings.length) {
             return _structureStrings[_structureStringsPtr++];
         }
-        
+
         _structureStringsPtr = 1;
         _currentStructureStringFragment = _currentStructureStringFragment.getNext();
         _structureStrings = _currentStructureStringFragment.getArray();
         return _structureStrings[0];
     }
-    
+
     protected final String readContentString() {
         return (String)readContentObject();
     }
-    
+
     protected final char[] readContentCharactersCopy() {
         return (char[])readContentObject();
     }
-    
+
     protected final int readContentCharactersBuffer(int length) {
         if (_contentCharactersBufferPtr + length < _contentCharactersBuffer.length) {
             final int start = _contentCharactersBufferPtr;
@@ -214,27 +226,27 @@ public abstract class AbstractProcessor extends AbstractCreatorProcessor {
         _contentCharactersBuffer = _currentContentCharactersBufferFragment.getArray();
         return 0;
     }
-    
+
     protected final Object readContentObject() {
         if (_contentObjectsPtr < _contentObjects.length) {
             return _contentObjects[_contentObjectsPtr++];
         }
-        
+
         _contentObjectsPtr = 1;
         _currentContentObjectFragment = _currentContentObjectFragment.getNext();
         _contentObjects = _currentContentObjectFragment.getArray();
         return _contentObjects[0];
     }
-    
+
     protected final StringBuilder _qNameBuffer = new StringBuilder();
-    
+
     protected final String getQName(String prefix, String localName) {
         _qNameBuffer.append(prefix).append(':').append(localName);
         final String qName = _qNameBuffer.toString();
         _qNameBuffer.setLength(0);
         return (_stringInterningFeature) ? qName.intern() : qName;
-    }        
-   
+    }
+
     protected final String getPrefixFromQName(String qName) {
         int pIndex = qName.indexOf(':');
         if (_stringInterningFeature) {

@@ -40,6 +40,8 @@ import com.sun.xml.internal.ws.message.AttachmentSetImpl;
 import com.sun.xml.internal.ws.message.RootElementSniffer;
 import com.sun.xml.internal.ws.message.stream.StreamMessage;
 import com.sun.xml.internal.ws.streaming.XMLStreamWriterUtil;
+import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil;
+import com.sun.xml.internal.ws.streaming.MtomStreamWriter;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -48,12 +50,14 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.attachment.AttachmentMarshaller;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.util.JAXBResult;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
 import javax.xml.transform.Source;
 import javax.xml.ws.WebServiceException;
 import java.io.OutputStream;
@@ -71,7 +75,7 @@ public final class JAXBMessage extends AbstractMessageImpl {
      * The JAXB object that represents the header.
      */
     private final Object jaxbObject;
-    
+
     private final AttachmentSetImpl attachmentSet;
 
     private final Bridge bridge;
@@ -190,7 +194,7 @@ public final class JAXBMessage extends AbstractMessageImpl {
         this.jaxbObject = that.jaxbObject;
         this.bridge = that.bridge;
     }
-    
+
     @Override
     public @NotNull AttachmentSet getAttachments() {
         return attachmentSet;
@@ -265,7 +269,10 @@ public final class JAXBMessage extends AbstractMessageImpl {
                 bridge.marshal(jaxbObject,sbr);
                 infoset = sbr.getXMLStreamBuffer();
             }
-            return infoset.readAsXMLStreamReader();
+            XMLStreamReader reader = infoset.readAsXMLStreamReader();
+            if(reader.getEventType()== START_DOCUMENT)
+                XMLStreamReaderUtil.nextElementContent(reader);
+            return reader;
         } catch (JAXBException e) {
            // bug 6449684, spec 4.3.4
            throw new WebServiceException(e);
@@ -292,15 +299,20 @@ public final class JAXBMessage extends AbstractMessageImpl {
 
     public void writePayloadTo(XMLStreamWriter sw) throws XMLStreamException {
         try {
-            AttachmentMarshallerImpl am = new AttachmentMarshallerImpl(attachmentSet);
+            // MtomCodec sets its own AttachmentMarshaller
+            AttachmentMarshaller am = (sw instanceof MtomStreamWriter)
+                    ? ((MtomStreamWriter)sw).getAttachmentMarshaller()
+                    : new AttachmentMarshallerImpl(attachmentSet);
+
             // Get output stream and use JAXB UTF-8 writer
             OutputStream os = XMLStreamWriterUtil.getOutputStream(sw);
             if (os != null) {
                 bridge.marshal(jaxbObject, os, sw.getNamespaceContext(),am);
             } else {
-                bridge.marshal(jaxbObject,sw,am);   
+                bridge.marshal(jaxbObject,sw,am);
             }
-            am.cleanup();
+            //cleanup() is not needed since JAXB doesn't keep ref to AttachmentMarshaller
+            //am.cleanup();
         } catch (JAXBException e) {
             // bug 6449684, spec 4.3.4
             throw new WebServiceException(e);

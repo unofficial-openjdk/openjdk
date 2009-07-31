@@ -42,7 +42,7 @@ final class JCast extends JExpressionImpl {
     private final JExpression object;
 
     /**
-     * JCast constructor 
+     * JCast constructor
      *
      * @param type
      *        JType to which the expression is cast

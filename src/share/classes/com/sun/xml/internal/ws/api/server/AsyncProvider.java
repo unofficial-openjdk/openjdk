@@ -39,7 +39,7 @@ import java.util.concurrent.Executor;
  * {@link Provider} to implement asynchronous web services (AWS.) AWS enables
  * applications to perform operations with long latency without blocking a thread,
  * and thus particularly suitable for highly scalable service implementation,
- * at the expesnce of implementation complexity. 
+ * at the expesnce of implementation complexity.
  *
  * <h2>Programming Model</h2>
  * <p>

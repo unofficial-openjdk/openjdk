@@ -24,11 +24,11 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.org.jvnet.fastinfoset;
 
-/** 
+/**
  * The indexes of built-in encoding algorithms.
  *
  * <p>The indexes of the built-in encoding algorithms are specified

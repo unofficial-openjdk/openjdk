@@ -33,16 +33,16 @@ import com.sun.xml.internal.rngom.util.Localizer;
 
 class BuiltinDatatypeBuilder implements DatatypeBuilder {
   private final Datatype dt;
-  
+
   private static final Localizer localizer = new Localizer(BuiltinDatatypeBuilder.class);
-  
+
   BuiltinDatatypeBuilder(Datatype dt) {
     this.dt = dt;
   }
 
   public void addParameter(String name,
-			   String value,
-			   ValidationContext context) throws DatatypeException {
+                           String value,
+                           ValidationContext context) throws DatatypeException {
     throw new DatatypeException(localizer.message("builtin_param"));
   }
 

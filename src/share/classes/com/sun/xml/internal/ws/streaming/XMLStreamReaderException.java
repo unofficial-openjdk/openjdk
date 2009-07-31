@@ -31,9 +31,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * <p> XMLStream ReaderException represents an exception that occurred while reading an
  * XML document. </p>
- * 
+ *
  * @see JAXWSExceptionBase
- * 
+ *
  * @author WS Development Team
  */
 public class XMLStreamReaderException extends JAXWSExceptionBase {

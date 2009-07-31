@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -38,22 +38,22 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     private String _entityName;
     private String _replacement;
     private String _notationName;
-    
+
     /** Creates a new instance of EntityDeclarationImpl */
     public EntityDeclarationImpl() {
         init();
     }
-    
+
     public EntityDeclarationImpl(String entityName , String replacement){
         init();
         _entityName = entityName;
         _replacement = replacement;
     }
-    
+
     /**
     * The entity's public identifier, or null if none was given
     * @return the public ID for this declaration or null
-    */    
+    */
     public String getPublicId(){
         return _publicId;
     }
@@ -64,7 +64,7 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     */
     public String getSystemId(){
         return _systemId;
-    }    
+    }
 
     /**
     * The entity's name
@@ -73,7 +73,7 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     public String getName(){
         return _entityName;
     }
-    
+
     /**
     * The name of the associated notation.
     * @return the notation name
@@ -104,27 +104,27 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     public void setPublicId(String publicId) {
         _publicId = publicId;
     }
-    
+
     public void setSystemId(String systemId) {
         _systemId = systemId;
     }
-    
+
     public void setBaseURI(String baseURI) {
         _baseURI = baseURI;
     }
-    
+
     public void setName(String entityName){
         _entityName = entityName;
-    }    
-    
+    }
+
     public void setReplacementText(String replacement){
         _replacement = replacement;
     }
-        
+
     public void setNotationName(String notationName){
         _notationName = notationName;
     }
-        
+
     protected void init(){
         setEventType(ENTITY_DECLARATION);
     }

@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.org.jvnet.fastinfoset;
@@ -41,7 +41,7 @@ import com.sun.xml.internal.fastinfoset.sax.SAXDocumentSerializer;
  *
  *  <P>The derivation of FIResult from SAXResult is an implementation
  *  detail.<P>
- *  
+ *
  *  <P>This implementation is designed for interoperation with JAXP and is not
  *  not designed with performance in mind. It is recommended that for performant
  *  interoperation alternative serializer specific solutions be used.<P>
@@ -55,9 +55,9 @@ import com.sun.xml.internal.fastinfoset.sax.SAXDocumentSerializer;
  *  </P>
  */
 public class FastInfosetResult extends SAXResult {
-   
+
     OutputStream _outputStream;
-    
+
     public FastInfosetResult(OutputStream outputStream) {
         _outputStream = outputStream;
     }
@@ -69,18 +69,18 @@ public class FastInfosetResult extends SAXResult {
             setHandler(handler);
         }
         ((SAXDocumentSerializer) handler).setOutputStream(_outputStream);
-        return handler;        
+        return handler;
     }
-    
+
     public LexicalHandler getLexicalHandler() {
         return (LexicalHandler) getHandler();
     }
-    
+
     public OutputStream getOutputStream() {
         return _outputStream;
-    }    
-    
+    }
+
     public void setOutputStream(OutputStream outputStream) {
         _outputStream = outputStream;
-    }    
+    }
 }

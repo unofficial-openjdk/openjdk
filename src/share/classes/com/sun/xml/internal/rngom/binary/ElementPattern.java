@@ -40,10 +40,10 @@ public final class ElementPattern extends Pattern {
 
   ElementPattern(NameClass nameClass, Pattern p, Locator loc) {
     super(false,
-	  ELEMENT_CONTENT_TYPE,
-	  combineHashCode(ELEMENT_HASH_CODE,
-			  nameClass.hashCode(),
-			  p.hashCode()));
+          ELEMENT_CONTENT_TYPE,
+          combineHashCode(ELEMENT_HASH_CODE,
+                          nameClass.hashCode(),
+                          p.hashCode()));
     this.nameClass = nameClass;
     this.origNameClass = nameClass;
     this.p = p;

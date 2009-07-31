@@ -42,7 +42,7 @@ import java.util.Iterator;
 public final class AttachmentSetImpl implements AttachmentSet {
 
     private final ArrayList<Attachment> attList = new ArrayList<Attachment>();
-    
+
     /**
      * Creates an empty {@link AttachmentSet}.
      */

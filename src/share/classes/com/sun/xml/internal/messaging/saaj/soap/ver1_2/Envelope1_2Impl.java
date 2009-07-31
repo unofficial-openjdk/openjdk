@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * 
- */
 
 
 
@@ -50,7 +47,7 @@ public class Envelope1_2Impl extends EnvelopeImpl {
     protected static final Logger log =
         Logger.getLogger(Envelope1_2Impl.class.getName(),
                          "com.sun.xml.internal.messaging.saaj.soap.ver1_2.LocalStrings");
-    
+
     public Envelope1_2Impl(SOAPDocumentImpl ownerDoc, String prefix) {
         super(ownerDoc, NameImpl.createEnvelope1_2Name(prefix));
     }

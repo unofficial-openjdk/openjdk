@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.output;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ import org.xml.sax.SAXException;
 /**
  * Abstract implementation of {@link XmlOutput}
  *
- * Implements the optimal methods, where defer to 
+ * Implements the optimal methods, where defer to
  * the non-optimal methods.
  *
  * @author Kohsuke Kawaguchi

@@ -52,9 +52,9 @@ import javax.xml.ws.spi.WebServiceFeatureAnnotation;
  *  <li> ENABLED: In this Mode, a JAX-WS runtime MUST assure that all
  *  required <code>wsdl:binding</code> extensions are either understood
  *  and used by the runtime, or explicitly disabled by the web service
- *  application.  A web service application can disable a particular 
- *  extension that has a known WebServiceFeature using either the appropriate 
- *  annotation associated with that WebServiceFeature on the server, or one of 
+ *  application.  A web service application can disable a particular
+ *  extension that has a known WebServiceFeature using either the appropriate
+ *  annotation associated with that WebServiceFeature on the server, or one of
  *  the following methods on the client:
  *    <ul>
  *      <li>{@link Service#getPort(QName,Class,WebServiceFeature...)}

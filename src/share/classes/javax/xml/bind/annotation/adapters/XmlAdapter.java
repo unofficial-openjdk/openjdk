@@ -41,7 +41,7 @@ package javax.xml.bind.annotation.adapters;
  * MyXmlGregorianCalendar, for example. In both cases, there is a
  * mismatch between <i> bound type </i>, used by an application to
  * access XML content and the <i> value type</i>, that is mapped to an
- * XML representation.  
+ * XML representation.
  *
  * <p>
  * This abstract class defines methods for adapting a bound type to a value
@@ -51,17 +51,17 @@ package javax.xml.bind.annotation.adapters;
  * <ul>
  *   <li> <b> XmlAdapter.marshal(...): </b> During marshalling, JAXB
  *        binding framework invokes XmlAdapter.marshal(..) to adapt a
- *        bound type to value type, which is then marshaled to XML 
- *        representation. </li> 
+ *        bound type to value type, which is then marshaled to XML
+ *        representation. </li>
  *
  *   <li> <b> XmlAdapter.unmarshal(...): </b> During unmarshalling,
  *        JAXB binding framework first unmarshals XML representation
  *        to a value type and then invokes XmlAdapter.unmarshal(..) to
- *        adapt the value type to a bound type. </li> 
+ *        adapt the value type to a bound type. </li>
  * </ul>
  *
  * Writing an adapter therefore involves the following steps:
- * 
+ *
  * <ul>
  *   <li> Write an adapter that implements this abstract class. </li>
  *   <li> Install the adapter using the annotation {@link
@@ -69,7 +69,7 @@ package javax.xml.bind.annotation.adapters;
  * </ul>
  *
  * <p><b>Example:</b> Customized mapping of </tt>HashMap</tt></p>
- * <p> The following example illustrates the use of 
+ * <p> The following example illustrates the use of
  * <tt>&#64;XmlAdapter</tt> and <tt>&#64;XmlJavaTypeAdapter</tt> to
  * customize the mapping of a <tt>HashMap</tt>.
  *
@@ -80,14 +80,14 @@ package javax.xml.bind.annotation.adapters;
  *         &lt;entry key="id123">this is a value&lt;/entry>
  *         &lt;entry key="id312">this is another value&lt;/entry>
  *         ...
- *       &lt;/hashmap>  
+ *       &lt;/hashmap>
  * </pre>
  *
  * <p> <b> Step 2: </b> Determine the schema definition that the
  * desired XML representation shown above should follow.
  *
  * <pre>
- *     
+ *
  *     &lt;xs:complexType name="myHashMapType">
  *       &lt;xs:sequence>
  *         &lt;xs:element name="entry" type="myHashMapEntryType"
@@ -115,20 +115,20 @@ package javax.xml.bind.annotation.adapters;
  *
  *     public class MyHashMapEntryType {
  *         &#64;XmlAttribute
- *         public Integer key; 
+ *         public Integer key;
  *
  *         &#64;XmlValue
  *         public String value;
  *     }
  * </pre>
- * 
+ *
  * <p> <b> Step 4: </b> Write the adapter that adapts the value type,
  * MyHashMapType to a bound type, HashMap, used by the application.
  *
  * <pre>
  *     public final class MyHashMapAdapter extends
  *                        XmlAdapter&lt;MyHashMapType,HashMap> { ... }
- *      
+ *
  * </pre>
  *
  * <p> <b> Step 5: </b> Use the adapter.
@@ -142,7 +142,7 @@ package javax.xml.bind.annotation.adapters;
  * </pre>
  *
  * The above code fragment will map to the following schema:
- * 
+ *
  * <pre>
  *     &lt;xs:complexType name="Foo">
  *       &lt;xs:sequence>

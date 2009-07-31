@@ -40,11 +40,11 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
 
 /**
  * Realizes a property as an untyped {@link List}.
- * 
+ *
  * <pre>
  * List getXXX();
  * </pre>
- * 
+ *
  * <h2>Default value handling</h2>
  * <p>
  * Since unmarshaller just adds new values into the storage,
@@ -56,14 +56,14 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
  * When the getXXX method is called, we'll check if the storage is
  * modified in anyway. If it is modified, it must mean that the values
  * are found in the document, so we just return it.
- * 
+ *
  * Otherwise we will fill in default values and return it to the user.
- * 
+ *
  * <p>
  * When a list has default values, its dirty flag is set to true.
  * Marshaller will check this and treat it appropriately.
- * 
- * 
+ *
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

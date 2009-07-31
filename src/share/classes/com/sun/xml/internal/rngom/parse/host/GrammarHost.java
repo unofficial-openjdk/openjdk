@@ -32,14 +32,14 @@ import com.sun.xml.internal.rngom.ast.om.ParsedPattern;
 
 /**
  * Wraps {@link Grammar} and provides error checking.
- * 
+ *
  * <p>
  * The following errors are checked by this host:
- * 
+ *
  * <ol>
  *  <li>referenced to undefined patterns.
  * </ol>
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -56,7 +56,7 @@ public class GrammarHost extends ScopeHost implements Grammar {
     public ParsedPattern endGrammar(Location _loc, Annotations _anno) throws BuildException {
         LocationHost loc = cast(_loc);
         AnnotationsHost anno = cast(_anno);
-        
+
         return new ParsedPatternHost(
             lhs.endGrammar(loc.lhs, anno.lhs),
             rhs.endGrammar(loc.rhs, anno.rhs));

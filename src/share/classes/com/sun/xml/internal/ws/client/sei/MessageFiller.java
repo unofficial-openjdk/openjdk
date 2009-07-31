@@ -66,7 +66,7 @@ abstract class MessageFiller {
      * Moves an argument of a method invocation into a {@link Message}.
      */
     abstract void fillIn(Object[] methodArgs, Message msg);
-    
+
     /**
      * Adds a parameter as an MIME attachment to {@link Message}.
      */
@@ -75,7 +75,7 @@ abstract class MessageFiller {
         protected final ValueGetter getter;
         protected final String mimeType;
         private final String contentIdPart;
-        
+
         protected AttachmentFiller(ParameterImpl param, ValueGetter getter) {
             super(param.getIndex());
             this.param = param;
@@ -87,7 +87,7 @@ abstract class MessageFiller {
                 throw new WebServiceException(e);
             }
         }
-        
+
         /**
          * Creates an MessageFiller based on the parameter type
          *
@@ -109,12 +109,12 @@ abstract class MessageFiller {
                 return new DataHandlerFiller(param, getter);
             }
         }
-        
+
         String getContentId() {
             return contentIdPart+UUID.randomUUID()+"@jaxws.sun.com";
         }
     }
-    
+
     private static class ByteArrayFiller extends AttachmentFiller {
         protected ByteArrayFiller(ParameterImpl param, ValueGetter getter) {
             super(param, getter);
@@ -126,7 +126,7 @@ abstract class MessageFiller {
             msg.getAttachments().add(att);
         }
     }
-    
+
     private static class DataHandlerFiller extends AttachmentFiller {
         protected DataHandlerFiller(ParameterImpl param, ValueGetter getter) {
             super(param, getter);
@@ -139,7 +139,7 @@ abstract class MessageFiller {
             msg.getAttachments().add(att);
         }
     }
-    
+
     private static class JAXBFiller extends AttachmentFiller {
         protected JAXBFiller(ParameterImpl param, ValueGetter getter) {
             super(param, getter);
@@ -170,9 +170,9 @@ abstract class MessageFiller {
             msg.getHeaders().add(Headers.create(bridge,value));
         }
     }
-    
+
     private static boolean isXMLMimeType(String mimeType){
-        return (mimeType.equals("text/xml") || mimeType.equals("application/xml")) ? true : false;
+        return (mimeType.equals("text/xml") || mimeType.equals("application/xml"));
     }
 
 }

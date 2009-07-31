@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class UtilMessages {
 
@@ -44,7 +44,7 @@ public final class UtilMessages {
 
     /**
      * at line {0} of {1}
-     * 
+     *
      */
     public static String UTIL_LOCATION(Object arg0, Object arg1) {
         return localizer.localize(localizableUTIL_LOCATION(arg0, arg1));
@@ -56,7 +56,7 @@ public final class UtilMessages {
 
     /**
      * Could not parse handler chain file {1} for class {0}
-     * 
+     *
      */
     public static String UTIL_FAILED_TO_PARSE_HANDLERCHAIN_FILE(Object arg0, Object arg1) {
         return localizer.localize(localizableUTIL_FAILED_TO_PARSE_HANDLERCHAIN_FILE(arg0, arg1));
@@ -68,7 +68,7 @@ public final class UtilMessages {
 
     /**
      * found element "{1}", expected "{2}" in handler chain configuration (line {0})
-     * 
+     *
      */
     public static String UTIL_PARSER_WRONG_ELEMENT(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableUTIL_PARSER_WRONG_ELEMENT(arg0, arg1, arg2));
@@ -80,7 +80,7 @@ public final class UtilMessages {
 
     /**
      * "Class: {0} could not be found"
-     * 
+     *
      */
     public static String UTIL_HANDLER_CLASS_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableUTIL_HANDLER_CLASS_NOT_FOUND(arg0));
@@ -92,7 +92,7 @@ public final class UtilMessages {
 
     /**
      * "The Endpoint Interface: {0} does not have WebService Annotation"
-     * 
+     *
      */
     public static String UTIL_HANDLER_ENDPOINT_INTERFACE_NO_WEBSERVICE(Object arg0) {
         return localizer.localize(localizableUTIL_HANDLER_ENDPOINT_INTERFACE_NO_WEBSERVICE(arg0));
@@ -104,7 +104,7 @@ public final class UtilMessages {
 
     /**
      * "A WebService annotation is not present on class: {0}"
-     * 
+     *
      */
     public static String UTIL_HANDLER_NO_WEBSERVICE_ANNOTATION(Object arg0) {
         return localizer.localize(localizableUTIL_HANDLER_NO_WEBSERVICE_ANNOTATION(arg0));
@@ -116,7 +116,7 @@ public final class UtilMessages {
 
     /**
      * Could not find handler chain file {1} for class {0}
-     * 
+     *
      */
     public static String UTIL_FAILED_TO_FIND_HANDLERCHAIN_FILE(Object arg0, Object arg1) {
         return localizer.localize(localizableUTIL_FAILED_TO_FIND_HANDLERCHAIN_FILE(arg0, arg1));
@@ -128,7 +128,7 @@ public final class UtilMessages {
 
     /**
      * You must use HanlderChain annotation, not SOAPMessageHandlers
-     * 
+     *
      */
     public static String UTIL_HANDLER_CANNOT_COMBINE_SOAPMESSAGEHANDLERS() {
         return localizer.localize(localizableUTIL_HANDLER_CANNOT_COMBINE_SOAPMESSAGEHANDLERS());

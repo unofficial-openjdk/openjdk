@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -45,11 +45,11 @@ import com.sun.xml.internal.fastinfoset.vocab.ParserVocabulary;
 
 
 public class PrintTable {
-    
+
     /** Creates a new instance of PrintTable */
     public PrintTable() {
     }
-    
+
     public static void printVocabulary(ParserVocabulary vocabulary) {
         printArray("Attribute Name Table", vocabulary.attributeName);
         printArray("Attribute Value Table", vocabulary.attributeValue);
@@ -62,13 +62,13 @@ public class PrintTable {
         printArray("Other URI Table", vocabulary.otherURI);
         printArray("Prefix Table", vocabulary.prefix);
     }
-    
+
     public static void printArray(String title, StringArray a) {
         System.out.println(title);
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }        
+        }
     }
 
     public static void printArray(String title, PrefixArray a) {
@@ -76,15 +76,15 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }        
+        }
     }
-    
+
     public static void printArray(String title, CharArrayArray a) {
         System.out.println(title);
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }        
+        }
     }
 
     public static void printArray(String title, ContiguousCharArrayArray a) {
@@ -92,7 +92,7 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getString(i));
-        }        
+        }
     }
 
     public static void printArray(String title, QualifiedNameArray a) {
@@ -100,12 +100,12 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             QualifiedName name = a.getArray()[i];
-            System.out.println("" + (name.index + 1) + ": " + 
-                    "{" + name.namespaceName + "}" + 
+            System.out.println("" + (name.index + 1) + ": " +
+                    "{" + name.namespaceName + "}" +
                     name.prefix + ":" + name.localName);
-        }        
+        }
     }
-    
+
     /**
      * @param args the command line arguments
      */
@@ -117,11 +117,11 @@ public class PrintTable {
             SAXParser saxParser = saxParserFactory.newSAXParser();
 
             ParserVocabulary referencedVocabulary = new ParserVocabulary();
-        
+
             VocabularyGenerator vocabularyGenerator = new VocabularyGenerator(referencedVocabulary);
             File f = new File(args[0]);
             saxParser.parse(f, vocabularyGenerator);
-                        
+
             printVocabulary(referencedVocabulary);
         } catch (Exception e) {
             e.printStackTrace();

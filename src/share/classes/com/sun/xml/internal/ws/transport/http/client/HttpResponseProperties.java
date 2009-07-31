@@ -60,7 +60,7 @@ final class HttpResponseProperties extends PropertySet {
     protected PropertyMap getPropertyMap() {
         return model;
     }
-        
+
     private static final PropertyMap model;
 
     static {

@@ -24,20 +24,20 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.util;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class StringArray extends ValueArray {
-    
+
     public String[] _array;
-    
+
     private StringArray _readOnlyArray;
 
     private boolean _clear;
-    
+
     public StringArray(int initialCapacity, int maximumCapacity, boolean clear) {
         _array = new String[initialCapacity];
         _maximumCapacity = maximumCapacity;
@@ -58,13 +58,13 @@ public class StringArray extends ValueArray {
     public final String[] getArray() {
         return _array;
     }
-    
+
     public final void setReadOnlyArray(ValueArray readOnlyArray, boolean clear) {
         if (!(readOnlyArray instanceof StringArray)) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().
                     getString("message.illegalClass", new Object[]{readOnlyArray}));
-        }       
-        
+        }
+
         setReadOnlyArray((StringArray)readOnlyArray, clear);
     }
 
@@ -72,7 +72,7 @@ public class StringArray extends ValueArray {
         if (readOnlyArray != null) {
             _readOnlyArray = readOnlyArray;
             _readOnlyArraySize = readOnlyArray.getSize();
-           
+
             if (clear) {
                 clear();
             }
@@ -92,20 +92,20 @@ public class StringArray extends ValueArray {
             return a;
         }
     }
-    
+
     public final String get(int i) {
         return _array[i];
     }
- 
+
     public final int add(String s) {
         if (_size == _array.length) {
             resize();
         }
-            
+
        _array[_size++] = s;
        return _size;
     }
-    
+
     protected final void resize() {
         if (_size == _maximumCapacity) {
             throw new ValueArrayResourceException(CommonResourceBundle.getInstance().getString("message.arrayMaxCapacity"));

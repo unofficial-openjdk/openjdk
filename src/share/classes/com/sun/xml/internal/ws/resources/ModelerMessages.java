@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class ModelerMessages {
 
@@ -44,7 +44,7 @@ public final class ModelerMessages {
 
     /**
      * runtime modeler error: {0}
-     * 
+     *
      */
     public static String NESTED_MODELER_ERROR(Object arg0) {
         return localizer.localize(localizableNESTED_MODELER_ERROR(arg0));
@@ -56,7 +56,7 @@ public final class ModelerMessages {
 
     /**
      * Annotation {0} is not recognizable, atleast one constructor of {1} should be marked with @FeatureConstructor
-     * 
+     *
      */
     public static String RUNTIME_MODELER_WSFEATURE_NO_FTRCONSTRUCTOR(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_WSFEATURE_NO_FTRCONSTRUCTOR(arg0, arg1));
@@ -68,7 +68,7 @@ public final class ModelerMessages {
 
     /**
      * @WebMethod is not allowed on a non-public method {0}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_WEBMETHOD_MUST_BE_PUBLIC(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_WEBMETHOD_MUST_BE_PUBLIC(arg0));
@@ -80,7 +80,7 @@ public final class ModelerMessages {
 
     /**
      * Wrapper class {0} is not found. Have you run APT to generate them?
-     * 
+     *
      */
     public static String RUNTIME_MODELER_WRAPPER_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_WRAPPER_NOT_FOUND(arg0));
@@ -92,7 +92,7 @@ public final class ModelerMessages {
 
     /**
      * Error in  @BindingType: MTOM Configuration in binding identifier {0} conflicts with feature @MTOM {1}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_MTOM_CONFLICT(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_MTOM_CONFLICT(arg0, arg1));
@@ -103,8 +103,8 @@ public final class ModelerMessages {
     }
 
     /**
-     * Feature {0} in implementation conflicts with {1} in WSDL configuration 
-     * 
+     * Feature {0} in implementation conflicts with {1} in WSDL configuration
+     *
      */
     public static String RUNTIME_MODELER_FEATURE_CONFLICT(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_FEATURE_CONFLICT(arg0, arg1));
@@ -116,7 +116,7 @@ public final class ModelerMessages {
 
     /**
      * Annotation {0} is illegal, Only one constructor of {1} can be marked as @FeatureConstructor
-     * 
+     *
      */
     public static String RUNTIME_MODELER_WSFEATURE_MORETHANONE_FTRCONSTRUCTOR(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_WSFEATURE_MORETHANONE_FTRCONSTRUCTOR(arg0, arg1));
@@ -128,7 +128,7 @@ public final class ModelerMessages {
 
     /**
      * SEI {0} has method {1} annotated as BARE but it has more than one parameter bound to body. This is invalid. Please annotate the method with annotation: @SOAPBinding(parameterStyle=SOAPBinding.ParameterStyle.WRAPPED)
-     * 
+     *
      */
     public static String NOT_A_VALID_BARE_METHOD(Object arg0, Object arg1) {
         return localizer.localize(localizableNOT_A_VALID_BARE_METHOD(arg0, arg1));
@@ -140,7 +140,7 @@ public final class ModelerMessages {
 
     /**
      * A @WebService.targetNamespace must be specified on classes with no package.  Class: {0}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_NO_PACKAGE(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_NO_PACKAGE(arg0));
@@ -152,7 +152,7 @@ public final class ModelerMessages {
 
     /**
      * A WebService annotation is not present on class: {0}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_NO_WEBSERVICE_ANNOTATION(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_NO_WEBSERVICE_ANNOTATION(arg0));
@@ -164,7 +164,7 @@ public final class ModelerMessages {
 
     /**
      * oneway operation should not have out parameters class: {0} method: {1}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_ONEWAY_OPERATION_NO_OUT_PARAMETERS(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_ONEWAY_OPERATION_NO_OUT_PARAMETERS(arg0, arg1));
@@ -175,8 +175,8 @@ public final class ModelerMessages {
     }
 
     /**
-     * Unable to create JAXBContext due to the security restriction
-     * 
+     * Unable to create JAXBContext
+     *
      */
     public static String UNABLE_TO_CREATE_JAXB_CONTEXT() {
         return localizer.localize(localizableUNABLE_TO_CREATE_JAXB_CONTEXT());
@@ -188,7 +188,7 @@ public final class ModelerMessages {
 
     /**
      * The web service defined by the class {0} does not contain any valid WebMethods.
-     * 
+     *
      */
     public static String RUNTIME_MODELER_NO_OPERATIONS(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_NO_OPERATIONS(arg0));
@@ -199,8 +199,8 @@ public final class ModelerMessages {
     }
 
     /**
-     * @WebMethod is not allowed on a static method {0}  
-     * 
+     * @WebMethod is not allowed on a static method {0}
+     *
      */
     public static String RUNTIME_MODELER_WEBMETHOD_MUST_BE_NONSTATIC(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_WEBMETHOD_MUST_BE_NONSTATIC(arg0));
@@ -212,7 +212,7 @@ public final class ModelerMessages {
 
     /**
      * method: {0} could not be found on class: {1}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_METHOD_NOT_FOUND(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_METHOD_NOT_FOUND(arg0, arg1));
@@ -224,7 +224,7 @@ public final class ModelerMessages {
 
     /**
      * class: {0} could not be found
-     * 
+     *
      */
     public static String RUNTIME_MODELER_CLASS_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_CLASS_NOT_FOUND(arg0));
@@ -236,7 +236,7 @@ public final class ModelerMessages {
 
     /**
      * The serviceName cannot be retrieved from an interface.  class {0}
-     * 
+     *
      */
     public static String RUNTIME_MODELER_CANNOT_GET_SERVICE_NAME_FROM_INTERFACE(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_CANNOT_GET_SERVICE_NAME_FROM_INTERFACE(arg0));
@@ -248,7 +248,7 @@ public final class ModelerMessages {
 
     /**
      * The Endpoint Interface: {0} does not have WebService Annotation
-     * 
+     *
      */
     public static String RUNTIME_MODELER_ENDPOINT_INTERFACE_NO_WEBSERVICE(Object arg0) {
         return localizer.localize(localizableRUNTIME_MODELER_ENDPOINT_INTERFACE_NO_WEBSERVICE(arg0));
@@ -260,7 +260,7 @@ public final class ModelerMessages {
 
     /**
      * The namespace of the serviceName "{0}" and the namespace of the portName "{1}" must match
-     * 
+     *
      */
     public static String RUNTIME_MODELER_PORTNAME_SERVICENAME_NAMESPACE_MISMATCH(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_PORTNAME_SERVICENAME_NAMESPACE_MISMATCH(arg0, arg1));
@@ -272,10 +272,22 @@ public final class ModelerMessages {
 
     /**
      * Annotation {0} is illegal, In {1} @FeatureConstructor value does n't match the constructor parameters
-     * 
+     *
      */
     public static String RUNTIME_MODELER_WSFEATURE_ILLEGAL_FTRCONSTRUCTOR(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_MODELER_WSFEATURE_ILLEGAL_FTRCONSTRUCTOR(arg0, arg1));
+    }
+
+    public static Localizable localizableRUNTIME_MODELER_WEBMETHOD_MUST_BE_NONSTATICFINAL(Object arg0) {
+        return messageFactory.getMessage("runtime.modeler.webmethod.must.be.nonstaticfinal", arg0);
+    }
+
+    /**
+     * @WebMethod is not allowed on a static or final method {0}
+     *
+     */
+    public static String RUNTIME_MODELER_WEBMETHOD_MUST_BE_NONSTATICFINAL(Object arg0) {
+        return localizer.localize(localizableRUNTIME_MODELER_WEBMETHOD_MUST_BE_NONSTATICFINAL(arg0));
     }
 
 }

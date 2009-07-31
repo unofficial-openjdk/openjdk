@@ -40,7 +40,7 @@ import com.sun.xml.internal.bind.api.impl.NameConverter;
 
 /**
  * A required primitive property.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -59,7 +59,7 @@ public class UnboxedField extends AbstractFieldWithVar {
 
         ptype = (JPrimitiveType) implType;
         assert ptype!=null;
-        
+
         createField();
 
         // apparently a required attribute can be still defaulted.
@@ -70,7 +70,7 @@ public class UnboxedField extends AbstractFieldWithVar {
         NameConverter nc = outline.parent().getModel().getNameConverter();
 
         JBlock body;
-        
+
         // [RESULT]
         // Type getXXX() {
         //     return value;
@@ -92,10 +92,8 @@ public class UnboxedField extends AbstractFieldWithVar {
         JVar $value = writer.addParameter( ptype, "value" );
         body = $set.body();
         body.assign(JExpr._this().ref(ref()),$value);
-        javadoc = prop.javadoc;
-        if(javadoc.length()==0)
-            javadoc = Messages.DEFAULT_SETTER_JAVADOC.format(nc.toVariableName(prop.getName(true)));
-        writer.javadoc().append(javadoc);
+        // setter always get the default javadoc. See issue #381
+        writer.javadoc().append(Messages.DEFAULT_SETTER_JAVADOC.format(nc.toVariableName(prop.getName(true))));
 
     }
 
@@ -109,11 +107,11 @@ public class UnboxedField extends AbstractFieldWithVar {
 
     public FieldAccessor create(JExpression targetObject) {
         return new Accessor(targetObject) {
-            
+
             public void unsetValues( JBlock body ) {
                 // you can't unset a value
             }
-            
+
             public JExpression hasSetValue() {
                 return JExpr.TRUE;
             }

@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -37,17 +37,17 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 public class FI_SAX_XML extends TransformInputOutput {
-    
+
     public FI_SAX_XML() {
     }
-    
+
     public void parse(InputStream finf, OutputStream xml) throws Exception {
         Transformer tx = TransformerFactory.newInstance().newTransformer();
         tx.transform(new FastInfosetSource(finf), new StreamResult(xml));
     }
-    
-    public static void main(String[] args) throws Exception {        
+
+    public static void main(String[] args) throws Exception {
         FI_SAX_XML p = new FI_SAX_XML();
         p.parse(args);
-    }    
+    }
 }

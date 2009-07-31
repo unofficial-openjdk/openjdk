@@ -35,7 +35,7 @@ package com.sun.xml.internal.ws.api.model;
  * and accessor method
  *
  * <code>public FaultBean getFaultInfo();</code>
- * 
+ *
  * @author Vivek Pandey
  */
 public enum ExceptionType {

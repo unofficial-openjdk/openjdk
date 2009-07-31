@@ -42,11 +42,11 @@ public abstract class BuiltInEncodingAlgorithm implements EncodingAlgorithm {
     public abstract int getOctetLengthFromPrimitiveLength(int primitiveLength);
 
     public abstract void encodeToBytes(Object array, int astart, int alength, byte[] b, int start);
-        
+
     public interface WordListener {
         public void word(int start, int end);
     }
-    
+
     public void matchWhiteSpaceDelimnatedWords(CharBuffer cb, WordListener wl) {
         Matcher m = SPACE_PATTERN.matcher(cb);
         int i = 0;
@@ -61,7 +61,7 @@ public abstract class BuiltInEncodingAlgorithm implements EncodingAlgorithm {
         if (i != cb.length())
             wl.word(i, cb.length());
     }
-    
+
     public StringBuffer removeWhitespace(char[] ch, int start, int length) {
         StringBuffer buf = new StringBuffer();
         int firstNonWS = 0;
@@ -79,5 +79,5 @@ public abstract class BuiltInEncodingAlgorithm implements EncodingAlgorithm {
         }
         return buf;
     }
-    
+
 }

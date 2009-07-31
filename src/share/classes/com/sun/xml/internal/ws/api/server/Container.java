@@ -87,7 +87,7 @@ public abstract class Container {
 
     /**
      * Constant that represents a "no {@link Container}",
-     * which always returns null from {@link #getSPI(Class)}. 
+     * which always returns null from {@link #getSPI(Class)}.
      */
     public static final Container NONE = new Container() {
         public <T> T getSPI(Class<T> spiType) {

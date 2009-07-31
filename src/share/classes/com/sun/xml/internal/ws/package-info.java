@@ -47,7 +47,7 @@
  *    The client side portion of the JAX-WS runtime.
  *
  * </dl>
- * 
+ *
  * @ArchitectureDocument
  **/
 package com.sun.xml.internal.ws;

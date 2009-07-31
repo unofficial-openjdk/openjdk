@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: ImageDataContentHandler.java,v 1.1.1.1.2.1 2007/11/27 07:19:28 kumarjayanti Exp $
- * $Revision: 1.1.1.1.2.1 $
- * $Date: 2007/11/27 07:19:28 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.soap;
@@ -52,7 +47,7 @@ public class ImageDataContentHandler extends Component
     protected static final Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.LocalStrings");
-    
+
     private DataFlavor[] flavor;
 
     public ImageDataContentHandler() {
@@ -72,7 +67,7 @@ public class ImageDataContentHandler extends Component
      *
      * @return The DataFlavors.
      */
-    public DataFlavor[] getTransferDataFlavors() { 
+    public DataFlavor[] getTransferDataFlavors() {
         return flavor;
     }
 
@@ -128,7 +123,7 @@ public class ImageDataContentHandler extends Component
                 bufImage = render((Image)obj);
             } else {
                 log.log(Level.SEVERE,
-                    "SAAJ0520.soap.invalid.obj.type", 
+                    "SAAJ0520.soap.invalid.obj.type",
                     new String[] { obj.getClass().toString() });
                 throw new IOException(
                     "ImageDataContentHandler requires Image object, "
@@ -145,7 +140,7 @@ public class ImageDataContentHandler extends Component
                 stream = ImageIO.createImageOutputStream(os);
                 writer.setOutput(stream);
                 writer.write(bufImage);
-		writer.dispose();
+                writer.dispose();
                 stream.close();
             } else {
                 log.log(Level.SEVERE, "SAAJ0526.soap.unsupported.mime.type",

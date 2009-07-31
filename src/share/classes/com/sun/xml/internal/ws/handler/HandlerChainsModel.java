@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 public class HandlerChainsModel {
     private static final Logger logger = Logger.getLogger(
             com.sun.xml.internal.ws.util.Constants.LoggingDomain + ".util");
-    
+
     private Class annotatedClass;
     private List<HandlerChainType> handlerChains;
     private String id;
@@ -59,18 +59,18 @@ public class HandlerChainsModel {
     private HandlerChainsModel(Class annotatedClass) {
         this.annotatedClass = annotatedClass;
     }
-    
+
     private List<HandlerChainType> getHandlerChain() {
         if (handlerChains == null) {
             handlerChains = new ArrayList<HandlerChainType>();
         }
         return handlerChains;
     }
-    
+
     public String getId() {
         return id;
     }
-    
+
     public void setId(String value) {
         this.id = value;
     }

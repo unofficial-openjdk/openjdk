@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.org.jvnet.staxex;
 
 import javax.xml.stream.XMLStreamReader;
@@ -178,7 +179,7 @@ public interface XMLStreamReaderEx extends XMLStreamReader {
      * The parser can often do this more efficiently than
      * {@code getElementText().trim()}.
      *
-     * @see #getElementText() 
+     * @see #getElementText()
      */
     String getElementTextTrim() throws XMLStreamException;
 }

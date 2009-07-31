@@ -198,11 +198,11 @@ public class ParameterImpl implements Parameter {
     /**
      * Creates a holder if applicable else gives the object as it is. To be
      * called on the inbound message.
-     * 
+     *
      * @param value
      * @return the non-holder value if its Response or IN otherwise creates a
      *         holder with the passed value and returns it back.
-     * 
+     *
      */
     public Object createHolderValue(Object value) {
         if (isResponse() || isIN()) {
@@ -214,7 +214,7 @@ public class ParameterImpl implements Parameter {
     /**
      * Gets the holder value if applicable. To be called for inbound client side
      * message.
-     * 
+     *
      * @param obj
      * @return the holder value if applicable.
      */

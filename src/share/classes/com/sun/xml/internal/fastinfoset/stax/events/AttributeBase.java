@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -40,12 +40,12 @@ public class AttributeBase extends EventBase implements Attribute
     //an Attribute consists of a qualified name and value
     private QName _QName;
     private String _value;
-    
+
     private String _attributeType = null;
     //A flag indicating whether this attribute was actually specified in the start-tag
     //of its element or was defaulted from the schema.
     private boolean _specified = false;
-    
+
     public AttributeBase(){
         super(ATTRIBUTE);
     }
@@ -72,23 +72,23 @@ public class AttributeBase extends EventBase implements Attribute
         _value = value;
         _attributeType = (attributeType == null) ? "CDATA":attributeType;
     }
-    
+
 
     public void setName(QName name){
         _QName = name ;
     }
-    
+
   /**
    * Returns the QName for this attribute
    */
     public QName getName() {
         return _QName;
     }
-    
+
     public void setValue(String value){
         _value = value;
     }
-    
+
     public String getLocalName() {
         return _QName.getLocalPart();
     }
@@ -98,24 +98,24 @@ public class AttributeBase extends EventBase implements Attribute
     public String getValue() {
         return _value;
     }
-    
+
     public void setAttributeType(String attributeType){
         _attributeType = attributeType ;
     }
 
     /**
-   * Gets the type of this attribute, default is 
+   * Gets the type of this attribute, default is
    * the String "CDATA"
    * @return the type as a String, default is "CDATA"
    */
     public String getDTDType() {
         return _attributeType;
     }
-    
-    
+
+
   /**
-   * A flag indicating whether this attribute was actually 
-   * specified in the start-tag of its element, or was defaulted from the schema. 
+   * A flag indicating whether this attribute was actually
+   * specified in the start-tag of its element, or was defaulted from the schema.
    * @return returns true if this was specified in the start element
    */
     public boolean isSpecified() {
@@ -125,16 +125,15 @@ public class AttributeBase extends EventBase implements Attribute
     public void setSpecified(boolean isSpecified){
         _specified = isSpecified ;
     }
-   
-    
+
+
     public String toString() {
         String prefix = _QName.getPrefix();
         if (!Util.isEmptyString(prefix))
             return prefix + ":" + _QName.getLocalPart() + "='" + _value + "'";
-        
+
         return _QName.getLocalPart() + "='" + _value + "'";
     }
-    
-    
-}
 
+
+}

@@ -109,7 +109,7 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
 
     public void writeStartDocument(String encoding, String version) throws XMLStreamException {
         namespaceContext.resetContexts();
-        
+
         storeStructure(T_DOCUMENT);
     }
 
@@ -120,12 +120,12 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
     public void writeStartElement(String localName) throws XMLStreamException {
         namespaceContext.pushContext();
         depth++;
-        
+
         final String defaultNamespaceURI = namespaceContext.getNamespaceURI("");
-        
+
         if (defaultNamespaceURI == null)
             storeQualifiedName(T_ELEMENT_LN, null, null, localName);
-        else 
+        else
             storeQualifiedName(T_ELEMENT_LN, null, defaultNamespaceURI, localName);
     }
 
@@ -137,7 +137,7 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
         if (prefix == null) {
             throw new XMLStreamException();
         }
-        
+
         namespaceContext.pushContext();
         storeQualifiedName(T_ELEMENT_LN, prefix, namespaceURI, localName);
     }
@@ -166,7 +166,7 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
 
     public void writeEndElement() throws XMLStreamException {
         namespaceContext.popContext();
-        
+
         storeStructure(T_END);
         if(--depth==0)
             increaseTreeCount();
@@ -193,7 +193,7 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
             // TODO
             throw new XMLStreamException();
         }
-        
+
         writeAttribute(prefix, namespaceURI, localName, value);
     }
 
@@ -238,7 +238,7 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
     }
 
     // XMLStreamWriterEx
-    
+
     public void writePCDATA(CharSequence charSequence) throws XMLStreamException {
         if (charSequence instanceof Base64Data) {
             storeStructure(T_TEXT_AS_OBJECT);
@@ -258,8 +258,10 @@ public class StreamWriterBufferCreator extends StreamBufferCreator implements XM
     }
 
     public void writeBinary(DataHandler dataHandler) throws XMLStreamException {
-        // TODO
-        throw new UnsupportedOperationException();
+        Base64Data d = new Base64Data();
+        d.set(dataHandler);
+        storeStructure(T_TEXT_AS_OBJECT);
+        storeContentObject(d);
     }
 
     public OutputStream writeBinary(String endpointURL) throws XMLStreamException {

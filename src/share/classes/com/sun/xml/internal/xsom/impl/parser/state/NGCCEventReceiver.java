@@ -28,8 +28,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * 
- * 
+ *
+ *
  * @author Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public interface NGCCEventReceiver {

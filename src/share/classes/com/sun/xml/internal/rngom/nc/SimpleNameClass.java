@@ -33,7 +33,7 @@ public class SimpleNameClass extends NameClass {
     public SimpleNameClass(QName name) {
         this.name = name;
     }
-    
+
     public SimpleNameClass( String nsUri, String localPart ) {
         this( new QName(nsUri,localPart) );
     }

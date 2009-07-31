@@ -26,17 +26,17 @@ package com.sun.codemodel.internal;
 
 /**
  * Label that can be used for continue and break.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class JLabel implements JStatement {
-    
+
     final String label;
-    
+
     /**
      * JBreak constructor
-     * 
+     *
      * @param   _label
      *      break label or null.
      */

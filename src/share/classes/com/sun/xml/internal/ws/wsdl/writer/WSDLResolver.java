@@ -51,7 +51,7 @@ public interface WSDLResolver {
     /**
      * Create a Result object into which abstract WSDL is to be generated. If the the
      * abstract WSDL is already in metadata, it is not generated.
-     * 
+     *
      * Update filename if the suggested filename need to be changed in wsdl:import.
      * This needs to be done if the metadata contains abstract WSDL, and that systemid
      * needs to be reflected in concrete WSDL's wsdl:import
@@ -63,7 +63,7 @@ public interface WSDLResolver {
     /**
      * Create a Result object into which schema doc is to be generated. Typically if
      * there is a schema doc for namespace in metadata, then it is not generated.
-     * 
+     *
      * Update filename if the suggested filename need to be changed in xsd:import. This
      * needs to be done if the metadata contains the document, and that systemid
      * needs to be reflected in some other document's xsd:import

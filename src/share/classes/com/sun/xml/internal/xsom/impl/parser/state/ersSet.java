@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 
 
 class ersSet extends NGCCHandler {
@@ -164,22 +164,21 @@ class ersSet extends NGCCHandler {
         return(($_ngcc_current_state == 0));
     }
 
-    
+
       private Integer makeResult() {
         if(v==null)     return new Integer($runtime.blockDefault);
-        
+
         if(v.indexOf("#all")!=-1)
             return new Integer(
               XSType.EXTENSION|XSType.RESTRICTION|XSType.SUBSTITUTION);
-        
+
         int r = 0;
-        
+
         if(v.indexOf("extension")!=-1)      r|=XSType.EXTENSION;
         if(v.indexOf("restriction")!=-1)    r|=XSType.RESTRICTION;
         if(v.indexOf("substitution")!=-1)   r|=XSType.SUBSTITUTION;
-        
+
         return new Integer(r);
       }
-    
-}
 
+}

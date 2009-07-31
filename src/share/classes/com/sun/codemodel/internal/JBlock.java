@@ -111,6 +111,14 @@ public final class JBlock implements JGenerable, JStatement {
         return r;
     }
 
+    /**
+     * Returns true if this block is empty and does not contain
+     * any statement.
+     */
+    public boolean isEmpty() {
+        return content.isEmpty();
+    }
+
 
     /**
      * Adds a local variable declaration to this block
@@ -387,11 +395,11 @@ public final class JBlock implements JGenerable, JStatement {
 
     /**
      * Creates a "literal" statement directly.
-     * 
+     *
      * <p>
      * Specified string is printed as-is.
      * This is useful as a short-cut.
-     * 
+     *
      * <p>
      * For example, you can invoke this method as:
      * <code>directStatement("a=b+c;")</code>.

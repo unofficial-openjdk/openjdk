@@ -35,8 +35,8 @@ public class ListPattern extends Pattern {
 
   ListPattern(Pattern p, Locator locator) {
     super(false,
-	  DATA_CONTENT_TYPE,
-	  combineHashCode(LIST_HASH_CODE, p.hashCode()));
+          DATA_CONTENT_TYPE,
+          combineHashCode(LIST_HASH_CODE, p.hashCode()));
     this.p = p;
     this.locator = locator;
   }
@@ -55,7 +55,7 @@ public class ListPattern extends Pattern {
 
   boolean samePattern(Pattern other) {
     return (other instanceof ListPattern
-	    && p == ((ListPattern)other).p);
+            && p == ((ListPattern)other).p);
   }
 
   public void accept(PatternVisitor visitor) {
@@ -84,7 +84,7 @@ public class ListPattern extends Pattern {
       throw e;
     }
   }
-  
+
   Pattern getOperand() {
     return p;
   }

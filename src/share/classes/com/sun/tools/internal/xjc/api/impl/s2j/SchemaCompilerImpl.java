@@ -62,12 +62,12 @@ import org.xml.sax.helpers.LocatorImpl;
 
 /**
  * {@link SchemaCompiler} implementation.
- * 
+ *
  * This class builds a {@link DOMForest} until the {@link #bind()} method,
  * then this method does the rest of the hard work.
- * 
+ *
  * @see ModelLoader
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -130,7 +130,7 @@ public final class SchemaCompilerImpl extends ErrorReceiver implements SchemaCom
                 e.getMessage(), null, systemId,-1,-1, e));
         }
     }
-    
+
     public void parseSchema(InputSource source) {
         checkAbsoluteness(source.getSystemId());
         try {
@@ -174,7 +174,7 @@ public final class SchemaCompilerImpl extends ErrorReceiver implements SchemaCom
 
     public void setEntityResolver(EntityResolver entityResolver) {
         forest.setEntityResolver(entityResolver);
-        opts.entityResolver = entityResolver; 
+        opts.entityResolver = entityResolver;
     }
 
     public void setDefaultPackageName(String packageName) {
@@ -200,7 +200,12 @@ public final class SchemaCompilerImpl extends ErrorReceiver implements SchemaCom
         // this has been problematic. turn it off.
 //        if(!forest.checkSchemaCorrectness(this))
 //            return null;
-        
+
+        // parse all the binding files given via XJC -b options.
+        // this also takes care of the binding files given in the -episode option.
+        for (InputSource is : opts.getBindFiles())
+            parseSchema(is);
+
         // internalization
         SCDBasedBindingSet scdBasedBindingSet = forest.transform(opts.isExtensionMode());
 
@@ -283,7 +288,7 @@ public final class SchemaCompilerImpl extends ErrorReceiver implements SchemaCom
 
     static {
         try {
-            NO_CORRECTNESS_CHECK = Boolean.getBoolean(SchemaCompilerImpl.class+".noCorrectnessCheck");
+            NO_CORRECTNESS_CHECK = Boolean.getBoolean(SchemaCompilerImpl.class.getName()+".noCorrectnessCheck");
         } catch( Throwable t) {
             // ignore
         }

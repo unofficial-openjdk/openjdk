@@ -55,7 +55,7 @@ public class RefPattern extends Pattern {
   Pattern getPattern() {
     return p;
   }
-  
+
   void setPattern(Pattern p) {
     this.p = p;
   }
@@ -63,11 +63,11 @@ public class RefPattern extends Pattern {
   Locator getRefLocator() {
     return refLoc;
   }
-  
+
   void setRefLocator(Locator loc) {
     this.refLoc = loc;
   }
-  
+
   void checkRecursion(int depth) throws SAXException {
     if (checkRecursionDepth == -1) {
       checkRecursionDepth = depth;
@@ -77,7 +77,7 @@ public class RefPattern extends Pattern {
     else if (depth == checkRecursionDepth)
       // XXX try to recover from this?
       throw new SAXParseException(SchemaBuilderImpl.localizer.message("recursive_reference", name),
-				  refLoc);
+                                  refLoc);
   }
 
   Pattern expand(SchemaPatternBuilder b) {
@@ -103,7 +103,7 @@ public class RefPattern extends Pattern {
   byte getReplacementStatus() {
     return replacementStatus;
   }
-  
+
   void setReplacementStatus(byte replacementStatus) {
     this.replacementStatus = replacementStatus;
   }
@@ -128,4 +128,3 @@ public class RefPattern extends Pattern {
     return name;
   }
 }
-

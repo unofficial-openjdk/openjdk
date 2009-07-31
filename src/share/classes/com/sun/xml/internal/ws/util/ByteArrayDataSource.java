@@ -32,7 +32,7 @@ import javax.activation.DataSource;
 
 /**
  * {@link DataSource} backed by a byte buffer.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public final class ByteArrayDataSource implements DataSource {

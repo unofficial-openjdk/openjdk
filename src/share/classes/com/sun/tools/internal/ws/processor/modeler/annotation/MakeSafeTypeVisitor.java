@@ -45,26 +45,26 @@ public class MakeSafeTypeVisitor extends APTTypeVisitor<TypeMirror, Types> imple
      * Creates a new instance of MakeSafeTypeVisitor
      */
     public MakeSafeTypeVisitor(AnnotationProcessorEnvironment apEnv) {
-        collectionDecl = apEnv.getTypeDeclaration(COLLECTION_CLASSNAME);        
+        collectionDecl = apEnv.getTypeDeclaration(COLLECTION_CLASSNAME);
         mapDecl = apEnv.getTypeDeclaration(MAP_CLASSNAME);
     }
-    
+
     protected TypeMirror onArrayType(ArrayType type, Types apTypes) {
-        return apTypes.getErasure(type);   
+        return apTypes.getErasure(type);
     }
-    
+
     protected TypeMirror onPrimitiveType(PrimitiveType type, Types apTypes) {
-        return apTypes.getErasure(type);   
+        return apTypes.getErasure(type);
     }
-     
+
     protected TypeMirror onClassType(ClassType type, Types apTypes) {
         return processDeclaredType(type, apTypes);
     }
-    
+
     protected TypeMirror onInterfaceType(InterfaceType type, Types apTypes) {
-        return processDeclaredType(type, apTypes);        
+        return processDeclaredType(type, apTypes);
     }
-    
+
     private TypeMirror processDeclaredType(DeclaredType type, Types apTypes) {
         if (TypeModeler.isSubtype(type.getDeclaration(), collectionDecl) ||
             TypeModeler.isSubtype(type.getDeclaration(), mapDecl)) {
@@ -72,22 +72,22 @@ public class MakeSafeTypeVisitor extends APTTypeVisitor<TypeMirror, Types> imple
             TypeMirror[] safeArgs = new TypeMirror[args.size()];
             int i = 0;
             for (TypeMirror arg : args) {
-                safeArgs[i++]= apply(arg, apTypes);                    
+                safeArgs[i++]= apply(arg, apTypes);
             }
             return apTypes.getDeclaredType(type.getDeclaration(), safeArgs);
         }
         return apTypes.getErasure(type);
     }
-    
+
     protected TypeMirror onTypeVariable(TypeVariable type, Types apTypes) {
-        return apTypes.getErasure(type);        
+        return apTypes.getErasure(type);
     }
-    
+
     protected TypeMirror onVoidType(VoidType type, Types apTypes) {
-        return type;        
+        return type;
     }
 
     protected TypeMirror onWildcard(WildcardType type, Types apTypes) {
-        return apTypes.getErasure(type);   
+        return apTypes.getErasure(type);
     }
 }

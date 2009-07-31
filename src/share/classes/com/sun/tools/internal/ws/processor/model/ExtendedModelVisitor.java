@@ -43,7 +43,7 @@ public class ExtendedModelVisitor {
             for (Port port : service.getPorts()) {
                 preVisit(port);
                 if (shouldVisit(port)) {
-                    for (Operation operation : port.getOperations()) {                        
+                    for (Operation operation : port.getOperations()) {
                         preVisit(operation);
                         Request request = operation.getRequest();
                         if (request != null) {

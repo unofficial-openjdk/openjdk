@@ -93,5 +93,5 @@ public abstract class AbstractWebServiceContext implements WSWebServiceContext {
         }
         return clazz.cast(((WSEndpointImpl)endpoint).getEndpointReference(clazz,address,wsdlAddress, referenceParameters));
     }
-    
+
 }

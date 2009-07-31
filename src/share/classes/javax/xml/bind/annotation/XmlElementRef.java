@@ -33,13 +33,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 
-/** 
+/**
  * <p>
  * Maps a JavaBean property to a XML element derived from property's type.
  * <p>
  * <b>Usage</b>
  * <p>
- * <tt>&#64;XmlElementRef</tt> annotation can be used with a 
+ * <tt>&#64;XmlElementRef</tt> annotation can be used with a
  * JavaBean property or from within {@link XmlElementRefs}
  * <p>
  * This annotation dynamically associates an XML element name with the JavaBean
@@ -52,7 +52,7 @@ import static java.lang.annotation.ElementType.METHOD;
  * <h3> XML Schema substitution group support </h3>
  * XML Schema allows a XML document author to use XML element names
  * that were not statically specified in the content model of a
- * schema using substitution groups. Schema derived code provides 
+ * schema using substitution groups. Schema derived code provides
  * support for substitution groups using an <i>element property</i>,
  * (section 5.5.5, "Element Property" of JAXB 2.0 specification). An
  * element property method signature is of the form:
@@ -67,7 +67,7 @@ import static java.lang.annotation.ElementType.METHOD;
  * element property indicates that the element name from <tt>JAXBElement</tt>
  * instance be used instead of deriving an XML element name from the
  * JavaBean property name.
- * 
+ *
  * <p>
  * The usage is subject to the following constraints:
  * <ul>
@@ -103,8 +103,8 @@ import static java.lang.annotation.ElementType.METHOD;
  *     &#64;XmlRootElement(name="target")
  *     class Target {
  *         // The presence of &#64;XmlElementRef indicates that the XML
- *         // element name will be derived from the &#64;XmlRootElement 
- *         // annotation on the type (for e.g. "jar" for JarTask). 
+ *         // element name will be derived from the &#64;XmlRootElement
+ *         // annotation on the type (for e.g. "jar" for JarTask).
  *         &#64;XmlElementRef
  *         List&lt;Task> tasks;
  *     }
@@ -162,15 +162,15 @@ import static java.lang.annotation.ElementType.METHOD;
  * <p> The following example shows the annotations for XML Schema
  * substitution groups.  The annotations and the ObjectFactory are
  * derived from the schema.
- * 
+ *
  * <pre>
  *     &#64;XmlElement
  *     class Math {
- *         //  The value of {@link #type()}is 
+ *         //  The value of {@link #type()}is
  *         //  JAXBElement.class , which indicates the XML
  *         //  element name ObjectFactory - in general a class marked
  *         //  with &#64;XmlRegistry. (See ObjectFactory below)
- *         //  
+ *         //
  *         //  The {@link #name()} is "operator", a pointer to a
  *         // factory method annotated with a
  *         //  {@link XmlElementDecl} with the name "operator". Since
@@ -180,7 +180,7 @@ import static java.lang.annotation.ElementType.METHOD;
  *         //  elements "add" or "sub". At runtime, JAXBElement
  *         //  instance contains the element name that has been
  *         //  substituted in the XML document.
- *         // 
+ *         //
  *         &#64;XmlElementRef(type=JAXBElement.class,name="operator")
  *         JAXBElement&lt;? extends Operator> term;
  *     }
@@ -213,7 +213,7 @@ import static java.lang.annotation.ElementType.METHOD;
  *     &lt;/math>
  * </pre>
  *
- * 
+ *
  * @author <ul><li>Kohsuke Kawaguchi, Sun Microsystems,Inc. </li><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>
  * @see XmlElementRefs
  * @since JAXB2.0
@@ -233,7 +233,7 @@ public @interface XmlElementRef {
      * This parameter and {@link #name()} are used to determine the
      * XML element for the JavaBean property.
      *
-     * <p> If <tt>type()</tt> is <tt>JAXBElement.class</tt> , then 
+     * <p> If <tt>type()</tt> is <tt>JAXBElement.class</tt> , then
      * <tt>namespace()</tt> and <tt>name()</tt>
      * point to a factory method with {@link XmlElementDecl}. The XML
      * element name is the element name from the factory method's
@@ -249,7 +249,7 @@ public @interface XmlElementRef {
      * an {@link XmlElementDecl}, then it is an error.
      *
      * <p> If <tt>type()</tt> is not <tt>JAXBElement.class</tt>, then
-     * this value must be "". 
+     * this value must be "".
      *
      */
     String namespace() default "";

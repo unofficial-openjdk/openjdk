@@ -30,7 +30,7 @@ import java.util.Iterator;
  * The common aspect of a package and a class.
  */
 public interface JClassContainer {
-    
+
     /**
      * Returns true if the container is a class.
      */
@@ -39,7 +39,7 @@ public interface JClassContainer {
      * Returns true if the container is a package.
      */
     boolean isPackage();
-    
+
     /**
      * Add a new class to this package/class.
      *
@@ -50,15 +50,15 @@ public interface JClassContainer {
      *        Name of class to be added to this package
      *
      * @return Newly generated class
-     * 
+     *
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
     JDefinedClass _class(int mods, String name) throws JClassAlreadyExistsException;
-    
+
     /**
      * Add a new public class to this class/package.
-     * 
+     *
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
@@ -74,7 +74,7 @@ public interface JClassContainer {
      *        Name of interface to be added to this package
      *
      * @return Newly generated interface
-     * 
+     *
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
@@ -82,7 +82,7 @@ public interface JClassContainer {
 
     /**
      * Adds a public interface to this package.
-     * 
+     *
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
@@ -92,7 +92,7 @@ public interface JClassContainer {
      * Create a new class or a new interface.
      *
      * @deprecated
-     *      use {@link #_class(int, String, ClassType)} 
+     *      use {@link #_class(int, String, ClassType)}
      */
     public JDefinedClass _class(int mods, String name, boolean isInterface )
         throws JClassAlreadyExistsException;
@@ -109,16 +109,16 @@ public interface JClassContainer {
      * class.
      */
     public Iterator<JDefinedClass> classes();
-    
+
     /**
      * Parent JClassContainer.
-     * 
+     *
      * If this is a package, this method returns a parent package,
      * or null if this package is the root package.
-     * 
+     *
      * If this is an outer-most class, this method returns a package
      * to which it belongs.
-     * 
+     *
      * If this is an inner class, this method returns the outer
      * class.
      */
@@ -136,7 +136,7 @@ public interface JClassContainer {
      * Get the root code model object.
      */
     public JCodeModel owner();
-    
+
     /**
      * Add an annotationType Declaration to this package
      * @param name
@@ -145,10 +145,10 @@ public interface JClassContainer {
      *      newly created Annotation Type Declaration
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
-     
+
      */
     public JDefinedClass _annotationTypeDeclaration(String name) throws JClassAlreadyExistsException;
-    
+
     /**
      * Add a public enum to this package
      * @param name
@@ -157,8 +157,8 @@ public interface JClassContainer {
      *      newly created Enum
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
-     
+
      */
     public JDefinedClass _enum (String name) throws JClassAlreadyExistsException;
-    
+
 }

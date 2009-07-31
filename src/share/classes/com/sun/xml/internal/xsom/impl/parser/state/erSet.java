@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 
 
 class erSet extends NGCCHandler {
@@ -141,15 +141,15 @@ class erSet extends NGCCHandler {
     public void text(String $value) throws SAXException {
         int $ai;
         switch($_ngcc_current_state) {
+        case 0:
+            {
+                revertToParentFromText(makeResult(), super._cookie, $value);
+            }
+            break;
         case 1:
             {
                 v = $value;
                 $_ngcc_current_state = 0;
-            }
-            break;
-        case 0:
-            {
-                revertToParentFromText(makeResult(), super._cookie, $value);
             }
             break;
         }
@@ -164,20 +164,19 @@ class erSet extends NGCCHandler {
         return(($_ngcc_current_state == 0));
     }
 
-    
+
       private Integer makeResult() {
         if(v==null)     return new Integer($runtime.finalDefault);
-        
+
         if(v.indexOf("#all")!=-1)
             return new Integer(XSType.EXTENSION|XSType.RESTRICTION);
-        
+
         int r = 0;
-        
+
         if(v.indexOf("extension")!=-1)      r|=XSType.EXTENSION;
         if(v.indexOf("restriction")!=-1)    r|=XSType.RESTRICTION;
-        
+
         return new Integer(r);
       }
-    
-}
 
+}

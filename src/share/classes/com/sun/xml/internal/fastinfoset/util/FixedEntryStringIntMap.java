@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.util;
@@ -32,12 +32,12 @@ package com.sun.xml.internal.fastinfoset.util;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class FixedEntryStringIntMap extends StringIntMap {
-    
+
     private Entry _fixedEntry;
 
     public FixedEntryStringIntMap(String fixedEntry, int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
-        
+
         // Add the fixed entry
         final int hash = hashHash(fixedEntry.hashCode());
         final int tableIndex = indexFor(hash, _table.length);
@@ -46,7 +46,7 @@ public class FixedEntryStringIntMap extends StringIntMap {
             resize(2 * _table.length);
         }
     }
-    
+
     public FixedEntryStringIntMap(String fixedEntry, int initialCapacity) {
         this(fixedEntry, initialCapacity, DEFAULT_LOAD_FACTOR);
     }
@@ -60,7 +60,7 @@ public class FixedEntryStringIntMap extends StringIntMap {
             _table[i] = null;
         }
         _lastEntry = NULL_ENTRY;
-        
+
         if (_fixedEntry != null) {
             final int tableIndex = indexFor(_fixedEntry._hash, _table.length);
             _table[tableIndex] = _fixedEntry;
@@ -77,11 +77,11 @@ public class FixedEntryStringIntMap extends StringIntMap {
         if (!(readOnlyMap instanceof FixedEntryStringIntMap)) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().
                     getString("message.illegalClass", new Object[]{readOnlyMap}));
-        }       
-        
+        }
+
         setReadOnlyMap((FixedEntryStringIntMap)readOnlyMap, clear);
     }
-    
+
     public final void setReadOnlyMap(FixedEntryStringIntMap readOnlyMap, boolean clear) {
         _readOnlyMap = readOnlyMap;
         if (_readOnlyMap != null) {
@@ -93,9 +93,9 @@ public class FixedEntryStringIntMap extends StringIntMap {
             }
         }  else {
             _readOnlyMapSize = 0;
-        }     
+        }
     }
-    
+
     private final void removeFixedEntry() {
         if (_fixedEntry != null) {
             final int tableIndex = indexFor(_fixedEntry._hash, _table.length);
@@ -109,9 +109,9 @@ public class FixedEntryStringIntMap extends StringIntMap {
                 }
                 previousEntry._next = _fixedEntry._next;
             }
-            
+
             _fixedEntry = null;
             _size--;
         }
-    }    
+    }
 }

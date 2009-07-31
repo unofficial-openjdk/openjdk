@@ -37,23 +37,23 @@ import org.xml.sax.SAXException;
 
 
 /**
- * {@link XMLParser} implementation that 
+ * {@link XMLParser} implementation that
  * parses XML from a DOM forest instead of parsing it from
  * its original location.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 class DOMForestParser implements XMLParser {
-    
+
     /** DOM forest to be "parsed". */
     private final DOMForest forest;
-    
+
     /** Scanner object will do the actual SAX events generation. */
     private final DOMForestScanner scanner;
-    
+
     private final XMLParser fallbackParser;
-    
+
     /**
      * @param fallbackParser
      *      This parser will be used when DOMForestParser needs to parse
@@ -71,10 +71,10 @@ class DOMForestParser implements XMLParser {
         ErrorHandler errorHandler,
         EntityResolver entityResolver )
         throws SAXException, IOException {
-        
+
         String systemId = source.getSystemId();
         Document dom = forest.get(systemId);
-        
+
         if(dom==null) {
             // if no DOM tree is built for it,
             // let the fall back parser parse the original document.
@@ -84,7 +84,7 @@ class DOMForestParser implements XMLParser {
             fallbackParser.parse( source, contentHandler, errorHandler, entityResolver );
             return;
         }
-        
+
         scanner.scan( dom, contentHandler );
     }
 }

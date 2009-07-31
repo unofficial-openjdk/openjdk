@@ -39,11 +39,11 @@ public class Localizer {
      * will be delegated to the parent.
      */
     private final Localizer parent;
-    
+
     public Localizer(Class cls) {
         this(null,cls);
     }
-    
+
     public Localizer(Localizer parent, Class cls) {
         this.parent = parent;
         this.cls = cls;
@@ -60,7 +60,7 @@ public class Localizer {
                 throw e;
         }
     }
-    
+
     public String message(String key) {
         return MessageFormat.format(getString(key), new Object[]{});
     }

@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.annotation;
 
 import com.sun.xml.internal.bind.v2.model.nav.Navigator;
@@ -29,7 +30,7 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
 
 /**
  * {@link Locatable} implementation for a class.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class ClassLocatable<C> implements Locatable {

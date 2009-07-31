@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ import org.xml.sax.SAXException;
 
 /**
  * {@link JaxBeanInfo} implementation that binds T[] to a list of simple types.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 final class ValueListBeanInfoImpl extends JaxBeanInfo {

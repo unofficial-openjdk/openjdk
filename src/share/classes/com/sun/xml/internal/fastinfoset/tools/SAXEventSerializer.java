@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -46,24 +46,24 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 public class SAXEventSerializer extends DefaultHandler
         implements LexicalHandler {
 
-    private Writer _writer; 
+    private Writer _writer;
     private boolean _charactersAreCDATA;
     private StringBuffer _characters;
-    
-    private Stack _namespaceStack = new Stack();    
+
+    private Stack _namespaceStack = new Stack();
     protected List _namespaceAttributes;
-    
+
     public SAXEventSerializer(OutputStream s) throws IOException {
         _writer = new OutputStreamWriter(s);
         _charactersAreCDATA = false;
     }
-    
+
     // -- ContentHandler interface ---------------------------------------
 
     public void startDocument() throws SAXException {
         try {
             _writer.write("<sax xmlns=\"http://www.sun.com/xml/sax-events\">\n");
-            _writer.write("<startDocument/>\n");   
+            _writer.write("<startDocument/>\n");
             _writer.flush();
         }
         catch (IOException e) {
@@ -73,7 +73,7 @@ public class SAXEventSerializer extends DefaultHandler
 
     public void endDocument() throws SAXException {
         try {
-            _writer.write("<endDocument/>\n");  
+            _writer.write("<endDocument/>\n");
             _writer.write("</sax>");
             _writer.flush();
             _writer.close();
@@ -83,26 +83,26 @@ public class SAXEventSerializer extends DefaultHandler
         }
     }
 
-    
-    public void startPrefixMapping(String prefix, String uri) 
+
+    public void startPrefixMapping(String prefix, String uri)
         throws SAXException
     {
         if (_namespaceAttributes == null) {
             _namespaceAttributes = new ArrayList();
         }
-        
+
         String qName = (prefix.length() == 0) ? "xmlns" : "xmlns" + prefix;
         AttributeValueHolder attribute = new AttributeValueHolder(
                 qName,
-                prefix, 
-                uri, 
+                prefix,
+                uri,
                 null,
                 null);
-        _namespaceAttributes.add(attribute);            
+        _namespaceAttributes.add(attribute);
     }
-    
-    public void endPrefixMapping(String prefix) 
-        throws SAXException 
+
+    public void endPrefixMapping(String prefix)
+        throws SAXException
     {
         /*
         try {
@@ -120,16 +120,16 @@ public class SAXEventSerializer extends DefaultHandler
 
     public void startElement(String uri, String localName,
             String qName, Attributes attributes)
-        throws SAXException 
+        throws SAXException
     {
         try {
             outputCharacters();
 
             if (_namespaceAttributes != null) {
-                
+
                 AttributeValueHolder[] attrsHolder = new AttributeValueHolder[0];
                 attrsHolder = (AttributeValueHolder[])_namespaceAttributes.toArray(attrsHolder);
-                        
+
                 // Sort attributes
                 quicksort(attrsHolder, 0, attrsHolder.length - 1);
 
@@ -138,24 +138,24 @@ public class SAXEventSerializer extends DefaultHandler
                         attrsHolder[i].localName + "\" uri=\"" + attrsHolder[i].uri + "\"/>\n");
                     _writer.flush();
                 }
-                        
+
                 _namespaceStack.push(attrsHolder);
                 _namespaceAttributes = null;
             } else {
                 _namespaceStack.push(null);
             }
-            
-            AttributeValueHolder[] attrsHolder = 
+
+            AttributeValueHolder[] attrsHolder =
                 new AttributeValueHolder[attributes.getLength()];
             for (int i = 0; i < attributes.getLength(); i++) {
                 attrsHolder[i] = new AttributeValueHolder(
-                    attributes.getQName(i), 
-                    attributes.getLocalName(i), 
-                    attributes.getURI(i), 
+                    attributes.getQName(i),
+                    attributes.getLocalName(i),
+                    attributes.getURI(i),
                     attributes.getType(i),
                     attributes.getValue(i));
             }
-            
+
             // Sort attributes
             quicksort(attrsHolder, 0, attrsHolder.length - 1);
 
@@ -167,15 +167,15 @@ public class SAXEventSerializer extends DefaultHandler
                 }
                 attributeCount++;
             }
-            
+
             if (attributeCount == 0) {
-                _writer.write("<startElement uri=\"" + uri 
+                _writer.write("<startElement uri=\"" + uri
                     + "\" localName=\"" + localName + "\" qName=\""
                     + qName + "\"/>\n");
                 return;
             }
-            
-            _writer.write("<startElement uri=\"" + uri 
+
+            _writer.write("<startElement uri=\"" + uri
                 + "\" localName=\"" + localName + "\" qName=\""
                 + qName + "\">\n");
 
@@ -193,24 +193,24 @@ public class SAXEventSerializer extends DefaultHandler
                     "\" value=\"" + attrsHolder[i].value +
                     "\"/>\n");
             }
-            
+
             _writer.write("</startElement>\n");
             _writer.flush();
         }
         catch (IOException e) {
             throw new SAXException(e);
-        }       
+        }
     }
 
     public void endElement(String uri, String localName, String qName)
-            throws SAXException 
+            throws SAXException
     {
         try {
             outputCharacters();
 
-            _writer.write("<endElement uri=\"" + uri 
+            _writer.write("<endElement uri=\"" + uri
                 + "\" localName=\"" + localName + "\" qName=\""
-                + qName + "\"/>\n");   
+                + qName + "\"/>\n");
             _writer.flush();
 
             // Write out the end prefix here rather than waiting
@@ -223,7 +223,7 @@ public class SAXEventSerializer extends DefaultHandler
                     _writer.flush();
                 }
             }
-            
+
         }
         catch (IOException e) {
             throw new SAXException(e);
@@ -231,19 +231,19 @@ public class SAXEventSerializer extends DefaultHandler
     }
 
     public void characters(char[] ch, int start, int length)
-            throws SAXException 
+            throws SAXException
     {
         if (length == 0) {
             return;
         }
-        
+
         if (_characters == null) {
             _characters = new StringBuffer();
         }
-        
+
         // Coalesce multiple character events
         _characters.append(ch, start, length);
-        
+
         /*
         try {
             _writer.write("<characters>" +
@@ -263,7 +263,7 @@ public class SAXEventSerializer extends DefaultHandler
         if (_characters == null) {
             return;
         }
-        
+
         try {
             _writer.write("<characters>" +
                 (_charactersAreCDATA ? "<![CDATA[" : "") +
@@ -277,29 +277,29 @@ public class SAXEventSerializer extends DefaultHandler
             throw new SAXException(e);
         }
     }
-    
+
     public void ignorableWhitespace(char[] ch, int start, int length)
-            throws SAXException 
+            throws SAXException
     {
         // Report ignorable ws as characters (assumes validation off)
         characters(ch, start, length);
     }
 
     public void processingInstruction(String target, String data)
-            throws SAXException 
+            throws SAXException
     {
         try {
             outputCharacters();
 
-            _writer.write("<processingInstruction target=\"" + target 
-                + "\" data=\"" + data + "\"/>\n");   
+            _writer.write("<processingInstruction target=\"" + target
+                + "\" data=\"" + data + "\"/>\n");
             _writer.flush();
-        } 
+        }
         catch (IOException e) {
             throw new SAXException(e);
         }
     }
-    
+
     // -- LexicalHandler interface ---------------------------------------
 
     public void startDTD(String name, String publicId, String systemId)
@@ -333,7 +333,7 @@ public class SAXEventSerializer extends DefaultHandler
     }
 
     public void comment(char[] ch, int start, int length)
-            throws SAXException 
+            throws SAXException
     {
         try {
             outputCharacters();
@@ -347,9 +347,9 @@ public class SAXEventSerializer extends DefaultHandler
             throw new SAXException(e);
         }
     }
-    
+
     // -- Utility methods ------------------------------------------------
-    
+
     private void quicksort(AttributeValueHolder[] attrs, int p, int r) {
         while (p < r) {
             final int q = partition(attrs, p, r);
@@ -357,7 +357,7 @@ public class SAXEventSerializer extends DefaultHandler
             p = q + 1;
         }
     }
-                                                                                                                         
+
     private int partition(AttributeValueHolder[] attrs, int p, int r) {
         AttributeValueHolder x = attrs[(p + r) >>> 1];
         int i = p - 1;
@@ -375,7 +375,7 @@ public class SAXEventSerializer extends DefaultHandler
             }
         }
     }
-    
+
     public static class AttributeValueHolder implements Comparable {
         public final String qName;
         public final String localName;
@@ -403,8 +403,7 @@ public class SAXEventSerializer extends DefaultHandler
             catch (Exception e) {
                 throw new RuntimeException(CommonResourceBundle.getInstance().getString("message.AttributeValueHolderExpected"));
             }
-        }                                                                            
+        }
     }
 
 }
-

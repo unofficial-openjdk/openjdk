@@ -118,5 +118,5 @@ public class PortInfoImpl implements PortInfo {
     public int hashCode() {
         return bindingId.hashCode();
     }
-    
+
 }

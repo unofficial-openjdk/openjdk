@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import java.util.Iterator;
@@ -33,7 +35,7 @@ import com.sun.xml.internal.xsom.visitor.XSWildcardVisitor;
 /**
  * Wildcard schema component (used for both attribute wildcard
  * and element wildcard.)
- * 
+ *
  * XSWildcard interface can always be downcasted to either
  * Any, Other, or Union.
  */
@@ -44,7 +46,7 @@ public interface XSWildcard extends XSComponent, XSTerm
     static final int SKIP = 3;
     /**
      * Gets the processing mode.
-     * 
+     *
      * @return
      *      Either LAX, STRICT, or SKIP.
      */
@@ -53,7 +55,7 @@ public interface XSWildcard extends XSComponent, XSTerm
     /**
      * Returns true if the specified namespace URI is valid
      * wrt this wildcard.
-     * 
+     *
      * @param namespaceURI
      *      Use the empty string to test the default no-namespace.
      */

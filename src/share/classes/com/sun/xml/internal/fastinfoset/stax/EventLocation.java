@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax;
 
@@ -37,10 +37,10 @@ public class EventLocation implements Location{
     int _column = -1;
     int _line = -1;
     int _charOffset = -1;
-    
+
     EventLocation() {
     }
-    
+
     //explicitly create a nil location
     public static Location getNilLocation() {
         return new EventLocation();
@@ -61,19 +61,19 @@ public class EventLocation implements Location{
     public int getColumnNumber() {
         return _column;
     }
-    
+
   /**
    * Return the byte or character offset into the input source this location
-   * is pointing to. If the input source is a file or a byte stream then 
-   * this is the byte offset into that stream, but if the input source is 
-   * a character media then the offset is the character offset. 
+   * is pointing to. If the input source is a file or a byte stream then
+   * this is the byte offset into that stream, but if the input source is
+   * a character media then the offset is the character offset.
    * Returns -1 if there is no offset available.
    * @return the current offset
    */
     public int getCharacterOffset(){
         return _charOffset;
     }
-    
+
     /**
     * Returns the public ID of the XML
     * @return the public ID, or null if not available
@@ -81,7 +81,7 @@ public class EventLocation implements Location{
     public String getPublicId(){
         return _publicId;
     }
-    
+
   /**
    * Returns the system ID of the XML
    * @return the system ID, or null if not available
@@ -89,7 +89,7 @@ public class EventLocation implements Location{
     public String getSystemId(){
         return _systemId;
     }
-    
+
     public void setLineNumber(int line) {
         _line = line;
     }
@@ -105,7 +105,7 @@ public class EventLocation implements Location{
     public void setSystemId(String id) {
         _systemId = id;
     }
-    
+
     public String toString(){
         StringBuffer sbuffer = new StringBuffer() ;
         sbuffer.append("Line number = " + _line);
@@ -120,6 +120,5 @@ public class EventLocation implements Location{
         sbuffer.append("\n") ;
         return sbuffer.toString();
     }
-    
-}
 
+}

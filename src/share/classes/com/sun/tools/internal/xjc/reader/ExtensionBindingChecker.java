@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 /**
  * This filter checks jaxb:extensionBindingPrefix and
  * pass/filter extension bindings.
- * 
+ *
  * <p>
  * This filter also remembers enabled extension namespaces
  * and filters out any extension namespaces that doesn't belong
@@ -46,7 +46,7 @@ import org.xml.sax.SAXException;
  * <p>
  * Note that we can't just filter out all foreign namespaces,
  * as we need to use user-defined tags in documentations to generate javadoc.
- * 
+ *
  * <p>
  * The class needs to know the list of extension binding namespaces
  * that the RI recognizes.
@@ -77,7 +77,7 @@ public final class ExtensionBindingChecker extends AbstractExtensionBindingCheck
             return false;
         if( enabledExtensions.contains(uri) )
             return false;
-        
+
         // we don't need to prune something unless
         // the rest of the processor recognizes it as something special.
         // this allows us to send the documentation and other harmless
@@ -93,7 +93,7 @@ public final class ExtensionBindingChecker extends AbstractExtensionBindingCheck
 
     public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
         throws SAXException {
-        
+
         if(!isCutting()) {
             String v = atts.getValue(Const.JAXB_NSURI,"extensionBindingPrefixes");
             if(v!=null) {
@@ -116,7 +116,7 @@ public final class ExtensionBindingChecker extends AbstractExtensionBindingCheck
                         checkAndEnable(uri);
                 }
             }
-            
+
             if( needsToBePruned(namespaceURI) ) {
                 // start pruning the tree. Call the super class method directly.
                 if( isRecognizableExtension(namespaceURI) ) {
@@ -128,7 +128,7 @@ public final class ExtensionBindingChecker extends AbstractExtensionBindingCheck
             } else
                 verifyTagName(namespaceURI, localName, qName);
         }
-        
+
         count++;
         super.startElement(namespaceURI, localName, qName, atts);
     }

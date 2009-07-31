@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.util;
 
@@ -36,7 +36,7 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class StAXFilteredParser extends StAXParserWrapper {
     private StreamFilter _filter;
-    
+
     /** Creates a new instance of StAXFilteredParser */
     public StAXFilteredParser() {
     }
@@ -44,7 +44,7 @@ public class StAXFilteredParser extends StAXParserWrapper {
         super(reader);
         _filter = filter;
     }
-    
+
     public void setFilter(StreamFilter filter) {
         _filter = filter;
     }
@@ -64,5 +64,5 @@ public class StAXFilteredParser extends StAXParserWrapper {
         }
         return false;
     }
-    
+
 }

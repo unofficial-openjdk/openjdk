@@ -34,11 +34,10 @@ package com.sun.tools.internal.xjc;
  * <p>
  * This exception should be only thrown from {@link ErrorReceiver}
  * for the consistent error handling.
- * 
+ *
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class AbortException extends RuntimeException {
     public AbortException() {
     }
 }
-    

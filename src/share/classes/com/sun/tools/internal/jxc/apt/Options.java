@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.jxc.apt;
 
 import java.io.File;
@@ -86,7 +87,7 @@ public class Options  {
                 throw new BadCommandLineException(
                         (Messages.OPERAND_MISSING.format(args[i])));
             classpath = args[++i];
-            
+
             return 1;
         }
 
@@ -96,6 +97,3 @@ public class Options  {
 
 
 }
-
-
-

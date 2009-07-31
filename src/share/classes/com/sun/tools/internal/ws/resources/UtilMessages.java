@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class UtilMessages {
 
@@ -44,7 +44,7 @@ public final class UtilMessages {
 
     /**
      * SAX2DOMEx.DomImplDoesntSupportCreateElementNs: {0}
-     * 
+     *
      */
     public static String SAX_2_DOM_NOTSUPPORTED_CREATEELEMENT(Object arg0) {
         return localizer.localize(localizableSAX_2_DOM_NOTSUPPORTED_CREATEELEMENT(arg0));
@@ -56,7 +56,7 @@ public final class UtilMessages {
 
     /**
      * Encountered error in wsdl. Check namespace of element <{0}>
-     * 
+     *
      */
     public static String NULL_NAMESPACE_FOUND(Object arg0) {
         return localizer.localize(localizableNULL_NAMESPACE_FOUND(arg0));
@@ -68,7 +68,7 @@ public final class UtilMessages {
 
     /**
      * Could not find the field in the Holder that contains the Holder''s value: {0}
-     * 
+     *
      */
     public static String HOLDER_VALUEFIELD_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableHOLDER_VALUEFIELD_NOT_FOUND(arg0));

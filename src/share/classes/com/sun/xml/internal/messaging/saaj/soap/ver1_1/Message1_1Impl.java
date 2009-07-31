@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * 
- */
 
 
 
@@ -47,15 +44,15 @@ import com.sun.xml.internal.messaging.saaj.soap.MessageImpl;
 import com.sun.xml.internal.messaging.saaj.util.LogDomainConstants;
 
 public class Message1_1Impl extends MessageImpl implements SOAPConstants {
-    
+
     protected static final Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_VER1_1_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.ver1_1.LocalStrings");
-   
+
     public Message1_1Impl() {
         super();
     }
-    
+
     public Message1_1Impl(boolean isFastInfoset, boolean acceptFastInfoset) {
         super(isFastInfoset, acceptFastInfoset);
     }

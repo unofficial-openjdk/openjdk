@@ -35,14 +35,14 @@ import com.sun.tools.internal.xjc.generator.bean.ObjectFactoryGenerator;
 
 /**
  * Outline object that provides per-package information.
- * 
+ *
  * This interface is accessible from {@link Outline}.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public interface PackageOutline {
-    
+
     /**
      * The exposed package this context is representing.
      *
@@ -55,7 +55,7 @@ public interface PackageOutline {
 
     /**
      * Generated ObjectFactory from package.
-     * 
+     *
      * This method allows a caller to obtain a reference to such
      * ObjectFactory from its package.
      *

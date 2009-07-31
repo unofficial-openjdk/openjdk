@@ -237,31 +237,31 @@ class SchemaParser {
     }
 
     public void startElement(String namespaceURI,
-			     String localName,
-			     String qName,
-			     Attributes atts) throws SAXException {
+                             String localName,
+                             String qName,
+                             Attributes atts) throws SAXException {
       xmlBaseHandler.startElement();
       if (isRelaxNGElement(namespaceURI)) {
-	State state = createChildState(localName);
-	if (state == null) {
-	  xr.setContentHandler(new Skipper(this));
-	  return;
-	}
-	state.setParent(this);
-	state.set();
-	state.attributes(atts);
+        State state = createChildState(localName);
+        if (state == null) {
+          xr.setContentHandler(new Skipper(this));
+          return;
+        }
+        state.setParent(this);
+        state.set();
+        state.attributes(atts);
       }
       else {
-	checkForeignElement();
+        checkForeignElement();
         ForeignElementHandler feh = new ForeignElementHandler(this, getComments());
         feh.startElement(namespaceURI, localName, qName, atts);
-	xr.setContentHandler(feh);
+        xr.setContentHandler(feh);
       }
     }
 
     public void endElement(String namespaceURI,
-			   String localName,
-			   String qName) throws SAXException {
+                           String localName,
+                           String qName) throws SAXException {
       xmlBaseHandler.endElement();
       parent.set();
       end();
@@ -284,31 +284,31 @@ class SchemaParser {
     void attributes(Attributes atts) throws SAXException {
       int len = atts.getLength();
       for (int i = 0; i < len; i++) {
-	String uri = atts.getURI(i);
-	if (uri.length() == 0) {
-	  String name = atts.getLocalName(i);
-	  if (name.equals("name"))
-	    setName(atts.getValue(i).trim());
-	  else if (name.equals("ns"))
-	    ns = atts.getValue(i);
-	  else if (name.equals("datatypeLibrary")) {
-	    datatypeLibrary = atts.getValue(i);
-	    checkUri(datatypeLibrary);
-	    if (!datatypeLibrary.equals("")
-		&& !Uri.isAbsolute(datatypeLibrary))
-	      error("relative_datatype_library");
-	    if (Uri.hasFragmentId(datatypeLibrary))
-	      error("fragment_identifier_datatype_library");
-	    datatypeLibrary = Uri.escapeDisallowedChars(datatypeLibrary);
-	  }
-	  else
-	    setOtherAttribute(name, atts.getValue(i));
-	}
-	else if (uri.equals(relaxngURI))
-	  error("qualified_attribute", atts.getLocalName(i));
-	else if (uri.equals(WellKnownNamespaces.XML)
-		 && atts.getLocalName(i).equals("base"))
-	  xmlBaseHandler.xmlBaseAttribute(atts.getValue(i));
+        String uri = atts.getURI(i);
+        if (uri.length() == 0) {
+          String name = atts.getLocalName(i);
+          if (name.equals("name"))
+            setName(atts.getValue(i).trim());
+          else if (name.equals("ns"))
+            ns = atts.getValue(i);
+          else if (name.equals("datatypeLibrary")) {
+            datatypeLibrary = atts.getValue(i);
+            checkUri(datatypeLibrary);
+            if (!datatypeLibrary.equals("")
+                && !Uri.isAbsolute(datatypeLibrary))
+              error("relative_datatype_library");
+            if (Uri.hasFragmentId(datatypeLibrary))
+              error("fragment_identifier_datatype_library");
+            datatypeLibrary = Uri.escapeDisallowedChars(datatypeLibrary);
+          }
+          else
+            setOtherAttribute(name, atts.getValue(i));
+        }
+        else if (uri.equals(relaxngURI))
+          error("qualified_attribute", atts.getLocalName(i));
+        else if (uri.equals(WellKnownNamespaces.XML)
+                 && atts.getLocalName(i).equals("base"))
+          xmlBaseHandler.xmlBaseAttribute(atts.getValue(i));
         else {
           if (annotations == null)
             annotations = schemaBuilder.makeAnnotations(null, getContext());
@@ -339,16 +339,16 @@ class SchemaParser {
 
     public void characters(char[] ch, int start, int len) throws SAXException {
       for (int i = 0; i < len; i++) {
-	switch(ch[start + i]) {
-	case ' ':
-	case '\r':
-	case '\n':
-	case '\t':
-	  break;
-	default:
-	  error("illegal_characters_ignored");
-	  break;
-	}
+        switch(ch[start + i]) {
+        case ' ':
+        case '\r':
+        case '\n':
+        case '\t':
+          break;
+        default:
+          error("illegal_characters_ignored");
+          break;
+        }
       }
     }
 
@@ -399,7 +399,7 @@ class SchemaParser {
                                                            getContext());
       int len = atts.getLength();
       for (int i = 0; i < len; i++) {
-	String uri = atts.getURI(i);
+        String uri = atts.getURI(i);
         builder.addAttribute(uri, atts.getLocalName(i), findPrefix(atts.getQName(i), uri),
                              atts.getValue(i), loc);
       }
@@ -452,17 +452,17 @@ class SchemaParser {
     }
 
     public void startElement(String namespaceURI,
-			     String localName,
-			     String qName,
-			     Attributes atts) throws SAXException {
+                             String localName,
+                             String qName,
+                             Attributes atts) throws SAXException {
       ++level;
     }
 
     public void endElement(String namespaceURI,
-			   String localName,
-			   String qName) throws SAXException {
+                           String localName,
+                           String qName) throws SAXException {
       if (--level == 0)
-	nextState.set();
+        nextState.set();
     }
 
     public void comment(String value) {
@@ -497,8 +497,8 @@ class SchemaParser {
     State createChildState(String localName) throws SAXException {
       State state = (State)patternTable.get(localName);
       if (state == null) {
-	error("expected_pattern", localName);
-	return null;
+        error("expected_pattern", localName);
+        return null;
       }
       return state.create();
     }
@@ -526,8 +526,8 @@ class SchemaParser {
 
     void end() throws SAXException {
       if (childPatterns == null) {
-	error("missing_children");
-	endChild(schemaBuilder.makeErrorPattern());
+        error("missing_children");
+        endChild(schemaBuilder.makeErrorPattern());
       }
       if (comments != null) {
         int idx = childPatterns.size()-1;
@@ -631,11 +631,11 @@ class SchemaParser {
 
     void endAttributes() throws SAXException {
       if (name != null) {
-	nameClass = expandName(name, getNs(), null);
+        nameClass = expandName(name, getNs(), null);
         nameClassWasAttribute = true;
       }
       else
-	new NameClassChildState(this, this).set();
+        new NameClassChildState(this, this).set();
     }
 
     State create() {
@@ -673,9 +673,9 @@ class SchemaParser {
 
     State createChildState(String localName) throws SAXException {
       if (grammar == null)
-	return super.createChildState(localName);
+        return super.createChildState(localName);
       if (localName.equals("grammar"))
-	return new MergeGrammarState(grammar);
+        return new MergeGrammarState(grammar);
       error("expected_grammar", localName);
       return null;
     }
@@ -690,11 +690,11 @@ class SchemaParser {
 
     boolean isRelaxNGElement(String uri) throws SAXException {
       if (!uri.startsWith(relaxngURIPrefix))
-	return false;
+        return false;
       if (!uri.equals(WellKnownNamespaces.RELAX_NG))
-	warning("wrong_uri_version",
-		WellKnownNamespaces.RELAX_NG.substring(relaxngURIPrefix.length()),
-		uri.substring(relaxngURIPrefix.length()));
+        warning("wrong_uri_version",
+                WellKnownNamespaces.RELAX_NG.substring(relaxngURIPrefix.length()),
+                uri.substring(relaxngURIPrefix.length()));
       relaxngURI = uri;
       return true;
     }
@@ -741,9 +741,9 @@ class SchemaParser {
 
     void setOtherAttribute(String name, String value) throws SAXException {
       if (name.equals("type"))
-	type = checkNCName(value.trim());
+        type = checkNCName(value.trim());
       else
-	super.setOtherAttribute(name, value);
+        super.setOtherAttribute(name, value);
     }
 
     public void characters(char[] ch, int start, int len) {
@@ -789,14 +789,14 @@ class SchemaParser {
 
     State createChildState(String localName) throws SAXException {
       if (localName.equals("param")) {
-	if (except != null)
-	  error("param_after_except");
-	return new ParamState(dpb);
+        if (except != null)
+          error("param_after_except");
+        return new ParamState(dpb);
       }
       if (localName.equals("except")) {
-	if (except != null)
-	  error("multiple_except");
-	return new ChoiceState();
+        if (except != null)
+          error("multiple_except");
+        return new ChoiceState();
       }
       error("expected_param_except", localName);
       return null;
@@ -804,16 +804,16 @@ class SchemaParser {
 
     void setOtherAttribute(String name, String value) throws SAXException {
       if (name.equals("type"))
-	type = checkNCName(value.trim());
+        type = checkNCName(value.trim());
       else
-	super.setOtherAttribute(name, value);
+        super.setOtherAttribute(name, value);
     }
 
     void endAttributes() throws SAXException {
       if (type == null)
-	error("missing_type_attribute");
+        error("missing_type_attribute");
       else
-	dpb = schemaBuilder.makeDataPatternBuilder(datatypeLibrary, type, startLocation);
+        dpb = schemaBuilder.makeDataPatternBuilder(datatypeLibrary, type, startLocation);
     }
 
     void endForeignChild(ParsedElementAnnotation ea) {
@@ -859,7 +859,7 @@ class SchemaParser {
 
     void endAttributes() throws SAXException {
       if (name == null)
-	error("missing_name_attribute");
+        error("missing_name_attribute");
     }
 
     State createChildState(String localName) throws SAXException {
@@ -877,7 +877,7 @@ class SchemaParser {
 
     void end() throws SAXException {
       if (name == null)
-	return;
+        return;
       if (dpb == null)
         return;
       mergeLeadingComments();
@@ -904,16 +904,16 @@ class SchemaParser {
 
     void endAttributes() throws SAXException {
       if (name != null) {
-	String nsUse;
-	if (ns != null)
-	  nsUse = ns;
-	else
-	  nsUse = "";
-	nameClass = expandName(name, nsUse, null);
+        String nsUse;
+        if (ns != null)
+          nsUse = ns;
+        else
+          nsUse = "";
+        nameClass = expandName(name, nsUse, null);
         nameClassWasAttribute = true;
       }
       else
-	new NameClassChildState(this, this).set();
+        new NameClassChildState(this, this).set();
     }
 
     void endForeignChild(ParsedElementAnnotation ea) {
@@ -925,7 +925,7 @@ class SchemaParser {
 
     void end() throws SAXException {
       if (childPatterns == null)
-	endChild(schemaBuilder.makeText(startLocation, null));
+        endChild(schemaBuilder.makeText(startLocation, null));
       super.end();
     }
 
@@ -936,7 +936,7 @@ class SchemaParser {
     State createChildState(String localName) throws SAXException {
       State tem = super.createChildState(localName);
       if (tem != null && childPatterns!=null)
-	error("attribute_multi_pattern");
+        error("attribute_multi_pattern");
       return tem;
     }
 
@@ -945,7 +945,7 @@ class SchemaParser {
   abstract class SinglePatternContainerState extends PatternContainerState {
     State createChildState(String localName) throws SAXException {
       if (childPatterns==null)
-	return super.createChildState(localName);
+        return super.createChildState(localName);
       error("too_many_children");
       return null;
     }
@@ -966,16 +966,16 @@ class SchemaParser {
 
     State createChildState(String localName) throws SAXException {
       if (localName.equals("define"))
-	return new DefineState(section);
+        return new DefineState(section);
       if (localName.equals("start"))
-	return new StartState(section);
+        return new StartState(section);
       if (localName.equals("include")) {
-	Include include = section.makeInclude();
-	if (include != null)
-	  return new IncludeState(include);
+        Include include = section.makeInclude();
+        if (include != null)
+          return new IncludeState(include);
       }
       if (localName.equals("div"))
-	return new DivState(section.makeDiv());
+        return new DivState(section.makeDiv());
       error("expected_define", localName);
       // XXX better errors
       return null;
@@ -1017,16 +1017,16 @@ class SchemaParser {
 
     void setOtherAttribute(String name, String value) throws SAXException {
       if (name.equals("href")) {
-	href = value;
-	checkUri(href);
+        href = value;
+        checkUri(href);
       }
       else
-	super.setOtherAttribute(name, value);
+        super.setOtherAttribute(name, value);
     }
 
     void endAttributes() throws SAXException {
       if (href == null)
-	error("missing_href_attribute");
+        error("missing_href_attribute");
       else
         href = resolve(href);
     }
@@ -1130,16 +1130,16 @@ class SchemaParser {
 
     void setOtherAttribute(String name, String value) throws SAXException {
       if (name.equals("href")) {
-	href = value;
-	checkUri(href);
+        href = value;
+        checkUri(href);
       }
       else
-	super.setOtherAttribute(name, value);
+        super.setOtherAttribute(name, value);
     }
 
     void endAttributes() throws SAXException {
       if (href == null)
-	error("missing_href_attribute");
+        error("missing_href_attribute");
       else
         href = resolve(href);
     }
@@ -1170,16 +1170,16 @@ class SchemaParser {
 
     void setOtherAttribute(String name, String value) throws SAXException {
       if (name.equals("combine")) {
-	value = value.trim();
-	if (value.equals("choice"))
-	  combine = GrammarSection.COMBINE_CHOICE;
-	else if (value.equals("interleave"))
-	  combine = GrammarSection.COMBINE_INTERLEAVE;
-	else
-	  error("combine_attribute_bad_value", value);
+        value = value.trim();
+        if (value.equals("choice"))
+          combine = GrammarSection.COMBINE_CHOICE;
+        else if (value.equals("interleave"))
+          combine = GrammarSection.COMBINE_INTERLEAVE;
+        else
+          error("combine_attribute_bad_value", value);
       }
       else
-	super.setOtherAttribute(name, value);
+        super.setOtherAttribute(name, value);
     }
 
     ParsedPattern buildPattern(List<ParsedPattern> patterns, Location loc, Annotations anno) throws SAXException {
@@ -1204,12 +1204,12 @@ class SchemaParser {
 
     void endAttributes() throws SAXException {
       if (name == null)
-	error("missing_name_attribute");
+        error("missing_name_attribute");
     }
 
     void sendPatternToParent(ParsedPattern p) {
       if (name != null)
-	section.define(name, combine, p, startLocation, annotations);
+        section.define(name, combine, p, startLocation, annotations);
     }
 
   }
@@ -1231,7 +1231,7 @@ class SchemaParser {
     State createChildState(String localName) throws SAXException {
       State tem = super.createChildState(localName);
       if (tem != null && childPatterns!=null)
-	error("start_multi_pattern");
+        error("start_multi_pattern");
       return tem;
     }
 
@@ -1241,8 +1241,8 @@ class SchemaParser {
     State createChildState(String localName) throws SAXException {
       State state = (State)nameClassTable.get(localName);
       if (state == null) {
-	error("expected_name_class", localName);
-	return null;
+        error("expected_name_class", localName);
+        return null;
       }
       return state.create();
     }
@@ -1330,9 +1330,9 @@ private SAXParseable parseable;
 
     State createChildState(String localName) throws SAXException {
       if (localName.equals("except")) {
-	if (except != null)
-	  error("multiple_except");
-	return new NameClassChoiceState(getContext());
+        if (except != null)
+          error("multiple_except");
+        return new NameClassChoiceState(getContext());
       }
       error("expected_except", localName);
       return null;
@@ -1344,9 +1344,9 @@ private SAXParseable parseable;
 
     ParsedNameClass makeNameClass() {
       if (except == null)
-	return makeNameClassNoExcept();
+        return makeNameClassNoExcept();
       else
-	return makeNameClassExcept(except);
+        return makeNameClassExcept(except);
     }
 
     ParsedNameClass makeNameClassNoExcept() {
@@ -1398,7 +1398,7 @@ private SAXParseable parseable;
     void setParent(State parent) {
       super.setParent(parent);
       if (parent instanceof NameClassChoiceState)
-	this.context = ((NameClassChoiceState)parent).context;
+        this.context = ((NameClassChoiceState)parent).context;
     }
 
     State create() {
@@ -1407,18 +1407,18 @@ private SAXParseable parseable;
 
     State createChildState(String localName) throws SAXException {
       if (localName.equals("anyName")) {
-	if (context >= ANY_NAME_CONTEXT) {
-	  error(context == ANY_NAME_CONTEXT
-		? "any_name_except_contains_any_name"
-		: "ns_name_except_contains_any_name");
-	  return null;
-	}
+        if (context >= ANY_NAME_CONTEXT) {
+          error(context == ANY_NAME_CONTEXT
+                ? "any_name_except_contains_any_name"
+                : "ns_name_except_contains_any_name");
+          return null;
+        }
       }
       else if (localName.equals("nsName")) {
-	if (context == NS_NAME_CONTEXT) {
-	  error("ns_name_except_contains_ns_name");
-	  return null;
-	}
+        if (context == NS_NAME_CONTEXT) {
+          error("ns_name_except_contains_ns_name");
+          return null;
+        }
       }
       return super.createChildState(localName);
     }
@@ -1443,9 +1443,9 @@ private SAXParseable parseable;
 
     void end() throws SAXException {
       if (nNameClasses == 0) {
-	error("missing_name_class");
-	parent.endChild(nameClassBuilder.makeErrorNameClass());
-	return;
+        error("missing_name_class");
+        parent.endChild(nameClassBuilder.makeErrorNameClass());
+        return;
       }
       if (comments != null) {
         nameClasses[nNameClasses - 1] = nameClassBuilder.commentAfter(nameClasses[nNameClasses - 1], comments);
@@ -1614,7 +1614,7 @@ private SAXParseable parseable;
     String localName = checkNCName(name.substring(ic + 1));
     for (PrefixMapping tem = context.prefixMapping; tem != null; tem = tem.next)
       if (tem.prefix.equals(prefix))
-	return nameClassBuilder.makeName(tem.uri, localName, prefix, null, anno);
+        return nameClassBuilder.makeName(tem.uri, localName, prefix, null, anno);
     error("undefined_prefix", prefix);
     return nameClassBuilder.makeName("", localName, null, null, anno);
   }
@@ -1652,8 +1652,8 @@ private SAXParseable parseable;
     if (locator == null)
       return null;
     return schemaBuilder.makeLocation(locator.getSystemId(),
-				      locator.getLineNumber(),
-				      locator.getColumnNumber());
+                                      locator.getLineNumber(),
+                                      locator.getColumnNumber());
   }
 
   private void checkUri(String s) throws SAXException {

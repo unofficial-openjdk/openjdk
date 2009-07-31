@@ -37,13 +37,13 @@ import org.xml.sax.Locator;
 
 /**
  * Abstract partial implementation of {@link BIDeclaration}
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 abstract class AbstractDeclarationImpl implements BIDeclaration {
 
-    @Deprecated // eventually delete this in favor of using JAXB    
+    @Deprecated // eventually delete this in favor of using JAXB
     protected AbstractDeclarationImpl(Locator loc) {
         this.loc = loc;
     }
@@ -54,7 +54,7 @@ abstract class AbstractDeclarationImpl implements BIDeclaration {
     @XmlLocation
     Locator loc;    // set by JAXB
     public Locator getLocation() { return loc; }
-    
+
     protected BindInfo parent;
     public void setParent(BindInfo p) { this.parent=p; }
 
@@ -70,7 +70,7 @@ abstract class AbstractDeclarationImpl implements BIDeclaration {
 
 
     private boolean isAcknowledged = false;
-    
+
     public final boolean isAcknowledged() { return isAcknowledged; }
 
     public void onSetOwner() {

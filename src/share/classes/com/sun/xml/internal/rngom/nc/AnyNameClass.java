@@ -27,9 +27,9 @@ package com.sun.xml.internal.rngom.nc;
 import javax.xml.namespace.QName;
 
 final class AnyNameClass extends NameClass {
-    
+
     protected AnyNameClass() {} // no instanciation
-    
+
     public boolean contains(QName name) {
         return true;
     }
@@ -53,7 +53,7 @@ final class AnyNameClass extends NameClass {
     public boolean isOpen() {
         return true;
     }
-    
+
     private static Object readReplace() {
         return NameClass.ANY;
     }

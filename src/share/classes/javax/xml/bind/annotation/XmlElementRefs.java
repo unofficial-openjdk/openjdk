@@ -43,7 +43,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * the same tag name with @xsi:type, whereas a reference property produces
  * a different tag name (the tag name that's on the the sub-class.)
  *
- * <p> This annotation can be used with the following annotations: 
+ * <p> This annotation can be used with the following annotations:
  * {@link XmlJavaTypeAdapter}, {@link XmlElementWrapper}.
  *
  * @author <ul><li>Kohsuke Kawaguchi, Sun Microsystems, Inc.</li><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>

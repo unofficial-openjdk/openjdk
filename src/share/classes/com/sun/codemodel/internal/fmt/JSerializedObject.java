@@ -39,7 +39,7 @@ import com.sun.codemodel.internal.JResourceFile;
 public class JSerializedObject extends JResourceFile {
 
     private final Object obj;
-    
+
     /**
      * @exception   IOException
      *      If the serialization fails, this exception is thrown
@@ -48,9 +48,9 @@ public class JSerializedObject extends JResourceFile {
         super(name);
         this.obj = obj;
     }
-    
+
     /**
-     * called by JPackage to serialize the object 
+     * called by JPackage to serialize the object
      */
     protected void build( OutputStream os ) throws IOException {
         // serialize the obj into a ByteArrayOutputStream

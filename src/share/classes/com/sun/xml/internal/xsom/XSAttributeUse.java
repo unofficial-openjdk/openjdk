@@ -22,13 +22,15 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import org.relaxng.datatype.ValidationContext;
 
 /**
  * Attribute use.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -39,7 +41,7 @@ public interface XSAttributeUse extends XSComponent
 
     /**
      * Gets the default value of this attribute use, if one is specified.
-     * 
+     *
      * Note that if a default value is specified in the attribute
      * declaration, this method returns that value.
      */
@@ -47,7 +49,7 @@ public interface XSAttributeUse extends XSComponent
 
     /**
      * Gets the fixed value of this attribute use, if one is specified.
-     * 
+     *
      * Note that if a fixed value is specified in the attribute
      * declaration, this method returns that value.
      */

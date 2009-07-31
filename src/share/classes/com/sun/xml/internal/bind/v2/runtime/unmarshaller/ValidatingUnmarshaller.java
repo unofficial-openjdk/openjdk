@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
  * @author Kohsuke Kawaguchi
  */
 final class ValidatingUnmarshaller implements XmlVisitor, XmlVisitor.TextPredictor {
-    
+
     private final XmlVisitor next;
     private final ValidatorHandler validator;
 

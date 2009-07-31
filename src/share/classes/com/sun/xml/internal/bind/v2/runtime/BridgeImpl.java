@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.io.IOException;
@@ -75,7 +76,7 @@ final class BridgeImpl<T> extends InternalBridge<T> {
 
     public void marshal(Marshaller _m, T t, XMLStreamWriter output) throws JAXBException {
         MarshallerImpl m = (MarshallerImpl)_m;
-        m.write(tagName,bi,t,XMLStreamWriterOutput.create(output,context),new StAXPostInitAction(output,m.serializer));        
+        m.write(tagName,bi,t,XMLStreamWriterOutput.create(output,context),new StAXPostInitAction(output,m.serializer));
     }
 
     public void marshal(Marshaller _m, T t, OutputStream output, NamespaceContext nsContext) throws JAXBException {
@@ -132,7 +133,7 @@ final class BridgeImpl<T> extends InternalBridge<T> {
         if(value==null) {
             out.writeXsiNilTrue();
         } else {
-            out.childAsXsiType(value,null,bi);
+            out.childAsXsiType(value,null,bi,false);
         }
         out.endElement();
     }

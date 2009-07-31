@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl.util;
 
 import org.xml.sax.EntityResolver;
@@ -31,9 +33,9 @@ public class ResourceEntityResolver implements EntityResolver {
     public ResourceEntityResolver( Class _base ) {
         this.base = _base;
     }
-    
+
     private final Class base;
-    
+
     public InputSource resolveEntity( String publicId, String systemId ) {
         return new InputSource(base.getResourceAsStream(systemId));
     }

@@ -39,38 +39,38 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * 
+ *
  * A mutable stream-based buffer of an XML infoset.
- * 
+ *
  * <p>
- * A MutableXMLStreamBuffer is created using specific SAX and StAX-based 
- * creators. Utility methods on MutableXMLStreamBuffer are provided for 
+ * A MutableXMLStreamBuffer is created using specific SAX and StAX-based
+ * creators. Utility methods on MutableXMLStreamBuffer are provided for
  * such functionality that utilize SAX and StAX-based creators.
- * 
+ *
  * <p>
  * Once instantiated the same instance of a MutableXMLStreamBuffer may be reused for
  * creation to reduce the amount of Objects instantiated and garbage
  * collected that are required for internally representing an XML infoset.
- * 
+ *
  * <p>
- * A MutableXMLStreamBuffer is not designed to be created and processed 
+ * A MutableXMLStreamBuffer is not designed to be created and processed
  * concurrently. If done so unspecified behaviour may occur.
  */
 public class MutableXMLStreamBuffer extends XMLStreamBuffer {
     /**
-     * The default array size for the arrays used in internal representation 
+     * The default array size for the arrays used in internal representation
      * of the XML infoset.
      */
-    public static int DEFAULT_ARRAY_SIZE = 512;
-    
+    public static final int DEFAULT_ARRAY_SIZE = 512;
+
     /**
-     * Create a new MutableXMLStreamBuffer using the 
+     * Create a new MutableXMLStreamBuffer using the
      * {@link MutableXMLStreamBuffer#DEFAULT_ARRAY_SIZE}.
      */
     public MutableXMLStreamBuffer() {
         this(DEFAULT_ARRAY_SIZE);
     }
-    
+
     /**
      * Set the system identifier for this buffer.
      * @param systemId The system identifier.
@@ -78,12 +78,12 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
     public void setSystemId(String systemId) {
         this.systemId = systemId;
     }
-    
+
     /**
      * Create a new MutableXMLStreamBuffer.
-     * 
+     *
      * @param size
-     * The size of the arrays used in the internal representation 
+     * The size of the arrays used in the internal representation
      * of the XML infoset.
      * @throws NegativeArraySizeException
      * If the <code>size</code> argument is less than <code>0</code>.
@@ -101,14 +101,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
     /**
      * Create contents of a buffer from a XMLStreamReader.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is reset (see {@link #reset}) before creation.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is created by consuming the events on the XMLStreamReader using
      * an instance of {@link StreamReaderBufferCreator}.
-     * 
+     *
      * @param reader
      * A XMLStreamReader to read from to create.
      */
@@ -120,10 +120,10 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
     /**
      * Create contents of a buffer from a XMLStreamWriter.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is reset (see {@link #reset}) before creation.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is created by consuming events on a XMLStreamWriter using
      * an instance of {@link StreamWriterBufferCreator}.
@@ -135,14 +135,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
     /**
      * Create contents of a buffer from a {@link SAXBufferCreator}.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is reset (see {@link #reset}) before creation.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is created by consuming events from a {@link ContentHandler} using
      * an instance of {@link SAXBufferCreator}.
-     * 
+     *
      * @return The {@link SAXBufferCreator} to create from.
      */
     public SAXBufferCreator createFromSAXBufferCreator() {
@@ -154,14 +154,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
     /**
      * Create contents of a buffer from a {@link XMLReader} and {@link InputStream}.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is reset (see {@link #reset}) before creation.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is created by using an instance of {@link SAXBufferCreator}
      * and registering associated handlers on the {@link XMLReader}.
-     * 
+     *
      * @param reader
      * The {@link XMLReader} to use for parsing.
      * @param in
@@ -173,14 +173,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
     /**
      * Create contents of a buffer from a {@link XMLReader} and {@link InputStream}.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is reset (see {@link #reset}) before creation.
-     * 
+     *
      * <p>
      * The MutableXMLStreamBuffer is created by using an instance of {@link SAXBufferCreator}
      * and registering associated handlers on the {@link XMLReader}.
-     * 
+     *
      * @param reader
      * The {@link XMLReader} to use for parsing.
      * @param in
@@ -198,14 +198,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
 
         c.create(reader, in, systemId);
     }
-    
+
     /**
      * Reset the MutableXMLStreamBuffer.
-     * 
+     *
      * <p>
      * This method will reset the MutableXMLStreamBuffer to a state of being "uncreated"
      * similar to the state of a newly instantiated MutableXMLStreamBuffer.
-     * 
+     *
      * <p>
      * As many Objects as possible will be retained for reuse in future creation.
      */
@@ -213,7 +213,7 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
         // Reset the ptrs in arrays to 0
         _structurePtr =
                 _structureStringsPtr =
-                _contentCharactersBufferPtr = 
+                _contentCharactersBufferPtr =
                 _contentObjectsPtr = 0;
 
         // Set the first element of structure array to indicate an empty buffer
@@ -232,14 +232,14 @@ public class MutableXMLStreamBuffer extends XMLStreamBuffer {
         }
 
         treeCount = 0;
-        
+
         /*
          * TODO consider truncating the size of _structureStrings and
          * _contentCharactersBuffer to limit the memory used by the buffer
          */
     }
-    
-    
+
+
     protected void setHasInternedStrings(boolean hasInternedStrings) {
         _hasInternedStrings = hasInternedStrings;
     }

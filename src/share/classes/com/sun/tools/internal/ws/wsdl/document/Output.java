@@ -122,7 +122,7 @@ public class Output extends Entity implements TWSDLExtensible {
     public TWSDLExtensible getParent() {
         return parent;
     }
-    
+
     public void setParent(TWSDLExtensible parent) {
         this.parent = parent;
     }

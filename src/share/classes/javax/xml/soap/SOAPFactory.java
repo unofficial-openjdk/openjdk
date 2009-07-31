@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * $Id: SOAPFactory.java,v 1.13 2005/06/22 10:24:11 vj135062 Exp $
- * $Revision: 1.13 $
+ * $Id: SOAPFactory.java,v 1.14 2006/03/30 00:59:41 ofung Exp $
+ * $Revision: 1.14 $
  * $Datae$
  */
 
@@ -61,35 +61,35 @@ public abstract class SOAPFactory {
         "javax.xml.soap.SOAPFactory";
 
     /**
-     * Creates a <code>SOAPElement</code> object from an existing DOM 
+     * Creates a <code>SOAPElement</code> object from an existing DOM
      * <code>Element</code>. If the DOM <code>Element</code> that is passed in
-     * as an argument is already a <code>SOAPElement</code> then this method 
+     * as an argument is already a <code>SOAPElement</code> then this method
      * must return it unmodified without any further work. Otherwise, a new
-     * <code>SOAPElement</code> is created and a deep copy is made of the 
+     * <code>SOAPElement</code> is created and a deep copy is made of the
      * <code>domElement</code> argument. The concrete type of the return value
      * will depend on the name of the <code>domElement</code> argument. If any
-     * part of the tree rooted in <code>domElement</code> violates SOAP rules, a 
+     * part of the tree rooted in <code>domElement</code> violates SOAP rules, a
      * <code>SOAPException</code> will be thrown.
-     * 
+     *
      * @param domElement - the <code>Element</code> to be copied.
-     * 
+     *
      * @return a new <code>SOAPElement</code> that is a copy of <code>domElement</code>.
-     * 
+     *
      * @exception SOAPException if there is an error in creating the
      *            <code>SOAPElement</code> object
-     * 
+     *
      * @since SAAJ 1.3
      */
     public SOAPElement createElement(Element domElement) throws SOAPException {
         throw new UnsupportedOperationException("createElement(org.w3c.dom.Element) must be overridden by all subclasses of SOAPFactory.");
     }
-    
+
     /**
      * Creates a <code>SOAPElement</code> object initialized with the
      * given <code>Name</code> object. The concrete type of the return value
-     * will depend on the name given to the new <code>SOAPElement</code>. For 
-     * instance, a new <code>SOAPElement</code> with the name 
-     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a 
+     * will depend on the name given to the new <code>SOAPElement</code>. For
+     * instance, a new <code>SOAPElement</code> with the name
+     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a
      * <code>SOAPEnvelope</code> that supports SOAP 1.2 behavior to be created.
      *
      * @param name a <code>Name</code> object with the XML name for
@@ -107,9 +107,9 @@ public abstract class SOAPFactory {
     /**
      * Creates a <code>SOAPElement</code> object initialized with the
      * given <code>QName</code> object. The concrete type of the return value
-     * will depend on the name given to the new <code>SOAPElement</code>. For 
-     * instance, a new <code>SOAPElement</code> with the name 
-     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a 
+     * will depend on the name given to the new <code>SOAPElement</code>. For
+     * instance, a new <code>SOAPElement</code> with the name
+     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a
      * <code>SOAPEnvelope</code> that supports SOAP 1.2 behavior to be created.
      *
      * @param qname a <code>QName</code> object with the XML name for
@@ -129,7 +129,7 @@ public abstract class SOAPFactory {
 
     /**
      * Creates a <code>SOAPElement</code> object initialized with the
-     * given local name. 
+     * given local name.
      *
      * @param localName a <code>String</code> giving the local name for
      *             the new element
@@ -142,14 +142,14 @@ public abstract class SOAPFactory {
      */
     public abstract SOAPElement createElement(String localName)
         throws SOAPException;
-    
+
 
     /**
      * Creates a new <code>SOAPElement</code> object with the given
      * local name, prefix and uri. The concrete type of the return value
-     * will depend on the name given to the new <code>SOAPElement</code>. For 
-     * instance, a new <code>SOAPElement</code> with the name 
-     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a 
+     * will depend on the name given to the new <code>SOAPElement</code>. For
+     * instance, a new <code>SOAPElement</code> with the name
+     * "{http://www.w3.org/2003/05/soap-envelope}Envelope" would cause a
      * <code>SOAPEnvelope</code> that supports SOAP 1.2 behavior to be created.
      *
      * @param localName a <code>String</code> giving the local name
@@ -176,8 +176,8 @@ public abstract class SOAPFactory {
      * abstraction.
      *
      * @return a <code>Detail</code> object
-     * @throws SOAPException if there is a SOAP error 
-     * @throws UnsupportedOperationException if the protocol specified 
+     * @throws SOAPException if there is a SOAP error
+     * @throws UnsupportedOperationException if the protocol specified
      *         for the SOAPFactory was <code>DYNAMIC_SOAP_PROTOCOL</code>
      */
     public abstract Detail createDetail() throws SOAPException;
@@ -194,7 +194,7 @@ public abstract class SOAPFactory {
     public abstract SOAPFault createFault(String reasonText, QName faultCode) throws SOAPException;
 
     /**
-     *Creates a new default <code>SOAPFault</code> object 
+     *Creates a new default <code>SOAPFault</code> object
      *@return a <code>SOAPFault</code> object
      *@throws SOAPException if there is a SOAP error
      *@since SAAJ 1.3
@@ -228,7 +228,7 @@ public abstract class SOAPFactory {
      * <P>
      * This factory method creates <code>Name</code> objects for use in
      * situations where it is not practical to use the <code>SOAPEnvelope</code>
-     * abstraction. 
+     * abstraction.
      *
      * @param localName a <code>String</code> giving the local name
      * @return a <code>Name</code> object initialized with the given
@@ -275,7 +275,7 @@ public abstract class SOAPFactory {
 
     /**
      * Creates a new <code>SOAPFactory</code> object that is an instance of
-     * the specified implementation, this method uses the SAAJMetaFactory to 
+     * the specified implementation, this method uses the SAAJMetaFactory to
      * locate the implementation class and create the SOAPFactory instance.
      *
      * @return a new instance of a <code>SOAPFactory</code>

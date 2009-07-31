@@ -30,7 +30,7 @@ import org.relaxng.datatype.Datatype;
 
 /**
  * Walks the pattern tree.
- * 
+ *
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */

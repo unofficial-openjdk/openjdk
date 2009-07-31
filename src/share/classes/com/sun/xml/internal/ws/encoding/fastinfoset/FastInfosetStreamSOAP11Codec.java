@@ -58,7 +58,7 @@ final class FastInfosetStreamSOAP11Codec extends FastInfosetStreamSOAPCodec {
     protected final StreamHeader createHeader(XMLStreamReader reader, XMLStreamBuffer mark) {
         return new StreamHeader11(reader, mark);
     }
-    
+
     protected ContentType getContentType(String soapAction) {
         if (soapAction == null || soapAction.length() == 0) {
             return _defaultContentType;

@@ -41,7 +41,7 @@ import com.sun.xml.internal.messaging.saaj.packaging.mime.MessagingException;
  * A utility class that implements a DataSource out of
  * a MimeBodyPart. This class is primarily meant for service providers.
  *
- * @author 	John Mani
+ * @author      John Mani
  */
 
 public final class MimePartDataSource implements DataSource {
@@ -51,7 +51,7 @@ public final class MimePartDataSource implements DataSource {
      * Constructor, that constructs a DataSource from a MimeBodyPart.
      */
     public MimePartDataSource(MimeBodyPart part) {
-	this.part = part;
+        this.part = part;
     }
 
     /**
@@ -65,21 +65,21 @@ public final class MimePartDataSource implements DataSource {
      * using the <code>getContentStream()</code> method and decodes
      * it using the <code>MimeUtility.decode()</code> method.
      *
-     * @return 	decoded input stream
+     * @return  decoded input stream
      */
     public InputStream getInputStream() throws IOException {
 
-	try {
+        try {
         InputStream is = part.getContentStream();
 
-	    String encoding = part.getEncoding();
-	    if (encoding != null)
-		return MimeUtility.decode(is, encoding);
-	    else
-		return is;
-	} catch (MessagingException mex) {
-	    throw new IOException(mex.getMessage());
-	}
+            String encoding = part.getEncoding();
+            if (encoding != null)
+                return MimeUtility.decode(is, encoding);
+            else
+                return is;
+        } catch (MessagingException mex) {
+            throw new IOException(mex.getMessage());
+        }
     }
 
     /**
@@ -88,7 +88,7 @@ public final class MimePartDataSource implements DataSource {
      * This implementation throws the UnknownServiceException.
      */
     public OutputStream getOutputStream() throws IOException {
-	throw new UnknownServiceException();
+        throw new UnknownServiceException();
     }
 
     /**
@@ -107,10 +107,10 @@ public final class MimePartDataSource implements DataSource {
      * This implementation just returns an empty string.
      */
     public String getName() {
-	try {
-		return part.getFileName();
-	} catch (MessagingException mex) {
+        try {
+                return part.getFileName();
+        } catch (MessagingException mex) {
         return "";
-	}
+        }
     }
 }

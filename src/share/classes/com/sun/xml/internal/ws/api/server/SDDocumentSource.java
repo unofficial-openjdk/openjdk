@@ -41,7 +41,7 @@ import java.net.URL;
  *
  * <p>
  * This abstract class could be implemented by appliations, or one of the
- * {@link #create} methods can be used. 
+ * {@link #create} methods can be used.
  *
  * @author Kohsuke Kawaguchi
  */

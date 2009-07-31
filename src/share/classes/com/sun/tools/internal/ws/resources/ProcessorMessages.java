@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class ProcessorMessages {
 
@@ -44,7 +44,7 @@ public final class ProcessorMessages {
 
     /**
      * model is missing
-     * 
+     *
      */
     public static String PROCESSOR_MISSING_MODEL() {
         return localizer.localize(localizablePROCESSOR_MISSING_MODEL());

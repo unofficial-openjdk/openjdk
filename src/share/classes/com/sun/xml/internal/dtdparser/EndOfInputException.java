@@ -29,4 +29,3 @@ import java.io.IOException;
 
 class EndOfInputException extends IOException {
 }
-

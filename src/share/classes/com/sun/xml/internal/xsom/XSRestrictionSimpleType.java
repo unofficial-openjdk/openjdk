@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import java.util.Iterator;
@@ -30,25 +32,31 @@ import java.util.List;
 
 /**
  * Restriction simple type.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public interface XSRestrictionSimpleType extends XSSimpleType {
     // TODO
-    
+
     /** Iterates facets that are specified in this step of derivation. */
     public Iterator<XSFacet> iterateDeclaredFacets();
 
+    /**
+     * Gets all the facets that are declared on this restriction.
+     *
+     * @return
+     *      Can be empty but always non-null.
+     */
     public Collection<? extends XSFacet> getDeclaredFacets();
 
     /**
      * Gets the declared facet object of the given name.
-     * 
+     *
      * <p>
      * This method returns a facet object that is added in this
      * type and does not recursively check the ancestors.
-     * 
+     *
      * <p>
      * For those facets that can have multiple values
      * (pattern facets and enumeration facets), this method

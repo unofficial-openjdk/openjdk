@@ -24,15 +24,15 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.util;
 
 public class ValueArrayResourceException extends RuntimeException {
-    
+
     public ValueArrayResourceException() {
     }
-    
+
     public ValueArrayResourceException(String message) {
         super(message);
     }

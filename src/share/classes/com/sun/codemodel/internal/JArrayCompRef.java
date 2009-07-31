@@ -63,9 +63,9 @@ final class JArrayCompRef extends JExpressionImpl implements JAssignmentTarget {
     }
 
     public JExpression assign(JExpression rhs) {
-		return JExpr.assign(this,rhs);
+                return JExpr.assign(this,rhs);
     }
     public JExpression assignPlus(JExpression rhs) {
-		return JExpr.assignPlus(this,rhs);
+                return JExpr.assignPlus(this,rhs);
     }
 }

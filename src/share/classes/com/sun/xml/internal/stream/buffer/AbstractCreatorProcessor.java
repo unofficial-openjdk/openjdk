@@ -37,7 +37,7 @@ public abstract class AbstractCreatorProcessor {
     protected static final int FLAG_PREFIX                 = 1 << 0;
     protected static final int FLAG_URI                    = 1 << 1;
     protected static final int FLAG_QUALIFIED_NAME         = 1 << 2;
-    
+
     /*
      * Types of content for T_TEXT and T_COMMENT
      * <p>
@@ -57,7 +57,7 @@ public abstract class AbstractCreatorProcessor {
     protected static final int CHAR_ARRAY_LENGTH_MEDIUM       = 1;
     protected static final int CHAR_ARRAY_LENGTH_SMALL_SIZE   = 1 << 8;
     protected static final int CHAR_ARRAY_LENGTH_MEDIUM_SIZE  = 1 << 16;
-    
+
     /*
      * Types of value for T_ATTRIBUTE
      * <p>
@@ -88,16 +88,16 @@ public abstract class AbstractCreatorProcessor {
      * One octet is used.
      */
     protected static final int T_DOCUMENT_FRAGMENT           = T_DOCUMENT | FLAG_DOCUMENT_FRAGMENT;
-    
+
     protected static final int T_ELEMENT_U_LN_QN             = T_ELEMENT | FLAG_URI | FLAG_QUALIFIED_NAME;
     protected static final int T_ELEMENT_P_U_LN              = T_ELEMENT | FLAG_PREFIX | FLAG_URI;
     protected static final int T_ELEMENT_U_LN                = T_ELEMENT | FLAG_URI;
     protected static final int T_ELEMENT_LN                  = T_ELEMENT;
-    
+
     protected static final int T_NAMESPACE_ATTRIBUTE_P       = T_NAMESPACE_ATTRIBUTE | FLAG_PREFIX;
     protected static final int T_NAMESPACE_ATTRIBUTE_P_U     = T_NAMESPACE_ATTRIBUTE | FLAG_PREFIX | FLAG_URI;
     protected static final int T_NAMESPACE_ATTRIBUTE_U       = T_NAMESPACE_ATTRIBUTE | FLAG_URI;
-    
+
     protected static final int T_ATTRIBUTE_U_LN_QN           = T_ATTRIBUTE | FLAG_URI | FLAG_QUALIFIED_NAME;
     protected static final int T_ATTRIBUTE_P_U_LN            = T_ATTRIBUTE | FLAG_PREFIX | FLAG_URI;
     protected static final int T_ATTRIBUTE_U_LN              = T_ATTRIBUTE | FLAG_URI;
@@ -106,35 +106,35 @@ public abstract class AbstractCreatorProcessor {
     protected static final int T_ATTRIBUTE_P_U_LN_OBJECT     = T_ATTRIBUTE_P_U_LN | VALUE_TYPE_OBJECT;
     protected static final int T_ATTRIBUTE_U_LN_OBJECT       = T_ATTRIBUTE_U_LN | VALUE_TYPE_OBJECT;
     protected static final int T_ATTRIBUTE_LN_OBJECT         = T_ATTRIBUTE_LN | VALUE_TYPE_OBJECT;
-    
+
     protected static final int T_TEXT_AS_CHAR_ARRAY          = T_TEXT;
     protected static final int T_TEXT_AS_CHAR_ARRAY_SMALL    = T_TEXT | CHAR_ARRAY_LENGTH_SMALL;
     protected static final int T_TEXT_AS_CHAR_ARRAY_MEDIUM   = T_TEXT | CHAR_ARRAY_LENGTH_MEDIUM;
     protected static final int T_TEXT_AS_CHAR_ARRAY_COPY     = T_TEXT | CONTENT_TYPE_CHAR_ARRAY_COPY;
     protected static final int T_TEXT_AS_STRING              = T_TEXT | CONTENT_TYPE_STRING;
     protected static final int T_TEXT_AS_OBJECT              = T_TEXT | CONTENT_TYPE_OBJECT;
-    
+
     protected static final int T_COMMENT_AS_CHAR_ARRAY        = T_COMMENT;
     protected static final int T_COMMENT_AS_CHAR_ARRAY_SMALL  = T_COMMENT | CHAR_ARRAY_LENGTH_SMALL;
     protected static final int T_COMMENT_AS_CHAR_ARRAY_MEDIUM = T_COMMENT | CHAR_ARRAY_LENGTH_MEDIUM;
     protected static final int T_COMMENT_AS_CHAR_ARRAY_COPY   = T_COMMENT | CONTENT_TYPE_CHAR_ARRAY_COPY;
     protected static final int T_COMMENT_AS_STRING            = T_COMMENT | CONTENT_TYPE_STRING;
-    
+
     protected static final int T_END_OF_BUFFER               = -1;
-    
+
     protected FragmentedArray<byte[]> _currentStructureFragment;
     protected byte[] _structure;
     protected int _structurePtr;
-    
+
     protected FragmentedArray<String[]> _currentStructureStringFragment;
     protected String[] _structureStrings;
     protected int _structureStringsPtr;
-    
+
     protected FragmentedArray<char[]> _currentContentCharactersBufferFragment;
     protected char[] _contentCharactersBuffer;
-    protected int _contentCharactersBufferPtr;        
-    
+    protected int _contentCharactersBufferPtr;
+
     protected FragmentedArray<Object[]> _currentContentObjectFragment;
     protected Object[] _contentObjects;
-    protected int _contentObjectsPtr;        
+    protected int _contentObjectsPtr;
 }

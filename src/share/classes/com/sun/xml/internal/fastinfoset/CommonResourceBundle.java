@@ -37,7 +37,7 @@ public class CommonResourceBundle extends AbstractResourceBundle {
     private static CommonResourceBundle instance = null;
     private static Locale locale = null;
     private ResourceBundle bundle = null;
-    
+
     protected CommonResourceBundle() {
         // Load the resource bundle of default locale
         bundle = ResourceBundle.getBundle(BASE_NAME);
@@ -62,7 +62,7 @@ public class CommonResourceBundle extends AbstractResourceBundle {
 
         return instance;
     }
-    
+
     public static CommonResourceBundle getInstance(Locale locale) {
         if (instance == null) {
             synchronized (CommonResourceBundle.class) {
@@ -74,7 +74,7 @@ public class CommonResourceBundle extends AbstractResourceBundle {
                     instance = new CommonResourceBundle(locale);
                 }
             }
-	}
+        }
         return instance;
     }
 
@@ -85,5 +85,5 @@ public class CommonResourceBundle extends AbstractResourceBundle {
     public ResourceBundle getBundle(Locale locale) {
         return ResourceBundle.getBundle(BASE_NAME, locale);
     }
-    
+
 }

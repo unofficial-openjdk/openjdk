@@ -189,7 +189,7 @@ public class Operation extends Entity implements TWSDLOperation {
             }
             if (_faults != null && _faults.size() != 0) {
                 failValidation("validation.invalidSubEntity", "fault");
-            }            
+            }
         } else if (_style == OperationStyle.NOTIFICATION) {
             if (_parameterOrder != null) {
                 failValidation("validation.invalidAttribute", "parameterOrder");

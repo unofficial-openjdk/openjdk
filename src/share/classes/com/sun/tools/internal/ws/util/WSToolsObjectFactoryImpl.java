@@ -37,13 +37,13 @@ import java.io.OutputStream;
  * @author JAX-WS Development Team
  */
 public class WSToolsObjectFactoryImpl extends WSToolsObjectFactory {
-    
+
     @Override
     public boolean wsimport(OutputStream logStream, Container container, String[] args) {
         WsimportTool tool = new WsimportTool(logStream, container);
         return tool.run(args);
     }
-    
+
     @Override
     public boolean wsgen(OutputStream logStream, Container container, String[] args) {
         WsgenTool tool = new WsgenTool(logStream, container);

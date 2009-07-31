@@ -47,7 +47,7 @@ import java.util.List;
  * This parameter is only used for the {@link ParameterBinding#BODY} binding.
  * Other parameters that bind to other parts (such as headers or unbound)
  * will show up directly under {@link JavaMethod}.
- * 
+ *
  * @author Vivek Pandey
  */
 public class WrapperParameter extends ParameterImpl {
@@ -77,7 +77,7 @@ public class WrapperParameter extends ParameterImpl {
 
     /**
      * Adds a new child parameter.
-     * 
+     *
      * @param wrapperChild
      */
     public void addWrapperChild(ParameterImpl wrapperChild) {

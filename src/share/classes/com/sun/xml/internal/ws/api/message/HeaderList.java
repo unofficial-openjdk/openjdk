@@ -732,7 +732,7 @@ public final class HeaderList extends ArrayList<Header> {
      * is inserted.
      *
      * @return
-     *      always true. Don't use the return value.      
+     *      always true. Don't use the return value.
      */
     public boolean add(Header header) {
         return super.add(header);

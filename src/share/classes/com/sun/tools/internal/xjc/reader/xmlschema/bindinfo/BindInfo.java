@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -53,7 +52,6 @@ import com.sun.tools.internal.xjc.model.Model;
 import com.sun.tools.internal.xjc.reader.Ring;
 import com.sun.tools.internal.xjc.reader.xmlschema.BGMBuilder;
 import com.sun.xml.internal.bind.annotation.XmlLocation;
-import com.sun.xml.internal.bind.api.TypeReference;
 import com.sun.xml.internal.bind.marshaller.MinimumEscapeHandler;
 import com.sun.xml.internal.bind.v2.WellKnownNamespace;
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
@@ -78,11 +76,11 @@ public final class BindInfo implements Iterable<BIDeclaration> {
 
     @XmlLocation
     private Locator location;
-    
+
     /**
-     * Documentation taken from &lt;xs:documentation>s. 
+     * Documentation taken from &lt;xs:documentation>s.
      */
-    @XmlElement
+    @XmlElement(namespace=WellKnownNamespace.XML_SCHEMA)
     private Documentation documentation;
 
     /**
@@ -146,7 +144,7 @@ public final class BindInfo implements Iterable<BIDeclaration> {
 
 
     // only used by JAXB
-    @XmlElement
+    @XmlElement(namespace=WellKnownNamespace.XML_SCHEMA)
     void setAppinfo(AppInfo aib) {
         aib.addTo(this);
     }
@@ -155,7 +153,7 @@ public final class BindInfo implements Iterable<BIDeclaration> {
 
     /**
      * Gets the location of this annotation in the source file.
-     * 
+     *
      * @return
      *      If the declarations are in fact specified in the source
      *      code, a non-null valid object will be returned.
@@ -163,8 +161,8 @@ public final class BindInfo implements Iterable<BIDeclaration> {
      *      null will be returned.
      */
     public Locator getSourceLocation() { return location; }
-    
-    
+
+
     private XSComponent owner;
     /**
      * Sets the owner schema component and a reference to BGMBuilder.
@@ -178,7 +176,7 @@ public final class BindInfo implements Iterable<BIDeclaration> {
             d.onSetOwner();
     }
     public XSComponent getOwner() { return owner; }
-    
+
     /**
      * Back pointer to the BGMBuilder which is building
      * a BGM from schema components including this customization.
@@ -191,7 +189,7 @@ public final class BindInfo implements Iterable<BIDeclaration> {
         decl.setParent(this);
         decls.add(decl);
     }
-    
+
     /**
      * Gets the first declaration with a given name, or null
      * if none is found.
@@ -204,10 +202,10 @@ public final class BindInfo implements Iterable<BIDeclaration> {
         }
         return null; // not found
     }
-   
+
     /**
      * Gets all the declarations
-     */ 
+     */
     public BIDeclaration[] getDecls() {
         return decls.toArray(new BIDeclaration[decls.size()]);
     }
@@ -272,10 +270,10 @@ public final class BindInfo implements Iterable<BIDeclaration> {
         else
             this.documentation.addAll(bi.documentation);
     }
-    
+
     /** Gets the number of declarations. */
     public int size() { return decls.size(); }
-    
+
     public BIDeclaration get( int idx ) { return decls.get(idx); }
 
     public Iterator<BIDeclaration> iterator() {
@@ -318,13 +316,15 @@ public final class BindInfo implements Iterable<BIDeclaration> {
         synchronized(AnnotationParserFactoryImpl.class) {
             try {
                 if(customizationContext==null)
-                    customizationContext = new JAXBContextImpl(
+                    customizationContext = new JAXBContextImpl.JAXBContextBuilder().setClasses(
                         new Class[] {
                             BindInfo.class, // for xs:annotation
                             BIClass.class,
                             BIConversion.User.class,
                             BIConversion.UserAdapter.class,
                             BIDom.class,
+                            BIFactoryMethod.class,
+                            BIInlineBinaryData.class,
                             BIXDom.class,
                             BIXSubstitutable.class,
                             BIEnum.class,
@@ -332,8 +332,7 @@ public final class BindInfo implements Iterable<BIDeclaration> {
                             BIGlobalBinding.class,
                             BIProperty.class,
                             BISchemaBinding.class
-                        }, Collections.<TypeReference>emptyList(),
-                            Collections.<Class,Class>emptyMap(), null, false, null, false, false);
+                        }).build();
                 return customizationContext;
             } catch (JAXBException e) {
                 throw new AssertionError(e);
@@ -346,4 +345,3 @@ public final class BindInfo implements Iterable<BIDeclaration> {
      */
     public static final SchemaCache bindingFileSchema = new SchemaCache(BindInfo.class.getResource("binding.xsd"));
 }
-

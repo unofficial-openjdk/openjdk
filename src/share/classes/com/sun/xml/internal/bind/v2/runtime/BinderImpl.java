@@ -44,11 +44,11 @@ import org.xml.sax.SAXException;
 
 /**
  * Implementation of {@link Binder}.
- * 
+ *
  * TODO: investigate how much in-place unmarshalling is implemented
  *      - some preliminary work is there. Probably buggy.
  * TODO: work on the marshaller side.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -58,7 +58,7 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
      * The parent context object.
      */
     private final JAXBContextImpl context;
-    
+
     /**
      * Lazily created unmarshaller to do XML->Java binding.
      * @see #getUnmarshaller()
@@ -72,18 +72,18 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
     private MarshallerImpl marshaller;
 
     private final InfosetScanner<XmlNode> scanner;
-    
+
     /**
      * A {@link Binder} always works with the same
      * association map.
      */
     private final AssociationMap<XmlNode> assoc = new AssociationMap<XmlNode>();
-    
+
     BinderImpl(JAXBContextImpl _context,InfosetScanner<XmlNode> scanner) {
         this.context = _context;
         this.scanner = scanner;
     }
-    
+
     private UnmarshallerImpl getUnmarshaller() {
         if(unmarshaller==null)
             unmarshaller = new UnmarshallerImpl(context,assoc);
@@ -146,11 +146,13 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
         } catch( SAXException e ) {
             throw unmarshaller.createUnmarshalException(e);
         }
-        
+
         return handler.getContext().getResult();
     }
 
     public XmlNode getXMLNode(Object jaxbObject) {
+        if(jaxbObject==null)
+            throw new IllegalArgumentException();
         AssociationMap.Entry<XmlNode> e = assoc.byPeer(jaxbObject);
         if(e==null)     return null;
         return e.element();

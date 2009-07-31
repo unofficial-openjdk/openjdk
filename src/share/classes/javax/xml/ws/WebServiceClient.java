@@ -31,7 +31,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 
-/** 
+/**
  *  Used to annotate a generated service interface.
  *
  *  <p>The information specified in this annotation is sufficient

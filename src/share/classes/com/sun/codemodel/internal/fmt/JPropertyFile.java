@@ -38,9 +38,9 @@ public class JPropertyFile extends JResourceFile
     public JPropertyFile( String name ) {
         super(name);
     }
-    
+
     private final Properties data = new Properties();
-    
+
     /**
      * Adds key/value pair into the property file.
      * If you call this method twice with the same key,
@@ -49,11 +49,11 @@ public class JPropertyFile extends JResourceFile
     public void add( String key, String value ) {
         data.put(key,value);
     }
-    
+
     // TODO: method to iterate values in data?
     // TODO: should we rather expose Properties object directly via
     // public Properties body() { return data; } ?
-    
+
     public void build( OutputStream out ) throws IOException {
         data.store(out,null);
     }

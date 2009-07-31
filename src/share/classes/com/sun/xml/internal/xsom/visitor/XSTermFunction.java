@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.visitor;
 
 import com.sun.xml.internal.xsom.XSElementDecl;
@@ -32,7 +34,7 @@ import com.sun.xml.internal.xsom.XSTerm;
 
 /**
  * Function object that works on {@link XSTerm}.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -42,4 +44,3 @@ public interface XSTermFunction<T> {
     T modelGroup( XSModelGroup group );
     T elementDecl( XSElementDecl decl );
 }
-

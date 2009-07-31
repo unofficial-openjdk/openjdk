@@ -441,8 +441,19 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
 
     protected boolean shouldProcessMethod(MethodDeclaration method, WebMethod webMethod) {
         builder.log("should process method: "+method.getSimpleName()+" hasWebMethods: "+ hasWebMethods+" ");
+        /*
+        Fix for https://jax-ws.dev.java.net/issues/show_bug.cgi?id=577
         if (hasWebMethods && webMethod == null) {
             builder.log("webMethod == null");
+            return false;
+        }
+        */
+        Collection<Modifier> modifiers = method.getModifiers();
+        boolean staticFinal = modifiers.contains(Modifier.STATIC) || modifiers.contains(Modifier.FINAL);
+        if (staticFinal) {
+            if (webMethod != null) {
+                builder.onError(method.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_METHOD_IS_STATIC_OR_FINAL(method.getDeclaringType(), method));
+            }
             return false;
         }
         boolean retval = (endpointReferencesInterface ||
@@ -474,10 +485,6 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
             builder.onError(classDecl.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_CLASS_IS_ABSTRACT(classDecl.getQualifiedName()));
             return false;
         }
-        if (classDecl.getDeclaringType() != null && !modifiers.contains(Modifier.STATIC) && !isStateful) {
-            builder.onError(classDecl.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_CLASS_IS_INNERCLASS_NOT_STATIC(classDecl.getQualifiedName()));
-            return false;
-        }
         boolean hasDefaultConstructor = false;
         for (ConstructorDeclaration constructor : classDecl.getConstructors()) {
             if (constructor.getModifiers().contains(Modifier.PUBLIC) &&
@@ -487,6 +494,11 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
             }
         }
         if (!hasDefaultConstructor && !isStateful) {
+            if (classDecl.getDeclaringType() != null && !modifiers.contains(Modifier.STATIC)) {
+                builder.onError(classDecl.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_CLASS_IS_INNERCLASS_NOT_STATIC(classDecl.getQualifiedName()));
+                return false;
+            }
+
             builder.onError(classDecl.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_NO_DEFAULT_CONSTRUCTOR(classDecl.getQualifiedName()));
             return false;
         }
@@ -577,8 +589,8 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
                 return false;
         }
         ClassType superClass = classDecl.getSuperclass();
-        
-        if (!superClass.getDeclaration().getQualifiedName().equals(JAVA_LANG_OBJECT) && superClass != null && !methodsAreLegal(superClass.getDeclaration())) {
+
+        if (!superClass.getDeclaration().getQualifiedName().equals(JAVA_LANG_OBJECT) && !methodsAreLegal(superClass.getDeclaration())) {
             return false;
         }
         return true;
@@ -590,17 +602,19 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
         //SEI cannot have methods with @WebMethod(exclude=true)
         if (typeDecl instanceof InterfaceDeclaration && webMethod != null && webMethod.exclude())
             builder.onError(method.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_INVALID_SEI_ANNOTATION_ELEMENT_EXCLUDE("exclude=true", typeDecl.getQualifiedName(), method.toString()));
-        
+
         if (hasWebMethods && (webMethod == null))
             return true;
         if (!hasWebMethods && (webMethod !=null) && webMethod.exclude()) {
             return true;
         }
+        /*
+        This check is not needed as Impl class is already checked that it is not abstract.
         if (typeDecl instanceof ClassDeclaration && method.getModifiers().contains(Modifier.ABSTRACT)) {
             builder.onError(method.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_WEBSERVICE_METHOD_IS_ABSTRACT(typeDecl.getQualifiedName(), method.getSimpleName()));
             return false;
         }
-
+        */
         if (!isLegalType(method.getReturnType())) {
             builder.onError(method.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_METHOD_RETURN_TYPE_CANNOT_IMPLEMENT_REMOTE(typeDecl.getQualifiedName(),
                 method.getSimpleName(),
@@ -708,11 +722,11 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
             if (!builder.isRemoteException(exDecl)) {
                 builder.onError(method.getPosition(), WebserviceapMessages.localizableWEBSERVICEAP_ONEWAY_OPERATION_CANNOT_DECLARE_EXCEPTIONS(typeDecl.getQualifiedName(), method.toString(), exDecl.getQualifiedName()));
                 valid = false;
-            }                
+            }
         }
         return valid;
     }
-    
+
     protected int getModeParameterCount(MethodDeclaration method, WebParam.Mode mode) {
         WebParam webParam;
         int cnt = 0;
@@ -731,7 +745,7 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
         }
         return cnt;
     }
-    
+
     protected boolean isEquivalentModes(WebParam.Mode mode1, WebParam.Mode mode2) {
         if (mode1.equals(mode2))
             return true;
@@ -742,15 +756,20 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
             return true;
         return false;
     }
-    
+
     protected boolean isHolder(ParameterDeclaration param) {
         return builder.getHolderValueType(param.getType()) != null;
     }
-    
+
     protected boolean isLegalType(TypeMirror type) {
         if (!(type instanceof DeclaredType))
             return true;
-        return !builder.isRemote(((DeclaredType)type).getDeclaration());
+        TypeDeclaration typeDecl = ((DeclaredType)type).getDeclaration();
+        if(typeDecl == null) {
+            // can be null, if this type's declaration is unknown. This may be the result of a processing error, such as a missing class file.
+            builder.onError(WebserviceapMessages.WEBSERVICEAP_COULD_NOT_FIND_TYPEDECL(typeDecl.toString(), context.getRound()));
+        }
+        return !builder.isRemote(typeDecl);
     }
 
     protected ParameterDeclaration getOutParameter(MethodDeclaration method) {
@@ -763,7 +782,7 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
         }
         return null;
     }
-    
+
     protected static class MySOAPBinding implements SOAPBinding {
         public Style style() {return SOAPBinding.Style.DOCUMENT;}
         public Use use() {return SOAPBinding.Use.LITERAL; }
@@ -773,4 +792,3 @@ public abstract class WebServiceVisitor extends SimpleDeclarationVisitor impleme
         }
     }
 }
-

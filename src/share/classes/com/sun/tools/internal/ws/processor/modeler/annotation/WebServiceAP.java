@@ -58,8 +58,8 @@ import java.util.Set;
 
 
 /**
- * WebServiceAP is a APT AnnotationProcessor for processing javax.jws.* and 
- * javax.xml.ws.* annotations. This class is used either by the WsGen (CompileTool) tool or 
+ * WebServiceAP is a APT AnnotationProcessor for processing javax.jws.* and
+ * javax.xml.ws.* annotations. This class is used either by the WsGen (CompileTool) tool or
  *    idirectly via the {@link com.sun.istack.internal.ws.AnnotationProcessorFactoryImpl} when invoked by APT.
  *
  * @author WS Development Team
@@ -210,6 +210,7 @@ public class WebServiceAP implements AnnotationProcessor, ModelBuilder, WebServi
     public void onError(String message) {
         if (messager != null) {
             messager.printError(message);
+            throw new AbortException();
         } else {
             throw new ModelerException(message);
         }
@@ -417,6 +418,3 @@ public class WebServiceAP implements AnnotationProcessor, ModelBuilder, WebServi
         return javaName;
     }
 }
-
-
-

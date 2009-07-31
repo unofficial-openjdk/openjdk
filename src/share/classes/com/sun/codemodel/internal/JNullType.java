@@ -30,12 +30,12 @@ import java.util.List;
 
 /**
  * Special class object that represents the type of "null".
- * 
+ *
  * <p>
  * Use this class with care.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public final class JNullType extends JClass {
 

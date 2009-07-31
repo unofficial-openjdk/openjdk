@@ -82,7 +82,12 @@ public class ByteArrayBuffer extends OutputStream {
     }
 
     public ByteArrayBuffer(byte[] data) {
+        this(data,data.length);
+    }
+
+    public ByteArrayBuffer(byte[] data, int length) {
         this.buf = data;
+        this.count = length;
     }
 
     /**
@@ -99,7 +104,7 @@ public class ByteArrayBuffer extends OutputStream {
             if(sz<0)    return;     // hit EOS
             count += sz;
 
-            
+
             if(cap==sz)
                 ensureCapacity(buf.length*2);   // buffer filled up.
         }

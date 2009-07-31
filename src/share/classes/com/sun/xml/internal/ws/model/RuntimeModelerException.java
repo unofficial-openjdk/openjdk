@@ -30,9 +30,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * RuntimeModelerException represents an exception that occurred while
  * serializing a Java value as XML.
- * 
+ *
  * @see JAXWSExceptionBase
- * 
+ *
  * @author WS Development Team
  */
 public class RuntimeModelerException extends JAXWSExceptionBase {

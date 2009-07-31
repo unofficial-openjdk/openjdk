@@ -26,7 +26,7 @@ package com.sun.xml.internal.bind;
 
 /**
  * Processes white space normalization.
- * 
+ *
  * @since 1.0
  */
 public abstract class WhiteSpaceProcessor {
@@ -62,7 +62,7 @@ public abstract class WhiteSpaceProcessor {
         // look for the first whitespace char.
         while( i>=0 && !isWhiteSpaceExceptSpace(text.charAt(i)) )
             i--;
-        
+
         if( i<0 )
             // no such whitespace. replace(text)==text.
             return text;
@@ -100,7 +100,7 @@ public abstract class WhiteSpaceProcessor {
         else
             return text.subSequence(start,end+1);
     }
-    
+
     public static String collapse(String text) {
         return collapse( (CharSequence)text ).toString();
     }
@@ -112,7 +112,7 @@ public abstract class WhiteSpaceProcessor {
      */
     public static CharSequence collapse(CharSequence text) {
         int len = text.length();
-        
+
         // most of the texts are already in the collapsed form.
         // so look for the first whitespace in the hope that we will
         // never see it.
@@ -122,21 +122,21 @@ public abstract class WhiteSpaceProcessor {
                 break;
             s++;
         }
-        if(s==len) 
+        if(s==len)
             // the input happens to be already collapsed.
             return text;
-        
+
         // we now know that the input contains spaces.
-        // let's sit down and do the collapsing normally. 
-        
+        // let's sit down and do the collapsing normally.
+
         StringBuilder result = new StringBuilder(len /*allocate enough size to avoid re-allocation*/ );
-        
+
         if(s!=0) {
             for( int i=0; i<s; i++ )
                 result.append(text.charAt(i));
             result.append(' ');
         }
-            
+
         boolean inStripMode = true;
         for (int i = s+1; i < len; i++) {
             char ch = text.charAt(i);
@@ -177,7 +177,7 @@ public abstract class WhiteSpaceProcessor {
         // most of the characters are non-control characters.
         // so check that first to quickly return false for most of the cases.
         if( ch>0x20 )   return false;
-        
+
         // other than we have to do four comparisons.
         return ch == 0x9 || ch == 0xA || ch == 0xD || ch == 0x20;
     }
@@ -190,9 +190,8 @@ public abstract class WhiteSpaceProcessor {
         // most of the characters are non-control characters.
         // so check that first to quickly return false for most of the cases.
         if( ch>=0x20 )   return false;
-        
+
         // other than we have to do four comparisons.
         return ch == 0x9 || ch == 0xA || ch == 0xD;
     }
 }
-

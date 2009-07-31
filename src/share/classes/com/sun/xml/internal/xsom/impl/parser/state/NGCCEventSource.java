@@ -28,8 +28,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * 
- * 
+ *
+ *
  * @author Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public interface NGCCEventSource {
@@ -38,7 +38,7 @@ public interface NGCCEventSource {
      * ID of the EventReceiver thread.
      */
     int replace( NGCCEventReceiver _old, NGCCEventReceiver _new );
-    
+
     /** Sends an enter element event to the specified EventReceiver thread. */
     void sendEnterElement( int receiverThreadId, String uri, String local, String qname, Attributes atts ) throws SAXException;
 

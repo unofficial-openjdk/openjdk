@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class HandlerMessages {
 
@@ -44,7 +44,7 @@ public final class HandlerMessages {
 
     /**
      * "{0}" is not an allowed value for the property "{1}"
-     * 
+     *
      */
     public static String HANDLER_MESSAGE_CONTEXT_INVALID_CLASS(Object arg0, Object arg1) {
         return localizer.localize(localizableHANDLER_MESSAGE_CONTEXT_INVALID_CLASS(arg0, arg1));
@@ -56,7 +56,7 @@ public final class HandlerMessages {
 
     /**
      * Handler {0} must implement LogicalHandler or SOAPHandler.
-     * 
+     *
      */
     public static String CANNOT_EXTEND_HANDLER_DIRECTLY(Object arg0) {
         return localizer.localize(localizableCANNOT_EXTEND_HANDLER_DIRECTLY(arg0));
@@ -68,7 +68,7 @@ public final class HandlerMessages {
 
     /**
      * {0} does not implement one of the handler interfaces.
-     * 
+     *
      */
     public static String HANDLER_NOT_VALID_TYPE(Object arg0) {
         return localizer.localize(localizableHANDLER_NOT_VALID_TYPE(arg0));
@@ -80,7 +80,7 @@ public final class HandlerMessages {
 
     /**
      * Unable to instantiate handler: {0} because: {1}
-     * 
+     *
      */
     public static String CANNOT_INSTANTIATE_HANDLER(Object arg0, Object arg1) {
         return localizer.localize(localizableCANNOT_INSTANTIATE_HANDLER(arg0, arg1));
@@ -92,7 +92,7 @@ public final class HandlerMessages {
 
     /**
      * A HandlerChain can only contain Handler instances: {0}
-     * 
+     *
      */
     public static String HANDLER_CHAIN_CONTAINS_HANDLER_ONLY(Object arg0) {
         return localizer.localize(localizableHANDLER_CHAIN_CONTAINS_HANDLER_ONLY(arg0));
@@ -104,7 +104,7 @@ public final class HandlerMessages {
 
     /**
      * handler error: {0}
-     * 
+     *
      */
     public static String HANDLER_NESTED_ERROR(Object arg0) {
         return localizer.localize(localizableHANDLER_NESTED_ERROR(arg0));
@@ -116,7 +116,7 @@ public final class HandlerMessages {
 
     /**
      * Exception ignored from invoking handler @PreDestroy method: {0}
-     * 
+     *
      */
     public static String HANDLER_PREDESTROY_IGNORE(Object arg0) {
         return localizer.localize(localizableHANDLER_PREDESTROY_IGNORE(arg0));

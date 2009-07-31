@@ -31,9 +31,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * DeserializationException represents an exception that occurred while
  * deserializing a Java value from XML.
- * 
+ *
  * @see JAXWSExceptionBase
- * 
+ *
  * @author WS Development Team
  */
 public class DeserializationException extends JAXWSExceptionBase {

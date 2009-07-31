@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl.parser;
 
 import com.sun.xml.internal.xsom.parser.XMLParser;
@@ -40,18 +42,18 @@ import java.io.IOException;
 /**
  * {@link SAXParserFactory} implementation that ultimately
  * uses {@link XMLParser} to parse documents.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class SAXParserFactoryAdaptor extends SAXParserFactory {
-    
+
     private final XMLParser parser;
-    
+
     public SAXParserFactoryAdaptor( XMLParser _parser ) {
         this.parser = _parser;
     }
-    
+
     public SAXParser newSAXParser() throws ParserConfigurationException, SAXException {
         return new SAXParserImpl();
     }
@@ -63,11 +65,11 @@ public class SAXParserFactoryAdaptor extends SAXParserFactory {
     public boolean getFeature(String name) {
         return false;
     }
-    
+
     private class SAXParserImpl extends SAXParser
     {
         private final XMLReaderImpl reader = new XMLReaderImpl();
-        
+
         /**
          * @deprecated
          */
@@ -94,7 +96,7 @@ public class SAXParserFactoryAdaptor extends SAXParserFactory {
             return null;
         }
     }
-    
+
     private class XMLReaderImpl extends XMLFilterImpl
     {
         public void parse(InputSource input) throws IOException, SAXException {

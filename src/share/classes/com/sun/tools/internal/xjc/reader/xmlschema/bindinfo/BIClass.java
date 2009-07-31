@@ -35,13 +35,13 @@ import com.sun.istack.internal.Nullable;
 
 /**
  * Class declaration.
- * 
+ *
  * This customization turns arbitrary schema component into a Java
  * content interface.
- * 
+ *
  * <p>
  * This customization is acknowledged by the ClassSelector.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -121,4 +121,3 @@ public final class BIClass extends AbstractDeclarationImpl {
     /** Name of this declaration. */
     public static final QName NAME = new QName( Const.JAXB_NSURI, "class" );
 }
-

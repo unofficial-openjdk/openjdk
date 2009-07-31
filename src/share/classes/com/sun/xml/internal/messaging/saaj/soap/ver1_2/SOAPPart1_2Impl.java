@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * 
- */
 
 
 
@@ -58,7 +55,7 @@ public class SOAPPart1_2Impl extends SOAPPartImpl implements SOAPConstants{
     public SOAPPart1_2Impl(MessageImpl message) {
         super(message);
     }
-    
+
     protected String getContentType() {
         return "application/soap+xml";
     }

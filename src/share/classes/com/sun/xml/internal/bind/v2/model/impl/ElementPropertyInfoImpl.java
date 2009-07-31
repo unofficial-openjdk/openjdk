@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.impl;
 
 import java.util.AbstractList;
@@ -44,7 +45,7 @@ import com.sun.xml.internal.bind.v2.runtime.IllegalAnnotationException;
 /**
  * Common {@link ElementPropertyInfo} implementation used for both
  * APT and runtime.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 class ElementPropertyInfoImpl<TypeT,ClassDeclT,FieldT,MethodT>

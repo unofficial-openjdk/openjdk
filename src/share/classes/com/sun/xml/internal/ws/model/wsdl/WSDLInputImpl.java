@@ -27,6 +27,9 @@ package com.sun.xml.internal.ws.model.wsdl;
 
 import com.sun.xml.internal.ws.api.model.wsdl.WSDLInput;
 import com.sun.xml.internal.ws.api.model.wsdl.WSDLMessage;
+import com.sun.xml.internal.ws.api.model.wsdl.WSDLOperation;
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -52,7 +55,7 @@ public final class WSDLInputImpl extends AbstractExtensibleImpl implements WSDLI
     public String getName() {
         if(name != null)
             return name;
-        
+
         return (operation.isOneWay())?operation.getName().getLocalPart():operation.getName().getLocalPart()+"Request";
     }
 
@@ -62,6 +65,15 @@ public final class WSDLInputImpl extends AbstractExtensibleImpl implements WSDLI
 
     public String getAction() {
         return action;
+    }
+
+    @NotNull
+    public WSDLOperation getOperation() {
+        return operation;
+    }
+
+    public QName getQName() {
+        return new QName(operation.getName().getNamespaceURI(), getName());
     }
 
     public void setAction(String action) {
@@ -75,7 +87,7 @@ public final class WSDLInputImpl extends AbstractExtensibleImpl implements WSDLI
     public void setDefaultAction(boolean defaultAction) {
         this.defaultAction = defaultAction;
     }
-    
+
     void freeze(WSDLModelImpl parent) {
         message = parent.getMessage(messageName);
     }

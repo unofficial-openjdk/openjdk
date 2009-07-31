@@ -102,7 +102,7 @@ public  class MimeMultipart {
     /**
      * The <code>MimeBodyPart</code> containing this <code>MimeMultipart</code>,
      * if known.
-     * @since	JavaMail 1.1
+     * @since   JavaMail 1.1
      */
     protected MimeBodyPart parent;
 
@@ -110,7 +110,7 @@ public  class MimeMultipart {
      * Default constructor. An empty MimeMultipart object
      * is created. Its content type is set to "multipart/mixed".
      * A unique boundary string is generated and this string is
-     * setup as the "boundary" parameter for the 
+     * setup as the "boundary" parameter for the
      * <code>contentType</code> field. <p>
      *
      * MimeBodyParts may be added later.
@@ -122,36 +122,36 @@ public  class MimeMultipart {
     /**
      * Construct a MimeMultipart object of the given subtype.
      * A unique boundary string is generated and this string is
-     * setup as the "boundary" parameter for the 
+     * setup as the "boundary" parameter for the
      * <code>contentType</code> field. <p>
      *
      * MimeBodyParts may be added later.
      */
     public MimeMultipart(String subtype) {
-	//super();
-	/*
-	 * Compute a boundary string.
-	 */
-	String boundary = UniqueValue.getUniqueBoundaryValue();
-	contentType = new ContentType("multipart", subtype, null);
-	contentType.setParameter("boundary", boundary);
+        //super();
+        /*
+         * Compute a boundary string.
+         */
+        String boundary = UniqueValue.getUniqueBoundaryValue();
+        contentType = new ContentType("multipart", subtype, null);
+        contentType.setParameter("boundary", boundary);
     }
 
     /**
-     * Constructs a MimeMultipart object and its bodyparts from the 
+     * Constructs a MimeMultipart object and its bodyparts from the
      * given DataSource. <p>
      *
      * This constructor handles as a special case the situation where the
      * given DataSource is a MultipartDataSource object.
      *
-     * Otherwise, the DataSource is assumed to provide a MIME multipart 
+     * Otherwise, the DataSource is assumed to provide a MIME multipart
      * byte stream.  The <code>parsed</code> flag is set to false.  When
      * the data for the body parts are needed, the parser extracts the
      * "boundary" parameter from the content type of this DataSource,
      * skips the 'preamble' and reads bytes till the terminating
      * boundary and creates MimeBodyParts for each part of the stream.
      *
-     * @param	ds	DataSource, can be a MultipartDataSource
+     * @param   ds      DataSource, can be a MultipartDataSource
      * @param ct
      *      This must be the same information as {@link DataSource#getContentType()}.
      *      All the callers of this method seem to have this object handy, so
@@ -173,19 +173,19 @@ public  class MimeMultipart {
      * MimeMultipart object created by the client. The default subtype
      * of such a multipart object is "mixed". <p>
      *
-     * @param	subtype		Subtype
+     * @param   subtype         Subtype
      */
     public  void setSubType(String subtype) {
-    	contentType.setSubType(subtype);
+        contentType.setSubType(subtype);
     }
 
     /**
      * Return the number of enclosed MimeBodyPart objects.
      *
-     * @return		number of parts
+     * @return          number of parts
      */
     public  int getCount() throws MessagingException {
-    	parse();
+        parse();
         if (parts == null)
             return 0;
 
@@ -195,13 +195,13 @@ public  class MimeMultipart {
     /**
      * Get the specified MimeBodyPart.  BodyParts are numbered starting at 0.
      *
-     * @param index	the index of the desired MimeBodyPart
-     * @return		the MimeBodyPart
+     * @param index     the index of the desired MimeBodyPart
+     * @return          the MimeBodyPart
      * @exception       MessagingException if no such MimeBodyPart exists
      */
     public  MimeBodyPart getBodyPart(int index)
-			throws MessagingException {
-    	parse();
+                        throws MessagingException {
+        parse();
         if (parts == null)
             throw new IndexOutOfBoundsException("No such BodyPart");
 
@@ -209,24 +209,24 @@ public  class MimeMultipart {
     }
 
     /**
-     * Get the MimeBodyPart referred to by the given ContentID (CID). 
+     * Get the MimeBodyPart referred to by the given ContentID (CID).
      * Returns null if the part is not found.
      *
-     * @param  CID 	the ContentID of the desired part
+     * @param  CID      the ContentID of the desired part
      * @return          the MimeBodyPart
      */
     public  MimeBodyPart getBodyPart(String CID)
-			throws MessagingException {
-	parse();
+                        throws MessagingException {
+        parse();
 
-	int count = getCount();
-	for (int i = 0; i < count; i++) {
-	   MimeBodyPart part = getBodyPart(i);
-	   String s = part.getContentID();
-	   if (s != null && s.equals(CID))
-		return part;    
-	}
-	return null;
+        int count = getCount();
+        for (int i = 0; i < count; i++) {
+           MimeBodyPart part = getBodyPart(i);
+           String s = part.getContentID();
+           if (s != null && s.equals(CID))
+                return part;
+        }
+        return null;
     }
 
     /**
@@ -241,14 +241,14 @@ public  class MimeMultipart {
      * method is invoked on the Message object containing this
      * MimeMultipart. This is typically done as part of the Message
      * send process, however note that a client is free to call
-     * it any number of times. So if the header updating process is 
+     * it any number of times. So if the header updating process is
      * expensive for a specific MimeMultipart subclass, then it
      * might itself want to track whether its internal state actually
      * did change, and do the header updating only if necessary.
      */
     protected void updateHeaders() throws MessagingException {
-	for (int i = 0; i < parts.size(); i++)
-	    ((MimeBodyPart)parts.get(i)).updateHeaders();
+        for (int i = 0; i < parts.size(); i++)
+            ((MimeBodyPart)parts.get(i)).updateHeaders();
     }
 
     /**
@@ -279,185 +279,185 @@ public  class MimeMultipart {
      * method is called by all other methods that need data for
      * the body parts, to make sure the data has been parsed.
      *
-     * @since	JavaMail 1.2
+     * @since   JavaMail 1.2
      */
     protected  void parse() throws MessagingException {
-	if (parsed)
-	    return;
-	
-	InputStream in;
-	SharedInputStream sin = null;
-	long start = 0, end = 0;
+        if (parsed)
+            return;
 
-	try {
-	    in = ds.getInputStream();
-	    if (!(in instanceof ByteArrayInputStream) &&
-		!(in instanceof BufferedInputStream) &&
-		!(in instanceof SharedInputStream))
-		in = new BufferedInputStream(in);
-	} catch (Exception ex) {
-	    throw new MessagingException("No inputstream from datasource");
-	}
-	if (in instanceof SharedInputStream)
-	    sin = (SharedInputStream)in;
+        InputStream in;
+        SharedInputStream sin = null;
+        long start = 0, end = 0;
+
+        try {
+            in = ds.getInputStream();
+            if (!(in instanceof ByteArrayInputStream) &&
+                !(in instanceof BufferedInputStream) &&
+                !(in instanceof SharedInputStream))
+                in = new BufferedInputStream(in);
+        } catch (Exception ex) {
+            throw new MessagingException("No inputstream from datasource");
+        }
+        if (in instanceof SharedInputStream)
+            sin = (SharedInputStream)in;
 
         String boundary = "--" + contentType.getParameter("boundary");
-	byte[] bndbytes = ASCIIUtility.getBytes(boundary);
-	int bl = bndbytes.length;
+        byte[] bndbytes = ASCIIUtility.getBytes(boundary);
+        int bl = bndbytes.length;
 
-	try {
-	    // Skip the preamble
-	    LineInputStream lin = new LineInputStream(in);
-	    String line;
-	    while ((line = lin.readLine()) != null) {
-		/*
-		 * Strip trailing whitespace.  Can't use trim method
-		 * because it's too aggressive.  Some bogus MIME
-		 * messages will include control characters in the
-		 * boundary string.
-		 */
-		int i;
-		for (i = line.length() - 1; i >= 0; i--) {
-		    char c = line.charAt(i);
-		    if (!(c == ' ' || c == '\t'))
-			break;
-		}
-		line = line.substring(0, i + 1);
-		if (line.equals(boundary))
-		    break;
-	    }
-	    if (line == null)
-		throw new MessagingException("Missing start boundary");
-	    
-	    /*
-	     * Read and process body parts until we see the
-	     * terminating boundary line (or EOF).
-	     */
-	    boolean done = false;
-	getparts:
-	    while (!done) {
-		InternetHeaders headers = null;
-		if (sin != null) {
-		    start = sin.getPosition();
-		    // skip headers
-		    while ((line = lin.readLine()) != null && line.length() > 0)
-			;
-		    if (line == null) {
-			//throw new MessagingException("EOF skipping headers");
-			// assume there's just a missing end boundary
-			break getparts;
-		    }
-		} else {
-		    // collect the headers for this body part
-		    headers = createInternetHeaders(in);
-		}
+        try {
+            // Skip the preamble
+            LineInputStream lin = new LineInputStream(in);
+            String line;
+            while ((line = lin.readLine()) != null) {
+                /*
+                 * Strip trailing whitespace.  Can't use trim method
+                 * because it's too aggressive.  Some bogus MIME
+                 * messages will include control characters in the
+                 * boundary string.
+                 */
+                int i;
+                for (i = line.length() - 1; i >= 0; i--) {
+                    char c = line.charAt(i);
+                    if (!(c == ' ' || c == '\t'))
+                        break;
+                }
+                line = line.substring(0, i + 1);
+                if (line.equals(boundary))
+                    break;
+            }
+            if (line == null)
+                throw new MessagingException("Missing start boundary");
 
-		if (!in.markSupported())
-		    throw new MessagingException("Stream doesn't support mark");
+            /*
+             * Read and process body parts until we see the
+             * terminating boundary line (or EOF).
+             */
+            boolean done = false;
+        getparts:
+            while (!done) {
+                InternetHeaders headers = null;
+                if (sin != null) {
+                    start = sin.getPosition();
+                    // skip headers
+                    while ((line = lin.readLine()) != null && line.length() > 0)
+                        ;
+                    if (line == null) {
+                        //throw new MessagingException("EOF skipping headers");
+                        // assume there's just a missing end boundary
+                        break getparts;
+                    }
+                } else {
+                    // collect the headers for this body part
+                    headers = createInternetHeaders(in);
+                }
 
-		ByteOutputStream buf = null;
-		// if we don't have a shared input stream, we copy the data
-		if (sin == null)
-		    buf = new ByteOutputStream();
-		int b;
-		boolean bol = true;    // beginning of line flag
-		// the two possible end of line characters
-		int eol1 = -1, eol2 = -1;
+                if (!in.markSupported())
+                    throw new MessagingException("Stream doesn't support mark");
 
-		/*
-		 * Read and save the content bytes in buf.
-		 */
-		for (;;) {
-		    if (bol) {
-			/*
-			 * At the beginning of a line, check whether the
-			 * next line is a boundary.
-			 */
-			int i;
-			in.mark(bl + 4 + 1000); // bnd + "--\r\n" + lots of LWSP
-			// read bytes, matching against the boundary
-			for (i = 0; i < bl; i++)
-			    if (in.read() != bndbytes[i])
-				break;
-			if (i == bl) {
-			    // matched the boundary, check for last boundary
-			    int b2 = in.read();
-			    if (b2 == '-') {
-				if (in.read() == '-') {
-				    done = true;
-				    break;	// ignore trailing text
-				}
-			    }
-			    // skip linear whitespace
-			    while (b2 == ' ' || b2 == '\t')
-				b2 = in.read();
-			    // check for end of line
-			    if (b2 == '\n')
-				break;	// got it!  break out of the loop
-			    if (b2 == '\r') {
-				in.mark(1);
-				if (in.read() != '\n')
-				    in.reset();
-				break;	// got it!  break out of the loop
-			    }
-			}
-			// failed to match, reset and proceed normally
-			in.reset();
+                ByteOutputStream buf = null;
+                // if we don't have a shared input stream, we copy the data
+                if (sin == null)
+                    buf = new ByteOutputStream();
+                int b;
+                boolean bol = true;    // beginning of line flag
+                // the two possible end of line characters
+                int eol1 = -1, eol2 = -1;
 
-			// if this is not the first line, write out the
-			// end of line characters from the previous line
-			if (buf != null && eol1 != -1) {
-			    buf.write(eol1);
-			    if (eol2 != -1)
-				buf.write(eol2);
-			    eol1 = eol2 = -1;
-			}
-		    }
+                /*
+                 * Read and save the content bytes in buf.
+                 */
+                for (;;) {
+                    if (bol) {
+                        /*
+                         * At the beginning of a line, check whether the
+                         * next line is a boundary.
+                         */
+                        int i;
+                        in.mark(bl + 4 + 1000); // bnd + "--\r\n" + lots of LWSP
+                        // read bytes, matching against the boundary
+                        for (i = 0; i < bl; i++)
+                            if (in.read() != bndbytes[i])
+                                break;
+                        if (i == bl) {
+                            // matched the boundary, check for last boundary
+                            int b2 = in.read();
+                            if (b2 == '-') {
+                                if (in.read() == '-') {
+                                    done = true;
+                                    break;      // ignore trailing text
+                                }
+                            }
+                            // skip linear whitespace
+                            while (b2 == ' ' || b2 == '\t')
+                                b2 = in.read();
+                            // check for end of line
+                            if (b2 == '\n')
+                                break;  // got it!  break out of the loop
+                            if (b2 == '\r') {
+                                in.mark(1);
+                                if (in.read() != '\n')
+                                    in.reset();
+                                break;  // got it!  break out of the loop
+                            }
+                        }
+                        // failed to match, reset and proceed normally
+                        in.reset();
 
-		    // read the next byte
-		    if ((b = in.read()) < 0) {
-			done = true;
-			break;
-		    }
+                        // if this is not the first line, write out the
+                        // end of line characters from the previous line
+                        if (buf != null && eol1 != -1) {
+                            buf.write(eol1);
+                            if (eol2 != -1)
+                                buf.write(eol2);
+                            eol1 = eol2 = -1;
+                        }
+                    }
 
-		    /*
-		     * If we're at the end of the line, save the eol characters
-		     * to be written out before the beginning of the next line.
-		     */
-		    if (b == '\r' || b == '\n') {
-			bol = true;
-			if (sin != null)
-			    end = sin.getPosition() - 1;
-			eol1 = b;
-			if (b == '\r') {
-			    in.mark(1);
-			    if ((b = in.read()) == '\n')
-				eol2 = b;
-			    else
-				in.reset();
-			}
-		    } else {
-			bol = false;
-			if (buf != null)
-			    buf.write(b);
-		    }
-		}
+                    // read the next byte
+                    if ((b = in.read()) < 0) {
+                        done = true;
+                        break;
+                    }
 
-		/*
-		 * Create a MimeBody element to represent this body part.
-		 */
-		MimeBodyPart part;
-		if (sin != null)
-		    part = createMimeBodyPart(sin.newStream(start, end));
-		else
-		    part = createMimeBodyPart(headers, buf.getBytes(), buf.getCount());
-		addBodyPart(part);
-	    }
-	} catch (IOException ioex) {
-	    throw new MessagingException("IO Error", ioex);
-	}
+                    /*
+                     * If we're at the end of the line, save the eol characters
+                     * to be written out before the beginning of the next line.
+                     */
+                    if (b == '\r' || b == '\n') {
+                        bol = true;
+                        if (sin != null)
+                            end = sin.getPosition() - 1;
+                        eol1 = b;
+                        if (b == '\r') {
+                            in.mark(1);
+                            if ((b = in.read()) == '\n')
+                                eol2 = b;
+                            else
+                                in.reset();
+                        }
+                    } else {
+                        bol = false;
+                        if (buf != null)
+                            buf.write(b);
+                    }
+                }
 
-	parsed = true;
+                /*
+                 * Create a MimeBody element to represent this body part.
+                 */
+                MimeBodyPart part;
+                if (sin != null)
+                    part = createMimeBodyPart(sin.newStream(start, end));
+                else
+                    part = createMimeBodyPart(headers, buf.getBytes(), buf.getCount());
+                addBodyPart(part);
+            }
+        } catch (IOException ioex) {
+            throw new MessagingException("IO Error", ioex);
+        }
+
+        parsed = true;
     }
 
     /**
@@ -467,13 +467,13 @@ public  class MimeMultipart {
      * necessary.  This implementation simply constructs and returns
      * an InternetHeaders object.
      *
-     * @param	is	the InputStream to read the headers from
-     * @exception  	MessagingException
-     * @since		JavaMail 1.2
+     * @param   is      the InputStream to read the headers from
+     * @exception       MessagingException
+     * @since           JavaMail 1.2
      */
     protected InternetHeaders createInternetHeaders(InputStream is)
-				throws MessagingException {
-	return new InternetHeaders(is);
+                                throws MessagingException {
+        return new InternetHeaders(is);
     }
 
     /**
@@ -483,12 +483,12 @@ public  class MimeMultipart {
      * necessary.  This implementation simply constructs and returns
      * a MimeBodyPart object.
      *
-     * @param	headers		the headers for the body part
-     * @param	content		the content of the body part
-     * @since			JavaMail 1.2
+     * @param   headers         the headers for the body part
+     * @param   content         the content of the body part
+     * @since                   JavaMail 1.2
      */
     protected MimeBodyPart createMimeBodyPart(InternetHeaders headers, byte[] content, int len) {
-	    return new MimeBodyPart(headers, content,len);
+            return new MimeBodyPart(headers, content,len);
     }
 
     /**
@@ -498,12 +498,12 @@ public  class MimeMultipart {
      * necessary.  This implementation simply constructs and returns
      * a MimeBodyPart object.
      *
-     * @param	is		InputStream containing the body part
-     * @exception  		MessagingException
-     * @since			JavaMail 1.2
+     * @param   is              InputStream containing the body part
+     * @exception               MessagingException
+     * @since                   JavaMail 1.2
      */
     protected MimeBodyPart createMimeBodyPart(InputStream is) throws MessagingException {
-	    return new MimeBodyPart(is);
+            return new MimeBodyPart(is);
     }
 
     /**
@@ -519,16 +519,16 @@ public  class MimeMultipart {
      * needs to create an appropriate MimeMultipart subclass that represents
      * a specific multipart subtype.
      *
-     * @param	mp	MimeMultipart datasource
+     * @param   mp      MimeMultipart datasource
      */
 
     protected void setMultipartDataSource(MultipartDataSource mp)
-			throws MessagingException {
-	contentType = new ContentType(mp.getContentType());
+                        throws MessagingException {
+        contentType = new ContentType(mp.getContentType());
 
-	int count = mp.getCount();
-	for (int i = 0; i < count; i++)
-	    addBodyPart(mp.getBodyPart(i));
+        int count = mp.getCount();
+        for (int i = 0; i < count; i++)
+            addBodyPart(mp.getBodyPart(i));
     }
 
     /**
@@ -537,45 +537,45 @@ public  class MimeMultipart {
      * This implementation just returns the value of the
      * <code>contentType</code> field.
      *
-     * @return 	content-type
-     * @see	#contentType
+     * @return  content-type
+     * @see     #contentType
      */
     public ContentType getContentType() {
-	    return contentType;
+            return contentType;
     }
 
     /**
      * Remove the specified part from the multipart message.
      * Shifts all the parts after the removed part down one.
      *
-     * @param   part	The part to remove
-     * @return		true if part removed, false otherwise
-     * @exception	MessagingException if no such MimeBodyPart exists
+     * @param   part    The part to remove
+     * @return          true if part removed, false otherwise
+     * @exception       MessagingException if no such MimeBodyPart exists
      */
     public boolean removeBodyPart(MimeBodyPart part) throws MessagingException {
-	if (parts == null)
-	    throw new MessagingException("No such body part");
+        if (parts == null)
+            throw new MessagingException("No such body part");
 
-	boolean ret = parts.remove(part);
-	part.setParent(null);
-	return ret;
+        boolean ret = parts.remove(part);
+        part.setParent(null);
+        return ret;
     }
 
     /**
      * Remove the part at specified location (starting from 0).
      * Shifts all the parts after the removed part down one.
      *
-     * @param   index	Index of the part to remove
+     * @param   index   Index of the part to remove
      * @exception       IndexOutOfBoundsException if the given index
-     *			is out of range.
+     *                  is out of range.
      */
     public void removeBodyPart(int index) {
-	if (parts == null)
-	    throw new IndexOutOfBoundsException("No such BodyPart");
+        if (parts == null)
+            throw new IndexOutOfBoundsException("No such BodyPart");
 
-	MimeBodyPart part = (MimeBodyPart)parts.get(index);
-	parts.remove(index);
-	part.setParent(null);
+        MimeBodyPart part = (MimeBodyPart)parts.get(index);
+        parts.remove(index);
+        part.setParent(null);
     }
 
     /**
@@ -585,11 +585,11 @@ public  class MimeMultipart {
      * @param  part  The MimeBodyPart to be appended
      */
     public synchronized void addBodyPart(MimeBodyPart part) {
-	if (parts == null)
-	    parts = new FinalArrayList();
+        if (parts == null)
+            parts = new FinalArrayList();
 
-	parts.add(part);
-	part.setParent(this);
+        parts.add(part);
+        part.setParent(this);
     }
 
     /**
@@ -603,20 +603,20 @@ public  class MimeMultipart {
      * @param  index Location where to insert the part
      */
     public synchronized void addBodyPart(MimeBodyPart part, int index) {
-	if (parts == null)
-	    parts = new FinalArrayList();
+        if (parts == null)
+            parts = new FinalArrayList();
 
-	parts.add(index,part);
-	part.setParent(this);
+        parts.add(index,part);
+        part.setParent(this);
     }
 
     /**
      * Return the <code>MimeBodyPart</code> that contains this <code>MimeMultipart</code>
      * object, or <code>null</code> if not known.
-     * @since	JavaMail 1.1
+     * @since   JavaMail 1.1
      */
     MimeBodyPart getParent() {
-	return parent;
+        return parent;
     }
 
     /**
@@ -626,9 +626,9 @@ public  class MimeMultipart {
      * <code>parent</code> may be <code>null</code> if the
      * <code>MimeMultipart</code> is being removed from its containing
      * <code>MimeBodyPart</code>.
-     * @since	JavaMail 1.1
+     * @since   JavaMail 1.1
      */
     void setParent(MimeBodyPart parent) {
-	this.parent = parent;
+        this.parent = parent;
     }
 }

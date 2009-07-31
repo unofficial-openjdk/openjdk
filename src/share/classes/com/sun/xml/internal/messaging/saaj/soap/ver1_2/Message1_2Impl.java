@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: Message1_2Impl.java,v 1.18 2006/01/27 12:49:48 vj135062 Exp $
- */
 
 
 
@@ -87,5 +84,5 @@ public class Message1_2Impl extends MessageImpl implements SOAPConstants{
        String accept = "application/soap+xml, text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2";
        return acceptFastInfoset ? ("application/soap+fastinfoset, " + accept) : accept;
    }
-    
+
 }

@@ -46,12 +46,12 @@ import java.net.URL;
  * @author Santiago.PericasGeertsen@sun.com
  */
 public class SourceReaderFactory {
-    
+
     /**
      * FI FastInfosetSource class.
      */
     static Class fastInfosetSourceClass;
-    
+
     /**
      * FI <code>StAXDocumentSerializer.setEncoding()</code> method via reflection.
      */
@@ -62,9 +62,9 @@ public class SourceReaderFactory {
         try {
             fastInfosetSourceClass =
                 Class.forName("com.sun.xml.internal.org.jvnet.fastinfoset.FastInfosetSource");
-            fastInfosetSource_getInputStream = 
+            fastInfosetSource_getInputStream =
                 fastInfosetSourceClass.getMethod("getInputStream");
-        } 
+        }
         catch (Exception e) {
             fastInfosetSourceClass = null;
         }
@@ -73,7 +73,7 @@ public class SourceReaderFactory {
     public static XMLStreamReader createSourceReader(Source source, boolean rejectDTDs) {
         return createSourceReader(source, rejectDTDs, null);
     }
-    
+
     public static XMLStreamReader createSourceReader(Source source, boolean rejectDTDs, String charsetName) {
         try {
             if (source instanceof StreamSource) {
@@ -84,7 +84,7 @@ public class SourceReaderFactory {
                     // Wrap input stream in Reader if charset is specified
                     if (charsetName != null) {
                         return XMLStreamReaderFactory.create(
-                            source.getSystemId(), new InputStreamReader(is, charsetName), rejectDTDs);                    
+                            source.getSystemId(), new InputStreamReader(is, charsetName), rejectDTDs);
                     }
                     else {
                         return XMLStreamReaderFactory.create(
@@ -124,7 +124,7 @@ public class SourceReaderFactory {
             else {
                 throw new XMLReaderException("sourceReader.invalidSource",
                         source.getClass().getName());
-            }        
+            }
         }
         catch (Exception e) {
             throw new XMLReaderException(e);

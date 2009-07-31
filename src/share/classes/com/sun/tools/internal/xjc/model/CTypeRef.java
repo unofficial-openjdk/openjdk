@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -39,7 +40,7 @@ import com.sun.istack.internal.Nullable;
 
 /**
  * {@link TypeRef} for XJC.
- * 
+ *
  * TODO: do we need the source schema component support here?
  *
  * @author Kohsuke Kawaguchi
@@ -48,7 +49,7 @@ public final class CTypeRef implements TypeRef<NType,NClass> {
     /**
      * In-memory type.
      *
-     * This is the type used when 
+     * This is the type used when
      */
     @XmlJavaTypeAdapter(RuntimeUtil.ToStringAdapter.class)
     private final CNonElement type;
@@ -101,7 +102,7 @@ public final class CTypeRef implements TypeRef<NType,NClass> {
 
     /**
      * Inside XJC, use {@link #defaultValue} that has context information.
-     * This method is to override the one defined in the runtime model. 
+     * This method is to override the one defined in the runtime model.
      *
      * @see #defaultValue
      */

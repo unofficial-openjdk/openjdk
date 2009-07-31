@@ -30,7 +30,7 @@ import com.sun.xml.internal.ws.api.FeatureConstructor;
 import javax.xml.ws.WebServiceFeature;
 
 /**
- * Client side feature to enable or disable the selection of the optimal 
+ * Client side feature to enable or disable the selection of the optimal
  * encoding by the client when sending outbound messages.
  * <p>
  * The following describes the affects of this feature with respect
@@ -47,10 +47,10 @@ import javax.xml.ws.WebServiceFeature;
  * <p>
  * If this feature is enabled by the client and the Service supports the
  * Fast Infoset encoding, as specified by the {@link FastInfosetFeature},
- * and Fast Infoset is determined to be the most optimal encoding, then the 
+ * and Fast Infoset is determined to be the most optimal encoding, then the
  * Fast Infoset encoding will be automatically selected by the client.
  * <p>
- * TODO: Still not sure if a feature is a server side only thing or can 
+ * TODO: Still not sure if a feature is a server side only thing or can
  * also be a client side thing. If the former then this class should be
  * removed.
  * @author Paul.Sandoz@Sun.Com
@@ -62,7 +62,7 @@ public class SelectOptimalEncodingFeature extends WebServiceFeature {
     public static final String ID = "http://java.sun.com/xml/ns/jaxws/client/selectOptimalEncoding";
 
     /**
-     * Create a {@link SelectOptimalEncodingFeature}. 
+     * Create a {@link SelectOptimalEncodingFeature}.
      * The instance created will be enabled.
      */
     public SelectOptimalEncodingFeature() {

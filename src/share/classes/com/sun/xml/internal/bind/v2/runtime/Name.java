@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime;
 
 import javax.xml.namespace.QName;
@@ -59,12 +60,12 @@ public final class Name implements Comparable<Name> {
      * Index of the Name for an EII or AII
      */
     public final short qNameIndex;
-            
+
     /**
      * Specifies if the Name is associated with an EII or AII
      */
     public final boolean isAttribute;
-    
+
     Name(int qNameIndex, int nsUriIndex, String nsUri, int localIndex, String localName, boolean isAttribute) {
         this.qNameIndex = (short)qNameIndex;
         this.nsUri = nsUri;

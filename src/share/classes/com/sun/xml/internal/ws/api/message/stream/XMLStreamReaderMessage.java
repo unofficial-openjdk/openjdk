@@ -32,13 +32,13 @@ import javax.xml.stream.XMLStreamReader;
  * Low level representation of an XML or SOAP message as an {@link XMLStreamReader}.
  *
  */
-public class XMLStreamReaderMessage extends StreamBasedMessage {  
+public class XMLStreamReaderMessage extends StreamBasedMessage {
     /**
      * The message represented as an {@link XMLStreamReader}.
      */
     public final XMLStreamReader msg;
-    
-    /** 
+
+    /**
      * Create a new message.
      *
      * @param properties
@@ -51,9 +51,9 @@ public class XMLStreamReaderMessage extends StreamBasedMessage {
     public XMLStreamReaderMessage(Packet properties, XMLStreamReader msg) {
         super(properties);
         this.msg = msg;
-    }    
-    
-    /** 
+    }
+
+    /**
      * Create a new message.
      *
      * @param properties
@@ -69,5 +69,5 @@ public class XMLStreamReaderMessage extends StreamBasedMessage {
     public XMLStreamReaderMessage(Packet properties, AttachmentSet attachments, XMLStreamReader msg) {
         super(properties, attachments);
         this.msg = msg;
-    }    
+    }
 }

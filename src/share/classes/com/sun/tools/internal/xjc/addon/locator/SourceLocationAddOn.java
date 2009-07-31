@@ -45,7 +45,7 @@ import org.xml.sax.Locator;
 
 /**
  * Generates JAXB objects that implement {@link Locatable}.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -69,7 +69,7 @@ public class SourceLocationAddOn extends Plugin {
         Outline outline,
         Options opt,
         ErrorHandler errorHandler ) {
-        
+
         for( ClassOutline ci : outline.getClasses() ) {
             JDefinedClass impl = ci.implClass;
             if (ci.getSuperClass() == null) {
@@ -80,13 +80,13 @@ public class SourceLocationAddOn extends Plugin {
                 impl._implements(Locatable.class);
 
                 impl.method(JMod.PUBLIC, Locator.class, "sourceLocation").body()._return($loc);
-                
+
                 JMethod setter = impl.method(JMod.PUBLIC, Void.TYPE, "setSourceLocation");
                 JVar $newLoc = setter.param(Locator.class, "newLocator");
                 setter.body().assign($loc, $newLoc);
             }
         }
-        
+
         return true;
     }
 }

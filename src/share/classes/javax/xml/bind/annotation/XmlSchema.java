@@ -38,7 +38,7 @@ import static java.lang.annotation.RetentionPolicy.*;
  * <p>
  * The XmlSchema annotation can be used with the following program
  * elements:
- * <ul> 
+ * <ul>
  *   <li>package</li>
  * </ul>
  *
@@ -57,14 +57,14 @@ import static java.lang.annotation.RetentionPolicy.*;
  * </ul>
  * <p>
  *
- * <p><b>Example 1:</b> Customize name of XML namespace to which 
+ * <p><b>Example 1:</b> Customize name of XML namespace to which
  * package is mapped.</p>
  *
  * <pre>
  *    &#64;javax.xml.bind.annotation.XmlSchema (
  *      namespace = "http://www.example.com/MYPO1"
  *    )
- *    
+ *
  *    &lt;!-- XML Schema fragment -->
  *    &lt;schema
  *      xmlns=...
@@ -81,21 +81,21 @@ import static java.lang.annotation.RetentionPolicy.*;
  * <pre>
  *    // Package level annotation
  *    &#64;javax.xml.bind.annotation.XmlSchema (
- *      xmlns = { 
- *        &#64;javax.xml.bind.annotation.XmlNs(prefix = "po", 
+ *      xmlns = {
+ *        &#64;javax.xml.bind.annotation.XmlNs(prefix = "po",
  *                   namespaceURI="http://www.example.com/myPO1"),
  *
  *        &#64;javax.xml.bind.annotation.XmlNs(prefix="xs",
  *                   namespaceURI="http://www.w3.org/2001/XMLSchema")
  *      )
  *    )
- * 
+ *
  *    &lt;!-- XML Schema fragment -->
  *    &lt;schema
  *        xmlns:xs="http://www.w3.org/2001/XMLSchema"
  *        xmlns:po="http://www.example.com/PO1"
  *        targetNamespace="http://www.example.com/PO1">
- * 
+ *
  * </pre>
  *
  * <p><b>Example 3:</b> Customize elementFormDefault</p>
@@ -104,18 +104,18 @@ import static java.lang.annotation.RetentionPolicy.*;
  *      elementFormDefault=XmlNsForm.UNQUALIFIED
  *      ...
  *    )
- * 
+ *
  *    &lt;!-- XML Schema fragment -->
  *    &lt;schema
  *        xmlns="http://www.w3.org/2001/XMLSchema"
  *        xmlns:po="http://www.example.com/PO1"
  *        elementFormDefault="unqualified">
- * 
+ *
  * </pre>
 
  * @author Sekhar Vajjhala, Sun Microsystems, Inc.
  * @since JAXB2.0
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 
 @Retention(RUNTIME) @Target(PACKAGE)
@@ -134,7 +134,7 @@ public @interface XmlSchema {
     String namespace() default "";
 
     /**
-     * Namespace qualification for elements. By default, element 
+     * Namespace qualification for elements. By default, element
      * default attribute will be absent from the XML Schema fragment.
      */
     XmlNsForm elementFormDefault() default XmlNsForm.UNSET;

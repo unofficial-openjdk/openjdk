@@ -60,34 +60,34 @@ public abstract class FastInfosetStreamSOAPCodec implements Codec {
 
     private StAXDocumentParser _statefulParser;
     private StAXDocumentSerializer _serializer;
-    
+
     private final StreamSOAPCodec _soapCodec;
-    
+
     private final boolean _retainState;
-    
+
     protected final ContentType _defaultContentType;
-    
+
     /* package */ FastInfosetStreamSOAPCodec(StreamSOAPCodec soapCodec, SOAPVersion soapVersion, boolean retainState, String mimeType) {
 //        _soapCodec = StreamSOAPCodec.create(soapVersion);
         _soapCodec = soapCodec;
         _retainState = retainState;
         _defaultContentType = new ContentTypeImpl(mimeType);
     }
-    
+
     /* package */ FastInfosetStreamSOAPCodec(FastInfosetStreamSOAPCodec that) {
         this._soapCodec = (StreamSOAPCodec) that._soapCodec.copy();
         this._retainState = that._retainState;
         this._defaultContentType = that._defaultContentType;
     }
-    
+
     public String getMimeType() {
         return _defaultContentType.getContentType();
     }
-    
+
     public ContentType getStaticContentType(Packet packet) {
         return getContentType(packet.soapAction);
     }
-    
+
     public ContentType encode(Packet packet, OutputStream out) {
         if (packet.getMessage() != null) {
             final XMLStreamWriter writer = getXMLStreamWriter(out);
@@ -100,25 +100,25 @@ public abstract class FastInfosetStreamSOAPCodec implements Codec {
         }
         return getContentType(packet.soapAction);
     }
-    
+
     public ContentType encode(Packet packet, WritableByteChannel buffer) {
         //TODO: not yet implemented
         throw new UnsupportedOperationException();
     }
-    
+
     public void decode(InputStream in, String contentType, Packet response) throws IOException {
         response.setMessage(
                 _soapCodec.decode(getXMLStreamReader(in)));
     }
-    
+
     public void decode(ReadableByteChannel in, String contentType, Packet response) {
         throw new UnsupportedOperationException();
     }
-    
+
     protected abstract StreamHeader createHeader(XMLStreamReader reader, XMLStreamBuffer mark);
-    
+
     protected abstract ContentType getContentType(String soapAction);
-    
+
     private XMLStreamWriter getXMLStreamWriter(OutputStream out) {
         if (_serializer != null) {
             _serializer.setOutputStream(out);
@@ -127,7 +127,7 @@ public abstract class FastInfosetStreamSOAPCodec implements Codec {
             return _serializer = FastInfosetCodec.createNewStreamWriter(out, _retainState);
         }
     }
-    
+
     private XMLStreamReader getXMLStreamReader(InputStream in) {
         // If the _retainState is true (FI stateful) then pick up Codec assiciated XMLStreamReader
         if (_retainState) {
@@ -138,11 +138,11 @@ public abstract class FastInfosetStreamSOAPCodec implements Codec {
                 return _statefulParser = FastInfosetCodec.createNewStreamReader(in, _retainState);
             }
         }
-        
+
         // Otherwise thread assiciated XMLStreamReader
         return READER_FACTORY.doCreate(null, in, false);
     }
-    
+
     /**
      * Creates a new {@link FastInfosetStreamSOAPCodec} instance.
      *
@@ -152,7 +152,7 @@ public abstract class FastInfosetStreamSOAPCodec implements Codec {
     public static FastInfosetStreamSOAPCodec create(StreamSOAPCodec soapCodec, SOAPVersion version) {
         return create(soapCodec, version, false);
     }
-    
+
     /**
      * Creates a new {@link FastInfosetStreamSOAPCodec} instance.
      *

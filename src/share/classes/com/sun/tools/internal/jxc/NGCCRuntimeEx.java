@@ -39,7 +39,7 @@ import org.xml.sax.SAXParseException;
 /**
  * Controls the  validating and converting  of values obtained
  * from the config file.
- * 
+ *
  * @author
  *     Bhakti Mehta (bhakti.mehta@sun.com)
  */

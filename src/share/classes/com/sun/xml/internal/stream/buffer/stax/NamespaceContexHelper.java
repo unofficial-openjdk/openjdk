@@ -38,15 +38,15 @@ import com.sun.xml.internal.org.jvnet.staxex.NamespaceContextEx;
  * Namespace contexts are pushed on and popped off the namespace context stack.
  * <p>
  * A declared namespace will be in scope iff the context that it was declared on
- * has not been popped off the stack. 
+ * has not been popped off the stack.
  * <p>
  * When instantiated the namespace stack consists of the root namespace context,
  * which contains, by default, the "xml" and "xmlns" declarations.
  * Namespaces may be declarations may be declared on the root context.
- * The root context cannot be popped but can be reset to contain just the 
+ * The root context cannot be popped but can be reset to contain just the
  * "xml" and "xmlns" declarations.
  * <p>
- * Implementation note: determining the prefix from a namespace URI 
+ * Implementation note: determining the prefix from a namespace URI
  * (or vice versa) is efficient when there are few namespace
  * declarations i.e. what is considered to be the case for namespace
  * declarations in 'average' XML documents. The look up of a namespace URI
@@ -54,29 +54,29 @@ import com.sun.xml.internal.org.jvnet.staxex.NamespaceContextEx;
  * a namespace URI is performed in O(2n) time.
  * <p>
  * The implementation does not scale when there are many namespace
- * declarations. TODO: Use a hash map when there are many namespace 
+ * declarations. TODO: Use a hash map when there are many namespace
  * declarations.
  *
  * @author Paul.Sandoz@Sun.Com
  */
 final public class NamespaceContexHelper implements NamespaceContextEx {
     private static int DEFAULT_SIZE = 8;
-    
+
     // The prefixes of the namespace declarations
     private String[] prefixes = new String[DEFAULT_SIZE];
     // The URIs of the namespace declarations
     private String[] namespaceURIs = new String[DEFAULT_SIZE];
     // Current position to store the next namespace declaration
     private int namespacePosition;
-    
+
     // The namespace contexts
     private int[] contexts = new int[DEFAULT_SIZE];
     // Current position to store the next namespace context
     private int contextPosition;
-    
+
     // The current namespace context
     private int currentContext;
-    
+
     /**
      * Create a new NamespaceContexHelper.
      *
@@ -90,15 +90,15 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
 
         currentContext = namespacePosition = 2;
     }
-    
+
 
     // NamespaceContext interface
-    
+
     public String getNamespaceURI(String prefix) {
         if (prefix == null) throw new IllegalArgumentException();
-        
+
         prefix = prefix.intern();
-        
+
         for (int i = namespacePosition - 1; i >= 0; i--) {
             final String declaredPrefix = prefixes[i];
             if (declaredPrefix == prefix) {
@@ -111,63 +111,63 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
 
     public String getPrefix(String namespaceURI) {
         if (namespaceURI == null) throw new IllegalArgumentException();
-        
+
         for (int i = namespacePosition - 1; i >= 0; i--) {
             final String declaredNamespaceURI = namespaceURIs[i];
             if (declaredNamespaceURI == namespaceURI || declaredNamespaceURI.equals(namespaceURI)) {
                 final String declaredPrefix = prefixes[i];
-                
+
                 // Check if prefix is out of scope
                 for (++i; i < namespacePosition; i++)
                     if (declaredPrefix == prefixes[i])
                         return null;
-                
+
                 return declaredPrefix;
             }
         }
-        
+
         return null;
     }
 
     public Iterator getPrefixes(String namespaceURI) {
         if (namespaceURI == null) throw new IllegalArgumentException();
-        
+
         List<String> l = new ArrayList<String>();
-        
+
         NAMESPACE_LOOP: for (int i = namespacePosition - 1; i >= 0; i--) {
             final String declaredNamespaceURI = namespaceURIs[i];
             if (declaredNamespaceURI == namespaceURI || declaredNamespaceURI.equals(namespaceURI)) {
                 final String declaredPrefix = prefixes[i];
-                
+
                 // Check if prefix is out of scope
                 for (int j = i + 1; j < namespacePosition; j++)
                     if (declaredPrefix == prefixes[j])
                         continue NAMESPACE_LOOP;
-                
+
                 l.add(declaredPrefix);
             }
         }
-        
+
         return l.iterator();
     }
-    
+
     // NamespaceContextEx interface
-    
+
     public Iterator<NamespaceContextEx.Binding> iterator() {
         if (namespacePosition == 2)
             return Collections.EMPTY_LIST.iterator();
-        
-        final List<NamespaceContextEx.Binding> namespaces = 
+
+        final List<NamespaceContextEx.Binding> namespaces =
                 new ArrayList<NamespaceContextEx.Binding>(namespacePosition);
-        
+
         NAMESPACE_LOOP: for (int i = namespacePosition - 1; i >= 2; i--) {
             final String declaredPrefix = prefixes[i];
-                        
+
             // Check if prefix is out of scope
             for (int j = i + 1; j < namespacePosition; j++) {
                 if (declaredPrefix == prefixes[j])
                     continue NAMESPACE_LOOP;
-                
+
                 namespaces.add(new NamespaceBindingImpl(i));
             }
         }
@@ -177,11 +177,11 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
 
     final private class NamespaceBindingImpl implements NamespaceContextEx.Binding {
         int index;
-        
+
         NamespaceBindingImpl(int index) {
             this.index = index;
         }
-        
+
         public String getPrefix() {
             return prefixes[index];
         }
@@ -199,19 +199,19 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
     public void declareDefaultNamespace(String namespaceURI) {
         declareNamespace("", namespaceURI);
     }
-    
+
     /**
      * Declare a namespace.
      * <p>
      * The namespace will be declared on the current namespace context.
      * <p>
      * The namespace can be removed by popping the current namespace
-     * context, or, if the declaration occured in the root context, by 
+     * context, or, if the declaration occured in the root context, by
      * reseting the namespace context.
      * <p>
-     * A default namespace can be declared by passing <code>""</code> as 
-     * the value of the prefix parameter. 
-     * A namespace may be undeclared by passing <code>null</code> as the 
+     * A default namespace can be declared by passing <code>""</code> as
+     * the value of the prefix parameter.
+     * A namespace may be undeclared by passing <code>null</code> as the
      * value of the namespaceURI parameter.
      * <p>
      * @param prefix the namespace prefix to declare, may not be null.
@@ -220,7 +220,7 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
      */
     public void declareNamespace(String prefix, String namespaceURI) {
         if (prefix == null) throw new IllegalArgumentException();
-            
+
         prefix = prefix.intern();
         // Ignore the "xml" or "xmlns" declarations
         if (prefix == "xml" || prefix == "xmlns")
@@ -229,7 +229,7 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
         // Check for undeclaration
         if (namespaceURI != null)
             namespaceURI = namespaceURI.intern();
-        
+
         if (namespacePosition == namespaceURIs.length)
             resizeNamespaces();
 
@@ -244,7 +244,7 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
         String[] newPrefixes = new String[newLength];
         System.arraycopy(prefixes, 0, newPrefixes, 0, prefixes.length);
         prefixes = newPrefixes;
-        
+
         String[] newNamespaceURIs = new String[newLength];
         System.arraycopy(namespaceURIs, 0, newNamespaceURIs, 0, namespaceURIs.length);
         namespaceURIs = newNamespaceURIs;
@@ -256,16 +256,16 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
     public void pushContext() {
         if (contextPosition == contexts.length)
             resizeContexts();
-        
+
         contexts[contextPosition++] = currentContext = namespacePosition;
     }
-    
+
     private void resizeContexts() {
         int[] newContexts = new int[contexts.length * 3 / 2 + 1];
         System.arraycopy(contexts, 0, newContexts, 0, contexts.length);
         contexts = newContexts;
     }
-    
+
     /**
      * Pop the namespace context off the stack.
      * <p>
@@ -277,7 +277,7 @@ final public class NamespaceContexHelper implements NamespaceContextEx {
             namespacePosition = currentContext = contexts[--contextPosition];
         }
     }
-    
+
     /**
      * Reset namespace contexts.
      * <p>

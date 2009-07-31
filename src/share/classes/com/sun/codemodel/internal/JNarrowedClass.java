@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * Represents X&lt;Y>.
  *
  * TODO: consider separating the decl and the use.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -50,7 +50,7 @@ class JNarrowedClass extends JClass {
     JNarrowedClass(JClass basis, JClass arg) {
         this(basis,Collections.singletonList(arg));
     }
-    
+
     JNarrowedClass(JClass basis, List<JClass> args) {
         super(basis.owner());
         this.basis = basis;
@@ -86,7 +86,7 @@ class JNarrowedClass extends JClass {
         buf.append('>');
         return buf.toString();
     }
-    
+
     public String fullName() {
         StringBuilder buf = new StringBuilder();
         buf.append(basis.fullName());
@@ -196,14 +196,14 @@ class JNarrowedClass extends JClass {
     protected JClass substituteParams(JTypeVar[] variables, List<JClass> bindings) {
         JClass b = basis.substituteParams(variables,bindings);
         boolean different = b!=basis;
-        
+
         List<JClass> clazz = new ArrayList<JClass>(args.size());
         for( int i=0; i<clazz.size(); i++ ) {
             JClass c = args.get(i).substituteParams(variables,bindings);
             clazz.set(i,c);
             different |= c != args.get(i);
         }
-        
+
         if(different)
             return new JNarrowedClass(b,clazz);
         else

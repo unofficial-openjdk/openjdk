@@ -31,12 +31,33 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class ServerMessages {
 
     private final static LocalizableMessageFactory messageFactory = new LocalizableMessageFactory("com.sun.xml.internal.ws.resources.server");
     private final static Localizer localizer = new Localizer();
+
+    public static Localizable localizableRUNTIME_PARSER_WSDL_INCORRECTSERVICE(Object arg0, Object arg1) {
+        return messageFactory.getMessage("runtime.parser.wsdl.incorrectservice", arg0, arg1);
+    }
+
+    /**
+     * could not get binding from WSDL! service: {0} not found in the WSDL {1}.
+     * It could be because service name does not match WSDL''s wsdl:service name:
+     *  1. service name is not there in deployment descriptor OR
+     *  2. Either there is a typo in deployment descriptor''s service name OR
+     *  3. The computed names from @WebService do not match wsdl:service name
+     * OR
+     *  1. There is an error while parsing the wsdl and Service with name {0} is not found in the WSDLModel.
+     * Suggest doing the following:
+     *  1. Add/Correct entries for service name in deployment descriptor OR
+     *  2. Specify targetNamespace, serviceName in @WebService on the endpoint class
+     *
+     */
+    public static String RUNTIME_PARSER_WSDL_INCORRECTSERVICE(Object arg0, Object arg1) {
+        return localizer.localize(localizableRUNTIME_PARSER_WSDL_INCORRECTSERVICE(arg0, arg1));
+    }
 
     public static Localizable localizableRUNTIME_PARSER_MISSING_ATTRIBUTE_NO_LINE() {
         return messageFactory.getMessage("runtime.parser.missing.attribute.no.line");
@@ -44,7 +65,7 @@ public final class ServerMessages {
 
     /**
      * missing attribute "{2}" in element "{1}" of runtime descriptor
-     * 
+     *
      */
     public static String RUNTIME_PARSER_MISSING_ATTRIBUTE_NO_LINE() {
         return localizer.localize(localizableRUNTIME_PARSER_MISSING_ATTRIBUTE_NO_LINE());
@@ -56,7 +77,7 @@ public final class ServerMessages {
 
     /**
      * Invalid/expired {0} header value: {1}
-     * 
+     *
      */
     public static String STATEFUL_COOKIE_HEADER_INCORRECT(Object arg0, Object arg1) {
         return localizer.localize(localizableSTATEFUL_COOKIE_HEADER_INCORRECT(arg0, arg1));
@@ -68,7 +89,7 @@ public final class ServerMessages {
 
     /**
      * "{0}" doesn't implement Provider
-     * 
+     *
      */
     public static String NOT_IMPLEMENT_PROVIDER(Object arg0) {
         return localizer.localize(localizableNOT_IMPLEMENT_PROVIDER(arg0));
@@ -80,7 +101,7 @@ public final class ServerMessages {
 
     /**
      * Stateful web service {0} requires the WS-Addressing support to be enabled. Perhaps you are missing @Addressing
-     * 
+     *
      */
     public static String STATEFUL_REQURES_ADDRESSING(Object arg0) {
         return localizer.localize(localizableSTATEFUL_REQURES_ADDRESSING(arg0));
@@ -92,7 +113,7 @@ public final class ServerMessages {
 
     /**
      * Error in decoding SOAP Message
-     * 
+     *
      */
     public static String SOAPDECODER_ERR() {
         return localizer.localize(localizableSOAPDECODER_ERR());
@@ -104,7 +125,7 @@ public final class ServerMessages {
 
     /**
      * error parsing runtime descriptor: {0}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_INVALID_READER_STATE(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_INVALID_READER_STATE(arg0));
@@ -116,22 +137,22 @@ public final class ServerMessages {
 
     /**
      * Generating non-standard WSDL for the specified binding
-     * 
+     *
      */
     public static String GENERATE_NON_STANDARD_WSDL() {
         return localizer.localize(localizableGENERATE_NON_STANDARD_WSDL());
     }
 
-    public static Localizable localizableDISPATCH_CANNOT_FIND_METHOD(Object arg0, Object arg1) {
-        return messageFactory.getMessage("dispatch.cannotFindMethod", arg0, arg1);
+    public static Localizable localizableDISPATCH_CANNOT_FIND_METHOD(Object arg0) {
+        return messageFactory.getMessage("dispatch.cannotFindMethod", arg0);
     }
 
     /**
-     * Cannot find dispatch method for {0} using "{1}"
-     * 
+     * Cannot find dispatch method for {0}
+     *
      */
-    public static String DISPATCH_CANNOT_FIND_METHOD(Object arg0, Object arg1) {
-        return localizer.localize(localizableDISPATCH_CANNOT_FIND_METHOD(arg0, arg1));
+    public static String DISPATCH_CANNOT_FIND_METHOD(Object arg0) {
+        return localizer.localize(localizableDISPATCH_CANNOT_FIND_METHOD(arg0));
     }
 
     public static Localizable localizableNO_CONTENT_TYPE() {
@@ -140,7 +161,7 @@ public final class ServerMessages {
 
     /**
      * Request doesn't have a Content-Type
-     * 
+     *
      */
     public static String NO_CONTENT_TYPE() {
         return localizer.localize(localizableNO_CONTENT_TYPE());
@@ -152,7 +173,7 @@ public final class ServerMessages {
 
     /**
      * unsupported runtime descriptor version: {2}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_INVALID_VERSION_NUMBER() {
         return localizer.localize(localizableRUNTIME_PARSER_INVALID_VERSION_NUMBER());
@@ -164,7 +185,7 @@ public final class ServerMessages {
 
     /**
      * "{0}" implements Provider but its type parameter {1} is incorrect
-     * 
+     *
      */
     public static String PROVIDER_INVALID_PARAMETER_TYPE(Object arg0, Object arg1) {
         return localizer.localize(localizablePROVIDER_INVALID_PARAMETER_TYPE(arg0, arg1));
@@ -176,7 +197,7 @@ public final class ServerMessages {
 
     /**
      * Incorrect no of arguments for method "{0}"
-     * 
+     *
      */
     public static String WRONG_NO_PARAMETERS(Object arg0) {
         return localizer.localize(localizableWRONG_NO_PARAMETERS(arg0));
@@ -188,7 +209,7 @@ public final class ServerMessages {
 
     /**
      * Only one method should have the annotation "{0}"
-     * 
+     *
      */
     public static String ANNOTATION_ONLY_ONCE(Object arg0) {
         return localizer.localize(localizableANNOTATION_ONLY_ONCE(arg0));
@@ -200,7 +221,7 @@ public final class ServerMessages {
 
     /**
      * There is already a HTTPS server at : {0}
-     * 
+     *
      */
     public static String ALREADY_HTTPS_SERVER(Object arg0) {
         return localizer.localize(localizableALREADY_HTTPS_SERVER(arg0));
@@ -212,7 +233,7 @@ public final class ServerMessages {
 
     /**
      * error parsing runtime descriptor: {0}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_XML_READER(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_XML_READER(arg0));
@@ -229,9 +250,9 @@ public final class ServerMessages {
      *  2. Either there is a typo in deployment descriptor''s service and port names OR
      *  3. The computed names from @WebService do not match wsdl:service and wsdl:port names
      * Suggest doing the following:
-     *  1. Add/Correct entries for service and port names in deployment descriptor OR 
+     *  1. Add/Correct entries for service and port names in deployment descriptor OR
      *  2. Specify targetNamespace, serviceName, portName in @WebService on the endpoint class
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL_INCORRECTSERVICEPORT(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL_INCORRECTSERVICEPORT(arg0, arg1, arg2));
@@ -243,7 +264,7 @@ public final class ServerMessages {
 
     /**
      * Server Runtime Error: {0}
-     * 
+     *
      */
     public static String SERVER_RT_ERR(Object arg0) {
         return localizer.localize(localizableSERVER_RT_ERR(arg0));
@@ -255,7 +276,7 @@ public final class ServerMessages {
 
     /**
      * invalid value for attribute "{2}" of element "{1}" in runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_INVALID_ATTRIBUTE_VALUE(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableRUNTIME_PARSER_INVALID_ATTRIBUTE_VALUE(arg0, arg1, arg2));
@@ -267,7 +288,7 @@ public final class ServerMessages {
 
     /**
      * This thread is not currently processing any web service request.
-     * 
+     *
      */
     public static String NO_CURRENT_PACKET() {
         return localizer.localize(localizableNO_CURRENT_PACKET());
@@ -279,7 +300,7 @@ public final class ServerMessages {
 
     /**
      * unexpected content in runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_UNEXPECTED_CONTENT(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_UNEXPECTED_CONTENT(arg0));
@@ -291,7 +312,7 @@ public final class ServerMessages {
 
     /**
      * This is a stateful web service and {0} header is required.
-     * 
+     *
      */
     public static String STATEFUL_COOKIE_HEADER_REQUIRED(Object arg0) {
         return localizer.localize(localizableSTATEFUL_COOKIE_HEADER_REQUIRED(arg0));
@@ -303,7 +324,7 @@ public final class ServerMessages {
 
     /**
      * Implementor cannot be null
-     * 
+     *
      */
     public static String NULL_IMPLEMENTOR() {
         return localizer.localize(localizableNULL_IMPLEMENTOR());
@@ -315,7 +336,7 @@ public final class ServerMessages {
 
     /**
      * exception during WSDL parsing: {0}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL(arg0));
@@ -327,7 +348,7 @@ public final class ServerMessages {
 
     /**
      * Error in encoding SOAP Message
-     * 
+     *
      */
     public static String SOAPENCODER_ERR() {
         return localizer.localize(localizableSOAPENCODER_ERR());
@@ -339,7 +360,7 @@ public final class ServerMessages {
 
     /**
      * wsdl is required
-     * 
+     *
      */
     public static String WSDL_REQUIRED() {
         return localizer.localize(localizableWSDL_REQUIRED());
@@ -351,10 +372,22 @@ public final class ServerMessages {
 
     /**
      * Required com.sun.net.httpserver.HttpContext. Got : {0}
-     * 
+     *
      */
     public static String NOT_HTTP_CONTEXT_TYPE(Object arg0) {
         return localizer.localize(localizableNOT_HTTP_CONTEXT_TYPE(arg0));
+    }
+
+    public static Localizable localizableRUNTIME_PARSER_WSDL_NOSERVICE_IN_WSDLMODEL(Object arg0) {
+        return messageFactory.getMessage("runtime.parser.wsdl.noservice.in.wsdlmodel", arg0);
+    }
+
+    /**
+     * There is an error in processing the WSDL {0} and no valid services are found.
+     *
+     */
+    public static String RUNTIME_PARSER_WSDL_NOSERVICE_IN_WSDLMODEL(Object arg0) {
+        return localizer.localize(localizableRUNTIME_PARSER_WSDL_NOSERVICE_IN_WSDLMODEL(arg0));
     }
 
     public static Localizable localizablePORT_NAME_REQUIRED() {
@@ -363,7 +396,7 @@ public final class ServerMessages {
 
     /**
      * Port QName is not found
-     * 
+     *
      */
     public static String PORT_NAME_REQUIRED() {
         return localizer.localize(localizablePORT_NAME_REQUIRED());
@@ -375,7 +408,7 @@ public final class ServerMessages {
 
     /**
      * Port namespace {0} doesn't match Service namespace {1}
-     * 
+     *
      */
     public static String WRONG_TNS_FOR_PORT(Object arg0) {
         return localizer.localize(localizableWRONG_TNS_FOR_PORT(arg0));
@@ -387,10 +420,22 @@ public final class ServerMessages {
 
     /**
      * multiple bindings found for binding ID {0} for service {1} in WSDL {2}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL_MULTIPLEBINDING(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL_MULTIPLEBINDING(arg0, arg1, arg2));
+    }
+
+    public static Localizable localizableNON_UNIQUE_DISPATCH_QNAME(Object arg0, Object arg1) {
+        return messageFactory.getMessage("non.unique.dispatch.qname", arg0, arg1);
+    }
+
+    /**
+     * Non unique body parts! In a port, as per BP 1.1 R2710 operations must have unique operation signature on the wire for successful dispatch. Methods {0} have the same request body block {1}. Method dispatching may fail, runtime will try to dispatch using SOAPAction.
+     *
+     */
+    public static String NON_UNIQUE_DISPATCH_QNAME(Object arg0, Object arg1) {
+        return localizer.localize(localizableNON_UNIQUE_DISPATCH_QNAME(arg0, arg1));
     }
 
     public static Localizable localizableALREADY_HTTP_SERVER(Object arg0) {
@@ -398,8 +443,8 @@ public final class ServerMessages {
     }
 
     /**
-     * There is already a HTTP server at : {0} 
-     * 
+     * There is already a HTTP server at : {0}
+     *
      */
     public static String ALREADY_HTTP_SERVER(Object arg0) {
         return localizer.localize(localizableALREADY_HTTP_SERVER(arg0));
@@ -411,7 +456,7 @@ public final class ServerMessages {
 
     /**
      * Cannot generate WSDL for binding "{0}"
-     * 
+     *
      */
     public static String CAN_NOT_GENERATE_WSDL(Object arg0) {
         return localizer.localize(localizableCAN_NOT_GENERATE_WSDL(arg0));
@@ -423,7 +468,7 @@ public final class ServerMessages {
 
     /**
      * invalid attribute value "{1}" in runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_INVALID_ATTRIBUTE_VALUE(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_PARSER_INVALID_ATTRIBUTE_VALUE(arg0, arg1));
@@ -435,10 +480,22 @@ public final class ServerMessages {
 
     /**
      * found element "{1}", expected "{2}" in runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WRONG_ELEMENT(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableRUNTIME_PARSER_WRONG_ELEMENT(arg0, arg1, arg2));
+    }
+
+    public static Localizable localizableRUNTIMEMODELER_INVALIDANNOTATION_ON_IMPL(Object arg0, Object arg1, Object arg2) {
+        return messageFactory.getMessage("runtimemodeler.invalidannotationOnImpl", arg0, arg1, arg2);
+    }
+
+    /**
+     * Invalid annotation: {0} on endpoint implementation class "{1}" - will be ignored. "{1}" is annotated with @WebService(endpointInterface="{2}"}, it MUST NOT be annotated with {0}, to fix it - put this annotation on the SEI {2}.
+     *
+     */
+    public static String RUNTIMEMODELER_INVALIDANNOTATION_ON_IMPL(Object arg0, Object arg1, Object arg2) {
+        return localizer.localize(localizableRUNTIMEMODELER_INVALIDANNOTATION_ON_IMPL(arg0, arg1, arg2));
     }
 
     public static Localizable localizableRUNTIME_PARSER_WSDL_NOSERVICE() {
@@ -447,7 +504,7 @@ public final class ServerMessages {
 
     /**
      * can't apply binding! service {0} not found in the WSDL {1}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL_NOSERVICE() {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL_NOSERVICE());
@@ -459,7 +516,7 @@ public final class ServerMessages {
 
     /**
      * Service QName is not found
-     * 
+     *
      */
     public static String SERVICE_NAME_REQUIRED() {
         return localizer.localize(localizableSERVICE_NAME_REQUIRED());
@@ -471,7 +528,7 @@ public final class ServerMessages {
 
     /**
      * "{0}" implements Provider but doesn't specify the type parameter
-     * 
+     *
      */
     public static String PROVIDER_NOT_PARAMETERIZED(Object arg0) {
         return localizer.localize(localizablePROVIDER_NOT_PARAMETERIZED(arg0));
@@ -483,7 +540,7 @@ public final class ServerMessages {
 
     /**
      * error while patching WSDL related document
-     * 
+     *
      */
     public static String RUNTIME_WSDL_PATCHER() {
         return localizer.localize(localizableRUNTIME_WSDL_PATCHER());
@@ -496,7 +553,7 @@ public final class ServerMessages {
     /**
      * {0}
      * {1}
-     * 
+     *
      */
     public static String RUNTIME_SAXPARSER_EXCEPTION(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_SAXPARSER_EXCEPTION(arg0, arg1));
@@ -508,7 +565,7 @@ public final class ServerMessages {
 
     /**
      * {0} is not found in the WAR file. Package it in the WAR file or correct it in sun-jaxws.xml.
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL_NOT_FOUND(arg0));
@@ -520,7 +577,7 @@ public final class ServerMessages {
 
     /**
      * Incorrect argument types for method "{0}"
-     * 
+     *
      */
     public static String WRONG_PARAMETER_TYPE(Object arg0) {
         return localizer.localize(localizableWRONG_PARAMETER_TYPE(arg0));
@@ -532,10 +589,22 @@ public final class ServerMessages {
 
     /**
      * class not found in runtime descriptor: {0}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_CLASS_NOT_FOUND(Object arg0) {
         return localizer.localize(localizableRUNTIME_PARSER_CLASS_NOT_FOUND(arg0));
+    }
+
+    public static Localizable localizableUNSUPPORTED_CHARSET(Object arg0) {
+        return messageFactory.getMessage("unsupported.charset", arg0);
+    }
+
+    /**
+     * Unsupported charset "{0}" in the received message''s Content-Type
+     *
+     */
+    public static String UNSUPPORTED_CHARSET(Object arg0) {
+        return localizer.localize(localizableUNSUPPORTED_CHARSET(arg0));
     }
 
     public static Localizable localizableSTATIC_RESOURCE_INJECTION_ONLY(Object arg0, Object arg1) {
@@ -544,7 +613,7 @@ public final class ServerMessages {
 
     /**
      * Static resource {0} cannot be injected to non-static "{1}"
-     * 
+     *
      */
     public static String STATIC_RESOURCE_INJECTION_ONLY(Object arg0, Object arg1) {
         return localizer.localize(localizableSTATIC_RESOURCE_INJECTION_ONLY(arg0, arg1));
@@ -556,7 +625,7 @@ public final class ServerMessages {
 
     /**
      * Method "{0}" shouldn''t have any arguments
-     * 
+     *
      */
     public static String NOT_ZERO_PARAMETERS(Object arg0) {
         return localizer.localize(localizableNOT_ZERO_PARAMETERS(arg0));
@@ -568,7 +637,7 @@ public final class ServerMessages {
 
     /**
      * Metadata has more than one WSDL that has Service definiton for the endpoint. WSDL={0} is one such WSDL.
-     * 
+     *
      */
     public static String DUPLICATE_PRIMARY_WSDL(Object arg0) {
         return localizer.localize(localizableDUPLICATE_PRIMARY_WSDL(arg0));
@@ -580,7 +649,7 @@ public final class ServerMessages {
 
     /**
      * Metadata has more than one WSDL that has PortType definiton for the endpoint. WSDL={0} is one such WSDL.
-     * 
+     *
      */
     public static String DUPLICATE_ABSTRACT_WSDL(Object arg0) {
         return localizer.localize(localizableDUPLICATE_ABSTRACT_WSDL(arg0));
@@ -592,7 +661,7 @@ public final class ServerMessages {
 
     /**
      * Not a WebServiceContext from JAX-WS RI: {0}
-     * 
+     *
      */
     public static String STATEFUL_INVALID_WEBSERVICE_CONTEXT(Object arg0) {
         return localizer.localize(localizableSTATEFUL_INVALID_WEBSERVICE_CONTEXT(arg0));
@@ -604,7 +673,7 @@ public final class ServerMessages {
 
     /**
      * can't apply binding! no binding found for binding ID {0] for service {1} in WSDL {2}
-     * 
+     *
      */
     public static String RUNTIME_PARSER_WSDL_NOBINDING() {
         return localizer.localize(localizableRUNTIME_PARSER_WSDL_NOBINDING());
@@ -616,7 +685,7 @@ public final class ServerMessages {
 
     /**
      * invalid element "{1}" in runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_INVALID_ELEMENT(Object arg0, Object arg1) {
         return localizer.localize(localizableRUNTIME_PARSER_INVALID_ELEMENT(arg0, arg1));
@@ -628,7 +697,7 @@ public final class ServerMessages {
 
     /**
      * missing attribute "{2}" in element "{1}" of runtime descriptor (line {0})
-     * 
+     *
      */
     public static String RUNTIME_PARSER_MISSING_ATTRIBUTE(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableRUNTIME_PARSER_MISSING_ATTRIBUTE(arg0, arg1, arg2));
@@ -640,7 +709,7 @@ public final class ServerMessages {
 
     /**
      * Incorrect type for field "{0}"
-     * 
+     *
      */
     public static String WRONG_FIELD_TYPE(Object arg0) {
         return localizer.localize(localizableWRONG_FIELD_TYPE(arg0));
@@ -652,7 +721,7 @@ public final class ServerMessages {
 
     /**
      * Received SOAP message contains duplicate header: {0} for a bound parameter
-     * 
+     *
      */
     public static String DUPLICATE_PORT_KNOWN_HEADER(Object arg0) {
         return localizer.localize(localizableDUPLICATE_PORT_KNOWN_HEADER(arg0));
@@ -664,7 +733,7 @@ public final class ServerMessages {
 
     /**
      * Unsupported Content-Type: {0} Supported ones are: {1}
-     * 
+     *
      */
     public static String UNSUPPORTED_CONTENT_TYPE(Object arg0, Object arg1) {
         return localizer.localize(localizableUNSUPPORTED_CONTENT_TYPE(arg0, arg1));
@@ -676,7 +745,7 @@ public final class ServerMessages {
 
     /**
      * Unable to instantiate {0} (which is specified in {1} on {2})
-     * 
+     *
      */
     public static String FAILED_TO_INSTANTIATE_INSTANCE_RESOLVER(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableFAILED_TO_INSTANTIATE_INSTANCE_RESOLVER(arg0, arg1, arg2));
@@ -688,7 +757,7 @@ public final class ServerMessages {
 
     /**
      * Error in Deployment Descriptor : MTOM Configuration in binding {0} conflicts with enable-mtom attribute value {1}
-     * 
+     *
      */
     public static String DD_MTOM_CONFLICT(Object arg0, Object arg1) {
         return localizer.localize(localizableDD_MTOM_CONFLICT(arg0, arg1));

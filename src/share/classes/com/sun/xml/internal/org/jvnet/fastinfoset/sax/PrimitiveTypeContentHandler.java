@@ -24,18 +24,18 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.org.jvnet.fastinfoset.sax;
 
 import org.xml.sax.SAXException;
 
-/** 
- * SAX2 extention handler to receive notification of character data as 
+/**
+ * SAX2 extention handler to receive notification of character data as
  * primtive types.
  *
- * <p>This is an optional extension handler for SAX2. XML readers are not 
- * required to recognize this handler, and it is not part of core-only 
+ * <p>This is an optional extension handler for SAX2. XML readers are not
+ * required to recognize this handler, and it is not part of core-only
  * SAX2 distributions.</p>
  *
  * <p>This interface may be used with with a Fast Infoset
@@ -56,10 +56,10 @@ import org.xml.sax.SAXException;
  * {@link com.sun.xml.internal.org.jvnet.fastinfoset.sax.FastInfosetReader#setPrimitiveTypeContentHandler
  *  setPrimitiveTypeContentHandler} method.<p>
 
- * <p>The Parser will call methods of this interface to report each 
- * chunk of character data that has been converted to an array of primitive 
- * types, for example an array of integer or an array of float. Parsers may 
- * return all contiguous primtive types in a single chunk, or they may split 
+ * <p>The Parser will call methods of this interface to report each
+ * chunk of character data that has been converted to an array of primitive
+ * types, for example an array of integer or an array of float. Parsers may
+ * return all contiguous primtive types in a single chunk, or they may split
  * it into several chunks</p>
  *
  * <p>The application must not attempt to read from the array
@@ -85,7 +85,7 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of boolean to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void booleans(boolean [] b, int start, int length) throws SAXException;
 
     /**
@@ -97,11 +97,11 @@ public interface PrimitiveTypeContentHandler {
      * <p>Such notifications will occur for a Fast Infoset SAX parser
      * when processing data encoded using the "base64" encoding
      * algorithm, see subclause 10.3, or the "hexadecimal" encoding
-     * algorithm, see subclause 10.2. 
-     * 
+     * algorithm, see subclause 10.2.
+     *
      * <p>Such a notification may occur for binary data that would
      * normally require base 64 encoding and reported as character data
-     * using the {@link org.xml.sax.ContentHandler#characters characters} 
+     * using the {@link org.xml.sax.ContentHandler#characters characters}
      * method <p>.
      *
      * @param b the array of byte
@@ -109,9 +109,9 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of byte to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void bytes(byte[] b, int start, int length) throws SAXException;
-    
+
     /**
      * Receive notification of character data as an array of short.
      *
@@ -127,9 +127,9 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of short to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void shorts(short[] s, int start, int length) throws SAXException;
-    
+
     /**
      * Receive notification of character data as an array of int.
      *
@@ -145,9 +145,9 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of int to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void ints(int [] i, int start, int length) throws SAXException;
-    
+
     /**
      * Receive notification of character data as an array of long.
      *
@@ -163,9 +163,9 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of long to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void longs(long [] l, int start, int length) throws SAXException;
-    
+
     /**
      * Receive notification of character data as an array of float.
      *
@@ -181,9 +181,9 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of float to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void floats(float [] f, int start, int length) throws SAXException;
-    
+
     /**
      * Receive notification of character data as an array of double.
      *
@@ -199,7 +199,7 @@ public interface PrimitiveTypeContentHandler {
      * @param length the number of double to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void doubles(double [] d, int start, int length) throws SAXException;
 
     /**
@@ -215,10 +215,10 @@ public interface PrimitiveTypeContentHandler {
      * @param msblsb the array of long containing pairs of most signficant
      * bits and least significant bits of the UUIDs
      * @param start the start position in the array
-     * @param length the number of long to read from the array. This will 
+     * @param length the number of long to read from the array. This will
      * be twice the number of UUIDs, which are pairs of two long values
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception
-     */    
+     */
     public void uuids(long[] msblsb, int start, int length) throws SAXException;
 }

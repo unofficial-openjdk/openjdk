@@ -223,7 +223,7 @@ public class SimpleCharStream
   }
 
   /**
-   * @deprecated 
+   * @deprecated
    * @see #getEndColumn
    */
 
@@ -232,7 +232,7 @@ public class SimpleCharStream
   }
 
   /**
-   * @deprecated 
+   * @deprecated
    * @see #getEndLine
    */
 
@@ -440,7 +440,7 @@ public class SimpleCharStream
         bufcolumn[j] = newCol + columnDiff;
         columnDiff = nextColDiff;
         i++;
-     } 
+     }
 
      if (i < len)
      {

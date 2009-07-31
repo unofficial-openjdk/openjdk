@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.property;
 
 import javax.xml.namespace.QName;
@@ -31,7 +32,7 @@ import com.sun.xml.internal.bind.v2.runtime.Name;
 
 /**
  * Pair of {@link QName} and {@link JaxBeanInfo}.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 class TagAndType {

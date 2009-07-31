@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc;
 
 import java.io.PrintStream;
@@ -80,7 +81,7 @@ public abstract class XJCListener implements ErrorListener {
      * will be reported through this method.
      *
      * This method is used like {@link PrintStream#println(String)}.
-     * The callee is expected to add '\n'. 
+     * The callee is expected to add '\n'.
      */
     public void message(String msg) {}
 
@@ -106,7 +107,7 @@ public abstract class XJCListener implements ErrorListener {
      * Note that despite all the efforts to check this method frequently, XJC may still fail to
      * invoke this method for a long time. Such scenario would include network related problems
      * or other I/O block (you can't even interrupt the thread while I/O is blocking.)
-     * So just beware that this is not a cure-all. 
+     * So just beware that this is not a cure-all.
      *
      * @return
      *      true if the {@link XJCListener} wants to abort the processing.

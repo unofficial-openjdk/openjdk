@@ -30,12 +30,12 @@ package com.sun.codemodel.internal;
  * JBreak statement
  */
 final class JBreak implements JStatement {
-    
+
     private final JLabel label;
-    
+
     /**
      * JBreak constructor
-     * 
+     *
      * @param   _label
      *      break label or null.
      */

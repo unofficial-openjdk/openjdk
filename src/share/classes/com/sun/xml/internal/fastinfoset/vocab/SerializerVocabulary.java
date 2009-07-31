@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.vocab;
 
@@ -54,13 +54,13 @@ public class SerializerVocabulary extends Vocabulary {
 
     public final LocalNameQualifiedNamesMap elementName;
     public final LocalNameQualifiedNamesMap attributeName;
-    
+
     public final KeyIntMap[] tables = new KeyIntMap[12];
 
     protected boolean _useLocalNameAsKey;
-    
+
     protected SerializerVocabulary _readOnlyVocabulary;
-    
+
     public SerializerVocabulary() {
         tables[RESTRICTED_ALPHABET] = restrictedAlphabet = new StringIntMap(4);
         tables[ENCODING_ALGORITHM] = encodingAlgorithm = new StringIntMap(4);
@@ -73,48 +73,48 @@ public class SerializerVocabulary extends Vocabulary {
         tables[OTHER_STRING] = otherString = new CharArrayIntMap(4);
         tables[CHARACTER_CONTENT_CHUNK] = characterContentChunk = new CharArrayIntMap();
         tables[ELEMENT_NAME] = elementName = new LocalNameQualifiedNamesMap();
-        tables[ATTRIBUTE_NAME] = attributeName = new LocalNameQualifiedNamesMap();        
+        tables[ATTRIBUTE_NAME] = attributeName = new LocalNameQualifiedNamesMap();
     }
-        
-    public SerializerVocabulary(com.sun.xml.internal.org.jvnet.fastinfoset.Vocabulary v, 
+
+    public SerializerVocabulary(com.sun.xml.internal.org.jvnet.fastinfoset.Vocabulary v,
             boolean useLocalNameAsKey) {
         this();
-        
+
         _useLocalNameAsKey = useLocalNameAsKey;
         convertVocabulary(v);
     }
-    
+
     public SerializerVocabulary getReadOnlyVocabulary() {
         return _readOnlyVocabulary;
     }
-    
-    protected void setReadOnlyVocabulary(SerializerVocabulary readOnlyVocabulary, 
+
+    protected void setReadOnlyVocabulary(SerializerVocabulary readOnlyVocabulary,
             boolean clear) {
         for (int i = 0; i < tables.length; i++) {
             tables[i].setReadOnlyMap(readOnlyVocabulary.tables[i], clear);
         }
     }
 
-    public void setInitialVocabulary(SerializerVocabulary initialVocabulary, 
+    public void setInitialVocabulary(SerializerVocabulary initialVocabulary,
             boolean clear) {
         setExternalVocabularyURI(null);
         setInitialReadOnlyVocabulary(true);
         setReadOnlyVocabulary(initialVocabulary, clear);
     }
-    
-    public void setExternalVocabulary(String externalVocabularyURI, 
+
+    public void setExternalVocabulary(String externalVocabularyURI,
             SerializerVocabulary externalVocabulary, boolean clear) {
         setInitialReadOnlyVocabulary(false);
         setExternalVocabularyURI(externalVocabularyURI);
         setReadOnlyVocabulary(externalVocabulary, clear);
     }
-    
+
     public void clear() {
         for (int i = 0; i < tables.length; i++) {
             tables[i].clear();
         }
     }
-    
+
     private void convertVocabulary(com.sun.xml.internal.org.jvnet.fastinfoset.Vocabulary v) {
         addToTable(v.restrictedAlphabets.iterator(), restrictedAlphabet);
         addToTable(v.encodingAlgorithms.iterator(), encodingAlgorithm);
@@ -127,45 +127,45 @@ public class SerializerVocabulary extends Vocabulary {
         addToTable(v.otherStrings.iterator(), otherString);
         addToTable(v.characterContentChunks.iterator(), characterContentChunk);
         addToTable(v.elements.iterator(), elementName);
-        addToTable(v.attributes.iterator(), attributeName);                            
+        addToTable(v.attributes.iterator(), attributeName);
     }
-    
+
     private void addToTable(Iterator i, StringIntMap m) {
         while (i.hasNext()) {
             addToTable((String)i.next(), m);
-        }        
+        }
     }
-    
+
     private void addToTable(String s, StringIntMap m) {
         if (s.length() == 0) {
             return;
         }
-        
+
         m.obtainIndex(s);
     }
-    
+
     private void addToTable(Iterator i, CharArrayIntMap m) {
         while (i.hasNext()) {
             addToTable((String)i.next(), m);
-        }        
+        }
     }
-    
+
     private void addToTable(String s, CharArrayIntMap m) {
         if (s.length() == 0) {
             return;
         }
-        
+
         char[] c = s.toCharArray();
         m.obtainIndex(c, 0, c.length, false);
     }
-    
+
     private void addToTable(Iterator i, LocalNameQualifiedNamesMap m) {
         while (i.hasNext()) {
             addToNameTable((QName)i.next(), m);
-        }        
+        }
     }
-    
-    private void addToNameTable(QName n, LocalNameQualifiedNamesMap m) {                
+
+    private void addToNameTable(QName n, LocalNameQualifiedNamesMap m) {
         int namespaceURIIndex = -1;
         int prefixIndex = -1;
         if (n.getNamespaceURI().length() > 0) {
@@ -173,7 +173,7 @@ public class SerializerVocabulary extends Vocabulary {
             if (namespaceURIIndex == KeyIntMap.NOT_PRESENT) {
                 namespaceURIIndex = namespaceName.get(n.getNamespaceURI());
             }
-            
+
             if (n.getPrefix().length() > 0) {
                 prefixIndex = prefix.obtainIndex(n.getPrefix());
                 if (prefixIndex == KeyIntMap.NOT_PRESENT) {
@@ -181,26 +181,26 @@ public class SerializerVocabulary extends Vocabulary {
                 }
             }
         }
-        
+
         int localNameIndex = localName.obtainIndex(n.getLocalPart());
         if (localNameIndex == KeyIntMap.NOT_PRESENT) {
             localNameIndex = localName.get(n.getLocalPart());
         }
-        
+
         QualifiedName name = new QualifiedName(n.getPrefix(), n.getNamespaceURI(), n.getLocalPart(),
-                m.getNextIndex(), 
+                m.getNextIndex(),
                 prefixIndex, namespaceURIIndex, localNameIndex);
-        
+
         LocalNameQualifiedNamesMap.Entry entry = null;
         if (_useLocalNameAsKey) {
             entry = m.obtainEntry(n.getLocalPart());
         } else {
             String qName = (prefixIndex == -1)
-                ? n.getLocalPart() 
+                ? n.getLocalPart()
                 : n.getPrefix() + ":" + n.getLocalPart();
             entry = m.obtainEntry(qName);
         }
-        
+
         entry.addQualifiedName(name);
-    }    
+    }
 }

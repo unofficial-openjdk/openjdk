@@ -37,9 +37,9 @@ import java.util.Set;
  */
 
 public class ServerMUTube extends MUTube {
-    
+
     private HandlerConfiguration handlerConfig;
-    
+
     public ServerMUTube(WSBinding binding, Tube next) {
         super(binding, next);
         //On Server, HandlerConfiguration does n't change after publish.

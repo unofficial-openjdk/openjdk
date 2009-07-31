@@ -31,9 +31,9 @@ import org.xml.sax.SAXParseException;
 
 /**
  * Filter implementation of the ErrorReceiver.
- * 
+ *
  * If an error is encountered, this filter sets a flag.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

@@ -22,13 +22,15 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.visitor;
 
 import com.sun.xml.internal.xsom.XSWildcard;
 
 /**
  * Visits three kinds of {@link XSWildcard}.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

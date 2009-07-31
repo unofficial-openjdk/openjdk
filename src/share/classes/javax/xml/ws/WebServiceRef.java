@@ -37,7 +37,7 @@ import java.lang.annotation.RetentionPolicy;
  *  (optionally) an injection target for it.
  *
  *  Web service references are resources in the Java EE 5 sense.
- * 
+ *
  *  @see javax.annotation.Resource
  *
  *  @since JAX-WS 2.0

@@ -48,9 +48,9 @@ import javax.xml.ws.spi.Provider;
  *  <li> ENABLED: In this Mode, a JAX-WS runtime MUST assure that all
  *  required <code>wsdl:binding</code> extensions are either understood
     and used by the runtime, or explicitly disabled by the web service
- *  application.  A web service application can disable a particular 
- *  extension that has a known WebServiceFeature using either the appropriate 
- *  annotation associated with that WebServiceFeature on the server, or one of 
+ *  application.  A web service application can disable a particular
+ *  extension that has a known WebServiceFeature using either the appropriate
+ *  annotation associated with that WebServiceFeature on the server, or one of
  *  the following methods on the client:
  *    <ul>
  *      <li>{@link Service#getPort(QName,Class,WebServiceFeature...)}
@@ -64,26 +64,26 @@ import javax.xml.ws.spi.Provider;
  *      <li>One of the <code>getXXXPort(WebServiceFeatures...)</code> methods on a
  *          generated <code>Service</code>.
  *    </ul>
- *  The runtime MUST also make sure that binding of 
+ *  The runtime MUST also make sure that binding of
  *  SEI parameters/return values respect the <code>wsdl:binding</code>.
  *  With this feature enabled, if a required (<code>wsdl:required="true"</code>)
  *  <code>wsdl:binding</code> extension is in the WSDL and it is not
- *  supported by a JAX-WS runtime and it has not 
+ *  supported by a JAX-WS runtime and it has not
  *  been explicitly turned off by the web service developer, then
- *  that JAX-WS runtime MUST behave appropriately based on whether it is 
+ *  that JAX-WS runtime MUST behave appropriately based on whether it is
  *  on the client or server:
  *  <UL>
- *    <li>Client: runtime MUST throw a 
+ *    <li>Client: runtime MUST throw a
  *  <code>WebServiceException</code> no sooner than when one of the methods
  *  above is invoked but no later than the first invocation of an endpoint
- *  operation. 
+ *  operation.
  *    <li>Server: throw a WebServiceException and the endpoint MUST fail to deploy
  *  </ul>
  *  <li> DISABLED: In this Mode, an implementation may choose whether
  *  to inspect the <code>wsdl:binding<code> or not and to what degree
  *  the <code>wsdl:binding</code> will be inspected.  For example,
  *  one implementation may choose to behave as if this feature is enabled,
- *  another implementation may only choose to verify the SEI's 
+ *  another implementation may only choose to verify the SEI's
  *  parameter/return type bindings.
  * </ul>
  *
@@ -93,12 +93,12 @@ import javax.xml.ws.spi.Provider;
  */
 public final class RespectBindingFeature extends WebServiceFeature {
     /**
-     * 
+     *
      * Constant value identifying the RespectBindingFeature
      */
     public static final String ID = "javax.xml.ws.RespectBindingFeature";
-    
-    
+
+
     /**
      * Creates an <code>RespectBindingFeature</code>.
      * The instance created will be enabled.
@@ -109,14 +109,14 @@ public final class RespectBindingFeature extends WebServiceFeature {
 
     /**
      * Creates an RespectBindingFeature
-     * 
+     *
      * @param enabled specifies whether this feature should
      * be enabled or not.
      */
     public RespectBindingFeature(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     /**
      * {@inheritDoc}
      */

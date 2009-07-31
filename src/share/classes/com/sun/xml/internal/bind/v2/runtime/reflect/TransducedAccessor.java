@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect;
 
 import java.io.IOException;
@@ -266,7 +267,7 @@ public abstract class TransducedAccessor<BeanT> {
         public String print(BeanT bean) throws AccessorException, SAXException {
             TargetT target = acc.get(bean);
             if(target==null)    return null;
-            
+
             XMLSerializer w = XMLSerializer.getInstance();
             try {
                 String id = w.grammar.getBeanInfo(target,true).getId(target,w);

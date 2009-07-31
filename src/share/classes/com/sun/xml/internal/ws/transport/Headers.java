@@ -49,7 +49,7 @@ import java.io.*;
  * HeaderName: value2
  * </blockquote></pre>
  * <p>
- * All the normal {@link java.util.Map} methods are provided, but the following 
+ * All the normal {@link java.util.Map} methods are provided, but the following
  * additional convenience methods are most likely to be used:
  * <ul>
  * <li>{@link #getFirst(String)} returns a single valued header or the first value of
@@ -58,7 +58,7 @@ import java.io.*;
  * <li>{@link #set(String,String)} sets the given header field to the single value given
  * overwriting any existing values in the value list.
  * </ul><p>
- * All methods in this class accept <code>null</code> values for keys and values. However, null 
+ * All methods in this class accept <code>null</code> values for keys and values. However, null
  * keys will never will be present in HTTP request headers, and will not be output/sent in response headers.
  * Null values can be represented as either a null entry for the key (i.e. the list is null) or
  * where the key has a list, but one (or more) of the list's values is null. Null values are output
@@ -75,7 +75,7 @@ public class Headers implements Map<String,List<String>> {
 
     /* Normalize the key by converting to following form.
      * First char upper case, rest lower case.
-     * key is presumed to be ASCII 
+     * key is presumed to be ASCII
      */
     private String normalize (String key) {
         if (key == null) {
@@ -207,5 +207,10 @@ public class Headers implements Map<String,List<String>> {
 
     public int hashCode() {
         return map.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return map.toString();
     }
 }

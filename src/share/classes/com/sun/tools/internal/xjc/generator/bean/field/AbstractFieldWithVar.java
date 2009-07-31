@@ -31,23 +31,24 @@ import com.sun.codemodel.internal.JFieldVar;
 import com.sun.codemodel.internal.JMod;
 import com.sun.codemodel.internal.JType;
 import com.sun.codemodel.internal.JVar;
+import com.sun.tools.internal.xjc.api.SpecVersion;
 import com.sun.tools.internal.xjc.generator.bean.ClassOutlineImpl;
 import com.sun.tools.internal.xjc.model.CPropertyInfo;
 
 /**
- * 
- * 
+ *
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 abstract class AbstractFieldWithVar extends AbstractField {
-    
+
     /**
      * Field declaration of the actual list object that we use
      * to store data.
      */
     private JFieldVar field;
-    
+
     /**
      * Invoke {@link #createField()} after calling the
      * constructor.
@@ -55,7 +56,7 @@ abstract class AbstractFieldWithVar extends AbstractField {
     AbstractFieldWithVar( ClassOutlineImpl outline, CPropertyInfo prop ) {
         super(outline,prop);
     }
-    
+
     protected final void createField() {
         field = outline.implClass.field( JMod.PROTECTED,
             getFieldType(), prop.getName(false) );
@@ -71,7 +72,13 @@ abstract class AbstractFieldWithVar extends AbstractField {
      * {@code isXXXX} as the method name.
      */
     protected String getGetterMethod() {
-        return (getFieldType().boxify().getPrimitiveType()==codeModel.BOOLEAN?"is":"get")+prop.getName(true);
+        if (getOptions().target.isLaterThan(SpecVersion.V2_2)) {
+            return ((getFieldType().isPrimitive() &&
+                     getFieldType().boxify().getPrimitiveType()==codeModel.BOOLEAN) ?
+                         "is":"get") + prop.getName(true);
+        } else {
+            return (getFieldType().boxify().getPrimitiveType()==codeModel.BOOLEAN?"is":"get")+prop.getName(true);
+        }
     }
 
     /**
@@ -84,21 +91,25 @@ abstract class AbstractFieldWithVar extends AbstractField {
     public final JType getRawType() {
         return exposedType;
     }
-    
+
     protected abstract class Accessor extends AbstractField.Accessor {
-    
+
         protected Accessor(JExpression $target) {
             super($target);
             this.$ref = $target.ref(AbstractFieldWithVar.this.ref());
         }
-        
+
         /**
          * Reference to the field bound by the target object.
          */
         protected final JFieldRef $ref;
 
         public final void toRawValue(JBlock block, JVar $var) {
-            block.assign($var,$target.invoke(getGetterMethod()));
+            if (getOptions().target.isLaterThan(SpecVersion.V2_2)) {
+                block.assign($var,$target.invoke(getGetterMethod()));
+            } else {
+                block.assign($var,$target.invoke(getGetterMethod()));
+            }
         }
 
         public final void fromRawValue(JBlock block, String uniqueName, JExpression $var) {

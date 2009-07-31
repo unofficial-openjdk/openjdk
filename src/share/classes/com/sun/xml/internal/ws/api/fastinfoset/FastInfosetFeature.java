@@ -36,7 +36,7 @@ import javax.xml.ws.WebServiceFeature;
  * to being enabled or disabled:
  * <ul>
  *  <li> ENABLED: In this Mode, Fast Infoset will be enabled.
- *  <li> DISABLED: In this Mode, Fast Infoset will be disabled and the 
+ *  <li> DISABLED: In this Mode, Fast Infoset will be disabled and the
  *       Web service will not process incoming messages or produce outgoing
  *       messages encoded using Fast Infoset.
  * </ul>

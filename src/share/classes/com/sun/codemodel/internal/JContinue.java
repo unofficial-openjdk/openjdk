@@ -30,12 +30,12 @@ package com.sun.codemodel.internal;
  * JContinue statement
  */
 class JContinue implements JStatement {
-    
+
     private final JLabel label;
-    
+
     /**
      * JContinue constructor.
-     * 
+     *
      * @param _label
      *      a valid label or null.
      */

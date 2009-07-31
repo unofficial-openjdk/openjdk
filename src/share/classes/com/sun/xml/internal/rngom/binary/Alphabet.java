@@ -47,8 +47,8 @@ class Alphabet {
 
   void checkOverlap(Alphabet a) throws RestrictionViolationException {
     if (nameClass != null
-	&& a.nameClass != null
-	&& nameClass.hasOverlapWith(a.nameClass))
+        && a.nameClass != null
+        && nameClass.hasOverlapWith(a.nameClass))
       throw new RestrictionViolationException("interleave_element_overlap");
   }
 }

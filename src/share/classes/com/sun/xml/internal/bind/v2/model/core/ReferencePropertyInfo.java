@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.core;
 
 import java.util.Collection;
@@ -61,7 +62,7 @@ public interface ReferencePropertyInfo<T,C> extends PropertyInfo<T,C> {
      * {@inheritDoc}.
      *
      * If this {@link ReferencePropertyInfo} has a wildcard in it,
-     * then the returned list will contain {@link WildcardTypeInfo}. 
+     * then the returned list will contain {@link WildcardTypeInfo}.
      */
     Collection<? extends TypeInfo<T,C>> ref();
 
@@ -113,6 +114,11 @@ public interface ReferencePropertyInfo<T,C> extends PropertyInfo<T,C> {
      *      if the wildcard is not allowed on this element.
      */
     C getDOMHandler();
+
+    /**
+     * Returns true if this element is mandatory.
+     */
+    boolean isRequired();
 
     Adapter<T,C> getAdapter();
 }

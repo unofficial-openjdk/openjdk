@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * 
- * 
- * 
- */
 
 
 package com.sun.xml.internal.messaging.saaj.soap.impl;
@@ -38,7 +33,6 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.soap.*;
 
-import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
 import org.w3c.dom.*;
 import org.w3c.dom.Node;
 
@@ -63,6 +57,19 @@ public class ElementImpl
     protected static final Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_IMPL_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.impl.LocalStrings");
+
+    /**
+     * XML Information Set REC
+     * all namespace attributes (including those named xmlns,
+     * whose [prefix] property has no value) have a namespace URI of http://www.w3.org/2000/xmlns/
+     */
+    public final static String XMLNS_URI = "http://www.w3.org/2000/xmlns/".intern();
+
+    /**
+     * The XML Namespace ("http://www.w3.org/XML/1998/namespace"). This is
+     * the Namespace URI that is automatically mapped to the "xml" prefix.
+     */
+    public final static String XML_URI = "http://www.w3.org/XML/1998/namespace".intern();
 
     public ElementImpl(SOAPDocumentImpl ownerDoc, Name name) {
         super(
@@ -128,7 +135,7 @@ public class ElementImpl
         throws SOAPException {
         String uri = getNamespaceURI(prefix);
         if (uri == null) {
-            log.log( 
+            log.log(
                 Level.SEVERE,
                 "SAAJ0101.impl.parent.of.body.elem.mustbe.body",
                 new String[] { prefix });
@@ -141,11 +148,11 @@ public class ElementImpl
     public String getNamespaceURI(String prefix) {
 
         if ("xmlns".equals(prefix)) {
-            return NamespaceContext.XMLNS_URI;
+            return XMLNS_URI;
         }
-        
+
         if("xml".equals(prefix)) {
-            return NamespaceContext.XML_URI;
+            return XML_URI;
         }
 
         if ("".equals(prefix)) {
@@ -167,11 +174,11 @@ public class ElementImpl
                         }
                     }*/
                     if (((Element) currentAncestor).hasAttributeNS(
-                            NamespaceContext.XMLNS_URI, "xmlns")) {
+                            XMLNS_URI, "xmlns")) {
 
                         String uri =
                             ((Element) currentAncestor).getAttributeNS(
-                                NamespaceContext.XMLNS_URI, "xmlns");
+                                XMLNS_URI, "xmlns");
                         if ("".equals(uri))
                             return null;
                         else {
@@ -185,12 +192,12 @@ public class ElementImpl
         } else if (prefix != null) {
             // Find if there's an ancester whose name contains this prefix
             org.w3c.dom.Node currentAncestor = this;
-            
+
 //            String uri = currentAncestor.lookupNamespaceURI(prefix);
 //            return uri;
             while (currentAncestor != null &&
                    !(currentAncestor instanceof Document)) {
-                
+
                /* if (prefix.equals(currentAncestor.getPrefix())) {
                     String uri = currentAncestor.getNamespaceURI();
                     // this is because the javadoc says getNamespaceURI() is not a computed value
@@ -202,11 +209,11 @@ public class ElementImpl
                 //if (uri != null) {
                 //    return uri;
                 //}
-                
+
                 if (((Element) currentAncestor).hasAttributeNS(
-                        NamespaceContext.XMLNS_URI, prefix)) {
+                        XMLNS_URI, prefix)) {
                     return ((Element) currentAncestor).getAttributeNS(
-                               NamespaceContext.XMLNS_URI, prefix);
+                               XMLNS_URI, prefix);
                 }
 
                 currentAncestor = currentAncestor.getParentNode();
@@ -222,13 +229,13 @@ public class ElementImpl
         return replaceElementWithSOAPElement(this,copy);
     }
 
-    public QName createQName(String localName, String prefix) 
+    public QName createQName(String localName, String prefix)
         throws SOAPException {
         String uri = getNamespaceURI(prefix);
         if (uri == null) {
             log.log(Level.SEVERE, "SAAJ0102.impl.cannot.locate.ns",
                     new Object[] {prefix});
-            throw new SOAPException("Unable to locate namespace for prefix " 
+            throw new SOAPException("Unable to locate namespace for prefix "
                                     + prefix);
         }
         return new QName(uri, localName, prefix);
@@ -291,7 +298,7 @@ public class ElementImpl
         String prefix,
         String uri)
         throws SOAPException {
-        
+
         SOAPElement newElement = createElement(NameImpl.create(localName, prefix, uri));
         addNode(newElement);
         return convertToSoapElement(newElement);
@@ -308,7 +315,7 @@ public class ElementImpl
             || (SOAPConstants.URI_NS_SOAP_1_2_ENVELOPE).equals(elementURI)) {
 
 
-            if ("Envelope".equalsIgnoreCase(localName) || 
+            if ("Envelope".equalsIgnoreCase(localName) ||
                 "Header".equalsIgnoreCase(localName) || "Body".equalsIgnoreCase(localName)) {
                 log.severe("SAAJ0103.impl.cannot.add.fragements");
                 throw new SOAPExceptionImpl(
@@ -319,7 +326,7 @@ public class ElementImpl
             if ("Fault".equalsIgnoreCase(localName) && !"Body".equalsIgnoreCase(this.getLocalName())) {
                 log.severe("SAAJ0154.impl.adding.fault.to.nonbody");
                 throw new SOAPExceptionImpl("Cannot add a SOAPFault as a child of " + this.getLocalName());
-            } 
+            }
 
             if ("Detail".equalsIgnoreCase(localName) && !"Fault".equalsIgnoreCase(this.getLocalName())) {
                 log.severe("SAAJ0155.impl.adding.detail.nonfault");
@@ -338,7 +345,7 @@ public class ElementImpl
                    throw new SOAPExceptionImpl("Cannot add SOAPFault as a child of a non-Empty SOAPBody");
                }
             }
-        }    
+        }
 
         // preserve the encodingStyle attr as it may get lost in the import
         String encodingStyle = element.getEncodingStyle();
@@ -405,7 +412,7 @@ public class ElementImpl
 
         if (getOwnerDocument() instanceof DocumentFragment)
             return;
-                                                                                
+
         if (newElement instanceof ElementImpl) {
             ElementImpl element = (ElementImpl) newElement;
             QName elementName = element.getElementQName();
@@ -472,29 +479,29 @@ public class ElementImpl
     private void addAttributeBare(Name name, String value) {
         addAttributeBare(
             name.getURI(),
-            name.getPrefix(), 
+            name.getPrefix(),
             name.getQualifiedName(),
             value);
     }
     private void addAttributeBare(QName name, String value) {
         addAttributeBare(
             name.getNamespaceURI(),
-            name.getPrefix(), 
+            name.getPrefix(),
             getQualifiedName(name),
             value);
     }
 
     private void addAttributeBare(
         String uri,
-        String prefix, 
+        String prefix,
         String qualifiedName,
         String value) {
 
         uri = uri.length() == 0 ? null : uri;
         if (qualifiedName.equals("xmlns")) {
-            uri = NamespaceContext.XMLNS_URI;
+            uri = XMLNS_URI;
         }
-        
+
         if (uri == null) {
             setAttribute(qualifiedName, value);
         } else {
@@ -505,9 +512,9 @@ public class ElementImpl
     public SOAPElement addNamespaceDeclaration(String prefix, String uri)
         throws SOAPException {
         if (prefix.length() > 0) {
-            setAttributeNS(NamespaceContext.XMLNS_URI, "xmlns:" + prefix, uri);
+            setAttributeNS(XMLNS_URI, "xmlns:" + prefix, uri);
         } else {
-            setAttributeNS(NamespaceContext.XMLNS_URI, "xmlns", uri);
+            setAttributeNS(XMLNS_URI, "xmlns", uri);
         }
         //Fix for CR:6474641
         //tryToFindEncodingStyleAttributeName();
@@ -515,7 +522,7 @@ public class ElementImpl
     }
 
     public String getAttributeValue(Name name) {
-        return getAttributeValueFrom(this, name); 
+        return getAttributeValueFrom(this, name);
     }
 
     public String getAttributeValue(QName qname) {
@@ -667,7 +674,7 @@ public class ElementImpl
             Name name = (Name) eachAttribute.next();
             copy.addAttributeBare(name, getAttributeValueFrom(element, name));
         }
-        
+
         Iterator eachChild = getChildElementsFrom(element);
         while (eachChild.hasNext()) {
             Node nextChild = (Node) eachChild.next();
@@ -728,7 +735,7 @@ public class ElementImpl
     public Iterator getChildElements(final QName qname) {
         return getChildElements(qname.getNamespaceURI(), qname.getLocalPart());
     }
-    
+
     private Iterator getChildElements(final String nameUri, final String nameLocal) {
         return new Iterator() {
             Iterator eachElement = getChildElementNodes();
@@ -867,10 +874,10 @@ public class ElementImpl
             javax.xml.soap.Node n = (javax.xml.soap.Node) i.next();
             if (n.getNodeType() == org.w3c.dom.Node.TEXT_NODE ||
                 n.getNodeType() == org.w3c.dom.Node.CDATA_SECTION_NODE) {
-                // TODO: Hack to fix text node split into multiple lines.                
+                // TODO: Hack to fix text node split into multiple lines.
                 normalize();
                 // Should remove the normalization step when this gets fixed in
-                // DOM/Xerces.                
+                // DOM/Xerces.
                 return (javax.xml.soap.Node) n;
             }
         }
@@ -1066,14 +1073,14 @@ public class ElementImpl
       return getAttributeValueFrom(
           element,
           name.getURI(),
-          name.getLocalName(), 
+          name.getLocalName(),
           name.getPrefix(),
           name.getQualifiedName());
     }
 
     private static String getAttributeValueFrom(
         Element element,
-        String uri, 
+        String uri,
         String localName,
         String prefix,
         String qualifiedName) {
@@ -1169,7 +1176,7 @@ public class ElementImpl
         int index = qualifiedName.indexOf(':');
         if (index < 0)
             return qualifiedName;
-        else 
+        else
             return qualifiedName.substring(index + 1);
     }
 
@@ -1182,7 +1189,7 @@ public class ElementImpl
         int index = qualifiedName.indexOf(':');
         if (index < 0)
             return "";
-        else 
+        else
             return qualifiedName.substring(0, index);
     }
 
@@ -1229,7 +1236,7 @@ public class ElementImpl
             prefix = qualifiedName.substring(0, index);
             localName = qualifiedName.substring(index + 1);
         }
-        
+
         // Workaround for bug 6467808 - This needs to be fixed in JAXP
 
         // Rolling back this fix, this is a wrong fix, infact its causing other regressions in JAXWS tck and
@@ -1239,7 +1246,7 @@ public class ElementImpl
 //                (SOAPConstants.URI_NS_SOAP_1_1_ENVELOPE.equals(value) ||
 //                SOAPConstants.URI_NS_SOAP_1_2_ENVELOPE.equals(value)))
 //            return;
-        
+
         super.setAttributeNS(namespaceURI,qualifiedName,value);
         //String tmpLocalName = this.getLocalName();
         String tmpURI = this.getNamespaceURI();
@@ -1256,7 +1263,7 @@ public class ElementImpl
                 setIdAttributeNS(namespaceURI,localName,true);
             }
         }
-                                                                                                                               
+
     }
 
 }

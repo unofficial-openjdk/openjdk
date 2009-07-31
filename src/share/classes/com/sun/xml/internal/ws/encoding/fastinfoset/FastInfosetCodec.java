@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 import java.nio.channels.ReadableByteChannel;
 import com.sun.xml.internal.org.jvnet.fastinfoset.FastInfosetSource;
-import com.sun.xml.internal.org.jvnet.fastinfoset.stax.FastInfosetStreamReader;
 
 /**
  * A codec for encoding/decoding XML infosets to/from fast
@@ -58,33 +57,33 @@ import com.sun.xml.internal.org.jvnet.fastinfoset.stax.FastInfosetStreamReader;
 public class FastInfosetCodec implements Codec {
     private static final int DEFAULT_INDEXED_STRING_SIZE_LIMIT = 32;
     private static final int DEFAULT_INDEXED_STRING_MEMORY_LIMIT = 4 * 1024 * 1024; //4M limit
-    
+
     private StAXDocumentParser _parser;
-    
+
     private StAXDocumentSerializer _serializer;
-    
+
     private final boolean _retainState;
-    
+
     private final ContentType _contentType;
-    
+
     /* package */ FastInfosetCodec(boolean retainState) {
         _retainState = retainState;
         _contentType = (retainState) ? new ContentTypeImpl(FastInfosetMIMETypes.STATEFUL_INFOSET) :
             new ContentTypeImpl(FastInfosetMIMETypes.INFOSET);
     }
-    
+
     public String getMimeType() {
         return _contentType.getContentType();
     }
-    
+
     public Codec copy() {
         return new FastInfosetCodec(_retainState);
     }
-    
+
     public ContentType getStaticContentType(Packet packet) {
         return _contentType;
     }
-    
+
     public ContentType encode(Packet packet, OutputStream out) {
         Message message = packet.getMessage();
         if (message != null && message.hasPayload()) {
@@ -98,15 +97,15 @@ public class FastInfosetCodec implements Codec {
                 throw new WebServiceException(e);
             }
         }
-        
+
         return _contentType;
     }
-    
+
     public ContentType encode(Packet packet, WritableByteChannel buffer) {
         //TODO: not yet implemented
         throw new UnsupportedOperationException();
     }
-    
+
     public void decode(InputStream in, String contentType, Packet packet) throws IOException {
         /* Implements similar logic as the XMLMessage.create(String, InputStream).
          * But it's faster, as we know the InputStream has FastInfoset content*/
@@ -118,14 +117,14 @@ public class FastInfosetCodec implements Codec {
         } else {
             message = Messages.createEmpty(SOAPVersion.SOAP_11);
         }
-        
+
         packet.setMessage(message);
     }
-    
+
     public void decode(ReadableByteChannel in, String contentType, Packet response) {
         throw new UnsupportedOperationException();
     }
-    
+
     private XMLStreamWriter getXMLStreamWriter(OutputStream out) {
         if (_serializer != null) {
             _serializer.setOutputStream(out);
@@ -134,7 +133,7 @@ public class FastInfosetCodec implements Codec {
             return _serializer = createNewStreamWriter(out, _retainState);
         }
     }
-    
+
     private XMLStreamReader getXMLStreamReader(InputStream in) {
         if (_parser != null) {
             _parser.setInputStream(in);
@@ -143,7 +142,7 @@ public class FastInfosetCodec implements Codec {
             return _parser = createNewStreamReader(in, _retainState);
         }
     }
-    
+
     /**
      * Creates a new {@link FastInfosetCodec} instance.
      *
@@ -152,7 +151,7 @@ public class FastInfosetCodec implements Codec {
     public static FastInfosetCodec create() {
         return create(false);
     }
-    
+
     /**
      * Creates a new {@link FastInfosetCodec} instance.
      *
@@ -163,7 +162,7 @@ public class FastInfosetCodec implements Codec {
     public static FastInfosetCodec create(boolean retainState) {
         return new FastInfosetCodec(retainState);
     }
-    
+
     /**
      * Create a new (@link StAXDocumentSerializer} instance.
      *
@@ -175,7 +174,7 @@ public class FastInfosetCodec implements Codec {
     /* package */ static StAXDocumentSerializer createNewStreamWriter(OutputStream out, boolean retainState) {
         return createNewStreamWriter(out, retainState, DEFAULT_INDEXED_STRING_SIZE_LIMIT, DEFAULT_INDEXED_STRING_MEMORY_LIMIT);
     }
-    
+
     /**
      * Create a new (@link StAXDocumentSerializer} instance.
      *
@@ -196,14 +195,16 @@ public class FastInfosetCodec implements Codec {
              */
             SerializerVocabulary vocabulary = new SerializerVocabulary();
             serializer.setVocabulary(vocabulary);
-            serializer.setAttributeValueSizeLimit(indexedStringSizeLimit);
-            serializer.setCharacterContentChunkSizeLimit(indexedStringSizeLimit);
+            serializer.setMinAttributeValueSize(0);
+            serializer.setMaxAttributeValueSize(indexedStringSizeLimit);
+            serializer.setMinCharacterContentChunkSize(0);
+            serializer.setMaxCharacterContentChunkSize(indexedStringSizeLimit);
             serializer.setAttributeValueMapMemoryLimit(stringsMemoryLimit);
             serializer.setCharacterContentChunkMapMemoryLimit(stringsMemoryLimit);
         }
         return serializer;
     }
-    
+
     /**
      * Create a new (@link StAXDocumentParser} instance.
      *
@@ -227,7 +228,7 @@ public class FastInfosetCodec implements Codec {
         }
         return parser;
     }
-    
+
     /**
      * Create a new (@link StAXDocumentParser} recyclable instance.
      *

@@ -28,8 +28,8 @@ import org.xml.sax.Locator;
 
 
 /**
- * Other miscellaneous utility methods. 
- * 
+ * Other miscellaneous utility methods.
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

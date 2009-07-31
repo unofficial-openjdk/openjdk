@@ -29,15 +29,15 @@ package javax.xml.bind;
  * This exception indicates that an error has occurred while performing
  * an unmarshal operation that prevents the JAXB Provider from completing
  * the operation.
- * 
+ *
  * <p>
  * The <tt>ValidationEventHandler</tt> can cause this exception to be thrown
- * during the unmarshal operations.  See 
+ * during the unmarshal operations.  See
  * {@link ValidationEventHandler#handleEvent(ValidationEvent)
  * ValidationEventHandler.handleEvent(ValidationEvent)}.
- * 
+ *
  * @author <ul><li>Ryan Shoemaker, Sun Microsystems, Inc.</li></ul>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.1 $
  * @see JAXBException
  * @see Unmarshaller
  * @see ValidationEventHandler
@@ -45,8 +45,8 @@ package javax.xml.bind;
  */
 public class UnmarshalException extends JAXBException {
 
-    /** 
-     * Construct an UnmarshalException with the specified detail message.  The 
+    /**
+     * Construct an UnmarshalException with the specified detail message.  The
      * errorCode and linkedException will default to null.
      *
      * @param message a description of the exception
@@ -55,8 +55,8 @@ public class UnmarshalException extends JAXBException {
         this( message, null, null );
     }
 
-    /** 
-     * Construct an UnmarshalException with the specified detail message and vendor 
+    /**
+     * Construct an UnmarshalException with the specified detail message and vendor
      * specific errorCode.  The linkedException will default to null.
      *
      * @param message a description of the exception
@@ -66,7 +66,7 @@ public class UnmarshalException extends JAXBException {
         this( message, errorCode, null );
     }
 
-    /** 
+    /**
      * Construct an UnmarshalException with a linkedException.  The detail message and
      * vendor specific errorCode will default to null.
      *
@@ -75,9 +75,9 @@ public class UnmarshalException extends JAXBException {
     public UnmarshalException( Throwable exception ) {
         this( null, null, exception );
     }
-    
-    /** 
-     * Construct an UnmarshalException with the specified detail message and 
+
+    /**
+     * Construct an UnmarshalException with the specified detail message and
      * linkedException.  The errorCode will default to null.
      *
      * @param message a description of the exception
@@ -86,9 +86,9 @@ public class UnmarshalException extends JAXBException {
     public UnmarshalException( String message, Throwable exception ) {
         this( message, null, exception );
     }
-    
-    /** 
-     * Construct an UnmarshalException with the specified detail message, vendor 
+
+    /**
+     * Construct an UnmarshalException with the specified detail message, vendor
      * specific errorCode, and linkedException.
      *
      * @param message a description of the exception
@@ -100,5 +100,3 @@ public class UnmarshalException extends JAXBException {
     }
 
 }
-
-

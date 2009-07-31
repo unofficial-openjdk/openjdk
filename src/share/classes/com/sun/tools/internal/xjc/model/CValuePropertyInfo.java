@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 import javax.xml.namespace.QName;
@@ -36,7 +37,7 @@ import org.xml.sax.Locator;
 
 /**
  * {@link ValuePropertyInfo} implementation for XJC.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public final class CValuePropertyInfo extends CSingleTypePropertyInfo implements ValuePropertyInfo<NType,NClass> {

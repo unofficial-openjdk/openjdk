@@ -29,7 +29,7 @@ import com.sun.xml.internal.rngom.ast.om.*;
 
 /**
  * An input that can be turned into a RELAX NG pattern.
- * 
+ *
  * <p>
  * This is either a RELAX NG schema in the XML format, or a RELAX NG
  * schema in the compact syntax.
@@ -37,11 +37,11 @@ import com.sun.xml.internal.rngom.ast.om.*;
 public interface Parseable {
     /**
      * Parses this {@link Parseable} object into a RELAX NG pattern.
-     * 
+     *
      * @param sb
      *      The builder of the schema object model. This object
      *      dictates how the actual pattern is constructed.
-     * 
+     *
      * @return
      *      a parsed object. Always returns a non-null valid object.
      */

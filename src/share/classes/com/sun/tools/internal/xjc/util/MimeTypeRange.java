@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.util;
 
 import java.text.ParseException;
@@ -130,7 +131,7 @@ public class MimeTypeRange {
         StringBuilder sb = new StringBuilder(majorType+'/'+subType);
         if(q!=1)
             sb.append("; q=").append(q);
-        
+
         for( Map.Entry<String,String> p : parameters.entrySet() ) {
             // I'm too lazy to quote the value
             sb.append("; ").append(p.getKey()).append('=').append(p.getValue());

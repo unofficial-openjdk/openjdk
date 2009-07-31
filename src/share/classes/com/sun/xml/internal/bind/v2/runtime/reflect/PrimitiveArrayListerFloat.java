@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect;
 
 import com.sun.xml.internal.bind.api.AccessorException;
@@ -35,7 +36,7 @@ import com.sun.xml.internal.bind.v2.runtime.XMLSerializer;
  * lister classes. Do not modify the generated copies.
  */
 final class PrimitiveArrayListerFloat<BeanT> extends Lister<BeanT,float[],Float,PrimitiveArrayListerFloat.FloatArrayPack> {
-    
+
     private PrimitiveArrayListerFloat() {
     }
 
@@ -83,7 +84,8 @@ final class PrimitiveArrayListerFloat<BeanT> extends Lister<BeanT,float[],Float,
                 System.arraycopy(buf,0,nb,0,buf.length);
                 buf = nb;
             }
-            buf[size++] = b;
+            if(b!=null)
+                buf[size++] = b;
         }
 
         float[] build() {

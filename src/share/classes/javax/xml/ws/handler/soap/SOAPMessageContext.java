@@ -30,24 +30,24 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.namespace.QName;
 import java.util.Set;
 
-/** The interface <code>SOAPMessageContext</code> 
- *  provides access to the SOAP message for either RPC request or 
+/** The interface <code>SOAPMessageContext</code>
+ *  provides access to the SOAP message for either RPC request or
  *  response. The <code>javax.xml.soap.SOAPMessage</code> specifies
  *  the standard Java API for the representation of a SOAP 1.1 message
  *  with attachments.
  *
  *  @see javax.xml.soap.SOAPMessage
- * 
+ *
  *  @since JAX-WS 2.0
 **/
-public interface SOAPMessageContext 
+public interface SOAPMessageContext
                     extends javax.xml.ws.handler.MessageContext {
 
   /** Gets the <code>SOAPMessage<code> from this message context. Modifications
    *  to the returned <code>SOAPMessage</code> change the message in-place, there
    *  is no need to susequently call <code>setMessage</code>.
    *
-   *  @return Returns the <code>SOAPMessage</code>; returns <code>null</code> if no 
+   *  @return Returns the <code>SOAPMessage</code>; returns <code>null</code> if no
    *          <code>SOAPMessage</code> is present in this message context
   **/
   public SOAPMessage getMessage();
@@ -67,13 +67,13 @@ public interface SOAPMessageContext
    *  with the same qualified name.
    *
    *  @param  header The XML qualified name of the SOAP header(s).
-   *  @param  context The JAXBContext that should be used to unmarshall the 
+   *  @param  context The JAXBContext that should be used to unmarshall the
    *          header
    *  @param  allRoles If <code>true</code> then returns headers for all SOAP
    *          roles, if <code>false</code> then only returns headers targetted
    *          at the roles currently being played by this SOAP node, see
    *          <code>getRoles</code>.
-   *  @return An array of unmarshalled headers; returns an empty array if no 
+   *  @return An array of unmarshalled headers; returns an empty array if no
    *          message is present in this message context or no headers match
    *          the supplied qualified name.
    *  @throws WebServiceException If an error occurs when using the supplied

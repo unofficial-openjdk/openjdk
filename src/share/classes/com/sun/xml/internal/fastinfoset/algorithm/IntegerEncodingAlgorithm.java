@@ -36,5 +36,5 @@ public abstract class IntegerEncodingAlgorithm extends BuiltInEncodingAlgorithm 
     public final static int SHORT_MAX_CHARACTER_SIZE    = 6;
     public final static int INT_MAX_CHARACTER_SIZE      = 11;
     public final static int LONG_MAX_CHARACTER_SIZE     = 20;
-        
+
 }

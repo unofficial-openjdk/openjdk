@@ -40,19 +40,19 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
 public class FI_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
-    
+
     public FI_SAX_Or_XML_SAX_SAXEvent() {
     }
-    
+
     public void parse(InputStream document, OutputStream events, String workingDirectory) throws Exception {
         if (!document.markSupported()) {
             document = new BufferedInputStream(document);
         }
-        
+
         document.mark(4);
         boolean isFastInfosetDocument = Decoder.isFastInfosetDocument(document);
         document.reset();
-        
+
         if (isFastInfosetDocument) {
             SAXDocumentParser parser = new SAXDocumentParser();
             SAXEventSerializer ses = new SAXEventSerializer(events);
@@ -64,7 +64,7 @@ public class FI_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
             parserFactory.setNamespaceAware(true);
             SAXParser parser = parserFactory.newSAXParser();
             SAXEventSerializer ses = new SAXEventSerializer(events);
-            
+
             XMLReader reader = parser.getXMLReader();
             reader.setProperty("http://xml.org/sax/properties/lexical-handler", ses);
             reader.setContentHandler(ses);
@@ -74,11 +74,11 @@ public class FI_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
             reader.parse(new InputSource(document));
         }
     }
-    
+
     public void parse(InputStream document, OutputStream events) throws Exception {
         parse(document, events, null);
     }
-    
+
     public static void main(String[] args) throws Exception {
         FI_SAX_Or_XML_SAX_SAXEvent p = new FI_SAX_Or_XML_SAX_SAXEvent();
         p.parse(args);

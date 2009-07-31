@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -40,27 +40,27 @@ import org.xml.sax.helpers.AttributesImpl;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class StAX2SAXReader {
-    
+
     /**
      * Content handler where events are pushed.
      */
     ContentHandler _handler;
-    
+
     /**
      * Lexical handler to report lexical events.
      */
     LexicalHandler _lexicalHandler;
-    
+
     /**
      * XML stream reader where events are pulled.
      */
     XMLStreamReader _reader;
-    
+
     public StAX2SAXReader(XMLStreamReader reader, ContentHandler handler) {
         _handler = handler;
         _reader = reader;
     }
-    
+
     public StAX2SAXReader(XMLStreamReader reader) {
         _reader = reader;
     }
@@ -72,7 +72,7 @@ public class StAX2SAXReader {
     public void setLexicalHandler(LexicalHandler lexicalHandler) {
         _lexicalHandler = lexicalHandler;
     }
-        
+
     public void adapt() throws XMLStreamException, SAXException {
         QName qname;
         String prefix, localPart;
@@ -80,11 +80,11 @@ public class StAX2SAXReader {
         char[] buffer;
         int nsc;
         int nat;
-        
+
         _handler.startDocument();
-        
+
         try {
-            
+
             while (_reader.hasNext()) {
                 int event = _reader.next();
 
@@ -94,7 +94,7 @@ public class StAX2SAXReader {
                     // Report namespace events first
                     nsc = _reader.getNamespaceCount();
                     for (int i = 0; i < nsc; i++) {
-                        _handler.startPrefixMapping(_reader.getNamespacePrefix(i), 
+                        _handler.startPrefixMapping(_reader.getNamespacePrefix(i),
                             _reader.getNamespaceURI(i));
                     }
 
@@ -112,7 +112,7 @@ public class StAX2SAXReader {
                         attrs.addAttribute(_reader.getAttributeNamespace(i),
                                            q.getLocalPart(),
                                            qName,
-                                           _reader.getAttributeType(i), 
+                                           _reader.getAttributeType(i),
                                            _reader.getAttributeValue(i));
                     }
 
@@ -122,9 +122,9 @@ public class StAX2SAXReader {
                     localPart = qname.getLocalPart();
 
                     _handler.startElement(_reader.getNamespaceURI(),
-                                          localPart, 
-                                          (prefix.length() > 0) ? 
-                                              (prefix + ":" + localPart) : localPart, 
+                                          localPart,
+                                          (prefix.length() > 0) ?
+                                              (prefix + ":" + localPart) : localPart,
                                           attrs);
                     break;
                 }
@@ -135,9 +135,9 @@ public class StAX2SAXReader {
                     localPart = qname.getLocalPart();
 
                     _handler.endElement(_reader.getNamespaceURI(),
-                                        localPart, 
+                                        localPart,
                                         (prefix.length() > 0) ?
-                                            (prefix + ":" + localPart) : localPart); 
+                                            (prefix + ":" + localPart) : localPart);
 
                     // Report end namespace events
                     nsc = _reader.getNamespaceCount();
@@ -166,9 +166,8 @@ public class StAX2SAXReader {
             _handler.endDocument();     // flush whatever we have
             throw e;
         }
-        
+
         _handler.endDocument();
     }
 
 }
-

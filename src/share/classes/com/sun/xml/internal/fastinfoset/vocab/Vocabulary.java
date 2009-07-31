@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.vocab;
@@ -43,11 +43,11 @@ public abstract class Vocabulary {
     public static final int CHARACTER_CONTENT_CHUNK = 9;
     public static final int ELEMENT_NAME = 10;
     public static final int ATTRIBUTE_NAME = 11;
-        
+
     protected boolean _hasInitialReadOnlyVocabulary;
-    
+
     protected String _referencedVocabularyURI;
-    
+
     public boolean hasInitialVocabulary() {
         return _hasInitialReadOnlyVocabulary;
     }
@@ -55,15 +55,15 @@ public abstract class Vocabulary {
     protected void setInitialReadOnlyVocabulary(boolean hasInitialReadOnlyVocabulary) {
         _hasInitialReadOnlyVocabulary = hasInitialReadOnlyVocabulary;
     }
-    
+
     public boolean hasExternalVocabulary() {
         return _referencedVocabularyURI != null;
     }
-    
+
     public String getExternalVocabularyURI() {
         return _referencedVocabularyURI;
     }
-    
+
     protected void setExternalVocabularyURI(String referencedVocabularyURI) {
         _referencedVocabularyURI = referencedVocabularyURI;
     }

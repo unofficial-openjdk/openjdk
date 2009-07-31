@@ -152,7 +152,7 @@ public final class RequestContext extends PropertySet {
     }
 
     /**
-     * The value of {@link ContentNegotiation#PROPERTY} 
+     * The value of {@link ContentNegotiation#PROPERTY}
      * property.
      */
     public ContentNegotiation contentNegotiation = defaultContentNegotiation;
@@ -297,7 +297,7 @@ public final class RequestContext extends PropertySet {
                     handlerScopePropertyNames.add(key);
                 }
             }
-            
+
             if(!handlerScopePropertyNames.isEmpty())
                 packet.getHandlerScopePropertyNames(false).addAll(handlerScopePropertyNames);
         }

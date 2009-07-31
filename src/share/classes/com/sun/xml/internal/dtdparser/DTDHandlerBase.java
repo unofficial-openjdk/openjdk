@@ -118,4 +118,3 @@ public class DTDHandlerBase implements DTDEventListener {
     public void connector(short connectorType) throws SAXException {
     }
 }
-

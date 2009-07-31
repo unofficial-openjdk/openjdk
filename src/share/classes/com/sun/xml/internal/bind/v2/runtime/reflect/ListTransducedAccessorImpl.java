@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.runtime.reflect;
 
 import javax.xml.bind.JAXBException;
@@ -48,7 +49,7 @@ public final class ListTransducedAccessorImpl<BeanT,ListT,ItemT,PackT> extends D
      */
     private final Lister<BeanT,ListT,ItemT,PackT> lister;
     /**
-     * {@link Accessor} to get/set the list. 
+     * {@link Accessor} to get/set the list.
      */
     private final Accessor<BeanT,ListT> acc;
 

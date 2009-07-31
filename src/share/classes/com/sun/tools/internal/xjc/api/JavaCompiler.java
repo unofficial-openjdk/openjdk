@@ -34,12 +34,12 @@ import com.sun.mirror.apt.AnnotationProcessorEnvironment;
 
 /**
  * Java-to-Schema compiler.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public interface JavaCompiler {
-    
+
     /**
      * Compiles the given annotated Java source code.
      *

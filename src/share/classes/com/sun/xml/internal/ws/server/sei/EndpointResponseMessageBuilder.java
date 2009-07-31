@@ -166,7 +166,7 @@ abstract class EndpointResponseMessageBuilder {
          * How does each wrapped parameter binds to XML?
          */
         private final RawAccessor[] accessors;
-        
+
         //private final RawAccessor retAccessor;
 
         /**

@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.model.impl;
 
 import java.lang.reflect.Field;
@@ -83,7 +84,7 @@ final class RuntimeTypeInfoSetImpl extends TypeInfoSetImpl<Type,Class,Field,Meth
     }
 
     public Map<Class,RuntimeArrayInfoImpl> arrays() {
-        return (Map<Class,RuntimeArrayInfoImpl>)super.arrays(); 
+        return (Map<Class,RuntimeArrayInfoImpl>)super.arrays();
     }
 
     public RuntimeElementInfoImpl getElementInfo(Class scope,QName name) {

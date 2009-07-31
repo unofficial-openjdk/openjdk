@@ -36,7 +36,7 @@ import java.io.InputStream;
 /**
  * This class implements a Q Decoder as defined in RFC 2047
  * for decoding MIME headers. It subclasses the QPDecoderStream class.
- * 
+ *
  * @author John Mani
  */
 
@@ -47,7 +47,7 @@ public class QDecoderStream extends QPDecoderStream {
      * @param in        the input stream
      */
     public QDecoderStream(InputStream in) {
-	super(in);
+        super(in);
     }
 
     /**
@@ -63,21 +63,21 @@ public class QDecoderStream extends QPDecoderStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int read() throws IOException {
-	int c = in.read();
+        int c = in.read();
 
-	if (c == '_') // Return '_' as ' '
-	    return ' ';
-	else if (c == '=') {
-	    // QP Encoded atom. Get the next two bytes ..
-	    ba[0] = (byte)in.read();
-	    ba[1] = (byte)in.read();
-	    // .. and decode them
-	    try {
-		return ASCIIUtility.parseInt(ba, 0, 2, 16);
-	    } catch (NumberFormatException nex) {
-		throw new IOException("Error in QP stream " + nex.getMessage());
-	    }
-	} else
-	    return c;
+        if (c == '_') // Return '_' as ' '
+            return ' ';
+        else if (c == '=') {
+            // QP Encoded atom. Get the next two bytes ..
+            ba[0] = (byte)in.read();
+            ba[1] = (byte)in.read();
+            // .. and decode them
+            try {
+                return ASCIIUtility.parseInt(ba, 0, 2, 16);
+            } catch (NumberFormatException nex) {
+                throw new IOException("Error in QP stream " + nex.getMessage());
+            }
+        } else
+            return c;
     }
 }

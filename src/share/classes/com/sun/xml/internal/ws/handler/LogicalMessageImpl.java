@@ -64,13 +64,13 @@ class LogicalMessageImpl implements LogicalMessage {
     private Source payloadSrc = null;
     // Flag to check if the PayloadSrc is accessed/modified
     private boolean payloadModifed = false;
-        
+
     /** Creates a new instance of LogicalMessageImplRearch */
     public LogicalMessageImpl(Packet packet) {
         // don't create extract payload until Users wants it.
         this.packet = packet;
     }
-    
+
     boolean isPayloadModifed(){
         return payloadModifed;
     }
@@ -78,9 +78,9 @@ class LogicalMessageImpl implements LogicalMessage {
         if(!payloadModifed)
             throw new RuntimeException("Payload not modified.");
         return payloadSrc;
-        
+
     }
-    public Source getPayload() {                
+    public Source getPayload() {
         if(!payloadModifed) {
             payloadSrc = packet.getMessage().readPayloadAsSource();
             payloadModifed = true;
@@ -110,13 +110,13 @@ class LogicalMessageImpl implements LogicalMessage {
         return copySrc;
          */
     }
-    
+
     public void setPayload(Source payload) {
         payloadModifed = true;
         payloadSrc = payload;
     }
     /*
-     * Converts to DOMSource and then it unmarshalls this  DOMSource 
+     * Converts to DOMSource and then it unmarshalls this  DOMSource
      * to a jaxb object. Any changes done in jaxb object are lost if
      * the object isn't set again.
      */
@@ -124,14 +124,14 @@ class LogicalMessageImpl implements LogicalMessage {
         try {
             Source payloadSrc = getPayload();
             if(payloadSrc == null)
-                return null; 
+                return null;
             Unmarshaller unmarshaller = context.createUnmarshaller();
             return unmarshaller.unmarshal(payloadSrc);
         } catch (JAXBException e){
             throw new WebServiceException(e);
         }
     }
-    
+
     public void setPayload(Object payload, JAXBContext context) {
         payloadModifed = true;
         try {
@@ -142,7 +142,7 @@ class LogicalMessageImpl implements LogicalMessage {
             payloadSrc = new DOMSource(domResult.getNode());
         } catch(JAXBException e) {
             throw new WebServiceException(e);
-        }        
+        }
     }
     /*
     private Source copy(Source src) {

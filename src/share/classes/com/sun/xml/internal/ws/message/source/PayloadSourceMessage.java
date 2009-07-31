@@ -47,7 +47,7 @@ public class PayloadSourceMessage extends PayloadStreamReaderMessage {
     public PayloadSourceMessage(@Nullable HeaderList headers,
         @NotNull Source payload, @NotNull AttachmentSet attSet,
         @NotNull SOAPVersion soapVersion) {
-        
+
         super(headers, SourceReaderFactory.createSourceReader(payload, true),
                 attSet, soapVersion);
     }

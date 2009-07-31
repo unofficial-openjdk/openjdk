@@ -46,23 +46,23 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
 public class FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent extends TransformInputOutput {
-    
+
     public FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent() {
     }
-    
+
     public void parse(InputStream document, OutputStream events, String workingDirectory) throws Exception {
         if (!document.markSupported()) {
             document = new BufferedInputStream(document);
         }
-        
+
         document.mark(4);
         boolean isFastInfosetDocument = Decoder.isFastInfosetDocument(document);
         document.reset();
-        
+
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer t = tf.newTransformer();
         DOMResult dr = new DOMResult();
-        
+
         if (isFastInfosetDocument) {
             t.transform(new FastInfosetSource(document), dr);
         } else if (workingDirectory != null) {
@@ -70,20 +70,20 @@ public class FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent extends TransformInputOutput {
             XMLReader reader = parser.getXMLReader();
             reader.setEntityResolver(createRelativePathResolver(workingDirectory));
             SAXSource source = new SAXSource(reader, new InputSource(document));
-            
+
             t.transform(source, dr);
         } else {
             t.transform(new StreamSource(document), dr);
         }
-        
+
         SAXEventSerializer ses = new SAXEventSerializer(events);
         t.transform(new DOMSource(dr.getNode()), new SAXResult(ses));
     }
-    
+
     public void parse(InputStream document, OutputStream events) throws Exception {
         parse(document, events, null);
     }
-    
+
     private SAXParser getParser() {
         SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(true);
@@ -93,10 +93,10 @@ public class FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent extends TransformInputOutput {
             return null;
         }
     }
-    
+
     public static void main(String[] args) throws Exception {
         FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent p = new FI_SAX_Or_XML_SAX_DOM_SAX_SAXEvent();
         p.parse(args);
     }
-    
+
 }

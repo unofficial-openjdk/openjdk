@@ -43,10 +43,10 @@ import org.xml.sax.helpers.XMLFilterImpl;
 
 /**
  * Checks the jaxb:version attribute on a XML Schema document.
- * 
+ *
  * jaxb:version is optional if no binding customization is used,
  * but if present, its value must be "1.0".
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -57,40 +57,40 @@ public class VersionChecker extends XMLFilterImpl {
      * when we hit the root element.
      */
     private String version = null ;
-    
+
     /** Will be set to true once we hit the root element. */
     private boolean seenRoot = false;
-    
+
     /** Will be set to true once we hit a binding declaration. */
     private boolean seenBindings = false;
-    
+
     private Locator locator;
-    
+
     /**
      * Stores the location of the start tag of the root tag.
      */
     private Locator rootTagStart;
-    
+
     public VersionChecker( XMLReader parent ) {
         setParent(parent);
     }
-    
+
     public VersionChecker( ContentHandler handler,ErrorHandler eh,EntityResolver er ) {
         setContentHandler(handler);
         if(eh!=null)    setErrorHandler(eh);
         if(er!=null)    setEntityResolver(er);
     }
-    
+
     public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
         throws SAXException {
-        
+
         super.startElement(namespaceURI, localName, qName, atts);
-        
+
         if(!seenRoot) {
             // if this is the root element
             seenRoot = true;
             rootTagStart = new LocatorImpl(locator);
-            
+
             version = atts.getValue(Const.JAXB_NSURI,"version");
             if( namespaceURI.equals(Const.JAXB_NSURI) ) {
                 String version2 = atts.getValue("","version");
@@ -103,31 +103,31 @@ public class VersionChecker extends XMLFilterImpl {
                 if( version==null )
                     version = version2;
             }
-            
+
         }
-        
+
         if( Const.JAXB_NSURI.equals(namespaceURI) )
             seenBindings = true;
     }
 
     public void endDocument() throws SAXException {
         super.endDocument();
-        
+
         if( seenBindings && version==null ) {
             // if we see a binding declaration but not version attribute
             SAXParseException e = new SAXParseException(
                 Messages.format(Messages.ERR_VERSION_NOT_FOUND),rootTagStart);
             getErrorHandler().error(e);
         }
-        
-        // if present, the value must be either 1.0 or 2.0 
+
+        // if present, the value must be either 1.0 or 2.0
         if( version!=null && !VERSIONS.contains(version) ) {
             SAXParseException e = new SAXParseException(
                 Messages.format(Messages.ERR_INCORRECT_VERSION),rootTagStart);
             getErrorHandler().error(e);
         }
     }
-    
+
     public void setDocumentLocator(Locator locator) {
         super.setDocumentLocator(locator);
         this.locator = locator;

@@ -40,44 +40,44 @@ import com.sun.xml.internal.org.jvnet.fastinfoset.EncodingAlgorithmIndexes;
  * process and has the knowledge to call the LowLevel methods in the required
  * order.
  * <p>
- * For example, the application may be able to perform efficient information 
+ * For example, the application may be able to perform efficient information
  * to indexing mapping and to provide certain information in UTF-8 encoded form.
  * <p>
  * These methods may be used in conjuction with {@link javax.xml.stream.XMLStreamWriter}
  * as long as an element fragment written using the efficient streaming methods
- * are self-contained and no sub-fragment is written using methods from 
+ * are self-contained and no sub-fragment is written using methods from
  * {@link javax.xml.stream.XMLStreamWriter}.
  * <p>
  * The required call sequence is as follows:
  * <pre>
- * CALLSEQUENCE    := {@link #startDocument startDocument} 
- *                    initiateLowLevelWriting ELEMENT 
+ * CALLSEQUENCE    := {@link #startDocument startDocument}
+ *                    initiateLowLevelWriting ELEMENT
  *                    {@link #endDocument endDocument}
  *                 |  initiateLowLevelWriting ELEMENT   // for fragment
  *
  * ELEMENT         := writeLowLevelTerminationAndMark
  *                    NAMESPACES?
  *                    ELEMENT_NAME
- *                    ATTRIBUTES? 
+ *                    ATTRIBUTES?
  *                    writeLowLevelEndStartElement
  *                    CONTENTS
  *                    writeLowLevelEndElement
  *
  * NAMESPACES      := writeLowLevelStartNamespaces
- *                    writeLowLevelNamespace* 
+ *                    writeLowLevelNamespace*
  *                    writeLowLevelEndNamespaces
  *
  * ELEMENT_NAME    := writeLowLevelStartElementIndexed
  *                 |  writeLowLevelStartNameLiteral
  *                 |  writeLowLevelStartElement
- * 
+ *
  * ATTRUBUTES      := writeLowLevelStartAttributes
  *                   (ATTRIBUTE_NAME writeLowLevelAttributeValue)*
  *
  * ATTRIBUTE_NAME  := writeLowLevelAttributeIndexed
  *                 |  writeLowLevelStartNameLiteral
  *                 |  writeLowLevelAttribute
- *       
+ *
  *
  * CONTENTS      := (ELEMENT | writeLowLevelText writeLowLevelOctets)*
  * </pre>
@@ -93,7 +93,7 @@ public interface LowLevelFastInfosetStreamWriter {
      */
     public void initiateLowLevelWriting()
     throws XMLStreamException;
-        
+
     /**
      * Get the next index to apply to an Element Information Item.
      * <p>
@@ -118,15 +118,15 @@ public interface LowLevelFastInfosetStreamWriter {
      * @return the index.
      */
     public int getNextAttributeIndex();
-    
+
     /**
-     * Get the current index that was applied to an [local name] of an 
+     * Get the current index that was applied to an [local name] of an
      * Element or Attribute Information Item.
      * </pre>
      * @return the index.
      */
     public int getLocalNameIndex();
-    
+
     /**
      * Get the next index to apply to an [local name] of an Element or Attribute
      * Information Item.
@@ -145,31 +145,31 @@ public interface LowLevelFastInfosetStreamWriter {
 
     public void writeLowLevelStartElementIndexed(int type, int index)
     throws IOException;
-    
+
     /**
      * Write the start of an element.
      *
      * @return true if element is indexed, otherwise false.
      */
-    public boolean writeLowLevelStartElement(int type, 
-            String prefix, String localName, String namespaceURI) 
+    public boolean writeLowLevelStartElement(int type,
+            String prefix, String localName, String namespaceURI)
             throws IOException;
-                
+
     public void writeLowLevelStartNamespaces()
     throws IOException;
-    
-    public void writeLowLevelNamespace(String prefix, String namespaceName) 
+
+    public void writeLowLevelNamespace(String prefix, String namespaceName)
         throws IOException;
-    
+
     public void writeLowLevelEndNamespaces()
     throws IOException;
-    
+
     public void writeLowLevelStartAttributes()
     throws IOException;
-        
+
     public void writeLowLevelAttributeIndexed(int index)
     throws IOException;
-    
+
     /**
      * Write an attribute.
      *
@@ -178,30 +178,30 @@ public interface LowLevelFastInfosetStreamWriter {
     public boolean writeLowLevelAttribute(
             String prefix, String namespaceURI, String localName)
             throws IOException;
-                
+
     public void writeLowLevelAttributeValue(String value)
     throws IOException;
-    
-    public void writeLowLevelStartNameLiteral(int type, 
+
+    public void writeLowLevelStartNameLiteral(int type,
             String prefix, byte[] utf8LocalName, String namespaceURI)
             throws IOException;
-    
+
     public void writeLowLevelStartNameLiteral(int type,
             String prefix, int localNameIndex, String namespaceURI)
             throws IOException;
-    
+
     public void writeLowLevelEndStartElement()
     throws IOException;
-    
+
     public void writeLowLevelEndElement()
     throws IOException;
-    
+
     public void writeLowLevelText(char[] text, int length)
     throws IOException;
-    
+
     public void writeLowLevelText(String text)
     throws IOException;
-    
+
     public void writeLowLevelOctets(byte[] octets, int length)
     throws IOException;
 }

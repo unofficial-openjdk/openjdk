@@ -33,7 +33,7 @@ public interface BIConversion
 {
     /** Gets the conversion name. */
     String name();
-    
+
     /** Gets a transducer for this conversion. */
     TypeUse getTransducer();
 }

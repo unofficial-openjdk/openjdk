@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax;
 
@@ -36,17 +36,17 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 public class StAXManager {
     protected static final String STAX_NOTATIONS = "javax.xml.stream.notations";
     protected static final String STAX_ENTITIES = "javax.xml.stream.entities";
-    
+
     HashMap features = new HashMap();
-    
+
     public static final int CONTEXT_READER = 1;
     public static final int CONTEXT_WRITER = 2;
-    
-    
+
+
     /** Creates a new instance of StAXManager */
     public StAXManager() {
     }
-    
+
     public StAXManager(int context) {
         switch(context){
             case CONTEXT_READER:{
@@ -59,17 +59,17 @@ public class StAXManager {
             }
         }
     }
-    
+
     public StAXManager(StAXManager manager){
-        
+
         HashMap properties = manager.getProperties();
         features.putAll(properties);
     }
-    
+
     private HashMap getProperties(){
         return features ;
     }
-    
+
     private void initConfigurableReaderProperties(){
         //spec v1.0 default values
         features.put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
@@ -83,11 +83,11 @@ public class StAXManager {
         features.put(XMLInputFactory.ALLOCATOR, null);
         features.put(STAX_NOTATIONS,null );
     }
-    
+
     private void initWriterProps(){
         features.put(XMLOutputFactory.IS_REPAIRING_NAMESPACES , Boolean.FALSE);
     }
-    
+
     /**
      * public void reset(){
      * features.clear() ;
@@ -96,12 +96,12 @@ public class StAXManager {
     public boolean containsProperty(String property){
         return features.containsKey(property) ;
     }
-    
+
     public Object getProperty(String name){
         checkProperty(name);
         return features.get(name);
     }
-    
+
     public void setProperty(String name, Object value){
         checkProperty(name);
         if (name.equals(XMLInputFactory.IS_VALIDATING) &&
@@ -116,7 +116,7 @@ public class StAXManager {
         features.put(name,value);
 
     }
-    
+
     public void checkProperty(String name) {
         if (!features.containsKey(name))
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.propertyNotSupported", new Object[]{name}));
@@ -125,5 +125,5 @@ public class StAXManager {
     public String toString(){
         return features.toString();
     }
-        
+
 }

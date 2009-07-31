@@ -39,17 +39,17 @@ public class FastInfosetReflection {
      * FI StAXDocumentParser constructor using reflection.
      */
     public static final Constructor fiStAXDocumentParser_new;
-    
+
     /**
      * FI <code>StAXDocumentParser.setInputStream()</code> method via reflection.
      */
     public static final Method fiStAXDocumentParser_setInputStream;
-    
+
     /**
      * FI <code>StAXDocumentParser.setStringInterning()</code> method via reflection.
      */
     public static final Method fiStAXDocumentParser_setStringInterning;
-    
+
     static {
         Constructor tmp_new = null;
         Method tmp_setInputStream = null;
@@ -63,7 +63,7 @@ public class FastInfosetReflection {
                 clazz.getMethod("setInputStream", java.io.InputStream.class);
             tmp_setStringInterning =
                 clazz.getMethod("setStringInterning", boolean.class);
-        } 
+        }
         catch (Exception e) {
             // falls through
         }

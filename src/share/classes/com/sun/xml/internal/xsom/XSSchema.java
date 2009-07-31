@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import com.sun.xml.internal.xsom.parser.SchemaDocument;
@@ -31,9 +33,9 @@ import java.util.Map;
 
 /**
  * Schema.
- * 
+ *
  * Container of declarations that belong to the same target namespace.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

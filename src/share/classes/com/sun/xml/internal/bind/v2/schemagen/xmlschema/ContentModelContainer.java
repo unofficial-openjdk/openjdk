@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.bind.v2.schemagen.xmlschema;
 
 import com.sun.xml.internal.txw2.TypedXmlWriter;
@@ -31,7 +32,7 @@ import com.sun.xml.internal.txw2.annotation.XmlElement;
  * Used to write a content model.
  *
  * This mixes the particle and model group as the child of complex type.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public interface ContentModelContainer extends TypedXmlWriter {

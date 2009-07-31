@@ -27,8 +27,12 @@ package com.sun.tools.internal.xjc.generator.bean.field;
 import java.util.ArrayList;
 
 import com.sun.tools.internal.xjc.generator.bean.ClassOutlineImpl;
+import com.sun.tools.internal.xjc.model.CElement;
 import com.sun.tools.internal.xjc.model.CPropertyInfo;
+import com.sun.tools.internal.xjc.model.CReferencePropertyInfo;
 import com.sun.tools.internal.xjc.outline.FieldOutline;
+import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Default implementation of the FieldRendererFactory
@@ -44,7 +48,7 @@ import com.sun.tools.internal.xjc.outline.FieldOutline;
 final class DefaultFieldRenderer implements FieldRenderer {
 
     private final FieldRendererFactory frf;
-    
+
     /**
      * Use {@link FieldRendererFactory#getDefault()}.
      */
@@ -56,15 +60,26 @@ final class DefaultFieldRenderer implements FieldRenderer {
         this.frf = frf;
         this.defaultCollectionFieldRenderer = defaultCollectionFieldRenderer;
     }
-    
+
     private FieldRenderer defaultCollectionFieldRenderer;
 
 
     public FieldOutline generate(ClassOutlineImpl outline, CPropertyInfo prop) {
         return decideRenderer(outline,prop).generate(outline,prop);
     }
-    
-    private FieldRenderer decideRenderer(ClassOutlineImpl outline,CPropertyInfo prop) {
+
+    private FieldRenderer decideRenderer(ClassOutlineImpl outline, CPropertyInfo prop) {
+
+        if (prop instanceof CReferencePropertyInfo) {
+            CReferencePropertyInfo p = (CReferencePropertyInfo)prop;
+            if (p.isDummy()) {
+                return frf.getDummyList(outline.parent().getCodeModel().ref(ArrayList.class));
+            }
+            if (p.isContent() && (p.isMixedExtendedCust())) {
+                return frf.getContentList(outline.parent().getCodeModel().ref(ArrayList.class).narrow(Serializable.class));
+            }
+        }
+
         if(!prop.isCollection()) {
             // non-collection field
 
@@ -77,11 +92,11 @@ final class DefaultFieldRenderer implements FieldRenderer {
                 // otherwise use the default non-collection field
                 return frf.getSingle();
         }
-        
+
         if( defaultCollectionFieldRenderer==null ) {
             return frf.getList(outline.parent().getCodeModel().ref(ArrayList.class));
         }
-        
+
         // this field is a collection field.
         // use untyped list as the default. This is consistent
         // to the JAXB spec.

@@ -89,7 +89,7 @@ public class CompactSyntax implements Context, CompactSyntaxConstants {
 
   /**
    * String that represents the inherited namespace.
-   * 
+   *
    * <p>
    * HACK: we always allocate a new String instance so that
    * we can distinguish inherited value from the explicitly

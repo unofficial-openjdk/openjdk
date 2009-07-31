@@ -38,7 +38,7 @@ class Messages
         String text = ResourceBundle.getBundle(Messages.class.getPackage().getName() +".MessageBundle").getString(property);
         return MessageFormat.format(text,args);
     }
-    
+
     static final String ERR_INCORRECT_SCHEMA_REFERENCE = // args:2
         "Internalizer.IncorrectSchemaReference";
     static final String ERR_XPATH_EVAL = // arg:1

@@ -76,7 +76,7 @@ public class JFieldVar extends JVar {
      * @return JDocComment containing javadocs for this class
      */
     public JDocComment javadoc() {
-        if( jdoc == null ) 
+        if( jdoc == null )
             jdoc = new JDocComment(owner.owner());
         return jdoc;
     }
@@ -87,6 +87,5 @@ public class JFieldVar extends JVar {
         super.declare( f );
     }
 
-   
-}
 
+}

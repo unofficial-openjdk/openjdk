@@ -31,7 +31,7 @@ import java.io.IOException;
 
 /**
  * {@link OutputStream} that cannot be closed.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class NoCloseOutputStream extends FilterOutputStream {

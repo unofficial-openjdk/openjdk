@@ -31,8 +31,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 
-/** 
- * Used to annotate service specific exception classes to customize 
+/**
+ * Used to annotate service specific exception classes to customize
  * to the local and namespace name of the fault element and the name
  * of the fault bean.
  *

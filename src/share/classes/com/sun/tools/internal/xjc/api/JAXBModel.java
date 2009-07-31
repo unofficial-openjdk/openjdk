@@ -30,7 +30,7 @@ import javax.xml.bind.JAXBContext;
 
 /**
  * The in-memory representation of the JAXB binding.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

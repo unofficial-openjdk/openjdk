@@ -32,7 +32,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Inherited;
 
-/** 
+/**
  * Used to indicate whether a {@link Provider} implementation wishes to work
  * with entire protocol messages or just with protocol message payloads.
  *

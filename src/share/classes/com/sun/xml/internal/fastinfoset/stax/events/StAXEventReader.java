@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -47,7 +47,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
     private int size = 3;
     private int currentIndex = 0;
     private boolean hasEvent = false;   //true when current event exists, false initially & at end
-    
+
     //only constructor will do because we delegate everything to underlying XMLStreamReader
     public StAXEventReader(XMLStreamReader reader) throws  XMLStreamException {
         _streamReader = reader ;
@@ -66,15 +66,15 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.noElement"));
         }
     }
-        
-    public boolean hasNext() {        
+
+    public boolean hasNext() {
         return hasEvent;
-    }    
-    
+    }
+
     public XMLEvent nextEvent() throws XMLStreamException {
         XMLEvent event = null;
         XMLEvent nextEvent = null;
-        if (hasEvent) 
+        if (hasEvent)
         {
             event = events[currentIndex];
             events[currentIndex] = null;
@@ -95,19 +95,19 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         }
         else{
             throw new NoSuchElementException();
-        }        
+        }
     }
-    
+
     public void remove(){
         //stream reader is read-only.
         throw new java.lang.UnsupportedOperationException();
     }
-    
-    
+
+
     public void close() throws XMLStreamException {
         _streamReader.close();
     }
-    
+
     /** Reads the content of a text-only element. Precondition:
      * the current event is START_ELEMENT. Postcondition:
      * The current event is the corresponding END_ELEMENT.
@@ -118,7 +118,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         if(!hasEvent) {
             throw new NoSuchElementException();
         }
-                
+
         if(!_currentEvent.isStartElement()) {
             StAXDocumentParser parser = (StAXDocumentParser)_streamReader;
             return parser.getElementText(true);
@@ -126,7 +126,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             return _streamReader.getElementText();
         }
     }
-    
+
     /** Get the value of a feature/property from the underlying implementation
      * @param name The name of the property
      * @return The value of the property
@@ -135,7 +135,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
     public Object getProperty(java.lang.String name) throws java.lang.IllegalArgumentException {
         return _streamReader.getProperty(name) ;
     }
-    
+
     /** Skips any insignificant space events until a START_ELEMENT or
      * END_ELEMENT is reached. If anything other than space characters are
      * encountered, an exception is thrown. This method should
@@ -152,7 +152,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         parser.nextTag(true);
         return _eventAllocator.allocate(_streamReader);
     }
-    
+
     //XMLEventReader extends Iterator;
     public Object next() {
         try{
@@ -161,7 +161,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             return null;
         }
     }
-    
+
     public XMLEvent peek() throws XMLStreamException{
         if (!hasEvent)
              throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.noElement"));
@@ -175,6 +175,6 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
 
         _eventAllocator = allocator;
     }
-    
-    
+
+
 }

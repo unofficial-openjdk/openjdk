@@ -155,4 +155,3 @@ public final class JAnnotationArrayMember extends JAnnotationValue implements JA
         f.nl().o().p('}');
     }
 }
-

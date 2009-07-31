@@ -41,10 +41,10 @@ import javax.xml.transform.dom.DOMSource;
 import org.w3c.dom.Document;
 
 public class XML_DOM_SAX_FI extends TransformInputOutput {
-    
+
     public XML_DOM_SAX_FI() {
     }
-    
+
     public void parse(InputStream document, OutputStream finf, String workingDirectory) throws Exception {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
@@ -53,19 +53,19 @@ public class XML_DOM_SAX_FI extends TransformInputOutput {
             db.setEntityResolver(createRelativePathResolver(workingDirectory));
         }
         Document d = db.parse(document);
-        
+
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer t = tf.newTransformer();
         t.transform(new DOMSource(d), new FastInfosetResult(finf));
     }
-    
+
     public void parse(InputStream document, OutputStream finf) throws Exception {
         parse(document, finf, null);
     }
-    
+
     public static void main(String[] args) throws Exception {
         XML_DOM_SAX_FI p = new XML_DOM_SAX_FI();
         p.parse(args);
     }
-    
+
 }

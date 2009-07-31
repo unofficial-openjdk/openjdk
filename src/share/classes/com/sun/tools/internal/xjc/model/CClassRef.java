@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 import javax.xml.namespace.QName;
@@ -105,7 +106,7 @@ public final class CClassRef extends AbstractCElement implements NClass, CClass 
     public CNonElement getInfo() {
         return this;
     }
-    
+
 // are these going to bite us?
 //    we can compute some of them, but not all.
 

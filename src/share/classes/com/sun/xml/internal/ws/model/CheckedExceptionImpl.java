@@ -35,11 +35,11 @@ import com.sun.xml.internal.ws.api.model.JavaMethod;
 /**
  * CheckedException class. Holds the exception class - class that has public
  * constructor
- * 
+ *
  * <code>public WrapperException()String message, FaultBean){}</code>
- * 
+ *
  * and method
- * 
+ *
  * <code>public FaultBean getFaultInfo();</code>
  *
  * @author Vivek Pandey
@@ -79,7 +79,7 @@ public final class CheckedExceptionImpl implements CheckedException {
 
     /**
      * @return the <code>Class</clode> for this object
-     * 
+     *
      */
     public Class getExceptionClass() {
         return exceptionClass;
@@ -100,11 +100,11 @@ public final class CheckedExceptionImpl implements CheckedException {
     public ExceptionType getExceptionType() {
         return exceptionType;
     }
-    
+
     public String getMessageName() {
         return messageName;
     }
-    
+
     public void setMessageName(String messageName) {
         this.messageName = messageName;
     }

@@ -41,8 +41,8 @@ public final class FastInfosetMIMETypes {
     /**
      * MIME type for a SOAP 1.2 Infoset encoded as a fast infoset document.
      */
-    static public final String SOAP_12 = "application/soap+fastinfoset";    
-    
+    static public final String SOAP_12 = "application/soap+fastinfoset";
+
     /**
      * MIME type for a generic Infoset encoded as a stateful fast infoset document.
      */
@@ -54,5 +54,5 @@ public final class FastInfosetMIMETypes {
     /**
      * MIME type for a SOAP 1.2 Infoset encoded as a stateful fast infoset document.
      */
-    static public final String STATEFUL_SOAP_12 = "application/vnd.sun.stateful.soap+fastinfoset";    
+    static public final String STATEFUL_SOAP_12 = "application/vnd.sun.stateful.soap+fastinfoset";
 }

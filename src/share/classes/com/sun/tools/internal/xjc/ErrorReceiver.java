@@ -38,22 +38,22 @@ import org.xml.sax.SAXParseException;
 /**
  * Implemented by the driver of the compiler engine to handle
  * errors found during the compiliation.
- * 
+ *
  * <p>
  * This class implements {@link ErrorHandler} so it can be
  * passed to anywhere where {@link ErrorHandler} is expected.
- * 
+ *
  * <p>
  * However, to make the error handling easy (and make it work
  * with visitor patterns nicely),
  * none of the methods on thi class throws {@link org.xml.sax.SAXException}.
  * Instead, when the compilation needs to be aborted,
  * it throws {@link AbortException}, which is unchecked.
- * 
+ *
  * <p>
  * This also implements the externally visible {@link ErrorListener}
  * so that we can reuse our internal implementation for testing and such.
- * 
+ *
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
@@ -61,7 +61,7 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
 //
 //
 // convenience methods for callers
-//    
+//
 //
     /**
      * @param loc
@@ -90,7 +90,7 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
     public final void warning( Locator loc, String msg ) {
         warning( new SAXParseException(msg,loc) );
     }
-    
+
 //
 //
 // ErrorHandler implementation, but can't throw SAXException
@@ -109,7 +109,7 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
 
     /**
      * Reports verbose messages to users.
-     * 
+     *
      * This method can be used to report additional non-essential
      * messages. The implementation usually discards them
      * unless some specific debug option is turned on.
@@ -118,7 +118,7 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
 
     /**
      * Reports a debug message to users.
-     * 
+     *
      * @see #info(SAXParseException)
      */
     public final void debug( String msg ) {
@@ -130,12 +130,12 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
 // convenience methods for derived classes
 //
 //
-    
+
   /**
-   * Returns the human readable string representation of the 
+   * Returns the human readable string representation of the
    * {@link org.xml.sax.Locator} part of the specified
    * {@link SAXParseException}.
-   * 
+   *
    * @return  non-null valid object.
    */
   protected final String getLocationString( SAXParseException e ) {
@@ -144,14 +144,14 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
           return Messages.format( Messages.LINE_X_OF_Y,
               line==-1?"?":Integer.toString( line ),
               getShortName( e.getSystemId() ) );
-      } else {        
+      } else {
           return Messages.format( Messages.UNKNOWN_LOCATION );
       }
   }
-    
+
   /** Computes a short name of a given URL for display. */
   private String getShortName( String url ) {
-      if(url==null)  
+      if(url==null)
           return Messages.format( Messages.UNKNOWN_FILE );
 
 // sometimes the user deals with a set of schems that reference each other
@@ -166,8 +166,7 @@ public abstract class ErrorReceiver  implements ErrorHandler, ErrorListener {
 //      if(idx!=-1)     return url.substring(idx+1);
 //      idx = url.lastIndexOf('\\');
 //      if(idx!=-1)     return url.substring(idx+1);
-        
+
       return url;
   }
 }
-

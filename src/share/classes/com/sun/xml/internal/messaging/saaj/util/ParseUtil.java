@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: ParseUtil.java,v 1.5 2006/01/27 12:49:52 vj135062 Exp $
- * $Revision: 1.5 $
- * $Date: 2006/01/27 12:49:52 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.util;
@@ -44,7 +39,7 @@ public class ParseUtil {
 
     /**
      * Returns a new String constructed from the specified String by replacing
-     * the URL escape sequences and UTF8 encoding with the characters they 
+     * the URL escape sequences and UTF8 encoding with the characters they
      * represent.
      */
     public static String decode(String s) {

@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl;
 
 import com.sun.xml.internal.xsom.XSAttributeDecl;
@@ -39,26 +41,26 @@ public class AttributeDeclImpl extends DeclarationImpl implements XSAttributeDec
         AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa, boolean _anonymous,
         XmlString _defValue, XmlString _fixedValue,
         Ref.SimpleType _type ) {
-        
+
         super(owner,_annon,_loc,_fa,_targetNamespace,_name,_anonymous);
-        
+
         if(_name==null) // assertion failed.
             throw new IllegalArgumentException();
-        
+
         this.defaultValue = _defValue;
         this.fixedValue = _fixedValue;
         this.type = _type;
     }
-    
+
     private final Ref.SimpleType type;
     public XSSimpleType getType() { return type.getType(); }
 
     private final XmlString defaultValue;
     public XmlString getDefaultValue() { return defaultValue; }
-    
+
     private final XmlString fixedValue;
     public XmlString getFixedValue() { return fixedValue; }
-    
+
     public void visit( XSVisitor visitor ) {
         visitor.attributeDecl(this);
     }

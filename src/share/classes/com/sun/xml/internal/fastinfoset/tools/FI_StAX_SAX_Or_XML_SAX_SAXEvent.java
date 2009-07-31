@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -40,7 +40,7 @@ import javax.xml.parsers.SAXParserFactory;
 import com.sun.xml.internal.fastinfoset.tools.StAX2SAXReader;
 
 public class FI_StAX_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
-    
+
     public FI_StAX_SAX_Or_XML_SAX_SAXEvent() {
     }
 
@@ -48,11 +48,11 @@ public class FI_StAX_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
         if (!document.markSupported()) {
             document = new BufferedInputStream(document);
         }
-        
+
         document.mark(4);
         boolean isFastInfosetDocument = Decoder.isFastInfosetDocument(document);
         document.reset();
-        
+
         if (isFastInfosetDocument) {
             StAXDocumentParser parser = new StAXDocumentParser();
             parser.setInputStream(document);
@@ -69,10 +69,10 @@ public class FI_StAX_SAX_Or_XML_SAX_SAXEvent extends TransformInputOutput {
             parser.parse(document, ses);
         }
     }
-    
+
     public static void main(String[] args) throws Exception {
         FI_StAX_SAX_Or_XML_SAX_SAXEvent p = new FI_StAX_SAX_Or_XML_SAX_SAXEvent();
         p.parse(args);
-    }    
-    
+    }
+
 }

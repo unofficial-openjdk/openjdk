@@ -59,12 +59,12 @@ class UniqueValue {
      * and the current time (in milliseconds).
      */
     public static String getUniqueBoundaryValue() {
-	StringBuffer s = new StringBuffer();
+        StringBuffer s = new StringBuffer();
 
-	// Unique string is ----=_Part_<part>_<hashcode>.<currentTime>
-	s.append("----=_Part_").append(part++).append("_").
-	  append(s.hashCode()).append('.').
-	  append(System.currentTimeMillis());
-	return s.toString();
+        // Unique string is ----=_Part_<part>_<hashcode>.<currentTime>
+        s.append("----=_Part_").append(part++).append("_").
+          append(s.hashCode()).append('.').
+          append(System.currentTimeMillis());
+        return s.toString();
     }
 }

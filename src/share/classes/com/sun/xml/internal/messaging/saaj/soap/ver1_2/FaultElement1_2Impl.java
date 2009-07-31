@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: FaultElement1_2Impl.java,v 1.13 2006/01/27 12:49:48 vj135062 Exp $
- */
 
 
 
@@ -79,7 +76,7 @@ public class FaultElement1_2Impl extends FaultElementImpl {
         }
     }
 
-    public void setEncodingStyle(String encodingStyle) throws SOAPException {        
+    public void setEncodingStyle(String encodingStyle) throws SOAPException {
         log.severe("SAAJ0408.ver1_2.no.encodingStyle.in.fault.child");
         throw new SOAPExceptionImpl("encodingStyle attribute cannot appear on a Fault child element");
     }
@@ -87,7 +84,7 @@ public class FaultElement1_2Impl extends FaultElementImpl {
     public SOAPElement addAttribute(Name name, String value)
         throws SOAPException {
         if (name.getLocalName().equals("encodingStyle")
-            && name.getURI().equals(NameImpl.SOAP12_NAMESPACE)) {                
+            && name.getURI().equals(NameImpl.SOAP12_NAMESPACE)) {
             setEncodingStyle(value);
         }
         return super.addAttribute(name, value);
@@ -96,7 +93,7 @@ public class FaultElement1_2Impl extends FaultElementImpl {
     public SOAPElement addAttribute(QName name, String value)
         throws SOAPException {
         if (name.getLocalPart().equals("encodingStyle")
-            && name.getNamespaceURI().equals(NameImpl.SOAP12_NAMESPACE)) {                
+            && name.getNamespaceURI().equals(NameImpl.SOAP12_NAMESPACE)) {
             setEncodingStyle(value);
         }
         return super.addAttribute(name, value);

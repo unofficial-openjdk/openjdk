@@ -24,6 +24,7 @@
  */
 package com.sun.tools.internal.xjc;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -101,7 +102,7 @@ public class Driver {
 
     private static void _main( String[] args ) throws Exception {
         try {
-            System.exit(run( args, System.err, System.out ));
+            System.exit(run( args, System.out, System.out ));
         } catch (BadCommandLineException e) {
             // there was an error in the command line.
             // print usage and abort.
@@ -240,12 +241,15 @@ public class Driver {
                 listener.message(Messages.format(Messages.PARSING_SCHEMA));
             }
 
+            final boolean[] hadWarning = new boolean[1];
+
             ErrorReceiver receiver = new ErrorReceiverFilter(listener) {
                 public void info(SAXParseException exception) {
                     if(opt.verbose)
                         super.info(exception);
                 }
                 public void warning(SAXParseException exception) {
+                    hadWarning[0] = true;
                     if(!opt.quiet)
                         super.warning(exception);
                 }
@@ -294,7 +298,7 @@ public class Driver {
                 }
                 return -1;
             }
-            
+
             Model model = ModelLoader.load( opt, new JCodeModel(), receiver );
 
             if (model == null) {
@@ -367,6 +371,15 @@ public class Driver {
                 assert false;
             }
 
+            if(opt.debugMode) {
+                try {
+                    new FileOutputStream(new File(opt.targetDir,hadWarning[0]?"hadWarning":"noWarning")).close();
+                } catch (IOException e) {
+                    receiver.error(e);
+                    return -1;
+                }
+            }
+
             return 0;
         } catch( StackOverflowError e ) {
             if(opt.verbose)
@@ -410,10 +423,10 @@ public class Driver {
         GBIND
     }
 
-    
+
     /**
      * Command-line arguments processor.
-     * 
+     *
      * <p>
      * This class contains options that only make sense
      * for the command line interface.
@@ -422,10 +435,10 @@ public class Driver {
     {
         /** Operation mode. */
         protected Mode mode = Mode.CODE;
-        
+
         /** A switch that determines the behavior in the BGM mode. */
         public boolean noNS = false;
-        
+
         /** Parse XJC-specific options. */
         public int parseArgument(String[] args, int i) throws BadCommandLineException {
             if (args[i].equals("-noNS")) {
@@ -482,7 +495,7 @@ public class Driver {
         } else {
             System.out.println(Messages.format(Messages.DRIVER_PUBLIC_USAGE));
         }
-        
+
         if( opts!=null && opts.getAllPlugins().size()!=0 ) {
             System.out.println(Messages.format(Messages.ADDON_USAGE));
             for (Plugin p : opts.getAllPlugins()) {

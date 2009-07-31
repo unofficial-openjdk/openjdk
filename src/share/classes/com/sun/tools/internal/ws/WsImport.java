@@ -28,7 +28,7 @@ import com.sun.tools.internal.ws.wscompile.WsimportTool;
 
 /**
  * WsImport tool entry point.
- * 
+ *
  * @author Vivek Pandey
  * @author Kohsuke Kawaguchi
  */

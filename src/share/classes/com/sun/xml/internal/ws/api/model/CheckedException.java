@@ -88,7 +88,7 @@ public interface CheckedException {
      *
      * and accessor method
      *
-     * <code>public FaultBean getFaultInfo();</code>     
+     * <code>public FaultBean getFaultInfo();</code>
      */
     ExceptionType getExceptionType();
 

@@ -47,9 +47,9 @@ import javax.activation.DataSource;
  * This interface will typically be implemented by providers that
  * preparse multipart bodies, for example an IMAP provider.
  *
- * @version	1.6, 02/03/27
- * @author	John Mani
- * @see		javax.activation.DataSource
+ * @version     1.6, 02/03/27
+ * @author      John Mani
+ * @see         javax.activation.DataSource
  */
 
 public interface MultipartDataSource extends DataSource {
@@ -67,7 +67,7 @@ public interface MultipartDataSource extends DataSource {
      * @param index     the index of the desired MimeBodyPart
      * @return          the MimeBodyPart
      * @exception       IndexOutOfBoundsException if the given index
-     *			is out of range.
+     *                  is out of range.
      * @exception       MessagingException
      */
     public MimeBodyPart getBodyPart(int index) throws MessagingException;

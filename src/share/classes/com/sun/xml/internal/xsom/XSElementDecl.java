@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 import java.util.List;
@@ -29,7 +31,7 @@ import java.util.Set;
 
 /**
  * Element declaration.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -60,10 +62,10 @@ public interface XSElementDecl extends XSDeclaration, XSTerm
 
     /**
      * Checks the substitution excluded property of the schema component.
-     * 
+     *
      * IOW, this checks the value of the <code>final</code> attribute
      * (plus <code>finalDefault</code>).
-     * 
+     *
      * @param method
      *      Possible values are {@link XSType#EXTENSION} or
      *      <code>XSType.RESTRICTION</code>.
@@ -72,10 +74,10 @@ public interface XSElementDecl extends XSDeclaration, XSTerm
 
     /**
      * Checks the diallowed substitution property of the schema component.
-     * 
+     *
      * IOW, this checks the value of the <code>block</code> attribute
      * (plus <code>blockDefault</code>).
-     * 
+     *
      * @param method
      *      Possible values are {@link XSType#EXTENSION},
      *      <code>XSType.RESTRICTION</code>, or <code>XSType.SUBSTITUTION</code>
@@ -87,49 +89,49 @@ public interface XSElementDecl extends XSDeclaration, XSTerm
     /**
      * Returns the element declarations that can substitute
      * this element.
-     * 
+     *
      * <p>
      * IOW, this set returns all the element decls that satisfies
      * <a href="http://www.w3.org/TR/xmlschema-1/#cos-equiv-derived-ok-rec">
      * the "Substitution Group OK" constraint.
      * </a>
-     * 
+     *
      * @return
      *      nun-null valid array. The return value always contains this element
-     *      decl itself. 
-     * 
+     *      decl itself.
+     *
      * @deprecated
      *      this method allocates a new array every time, so it could be
      *      inefficient when working with a large schema. Use
      *      {@link #getSubstitutables()} instead.
      */
     XSElementDecl[] listSubstitutables();
-    
+
     /**
      * Returns the element declarations that can substitute
      * this element.
-     * 
+     *
      * <p>
      * IOW, this set returns all the element decls that satisfies
      * <a href="http://www.w3.org/TR/xmlschema-1/#cos-equiv-derived-ok-rec">
      * the "Substitution Group OK" constraint.
      * </a>
-     * 
+     *
      * <p>
      * Note that the above clause does <em>NOT</em> check for
      * abstract elements. So abstract elements may still show up
      * in the returned set.
-     * 
+     *
      * @return
      *      nun-null unmodifiable list.
-     *      The returned list always contains this element decl itself. 
+     *      The returned list always contains this element decl itself.
      */
     Set<? extends XSElementDecl> getSubstitutables();
-    
+
     /**
      * Returns true if this element declaration can be validly substituted
      * by the given declaration.
-     * 
+     *
      * <p>
      * Just a short cut of <tt>getSubstitutables().contain(e);</tt>
      */
@@ -140,4 +142,15 @@ public interface XSElementDecl extends XSDeclaration, XSTerm
 
     XmlString getDefaultValue();
     XmlString getFixedValue();
+
+    /**
+     * Used for javadoc schema generation
+     *
+     * @return
+     *    null if form attribute not present,
+     *    true if form attribute present and set to qualified,
+     *    false if form attribute present and set to unqualified.
+     */
+
+    Boolean getForm();
 }

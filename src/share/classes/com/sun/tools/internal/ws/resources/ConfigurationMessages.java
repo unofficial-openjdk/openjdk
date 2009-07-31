@@ -31,7 +31,7 @@ import com.sun.xml.internal.ws.util.localization.Localizer;
 
 /**
  * Defines string formatting method for each constant in the resource file
- * 
+ *
  */
 public final class ConfigurationMessages {
 
@@ -44,7 +44,7 @@ public final class ConfigurationMessages {
 
     /**
      * invalid element "{2}" in file "{0}" (line {1})
-     * 
+     *
      */
     public static String CONFIGURATION_INVALID_ELEMENT(Object arg0, Object arg1, Object arg2) {
         return localizer.localize(localizableCONFIGURATION_INVALID_ELEMENT(arg0, arg1, arg2));
@@ -56,7 +56,7 @@ public final class ConfigurationMessages {
 
     /**
      * Ignoring: binding file ""{0}". It is not a jaxws or a jaxb binding file.
-     * 
+     *
      */
     public static String CONFIGURATION_NOT_BINDING_FILE(Object arg0) {
         return localizer.localize(localizableCONFIGURATION_NOT_BINDING_FILE(arg0));

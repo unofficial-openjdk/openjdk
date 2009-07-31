@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: FaultElementImpl.java,v 1.10 2006/01/27 12:49:35 vj135062 Exp $
- * $Revision: 1.10 $
- * $Date: 2006/01/27 12:49:35 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.soap.impl;
@@ -42,14 +37,14 @@ import com.sun.xml.internal.messaging.saaj.soap.SOAPDocumentImpl;
 import com.sun.xml.internal.messaging.saaj.soap.name.NameImpl;
 
 public abstract class FaultElementImpl
-    extends ElementImpl 
+    extends ElementImpl
     implements SOAPFaultElement {
 
-    protected FaultElementImpl(SOAPDocumentImpl ownerDoc, NameImpl qname) { 
+    protected FaultElementImpl(SOAPDocumentImpl ownerDoc, NameImpl qname) {
         super(ownerDoc, qname);
     }
 
-    protected FaultElementImpl(SOAPDocumentImpl ownerDoc, QName qname) { 
+    protected FaultElementImpl(SOAPDocumentImpl ownerDoc, QName qname) {
         super(ownerDoc, qname);
     }
 

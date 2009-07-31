@@ -44,7 +44,7 @@ import javax.xml.transform.Source;
 
 /**
  * {@link Message} that has no body.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public class EmptyMessageImpl extends AbstractMessageImpl {
@@ -82,7 +82,7 @@ public class EmptyMessageImpl extends AbstractMessageImpl {
     public boolean hasHeaders() {
         return !headers.isEmpty();
     }
-    
+
     @Override
     public @NotNull AttachmentSet getAttachments() {
         return attachmentSet;

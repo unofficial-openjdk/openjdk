@@ -89,7 +89,7 @@ public abstract class WSHTTPConnection extends PropertySet {
      *      This parameter may not be null, but since the user application
      *      code may invoke this method, a graceful error checking with
      *      an helpful error message should be provided if it's actually null.
-     * @see #setContentTypeResponseHeader(String) 
+     * @see #setContentTypeResponseHeader(String)
      */
     public abstract void setResponseHeaders(@NotNull Map<String,List<String>> headers);
 
@@ -120,7 +120,7 @@ public abstract class WSHTTPConnection extends PropertySet {
      * so do not consider the value to be final until {@link #getOutput()}
      * is invoked.
      */
-    
+
     public abstract void setStatus(int status);
 
     /**
@@ -214,6 +214,16 @@ public abstract class WSHTTPConnection extends PropertySet {
     public abstract @Nullable String getPathInfo();
 
     /**
+     * Gets the absolute URL up to the context path.
+     * @return
+     *      String like "http://myhost/myapp"
+     * @since 2.1.2
+     */
+    public @NotNull String getBaseAddress() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Whether connection is HTTPS or not
      *
      * @return if the received request is on HTTPS, return true
@@ -253,5 +263,5 @@ public abstract class WSHTTPConnection extends PropertySet {
      */
     public void setContentLengthResponseHeader(int value) {
     }
-    
+
 }

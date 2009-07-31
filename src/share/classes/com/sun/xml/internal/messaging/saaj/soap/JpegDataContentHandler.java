@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: JpegDataContentHandler.java,v 1.1.1.1.2.1 2007/11/27 07:19:29 kumarjayanti Exp $
- * $Revision: 1.1.1.1.2.1 $
- * $Date: 2007/11/27 07:19:29 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.soap;
@@ -86,10 +81,10 @@ public class JpegDataContentHandler
             if (df.getRepresentationClass().getName().equals(STR_SRC)) {
                 InputStream inputStream = null;
                 BufferedImage jpegLoadImage = null;
-                
+
                 try {
                     inputStream = ds.getInputStream();
-                    jpegLoadImage = ImageIO.read(inputStream); 
+                    jpegLoadImage = ImageIO.read(inputStream);
 
                 } catch (Exception e) {
                     System.out.println(e);
@@ -146,8 +141,8 @@ public class JpegDataContentHandler
                 tracker.addImage(img, 0);
                 tracker.waitForAll();
                 if (tracker.isErrorAny()) {
-			throw new IOException("Error while loading image");
-		}
+                        throw new IOException("Error while loading image");
+                }
                 bufImage =
                     new BufferedImage(
                         img.getWidth(null),
@@ -157,7 +152,6 @@ public class JpegDataContentHandler
                 Graphics g = bufImage.createGraphics();
                 g.drawImage(img, 0, 0, null);
             }
-
             ImageIO.write(bufImage, "jpeg", os);
 
         } catch (Exception ex) {

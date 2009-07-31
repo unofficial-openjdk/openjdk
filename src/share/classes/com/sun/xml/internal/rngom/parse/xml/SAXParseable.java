@@ -43,7 +43,7 @@ import org.xml.sax.XMLReader;
 
 /**
  * RELAX NG schema in the XML syntax.
- * 
+ *
  */
 public class SAXParseable implements Parseable {
   private final InputSource in;
@@ -60,7 +60,7 @@ public class SAXParseable implements Parseable {
   public SAXParseable(InputSource in, ErrorHandler eh) {
       this(in,eh,new JAXPXMLReaderCreator());
   }
-  
+
   public ParsedPattern parse(SchemaBuilder schemaBuilder) throws BuildException, IllegalSchemaException {
     try {
       XMLReader xr = xrc.createXMLReader();

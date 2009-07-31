@@ -52,7 +52,7 @@ public final class RootElementSniffer extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes a) throws SAXException {
         this.nsUri = uri;
         this.localName = localName;
-        
+
         if(parseAttributes) {
             if(a.getLength()==0)    // often there's no attribute
                 this.atts = EMPTY_ATTRIBUTES;

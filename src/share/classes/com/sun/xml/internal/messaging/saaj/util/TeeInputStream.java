@@ -23,11 +23,10 @@
  * have any questions.
  */
 
-
 /*
  * Created on Feb 28, 2003
  *
- * To change this generated comment go to 
+ * To change this generated comment go to
  * Window>Preferences>Java>Code Generation>Code Template
  */
 package com.sun.xml.internal.messaging.saaj.util;
@@ -40,7 +39,7 @@ import java.io.*;
 public class TeeInputStream extends InputStream {
     protected InputStream source;
     protected OutputStream copySink;
-    
+
     public TeeInputStream(InputStream source, OutputStream sink) {
         super();
         this.copySink = sink;

@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: CharWriter.java,v 1.6 2006/01/27 12:49:51 vj135062 Exp $
- * $Revision: 1.6 $
- * $Date: 2006/01/27 12:49:51 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.util;
@@ -39,15 +34,15 @@ public class CharWriter extends CharArrayWriter {
     public CharWriter () {
         super();
     }
-        
+
     public CharWriter(int size) {
         super(size);
     }
-        
+
     public char[] getChars() {
         return buf;
     }
-    
+
     public int getCount() {
         return count;
     }

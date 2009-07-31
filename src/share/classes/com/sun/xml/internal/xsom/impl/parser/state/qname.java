@@ -37,7 +37,7 @@ import com.sun.xml.internal.xsom.impl.parser.NGCCRuntimeEx;
     import org.xml.sax.ContentHandler;
     import org.xml.sax.helpers.*;
     import java.util.*;
-  
+
 
 
 class qname extends NGCCHandler {
@@ -141,15 +141,15 @@ class qname extends NGCCHandler {
     public void text(String $value) throws SAXException {
         int $ai;
         switch($_ngcc_current_state) {
-        case 0:
-            {
-                revertToParentFromText($runtime.parseUName(qvalue), super._cookie, $value);
-            }
-            break;
         case 1:
             {
                 qvalue = $value;
                 $_ngcc_current_state = 0;
+            }
+            break;
+        case 0:
+            {
+                revertToParentFromText($runtime.parseUName(qvalue), super._cookie, $value);
             }
             break;
         }
@@ -166,4 +166,3 @@ class qname extends NGCCHandler {
 
 
 }
-

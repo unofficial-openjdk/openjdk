@@ -38,7 +38,7 @@ class CompatibilityDatatypeLibrary implements DatatypeLibrary {
     CompatibilityDatatypeLibrary(DatatypeLibraryFactory factory) {
         this.factory = factory;
     }
-    
+
     public DatatypeBuilder createDatatypeBuilder(String type)
         throws DatatypeException {
         if (type.equals("ID")

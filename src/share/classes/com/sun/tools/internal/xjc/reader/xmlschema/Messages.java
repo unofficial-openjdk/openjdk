@@ -43,6 +43,9 @@ public class Messages
     static final String WARN_NO_GLOBAL_ELEMENT =
         "BGMBuilder.NoGlobalElement";
 
+    public static final String WARN_UNUSED_EXPECTED_CONTENT_TYPES =
+        "UnusedCustomizationChecker.WarnUnusedExpectedContentTypes";
+
     static final String ERR_MULTIPLE_SCHEMA_BINDINGS =
         "BGMBuilder.MultipleSchemaBindings"; // arg:1
 
@@ -73,6 +76,9 @@ public class Messages
     static final String ERR_NO_ENUM_NAME_AVAILABLE =
         "ConversionFinder.NoEnumNameAvailable"; // arg:0
 
+    static final String ERR_NO_ENUM_FACET =
+        "ConversionFinder.NoEnumFacet"; // arg:0
+
     static final String ERR_ILLEGAL_EXPECTED_MIME_TYPE =
         "ERR_ILLEGAL_EXPECTED_MIME_TYPE"; // args:2
 
@@ -102,7 +108,7 @@ public class Messages
 
     static final String JAVADOC_LINE_UNKNOWN = // 0 args
         "ClassSelector.JavadocLineUnknown";
-    
+
     static final String JAVADOC_VALUEOBJECT_PROPERTY =
         "FieldBuilder.Javadoc.ValueObject"; // args:2
 

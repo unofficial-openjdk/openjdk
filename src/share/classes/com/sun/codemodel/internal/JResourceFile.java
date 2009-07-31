@@ -34,16 +34,16 @@ import java.io.OutputStream;
 public abstract class JResourceFile {
 
     private final String name;
-    
+
     protected JResourceFile( String name ) {
         this.name = name;
     }
-    
+
     /**
      * Gets the name of this property file
      */
-    public String name() { 
-        return name; 
+    public String name() {
+        return name;
     }
 
     /**

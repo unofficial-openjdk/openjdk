@@ -135,5 +135,5 @@ abstract class AbstractExtensibleImpl extends AbstractObjectImpl implements WSDL
             throw new WebServiceException(buf.toString());
         }
         return true;
-    }    
+    }
 }

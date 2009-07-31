@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl;
 
 import com.sun.xml.internal.xsom.XSElementDecl;
@@ -51,22 +53,22 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
         super(owner,_annon,_loc,_fa);
         this.mode = _mode;
     }
-    
+
     private final int mode;
     public int getMode() { return mode; }
-    
+
     // compute the union
     public WildcardImpl union( SchemaDocumentImpl owner, WildcardImpl rhs ) {
         if(this instanceof Any || rhs instanceof Any)
             return new Any(owner,null,null,null,mode);
-        
+
         if(this instanceof Finite && rhs instanceof Finite) {
             Set<String> values = new HashSet<String>();
             values.addAll( ((Finite)this).names );
             values.addAll( ((Finite)rhs ).names );
             return new Finite(owner,null,null,null,values,mode);
         }
-        
+
         if(this instanceof Other && rhs instanceof Other) {
             if( ((Other)this).otherNamespace.equals(
                 ((Other)rhs).otherNamespace) )
@@ -75,29 +77,29 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
                 // this somewhat strange rule is indeed in the spec
                 return new Other(owner,null,null,null, "", mode );
         }
-        
+
         Other o;
         Finite f;
-        
+
         if( this instanceof Other ) {
             o=(Other)this; f=(Finite)rhs;
         } else {
             o=(Other)rhs; f=(Finite)this;
         }
-        
+
         if(f.names.contains(o.otherNamespace))
             return new Any(owner,null,null,null,mode);
         else
             return new Other(owner,null,null,null,o.otherNamespace,mode);
     }
-    
-    
-    
+
+
+
     public final static class Any extends WildcardImpl implements XSWildcard.Any {
         public Any( SchemaDocumentImpl owner, AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa, int _mode ) {
             super(owner,_annon,_loc,_fa,_mode);
         }
-        
+
         public boolean acceptsNamespace( String namespaceURI ) {
             return true;
         }
@@ -108,18 +110,18 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
             return function.any(this);
         }
     }
-    
+
     public final static class Other extends WildcardImpl implements XSWildcard.Other {
         public Other( SchemaDocumentImpl owner, AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa,
                     String otherNamespace, int _mode ) {
             super(owner,_annon,_loc,_fa,_mode);
             this.otherNamespace = otherNamespace;
         }
-        
+
         private final String otherNamespace;
 
         public String getOtherNamespace() { return otherNamespace; }
-        
+
         public boolean acceptsNamespace( String namespaceURI ) {
             return !namespaceURI.equals(otherNamespace);
         }
@@ -131,7 +133,7 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
             return function.other(this);
         }
     }
-    
+
     public final static class Finite extends WildcardImpl implements XSWildcard.Union {
         public Finite( SchemaDocumentImpl owner, AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa,
                     Set<String> ns, int _mode ) {
@@ -139,7 +141,7 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
             names = ns;
             namesView = Collections.unmodifiableSet(names);
         }
-        
+
         private final Set<String> names;
         private final Set<String> namesView;
 
@@ -162,7 +164,7 @@ public abstract class WildcardImpl extends ComponentImpl implements XSWildcard, 
             return function.union(this);
         }
     }
-    
+
     public final void visit( XSVisitor visitor ) {
         visitor.wildcard(this);
     }

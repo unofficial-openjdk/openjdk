@@ -29,7 +29,7 @@ import java.io.OutputStream;
 
 /**
  * Just consumes the byte stream. Kind of like /dev/null.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -37,7 +37,7 @@ public class NullStream extends OutputStream {
 
     public void write(int b) throws IOException {
     }
-    
+
     public void close() throws IOException {
     }
 

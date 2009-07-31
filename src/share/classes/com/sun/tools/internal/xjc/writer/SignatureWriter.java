@@ -46,18 +46,18 @@ import com.sun.tools.internal.xjc.outline.Outline;
 /**
  * Dumps an annotated grammar in a simple format that
  * makes signature check easy.
- * 
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class SignatureWriter {
-    
+
     public static void write( Outline model, Writer out )
         throws IOException {
-        
+
         new SignatureWriter(model,out).dump();
     }
-    
+
     private SignatureWriter( Outline model, Writer out ) {
         this.out = out;
         this.classes = model.getClasses();
@@ -65,12 +65,12 @@ public class SignatureWriter {
         for( ClassOutline ci : classes )
             classSet.put( ci.ref, ci );
     }
-    
+
     /** All the ClassItems in this grammar. */
     private final Collection<? extends ClassOutline> classes;
     /** Map from content interfaces to ClassItem. */
     private final Map<JDefinedClass,ClassOutline> classSet = new HashMap<JDefinedClass,ClassOutline>();
-    
+
     private final Writer out;
     private int indent=0;
     private void printIndent() throws IOException {
@@ -82,9 +82,9 @@ public class SignatureWriter {
         out.write(s);
         out.write('\n');
     }
-    
+
     private void dump() throws IOException {
-        
+
         // collect packages used in the class.
         Set<JPackage> packages = new TreeSet<JPackage>(new Comparator<JPackage>() {
             public int compare(JPackage lhs, JPackage rhs) {
@@ -96,10 +96,10 @@ public class SignatureWriter {
 
         for( JPackage pkg : packages )
             dump( pkg );
-        
+
         out.flush();
     }
-    
+
     private void dump( JPackage pkg ) throws IOException {
         println("package "+pkg.name()+" {");
         indent++;
@@ -107,7 +107,7 @@ public class SignatureWriter {
         indent--;
         println("}");
     }
-    
+
     private void dumpChildren( JClassContainer cont ) throws IOException {
         Iterator itr = cont.classes();
         while(itr.hasNext()) {
@@ -117,14 +117,14 @@ public class SignatureWriter {
                 dump(ci);
         }
     }
-    
+
     private void dump( ClassOutline ci ) throws IOException {
         JDefinedClass cls = ci.implClass;
 
         StringBuilder buf = new StringBuilder();
         buf.append("interface ");
         buf.append(cls.name());
-        
+
         boolean first=true;
         Iterator itr = cls._implements();
         while(itr.hasNext()) {
@@ -139,19 +139,19 @@ public class SignatureWriter {
         buf.append(" {");
         println(buf.toString());
         indent++;
-        
+
         // dump the field
         for( FieldOutline fo : ci.getDeclaredFields() ) {
             String type = printName(fo.getRawType());
             println(type+' '+fo.getPropertyInfo().getName(true)+';');
         }
-        
+
         dumpChildren(cls);
-        
+
         indent--;
         println("}");
     }
-    
+
     /** Get the display name of a type. */
     private String printName( JType t ) {
         String name = t.fullName();

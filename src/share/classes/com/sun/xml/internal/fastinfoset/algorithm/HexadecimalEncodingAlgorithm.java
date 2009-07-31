@@ -37,8 +37,8 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
     private static final char NIBBLE_TO_HEXADECIMAL_TABLE[] =
         {   '0','1','2','3','4','5','6','7',
-            '8','9','A','B','B','D','E','F' };
-    
+            '8','9','A','B','C','D','E','F' };
+
     private static final int HEXADECIMAL_TO_NIBBLE_TABLE[] = {
         /*'0'*/ 0,
         /*'1'*/ 1,
@@ -70,31 +70,31 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
         System.arraycopy(b, start, data, 0, length);
         return data;
     }
-    
+
     public final Object decodeFromInputStream(InputStream s) throws IOException {
         throw new UnsupportedOperationException(CommonResourceBundle.getInstance().getString("message.notImplemented"));
     }
-    
-    
+
+
     public void encodeToOutputStream(Object data, OutputStream s) throws IOException {
         if (!(data instanceof byte[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotByteArray"));
         }
-        
+
         s.write((byte[])data);
     }
-    
+
     public final Object convertFromCharacters(char[] ch, int start, int length) {
         if (length == 0) {
             return new byte[0];
         }
-        
+
         StringBuffer encodedValue = removeWhitespace(ch, start, length);
         int encodedLength = encodedValue.length();
         if (encodedLength == 0) {
             return new byte[0];
         }
-        
+
         int valueLength = encodedValue.length() / 2;
         byte[] value = new byte[valueLength];
 
@@ -107,7 +107,7 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         return value;
     }
-    
+
     public final void convertToCharacters(Object data, StringBuffer s) {
         if (data == null) {
             return;
@@ -123,9 +123,9 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             s.append(NIBBLE_TO_HEXADECIMAL_TABLE[value[i] & 0xf]);
         }
     }
-    
-    
-        
+
+
+
     public final int getPrimtiveLengthFromOctetLength(int octetLength) throws EncodingAlgorithmException {
         return octetLength * 2;
     }
@@ -133,8 +133,8 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
     public int getOctetLengthFromPrimitiveLength(int primitiveLength) {
         return primitiveLength / 2;
     }
-    
+
     public final void encodeToBytes(Object array, int astart, int alength, byte[] b, int start) {
         System.arraycopy((byte[])array, astart, b, start, alength);
-    }    
+    }
 }

@@ -48,4 +48,3 @@ public class ClientTransportException extends JAXWSExceptionBase {
         return "com.sun.xml.internal.ws.resources.client";
     }
 }
-

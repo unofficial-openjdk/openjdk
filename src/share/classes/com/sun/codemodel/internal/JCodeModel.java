@@ -78,17 +78,17 @@ import com.sun.codemodel.internal.writer.ProgressCodeWriter;
  * See {@link #_class(String, ClassType)}.
  */
 public final class JCodeModel {
-    
+
     /** The packages that this JCodeWriter contains. */
     private HashMap<String,JPackage> packages = new HashMap<String,JPackage>();
-    
+
     /** All JReferencedClasses are pooled here. */
     private final HashMap<Class,JReferencedClass> refClasses = new HashMap<Class,JReferencedClass>();
 
-    
+
     /** Obtains a reference to the special "null" type. */
     public final JNullType NULL = new JNullType(this);
-    // primitive types 
+    // primitive types
     public final JPrimitiveType VOID    = new JPrimitiveType(this,"void",   Void.class);
     public final JPrimitiveType BOOLEAN = new JPrimitiveType(this,"boolean",Boolean.class);
     public final JPrimitiveType BYTE    = new JPrimitiveType(this,"byte",   Byte.class);
@@ -98,13 +98,13 @@ public final class JCodeModel {
     public final JPrimitiveType FLOAT   = new JPrimitiveType(this,"float",  Float.class);
     public final JPrimitiveType LONG    = new JPrimitiveType(this,"long",   Long.class);
     public final JPrimitiveType DOUBLE  = new JPrimitiveType(this,"double", Double.class);
-    
+
     /**
      * If the flag is true, we will consider two classes "Foo" and "foo"
      * as a collision.
      */
     protected static final boolean isCaseSensitiveFileSystem = getFileSystemCaseSensitivity();
-    
+
     private static boolean getFileSystemCaseSensitivity() {
         try {
             // let the system property override, in case the user really
@@ -112,14 +112,14 @@ public final class JCodeModel {
             if( System.getProperty("com.sun.codemodel.internal.FileSystemCaseSensitive")!=null )
                 return true;
         } catch( Exception e ) {}
-        
+
         // on Unix, it's case sensitive.
         return (File.separatorChar == '/');
     }
 
 
     public JCodeModel() {}
-    
+
     /**
      * Add a package to the list of packages to be generated
      *
@@ -136,7 +136,7 @@ public final class JCodeModel {
         }
         return p;
     }
-    
+
     public final JPackage rootPackage() {
         return _package("");
     }
@@ -148,10 +148,10 @@ public final class JCodeModel {
     public Iterator<JPackage> packages() {
         return packages.values().iterator();
     }
-    
+
     /**
      * Creates a new generated class.
-     * 
+     *
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
@@ -186,7 +186,7 @@ public final class JCodeModel {
 
     /**
      * Gets a reference to the already created generated class.
-     * 
+     *
      * @return null
      *      If the class is not yet created.
      * @see JPackage#_getClass(String)
@@ -201,7 +201,7 @@ public final class JCodeModel {
 
     /**
      * Creates a new anonymous class.
-     * 
+     *
      * @deprecated
      *      The naming convention doesn't match the rest of the CodeModel.
      *      Use {@link #anonymousClass(JClass)} instead.
@@ -220,13 +220,13 @@ public final class JCodeModel {
     public JDefinedClass anonymousClass(Class baseType) {
         return anonymousClass(ref(baseType));
     }
-    
+
     /**
      * Generates Java source code.
      * A convenience method for <code>build(destDir,destDir,System.out)</code>.
-     * 
-     * @param	destDir
-     *		source files are generated into this directory.
+     *
+     * @param   destDir
+     *          source files are generated into this directory.
      * @param   status
      *      if non-null, progress indication will be sent to this stream.
      */
@@ -238,10 +238,10 @@ public final class JCodeModel {
      * Generates Java source code.
      * A convenience method that calls {@link #build(CodeWriter,CodeWriter)}.
      *
-     * @param	srcDir
-     *		Java source files are generated into this directory.
-     * @param	resourceDir
-     *		Other resource files are generated into this directory.
+     * @param   srcDir
+     *          Java source files are generated into this directory.
+     * @param   resourceDir
+     *          Other resource files are generated into this directory.
      * @param   status
      *      if non-null, progress indication will be sent to this stream.
      */
@@ -275,7 +275,7 @@ public final class JCodeModel {
     public void build( CodeWriter out ) throws IOException {
         build(out,out);
     }
-    
+
     /**
      * Generates Java source code.
      */
@@ -301,7 +301,7 @@ public final class JCodeModel {
         return r;
     }
 
-	
+
     /**
      * Obtains a reference to an existing class from its Class object.
      *
@@ -511,11 +511,11 @@ public final class JCodeModel {
 
     /**
      * References to existing classes.
-     * 
+     *
      * <p>
      * JReferencedClass is kept in a pool so that they are shared.
      * There is one pool for each JCodeModel object.
-     * 
+     *
      * <p>
      * It is impossible to cache JReferencedClass globally only because
      * there is the _package() method, which obtains the owner JPackage

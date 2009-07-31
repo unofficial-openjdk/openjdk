@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,13 +47,13 @@ import static javax.xml.bind.JAXBContext.JAXB_CONTEXT_FACTORY;
 //import java.lang.reflect.InvocationTargetException;
 
 /**
- * This class is package private and therefore is not exposed as part of the 
+ * This class is package private and therefore is not exposed as part of the
  * JAXB API.
  *
  * This code is designed to implement the JAXB 1.0 spec pluggability feature
  *
  * @author <ul><li>Ryan Shoemaker, Sun Microsystems, Inc.</li></ul>
- * @version $Revision$
+ * @version $Revision: 1.27.2.1 $
  * @see JAXBContext
  */
 class ContextFinder {
@@ -124,7 +124,7 @@ class ContextFinder {
      * Create an instance of a class using the specified ClassLoader
      */
     static JAXBContext newInstance( String contextPath,
-                               String className, 
+                               String className,
                                ClassLoader classLoader,
                                Map properties )
         throws JAXBException
@@ -289,7 +289,7 @@ class ContextFinder {
             final StringBuilder resource = new StringBuilder().append("META-INF/services/").append(jaxbContextFQCN);
             final InputStream resourceStream =
                     classLoader.getResourceAsStream(resource.toString());
-            
+
             if (resourceStream != null) {
                 r = new BufferedReader(new InputStreamReader(resourceStream, "UTF-8"));
                 factoryClassName = r.readLine().trim();
@@ -398,11 +398,11 @@ class ContextFinder {
 
 
     private static Properties loadJAXBProperties( ClassLoader classLoader,
-                                                  String propFileName ) 
+                                                  String propFileName )
         throws JAXBException {
-                                            
+
         Properties props = null;
-                                                    
+
         try {
             URL url;
             if(classLoader==null)
@@ -416,12 +416,12 @@ class ContextFinder {
                 InputStream is = url.openStream();
                 props.load( is );
                 is.close();
-            } 
+            }
         } catch( IOException ioe ) {
             logger.log(Level.FINE,"Unable to load "+propFileName,ioe);
             throw new JAXBException( ioe.toString(), ioe );
         }
-        
+
         return props;
     }
 
@@ -484,26 +484,29 @@ class ContextFinder {
      * Loads the class, provided that the calling thread has an access to the class being loaded.
      */
     private static Class safeLoadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
-        logger.fine("Trying to load "+className);
-        try {
-            // make sure that the current thread has an access to the package of the given name.
-            SecurityManager s = System.getSecurityManager();
-            if (s != null) {
-                int i = className.lastIndexOf('.');
-                if (i != -1) {
-                    s.checkPackageAccess(className.substring(0,i));
-                }
-            }
+       logger.fine("Trying to load "+className);
+       try {
+          // make sure that the current thread has an access to the package of the given name.
+          SecurityManager s = System.getSecurityManager();
+          if (s != null) {
+              int i = className.lastIndexOf('.');
+              if (i != -1) {
+                  s.checkPackageAccess(className.substring(0,i));
+              }
+          }
 
-            if (classLoader == null)
-                return Class.forName(className);
-            else
-                return classLoader.loadClass(className);
-        } catch (SecurityException se) {
-            // anyone can access the platform default factory class without permission
-            if (PLATFORM_DEFAULT_FACTORY_CLASS.equals(className))
-                return Class.forName(className);
-            throw se;
-        }
+          if (classLoader == null) {
+              return Class.forName(className);
+          } else {
+              return classLoader.loadClass(className);
+          }
+       } catch (SecurityException se) {
+           // anyone can access the platform default factory class without permission
+           if (PLATFORM_DEFAULT_FACTORY_CLASS.equals(className)) {
+              return Class.forName(className);
+           }
+           throw se;
+       }
     }
+
 }

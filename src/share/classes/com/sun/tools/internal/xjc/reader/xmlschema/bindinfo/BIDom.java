@@ -44,7 +44,7 @@ public class BIDom extends AbstractDeclarationImpl {
     String type;
 
     public final QName getName() { return NAME; }
-    
+
     /** Name of the conversion declaration. */
     public static final QName NAME = new QName(Const.JAXB_NSURI,"dom");
 }

@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom.impl;
 
 import com.sun.xml.internal.xsom.XSElementDecl;
@@ -51,19 +53,20 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
     public ElementDecl( PatcherManager reader, SchemaDocumentImpl owner,
         AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl fa,
         String _tns, String _name, boolean _anonymous,
-        
+
         XmlString _defv, XmlString _fixedv,
-        boolean _nillable, boolean _abstract,
+        boolean _nillable, boolean _abstract, Boolean _form,
         Ref.Type _type, Ref.Element _substHead,
         int _substDisallowed, int _substExcluded,
-        List<IdentityConstraintImpl> idConstraints ) {
-        
+        List<IdentityConstraintImpl> idConstraints) {
+
         super(owner,_annon,_loc,fa,_tns,_name,_anonymous);
-        
+
         this.defaultValue = _defv;
         this.fixedValue = _fixedv;
         this.nillable = _nillable;
         this._abstract = _abstract;
+        this.form = _form;
         this.type = _type;
         this.substHead = _substHead;
         this.substDisallowed = _substDisallowed;
@@ -76,33 +79,33 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
         if(type==null)
             throw new IllegalArgumentException();
     }
-    
+
     private XmlString defaultValue;
     public XmlString getDefaultValue() { return defaultValue; }
-    
+
     private XmlString fixedValue;
     public XmlString getFixedValue() { return fixedValue; }
 
     private boolean nillable;
     public boolean isNillable() { return nillable; }
-    
+
     private boolean _abstract;
     public boolean isAbstract() { return _abstract; }
-    
+
     private Ref.Type type;
     public XSType getType() { return type.getType(); }
-    
+
     private Ref.Element substHead;
     public XSElementDecl getSubstAffiliation() {
         if(substHead==null)     return null;
         return substHead.get();
     }
-    
+
     private int substDisallowed;
     public boolean isSubstitutionDisallowed( int method ) {
         return (substDisallowed&method)!=0;
     }
-    
+
     private int substExcluded;
     public boolean isSubstitutionExcluded( int method ) {
         return (substExcluded&method)!=0;
@@ -113,9 +116,14 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
         return idConstraints;
     }
 
+    private Boolean form;
+    public Boolean getForm() {
+        return form;
+    }
+
 
     /**
-     * @deprecated 
+     * @deprecated
      */
     public XSElementDecl[] listSubstitutables() {
         Set<? extends XSElementDecl> s = getSubstitutables();
@@ -127,7 +135,7 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
 
     /** Unmodifieable view of {@link #substitutables}. */
     private Set<XSElementDecl> substitutablesView = null;
-    
+
     public Set<? extends XSElementDecl> getSubstitutables() {
         if( substitutables==null ) {
             // if the field is null by the time this method
@@ -136,7 +144,7 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
         }
         return substitutablesView;
     }
-    
+
     protected void addSubstitutable( ElementDecl decl ) {
         if( substitutables==null ) {
             substitutables = new HashSet<XSElementDecl>();
@@ -145,47 +153,47 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
         }
         substitutables.add(decl);
     }
-    
-    
+
+
     public void updateSubstitutabilityMap() {
         ElementDecl parent = this;
-        XSType type = this.getType(); 
+        XSType type = this.getType();
 
         boolean rused = false;
         boolean eused = false;
-        
+
         while( (parent=(ElementDecl)parent.getSubstAffiliation())!=null ) {
-            
+
             if(parent.isSubstitutionDisallowed(XSType.SUBSTITUTION))
                 continue;
-            
+
             boolean rd = parent.isSubstitutionDisallowed(XSType.RESTRICTION);
             boolean ed = parent.isSubstitutionDisallowed(XSType.EXTENSION);
 
             if( (rd && rused) || ( ed && eused ) )   continue;
-            
+
             XSType parentType = parent.getType();
             while(type!=parentType) {
                 if(type.getDerivationMethod()==XSType.RESTRICTION)  rused = true;
                 else                                                eused = true;
-                
+
                 type = type.getBaseType();
                 if(type==null)  // parentType and type doesn't share the common base type. a bug in the schema.
                     break;
-                
+
                 if( type.isComplexType() ) {
                     rd |= type.asComplexType().isSubstitutionProhibited(XSType.RESTRICTION);
                     ed |= type.asComplexType().isSubstitutionProhibited(XSType.EXTENSION);
                 }
             }
-            
+
             if( (rd && rused) || ( ed && eused ) )   continue;
-            
+
             // this element can substitute "parent"
             parent.addSubstitutable(this);
         }
     }
-    
+
     public boolean canBeSubstitutedBy(XSElementDecl e) {
         return getSubstitutables().contains(e);
     }
@@ -202,7 +210,7 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
 
 
 
-    
+
     public void visit( XSVisitor visitor ) {
         visitor.elementDecl(this);
     }
@@ -220,8 +228,8 @@ public class ElementDecl extends DeclarationImpl implements XSElementDecl, Ref.T
     public Object apply( XSFunction function ) {
         return function.elementDecl(this);
     }
-    
-    
+
+
     // Ref.Term implementation
     public XSTerm getTerm() { return this; }
 }

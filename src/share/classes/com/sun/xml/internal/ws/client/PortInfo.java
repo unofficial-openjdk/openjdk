@@ -111,7 +111,7 @@ public class PortInfo implements WSPortInfo {
             Iterable<WSDLPortImpl> ports = owner.getWsdlService().getPorts();
             for (WSDLPortImpl port : ports){
                 if (port.getName().equals(portName))
-                    return port;                
+                    return port;
             }
         }
         return null;
@@ -168,4 +168,3 @@ public class PortInfo implements WSPortInfo {
         return bindingId.toString();
     }
 }
-

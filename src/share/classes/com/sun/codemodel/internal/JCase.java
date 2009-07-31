@@ -30,7 +30,7 @@ package com.sun.codemodel.internal;
 public final class JCase implements JStatement {
 
     /**
-     * label part of the case statement 
+     * label part of the case statement
      */
     private JExpression label;
 
@@ -43,7 +43,7 @@ public final class JCase implements JStatement {
      * is this a regular case statement or a default case statement?
      */
     private boolean isDefaultCase = false;
-    
+
     /**
      * Construct a case statement
      */
@@ -59,7 +59,7 @@ public final class JCase implements JStatement {
         this.label = label;
         this.isDefaultCase = isDefaultCase;
     }
-    
+
     public JExpression label() {
         return label;
     }
@@ -76,7 +76,7 @@ public final class JCase implements JStatement {
         } else {
             f.p("default:").nl();
         }
-    	if (body != null)
+        if (body != null)
             f.s(body);
         f.o();
     }

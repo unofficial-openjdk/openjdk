@@ -22,9 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * 
- */
 
 
 
@@ -50,7 +47,7 @@ import com.sun.xml.internal.messaging.saaj.util.LogDomainConstants;
 
 
 public class Fault1_2Impl extends FaultImpl {
-        
+
     protected static final Logger log =
         Logger.getLogger(
             LogDomainConstants.SOAP_VER1_2_DOMAIN,
@@ -180,7 +177,7 @@ public class Fault1_2Impl extends FaultImpl {
         if (this.faultStringElement == null)
             findReasonElement();
         SOAPElement reasonText;
-        
+
         if (this.faultStringElement == null) {
             this.faultStringElement = addSOAPFaultElement("Reason");
             reasonText =
@@ -197,12 +194,12 @@ public class Fault1_2Impl extends FaultImpl {
                         getFaultReasonTextName());
             }
         }
-        
+
         String xmlLang = localeToXmlLang(locale);
         reasonText.addAttribute(getXmlLangName(), xmlLang);
         reasonText.addTextNode(text);
     }
-    
+
     private void removeDefaultFaultString() throws SOAPException {
         SOAPElement reasonText = getFaultReasonTextElement(Locale.getDefault());
         if (reasonText != null) {
@@ -547,13 +544,13 @@ public class Fault1_2Impl extends FaultImpl {
     protected QName getDefaultFaultCode() {
         return SOAPConstants.SOAP_SENDER_FAULT;
     }
-    
+
      protected FaultElementImpl createSOAPFaultElement(QName qname) {
          return new FaultElement1_2Impl(
                        ((SOAPDocument) getOwnerDocument()).getDocument(),
                        qname);
     }
-     
+
     protected FaultElementImpl createSOAPFaultElement(Name qname) {
          return new FaultElement1_2Impl(
                        ((SOAPDocument) getOwnerDocument()).getDocument(),

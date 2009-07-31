@@ -44,7 +44,7 @@ public class ValuePattern extends StringPattern {
     if (!(other instanceof ValuePattern))
       return false;
     return (dt.equals(((ValuePattern)other).dt)
-	    && dt.sameValue(obj, ((ValuePattern)other).obj));
+            && dt.sameValue(obj, ((ValuePattern)other).obj));
   }
 
   public void accept(PatternVisitor visitor) {

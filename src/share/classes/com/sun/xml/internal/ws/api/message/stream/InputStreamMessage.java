@@ -35,14 +35,14 @@ import java.io.InputStream;
 public class InputStreamMessage extends StreamBasedMessage {
     /**
      * The MIME content-type of the encoding.
-     */    
+     */
     public final String contentType;
-    
+
     /**
      * The message represented as an {@link InputStream}.
      */
     public final InputStream msg;
-    
+
     /**
      * Create a new message.
      *
@@ -58,11 +58,11 @@ public class InputStreamMessage extends StreamBasedMessage {
      */
     public InputStreamMessage(Packet properties, String contentType, InputStream msg) {
         super(properties);
-        
+
         this.contentType = contentType;
         this.msg = msg;
     }
-    
+
     /**
      * Create a new message.
      *
@@ -82,7 +82,7 @@ public class InputStreamMessage extends StreamBasedMessage {
     public InputStreamMessage(Packet properties, AttachmentSet attachments,
             String contentType, InputStream msg) {
         super(properties, attachments);
-        
+
         this.contentType = contentType;
         this.msg = msg;
     }

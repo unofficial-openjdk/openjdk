@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -47,6 +48,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.sun.codemodel.internal.CodeWriter;
+import com.sun.codemodel.internal.JPackage;
 import com.sun.codemodel.internal.writer.FileCodeWriter;
 import com.sun.codemodel.internal.writer.PrologCodeWriter;
 import com.sun.org.apache.xml.internal.resolver.CatalogManager;
@@ -63,7 +65,7 @@ import org.xml.sax.InputSource;
 
 /**
  * Global options.
- * 
+ *
  * <p>
  * This class stores invocation configuration for XJC.
  * The configuration in this class shoule be abstract enough so that
@@ -73,10 +75,10 @@ public class Options
 {
     /** If "-debug" is specified. */
     public boolean debugMode;
-    
+
     /** If the "-verbose" option is specified. */
     public boolean verbose;
-    
+
     /** If the "-quiet" option is specified. */
     public boolean quiet;
 
@@ -85,7 +87,7 @@ public class Options
 
     /** No file header comment (to be more friendly with diff.) */
     public boolean noFileHeader;
-    
+
     /**
      * Check the source schemas with extra scrutiny.
      * The exact meaning depends on the schema language.
@@ -103,7 +105,7 @@ public class Options
      * If true, try to resolve name conflicts automatically by assigning mechanical numbers.
      */
     public boolean automaticNameConflictResolution = false;
-    
+
     /**
      * strictly follow the compatibility rules and reject schemas that
      * contain features from App. E.2, use vendor binding extensions
@@ -114,7 +116,7 @@ public class Options
      * binding extensions
      */
     public static final int EXTENSION = 2;
-    
+
     /**
      * this switch determines how carefully the compiler will follow
      * the compatibility rules in the spec. Either <code>STRICT</code>
@@ -129,12 +131,34 @@ public class Options
     /**
      * Generates output for the specified version of the runtime.
      */
-    public SpecVersion target = SpecVersion.V2_1;
+    public SpecVersion target = SpecVersion.LATEST;
 
+    private boolean is2_2 = true;
 
-    /** Target direcoty when producing files. */
+    public Options() {
+        if (is2_2) {
+            try {
+                Class.forName("javax.xml.bind.JAXBPermission");
+            } catch (ClassNotFoundException cnfe) {
+                is2_2 = false;
+            }
+            if (!is2_2) {
+                target = SpecVersion.V2_1;
+            } else {
+                target = SpecVersion.LATEST;
+            }
+        }
+    }
+
+    /**
+     * Target directory when producing files.
+     * <p>
+     * This field is not used when XJC is driven through the XJC API.
+     * Plugins that need to generate extra files should do so by using
+     * {@link JPackage#addResourceFile(JResourceFile)}.
+     */
     public File targetDir = new File(".");
-    
+
     /**
      * Actually stores {@link CatalogResolver}, but the field
      * type is made to {@link EntityResolver} so that XJC can be
@@ -147,7 +171,7 @@ public class Options
      * constants.
      */
     private Language schemaLanguage = null;
-    
+
     /**
      * The -p option that should control the default Java package that
      * will contain the generated code. Null if unspecified.
@@ -164,9 +188,9 @@ public class Options
      * Input schema files as a list of {@link InputSource}s.
      */
     private final List<InputSource> grammars = new ArrayList<InputSource>();
-    
+
     private final List<InputSource> bindFiles = new ArrayList<InputSource>();
-    
+
     // Proxy setting.
     private String proxyHost = null;
     private String proxyPort = null;
@@ -328,12 +352,12 @@ public class Options
     public void setSchemaLanguage(Language _schemaLanguage) {
         this.schemaLanguage = _schemaLanguage;
     }
-    
+
     /** Input schema files. */
     public InputSource[] getGrammars() {
         return grammars.toArray(new InputSource[grammars.size()]);
     }
-    
+
     /**
      * Adds a new input schema.
      */
@@ -379,7 +403,7 @@ public class Options
         // absolutize all the system IDs in the input,
         // so that we can map system IDs to DOM trees.
         try {
-            URL baseURL = new File(".").getCanonicalFile().toURL(); 
+            URL baseURL = new File(".").getCanonicalFile().toURL();
             is.setSystemId( new URL(baseURL,is.getSystemId()).toExternalForm() );
         } catch( IOException e ) {
             // ignore
@@ -387,7 +411,7 @@ public class Options
         return is;
     }
 
-    
+
     /** Input external binding files. */
     public InputSource[] getBindFiles() {
         return bindFiles.toArray(new InputSource[bindFiles.size()]);
@@ -424,11 +448,11 @@ public class Options
                 classpaths.toArray(new URL[classpaths.size()]),parent);
     }
 
-    
+
     /**
      * Parses an option <code>args[i]</code> and return
      * the number of tokens consumed.
-     * 
+     *
      * @return
      *      0 if the argument is not understood. Returning 0
      *      will let the caller report an error.
@@ -437,12 +461,15 @@ public class Options
      */
     public int parseArgument( String[] args, int i ) throws BadCommandLineException {
         if (args[i].equals("-classpath") || args[i].equals("-cp")) {
-            File file = new File(requireArgument(args[i],args,++i));
-            try {
-                classpaths.add(file.toURL());
-            } catch (MalformedURLException e) {
-                throw new BadCommandLineException(
-                    Messages.format(Messages.NOT_A_VALID_FILENAME,file),e);
+            String a = requireArgument(args[i], args, ++i);
+            for (String p : a.split(File.pathSeparator)) {
+                File file = new File(p);
+                try {
+                    classpaths.add(file.toURL());
+                } catch (MalformedURLException e) {
+                    throw new BadCommandLineException(
+                        Messages.format(Messages.NOT_A_VALID_FILENAME,file),e);
+                }
             }
             return 2;
         }
@@ -633,7 +660,7 @@ public class Options
                 throw new BadCommandLineException(e.getMessage(),e);
             }
         }
-        
+
         return 0;   // unrecognized
     }
 
@@ -706,10 +733,10 @@ public class Options
         }
         ((CatalogResolver)entityResolver).getCatalog().parseCatalog(catalogFile.getPath());
     }
-    
+
     /**
      * Parses arguments and fill fields of this object.
-     * 
+     *
      * @exception BadCommandLineException
      *      thrown when there's a problem in the command-line arguments
      */
@@ -731,7 +758,7 @@ public class Options
                     addFile(args[i],grammars,".xsd");
             }
         }
-        
+
         // configure proxy
         if (proxyHost != null || proxyPort != null) {
             if (proxyHost != null && proxyPort != null) {
@@ -756,9 +783,14 @@ public class Options
         if (grammars.size() == 0)
             throw new BadCommandLineException(
                 Messages.format(Messages.MISSING_GRAMMAR));
-        
+
         if( schemaLanguage==null )
             schemaLanguage = guessSchemaLanguage();
+
+//        if(target==SpecVersion.V2_2 && !isExtensionMode())
+//            throw new BadCommandLineException(
+//                "Currently 2.2 is still not finalized yet, so using it requires the -extension switch." +
+//                "NOTE THAT 2.2 SPEC MAY CHANGE BEFORE IT BECOMES FINAL.");
 
         if(pluginLoadFailure!=null)
             throw new BadCommandLineException(
@@ -768,7 +800,7 @@ public class Options
     /**
      * Finds the <tt>META-INF/sun-jaxb.episode</tt> file to add as a binding customization.
      */
-    private void scanEpisodeFile(File jar) throws BadCommandLineException {
+    public void scanEpisodeFile(File jar) throws BadCommandLineException {
         try {
             URLClassLoader ucl = new URLClassLoader(new URL[]{jar.toURL()});
             Enumeration<URL> resources = ucl.findResources("META-INF/sun-jaxb.episode");
@@ -787,18 +819,21 @@ public class Options
      * Guesses the schema language.
      */
     public Language guessSchemaLanguage() {
+
         // otherwise, use the file extension.
         // not a good solution, but very easy.
-        String name = grammars.get(0).getSystemId().toLowerCase();
+        if ((grammars != null) && (grammars.size() > 0)) {
+            String name = grammars.get(0).getSystemId().toLowerCase();
 
-        if (name.endsWith(".rng"))
-            return Language.RELAXNG;
-        if (name.endsWith(".rnc"))
-            return Language.RELAXNG_COMPACT;
-        if (name.endsWith(".dtd"))
-            return Language.DTD;
-        if (name.endsWith(".wsdl"))
-            return Language.WSDL;
+            if (name.endsWith(".rng"))
+                return Language.RELAXNG;
+            if (name.endsWith(".rnc"))
+                return Language.RELAXNG_COMPACT;
+            if (name.endsWith(".dtd"))
+                return Language.DTD;
+            if (name.endsWith(".wsdl"))
+                return Language.WSDL;
+        }
 
         // by default, assume XML Schema
         return Language.XMLSCHEMA;
@@ -852,6 +887,36 @@ public class Options
     private static <T> T[] findServices( Class<T> clazz, ClassLoader classLoader ) {
         // if true, print debug output
         final boolean debug = com.sun.tools.internal.xjc.util.Util.getSystemProperty(Options.class,"findServices")!=null;
+
+        // if we are running on Mustang or Dolphin, use ServiceLoader
+        // so that we can take advantage of JSR-277 module system.
+        try {
+            Class<?> serviceLoader = Class.forName("java.util.ServiceLoader");
+            if(debug)
+                System.out.println("Using java.util.ServiceLoader");
+            Iterable<T> itr = (Iterable<T>)serviceLoader.getMethod("load",Class.class,ClassLoader.class).invoke(null,clazz,classLoader);
+            List<T> r = new ArrayList<T>();
+            for (T t : itr)
+                r.add(t);
+            return r.toArray((T[])Array.newInstance(clazz,r.size()));
+        } catch (ClassNotFoundException e) {
+            // fall through
+        } catch (IllegalAccessException e) {
+            Error x = new IllegalAccessError();
+            x.initCause(e);
+            throw x;
+        } catch (InvocationTargetException e) {
+            Throwable x = e.getTargetException();
+            if (x instanceof RuntimeException)
+                throw (RuntimeException) x;
+            if (x instanceof Error)
+                throw (Error) x;
+            throw new Error(x);
+        } catch (NoSuchMethodException e) {
+            Error x = new NoSuchMethodError();
+            x.initCause(e);
+            throw x;
+        }
 
         String serviceId = "META-INF/services/" + clazz.getName();
 

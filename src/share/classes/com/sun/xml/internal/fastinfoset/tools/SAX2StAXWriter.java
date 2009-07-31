@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -40,25 +40,25 @@ import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
-        
+
     /**
      * XML stream writer where events are pushed.
      */
     XMLStreamWriter _writer;
-    
+
     /**
      * List of namespace decl for upcoming element.
      */
     ArrayList _namespaces = new ArrayList();
-    
+
     public SAX2StAXWriter(XMLStreamWriter writer) {
         _writer = writer;
     }
-    
+
     public XMLStreamWriter getWriter() {
         return _writer;
     }
-    
+
     public void startDocument() throws SAXException {
         try {
             _writer.writeStartDocument();
@@ -67,7 +67,7 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
             throw new SAXException(e);
         }
     }
-    
+
     public void endDocument() throws SAXException {
         try {
             _writer.writeEndDocument();
@@ -77,9 +77,9 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
             throw new SAXException(e);
         }
     }
-    
-    public void characters(char[] ch, int start, int length) 
-        throws SAXException 
+
+    public void characters(char[] ch, int start, int length)
+        throws SAXException
     {
         try {
             _writer.writeCharacters(ch, start, length);
@@ -87,37 +87,37 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
         catch (XMLStreamException e) {
             throw new SAXException(e);
         }
-    }    
-    
-    public void startElement(String namespaceURI, String localName, 
-        String qName, Attributes atts) throws SAXException 
+    }
+
+    public void startElement(String namespaceURI, String localName,
+        String qName, Attributes atts) throws SAXException
     {
         try {
             int k = qName.indexOf(':');
             String prefix = (k > 0) ? qName.substring(0, k) : "";
             _writer.writeStartElement(prefix, localName, namespaceURI);
-            
+
             int length = _namespaces.size();
             for (int i = 0; i < length; i++) {
                 QualifiedName nsh = (QualifiedName) _namespaces.get(i);
                 _writer.writeNamespace(nsh.prefix, nsh.namespaceName);
             }
             _namespaces.clear();
-            
+
             length = atts.getLength();
             for (int i = 0; i < length; i++) {
-                _writer.writeAttribute(atts.getURI(i), 
+                _writer.writeAttribute(atts.getURI(i),
                                        atts.getLocalName(i),
-                                       atts.getValue(i));                                       
+                                       atts.getValue(i));
             }
         }
         catch (XMLStreamException e) {
             throw new SAXException(e);
-        }                
+        }
     }
-    
-    public void endElement(String namespaceURI, String localName, 
-        String qName) throws SAXException 
+
+    public void endElement(String namespaceURI, String localName,
+        String qName) throws SAXException
     {
         try {
             _writer.writeEndElement();
@@ -125,11 +125,11 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
         catch (XMLStreamException e) {
             e.printStackTrace();
             throw new SAXException(e);
-        }        
+        }
     }
-    
-    public void startPrefixMapping(String prefix, String uri) 
-        throws SAXException 
+
+    public void startPrefixMapping(String prefix, String uri)
+        throws SAXException
     {
     // Commented as in StAX NS are declared for current element?
     // now _writer.setPrefix() is invoked in _writer.writeNamespace()
@@ -141,18 +141,18 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
 //            throw new SAXException(e);
 //        }
     }
-    
+
     public void endPrefixMapping(String prefix) throws SAXException {
     }
-    
-    public void ignorableWhitespace(char[] ch, int start, int length) 
-        throws SAXException 
+
+    public void ignorableWhitespace(char[] ch, int start, int length)
+        throws SAXException
     {
         characters(ch, start, length);
     }
-    
-    public void processingInstruction(String target, String data) 
-        throws SAXException 
+
+    public void processingInstruction(String target, String data)
+        throws SAXException
     {
         try {
             _writer.writeProcessingInstruction(target, data);
@@ -161,41 +161,40 @@ public class SAX2StAXWriter extends DefaultHandler implements LexicalHandler {
             throw new SAXException(e);
         }
     }
-    
+
     public void setDocumentLocator(Locator locator) {
     }
-    
+
     public void skippedEntity(String name) throws SAXException {
     }
-    
-    public void comment(char[] ch, int start, int length) 
-        throws SAXException 
+
+    public void comment(char[] ch, int start, int length)
+        throws SAXException
     {
         try {
             _writer.writeComment(new String(ch, start, length));
         }
         catch (XMLStreamException e) {
             throw new SAXException(e);
-        }        
-    }    
-    
+        }
+    }
+
     public void endCDATA() throws SAXException {
     }
-    
+
     public void endDTD() throws SAXException {
     }
-    
+
     public void endEntity(String name) throws SAXException {
     }
-    
+
     public void startCDATA() throws SAXException {
     }
-    
+
     public void startDTD(String name, String publicId, String systemId) throws SAXException {
     }
-    
+
     public void startEntity(String name) throws SAXException {
     }
-    
-}
 
+}

@@ -22,11 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.xsom;
 
 /**
  * Model group.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -46,7 +48,7 @@ public interface XSModelGroup extends XSComponent, XSTerm, Iterable<XSParticle>
         private final String value;
         /**
          * Returns the human-readable compositor name.
-         * 
+         *
          * @return
          *      Either "all", "sequence", or "choice".
          */

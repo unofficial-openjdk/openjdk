@@ -30,7 +30,7 @@ import org.xml.sax.SAXException;
 /**
  * Dispatches incoming events into sub handlers appropriately
  * so that the interleaving semantics will be correctly realized.
- * 
+ *
  * @author Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEventReceiver {
@@ -38,14 +38,14 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
         this._parent = parent;
         this._cookie = cookie;
     }
-    
+
     protected void setHandlers( NGCCEventReceiver[] receivers ) {
         this._receivers = receivers;
     }
-    
+
     /** event receiverse. */
     protected NGCCEventReceiver[] _receivers;
-    
+
     public int replace(NGCCEventReceiver oldHandler, NGCCEventReceiver newHandler) {
         for( int i=0; i<_receivers.length; i++ )
             if( _receivers[i]==oldHandler ) {
@@ -86,12 +86,12 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
      * Nest level. Lock will be release when the lockCount becomes 0.
      */
     private int lockCount=0;
-    
+
     public void enterElement(
         String uri, String localName, String qname,Attributes atts) throws SAXException {
-        
+
         if(isJoining)   return; // ignore any token if we are joining. See joinByXXXX.
-        
+
         if(lockCount++==0) {
             lockedReceiver = findReceiverOfElement(uri,localName);
             if(lockedReceiver==-1) {
@@ -100,7 +100,7 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
                 return;
             }
         }
-        
+
         _receivers[lockedReceiver].enterElement(uri,localName,qname,atts);
     }
     public void leaveElement(String uri, String localName, String qname) throws SAXException {
@@ -113,7 +113,7 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
     }
     public void enterAttribute(String uri, String localName, String qname) throws SAXException {
         if(isJoining)   return; // ignore any token if we are joining. See joinByXXXX.
-        
+
         if(lockCount++==0) {
             lockedReceiver = findReceiverOfAttribute(uri,localName);
             if(lockedReceiver==-1) {
@@ -122,12 +122,12 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
                 return;
             }
         }
-                
+
         _receivers[lockedReceiver].enterAttribute(uri,localName,qname);
     }
     public void leaveAttribute(String uri, String localName, String qname) throws SAXException {
         if(isJoining)   return; // ignore any token if we are joining. See joinByXXXX.
-        
+
         if( lockCount-- == 0 )
             joinByLeaveAttribute(null,uri,localName,qname);
         else
@@ -135,7 +135,7 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
     }
     public void text(String value) throws SAXException {
         if(isJoining)   return; // ignore any token if we are joining. See joinByXXXX.
-        
+
         if(lockCount!=0)
             _receivers[lockedReceiver].text(value);
         else {
@@ -150,18 +150,18 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
     /**
      * Implemented by the generated code to determine the handler
      * that can receive the given element.
-     * 
+     *
      * @return
      *      Thread ID of the receiver that can handle this event,
      *      or -1 if none.
      */
     protected abstract int findReceiverOfElement( String uri, String local );
-    
+
     /**
      * Returns the handler that can receive the given attribute, or null.
      */
     protected abstract int findReceiverOfAttribute( String uri, String local );
-    
+
     /**
      * Returns the handler that can receive text events, or null.
      */
@@ -176,7 +176,7 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
 //
 //
 
-    
+
     /**
      * Set to true when this handler is in the process of
      * joining all branches.
@@ -185,16 +185,16 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
 
     /**
      * Joins all the child receivers.
-     * 
+     *
      * <p>
      * This method is called by a child receiver when it sees
      * something that it cannot handle, or by this object itself
      * when it sees an event that it can't process.
-     * 
+     *
      * <p>
      * This method forces children to move to its final state,
      * then revert to the parent.
-     * 
+     *
      * @param source
      *      If this method is called by one of the child receivers,
      *      the receiver object. If this method is called by itself,
@@ -202,7 +202,7 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
      */
     public void joinByEnterElement( NGCCEventReceiver source,
         String uri, String local, String qname, Attributes atts ) throws SAXException {
-        
+
         if(isJoining)   return; // we are already in the process of joining. ignore.
         isJoining = true;
 
@@ -214,17 +214,17 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
         for( int i=0; i<_receivers.length; i++ )
             if( _receivers[i]!=source )
                 _receivers[i].enterElement(uri,local,qname,atts);
-        
+
         // revert to the parent
         _parent._source.replace(this,_parent);
         _parent.onChildCompleted(null,_cookie,true);
         // send this event to the parent
         _parent.enterElement(uri,local,qname,atts);
     }
-    
+
     public void joinByLeaveElement( NGCCEventReceiver source,
         String uri, String local, String qname ) throws SAXException {
-        
+
         if(isJoining)   return; // we are already in the process of joining. ignore.
         isJoining = true;
 
@@ -236,17 +236,17 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
         for( int i=0; i<_receivers.length; i++ )
             if( _receivers[i]!=source )
                 _receivers[i].leaveElement(uri,local,qname);
-        
+
         // revert to the parent
         _parent._source.replace(this,_parent);
         _parent.onChildCompleted(null,_cookie,true);
         // send this event to the parent
         _parent.leaveElement(uri,local,qname);
     }
-    
+
     public void joinByEnterAttribute( NGCCEventReceiver source,
         String uri, String local, String qname ) throws SAXException {
-        
+
         if(isJoining)   return; // we are already in the process of joining. ignore.
         isJoining = true;
 
@@ -258,17 +258,17 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
         for( int i=0; i<_receivers.length; i++ )
             if( _receivers[i]!=source )
                 _receivers[i].enterAttribute(uri,local,qname);
-        
+
         // revert to the parent
         _parent._source.replace(this,_parent);
         _parent.onChildCompleted(null,_cookie,true);
         // send this event to the parent
         _parent.enterAttribute(uri,local,qname);
     }
-    
+
     public void joinByLeaveAttribute( NGCCEventReceiver source,
         String uri, String local, String qname ) throws SAXException {
-        
+
         if(isJoining)   return; // we are already in the process of joining. ignore.
         isJoining = true;
 
@@ -280,20 +280,20 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
         for( int i=0; i<_receivers.length; i++ )
             if( _receivers[i]!=source )
                 _receivers[i].leaveAttribute(uri,local,qname);
-        
+
         // revert to the parent
         _parent._source.replace(this,_parent);
         _parent.onChildCompleted(null,_cookie,true);
         // send this event to the parent
         _parent.leaveAttribute(uri,local,qname);
     }
-    
+
     public void joinByText( NGCCEventReceiver source,
         String value ) throws SAXException {
 
         if(isJoining)   return; // we are already in the process of joining. ignore.
         isJoining = true;
-        
+
         // send special token to the rest of the branches.
         // these branches don't understand this token, so they will
         // try to move to a final state and send the token back to us,
@@ -317,28 +317,28 @@ public abstract class NGCCInterleaveFilter implements NGCCEventSource, NGCCEvent
 // event dispatching methods
 //
 //
-    
+
     public void sendEnterAttribute( int threadId,
         String uri, String local, String qname) throws SAXException {
-        
+
         _receivers[threadId].enterAttribute(uri,local,qname);
     }
 
     public void sendEnterElement( int threadId,
         String uri, String local, String qname, Attributes atts) throws SAXException {
-        
+
         _receivers[threadId].enterElement(uri,local,qname,atts);
     }
 
     public void sendLeaveAttribute( int threadId,
         String uri, String local, String qname) throws SAXException {
-        
+
         _receivers[threadId].leaveAttribute(uri,local,qname);
     }
 
     public void sendLeaveElement( int threadId,
         String uri, String local, String qname) throws SAXException {
-        
+
         _receivers[threadId].leaveElement(uri,local,qname);
     }
 

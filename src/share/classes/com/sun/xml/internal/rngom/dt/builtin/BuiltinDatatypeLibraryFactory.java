@@ -46,7 +46,7 @@ public class BuiltinDatatypeLibraryFactory implements DatatypeLibraryFactory {
         compatibilityDatatypeLibrary = new CompatibilityDatatypeLibrary(coreFactory);
         this.core = coreFactory;
     }
-    
+
     public DatatypeLibrary createDatatypeLibrary(String uri) {
         if (uri.equals(""))
             return builtinDatatypeLibrary;

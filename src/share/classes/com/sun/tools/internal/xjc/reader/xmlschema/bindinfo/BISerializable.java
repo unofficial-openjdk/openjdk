@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  * This customization will enable serialization support on XJC.
  * This is used as a child of a {@link BIGlobalBinding} object,
  * and this doesn't implement BIDeclaration by itself.
- * 
+ *
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */

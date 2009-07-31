@@ -31,13 +31,13 @@ package javax.xml.bind.annotation;
  *
  * @author Sekhar Vajjhala, Sun Microsystems, Inc.
  * @since JAXB2.0
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.1 $
  * @see XmlAccessorOrder
  */
 
-public enum XmlAccessOrder { 
+public enum XmlAccessOrder {
     /**
-     * The ordering of fields and properties in a class is undefined. 
+     * The ordering of fields and properties in a class is undefined.
      */
     UNDEFINED,
     /**
@@ -47,4 +47,3 @@ public enum XmlAccessOrder {
      */
     ALPHABETICAL
 }
-

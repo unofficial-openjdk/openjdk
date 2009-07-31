@@ -38,7 +38,7 @@ import com.sun.xml.internal.ws.api.pipe.TubeCloner;
  * In this prototype, this is not that convenient, but in the real production
  * code where we have {@code preDestroy()} and {@code clone()}, this
  * is fairly handy.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public abstract class AbstractFilterTubeImpl extends AbstractTubeImpl {
@@ -50,7 +50,11 @@ public abstract class AbstractFilterTubeImpl extends AbstractTubeImpl {
 
     protected AbstractFilterTubeImpl(AbstractFilterTubeImpl that, TubeCloner cloner) {
         super(that, cloner);
-        this.next = cloner.copy(that.next);
+        if (that.next != null) {
+            this.next = cloner.copy(that.next);
+        } else {
+            this.next = null;
+        }
     }
 
     /**

@@ -31,13 +31,13 @@ import java.io.OutputStream;
 import com.sun.codemodel.internal.JResourceFile;
 
 /**
- * Allows an application to copy a resource file to the output. 
- * 
+ * Allows an application to copy a resource file to the output.
+ *
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public final class JStaticFile extends JResourceFile {
-    
+
     private final ClassLoader classLoader;
     private final String resourceName;
     private final boolean isResource;
@@ -45,7 +45,7 @@ public final class JStaticFile extends JResourceFile {
     public JStaticFile(String _resourceName) {
         this(_resourceName,!_resourceName.endsWith(".java"));
     }
-    
+
     public JStaticFile(String _resourceName,boolean isResource) {
         this( JStaticFile.class.getClassLoader(), _resourceName, isResource );
     }
@@ -67,13 +67,13 @@ public final class JStaticFile extends JResourceFile {
 
     protected void build(OutputStream os) throws IOException {
         DataInputStream dis = new DataInputStream(classLoader.getResourceAsStream(resourceName));
-        
+
         byte[] buf = new byte[256];
         int sz;
         while( (sz=dis.read(buf))>0 )
             os.write(buf,0,sz);
-        
+
         dis.close();
     }
-    
+
 }

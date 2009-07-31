@@ -31,12 +31,12 @@ import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
 import javax.xml.bind.JAXBException;
 
 /**
- * A means to allow the user to provide customized Accessor  
- * to be used by JAXB. 
+ * A means to allow the user to provide customized Accessor
+ * to be used by JAXB.
  */
 public interface AccessorFactory {
     /**
-     * Access a field of the class. 
+     * Access a field of the class.
      *
      * @param bean the class to be processed.
      * @param f the field within the class to be accessed.
@@ -46,7 +46,7 @@ public interface AccessorFactory {
      * @throws JAXBException reports failures of the method.
      */
     Accessor createFieldAccessor(Class bean, Field f, boolean readOnly) throws JAXBException;
-    
+
     /**
      * Access a property of the class.
      *
@@ -55,7 +55,7 @@ public interface AccessorFactory {
      * @param setter the setter method to be accessed. The value can be null.
      * @return Accessor the accessor for these methods
      *
-     * @throws JAXBException reports failures of the method.     
+     * @throws JAXBException reports failures of the method.
      */
     Accessor createPropertyAccessor(Class bean, Method getter, Method setter) throws JAXBException;
 }

@@ -25,6 +25,10 @@
 
 package com.sun.xml.internal.ws.api.model.wsdl;
 
+import com.sun.istack.internal.NotNull;
+
+import javax.xml.namespace.QName;
+
 /**
  * Abstraction of wsdl:portType/wsdl:operation/wsdl:output
  *
@@ -53,9 +57,26 @@ public interface WSDLOutput extends WSDLObject, WSDLExtensible {
      * <p/>
      * This method provides the correct value irrespective of
      * whether the Action is explicitly specified in the WSDL or
-     * implicitly derived using the rules defined in WS-Addressing. 
+     * implicitly derived using the rules defined in WS-Addressing.
      *
      * @return Action
      */
     String getAction();
+
+    /**
+     * Gives the owning {@link WSDLOperation}
+     */
+    @NotNull
+    WSDLOperation getOperation();
+
+    /**
+     * Gives qualified name of the wsdl:output 'name' attribute value. If there is no name, then it computes the name from:
+     *
+     * wsdl:operation@name+"Response", which is local name of {@link WSDLOperation#getName()} + "Response"
+     * <p/>
+     *
+     * The namespace uri is determined from the enclosing wsdl:operation.
+     */
+    @NotNull
+    QName getQName();
 }

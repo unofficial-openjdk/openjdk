@@ -114,7 +114,7 @@ public final class JFormatter {
     public JFormatter(Writer w) {
         this(new PrintWriter(w));
     }
-    
+
     /**
      * Closes this formatter.
      */
@@ -445,8 +445,8 @@ public final class JFormatter {
         final String packageName = clazz._package().name();
         if(packageName.equals("java.lang"))
             return true;    // no need to explicitly import java.lang classes
-    
-        if (clazz._package() == c._package()){ 
+
+        if (clazz._package() == c._package()){
             // inner classes require an import stmt.
             // All other pkg local classes do not need an
             // import stmt for ref.

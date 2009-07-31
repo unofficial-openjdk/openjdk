@@ -43,7 +43,7 @@ import java.io.IOException;
  * @author Jitendra Kotamraju
  */
 public abstract class AbstractServerAsyncTransport<T> {
-    
+
     private final WSEndpoint endpoint;
     private final CodecPool codecPool;
 

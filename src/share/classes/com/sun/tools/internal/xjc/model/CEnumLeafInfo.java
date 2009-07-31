@@ -48,10 +48,10 @@ import org.xml.sax.Locator;
 
 /**
  * Transducer that converts a string into an "enumeration class."
- * 
+ *
  * The structure of the generated class needs to precisely
  * follow the JAXB spec.
- * 
+ *
  * @author
  *    <a href="mailto:kohsuke.kawaguchi@sun.com">Kohsuke KAWAGUCHI</a>
  */

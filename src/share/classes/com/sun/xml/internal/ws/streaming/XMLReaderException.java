@@ -31,10 +31,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * <p> XMLReaderException represents an exception that occurred while reading an
  * XML document. </p>
- * 
- * @see XMLReader
+ *
  * @see JAXWSExceptionBase
- * 
+ *
  * @author WS Development Team
  */
 public class XMLReaderException extends JAXWSExceptionBase {

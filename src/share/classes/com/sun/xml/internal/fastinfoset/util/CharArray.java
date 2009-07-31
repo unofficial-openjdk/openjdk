@@ -24,7 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
- 
+
 
 package com.sun.xml.internal.fastinfoset.util;
 
@@ -32,16 +32,16 @@ public class CharArray implements CharSequence {
     public char[] ch;
     public int start;
     public int length;
-                                                                                
+
     protected int _hash;
 
     protected CharArray() {
     }
-    
+
     public CharArray(char[] _ch, int _start, int _length, boolean copy) {
         set(_ch, _start, _length, copy);
     }
-    
+
     public final void set(char[] _ch, int _start, int _length, boolean copy) {
         if (copy) {
             ch = new char[_length];
@@ -55,18 +55,18 @@ public class CharArray implements CharSequence {
         }
         _hash = 0;
     }
-    
+
     public final void cloneArray() {
         char[] _ch = new char[length];
         System.arraycopy(ch, start, _ch, 0, length);
         ch = _ch;
         start = 0;
     }
-                                                                                
+
     public String toString() {
         return new String(ch, start, length);
     }
-                                                                                
+
     public int hashCode() {
         if (_hash == 0) {
             // Same hash code algorithm as used for String
@@ -85,15 +85,15 @@ public class CharArray implements CharSequence {
         for (int i = start; i < start + length; i++) {
             hash = 31*hash + ch[i];
         }
-        
+
         return hash;
     }
-    
+
     public final boolean equalsCharArray(CharArray cha) {
         if (this == cha) {
             return true;
         }
-        
+
         if (length == cha.length) {
             int n = length;
             int i = start;
@@ -104,7 +104,7 @@ public class CharArray implements CharSequence {
             }
             return true;
         }
-        
+
         return false;
     }
 
@@ -119,10 +119,10 @@ public class CharArray implements CharSequence {
             }
             return true;
         }
-        
+
         return false;
     }
-    
+
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -144,7 +144,7 @@ public class CharArray implements CharSequence {
     }
 
     // CharSequence interface
-    
+
     public final int length() {
         return length;
     }

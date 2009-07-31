@@ -30,13 +30,13 @@ import com.sun.codemodel.internal.JClass;
 /**
  * Comparator object that sorts {@link JClass}es in the order
  * of their names.
- * 
+ *
  * @author
- * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class ClassNameComparator implements Comparator<JClass> {
     private ClassNameComparator() {}
-    
+
     public int compare(JClass l, JClass r) {
         return l.fullName().compareTo(r.fullName());
     }

@@ -58,7 +58,7 @@ final class SOAPHandlerProcessor<C extends MessageUpdatableContext> extends Hand
         super(owner, binding, chain);
         this.isClient = isClient;
     }
-    
+
     /**
      * Replace the message in the given message context with a
      * fault message. If the context already contains a fault
@@ -88,7 +88,7 @@ final class SOAPHandlerProcessor<C extends MessageUpdatableContext> extends Hand
             throw new RuntimeException(e);
         }
     }
-    
+
     /**
      * <p>Figure out if the fault code local part is client,
      * server, sender, receiver, etc. This is called by

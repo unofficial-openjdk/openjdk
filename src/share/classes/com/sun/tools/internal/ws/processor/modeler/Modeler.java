@@ -29,7 +29,7 @@ package com.sun.tools.internal.ws.processor.modeler;
 import com.sun.tools.internal.ws.processor.model.Model;
 
 /**
- * A Modeler is used to create a Model of a Web Service from a particular Web 
+ * A Modeler is used to create a Model of a Web Service from a particular Web
  * Web Service description such as a WSDL
  *
  * @author WS Development Team

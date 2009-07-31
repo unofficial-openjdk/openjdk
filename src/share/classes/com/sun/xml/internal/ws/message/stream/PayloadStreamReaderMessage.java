@@ -61,7 +61,7 @@ public class PayloadStreamReaderMessage extends AbstractMessageImpl {
         super(soapVersion);
         message = new StreamMessage(headers, attSet, reader, soapVersion);
     }
-    
+
     public boolean hasHeaders() {
         return message.hasHeaders();
     }

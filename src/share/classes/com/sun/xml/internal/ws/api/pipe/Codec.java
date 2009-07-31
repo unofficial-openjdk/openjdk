@@ -71,9 +71,9 @@ public interface Codec {
     /**
      * Get the MIME type associated with this Codec.
      * <p>
-     * If available the MIME type will represent the media that the codec 
+     * If available the MIME type will represent the media that the codec
      * encodes and decodes.
-     * 
+     *
      * The MIME type returned will be the most general representation independent
      * of an instance of this MIME type utilized as a MIME content-type.
      *
@@ -82,7 +82,7 @@ public interface Codec {
      *      implementation. Otherwise the MIME type is returned.
      */
     public String getMimeType();
-    
+
     /**
      * If the MIME content-type of the encoding is known statically
      * then this method returns it.

@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: HttpSOAPConnection.java,v 1.41 2006/01/27 12:49:17 vj135062 Exp $
- * $Revision: 1.41 $
- * $Date: 2006/01/27 12:49:17 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.client.p2p;
@@ -54,7 +49,7 @@ import com.sun.xml.internal.messaging.saaj.util.*;
  *
  */
 public class HttpSOAPConnection extends SOAPConnection {
-    
+
     public static final String vmVendor = System.getProperty("java.vendor.url");
     private static final String sunVmVendor = "http://java.sun.com/";
     private static final String ibmVmVendor = "http://www.ibm.com/";
@@ -66,8 +61,8 @@ public class HttpSOAPConnection extends SOAPConnection {
         Logger.getLogger(LogDomainConstants.HTTP_CONN_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.client.p2p.LocalStrings");
 
-    public static final String defaultProxyHost = null;
-    public static  final int defaultProxyPort = -1;
+    private static final String defaultProxyHost = null;
+    private static final int defaultProxyPort = -1;
 
     MessageFactory messageFactory = null;
 
@@ -80,8 +75,8 @@ public class HttpSOAPConnection extends SOAPConnection {
         try {
             messageFactory = MessageFactory.newInstance(SOAPConstants.DYNAMIC_SOAP_PROTOCOL);
         } catch (NoSuchMethodError ex) {
-	            //fallback to default SOAP 1.1 in this case for backward compatibility
-	            messageFactory = MessageFactory.newInstance();
+            //fallback to default SOAP 1.1 in this case for backward compatibility
+            messageFactory = MessageFactory.newInstance();
         } catch (Exception ex) {
             log.log(Level.SEVERE, "SAAJ0001.p2p.cannot.create.msg.factory", ex);
             throw new SOAPExceptionImpl("Unable to create message factory", ex);
@@ -105,19 +100,18 @@ public class HttpSOAPConnection extends SOAPConnection {
             throw new SOAPExceptionImpl("Connection is closed");
         }
 
-        Class urlEndpointClass = null;       
+        Class urlEndpointClass = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-
         try {
-                if (loader != null) {
-	                urlEndpointClass = loader.loadClass(JAXM_URLENDPOINT);
-	        } else {
- 	                urlEndpointClass = Class.forName(JAXM_URLENDPOINT);
-	            }
-	        } catch (ClassNotFoundException ex) {
-	            //Do nothing. URLEndpoint is available only when JAXM is there.
-	            log.finest("SAAJ0090.p2p.endpoint.available.only.for.JAXM");
- 	        }
+            if (loader != null) {
+                urlEndpointClass = loader.loadClass(JAXM_URLENDPOINT);
+            } else {
+                urlEndpointClass = Class.forName(JAXM_URLENDPOINT);
+            }
+        } catch (ClassNotFoundException ex) {
+            //Do nothing. URLEndpoint is available only when JAXM is there.
+            log.finest("SAAJ0090.p2p.endpoint.available.only.for.JAXM");
+        }
 
         if (urlEndpointClass != null) {
             if (urlEndpointClass.isInstance(endPoint)) {
@@ -193,7 +187,7 @@ public class HttpSOAPConnection extends SOAPConnection {
     private String proxyHost = null;
 
     static class PriviledgedSetProxyAction implements PrivilegedExceptionAction {
-                                                                                                                                             
+
         String proxyHost = null;
         int proxyPort = 0;
 
@@ -201,11 +195,11 @@ public class HttpSOAPConnection extends SOAPConnection {
             this.proxyHost = host;
             this.proxyPort = port;
         }
-                                                                                                                                             
+
         public Object run() throws Exception {
             System.setProperty("http.proxyHost", proxyHost);
             System.setProperty("http.proxyPort", new Integer(proxyPort).toString());
-            log.log(Level.FINE, "SAAJ0050.p2p.proxy.host", 
+            log.log(Level.FINE, "SAAJ0050.p2p.proxy.host",
                     new String[] { proxyHost });
             log.log(Level.FINE, "SAAJ0051.p2p.proxy.port",
                     new String[] { new Integer(proxyPort).toString() });
@@ -217,13 +211,13 @@ public class HttpSOAPConnection extends SOAPConnection {
     public void setProxy(String host, int port) {
         try {
             proxyPort = port;
-            PriviledgedSetProxyAction ps = new PriviledgedSetProxyAction(host, port); 
+            PriviledgedSetProxyAction ps = new PriviledgedSetProxyAction(host, port);
             proxyHost = (String) AccessController.doPrivileged(ps);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-    
+
     public String getProxyHost() {
         return proxyHost;
     }
@@ -399,7 +393,7 @@ public class HttpSOAPConnection extends SOAPConnection {
                     httpConnection.getContentLength() == -1
                         ? bytes.length
                         : httpConnection.getContentLength();
-                        
+
                 // If no reply message is returned,
                 // content-Length header field value is expected to be zero.
                 if (length == 0) {
@@ -409,7 +403,7 @@ public class HttpSOAPConnection extends SOAPConnection {
                     ByteInputStream in = new ByteInputStream(bytes, length);
                     response = messageFactory.createMessage(headers, in);
                 }
-                        
+
                 httpIn.close();
                 httpConnection.disconnect();
 
@@ -654,28 +648,29 @@ public class HttpSOAPConnection extends SOAPConnection {
 
         return ret;
     }
+
     //private static String SSL_PKG = "com.sun.net.ssl.internal.www.protocol";
     //private static String SSL_PROVIDER =
-	      //  "com.sun.net.ssl.internal.ssl.Provider";
+      //  "com.sun.net.ssl.internal.ssl.Provider";
     private static final String SSL_PKG;
-    private static  final String SSL_PROVIDER;
-    
-    
-    static {    
- 	        if (isIBMVM) {
- 	            SSL_PKG ="com.ibm.net.ssl.internal.www.protocol";
- 	            SSL_PROVIDER ="com.ibm.net.ssl.internal.ssl.Provider";
- 	        } else {
- 	            //if not IBM VM default to Sun.
- 	            SSL_PKG = "com.sun.net.ssl.internal.www.protocol";
- 	            SSL_PROVIDER ="com.sun.net.ssl.internal.ssl.Provider";
- 	        }
- 	    }
+    private static final String SSL_PROVIDER;
+
+    static {
+        if (isIBMVM) {
+            SSL_PKG ="com.ibm.net.ssl.internal.www.protocol";
+            SSL_PROVIDER ="com.ibm.net.ssl.internal.ssl.Provider";
+        } else {
+            //if not IBM VM default to Sun.
+            SSL_PKG = "com.sun.net.ssl.internal.www.protocol";
+            SSL_PROVIDER ="com.sun.net.ssl.internal.ssl.Provider";
+        }
+    }
+
     private void initHttps() {
         //if(!setHttps) {
         String pkgs = System.getProperty("java.protocol.handler.pkgs");
         log.log(Level.FINE,
-                "SAAJ0053.p2p.providers", 
+                "SAAJ0053.p2p.providers",
                 new String[] { pkgs });
 
         if (pkgs == null || pkgs.indexOf(SSL_PKG) < 0) {
@@ -685,7 +680,7 @@ public class HttpSOAPConnection extends SOAPConnection {
                 pkgs = pkgs + "|" + SSL_PKG;
             System.setProperty("java.protocol.handler.pkgs", pkgs);
             log.log(Level.FINE,
-                    "SAAJ0054.p2p.set.providers", 
+                    "SAAJ0054.p2p.set.providers",
                     new String[] { pkgs });
             try {
                 Class c = Class.forName(SSL_PROVIDER);
@@ -740,7 +735,7 @@ public class HttpSOAPConnection extends SOAPConnection {
     private static final int dL = 0;
     private void d(String s) {
         log.log(Level.SEVERE,
-                "SAAJ0013.p2p.HttpSOAPConnection", 
+                "SAAJ0013.p2p.HttpSOAPConnection",
                 new String[] { s });
         System.err.println("HttpSOAPConnection: " + s);
     }

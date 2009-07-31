@@ -22,11 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/*
- * $Id: FastInfosetDataContentHandler.java,v 1.1.1.1 2006/01/27 13:10:56 kumarjayanti Exp $
- * $Revision: 1.1.1.1 $
- * $Date: 2006/01/27 13:10:56 $
- */
 
 
 package com.sun.xml.internal.messaging.saaj.soap;
@@ -59,7 +54,7 @@ public class FastInfosetDataContentHandler implements DataContentHandler {
     public DataFlavor[] getTransferDataFlavors() { // throws Exception;
         DataFlavor flavors[] = new DataFlavor[1];
         flavors[0] = new ActivationDataFlavor(
-                FastInfosetReflection.getFastInfosetSource_class(), 
+                FastInfosetReflection.getFastInfosetSource_class(),
                 "application/fastinfoset", "Fast Infoset");
         return flavors;
     }
@@ -71,7 +66,7 @@ public class FastInfosetDataContentHandler implements DataContentHandler {
      * @return The constructed Object.
      */
     public Object getTransferData(DataFlavor flavor, DataSource dataSource)
-        throws IOException 
+        throws IOException
     {
         if (flavor.getMimeType().startsWith("application/fastinfoset")) {
             try {
@@ -103,22 +98,22 @@ public class FastInfosetDataContentHandler implements DataContentHandler {
      *  which one to support)
      */
     public void writeTo(Object obj, String mimeType, OutputStream os)
-        throws IOException 
+        throws IOException
     {
         if (!mimeType.equals("application/fastinfoset")) {
-            throw new IOException("Invalid content type \"" + mimeType 
+            throw new IOException("Invalid content type \"" + mimeType
                 + "\" for FastInfosetDCH");
         }
-        
-        try {            
+
+        try {
             InputStream is = FastInfosetReflection.FastInfosetSource_getInputStream(
                 (Source) obj);
-            
-	    int n; byte[] buffer = new byte[4096];
+
+            int n; byte[] buffer = new byte[4096];
             while ((n = is.read(buffer)) != -1) {
                 os.write(buffer, 0, n);
             }
-        } 
+        }
         catch (Exception ex) {
             throw new IOException(
                 "Error copying FI source to output stream " + ex.getMessage());

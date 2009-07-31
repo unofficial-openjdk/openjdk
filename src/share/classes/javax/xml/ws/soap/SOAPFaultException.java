@@ -51,9 +51,9 @@ import javax.xml.soap.SOAPFault;
  *  @since JAX-WS 2.0
  **/
 public class SOAPFaultException extends javax.xml.ws.ProtocolException  {
-    
+
     private SOAPFault fault;
-    
+
     /** Constructor for SOAPFaultException
      *  @param fault   <code>SOAPFault</code> representing the fault
      *
@@ -63,7 +63,7 @@ public class SOAPFaultException extends javax.xml.ws.ProtocolException  {
         super(fault.getFaultString());
         this.fault = fault;
     }
-    
+
     /** Gets the embedded <code>SOAPFault</code> instance.
      *
      *  @return <code>javax.xml.soap.SOAPFault</code> SOAP

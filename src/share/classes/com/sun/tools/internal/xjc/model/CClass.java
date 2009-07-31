@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.tools.internal.xjc.model;
 
 /**
@@ -31,5 +32,5 @@ package com.sun.tools.internal.xjc.model;
  */
 public interface CClass extends CNonElement, CElement {
     // how can anything be CNonElement and CElement at the same time, you may ask.
-    
+
 }

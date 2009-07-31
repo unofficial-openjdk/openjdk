@@ -38,7 +38,7 @@ import javax.xml.ws.Service.Mode;
 
 /**
  * {@link Dispatch} implementation for {@link Message}.
- * 
+ *
  * @author Kohsuke Kawaguchi
  * @since 2.1.1
  */

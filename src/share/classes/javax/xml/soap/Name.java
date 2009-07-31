@@ -23,9 +23,9 @@
  * have any questions.
  */
 /*
- * $Id: Name.java,v 1.4 2005/04/05 20:49:49 mk125090 Exp $
- * $Revision: 1.4 $
- * $Date: 2005/04/05 20:49:49 $
+ * $Id: Name.java,v 1.5 2006/03/30 00:59:39 ofung Exp $
+ * $Revision: 1.5 $
+ * $Date: 2006/03/30 00:59:39 $
  */
 
 
@@ -34,7 +34,7 @@ package javax.xml.soap;
 /**
  * A representation of an XML name.  This interface provides methods for
  * getting the local and namespace-qualified names and also for getting the
- * prefix associated with the namespace for the name. It is also possible 
+ * prefix associated with the namespace for the name. It is also possible
  * to get the URI of the namespace.
  * <P>
  * The following is an example of a namespace declaration in an element.
@@ -42,7 +42,7 @@ package javax.xml.soap;
  *   &lt;wombat:GetLastTradePrice xmlns:wombat="http://www.wombat.org/trader"&gt;
  * </PRE>
  * ("xmlns" stands for "XML namespace".)
- * The following 
+ * The following
  * shows what the methods in the <code>Name</code> interface will return.
  * <UL>
  *  <LI><code>getQualifiedName</code> will return "prefix:LocalName" =
@@ -58,8 +58,8 @@ package javax.xml.soap;
  * <code>Name</code> objects are created using the method
  * <code>SOAPEnvelope.createName</code>, which has two versions.
  * One method creates <code>Name</code> objects with
- * a local name, a namespace prefix, and a namespace URI. 
- *  and the second creates <code>Name</code> objects with just a local name.  
+ * a local name, a namespace prefix, and a namespace URI.
+ *  and the second creates <code>Name</code> objects with just a local name.
  * The following line of
  * code, in which <i>se</i> is a <code>SOAPEnvelope</code> object, creates a new
  * <code>Name</code> object with all three.
@@ -83,15 +83,15 @@ package javax.xml.soap;
 public interface Name {
     /**
      * Gets the local name part of the XML name that this <code>Name</code>
-     * object represents. 
+     * object represents.
      *
      * @return a string giving the local name
      */
     String getLocalName();
 
     /**
-     * Gets the namespace-qualified name of the XML name that this 
-     * <code>Name</code> object represents. 
+     * Gets the namespace-qualified name of the XML name that this
+     * <code>Name</code> object represents.
      *
      * @return the namespace-qualified name as a string
      */
@@ -100,7 +100,7 @@ public interface Name {
     /**
      * Returns the prefix that was specified when this <code>Name</code> object
      * was initialized. This prefix is associated with the namespace for the XML
-     * name that this <code>Name</code> object represents. 
+     * name that this <code>Name</code> object represents.
      *
      * @return the prefix as a string
      */
@@ -108,7 +108,7 @@ public interface Name {
 
     /**
      * Returns the URI of the namespace for the XML
-     * name that this <code>Name</code> object represents. 
+     * name that this <code>Name</code> object represents.
      *
      * @return the URI as a string
      */

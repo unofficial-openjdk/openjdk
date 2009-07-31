@@ -22,6 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
+
 package com.sun.xml.internal.bind.v2.runtime.unmarshaller;
 
 import java.util.Iterator;
@@ -75,7 +77,7 @@ final class StAXEventConnector extends StAXConnector {
     /**
      * Construct a new StAX to SAX adapter that will convert a StAX event
      * stream into a SAX event stream.
-     * 
+     *
      * @param staxCore
      *                StAX event source
      * @param visitor
@@ -276,7 +278,7 @@ final class StAXEventConnector extends StAXConnector {
                 qName = prefix + ':' + localName;
             String type = staxAttr.getDTDType();
             String value = staxAttr.getValue();
-            
+
             attrs.addAttribute(uri, localName, qName, type, value);
         }
 

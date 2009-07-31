@@ -24,7 +24,6 @@
  */
 
 
-
 package com.sun.tools.internal.ws.wsdl.parser;
 
 import com.sun.tools.internal.ws.wsdl.document.jaxws.JAXWSBindingsConstants;
@@ -102,4 +101,3 @@ class DOMBuilder extends SAX2DOMEx {
         super.endElement(namespaceURI, localName, qName);
     }
 }
-
