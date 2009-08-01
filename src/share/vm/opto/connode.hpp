@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)connode.hpp	1.160 07/05/05 17:06:13 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class PhaseTransform;
@@ -29,7 +32,7 @@ class MachNode;
 // Simple constants
 class ConNode : public TypeNode {
 public:
-  ConNode( const Type *t ) : TypeNode(t,1) {
+  ConNode( const Type *t ) : TypeNode(t,1) { 
     init_req(0, (Node*)Compile::current()->root());
     init_flags(Flag_is_Con);
   }
@@ -128,7 +131,7 @@ public:
 // Place holder for the 2 conditional inputs to a CMove.  CMove needs 4
 // inputs: the Bool (for the lt/gt/eq/ne bits), the flags (result of some
 // compare), and the 2 values to select between.  The Matcher requires a
-// binary tree so we break it down like this:
+// binary tree so we break it down like this: 
 //     (CMove (Binary bol cmp) (Binary src1 src2))
 class BinaryNode : public Node {
 public:
@@ -148,7 +151,7 @@ public:
   CMoveNode( Node *bol, Node *left, Node *right, const Type *t ) : TypeNode(t,4)
   {
     init_class_id(Class_CMove);
-    // all inputs are nullified in Node::Node(int)
+    // all inputs are nullified in Node::Node(int) 
     // init_req(Control,NULL);
     init_req(Condition,bol);
     init_req(IfFalse,left);
@@ -590,7 +593,7 @@ public:
 // The 2nd slow-half of a subtype check.  Scan the subklass's 2ndary superklass
 // array for an instance of the superklass.  Set a hidden internal cache on a
 // hit (cache is checked with exposed code in gen_subtype_check()).  Return
-// not zero for a miss or zero for a hit.
+// not zero for a miss or zero for a hit.  
 class PartialSubtypeCheckNode : public Node {
 public:
   PartialSubtypeCheckNode(Node* c, Node* sub, Node* super) : Node(c,sub,super) {}
@@ -599,7 +602,7 @@ public:
   virtual uint ideal_reg() const { return Op_RegP; }
 };
 
-//
+// 
 class MoveI2FNode : public Node {
  public:
   MoveI2FNode( Node *value ) : Node(0,value) {}

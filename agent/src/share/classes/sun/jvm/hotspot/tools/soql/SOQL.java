@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools.soql;
@@ -82,7 +82,7 @@ public class SOQL extends Tool {
          } catch (IOException e) {
             e.printStackTrace();
             return;
-         }
+         } 
       }
    }
 
@@ -96,7 +96,7 @@ public class SOQL extends Tool {
          } catch (IOException ioe) {
             break;
          }
-         if (tmp.equals("") || tmp.equals("go"))
+         if (tmp.equals("") || tmp.equals("go")) 
             break;
          buf.append('\n');
          buf.append(tmp);
@@ -104,7 +104,7 @@ public class SOQL extends Tool {
       query = buf.toString();
 
       try {
-         soqlEngine.executeQuery(query,
+         soqlEngine.executeQuery(query, 
                            new ObjectVisitor() {
                               public void visit(Object o) {
                                  if (o != null && o instanceof JSJavaObject) {
@@ -126,7 +126,7 @@ public class SOQL extends Tool {
       for (int i = 0; i < klasses.length; i++) {
          out.print(klasses[i].getName().asString().replace('/', '.'));
          out.print(" @");
-         out.println(klasses[i].getHandle());
+         out.println(klasses[i].getHandle()); 
       }
    }
 

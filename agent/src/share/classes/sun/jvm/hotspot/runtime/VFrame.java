@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -74,7 +74,7 @@ public class VFrame {
           } else {
             scope = nm.getScopeDescAt(f.getPC());
           }
-          return new CompiledVFrame(f, regMap, thread, scope, mayBeImprecise);
+          return new CompiledVFrame(f, regMap, thread, scope, mayBeImprecise);  
         }
 
         if (f.isGlueFrame()) {
@@ -101,7 +101,7 @@ public class VFrame {
   public Frame       getFrame()       { return fr;     }
   public RegisterMap getRegisterMap() { return regMap; }
   public JavaThread  getThread()      { return thread; }
-
+  
   /** Returns the sender vframe */
   public VFrame sender() {
     if (Assert.ASSERTS_ENABLED) {
@@ -118,7 +118,7 @@ public class VFrame {
     }
     Frame s = fr.realSender(tempMap);
     // ia64 in 1.4.1 only has java frames and no entryFrame
-    // so "s" can be null here for the first frame.
+    // so "s" can be null here for the first frame. 
     if (s == null) {
       Assert.that(VM.getVM().getCPU().equals("ia64"), "Only ia64 should have null here");
       return null;
@@ -137,7 +137,7 @@ public class VFrame {
   public JavaVFrame javaSender() {
     boolean imprecise = false;
 
-    // Hack for debugging
+    // Hack for debugging 
     if (VM.getVM().isDebugging()) {
       if (!isJavaFrame()) {
         imprecise = mayBeImpreciseDbg();
@@ -152,13 +152,13 @@ public class VFrame {
     }
     return null;
   }
-
+  
   /** Answers if the this is the top vframe in the frame, i.e., if the
       sender vframe is in the caller frame */
   public boolean isTop() {
     return true;
   }
-
+  
   /** Returns top vframe within same frame (see isTop()) */
   public VFrame top() {
     VFrame vf = this;
@@ -169,7 +169,7 @@ public class VFrame {
   }
 
   /** Type testing operations */
-  public boolean isEntryFrame()       { return false; }
+  public boolean isEntryFrame()       { return false; }  
   public boolean isJavaFrame()        { return false; }
   public boolean isInterpretedFrame() { return false; }
   public boolean isCompiledFrame()    { return false; }

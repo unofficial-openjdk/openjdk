@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -32,7 +32,7 @@ import sun.jvm.hotspot.runtime.*;
 
 /** <P> The (supported) Generation hierarchy currently looks like this: </P>
 
-    <ul>
+    <ul> 
     <li> Generation
       <ul>
       <li> CardGeneration
@@ -75,7 +75,7 @@ public abstract class Generation extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("Generation");
-
+    
     reservedFieldOffset     = type.getField("_reserved").getOffset();
     virtualSpaceFieldOffset = type.getField("_virtual_space").getOffset();
     levelField              = type.getCIntegerField("_level");
@@ -95,7 +95,7 @@ public abstract class Generation extends VMObject {
   public Generation(Address addr) {
     super(addr);
   }
-
+ 
   public static class Name {
     public static final Name DEF_NEW = new Name("DefNew");
     public static final Name PAR_NEW = new Name("ParNew");
@@ -112,7 +112,7 @@ public abstract class Generation extends VMObject {
       return value;
     }
   }
-
+ 
   public Generation.Name kind() {
     return Generation.Name.OTHER;
   }
@@ -211,7 +211,7 @@ public abstract class Generation extends VMObject {
     }
 
   }
-
+  
   private StatRecord getStatRecord() {
     return (StatRecord) VMObjectFactory.newObject(Generation.StatRecord.class, addr.addOffsetTo(statRecordField.getOffset()));
   }

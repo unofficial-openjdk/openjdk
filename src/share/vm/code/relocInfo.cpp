@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)relocInfo.cpp	1.89 07/05/05 17:05:21 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -95,15 +98,15 @@ void relocInfo::set_format(int f) {
 
 
 void relocInfo::change_reloc_info_for_address(RelocIterator *itr, address pc, relocType old_type, relocType new_type) {
-  bool found = false;
-  while (itr->next() && !found) {
-    if (itr->addr() == pc) {
+  bool found = false;  
+  while (itr->next() && !found) {    
+    if (itr->addr() == pc) {      
       assert(itr->type()==old_type, "wrong relocInfo type found");
-      itr->current()->set_type(new_type);
+      itr->current()->set_type(new_type);      
       found=true;
     }
   }
-  assert(found, "no relocInfo found for pc");
+  assert(found, "no relocInfo found for pc");      
 }
 
 
@@ -129,7 +132,7 @@ void RelocIterator::initialize(CodeBlob* cb, address begin, address limit) {
   _end     = cb->relocation_end();
   _addr    = (address) cb->instructions_begin();
 
-  assert(!has_current(), "just checking");
+  assert(!has_current(), "just checking");  
   address code_end = cb->instructions_end();
 
   assert(begin == NULL || begin >= cb->instructions_begin(), "in bounds");
@@ -187,14 +190,14 @@ int RelocIterator::locs_and_index_size(int code_size, int locs_size) {
 
 void RelocIterator::create_index(relocInfo* dest_begin, int dest_count, relocInfo* dest_end) {
   address relocation_begin = (address)dest_begin;
-  address relocation_end   = (address)dest_end;
+  address relocation_end   = (address)dest_end; 
   int     total_size       = relocation_end - relocation_begin;
   int     locs_size        = dest_count * sizeof(relocInfo);
   if (!UseRelocIndex) {
     Copy::fill_to_bytes(relocation_begin + locs_size, total_size-locs_size, 0);
     return;
   }
-  int     index_size       = total_size - locs_size - BytesPerInt;      // find out how much space is left
+  int     index_size       = total_size - locs_size - BytesPerInt;	// find out how much space is left
   int     ncards           = index_size / sizeof(RelocIndexEntry);
   assert(total_size == locs_size + index_size + BytesPerInt, "checkin'");
   assert(index_size >= 0 && index_size % sizeof(RelocIndexEntry) == 0, "checkin'");
@@ -206,7 +209,7 @@ void RelocIterator::create_index(relocInfo* dest_begin, int dest_count, relocInf
   if (index_size != 0) {
     assert(index_size > 0, "checkin'");
 
-    RelocIndexEntry* index = (RelocIndexEntry *)(relocation_begin + locs_size);
+    RelocIndexEntry* index = (RelocIndexEntry *)(relocation_begin + locs_size); 
     assert(index == (RelocIndexEntry*)index_size_addr - ncards, "checkin'");
 
     // walk over the relocations, and fill in index entries as we go
@@ -230,10 +233,10 @@ void RelocIterator::create_index(relocInfo* dest_begin, int dest_count, relocInf
       reloc_offset = iter._current - initial_current;
       if (!iter.next())  break;
       while (iter.addr() >= next_card_addr) {
-        index[i].addr_offset  = addr_offset;
-        index[i].reloc_offset = reloc_offset;
-        i++;
-        next_card_addr += indexCardSize;
+	index[i].addr_offset  = addr_offset;
+	index[i].reloc_offset = reloc_offset;
+	i++;
+	next_card_addr += indexCardSize;
       }
     }
     while (i < ncards) {
@@ -269,8 +272,8 @@ void RelocIterator::set_limits(address begin, address limit) {
       assert(_addr == _code->instructions_begin(), "_addr must be unadjusted");
       int card = (begin - _addr) / indexCardSize;
       if (card > 0) {
-        if (index+card-1 < index_limit)  index += card-1;
-        else                             index = index_limit - 1;
+	if (index+card-1 < index_limit)  index += card-1;
+	else                             index = index_limit - 1;
 #ifdef ASSERT
         addrCheck = _addr    + index->addr_offset;
         infoCheck = _current + index->reloc_offset;
@@ -319,19 +322,19 @@ void RelocIterator::set_limit(address limit) {
 
 void PatchingRelocIterator:: prepass() {
   // turn breakpoints off during patching
-  _init_state = (*this);        // save cursor
+  _init_state = (*this);	// save cursor
   while (next()) {
     if (type() == relocInfo::breakpoint_type) {
       breakpoint_reloc()->set_active(false);
     }
   }
-  (RelocIterator&)(*this) = _init_state;        // reset cursor for client
+  (RelocIterator&)(*this) = _init_state;	// reset cursor for client
 }
 
 
 void PatchingRelocIterator:: postpass() {
   // turn breakpoints back on after patching
-  (RelocIterator&)(*this) = _init_state;        // reset cursor again
+  (RelocIterator&)(*this) = _init_state;	// reset cursor again
   while (next()) {
     if (type() == relocInfo::breakpoint_type) {
       breakpoint_Relocation* bpt = breakpoint_reloc();
@@ -414,8 +417,8 @@ RelocationHolder RelocationHolder::plus(int offset) const {
       break;
     case relocInfo::oop_type:
       {
-        oop_Relocation* r = (oop_Relocation*)reloc();
-        return oop_Relocation::spec(r->oop_index(), r->offset() + offset);
+	oop_Relocation* r = (oop_Relocation*)reloc();
+	return oop_Relocation::spec(r->oop_index(), r->offset() + offset);
       }
     default:
       ShouldNotReachHere();
@@ -434,7 +437,7 @@ address Relocation::value() {
   ShouldNotReachHere();
   return NULL;
 }
-
+  
 
 void Relocation::set_value(address x) {
   ShouldNotReachHere();
@@ -490,7 +493,7 @@ address Relocation::index_to_runtime_address(int32_t index) {
     return p->begin();
   } else {
 #ifndef _LP64
-    // this only works on 32bit machines
+    // this only works on 32bit machines 
     return (address) ((intptr_t) index);
 #else
     fatal("Relocation::index_to_runtime_address, int32_t not pointer sized");
@@ -567,7 +570,7 @@ void virtual_call_Relocation::pack_data_to(CodeSection* dest) {
   short*  p     = (short*) dest->locs_end();
   address point =          dest->locs_point();
 
-  // Try to make a pointer NULL first.
+  // Try to make a pointer NULL first.  
   if (_oop_limit >= point &&
       _oop_limit <= point + NativeCall::instruction_size) {
     _oop_limit = NULL;
@@ -743,7 +746,7 @@ void breakpoint_Relocation::unpack_data() {
   else                      { ShouldNotReachHere(); }
 
   _target = internal() ? address_from_scaled_offset(target_bits, addr())
-                       : index_to_runtime_address  (target_bits);
+		       : index_to_runtime_address  (target_bits);
 }
 
 
@@ -776,7 +779,7 @@ void oop_Relocation::fix_oop_relocation() {
 }
 
 
-RelocIterator virtual_call_Relocation::parse_ic(CodeBlob* &code, address &ic_call, address &first_oop,
+RelocIterator virtual_call_Relocation::parse_ic(CodeBlob* &code, address &ic_call, address &first_oop, 
                                                 oop* &oop_addr, bool *is_optimized) {
   assert(ic_call != NULL, "ic_call address must be set");
   assert(ic_call != NULL || first_oop != NULL, "must supply a non-null input");
@@ -790,16 +793,16 @@ RelocIterator virtual_call_Relocation::parse_ic(CodeBlob* &code, address &ic_cal
   }
   assert(ic_call   == NULL || code->contains(ic_call),   "must be in CodeBlob");
   assert(first_oop == NULL || code->contains(first_oop), "must be in CodeBlob");
-
+  
   address oop_limit = NULL;
 
   if (ic_call != NULL) {
     // search for the ic_call at the given address
     RelocIterator iter(code, ic_call, ic_call+1);
     bool ret = iter.next();
-    assert(ret == true, "relocInfo must exist at this address");
+    assert(ret == true, "relocInfo must exist at this address");    
     assert(iter.addr() == ic_call, "must find ic_call");
-    if (iter.type() == relocInfo::virtual_call_type) {
+    if (iter.type() == relocInfo::virtual_call_type) {      
       virtual_call_Relocation* r = iter.virtual_call_reloc();
       first_oop = r->first_oop();
       oop_limit = r->oop_limit();
@@ -811,7 +814,7 @@ RelocIterator virtual_call_Relocation::parse_ic(CodeBlob* &code, address &ic_cal
       first_oop = NULL;
       return iter;
     }
-  }
+  }   
 
   // search for the first_oop, to get its oop_addr
   RelocIterator all_oops(code, first_oop);
@@ -833,16 +836,16 @@ RelocIterator virtual_call_Relocation::parse_ic(CodeBlob* &code, address &ic_cal
     // search forward for the ic_call matching the given first_oop
     while (iter.next()) {
       if (iter.type() == relocInfo::virtual_call_type) {
-        virtual_call_Relocation* r = iter.virtual_call_reloc();
-        if (r->first_oop() == first_oop) {
-          ic_call   = r->addr();
-          oop_limit = r->oop_limit();
-          break;
-        }
+	virtual_call_Relocation* r = iter.virtual_call_reloc();
+	if (r->first_oop() == first_oop) {
+	  ic_call   = r->addr();
+	  oop_limit = r->oop_limit();
+	  break;
+	}
       }
     }
     guarantee(!did_reset, "cannot find ic_call");
-    iter = RelocIterator(code); // search the whole CodeBlob
+    iter = RelocIterator(code);	// search the whole CodeBlob
     did_reset = true;
   }
 
@@ -871,8 +874,8 @@ void virtual_call_Relocation::clear_inline_cache() {
   // No stubs for ICs
   // Clean IC
   ResourceMark rm;
-  CompiledIC* icache = CompiledIC_at(this);
-  icache->set_to_clean();
+  CompiledIC* icache = CompiledIC_at(this);  
+  icache->set_to_clean();  
 }
 
 
@@ -880,8 +883,8 @@ void opt_virtual_call_Relocation::clear_inline_cache() {
   // No stubs for ICs
   // Clean IC
   ResourceMark rm;
-  CompiledIC* icache = CompiledIC_at(this);
-  icache->set_to_clean();
+  CompiledIC* icache = CompiledIC_at(this);  
+  icache->set_to_clean();  
 }
 
 
@@ -892,7 +895,7 @@ address opt_virtual_call_Relocation::static_stub() {
   while (iter.next()) {
     if (iter.type() == relocInfo::static_stub_type) {
       if (iter.static_stub_reloc()->static_call() == static_call_addr) {
-        return iter.addr();
+	return iter.addr();
       }
     }
   }
@@ -914,7 +917,7 @@ address static_call_Relocation::static_stub() {
   while (iter.next()) {
     if (iter.type() == relocInfo::static_stub_type) {
       if (iter.static_stub_reloc()->static_call() == static_call_addr) {
-        return iter.addr();
+	return iter.addr();
       }
     }
   }
@@ -961,7 +964,7 @@ void internal_word_Relocation::fix_relocation_after_move(const CodeBuffer* src, 
       target = new_addr_for(pd_get_address_from_code(), src, dest);
     }
   }
-  set_value(target);
+  set_value(target);  
 }
 
 
@@ -1021,7 +1024,7 @@ void breakpoint_Relocation::set_enabled(bool b) {
   if (b) {
     set_bits(bits() | enabled_state);
   } else {
-    set_active(false);          // remove the actual breakpoint insn, if any
+    set_active(false);		// remove the actual breakpoint insn, if any
     set_bits(bits() & ~enabled_state);
   }
 }
@@ -1034,7 +1037,7 @@ void breakpoint_Relocation::set_active(bool b) {
 
   // %%% should probably seize a lock here (might not be the right lock)
   //MutexLockerEx ml_patch(Patching_lock, true);
-  //if (active() == b)  return;         // recheck state after locking
+  //if (active() == b)  return;		// recheck state after locking
 
   if (b) {
     set_bits(bits() | active_state);
@@ -1078,7 +1081,7 @@ void RelocIterator::print_current() {
     return;
   }
   tty->print("relocInfo@" INTPTR_FORMAT " [type=%d(%s) addr=" INTPTR_FORMAT,
-             _current, type(), reloc_type_string((relocInfo::relocType) type()), _addr);
+	     _current, type(), reloc_type_string((relocInfo::relocType) type()), _addr);
   if (current()->format() != 0)
     tty->print(" format=%d", current()->format());
   if (datalen() == 1) {
@@ -1099,17 +1102,17 @@ void RelocIterator::print_current() {
       oop  raw_oop   = NULL;
       oop  oop_value = NULL;
       if (code() != NULL || r->oop_is_immediate()) {
-        oop_addr  = r->oop_addr();
-        raw_oop   = *oop_addr;
-        oop_value = r->oop_value();
+	oop_addr  = r->oop_addr();
+	raw_oop   = *oop_addr;
+	oop_value = r->oop_value();
       }
       tty->print(" | [oop_addr=" INTPTR_FORMAT " *=" INTPTR_FORMAT " offset=%d]",
                  oop_addr, (address)raw_oop, r->offset());
       // Do not print the oop by default--we want this routine to
       // work even during GC or other inconvenient times.
       if (WizardMode && oop_value != NULL) {
-        tty->print("oop_value=" INTPTR_FORMAT ": ", (address)oop_value);
-        oop_value->print_value_on(tty);
+	tty->print("oop_value=" INTPTR_FORMAT ": ", (address)oop_value);
+	oop_value->print_value_on(tty);
       }
       break;
     }
@@ -1132,7 +1135,7 @@ void RelocIterator::print_current() {
     {
       virtual_call_Relocation* r = (virtual_call_Relocation*) reloc();
       tty->print(" | [destination=" INTPTR_FORMAT " first_oop=" INTPTR_FORMAT " oop_limit=" INTPTR_FORMAT "]",
-                 r->destination(), r->first_oop(), r->oop_limit());
+		 r->destination(), r->first_oop(), r->oop_limit());
       break;
     }
   case relocInfo::static_stub_type:

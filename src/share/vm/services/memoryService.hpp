@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)memoryService.hpp	1.16 07/05/05 17:07:05 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Forward declaration
@@ -67,10 +70,10 @@ private:
   // Code heap memory pool
   static MemoryPool*                    _code_heap_pool;
 
-  static void add_generation_memory_pool(Generation* gen,
+  static void add_generation_memory_pool(Generation* gen, 
                                          MemoryManager* major_mgr,
                                          MemoryManager* minor_mgr);
-  static void add_generation_memory_pool(Generation* gen,
+  static void add_generation_memory_pool(Generation* gen, 
                                          MemoryManager* major_mgr) {
     add_generation_memory_pool(gen, major_mgr, NULL);
   }
@@ -80,30 +83,30 @@ private:
   static void add_cms_perm_gen_memory_pool(CMSPermGenGen* perm_gen,
                                            MemoryManager* mgr);
 
-  static void add_psYoung_memory_pool(PSYoungGen* gen,
-                                      MemoryManager* major_mgr,
+  static void add_psYoung_memory_pool(PSYoungGen* gen, 
+                                      MemoryManager* major_mgr, 
                                       MemoryManager* minor_mgr);
-  static void add_psOld_memory_pool(PSOldGen* gen,
+  static void add_psOld_memory_pool(PSOldGen* gen, 
                                     MemoryManager* mgr);
-  static void add_psPerm_memory_pool(PSPermGen* perm,
+  static void add_psPerm_memory_pool(PSPermGen* perm, 
                                      MemoryManager* mgr);
 
 
-  static MemoryPool* add_space(ContiguousSpace* space,
-                               const char* name,
-                               bool is_heap,
+  static MemoryPool* add_space(ContiguousSpace* space, 
+                               const char* name, 
+                               bool is_heap, 
                                size_t max_size,
                                bool support_usage_threshold);
   static MemoryPool* add_survivor_spaces(DefNewGeneration* gen,
-                                         const char* name,
-                                         bool is_heap,
+                                         const char* name, 
+                                         bool is_heap, 
                                          size_t max_size,
                                          bool support_usage_threshold);
-  static MemoryPool* add_gen(Generation* gen,
-                             const char* name,
+  static MemoryPool* add_gen(Generation* gen, 
+                             const char* name, 
                              bool is_heap,
                              bool support_usage_threshold);
-  static MemoryPool* add_cms_space(CompactibleFreeListSpace* space,
+  static MemoryPool* add_cms_space(CompactibleFreeListSpace* space, 
                                    const char* name,
                                    bool is_heap,
                                    size_t max_size,

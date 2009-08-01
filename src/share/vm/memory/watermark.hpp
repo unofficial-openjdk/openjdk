@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)watermark.hpp	1.14 07/05/05 17:05:56 JVM"
+#endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A water mark points into a space and is used during GC to keep track of
@@ -51,3 +54,4 @@ inline bool operator==(const WaterMark& x, const WaterMark& y) {
 inline bool operator!=(const WaterMark& x, const WaterMark& y) {
   return !(x == y);
 }
+

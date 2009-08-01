@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)divnode.hpp	1.31 07/05/05 17:06:16 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -30,7 +33,7 @@
 //------------------------------DivINode---------------------------------------
 // Integer division
 // Note: this is division as defined by JVMS, i.e., MinInt/-1 == MinInt.
-// On processors which don't naturally support this special case (e.g., x86),
+// On processors which don't naturally support this special case (e.g., x86), 
 // the matcher or runtime system must take care of this.
 class DivINode : public Node {
 public:
@@ -175,3 +178,4 @@ public:
   // Make a divmod and associated projections from a div or mod.
   static DivModLNode* make(Compile* C, Node* div_or_mod);
 };
+

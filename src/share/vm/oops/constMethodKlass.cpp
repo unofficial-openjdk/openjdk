@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)constMethodKlass.cpp	1.25 07/08/29 13:42:26 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,7 +31,7 @@
 
 klassOop constMethodKlass::create_klass(TRAPS) {
   constMethodKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
   KlassHandle k = base_create_klass(h_this_klass, header_size(),
                                     o.vtbl_value(), CHECK_NULL);
   // Make sure size calculation is right
@@ -75,7 +78,7 @@ constMethodOop constMethodKlass::allocate(int byte_code_size,
                                 compressed_line_number_size,
                                 localvariable_table_length);
   assert(cm->size() == size, "wrong size for object");
-  cm->set_partially_loaded();
+  cm->set_partially_loaded();     
   assert(cm->is_parsable(), "Is safely parsable by gc");
   return cm;
 }
@@ -86,19 +89,19 @@ void constMethodKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(cm->adr_method());
   MarkSweep::mark_and_push(cm->adr_stackmap_data());
   MarkSweep::mark_and_push(cm->adr_exception_table());
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constMethodKlassObj never moves.
 }
 
 #ifndef SERIALGC
 void constMethodKlass::oop_follow_contents(ParCompactionManager* cm,
-                                           oop obj) {
+					   oop obj) {
   assert (obj->is_constMethod(), "object must be constMethod");
   constMethodOop cm_oop = constMethodOop(obj);
   PSParallelCompact::mark_and_push(cm, cm_oop->adr_method());
   PSParallelCompact::mark_and_push(cm, cm_oop->adr_stackmap_data());
   PSParallelCompact::mark_and_push(cm, cm_oop->adr_exception_table());
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constMethodKlassObj never moves.
 }
 #endif // SERIALGC
@@ -109,9 +112,9 @@ int constMethodKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   blk->do_oop(cm->adr_method());
   blk->do_oop(cm->adr_stackmap_data());
   blk->do_oop(cm->adr_exception_table());
-  // Get size before changing pointers.
+  // Get size before changing pointers. 
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cm->object_size();
+  int size = cm->object_size();  
   return size;
 }
 
@@ -128,8 +131,8 @@ int constMethodKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) 
   if (mr.contains(adr)) blk->do_oop(adr);
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cm->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  int size = cm->object_size();  
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constMethodKlassObj never moves.
   return size;
 }
@@ -143,8 +146,8 @@ int constMethodKlass::oop_adjust_pointers(oop obj) {
   MarkSweep::adjust_pointer(cm->adr_exception_table());
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cm->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  int size = cm->object_size();  
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constMethodKlassObj never moves.
   return size;
 }
@@ -175,8 +178,8 @@ int constMethodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int constMethodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                          HeapWord* beg_addr,
-                                          HeapWord* end_addr) {
+					  HeapWord* beg_addr,
+					  HeapWord* end_addr) {
   assert(obj->is_constMethod(), "should be constMethod");
   constMethodOop cm_oop = constMethodOop(obj);
 
@@ -204,7 +207,7 @@ void constMethodKlass::oop_print_on(oop obj, outputStream* st) {
   st->print(" - exceptions:   " INTPTR_FORMAT "\n", (address)m->exception_table());
   if (m->has_stackmap_table()) {
     st->print(" - stackmap data:       ");
-    m->stackmap_data()->print_value_on(st);
+    m->stackmap_data()->print_value_on(st); 
     st->cr();
   }
 }
@@ -234,7 +237,7 @@ void constMethodKlass::oop_verify_on(oop obj, outputStream* st) {
   constMethodOop m = constMethodOop(obj);
   guarantee(m->is_perm(),                            "should be in permspace");
 
-  // Verification can occur during oop construction before the method or
+  // Verification can occur during oop construction before the method or 
   // other fields have been initialized.
   if (!obj->partially_loaded()) {
     guarantee(m->method()->is_perm(), "should be in permspace");
@@ -288,7 +291,7 @@ bool constMethodKlass::oop_partially_loaded(oop obj) const {
   assert(obj->is_constMethod(), "object must be klass");
   constMethodOop m = constMethodOop(obj);
   // check whether exception_table points to self (flag for partially loaded)
-  return m->exception_table() == (typeArrayOop)obj;
+  return m->exception_table() == (typeArrayOop)obj; 
 }
 
 
@@ -299,3 +302,4 @@ void constMethodKlass::oop_set_partially_loaded(oop obj) {
   // Temporarily set exception_table to point to self
   m->set_exception_table((typeArrayOop)obj);
 }
+

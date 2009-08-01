@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -31,7 +31,7 @@ public interface DebugVC50SubsectionDirectory {
   public short getHeaderLength();
   public short getEntryLength();
   public int   getNumEntries();
-
+  
   // lfoNextDir and flags fields have been elided as they are unused
   // according to the documentation
 

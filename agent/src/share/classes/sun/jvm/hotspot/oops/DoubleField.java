@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public class DoubleField extends Field {
   }
 
   public DoubleField(sun.jvm.hotspot.types.JDoubleField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
   }
 
   public DoubleField(InstanceKlass holder, int fieldArrayIndex) {
@@ -42,6 +42,7 @@ public class DoubleField extends Field {
 
   public double getValue(Oop obj) { return obj.getHandle().getJDoubleAt(getOffset()); }
   public void setValue(Oop obj, double value) throws MutationException {
-    // Fix this: setJDoubleAt is missing in Address
+    // Fix this: setJDoubleAt is missing in Address    
   }
 }
+

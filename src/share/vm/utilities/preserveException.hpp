@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)preserveException.hpp	1.20 07/05/05 17:07:11 JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file provides more support for exception handling; see also exceptions.hpp
@@ -61,10 +64,10 @@ private:
   Handle      _preserved_exception_oop;
   int         _preserved_exception_line;
   const char* _preserved_exception_file;
-
+  
   void        preserve();
   void        restore();
-
+  
   public:
     WeakPreserveExceptionMark(Thread* pThread) :  _thread(pThread), _preserved_exception_oop()  {
       if (pThread->has_pending_exception()) {
@@ -81,5 +84,5 @@ private:
 
 
 // use global exception mark when allowing pending exception to be set and
-// saving and restoring them
+// saving and restoring them 
 #define PRESERVE_EXCEPTION_MARK                    Thread* THREAD; PreserveExceptionMark __em(THREAD);

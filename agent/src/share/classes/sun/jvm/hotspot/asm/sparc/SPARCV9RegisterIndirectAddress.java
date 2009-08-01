@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -41,7 +41,7 @@ public class SPARCV9RegisterIndirectAddress extends SPARCRegisterIndirectAddress
 
     public void setIndirectAsi(boolean indirectAsi) {
         this.indirectAsi = indirectAsi;
-    }
+    }   
 
     public String toString() {
         StringBuffer buf = new StringBuffer();

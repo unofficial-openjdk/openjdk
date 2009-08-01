@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)taskqueue.cpp	1.21 06/08/10 17:56:51 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -50,7 +53,7 @@ int TaskQueueSetSuper::randomParkAndMiller(int *seed0) {
 ParallelTaskTerminator::
 ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set) :
   _n_threads(n_threads),
-  _queue_set(queue_set),
+  _queue_set(queue_set), 
   _offered_termination(0) {}
 
 bool ParallelTaskTerminator::peek_in_queue_set() {

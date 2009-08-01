@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -286,15 +286,15 @@ public class Bytecodes {
         return (alignedBCI - bci) + (3 + hi - lo + 1)*jintSize;
       }
 
-    case _lookupswitch:      // fall through
-    case _fast_binaryswitch: // fall through
-    case _fast_linearswitch:
+    case _lookupswitch:      // fall through    
+    case _fast_binaryswitch: // fall through    
+    case _fast_linearswitch: 
       {
         int alignedBCI = Bits.roundTo(bci + 1, jintSize);
         int npairs = method.getBytecodeIntArg(alignedBCI + jintSize);
         return (alignedBCI - bci) + (2 + 2*npairs)*jintSize;
       }
-
+  
     }
     throw new RuntimeException("should not reach here");
   }
@@ -312,7 +312,7 @@ public class Bytecodes {
   }
 
   /** Fetches a bytecode, hiding breakpoints as necessary */
-  public static int codeAt(Method method, int bci) {
+  public static int codeAt(Method method, int bci) { 
     int res = codeOrBPAt(method, bci);
     if (res == _breakpoint) {
       res = method.getOrigBytecodeAt(bci);
@@ -351,12 +351,12 @@ public class Bytecodes {
   public static boolean   isJavaCode   (int code) { return 0 <= code && code < number_of_java_codes; }
   public static boolean   isFastCode   (int code) { return number_of_java_codes <= code && code < number_of_codes; }
 
-  public static boolean   isAload      (int code) { return (code == _aload  || code == _aload_0  || code == _aload_1
+  public static boolean   isAload      (int code) { return (code == _aload  || code == _aload_0  || code == _aload_1   
                                                                             || code == _aload_2  || code == _aload_3); }
-  public static boolean   isAstore     (int code) { return (code == _astore || code == _astore_0 || code == _astore_1
+  public static boolean   isAstore     (int code) { return (code == _astore || code == _astore_0 || code == _astore_1 
                                                                             || code == _astore_2 || code == _astore_3); }
 
-  public static boolean   isZeroConst  (int code) { return (code == _aconst_null || code == _iconst_0
+  public static boolean   isZeroConst  (int code) { return (code == _aconst_null || code == _iconst_0 
                                                                                  || code == _fconst_0 || code == _dconst_0); }
 
   //----------------------------------------------------------------------
@@ -422,7 +422,7 @@ public class Bytecodes {
     // w: wide bytecode
     //
     // Note: Right now the format strings are used for 2 purposes:
-    //       1. to specify the length of the bytecode
+    //       1. to specify the length of the bytecode 
     //          (= number of characters in format string)
     //       2. to specify the bytecode attributes
     //
@@ -431,7 +431,7 @@ public class Bytecodes {
     //       used, one would also have to adjust the bytecode tracer.
     //
     // Note: For bytecodes with variable length, the format string is the empty string.
-
+    
     // Note 1: null for the format string means the bytecode doesn't exist
     //         in that form.
     //
@@ -644,7 +644,7 @@ public class Bytecodes {
     def(_jsr_w               , "jsr_w"               , "boooo", null    , BasicType.getTInt()    ,  0, false);
     def(_breakpoint          , "breakpoint"          , ""     , null    , BasicType.getTVoid()   ,  0, true );
 
-    //  JVM bytecodes
+    //  JVM bytecodes	  			
     //  bytecode               bytecode name           format   wide f.   result tp               stk traps  std code
     def(_fast_agetfield      , "fast_agetfield"      , "bjj"  , null    , BasicType.getTObject() ,  0, true , _getfield       );
     def(_fast_bgetfield      , "fast_bgetfield"      , "bjj"  , null    , BasicType.getTInt()    ,  0, true , _getfield       );
@@ -654,7 +654,7 @@ public class Bytecodes {
     def(_fast_igetfield      , "fast_igetfield"      , "bjj"  , null    , BasicType.getTInt()    ,  0, true , _getfield       );
     def(_fast_lgetfield      , "fast_lgetfield"      , "bjj"  , null    , BasicType.getTLong()   ,  0, true , _getfield       );
     def(_fast_sgetfield      , "fast_sgetfield"      , "bjj"  , null    , BasicType.getTShort()  ,  0, true , _getfield       );
-
+  
     def(_fast_aputfield      , "fast_aputfield"      , "bjj"  , null    , BasicType.getTObject() ,  0, true , _putfield       );
     def(_fast_bputfield      , "fast_bputfield"      , "bjj"  , null    , BasicType.getTInt()    ,  0, true , _putfield       );
     def(_fast_cputfield      , "fast_cputfield"      , "bjj"  , null    , BasicType.getTChar()   ,  0, true , _putfield       );
@@ -663,19 +663,19 @@ public class Bytecodes {
     def(_fast_iputfield      , "fast_iputfield"      , "bjj"  , null    , BasicType.getTInt()    ,  0, true , _putfield       );
     def(_fast_lputfield      , "fast_lputfield"      , "bjj"  , null    , BasicType.getTLong()   ,  0, true , _putfield       );
     def(_fast_sputfield      , "fast_sputfield"      , "bjj"  , null    , BasicType.getTShort()  ,  0, true , _putfield       );
-
+  
     def(_fast_aload_0        , "fast_aload_0"        , "b"    , null    , BasicType.getTObject() ,  1, true , _aload_0        );
     def(_fast_iaccess_0      , "fast_iaccess_0"      , "b_jj" , null    , BasicType.getTInt()    ,  1, true , _aload_0        );
     def(_fast_aaccess_0      , "fast_aaccess_0"      , "b_jj" , null    , BasicType.getTObject() ,  1, true , _aload_0        );
     def(_fast_faccess_0      , "fast_faccess_0"      , "b_jj" , null    , BasicType.getTObject() ,  1, true , _aload_0        );
-
+  
     def(_fast_iload          , "fast_iload"          , "bi"   , null    , BasicType.getTInt()    ,  1, false, _iload);
     def(_fast_iload2         , "fast_iload2"         , "bi_i" , null    , BasicType.getTInt()    ,  2, false, _iload);
     def(_fast_icaload        , "fast_icaload"        , "bi_"  , null    , BasicType.getTInt()    ,  0, false, _iload);
-
+  
     // Faster method invocation.
     def(_fast_invokevfinal   , "fast_invokevfinal"   , "bjj"  , null    , BasicType.getTIllegal(), -1, true, _invokevirtual);
-
+  
     def(_fast_linearswitch   , "fast_linearswitch"   , ""     , null    , BasicType.getTVoid()   , -1, false, _lookupswitch   );
     def(_fast_binaryswitch   , "fast_binaryswitch"   , ""     , null    , BasicType.getTVoid()   , -1, false, _lookupswitch   );
     def(_shouldnotreachhere  , "_shouldnotreachhere" , "b"    , null    , BasicType.getTVoid()   ,  0, false);

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bytecodeInterpreter_x86.inline.hpp	1.10 07/08/29 13:42:12 JVM"
+#endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Inline interpreter functions for IA32
@@ -33,10 +36,10 @@ inline jfloat BytecodeInterpreter::VMfloatRem(jfloat op1, jfloat op2) { return f
 inline jfloat BytecodeInterpreter::VMfloatNeg(jfloat op) { return -op; }
 
 inline int32_t BytecodeInterpreter::VMfloatCompare(jfloat op1, jfloat op2, int32_t direction) {
-  return ( op1 < op2 ? -1 :
-               op1 > op2 ? 1 :
-                   op1 == op2 ? 0 :
-                       (direction == -1 || direction == 1) ? direction : 0);
+  return ( op1 < op2 ? -1 : 
+	       op1 > op2 ? 1 : 
+		   op1 == op2 ? 0 : 
+		       (direction == -1 || direction == 1) ? direction : 0);
 
 }
 
@@ -183,10 +186,10 @@ inline jdouble BytecodeInterpreter::VMdoubleSub(jdouble op1, jdouble op2) {
 }
 
 inline int32_t BytecodeInterpreter::VMdoubleCompare(jdouble op1, jdouble op2, int32_t direction) {
-  return ( op1 < op2 ? -1 :
-               op1 > op2 ? 1 :
-                   op1 == op2 ? 0 :
-                       (direction == -1 || direction == 1) ? direction : 0);
+  return ( op1 < op2 ? -1 : 
+	       op1 > op2 ? 1 : 
+		   op1 == op2 ? 0 : 
+		       (direction == -1 || direction == 1) ? direction : 0);
 }
 
 // Double Conversions
@@ -278,3 +281,4 @@ inline jshort BytecodeInterpreter::VMint2Short(jint val) {
 inline jbyte BytecodeInterpreter::VMint2Byte(jint val) {
   return (jbyte) val;
 }
+

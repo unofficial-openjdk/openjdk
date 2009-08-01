@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)loopnode.hpp	1.146 07/10/23 13:12:55 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class CmpNode;
@@ -36,12 +39,12 @@ struct small_cache;
 //                  I D E A L I Z E D   L O O P S
 //
 // Idealized loops are the set of loops I perform more interesting
-// transformations on, beyond simple hoisting.
+// transformations on, beyond simple hoisting.  
 
 //------------------------------LoopNode---------------------------------------
 // Simple loop header.  Fall in path on left, loop-back path on right.
 class LoopNode : public RegionNode {
-  // Size is bigger to hold the flags.  However, the flags do not change
+  // Size is bigger to hold the flags.  However, the flags do not change 
   // the semantics so it does not appear in the hash & cmp functions.
   virtual uint size_of() const { return sizeof(*this); }
 protected:
@@ -114,21 +117,21 @@ public:
 // CountedLoopNodes head simple counted loops.  CountedLoopNodes have as
 // inputs the incoming loop-start control and the loop-back control, so they
 // act like RegionNodes.  They also take in the initial trip counter, the
-// loop-invariant stride and the loop-invariant limit value.  CountedLoopNodes
-// produce a loop-body control and the trip counter value.  Since
+// loop-invariant stride and the loop-invariant limit value.  CountedLoopNodes 
+// produce a loop-body control and the trip counter value.  Since 
 // CountedLoopNodes behave like RegionNodes I still have a standard CFG model.
 
 class CountedLoopNode : public LoopNode {
-  // Size is bigger to hold _main_idx.  However, _main_idx does not change
+  // Size is bigger to hold _main_idx.  However, _main_idx does not change 
   // the semantics so it does not appear in the hash & cmp functions.
   virtual uint size_of() const { return sizeof(*this); }
 
   // For Pre- and Post-loops during debugging ONLY, this holds the index of
   // the Main CountedLoop.  Used to assert that we understand the graph shape.
   node_idx_t _main_idx;
-
+  
   // Known trip count calculated by policy_maximally_unroll
-  int   _trip_count;
+  int   _trip_count; 
 
   // Expected trip count from profile data
   float _profile_trip_cnt;
@@ -146,7 +149,7 @@ public:
       _profile_trip_cnt(COUNT_UNKNOWN), _unrolled_count_log2(0),
       _node_count_before_unroll(0) {
     init_class_id(Class_CountedLoop);
-    // Initialize _trip_count to the largest possible value.
+    // Initialize _trip_count to the largest possible value. 
     // Will be reset (lower) if the loop's trip count is known.
   }
 
@@ -239,7 +242,7 @@ public:
   int stride_con() const;
   bool stride_is_con() const        { Node *tmp = stride  (); return (tmp != NULL && tmp->is_Con()); }
   BoolTest::mask test_trip() const  { return in(TestValue)->as_Bool()->_test._test; }
-  CountedLoopNode *loopnode() const {
+  CountedLoopNode *loopnode() const { 
     Node *ln = phi()->in(0);
     assert( ln->Opcode() == Op_CountedLoop, "malformed loop" );
     return (CountedLoopNode*)ln; }
@@ -250,13 +253,13 @@ public:
 };
 
 
-inline CountedLoopEndNode *CountedLoopNode::loopexit() const {
+inline CountedLoopEndNode *CountedLoopNode::loopexit() const { 
   Node *bc = back_control();
   if( bc == NULL ) return NULL;
   Node *le = bc->in(0);
   if( le->Opcode() != Op_CountedLoopEnd )
     return NULL;
-  return (CountedLoopEndNode*)le;
+  return (CountedLoopEndNode*)le; 
 }
 inline Node *CountedLoopNode::init_trip() const { return loopexit() ? loopexit()->init_trip() : NULL; }
 inline Node *CountedLoopNode::stride() const { return loopexit() ? loopexit()->stride() : NULL; }
@@ -284,7 +287,7 @@ public:
   PhaseIdealLoop* _phase;
 
   Node_List _body;              // Loop body for inner loops
-
+  
   uint8 _nest;                  // Nesting depth
   uint8 _irreducible:1,         // True if irreducible
         _has_call:1,            // True if has call safepoint
@@ -309,13 +312,13 @@ public:
   // Set loop nesting depth.  Accumulate has_call bits.
   int set_nest( uint depth );
 
-  // Split out multiple fall-in edges from the loop header.  Move them to a
+  // Split out multiple fall-in edges from the loop header.  Move them to a 
   // private RegionNode before the loop.  This becomes the loop landing pad.
   void split_fall_in( PhaseIdealLoop *phase, int fall_in_cnt );
 
   // Split out the outermost loop from this shared header.
   void split_outer_loop( PhaseIdealLoop *phase );
-
+  
   // Merge all the backedges from the shared header into a private Region.
   // Feed that region as the one backedge to this loop.
   void merge_many_backedges( PhaseIdealLoop *phase );
@@ -359,7 +362,7 @@ public:
   // Replace with a 1-in-10 exit guess.
   void adjust_loop_exit_prob( PhaseIdealLoop *phase );
 
-  // Return TRUE or FALSE if the loop should never be RCE'd or aligned.
+  // Return TRUE or FALSE if the loop should never be RCE'd or aligned.  
   // Useful for unrolling loops with NO array accesses.
   bool policy_peel_only( PhaseIdealLoop *phase ) const;
 
@@ -371,7 +374,7 @@ public:
   bool policy_do_remove_empty_loop( PhaseIdealLoop *phase );
 
   // Return TRUE or FALSE if the loop should be peeled or not.  Peel if we can
-  // make some loop-invariant test (usually a null-check) happen before the
+  // make some loop-invariant test (usually a null-check) happen before the 
   // loop.
   bool policy_peeling( PhaseIdealLoop *phase ) const;
 
@@ -379,7 +382,7 @@ public:
   // known trip count in the counted loop node.
   bool policy_maximally_unroll( PhaseIdealLoop *phase ) const;
 
-  // Return TRUE or FALSE if the loop should be unrolled or not.  Unroll if
+  // Return TRUE or FALSE if the loop should be unrolled or not.  Unroll if 
   // the loop is a CountedLoop and the body is small enough.
   bool policy_unroll( PhaseIdealLoop *phase ) const;
 
@@ -458,7 +461,7 @@ class PhaseIdealLoop : public PhaseTransform {
     memset(_preorders, 0, sizeof(uint) * _max_preorder);
   }
 
-  // Check to grow _preorders[] array for the case when build_loop_tree_impl()
+  // Check to grow _preorders[] array for the case when build_loop_tree_impl() 
   // adds new nodes.
   void check_grow_preorders( ) {
     if ( _max_preorder < C->unique() ) {
@@ -471,14 +474,14 @@ class PhaseIdealLoop : public PhaseTransform {
   // Check for pre-visited.  Zero for NOT visited; non-zero for visited.
   int is_visited( Node *n ) const { return _preorders[n->_idx]; }
   // Pre-order numbers are written to the Nodes array as low-bit-set values.
-  void set_preorder_visited( Node *n, int pre_order ) {
+  void set_preorder_visited( Node *n, int pre_order ) { 
     assert( !is_visited( n ), "already set" );
     _preorders[n->_idx] = (pre_order<<1);
   };
   // Return pre-order number.
   int get_preorder( Node *n ) const { assert( is_visited(n), "" ); return _preorders[n->_idx]>>1; }
 
-  // Check for being post-visited.
+  // Check for being post-visited. 
   // Should be previsited already (checked with assert(is_visited(n))).
   int is_postvisited( Node *n ) const { assert( is_visited(n), "" ); return _preorders[n->_idx]&1; }
 
@@ -567,7 +570,7 @@ private:
   Node *get_ctrl_no_update( Node *i ) const {
     assert( has_ctrl(i), "" );
     Node *n = (Node*)(((intptr_t)_nodes[i->_idx]) & ~1);
-    if (!n->in(0)) {
+    if (!n->in(0)) {        
       // Skip dead CFG nodes
       do {
         n = (Node*)(((intptr_t)_nodes[n->_idx]) & ~1);
@@ -579,7 +582,7 @@ private:
 
   // Check for loop being set
   // "n" must be a control node. Returns true if "n" is known to be in a loop.
-  bool has_loop( Node *n ) const {
+  bool has_loop( Node *n ) const { 
     assert(!has_node(n) || !has_ctrl(n), "");
     return has_node(n);
   }
@@ -629,11 +632,11 @@ private:
 private:
   uint _idom_size;
   Node **_idom;                 // Array of immediate dominators
-  uint *_dom_depth;           // Used for fast LCA test
+  uint *_dom_depth;           // Used for fast LCA test    
   GrowableArray<uint>* _dom_stk; // For recomputation of dom depth
 
   Node* idom_no_update(Node* d) const {
-    assert(d->_idx < _idom_size, "oob");
+    assert(d->_idx < _idom_size, "oob"); 
     Node* n = _idom[d->_idx];
     assert(n != NULL,"Bad immediate dominator info.");
     while (n->in(0) == NULL) {  // Skip dead CFG nodes
@@ -649,7 +652,7 @@ private:
     _idom[didx] = n;            // Lazily remove dead CFG nodes from table.
     return n;
   }
-  uint dom_depth(Node* d) const {
+  uint dom_depth(Node* d) const {                        
     assert(d->_idx < _idom_size, "");
     return _dom_depth[d->_idx];
   }
@@ -690,7 +693,7 @@ public:
   }
 
   // Is 'n' a (nested) member of 'loop'?
-  int is_member( const IdealLoopTree *loop, Node *n ) const {
+  int is_member( const IdealLoopTree *loop, Node *n ) const { 
     return loop->is_member(get_loop(n)); }
 
   // This is the basic building block of the loop optimizations.  It clones an
@@ -709,7 +712,7 @@ public:
   //      dominated by the passed in side_by_side_idom node.  Used in
   //      construction of unswitched loops.
   void clone_loop( IdealLoopTree *loop, Node_List &old_new, int dom_depth,
-                   Node* side_by_side_idom = NULL);
+	           Node* side_by_side_idom = NULL);
 
   // If we got the effect of peeling, either by actually peeling or by
   // making a pre-loop which must execute at least once, we can remove
@@ -765,7 +768,7 @@ public:
   // the pre-loop or the post-loop until the condition holds true in the main
   // loop.  Scale_con, offset and limit are all loop invariant.
   void add_constraint( int stride_con, int scale_con, Node *offset, Node *limit, Node *pre_ctrl, Node **pre_limit, Node **main_limit );
-
+  
   // Partially peel loop up through last_peel node.
   bool partial_peel( IdealLoopTree *loop, Node_List &old_new );
 
@@ -812,13 +815,13 @@ public:
 
   // Passed in a Phi merging (recursively) some nearly equivalent Bool/Cmps.
   // "Nearly" because all Nodes have been cloned from the original in the loop,
-  // but the fall-in edges to the Cmp are different.  Clone bool/Cmp pairs
+  // but the fall-in edges to the Cmp are different.  Clone bool/Cmp pairs 
   // through the Phi recursively, and return a Bool.
   BoolNode *clone_iff( PhiNode *phi, IdealLoopTree *loop );
   CmpNode *clone_bool( PhiNode *phi, IdealLoopTree *loop );
 
 
-  // Rework addressing expressions to get the most loop-invariant stuff
+  // Rework addressing expressions to get the most loop-invariant stuff 
   // moved out.  We'd like to do all associative operators, but it's especially
   // important (common) to do address expressions.
   Node *remix_address_expressions( Node *n );
@@ -846,7 +849,7 @@ public:
   Node *split_thru_region( Node *n, Node *region );
   // Split Node 'n' through merge point if there is enough win.
   Node *split_thru_phi( Node *n, Node *region, int policy );
-  // Found an If getting its condition-code input from a Phi in the
+  // Found an If getting its condition-code input from a Phi in the 
   // same block.  Split thru the Region.
   void do_split_if( Node *iff );
 
@@ -922,3 +925,4 @@ public:
 
   IdealLoopTree* current() { return _curnt; }  // Return current value of iterator.
 };
+

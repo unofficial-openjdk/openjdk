@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)placeholders.cpp	1.20 07/05/17 15:50:29 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,7 +31,7 @@
 // Placeholder methods
 
 PlaceholderEntry* PlaceholderTable::new_entry(int hash, symbolOop name,
-                                              oop loader, bool havesupername,
+                                              oop loader, bool havesupername, 
                                               symbolOop supername) {
   PlaceholderEntry* entry = (PlaceholderEntry*)Hashtable::new_entry(hash, name);
   entry->set_loader(loader);
@@ -60,9 +63,9 @@ void PlaceholderTable::add_entry(int index, unsigned int hash,
 }
 
 
-// Remove a placeholder object.
+// Remove a placeholder object. 
 void PlaceholderTable::remove_entry(int index, unsigned int hash,
-                                    symbolHandle class_name,
+                                    symbolHandle class_name, 
                                     Handle class_loader) {
   assert_locked_or_safepoint(SystemDictionary_lock);
   PlaceholderEntry** p = bucket_addr(index);
@@ -105,8 +108,8 @@ symbolOop PlaceholderTable::find_entry(int index, unsigned int hash,
 }
 
   // find_and_add returns probe pointer - old or new
-  // If no entry exists, add a placeholder entry
-  // If entry exists, reuse entry
+  // If no entry exists, add a placeholder entry 
+  // If entry exists, reuse entry 
   // For both, push SeenThread for classloadAction
   // if havesupername: this is used for circularity for instanceklass loading
 PlaceholderEntry* PlaceholderTable::find_and_add(int index, unsigned int hash, symbolHandle name, Handle loader, classloadAction action, symbolHandle supername, Thread* thread) {
@@ -160,8 +163,8 @@ PlaceholderTable::PlaceholderTable(int table_size)
 
 void PlaceholderTable::oops_do(OopClosure* f) {
   for (int index = 0; index < table_size(); index++) {
-    for (PlaceholderEntry* probe = bucket(index);
-                           probe != NULL;
+    for (PlaceholderEntry* probe = bucket(index); 
+                           probe != NULL; 
                            probe = probe->next()) {
       probe->oops_do(f);
     }
@@ -186,10 +189,10 @@ void PlaceholderEntry::oops_do(OopClosure* blk) {
 // do all entries in the placeholder table
 void PlaceholderTable::entries_do(void f(symbolOop, oop)) {
   for (int index = 0; index < table_size(); index++) {
-    for (PlaceholderEntry* probe = bucket(index);
-                           probe != NULL;
+    for (PlaceholderEntry* probe = bucket(index); 
+                           probe != NULL; 
                            probe = probe->next()) {
-      f(probe->klass(), probe->loader());
+      f(probe->klass(), probe->loader());             
     }
   }
 }
@@ -229,9 +232,9 @@ void PlaceholderEntry::print() const {
 #endif
 
 void PlaceholderEntry::verify() const {
-  guarantee(loader() == NULL || loader()->is_instance(),
+  guarantee(loader() == NULL || loader()->is_instance(), 
             "checking type of _loader");
-  guarantee(instanceKlass() == NULL
+  guarantee(instanceKlass() == NULL 
             || Klass::cast(instanceKlass())->oop_is_instance(),
             "checking type of instanceKlass result");
   klass()->verify();
@@ -240,8 +243,8 @@ void PlaceholderEntry::verify() const {
 void PlaceholderTable::verify() {
   int element_count = 0;
   for (int pindex = 0; pindex < table_size(); pindex++) {
-    for (PlaceholderEntry* probe = bucket(pindex);
-                           probe != NULL;
+    for (PlaceholderEntry* probe = bucket(pindex); 
+                           probe != NULL; 
                            probe = probe->next()) {
       probe->verify();
       element_count++;  // both klasses and place holders count
@@ -254,9 +257,9 @@ void PlaceholderTable::verify() {
 
 #ifndef PRODUCT
 void PlaceholderTable::print() {
-  for (int pindex = 0; pindex < table_size(); pindex++) {
+  for (int pindex = 0; pindex < table_size(); pindex++) {    
     for (PlaceholderEntry* probe = bucket(pindex);
-                           probe != NULL;
+                           probe != NULL; 
                            probe = probe->next()) {
       if (Verbose) tty->print("%4d: ", pindex);
       tty->print(" place holder ");
@@ -267,3 +270,5 @@ void PlaceholderTable::print() {
   }
 }
 #endif
+
+

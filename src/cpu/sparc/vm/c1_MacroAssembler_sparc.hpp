@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_MacroAssembler_sparc.hpp	1.27 07/05/05 17:04:26 JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
   void pd_init() { /* nothing to do */ }
@@ -59,7 +62,7 @@
     Register t2,                       // temp register
     Register t3,                       // temp register
     int      hdr_size,                 // object header size in words
-    int      obj_size,                 // object size in words
+    int      obj_size,                 // object size in words 
     Register klass,                    // object klass
     Label&   slow_case                 // continuation point if fast allocation fails
   );
@@ -76,7 +79,7 @@
     Register t2,                       // temp register
     Register t3,                       // temp register
     int      hdr_size,                 // object header size in words
-    int      elt_size,                 // element size in bytes
+    int      elt_size,                 // element size in bytes 
     Register klass,                    // object klass
     Label&   slow_case                 // continuation point if fast allocation fails
   );

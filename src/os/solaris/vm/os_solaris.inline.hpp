@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)os_solaris.inline.hpp	1.63 07/06/29 04:05:41 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline const char* os::file_separator() { return "/"; }
@@ -40,8 +43,8 @@ inline bool os::uses_stack_guard_pages() {
 
 inline bool os::allocate_stack_guard_pages() {
   assert(uses_stack_guard_pages(), "sanity check");
-  int r = thr_main() ;
-  guarantee (r == 0 || r == 1, "CR6501650 or CR6493689") ;
+  int r = thr_main() ; 
+  guarantee (r == 0 || r == 1, "CR6501650 or CR6493689") ; 
   return r;
 }
 
@@ -71,7 +74,7 @@ inline int os::readdir_buf_size(const char *path)
 inline struct dirent* os::readdir(DIR* dirp, dirent* dbuf)
 {
   assert(dirp != NULL, "just checking");
-#if defined(_LP64) || defined(_GNU_SOURCE)
+#if defined(_LP64) || defined(_GNU_SOURCE) 
   dirent* p;
   int status;
 
@@ -80,9 +83,9 @@ inline struct dirent* os::readdir(DIR* dirp, dirent* dbuf)
     return NULL;
   } else
     return p;
-#else  // defined(_LP64) || defined(_GNU_SOURCE)
+#else  // defined(_LP64) || defined(_GNU_SOURCE)  
   return ::readdir_r(dirp, dbuf);
-#endif // defined(_LP64) || defined(_GNU_SOURCE)
+#endif // defined(_LP64) || defined(_GNU_SOURCE) 
 }
 
 inline int os::closedir(DIR *dirp)
@@ -94,7 +97,7 @@ inline int os::closedir(DIR *dirp)
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// macros for interruptible io and system calls and system call restarting
+// macros for interruptible io and system calls and system call restarting 
 
 #define _INTERRUPTIBLE(_setup, _cmd, _result, _thread, _clear, _before, _after, _int_enable) \
 do { \
@@ -129,7 +132,7 @@ do { \
   _INTERRUPTIBLE( JavaThread* _thread = (JavaThread*)ThreadLocalStorage::thread(),_result = _cmd, _result, _thread, _clear, , , UseVMInterruptibleIO); \
 } while((_result == OS_ERR) && (errno == EINTR))
 
-#else
+#else 
 
 // This adds an assertion that it is only called from thread_in_native
 // The call overhead is skipped for performance in product mode
@@ -145,7 +148,7 @@ do { \
 } while((_result == OS_ERR) && (errno == EINTR))
 
 /* Use NORESTART when the system call cannot return EINTR, when something other
-   than a system call is being invoked, or when the caller must do EINTR
+   than a system call is being invoked, or when the caller must do EINTR 
    handling. */
 
 #ifndef ASSERT

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -54,7 +54,7 @@ public class JavaCallWrapper extends VMObject {
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JavaCallWrapper");
     Type anchorType = db.lookupType("JavaFrameAnchor");
-
+    
     anchorField      = type.getAddressField("_anchor");
     lastJavaSPField  = anchorType.getAddressField("_last_Java_sp");
     lastJavaPCField  = anchorType.getAddressField("_last_Java_pc");

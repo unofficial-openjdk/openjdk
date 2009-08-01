@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)compiledICHolderKlass.cpp	1.41 07/05/29 09:44:18 JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 klassOop compiledICHolderKlass::create_klass(TRAPS) {
   compiledICHolderKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
   KlassHandle k = base_create_klass(h_this_klass, header_size(), o.vtbl_value(), CHECK_NULL);
   // Make sure size calculation is right
   assert(k()->size() == align_object_size(header_size()), "wrong size for object");
@@ -63,7 +66,7 @@ void compiledICHolderKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void compiledICHolderKlass::oop_follow_contents(ParCompactionManager* cm,
-                                                oop obj) {
+						oop obj) {
   assert(obj->is_compiledICHolder(), "must be compiledICHolder");
   compiledICHolderOop c = compiledICHolderOop(obj);
 
@@ -88,7 +91,7 @@ int compiledICHolderKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
 }
 
 int compiledICHolderKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
-                                              MemRegion mr) {
+					      MemRegion mr) {
   assert(obj->is_compiledICHolder(), "must be compiledICHolder");
   compiledICHolderOop c = compiledICHolderOop(obj);
   // Get size before changing pointers.
@@ -129,7 +132,7 @@ void compiledICHolderKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 }
 
 int compiledICHolderKlass::oop_update_pointers(ParCompactionManager* cm,
-                                               oop obj) {
+					       oop obj) {
   assert(obj->is_compiledICHolder(), "must be compiledICHolder");
   compiledICHolderOop c = compiledICHolderOop(obj);
 
@@ -139,9 +142,9 @@ int compiledICHolderKlass::oop_update_pointers(ParCompactionManager* cm,
 }
 
 int compiledICHolderKlass::oop_update_pointers(ParCompactionManager* cm,
-                                               oop obj,
-                                               HeapWord* beg_addr,
-                                               HeapWord* end_addr) {
+					       oop obj,
+					       HeapWord* beg_addr,
+					       HeapWord* end_addr) {
   assert(obj->is_compiledICHolder(), "must be compiledICHolder");
   compiledICHolderOop c = compiledICHolderOop(obj);
 

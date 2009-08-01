@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)cpCacheOop.hpp	1.74 07/05/29 09:44:19 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A ConstantPoolCacheEntry describes an individual entry of the constant
@@ -140,14 +143,14 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
     volatileField = 25,
     vfinalMethod  = 26,
     finalField    = 27
-  };
+  }; 
 
   enum { field_index_mask = 0xFFFF };
 
   // start of type bits in flags
   // Note: the interpreter knows this layout!
   enum FlagValues {
-    tosBits      = 28
+    tosBits      = 28 
   };
 
   // Initialization
@@ -159,9 +162,9 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
     KlassHandle     field_holder,                // the object/klass holding the field
     int             orig_field_index,            // the original field index in the field holder
     int             field_offset,                // the field offset in words in the field holder
-    TosState        field_type,                  // the (machine) field type
-    bool            is_final,                     // the field is final
-    bool            is_volatile                  // the field is volatile
+    TosState        field_type,                  // the (machine) field type    
+    bool            is_final,                     // the field is final 
+    bool            is_volatile                  // the field is volatile 
   );
 
   void set_method(                               // sets entry to resolved method entry
@@ -171,12 +174,12 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   );
 
   void set_interface_call(
-    methodHandle method,                         // Resolved method
+    methodHandle method,                         // Resolved method    
     int index                                    // Method index into interface
-  );
+  );               
 
   void set_parameter_size(int value) {
-    assert(parameter_size() == 0 || parameter_size() == value,
+    assert(parameter_size() == 0 || parameter_size() == value, 
            "size must not change");
     // Setting the parameter size by itself is only safe if the
     // current value of _flags is 0, otherwise another thread may have
@@ -328,3 +331,4 @@ class constantPoolCacheOopDesc: public oopDesc {
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
 };
+

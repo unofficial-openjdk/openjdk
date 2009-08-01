@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jvmtiExtensions.hpp	1.8 07/05/05 17:06:38 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,9 +22,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
-
+ 
 #ifndef _JVMTI_EXTENSIONS_H_
 #define _JVMTI_EXTENSIONS_H_
 
@@ -29,9 +32,9 @@
 // JvmtiExtensions
 //
 // Maintains the list of extension functions and events in this JVMTI
-// implementation. The list of functions and events can be obtained by
-// the profiler using the JVMTI GetExtensionFunctions and
-// GetExtensionEvents functions.
+// implementation. The list of functions and events can be obtained by 
+// the profiler using the JVMTI GetExtensionFunctions and 
+// GetExtensionEvents functions. 
 
 class JvmtiExtensions : public AllStatic {
  private:
@@ -43,16 +46,16 @@ class JvmtiExtensions : public AllStatic {
   static void register_extensions();
 
   // returns the list of extension functions
-  static jvmtiError get_functions(JvmtiEnv* env, jint* extension_count_ptr,
-                                  jvmtiExtensionFunctionInfo** extensions);
+  static jvmtiError get_functions(JvmtiEnv* env, jint* extension_count_ptr, 
+				  jvmtiExtensionFunctionInfo** extensions);
 
   // returns the list of extension events
-  static jvmtiError get_events(JvmtiEnv* env, jint* extension_count_ptr,
-                               jvmtiExtensionEventInfo** extensions);
+  static jvmtiError get_events(JvmtiEnv* env, jint* extension_count_ptr, 
+			       jvmtiExtensionEventInfo** extensions);
 
   // sets the callback function for an extension event and enables the event
-  static jvmtiError set_event_callback(JvmtiEnv* env, jint extension_event_index,
-                                       jvmtiExtensionEvent callback);
+  static jvmtiError set_event_callback(JvmtiEnv* env, jint extension_event_index, 
+				       jvmtiExtensionEvent callback);
 };
 
 #endif  /* _JVMTI_EXTENSIONS_H_ */

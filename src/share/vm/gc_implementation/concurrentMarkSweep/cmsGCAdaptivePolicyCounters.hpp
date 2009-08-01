@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)cmsGCAdaptivePolicyCounters.hpp	1.16 07/05/05 17:05:25 JVM"
+#endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // CMSGCAdaptivePolicyCounters is a holder class for performance counters
@@ -83,7 +86,7 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   // MSC collection and the beginning of the next
   // MSC collection.
   PerfVariable* _avg_msc_interval_counter;
-  // Average for the GC cost of a MSC collection based on
+  // Average for the GC cost of a MSC collection based on 
   // _avg_msc_pause_counter and _avg_msc_interval_counter.
   PerfVariable* _msc_gc_cost_counter;
 
@@ -94,7 +97,7 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   // MS collection and the beginning of the next
   // MS collection.
   PerfVariable* _avg_ms_interval_counter;
-  // Average for the GC cost of a MS collection based on
+  // Average for the GC cost of a MS collection based on 
   // _avg_ms_pause_counter and _avg_ms_interval_counter.
   PerfVariable* _ms_gc_cost_counter;
 
@@ -105,7 +108,7 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   // Padded average of the bytes promoted per minor colleciton
   PerfVariable* _promoted_padded_avg_counter;
 
-  // See description of the _change_young_gen_for_maj_pauses
+  // See description of the _change_young_gen_for_maj_pauses 
   // variable recently in cmsAdaptiveSizePolicy.hpp.
   PerfVariable* _change_young_gen_for_maj_pauses_counter;
 
@@ -116,16 +119,16 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   PerfVariable* _remark_pause_young_slope_counter;
   PerfVariable* _initial_pause_young_slope_counter;
 
-  CMSAdaptiveSizePolicy* cms_size_policy() {
-    assert(_size_policy->kind() ==
+  CMSAdaptiveSizePolicy* cms_size_policy() { 
+    assert(_size_policy->kind() == 
       AdaptiveSizePolicy::_gc_cms_adaptive_size_policy,
       "Wrong size policy");
-    return (CMSAdaptiveSizePolicy*)_size_policy;
+    return (CMSAdaptiveSizePolicy*)_size_policy; 
   }
 
   inline void update_avg_cms_STW_time_counter() {
     _avg_cms_STW_time_counter->set_value(
-      (jlong) (cms_size_policy()->avg_cms_STW_time()->average() *
+      (jlong) (cms_size_policy()->avg_cms_STW_time()->average() * 
       (double) MILLIUNITS));
   }
 
@@ -136,37 +139,37 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
 
   inline void update_avg_initial_pause_counter() {
     _avg_initial_pause_counter->set_value(
-      (jlong) (cms_size_policy()->avg_initial_pause()->average() *
+      (jlong) (cms_size_policy()->avg_initial_pause()->average() * 
       (double) MILLIUNITS));
   }
 #ifdef NOT_PRODUCT
   inline void update_avg_remark_pause_counter() {
     _avg_remark_pause_counter->set_value(
-      (jlong) (cms_size_policy()-> avg_remark_pause()->average() *
+      (jlong) (cms_size_policy()-> avg_remark_pause()->average() * 
       (double) MILLIUNITS));
   }
 
   inline void update_initial_pause_counter() {
     _initial_pause_counter->set_value(
-      (jlong) (cms_size_policy()->avg_initial_pause()->average() *
+      (jlong) (cms_size_policy()->avg_initial_pause()->average() * 
       (double) MILLIUNITS));
   }
 #endif
   inline void update_remark_pause_counter() {
     _remark_pause_counter->set_value(
-      (jlong) (cms_size_policy()-> avg_remark_pause()->last_sample() *
+      (jlong) (cms_size_policy()-> avg_remark_pause()->last_sample() * 
       (double) MILLIUNITS));
   }
 
   inline void update_avg_concurrent_time_counter() {
     _avg_concurrent_time_counter->set_value(
-      (jlong) (cms_size_policy()->avg_concurrent_time()->last_sample() *
+      (jlong) (cms_size_policy()->avg_concurrent_time()->last_sample() * 
       (double) MILLIUNITS));
   }
 
   inline void update_avg_concurrent_interval_counter() {
     _avg_concurrent_interval_counter->set_value(
-      (jlong) (cms_size_policy()->avg_concurrent_interval()->average() *
+      (jlong) (cms_size_policy()->avg_concurrent_interval()->average() * 
       (double) MILLIUNITS));
   }
 
@@ -198,13 +201,13 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
 
   inline void update_avg_msc_pause_counter() {
     _avg_msc_pause_counter->set_value(
-      (jlong) (cms_size_policy()->avg_msc_pause()->average() *
+      (jlong) (cms_size_policy()->avg_msc_pause()->average() * 
       (double) MILLIUNITS));
   }
 
   inline void update_avg_msc_interval_counter() {
     _avg_msc_interval_counter->set_value(
-      (jlong) (cms_size_policy()->avg_msc_interval()->average() *
+      (jlong) (cms_size_policy()->avg_msc_interval()->average() * 
       (double) MILLIUNITS));
   }
 
@@ -215,13 +218,13 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
 
   inline void update_avg_ms_pause_counter() {
     _avg_ms_pause_counter->set_value(
-      (jlong) (cms_size_policy()->avg_ms_pause()->average() *
+      (jlong) (cms_size_policy()->avg_ms_pause()->average() * 
       (double) MILLIUNITS));
   }
 
   inline void update_avg_ms_interval_counter() {
     _avg_ms_interval_counter->set_value(
-      (jlong) (cms_size_policy()->avg_ms_interval()->average() *
+      (jlong) (cms_size_policy()->avg_ms_interval()->average() * 
       (double) MILLIUNITS));
   }
 
@@ -294,7 +297,7 @@ class CMSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
     _cms_capacity_counter->set_value(size_in_bytes);
   }
 
-  virtual GCPolicyCounters::Name kind() const {
-    return GCPolicyCounters::CMSGCAdaptivePolicyCountersKind;
+  virtual GCPolicyCounters::Name kind() const { 
+    return GCPolicyCounters::CMSGCAdaptivePolicyCountersKind; 
   }
 };

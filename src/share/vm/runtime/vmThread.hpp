@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vmThread.hpp	1.40 07/05/05 17:07:03 JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -33,13 +36,13 @@ class VMOperationQueue : public CHeapObj {
   enum Priorities {
      SafepointPriority, // Highest priority (operation executed at a safepoint)
      MediumPriority,    // Medium priority
-     nof_priorities
+     nof_priorities 
   };
 
   // We maintain a doubled linked list, with explicit count.
   int           _queue_length[nof_priorities];
   int           _queue_counter;
-  VM_Operation* _queue       [nof_priorities];
+  VM_Operation* _queue       [nof_priorities];  
   // we also allow the vmThread to register the ops it has drained so we
   // can scan them from oops_do
   VM_Operation* _drain_list;
@@ -52,7 +55,7 @@ class VMOperationQueue : public CHeapObj {
   bool queue_empty                (int prio);
   void queue_add_front            (int prio, VM_Operation *op);
   void queue_add_back             (int prio, VM_Operation *op);
-  VM_Operation* queue_remove_front(int prio);
+  VM_Operation* queue_remove_front(int prio);  
   void queue_oops_do(int queue, OopClosure* f);
   void drain_list_oops_do(OopClosure* f);
   VM_Operation* queue_drain(int prio);
@@ -102,7 +105,7 @@ class VMThread: public Thread {
   bool is_GC_thread() const                      { return true; }
 
   char* name() const { return (char*)"VM Thread"; }
-
+  
   // The ever running loop for the VMThread
   void loop();
 
@@ -115,7 +118,7 @@ class VMThread: public Thread {
   static void execute(VM_Operation* op);
 
   // Returns the current vm operation if any.
-  static VM_Operation* vm_operation()             { return _cur_vm_operation;   }
+  static VM_Operation* vm_operation()             { return _cur_vm_operation;   }  
 
   // Returns the single instance of VMThread.
   static VMThread* vm_thread()                    { return _vm_thread; }
@@ -125,7 +128,7 @@ class VMThread: public Thread {
 
   // Debugging
   void print_on(outputStream* st) const;
-  void print() const                              { print_on(tty); }
+  void print() const				  { print_on(tty); }
   void verify();
 
   // Performance measurement
@@ -138,11 +141,13 @@ class VMThread: public Thread {
   static void create();
   static void destroy();
 
- private:
-  // VM_Operation support
+ private:   
+  // VM_Operation support  
   static VM_Operation*     _cur_vm_operation;   // Current VM operation
   static VMOperationQueue* _vm_queue;           // Queue (w/ policy) of VM operations
-
+  
   // Pointer to single-instance of VM thread
   static VMThread*     _vm_thread;
 };
+
+

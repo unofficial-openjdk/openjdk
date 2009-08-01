@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jniHandles.hpp	1.54 07/05/17 16:06:14 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class JNIHandleBlock;
@@ -33,7 +36,7 @@ class JNIHandles : AllStatic {
   static JNIHandleBlock* _global_handles;             // First global handle block
   static JNIHandleBlock* _weak_global_handles;        // First weak global handle block
   static oop _deleted_handle;                         // Sentinel marking deleted handles
-
+  
  public:
   // Resolve handle into oop
   inline static oop resolve(jobject handle);
@@ -59,7 +62,7 @@ class JNIHandles : AllStatic {
   // jmethodID handling (as Weak global handles).
   // Because the useful life-span of a jmethodID cannot be determined, once created they are
   // never reclaimed.  The methods to which they refer, however, can be GC'ed away if the class
-  // is unloaded or if the method is made obsolete or deleted -- in these cases, the jmethodID
+  // is unloaded or if the method is made obsolete or deleted -- in these cases, the jmethodID 
   // refers to NULL (as is the case for any weak reference).
   static jmethodID make_jmethod_id(methodHandle mh);
   static void destroy_jmethod_id(jmethodID mid);
@@ -67,17 +70,17 @@ class JNIHandles : AllStatic {
   inline static methodOop checked_resolve_jmethod_id(jmethodID mid); // NULL on invalid jmethodID
   static void change_method_associated_with_jmethod_id(jmethodID jmid, methodHandle mh);
 
-  // Sentinel marking deleted handles in block. Note that we cannot store NULL as
+  // Sentinel marking deleted handles in block. Note that we cannot store NULL as 
   // the sentinel, since clearing weak global JNI refs are done by storing NULL in
   // the handle. The handle may not be reused before destroy_weak_global is called.
   static oop deleted_handle()   { return _deleted_handle; }
 
   // Initialization
   static void initialize();
-
+  
   // Debugging
   static void print_on(outputStream* st);
-  static void print()           { print_on(tty); }
+  static void print()		{ print_on(tty); }
   static void verify();
   static bool is_local_handle(Thread* thread, jobject handle);
   static bool is_frame_handle(JavaThread* thr, jobject obj);
@@ -100,7 +103,7 @@ class JNIHandles : AllStatic {
 class JNIHandleBlock : public CHeapObj {
   friend class VMStructs;
  private:
-  enum SomeConstants {
+  enum SomeConstants {     
     block_size_in_oops  = 32                    // Number of handles per handle block
   };
 
@@ -108,9 +111,9 @@ class JNIHandleBlock : public CHeapObj {
   int             _top;                         // Index of next unused handle
   JNIHandleBlock* _next;                        // Link to next block
 
-  // The following instance variables are only used by the first block in a chain.
+  // The following instance variables are only used by the first block in a chain. 
   // Having two types of blocks complicates the code and the space overhead in negligble.
-  JNIHandleBlock* _last;                        // Last block in use
+  JNIHandleBlock* _last;                        // Last block in use 
   JNIHandleBlock* _pop_frame_link;              // Block to restore on PopLocalFrame call
   oop*            _free_list;                   // Handle free list
   int             _allocate_before_rebuild;     // Number of blocks to allocate before rebuilding free list
@@ -210,3 +213,5 @@ inline void JNIHandles::destroy_local(jobject handle) {
     *((oop*)handle) = deleted_handle(); // Mark the handle as deleted, allocate will reuse it
   }
 }
+
+

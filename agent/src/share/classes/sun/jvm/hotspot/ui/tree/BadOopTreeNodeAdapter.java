@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.tree;
@@ -46,7 +46,7 @@ public class BadOopTreeNodeAdapter extends FieldTreeNodeAdapter {
 
   public int getChildCount() {
     return 0;
-  }
+  }  
 
   public SimpleTreeNode getChild(int index) {
     throw new RuntimeException("Should not call this");

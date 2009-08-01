@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)osThread_solaris.hpp	1.60 07/06/29 04:04:08 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This is embedded via include into the class OSThread
@@ -85,18 +88,18 @@
     ucontext_t* ucontext() const { return _ucontext; }
   };
 
-  // There are currently no asynchronous callbacks - and we'd better not
+  // There are currently no asynchronous callbacks - and we'd better not 
   // support them in the future either, as they need to be deallocated from
-  // the interrupt handler, which is not safe; they also require locks to
+  // the interrupt handler, which is not safe; they also require locks to 
   // protect the callback queue.
-
+  
   class Sync_Interrupt_Callback : private StackObj {
    protected:
     volatile bool _is_done;
     Monitor*      _sync;
     Thread*       _target;
    public:
-    Sync_Interrupt_Callback(Monitor * sync) {
+    Sync_Interrupt_Callback(Monitor * sync) { 
       _is_done = false;  _target = NULL;  _sync = sync;
     }
 
@@ -105,7 +108,7 @@
 
     int interrupt(Thread * target, int timeout);
 
-    // override to implement the callback.
+    // override to implement the callback. 
     virtual void execute(InterruptArguments *args) = 0;
 
     void leave_callback();
@@ -132,7 +135,7 @@
  private:
 
   JavaThreadState      _saved_interrupt_thread_state;       // the thread state before a system call -- restored afterward
-
+  
  public:
 
 

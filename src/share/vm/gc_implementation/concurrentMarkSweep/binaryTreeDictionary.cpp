@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)binaryTreeDictionary.cpp	1.37 07/05/05 17:05:43 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -93,7 +96,7 @@ TreeList* TreeList::removeChunkReplaceIfNeeded(TreeChunk* tc) {
   FreeChunk* list = head();
   assert(!list || list != list->next(), "Chunk on list twice");
   assert(tc != NULL, "Chunk being removed is NULL");
-  assert(parent() == NULL || this == parent()->left() ||
+  assert(parent() == NULL || this == parent()->left() || 
     this == parent()->right(), "list is inconsistent");
   assert(tc->isFree(), "Header is not marked correctly");
   assert(head() == NULL || head()->prev() == NULL, "list invariant");
@@ -110,7 +113,7 @@ TreeList* TreeList::removeChunkReplaceIfNeeded(TreeChunk* tc) {
     // because the first chunk is also acting as the tree node.
     // When coalescing happens, however, the first chunk in the a tree
     // list can be the start of a free range.  Free ranges are removed
-    // from the free lists so that they are not available to be
+    // from the free lists so that they are not available to be 
     // allocated when the sweeper yields (giving up the free list lock)
     // to allow mutator activity.  If this chunk is the first in the
     // list and is not the last in the list, do the work to copy the
@@ -128,28 +131,28 @@ TreeList* TreeList::removeChunkReplaceIfNeeded(TreeChunk* tc) {
       // This can be slow for a long list.  Consider having
       // an option that does not allow the first chunk on the
       // list to be coalesced.
-      for (TreeChunk* curTC = nextTC; curTC != NULL;
-          curTC = TreeChunk::as_TreeChunk(curTC->next())) {
+      for (TreeChunk* curTC = nextTC; curTC != NULL; 
+	  curTC = TreeChunk::as_TreeChunk(curTC->next())) {
         curTC->set_list(retTL);
       }
       // Fix the parent to point to the new TreeList.
       if (retTL->parent() != NULL) {
-        if (this == retTL->parent()->left()) {
-          retTL->parent()->setLeft(retTL);
-        } else {
-          assert(this == retTL->parent()->right(), "Parent is incorrect");
-          retTL->parent()->setRight(retTL);
-        }
+	if (this == retTL->parent()->left()) {
+	  retTL->parent()->setLeft(retTL);
+	} else {
+	  assert(this == retTL->parent()->right(), "Parent is incorrect");
+	  retTL->parent()->setRight(retTL);
+	}
       }
       // Fix the children's parent pointers to point to the
       // new list.
       assert(right() == retTL->right(), "Should have been copied");
       if (retTL->right() != NULL) {
-        retTL->right()->setParent(retTL);
+	retTL->right()->setParent(retTL);
       }
       assert(left() == retTL->left(), "Should have been copied");
       if (retTL->left() != NULL) {
-        retTL->left()->setParent(retTL);
+	retTL->left()->setParent(retTL);
       }
       retTL->link_head(nextTC);
       assert(nextTC->isFree(), "Should be a free chunk");
@@ -164,40 +167,40 @@ TreeList* TreeList::removeChunkReplaceIfNeeded(TreeChunk* tc) {
   }
 
   // Below this point the embeded TreeList being used for the
-  // tree node may have changed. Don't use "this"
+  // tree node may have changed. Don't use "this" 
   // TreeList*.
   // chunk should still be a free chunk (bit set in _prev)
-  assert(!retTL->head() || retTL->size() == retTL->head()->size(),
+  assert(!retTL->head() || retTL->size() == retTL->head()->size(), 
     "Wrong sized chunk in list");
   debug_only(
-    tc->linkPrev(NULL);
+    tc->linkPrev(NULL);  
     tc->linkNext(NULL);
     tc->set_list(NULL);
     bool prev_found = false;
     bool next_found = false;
-    for (FreeChunk* curFC = retTL->head();
-         curFC != NULL; curFC = curFC->next()) {
+    for (FreeChunk* curFC = retTL->head(); 
+	 curFC != NULL; curFC = curFC->next()) {
       assert(curFC != tc, "Chunk is still in list");
       if (curFC == prevFC) {
-        prev_found = true;
+	prev_found = true;
       }
       if (curFC == nextTC) {
-        next_found = true;
+	next_found = true;
       }
     }
     assert(prevFC == NULL || prev_found, "Chunk was lost from list");
     assert(nextTC == NULL || next_found, "Chunk was lost from list");
     assert(retTL->parent() == NULL ||
-           retTL == retTL->parent()->left() ||
-           retTL == retTL->parent()->right(),
+	   retTL == retTL->parent()->left() || 
+	   retTL == retTL->parent()->right(),
            "list is inconsistent");
   )
   retTL->decrement_count();
 
   assert(tc->isFree(), "Should still be a free chunk");
-  assert(retTL->head() == NULL || retTL->head()->prev() == NULL,
+  assert(retTL->head() == NULL || retTL->head()->prev() == NULL, 
     "list invariant");
-  assert(retTL->tail() == NULL || retTL->tail()->next() == NULL,
+  assert(retTL->tail() == NULL || retTL->tail()->next() == NULL, 
     "list invariant");
   return retTL;
 }
@@ -209,7 +212,7 @@ void TreeList::returnChunkAtTail(TreeChunk* chunk) {
   assert(!verifyChunkInFreeLists(chunk), "Double entry");
   assert(head() == NULL || head()->prev() == NULL, "list invariant");
   assert(tail() == NULL || tail()->next() == NULL, "list invariant");
-
+  
   FreeChunk* fc = tail();
   fc->linkAfter(chunk);
   link_tail(chunk);
@@ -222,7 +225,7 @@ void TreeList::returnChunkAtTail(TreeChunk* chunk) {
 }
 
 // Add this chunk at the head of the list.  "At the head of the list"
-// is defined to be after the chunk pointer to by head().  This is
+// is defined to be after the chunk pointer to by head().  This is 
 // because the TreeList is embedded in the first TreeChunk in the
 // list.  See the definition of TreeChunk.
 void TreeList::returnChunkAtHead(TreeChunk* chunk) {
@@ -329,7 +332,7 @@ BinaryTreeDictionary::getChunkFromTree(size_t size, Dither dither, bool splay)
   for (prevTL = curTL = root(); curTL != NULL;) {
     if (curTL->size() == size) {        // exact match
       break;
-    }
+    } 
     prevTL = curTL;
     if (curTL->size() < size) {        // proceed to right sub-tree
       curTL = curTL->right();
@@ -350,7 +353,7 @@ BinaryTreeDictionary::getChunkFromTree(size_t size, Dither dither, bool splay)
   if (curTL != NULL) {
     assert(curTL->size() >= size, "size inconsistency");
     if (UseCMSAdaptiveFreeLists) {
-
+  
       // A candidate chunk has been found.  If it is already under
       // populated, get a chunk associated with the hint for this
       // chunk.
@@ -358,29 +361,29 @@ BinaryTreeDictionary::getChunkFromTree(size_t size, Dither dither, bool splay)
         /* Use the hint to find a size with a surplus, and reset the hint. */
         TreeList* hintTL = curTL;
         while (hintTL->hint() != 0) {
-          assert(hintTL->hint() == 0 || hintTL->hint() > hintTL->size(),
-            "hint points in the wrong direction");
+  	  assert(hintTL->hint() == 0 || hintTL->hint() > hintTL->size(),
+	    "hint points in the wrong direction");
           hintTL = findList(hintTL->hint());
-          assert(curTL != hintTL, "Infinite loop");
-          if (hintTL == NULL ||
-              hintTL == curTL /* Should not happen but protect against it */ ) {
-            // No useful hint.  Set the hint to NULL and go on.
+  	  assert(curTL != hintTL, "Infinite loop");
+          if (hintTL == NULL || 
+	      hintTL == curTL /* Should not happen but protect against it */ ) {
+  	    // No useful hint.  Set the hint to NULL and go on.
             curTL->set_hint(0);
             break;
           }
           assert(hintTL->size() > size, "hint is inconsistent");
           if (hintTL->surplus() > 0) {
-            // The hint led to a list that has a surplus.  Use it.
-            // Set the hint for the candidate to an overpopulated
-            // size.
+  	    // The hint led to a list that has a surplus.  Use it.
+  	    // Set the hint for the candidate to an overpopulated
+  	    // size.  
             curTL->set_hint(hintTL->size());
             // Change the candidate.
             curTL = hintTL;
             break;
           }
-          // The evm code reset the hint of the candidate as
-          // at an interrim point.  Why?  Seems like this leaves
-          // the hint pointing to a list that didn't work.
+  	  // The evm code reset the hint of the candidate as
+  	  // at an interrim point.  Why?  Seems like this leaves
+  	  // the hint pointing to a list that didn't work.
           // curTL->set_hint(hintTL->size());
         }
       }
@@ -392,7 +395,7 @@ BinaryTreeDictionary::getChunkFromTree(size_t size, Dither dither, bool splay)
     retTC = curTL->first_available();
     assert((retTC != NULL) && (curTL->count() > 0),
       "A list in the binary tree should not be NULL");
-    assert(retTC->size() >= size,
+    assert(retTC->size() >= size, 
       "A chunk of the wrong size was found");
     removeChunkFromTree(retTC);
     assert(retTC->isFree(), "Header is not marked correctly");
@@ -409,8 +412,8 @@ TreeList* BinaryTreeDictionary::findList(size_t size) const {
   for (curTL = root(); curTL != NULL;) {
     if (curTL->size() == size) {        // exact match
       break;
-    }
-
+    } 
+    
     if (curTL->size() < size) {        // proceed to right sub-tree
       curTL = curTL->right();
     } else {                           // proceed to left sub-tree
@@ -442,7 +445,7 @@ FreeChunk* BinaryTreeDictionary::findLargestDict() const {
   }
 }
 
-// Remove the current chunk from the tree.  If it is not the last
+// Remove the current chunk from the tree.  If it is not the last 
 // chunk in a list on a tree node, just unlink it.
 // If it is the last chunk in the list (the next link is NULL),
 // remove the node and repair the tree.
@@ -459,15 +462,15 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
     if (tl == _root) {
       if ((_root->left() == NULL) && (_root->right() == NULL)) {
         if (_root->count() == 1) {
-          assert(_root->head() == tc, "Should only be this one chunk");
-          removing_only_chunk = true;
+	  assert(_root->head() == tc, "Should only be this one chunk");
+	  removing_only_chunk = true;
         }
       }
     }
   )
   assert(tl != NULL, "List should be set");
-  assert(tl->parent() == NULL || tl == tl->parent()->left() ||
-         tl == tl->parent()->right(), "list is inconsistent");
+  assert(tl->parent() == NULL || tl == tl->parent()->left() || 
+	 tl == tl->parent()->right(), "list is inconsistent");
 
   bool complicatedSplice = false;
 
@@ -477,8 +480,8 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
   TreeList* replacementTL = tl->removeChunkReplaceIfNeeded(tc);
   assert(tc->isFree(), "Chunk should still be free");
   assert(replacementTL->parent() == NULL ||
-         replacementTL == replacementTL->parent()->left() ||
-         replacementTL == replacementTL->parent()->right(),
+	 replacementTL == replacementTL->parent()->left() || 
+	 replacementTL == replacementTL->parent()->right(),
          "list is inconsistent");
   if (tl == root()) {
     assert(replacementTL->parent() == NULL, "Incorrectly replacing root");
@@ -486,7 +489,7 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
   }
   debug_only(
     if (tl != replacementTL) {
-      assert(replacementTL->head() != NULL,
+      assert(replacementTL->head() != NULL, 
         "If the tree list was replaced, it should not be a NULL list");
       TreeList* rhl = replacementTL->head_as_TreeChunk()->list();
       TreeList* rtl = TreeChunk::as_TreeChunk(replacementTL->tail())->list();
@@ -498,8 +501,8 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
 
   // Does the tree need to be repaired?
   if (replacementTL->count() == 0) {
-    assert(replacementTL->head() == NULL &&
-           replacementTL->tail() == NULL, "list count is incorrect");
+    assert(replacementTL->head() == NULL && 
+	   replacementTL->tail() == NULL, "list count is incorrect");
     // Find the replacement node for the (soon to be empty) node being removed.
     // if we have a single (or no) child, splice child in our stead
     if (replacementTL->left() == NULL) {
@@ -524,14 +527,14 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
       verifyTree();
     }
     // first make newTL my parent's child
-    if ((parentTL = replacementTL->parent()) == NULL) {
+    if ((parentTL = replacementTL->parent()) == NULL) {  
       // newTL should be root
       assert(tl == root(), "Incorrectly replacing root");
       set_root(newTL);
       if (newTL != NULL) {
         newTL->clearParent();
       }
-    } else if (parentTL->right() == replacementTL) {
+    } else if (parentTL->right() == replacementTL) {   
       // replacementTL is a right child
       parentTL->setRight(newTL);
     } else {                                // replacementTL is a left child
@@ -539,8 +542,8 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
       parentTL->setLeft(newTL);
     }
     debug_only(replacementTL->clearParent();)
-    if (complicatedSplice) {  // we need newTL to get replacementTL's
-                              // two children
+    if (complicatedSplice) {  // we need newTL to get replacementTL's 
+			      // two children
       assert(newTL != NULL &&
              newTL->left() == NULL && newTL->right() == NULL,
             "newTL should not have encumbrances from the past");
@@ -548,9 +551,9 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
       // assert(replacementTL->left() != NULL && replacementTL->right() != NULL,
       //       "else !complicatedSplice");
       // ... however, the above assertion is too strong because we aren't
-      // guaranteed that replacementTL->right() is still NULL.
+      // guaranteed that replacementTL->right() is still NULL. 
       // Recall that we removed
-      // the right sub-tree minimum from replacementTL.
+      // the right sub-tree minimum from replacementTL. 
       // That may well have been its right
       // child! So we'll just assert half of the above:
       assert(replacementTL->left() != NULL, "else !complicatedSplice");
@@ -561,9 +564,9 @@ BinaryTreeDictionary::removeChunkFromTree(TreeChunk* tc) {
         replacementTL->clearLeft();
       )
     }
-    assert(replacementTL->right() == NULL &&
-           replacementTL->left() == NULL &&
-           replacementTL->parent() == NULL,
+    assert(replacementTL->right() == NULL && 
+	   replacementTL->left() == NULL && 
+	   replacementTL->parent() == NULL,
         "delete without encumbrances");
   }
 
@@ -647,10 +650,10 @@ void BinaryTreeDictionary::insertChunkInTree(FreeChunk* fc) {
   }
   // XXX: do i need to clear the FreeChunk fields, let me do it just in case
   // Revisit this later
-
+  
   fc->clearNext();
   fc->linkPrev(NULL);
-
+  
   // work down from the _root, looking for insertion point
   for (prevTL = curTL = root(); curTL != NULL;) {
     if (curTL->size() == size)  // exact match
@@ -750,7 +753,7 @@ size_t BinaryTreeDictionary::totalFreeBlocksInTree(TreeList* tl) const {
 }
 
 size_t BinaryTreeDictionary::numFreeBlocks() const {
-  assert(totalFreeBlocksInTree(root()) == totalFreeBlocks(),
+  assert(totalFreeBlocksInTree(root()) == totalFreeBlocks(), 
          "_totalFreeBlocks inconsistency");
   return totalFreeBlocks();
 }
@@ -847,14 +850,14 @@ class DescendTreeCensusClosure : public TreeCensusClosure {
     }
   }
 };
-
+       
 // For each list in the tree, calculate the desired, desired
 // coalesce, count before sweep, and surplus before sweep.
 class BeginSweepClosure : public AscendTreeCensusClosure {
   double _percentage;
   float _inter_sweep_current;
   float _inter_sweep_estimate;
-
+  
  public:
   BeginSweepClosure(double p, float inter_sweep_current,
                               float inter_sweep_estimate) :
@@ -920,8 +923,8 @@ class EndTreeSearchClosure : public DescendTreeSearchClosure {
     FreeChunk* item = fl->head();
     while (item != NULL) {
       if (item->end() == _target) {
-        _found = item;
-        return true;
+	_found = item;
+	return true;
       }
       item = item->next();
     }
@@ -954,12 +957,12 @@ NOT_PRODUCT(
       fl->set_returnedBytes(0);
     }
   };
-
+  
   void BinaryTreeDictionary::initializeDictReturnedBytes() {
     InitializeDictReturnedBytesClosure idrb;
     idrb.do_tree(root());
   }
-
+  
   class ReturnedBytesClosure : public AscendTreeCensusClosure {
     size_t _dictReturnedBytes;
    public:
@@ -969,11 +972,11 @@ NOT_PRODUCT(
     }
     size_t dictReturnedBytes() { return _dictReturnedBytes; }
   };
-
+  
   size_t BinaryTreeDictionary::sumDictReturnedBytes() {
     ReturnedBytesClosure rbc;
     rbc.do_tree(root());
-
+  
     return rbc.dictReturnedBytes();
   }
 
@@ -1018,7 +1021,7 @@ class setTreeHintsClosure : public DescendTreeCensusClosure {
   setTreeHintsClosure(size_t v) { hint = v; }
   void do_list(FreeList* fl) {
     fl->set_hint(hint);
-    assert(fl->hint() == 0 || fl->hint() > fl->size(),
+    assert(fl->hint() == 0 || fl->hint() > fl->size(), 
       "Current hint is inconsistent");
     if (fl->surplus() > 0) {
       hint = fl->size();
@@ -1057,7 +1060,7 @@ void BinaryTreeDictionary::endSweepDictCensus(double splitSurplusPercent) {
   }
   clearTreeCensus();
 }
-
+    
 // Print summary statistics
 void BinaryTreeDictionary::reportStatistics() const {
   verify_par_locked();
@@ -1110,7 +1113,7 @@ class printTreeCensusClosure : public AscendTreeCensusClosure {
 };
 
 void BinaryTreeDictionary::printDictCensus(void) const {
-
+  
   gclog_or_tty->print("\nBinaryTree\n");
   FreeList::print_labels_on(gclog_or_tty, "size");
   printTreeCensusClosure ptc;
@@ -1145,7 +1148,7 @@ size_t BinaryTreeDictionary::verifyPrevFreePtrs(TreeList* tl) {
   size_t ct = 0;
   for (FreeChunk* curFC = tl->head(); curFC != NULL; curFC = curFC->next()) {
     ct++;
-    assert(curFC->prev() == NULL || curFC->prev()->isFree(),
+    assert(curFC->prev() == NULL || curFC->prev()->isFree(), 
       "Chunk should be free");
   }
   return ct;
@@ -1164,10 +1167,10 @@ void BinaryTreeDictionary::verifyTreeHelper(TreeList* tl) const {
          "parent<-/->right");;
   guarantee(tl->left() == NULL  || tl->left()->size()    <  tl->size(),
          "parent !> left");
-  guarantee(tl->right() == NULL || tl->right()->size()   >  tl->size(),
+  guarantee(tl->right() == NULL || tl->right()->size()   >  tl->size(), 
          "parent !< left");
   guarantee(tl->head() == NULL || tl->head()->isFree(), "!Free");
-  guarantee(tl->head() == NULL || tl->head_as_TreeChunk()->list() == tl,
+  guarantee(tl->head() == NULL || tl->head_as_TreeChunk()->list() == tl, 
     "list inconsistency");
   guarantee(tl->count() > 0 || (tl->head() == NULL && tl->tail() == NULL),
     "list count is inconsistent");

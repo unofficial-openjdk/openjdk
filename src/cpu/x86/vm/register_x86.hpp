@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)register_x86.hpp	1.27 07/07/02 16:50:37 JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class VMRegImpl;
@@ -205,11 +208,11 @@ class ConcreteRegisterImpl : public AbstractRegisterImpl {
   // There is no requirement that any ordering here matches any ordering c2 gives
   // it's optoregs.
 
-    number_of_registers =      RegisterImpl::number_of_registers +
+    number_of_registers =      RegisterImpl::number_of_registers + 
 #ifdef AMD64
                                RegisterImpl::number_of_registers +  // "H" half of a 64bit register
 #endif // AMD64
-                           2 * FloatRegisterImpl::number_of_registers +
+                           2 * FloatRegisterImpl::number_of_registers + 
                            2 * XMMRegisterImpl::number_of_registers +
                            1 // eflags
   };

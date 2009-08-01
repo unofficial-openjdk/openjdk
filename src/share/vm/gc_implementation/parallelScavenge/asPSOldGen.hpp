@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)asPSOldGen.hpp	1.14 07/05/05 17:05:26 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,26 +22,26 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ASPSOldGen : public PSOldGen {
   friend class VMStructs;
   size_t _gen_size_limit;  // Largest size the generation's reserved size
-                           // can grow.
+			   // can grow.
  public:
   ASPSOldGen(size_t initial_byte_size,
-             size_t minimum_byte_size,
-             size_t byte_size_limit,
+             size_t minimum_byte_size, 
+	     size_t byte_size_limit,
              const char* gen_name, int level);
-  ASPSOldGen(PSVirtualSpace* vs,
-             size_t initial_byte_size,
-             size_t minimum_byte_size,
-             size_t byte_size_limit,
+  ASPSOldGen(PSVirtualSpace* vs, 
+	     size_t initial_byte_size,
+             size_t minimum_byte_size, 
+	     size_t byte_size_limit,
              const char* gen_name, int level);
-  size_t gen_size_limit()               { return _gen_size_limit; }
-  size_t max_gen_size()                 { return _reserved.byte_size(); }
-  void set_gen_size_limit(size_t v)     { _gen_size_limit = v; }
+  size_t gen_size_limit() 		{ return _gen_size_limit; }
+  size_t max_gen_size() 		{ return _reserved.byte_size(); }
+  void set_gen_size_limit(size_t v) 	{ _gen_size_limit = v; }
 
   // After a shrink or expand reset the generation
   void reset_after_change();

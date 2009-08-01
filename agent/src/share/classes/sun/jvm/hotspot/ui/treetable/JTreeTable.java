@@ -41,6 +41,7 @@ import java.util.EventObject;
  * by using a JTree as a renderer (and editor) for the cells in a
  * particular column in the JTable.
  *
+ * @version 1.2 10/27/98
  *
  * @author Philip Milne
  * @author Scott Violet

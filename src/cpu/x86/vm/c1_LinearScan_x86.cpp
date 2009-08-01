@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_LinearScan_x86.cpp	1.9 07/09/17 09:25:58 JVM"
+#endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -39,7 +42,7 @@ void LinearScan::allocate_fpu_stack() {
 
     // ignore memory intervals by overwriting intervals_in_memory
     // the dummy interval is needed to enforce the walker to walk until the given id:
-    // without it, the walker stops when the unhandled-list is empty -> live information
+    // without it, the walker stops when the unhandled-list is empty -> live information 
     // beyond this point would be incorrect.
     Interval* dummy_interval = new Interval(any_reg);
     dummy_interval->add_range(max_jint - 2, max_jint - 1);
@@ -52,25 +55,25 @@ void LinearScan::allocate_fpu_stack() {
     for (int i = 0; i < num_blocks; i++) {
       BlockBegin* b = block_at(i);
 
-      // register usage is only needed for merging stacks -> compute only
+      // register usage is only needed for merging stacks -> compute only 
       // when more than one predecessor.
       // the block must not have any spill moves at the beginning (checked by assertions)
       // spill moves would use intervals that are marked as handled and so the usage bit
       // would been set incorrectly
 
-      // NOTE: the check for number_of_preds > 1 is necessary. A block with only one
+      // NOTE: the check for number_of_preds > 1 is necessary. A block with only one 
       //       predecessor may have spill moves at the begin of the block.
       //       If an interval ends at the current instruction id, it is not possible
-      //       to decide if the register is live or not at the block begin -> the
+      //       to decide if the register is live or not at the block begin -> the 
       //       register information would be incorrect.
       if (b->number_of_preds() > 1) {
         int id = b->first_lir_instruction_id();
         BitMap regs(FrameMap::nof_fpu_regs);
         regs.clear();
-
+      
         iw.walk_to(id);   // walk after the first instruction (always a label) of the block
         assert(iw.current_position() == id, "did not walk completely to id");
-
+      
         // Only consider FPU values in registers
         Interval* interval = iw.active_first(fixedKind);
         while (interval != Interval::end()) {
@@ -78,7 +81,7 @@ void LinearScan::allocate_fpu_stack() {
           assert(reg >= pd_first_fpu_reg && reg <= pd_last_fpu_reg, "no fpu register");
           assert(interval->assigned_regHi() == -1, "must not have hi register (doubles stored in one register)");
           assert(interval->from() <= id && id < interval->to(), "interval out of range");
-
+        
 #ifndef PRODUCT
           if (TraceFPURegisterUsage) {
             tty->print("fpu reg %d is live because of ", reg - pd_first_fpu_reg); interval->print();
@@ -162,7 +165,7 @@ void FpuStackAllocator::allocate_block(BlockBegin* block) {
   set_lir(block->lir());
   set_pos(0);
 
-
+  
   // Note: insts->length() may change during loop
   while (pos() < insts->length()) {
     LIR_Op* op = insts->at(pos());
@@ -202,7 +205,7 @@ void FpuStackAllocator::allocate_block(BlockBegin* block) {
     set_pos(1 + pos());
   }
 
-  // Propagate stack when block does not end with branch
+  // Propagate stack when block does not end with branch 
   if (!processed_merge) {
     merge_fpu_stack_with_successors(block);
   }
@@ -212,7 +215,7 @@ void FpuStackAllocator::allocate_block(BlockBegin* block) {
 void FpuStackAllocator::compute_debug_information(LIR_Op* op) {
   if (!_debug_information_computed && op->id() != -1 && allocator()->has_info(op->id())) {
     visitor.visit(op);
-
+    
     // exception handling
     if (allocator()->compilation()->has_exception_handlers()) {
       XHandlers* xhandlers = visitor.all_xhandler();
@@ -495,10 +498,10 @@ void FpuStackAllocator::handle_op1(LIR_Op1* op1) {
           // move from fpu-register to fpu-register:
           // * input and result register equal:
           //   nothing to do
-          // * input register is last use:
-          //   rename the input register to result register -> input register
+          // * input register is last use: 
+          //   rename the input register to result register -> input register 
           //   not present on fpu-stack afterwards
-          // * input register not last use:
+          // * input register not last use: 
           //   duplicate input register to result register to preserve input
           //
           // Note: The LIR-Assembler does not produce any code for fpu register moves,
@@ -548,11 +551,11 @@ void FpuStackAllocator::handle_op1(LIR_Op1* op1) {
       if (in->is_fpu_register() && !in->is_xmm_register()) {
         assert(res->is_fpu_register() && !res->is_xmm_register(), "must be");
         assert(in->is_last_use(), "old value gets destroyed");
-
+ 
         insert_free_if_dead(res, in);
         insert_exchange(in);
         new_in = to_fpu_stack_top(in);
-
+        
         do_rename(in, res);
         new_res = to_fpu_stack_top(res);
       }
@@ -632,7 +635,7 @@ void FpuStackAllocator::handle_op1(LIR_Op1* op1) {
           ShouldNotReachHere();
       }
       break;
-    }
+    }  
 
     case lir_roundfp: {
       assert(in->is_fpu_register() && !in->is_xmm_register(), "input must be in register");
@@ -723,7 +726,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
           if (tos_offset(right) == 0) {
             sim()->pop();
           } else {
-            // if left is on top of stack, the result is placed in the stack
+            // if left is on top of stack, the result is placed in the stack 
             // slot of right, so a renaming from right to res is necessary
             assert(tos_offset(left) == 0, "must be");
             sim()->pop();
@@ -752,7 +755,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
       insert_exchange(left);
       assert(tos_offset(right) == 1, "check");
       assert(tos_offset(left) == 0, "check");
-
+      
       new_left = to_fpu_stack_top(left);
       new_right = to_fpu_stack(right);
 
@@ -773,7 +776,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
       assert(left->is_fpu_register(), "must be");
       assert(res->is_fpu_register(), "must be");
       assert(left->is_last_use(), "old value gets destroyed");
-
+ 
       insert_free_if_dead(res, left);
       insert_exchange(left);
       do_rename(left, res);
@@ -802,7 +805,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
 
       insert_free_if_dead(right);
       insert_free_if_dead(op2->tmp_opr());
-
+ 
       insert_free_if_dead(res, left);
       insert_exchange(left);
       do_rename(left, res);
@@ -850,7 +853,7 @@ void FpuStackAllocator::check_invalid_lir_op(LIR_Op* op) {
     case lir_ffree:
       assert(false, "operations not allowed in lir. If one of these operations is needed, check if they have fpu operands");
       break;
-
+      
     case lir_fpop_raw:
     case lir_fxch:
     case lir_fld:
@@ -921,7 +924,7 @@ bool FpuStackAllocator::merge_rename(FpuStackSim* cur_sim, FpuStackSim* sux_sim,
 
       return true;
     }
-  }
+  } 
   return false;
 }
 
@@ -948,7 +951,7 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
 
   if (!ComputeExactFPURegisterUsage) {
     // add slots that are currently free, but used in successor
-    // When the exact FPU register usage is computed, the stack does
+    // When the exact FPU register usage is computed, the stack does 
     // not contain dead values at merging -> no values must be added
 
     int sux_slot = sux_sim->stack_size() - 1;
@@ -975,7 +978,7 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
   // 1) as long as the current stack top is not in the right location (that meens
   //    it should not be on the stack top), exchange it into the right location
   // 2) if the stack top is right, but the remaining stack is not ordered correctly,
-  //    the stack top is exchanged away to get another value on top ->
+  //    the stack top is exchanged away to get another value on top -> 
   //    now step 1) can be continued
   // the stack can also contain unused items -> these items are removed from stack
 
@@ -1129,7 +1132,7 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
         assert(block == sux->pred_at(j), "all critical edges must be broken");
       }
 
-      // check if new state is same
+      // check if new state is same 
       if (sux->fpu_stack_state() != NULL) {
         intArray* sux_state = sux->fpu_stack_state();
         assert(state->length() == sux_state->length(), "overwriting existing stack state");
@@ -1148,7 +1151,7 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
       sux->set_fpu_stack_state(state);
     }
   }
-
+  
 #ifndef PRODUCT
   // assertions that FPU stack state conforms to all successors' states
   intArray* cur_state = sim()->write_state();

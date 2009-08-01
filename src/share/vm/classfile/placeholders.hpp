@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)placeholders.hpp	1.21 07/05/05 17:05:54 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class PlaceholderEntry;
@@ -48,7 +51,7 @@ public:
     Hashtable::add_entry(index, (HashtableEntry*)new_entry);
   }
 
-  void add_entry(int index, unsigned int hash, symbolHandle name,
+  void add_entry(int index, unsigned int hash, symbolHandle name, 
                 Handle loader, bool havesupername, symbolHandle supername);
 
 // This returns a symbolOop to match type for SystemDictionary
@@ -66,7 +69,7 @@ public:
 // LOAD_SUPER needed to check for class circularity
 // DEFINE_CLASS: ultimately define class must be single threaded
 // on a class/classloader basis
-// so the head of that queue owns the token
+// so the head of that queue owns the token  
 // and the rest of the threads return the result the first thread gets
  enum classloadAction {
     LOAD_INSTANCE = 1,             // calling load_instance_class
@@ -77,17 +80,17 @@ public:
   // find_and_add returns probe pointer - old or new
   // If no entry exists, add a placeholder entry and push SeenThread
   // If entry exists, reuse entry and push SeenThread for classloadAction
-  PlaceholderEntry* find_and_add(int index, unsigned int hash,
-                                 symbolHandle name, Handle loader,
-                                 classloadAction action, symbolHandle supername,
+  PlaceholderEntry* find_and_add(int index, unsigned int hash, 
+                                 symbolHandle name, Handle loader, 
+                                 classloadAction action, symbolHandle supername, 
                                  Thread* thread);
 
   void remove_entry(int index, unsigned int hash,
                     symbolHandle name, Handle loader);
 
 // Remove placeholder information
-  void find_and_remove(int index, unsigned int hash,
-                       symbolHandle name, Handle loader, Thread* thread);
+  void find_and_remove(int index, unsigned int hash, 
+                       symbolHandle name, Handle loader, Thread* thread); 
 
   // GC support.
   void oops_do(OopClosure* f);
@@ -126,7 +129,7 @@ public:
    SeenThread* next()              const { return _stnext;}
    void set_next(SeenThread *seen) { _stnext = seen; }
    void set_prev(SeenThread *seen) { _stprev = seen; }
-
+   
 #ifndef PRODUCT
   void printActionQ() {
     SeenThread* seen = this;
@@ -156,13 +159,13 @@ class PlaceholderEntry : public HashtableEntry {
   Thread*           _definer;       // owner of define token
   klassOop          _instanceKlass; // instanceKlass from successful define
   SeenThread*       _superThreadQ;  // doubly-linked queue of Threads loading a superclass for this class
-  SeenThread*       _loadInstanceThreadQ;  // loadInstance thread
+  SeenThread*       _loadInstanceThreadQ;  // loadInstance thread 
                                     // can be multiple threads if classloader object lock broken by application
                                     // or if classloader supports parallel classloading
-
+                   
   SeenThread*       _defineThreadQ; // queue of Threads trying to define this class
                                     // including _definer
-                                    // _definer owns token
+                                    // _definer owns token 
                                     // queue waits for and returns results from _definer
 
  public:
@@ -246,7 +249,7 @@ class PlaceholderEntry : public HashtableEntry {
 
   bool super_load_in_progress() {
      return (_superThreadQ != NULL);
-  }
+  } 
 
   bool instance_load_in_progress() {
     return (_loadInstanceThreadQ != NULL);
@@ -265,7 +268,7 @@ class PlaceholderEntry : public HashtableEntry {
     assert_lock_strong(SystemDictionary_lock);
     SeenThread* threadEntry = new SeenThread(thread);
     SeenThread* seen = actionToQueue(action);
-
+    
     if (seen == NULL) {
       set_threadQ(threadEntry, action);
       return;
@@ -329,3 +332,5 @@ class PlaceholderEntry : public HashtableEntry {
   void print() const  PRODUCT_RETURN;
   void verify() const;
 };
+
+

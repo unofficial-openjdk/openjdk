@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities;
@@ -32,15 +32,15 @@ import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.utilities.*;
 
 /**
- * ObjectReader can "deserialize" objects from debuggee.
+ * ObjectReader can "deserialize" objects from debuggee. 
  *
- * Class Loading:
+ * Class Loading: 
  *
  * ObjectReader loads classes using the given class loader. If no
  * class loader is supplied, it uses a ProcImageClassLoader, which
  * loads classes from debuggee core or process.
 
- * Object creation:
+ * Object creation: 
  *
  * This class uses no-arg constructor to construct objects. But if
  * there is no no-arg constructor in a given class, then it tries to
@@ -53,12 +53,12 @@ import sun.jvm.hotspot.utilities.*;
  * object graph.
  *
  * Debug messages:
- *
+ * 
  * The flag sun.jvm.hotspot.utilities.ObjectReader.DEBUG may be set to
  * non-null to get debug error messages and stack traces.
- *
+ * 
  * JDK version:
- *
+ * 
  * JDK classes are loaded by bootstrap class loader and not by the
  * supplied class loader or ProcImageClassLoader. This may create
  * problems if a JDK class evolves. i.e., if SA runs a JDK version
@@ -89,9 +89,9 @@ public class ObjectReader {
       if (oop instanceof Instance) {
          return readInstance((Instance) oop);
       } else if (oop instanceof TypeArray){
-         return readPrimitiveArray((TypeArray)oop);
+         return readPrimitiveArray((TypeArray)oop); 
       } else if (oop instanceof ObjArray){
-         return readObjectArray((ObjArray)oop);
+         return readObjectArray((ObjArray)oop); 
       } else {
          return null;
       }
@@ -131,9 +131,9 @@ public class ObjectReader {
       Object result = getFromObjTable(oop);
       if (result == null) {
          InstanceKlass kls = (InstanceKlass) oop.getKlass();
-         // Handle java.lang.String instances differently. As part of JSR-133, fields of immutable
+         // Handle java.lang.String instances differently. As part of JSR-133, fields of immutable 
          // classes have been made final. The algorithm below will not be able to read Strings from
-         // debuggee (can't use reflection to set final fields). But, need to read Strings is very
+         // debuggee (can't use reflection to set final fields). But, need to read Strings is very 
          // important. FIXME: need a framework to handle many other special cases.
          if (kls.getName().equals(javaLangString())) {
             return OopUtilities.stringOopToString(oop);
@@ -191,8 +191,8 @@ public class ObjectReader {
                final boolean[] arrayObj = new boolean[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doBoolean(BooleanField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -203,8 +203,8 @@ public class ObjectReader {
                final char[] arrayObj = new char[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doChar(CharField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -215,8 +215,8 @@ public class ObjectReader {
                final float[] arrayObj = new float[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doFloat(FloatField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -227,8 +227,8 @@ public class ObjectReader {
                final double[] arrayObj = new double[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doDouble(DoubleField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -239,8 +239,8 @@ public class ObjectReader {
                final byte[] arrayObj = new byte[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doByte(ByteField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -251,8 +251,8 @@ public class ObjectReader {
                final short[] arrayObj = new short[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doShort(ShortField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -263,8 +263,8 @@ public class ObjectReader {
                final int[] arrayObj = new int[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doInt(IntField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -275,8 +275,8 @@ public class ObjectReader {
                final long[] arrayObj = new long[length];
                array.iterate(new DefaultOopVisitor() {
                                 public void doLong(LongField field, boolean isVMField) {
-                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID();
-                                   arrayObj[ifd.getIndex()] = field.getValue(array);
+                                   IndexableFieldIdentifier ifd = (IndexableFieldIdentifier) field.getID(); 
+                                   arrayObj[ifd.getIndex()] = field.getValue(array); 
                                 }
                             }, false);
                result = arrayObj;
@@ -408,7 +408,7 @@ public class ObjectReader {
       }
 
       public void doShort(ShortField field, boolean isVMField) {
-         java.lang.reflect.Field f = null;
+         java.lang.reflect.Field f = null; 
          try {
             f = readField(field);
             if (Modifier.isFinal(f.getModifiers())) return;
@@ -481,7 +481,7 @@ public class ObjectReader {
       return cls;
    }
 
-   public Object readMethodOrConstructor(sun.jvm.hotspot.oops.Method m)
+   public Object readMethodOrConstructor(sun.jvm.hotspot.oops.Method m) 
                      throws NoSuchMethodException, ClassNotFoundException {
       String name = m.getName().asString();
       if (name.equals("<init>")) {
@@ -491,7 +491,7 @@ public class ObjectReader {
       }
    }
 
-   public java.lang.reflect.Method readMethod(sun.jvm.hotspot.oops.Method m)
+   public java.lang.reflect.Method readMethod(sun.jvm.hotspot.oops.Method m) 
             throws NoSuchMethodException, ClassNotFoundException {
       java.lang.reflect.Method result = (java.lang.reflect.Method) getFromObjTable(m);
       if (result == null) {
@@ -504,7 +504,7 @@ public class ObjectReader {
       return result;
    }
 
-   public java.lang.reflect.Constructor readConstructor(sun.jvm.hotspot.oops.Method m)
+   public java.lang.reflect.Constructor readConstructor(sun.jvm.hotspot.oops.Method m) 
             throws NoSuchMethodException, ClassNotFoundException {
       java.lang.reflect.Constructor result = (java.lang.reflect.Constructor) getFromObjTable(m);
       if (result == null) {
@@ -517,7 +517,7 @@ public class ObjectReader {
       return result;
    }
 
-   public java.lang.reflect.Field readField(sun.jvm.hotspot.oops.Field f)
+   public java.lang.reflect.Field readField(sun.jvm.hotspot.oops.Field f) 
             throws NoSuchFieldException, ClassNotFoundException {
       java.lang.reflect.Field result = (java.lang.reflect.Field) fieldMap.get(f);
       if (result == null) {
@@ -569,7 +569,7 @@ public class ObjectReader {
          }
       }
 
-      public void doObject(int begin, int end) {
+      public void doObject(int begin, int end) { 
          tmp.add(getClass(begin, end));
       }
 
@@ -601,7 +601,7 @@ public class ObjectReader {
             return Class.forName(className, true, cl);
          } catch (Exception e) {
             if (DEBUG) {
-               System.err.println("Can't load class " + className);
+               System.err.println("Can't load class " + className); 
             }
             throw new RuntimeException(e);
          }

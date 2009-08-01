@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -65,10 +65,10 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
     }
 
     protected Oop ref() {
-        return saObject;
+	return saObject;
     }
 
-    public Type type() {
+    public Type type() { 
         return referenceType();
     }
 
@@ -76,14 +76,14 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
         Klass myKlass = ref().getKlass();
         return vm.referenceType(myKlass);
     }
-
+    
     public Value getValue(Field sig) {
         List list = new ArrayList(1);
         list.add(sig);
         Map map = getValues(list);
         return(Value)map.get(sig);
     }
-
+    
     public Map getValues(List theFields) {
         //validateMirrors(theFields);
 
@@ -119,26 +119,26 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
         // Then get instance field(s)
         size = instanceFields.size();
         for (int ii=0; ii<size; ii++){
-            FieldImpl fieldImpl = (FieldImpl)instanceFields.get(ii);
+	    FieldImpl fieldImpl = (FieldImpl)instanceFields.get(ii);
             map.put(fieldImpl, fieldImpl.getValue(saObject));
         }
 
         return map;
     }
 
-    public void setValue(Field field, Value value)
+    public void setValue(Field field, Value value) 
                    throws InvalidTypeException, ClassNotLoadedException {
         vm.throwNotReadOnlyException("ObjectReference.setValue(...)");
     }
 
-    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf,
-                              List arguments, int options)
+    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf, 
+                              List arguments, int options) 
                               throws InvalidTypeException,
                                      IncompatibleThreadStateException,
                                      InvocationException,
                                      ClassNotLoadedException {
         vm.throwNotReadOnlyException("ObjectReference.invokeMethod(...)");
-        return null;
+	return null;
     }
 
     public void disableCollection() {
@@ -164,21 +164,21 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
         }
 
         if (! monitorInfoCached) {
-            computeMonitorInfo();
-        }
-        return waitingThreads;
+	    computeMonitorInfo();
+	}
+	return waitingThreads;
     }
 
-
+   
     public ThreadReference owningThread() throws IncompatibleThreadStateException {
         if (vm.canGetMonitorInfo() == false) {
             throw new UnsupportedOperationException();
         }
 
-        if (! monitorInfoCached) {
-            computeMonitorInfo();
-        }
-        return owningThread;
+	if (! monitorInfoCached) {
+	    computeMonitorInfo();
+	}
+	return owningThread;
     }
 
 
@@ -187,10 +187,10 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
             throw new UnsupportedOperationException();
         }
 
-        if (! monitorInfoCached) {
-            computeMonitorInfo();
-        }
-        return entryCount;
+	if (! monitorInfoCached) {
+	    computeMonitorInfo();
+	}
+	return entryCount;
     }
 
     // new method since 1.6.
@@ -201,34 +201,34 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
                       "target does not support getting instances");
         }
         if (maxReferrers < 0) {
-            throw new IllegalArgumentException("maxReferrers is less than zero: "
+            throw new IllegalArgumentException("maxReferrers is less than zero: " 
                                               + maxReferrers);
         }
         final ObjectReference obj = this;
         final List objects = new ArrayList(0);
         final long max = maxReferrers;
-                vm.saObjectHeap().iterate(new DefaultHeapVisitor() {
+		vm.saObjectHeap().iterate(new DefaultHeapVisitor() {
                 private long refCount = 0;
                 public boolean doObj(Oop oop) {
-                                        try {
-                                                ObjectReference objref = vm.objectMirror(oop);
-                                                List fields = objref.referenceType().allFields();
-                                                for (int i=0; i < fields.size(); i++) {
-                                                        Field fld = (Field)fields.get(i);
-                                                        if (objref.getValue(fld).equals(obj) && !objects.contains(objref)) {
-                                                                objects.add(objref);
-                                                                refCount++;
-                                                        }
-                                                }
-                                                if (max > 0 && refCount >= max) {
-                                                        return true;
-                                                }
-                                        } catch  (RuntimeException x) {
-                                          // Ignore RuntimeException thrown from vm.objectMirror(oop)
-                                          // for bad oop. It is possible to see some bad oop
-                                          // because heap might be iterating at no safepoint.
-                                        }
-                                        return false;
+					try {
+						ObjectReference objref = vm.objectMirror(oop);
+						List fields = objref.referenceType().allFields();
+						for (int i=0; i < fields.size(); i++) {
+							Field fld = (Field)fields.get(i);
+							if (objref.getValue(fld).equals(obj) && !objects.contains(objref)) {
+								objects.add(objref);
+								refCount++;
+							}
+						}
+						if (max > 0 && refCount >= max) {
+							return true;
+						}
+					} catch  (RuntimeException x) {
+  					  // Ignore RuntimeException thrown from vm.objectMirror(oop)
+  					  // for bad oop. It is possible to see some bad oop
+  					  // because heap might be iterating at no safepoint. 
+					}
+					return false;
 
                 }
             });
@@ -242,109 +242,109 @@ public class ObjectReferenceImpl extends ValueImpl implements ObjectReference {
     // in JavaThread. i.e., we count total number of times the same
     // object is (lightweight) locked by given thread.
     private int countLockedObjects(JavaThread jt, Oop obj) {
-        int res = 0;
-        JavaVFrame frame = jt.getLastJavaVFrameDbg();
+	int res = 0;
+	JavaVFrame frame = jt.getLastJavaVFrameDbg();
         while (frame != null) {
-            List monitors = frame.getMonitors();
-            OopHandle givenHandle = obj.getHandle();
-            for (Iterator itr = monitors.iterator(); itr.hasNext();) {
-                MonitorInfo mi = (MonitorInfo) itr.next();
-                if (givenHandle.equals(mi.owner())) {
-                    res++;
-                }
-            }
-            frame = (JavaVFrame) frame.javaSender();
-        }
-        return res;
+	    List monitors = frame.getMonitors();
+	    OopHandle givenHandle = obj.getHandle();
+	    for (Iterator itr = monitors.iterator(); itr.hasNext();) {
+		MonitorInfo mi = (MonitorInfo) itr.next();
+		if (givenHandle.equals(mi.owner())) {
+		    res++;
+		}
+	    }
+	    frame = (JavaVFrame) frame.javaSender();
+	}
+	return res;
     }
 
     // wrappers on same named method of Threads class
-    // returns List<JavaThread>
+    // returns List<JavaThread>  
     private List getPendingThreads(ObjectMonitor mon) {
-        return vm.saVM().getThreads().getPendingThreads(mon);
+	return vm.saVM().getThreads().getPendingThreads(mon);
     }
 
     // returns List<JavaThread>
     private List getWaitingThreads(ObjectMonitor mon) {
-        return vm.saVM().getThreads().getWaitingThreads(mon);
+	return vm.saVM().getThreads().getWaitingThreads(mon);
     }
 
     private JavaThread owningThreadFromMonitor(Address addr) {
-        return vm.saVM().getThreads().owningThreadFromMonitor(addr);
+	return vm.saVM().getThreads().owningThreadFromMonitor(addr);
     }
 
     // refer to JvmtiEnv::GetObjectMonitorUsage
     private void computeMonitorInfo() {
-        monitorInfoCached = true;
-        Mark mark = saObject.getMark();
-        ObjectMonitor mon = null;
+	monitorInfoCached = true;
+	Mark mark = saObject.getMark();
+	ObjectMonitor mon = null;
         Address owner = null;
-        // check for heavyweight monitor
-        if (! mark.hasMonitor()) {
-            // check for lightweight monitor
-            if (mark.hasLocker()) {
-                owner = mark.locker().getAddress(); // save the address of the Lock word
-            }
-            // implied else: no owner
-        } else {
-            // this object has a heavyweight monitor
-            mon = mark.monitor();
+	// check for heavyweight monitor
+	if (! mark.hasMonitor()) {
+	    // check for lightweight monitor
+	    if (mark.hasLocker()) {
+		owner = mark.locker().getAddress(); // save the address of the Lock word
+	    }
+	    // implied else: no owner
+	} else {
+  	    // this object has a heavyweight monitor
+	    mon = mark.monitor();
 
-            // The owner field of a heavyweight monitor may be NULL for no
-            // owner, a JavaThread * or it may still be the address of the
-            // Lock word in a JavaThread's stack. A monitor can be inflated
-            // by a non-owning JavaThread, but only the owning JavaThread
-            // can change the owner field from the Lock word to the
-            // JavaThread * and it may not have done that yet.
-            owner = mon.owner();
-        }
+	    // The owner field of a heavyweight monitor may be NULL for no
+	    // owner, a JavaThread * or it may still be the address of the
+	    // Lock word in a JavaThread's stack. A monitor can be inflated
+	    // by a non-owning JavaThread, but only the owning JavaThread
+	    // can change the owner field from the Lock word to the
+	    // JavaThread * and it may not have done that yet.
+	    owner = mon.owner();
+	}
 
-        // find the owning thread
-        if (owner != null) {
-            owningThread = vm.threadMirror(owningThreadFromMonitor(owner));
-        }
+	// find the owning thread
+	if (owner != null) {
+	    owningThread = vm.threadMirror(owningThreadFromMonitor(owner));
+	}
 
-        // compute entryCount
-        if (owningThread != null) {
-            if (owningThread.getJavaThread().getAddress().equals(owner)) {
-                // the owner field is the JavaThread *
-                if (Assert.ASSERTS_ENABLED) {
-                    Assert.that(false, "must have heavyweight monitor with JavaThread * owner");
-                }
-                entryCount = (int) mark.monitor().recursions() + 1;
-            } else {
-                // The owner field is the Lock word on the JavaThread's stack
-                // so the recursions field is not valid. We have to count the
-                // number of recursive monitor entries the hard way.
-                entryCount = countLockedObjects(owningThread.getJavaThread(), saObject);
-            }
-        }
+	// compute entryCount
+	if (owningThread != null) {
+	    if (owningThread.getJavaThread().getAddress().equals(owner)) {
+		// the owner field is the JavaThread *
+		if (Assert.ASSERTS_ENABLED) {
+		    Assert.that(false, "must have heavyweight monitor with JavaThread * owner");
+		}
+		entryCount = (int) mark.monitor().recursions() + 1;
+	    } else {
+		// The owner field is the Lock word on the JavaThread's stack
+		// so the recursions field is not valid. We have to count the
+		// number of recursive monitor entries the hard way.
+		entryCount = countLockedObjects(owningThread.getJavaThread(), saObject);
+	    }
+	}
 
-        // find the contenders & waiters
-        waitingThreads = new ArrayList();
-        if (mon != null) {
-            // this object has a heavyweight monitor. threads could
-            // be contenders or waiters
-            // add all contenders
-            List pendingThreads = getPendingThreads(mon);
-            // convert the JavaThreads to ThreadReferenceImpls
-            for (Iterator itrPend = pendingThreads.iterator(); itrPend.hasNext();) {
-                waitingThreads.add(vm.threadMirror((JavaThread) itrPend.next()));
-            }
+	// find the contenders & waiters
+	waitingThreads = new ArrayList();
+	if (mon != null) {
+	    // this object has a heavyweight monitor. threads could
+	    // be contenders or waiters
+	    // add all contenders
+	    List pendingThreads = getPendingThreads(mon);
+	    // convert the JavaThreads to ThreadReferenceImpls
+	    for (Iterator itrPend = pendingThreads.iterator(); itrPend.hasNext();) {
+		waitingThreads.add(vm.threadMirror((JavaThread) itrPend.next()));
+	    }
 
-            // add all waiters (threads in Object.wait())
-            // note that we don't do this JVMTI way. To do it JVMTI way,
-            // we would need to access ObjectWaiter list maintained in
-            // ObjectMonitor::_queue. But we don't have this struct exposed
-            // in vmStructs. We do waiters list in a way similar to getting
-            // pending threads list
-            List objWaitingThreads = getWaitingThreads(mon);
-            // convert the JavaThreads to ThreadReferenceImpls
-            for (Iterator itrWait = objWaitingThreads.iterator(); itrWait.hasNext();) {
-                waitingThreads.add(vm.threadMirror((JavaThread) itrWait.next()));
-            }
-        }
-    }
+	    // add all waiters (threads in Object.wait())
+	    // note that we don't do this JVMTI way. To do it JVMTI way,
+	    // we would need to access ObjectWaiter list maintained in
+	    // ObjectMonitor::_queue. But we don't have this struct exposed
+	    // in vmStructs. We do waiters list in a way similar to getting
+	    // pending threads list
+	    List objWaitingThreads = getWaitingThreads(mon);
+	    // convert the JavaThreads to ThreadReferenceImpls
+	    for (Iterator itrWait = objWaitingThreads.iterator(); itrWait.hasNext();) {
+		waitingThreads.add(vm.threadMirror((JavaThread) itrWait.next()));
+	    }
+	}
+    } 
 
     public boolean equals(Object obj) {
         if ((obj != null) && (obj instanceof ObjectReferenceImpl)) {

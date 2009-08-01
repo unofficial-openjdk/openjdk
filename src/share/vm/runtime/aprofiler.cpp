@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)aprofiler.cpp	1.33 07/05/05 17:06:43 JVM"
+#endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -115,17 +118,17 @@ void AllocationProfiler::sort_and_print_array(size_t cutoff) {
 #else
       const char* name = k->klass_part()->internal_name();
 #endif
-      tty->print_cr("%20u %10u %8u  %s",
-        alloc_size * BytesPerWord,
-        alloc_count,
-        average(alloc_size, alloc_count),
+      tty->print_cr("%20u %10u %8u  %s", 
+        alloc_size * BytesPerWord, 
+        alloc_count, 
+        average(alloc_size, alloc_count), 
         name);
       total_alloc_size += alloc_size;
       total_alloc_count += alloc_count;
     }
   }
-  tty->print_cr("%20u %10u %8u  --total--",
-    total_alloc_size * BytesPerWord,
+  tty->print_cr("%20u %10u %8u  --total--", 
+    total_alloc_size * BytesPerWord, 
     total_alloc_count,
     average(total_alloc_size, total_alloc_count));
   tty->cr();

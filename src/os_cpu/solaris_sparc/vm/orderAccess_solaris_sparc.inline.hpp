@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)orderAccess_solaris_sparc.inline.hpp	1.12 07/05/05 17:04:53 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Implementation of class OrderAccess.
@@ -42,8 +45,8 @@ inline void OrderAccess::acquire() {
 }
 
 inline void OrderAccess::release() {
-  jint* dummy = (jint*)&dummy;
-  __asm__ volatile("stw %%g0, [%0]" : : "r" (dummy) : "memory");
+  jint* dummy = (jint*)&dummy; 
+  __asm__ volatile("stw %%g0, [%0]" : : "r" (dummy) : "memory"); 
 }
 
 inline void OrderAccess::fence() {

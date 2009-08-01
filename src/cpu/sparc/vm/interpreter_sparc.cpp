@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)interpreter_sparc.cpp	1.263 07/08/29 13:42:18 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -161,11 +164,11 @@ address AbstractInterpreterGenerator::generate_slow_signature_handler() {
 
     __ bind(NonFloatArg);
     // There are only 6 integer register arguments!
-    if ( ldarg.is_register() )
+    if ( ldarg.is_register() ) 
       __ ld_ptr(ldarg.address_in_frame(), ldarg.as_register());
     else {
     // Optimization, see if there are any more args and get out prior to checking
-    // all 16 float registers.  My guess is that this is rare.
+    // all 16 float registers.  My guess is that this is rare.  
     // If is_register is false, then we are done the first six integer args.
       __ tst(G4_scratch);
       __ brx(Assembler::zero, false, Assembler::pt, done);
@@ -186,7 +189,7 @@ address AbstractInterpreterGenerator::generate_slow_signature_handler() {
     __ delayed()->srl( G4_scratch, 2, G4_scratch );
 
     __ bind(NextArg);
-
+ 
   }
 
   __ bind(done);
@@ -207,7 +210,7 @@ void InterpreterGenerator::generate_counter_overflow(Label& Lcontinue) {
   // The call returns the address of the verified entry point for the method or NULL
   // if the compilation did not complete (either went background or bailed out).
   __ set((int)false, O2);
-  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::frequency_counter_overflow), O2, O2, true);
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::frequency_counter_overflow), O2, O2, true); 
   // returns verified_entry_point or NULL
   // we ignore it in any case
   __ ba(false, Lcontinue);
@@ -248,7 +251,7 @@ address InterpreterGenerator::generate_abstract_entry(void) {
 //
 // When control flow reaches any of the entry types for the interpreter
 // the following holds ->
-//
+// 
 // C2 Calling Conventions:
 //
 // The entry code below assumes that the following registers are set
@@ -356,7 +359,7 @@ address AbstractInterpreterGenerator::generate_method_entry(AbstractInterpreter:
   bool synchronized = false;
   address entry_point = NULL;
 
-  switch (kind) {
+  switch (kind) {    
     case Interpreter::zerolocals             :                                                                             break;
     case Interpreter::zerolocals_synchronized: synchronized = true;                                                        break;
     case Interpreter::native                 : entry_point = ((InterpreterGenerator*)this)->generate_native_entry(false);  break;
@@ -382,12 +385,12 @@ address AbstractInterpreterGenerator::generate_method_entry(AbstractInterpreter:
 
 // This method tells the deoptimizer how big an interpreted frame must be:
 int AbstractInterpreter::size_activation(methodOop method,
-                                         int tempcount,
-                                         int popframe_extra_args,
-                                         int moncount,
-                                         int callee_param_count,
-                                         int callee_locals,
-                                         bool is_top_frame) {
+					 int tempcount,
+					 int popframe_extra_args,
+					 int moncount,
+					 int callee_param_count,
+					 int callee_locals,
+					 bool is_top_frame) {
   return layout_activation(method,
                            tempcount,
                            popframe_extra_args,

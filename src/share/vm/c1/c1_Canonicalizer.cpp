@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)c1_Canonicalizer.cpp	1.57 07/05/05 17:05:05 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -79,7 +82,7 @@ void Canonicalizer::do_Op2(Op2* x) {
             case Bytecodes::_iadd: set_constant(a + b); return;
             case Bytecodes::_isub: set_constant(a - b); return;
             case Bytecodes::_imul: set_constant(a * b); return;
-            case Bytecodes::_idiv:
+            case Bytecodes::_idiv: 
               if (b != 0) {
                 if (a == min_jint && b == -1) {
                   set_constant(min_jint);
@@ -359,7 +362,7 @@ void Canonicalizer::do_CompareOp      (CompareOp*       x) {
           set_constant(1);
         break;
       }
-
+        
       case floatTag: {
         float vx = x->x()->type()->as_FloatConstant()->value();
         float vy = x->y()->type()->as_FloatConstant()->value();
@@ -373,7 +376,7 @@ void Canonicalizer::do_CompareOp      (CompareOp*       x) {
           set_constant(1);
         break;
       }
-
+        
       case doubleTag: {
         double vx = x->x()->type()->as_DoubleConstant()->value();
         double vy = x->y()->type()->as_DoubleConstant()->value();
@@ -663,7 +666,7 @@ void Canonicalizer::do_If(If* x) {
       BlockBegin* no_inst_sux = x->sux_for(is_true(0, x->cond(), rc)); // successor for instanceof == 0
       if (is_inst_sux == no_inst_sux && inst->is_loaded()) {
         // both successors identical and klass is loaded => simplify to: Goto
-        set_canonical(new Goto(is_inst_sux, x->state_before(), x->is_safepoint()));
+        set_canonical(new Goto(is_inst_sux, x->state_before(), x->is_safepoint()));       
       } else {
         // successors differ => simplify to: IfInstanceOf
         set_canonical(new IfInstanceOf(inst->klass(), inst->obj(), true, inst->bci(), is_inst_sux, no_inst_sux));

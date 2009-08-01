@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.gc_interface;
@@ -45,7 +45,7 @@ public class CollectedHeap extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("CollectedHeap");
-
+    
     reservedFieldOffset = type.getField("_reserved").getOffset();
   }
 
@@ -74,7 +74,7 @@ public class CollectedHeap extends VMObject {
   }
 
   public CollectedHeapName kind() {
-    return CollectedHeapName.ABSTRACT;
+    return CollectedHeapName.ABSTRACT; 
   }
 
   public void print() { printOn(System.out); }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)memoryService.cpp	1.35 07/05/29 09:44:30 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_memoryService.cpp.incl"
 
-GrowableArray<MemoryPool*>* MemoryService::_pools_list =
+GrowableArray<MemoryPool*>* MemoryService::_pools_list = 
   new (ResourceObj::C_HEAP) GrowableArray<MemoryPool*>(init_pools_list_size, true);
-GrowableArray<MemoryManager*>* MemoryService::_managers_list =
+GrowableArray<MemoryManager*>* MemoryService::_managers_list = 
   new (ResourceObj::C_HEAP) GrowableArray<MemoryManager*>(init_managers_list_size, true);
 
 GCMemoryManager* MemoryService::_minor_gc_manager = NULL;
@@ -102,8 +105,8 @@ void MemoryService::add_gen_collected_heap_info(GenCollectedHeap* heap) {
         _minor_gc_manager = MemoryManager::get_copy_memory_manager();
         break;
 #ifndef SERIALGC
-      case Generation::ParNew:
-      case Generation::ASParNew:
+      case Generation::ParNew: 
+      case Generation::ASParNew: 
         _minor_gc_manager = MemoryManager::get_parnew_memory_manager();
         break;
 #endif // SERIALGC
@@ -150,7 +153,7 @@ void MemoryService::add_gen_collected_heap_info(GenCollectedHeap* heap) {
 }
 
 #ifndef SERIALGC
-// Add memory pools for ParallelScavengeHeap
+// Add memory pools for ParallelScavengeHeap 
 // This function currently only supports two generations collected heap.
 // The collector for ParallelScavengeHeap will have two memory managers.
 void MemoryService::add_parallel_scavenge_heap_info(ParallelScavengeHeap* heap) {
@@ -166,11 +169,11 @@ void MemoryService::add_parallel_scavenge_heap_info(ParallelScavengeHeap* heap) 
 }
 #endif // SERIALGC
 
-MemoryPool* MemoryService::add_gen(Generation* gen,
-                                   const char* name,
+MemoryPool* MemoryService::add_gen(Generation* gen, 
+                                   const char* name, 
                                    bool is_heap,
                                    bool support_usage_threshold) {
-
+ 
   MemoryPool::PoolType type = (is_heap ? MemoryPool::Heap : MemoryPool::NonHeap);
   GenerationPool* pool = new GenerationPool(gen, name, type, support_usage_threshold);
   _pools_list->append(pool);
@@ -178,25 +181,25 @@ MemoryPool* MemoryService::add_gen(Generation* gen,
 }
 
 MemoryPool* MemoryService::add_space(ContiguousSpace* space,
-                                     const char* name,
+                                     const char* name,   
                                      bool is_heap,
                                      size_t max_size,
                                      bool support_usage_threshold) {
   MemoryPool::PoolType type = (is_heap ? MemoryPool::Heap : MemoryPool::NonHeap);
   ContiguousSpacePool* pool = new ContiguousSpacePool(space, name, type, max_size, support_usage_threshold);
-
+ 
   _pools_list->append(pool);
   return (MemoryPool*) pool;
 }
 
 MemoryPool* MemoryService::add_survivor_spaces(DefNewGeneration* gen,
-                                               const char* name,
+                                               const char* name,   
                                                bool is_heap,
                                                size_t max_size,
                                                bool support_usage_threshold) {
   MemoryPool::PoolType type = (is_heap ? MemoryPool::Heap : MemoryPool::NonHeap);
   SurvivorContiguousSpacePool* pool = new SurvivorContiguousSpacePool(gen, name, type, max_size, support_usage_threshold);
-
+ 
   _pools_list->append(pool);
   return (MemoryPool*) pool;
 }
@@ -215,7 +218,7 @@ MemoryPool* MemoryService::add_cms_space(CompactibleFreeListSpace* space,
 #endif // SERIALGC
 
 // Add memory pool(s) for one generation
-void MemoryService::add_generation_memory_pool(Generation* gen,
+void MemoryService::add_generation_memory_pool(Generation* gen, 
                                                MemoryManager* major_mgr,
                                                MemoryManager* minor_mgr) {
   Generation::Name kind = gen->kind();
@@ -225,15 +228,15 @@ void MemoryService::add_generation_memory_pool(Generation* gen,
     case Generation::DefNew: {
       assert(major_mgr != NULL && minor_mgr != NULL, "Should have two managers");
       DefNewGeneration* young_gen = (DefNewGeneration*) gen;
-      // Add a memory pool for each space and young gen doesn't
+      // Add a memory pool for each space and young gen doesn't 
       // support low memory detection as it is expected to get filled up.
       MemoryPool* eden = add_space(young_gen->eden(),
                                    "Eden Space",
                                    true, /* is_heap */
                                    young_gen->max_eden_size(),
                                    false /* support_usage_threshold */);
-      MemoryPool* survivor = add_survivor_spaces(young_gen,
-                                                 "Survivor Space",
+      MemoryPool* survivor = add_survivor_spaces(young_gen, 
+                                                 "Survivor Space", 
                                                  true, /* is_heap */
                                                  young_gen->max_survivor_size(),
                                                  false /* support_usage_threshold */);
@@ -242,15 +245,15 @@ void MemoryService::add_generation_memory_pool(Generation* gen,
 
 #ifndef SERIALGC
     case Generation::ParNew:
-    case Generation::ASParNew:
+    case Generation::ASParNew: 
     {
       assert(major_mgr != NULL && minor_mgr != NULL, "Should have two managers");
-      // Add a memory pool for each space and young gen doesn't
+      // Add a memory pool for each space and young gen doesn't 
       // support low memory detection as it is expected to get filled up.
       ParNewGeneration* parnew_gen = (ParNewGeneration*) gen;
-      MemoryPool* eden = add_space(parnew_gen->eden(),
-                                   "Par Eden Space",
-                                   true /* is_heap */,
+      MemoryPool* eden = add_space(parnew_gen->eden(), 
+                                   "Par Eden Space", 
+                                   true /* is_heap */, 
                                    parnew_gen->max_eden_size(),
                                    false /* support_usage_threshold */);
       MemoryPool* survivor = add_survivor_spaces(parnew_gen,
@@ -258,7 +261,7 @@ void MemoryService::add_generation_memory_pool(Generation* gen,
                                                  true, /* is_heap */
                                                  parnew_gen->max_survivor_size(),
                                                  false /* support_usage_threshold */);
-
+      
       break;
     }
 #endif // SERIALGC
@@ -273,8 +276,8 @@ void MemoryService::add_generation_memory_pool(Generation* gen,
     }
 
 #ifndef SERIALGC
-    case Generation::ConcurrentMarkSweep:
-    case Generation::ASConcurrentMarkSweep:
+    case Generation::ConcurrentMarkSweep: 
+    case Generation::ASConcurrentMarkSweep: 
     {
       assert(major_mgr != NULL && minor_mgr == NULL, "Should have only one manager");
       ConcurrentMarkSweepGeneration* cms = (ConcurrentMarkSweepGeneration*) gen;
@@ -309,7 +312,7 @@ void MemoryService::add_compact_perm_gen_memory_pool(CompactingPermGenGen* perm_
   PermanentGenerationSpec* spec = perm_gen->spec();
   size_t max_size = spec->max_size() - spec->read_only_size() - spec->read_write_size();
   MemoryPool* pool = add_space(perm_gen->unshared_space(),
-                               "Perm Gen",
+                               "Perm Gen", 
                                 false, /* is_heap */
                                 max_size,
                                 true   /* support_usage_threshold */);
@@ -346,16 +349,16 @@ void MemoryService::add_cms_perm_gen_memory_pool(CMSPermGenGen* cms_gen,
 void MemoryService::add_psYoung_memory_pool(PSYoungGen* gen, MemoryManager* major_mgr, MemoryManager* minor_mgr) {
   assert(major_mgr != NULL && minor_mgr != NULL, "Should have two managers");
 
-  // Add a memory pool for each space and young gen doesn't
+  // Add a memory pool for each space and young gen doesn't 
   // support low memory detection as it is expected to get filled up.
   EdenMutableSpacePool* eden = new EdenMutableSpacePool(gen,
-                                                        gen->eden_space(),
-                                                        "PS Eden Space",
+                                                        gen->eden_space(), 
+                                                        "PS Eden Space", 
                                                         MemoryPool::Heap,
                                                         false /* support_usage_threshold */);
 
   SurvivorMutableSpacePool* survivor = new SurvivorMutableSpacePool(gen,
-                                                                    "PS Survivor Space",
+                                                                    "PS Survivor Space", 
                                                                     MemoryPool::Heap,
                                                                     false /* support_usage_threshold */);
 
@@ -368,17 +371,17 @@ void MemoryService::add_psYoung_memory_pool(PSYoungGen* gen, MemoryManager* majo
 }
 
 void MemoryService::add_psOld_memory_pool(PSOldGen* gen, MemoryManager* mgr) {
-  PSGenerationPool* old_gen = new PSGenerationPool(gen,
+  PSGenerationPool* old_gen = new PSGenerationPool(gen, 
                                                    "PS Old Gen",
-                                                   MemoryPool::Heap,
+                                                   MemoryPool::Heap, 
                                                    true /* support_usage_threshold */);
   mgr->add_pool(old_gen);
   _pools_list->append(old_gen);
 }
 
 void MemoryService::add_psPerm_memory_pool(PSPermGen* gen, MemoryManager* mgr) {
-  PSGenerationPool* perm_gen = new PSGenerationPool(gen,
-                                                    "PS Perm Gen",
+  PSGenerationPool* perm_gen = new PSGenerationPool(gen, 
+                                                    "PS Perm Gen", 
                                                     MemoryPool::NonHeap,
                                                     true /* support_usage_threshold */);
   mgr->add_pool(perm_gen);
@@ -431,7 +434,7 @@ void MemoryService::track_memory_usage() {
 void MemoryService::track_memory_pool_usage(MemoryPool* pool) {
   // Track the peak memory usage
   pool->record_peak_memory_usage();
-
+  
   // Detect low memory
   if (LowMemoryDetector::is_enabled(pool)) {
     LowMemoryDetector::detect_low_memory(pool);
@@ -439,7 +442,7 @@ void MemoryService::track_memory_pool_usage(MemoryPool* pool) {
 }
 
 void MemoryService::gc_begin(bool fullGC) {
-  GCMemoryManager* mgr;
+  GCMemoryManager* mgr; 
   if (fullGC) {
     mgr = _major_gc_manager;
   } else {
@@ -456,7 +459,7 @@ void MemoryService::gc_begin(bool fullGC) {
 }
 
 void MemoryService::gc_end(bool fullGC) {
-  GCMemoryManager* mgr;
+  GCMemoryManager* mgr; 
   if (fullGC) {
     mgr = (GCMemoryManager*) _major_gc_manager;
   } else {
@@ -486,7 +489,7 @@ bool MemoryService::set_verbose(bool verbose) {
   // verbose will be set to the previous value
   bool succeed = CommandLineFlags::boolAtPut((char*)"PrintGC", &verbose, MANAGEMENT);
   assert(succeed, "Setting PrintGC flag fails");
-  ClassLoadingService::reset_trace_class_unloading();
+  ClassLoadingService::reset_trace_class_unloading(); 
 
   return verbose;
 }
@@ -515,18 +518,18 @@ Handle MemoryService::create_MemoryUsage_obj(MemoryUsage usage, TRAPS) {
 }
 //
 // GC manager type depends on the type of Generation. Depending the space
-// availablity and vm option the gc uses major gc manager or minor gc
-// manager or both. The type of gc manager depends on the generation kind.
-// For DefNew, ParNew and ASParNew generation doing scavange gc uses minor
-// gc manager (so _fullGC is set to false ) and for other generation kind
-// DOing mark-sweep-compact uses major gc manager (so _fullGC is set
+// availablity and vm option the gc uses major gc manager or minor gc 
+// manager or both. The type of gc manager depends on the generation kind. 
+// For DefNew, ParNew and ASParNew generation doing scavange gc uses minor 
+// gc manager (so _fullGC is set to false ) and for other generation kind 
+// DOing mark-sweep-compact uses major gc manager (so _fullGC is set 
 // to true).
 TraceMemoryManagerStats::TraceMemoryManagerStats(Generation::Name kind) {
   switch (kind) {
     case Generation::DefNew:
 #ifndef SERIALGC
-    case Generation::ParNew:
-    case Generation::ASParNew:
+    case Generation::ParNew: 
+    case Generation::ASParNew: 
 #endif // SERIALGC
       _fullGC=false;
       break;

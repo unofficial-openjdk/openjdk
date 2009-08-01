@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)constMethodOop.hpp	1.24 07/05/05 17:05:59 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // An constMethodOop represents portions of a Java method which
-// do not vary.
+// do not vary. 
 //
 // Memory layout (each line represents a word). Note that most
 // applications load thousands of methods, so keeping the size of this
@@ -110,9 +113,9 @@ public:
   oop* oop_block_end() const { return adr_exception_table() + 1; }
 
 private:
-  //
+  // 
   // The oop block.  See comment in klass.hpp before making changes.
-  //
+  // 
 
   // Backpointer to non-const methodOop (needed for some JVMTI operations)
   methodOop         _method;
@@ -123,7 +126,7 @@ private:
   // The exception handler table. 4-tuples of ints [start_pc, end_pc,
   // handler_pc, catch_type index] For methods with no exceptions the
   // table is pointing to Universe::the_empty_int_array
-  typeArrayOop      _exception_table;
+  typeArrayOop      _exception_table;            
 
   //
   // End of the oop block.
@@ -164,11 +167,11 @@ public:
   methodOop method() const                 { return _method; }
   void set_method(methodOop m)             { oop_store_without_check((oop*)&_method, (oop) m); }
 
-
+  
   // stackmap table data
   typeArrayOop stackmap_data() const { return _stackmap_data; }
-  void set_stackmap_data(typeArrayOop sd) {
-    oop_store_without_check((oop*)&_stackmap_data, (oop)sd);
+  void set_stackmap_data(typeArrayOop sd) { 
+    oop_store_without_check((oop*)&_stackmap_data, (oop)sd); 
   }
   bool has_stackmap_table() const { return _stackmap_data != NULL; }
 
@@ -177,7 +180,7 @@ public:
   void set_exception_table(typeArrayOop e)       { oop_store_without_check((oop*) &_exception_table, (oop) e); }
   bool has_exception_handler() const             { return exception_table() != NULL && exception_table()->length() > 0; }
 
-  void init_fingerprint() {
+  void init_fingerprint() { 
     const uint64_t initval = CONST64(0x8000000000000000);
     _fingerprint = initval;
   }

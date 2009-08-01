@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)adjoiningGenerations.hpp	1.14 07/05/05 17:05:25 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 
@@ -29,7 +32,7 @@
 // expanding of the generations can still be down with that
 // virtual space as was previously done.  If expanding of reserved
 // size of a generation is required, the adjacent generation
-// must be shrunk.  Adjusting the boundary between the generations
+// must be shrunk.  Adjusting the boundary between the generations  
 // is called for in this class.
 
 class AdjoiningGenerations : public CHeapObj {
@@ -37,7 +40,7 @@ class AdjoiningGenerations : public CHeapObj {
  private:
   // The young generation and old generation, respectively
   PSYoungGen* _young_gen;
-  PSOldGen* _old_gen;
+  PSOldGen* _old_gen;	
 
   // The spaces used by the two generations.
   AdjoiningVirtualSpaces _virtual_spaces;
@@ -50,13 +53,13 @@ class AdjoiningGenerations : public CHeapObj {
 
  public:
   AdjoiningGenerations(ReservedSpace rs,
-                       size_t init_low_byte_size,
-                       size_t min_low_byte_size,
-                       size_t max_low_byte_size,
-                       size_t init_high_byte_size,
-                       size_t min_high_byte_size,
-                       size_t max_high_bytes_size,
-                       size_t alignment);
+		       size_t init_low_byte_size,
+		       size_t min_low_byte_size,
+		       size_t max_low_byte_size,
+		       size_t init_high_byte_size,
+		       size_t min_high_byte_size,
+		       size_t max_high_bytes_size,
+		       size_t alignment);
 
   // Accessors
   PSYoungGen* young_gen() { return _young_gen; }

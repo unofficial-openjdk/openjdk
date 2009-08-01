@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import com.sun.jdi.*;
@@ -40,7 +40,7 @@ public class multivm {
     static VirtualMachine vm1;
     static VirtualMachine vm2;
     static VirtualMachineManager vmmgr;
-
+    
     public static void println(String msg) {
         System.out.println(msg);
     }
@@ -64,7 +64,7 @@ public class multivm {
                 "sun.jvm.hotspot.jdi.SAPIDAttachingConnector")) {
                 myPIDConn = tmpCon;
                 break;
-            }
+            } 
         }
 
         int pid1 = 0, pid2 = 0;

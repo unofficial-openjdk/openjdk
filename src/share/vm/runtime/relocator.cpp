@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)relocator.cpp	1.40 07/05/05 17:06:54 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,12 +33,12 @@
 #define MAX_SHORT ((1 << 15) - 1)
 #define MIN_SHORT (- (1 << 15))
 
-// Encapsulates a code change request. There are 3 types.
+// Encapsulates a code change request. There are 3 types. 
 // General instruction, jump instruction, and table/lookup switches
 //
-class ChangeItem : public ResourceObj {
+class ChangeItem : public ResourceObj { 
   int _bci;
- public:
+ public:  
    ChangeItem(int bci) { _bci = bci; }
    virtual bool handle_code_change(Relocator *r) = 0;
 
@@ -58,8 +61,8 @@ class ChangeWiden : public ChangeItem {
   int              _new_ilen;    // New length of instruction at bci
   u_char*          _inst_buffer; // New bytecodes
  public:
-  ChangeWiden(int bci, int new_ilen, u_char* inst_buffer) : ChangeItem(bci) {
-    _new_ilen = new_ilen;
+  ChangeWiden(int bci, int new_ilen, u_char* inst_buffer) : ChangeItem(bci) {    
+    _new_ilen = new_ilen; 
     _inst_buffer = inst_buffer;
   }
 
@@ -79,14 +82,14 @@ class ChangeJumpWiden : public ChangeItem {
   // Callback to do instruction
   bool handle_code_change(Relocator *r) { return r->handle_jump_widen(bci(), _delta); };
 
-  bool is_jump_widen()         { return true; }
+  bool is_jump_widen()         { return true; }   
 
   // If the bci matches, adjust the delta in the change jump request.
   bool adjust(int jump_bci, int delta) {
     if (bci() == jump_bci) {
-      if (_delta > 0)
+      if (_delta > 0) 
         _delta += delta;
-      else
+      else 
         _delta -= delta;
       return true;
     }
@@ -100,7 +103,7 @@ class ChangeSwitchPad : public ChangeItem {
   int  _padding;
   bool _is_lookup_switch;
  public:
-   ChangeSwitchPad(int bci, int padding, bool is_lookup_switch) : ChangeItem(bci) {
+   ChangeSwitchPad(int bci, int padding, bool is_lookup_switch) : ChangeItem(bci) { 
      _padding = padding;
      _is_lookup_switch = is_lookup_switch;
    }
@@ -120,7 +123,7 @@ class ChangeSwitchPad : public ChangeItem {
 
 Relocator::Relocator(methodHandle m, RelocatorListener* listener) {
   set_method(m);
-  set_code_length(method()->code_size());
+  set_code_length(method()->code_size()); 
   set_code_array(NULL);
   // Allocate code array and copy bytecodes
   if (!expand_code_array(0)) {
@@ -147,7 +150,7 @@ methodHandle Relocator::insert_space_at(int bci, int size, u_char inst_buffer[],
   }
 
   if (!handle_code_changes()) return methodHandle();
-
+ 
     // Construct the new method
   methodHandle new_method = methodOopDesc::clone_with_new_data(method(),
                               code_array(), code_length(),
@@ -179,23 +182,23 @@ bool Relocator::handle_code_changes() {
 
     // Execute operation
     if (!ci->handle_code_change(this)) return false;
-
+    
     // Shuffel items up
     for (int index = 1; index < _changes->length(); index++) {
       _changes->at_put(index-1, _changes->at(index));
-    }
+    }  
     _changes->pop();
   }
-  return true;
+  return true;  
 }
 
 
 bool Relocator::is_opcode_lookupswitch(Bytecodes::Code bc) {
   switch (bc) {
-    case Bytecodes::_tableswitch:       return false;
+    case Bytecodes::_tableswitch:       return false;    
     case Bytecodes::_lookupswitch:                   // not rewritten on ia64
     case Bytecodes::_fast_linearswitch:              // rewritten _lookupswitch
-    case Bytecodes::_fast_binaryswitch: return true; // rewritten _lookupswitch
+    case Bytecodes::_fast_binaryswitch: return true; // rewritten _lookupswitch    
     default: ShouldNotReachHere();
   }
   return true; // dummy
@@ -208,16 +211,16 @@ int Relocator::rc_instr_len(int bci) {
   switch (bc) {
     // In the case of switch instructions, see if we have the original
     // padding recorded.
-    case Bytecodes::_tableswitch:
+    case Bytecodes::_tableswitch:      
     case Bytecodes::_lookupswitch:
     case Bytecodes::_fast_linearswitch:
-    case Bytecodes::_fast_binaryswitch:
+    case Bytecodes::_fast_binaryswitch:        
     {
       int pad = get_orig_switch_pad(bci, is_opcode_lookupswitch(bc));
       if (pad == -1) {
         return instruction_length_at(bci);
       }
-      // Otherwise, depends on the switch type.
+      // Otherwise, depends on the switch type. 
       switch (bc) {
         case Bytecodes::_tableswitch: {
           int lo = int_at(bci + 1 + pad + 4 * 1);
@@ -226,22 +229,22 @@ int Relocator::rc_instr_len(int bci) {
           return 1 + pad + 4*(3 + n);
         }
         case Bytecodes::_lookupswitch:
-        case Bytecodes::_fast_linearswitch:
-        case Bytecodes::_fast_binaryswitch: {
+        case Bytecodes::_fast_linearswitch: 
+        case Bytecodes::_fast_binaryswitch: {          
           int npairs = int_at(bci + 1 + pad + 4 * 1);
-          return 1 + pad + 4*(2 + 2*npairs);
+          return 1 + pad + 4*(2 + 2*npairs); 
         }
         default:
           ShouldNotReachHere();
       }
-    }
+    }         
   }
   return instruction_length_at(bci);
 }
 
 // If a change item is recorded for "pc", with type "ct", returns the
 // associated padding, else -1.
-int Relocator::get_orig_switch_pad(int bci, bool is_lookup_switch) {
+int Relocator::get_orig_switch_pad(int bci, bool is_lookup_switch) {      
   for (int k = 0; k < _changes->length(); k++) {
     ChangeItem* ci = _changes->at(k);
     if (ci->is_switch_pad()) {
@@ -272,16 +275,16 @@ void Relocator::push_jump_widen(int bci, int delta, int new_delta) {
 // at "offset" and is a short if "isShort" is "TRUE",
 // and an integer otherwise.  If the jump crosses "breakPC", change
 // the span of the jump by "delta".
-void Relocator::change_jump(int bci, int offset, bool is_short, int break_bci, int delta) {
-  int bci_delta = (is_short) ? short_at(offset) : int_at(offset);
+void Relocator::change_jump(int bci, int offset, bool is_short, int break_bci, int delta) {  
+  int bci_delta = (is_short) ? short_at(offset) : int_at(offset);  
   int targ = bci + bci_delta;
 
   if ((bci <= break_bci && targ >  break_bci) ||
       (bci >  break_bci && targ <= break_bci)) {
     int new_delta;
-    if (bci_delta > 0)
+    if (bci_delta > 0) 
       new_delta = bci_delta + delta;
-    else
+    else 
       new_delta = bci_delta - delta;
 
     if (is_short && ((new_delta > MAX_SHORT) || new_delta < MIN_SHORT)) {
@@ -293,14 +296,14 @@ void Relocator::change_jump(int bci, int offset, bool is_short, int break_bci, i
     }
   }
 }
-
+    
 
 // Changes all jumps crossing "break_bci" by "delta".  May enqueue things
 // on "rc->changes"
 void Relocator::change_jumps(int break_bci, int delta) {
   int bci = 0;
   Bytecodes::Code bc;
-  // Now, adjust any affected instructions.
+  // Now, adjust any affected instructions. 
   while (bci < code_length()) {
     switch (bc= code_at(bci)) {
       case Bytecodes::_ifeq:
@@ -317,67 +320,67 @@ void Relocator::change_jumps(int break_bci, int delta) {
       case Bytecodes::_if_icmple:
       case Bytecodes::_if_acmpeq:
       case Bytecodes::_if_acmpne:
-      case Bytecodes::_ifnull:
+      case Bytecodes::_ifnull:   
       case Bytecodes::_ifnonnull:
       case Bytecodes::_goto:
       case Bytecodes::_jsr:
-        change_jump(bci, bci+1, true, break_bci, delta);
-        break;
+	change_jump(bci, bci+1, true, break_bci, delta);
+	break;
       case Bytecodes::_goto_w:
       case Bytecodes::_jsr_w:
-        change_jump(bci, bci+1, false, break_bci, delta);
-        break;
-      case Bytecodes::_tableswitch:
-      case Bytecodes::_lookupswitch:
+	change_jump(bci, bci+1, false, break_bci, delta);
+	break;
+      case Bytecodes::_tableswitch: 
+      case Bytecodes::_lookupswitch: 
       case Bytecodes::_fast_linearswitch:
-      case Bytecodes::_fast_binaryswitch: {
-        int recPad = get_orig_switch_pad(bci, (bc != Bytecodes::_tableswitch));
+      case Bytecodes::_fast_binaryswitch: {	
+	int recPad = get_orig_switch_pad(bci, (bc != Bytecodes::_tableswitch));
         int oldPad = (recPad != -1) ? recPad : align(bci+1) - (bci+1);
-        if (bci > break_bci) {
-          int new_bci = bci + delta;
-          int newPad = align(new_bci+1) - (new_bci+1);
-          // Do we need to check the padding?
-          if (newPad != oldPad) {
-            if (recPad == -1) {
+	if (bci > break_bci) {
+	  int new_bci = bci + delta;
+	  int newPad = align(new_bci+1) - (new_bci+1);
+	  // Do we need to check the padding? 
+	  if (newPad != oldPad) {
+	    if (recPad == -1) {
               _changes->push(new ChangeSwitchPad(bci, oldPad, (bc != Bytecodes::_tableswitch)));
-            }
-          }
-        }
-
-        // Then the rest, which depend on the kind of switch.
-        switch (bc) {
-          case Bytecodes::_tableswitch: {
+	    }
+	  }
+	}	
+	
+	// Then the rest, which depend on the kind of switch.
+	switch (bc) {
+	  case Bytecodes::_tableswitch: {
             change_jump(bci, bci +1 + oldPad, false, break_bci, delta);
-            // We cannot use the Bytecode_tableswitch abstraction, since the padding might not be correct.
+            // We cannot use the Bytecode_tableswitch abstraction, since the padding might not be correct.            
             int lo = int_at(bci + 1 + oldPad + 4 * 1);
             int hi = int_at(bci + 1 + oldPad + 4 * 2);
             int n = hi - lo + 1;
-            for (int k = 0; k < n; k++) {
-              change_jump(bci, bci +1 + oldPad + 4*(k+3), false, break_bci, delta);
-            }
-            // Special next-bci calculation here...
-            bci += 1 + oldPad + (n+3)*4;
-            continue;
-          }
-          case Bytecodes::_lookupswitch:
-          case Bytecodes::_fast_linearswitch:
+	    for (int k = 0; k < n; k++) {
+	      change_jump(bci, bci +1 + oldPad + 4*(k+3), false, break_bci, delta);
+	    }
+	    // Special next-bci calculation here...
+	    bci += 1 + oldPad + (n+3)*4;
+	    continue;
+	  }
+	  case Bytecodes::_lookupswitch:
+	  case Bytecodes::_fast_linearswitch:
           case Bytecodes::_fast_binaryswitch: {
             change_jump(bci, bci +1 + oldPad, false, break_bci, delta);
-            // We cannot use the Bytecode_lookupswitch abstraction, since the padding might not be correct.
-            int npairs = int_at(bci + 1 + oldPad + 4 * 1);
-            for (int k = 0; k < npairs; k++) {
+            // We cannot use the Bytecode_lookupswitch abstraction, since the padding might not be correct.            
+	    int npairs = int_at(bci + 1 + oldPad + 4 * 1);
+	    for (int k = 0; k < npairs; k++) {
               change_jump(bci, bci + 1 + oldPad + 4*(2 + 2*k + 1), false, break_bci, delta);
-            }
-            /* Special next-bci calculation here... */
-            bci += 1 + oldPad + (2 + (npairs*2))*4;
-            continue;
-          }
-          default:
-            ShouldNotReachHere();
-        }
+	    }
+	    /* Special next-bci calculation here... */
+	    bci += 1 + oldPad + (2 + (npairs*2))*4;
+	    continue;
+	  }
+	  default:
+	    ShouldNotReachHere();
+	}
       }
       default:
-        break;
+	break;
     }
     bci += rc_instr_len(bci);
   }
@@ -452,14 +455,14 @@ bool Relocator::expand_code_array(int delta) {
 
   // Expanding current array
   if (code_array() != NULL) {
-    memcpy(new_code_array, code_array(), code_length());
+    memcpy(new_code_array, code_array(), code_length());   
   } else {
     // Initial copy. Copy directly from methodOop
     memcpy(new_code_array, method()->code_base(), code_length());
   }
-
+  
   set_code_array(new_code_array);
-  set_code_array_length(length);
+  set_code_array_length(length);   
 
   return true;
 }
@@ -467,14 +470,14 @@ bool Relocator::expand_code_array(int delta) {
 
 // The instruction at "bci", whose size is "ilen", is changing size by
 // "delta".  Reallocate, move code, recalculate jumps, and enqueue
-// change items as necessary.
+// change items as necessary. 
 bool Relocator::relocate_code(int bci, int ilen, int delta) {
   int next_bci = bci + ilen;
   if (delta > 0 && code_length() + delta > code_array_length())  {
     // Expand allocated code space, if necessary.
     if (!expand_code_array(delta)) {
           return false;
-    }
+    }    
   }
 
   // We require 4-byte alignment of code arrays.
@@ -499,22 +502,22 @@ bool Relocator::relocate_code(int bci, int ilen, int delta) {
   // And local variable table...
   adjust_local_var_table(bci, delta);
 
-  // Relocate the pending change stack...
+  // Relocate the pending change stack...        
   for (int j = 0; j < _changes->length(); j++) {
     ChangeItem* ci = _changes->at(j);
     ci->relocate(bci, delta);
-  }
+  }  
 
   // Notify any listeners about code relocation
-  notify(bci, delta, code_length());
+  notify(bci, delta, code_length()); 
 
   return true;
 }
 
 // relocate a general instruction. Called by ChangeWiden class
-bool Relocator::handle_widen(int bci, int new_ilen, u_char inst_buffer[]) {
+bool Relocator::handle_widen(int bci, int new_ilen, u_char inst_buffer[]) {  
   int ilen = rc_instr_len(bci);
-  if (!relocate_code(bci, ilen, new_ilen - ilen))
+  if (!relocate_code(bci, ilen, new_ilen - ilen)) 
     return false;
 
   // Insert new bytecode(s)
@@ -526,9 +529,9 @@ bool Relocator::handle_widen(int bci, int new_ilen, u_char inst_buffer[]) {
 }
 
 // handle jump_widen instruction. Called be ChangeJumpWiden class
-bool Relocator::handle_jump_widen(int bci, int delta) {
+bool Relocator::handle_jump_widen(int bci, int delta) {  
   int ilen = rc_instr_len(bci);
-
+  
   Bytecodes::Code bc = code_at(bci);
   switch (bc) {
     case Bytecodes::_ifeq:
@@ -545,7 +548,7 @@ bool Relocator::handle_jump_widen(int bci, int delta) {
     case Bytecodes::_if_icmple:
     case Bytecodes::_if_acmpeq:
     case Bytecodes::_if_acmpne:
-    case Bytecodes::_ifnull:
+    case Bytecodes::_ifnull:   
     case Bytecodes::_ifnonnull: {
       const int goto_length   = Bytecodes::length_for(Bytecodes::_goto);
 
@@ -587,9 +590,9 @@ bool Relocator::handle_jump_widen(int bci, int delta) {
       assert(ilen == 3, "check length");
 
       if (!relocate_code(bci, 3, 2)) return false;
-      if (bc == Bytecodes::_goto)
+      if (bc == Bytecodes::_goto) 
         code_at_put(bci, Bytecodes::_goto_w);
-      else
+      else 
         code_at_put(bci, Bytecodes::_jsr_w);
 
       // If it's a forward jump, add 2 for the widening.
@@ -599,22 +602,22 @@ bool Relocator::handle_jump_widen(int bci, int delta) {
 
     default: ShouldNotReachHere();
   }
-
+    
   return true;
 }
 
 // handle lookup/table switch instructions.  Called be ChangeSwitchPad class
-bool Relocator::handle_switch_pad(int bci, int old_pad, bool is_lookup_switch) {
+bool Relocator::handle_switch_pad(int bci, int old_pad, bool is_lookup_switch) {  
   int ilen = rc_instr_len(bci);
   int new_pad = align(bci+1) - (bci+1);
   int pad_delta = new_pad - old_pad;
   if (pad_delta != 0) {
-    int len;
-    if (!is_lookup_switch) {
+    int len;    
+    if (!is_lookup_switch) {    
       int low  = int_at(bci+1+old_pad+4);
       int high = int_at(bci+1+old_pad+8);
       len = high-low+1 + 3; // 3 for default, hi, lo.
-    } else {
+    } else {      
       int npairs = int_at(bci+1+old_pad+4);
       len = npairs*2 + 2; // 2 for default, npairs.
     }
@@ -623,24 +626,24 @@ bool Relocator::handle_switch_pad(int bci, int old_pad, bool is_lookup_switch) {
     // we need to call that before messing with the current
     // instruction.  Since it may also overwrite the current
     // instruction when moving down, remember the possibly
-    // overwritten part.
-
+    // overwritten part. 
+    
     // Move the code following the instruction...
     if (!relocate_code(bci, ilen, pad_delta)) return false;
-
+    
     if (pad_delta < 0) {
-      // Move the shrunken instruction down.
+      // Move the shrunken instruction down.      
       memmove(addr_at(bci + 1 + new_pad),
               addr_at(bci + 1 + old_pad),
-              len * 4 + pad_delta);
+	      len * 4 + pad_delta);
       memmove(addr_at(bci + 1 + new_pad + len*4 + pad_delta),
-              _overwrite, -pad_delta);
+	      _overwrite, -pad_delta);
     } else {
       assert(pad_delta > 0, "check");
       // Move the expanded instruction up.
       memmove(addr_at(bci +1 + new_pad),
-              addr_at(bci +1 + old_pad),
-              len * 4);
+	      addr_at(bci +1 + old_pad),
+	      len * 4);	
     }
   }
   return true;

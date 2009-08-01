@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)codeBuffer.cpp	1.100 07/05/05 17:05:03 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -308,7 +311,7 @@ void CodeSection::relocate(address at, RelocationHolder const& spec, int format)
            rtype == relocInfo::runtime_call_type ||
            rtype == relocInfo::internal_word_type||
            rtype == relocInfo::section_word_type ||
-           rtype == relocInfo::external_word_type,
+           rtype == relocInfo::external_word_type, 
            "code needs relocation information");
     // leave behind an indication that we attempted a relocation
     DEBUG_ONLY(_locs_start = _locs_limit = (relocInfo*)badAddress);
@@ -500,7 +503,7 @@ csize_t CodeBuffer::total_offset_of(address addr) const {
 #ifndef PRODUCT
   tty->print_cr("Dangling address " PTR_FORMAT " in:", addr);
   ((CodeBuffer*)this)->print();
-#endif
+#endif  
   ShouldNotReachHere();
   return -1;
 }
@@ -648,7 +651,7 @@ void CodeBuffer::relocate_code_to(CodeBuffer* dest) const {
     Copy::disjoint_words((HeapWord*)cs->start(),
                          (HeapWord*)dest_cs->start(),
                          wsize / HeapWordSize);
-
+    
     if (dest->blob() == NULL) {
       // Destination is a final resting place, not just another buffer.
       // Normalize uninitialized bytes in the final padding.
@@ -788,7 +791,7 @@ void CodeBuffer::expand(CodeSection* which_cs, csize_t amount) {
 
   // Move all the code and relocations to the new blob:
   relocate_code_to(&cb);
-
+    
   // Copy the temporary code buffer into the current code buffer.
   // Basically, do {*this = cb}, except for some control information.
   this->take_over_code_from(&cb);
@@ -815,7 +818,7 @@ void CodeBuffer::take_over_code_from(CodeBuffer* cb) {
   // Must already have disposed of the old blob somehow.
   assert(blob() == NULL, "must be empty");
 #ifdef ASSERT
-
+  
 #endif
   // Take the new blob away from cb.
   set_blob(cb->blob());

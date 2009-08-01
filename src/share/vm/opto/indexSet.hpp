@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)indexSet.hpp	1.29 07/05/05 17:06:18 JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file defines the IndexSet class, a set of sparse integer indices.
@@ -81,7 +84,7 @@ class IndexSet : public ResourceObj {
   static uint get_bit_index(uint element) {
     return mask_bits(element,bit_index_mask);
   }
-
+  
   //------------------------------ class BitBlock ----------------------------
   // The BitBlock class is a segment of a bitvector set.
 
@@ -119,7 +122,7 @@ class IndexSet : public ResourceObj {
       uint word_index = IndexSet::get_word_index(element);
       uint bit_index = IndexSet::get_bit_index(element);
 
-      return ((words()[word_index] & (uint32)(0x1 << bit_index)) != 0);
+      return ((words()[word_index] & (uint32)(0x1 << bit_index)) != 0);  
     }
 
     bool insert(uint element) {
@@ -242,7 +245,7 @@ class IndexSet : public ResourceObj {
 
   // Get a BitBlock from the free list and place it in the top level array
   BitBlock *alloc_block_containing(uint element);
-
+  
   // Free a block from the top level array, placing it on the free BitBlock list
   void free_block(uint i);
 
@@ -273,7 +276,7 @@ class IndexSet : public ResourceObj {
 
   bool insert(uint element) {
 #ifdef ASSERT
-    if( VerifyOpto )
+    if( VerifyOpto ) 
       check_watch("insert", element);
 #endif
     if (element == 0) {
@@ -292,7 +295,7 @@ class IndexSet : public ResourceObj {
 
   bool remove(uint element) {
 #ifdef ASSERT
-    if( VerifyOpto )
+    if( VerifyOpto ) 
       check_watch("remove", element);
 #endif
 
@@ -310,7 +313,7 @@ class IndexSet : public ResourceObj {
   // exceeds fail_degree, the union bails out.  The underlying set is
   // cleared before the union is performed.
   uint lrg_union(uint lr1, uint lr2,
-                 const uint fail_degree,
+                 const uint fail_degree, 
                  const class PhaseIFG *ifg,
                  const RegMask &mask);
 
@@ -383,7 +386,7 @@ class IndexSet : public ResourceObj {
 
 
 //-------------------------------- class IndexSetIterator --------------------
-// An iterator for IndexSets.
+// An iterator for IndexSets.  
 
 class IndexSetIterator VALUE_OBJ_CLASS_SPEC {
  friend class IndexSet;

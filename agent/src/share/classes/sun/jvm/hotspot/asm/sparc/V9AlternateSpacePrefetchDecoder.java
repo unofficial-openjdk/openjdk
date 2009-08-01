@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -38,5 +38,6 @@ class V9AlternateSpacePrefetchDecoder extends V9AlternateSpaceDecoder {
                                      SPARCV9InstructionFactory factory) {
         SPARCV9InstructionFactory v9factory = (SPARCV9InstructionFactory) factory;
         return v9factory.newV9PrefetchInstruction(name, addr, rd.getNumber());
-    }
+    } 
 }
+

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.windbg.amd64;
@@ -97,7 +97,7 @@ class WindbgAMD64Thread implements ThreadProxy {
     if (!gotID) {
        id = debugger.getThreadIdFromSysId(sysId);
     }
-
+    
     return id;
   }
 }

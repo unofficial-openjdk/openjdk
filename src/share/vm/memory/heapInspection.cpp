@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)heapInspection.cpp	1.21 07/05/29 09:44:16 JVM"
+#endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -168,7 +171,7 @@ void KlassInfoTable::iterate(KlassInfoClosure* cic) {
 int KlassInfoHisto::sort_helper(KlassInfoEntry** e1, KlassInfoEntry** e2) {
   return (*e1)->compare(*e1,*e2);
 }
-
+  
 KlassInfoHisto::KlassInfoHisto(const char* title, int estimatedCount) :
   _title(title) {
   _elements = new (ResourceObj::C_HEAP) GrowableArray<KlassInfoEntry*>(estimatedCount,true);
@@ -255,7 +258,7 @@ void HeapInspection::heap_inspection(outputStream* st) {
       break;
     }
 #endif // SERIALGC
-    default:
+    default: 
       ShouldNotReachHere(); // Unexpected heap kind for this op
   }
   // Collect klass instance info
@@ -314,7 +317,7 @@ void HeapInspection::find_instances_at_safepoint(klassOop k, GrowableArray<oop>*
 
   // Ensure that the heap is parsable
   Universe::heap()->ensure_parsability(false);  // no need to retire TALBs
-
+ 
   // Iterate over objects in the heap
   FindInstanceClosure fic(k, result);
   Universe::heap()->object_iterate(&fic);

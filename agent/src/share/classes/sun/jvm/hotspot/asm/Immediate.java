@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm;
@@ -57,6 +57,6 @@ public class Immediate extends ImmediateOrRegister {
          return false;
 
       Immediate other = (Immediate) obj;
-      return value.equals(other.value);
+      return value.equals(other.value);    
    }
 }

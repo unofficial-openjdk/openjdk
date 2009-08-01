@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)arrayKlass.cpp	1.95 07/05/05 17:05:59 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -94,7 +97,7 @@ const Klass_vtbl& cplusplus_vtbl, int header_size, KlassHandle klass, TRAPS) {
   assert(k()->is_parsable(), "should be parsable here.");
   // Make sure size calculation is right
   assert(k()->size() == align_object_size(header_size + vtable_size), "wrong size for object");
-
+  
   return k;
 }
 
@@ -102,9 +105,9 @@ const Klass_vtbl& cplusplus_vtbl, int header_size, KlassHandle klass, TRAPS) {
 // Initialization of vtables and mirror object is done separatly from base_create_array_klass,
 // since a GC can happen. At this point all instance variables of the arrayKlass must be setup.
 void arrayKlass::complete_create_array_klass(arrayKlassHandle k, KlassHandle super_klass, TRAPS) {
-  ResourceMark rm(THREAD);
+  ResourceMark rm(THREAD);    
   k->initialize_supers(super_klass(), CHECK);
-  k->vtable()->initialize_vtable(false, CHECK);
+  k->vtable()->initialize_vtable(false, CHECK);  
   java_lang_Class::create_mirror(k, CHECK);
 }
 
@@ -125,7 +128,7 @@ bool arrayKlass::compute_is_subtype_of(klassOop k) {
 
 inline intptr_t* arrayKlass::start_of_vtable() const {
   // all vtables start at the same place, that's why we use instanceKlass::header_size here
-  return ((intptr_t*)as_klassOop()) + instanceKlass::header_size();
+  return ((intptr_t*)as_klassOop()) + instanceKlass::header_size(); 
 }
 
 

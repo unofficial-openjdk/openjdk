@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)permGen.cpp	1.54 07/05/29 09:44:16 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -91,8 +94,8 @@ HeapWord* PermGen::mem_allocate_in_gen(size_t size, Generation* gen) {
 
 CompactingPermGen::CompactingPermGen(ReservedSpace rs,
                                      ReservedSpace shared_rs,
-                                     size_t initial_byte_size,
-                                     GenRemSet* remset,
+				     size_t initial_byte_size,
+				     GenRemSet* remset,
                                      PermanentGenerationSpec* perm_spec)
 {
   CompactingPermGenGen* g =

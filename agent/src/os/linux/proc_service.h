@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)proc_service.h	1.11 07/05/05 17:02:03 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _PROC_SERVICE_H_
@@ -46,16 +49,16 @@ typedef enum {
 // ps_getpid() is only defined on Linux to return a thread's process ID
 pid_t ps_getpid(struct ps_prochandle *ph);
 
-// ps_pglobal_lookup() looks up the symbol sym_name in the symbol table
-// of the load object object_name in the target process identified by ph.
-// It returns the symbol's value as an address in the target process in
+// ps_pglobal_lookup() looks up the symbol sym_name in the symbol table 
+// of the load object object_name in the target process identified by ph. 
+// It returns the symbol's value as an address in the target process in 
 // *sym_addr.
 
 ps_err_e ps_pglobal_lookup(struct ps_prochandle *ph, const char *object_name,
                     const char *sym_name, psaddr_t *sym_addr);
 
 // read "size" bytes of data from debuggee at address "addr"
-ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t  addr,
+ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t  addr, 
                    void *buf, size_t size);
 
 // write "size" bytes of data to debuggee at address "addr"
@@ -65,7 +68,7 @@ ps_err_e ps_pdwrite(struct ps_prochandle *ph, psaddr_t addr,
 ps_err_e ps_lsetfpregs(struct ps_prochandle *ph, lwpid_t lid, const prfpregset_t *fpregs);
 
 ps_err_e ps_lsetregs(struct ps_prochandle *ph, lwpid_t lid, const prgregset_t gregset);
-
+  
 ps_err_e  ps_lgetfpregs(struct  ps_prochandle  *ph,  lwpid_t lid, prfpregset_t *fpregs);
 
 ps_err_e ps_lgetregs(struct ps_prochandle *ph, lwpid_t lid, prgregset_t gregset);

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)cppInterpreter.hpp	1.1 07/08/29 13:42:24 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifdef CC_INTERP
 
 // This file contains the platform-independant parts
-// of the c++ interpreter
+// of the c++ interpreter 
 
 class CppInterpreter: public AbstractInterpreter {
   friend class VMStructs;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)klassVtable.hpp	1.62 07/07/19 12:19:09 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A klassVtable abstracts the variable-length vtable that is embedded in instanceKlass
@@ -34,7 +37,7 @@
 class vtableEntry;
 
 class klassVtable : public ResourceObj {
-  KlassHandle  _klass;            // my klass
+  KlassHandle  _klass;            // my klass 
   int          _tableOffset;      // offset of start of vtable data within klass
   int          _length;           // length of vtable (number of entries)
 #ifndef PRODUCT
@@ -66,12 +69,12 @@ class klassVtable : public ResourceObj {
   int index_of_miranda(symbolOop name, symbolOop signature);
 
   void initialize_vtable(bool checkconstraints, TRAPS);   // initialize vtable of a new klass
-
+  
   // conputes vtable length (in words) and the number of miranda methods
   static void compute_vtable_size_and_num_mirandas(int &vtable_length, int &num_miranda_methods,
-                                                   klassOop super, objArrayOop methods,
-                                                   AccessFlags class_flags, oop classloader,
-                                                   symbolOop classname, objArrayOop local_interfaces);
+						   klassOop super, objArrayOop methods, 
+						   AccessFlags class_flags, oop classloader,
+						   symbolOop classname, objArrayOop local_interfaces);
 
   // RedefineClasses() API support:
   // If any entry of this vtable points to any of old_methods,
@@ -91,7 +94,7 @@ class klassVtable : public ResourceObj {
   void oop_follow_contents(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm,
-                           HeapWord* beg_addr, HeapWord* end_addr);
+			   HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   // Iterators
@@ -127,10 +130,10 @@ class klassVtable : public ResourceObj {
   static void add_new_mirandas_to_list(GrowableArray<methodOop>* list_of_current_mirandas, objArrayOop current_interface_methods, objArrayOop class_methods, klassOop super);
   static void get_mirandas(GrowableArray<methodOop>* mirandas, klassOop super, objArrayOop class_methods, objArrayOop local_interfaces);
   static int get_num_mirandas(klassOop super, objArrayOop class_methods, objArrayOop local_interfaces);
-
-
+    
+  
   void verify_against(outputStream* st, klassVtable* vt, int index);
-  inline instanceKlass* ik() const;
+  inline instanceKlass* ik() const;    
 };
 
 
@@ -162,19 +165,19 @@ class vtableEntry VALUE_OBJ_CLASS_SPEC {
 };
 
 
-inline methodOop klassVtable::method_at(int i) const {
+inline methodOop klassVtable::method_at(int i) const { 
   assert(i >= 0 && i < _length, "index out of bounds");
   assert(table()[i].method() != NULL, "should not be null");
   assert(oop(table()[i].method())->is_method(), "should be method");
   return table()[i].method();
 }
 
-inline methodOop klassVtable::unchecked_method_at(int i) const {
+inline methodOop klassVtable::unchecked_method_at(int i) const { 
   assert(i >= 0 && i < _length, "index out of bounds");
   return table()[i].method();
 }
 
-inline oop* klassVtable::adr_method_at(int i) const {
+inline oop* klassVtable::adr_method_at(int i) const { 
   // Allow one past the last entry to be referenced; useful for loop bounds.
   assert(i >= 0 && i <= _length, "index out of bounds");
   return (oop*)(address(table() + i) + vtableEntry::method_offset_in_bytes());
@@ -206,7 +209,7 @@ class itableOffsetEntry VALUE_OBJ_CLASS_SPEC {
 };
 
 
-class itableMethodEntry VALUE_OBJ_CLASS_SPEC {
+class itableMethodEntry VALUE_OBJ_CLASS_SPEC { 
  private:
   methodOop _method;
 
@@ -215,7 +218,7 @@ class itableMethodEntry VALUE_OBJ_CLASS_SPEC {
 
   void clear()             { _method = NULL; }
 
-  void initialize(methodOop method);
+  void initialize(methodOop method); 
 
   // Static size and offset accessors
   static int size()                         { return sizeof(itableMethodEntry) / HeapWordSize; }  // size in words
@@ -234,17 +237,17 @@ class itableMethodEntry VALUE_OBJ_CLASS_SPEC {
 //    klassOop of interface n             \
 //    offset to vtable from start of oop  / offset table entry
 //    --- vtable for interface 1 ---
-//    methodOop                           \
+//    methodOop                           \ 
 //    compiler entry point                / method table entry
 //    ...
-//    methodOop                           \
+//    methodOop                           \ 
 //    compiler entry point                / method table entry
 //    -- vtable for interface 2 ---
 //    ...
-//
+//      
 class klassItable : public ResourceObj {
  private:
-  instanceKlassHandle  _klass;             // my klass
+  instanceKlassHandle  _klass;             // my klass 
   int                  _table_offset;      // offset of start of itable data within klass (in words)
   int                  _size_offset_table; // size of offset table (in itableOffset entries)
   int                  _size_method_table; // size of methodtable (in itableMethodEntry entries)
@@ -262,7 +265,7 @@ class klassItable : public ResourceObj {
   int size_offset_table()                { return _size_offset_table; }
 
   // Initialization
-  void initialize_itable(bool checkconstraints, TRAPS);
+  void initialize_itable(bool checkconstraints, TRAPS);    
 
   // Updates
   void initialize_with_method(methodOop m);
@@ -285,7 +288,7 @@ class klassItable : public ResourceObj {
   void oop_follow_contents(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm,
-                           HeapWord* beg_addr, HeapWord* end_addr);
+			   HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   // Iterators
@@ -301,11 +304,11 @@ class klassItable : public ResourceObj {
 
   // Debugging/Statistics
   static void print_statistics() PRODUCT_RETURN;
- private:
+ private:  
   intptr_t* vtable_start() const { return ((intptr_t*)_klass()) + _table_offset; }
   intptr_t* method_start() const { return vtable_start() + _size_offset_table * itableOffsetEntry::size(); }
 
-  // Helper methods
+  // Helper methods  
   static int  calc_itable_size(int num_interfaces, int num_methods) { return (num_interfaces * itableOffsetEntry::size()) + (num_methods * itableMethodEntry::size()); }
 
   // Statistics

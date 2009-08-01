@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)interpreterRT_x86.hpp	1.31 07/09/17 09:30:37 JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // native method calls
@@ -53,7 +56,7 @@ class SignatureHandlerGenerator: public NativeSignatureIterator {
   SignatureHandlerGenerator(methodHandle method, CodeBuffer* buffer) : NativeSignatureIterator(method) {
     _masm = new MacroAssembler(buffer);
 #ifdef AMD64
-#ifdef _WIN64
+#ifdef _WIN64 
     _num_args = (method->is_static() ? 1 : 0);
     _stack_offset = (Argument::n_int_register_parameters_c+1)* wordSize; // don't overwrite return address
 #else

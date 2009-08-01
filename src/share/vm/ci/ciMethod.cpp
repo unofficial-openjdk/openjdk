@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ciMethod.cpp	1.109 07/09/28 10:23:23 JVM"
+#endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -43,7 +46,7 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
 
   // Easy to compute, so fill them in now.
   _max_stack          = h_m()->max_stack();
-  _max_locals         = h_m()->max_locals();
+  _max_locals         = h_m()->max_locals();  
   _code_size          = h_m()->code_size();
   _intrinsic_id       = h_m()->intrinsic_id();
   _handler_count      = h_m()->exception_table()->length() / 4;
@@ -61,7 +64,7 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
 #endif // COMPILER2
 
   if (JvmtiExport::can_hotswap_or_post_breakpoint() && _is_compilable) {
-    // 6328518 check hotswap conditions under the right lock.
+    // 6328518 check hotswap conditions under the right lock.  
     MutexLocker locker(Compile_lock);
     if (Dependencies::check_evol_method(h_m()) != NULL) {
       _is_compilable = false;
@@ -430,10 +433,10 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
         // not only in the case of a polymorphic call but also in the case
         // when a method data snapshot is taken after the site count was updated
         // but before receivers counters were updated.
-        if (morphism == result._limit) {
+        if (morphism == result._limit) { 
            // There were no array klasses and morphism <= MorphismLimit.
-           if (morphism <  ciCallProfile::MorphismLimit ||
-               morphism == ciCallProfile::MorphismLimit &&
+           if (morphism <  ciCallProfile::MorphismLimit || 
+               morphism == ciCallProfile::MorphismLimit && 
                (receivers_count_total+1) >= count) {
              result._morphism = morphism;
            }
@@ -458,7 +461,7 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
 // Add new receiver and sort data by receiver's profile count.
 void ciCallProfile::add_receiver(ciKlass* receiver, int receiver_count) {
   // Add new receiver and sort data by receiver's counts when we have space
-  // for it otherwise replace the less called receiver (less called receiver
+  // for it otherwise replace the less called receiver (less called receiver 
   // is placed to the last array element which is not used).
   // First array's element contains most called receiver.
   int i = _limit;
@@ -562,7 +565,7 @@ ciMethod* ciMethod::find_monomorphic_target(ciInstanceKlass* caller,
 // ------------------------------------------------------------------
 // ciMethod::resolve_invoke
 //
-// Given a known receiver klass, find the target for the call.
+// Given a known receiver klass, find the target for the call.  
 // Return NULL if the call has no target or the target is abstract.
 ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver) {
    check_is_loaded();
@@ -609,7 +612,7 @@ ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver) {
 // ------------------------------------------------------------------
 // ciMethod::resolve_vtable_index
 //
-// Given a known receiver klass, find the vtable index for the call.
+// Given a known receiver klass, find the vtable index for the call.  
 // Return methodOopDesc::invalid_vtable_index if the vtable_index is unknown.
 int ciMethod::resolve_vtable_index(ciKlass* caller, ciKlass* receiver) {
    check_is_loaded();
@@ -728,7 +731,7 @@ ciMethodData* ciMethod::method_data() {
     _method_data = CURRENT_ENV->get_empty_methodData();
   }
   return _method_data;
-
+                     
 }
 
 
@@ -947,7 +950,7 @@ bool ciMethod::check_call(int refinfo_index, bool is_static) const {
       CLEAR_PENDING_EXCEPTION;
       return false;
     } else {
-      return (spec_method->is_static() == is_static);
+      return (spec_method->is_static() == is_static);    
     }
   }
   return false;
@@ -1040,3 +1043,5 @@ void ciMethod::print_impl(outputStream* st) {
     st->print(" loaded=false");
   }
 }
+
+

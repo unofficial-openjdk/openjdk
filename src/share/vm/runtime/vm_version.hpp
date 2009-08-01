@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vm_version.hpp	1.28 07/10/04 10:49:20 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // VM_Version provides information about the VM.
@@ -85,3 +88,4 @@ class Abstract_VM_Version: AllStatic {
   // be VM version specific.
   static unsigned int calc_parallel_worker_threads();
 };
+

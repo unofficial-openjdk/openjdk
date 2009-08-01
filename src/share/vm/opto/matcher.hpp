@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)matcher.hpp	1.188 07/07/19 19:08:27 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Compile;
@@ -57,11 +60,11 @@ class Matcher : public PhaseTransform {
 
   // Map dense opcode number to info on when rule is swallowed constant.
   const bool *_swallowed;
-
+  
   // Map dense rule number to determine if this is an instruction chain rule
   const uint _begin_inst_chain_rule;
   const uint _end_inst_chain_rule;
-
+  
   // We want to clone constants and possible CmpI-variants.
   // If we do not clone CmpI, then we can have many instances of
   // condition codes alive at once.  This is OK on some chips and
@@ -76,7 +79,7 @@ class Matcher : public PhaseTransform {
 
   // Node labeling iterator for instruction selection
   Node *Label_Root( const Node *n, State *svec, Node *control, const Node *mem );
-
+  
   Node *transform( Node *dummy );
 
   Node_List &_proj_list;        // For Machine nodes killing many values
@@ -256,7 +259,7 @@ public:
     return stack_alignment_in_bytes() / (VMRegImpl::stack_slot_size);
   }
 
-  // Array mapping arguments to registers.  Argument 0 is usually the 'this'
+  // Array mapping arguments to registers.  Argument 0 is usually the 'this' 
   // pointer.  Registers can include stack-slots and regular registers.
   static void calling_convention( BasicType *, VMRegPair *, uint len, bool is_outgoing );
 
@@ -289,7 +292,7 @@ public:
   // Java-Interpreter calling convention
   // (what you use when calling between compiled-Java and Interpreted-Java
 
-  // Number of callee-save + always-save registers
+  // Number of callee-save + always-save registers 
   // Ignores frame pointer and "special" registers
   static int  number_of_saved_registers();
 
@@ -308,10 +311,10 @@ public:
   static OptoReg::Name  interpreter_frame_pointer_reg();
   static const RegMask &interpreter_frame_pointer_reg_mask();
 
-  // Java-Native calling convention
+  // Java-Native calling convention 
   // (what you use when intercalling between Java and C++ code)
 
-  // Array mapping arguments to registers.  Argument 0 is usually the 'this'
+  // Array mapping arguments to registers.  Argument 0 is usually the 'this' 
   // pointer.  Registers can include stack-slots and regular registers.
   static void c_calling_convention( BasicType*, VMRegPair *, uint );
   // Frame pointer. The frame pointer is kept at the base of the stack
@@ -337,7 +340,7 @@ public:
   // be subsumed into complex addressing expressions or compute them into
   // registers?  True for Intel but false for most RISCs
   static const bool clone_shift_expressions;
-
+  
   // Is it better to copy float constants, or load them directly from memory?
   // Intel can load a float constant from a direct address, requiring no
   // extra registers.  Most RISCs will have to materialize an address into a

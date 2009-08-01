@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.dummy;
@@ -121,12 +121,12 @@ public class DummyDebugger extends DebuggerBase {
     return null;
   }
 
-  public ReadResult readBytesFromProcess(long address, long numBytes)
+  public ReadResult readBytesFromProcess(long address, long numBytes) 
                                throws DebuggerException {
     throw new DebuggerException("Unimplemented");
   }
 
-  public void writeBytesToProcess(long a, long b, byte[] buf)
+  public void writeBytesToProcess(long a, long b, byte[] buf) 
                                throws DebuggerException {
     throw new DebuggerException("Unimplemented");
   }

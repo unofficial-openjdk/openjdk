@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)regmask.hpp	1.65 07/05/05 17:06:26 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Some fun naming (textual) substitutions:
@@ -47,7 +50,7 @@ int find_hihghest_bit( uint32 mask );
 //------------------------------RegMask----------------------------------------
 // The ADL file describes how to print the machine-specific registers, as well
 // as any notion of register classes.  We provide a register mask, which is
-// just a collection of Register numbers.
+// just a collection of Register numbers.  
 
 // The ADLC defines 2 macros, RM_SIZE and FORALL_BODY.
 // RM_SIZE is the size of a register mask in words.
@@ -59,7 +62,7 @@ int find_hihghest_bit( uint32 mask );
 class RegMask VALUE_OBJ_CLASS_SPEC {
   union {
     double _dummy_force_double_alignment[RM_SIZE>>1];
-    // Array of Register Mask bits.  This array is large enough to cover
+    // Array of Register Mask bits.  This array is large enough to cover 
     // all the machine registers and all parameters that need to be passed
     // on the stack (stack registers) up to some interesting limit.  Methods
     // that need more parameters will NOT be compiled.  On Intel, the limit
@@ -92,9 +95,9 @@ public:
 
   // A constructor only used by the ADLC output.  All mask fields are filled
   // in directly.  Calls to this look something like RM(1,2,3,4);
-  RegMask(
+  RegMask( 
 #   define BODY(I) int a##I,
-    FORALL_BODY
+    FORALL_BODY   
 #   undef BODY
     int dummy = 0 ) {
 #   define BODY(I) _A[I] = a##I;
@@ -122,7 +125,7 @@ public:
   }
 
   // The last bit in the register mask indicates that the mask should repeat
-  // indefinitely with ONE bits.  Returns TRUE if mask is infinite or
+  // indefinitely with ONE bits.  Returns TRUE if mask is infinite or 
   // unbounded in size.  Returns FALSE if mask is finite size.
   int is_AllStack() const { return _A[RM_SIZE-1] >> (_WordBits-1); }
 
@@ -144,22 +147,22 @@ public:
   }
 
   // Find lowest-numbered register from mask, or BAD if mask is empty.
-  OptoReg::Name find_first_elem() const {
+  OptoReg::Name find_first_elem() const { 
     int base, bits;
 #   define BODY(I) if( (bits = _A[I]) != 0 ) base = I<<_LogWordBits; else
     FORALL_BODY
 #   undef BODY
       { base = OptoReg::Bad; bits = 1<<0; }
-    return OptoReg::Name(base + find_lowest_bit(bits));
+    return OptoReg::Name(base + find_lowest_bit(bits)); 
   }
   // Get highest-numbered register from mask, or BAD if mask is empty.
-  OptoReg::Name find_last_elem() const {
+  OptoReg::Name find_last_elem() const { 
     int base, bits;
 #   define BODY(I) if( (bits = _A[RM_SIZE-1-I]) != 0 ) base = (RM_SIZE-1-I)<<_LogWordBits; else
     FORALL_BODY
 #   undef BODY
       { base = OptoReg::Bad; bits = 1<<0; }
-    return OptoReg::Name(base + find_hihghest_bit(bits));
+    return OptoReg::Name(base + find_hihghest_bit(bits)); 
   }
 
   // Find the lowest-numbered register pair in the mask.  Return the
@@ -185,7 +188,7 @@ public:
 
   // Fast overlap test.  Non-zero if any registers in common.
   int overlap( const RegMask &rm ) const {
-    return
+    return 
 #   define BODY(I) (_A[I] & rm._A[I]) |
     FORALL_BODY
 #   undef BODY

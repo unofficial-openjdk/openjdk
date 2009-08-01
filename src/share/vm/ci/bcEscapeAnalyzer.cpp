@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)bcEscapeAnalyzer.cpp	1.7 07/05/17 15:49:50 JVM"
+#endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 
@@ -270,7 +273,7 @@ void BCEscapeAnalyzer::invoke(StateInfo &state, Bytecodes::Code code, ciMethod* 
   if (inline_target != NULL && !is_recursive_call(inline_target)) {
     // analyze callee
     BCEscapeAnalyzer analyzer(inline_target, this);
-
+    
     // adjust escape state of actual parameters
     bool must_record_dependencies = false;
     for (i = arg_size - 1; i >= 0; i--) {
@@ -303,7 +306,7 @@ void BCEscapeAnalyzer::invoke(StateInfo &state, Bytecodes::Code code, ciMethod* 
     }
   } else {
     TRACE_BCEA(1, tty->print_cr("[EA] virtual method %s is not monomorphic.",
-                                target->name()->as_utf8()));
+				target->name()->as_utf8()));
     // conservatively mark all actual parameters as escaping globally
     for (i = 0; i < arg_size; i++) {
       ArgumentMap arg = state.raw_pop();
@@ -1223,22 +1226,22 @@ void BCEscapeAnalyzer::compute_escape_info() {
     if (BCEATraceLevel >= 1) {
       tty->print("Skipping method because: ");
       if (method()->is_abstract())
-        tty->print_cr("method is abstract.");
+	tty->print_cr("method is abstract.");
       else if (method()->is_native())
-        tty->print_cr("method is native.");
+	tty->print_cr("method is native.");
       else if (!method()->holder()->is_initialized())
-        tty->print_cr("class of method is not initialized.");
+	tty->print_cr("class of method is not initialized.");
       else if (_level > MaxBCEAEstimateLevel)
-        tty->print_cr("level (%d) exceeds MaxBCEAEstimateLevel (%d).",
-                      _level, MaxBCEAEstimateLevel);
+	tty->print_cr("level (%d) exceeds MaxBCEAEstimateLevel (%d).",
+		      _level, MaxBCEAEstimateLevel);
       else if (method()->code_size() > MaxBCEAEstimateSize)
-        tty->print_cr("code size (%d) exceeds MaxBCEAEstimateSize.",
-                      method()->code_size(), MaxBCEAEstimateSize);
-      else
-        ShouldNotReachHere();
+	tty->print_cr("code size (%d) exceeds MaxBCEAEstimateSize.",
+		      method()->code_size(), MaxBCEAEstimateSize);
+      else 
+	ShouldNotReachHere();
     }
     clear_escape_info();
-
+    
     return;
   }
 
@@ -1389,13 +1392,13 @@ BCEscapeAnalyzer::BCEscapeAnalyzer(ciMethod* method, BCEscapeAnalyzer* parent)
     bool printit = _method->should_print_assembly();
     if (methodData()->has_escape_info()) {
       TRACE_BCEA(2, tty->print_cr("[EA] Reading previous results for %s.%s",
-                                  method->holder()->name()->as_utf8(),
-                                  method->name()->as_utf8()));
+				  method->holder()->name()->as_utf8(),
+				  method->name()->as_utf8()));
       read_escape_info();
     } else {
       TRACE_BCEA(2, tty->print_cr("[EA] computing results for %s.%s",
-                                  method->holder()->name()->as_utf8(),
-                                  method->name()->as_utf8()));
+				  method->holder()->name()->as_utf8(),
+				  method->name()->as_utf8()));
 
       compute_escape_info();
       methodData()->update_escape_info();
@@ -1418,3 +1421,4 @@ void BCEscapeAnalyzer::copy_dependencies(Dependencies *deps) {
     deps->assert_unique_concrete_method(k, m);
   }
 }
+

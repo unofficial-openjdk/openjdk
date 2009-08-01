@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)libproc_impl.c	1.14 07/05/05 17:02:02 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 #include <stdarg.h>
 #include <stdio.h>
@@ -99,14 +102,14 @@ bool is_debug() {
 bool init_libproc(bool debug) {
    // init debug mode
    _libsaproc_debug = debug;
-
+   
    // initialize the thread_db library
    if (td_init() != TD_OK) {
      print_debug("libthread_db's td_init failed\n");
      return false;
    }
 
-   return true;
+   return true; 
 }
 
 static void destroy_lib_info(struct ps_prochandle* ph) {
@@ -147,7 +150,7 @@ lib_info* add_lib_info(struct ps_prochandle* ph, const char* libname, uintptr_t 
 
 lib_info* add_lib_info_fd(struct ps_prochandle* ph, const char* libname, int fd, uintptr_t base) {
    lib_info* newlib;
-
+  
    if ( (newlib = (lib_info*) calloc(1, sizeof(struct lib_info))) == NULL) {
       print_debug("can't allocate memory for lib_info\n");
       return NULL;
@@ -165,14 +168,14 @@ lib_info* add_lib_info_fd(struct ps_prochandle* ph, const char* libname, int fd,
    } else {
       newlib->fd = fd;
    }
-
+   
    // check whether we have got an ELF file. /proc/<pid>/map
    // gives out all file mappings and not just shared objects
    if (is_elf_file(newlib->fd) == false) {
       close(newlib->fd);
       free(newlib);
       return NULL;
-   }
+   } 
 
    newlib->symtab = build_symtab(newlib->fd);
    if (newlib->symtab == NULL) {
@@ -182,10 +185,10 @@ lib_info* add_lib_info_fd(struct ps_prochandle* ph, const char* libname, int fd,
    // even if symbol table building fails, we add the lib_info.
    // This is because we may need to read from the ELF file for core file
    // address read functionality. lookup_symbol checks for NULL symtab.
-   if (ph->libs) {
+   if (ph->libs) { 
       ph->lib_tail->next = newlib;
       ph->lib_tail = newlib;
-   }  else {
+   }  else { 
       ph->libs = ph->lib_tail = newlib;
    }
    ph->num_libs++;
@@ -193,10 +196,10 @@ lib_info* add_lib_info_fd(struct ps_prochandle* ph, const char* libname, int fd,
    return newlib;
 }
 
-// lookup for a specific symbol
-uintptr_t lookup_symbol(struct ps_prochandle* ph,  const char* object_name,
+// lookup for a specific symbol 
+uintptr_t lookup_symbol(struct ps_prochandle* ph,  const char* object_name, 
                        const char* sym_name) {
-   // ignore object_name. search in all libraries
+   // ignore object_name. search in all libraries 
    // FIXME: what should we do with object_name?? The library names are obtained
    // by parsing /proc/<pid>/maps, which may not be the same as object_name.
    // What we need is a utility to map object_name to real file name, something
@@ -212,7 +215,7 @@ uintptr_t lookup_symbol(struct ps_prochandle* ph,  const char* object_name,
       lib = lib->next;
    }
 
-   print_debug("lookup failed for symbol '%s' in obj '%s'\n",
+   print_debug("lookup failed for symbol '%s' in obj '%s'\n", 
                           sym_name, object_name);
    return (uintptr_t) NULL;
 }
@@ -271,7 +274,7 @@ static int thread_db_callback(const td_thrhandle_t *th_p, void *data) {
   }
 
   print_debug("thread_db : pthread %d (lwp %d)\n", ti.ti_tid, ti.ti_lid);
-
+  
   if (ptr->callback(ptr->ph, ti.ti_tid, ti.ti_lid) != true)
     return TD_ERR;
 
@@ -289,8 +292,8 @@ bool read_thread_info(struct ps_prochandle* ph, thread_info_callback cb) {
 
   mydata.ph = ph;
   mydata.callback = cb;
-
-  // we use libthread_db iterator to iterate thru list of threads.
+ 
+  // we use libthread_db iterator to iterate thru list of threads.  
   if (td_ta_thr_iter(thread_agent, thread_db_callback, &mydata,
                  TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY,
                  TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS) != TD_OK) {
@@ -328,12 +331,12 @@ bool get_lwp_regs(struct ps_prochandle* ph, lwpid_t lwp_id, struct user_regs_str
   return ph->ops->get_lwp_regs(ph, lwp_id, regs);
 }
 
-// get number of shared objects
+// get number of shared objects 
 int get_num_libs(struct ps_prochandle* ph) {
    return ph->num_libs;
 }
 
-// get name of n'th solib
+// get name of n'th solib 
 const char* get_lib_name(struct ps_prochandle* ph, int index) {
    int count = 0;
    lib_info* lib = ph->libs;
@@ -432,3 +435,4 @@ ps_err_e ps_get_thread_area() {
   print_debug("ps_get_thread_area not implemented\n");
   return PS_OK;
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)register_sparc.hpp	1.27 07/05/05 17:04:30 JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // forward declaration
@@ -118,7 +121,7 @@ CONSTANT_REGISTER_DECLARATION(Register, G4    , (RegisterImpl::gbase + 4));
 CONSTANT_REGISTER_DECLARATION(Register, G5    , (RegisterImpl::gbase + 5));
 CONSTANT_REGISTER_DECLARATION(Register, G6    , (RegisterImpl::gbase + 6));
 CONSTANT_REGISTER_DECLARATION(Register, G7    , (RegisterImpl::gbase + 7));
-
+                                                                          
 CONSTANT_REGISTER_DECLARATION(Register, O0    , (RegisterImpl::obase + 0));
 CONSTANT_REGISTER_DECLARATION(Register, O1    , (RegisterImpl::obase + 1));
 CONSTANT_REGISTER_DECLARATION(Register, O2    , (RegisterImpl::obase + 2));
@@ -127,7 +130,7 @@ CONSTANT_REGISTER_DECLARATION(Register, O4    , (RegisterImpl::obase + 4));
 CONSTANT_REGISTER_DECLARATION(Register, O5    , (RegisterImpl::obase + 5));
 CONSTANT_REGISTER_DECLARATION(Register, O6    , (RegisterImpl::obase + 6));
 CONSTANT_REGISTER_DECLARATION(Register, O7    , (RegisterImpl::obase + 7));
-
+                                                                          
 CONSTANT_REGISTER_DECLARATION(Register, L0    , (RegisterImpl::lbase + 0));
 CONSTANT_REGISTER_DECLARATION(Register, L1    , (RegisterImpl::lbase + 1));
 CONSTANT_REGISTER_DECLARATION(Register, L2    , (RegisterImpl::lbase + 2));
@@ -136,7 +139,7 @@ CONSTANT_REGISTER_DECLARATION(Register, L4    , (RegisterImpl::lbase + 4));
 CONSTANT_REGISTER_DECLARATION(Register, L5    , (RegisterImpl::lbase + 5));
 CONSTANT_REGISTER_DECLARATION(Register, L6    , (RegisterImpl::lbase + 6));
 CONSTANT_REGISTER_DECLARATION(Register, L7    , (RegisterImpl::lbase + 7));
-
+                                                                          
 CONSTANT_REGISTER_DECLARATION(Register, I0    , (RegisterImpl::ibase + 0));
 CONSTANT_REGISTER_DECLARATION(Register, I1    , (RegisterImpl::ibase + 1));
 CONSTANT_REGISTER_DECLARATION(Register, I2    , (RegisterImpl::ibase + 2));
@@ -145,7 +148,7 @@ CONSTANT_REGISTER_DECLARATION(Register, I4    , (RegisterImpl::ibase + 4));
 CONSTANT_REGISTER_DECLARATION(Register, I5    , (RegisterImpl::ibase + 5));
 CONSTANT_REGISTER_DECLARATION(Register, I6    , (RegisterImpl::ibase + 6));
 CONSTANT_REGISTER_DECLARATION(Register, I7    , (RegisterImpl::ibase + 7));
-
+                                                                          
 CONSTANT_REGISTER_DECLARATION(Register, FP    , (RegisterImpl::ibase + 6));
 CONSTANT_REGISTER_DECLARATION(Register, SP    , (RegisterImpl::obase + 6));
 
@@ -173,7 +176,7 @@ CONSTANT_REGISTER_DECLARATION(Register, SP    , (RegisterImpl::obase + 6));
 #define G5 ((Register)(G5_RegisterEnumValue))
 #define G6 ((Register)(G6_RegisterEnumValue))
 #define G7 ((Register)(G7_RegisterEnumValue))
-
+                                       
 #define O0 ((Register)(O0_RegisterEnumValue))
 #define O1 ((Register)(O1_RegisterEnumValue))
 #define O2 ((Register)(O2_RegisterEnumValue))
@@ -182,7 +185,7 @@ CONSTANT_REGISTER_DECLARATION(Register, SP    , (RegisterImpl::obase + 6));
 #define O5 ((Register)(O5_RegisterEnumValue))
 #define O6 ((Register)(O6_RegisterEnumValue))
 #define O7 ((Register)(O7_RegisterEnumValue))
-
+                                       
 #define L0 ((Register)(L0_RegisterEnumValue))
 #define L1 ((Register)(L1_RegisterEnumValue))
 #define L2 ((Register)(L2_RegisterEnumValue))
@@ -191,7 +194,7 @@ CONSTANT_REGISTER_DECLARATION(Register, SP    , (RegisterImpl::obase + 6));
 #define L5 ((Register)(L5_RegisterEnumValue))
 #define L6 ((Register)(L6_RegisterEnumValue))
 #define L7 ((Register)(L7_RegisterEnumValue))
-
+                                       
 #define I0 ((Register)(I0_RegisterEnumValue))
 #define I1 ((Register)(I1_RegisterEnumValue))
 #define I2 ((Register)(I2_RegisterEnumValue))
@@ -200,7 +203,7 @@ CONSTANT_REGISTER_DECLARATION(Register, SP    , (RegisterImpl::obase + 6));
 #define I5 ((Register)(I5_RegisterEnumValue))
 #define I6 ((Register)(I6_RegisterEnumValue))
 #define I7 ((Register)(I7_RegisterEnumValue))
-
+                                       
 #define FP ((Register)(FP_RegisterEnumValue))
 #define SP ((Register)(SP_RegisterEnumValue))
 #endif // DONT_USE_REGISTER_DEFINES
@@ -211,8 +214,8 @@ typedef FloatRegisterImpl* FloatRegister;
 
 
 // construction
-inline FloatRegister as_FloatRegister(int encoding) {
-  return (FloatRegister)(intptr_t)encoding;
+inline FloatRegister as_FloatRegister(int encoding) { 
+  return (FloatRegister)(intptr_t)encoding; 
 }
 
 // The implementation of float registers for the SPARC architecture
@@ -240,12 +243,12 @@ class FloatRegisterImpl: public AbstractRegisterImpl {
       case S:
         assert(c < 32, "bad single float register");
         return c;
-
+      
       case D:
         assert(c < 64  &&  (c & 1) == 0, "bad double float register");
         assert(c < 32 || VM_Version::v9_instructions_work(), "V9 float work only on V9 platform");
         return (c & 0x1e) | ((c & 0x20) >> 5);
-
+      
       case Q:
         assert(c < 64  &&  (c & 3) == 0, "bad quad float register");
         assert(c < 32 || VM_Version::v9_instructions_work(), "V9 float work only on V9 platform");
@@ -374,11 +377,11 @@ const int SPARC_ARGS_IN_REGS_NUM = 6;
 
 class ConcreteRegisterImpl : public AbstractRegisterImpl {
  public:
-  enum {
+  enum { 
     // This number must be large enough to cover REG_COUNT (defined by c2) registers.
     // There is no requirement that any ordering here matches any ordering c2 gives
     // it's optoregs.
-    number_of_registers = 2*RegisterImpl::number_of_registers +
+    number_of_registers = 2*RegisterImpl::number_of_registers + 
                             FloatRegisterImpl::number_of_registers +
                             1 + // ccr
                             4  //  fcc
@@ -440,3 +443,4 @@ class QuadFloatRegisterImpl {
     return as_FloatRegister( ((encoding & 1) << 5) | (encoding & 0x1c) );
   }
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)gSpaceCounters.cpp	1.11 07/05/05 17:05:33 JVM"
+#endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@ GSpaceCounters::GSpaceCounters(const char* name, int ordinal, size_t max_size,
                                Generation* g, GenerationCounters* gc,
                                bool sampled) :
    _gen(g) {
-
+   
   if (UsePerfData) {
     EXCEPTION_MARK;
     ResourceMark rm;

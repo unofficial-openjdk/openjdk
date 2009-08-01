@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)mutableSpace.cpp	1.22 07/05/05 17:05:35 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -100,7 +103,7 @@ HeapWord* MutableSpace::allocate(size_t size) {
     HeapWord* new_top = obj + size;
     set_top(new_top);
     assert(is_object_aligned((intptr_t)obj) && is_object_aligned((intptr_t)new_top),
-           "checking alignment");
+	   "checking alignment");
     return obj;
   } else {
     return NULL;
@@ -117,8 +120,8 @@ HeapWord* MutableSpace::cas_allocate(size_t size) {
       // result can be one of two:
       //  the old top value: the exchange succeeded
       //  otherwise: the new value of the top is returned.
-      if (result != obj) {
-        continue; // another thread beat us to the allocation, try again
+      if (result != obj) {          
+	continue; // another thread beat us to the allocation, try again
       }
       assert(is_object_aligned((intptr_t)obj) && is_object_aligned((intptr_t)new_top),
              "checking alignment");
@@ -154,14 +157,14 @@ void MutableSpace::object_iterate(ObjectClosure* cl) {
 
 void MutableSpace::print_short() const { print_short_on(tty); }
 void MutableSpace::print_short_on( outputStream* st) const {
-  st->print(" space " SIZE_FORMAT "K, %d%% used", capacity_in_bytes() / K,
+  st->print(" space " SIZE_FORMAT "K, %d%% used", capacity_in_bytes() / K, 
             (int) ((double) used_in_bytes() * 100 / capacity_in_bytes()));
 }
 
 void MutableSpace::print() const { print_on(tty); }
 void MutableSpace::print_on(outputStream* st) const {
   MutableSpace::print_short_on(st);
-  st->print_cr(" [" INTPTR_FORMAT "," INTPTR_FORMAT "," INTPTR_FORMAT ")",
+  st->print_cr(" [" INTPTR_FORMAT "," INTPTR_FORMAT "," INTPTR_FORMAT ")", 
                  bottom(), top(), end());
 }
 

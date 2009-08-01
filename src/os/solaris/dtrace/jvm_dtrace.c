@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <door.h>
@@ -226,7 +226,7 @@ static void delete_attach_file(pid_t pid) {
     }
 }
 
-/* attach to given JVM */
+/* attach to given JVM */ 
 jvm_t* jvm_attach(pid_t pid) {
     jvm_t* jvm;
     int door_fd, attach_fd, i;
@@ -279,7 +279,7 @@ quit:
         clear_jvm_error();
     } else {
         free(jvm);
-        jvm = NULL;
+        jvm = NULL; 
     }
     return jvm;
 }
@@ -311,21 +311,21 @@ int jvm_detach(jvm_t* jvm) {
         print_debug("jvm_t* is NULL\n");
         return -1;
     }
-}
+} 
 
 /*
- * A simple table to translate some known errors into reasonable
+ * A simple table to translate some known errors into reasonable 
  * error messages
  */
 static struct {
     int err;
     const char* msg;
 } const error_messages[] = {
-    { 100,      "Bad request" },
-    { 101,      "Protocol mismatch" },
-    { 102,      "Resource failure" },
-    { 103,      "Internal error" },
-    { 104,      "Permission denied" },
+    { 100, 	"Bad request" },
+    { 101,	"Protocol mismatch" },
+    { 102, 	"Resource failure" },
+    { 103,	"Internal error" },
+    { 104,	"Permission denied" },
 };
 
 /*
@@ -337,15 +337,15 @@ static const char* translate_error(int err) {
     int i;
 
     for (i=0; i<table_size; i++) {
-        if (err == error_messages[i].err) {
-            return error_messages[i].msg;
-        }
+	if (err == error_messages[i].err) {
+	    return error_messages[i].msg;
+	}
     }
     return NULL;
 }
 
 /*
- * Current protocol version
+ * Current protocol version 
  */
 static const char* PROTOCOL_VERSION = "1";
 
@@ -354,7 +354,7 @@ static const char* PROTOCOL_VERSION = "1";
 /*
  * Enqueue attach-on-demand command to the given JVM
  */
-static
+static 
 int enqueue_command(jvm_t* jvm, const char* cstr, int arg_count, const char** args) {
     size_t size;
     door_arg_t door_args;
@@ -364,24 +364,24 @@ int enqueue_command(jvm_t* jvm, const char* cstr, int arg_count, const char** ar
     int result = -1;
 
     /*
-     * First we get the command string and create the start of the
+     * First we get the command string and create the start of the 
      * argument string to send to the target VM:
      * <ver>\0<cmd>\0
      */
     if (cstr == NULL) {
         print_debug("command name is NULL\n");
         goto quit;
-    }
+    } 
     size = strlen(PROTOCOL_VERSION) + strlen(cstr) + 2;
     buf = (char*)malloc(size);
     if (buf != NULL) {
-        char* pos = buf;
-        strcpy(buf, PROTOCOL_VERSION);
-        pos += strlen(PROTOCOL_VERSION)+1;
-        strcpy(pos, cstr);
+	char* pos = buf;
+	strcpy(buf, PROTOCOL_VERSION);
+	pos += strlen(PROTOCOL_VERSION)+1;
+	strcpy(pos, cstr);
     } else {
         set_jvm_error(JVM_ERR_OUT_OF_MEMORY);
-        print_debug("malloc failed at %d in %s\n", __LINE__, __FILE__);
+	print_debug("malloc failed at %d in %s\n", __LINE__, __FILE__);
         goto quit;
     }
 
@@ -391,22 +391,22 @@ int enqueue_command(jvm_t* jvm, const char* cstr, int arg_count, const char** ar
      */
     for (i=0; i<arg_count; i++) {
         cstr = args[i];
-        if (cstr != NULL) {
-            size_t len = strlen(cstr);
-            char* newbuf = (char*)realloc(buf, size+len+1);
-            if (newbuf == NULL) {
+	if (cstr != NULL) {
+	    size_t len = strlen(cstr);
+	    char* newbuf = (char*)realloc(buf, size+len+1);
+	    if (newbuf == NULL) {
                 set_jvm_error(JVM_ERR_OUT_OF_MEMORY);
                 print_debug("realloc failed in %s at %d\n", __FILE__, __LINE__);
                 goto quit;
-            }
-            buf = newbuf;
-            strcpy(buf+size, cstr);
-            size += len+1;
+            }	
+	    buf = newbuf;
+	    strcpy(buf+size, cstr);
+	    size += len+1;
         }
     }
 
     /*
-     * The arguments to the door function are in 'buf' so we now
+     * The arguments to the door function are in 'buf' so we now 
      * do the door call
      */
     door_args.data_ptr = buf;
@@ -419,39 +419,39 @@ int enqueue_command(jvm_t* jvm, const char* cstr, int arg_count, const char** ar
     RESTARTABLE(door_call(jvm->door_fd, &door_args), rc);
 
     /*
-     * door_call failed
+     * door_call failed 
      */
     if (rc == -1) {
-        print_debug("door_call failed\n");
+	print_debug("door_call failed\n");
     } else {
-        /*
-         * door_call succeeded but the call didn't return the the expected jint.
-         */
-        if (door_args.data_size < sizeof(int)) {
-            print_debug("Enqueue error - reason unknown as result is truncated!");
-        } else {
-            int* res = (int*)(door_args.data_ptr);
-            if (*res != 0) {
-                const char* msg = translate_error(*res);
-                if (msg == NULL) {
-                    print_debug("Unable to enqueue command to target VM: %d\n", *res);
-                } else {
-                    print_debug("Unable to enqueue command to target VM: %s\n", msg);
-                }
-            } else {
-                /*
-                 * The door call should return a file descriptor to one end of
-                 * a socket pair
-                 */
-                if ((door_args.desc_ptr != NULL) &&
-                    (door_args.desc_num == 1) &&
-                    (door_args.desc_ptr->d_attributes & DOOR_DESCRIPTOR)) {
-                    result = door_args.desc_ptr->d_data.d_desc.d_descriptor;
-                } else {
-                    print_debug("Reply from enqueue missing descriptor!\n");
-                }
-            }
-        }
+	/*
+	 * door_call succeeded but the call didn't return the the expected jint.
+	 */
+	if (door_args.data_size < sizeof(int)) {
+	    print_debug("Enqueue error - reason unknown as result is truncated!");
+	} else {
+	    int* res = (int*)(door_args.data_ptr);
+	    if (*res != 0) {
+		const char* msg = translate_error(*res);
+		if (msg == NULL) {
+		    print_debug("Unable to enqueue command to target VM: %d\n", *res);
+		} else {    
+		    print_debug("Unable to enqueue command to target VM: %s\n", msg);
+		}
+	    } else {
+		/*
+	  	 * The door call should return a file descriptor to one end of	
+		 * a socket pair
+	  	 */
+	        if ((door_args.desc_ptr != NULL) &&
+	            (door_args.desc_num == 1) &&
+	            (door_args.desc_ptr->d_attributes & DOOR_DESCRIPTOR)) {
+	            result = door_args.desc_ptr->d_data.d_desc.d_descriptor;
+ 	        } else {
+		    print_debug("Reply from enqueue missing descriptor!\n");
+	 	}
+	    }
+	}
     }
 
 quit:
@@ -522,7 +522,7 @@ int jvm_enable_dtprobes(jvm_t* jvm, int num_probe_types, const char** probe_type
                    strcmp(p, JVM_DTPROBE_MONITOR_WAIT) == 0    ||
                    strcmp(p, JVM_DTPROBE_MONITOR_WAITED) == 0  ||
                    strcmp(p, JVM_DTPROBE_MONITOR_NOTIFY) == 0  ||
-                   strcmp(p, JVM_DTPROBE_MONITOR_NOTIFYALL) == 0) {
+                   strcmp(p, JVM_DTPROBE_MONITOR_NOTIFYALL) == 0) { 
             probe_type |= DTRACE_MONITOR_PROBES;
             count++;
         } else if (strcmp(p, JVM_DTPROBE_ALL) == 0) {
@@ -536,7 +536,7 @@ int jvm_enable_dtprobes(jvm_t* jvm, int num_probe_types, const char** probe_type
     }
     sprintf(buf, "%d", probe_type);
     args[0] = buf;
-
+   
     fd = enqueue_command(jvm, ENABLE_DPROBES_CMD, 1, args);
     if (fd < 0) {
         set_jvm_error(JVM_ERR_DOOR_CMD_SEND);
@@ -547,7 +547,7 @@ int jvm_enable_dtprobes(jvm_t* jvm, int num_probe_types, const char** probe_type
     // non-zero status is error
     if (status) {
         set_jvm_error(JVM_ERR_DOOR_CMD_STATUS);
-        print_debug("%s command failed (status: %d) in target JVM\n",
+        print_debug("%s command failed (status: %d) in target JVM\n", 
                     ENABLE_DPROBES_CMD, status);
         file_close(fd);
         return -1;

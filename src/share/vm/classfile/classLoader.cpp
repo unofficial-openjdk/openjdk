@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)classLoader.cpp	1.188 07/07/16 11:55:31 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -206,7 +209,7 @@ ClassFileStream* ClassPathZipEntry::open_stream(const char* name) {
 void ClassPathZipEntry::contents_do(void f(const char* name, void* context), void* context) {
   JavaThread* thread = JavaThread::current();
   HandleMark  handle_mark(thread);
-  ThreadToNativeFromVM ttn(thread);
+  ThreadToNativeFromVM ttn(thread);  
   for (int n = 0; ; n++) {
     jzentry * ze = ((*GetNextEntry)(_zip, n));
     if (ze == NULL) break;
@@ -256,7 +259,7 @@ bool LazyClassPathEntry::is_lazy() {
   return true;
 }
 
-static void print_meta_index(LazyClassPathEntry* entry,
+static void print_meta_index(LazyClassPathEntry* entry, 
                              GrowableArray<char*>& meta_packages) {
   tty->print("[Meta index for %s=", entry->name());
   for (int i = 0; i < meta_packages.length(); i++) {
@@ -289,7 +292,7 @@ void ClassLoader::setup_meta_index() {
         case '%':
         {
           if ((line_no == 1) && (strcmp(package_name, known_version) != 0)) {
-            if (TraceClassLoading && Verbose) {
+            if (TraceClassLoading && Verbose) {  
               tty->print("[Unsupported meta index version]");
             }
             fclose(file);
@@ -309,13 +312,13 @@ void ClassLoader::setup_meta_index() {
           // Hand off current packages to current lazy entry (if any)
           if ((cur_entry != NULL) &&
               (boot_class_path_packages.length() > 0)) {
-            if (TraceClassLoading && Verbose) {
+            if (TraceClassLoading && Verbose) {  
               print_meta_index(cur_entry, boot_class_path_packages);
             }
             MetaIndex* index = new MetaIndex(boot_class_path_packages.adr_at(0),
                                              boot_class_path_packages.length());
             cur_entry->set_meta_index(index);
-          }
+          }         
           cur_entry = NULL;
           boot_class_path_packages.clear();
 
@@ -328,7 +331,7 @@ void ClassLoader::setup_meta_index() {
               break;
             }
           }
-
+   
           // If the first character is '@', it indicates the following jar
           // file is a resource only jar file in which case, we should skip
           // reading the subsequent entries since the resource loading is
@@ -342,7 +345,7 @@ void ClassLoader::setup_meta_index() {
           } else {
             skipCurrentJar = false;
           }
-
+  
           break;
         }
 
@@ -358,13 +361,13 @@ void ClassLoader::setup_meta_index() {
     // Hand off current packages to current lazy entry (if any)
     if ((cur_entry != NULL) &&
         (boot_class_path_packages.length() > 0)) {
-      if (TraceClassLoading && Verbose) {
+      if (TraceClassLoading && Verbose) {  
         print_meta_index(cur_entry, boot_class_path_packages);
       }
       MetaIndex* index = new MetaIndex(boot_class_path_packages.adr_at(0),
                                        boot_class_path_packages.length());
       cur_entry->set_meta_index(index);
-    }
+    }          
     fclose(file);
   }
 }
@@ -372,7 +375,7 @@ void ClassLoader::setup_meta_index() {
 void ClassLoader::setup_bootstrap_search_path() {
   assert(_first_entry == NULL, "should not setup bootstrap class search path twice");
   char* sys_class_path = os::strdup(Arguments::get_sysclasspath());
-  if (TraceClassLoading && Verbose) {
+  if (TraceClassLoading && Verbose) {  
     tty->print_cr("[Bootstrap loader class path=%s]", sys_class_path);
   }
 
@@ -408,7 +411,7 @@ void ClassLoader::create_class_path_entry(char *path, struct stat st, ClassPathE
     if (!get_canonical_path(path, canonical_path, JVM_MAXPATHLEN)) {
       // This matches the classic VM
       EXCEPTION_MARK;
-      THROW_MSG(vmSymbols::java_io_IOException(), "Bad pathname");
+      THROW_MSG(vmSymbols::java_io_IOException(), "Bad pathname");          
     }
     char* error_msg = NULL;
     jzfile* zip;
@@ -423,7 +426,7 @@ void ClassLoader::create_class_path_entry(char *path, struct stat st, ClassPathE
       if (TraceClassLoading) {
         tty->print_cr("[Opened %s]", path);
       }
-    } else {
+    } else { 
       ResourceMark rm(thread);
       char *msg;
       if (error_msg == NULL) {
@@ -435,15 +438,15 @@ void ClassLoader::create_class_path_entry(char *path, struct stat st, ClassPathE
         jio_snprintf(msg, len - 1, "error in opening JAR file <%s> %s", error_msg, path);
       }
       EXCEPTION_MARK;
-      THROW_MSG(vmSymbols::java_lang_ClassNotFoundException(), msg);
-    }
+      THROW_MSG(vmSymbols::java_lang_ClassNotFoundException(), msg);          
+    } 
   } else {
     // Directory
     *new_entry = new ClassPathDirEntry(path);
     if (TraceClassLoading) {
       tty->print_cr("[Path %s]", path);
     }
-  }
+  }      
 }
 
 
@@ -453,25 +456,25 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path) {
   // check for a regular file
   struct stat st;
   if (os::stat(path, &st) == 0) {
-    if ((st.st_mode & S_IFREG) == S_IFREG) {
+    if ((st.st_mode & S_IFREG) == S_IFREG) {	        
       char orig_path[JVM_MAXPATHLEN];
       char canonical_path[JVM_MAXPATHLEN];
-
+      
       strcpy(orig_path, path);
       if (get_canonical_path(orig_path, canonical_path, JVM_MAXPATHLEN)) {
         char* error_msg = NULL;
-        jzfile* zip;
-        {
-          // enable call to C land
-          JavaThread* thread = JavaThread::current();
-          ThreadToNativeFromVM ttn(thread);
-          HandleMark hm(thread);
-          zip = (*ZipOpen)(canonical_path, &error_msg);
-        }
-        if (zip != NULL && error_msg == NULL) {
-          // create using canonical path
+	jzfile* zip;
+	{
+	  // enable call to C land
+	  JavaThread* thread = JavaThread::current();
+	  ThreadToNativeFromVM ttn(thread);
+	  HandleMark hm(thread);
+	  zip = (*ZipOpen)(canonical_path, &error_msg);
+	}
+	if (zip != NULL && error_msg == NULL) {
+	  // create using canonical path
           return new ClassPathZipEntry(zip, canonical_path);
-        }
+	}
       }
     }
   }
@@ -483,7 +486,7 @@ bool ClassLoader::contains_entry(ClassPathEntry *entry) {
   ClassPathEntry* e = _first_entry;
   while (e != NULL) {
     // assume zip entries have been canonicalized
-    if (strcmp(entry->name(), e->name()) == 0) {
+    if (strcmp(entry->name(), e->name()) == 0) {   
       return true;
     }
     e = e->next();
@@ -554,7 +557,7 @@ void ClassLoader::load_zip_library() {
     vm_exit_during_initialization("Corrupted ZIP library", path);
   }
 
-  // Lookup canonicalize entry in libjava.dll
+  // Lookup canonicalize entry in libjava.dll  
   void *javalib_handle = os::native_java_library();
   CanonicalizeEntry = CAST_TO_FN_PTR(canonicalize_fn_t, hpi::dll_lookup(javalib_handle, "Canonicalize"));
   // This lookup only works on 1.3. Do not check for non-null here
@@ -585,7 +588,7 @@ void ClassLoader::load_zip_library() {
 class PackageInfo: public BasicHashtableEntry {
 public:
   const char* _pkgname;       // Package name
-  int _classpath_index;       // Index of directory or JAR file loaded from
+  int _classpath_index;	      // Index of directory or JAR file loaded from
 
   PackageInfo* next() {
     return (PackageInfo*)BasicHashtableEntry::next();
@@ -753,12 +756,12 @@ bool ClassLoader::add_package(const char *pkgname, int classpath_index, TRAPS) {
       if (new_pkgname == NULL) {
         return false;
       }
-
+  
       memcpy(new_pkgname, pkgname, n);
       new_pkgname[n] = '\0';
       pp = _package_hash_table->new_entry(new_pkgname, n);
       pp->set_index(classpath_index);
-
+      
       // Insert into hash table
       _package_hash_table->add_entry(pp);
     }
@@ -845,9 +848,9 @@ instanceKlassHandle ClassLoader::load_classfile(symbolHandle h_name, TRAPS) {
     Handle class_loader;
     Handle protection_domain;
     symbolHandle parsed_name;
-    instanceKlassHandle result = parser.parseClassFile(h_name,
-                                                       class_loader,
-                                                       protection_domain,
+    instanceKlassHandle result = parser.parseClassFile(h_name, 
+                                                       class_loader, 
+                                                       protection_domain, 
                                                        parsed_name,
                                                        CHECK_(h));
 
@@ -888,7 +891,7 @@ void ClassLoader::initialize() {
 
   if (UsePerfData) {
     // jvmstat performance counters
-    NEWPERFTICKCOUNTER(_perf_accumulated_time, SUN_CLS, "time");
+    NEWPERFTICKCOUNTER(_perf_accumulated_time, SUN_CLS, "time"); 
     NEWPERFTICKCOUNTER(_perf_class_init_time, SUN_CLS, "classInitTime");
     NEWPERFTICKCOUNTER(_perf_class_verify_time, SUN_CLS, "classVerifyTime");
     NEWPERFTICKCOUNTER(_perf_class_link_time, SUN_CLS, "classLinkedTime");
@@ -898,30 +901,30 @@ void ClassLoader::initialize() {
 
     // The following performance counters are added for measuring the impact
     // of the bug fix of 6365597. They are mainly focused on finding out
-    // the behavior of system & user-defined classloader lock, whether
+    // the behavior of system & user-defined classloader lock, whether 
     // ClassLoader.loadClass/findClass is being called synchronized or not.
     // Also two additional counters are created to see whether 'UnsyncloadClass'
     // flag is being set or not and how many times load_instance_class call
     // fails with linkageError etc.
-    NEWPERFEVENTCOUNTER(_sync_systemLoaderLockContentionRate, SUN_CLS,
-                        "systemLoaderLockContentionRate");
+    NEWPERFEVENTCOUNTER(_sync_systemLoaderLockContentionRate, SUN_CLS, 
+			"systemLoaderLockContentionRate");    
     NEWPERFEVENTCOUNTER(_sync_nonSystemLoaderLockContentionRate, SUN_CLS,
-                        "nonSystemLoaderLockContentionRate");
+			"nonSystemLoaderLockContentionRate");
     NEWPERFEVENTCOUNTER(_sync_JVMFindLoadedClassLockFreeCounter, SUN_CLS,
-                        "jvmFindLoadedClassNoLockCalls");
+			"jvmFindLoadedClassNoLockCalls");
     NEWPERFEVENTCOUNTER(_sync_JVMDefineClassLockFreeCounter, SUN_CLS,
-                        "jvmDefineClassNoLockCalls");
+			"jvmDefineClassNoLockCalls");
 
     NEWPERFEVENTCOUNTER(_sync_JNIDefineClassLockFreeCounter, SUN_CLS,
-                        "jniDefineClassNoLockCalls");
-
+			"jniDefineClassNoLockCalls");
+    
     NEWPERFEVENTCOUNTER(_unsafe_defineClassCallCounter, SUN_CLS,
-                        "unsafeDefineClassCalls");
-
+			"unsafeDefineClassCalls");
+    
     NEWPERFEVENTCOUNTER(_isUnsyncloadClass, SUN_CLS, "isUnsyncloadClassSet");
     NEWPERFEVENTCOUNTER(_load_instance_class_failCounter, SUN_CLS,
-                        "loadInstanceClassFailRate");
-
+			"loadInstanceClassFailRate");
+    
     // increment the isUnsyncloadClass counter if UnsyncloadClass is set.
     if (UnsyncloadClass) {
       _isUnsyncloadClass->inc();
@@ -949,12 +952,12 @@ jlong ClassLoader::class_init_count() {
 }
 
 jlong ClassLoader::class_init_time_ms() {
-  return UsePerfData ?
+  return UsePerfData ? 
     Management::ticks_to_ms(_perf_class_init_time->get_value()) : -1;
 }
 
 jlong ClassLoader::class_verify_time_ms() {
-  return UsePerfData ?
+  return UsePerfData ? 
     Management::ticks_to_ms(_perf_class_verify_time->get_value()) : -1;
 }
 
@@ -963,7 +966,7 @@ jlong ClassLoader::class_link_count() {
 }
 
 jlong ClassLoader::class_link_time_ms() {
-  return UsePerfData ?
+  return UsePerfData ? 
     Management::ticks_to_ms(_perf_class_link_time->get_value()) : -1;
 }
 
@@ -982,16 +985,16 @@ void classLoader_init() {
 
 
 bool ClassLoader::get_canonical_path(char* orig, char* out, int len) {
-  assert(orig != NULL && out != NULL && len > 0, "bad arguments");
+  assert(orig != NULL && out != NULL && len > 0, "bad arguments");        
   if (CanonicalizeEntry != NULL) {
     JNIEnv* env = JavaThread::current()->jni_environment();
-    if ((CanonicalizeEntry)(env, hpi::native_path(orig), out, len) < 0) {
-      return false;
-    }
+    if ((CanonicalizeEntry)(env, hpi::native_path(orig), out, len) < 0) {    
+      return false;  
+    }    
   } else {
     // On JDK 1.2.2 the Canonicalize does not exist, so just do nothing
     strncpy(out, orig, len);
-    out[len - 1] = '\0';
+    out[len - 1] = '\0';    
   }
   return true;
 }
@@ -1007,10 +1010,10 @@ void ClassLoader::verify() {
 //
 // Iterates over all class path entries and forces compilation of all methods
 // in all classes found. Currently, only zip/jar archives are searched.
-//
+// 
 // The classes are loaded by the Java level bootstrap class loader, and the
 // initializer is called. If DelayCompilationDuringStartup is true (default),
-// the interpreter will run the initialization code. Note that forcing
+// the interpreter will run the initialization code. Note that forcing 
 // initialization in this way could potentially lead to initialization order
 // problems, in which case we could just force the initialization bit to be set.
 
@@ -1026,33 +1029,33 @@ void ClassLoader::verify() {
 
 
 // JDK 1.3 version
-typedef struct real_jzentry13 {         /* Zip file entry */
-    char *name;                 /* entry name */
-    jint time;                  /* modification time */
-    jint size;                  /* size of uncompressed data */
-    jint csize;                 /* size of compressed data (zero if uncompressed) */
-    jint crc;                   /* crc of uncompressed data */
-    char *comment;              /* optional zip file comment */
-    jbyte *extra;               /* optional extra data */
-    jint pos;                   /* position of LOC header (if negative) or data */
+typedef struct real_jzentry13 { 	/* Zip file entry */
+    char *name;	  	  	/* entry name */
+    jint time;            	/* modification time */
+    jint size;	  	  	/* size of uncompressed data */
+    jint csize;  	  	/* size of compressed data (zero if uncompressed) */
+    jint crc;		  	/* crc of uncompressed data */
+    char *comment;	  	/* optional zip file comment */
+    jbyte *extra;	  	/* optional extra data */
+    jint pos;	  	  	/* position of LOC header (if negative) or data */
 } real_jzentry13;
 
 typedef struct real_jzfile13 {  /* Zip file */
-    char *name;                 /* zip file name */
-    jint refs;                  /* number of active references */
-    jint fd;                    /* open file descriptor */
-    void *lock;                 /* read lock */
-    char *comment;              /* zip file comment */
-    char *msg;                  /* zip error message */
-    void *entries;              /* array of hash cells */
-    jint total;                 /* total number of entries */
+    char *name;	  	        /* zip file name */
+    jint refs;		        /* number of active references */
+    jint fd;		        /* open file descriptor */
+    void *lock;		        /* read lock */
+    char *comment; 	        /* zip file comment */
+    char *msg;		        /* zip error message */
+    void *entries;          	/* array of hash cells */
+    jint total;	  	        /* total number of entries */
     unsigned short *table;      /* Hash chain heads: indexes into entries */
-    jint tablelen;              /* number of hash eads */
+    jint tablelen;	        /* number of hash eads */
     real_jzfile13 *next;        /* next zip file in search list */
     jzentry *cache;             /* we cache the most recently freed jzentry */
     /* Information on metadata names in META-INF directory */
     char **metanames;           /* array of meta names (may have null names) */
-    jint metacount;             /* number of slots in metanames array */
+    jint metacount;	        /* number of slots in metanames array */
     /* If there are any per-entry comments, they are in the comments array */
     char **comments;
 } real_jzfile13;
@@ -1246,23 +1249,23 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
           for (int n = 0; n < k->methods()->length(); n++) {
             methodHandle m (THREAD, methodOop(k->methods()->obj_at(n)));
             if (CompilationPolicy::canBeCompiled(m)) {
-              // Force compilation
+              // Force compilation           
               CompileBroker::compile_method(m, InvocationEntryBci,
                                             methodHandle(), 0, "CTW", THREAD);
               if (HAS_PENDING_EXCEPTION) {
                 CLEAR_PENDING_EXCEPTION;
                 tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
               }
-            if (TieredCompilation) {
-              // Clobber the first compile and force second tier compilation
-              m->clear_code();
-              CompileBroker::compile_method(m, InvocationEntryBci,
+  	    if (TieredCompilation) {
+  	      // Clobber the first compile and force second tier compilation
+  	      m->clear_code();
+  	      CompileBroker::compile_method(m, InvocationEntryBci,
                                             methodHandle(), 0, "CTW", THREAD);
-              if (HAS_PENDING_EXCEPTION) {
-                CLEAR_PENDING_EXCEPTION;
-                tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
-              }
-            }
+  	      if (HAS_PENDING_EXCEPTION) {
+  		CLEAR_PENDING_EXCEPTION;
+  		tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
+  	      }
+  	    }
             }
           }
         }

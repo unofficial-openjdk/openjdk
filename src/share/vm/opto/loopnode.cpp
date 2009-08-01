@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)loopnode.cpp	1.262 07/10/23 13:12:50 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -1114,7 +1117,7 @@ void IdealLoopTree::allpaths_check_safepts(VectorSet &visited, Node_List &stack)
 // Given dominators, try to find loops with calls that must always be
 // executed (call dominates loop tail).  These loops do not need non-call
 // safepoints (ncsfpt).
-//
+// 
 // A complication is that a safepoint in a inner loop may be needed
 // by an outer loop. In the following, the inner loop sees it has a
 // call (block 3) on every path from the head (block 2) to the
@@ -1135,7 +1138,7 @@ void IdealLoopTree::allpaths_check_safepts(VectorSet &visited, Node_List &stack)
 //              v    +--+
 //        exit  4
 //
-//
+// 
 // This method creates a list (_required_safept) of ncsfpt nodes that must
 // be protected is created for each loop. When a ncsfpt maybe deleted, it
 // is first looked for in the lists for the outer loops of the current loop.
@@ -1171,7 +1174,7 @@ void IdealLoopTree::check_safepts(VectorSet &visited, Node_List &stack) {
     ch->check_safepts(visited, stack);
     ch = ch->_next;
   }
-
+  
   if (!_head->is_CountedLoop() && !_has_sfpt && _parent != NULL && !_irreducible) {
     bool  has_call         = false; // call on dom-path
     bool  has_local_ncsfpt = false; // ncsfpt on dom-path at this loop depth
@@ -1203,7 +1206,7 @@ void IdealLoopTree::check_safepts(VectorSet &visited, Node_List &stack) {
             // If inner loop has call on dom-path, so does outer loop
             if (nlpt->_has_sfpt) {
               has_call = true;
-              _has_sfpt = 1;
+              _has_sfpt = 1; 
               break;
             }
             // Skip to head of inner loop
@@ -1339,7 +1342,7 @@ void IdealLoopTree::counted_loop( PhaseIdealLoop *phase ) {
       }
     }
   } else if (_parent != NULL && !_irreducible) {
-    // Not a counted loop.
+    // Not a counted loop. 
     // Look for a safepoint on the idom-path to remove, preserving the first one
     bool found = false;
     Node* n = tail();
@@ -1586,7 +1589,7 @@ PhaseIdealLoop::PhaseIdealLoop( PhaseIterGVN &igvn, const PhaseIdealLoop *verify
       if (!lpt->is_counted() || !lpt->is_inner()) continue;
 
       lpt->reassociate_invariants(this);
-
+      
       // Because RCE opportunities can be masked by split_thru_phi,
       // look for RCE candidates and inhibit split_thru_phi
       // on just their loop-phi's for this pass of loop opts
@@ -2860,7 +2863,7 @@ void LoopTreeIterator::next() {
   } else {
     while (_curnt != _root && _curnt->_next == NULL) {
       _curnt = _curnt->_parent;
-    }
+    }      
     if (_curnt == _root) {
       _curnt = NULL;
       assert(done(), "must be done.");
@@ -2870,3 +2873,4 @@ void LoopTreeIterator::next() {
     }
   }
 }
+

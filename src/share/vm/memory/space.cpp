@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)space.cpp	1.217 07/05/29 09:44:13 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -29,23 +32,23 @@ void SpaceMemRegionOopsIterClosure::do_oop(oop* p)       { SpaceMemRegionOopsIte
 void SpaceMemRegionOopsIterClosure::do_oop(narrowOop* p) { SpaceMemRegionOopsIterClosure::do_oop_work(p); }
 
 HeapWord* DirtyCardToOopClosure::get_actual_top(HeapWord* top,
-                                                HeapWord* top_obj) {
+						HeapWord* top_obj) {
   if (top_obj != NULL) {
     if (_sp->block_is_obj(top_obj)) {
       if (_precision == CardTableModRefBS::ObjHeadPreciseArray) {
-        if (oop(top_obj)->is_objArray() || oop(top_obj)->is_typeArray()) {
-          // An arrayOop is starting on the dirty card - since we do exact
-          // store checks for objArrays we are done.
-        } else {
-          // Otherwise, it is possible that the object starting on the dirty
-          // card spans the entire card, and that the store happened on a
-          // later card.  Figure out where the object ends.
-          // Use the block_size() method of the space over which
-          // the iteration is being done.  That space (e.g. CMS) may have
-          // specific requirements on object sizes which will
-          // be reflected in the block_size() method.
-          top = top_obj + oop(top_obj)->size();
-        }
+	if (oop(top_obj)->is_objArray() || oop(top_obj)->is_typeArray()) {
+	  // An arrayOop is starting on the dirty card - since we do exact
+	  // store checks for objArrays we are done.
+	} else {
+	  // Otherwise, it is possible that the object starting on the dirty
+	  // card spans the entire card, and that the store happened on a
+	  // later card.  Figure out where the object ends.
+          // Use the block_size() method of the space over which 
+          // the iteration is being done.  That space (e.g. CMS) may have 
+          // specific requirements on object sizes which will 
+          // be reflected in the block_size() method. 
+	  top = top_obj + oop(top_obj)->size();
+	}
       }
     } else {
       top = top_obj;
@@ -57,8 +60,8 @@ HeapWord* DirtyCardToOopClosure::get_actual_top(HeapWord* top,
 }
 
 void DirtyCardToOopClosure::walk_mem_region(MemRegion mr,
-                                            HeapWord* bottom,
-                                            HeapWord* top) {
+					    HeapWord* bottom,
+					    HeapWord* top) {
   // 1. Blocks may or may not be objects.
   // 2. Even when a block_is_obj(), it may not entirely
   //    occupy the block if the block quantum is larger than
@@ -75,7 +78,7 @@ void DirtyCardToOopClosure::walk_mem_region(MemRegion mr,
     // "adjust the object size" (for instance pad it up to its
     // block alignment or minimum block size restrictions. XXX
     if (_sp->block_is_obj(bottom) &&
-        !_sp->obj_allocated_since_save_marks(oop(bottom))) {
+	!_sp->obj_allocated_since_save_marks(oop(bottom))) {
       oop(bottom)->oop_iterate(_cl, mr);
     }
   }
@@ -103,13 +106,13 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
   assert(_precision == CardTableModRefBS::ObjHeadPreciseArray ||
          _precision == CardTableModRefBS::Precise,
          "Only ones we deal with for now.");
-
+  
   assert(_precision != CardTableModRefBS::ObjHeadPreciseArray ||
          _cl->idempotent() || _last_bottom == NULL ||
          top <= _last_bottom,
          "Not decreasing");
   NOT_PRODUCT(_last_bottom = mr.start());
-
+  
   bottom_obj = _sp->block_start(bottom);
   top_obj    = _sp->block_start(last);
 
@@ -120,24 +123,24 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
   // the start of the object at the top, get the actual
   // value of the top.
   top = get_actual_top(top, top_obj);
-
+  
   // If the previous call did some part of this region, don't redo.
   if (_precision == CardTableModRefBS::ObjHeadPreciseArray &&
       _min_done != NULL &&
       _min_done < top) {
     top = _min_done;
   }
-
+  
   // Top may have been reset, and in fact may be below bottom,
   // e.g. the dirty card region is entirely in a now free object
   // -- something that could happen with a concurrent sweeper.
   bottom = MIN2(bottom, top);
   mr     = MemRegion(bottom, top);
   assert(bottom <= top &&
-         (_precision != CardTableModRefBS::ObjHeadPreciseArray ||
-          _min_done == NULL ||
-          top <= _min_done),
-         "overlap!");
+	 (_precision != CardTableModRefBS::ObjHeadPreciseArray ||
+	  _min_done == NULL ||
+	  top <= _min_done),
+	 "overlap!");
 
   // Walk the region if it is not empty; otherwise there is nothing to do.
   if (!mr.is_empty()) {
@@ -155,25 +158,25 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
 }
 
 DirtyCardToOopClosure* Space::new_dcto_cl(OopClosure* cl,
-                                          CardTableModRefBS::PrecisionStyle precision,
-                                          HeapWord* boundary) {
+					  CardTableModRefBS::PrecisionStyle precision,
+					  HeapWord* boundary) {
   return new DirtyCardToOopClosure(this, cl, precision, boundary);
 }
 
 HeapWord* ContiguousSpaceDCTOC::get_actual_top(HeapWord* top,
-                                               HeapWord* top_obj) {
+					       HeapWord* top_obj) {
   if (top_obj != NULL && top_obj < (_sp->toContiguousSpace())->top()) {
     if (_precision == CardTableModRefBS::ObjHeadPreciseArray) {
       if (oop(top_obj)->is_objArray() || oop(top_obj)->is_typeArray()) {
-        // An arrayOop is starting on the dirty card - since we do exact
-        // store checks for objArrays we are done.
+	// An arrayOop is starting on the dirty card - since we do exact
+	// store checks for objArrays we are done.
       } else {
-        // Otherwise, it is possible that the object starting on the dirty
-        // card spans the entire card, and that the store happened on a
-        // later card.  Figure out where the object ends.
-        assert(_sp->block_size(top_obj) == (size_t) oop(top_obj)->size(),
-          "Block size and object size mismatch");
-        top = top_obj + oop(top_obj)->size();
+	// Otherwise, it is possible that the object starting on the dirty
+	// card spans the entire card, and that the store happened on a
+	// later card.  Figure out where the object ends.
+	assert(_sp->block_size(top_obj) == (size_t) oop(top_obj)->size(), 
+	  "Block size and object size mismatch");
+	top = top_obj + oop(top_obj)->size();
       }
     }
   } else {
@@ -183,8 +186,8 @@ HeapWord* ContiguousSpaceDCTOC::get_actual_top(HeapWord* top,
 }
 
 void Filtering_DCTOC::walk_mem_region(MemRegion mr,
-                                      HeapWord* bottom,
-                                      HeapWord* top) {
+				      HeapWord* bottom,
+				      HeapWord* top) {
   // Note that this assumption won't hold if we have a concurrent
   // collector in this space, which may have freed up objects after
   // they were dirtied and before the stop-the-world GC that is
@@ -206,24 +209,24 @@ void Filtering_DCTOC::walk_mem_region(MemRegion mr,
 
 // We must replicate this so that the static type of "FilteringClosure"
 // (see above) is apparent at the oop_iterate calls.
-#define ContiguousSpaceDCTOC__walk_mem_region_with_cl_DEFN(ClosureType) \
-void ContiguousSpaceDCTOC::walk_mem_region_with_cl(MemRegion mr,        \
-                                                   HeapWord* bottom,    \
-                                                   HeapWord* top,       \
-                                                   ClosureType* cl) {   \
-  bottom += oop(bottom)->oop_iterate(cl, mr);                           \
-  if (bottom < top) {                                                   \
-    HeapWord* next_obj = bottom + oop(bottom)->size();                  \
-    while (next_obj < top) {                                            \
-      /* Bottom lies entirely below top, so we can call the */          \
-      /* non-memRegion version of oop_iterate below. */                 \
-      oop(bottom)->oop_iterate(cl);                                     \
-      bottom = next_obj;                                                \
-      next_obj = bottom + oop(bottom)->size();                          \
-    }                                                                   \
-    /* Last object. */                                                  \
-    oop(bottom)->oop_iterate(cl, mr);                                   \
-  }                                                                     \
+#define ContiguousSpaceDCTOC__walk_mem_region_with_cl_DEFN(ClosureType)	\
+void ContiguousSpaceDCTOC::walk_mem_region_with_cl(MemRegion mr,	\
+						   HeapWord* bottom,	\
+						   HeapWord* top,	\
+						   ClosureType* cl) {	\
+  bottom += oop(bottom)->oop_iterate(cl, mr);				\
+  if (bottom < top) {							\
+    HeapWord* next_obj = bottom + oop(bottom)->size();			\
+    while (next_obj < top) {						\
+      /* Bottom lies entirely below top, so we can call the */		\
+      /* non-memRegion version of oop_iterate below. */			\
+      oop(bottom)->oop_iterate(cl);					\
+      bottom = next_obj;						\
+      next_obj = bottom + oop(bottom)->size();				\
+    }									\
+    /* Last object. */							\
+    oop(bottom)->oop_iterate(cl, mr);					\
+  }									\
 }
 
 // (There are only two of these, rather than N, because the split is due
@@ -234,8 +237,8 @@ ContiguousSpaceDCTOC__walk_mem_region_with_cl_DEFN(FilteringClosure)
 
 DirtyCardToOopClosure*
 ContiguousSpace::new_dcto_cl(OopClosure* cl,
-                             CardTableModRefBS::PrecisionStyle precision,
-                             HeapWord* boundary) {
+			     CardTableModRefBS::PrecisionStyle precision,
+			     HeapWord* boundary) {
   return new ContiguousSpaceDCTOC(this, cl, precision, boundary);
 }
 
@@ -359,8 +362,8 @@ void CompactibleSpace::clear(bool mangle_space) {
   _compaction_top = bottom();
 }
 
-HeapWord* CompactibleSpace::forward(oop q, size_t size,
-                                    CompactPoint* cp, HeapWord* compact_top) {
+HeapWord* CompactibleSpace::forward(oop q, size_t size, 
+				    CompactPoint* cp, HeapWord* compact_top) {
   // q is alive
   // First check if we should switch compaction space
   assert(this == cp->space, "'this' should be current compaction space.");
@@ -387,7 +390,7 @@ HeapWord* CompactibleSpace::forward(oop q, size_t size,
     assert(q->is_gc_marked(), "encoding the pointer should preserve the mark");
   } else {
     // if the object isn't moving we can just set the mark to the default
-    // mark and handle it specially later on.
+    // mark and handle it specially later on.  
     q->init_mark();
     assert(q->forwardee() == NULL, "should be forwarded to NULL");
   }
@@ -406,7 +409,7 @@ HeapWord* CompactibleSpace::forward(oop q, size_t size,
 
 
 bool CompactibleSpace::insert_deadspace(size_t& allowed_deadspace_words,
-                                        HeapWord* q, size_t deadlength) {
+					HeapWord* q, size_t deadlength) {
   if (allowed_deadspace_words >= deadlength) {
     allowed_deadspace_words -= deadlength;
     CollectedHeap::fill_with_object(q, deadlength);
@@ -487,7 +490,7 @@ void CompactibleSpace::compact() {
 void Space::print_short() const { print_short_on(tty); }
 
 void Space::print_short_on(outputStream* st) const {
-  st->print(" space " SIZE_FORMAT "K, %3d%% used", capacity() / K,
+  st->print(" space " SIZE_FORMAT "K, %3d%% used", capacity() / K, 
               (int) ((double) used() * 100 / capacity()));
 }
 
@@ -498,13 +501,13 @@ void Space::print_on(outputStream* st) const {
   st->print_cr(" [" INTPTR_FORMAT ", " INTPTR_FORMAT ")",
                 bottom(), end());
 }
-
+  
 void ContiguousSpace::print_on(outputStream* st) const {
   print_short_on(st);
   st->print_cr(" [" INTPTR_FORMAT ", " INTPTR_FORMAT ", " INTPTR_FORMAT ")",
                 bottom(), top(), end());
 }
-
+  
 void OffsetTableContigSpace::print_on(outputStream* st) const {
   print_short_on(st);
   st->print_cr(" [" INTPTR_FORMAT ", " INTPTR_FORMAT ", "
@@ -748,7 +751,7 @@ oop_since_save_marks_iterate##nv_suffix(OopClosureType* blk) {            \
     }                                                                     \
   } while (t < top());                                                    \
                                                                           \
-  set_saved_mark_word(p);                                                 \
+  set_saved_mark_word(p);           	                                  \
 }
 
 ALL_SINCE_SAVE_MARKS_CLOSURES(ContigSpace_OOP_SINCE_SAVE_MARKS_DEFN)
@@ -775,19 +778,19 @@ HeapWord* ContiguousSpace::block_start_const(const void* p) const {
 size_t ContiguousSpace::block_size(const HeapWord* p) const {
   assert(MemRegion(bottom(), end()).contains(p), "p not in space");
   HeapWord* current_top = top();
-  assert(p <= current_top, "p is not a block start");
-  assert(p == current_top || oop(p)->is_oop(), "p is not a block start");
-  if (p < current_top)
+  assert(p <= current_top, "p is not a block start"); 
+  assert(p == current_top || oop(p)->is_oop(), "p is not a block start"); 
+  if (p < current_top) 
     return oop(p)->size();
   else {
-    assert(p == current_top, "just checking");
+    assert(p == current_top, "just checking"); 
     return pointer_delta(end(), (HeapWord*) p);
   }
 }
 
 // This version requires locking.
 inline HeapWord* ContiguousSpace::allocate_impl(size_t size,
-                                                HeapWord* const end_value) {
+						HeapWord* const end_value) {
   assert(Heap_lock->owned_by_self() ||
          (SafepointSynchronize::is_at_safepoint() &&
           Thread::current()->is_VM_thread()),
@@ -805,7 +808,7 @@ inline HeapWord* ContiguousSpace::allocate_impl(size_t size,
 
 // This version is lock-free.
 inline HeapWord* ContiguousSpace::par_allocate_impl(size_t size,
-                                                    HeapWord* const end_value) {
+						    HeapWord* const end_value) {
   do {
     HeapWord* obj = top();
     if (pointer_delta(end_value, obj) >= size) {
@@ -815,8 +818,8 @@ inline HeapWord* ContiguousSpace::par_allocate_impl(size_t size,
       //  the old top value: the exchange succeeded
       //  otherwise: the new value of the top is returned.
       if (result == obj) {
-        assert(is_aligned(obj) && is_aligned(new_top), "checking alignment");
-        return obj;
+	assert(is_aligned(obj) && is_aligned(new_top), "checking alignment");
+	return obj;
       }
     } else {
       return NULL;
@@ -835,7 +838,7 @@ HeapWord* ContiguousSpace::par_allocate(size_t size) {
 }
 
 void ContiguousSpace::allocate_temporary_filler(int factor) {
-  // allocate temporary type array decreasing free size with factor 'factor'
+  // allocate temporary type array decreasing free size with factor 'factor' 
   assert(factor >= 0, "just checking");
   size_t size = pointer_delta(end(), top());
 
@@ -899,8 +902,8 @@ HeapWord* ConcEdenSpace::par_allocate(size_t size)
       //  the old top value: the exchange succeeded
       //  otherwise: the new value of the top is returned.
       if (result == obj) {
-        assert(is_aligned(obj) && is_aligned(new_top), "checking alignment");
-        return obj;
+	assert(is_aligned(obj) && is_aligned(new_top), "checking alignment");
+	return obj;
       }
     } else {
       return NULL;
@@ -919,7 +922,7 @@ HeapWord* OffsetTableContigSpace::cross_threshold(HeapWord* start, HeapWord* end
 }
 
 OffsetTableContigSpace::OffsetTableContigSpace(BlockOffsetSharedArray* sharedOffsetArray,
-                                               MemRegion mr) :
+					       MemRegion mr) :
   _offsets(sharedOffsetArray, mr),
   _par_alloc_lock(Mutex::leaf, "OffsetTableContigSpace par alloc lock", true)
 {

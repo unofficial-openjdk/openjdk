@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_Compilation.hpp	1.88 07/05/17 15:49:31 JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BlockBegin;
@@ -55,7 +58,7 @@ class Compilation: public StackObj {
   friend class CompilationResourceObj;
  private:
 
-  static Arena* _arena;
+  static Arena* _arena; 
   static Arena* arena() { return _arena; }
 
   static Compilation* _compilation;
@@ -98,7 +101,7 @@ class Compilation: public StackObj {
 
   ExceptionInfoList* exception_info_list() const { return _exception_info_list; }
   ExceptionHandlerTable* exception_handler_table() { return &_exception_handler_table; }
-
+  
   LinearScan* allocator()                          { return _allocator;      }
   void        set_allocator(LinearScan* allocator) { _allocator = allocator; }
 
@@ -176,7 +179,7 @@ class Compilation: public StackObj {
 };
 
 
-// Macro definitions for unified bailout-support
+// Macro definitions for unified bailout-support 
 // The methods bailout() and bailed_out() are present in all classes
 // that might bailout, but forward all calls to Compilation
 #define BAILOUT(msg)               { bailout(msg); return;              }
@@ -190,7 +193,7 @@ class InstructionMark: public StackObj {
  private:
   Compilation* _compilation;
   Instruction*  _previous;
-
+  
  public:
   InstructionMark(Compilation* compilation, Instruction* instr) {
     _compilation = compilation;

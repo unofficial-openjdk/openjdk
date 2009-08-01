@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)adlparse.hpp	1.79 07/05/05 17:05:00 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ADLPARSE.HPP - Definitions for Architecture Description Language Parser
@@ -217,14 +220,14 @@ protected:
   // Return the next replacement variable identifier
   char *get_rep_var_ident(void);
   // Skip first '$' and make a duplicate of the string
-  char *get_rep_var_ident_dup(void);
+  char *get_rep_var_ident_dup(void);     
   // Return the next token given as a signed integer.
   int   get_int(void);
   // Return the next token, a relational operator { ==, !=, <=, >= }
   char *get_relation_dup(void);
 
-  void  get_oplist(NameList &parameters, FormDict &operands);// Parse type-operand pairs
-  void  get_effectlist(FormDict &effects, FormDict &operands); // Parse effect-operand pairs
+  void  get_oplist(NameList &parameters, FormDict &operands);// Parse type-operand pairs 
+  void  get_effectlist(FormDict &effects, FormDict &operands); // Parse effect-operand pairs 
   // Return the contents of a parenthesized expression.
   // Requires initial '(' and consumes final ')', which is replaced by '\0'.
   char *get_paren_expr(const char *description, bool include_location = false);
@@ -277,3 +280,5 @@ public:
   static bool equivalent_expressions(const char* str1, const char* str2);
   static void trim(char* &token);  // trim leading & trailing spaces
 };
+
+

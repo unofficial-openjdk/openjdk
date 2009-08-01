@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)aprofiler.hpp	1.32 07/05/05 17:06:42 JVM"
+#endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A simple allocation profiler for Java. The profiler collects and prints
 // the number and total size of instances allocated per class, including
 // array classes.
 //
-// The profiler is currently global for all threads. It can be changed to a
+// The profiler is currently global for all threads. It can be changed to a 
 // per threads profiler by keeping a more elaborate data structure and calling
 // iterate_since_last_scavenge at thread switches.
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -30,34 +30,34 @@ import sun.jvm.hotspot.utilities.*;
 
 public class JSJavaClass extends JSJavaInstance {
     public JSJavaClass(Instance instance, JSJavaKlass jk,  JSJavaFactory fac) {
-        super(instance, fac);
-        this.jklass = jk;
+	super(instance, fac);
+	this.jklass = jk;
     }
 
     public JSJavaKlass getJSJavaKlass() {
-        return jklass;
+	return jklass;
     }
 
     public String toString() {
-        StringBuffer buf = new StringBuffer();
-        buf.append("Class (address=");
-        buf.append(getOop().getHandle());
-        buf.append(", name=");
-        buf.append(jklass.getName());
-        buf.append(')');
-        return buf.toString();
+	StringBuffer buf = new StringBuffer();
+	buf.append("Class (address=");
+	buf.append(getOop().getHandle());
+	buf.append(", name=");
+	buf.append(jklass.getName());
+	buf.append(')');
+	return buf.toString();
     }
-
+  
     protected Object getFieldValue(String name) {
         return jklass.getMetaClassFieldValue(name);
     }
 
     protected String[] getFieldNames() {
-        return jklass.getMetaClassFieldNames();
+	return jklass.getMetaClassFieldNames(); 
     }
 
     protected boolean hasField(String name) {
-        return jklass.hasMetaClassField(name);
+	return jklass.hasMetaClassField(name);
     }
 
     private JSJavaKlass jklass;

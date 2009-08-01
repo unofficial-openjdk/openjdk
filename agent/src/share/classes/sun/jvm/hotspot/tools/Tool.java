@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools;
@@ -31,7 +31,7 @@ import sun.jvm.hotspot.bugspot.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.debugger.*;
 
-// generic command line or GUI tool.
+// generic command line or GUI tool. 
 // override run & code main as shown below.
 
 public abstract class Tool implements Runnable {
@@ -75,7 +75,7 @@ public abstract class Tool implements Runnable {
    protected void printUsage() {
       String name = null;
       if (needsJavaPrefix()) {
-         name = "java " + getName();
+	 name = "java " + getName();
       } else {
          name = getName();
       }
@@ -101,7 +101,7 @@ public abstract class Tool implements Runnable {
 
    /*
       Derived class main should be of the following form:
-
+  
       public static void main(String[] args) {
          <derived class> obj = new <derived class>;
          obj.start(args);
@@ -123,7 +123,7 @@ public abstract class Tool implements Runnable {
 
       // Attempt to handle -h or -help or some invalid flag
       if (args[0].startsWith("-")) {
-          usage();
+	  usage();
       }
 
       PrintStream err = System.err;
@@ -137,19 +137,19 @@ public abstract class Tool implements Runnable {
         case 1:
            try {
               pid = Integer.parseInt(args[0]);
-              debugeeType = DEBUGEE_PID;
+              debugeeType = DEBUGEE_PID; 
            } catch (NumberFormatException e) {
               // try remote server
               remoteServer = args[0];
-              debugeeType  = DEBUGEE_REMOTE;
+	      debugeeType  = DEBUGEE_REMOTE;
            }
-           break;
+	   break;
 
         case 2:
            executableName = args[0];
            coreFileName   = args[1];
            debugeeType    = DEBUGEE_CORE;
-           break;
+	   break;
 
         default:
            usage();
@@ -219,7 +219,7 @@ public abstract class Tool implements Runnable {
          }
 
          run();
-      } else { // not a java process or core
+      } else { // not a java process or core 
          if (requiresVM()) {
             err.println(getName() + " requires a java VM process/core!");
          } else {
@@ -228,3 +228,4 @@ public abstract class Tool implements Runnable {
       }
    }
 }
+

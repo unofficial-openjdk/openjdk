@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -63,11 +63,11 @@ public class ObjArrayKlass extends ArrayKlass {
     long arrayFlags = 0L;
     if ((elementFlags & (JVM_ACC_PUBLIC | JVM_ACC_PROTECTED)) != 0) {
        // The array type is public if the component type is public or protected
-       arrayFlags = JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC;
+       arrayFlags = JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC;  
     } else {
        // The array type is private if the component type is private
        arrayFlags = JVM_ACC_ABSTRACT | JVM_ACC_FINAL;
-    }
+    }  
     return arrayFlags;
   }
 
@@ -94,7 +94,7 @@ public class ObjArrayKlass extends ArrayKlass {
       // allocate klass
       throw new RuntimeException("Can not allocate array klasses in debugging system");
     }
-
+    
     if (orNull) {
       return ak.arrayKlassOrNull(n);
     }

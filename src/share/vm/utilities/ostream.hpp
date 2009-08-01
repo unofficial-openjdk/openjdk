@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)ostream.hpp	1.44 07/09/28 10:22:57 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Output streams for printing
-//
+// 
 // Printing guidelines:
 // Where possible, please use tty->print() and tty->print_cr().
 // For product mode VM warnings use warning() which internally uses tty.
@@ -111,8 +114,8 @@ class outputStream : public ResourceObj {
 };
 
 // standard output
-                                // ANSI C++ name collision
-extern outputStream* tty;           // tty output
+				// ANSI C++ name collision
+extern outputStream* tty;	    // tty output
 extern outputStream* gclog_or_tty;  // stream for gc log if -Xloggc:<f>, or tty
 
 // advisory locking for the shared tty stream:
@@ -194,7 +197,7 @@ class staticBufferStream : public outputStream {
   outputStream* _outer_stream;
  public:
   staticBufferStream(char* buffer, size_t buflen,
-                     outputStream *outer_stream);
+		     outputStream *outer_stream);
   ~staticBufferStream() {};
   virtual void write(const char* c, size_t len);
   void flush();
@@ -236,7 +239,7 @@ class networkStream : public bufferedStream {
   public:
     networkStream();
     ~networkStream();
-
+  
     bool connect(const char *host, short port);
     bool is_open() const { return _socket != -1; }
     int read(char *buf, size_t len);

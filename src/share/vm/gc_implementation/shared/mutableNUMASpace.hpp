@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)mutableNUMASpace.hpp	1.8 07/05/05 17:05:34 JVM"
+#endif
 /*
  * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,19 +22,19 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /*
  *    The NUMA-aware allocator (MutableNUMASpace) is basically a modification
  * of MutableSpace which preserves interfaces but implements different
  * functionality. The space is split into chunks for each locality group
- * (resizing for adaptive size policy is also supported). For each thread
+ * (resizing for adaptive size policy is also supported). For each thread 
  * allocations are performed in the chunk corresponding to the home locality
- * group of the thread. Whenever any chunk fills-in the young generation
+ * group of the thread. Whenever any chunk fills-in the young generation 
  * collection occurs.
  *   The chunks can be also be adaptively resized. The idea behind the adaptive
- * sizing is to reduce the loss of the space in the eden due to fragmentation.
+ * sizing is to reduce the loss of the space in the eden due to fragmentation. 
  * The main cause of fragmentation is uneven allocation rates of threads.
  * The allocation rate difference between locality groups may be caused either by
  * application specifics or by uneven LWP distribution by the OS. Besides,
@@ -44,8 +47,8 @@
  * bytes that can be moved during the adaptation phase.
  *   Chunks may contain pages from a wrong locality group. The page-scanner has
  * been introduced to address the problem. Remote pages typically appear due to
- * the memory shortage in the target locality group. Besides Solaris would
- * allocate a large page from the remote locality group even if there are small
+ * the memory shortage in the target locality group. Besides Solaris would 
+ * allocate a large page from the remote locality group even if there are small 
  * local pages available. The page-scanner scans the pages right after the
  * collection and frees remote pages in hope that subsequent reallocation would
  * be more successful. This approach proved to be useful on systems with high

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)assembler_sparc.inline.hpp	1.79 07/05/05 17:04:24 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline void MacroAssembler::pd_patch_instruction(address branch, address target) {
@@ -67,22 +70,22 @@ inline void Assembler::add(    Register s1, Register s2, Register d )           
 inline void Assembler::add(    Register s1, int simm13a, Register d, relocInfo::relocType rtype ) { emit_data( op(arith_op) | rd(d) | op3(add_op3) | rs1(s1) | immed(true) | simm(simm13a, 13), rtype ); }
 inline void Assembler::add(    Register s1, int simm13a, Register d, RelocationHolder const& rspec ) { emit_data( op(arith_op) | rd(d) | op3(add_op3) | rs1(s1) | immed(true) | simm(simm13a, 13), rspec ); }
 inline void Assembler::add(    const Address& a, Register d, int offset) { add( a.base(), a.disp() + offset, d, a.rspec(offset)); }
-
+  
 inline void Assembler::bpr( RCondition c, bool a, Predict p, Register s1, address d, relocInfo::relocType rt ) { v9_only();  emit_data( op(branch_op) | annul(a) | cond(c) | op2(bpr_op2) | wdisp16(intptr_t(d), intptr_t(pc())) | predict(p) | rs1(s1), rt);  has_delay_slot(); }
 inline void Assembler::bpr( RCondition c, bool a, Predict p, Register s1, Label& L) { bpr( c, a, p, s1, target(L)); }
-
+      
 inline void Assembler::fb( Condition c, bool a, address d, relocInfo::relocType rt ) { v9_dep();  emit_data( op(branch_op) | annul(a) | cond(c) | op2(fb_op2) | wdisp(intptr_t(d), intptr_t(pc()), 22), rt);  has_delay_slot(); }
 inline void Assembler::fb( Condition c, bool a, Label& L ) { fb(c, a, target(L)); }
-
+    
 inline void Assembler::fbp( Condition c, bool a, CC cc, Predict p, address d, relocInfo::relocType rt ) { v9_only();  emit_data( op(branch_op) | annul(a) | cond(c) | op2(fbp_op2) | branchcc(cc) | predict(p) | wdisp(intptr_t(d), intptr_t(pc()), 19), rt);  has_delay_slot(); }
 inline void Assembler::fbp( Condition c, bool a, CC cc, Predict p, Label& L ) { fbp(c, a, cc, p, target(L)); }
 
 inline void Assembler::cb( Condition c, bool a, address d, relocInfo::relocType rt ) { v8_only();  emit_data( op(branch_op) | annul(a) | cond(c) | op2(cb_op2) | wdisp(intptr_t(d), intptr_t(pc()), 22), rt);  has_delay_slot(); }
 inline void Assembler::cb( Condition c, bool a, Label& L ) { cb(c, a, target(L)); }
-
+    
 inline void Assembler::br( Condition c, bool a, address d, relocInfo::relocType rt ) { v9_dep();   emit_data( op(branch_op) | annul(a) | cond(c) | op2(br_op2) | wdisp(intptr_t(d), intptr_t(pc()), 22), rt);  has_delay_slot(); }
 inline void Assembler::br( Condition c, bool a, Label& L ) { br(c, a, target(L)); }
-
+    
 inline void Assembler::bp( Condition c, bool a, CC cc, Predict p, address d, relocInfo::relocType rt ) { v9_only();  emit_data( op(branch_op) | annul(a) | cond(c) | op2(bp_op2) | branchcc(cc) | predict(p) | wdisp(intptr_t(d), intptr_t(pc()), 19), rt);  has_delay_slot(); }
 inline void Assembler::bp( Condition c, bool a, CC cc, Predict p, Label& L ) { bp(c, a, cc, p, target(L)); }
 
@@ -107,7 +110,7 @@ inline void Assembler::ldfsr(  Register s1, Register s2) { v9_dep();   emit_long
 inline void Assembler::ldfsr(  Register s1, int simm13a) { v9_dep();   emit_data( op(ldst_op) |             op3(ldfsr_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 inline void Assembler::ldxfsr( Register s1, Register s2) { v9_only();  emit_long( op(ldst_op) | rd(G1)    | op3(ldfsr_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::ldxfsr( Register s1, int simm13a) { v9_only();  emit_data( op(ldst_op) | rd(G1)    | op3(ldfsr_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
-
+  
 inline void Assembler::ldc(   Register s1, Register s2, int crd) { v8_only();  emit_long( op(ldst_op) | fcn(crd) | op3(ldc_op3  ) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::ldc(   Register s1, int simm13a, int crd) { v8_only();  emit_data( op(ldst_op) | fcn(crd) | op3(ldc_op3  ) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 inline void Assembler::lddc(  Register s1, Register s2, int crd) { v8_only();  emit_long( op(ldst_op) | fcn(crd) | op3(lddc_op3 ) | rs1(s1) | rs2(s2) ); }
@@ -133,9 +136,9 @@ inline void Assembler::ldx(   Register s1, Register s2, Register d) { v9_only();
 inline void Assembler::ldx(   Register s1, int simm13a, Register d) { v9_only();  emit_data( op(ldst_op) | rd(d) | op3(ldx_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 inline void Assembler::ldd(   Register s1, Register s2, Register d) { v9_dep(); assert(d->is_even(), "not even"); emit_long( op(ldst_op) | rd(d) | op3(ldd_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::ldd(   Register s1, int simm13a, Register d) { v9_dep(); assert(d->is_even(), "not even"); emit_data( op(ldst_op) | rd(d) | op3(ldd_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
-
+      
 #ifdef _LP64
-// Make all 32 bit loads signed so 64 bit registers maintain proper sign
+// Make all 32 bit loads signed so 64 bit registers maintain proper sign 
 inline void Assembler::ld(  Register s1, Register s2, Register d) { ldsw( s1, s2, d); }
 inline void Assembler::ld(  Register s1, int simm13a, Register d) { ldsw( s1, simm13a, d); }
 #else
@@ -171,7 +174,7 @@ inline void Assembler::rett( Register s1, int simm13a, relocInfo::relocType rt) 
 inline void Assembler::sethi( int imm22a, Register d, RelocationHolder const& rspec ) { emit_data( op(branch_op) | rd(d) | op2(sethi_op2) | hi22(imm22a), rspec); }
 
   // pp 222
-
+  
 inline void Assembler::stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2) { emit_long( op(ldst_op) | fd(d, w) | alt_op3(stf_op3, w) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, int simm13a) { emit_data( op(ldst_op) | fd(d, w) | alt_op3(stf_op3, w) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 
@@ -183,7 +186,7 @@ inline void Assembler::stxfsr( Register s1, Register s2) { v9_only();  emit_long
 inline void Assembler::stxfsr( Register s1, int simm13a) { v9_only();  emit_data( op(ldst_op) | rd(G1)    | op3(stfsr_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 
   // p 226
-
+  
 inline void Assembler::stb(  Register d, Register s1, Register s2) { emit_long( op(ldst_op) | rd(d) | op3(stb_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::stb(  Register d, Register s1, int simm13a) { emit_data( op(ldst_op) | rd(d) | op3(stb_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 inline void Assembler::sth(  Register d, Register s1, Register s2) { emit_long( op(ldst_op) | rd(d) | op3(sth_op3) | rs1(s1) | rs2(s2) ); }
@@ -220,7 +223,7 @@ inline void Assembler::stdcq(  int crd, Register s1, int simm13a) { v8_only();  
 
 
 // pp 231
-
+  
 inline void Assembler::swap(    Register s1, Register s2, Register d) { v9_dep();  emit_long( op(ldst_op) | rd(d) | op3(swap_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::swap(    Register s1, int simm13a, Register d) { v9_dep();  emit_data( op(ldst_op) | rd(d) | op3(swap_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 
@@ -230,21 +233,21 @@ inline void Assembler::swap(    Address& a, Register d, int offset ) { relocate(
 // Use the right loads/stores for the platform
 inline void MacroAssembler::ld_ptr( Register s1, Register s2, Register d ) {
 #ifdef _LP64
-  Assembler::ldx( s1, s2, d);
+  Assembler::ldx( s1, s2, d); 
 #else
-  Assembler::ld(  s1, s2, d);
+  Assembler::ld(  s1, s2, d); 
 #endif
 }
 
 inline void MacroAssembler::ld_ptr( Register s1, int simm13a, Register d ) {
 #ifdef _LP64
-  Assembler::ldx( s1, simm13a, d);
+  Assembler::ldx( s1, simm13a, d); 
 #else
-  Assembler::ld(  s1, simm13a, d);
+  Assembler::ld(  s1, simm13a, d); 
 #endif
 }
 
-inline void MacroAssembler::ld_ptr( const Address& a, Register d, int offset ) {
+inline void MacroAssembler::ld_ptr( const Address& a, Register d, int offset ) { 
 #ifdef _LP64
   Assembler::ldx(  a, d, offset );
 #else
@@ -254,21 +257,21 @@ inline void MacroAssembler::ld_ptr( const Address& a, Register d, int offset ) {
 
 inline void MacroAssembler::st_ptr( Register d, Register s1, Register s2 ) {
 #ifdef _LP64
-  Assembler::stx( d, s1, s2);
+  Assembler::stx( d, s1, s2); 
 #else
-  Assembler::st( d, s1, s2);
+  Assembler::st( d, s1, s2); 
 #endif
 }
 
 inline void MacroAssembler::st_ptr( Register d, Register s1, int simm13a ) {
 #ifdef _LP64
-  Assembler::stx( d, s1, simm13a);
+  Assembler::stx( d, s1, simm13a); 
 #else
-  Assembler::st( d, s1, simm13a);
+  Assembler::st( d, s1, simm13a); 
 #endif
 }
 
-inline void MacroAssembler::st_ptr(  Register d, const Address& a, int offset) {
+inline void MacroAssembler::st_ptr(  Register d, const Address& a, int offset) { 
 #ifdef _LP64
   Assembler::stx(  d, a, offset);
 #else
@@ -277,23 +280,23 @@ inline void MacroAssembler::st_ptr(  Register d, const Address& a, int offset) {
 }
 
 // Use the right loads/stores for the platform
-inline void MacroAssembler::ld_long( Register s1, Register s2, Register d ) {
+inline void MacroAssembler::ld_long( Register s1, Register s2, Register d ) { 
 #ifdef _LP64
-  Assembler::ldx(s1, s2, d);
+  Assembler::ldx(s1, s2, d); 
 #else
-  Assembler::ldd(s1, s2, d);
+  Assembler::ldd(s1, s2, d); 
 #endif
 }
 
-inline void MacroAssembler::ld_long( Register s1, int simm13a, Register d ) {
+inline void MacroAssembler::ld_long( Register s1, int simm13a, Register d ) { 
 #ifdef _LP64
-  Assembler::ldx(s1, simm13a, d);
+  Assembler::ldx(s1, simm13a, d); 
 #else
-  Assembler::ldd(s1, simm13a, d);
+  Assembler::ldd(s1, simm13a, d); 
 #endif
 }
 
-inline void MacroAssembler::ld_long( const Address& a, Register d, int offset ) {
+inline void MacroAssembler::ld_long( const Address& a, Register d, int offset ) { 
 #ifdef _LP64
   Assembler::ldx(a, d, offset );
 #else
@@ -303,21 +306,21 @@ inline void MacroAssembler::ld_long( const Address& a, Register d, int offset ) 
 
 inline void MacroAssembler::st_long( Register d, Register s1, Register s2 ) {
 #ifdef _LP64
-  Assembler::stx(d, s1, s2);
+  Assembler::stx(d, s1, s2); 
 #else
-  Assembler::std(d, s1, s2);
+  Assembler::std(d, s1, s2); 
 #endif
 }
 
 inline void MacroAssembler::st_long( Register d, Register s1, int simm13a ) {
 #ifdef _LP64
-  Assembler::stx(d, s1, simm13a);
+  Assembler::stx(d, s1, simm13a); 
 #else
-  Assembler::std(d, s1, simm13a);
+  Assembler::std(d, s1, simm13a); 
 #endif
 }
 
-inline void MacroAssembler::st_long( Register d, const Address& a, int offset ) {
+inline void MacroAssembler::st_long( Register d, const Address& a, int offset ) { 
 #ifdef _LP64
   Assembler::stx(d, a, offset);
 #else
@@ -362,14 +365,14 @@ inline void MacroAssembler::srl_ptr( Register s1, int imm6a,   Register d ) {
 // Use the right branch for the platform
 
 inline void MacroAssembler::br( Condition c, bool a, Predict p, address d, relocInfo::relocType rt ) {
-  if (VM_Version::v9_instructions_work())
+  if (VM_Version::v9_instructions_work())             
     Assembler::bp(c, a, icc, p, d, rt);
-  else
-    Assembler::br(c, a, d, rt);
+  else          
+    Assembler::br(c, a, d, rt); 
 }
 
-inline void MacroAssembler::br( Condition c, bool a, Predict p, Label& L ) {
-  br(c, a, p, target(L));
+inline void MacroAssembler::br( Condition c, bool a, Predict p, Label& L ) { 
+  br(c, a, p, target(L)); 
 }
 
 
@@ -383,12 +386,12 @@ inline void MacroAssembler::brx( Condition c, bool a, Predict p, address d, relo
 #endif
 }
 
-inline void MacroAssembler::brx( Condition c, bool a, Predict p, Label& L ) {
-  brx(c, a, p, target(L));
+inline void MacroAssembler::brx( Condition c, bool a, Predict p, Label& L ) { 
+  brx(c, a, p, target(L)); 
 }
 
-inline void MacroAssembler::ba( bool a, Label& L ) {
-  br(always, a, pt, L);
+inline void MacroAssembler::ba( bool a, Label& L ) { 
+  br(always, a, pt, L); 
 }
 
 // Warning: V9 only functions
@@ -404,11 +407,11 @@ inline void MacroAssembler::fb( Condition c, bool a, Predict p, address d, reloc
   if (VM_Version::v9_instructions_work())
     fbp(c, a, fcc0, p, d, rt);
   else
-    Assembler::fb(c, a, d, rt);
+    Assembler::fb(c, a, d, rt); 
 }
 
-inline void MacroAssembler::fb( Condition c, bool a, Predict p, Label& L ) {
-  fb(c, a, p, target(L));
+inline void MacroAssembler::fb( Condition c, bool a, Predict p, Label& L ) { 
+  fb(c, a, p, target(L)); 
 }
 
 inline void MacroAssembler::fbp( Condition c, bool a, CC cc, Predict p, address d, relocInfo::relocType rt ) {
@@ -423,14 +426,14 @@ inline void MacroAssembler::jmp( Register s1, Register s2 ) { jmpl( s1, s2, G0 )
 inline void MacroAssembler::jmp( Register s1, int simm13a, RelocationHolder const& rspec ) { jmpl( s1, simm13a, G0, rspec); }
 
 // Call with a check to see if we need to deal with the added
-// expense of relocation and if we overflow the displacement
+// expense of relocation and if we overflow the displacement 
 // of the quick call instruction./
 // Check to see if we have to deal with relocations
-inline void MacroAssembler::call( address d, relocInfo::relocType rt ) {
+inline void MacroAssembler::call( address d, relocInfo::relocType rt ) { 
 #ifdef _LP64
   intptr_t disp;
   // NULL is ok because it will be relocated later.
-  // Must change NULL to a reachable address in order to
+  // Must change NULL to a reachable address in order to 
   // pass asserts here and in wdisp.
   if ( d == NULL )
     d = pc();
@@ -453,7 +456,7 @@ inline void MacroAssembler::call( address d, relocInfo::relocType rt ) {
 }
 
 inline void MacroAssembler::call( Label& L,   relocInfo::relocType rt ) {
-  MacroAssembler::call( target(L), rt);
+  MacroAssembler::call( target(L), rt); 
 }
 
 
@@ -510,7 +513,7 @@ inline void MacroAssembler::load_address( Address& a, int offset ) {
 #else
   if (a.hi() == 0 && a.rtype() == relocInfo::none) {
     set(a.disp() + offset, a.base());
-  }
+  } 
   else {
     sethi(a);
     add(a, a.base(), offset);
@@ -569,7 +572,7 @@ inline void MacroAssembler::jump_to( Address& a, int offset ) {
   jumpl_to( a, G0, offset );
 }
 
-
+ 
 inline void MacroAssembler::set_oop( jobject obj, Register d ) {
   set_oop(allocate_oop_address(obj, d));
 }
@@ -597,9 +600,9 @@ inline void MacroAssembler::store_argument( Register s, Argument& a ) {
   if (a.is_register())
     mov(s, a.as_register());
   else
-    st_ptr (s, a.as_address());         // ABI says everything is right justified.
+    st_ptr (s, a.as_address());		// ABI says everything is right justified.
 }
-
+ 
 inline void MacroAssembler::store_ptr_argument( Register s, Argument& a ) {
   if (a.is_register())
     mov(s, a.as_register());
@@ -614,7 +617,7 @@ inline void MacroAssembler::store_float_argument( FloatRegister s, Argument& a )
 // V9 ABI has F1, F3, F5 are used to pass instead of O0, O1, O2
     fmov(FloatRegisterImpl::S, s, a.as_float_register() );
   else
-    // Floats are stored in the high half of the stack entry
+    // Floats are stored in the high half of the stack entry 
     // The low half is undefined per the ABI.
     stf(FloatRegisterImpl::S, s, a.as_address(), sizeof(jfloat));
 }
@@ -626,7 +629,7 @@ inline void MacroAssembler::store_double_argument( FloatRegister s, Argument& a 
   else
     stf(FloatRegisterImpl::D, s, a.as_address());
 }
-
+ 
 inline void MacroAssembler::store_long_argument( Register s, Argument& a ) {
   if (a.is_register())
     mov(s, a.as_register());
@@ -651,7 +654,7 @@ inline bool MacroAssembler::membar_has_effect( Membar_mask_bits const7a ) {
   if( !os::is_MP() ) return false;  // Not needed on single CPU
   if( VM_Version::v9_instructions_work() ) {
     const Membar_mask_bits effective_mask =
-        Membar_mask_bits(const7a & ~(LoadLoad | LoadStore | StoreStore));
+	Membar_mask_bits(const7a & ~(LoadLoad | LoadStore | StoreStore));
     return (effective_mask != 0);
   } else {
     return true;
@@ -668,7 +671,7 @@ inline void MacroAssembler::membar( Membar_mask_bits const7a ) {
     // of the mmask subfield of const7a that does anything that isn't done
     // implicitly is StoreLoad.
     const Membar_mask_bits effective_mask =
-        Membar_mask_bits(const7a & ~(LoadLoad | LoadStore | StoreStore));
+	Membar_mask_bits(const7a & ~(LoadLoad | LoadStore | StoreStore));
     if ( effective_mask != 0 ) {
       Assembler::membar( effective_mask );
     }

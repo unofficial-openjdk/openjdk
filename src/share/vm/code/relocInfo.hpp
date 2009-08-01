@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)relocInfo.hpp	1.87 07/06/19 09:08:11 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Types in this file:
@@ -152,7 +155,7 @@
 //   The identity of the callee is extracted from debugging information.
 //   //%note reloc_3
 //
-// relocInfo::virtual_call_type -- a virtual call site (which includes an inline
+// relocInfo::virtual_call_type -- a virtual call site (which includes an inline 
 //                                 cache)
 //   Value:  an CodeBlob, a stub, the interpreter, or a fixup routine
 //   Instruction types: a call, plus some associated set-oop instructions
@@ -224,7 +227,7 @@
 // This uses 4 instruction words, 8 relocation halfwords,
 // and an entry (which is sharable) in the CodeBlob's oop pool,
 // for a total of 36 bytes.
-//
+// 
 // Note that the compiler is responsible for ensuring the "fldOffset" when
 // added to "%lo(myObject)" does not overflow the immediate fields of the
 // memory instructions.
@@ -248,12 +251,12 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
   friend class RelocIterator;
  public:
   enum relocType {
-    none                    =  0, // Used when no relocation should be generated
+    none	            =  0, // Used when no relocation should be generated
     oop_type                =  1, // embedded oop
     virtual_call_type       =  2, // a standard inline cache call for a virtual send
     opt_virtual_call_type   =  3, // a virtual call that has been statically bound (i.e., no IC cache)
-    static_call_type        =  4, // a static send
-    static_stub_type        =  5, // stub-entry for static send  (takes care of interpreter case)
+    static_call_type        =  4, // a static send 
+    static_stub_type        =  5, // stub-entry for static send  (takes care of interpreter case)    
     runtime_call_type       =  6, // call to fixed external routine
     external_word_type      =  7, // reference to fixed external address
     internal_word_type      =  8, // reference within the current code blob
@@ -316,7 +319,7 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
   };
 
   // accessors
- public:
+ public: 
   relocType  type()       const { return (relocType)((unsigned)_value >> nontype_width); }
   int  format()           const { return format_mask==0? 0: format_mask &
                                          ((unsigned)_value >> offset_width); }
@@ -327,9 +330,9 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
   const short* data()     const { assert(is_datalen(), "must have data");
                                   return (const short*)(this + 1); }
   int          datalen()  const { assert(is_datalen(), "must have data");
-                                  return (_value & datalen_mask); }
+				  return (_value & datalen_mask); }
   int         immediate() const { assert(is_immediate(), "must have immed");
-                                  return (_value & datalen_mask); }
+				  return (_value & datalen_mask); }
  public:
   static int addr_unit()        { return offset_unit; }
   static int offset_limit()     { return (1 << offset_width) * offset_unit; }
@@ -495,8 +498,8 @@ class RelocationHolder VALUE_OBJ_CLASS_SPEC {
 //      case relocInfo::prim_type         :
 //      case relocInfo::uncommon_type     :
 //      case relocInfo::runtime_call_type :
-//      case relocInfo::internal_word_type:
-//      case relocInfo::external_word_type:
+//      case relocInfo::internal_word_type: 
+//      case relocInfo::external_word_type: 
 //      ...
 //     }
 //   }
@@ -505,7 +508,7 @@ class RelocIterator : public StackObj {
   enum { SECT_CONSTS = 2,
          SECT_LIMIT = 3 };  // must be equal to CodeBuffer::SECT_LIMIT
   friend class Relocation;
-  friend class relocInfo;       // for change_reloc_info_for_address only
+  friend class relocInfo;	// for change_reloc_info_for_address only
   typedef relocInfo::relocType relocType;
 
  private:
@@ -586,7 +589,7 @@ class RelocIterator : public StackObj {
     return true;
   }
 
-  // accessors
+  // accessors  
   address      limit()        const { return _limit; }
   void     set_limit(address x);
   relocType    type()         const { return current()->type(); }
@@ -626,8 +629,8 @@ class RelocIterator : public StackObj {
 
 #ifndef PRODUCT
  public:
-  void print();
-  void print_current();
+  void print();  
+  void print_current();  
 #endif
 };
 
@@ -787,7 +790,7 @@ class Relocation VALUE_OBJ_CLASS_SPEC {
   address old_addr_for(address newa, const CodeBuffer* src, CodeBuffer* dest);
   address new_addr_for(address olda, const CodeBuffer* src, CodeBuffer* dest);
   void normalize_address(address& addr, const CodeSection* dest, bool allow_other_sections = false);
-
+ 
  public:
   // accessors which only make sense for a bound Relocation
   address   addr()         const { return binding()->addr(); }
@@ -856,11 +859,11 @@ class DataRelocation : public Relocation {
   virtual int    offset()                      { return 0; }
   address         value()                      = 0;
   void        set_value(address x)             { set_value(x, offset()); }
-  void        set_value(address x, intptr_t o) {
+  void        set_value(address x, intptr_t o) { 
     if (addr_in_const())
       *(address*)addr() = x;
-    else
-      pd_set_data_value(x, o);
+    else 
+      pd_set_data_value(x, o); 
   }
 
   // The "o" (displacement) argument is relevant only to split relocations
@@ -963,7 +966,7 @@ class virtual_call_Relocation : public CallRelocation {
   address _first_oop;               // location of first set-oop instruction
   address _oop_limit;               // search limit for set-oop instructions
 
-  friend class RelocIterator;
+  friend class RelocIterator; 
   virtual_call_Relocation() { }
 
 
@@ -1002,7 +1005,7 @@ class opt_virtual_call_Relocation : public CallRelocation {
   }
 
  private:
-  friend class RelocIterator;
+  friend class RelocIterator; 
   opt_virtual_call_Relocation() { }
 
  public:
@@ -1024,7 +1027,7 @@ class static_call_Relocation : public CallRelocation {
   }
 
  private:
-  friend class RelocIterator;
+  friend class RelocIterator; 
   static_call_Relocation() { }
 
  public:
@@ -1051,7 +1054,7 @@ class static_stub_Relocation : public Relocation {
     _static_call = static_call;
   }
 
-  friend class RelocIterator;
+  friend class RelocIterator; 
   static_stub_Relocation() { }
 
  public:
@@ -1075,7 +1078,7 @@ class runtime_call_Relocation : public CallRelocation {
   }
 
  private:
-  friend class RelocIterator;
+  friend class RelocIterator; 
   runtime_call_Relocation() { }
 
  public:
@@ -1107,7 +1110,7 @@ class external_word_Relocation : public DataRelocation {
     _target = target;
   }
 
-  friend class RelocIterator;
+  friend class RelocIterator; 
   external_word_Relocation() { }
 
  public:
@@ -1151,7 +1154,7 @@ class internal_word_Relocation : public DataRelocation {
   address _target;                  // address in CodeBlob
   int     _section;                 // section providing base address, if any
 
-  friend class RelocIterator;
+  friend class RelocIterator; 
   internal_word_Relocation() { }
 
   // bit-width of LSB field in packed offset, if section >= 0
@@ -1173,7 +1176,7 @@ class internal_word_Relocation : public DataRelocation {
 
 class section_word_Relocation : public internal_word_Relocation {
   relocInfo::relocType type() { return relocInfo::section_word_type; }
-
+  
  public:
   static RelocationHolder spec(address target, int section) {
     RelocationHolder rh = newHolder();
@@ -1192,7 +1195,7 @@ class section_word_Relocation : public internal_word_Relocation {
   void unpack_data();
 
  private:
-  friend class RelocIterator;
+  friend class RelocIterator; 
   section_word_Relocation() { }
 };
 
@@ -1251,7 +1254,7 @@ class breakpoint_Relocation : public Relocation {
 
   breakpoint_Relocation(int kind, address target, bool internal_target);
 
-  friend class RelocIterator;
+  friend class RelocIterator; 
   breakpoint_Relocation() { }
 
   short    bits()       const { return _bits; }
@@ -1275,8 +1278,8 @@ class breakpoint_Relocation : public Relocation {
   bool removable()      const { return (bits() & removable_attr) != 0; }
   bool settable()       const { return (bits() &  settable_attr) != 0; }
 
-  void set_enabled(bool b);     // to activate, you must also say set_active
-  void set_active(bool b);      // actually inserts bpt (must be enabled 1st)
+  void set_enabled(bool b);	// to activate, you must also say set_active
+  void set_active(bool b);	// actually inserts bpt (must be enabled 1st)
 
   // data is packed as 16 bits, followed by the target (1 or 2 words), followed
   // if necessary by empty storage for saving away original instruction bytes.
@@ -1291,7 +1294,7 @@ class breakpoint_Relocation : public Relocation {
 
 
 // We know all the xxx_Relocation classes, so now we can define these:
-#define EACH_CASE(name)                                         \
+#define EACH_CASE(name)                         		\
 inline name##_Relocation* RelocIterator::name##_reloc() {       \
   assert(type() == relocInfo::name##_type, "type must agree");  \
   /* The purpose of the placed "new" is to re-use the same */   \
@@ -1314,8 +1317,8 @@ class PatchingRelocIterator : public RelocIterator {
  private:
   RelocIterator _init_state;
 
-  void prepass();               // deactivates all breakpoints
-  void postpass();              // reactivates all enabled breakpoints
+  void prepass();		// deactivates all breakpoints
+  void postpass();		// reactivates all enabled breakpoints
 
   // do not copy these puppies; it would have unpredictable side effects
   // these are private and have no bodies defined because they should not be called
@@ -1328,3 +1331,4 @@ class PatchingRelocIterator : public RelocIterator {
 
   ~PatchingRelocIterator()                           { postpass(); }
 };
+

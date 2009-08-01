@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)handles.hpp	1.120 07/05/05 17:06:47 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,24 +22,24 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //------------------------------------------------------------------------------------------------------------------------
-// In order to preserve oops during garbage collection, they should be
+// In order to preserve oops during garbage collection, they should be 
 // allocated and passed around via Handles within the VM. A handle is
 // simply an extra indirection allocated in a thread local handle area.
-//
+// 
 // A handle is a ValueObj, so it can be passed around as a value, can
 // be used as a parameter w/o using &-passing, and can be returned as a
-// return value.
+// return value. 
 //
 // oop parameters and return types should be Handles whenever feasible.
-//
+// 
 // Handles are declared in a straight-forward manner, e.g.
 //
 //   oop obj = ...;
-//   Handle h1(obj);              // allocate new handle
+//   Handle h1(obj);              // allocate new handle 
 //   Handle h2(thread, obj);      // faster allocation when current thread is known
 //   Handle h3;                   // declare handle only, no allocation occurs
 //   ...
@@ -45,7 +48,7 @@
 //   h1->print();                 // invoking operation on oop
 //
 // Handles are specialized for different oop types to provide extra type
-// information and avoid unnecessary casting. For each oop type xxxOop
+// information and avoid unnecessary casting. For each oop type xxxOop 
 // there is a corresponding handle called xxxHandle, e.g.
 //
 //   oop           Handle
@@ -89,7 +92,7 @@ class Handle VALUE_OBJ_CLASS_SPEC {
   oop     operator -> () const                   { return non_null_obj(); }
   bool    operator == (oop o) const              { return obj() == o; }
   bool    operator == (const Handle& h) const          { return obj() == h.obj(); }
-
+   
   // Null checks
   bool    is_null() const                        { return _handle == NULL; }
   bool    not_null() const                       { return _handle != NULL; }
@@ -102,7 +105,7 @@ class Handle VALUE_OBJ_CLASS_SPEC {
   // Constructor takes a dummy argument to prevent unintentional type conversion in C++.
   Handle(oop *handle, bool dummy)                { _handle = handle; }
 
-  // Raw handle access. Allows easy duplication of Handles. This can be very unsafe
+  // Raw handle access. Allows easy duplication of Handles. This can be very unsafe 
   // since duplicates is only valid as long as original handle is alive.
   oop* raw_value()                               { return _handle; }
   static oop raw_resolve(oop *handle)            { return handle == NULL ? (oop)NULL : *handle; }
@@ -116,7 +119,7 @@ class KlassHandle: public Handle {
  protected:
   klassOop    obj() const                        { return (klassOop)Handle::obj(); }
   klassOop    non_null_obj() const               { return (klassOop)Handle::non_null_obj(); }
-  Klass*      as_klass() const                   { return non_null_obj()->klass_part(); }
+  Klass*      as_klass() const                   { return non_null_obj()->klass_part(); }  
 
  public:
   // Constructors
@@ -136,10 +139,10 @@ class KlassHandle: public Handle {
     : Handle(thread, kl ? kl->as_klassOop() : (klassOop)NULL) {
     assert(is_null() || obj()->is_klass(), "not a klassOop");
   }
-
+   
   // General access
-  klassOop    operator () () const               { return obj(); }
-  Klass*      operator -> () const               { return as_klass(); }
+  klassOop    operator () () const               { return obj(); }  
+  Klass*      operator -> () const               { return as_klass(); }  
 };
 
 
@@ -265,19 +268,19 @@ class HandleArea: public Arena {
   void oops_do(OopClosure* f);
 
   // Number of handles in use
-  size_t used() const     { return Arena::used() / oopSize; }
+  size_t used() const     { return Arena::used() / oopSize; }  
 
   debug_only(bool no_handle_mark_active() { return _no_handle_mark_nesting > 0; })
 };
 
 
 //------------------------------------------------------------------------------------------------------------------------
-// Handles are allocated in a (growable) thread local handle area. Deallocation
+// Handles are allocated in a (growable) thread local handle area. Deallocation 
 // is managed using a HandleMark. It should normally not be necessary to use
 // HandleMarks manually.
 //
-// A HandleMark constructor will record the current handle area top, and the
-// desctructor will reset the top, destroying all handles allocated in between.
+// A HandleMark constructor will record the current handle area top, and the 
+// desctructor will reset the top, destroying all handles allocated in between. 
 // The following code will therefore NOT work:
 //
 //   Handle h;
@@ -291,7 +294,7 @@ class HandleArea: public Arena {
 // across the HandleMark boundary.
 
 // The base class of HandleMark should have been StackObj but we also heap allocate
-// a HandleMark when a thread is created.
+// a HandleMark when a thread is created. 
 
 class HandleMark {
  private:
@@ -299,8 +302,8 @@ class HandleMark {
   HandleArea *_area;            // saved handle area
   Chunk *_chunk;                // saved arena chunk
   char *_hwm, *_max;            // saved arena info
-  NOT_PRODUCT(size_t _size_in_bytes;) // size of handle area
-  // Link to previous active HandleMark in thread
+  NOT_PRODUCT(size_t _size_in_bytes;) // size of handle area  
+  // Link to previous active HandleMark in thread 
   HandleMark* _previous_handle_mark;
 
   void initialize(Thread* thread);                // common code for constructors
@@ -320,7 +323,7 @@ class HandleMark {
 };
 
 //------------------------------------------------------------------------------------------------------------------------
-// A NoHandleMark stack object will verify that no handles are allocated
+// A NoHandleMark stack object will verify that no handles are allocated 
 // in its scope. Enabled in debug mode only.
 
 class NoHandleMark: public StackObj {
@@ -346,3 +349,4 @@ class ResetNoHandleMark: public StackObj {
   ~ResetNoHandleMark() {}
 #endif
 };
+

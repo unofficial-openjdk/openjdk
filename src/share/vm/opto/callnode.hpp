@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)callnode.hpp	1.195 07/10/04 14:36:00 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -302,7 +305,7 @@ public:
   {
     init_class_id(Class_SafePoint);
   }
-
+  
   OopMap*         _oop_map;   // Array of OopMap info (8-bit char) for GC
   JVMState* const _jvms;      // Pointer to list of JVM State objects
   const TypePtr*  _adr_type;  // What type of memory does this node produce?
@@ -561,7 +564,7 @@ public:
     init_class_id(Class_CallStaticJava);
     // This node calls a runtime stub, which often has narrow memory effects.
     _adr_type = adr_type;
-  }
+  }  
   const char *_name;            // Runtime wrapper name
 
   // If this is an uncommon trap, return the request code, else zero.
@@ -655,7 +658,7 @@ public:
 //  the _is_io_use flag in the projection.)  This is needed when expanding the node in
 //  order to differentiate the uses of the projection on the normal control path from
 //  those on the exception return path.
-//
+//  
 class AllocateNode : public CallNode {
 public:
   enum {

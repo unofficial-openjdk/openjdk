@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.tree;
@@ -67,7 +67,7 @@ public class CTypeTreeNodeAdapter extends FieldTreeNodeAdapter {
   static class CTypeFieldIdentifier extends FieldIdentifier {
     final private Field field;
     final private Type holder;
-
+    
     CTypeFieldIdentifier(Type t, Field f) {
       holder = t;
       field = f;
@@ -130,7 +130,7 @@ public class CTypeTreeNodeAdapter extends FieldTreeNodeAdapter {
           handle = f.getOopHandle(addr);
         }
         try {
-          Oop oop = VM.getVM().getObjectHeap().newOop(handle);
+          Oop oop = VM.getVM().getObjectHeap().newOop(handle); 
           return new OopTreeNodeAdapter(oop, cf, getTreeTableMode());
         } catch (AddressException e) {
           return new BadOopTreeNodeAdapter(handle,

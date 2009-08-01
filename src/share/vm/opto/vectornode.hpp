@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vectornode.hpp	1.6 07/05/17 16:02:36 JVM"
+#endif
 /*
  * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -1001,7 +1004,7 @@ class PackLNode : public PackNode {
 };
 
 //------------------------------PackFNode---------------------------------------
-// Pack float scalars into vector
+// Pack float scalars into vector 
 class PackFNode : public PackNode {
  protected:
   virtual BasicType elt_basic_type() const { return T_FLOAT; }

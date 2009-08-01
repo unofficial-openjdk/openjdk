@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)ciMethodData.hpp	1.28 07/09/28 10:23:22 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ciBitData;
@@ -55,8 +58,8 @@ public:
 
   void set_receiver(uint row, ciKlass* recv) {
     assert((uint)row < row_limit(), "oob");
-    set_intptr_at(receiver0_offset + row * receiver_type_row_cell_count,
-                  (intptr_t) recv);
+    set_intptr_at(receiver0_offset + row * receiver_type_row_cell_count, 
+		  (intptr_t) recv);
   }
 
   ciKlass* receiver(uint row) {
@@ -195,9 +198,9 @@ private:
 
   // hint accessors
   int      hint_di() const  { return _hint_di; }
-  void set_hint_di(int di)  {
+  void set_hint_di(int di)  { 
     assert(!out_of_bounds(di), "hint_di out of bounds");
-    _hint_di = di;
+    _hint_di = di; 
   }
   ciProfileData* data_before(int bci) {
     // avoid SEGV on this edge case

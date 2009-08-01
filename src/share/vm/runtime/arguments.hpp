@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)arguments.hpp	1.104 07/09/04 17:30:49 JVM"
+#endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Arguments parses the command line and recognizes options
@@ -64,7 +67,7 @@ class SystemProperty: public CHeapObj {
     }
     return false;
   }
-
+    
   void append_value(const char *value) {
     char *sp;
     size_t len = 0;
@@ -86,7 +89,7 @@ class SystemProperty: public CHeapObj {
         _value = sp;
       }
     }
-  }
+  } 
 
   // Constructor
   SystemProperty(const char* key, const char* value, bool writeable) {
@@ -153,18 +156,18 @@ class AgentLibraryList VALUE_OBJ_CLASS_SPEC {
   AgentLibrary* first() const               { return _first; }
 
   // add to the end of the list
-  void add(AgentLibrary* lib) {
-    if (is_empty()) {
-      _first = _last = lib;
-    } else {
-      _last->_next = lib;
-      _last = lib;
+  void add(AgentLibrary* lib) { 
+    if (is_empty()) { 
+      _first = _last = lib; 
+    } else { 
+      _last->_next = lib; 
+      _last = lib; 
     }
     lib->_next = NULL;
   }
 
   // search for and remove a library known to be in the list
-  void remove(AgentLibrary* lib) {
+  void remove(AgentLibrary* lib) { 
     AgentLibrary* curr;
     AgentLibrary* prev = NULL;
     for (curr = first(); curr != NULL; prev = curr, curr = curr->next()) {
@@ -192,7 +195,7 @@ class AgentLibraryList VALUE_OBJ_CLASS_SPEC {
     _first = NULL;
     _last = NULL;
   }
-};
+};  
 
 
 class Arguments : AllStatic {
@@ -213,7 +216,7 @@ class Arguments : AllStatic {
     arg_in_range   = 0
   };
 
- private:
+ private:  
 
   // an array containing all flags specified in the .hotspotrc file
   static char** _jvm_flags_array;
@@ -224,9 +227,9 @@ class Arguments : AllStatic {
   // string containing all java command (class/jarfile name and app args)
   static char* _java_command;
 
-  // Property list
+  // Property list 
   static SystemProperty* _system_properties;
-
+  
   // Quick accessor to System properties in the list:
   static SystemProperty *_java_ext_dirs;
   static SystemProperty *_java_endorsed_dirs;
@@ -239,19 +242,19 @@ class Arguments : AllStatic {
   // Meta-index for knowing what packages are in the boot class path
   static char* _meta_index_path;
   static char* _meta_index_dir;
-
+    
   // java.vendor.url.bug, bug reporting URL for fatal errors.
   static const char* _java_vendor_url_bug;
 
-  // sun.java.launcher, private property to provide information about
+  // sun.java.launcher, private property to provide information about 
   // java/gamma launcher
   static const char* _sun_java_launcher;
 
   // sun.java.launcher.pid, private property
   static int    _sun_java_launcher_pid;
 
-  // Option flags
-  static bool   _has_profile;
+  // Option flags       
+  static bool   _has_profile;  
   static bool   _has_alloc_profile;
   static const char*  _gc_log_filename;
   static uintx  _initial_heap_size;
@@ -350,7 +353,7 @@ class Arguments : AllStatic {
   static const char* build_resource_string(char** args, int count);
 
   static bool methodExists(
-    char* className, char* methodName,
+    char* className, char* methodName, 
     int classesNum, char** classes, bool* allMethods,
     int methodsNum, char** methods, bool* allClasses
   );
@@ -359,7 +362,7 @@ class Arguments : AllStatic {
     const char* line,
     short* classesNum, short* classesMax, char*** classes, bool** allMethods,
     short* methodsNum, short* methodsMax, char*** methods, bool** allClasses
-  );
+  ); 
 
   // Returns true if the string s is in the list of flags that have recently
   // been made obsolete.  If we detect one of these flags on the command
@@ -367,22 +370,22 @@ class Arguments : AllStatic {
   // flag.  This gives the user a release or so to stop using the flag.
   static bool is_newly_obsolete(const char* s, JDK_Version* buffer);
 
-  static short  CompileOnlyClassesNum;
-  static short  CompileOnlyClassesMax;
-  static char** CompileOnlyClasses;
-  static bool*  CompileOnlyAllMethods;
+  static short	CompileOnlyClassesNum;
+  static short	CompileOnlyClassesMax;
+  static char**	CompileOnlyClasses;
+  static bool*	CompileOnlyAllMethods;
 
-  static short  CompileOnlyMethodsNum;
-  static short  CompileOnlyMethodsMax;
-  static char** CompileOnlyMethods;
-  static bool*  CompileOnlyAllClasses;
+  static short	CompileOnlyMethodsNum;
+  static short	CompileOnlyMethodsMax;
+  static char**	CompileOnlyMethods;
+  static bool*	CompileOnlyAllClasses;
+  
+  static short	InterpretOnlyClassesNum;
+  static short	InterpretOnlyClassesMax;
+  static char**	InterpretOnlyClasses;
+  static bool*	InterpretOnlyAllMethods;
 
-  static short  InterpretOnlyClassesNum;
-  static short  InterpretOnlyClassesMax;
-  static char** InterpretOnlyClasses;
-  static bool*  InterpretOnlyAllMethods;
-
-  static bool   CheckCompileOnly;
+  static bool	CheckCompileOnly;
 
   static char*  SharedArchivePath;
 
@@ -396,7 +399,7 @@ class Arguments : AllStatic {
   // Used by os_solaris
   static bool process_settings_file(const char* file_name, bool should_exist, jboolean ignore_unrecognized);
 
-  // return a char* array containing all options
+  // return a char* array containing all options 
   static char** jvm_flags_array()          { return _jvm_flags_array; }
   static char** jvm_args_array()           { return _jvm_args_array; }
   static int num_jvm_flags()               { return _num_jvm_flags; }
@@ -444,7 +447,7 @@ class Arguments : AllStatic {
   static AgentLibrary* libraries()          { return _libraryList.first(); }
   static bool init_libraries_at_startup()   { return !_libraryList.is_empty(); }
   static void convert_library_to_agent(AgentLibrary* lib)
-                                            { _libraryList.remove(lib);
+                                            { _libraryList.remove(lib); 
                                               _agentList.add(lib); }
 
   // -agentlib -agentpath
@@ -456,14 +459,14 @@ class Arguments : AllStatic {
   static exit_hook_t     exit_hook()        { return _exit_hook; }
   static vfprintf_hook_t vfprintf_hook()    { return _vfprintf_hook; }
 
-  static bool GetCheckCompileOnly ()        { return CheckCompileOnly; }
+  static bool GetCheckCompileOnly ()	    { return CheckCompileOnly; }
 
   static const char* GetSharedArchivePath() { return SharedArchivePath; }
 
   static bool CompileMethod(char* className, char* methodName) {
     return
       methodExists(
-        className, methodName,
+        className, methodName, 
         CompileOnlyClassesNum, CompileOnlyClasses, CompileOnlyAllMethods,
         CompileOnlyMethodsNum, CompileOnlyMethods, CompileOnlyAllClasses
       );
@@ -486,10 +489,10 @@ class Arguments : AllStatic {
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
-
+    
   // Miscellaneous System property value getter and setters.
   static void set_dll_dir(char *value) { _sun_boot_library_path->set_value(value); }
-  static void set_java_home(char *value) { _java_home->set_value(value); }
+  static void set_java_home(char *value) { _java_home->set_value(value); }       
   static void set_library_path(char *value) { _java_library_path->set_value(value); }
   static void set_ext_dirs(char *value) { _java_ext_dirs->set_value(value); }
   static void set_endorsed_dirs(char *value) { _java_endorsed_dirs->set_value(value); }
@@ -499,14 +502,14 @@ class Arguments : AllStatic {
     _meta_index_path = meta_index_path;
     _meta_index_dir  = meta_index_dir;
   }
-
+ 
   static char *get_java_home() { return _java_home->value(); }
   static char *get_dll_dir() { return _sun_boot_library_path->value(); }
   static char *get_endorsed_dir() { return _java_endorsed_dirs->value(); }
   static char *get_sysclasspath() { return _sun_boot_class_path->value(); }
   static char* get_meta_index_path() { return _meta_index_path; }
   static char* get_meta_index_dir()  { return _meta_index_dir;  }
-
+             
   // Operation modi
   static Mode mode()                        { return _mode; }
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_MacroAssembler.hpp	1.23 07/05/05 17:05:08 JVM"
+#endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class CodeEmitInfo;
@@ -80,3 +83,5 @@ class StubAssembler: public C1_MacroAssembler {
   int call_RT(Register oop_result1, Register oop_result2, address entry, Register arg1, Register arg2);
   int call_RT(Register oop_result1, Register oop_result2, address entry, Register arg1, Register arg2, Register arg3);
 };
+
+

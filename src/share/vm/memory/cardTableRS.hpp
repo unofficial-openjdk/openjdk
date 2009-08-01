@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)cardTableRS.hpp	1.29 07/05/05 17:05:44 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,20 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Space;
 class OopsInGenClosure;
 class DirtyCardToOopClosure;
 
-// This kind of "GenRemSet" uses a card table both as shared data structure
+// This kind of "GenRemSet" uses a card table both as shared data structure 
 // for a mod ref barrier set and for the rem set information.
 
 class CardTableRS: public GenRemSet {
   friend class VMStructs;
   // Below are private classes used in impl.
-  friend class VerifyCTSpaceClosure;
+  friend class VerifyCTSpaceClosure;  
   friend class ClearNoncleanCardWrapper;
 
   static jbyte clean_card_val() {
@@ -53,9 +56,9 @@ class CardTableRS: public GenRemSet {
   enum ExtendedCardValue {
     youngergen_card   = CardTableModRefBS::CT_MR_BS_last_reserved + 1,
     // These are for parallel collection.
-    // There are three P (parallel) youngergen card values.  In general, this
+    // There are three P (parallel) youngergen card values.  In general, this 
     // needs to be more than the number of generations (including the perm
-    // gen) that might have younger_refs_do invoked on them separately.  So
+    // gen) that might have younger_refs_do invoked on them separately.  So 
     // if we add more gens, we have to add more values.
     youngergenP1_card  = CardTableModRefBS::CT_MR_BS_last_reserved + 2,
     youngergenP2_card  = CardTableModRefBS::CT_MR_BS_last_reserved + 3,
@@ -64,13 +67,13 @@ class CardTableRS: public GenRemSet {
       CardTableModRefBS::CT_MR_BS_last_reserved + 5
   };
 
-  // An array that contains, for each generation, the card table value last
+  // An array that contains, for each generation, the card table value last 
   // used as the current value for a younger_refs_do iteration of that
   // portion of the table.  (The perm gen is index 0; other gens are at
   // their level plus 1.  They youngest gen is in the table, but will
   // always have the value "clean_card".)
   jbyte* _last_cur_val_in_gen;
-
+  
   jbyte _cur_youngergen_card_val;
 
   int _regions_to_iterate;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ciTypeFlow.cpp	1.47 07/09/28 10:23:20 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -80,7 +83,7 @@ bool ciTypeFlow::JsrSet::is_compatible_with(JsrSet* other) {
   // the sets to be compatible.
   int size1 = size();
   int size2 = other->size();
-
+  
   // Special case.  If nothing is on the jsr stack, then there can
   // be no ret.
   if (size2 == 0) {
@@ -92,8 +95,8 @@ bool ciTypeFlow::JsrSet::is_compatible_with(JsrSet* other) {
       JsrRecord* record1 = record_at(i);
       JsrRecord* record2 = other->record_at(i);
       if (record1->entry_address() != record2->entry_address() ||
-          record1->return_address() != record2->return_address()) {
-        return false;
+	  record1->return_address() != record2->return_address()) {
+	return false;
       }
     }
     return true;
@@ -115,11 +118,11 @@ bool ciTypeFlow::JsrSet::is_compatible_with(JsrSet* other) {
       pos2++;
     } else {
       if (record1->return_address() == record2->return_address()) {
-        pos1++;
-        pos2++;
+	pos1++;
+	pos2++;
       } else {
-        // These two JsrSets are incompatible.
-        return false;
+	// These two JsrSets are incompatible.
+	return false;
       }
     }
   }
@@ -147,7 +150,7 @@ void ciTypeFlow::JsrSet::insert_jsr_record(JsrRecord* record) {
     } else if (entry < current->entry_address()) {
       break;
     }
-  }
+  }   
 
   // Insert the record into the list.
   JsrRecord* swap = record;
@@ -172,7 +175,7 @@ void ciTypeFlow::JsrSet::remove_jsr_record(int return_address) {
       // We have found the proper entry.  Remove it from the
       // JsrSet and exit.
       for (int j = i+1; j < len ; j++) {
-        _set->at_put(j-1, _set->at(j));
+	_set->at_put(j-1, _set->at(j));
       }
       _set->trunc_to(len-1);
       assert(size() == len-1, "must be smaller");
@@ -188,8 +191,8 @@ void ciTypeFlow::JsrSet::remove_jsr_record(int return_address) {
 // Apply the effect of a control-flow bytecode on the JsrSet.  The
 // only bytecodes that modify the JsrSet are jsr and ret.
 void ciTypeFlow::JsrSet::apply_control(ciTypeFlow* analyzer,
-                                       ciBytecodeStream* str,
-                                       ciTypeFlow::StateVector* state) {
+				       ciBytecodeStream* str,
+				       ciTypeFlow::StateVector* state) {
   Bytecodes::Code code = str->cur_bc();
   if (code == Bytecodes::_jsr) {
     JsrRecord* record =
@@ -263,14 +266,14 @@ ciType* ciTypeFlow::StateVector::type_meet_internal(ciType* t1, ciType* t2, ciTy
     // is T.  null_type meet null_type is null_type.
     if (t1->equals(null_type())) {
       if (!t2->is_primitive_type() || t2->equals(null_type())) {
-        return t2;
+	return t2;
       }
     } else if (t2->equals(null_type())) {
       if (!t1->is_primitive_type()) {
-        return t1;
+	return t1;
       }
     }
-
+	  
     // At least one of the two types is a non-top primitive type.
     // The other type is not equal to it.  Fall to bottom.
     return bottom_type();
@@ -295,22 +298,22 @@ ciType* ciTypeFlow::StateVector::type_meet_internal(ciType* t1, ciType* t2, ciTy
       // And when typeArray meets different typeArray, we again get Object.
       // But when objArray meets objArray, we look carefully at element types.
       if (k1->is_obj_array_klass() && k2->is_obj_array_klass()) {
-        // Meet the element types, then construct the corresponding array type.
-        ciKlass* elem1 = k1->as_obj_array_klass()->element_klass();
-        ciKlass* elem2 = k2->as_obj_array_klass()->element_klass();
-        ciKlass* elem  = type_meet_internal(elem1, elem2, analyzer)->as_klass();
-        // Do an easy shortcut if one type is a super of the other.
-        if (elem == elem1) {
-          assert(k1 == ciObjArrayKlass::make(elem), "shortcut is OK");
-          return k1;
-        } else if (elem == elem2) {
-          assert(k2 == ciObjArrayKlass::make(elem), "shortcut is OK");
-          return k2;
-        } else {
-          return ciObjArrayKlass::make(elem);
-        }
+	// Meet the element types, then construct the corresponding array type.
+	ciKlass* elem1 = k1->as_obj_array_klass()->element_klass();
+	ciKlass* elem2 = k2->as_obj_array_klass()->element_klass();
+	ciKlass* elem  = type_meet_internal(elem1, elem2, analyzer)->as_klass();
+	// Do an easy shortcut if one type is a super of the other.
+	if (elem == elem1) {
+	  assert(k1 == ciObjArrayKlass::make(elem), "shortcut is OK");
+	  return k1;
+	} else if (elem == elem2) {
+	  assert(k2 == ciObjArrayKlass::make(elem), "shortcut is OK");
+	  return k2;
+	} else {
+	  return ciObjArrayKlass::make(elem);
+	}
       } else {
-        return object_klass;
+	return object_klass;
       }
     } else {
       // Must be two plain old instance klasses.
@@ -320,7 +323,7 @@ ciType* ciTypeFlow::StateVector::type_meet_internal(ciType* t1, ciType* t2, ciTy
     }
   }
 }
-
+      
 
 // ------------------------------------------------------------------
 // ciTypeFlow::StateVector::StateVector
@@ -366,7 +369,7 @@ const ciTypeFlow::StateVector* ciTypeFlow::get_start_state() {
     if (non_osr_start != start_bci()) {
       // must flow forward from it
       if (CITraceTypeFlow) {
-        tty->print_cr(">> Interpreting pre-OSR block %d:", non_osr_start);
+	tty->print_cr(">> Interpreting pre-OSR block %d:", non_osr_start);
       }
       Block* block = block_at(non_osr_start, jsrs);
       assert(block->limit() == start_bci(), "must flow forward to start");
@@ -458,8 +461,8 @@ bool ciTypeFlow::StateVector::meet(const ciTypeFlow::StateVector* incoming) {
     if (!t1->equals(t2)) {
       ciType* new_type = type_meet(t1, t2);
       if (!t1->equals(new_type)) {
-        set_type_at(c, new_type);
-        different = true;
+	set_type_at(c, new_type);
+	different = true;
       }
     }
   }
@@ -473,7 +476,7 @@ bool ciTypeFlow::StateVector::meet(const ciTypeFlow::StateVector* incoming) {
 // one.  The incoming state is coming via an exception.  Returns true
 // if any modification takes place.
 bool ciTypeFlow::StateVector::meet_exception(ciInstanceKlass* exc,
-                                     const ciTypeFlow::StateVector* incoming) {
+				     const ciTypeFlow::StateVector* incoming) {
   if (monitor_count() == -1) {
     set_monitor_count(incoming->monitor_count());
   }
@@ -495,12 +498,12 @@ bool ciTypeFlow::StateVector::meet_exception(ciInstanceKlass* exc,
     if (!t1->equals(t2)) {
       ciType* new_type = type_meet(t1, t2);
       if (!t1->equals(new_type)) {
-        set_type_at(c, new_type);
-        different = true;
+	set_type_at(c, new_type);
+	different = true;
       }
     }
   }
-
+  
   // Handle stack separately.  When an exception occurs, the
   // only stack entry is the exception instance.
   ciType* tos_type = type_at_tos();
@@ -511,7 +514,7 @@ bool ciTypeFlow::StateVector::meet_exception(ciInstanceKlass* exc,
       different = true;
     }
   }
-
+  
   return different;
 }
 
@@ -624,13 +627,13 @@ void ciTypeFlow::StateVector::do_getstatic(ciBytecodeStream* str) {
     } else {
       push_translate(field_type);
     }
-  }
+  }    
 }
 
 // ------------------------------------------------------------------
 // ciTypeFlow::StateVector::do_invoke
 void ciTypeFlow::StateVector::do_invoke(ciBytecodeStream* str,
-                                        bool has_receiver) {
+					bool has_receiver) {
   bool will_link;
   ciMethod* method = str->get_method(will_link);
   if (!will_link) {
@@ -649,8 +652,8 @@ void ciTypeFlow::StateVector::do_invoke(ciBytecodeStream* str,
       // Do I want to check this type?
       // assert(stack_type->is_subtype_of(type), "bad type for field value");
       if (type->is_two_word()) {
-        ciType* stack_type2 = type_at(stack(stack_base + i++));
-        assert(stack_type2->equals(half_type(type)), "must be 2nd half");
+	ciType* stack_type2 = type_at(stack(stack_base + i++));
+	assert(stack_type2->equals(half_type(type)), "must be 2nd half");
       }
     }
     assert(arg_size == i, "must match");
@@ -665,11 +668,11 @@ void ciTypeFlow::StateVector::do_invoke(ciBytecodeStream* str,
     ciType* return_type = sigstr.type();
     if (!return_type->is_void()) {
       if (!return_type->is_loaded()) {
-        // As in do_getstatic(), generally speaking, we need the return type to
+        // As in do_getstatic(), generally speaking, we need the return type to 
         // be loaded if we are to do anything interesting with its value.
         // We used to do this:  trap(str, str->get_method_signature_index());
         //
-        // We do not trap here since execution can get past this invoke if
+        // We do not trap here since execution can get past this invoke if 
         // the return value is null.  As long as the value is null, the class
         // does not need to be loaded!  The compiler must assume that
         // the value of the unloaded class reference is null; if the code
@@ -678,7 +681,7 @@ void ciTypeFlow::StateVector::do_invoke(ciBytecodeStream* str,
         // See do_getstatic() for similar explanation, as well as bug 4684993.
         do_null_assert(return_type->as_klass());
       } else {
-        push_translate(return_type);
+	push_translate(return_type);
       }
     }
   }
@@ -778,14 +781,14 @@ void ciTypeFlow::StateVector::do_putstatic(ciBytecodeStream* str) {
       assert(type2->is_two_word(), "must be 2nd half");
       assert(type == half_type(type2), "must be 2nd half");
     }
-  }
+  }    
 }
 
 // ------------------------------------------------------------------
 // ciTypeFlow::StateVector::do_ret
 void ciTypeFlow::StateVector::do_ret(ciBytecodeStream* str) {
   Cell index = local(str->get_index());
-
+  
   ciType* address = type_at(index);
   assert(address->is_return_address(), "bad return address");
   set_type_at(index, bottom_type());
@@ -832,7 +835,7 @@ void ciTypeFlow::StateVector::do_null_assert(ciKlass* unloaded_klass) {
     // class later.
     push_null();
   }
-}
+} 
 
 
 // ------------------------------------------------------------------
@@ -845,7 +848,7 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
 
   if (CITraceTypeFlow) {
     tty->print_cr(">> Interpreting bytecode %d:%s", str->cur_bci(),
-                  Bytecodes::name(str->cur_bc()));
+		  Bytecodes::name(str->cur_bc()));
   }
 
   switch(str->cur_bc()) {
@@ -1184,7 +1187,7 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
 
   case Bytecodes::_getfield:  do_getfield(str);                      break;
   case Bytecodes::_getstatic: do_getstatic(str);                     break;
-
+    
   case Bytecodes::_goto:
   case Bytecodes::_goto_w:
   case Bytecodes::_nop:
@@ -1378,7 +1381,7 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
   case Bytecodes::_lload_1: load_local_long(1);                     break;
   case Bytecodes::_lload_2: load_local_long(2);                     break;
   case Bytecodes::_lload_3: load_local_long(3);                     break;
-
+    
   case Bytecodes::_lneg:
     {
       pop_long();
@@ -1410,7 +1413,7 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
   case Bytecodes::_new:      do_new(str);                           break;
 
   case Bytecodes::_newarray: do_newarray(str);                      break;
-
+    
   case Bytecodes::_pop:
     {
       pop();
@@ -1425,7 +1428,7 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
 
   case Bytecodes::_putfield:       do_putfield(str);                 break;
   case Bytecodes::_putstatic:      do_putstatic(str);                break;
-
+  
   case Bytecodes::_ret: do_ret(str);                                 break;
 
   case Bytecodes::_swap:
@@ -1508,7 +1511,7 @@ void ciTypeFlow::StateVector::print_on(outputStream* st) const {
     }
   }
 }
-#endif
+#endif 
 
 
 // ------------------------------------------------------------------
@@ -1557,8 +1560,8 @@ void ciTypeFlow::SuccIter::set_succ(Block* succ) {
 // ------------------------------------------------------------------
 // ciTypeFlow::Block::Block
 ciTypeFlow::Block::Block(ciTypeFlow* outer,
-                         ciBlock *ciblk,
-                         ciTypeFlow::JsrSet* jsrs) {
+			 ciBlock *ciblk,
+			 ciTypeFlow::JsrSet* jsrs) {
   _ciblock = ciblk;
   _exceptions = NULL;
   _exc_klasses = NULL;
@@ -1601,15 +1604,15 @@ void ciTypeFlow::Block::df_init() {
 // Get the successors for this Block.
 GrowableArray<ciTypeFlow::Block*>*
 ciTypeFlow::Block::successors(ciBytecodeStream* str,
-                              ciTypeFlow::StateVector* state,
-                              ciTypeFlow::JsrSet* jsrs) {
+			      ciTypeFlow::StateVector* state,
+			      ciTypeFlow::JsrSet* jsrs) {
   if (_successors == NULL) {
     if (CITraceTypeFlow) {
       tty->print(">> Computing successors for block ");
       print_value_on(tty);
       tty->cr();
     }
-
+    
     ciTypeFlow* analyzer = outer();
     Arena* arena = analyzer->arena();
     Block* block = NULL;
@@ -1617,13 +1620,13 @@ ciTypeFlow::Block::successors(ciBytecodeStream* str,
                          (control() != ciBlock::fall_through_bci || limit() < analyzer->code_size());
     if (!has_successor) {
       _successors =
-        new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
       // No successors
     } else if (control() == ciBlock::fall_through_bci) {
       assert(str->cur_bci() == limit(), "bad block end");
       // This block simply falls through to the next.
       _successors =
-        new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
 
       Block* block = analyzer->block_at(limit(), _jsrs);
       assert(_successors->length() == FALL_THROUGH, "");
@@ -1664,88 +1667,88 @@ ciTypeFlow::Block::successors(ciBytecodeStream* str,
         break;
 
       case Bytecodes::_jsr:
-        branch_bci = str->get_dest();
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
-        assert(_successors->length() == GOTO_TARGET, "");
-        _successors->append(analyzer->block_at(branch_bci, jsrs));
-        break;
+	branch_bci = str->get_dest();
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	assert(_successors->length() == GOTO_TARGET, "");
+	_successors->append(analyzer->block_at(branch_bci, jsrs));
+	break;
 
-      case Bytecodes::_goto_w:
+      case Bytecodes::_goto_w:         
       case Bytecodes::_jsr_w:
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
-        assert(_successors->length() == GOTO_TARGET, "");
-        _successors->append(analyzer->block_at(str->get_far_dest(), jsrs));
-        break;
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	assert(_successors->length() == GOTO_TARGET, "");
+	_successors->append(analyzer->block_at(str->get_far_dest(), jsrs));
+	break;
 
       case Bytecodes::_tableswitch:  {
-        Bytecode_tableswitch *tableswitch =
-          Bytecode_tableswitch_at(str->cur_bcp());
-
-        int len = tableswitch->length();
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, len+1, 0, NULL);
-        int bci = current_bci + tableswitch->default_offset();
-        Block* block = analyzer->block_at(bci, jsrs);
-        assert(_successors->length() == SWITCH_DEFAULT, "");
-        _successors->append(block);
-        while (--len >= 0) {
-          int bci = current_bci + tableswitch->dest_offset_at(len);
-          block = analyzer->block_at(bci, jsrs);
-          assert(_successors->length() >= SWITCH_CASES, "");
-          _successors->append_if_missing(block);
-        }
-        break;
+	Bytecode_tableswitch *tableswitch =
+	  Bytecode_tableswitch_at(str->cur_bcp());
+	
+	int len = tableswitch->length();        
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, len+1, 0, NULL);
+	int bci = current_bci + tableswitch->default_offset();
+	Block* block = analyzer->block_at(bci, jsrs);
+	assert(_successors->length() == SWITCH_DEFAULT, "");
+	_successors->append(block);
+	while (--len >= 0) {
+	  int bci = current_bci + tableswitch->dest_offset_at(len);
+	  block = analyzer->block_at(bci, jsrs);
+	  assert(_successors->length() >= SWITCH_CASES, "");
+	  _successors->append_if_missing(block);
+	}
+	break; 
       }
-
+      
       case Bytecodes::_lookupswitch: {
-        Bytecode_lookupswitch *lookupswitch =
-          Bytecode_lookupswitch_at(str->cur_bcp());
-
-        int npairs = lookupswitch->number_of_pairs();
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, npairs+1, 0, NULL);
-        int bci = current_bci + lookupswitch->default_offset();
-        Block* block = analyzer->block_at(bci, jsrs);
-        assert(_successors->length() == SWITCH_DEFAULT, "");
-        _successors->append(block);
-        while(--npairs >= 0) {
-          LookupswitchPair *pair = lookupswitch->pair_at(npairs);
-          int bci = current_bci + pair->offset();
-          Block* block = analyzer->block_at(bci, jsrs);
-          assert(_successors->length() >= SWITCH_CASES, "");
-          _successors->append_if_missing(block);
-        }
-        break;
+	Bytecode_lookupswitch *lookupswitch =
+	  Bytecode_lookupswitch_at(str->cur_bcp());
+          
+	int npairs = lookupswitch->number_of_pairs(); 
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, npairs+1, 0, NULL);
+	int bci = current_bci + lookupswitch->default_offset();
+	Block* block = analyzer->block_at(bci, jsrs);
+	assert(_successors->length() == SWITCH_DEFAULT, "");
+	_successors->append(block);
+	while(--npairs >= 0) {
+	  LookupswitchPair *pair = lookupswitch->pair_at(npairs);
+	  int bci = current_bci + pair->offset();
+	  Block* block = analyzer->block_at(bci, jsrs);
+	  assert(_successors->length() >= SWITCH_CASES, "");
+	  _successors->append_if_missing(block);
+	}
+	break; 
       }
 
       case Bytecodes::_athrow:     case Bytecodes::_ireturn:
       case Bytecodes::_lreturn:    case Bytecodes::_freturn:
       case Bytecodes::_dreturn:    case Bytecodes::_areturn:
       case Bytecodes::_return:
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
-        // No successors
-        break;
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	// No successors
+	break;
 
       case Bytecodes::_ret: {
-        _successors =
-          new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
+	_successors =
+	  new (arena) GrowableArray<Block*>(arena, 1, 0, NULL);
 
-        Cell local = state->local(str->get_index());
-        ciType* return_address = state->type_at(local);
-        assert(return_address->is_return_address(), "verify: wrong type");
-        int bci = return_address->as_return_address()->bci();
-        assert(_successors->length() == GOTO_TARGET, "");
-        _successors->append(analyzer->block_at(bci, jsrs));
-        break;
+	Cell local = state->local(str->get_index());
+	ciType* return_address = state->type_at(local);
+	assert(return_address->is_return_address(), "verify: wrong type");
+	int bci = return_address->as_return_address()->bci();
+	assert(_successors->length() == GOTO_TARGET, "");
+	_successors->append(analyzer->block_at(bci, jsrs));
+	break;
       }
 
-      case Bytecodes::_wide:
-      default:
-        ShouldNotReachHere();
-        break;
+      case Bytecodes::_wide:           
+      default:                 
+	ShouldNotReachHere();
+	break;
       }
     }
   }
@@ -1764,10 +1767,10 @@ void ciTypeFlow::Block::compute_exceptions() {
     print_value_on(tty);
     tty->cr();
   }
-
+  
   ciTypeFlow* analyzer = outer();
   Arena* arena = analyzer->arena();
-
+  
   // Any bci in the block will do.
   ciExceptionHandlerStream str(analyzer->method(), start());
 
@@ -1775,7 +1778,7 @@ void ciTypeFlow::Block::compute_exceptions() {
   int exc_count = str.count();
   _exceptions = new (arena) GrowableArray<Block*>(arena, exc_count, 0, NULL);
   _exc_klasses = new (arena) GrowableArray<ciInstanceKlass*>(arena, exc_count,
-                                                             0, NULL);
+							     0, NULL);
 
   for ( ; !str.is_done(); str.next()) {
     ciExceptionHandler* handler = str.handler();
@@ -2034,46 +2037,46 @@ ciTypeFlow::Block* ciTypeFlow::block_at(int bci, ciTypeFlow::JsrSet* jsrs, Creat
       tty->print_cr(">> No such block.");
     }
   }
-
+  
   return block;
 }
-
+ 
 // ------------------------------------------------------------------
 // ciTypeFlow::make_jsr_record
 //
 // Make a JsrRecord for a given (entry, return) pair, if such a record
 // does not already exist.
 ciTypeFlow::JsrRecord* ciTypeFlow::make_jsr_record(int entry_address,
-                                                   int return_address) {
+						   int return_address) {
   if (_jsr_records == NULL) {
     _jsr_records = new (arena()) GrowableArray<JsrRecord*>(arena(),
-                                                           _jsr_count,
-                                                           0,
-                                                           NULL);
+							   _jsr_count,
+							   0,
+							   NULL);
   }
   JsrRecord* record = NULL;
   int len = _jsr_records->length();
   for (int i = 0; i < len; i++) {
     JsrRecord* record = _jsr_records->at(i);
     if (record->entry_address() == entry_address &&
-        record->return_address() == return_address) {
+	record->return_address() == return_address) {
       return record;
     }
   }
-
+  
   record = new (arena()) JsrRecord(entry_address, return_address);
   _jsr_records->append(record);
   return record;
 }
-
+ 
 // ------------------------------------------------------------------
 // ciTypeFlow::flow_exceptions
 //
 // Merge the current state into all exceptional successors at the
 // current point in the code.
 void ciTypeFlow::flow_exceptions(GrowableArray<ciTypeFlow::Block*>* exceptions,
-                                 GrowableArray<ciInstanceKlass*>* exc_klasses,
-                                 ciTypeFlow::StateVector* state) {
+				 GrowableArray<ciInstanceKlass*>* exc_klasses,
+				 ciTypeFlow::StateVector* state) {
   int len = exceptions->length();
   assert(exc_klasses->length() == len, "must have same length");
   for (int i = 0; i < len; i++) {
@@ -2093,7 +2096,7 @@ void ciTypeFlow::flow_exceptions(GrowableArray<ciTypeFlow::Block*>* exceptions,
         add_to_work_list(block);
       }
     }
-  }
+  }    
 }
 
 // ------------------------------------------------------------------
@@ -2102,7 +2105,7 @@ void ciTypeFlow::flow_exceptions(GrowableArray<ciTypeFlow::Block*>* exceptions,
 // Merge the current state into all successors at the current point
 // in the code.
 void ciTypeFlow::flow_successors(GrowableArray<ciTypeFlow::Block*>* successors,
-                                 ciTypeFlow::StateVector* state) {
+				 ciTypeFlow::StateVector* state) {
   int len = successors->length();
   for (int i = 0; i < len; i++) {
     Block* block = successors->at(i);
@@ -2262,15 +2265,15 @@ ciTypeFlow::Block* ciTypeFlow::clone_loop_head(Loop* lp, StateVector* temp_vecto
 // vector of a basic block.  Push the changed state to succeeding
 // basic blocks.
 void ciTypeFlow::flow_block(ciTypeFlow::Block* block,
-                            ciTypeFlow::StateVector* state,
-                            ciTypeFlow::JsrSet* jsrs) {
+			    ciTypeFlow::StateVector* state,
+			    ciTypeFlow::JsrSet* jsrs) {
   if (CITraceTypeFlow) {
     tty->print("\n>> ANALYZING BLOCK : ");
     tty->cr();
     block->print_on(tty);
   }
   assert(block->has_pre_order(), "pre-order is assigned before 1st flow");
-
+  
   int start = block->start();
   int limit = block->limit();
   int control = block->control();
@@ -2292,7 +2295,7 @@ void ciTypeFlow::flow_block(ciTypeFlow::Block* block,
   str.reset_to_bci(start);
   Bytecodes::Code code;
   while ((code = str.next()) != ciBytecodeStream::EOBC() &&
-         str.cur_bci() < limit) {
+	 str.cur_bci() < limit) {
     // Check for exceptional control flow from this point.
     if (has_exceptions && can_trap(str)) {
       flow_exceptions(exceptions, exc_klasses, state);
@@ -2308,10 +2311,10 @@ void ciTypeFlow::flow_block(ciTypeFlow::Block* block,
 
       // We have encountered a trap.  Record it in this block.
       block->set_trap(state->trap_bci(), state->trap_index());
-
+      
       if (CITraceTypeFlow) {
-        tty->print_cr(">> Found trap");
-        block->print_on(tty);
+	tty->print_cr(">> Found trap");
+	block->print_on(tty);
       }
 
       // Save set of locals defined in this block

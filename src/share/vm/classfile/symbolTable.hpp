@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)symbolTable.hpp	1.48 07/05/05 17:05:56 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The symbol table holds all symbolOops and corresponding interned strings.
@@ -42,7 +45,7 @@ private:
   // The symbol table
   static SymbolTable* _the_table;
 
-  // Adding elements
+  // Adding elements    
   symbolOop basic_add(int index, u1* name, int len,
                       unsigned int hashValue, TRAPS);
   bool basic_add(constantPoolHandle cp, int names_count,

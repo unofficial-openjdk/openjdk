@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)compactibleFreeListSpace.hpp	1.91 07/05/05 17:05:45 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Classes in support of keeping track of promotions into a non-Contiguous
@@ -47,7 +50,7 @@ class PromotedObject VALUE_OBJ_CLASS_SPEC {
   inline PromotedObject* next() const {
     return (PromotedObject*)(_next & next_mask);
   }
-  inline void setNext(PromotedObject* x) {
+  inline void setNext(PromotedObject* x) { 
     assert(((intptr_t)x & ~next_mask) == 0,
            "Conflict in bit usage, "
            " or insufficient alignment of objects");
@@ -154,7 +157,7 @@ class PromotionInfo VALUE_OBJ_CLASS_SPEC {
   void reset() {
     _promoHead = NULL;
     _promoTail = NULL;
-    _spoolHead = NULL;
+    _spoolHead = NULL; 
     _spoolTail = NULL;
     _spareSpool = NULL;
     _firstIndex = 0;
@@ -165,14 +168,14 @@ class PromotionInfo VALUE_OBJ_CLASS_SPEC {
 
 class LinearAllocBlock VALUE_OBJ_CLASS_SPEC {
  public:
-  LinearAllocBlock() : _ptr(0), _word_size(0), _refillSize(0),
+  LinearAllocBlock() : _ptr(0), _word_size(0), _refillSize(0), 
     _allocation_size_limit(0) {}
-  void set(HeapWord* ptr, size_t word_size, size_t refill_size,
+  void set(HeapWord* ptr, size_t word_size, size_t refill_size, 
     size_t allocation_size_limit) {
     _ptr = ptr;
     _word_size = word_size;
     _refillSize = refill_size;
-    _allocation_size_limit = allocation_size_limit;
+    _allocation_size_limit = allocation_size_limit; 
   }
   HeapWord* _ptr;
   size_t    _word_size;
@@ -191,7 +194,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   friend class CMSCollector;
   friend class CMSPermGenGen;
   // Local alloc buffer for promotion into this space.
-  friend class CFLS_LAB;
+  friend class CFLS_LAB;   
 
   // "Size" of chunks of work (executed during parallel remark phases
   // of CMS collection); this probably belongs in CMSCollector, although
@@ -240,7 +243,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
 
   // a lock protecting the free lists and free blocks;
   // mutable because of ubiquity of locking even for otherwise const methods
-  mutable Mutex _freelistLock;
+  mutable Mutex _freelistLock; 
   // locking verifier convenience function
   void assert_locked() const PRODUCT_RETURN;
 
@@ -254,7 +257,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
                                        // indexed array for small size blocks
   // allocation stategy
   bool       _fitStrategy;      // Use best fit strategy.
-  bool       _adaptive_freelists; // Use adaptive freelists
+  bool	     _adaptive_freelists; // Use adaptive freelists
 
   // This is an address close to the largest free chunk in the heap.
   // It is currently assumed to be at the end of the heap.  Free
@@ -307,7 +310,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // to be used as linear allocation buffers.
   HeapWord* allocate_non_adaptive_freelists(size_t size);
 
-  // Gets a chunk from the linear allocation block (LinAB).  If there
+  // Gets a chunk from the linear allocation block (LinAB).  If there 
   // is not enough space in the LinAB, refills it.
   HeapWord*  getChunkFromLinearAllocBlock(LinearAllocBlock* blk, size_t size);
   HeapWord*  getChunkFromSmallLinearAllocBlock(size_t size);
@@ -335,13 +338,13 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Find a chunk in the indexed free list that is the best
   // fit for size "numWords".
   FreeChunk* bestFitSmall(size_t numWords);
-  // For free list "fl" of chunks of size > numWords,
+  // For free list "fl" of chunks of size > numWords, 
   // remove a chunk, split off a chunk of size numWords
   // and return it.  The split off remainder is returned to
   // the free lists.  The old name for getFromListGreater
   // was lookInListGreater.
   FreeChunk* getFromListGreater(FreeList* fl, size_t numWords);
-  // Get a chunk in the indexed free list or dictionary,
+  // Get a chunk in the indexed free list or dictionary, 
   // by considering a larger chunk and splitting it.
   FreeChunk* getChunkFromGreater(size_t numWords);
   //  Verify that the given chunk is in the indexed free lists.
@@ -351,7 +354,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Remove the specified chunk from the dictionary.
   void       removeChunkFromDictionary(FreeChunk* fc);
   // Split a free chunk into a smaller free chunk of size "new_size".
-  // Return the smaller free chunk and return the remainder to the
+  // Return the smaller free chunk and return the remainder to the 
   // free lists.
   FreeChunk* splitChunkAndReturnRemainder(FreeChunk* chunk, size_t new_size);
   // Add a chunk to the free lists.
@@ -377,7 +380,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   void       refillLinearAllocBlocksIfNeeded();
 
   void       verify_objects_initialized() const;
-
+  
   // Statistics reporting helper functions
   void       reportFreeListStatistics() const;
   void       reportIndexedFreeListStatistics() const;
@@ -406,7 +409,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
  public:
   // Constructor...
   CompactibleFreeListSpace(BlockOffsetSharedArray* bs, MemRegion mr,
-                           bool use_adaptive_freelists,
+			   bool use_adaptive_freelists,
                            FreeBlockDictionary::DictionaryChoice);
   // accessors
   bool bestFitFirst() { return _fitStrategy == FreeBlockBestFitFirst; }
@@ -467,7 +470,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   bool is_in(const void* p) const {
     return used_region().contains(p);
   }
-
+    
   virtual bool is_free_block(const HeapWord* p) const;
 
   // Resizing support
@@ -497,8 +500,8 @@ class CompactibleFreeListSpace: public CompactibleSpace {
 
   // Override: provides a DCTO_CL specific to this kind of space.
   DirtyCardToOopClosure* new_dcto_cl(OopClosure* cl,
-                                     CardTableModRefBS::PrecisionStyle precision,
-                                     HeapWord* boundary);
+				     CardTableModRefBS::PrecisionStyle precision,
+				     HeapWord* boundary);
 
   void blk_iterate(BlkClosure* cl);
   void blk_iterate_careful(BlkClosureCareful* cl);
@@ -606,7 +609,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // verify that the given chunk is in the free lists.
   bool verifyChunkInFreeLists(FreeChunk* fc) const;
   // Do some basic checks on the the free lists.
-  void checkFreeListConsistency()         const PRODUCT_RETURN;
+  void checkFreeListConsistency()	  const PRODUCT_RETURN;
 
   NOT_PRODUCT (
     void initializeIndexedFreeListArrayReturnedBytes();
@@ -620,7 +623,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // The census consists of counts of the quantities such as
   // the current count of the free chunks, number of chunks
   // created as a result of the split of a larger chunk or
-  // coalescing of smaller chucks, etc.  The counts in the
+  // coalescing of smaller chucks, etc.  The counts in the 
   // census is used to make decisions on splitting and
   // coalescing of chunks during the sweep of garbage.
 
@@ -644,56 +647,56 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   bool coalOverPopulated(size_t size);
 
 // Record (for each size):
-//
-//   split-births = #chunks added due to splits in (prev-sweep-end,
-//      this-sweep-start)
-//   split-deaths = #chunks removed for splits in (prev-sweep-end,
-//      this-sweep-start)
+// 
+//   split-births = #chunks added due to splits in (prev-sweep-end, 
+// 	this-sweep-start)
+//   split-deaths = #chunks removed for splits in (prev-sweep-end, 
+// 	this-sweep-start)
 //   num-curr     = #chunks at start of this sweep
 //   num-prev     = #chunks at end of previous sweep
-//
+// 
 // The above are quantities that are measured. Now define:
-//
+// 
 //   num-desired := num-prev + split-births - split-deaths - num-curr
-//
+// 
 // Roughly, num-prev + split-births is the supply,
 // split-deaths is demand due to other sizes
 // and num-curr is what we have left.
-//
+// 
 // Thus, num-desired is roughly speaking the "legitimate demand"
 // for blocks of this size and what we are striving to reach at the
 // end of the current sweep.
-//
+// 
 // For a given list, let num-len be its current population.
 // Define, for a free list of a given size:
-//
+// 
 //   coal-overpopulated := num-len >= num-desired * coal-surplus
 // (coal-surplus is set to 1.05, i.e. we allow a little slop when
 // coalescing -- we do not coalesce unless we think that the current
 // supply has exceeded the estimated demand by more than 5%).
-//
+// 
 // For the set of sizes in the binary tree, which is neither dense nor
 // closed, it may be the case that for a particular size we have never
 // had, or do not now have, or did not have at the previous sweep,
 // chunks of that size. We need to extend the definition of
 // coal-overpopulated to such sizes as well:
-//
+// 
 //   For a chunk in/not in the binary tree, extend coal-overpopulated
 //   defined above to include all sizes as follows:
-//
+// 
 //   . a size that is non-existent is coal-overpopulated
 //   . a size that has a num-desired <= 0 as defined above is
-//     coal-overpopulated.
-//
+//     coal-overpopulated.  
+// 
 // Also define, for a chunk heap-offset C and mountain heap-offset M:
-//
+// 
 //   close-to-mountain := C >= 0.99 * M
-//
+// 
 // Now, the coalescing strategy is:
-//
+// 
 //    Coalesce left-hand chunk with right-hand chunk if and
 //    only if:
-//
+// 
 //      EITHER
 //        . left-hand chunk is of a size that is coal-overpopulated
 //      OR

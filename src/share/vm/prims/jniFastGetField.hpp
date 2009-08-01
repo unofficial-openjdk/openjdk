@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jniFastGetField.hpp	1.8 07/05/05 17:06:32 JVM"
+#endif
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Basic logic of a fast version of jni_Get<Primitive>Field:
@@ -41,12 +44,12 @@
 //
 // LoadLoad membars to maintain the load order may be necessary
 // for some platforms.
-//
+// 
 // The fast versions don't check for pending suspension request.
 // This is fine since it's totally read-only and doesn't create new race.
 //
 // There is a hypothetical safepoint counter wraparound. But it's not
-// a practical concern.
+// a practical concern.  
 
 class JNI_FastGetField : AllStatic {
  private:

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)modRefBarrierSet.hpp	1.16 07/05/05 17:05:53 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This kind of "BarrierSet" allows a "CollectedHeap" to detect and
@@ -48,10 +51,10 @@ public:
   bool read_prim_needs_barrier(HeapWord* field, size_t bytes) { return false; }
   virtual bool write_ref_needs_barrier(void* field, oop new_val) = 0;
   bool write_prim_needs_barrier(HeapWord* field, size_t bytes,
-                                juint val1, juint val2) { return false; }
+				juint val1, juint val2) { return false; }
 
   void write_prim_field(oop obj, size_t offset, size_t bytes,
-                        juint val1, juint val2) {}
+			juint val1, juint val2) {}
 
   void read_ref_field(void* field) {}
   void read_prim_field(HeapWord* field, size_t bytes) {}
@@ -59,7 +62,7 @@ protected:
   virtual void write_ref_field_work(void* field, oop new_val) = 0;
 public:
   void write_prim_field(HeapWord* field, size_t bytes,
-                        juint val1, juint val2) {}
+			juint val1, juint val2) {}
 
   bool has_read_ref_array_opt() { return false; }
   bool has_read_prim_array_opt() { return false; }
@@ -97,7 +100,7 @@ public:
   // which may admit an optimized implementation for some barriers.
   virtual void invalidate(MemRegion mr, bool whole_heap = false) = 0;
 
-  // The caller guarantees that "mr" contains no references.  (Perhaps it's
+  // The caller guarantees that "mr" contains no references.  (Perhaps it's 
   // objects have been moved elsewhere.)
   virtual void clear(MemRegion mr) = 0;
 

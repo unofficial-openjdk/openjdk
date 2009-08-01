@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -53,7 +53,7 @@ import sun.jvm.hotspot.utilities.*;
 public abstract class Frame implements Cloneable {
   /** A raw stack pointer. The accessor getSP() will return a real (usable)
       stack pointer (e.g. from Thread::last_Java_sp) */
-  protected Address raw_sp;
+  protected Address raw_sp; 
 
   /** Program counter (the next instruction after the call) */
   protected Address pc;
@@ -88,7 +88,7 @@ public abstract class Frame implements Cloneable {
     if (bcp == null) return 0;
     long bci = bcp.minus(null);
     if (bci >= 0 && bci < cm.getCodeSize()) return (int) bci;
-    return (int) (bcp.minus(cm.getHandle()) - constMethodOopDescSize);
+    return (int) (bcp.minus(cm.getHandle()) - constMethodOopDescSize); 
   }
 
   protected int bcpToBci(Address bcp, Method m) {
@@ -105,7 +105,7 @@ public abstract class Frame implements Cloneable {
   public Address getPC()              { return pc; }
   public void    setPC(Address newpc) { pc = newpc; }
   public boolean isDeoptimized()      { return deoptimized; }
-
+  
   public abstract Address getSP();
   public abstract Address getID();
   public abstract Address getFP();
@@ -230,12 +230,12 @@ public abstract class Frame implements Cloneable {
   //  public OopHandle getOopHandleAtAdjusted(MethodOop method, int slot) { return addressOfStackSlot(slot).getOopHandleAt(0); }
   // FIXME: Not yet implementable
   //  public void  setOopHandleAt(int slot, OopHandle value) { addressOfStackSlot(slot).setOopHandleAt(0, value);              }
-
+  
   /** Fetches the (Java) int at the requested slot */
   public int       getIntAt(int slot)                        { return addressOfStackSlot(slot).getJIntAt(0);                   }
   // FIXME: Not yet implementable
   // public void setIntAt(int slot, int value)               { addressOfStackSlot(slot).setJIntAt(0, value);                   }
-
+                                                
   /** returns the frame size in stack slots */
   public abstract long frameSize();
 
@@ -304,7 +304,7 @@ public abstract class Frame implements Cloneable {
   public Address addressOfInterpreterFrameExpressionStackSlot(int slot) {
     return addressOfInterpreterFrameExpressionStack().addOffsetTo(-slot * VM.getVM().getAddressSize());
   }
-
+  
   /** Top of expression stack */
   public abstract Address addressOfInterpreterFrameTOS();
 
@@ -319,8 +319,8 @@ public abstract class Frame implements Cloneable {
 
   public abstract Address getInterpreterFrameSenderSP();
   // FIXME: not yet implementable
-  //  public abstract void    setInterpreterFrameSenderSP(Address senderSP);
-
+  //  public abstract void    setInterpreterFrameSenderSP(Address senderSP); 
+  
   //--------------------------------------------------------------------------------
   // BasicObjectLocks:
   //
@@ -342,7 +342,7 @@ public abstract class Frame implements Cloneable {
   //                                 it points to one beyond where the first element will be.
   // interpreter_frame_monitor_size  reports the allocation size of a monitor in the interpreter stack.
   //                                 this value is >= BasicObjectLock::size(), and may be rounded up
-
+  
   // FIXME: avoiding implementing this for now if possible
   //  public void interpreter_frame_set_monitor_end(BasicObjectLock* value);
   //  public void interpreter_frame_verify_monitor(BasicObjectLock* value) const;
@@ -394,7 +394,7 @@ public abstract class Frame implements Cloneable {
 
   protected abstract Address addressOfSavedOopResult();
   protected abstract Address addressOfSavedReceiver();
-
+  
   public OopHandle getSavedOopResult() {
     return addressOfSavedOopResult().getOopHandleAt(0);
   }
@@ -422,7 +422,7 @@ public abstract class Frame implements Cloneable {
   public Address oopMapRegToLocation(VMReg reg, RegisterMap regMap) {
     VMReg stack0 = VM.getVM().getVMRegImplInfo().getStack0();
     if (reg.lessThan(stack0)) {
-      // If it is passed in a register, it got spilled in the stub frame.
+      // If it is passed in a register, it got spilled in the stub frame.  
       return regMap.getLocation(reg);
     } else {
       long spOffset = VM.getVM().getAddressSize() * reg.minus(stack0);
@@ -480,7 +480,7 @@ public abstract class Frame implements Cloneable {
   //  jlong   get_local_long  (jint slot) const;
   //  jfloat  get_local_float (jint slot) const;
   //  jdouble get_local_double(jint slot) const;
-  //
+  //  
   //  void set_local_object(jint slot, oop     obj);
   //  void set_local_int   (jint slot, jint    i);
   //  void set_local_long  (jint slot, jlong   l);
@@ -489,7 +489,7 @@ public abstract class Frame implements Cloneable {
 
   // FIXME: add safepoint code, oops_do, etc.
   // FIXME: NOT FINISHED
-
+  
 
 
 
@@ -506,7 +506,7 @@ public abstract class Frame implements Cloneable {
   // Oop iteration (FIXME: NOT FINISHED)
   //
 
-
+  
   private static class InterpVisitor implements OopMapVisitor {
     private AddressVisitor addressVisitor;
 
@@ -526,7 +526,7 @@ public abstract class Frame implements Cloneable {
       if (VM.getVM().isClientCompiler()) {
         Assert.that(false, "should not reach here");
       } else if (VM.getVM().isServerCompiler() &&
-                 VM.getVM().useDerivedPointerTable()) {
+		 VM.getVM().useDerivedPointerTable()) {
         Assert.that(false, "FIXME: add derived pointer table");
       }
     }
@@ -538,7 +538,7 @@ public abstract class Frame implements Cloneable {
       addressVisitor.visitCompOopAddress(compOopAddr);
     }
   }
-
+  
   private void oopsInterpretedDo(AddressVisitor oopVisitor, RegisterMap map) {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(map != null, "map must be set");
@@ -565,7 +565,7 @@ public abstract class Frame implements Cloneable {
     //    ) {
     //#ifdef ASSERT
     //      interpreter_frame_verify_monitor(current);
-    //#endif
+    //#endif    
     //      current->oops_do(f);
     //    }
 
@@ -580,13 +580,13 @@ public abstract class Frame implements Cloneable {
 
     int maxLocals = (int) (m.isNative() ? m.getSizeOfParameters() : m.getMaxLocals());
     InterpreterFrameClosure blk = new InterpreterFrameClosure(this, maxLocals, (int) m.getMaxStack(), oopVisitor);
-
+    
     // process locals & expression stack
     OopMapCacheEntry mask = m.getMaskFor(bci);
     mask.iterateOop(blk);
 
     // process a callee's arguments if we are at a call site
-    // (i.e., if we are at an invoke bytecode)
+    // (i.e., if we are at an invoke bytecode)  
     if (map.getIncludeArgumentOops() && !m.isNative()) {
       BytecodeInvoke call = BytecodeInvoke.atCheck(m, bci);
       if (call != null && getInterpreterFrameExpressionStackSize() > 0) {
@@ -599,7 +599,7 @@ public abstract class Frame implements Cloneable {
         //       fore handling the exception (the exception handling
         //       code in the interpreter calls a blocking runtime
         //       routine which can cause this code to be executed).
-        //       (was bug gri 7/27/98)
+        //       (was bug gri 7/27/98)      
         oopsInterpretedArgumentsDo(call.signature(), call.isInvokestatic(), oopVisitor);
       }
     }
@@ -716,16 +716,16 @@ class ArgumentOopFinder extends SignatureInfo {
     // compute size of arguments
     int argsSize = new ArgumentSizeComputer(signature).size() + (isStatic ? 0 : 1);
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that(!fr.isInterpretedFrame() ||
+      Assert.that(!fr.isInterpretedFrame() ||     
                   argsSize <= fr.getInterpreterFrameExpressionStackSize(), "args cannot be on stack anymore");
     }
     // initialize ArgumentOopFinder
     this.f        = f;
-    this.fr       = fr;
+    this.fr       = fr;    
     this.offset   = argsSize;
     this.isStatic = isStatic;
   }
-
+  
   public void oopsDo() {
     if (!isStatic) {
       --offset;

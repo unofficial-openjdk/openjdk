@@ -1,4 +1,6 @@
 /*
+ * @(#)DefaultScriptObject.java	1.3 07/05/05 17:03:43
+ *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,7 +30,7 @@ import java.util.*;
 /**
  * Dummy implementation for ScriptObject interface. This class
  * supports empty set of named and indexed properties. Returns
- * false always for "has" calls. And ignores "delete" and "put"
+ * false always for "has" calls. And ignores "delete" and "put" 
  * calls.
  */
 public class DefaultScriptObject implements ScriptObject {

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)stackValue.cpp	1.28 07/05/24 14:38:39 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -128,9 +131,9 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     union { intptr_t p; jint ji;} value;
     value.p = (intptr_t) CONST64(0xDEADDEAFDEADDEAF);
     value.ji = (jint)((ConstantIntValue*)sv)->value();
-    return new StackValue(value.p);
+    return new StackValue(value.p); 
   } else if (sv->is_constant_oop()) {
-    // constant oop
+    // constant oop        
     return new StackValue(((ConstantOopReadValue *)sv)->value());
 #ifdef _LP64
   } else if (sv->is_constant_double()) {
@@ -151,8 +154,8 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
   }
 
   // Unknown ScopeValue type
-  ShouldNotReachHere();
-  return new StackValue((intptr_t) 0);   // dummy
+  ShouldNotReachHere();    
+  return new StackValue((intptr_t) 0);   // dummy  
 }
 
 
@@ -162,7 +165,7 @@ BasicLock* StackValue::resolve_monitor_lock(const frame* fr, Location location) 
   // (stack picture)
   // high: [     ]  word_offset + 1
   // low   [     ]  word_offset
-  //
+  //       
   // sp->  [     ]  0
   // the word_offset is the distance from the stack pointer to the lowest address
   // The frame's original stack pointer, before any extension by its callee
@@ -177,7 +180,7 @@ void StackValue::print_on(outputStream* st) const {
   switch(_type) {
     case T_INT:
       st->print("%d (int) %f (float) %x (hex)",  *(int *)&_i, *(float *)&_i,  *(int *)&_i);
-      break;
+      break;    
 
     case T_OBJECT:
      _o()->print_value_on(st);
@@ -185,7 +188,7 @@ void StackValue::print_on(outputStream* st) const {
      break;
 
     case T_CONFLICT:
-     st->print("conflict");
+     st->print("conflict"); 
      break;
 
     default:
@@ -194,3 +197,4 @@ void StackValue::print_on(outputStream* st) const {
 }
 
 #endif
+

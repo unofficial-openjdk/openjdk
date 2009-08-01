@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)bytecodeInfo.cpp	1.122 07/05/05 17:06:12 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@
 InlineTree::InlineTree( Compile* c, const InlineTree *caller_tree, ciMethod* callee, JVMState* caller_jvms, int caller_bci, float site_invoke_ratio )
 : C(c), _caller_jvms(caller_jvms),
   _caller_tree((InlineTree*)caller_tree),
-  _method(callee), _site_invoke_ratio(site_invoke_ratio),
+  _method(callee), _site_invoke_ratio(site_invoke_ratio), 
   _count_inline_bcs(method()->code_size()) {
   NOT_PRODUCT(_count_inlines = 0;)
   if (_caller_jvms != NULL) {
@@ -173,7 +176,7 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, ciMethod* calle
 
     if (callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode) {
       wci_result->set_profit(wci_result->profit() * 0.1);
-      // %%% adjust wci_result->size()?
+      // %%% adjust wci_result->size()? 
     }
 
     return NULL;
@@ -183,17 +186,17 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, ciMethod* calle
   if (callee_method->is_abstract())               return "abstract method";
   // note: we allow ik->is_abstract()
   if (!callee_method->holder()->is_initialized()) return "method holder not initialized";
-  if (callee_method->is_native())                 return "native method";
+  if (callee_method->is_native())                 return "native method"; 
   if (callee_method->has_unloaded_classes_in_signature()) return "unloaded signature classes";
 
   if (callee_method->should_inline()) {
     // ignore heuristic controls on inlining
     return NULL;
-  }
+  }  
 
   // Now perform checks which are heuristic
 
-  if( callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode )
+  if( callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode ) 
     return "already compiled into a big method";
 
   // don't inline exception code unless the top method belongs to an
@@ -294,8 +297,8 @@ const char* InlineTree::try_to_inline(ciMethod* callee_method, ciMethod* caller_
   if (UseOldInlining && ClipInlining
       && (int)count_inline_bcs() + size >= DesiredMethodLimit) {
     return "size > DesiredMethodLimit";
-  }
-
+  } 
+  
   // ok, inline this method
   return NULL;
 }

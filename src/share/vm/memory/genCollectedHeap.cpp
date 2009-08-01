@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)genCollectedHeap.cpp	1.190 07/06/15 16:44:02 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -113,11 +116,11 @@ jint GenCollectedHeap::initialize() {
   if (!heap_rs.is_reserved()) {
     vm_shutdown_during_initialization(
       "Could not reserve enough space for object heap");
-    return JNI_ENOMEM;
+    return JNI_ENOMEM;                                    
   }
 
   _reserved = MemRegion((HeapWord*)heap_rs.base(),
-                        (HeapWord*)(heap_rs.base() + heap_rs.size()));
+			(HeapWord*)(heap_rs.base() + heap_rs.size()));
 
   // It is important to do this in a way such that concurrent readers can't
   // temporarily think somethings in the heap.  (Seen this happen in asserts.)
@@ -157,7 +160,7 @@ jint GenCollectedHeap::initialize() {
 
 char* GenCollectedHeap::allocate(size_t alignment,
                                  PermanentGenerationSpec* perm_gen_spec,
-                                 size_t* _total_reserved,
+                                 size_t* _total_reserved, 
                                  int* _n_covered_regions,
                                  ReservedSpace* heap_rs){
   const char overflow_msg[] = "The size of the object heap + VM data exceeds "
@@ -166,11 +169,11 @@ char* GenCollectedHeap::allocate(size_t alignment,
   // Now figure out the total size.
   size_t total_reserved = 0;
   int n_covered_regions = 0;
-  const size_t pageSize = UseLargePages ?
+  const size_t pageSize = UseLargePages ? 
       os::large_page_size() : os::vm_page_size();
 
-  for (int i = 0; i < _n_gens; i++) {
-    total_reserved += _gen_specs[i]->max_size();
+  for (int i = 0; i < _n_gens; i++) {     
+    total_reserved += _gen_specs[i]->max_size();    
     if (total_reserved < _gen_specs[i]->max_size()) {
       vm_exit_during_initialization(overflow_msg);
     }
@@ -179,7 +182,7 @@ char* GenCollectedHeap::allocate(size_t alignment,
   assert(total_reserved % pageSize == 0, "Gen size");
   total_reserved += perm_gen_spec->max_size();
   assert(total_reserved % pageSize == 0, "Perm Gen size");
-
+    
   if (total_reserved < perm_gen_spec->max_size()) {
     vm_exit_during_initialization(overflow_msg);
   }
@@ -188,19 +191,19 @@ char* GenCollectedHeap::allocate(size_t alignment,
   // Add the size of the data area which shares the same reserved area
   // as the heap, but which is not actually part of the heap.
   size_t s = perm_gen_spec->misc_data_size() + perm_gen_spec->misc_code_size();
-
+  
   total_reserved += s;
   if (total_reserved < s) {
     vm_exit_during_initialization(overflow_msg);
   }
 
-  if (UseLargePages) {
+  if (UseLargePages) { 
     assert(total_reserved != 0, "total_reserved cannot be 0");
-    total_reserved = round_to(total_reserved, os::large_page_size());
+    total_reserved = round_to(total_reserved, os::large_page_size()); 
     if (total_reserved < os::large_page_size()) {
       vm_exit_during_initialization(overflow_msg);
     }
-  }
+  } 
 
   // Calculate the address at which the heap must reside in order for
   // the shared data to be at the required address.
@@ -231,7 +234,7 @@ char* GenCollectedHeap::allocate(size_t alignment,
 
 void GenCollectedHeap::post_initialize() {
   SharedHeap::post_initialize();
-  TwoGenerationCollectorPolicy *policy =
+  TwoGenerationCollectorPolicy *policy = 
     (TwoGenerationCollectorPolicy *)collector_policy();
   guarantee(policy->is_two_generation_policy(), "Illegal policy type");
   DefNewGeneration* def_new_gen = (DefNewGeneration*) get_gen(0);
@@ -239,15 +242,15 @@ void GenCollectedHeap::post_initialize() {
          def_new_gen->kind() == Generation::ParNew ||
          def_new_gen->kind() == Generation::ASParNew,
          "Wrong generation kind");
-
+  
   Generation* old_gen = get_gen(1);
   assert(old_gen->kind() == Generation::ConcurrentMarkSweep ||
-         old_gen->kind() == Generation::ASConcurrentMarkSweep ||
-         old_gen->kind() == Generation::MarkSweepCompact,
+	 old_gen->kind() == Generation::ASConcurrentMarkSweep ||
+	 old_gen->kind() == Generation::MarkSweepCompact,
     "Wrong generation kind");
 
   policy->initialize_size_policy(def_new_gen->eden()->capacity(),
-                                 old_gen->capacity(),
+				 old_gen->capacity(),
                                  def_new_gen->from()->capacity());
   policy->initialize_gc_policy_counters();
 }
@@ -341,7 +344,7 @@ unsigned int GenCollectedHeap::update_full_collections_completed(unsigned int co
 void GenCollectedHeap::check_for_non_bad_heap_word_value(HeapWord* addr,
                                                          size_t size) {
   if (CheckMemoryInitialization && ZapUnusedHeapArea) {
-    // We are asked to check a size in HeapWords,
+    // We are asked to check a size in HeapWords, 
     // but the memory is mangled in juint words.
     juint* start = (juint*) (addr + skip_header_HeapWords());
     juint* end   = (juint*) (addr + size);
@@ -351,11 +354,11 @@ void GenCollectedHeap::check_for_non_bad_heap_word_value(HeapWord* addr,
     }
   }
 }
-#endif
+#endif 
 
 HeapWord* GenCollectedHeap::attempt_allocation(size_t size,
                                                bool is_tlab,
-                                               bool first_only) {
+					       bool first_only) {
   HeapWord* res;
   for (int i = 0; i < _n_gens; i++) {
     if (_gens[i]->should_allocate(size, is_tlab)) {
@@ -371,10 +374,10 @@ HeapWord* GenCollectedHeap::attempt_allocation(size_t size,
 HeapWord* GenCollectedHeap::mem_allocate(size_t size,
                                          bool is_large_noref,
                                          bool is_tlab,
-                                         bool* gc_overhead_limit_was_exceeded) {
-  return collector_policy()->mem_allocate_work(size,
-                                               is_tlab,
-                                               gc_overhead_limit_was_exceeded);
+					 bool* gc_overhead_limit_was_exceeded) {
+  return collector_policy()->mem_allocate_work(size, 
+					       is_tlab, 
+					       gc_overhead_limit_was_exceeded);
 }
 
 bool GenCollectedHeap::must_clear_all_soft_refs() {
@@ -391,7 +394,7 @@ void GenCollectedHeap::do_collection(bool  full,
                                      bool   clear_all_soft_refs,
                                      size_t size,
                                      bool   is_tlab,
-                                     int    max_level) {
+				     int    max_level) {
   bool prepared_for_verification = false;
   ResourceMark rm;
   DEBUG_ONLY(Thread* my_thread = Thread::current();)
@@ -416,7 +419,7 @@ void GenCollectedHeap::do_collection(bool  full,
       gclog_or_tty->print_cr("GC Cause: %s", GCCause::to_string(gc_cause()));
     }
   }
-
+  
   {
     FlagSetting fl(_is_gc_active, true);
 
@@ -425,9 +428,9 @@ void GenCollectedHeap::do_collection(bool  full,
     if (complete) {
       GCCause::Cause cause = gc_cause();
       if (cause == GCCause::_java_lang_system_gc) {
-        gc_cause_str = "Full GC (System) ";
+	gc_cause_str = "Full GC (System) ";
       } else {
-        gc_cause_str = "Full GC ";
+	gc_cause_str = "Full GC ";
       }
     }
     gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
@@ -441,7 +444,7 @@ void GenCollectedHeap::do_collection(bool  full,
 
     int starting_level = 0;
     if (full) {
-      // Search for the oldest generation which will collect all younger
+      // Search for the oldest generation which will collect all younger 
       // generations, and start collection loop there.
       for (int i = max_level; i >= 0; i--) {
         if (_gens[i]->full_collects_younger_generations()) {
@@ -477,15 +480,15 @@ void GenCollectedHeap::do_collection(bool  full,
                      size*HeapWordSize);
         }
 
-        if (VerifyBeforeGC && i >= VerifyGCLevel &&
+        if (VerifyBeforeGC && i >= VerifyGCLevel && 
             total_collections() >= VerifyGCStartAt) {
           HandleMark hm;  // Discard invalid handles created during verification
-          if (!prepared_for_verification) {
-            prepare_for_verify();
+	  if (!prepared_for_verification) {
+	    prepare_for_verify(); 
             prepared_for_verification = true;
-          }
-          gclog_or_tty->print(" VerifyBeforeGC:");
-          Universe::verify(true);
+	  }
+	  gclog_or_tty->print(" VerifyBeforeGC:");
+	  Universe::verify(true);
         }
         COMPILER2_PRESENT(DerivedPointerTable::clear());
 
@@ -513,7 +516,7 @@ void GenCollectedHeap::do_collection(bool  full,
 
           HandleMark hm;  // Discard invalid handles created during gc
           save_marks();   // save marks for all gens
-          // We want to discover references, but not process them yet.
+          // We want to discover references, but not process them yet. 
           // This mode is disabled in process_discovered_references if the
           // generation does some collection work, or in
           // enqueue_discovered_references if the generation returns
@@ -533,11 +536,11 @@ void GenCollectedHeap::do_collection(bool  full,
           if (!rp->enqueuing_is_done()) {
             rp->enqueue_discovered_references();
           } else {
-            rp->set_enqueuing_is_done(false);
+	    rp->set_enqueuing_is_done(false);
           }
           rp->verify_no_references_recorded();
         }
-        max_level_collected = i;
+	max_level_collected = i;
 
         // Determine if allocation request was met.
         if (size > 0) {
@@ -549,16 +552,16 @@ void GenCollectedHeap::do_collection(bool  full,
         }
 
         COMPILER2_PRESENT(DerivedPointerTable::update_pointers());
-
+  
         _gens[i]->stat_record()->accumulated_time.stop();
 
-        update_gc_stats(i, full);
-
+	update_gc_stats(i, full);
+  
         if (VerifyAfterGC && i >= VerifyGCLevel &&
             total_collections() >= VerifyGCStartAt) {
           HandleMark hm;  // Discard invalid handles created during verification
-          gclog_or_tty->print(" VerifyAfterGC:");
-          Universe::verify(false);
+	  gclog_or_tty->print(" VerifyAfterGC:");
+	  Universe::verify(false);
         }
 
         if (PrintGCDetails) {
@@ -575,7 +578,7 @@ void GenCollectedHeap::do_collection(bool  full,
 
     if (PrintGCDetails) {
       print_heap_change(gch_prev_used);
-
+        
       // Print perm gen info for full GC with PrintGCDetails flag.
       if (complete) {
         print_perm_heap_change(perm_prev_used);
@@ -615,7 +618,7 @@ void GenCollectedHeap::do_collection(bool  full,
     vm_exit(-1);
   }
 }
-
+    
 HeapWord* GenCollectedHeap::satisfy_failed_allocation(size_t size, bool is_tlab) {
   return collector_policy()->satisfy_failed_allocation(size, is_tlab);
 }
@@ -636,14 +639,14 @@ static AssertIsPermClosure assert_is_perm_closure;
 
 void GenCollectedHeap::
 gen_process_strong_roots(int level,
-                         bool younger_gens_as_roots,
-                         bool collecting_perm_gen,
-                         SharedHeap::ScanningOption so,
-                         OopsInGenClosure* older_gens,
-                         OopsInGenClosure* not_older_gens) {
+			 bool younger_gens_as_roots,
+			 bool collecting_perm_gen,
+			 SharedHeap::ScanningOption so,
+			 OopsInGenClosure* older_gens,
+			 OopsInGenClosure* not_older_gens) {
   // General strong roots.
   SharedHeap::process_strong_roots(collecting_perm_gen, so,
-                                   not_older_gens, older_gens);
+				   not_older_gens, older_gens);
 
   if (younger_gens_as_roots) {
     if (!_gen_process_strong_tasks->is_task_claimed(GCH_PS_younger_gens)) {
@@ -666,7 +669,7 @@ gen_process_strong_roots(int level,
 }
 
 void GenCollectedHeap::gen_process_weak_roots(OopClosure* root_closure,
-                                              OopClosure* non_root_closure) {
+					      OopClosure* non_root_closure) {
   SharedHeap::process_weak_roots(root_closure, non_root_closure);
   // "Local" "weak" refs
   for (int i = 0; i < _n_gens; i++) {
@@ -674,16 +677,16 @@ void GenCollectedHeap::gen_process_weak_roots(OopClosure* root_closure,
   }
 }
 
-#define GCH_SINCE_SAVE_MARKS_ITERATE_DEFN(OopClosureType, nv_suffix)    \
-void GenCollectedHeap::                                                 \
-oop_since_save_marks_iterate(int level,                                 \
-                             OopClosureType* cur,                       \
-                             OopClosureType* older) {                   \
-  _gens[level]->oop_since_save_marks_iterate##nv_suffix(cur);           \
-  for (int i = level+1; i < n_gens(); i++) {                            \
-    _gens[i]->oop_since_save_marks_iterate##nv_suffix(older);           \
-  }                                                                     \
-  perm_gen()->oop_since_save_marks_iterate##nv_suffix(older);           \
+#define GCH_SINCE_SAVE_MARKS_ITERATE_DEFN(OopClosureType, nv_suffix)	\
+void GenCollectedHeap::							\
+oop_since_save_marks_iterate(int level,					\
+			     OopClosureType* cur,			\
+			     OopClosureType* older) {			\
+  _gens[level]->oop_since_save_marks_iterate##nv_suffix(cur);		\
+  for (int i = level+1; i < n_gens(); i++) {				\
+    _gens[i]->oop_since_save_marks_iterate##nv_suffix(older);		\
+  }									\
+  perm_gen()->oop_since_save_marks_iterate##nv_suffix(older);		\
 }
 
 ALL_SINCE_SAVE_MARKS_CLOSURES(GCH_SINCE_SAVE_MARKS_ITERATE_DEFN)
@@ -755,7 +758,7 @@ void GenCollectedHeap::collect_as_vm_thread(GCCause::Cause cause) {
   assert(Heap_lock->is_locked(), "Precondition#2");
   GCCauseSetter gcs(this, cause);
   switch (cause) {
-    case GCCause::_heap_inspection:
+    case GCCause::_heap_inspection: 
     case GCCause::_heap_dump: {
       HandleMark hm;
       do_full_collection(false,         // don't clear all soft refs
@@ -798,7 +801,7 @@ void GenCollectedHeap::collect_locked(GCCause::Cause cause, int max_level) {
 bool GenCollectedHeap::create_cms_collector() {
 
   assert(((_gens[1]->kind() == Generation::ConcurrentMarkSweep) ||
-         (_gens[1]->kind() == Generation::ASConcurrentMarkSweep)) &&
+	 (_gens[1]->kind() == Generation::ASConcurrentMarkSweep)) &&
          _perm_gen->as_gen()->kind() == Generation::ConcurrentMarkSweep,
          "Unexpected generation kinds");
   // Skip two header words in the block content verification
@@ -806,7 +809,7 @@ bool GenCollectedHeap::create_cms_collector() {
   CMSCollector* collector = new CMSCollector(
     (ConcurrentMarkSweepGeneration*)_gens[1],
     (ConcurrentMarkSweepGeneration*)_perm_gen->as_gen(),
-    _rem_set->as_CardTableRS(),
+    _rem_set->as_CardTableRS(), 
     (ConcurrentMarkSweepPolicy*) collector_policy());
 
   if (collector == NULL || !collector->completed_initialization()) {
@@ -836,7 +839,7 @@ void GenCollectedHeap::collect_mostly_concurrent(GCCause::Cause cause) {
 
 
 void GenCollectedHeap::do_full_collection(bool clear_all_soft_refs,
-                                          int max_level) {
+					  int max_level) {
   int local_max_level;
   if (!incremental_collection_will_fail() &&
       gc_cause() == GCCause::_gc_locker) {
@@ -871,10 +874,10 @@ void GenCollectedHeap::do_full_collection(bool clear_all_soft_refs,
 // Returns "TRUE" iff "p" points into the allocated area of the heap.
 bool GenCollectedHeap::is_in(const void* p) const {
   #ifndef ASSERT
-  guarantee(VerifyBeforeGC   ||
-            VerifyDuringGC   ||
+  guarantee(VerifyBeforeGC   || 
+            VerifyDuringGC   || 
             VerifyBeforeExit ||
-            VerifyAfterGC, "too expensive");
+            VerifyAfterGC, "too expensive"); 
   #endif
   // This might be sped up with a cache of the last generation that
   // answered yes.
@@ -1014,7 +1017,7 @@ HeapWord* GenCollectedHeap::allocate_new_tlab(size_t size) {
   HeapWord* result = mem_allocate(size   /* size */,
                                   false  /* is_large_noref */,
                                   true   /* is_tlab */,
-                                  &gc_overhead_limit_was_exceeded);
+				  &gc_overhead_limit_was_exceeded);
   return result;
 }
 
@@ -1055,7 +1058,7 @@ static void sort_scratch_list(ScratchBlock*& list) {
 }
 
 ScratchBlock* GenCollectedHeap::gather_scratch(Generation* requestor,
-                                               size_t max_alloc_words) {
+					       size_t max_alloc_words) {
   ScratchBlock* res = NULL;
   for (int i = 0; i < _n_gens; i++) {
     _gens[i]->contribute_scratch(res, requestor, max_alloc_words);
@@ -1089,7 +1092,7 @@ void GenCollectedHeap::prepare_for_verify() {
 
 
 void GenCollectedHeap::generation_iterate(GenClosure* cl,
-                                          bool old_to_young) {
+					  bool old_to_young) {
   if (old_to_young) {
     for (int i = _n_gens-1; i >= 0; i--) {
       cl->do_generation(_gens[i]);
@@ -1140,7 +1143,7 @@ GenCollectedHeap* GenCollectedHeap::heap() {
 void GenCollectedHeap::prepare_for_compaction() {
   Generation* scanning_gen = _gens[_n_gens-1];
   // Start by compacting into same gen.
-  CompactPoint cp(scanning_gen, NULL, NULL);
+  CompactPoint cp(scanning_gen, NULL, NULL); 
   while (scanning_gen != NULL) {
     scanning_gen->prepare_for_compaction(&cp);
     scanning_gen = prev_gen(scanning_gen);
@@ -1153,7 +1156,7 @@ GCStats* GenCollectedHeap::gc_stats(int level) const {
 
 void GenCollectedHeap::verify(bool allow_dirty, bool silent) {
   if (!silent) {
-    gclog_or_tty->print("permgen ");
+    gclog_or_tty->print("permgen ");     
   }
   perm_gen()->verify(allow_dirty);
   for (int i = _n_gens-1; i >= 0; i--) {
@@ -1237,8 +1240,8 @@ void GenCollectedHeap::print_perm_heap_change(size_t perm_prev_used) const {
 class GenGCPrologueClosure: public GenCollectedHeap::GenClosure {
  private:
   bool _full;
- public:
-  void do_generation(Generation* gen) {
+ public: 
+  void do_generation(Generation* gen) { 
     gen->gc_prologue(_full);
   }
   GenGCPrologueClosure(bool full) : _full(full) {};
@@ -1263,8 +1266,8 @@ void GenCollectedHeap::gc_prologue(bool full) {
 class GenGCEpilogueClosure: public GenCollectedHeap::GenClosure {
  private:
   bool _full;
- public:
-  void do_generation(Generation* gen) {
+ public: 
+  void do_generation(Generation* gen) { 
     gen->gc_epilogue(_full);
   }
   GenGCEpilogueClosure(bool full) : _full(full) {};

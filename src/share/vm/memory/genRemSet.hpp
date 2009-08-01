@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)genRemSet.hpp	1.23 07/05/05 17:05:50 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A GenRemSet provides ways of iterating over pointers accross generations.
@@ -34,7 +37,7 @@ class GenRemSet: public CHeapObj {
   friend class Generation;
 
   BarrierSet* _bs;
-
+  
 public:
   enum Name {
     CardTable,
@@ -68,7 +71,7 @@ public:
   virtual void younger_refs_iterate(Generation* g, OopsInGenClosure* blk) = 0;
 
   virtual void younger_refs_in_space_iterate(Space* sp,
-                                             OopsInGenClosure* cl) = 0;
+					     OopsInGenClosure* cl) = 0;
 
   // This method is used to notify the remembered set that "new_val" has
   // been written into "field" by the garbage collector.

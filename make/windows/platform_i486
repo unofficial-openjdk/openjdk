@@ -1,4 +1,4 @@
-// Platform file for windows platform
+// Platform file for windows platform @(#)platform_i486	1.7 07/09/17 09:41:33
 
 os_family = windows
 

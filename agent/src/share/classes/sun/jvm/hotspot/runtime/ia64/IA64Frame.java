@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.ia64;
@@ -51,7 +51,7 @@ public class IA64Frame extends Frame {
   // an additional field beyond sp and pc:
   // Address raw_fp; // frame pointer only 1.4.2
 
-  Address iframe;
+  Address iframe; 
 
   private IA64Frame() {
   }
@@ -110,7 +110,7 @@ public class IA64Frame extends Frame {
   public Address getSP() { return raw_sp; }
   public Address getID() { return getFP(); }
 
-  // FIXME: not implemented yet
+  // FIXME: not implemented yet 
   public boolean isSignalHandlerFrameDbg() { return false; }
   public int     getSignalNumberDbg()      { return 0;     }
   public String  getSignalNameDbg()        { return null;  }
@@ -137,19 +137,19 @@ public class IA64Frame extends Frame {
     if (fr.prev() == null) {
       Address wrapper = fr.wrapper();
       if ( wrapper == null) {
-        return null;
+	return null;
       }
       IA64JavaCallWrapper jcw = new IA64JavaCallWrapper(wrapper);
       Address iprev = jcw.getPrevIFrame();
       if (iprev == null) {
-        return null;
+	return null;
       }
       return new IA64Frame(null, iprev, null);
     } else {
       return new IA64Frame(null, fr.prev(), null);
     }
 
-    /*
+    /* 
     IA64RegisterMap map = (IA64RegisterMap) regMap;
 
     if (Assert.ASSERTS_ENABLED) {
@@ -194,7 +194,7 @@ public class IA64Frame extends Frame {
     IA64JavaCallWrapper jcw = (IA64JavaCallWrapper) getEntryFrameCallWrapper();
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(!entryFrameIsFirst(), "next Java fp must be non zero");
-      Assert.that(jcw.getLastJavaSP().greaterThan(getSP()), "must be above this frame on stack");
+      Assert.that(jcw.getLastJavaSP().greaterThan(getSP()), "must be above this frame on stack");  
     }
     IA64Frame fr = new IA64Frame(jcw.getLastJavaSP(), jcw.getLastJavaFP(), null);
     map.clear();
@@ -235,7 +235,7 @@ public class IA64Frame extends Frame {
 
     /*
 
-    // frame owned by optimizing compiler
+    // frame owned by optimizing compiler 
     Address        sender_sp = null;
 
     if (VM.getVM().isClientCompiler()) {
@@ -259,8 +259,8 @@ public class IA64Frame extends Frame {
       saved_fp = getFP().getAddressAt(0);
     } else {
       int llink_offset = cb.getLinkOffset();
-      if (llink_offset >= 0) {
-        // Restore base-pointer, since next frame might be an interpreter frame.
+      if (llink_offset >= 0) {    
+        // Restore base-pointer, since next frame might be an interpreter frame.    
         Address fp_addr = getSP().addOffsetTo(VM.getVM().getAddressSize() * llink_offset);
         saved_fp = fp_addr.getAddressAt(0);
       }
@@ -280,14 +280,14 @@ public class IA64Frame extends Frame {
 
   public long frameSize() {
     throw new RuntimeException("frameSize NYI");
-    /*
+    /* 
     return (getSenderSP().minus(getSP()) / VM.getVM().getAddressSize());
     */
   }
 
   public Address getLink() {
     throw new RuntimeException("getLink NYI");
-    /*
+    /* 
     return addressOfStackSlot(LINK_OFFSET).getAddressAt(0);
     */
   }
@@ -296,7 +296,7 @@ public class IA64Frame extends Frame {
   //inline void      frame::set_link(intptr_t* addr)  { *(intptr_t **)addr_at(link_offset) = addr; }
 
   public Address getUnextendedSP() { return getSP(); }
-
+  
   // Return address:
   /*
   public Address getSenderPCAddr() { return addressOfStackSlot(RETURN_ADDR_OFFSET); }
@@ -313,12 +313,12 @@ public class IA64Frame extends Frame {
 
   public Address getSenderSP()     { return null; }
 
-  /*
+  /* 
   public Address compiledArgumentToLocationPD(VMReg reg, RegisterMap regMap, int argSize) {
     if (VM.getVM().isCore() || VM.getVM().isClientCompiler()) {
       throw new RuntimeException("Should not reach here");
     }
-
+    
     return oopMapRegToLocation(reg, regMap);
   }
 
@@ -351,7 +351,7 @@ public class IA64Frame extends Frame {
   }
 
   public Address addressOfInterpreterFrameMDX() {
-    return null;
+    return null; 
   }
 
   // FIXME
@@ -381,12 +381,12 @@ public class IA64Frame extends Frame {
     // tos always points to first free element in c++ interpreter not tos
     return fr.stackBase().addOffsetTo(VM.getVM().getAddressSize());
   }
-
+  
   /** Expression stack from top down */
   public Address addressOfInterpreterFrameTOSAt(int slot) {
     return addressOfInterpreterFrameTOS().addOffsetTo(slot * VM.getVM().getAddressSize());
   }
-
+  
   public Address getInterpreterFrameSenderSP() {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(isInterpretedFrame(), "interpreted frame expected");
@@ -441,7 +441,7 @@ public class IA64Frame extends Frame {
     cInterpreter fr = new cInterpreter(iframe);
     return fr.constantsAddr();
   }
-
+  
   // Entry frames
   public JavaCallWrapper getEntryFrameCallWrapper() {
     throw new RuntimeException("getEntryFrameCallWrapper NYI");
@@ -462,7 +462,7 @@ public class IA64Frame extends Frame {
   }
 
   private void dumpStack() {
-    /*
+    /* 
     if (getFP() != null) {
       for (Address addr = getSP().addOffsetTo(-5 * VM.getVM().getAddressSize());
            AddressOps.lte(addr, getFP().addOffsetTo(5 * VM.getVM().getAddressSize()));

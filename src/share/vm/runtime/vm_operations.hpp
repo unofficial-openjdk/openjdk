@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vm_operations.hpp	1.130 07/05/23 10:54:21 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The following classes are used for operations
@@ -28,7 +31,7 @@
 
 #define VM_OP_ENUM(type)   VMOp_##type,
 
-// Note: When new VM_XXX comes up, add 'XXX' to the template table.
+// Note: When new VM_XXX comes up, add 'XXX' to the template table. 
 #define VM_OPS_DO(template)                       \
   template(Dummy)                                 \
   template(ThreadStop)                            \
@@ -90,21 +93,21 @@ class VM_Operation: public CHeapObj {
     _safepoint,       // blocking,        safepoint, vm_op C-heap allocated
     _no_safepoint,    // blocking,     no safepoint, vm_op C-Heap allocated
     _concurrent,      // non-blocking, no safepoint, vm_op C-Heap allocated
-    _async_safepoint  // non-blocking,    safepoint, vm_op C-Heap allocated
+    _async_safepoint  // non-blocking,    safepoint, vm_op C-Heap allocated 
   };
 
   enum VMOp_Type {
     VM_OPS_DO(VM_OP_ENUM)
     VMOp_Terminating
   };
-
+                
  private:
-  Thread*         _calling_thread;
+  Thread*	  _calling_thread;
   ThreadPriority  _priority;
   long            _timestamp;
-  VM_Operation*   _next;
+  VM_Operation*	  _next;  
   VM_Operation*   _prev;
-
+  
   // The VM operation name array
   static const char* _names[];
 
@@ -112,41 +115,41 @@ class VM_Operation: public CHeapObj {
   VM_Operation()  { _calling_thread = NULL; _next = NULL; _prev = NULL; }
   virtual ~VM_Operation() {}
 
-  // VM operation support (used by VM thread)
-  Thread* calling_thread() const                 { return _calling_thread; }
+  // VM operation support (used by VM thread)  
+  Thread* calling_thread() const                 { return _calling_thread; }  
   ThreadPriority priority()                      { return _priority; }
   void set_calling_thread(Thread* thread, ThreadPriority priority);
-
+  
   long timestamp() const              { return _timestamp; }
-  void set_timestamp(long timestamp)  { _timestamp = timestamp; }
-
+  void set_timestamp(long timestamp)  { _timestamp = timestamp; } 
+    
   // Called by VM thread - does in turn invoke doit(). Do not override this
-  void evaluate();
-
-  // evaluate() is called by the VMThread and in turn calls doit().
-  // If the thread invoking VMThread::execute((VM_Operation*) is a JavaThread,
-  // doit_prologue() is called in that thread before transferring control to
+  void evaluate();  
+    
+  // evaluate() is called by the VMThread and in turn calls doit(). 
+  // If the thread invoking VMThread::execute((VM_Operation*) is a JavaThread, 
+  // doit_prologue() is called in that thread before transferring control to 
   // the VMThread.
-  // If doit_prologue() returns true the VM operation will proceed, and
-  // doit_epilogue() will be called by the JavaThread once the VM operation
-  // completes. If doit_prologue() returns false the VM operation is cancelled.
+  // If doit_prologue() returns true the VM operation will proceed, and 
+  // doit_epilogue() will be called by the JavaThread once the VM operation 
+  // completes. If doit_prologue() returns false the VM operation is cancelled.    
   virtual void doit()                            = 0;
   virtual bool doit_prologue()                   { return true; };
   virtual void doit_epilogue()                   {}; // Note: Not called if mode is: _concurrent
 
   // Type test
   virtual bool is_methodCompiler() const         { return false; }
-
+  
   // Linking
-  VM_Operation *next() const                     { return _next; }
+  VM_Operation *next() const			 { return _next; }
   VM_Operation *prev() const                     { return _prev; }
-  void set_next(VM_Operation *next)              { _next = next; }
-  void set_prev(VM_Operation *prev)              { _prev = prev; }
-
-  // Configuration. Override these appropriatly in subclasses.
+  void set_next(VM_Operation *next)		 { _next = next; }
+  void set_prev(VM_Operation *prev)		 { _prev = prev; }
+  
+  // Configuration. Override these appropriatly in subclasses.             
   virtual VMOp_Type type() const = 0;
-  virtual Mode evaluation_mode() const            { return _safepoint; }
-  virtual bool allow_nested_vm_operations() const { return false; }
+  virtual Mode evaluation_mode() const            { return _safepoint; }  
+  virtual bool allow_nested_vm_operations() const { return false; }    
   virtual bool is_cheap_allocated() const         { return false; }
   virtual void oops_do(OopClosure* f)              { /* do nothing */ };
 
@@ -160,18 +163,18 @@ class VM_Operation: public CHeapObj {
   virtual bool evaluate_at_safepoint() const {
     return evaluation_mode() == _safepoint  ||
            evaluation_mode() == _async_safepoint;
-  }
+  }   
   virtual bool evaluate_concurrently() const {
     return evaluation_mode() == _concurrent ||
            evaluation_mode() == _async_safepoint;
-  }
+  }       
 
   // Debugging
   void print_on_error(outputStream* st) const;
   const char* name() const { return _names[type()]; }
-  static const char* name(int type) {
-    assert(type >= 0 && type < VMOp_Terminating, "invalid VM operation type");
-    return _names[type];
+  static const char* name(int type) { 
+    assert(type >= 0 && type < VMOp_Terminating, "invalid VM operation type"); 
+    return _names[type]; 
   }
 #ifndef PRODUCT
   void print_on(outputStream* st) const { print_on_error(st); }
@@ -179,14 +182,14 @@ class VM_Operation: public CHeapObj {
 };
 
 class VM_ThreadStop: public VM_Operation {
- private:
+ private:  
   oop     _thread;        // The Thread that the Throwable is thrown against
-  oop     _throwable;     // The Throwable thrown at the target Thread
+  oop     _throwable;     // The Throwable thrown at the target Thread  
  public:
   // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
   // VM operation is executed.
-  VM_ThreadStop(oop thread, oop throwable) {
-    _thread    = thread;
+  VM_ThreadStop(oop thread, oop throwable) {    
+    _thread    = thread;  
     _throwable = throwable;
   }
   VMOp_Type type() const                         { return VMOp_ThreadStop; }
@@ -207,7 +210,7 @@ class VM_ThreadStop: public VM_Operation {
 // dummy vm op, evaluated just to force a safepoint
 class VM_ForceSafepoint: public VM_Operation {
  public:
-  VM_ForceSafepoint() {}
+  VM_ForceSafepoint() {}  
   void doit()         {}
   VMOp_Type type() const { return VMOp_ForceSafepoint; }
 };
@@ -215,7 +218,7 @@ class VM_ForceSafepoint: public VM_Operation {
 // dummy vm op, evaluated just to force a safepoint
 class VM_ForceAsyncSafepoint: public VM_Operation {
  public:
-  VM_ForceAsyncSafepoint() {}
+  VM_ForceAsyncSafepoint() {}  
   void doit()              {}
   VMOp_Type type() const                         { return VMOp_ForceAsyncSafepoint; }
   Mode evaluation_mode() const                   { return _async_safepoint; }
@@ -289,8 +292,8 @@ class VM_PrintJNI: public VM_Operation {
  private:
   outputStream* _out;
  public:
-  VM_PrintJNI()                         { _out = tty; }
-  VM_PrintJNI(outputStream* out)        { _out = out; }
+  VM_PrintJNI() 			{ _out = tty; }
+  VM_PrintJNI(outputStream* out)  	{ _out = out; }
   VMOp_Type type() const                { return VMOp_PrintJNI; }
   void doit();
 };
@@ -331,14 +334,14 @@ class VM_ThreadDump : public VM_Operation {
  public:
   VM_ThreadDump(ThreadDumpResult* result,
                 int max_depth,  // -1 indicates entire stack
-                bool with_locked_monitors,
+                bool with_locked_monitors, 
                 bool with_locked_synchronizers);
 
   VM_ThreadDump(ThreadDumpResult* result,
                 GrowableArray<instanceHandle>* threads,
                 int num_threads, // -1 indicates entire stack
                 int max_depth,
-                bool with_locked_monitors,
+                bool with_locked_monitors, 
                 bool with_locked_synchronizers);
 
   VMOp_Type type() const { return VMOp_ThreadDump; }

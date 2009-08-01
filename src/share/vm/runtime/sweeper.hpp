@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)sweeper.hpp	1.26 07/05/05 17:06:59 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // An NmethodSweeper is an incremental cleaner for:
@@ -27,7 +30,7 @@
 //    - reclamation of unreferences zombie nmethods
 //
 
-class NMethodSweeper : public AllStatic {
+class NMethodSweeper : public AllStatic {  
   static long      _traversals;   // Stack traversal count
   static CodeBlob* _current;      // Current nmethod
   static int       _seen;         // Nof. nmethod we have currently processed in current pass of CodeCache
@@ -39,9 +42,9 @@ class NMethodSweeper : public AllStatic {
   static int       _not_entrant_seen_on_stack; // Number of not entrant nmethod were are still on stack
 
 
-  static void process_nmethod(nmethod *nm);
- public:
-  static long traversal_count() { return _traversals; }
+  static void process_nmethod(nmethod *nm);    
+ public:      
+  static long traversal_count() { return _traversals; }  
 
   static void sweep();  // Invoked at the end of each safepoint
 

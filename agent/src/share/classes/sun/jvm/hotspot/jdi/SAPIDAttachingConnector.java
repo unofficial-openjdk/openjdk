@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -54,7 +54,7 @@ public class SAPIDAttachingConnector extends ConnectorImpl implements AttachingC
         transport = new Transport() {
                    public String name() {
                        return "local process";
-                       }
+		       }
                 };
     }
 
@@ -76,19 +76,19 @@ public class SAPIDAttachingConnector extends ConnectorImpl implements AttachingC
         }
     }
 
-    private VirtualMachine createVirtualMachine(Class virtualMachineImplClass, int pid)
-        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        java.lang.reflect.Method createByPIDMethod
+    private VirtualMachine createVirtualMachine(Class virtualMachineImplClass, int pid) 
+	throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+       	java.lang.reflect.Method createByPIDMethod 
                   = virtualMachineImplClass.getMethod("createVirtualMachineForPID",
-                     new Class[] {
-                         VirtualMachineManager.class,
-                         Integer.TYPE, Integer.TYPE
+                     new Class[] { 
+			 VirtualMachineManager.class,
+                         Integer.TYPE, Integer.TYPE 
                      });
-        return (VirtualMachine) createByPIDMethod.invoke(null,
+        return (VirtualMachine) createByPIDMethod.invoke(null, 
                      new Object[] {
-                         Bootstrap.virtualMachineManager(),
-                         new Integer(pid),
-                         new Integer(0)
+	                 Bootstrap.virtualMachineManager(),
+                         new Integer(pid), 
+                         new Integer(0) 
                      });
     }
 
@@ -105,19 +105,19 @@ public class SAPIDAttachingConnector extends ConnectorImpl implements AttachingC
         checkProcessAttach(pid);
 
         VirtualMachine myVM = null;
-        try {
-            try {
-                Class vmImplClass = loadVirtualMachineImplClass();
-                myVM = createVirtualMachine(vmImplClass, pid);
-            } catch (InvocationTargetException ite) {
-                Class vmImplClass = handleVMVersionMismatch(ite);
-                if (vmImplClass != null) {
-                    return createVirtualMachine(vmImplClass, pid);
-                } else {
-                    throw ite;
-                }
-            }
-        } catch (Exception ee) {
+	try {
+	    try {
+		Class vmImplClass = loadVirtualMachineImplClass();
+		myVM = createVirtualMachine(vmImplClass, pid);              
+	    } catch (InvocationTargetException ite) {
+		Class vmImplClass = handleVMVersionMismatch(ite);
+		if (vmImplClass != null) {
+		    return createVirtualMachine(vmImplClass, pid);
+		} else {
+		    throw ite;
+		}
+	    }
+	} catch (Exception ee) {
             if (DEBUG) {
                 System.out.println("VirtualMachineImpl() got an exception:");
                 ee.printStackTrace();
@@ -141,3 +141,4 @@ public class SAPIDAttachingConnector extends ConnectorImpl implements AttachingC
         return transport;
     }
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bytes_solaris_x86.inline.hpp	1.15 07/09/17 09:17:32 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // For Sun Studio - implementation is in solaris_i486.il.
@@ -66,7 +69,7 @@ extern "C" {
   inline u2 _raw_swap_u2(u2 x) {
     register unsigned short int __dest;
     __asm__ ("rorw $8, %w0": "=r" (__dest): "0" (x): "cc");
-    return __dest;
+    return __dest; 
   }
   inline u4 _raw_swap_u4(u4 x) {
     register unsigned int __dest;
@@ -97,7 +100,7 @@ extern "C" {
     __asm__ __volatile__ (
       "bswap %0"
       :"=r" (ret)      // output : register 0 => ret
-      :"0"  (x)        // input  : x => register 0
+      :"0"  (x)        // input  : x => register 0 
       :"0"             // clobbered register
     );
     return ret;
@@ -109,3 +112,4 @@ extern "C" {
 #endif // AMD64
 }
 #endif  //_GNU_SOURCE
+

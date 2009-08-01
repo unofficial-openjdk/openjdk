@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.code;
@@ -36,7 +36,7 @@ import sun.jvm.hotspot.types.*;
 public class PCDesc extends VMObject {
   private static CIntegerField pcOffsetField;
   private static CIntegerField scopeDecodeOffsetField;
-
+  
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {

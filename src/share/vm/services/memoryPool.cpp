@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)memoryPool.cpp	1.35 07/05/29 09:44:30 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -62,7 +65,7 @@ void MemoryPool::add_manager(MemoryManager* mgr) {
 // Returns an instanceHandle of a MemoryPool object.
 // It creates a MemoryPool instance when the first time
 // this function is called.
-instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
+instanceOop MemoryPool::get_memory_pool_instance(TRAPS) { 
   // Must do an acquire so as to force ordering of subsequent
   // loads from anything _memory_pool_obj points to or implies.
   instanceOop pool_obj = (instanceOop)OrderAccess::load_ptr_acquire(&_memory_pool_obj);
@@ -71,16 +74,16 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
     // Extra pool instances will just be gc'ed.
     klassOop k = Management::sun_management_ManagementFactory_klass(CHECK_NULL);
     instanceKlassHandle ik(THREAD, k);
-
+    
     Handle pool_name = java_lang_String::create_from_str(_name, CHECK_NULL);
     jlong usage_threshold_value = (_usage_threshold->is_high_threshold_supported() ? 0 : -1L);
     jlong gc_usage_threshold_value = (_gc_usage_threshold->is_high_threshold_supported() ? 0 : -1L);
-
+  
     JavaValue result(T_OBJECT);
-    JavaCallArguments args;
+    JavaCallArguments args; 
     args.push_oop(pool_name);           // Argument 1
     args.push_int((int) is_heap());     // Argument 2
-
+  
     symbolHandle method_name = vmSymbolHandles::createMemoryPool_name();
     symbolHandle signature = vmSymbolHandles::createMemoryPool_signature();
 
@@ -98,7 +101,7 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
     instanceHandle pool(THREAD, p);
 
     {
-      // Get lock since another thread may have create the instance
+      // Get lock since another thread may have create the instance 
       MutexLocker ml(Management_lock);
 
       // Check if another thread has created the pool.  We reload
@@ -166,12 +169,12 @@ void MemoryPool::oops_do(OopClosure* f) {
   }
 }
 
-ContiguousSpacePool::ContiguousSpacePool(ContiguousSpace* space,
-                                         const char* name,
-                                         PoolType type,
+ContiguousSpacePool::ContiguousSpacePool(ContiguousSpace* space, 
+                                         const char* name, 
+                                         PoolType type, 
                                          size_t max_size,
                                          bool support_usage_threshold) :
-  CollectedMemoryPool(name, type, space->capacity(), max_size,
+  CollectedMemoryPool(name, type, space->capacity(), max_size, 
                       support_usage_threshold), _space(space) {
 }
 
@@ -184,11 +187,11 @@ MemoryUsage ContiguousSpacePool::get_memory_usage() {
 }
 
 SurvivorContiguousSpacePool::SurvivorContiguousSpacePool(DefNewGeneration* gen,
-                                                         const char* name,
-                                                         PoolType type,
+                                                         const char* name, 
+                                                         PoolType type, 
                                                          size_t max_size,
                                                          bool support_usage_threshold) :
-  CollectedMemoryPool(name, type, gen->from()->capacity(), max_size,
+  CollectedMemoryPool(name, type, gen->from()->capacity(), max_size, 
                       support_usage_threshold), _gen(gen) {
 }
 
@@ -201,12 +204,12 @@ MemoryUsage SurvivorContiguousSpacePool::get_memory_usage() {
 }
 
 #ifndef SERIALGC
-CompactibleFreeListSpacePool::CompactibleFreeListSpacePool(CompactibleFreeListSpace* space,
+CompactibleFreeListSpacePool::CompactibleFreeListSpacePool(CompactibleFreeListSpace* space, 
                                                            const char* name,
-                                                           PoolType type,
+                                                           PoolType type, 
                                                            size_t max_size,
                                                            bool support_usage_threshold) :
-  CollectedMemoryPool(name, type, space->capacity(), max_size,
+  CollectedMemoryPool(name, type, space->capacity(), max_size, 
                       support_usage_threshold), _space(space) {
 }
 
@@ -220,10 +223,10 @@ MemoryUsage CompactibleFreeListSpacePool::get_memory_usage() {
 #endif // SERIALGC
 
 GenerationPool::GenerationPool(Generation* gen,
-                               const char* name,
+                               const char* name, 
                                PoolType type,
                                bool support_usage_threshold) :
-  CollectedMemoryPool(name, type, gen->capacity(), gen->max_capacity(),
+  CollectedMemoryPool(name, type, gen->capacity(), gen->max_capacity(), 
                       support_usage_threshold), _gen(gen) {
 }
 
@@ -236,7 +239,7 @@ MemoryUsage GenerationPool::get_memory_usage() {
 }
 
 CodeHeapPool::CodeHeapPool(CodeHeap* codeHeap, const char* name, bool support_usage_threshold) :
-  MemoryPool(name, NonHeap, codeHeap->capacity(), codeHeap->max_capacity(),
+  MemoryPool(name, NonHeap, codeHeap->capacity(), codeHeap->max_capacity(), 
              support_usage_threshold, false), _codeHeap(codeHeap) {
 }
 

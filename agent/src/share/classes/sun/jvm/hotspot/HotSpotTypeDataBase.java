@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot;
@@ -40,7 +40,7 @@ import sun.jvm.hotspot.utilities.*;
     TypeDataBase interface and not directly to the HotSpotTypeDataBase
     type. </P>
 
-    <P> NOTE: since we are fetching the sizes of the Java primitive types
+    <P> NOTE: since we are fetching the sizes of the Java primitive types 
  */
 
 public class HotSpotTypeDataBase extends BasicTypeDataBase {
@@ -67,7 +67,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
       integers and addresses. This is required because we are fetching
       the sizes of the Java primitive types from the remote process,
       implying that attempting to fetch them before their sizes are
-      known is illegal. </P>
+      known is illegal. </P> 
 
       <P> Throws NoSuchSymbolException if a problem occurred while
       looking up one of the bootstrapping symbols related to the
@@ -98,7 +98,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
     long typeEntryIsUnsignedOffset;
     long typeEntrySizeOffset;
     long typeEntryArrayStride;
-
+    
     typeEntryTypeNameOffset       = getLongValueFromProcess("gHotSpotVMTypeEntryTypeNameOffset");
     typeEntrySuperclassNameOffset = getLongValueFromProcess("gHotSpotVMTypeEntrySuperclassNameOffset");
     typeEntryIsOopTypeOffset      = getLongValueFromProcess("gHotSpotVMTypeEntryIsOopTypeOffset");
@@ -125,13 +125,13 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
       typeNameAddr = entryAddr.getAddressAt(typeEntryTypeNameOffset);
       if (typeNameAddr != null) {
         String typeName = CStringUtilities.getString(typeNameAddr);
-
+        
         String superclassName = null;
         Address superclassNameAddr = entryAddr.getAddressAt(typeEntrySuperclassNameOffset);
         if (superclassNameAddr != null) {
           superclassName = CStringUtilities.getString(superclassNameAddr);
         }
-
+        
         boolean isOopType     = (entryAddr.getCIntegerAt(typeEntryIsOopTypeOffset, C_INT32_SIZE, false) != 0);
         boolean isIntegerType = (entryAddr.getCIntegerAt(typeEntryIsIntegerTypeOffset, C_INT32_SIZE, false) != 0);
         boolean isUnsigned    = (entryAddr.getCIntegerAt(typeEntryIsUnsignedOffset, C_INT32_SIZE, false) != 0);
@@ -193,7 +193,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
     structEntryOffsetOffset       = getLongValueFromProcess("gHotSpotVMStructEntryOffsetOffset");
     structEntryAddressOffset      = getLongValueFromProcess("gHotSpotVMStructEntryAddressOffset");
     structEntryArrayStride        = getLongValueFromProcess("gHotSpotVMStructEntryArrayStride");
-
+    
     // Fetch the address of the VMStructEntry*
     Address entryAddr = lookupInProcess("gHotSpotVMStructs");
     // Dereference this once to get the pointer to the first VMStructEntry
@@ -235,7 +235,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
         } else {
           typeString = CStringUtilities.getString(addr);
         }
-
+      
         isStatic = !(entryAddr.getCIntegerAt(structEntryIsStaticOffset, C_INT32_SIZE, false) == 0);
         if (isStatic) {
           staticFieldAddr = entryAddr.getAddressAt(structEntryAddressOffset);
@@ -266,7 +266,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
     long intConstantEntryNameOffset;
     long intConstantEntryValueOffset;
     long intConstantEntryArrayStride;
-
+    
     intConstantEntryNameOffset  = getLongValueFromProcess("gHotSpotVMIntConstantEntryNameOffset");
     intConstantEntryValueOffset = getLongValueFromProcess("gHotSpotVMIntConstantEntryValueOffset");
     intConstantEntryArrayStride = getLongValueFromProcess("gHotSpotVMIntConstantEntryArrayStride");
@@ -315,7 +315,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
     long longConstantEntryNameOffset;
     long longConstantEntryValueOffset;
     long longConstantEntryArrayStride;
-
+    
     longConstantEntryNameOffset  = getLongValueFromProcess("gHotSpotVMLongConstantEntryNameOffset");
     longConstantEntryValueOffset = getLongValueFromProcess("gHotSpotVMLongConstantEntryValueOffset");
     longConstantEntryArrayStride = getLongValueFromProcess("gHotSpotVMLongConstantEntryArrayStride");
@@ -409,7 +409,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
       and oop types properly. */
   private BasicType createBasicType(String typeName, boolean isOopType,
                                     boolean isIntegerType, boolean isUnsigned) {
-
+    
     BasicType type = null;
 
     if (isIntegerType) {
@@ -437,7 +437,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
     addType(type);
     return type;
   }
-
+  
   /** Recursively creates a PointerType from the string representation
       of the type's name. Note that this currently needs some
       workarounds due to incomplete information in the VMStructs
@@ -456,7 +456,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
         // VMStructs tables that didn't have the target type declared.
         // For this case, we create basic types that never get filled
         // in.
-
+        
         if (targetTypeName.equals("char") ||
             targetTypeName.equals("const char")) {
           // We don't have a representation of const-ness of C types in the SA
@@ -499,7 +499,7 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
             // they had a hierarchy; consider using lookupOrFail)
             superclass = lookupOrCreateClass(superclassName, false, false, false);
         }
-
+        
         // Lookup or create the current type
         BasicType curType = lookupOrCreateClass(typeName, isOopType, isIntegerType, isUnsigned);
         // Set superclass and/or ensure it's correct
@@ -558,42 +558,42 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
       return new BasicJBooleanField(this, containingType, name, type,
                                     isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJByteType())) {
       return new BasicJByteField(this, containingType, name, type,
                                  isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJCharType())) {
       return new BasicJCharField(this, containingType, name, type,
                                  isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJDoubleType())) {
       return new BasicJDoubleField(this, containingType, name, type,
                                    isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJFloatType())) {
       return new BasicJFloatField(this, containingType, name, type,
                                   isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJIntType())) {
       return new BasicJIntField(this, containingType, name, type,
                                 isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJLongType())) {
       return new BasicJLongField(this, containingType, name, type,
                                  isStatic, offset, staticFieldAddress);
     }
-
+    
     if (type.equals(getJShortType())) {
       return new BasicJShortField(this, containingType, name, type,
                                   isStatic, offset, staticFieldAddress);
     }
-
+    
     // Unknown ("opaque") type. Instantiate ordinary Field.
     return new BasicField(this, containingType, name, type,
                           isStatic, offset, staticFieldAddress);

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -50,7 +50,7 @@ public class BasicCDebugInfoDataBase implements CDebugInfoDataBase {
 
   // Used only during runtime
   private Map nameToTypeMap;
-
+  
   /////////////
   // Symbols //
   /////////////
@@ -134,7 +134,7 @@ public class BasicCDebugInfoDataBase implements CDebugInfoDataBase {
     for (Iterator iter = nameToSymMap.values().iterator(); iter.hasNext(); ) {
       ((BasicSym) iter.next()).resolve(this, listener);
     }
-
+    
     // Sort blocks in ascending order of starting address (but do not
     // change ordering among blocks with the same starting address)
     Collections.sort(blocks, new Comparator() {

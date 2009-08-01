@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)objArrayKlass.cpp	1.147 07/05/29 09:44:23 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@ int objArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 
-objArrayOop objArrayKlass::allocate(int length, TRAPS) {
+objArrayOop objArrayKlass::allocate(int length, TRAPS) {  
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
@@ -48,7 +51,7 @@ objArrayOop objArrayKlass::allocate(int length, TRAPS) {
 
 static int multi_alloc_counter = 0;
 
-oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
+oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) { 
   int length = *sizes;
   // Call to lower_dimension uses this pointer, so most be called before a
   // possible GC
@@ -59,7 +62,7 @@ oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   objArrayHandle h_array (THREAD, array);
   if (rank > 1) {
     if (length != 0) {
-      for (int index = 0; index < length; index++) {
+      for (int index = 0; index < length; index++) {  
         arrayKlass* ak = arrayKlass::cast(h_lower_dimension());
         oop sub_array = ak->multi_allocate(rank-1, &sizes[1], CHECK_NULL);
         assert(sub_array->is_parsable(), "Don't publish until parsable");
@@ -183,15 +186,15 @@ klassOop objArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
 }
 
 
-klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_null, int n, TRAPS) {
-
+klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_null, int n, TRAPS) {  
+  
   assert(this_oop->dimension() <= n, "check order of chain");
   int dimension = this_oop->dimension();
-  if (dimension == n)
+  if (dimension == n) 
     return this_oop();
 
   objArrayKlassHandle ak (THREAD, this_oop->higher_dimension());
-  if (ak.is_null()) {
+  if (ak.is_null()) {    
     if (or_null)  return NULL;
 
     ResourceMark rm;
@@ -206,11 +209,11 @@ klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_n
       if( ak.is_null() ) {
 
         // Create multi-dim klass object and link them together
-        klassOop new_klass =
+        klassOop new_klass = 
           objArrayKlassKlass::cast(Universe::objArrayKlassKlassObj())->
           allocate_objArray_klass(dimension + 1, this_oop, CHECK_NULL);
         ak = objArrayKlassHandle(THREAD, new_klass);
-        this_oop->set_higher_dimension(ak());
+        this_oop->set_higher_dimension(ak());    
         ak->set_lower_dimension(this_oop());
         assert(ak->oop_is_objArray(), "incorrect initialization of objArrayKlass");
       }
@@ -327,7 +330,7 @@ void objArrayKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void objArrayKlass::oop_follow_contents(ParCompactionManager* cm,
-                                        oop obj) {
+					oop obj) {
   assert (obj->is_array(), "obj must be array");
   objArrayOop a = objArrayOop(obj);
   a->follow_header(cm);
@@ -457,7 +460,7 @@ int objArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int objArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                       HeapWord* beg_addr, HeapWord* end_addr) {
+				       HeapWord* beg_addr, HeapWord* end_addr) {
   assert (obj->is_objArray(), "obj must be obj array");
   objArrayOop a = objArrayOop(obj);
   ObjArrayKlass_BOUNDED_OOP_ITERATE( \

@@ -21,6 +21,7 @@
 # have any questions.
 #
 
+.ident	"@(#)linux_x86_64.s	1.7 07/05/05 17:04:47 JVM"
 
         # NOTE WELL!  The _Copy functions are called directly
 	# from server-compiler-generated code via CallLeafNoFP,

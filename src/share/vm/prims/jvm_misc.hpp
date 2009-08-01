@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jvm_misc.hpp	1.24 07/05/05 17:06:34 JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// Useful entry points shared by JNI and JVM interface.
+// Useful entry points shared by JNI and JVM interface. 
 // We do not allow real JNI or JVM entry point to call each other.
 
 jclass find_class_from_class_loader(JNIEnv* env, symbolHandle name, jboolean init, Handle loader, Handle protection_domain, jboolean throwError, TRAPS);
@@ -34,11 +37,11 @@ jclass find_class_from_class_loader(JNIEnv* env, symbolHandle name, jboolean ini
 
 extern "C" {
 
-void JNICALL
-JVM_SetPrimitiveFieldValues(JNIEnv *env, jclass cb, jobject obj,
+void JNICALL 
+JVM_SetPrimitiveFieldValues(JNIEnv *env, jclass cb, jobject obj, 
                             jlongArray fieldIDs, jcharArray typecodes, jbyteArray data);
 
-void JNICALL
+void JNICALL 
 JVM_GetPrimitiveFieldValues(JNIEnv *env, jclass cb, jobject obj,
                             jlongArray fieldIDs, jcharArray typecodes, jbyteArray data);
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)coalesce.hpp	1.44 07/05/05 17:06:14 JVM"
+#endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class LoopTree;
@@ -107,3 +110,4 @@ public:
 
   void update_ifg(uint lr1, uint lr2, IndexSet *n_lr1, IndexSet *n_lr2);
 };
+

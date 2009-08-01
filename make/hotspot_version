@@ -22,6 +22,7 @@
 # 
 
 #
+# @(#)hotspot_version	1.17 08/10/30 20:49:14
 # 
 
 #
@@ -42,4 +43,4 @@ JDK_MINOR_VER=6
 JDK_MICRO_VER=0
 
 # Previous (bootdir) JDK version
-JDK_PREVIOUS_VERSION=1.6.0
+JDK_PREVIOUS_VERSION=1.5.0

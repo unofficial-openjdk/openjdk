@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)bytecodes.cpp	1.97 07/06/20 14:52:27 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -75,9 +78,9 @@ int Bytecodes::special_length_at(address bcp, address end) {
       return (len > 0 && len == (int)len) ? len : -1;
     }
 
-  case _lookupswitch:      // fall through
-  case _fast_binaryswitch: // fall through
-  case _fast_linearswitch:
+  case _lookupswitch:      // fall through    
+  case _fast_binaryswitch: // fall through    
+  case _fast_linearswitch: 
     { address aligned_bcp = (address)round_to((intptr_t)bcp + 1, jintSize);
       if (end != NULL && aligned_bcp + 2*jintSize >= end) {
         return -1; // don't read past end of code buffer
@@ -92,9 +95,9 @@ int Bytecodes::special_length_at(address bcp, address end) {
   return 0;
 }
 
-// At a breakpoint instruction, this returns the breakpoint's length,
+// At a breakpoint instruction, this returns the breakpoint's length, 
 // otherwise, it's the same as special_length_at().  This is used by
-// the RawByteCodeStream, which wants to see the actual bytecode
+// the RawByteCodeStream, which wants to see the actual bytecode 
 // values (including breakpoint).  RawByteCodeStream is used by the
 // verifier when reading in bytecode to verify.  Other mechanisms that
 // run at runtime (such as generateOopMaps) need to iterate over the code
@@ -133,7 +136,7 @@ void Bytecodes::def(Code code, const char* name, const char* format, const char*
   if (java_code != code)  _can_rewrite[java_code] = true;
 }
 
-
+  
 // Format strings interpretation:
 //
 // b: bytecode
@@ -145,7 +148,7 @@ void Bytecodes::def(Code code, const char* name, const char* format, const char*
 // w: wide bytecode
 //
 // Note: Right now the format strings are used for 2 purposes:
-//       1. to specify the length of the bytecode
+//       1. to specify the length of the bytecode 
 //          (= number of characters in format string)
 //       2. to specify the bytecode attributes
 //
@@ -353,7 +356,7 @@ void Bytecodes::initialize() {
   def(_putstatic           , "putstatic"           , "bjj"  , NULL    , T_ILLEGAL, -1, true );
   def(_getfield            , "getfield"            , "bjj"  , NULL    , T_ILLEGAL,  0, true );
   def(_putfield            , "putfield"            , "bjj"  , NULL    , T_ILLEGAL, -2, true );
-  def(_invokevirtual       , "invokevirtual"       , "bjj"  , NULL    , T_ILLEGAL, -1, true);
+  def(_invokevirtual       , "invokevirtual"       , "bjj"  , NULL    , T_ILLEGAL, -1, true); 
   def(_invokespecial       , "invokespecial"       , "bjj"  , NULL    , T_ILLEGAL, -1, true);
   def(_invokestatic        , "invokestatic"        , "bjj"  , NULL    , T_ILLEGAL,  0, true);
   def(_invokeinterface     , "invokeinterface"     , "bjj__", NULL    , T_ILLEGAL, -1, true);
@@ -375,7 +378,7 @@ void Bytecodes::initialize() {
   def(_jsr_w               , "jsr_w"               , "boooo", NULL    , T_INT    ,  0, false);
   def(_breakpoint          , "breakpoint"          , ""     , NULL    , T_VOID   ,  0, true);
 
-  //  JVM bytecodes
+  //  JVM bytecodes	  			
   //  bytecode               bytecode name           format   wide f.   result tp  stk traps  std code
 
   def(_fast_agetfield      , "fast_agetfield"      , "bjj"  , NULL    , T_OBJECT ,  0, true , _getfield       );
@@ -406,7 +409,7 @@ void Bytecodes::initialize() {
   def(_fast_icaload        , "fast_icaload"        , "bi_"  , NULL    , T_INT    ,  0, false, _iload);
 
   // Faster method invocation.
-  def(_fast_invokevfinal   , "fast_invokevfinal"   , "bjj"  , NULL    , T_ILLEGAL, -1, true, _invokevirtual   );
+  def(_fast_invokevfinal   , "fast_invokevfinal"   , "bjj"  , NULL    , T_ILLEGAL, -1, true, _invokevirtual   ); 
 
   def(_fast_linearswitch   , "fast_linearswitch"   , ""     , NULL    , T_VOID   , -1, false, _lookupswitch   );
   def(_fast_binaryswitch   , "fast_binaryswitch"   , ""     , NULL    , T_VOID   , -1, false, _lookupswitch   );
@@ -441,7 +444,7 @@ void bytecodes_init() {
   Bytecodes::initialize();
 }
 
-// Restore optimization
+// Restore optimization 
 #ifdef _M_AMD64
 #pragma optimize ("", on)
 #endif

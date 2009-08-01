@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)loopTransform.cpp	1.116 07/06/01 11:35:03 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_loopTransform.cpp.incl"
 
 //------------------------------is_loop_exit-----------------------------------
-// Given an IfNode, return the loop-exiting projection or NULL if both
+// Given an IfNode, return the loop-exiting projection or NULL if both 
 // arms remain in the loop.
 Node *IdealLoopTree::is_loop_exit(Node *iff) const {
   if( iff->outcnt() != 2 ) return NULL; // Ignore partially dead tests
@@ -172,7 +175,7 @@ Node* IdealLoopTree::reassociate_add_sub(Node* n1, PhaseIdealLoop *phase) {
   Node* inv2_c = phase->get_ctrl(inv2);
   Node* n_inv1;
   if (neg_inv1) {
-    Node *zero = phase->_igvn.intcon(0);
+    Node *zero = phase->_igvn.intcon(0); 
     phase->set_ctrl(zero, phase->C->root());
     n_inv1 = new (phase->C, 3) SubINode(zero, inv1);
     phase->register_new_node(n_inv1, inv1_c);
@@ -245,7 +248,7 @@ bool IdealLoopTree::policy_peeling( PhaseIdealLoop *phase ) const {
 
 //------------------------------peeled_dom_test_elim---------------------------
 // If we got the effect of peeling, either by actually peeling or by making
-// a pre-loop which must execute at least once, we can remove all
+// a pre-loop which must execute at least once, we can remove all 
 // loop-invariant dominated tests in the main body.
 void PhaseIdealLoop::peeled_dom_test_elim( IdealLoopTree *loop, Node_List &old_new ) {
   bool progress = true;
@@ -254,7 +257,7 @@ void PhaseIdealLoop::peeled_dom_test_elim( IdealLoopTree *loop, Node_List &old_n
     Node *prev = loop->_head->in(LoopNode::LoopBackControl);//loop->tail();
     Node *test = prev->in(0);
     while( test != loop->_head ) { // Scan till run off top of loop
-
+      
       int p_op = prev->Opcode();
       if( (p_op == Op_IfFalse || p_op == Op_IfTrue) &&
           test->is_If() &&      // Test?
@@ -279,7 +282,7 @@ void PhaseIdealLoop::peeled_dom_test_elim( IdealLoopTree *loop, Node_List &old_n
 }
 
 //------------------------------do_peeling-------------------------------------
-// Peel the first iteration of the given loop.
+// Peel the first iteration of the given loop.  
 // Step 1: Clone the loop body.  The clone becomes the peeled iteration.
 //         The pre-loop illegally has 2 control users (old & new loops).
 // Step 2: Make the old-loop fall-in edges point to the peeled iteration.
@@ -337,7 +340,7 @@ void PhaseIdealLoop::do_peeling( IdealLoopTree *loop, Node_List &old_new ) {
       old->set_req(LoopNode::EntryControl, new_exit_value);
     }
   }
-
+  
 
   // Step 3: Cut the backedge on the clone (so its not a loop) and remove the
   //         extra backedge user.
@@ -368,7 +371,7 @@ void PhaseIdealLoop::do_peeling( IdealLoopTree *loop, Node_List &old_new ) {
     }
   }
 
-  // Now force out all loop-invariant dominating tests.  The optimizer
+  // Now force out all loop-invariant dominating tests.  The optimizer 
   // finds some, but we _know_ they are all useless.
   peeled_dom_test_elim(loop,old_new);
 
@@ -426,7 +429,7 @@ bool IdealLoopTree::policy_maximally_unroll( PhaseIdealLoop *phase ) const {
 
 
 //------------------------------policy_unroll----------------------------------
-// Return TRUE or FALSE if the loop should be unrolled or not.  Unroll if
+// Return TRUE or FALSE if the loop should be unrolled or not.  Unroll if 
 // the loop is a CountedLoop and the body is small enough.
 bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
 
@@ -440,7 +443,7 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
   if( cl->trip_count() <= 1 ) return false;
 
   int future_unroll_ct = cl->unrolled_count() * 2;
-
+ 
   // Don't unroll if the next round of unrolling would push us
   // over the expected trip count of the loop.  One is subtracted
   // from the expected trip count because the pre-loop normally
@@ -451,7 +454,7 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
       (float)future_unroll_ct > cl->profile_trip_cnt() - 1.0) {
     return false;
   }
-
+  
   // When unroll count is greater than LoopUnrollMin, don't unroll if:
   //   the residual iterations are more than 10% of the trip count
   //   and rounds of "unroll,optimize" are not making significant progress
@@ -504,12 +507,12 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
   }
 
   // Check for being too big
-  if( body_size > (uint)LoopUnrollLimit ) {
+  if( body_size > (uint)LoopUnrollLimit ) { 
     if( xors_in_loop >= 4 && body_size < (uint)LoopUnrollLimit*4) return true;
     // Normal case: loop too big
     return false;
   }
-
+  
   // Check for stride being a small enough constant
   if( abs(cl->stride_con()) > (1<<3) ) return false;
 
@@ -555,14 +558,14 @@ bool IdealLoopTree::policy_range_check( PhaseIdealLoop *phase ) const {
       Node *limit = cmp->in(2);
 
       Node *limit_c = phase->get_ctrl(limit);
-      if( limit_c == phase->C->top() )
+      if( limit_c == phase->C->top() ) 
         return false;           // Found dead test on live IF?  No RCE!
       if( is_member(phase->get_loop(limit_c) ) ) {
         // Compare might have operands swapped; commute them
         rc_exp = cmp->in(2);
         limit  = cmp->in(1);
         limit_c = phase->get_ctrl(limit);
-        if( is_member(phase->get_loop(limit_c) ) )
+        if( is_member(phase->get_loop(limit_c) ) ) 
           continue;             // Both inputs are loop varying; cannot RCE
       }
 
@@ -594,7 +597,7 @@ bool IdealLoopTree::policy_peel_only( PhaseIdealLoop *phase ) const {
 }
 
 //------------------------------clone_up_backedge_goo--------------------------
-// If Node n lives in the back_ctrl block and cannot float, we clone a private
+// If Node n lives in the back_ctrl block and cannot float, we clone a private 
 // version of n in preheader_ctrl block and return that, otherwise return n.
 Node *PhaseIdealLoop::clone_up_backedge_goo( Node *back_ctrl, Node *preheader_ctrl, Node *n ) {
   if( get_ctrl(n) != back_ctrl ) return n;
@@ -867,7 +870,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   post_head->set_profile_trip_cnt(4.0);
   pre_head->set_profile_trip_cnt(4.0);
 
-  // Now force out all loop-invariant dominating tests.  The optimizer
+  // Now force out all loop-invariant dominating tests.  The optimizer 
   // finds some, but we _know_ they are all useless.
   peeled_dom_test_elim(loop,old_new);
 }
@@ -974,7 +977,7 @@ void PhaseIdealLoop::do_unroll( IdealLoopTree *loop, Node_List &old_new, bool ad
   }
 
   // ---------
-  // Step 4: Clone the loop body.  Move it inside the loop.  This loop body
+  // Step 4: Clone the loop body.  Move it inside the loop.  This loop body 
   // represents the odd iterations; since the loop trips an even number of
   // times its backedge is never taken.  Kill the backedge.
   uint dd = dom_depth(loop_head);
@@ -993,7 +996,7 @@ void PhaseIdealLoop::do_unroll( IdealLoopTree *loop, Node_List &old_new, bool ad
       newphi->set_req(LoopNode::LoopBackControl, phi   ->in(LoopNode::LoopBackControl));
       phi   ->set_req(LoopNode::LoopBackControl, C->top());
     }
-  }
+  }  
   Node *clone_head = old_new[loop_head->_idx];
   _igvn.hash_delete( clone_head );
   loop_head ->set_req(LoopNode::   EntryControl, clone_head->in(LoopNode::LoopBackControl));
@@ -1036,7 +1039,7 @@ void PhaseIdealLoop::do_maximally_unroll( IdealLoopTree *loop, Node_List &old_ne
 
   // Now its tripping an even number of times remaining.  Double loop body.
   // Do not adjust pre-guards; they are not needed and do not exist.
-  if( cl->trip_count() > 0 ) {
+  if( cl->trip_count() > 0 ) { 
     do_unroll( loop, old_new, false );
   }
 }
@@ -1053,8 +1056,8 @@ bool IdealLoopTree::dominates_backedge(Node* ctrl) {
 // Constrain the main loop iterations so the condition:
 //    scale_con * I + offset  <  limit
 // always holds true.  That is, either increase the number of iterations in
-// the pre-loop or the post-loop until the condition holds true in the main
-// loop.  Stride, scale, offset and limit are all loop invariant.  Further,
+// the pre-loop or the post-loop until the condition holds true in the main 
+// loop.  Stride, scale, offset and limit are all loop invariant.  Further, 
 // stride and scale are constants (offset and limit often are).
 void PhaseIdealLoop::add_constraint( int stride_con, int scale_con, Node *offset, Node *limit, Node *pre_ctrl, Node **pre_limit, Node **main_limit ) {
 
@@ -1066,18 +1069,18 @@ void PhaseIdealLoop::add_constraint( int stride_con, int scale_con, Node *offset
   Node *X = new (C, 3) DivINode( 0, con, scale );
   register_new_node( X, pre_ctrl );
 
-  // For positive stride, the pre-loop limit always uses a MAX function
+  // For positive stride, the pre-loop limit always uses a MAX function 
   // and the main loop a MIN function.  For negative stride these are
-  // reversed.
-
-  // Also for positive stride*scale the affine function is increasing, so the
+  // reversed.  
+  
+  // Also for positive stride*scale the affine function is increasing, so the 
   // pre-loop must check for underflow and the post-loop for overflow.
   // Negative stride*scale reverses this; pre-loop checks for overflow and
   // post-loop for underflow.
   if( stride_con*scale_con > 0 ) {
     // Compute I < (limit-offset)/scale_con
     // Adjust main-loop last iteration to be MIN/MAX(main_loop,X)
-    *main_limit = (stride_con > 0)
+    *main_limit = (stride_con > 0) 
       ? (Node*)(new (C, 3) MinINode( *main_limit, X ))
       : (Node*)(new (C, 3) MaxINode( *main_limit, X ));
     register_new_node( *main_limit, pre_ctrl );
@@ -1096,7 +1099,7 @@ void PhaseIdealLoop::add_constraint( int stride_con, int scale_con, Node *offset
     register_new_node( *pre_limit, pre_ctrl );
 
 //   [++] Here's the algebra that justifies the pre-loop limit expression:
-//
+//   
 //   NOT( scale_con * I + offset  <  limit )
 //      ==
 //   scale_con * I + offset  >=  limit
@@ -1109,12 +1112,12 @@ void PhaseIdealLoop::add_constraint( int stride_con, int scale_con, Node *offset
 //      ==
 //   ( if (scale_con > 0) /*common case*/
 //       (limit-offset)/scale_con - 1  <  I
-//     else
+//     else  
 //       (limit-offset)/scale_con + 1  >  I
 //    )
 //   ( if (scale_con > 0) /*common case*/
 //       (limit-offset)/scale_con + SGN(-scale_con)  <  I
-//     else
+//     else  
 //       (limit-offset)/scale_con + SGN(-scale_con)  >  I
   }
 }
@@ -1159,7 +1162,7 @@ bool PhaseIdealLoop::is_scaled_iv(Node* exp, Node* iv, int* p_scale) {
 bool PhaseIdealLoop::is_scaled_iv_plus_offset(Node* exp, Node* iv, int* p_scale, Node** p_offset, int depth) {
   if (is_scaled_iv(exp, iv, p_scale)) {
     if (p_offset != NULL) {
-      Node *zero = _igvn.intcon(0);
+      Node *zero = _igvn.intcon(0); 
       set_ctrl(zero, C->root());
       *p_offset = zero;
     }
@@ -1190,7 +1193,7 @@ bool PhaseIdealLoop::is_scaled_iv_plus_offset(Node* exp, Node* iv, int* p_scale,
   } else if (opc == Op_SubI) {
     if (is_scaled_iv(exp->in(1), iv, p_scale)) {
       if (p_offset != NULL) {
-        Node *zero = _igvn.intcon(0);
+        Node *zero = _igvn.intcon(0); 
         set_ctrl(zero, C->root());
         Node *ctrl_off = get_ctrl(exp->in(2));
         Node* offset = new (C, 3) SubINode(zero, exp->in(2));
@@ -1225,7 +1228,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Find the trip counter; we are iteration splitting based on it
   Node *trip_counter = cl->phi();
-  // Find the main loop limit; we will trim it's iterations
+  // Find the main loop limit; we will trim it's iterations 
   // to not ever trip end tests
   Node *main_limit = cl->limit();
   // Find the pre-loop limit; we will expand it's iterations to
@@ -1273,7 +1276,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
     return;
   }
   int stride_con = cl->stride_con();
-  Node *zero = _igvn.intcon(0);
+  Node *zero = _igvn.intcon(0); 
   Node *one  = _igvn.intcon(1);
   set_ctrl(zero, C->root());
   set_ctrl(one,  C->root());
@@ -1322,7 +1325,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
         rc_exp = cmp->in(2);
         limit  = cmp->in(1);
         limit_c = get_ctrl(limit);
-        if( loop->is_member(get_loop(limit_c) ) )
+        if( loop->is_member(get_loop(limit_c) ) ) 
           continue;             // Both inputs are loop varying; cannot RCE
       }
       // Here we know 'limit' is loop invariant
@@ -1354,9 +1357,9 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
 
       // At this point we have the expression as:
       //   scale_con * trip_counter + offset :: limit
-      // where scale_con, offset and limit are loop invariant.  Trip_counter
-      // monotonically increases by stride_con, a constant.  Both (or either)
-      // stride_con and scale_con can be negative which will flip about the
+      // where scale_con, offset and limit are loop invariant.  Trip_counter 
+      // monotonically increases by stride_con, a constant.  Both (or either) 
+      // stride_con and scale_con can be negative which will flip about the 
       // sense of the test.
 
       // Adjust pre and main loop limits to guard the correct iteration set
@@ -1376,7 +1379,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
           }
         } else {
 #ifndef PRODUCT
-          if( PrintOpto )
+          if( PrintOpto ) 
             tty->print_cr("missed RCE opportunity");
 #endif
           continue;             // In release mode, ignore it
@@ -1394,7 +1397,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
           limit = new (C, 3) AddINode( limit, one );
           register_new_node( limit, pre_ctrl );
           // Fall into LT case
-        case BoolTest::lt:
+        case BoolTest::lt: 
           add_constraint( stride_con, scale_con, offset, limit, pre_ctrl, &pre_limit, &main_limit );
           if (!conditional_rc) {
             conditional_rc = !loop->dominates_backedge(iff);
@@ -1402,7 +1405,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
           break;
         default:
 #ifndef PRODUCT
-          if( PrintOpto )
+          if( PrintOpto ) 
             tty->print_cr("missed RCE opportunity");
 #endif
           continue;             // Unhandled case
@@ -1498,11 +1501,11 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
 //------------------------------DCE_loop_body----------------------------------
 // Remove simplistic dead code from loop body
 void IdealLoopTree::DCE_loop_body() {
-  for( uint i = 0; i < _body.size(); i++ )
-    if( _body.at(i)->outcnt() == 0 )
+  for( uint i = 0; i < _body.size(); i++ ) 
+    if( _body.at(i)->outcnt() == 0 ) 
       _body.map( i--, _body.pop() );
 }
-
+  
 
 //------------------------------adjust_loop_exit_prob--------------------------
 // Look for loop-exit tests with the 50/50 (or worse) guesses from the parsing stage.
@@ -1517,7 +1520,7 @@ void IdealLoopTree::adjust_loop_exit_prob( PhaseIdealLoop *phase ) {
       IfNode *iff = test->in(0)->as_If();
       if( iff->outcnt() == 2 ) {        // Ignore dead tests
         Node *bol = iff->in(1);
-        if( bol && bol->req() > 1 && bol->in(1) &&
+        if( bol && bol->req() > 1 && bol->in(1) && 
             ((bol->in(1)->Opcode() == Op_StorePConditional ) ||
              (bol->in(1)->Opcode() == Op_StoreIConditional ) ||
              (bol->in(1)->Opcode() == Op_StoreLConditional ) ||
@@ -1545,7 +1548,7 @@ void IdealLoopTree::adjust_loop_exit_prob( PhaseIdealLoop *phase ) {
     test = phase->idom(test);
   }
 }
-
+  
 
 //------------------------------policy_do_remove_empty_loop--------------------
 // Micro-benchmark spamming.  Policy is to always remove empty loops.
@@ -1561,7 +1564,7 @@ bool IdealLoopTree::policy_do_remove_empty_loop( PhaseIdealLoop *phase ) {
   if( !phase->is_member(this,phase->get_ctrl(cl->loopexit()->in(CountedLoopEndNode::TestValue)) ) )
     return false;             // Infinite loop
 #ifndef PRODUCT
-  if( PrintOpto )
+  if( PrintOpto ) 
     tty->print_cr("Removing empty loop");
 #endif
 #ifdef ASSERT
@@ -1587,7 +1590,7 @@ bool IdealLoopTree::policy_do_remove_empty_loop( PhaseIdealLoop *phase ) {
   phase->C->set_major_progress();
   return true;
 }
-
+  
 
 //=============================================================================
 //------------------------------iteration_split_impl---------------------------
@@ -1632,7 +1635,7 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
   if( cl->is_normal_loop() ) {
     bool should_maximally_unroll =  policy_maximally_unroll(phase);
     if( should_maximally_unroll ) {
-      // Here we did some unrolling and peeling.  Eventually we will
+      // Here we did some unrolling and peeling.  Eventually we will 
       // completely unroll this loop and it will no longer be a loop.
       phase->do_maximally_unroll(this,old_new);
       return true;
@@ -1648,16 +1651,16 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
   // front for RCE, and may want to align loop refs to a cache
   // line.  Thus we clone a full loop up front whose trip count is
   // at least 1 (if peeling), but may be several more.
-
+        
   // The main loop will start cache-line aligned with at least 1
   // iteration of the unrolled body (zero-trip test required) and
   // will have some range checks removed.
-
+        
   // A post-loop will finish any odd iterations (leftover after
   // unrolling), plus any needed for RCE purposes.
 
   bool should_unroll = policy_unroll(phase);
-
+  
   bool should_rce = policy_range_check(phase);
 
   bool should_align = policy_align(phase);
@@ -1666,7 +1669,7 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
   // need a pre-loop.  We may still need to peel an initial iteration but
   // we will not be needing an unknown number of pre-iterations.
   //
-  // Basically, if may_rce_align reports FALSE first time through,
+  // Basically, if may_rce_align reports FALSE first time through, 
   // we will not be able to later do RCE or Aligning on this loop.
   bool may_rce_align = !policy_peel_only(phase) || should_rce || should_align;
 
@@ -1680,7 +1683,7 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
     // Adjust the pre- and main-loop limits to let the pre and post loops run
     // with full checks, but the main-loop with no checks.  Remove said
     // checks from the main body.
-    if( should_rce )
+    if( should_rce ) 
       phase->do_range_check(this,old_new);
 
     // Double loop body for unrolling.  Adjust the minimum-trip test (will do
@@ -1688,7 +1691,7 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
     // an even number of trips).  If we are peeling, we might enable some RCE
     // and we'd rather unroll the post-RCE'd loop SO... do not unroll if
     // peeling.
-    if( should_unroll && !should_peel )
+    if( should_unroll && !should_peel ) 
       phase->do_unroll(this,old_new, true);
 
     // Adjust the pre-loop limits to align the main body
@@ -1717,8 +1720,8 @@ bool IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new )
 
   // Look for loop-exit tests with my 50/50 guesses from the Parsing stage.
   // Replace with a 1-in-10 exit guess.
-  if( _parent /*not the root loop*/ &&
-      !_irreducible &&
+  if( _parent /*not the root loop*/ && 
+      !_irreducible && 
       // Also ignore the occasional dead backedge
       !tail()->is_top() ) {
     adjust_loop_exit_prob(phase);
@@ -1739,7 +1742,7 @@ bool IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new )
     }
   }
 
-  // Minor offset re-organization to remove loop-fallout uses of
+  // Minor offset re-organization to remove loop-fallout uses of 
   // trip counter.
   if( _head->is_CountedLoop() ) phase->reorg_offsets( this );
   if( _next && !_next->iteration_split( phase, old_new ))

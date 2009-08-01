@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)regalloc.cpp	1.28 07/05/05 17:06:27 JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -31,7 +34,7 @@ void (*PhaseRegAlloc::_alloc_statistics[MAX_REG_ALLOCATORS])();
 int PhaseRegAlloc::_num_allocators = 0;
 #ifndef PRODUCT
 int PhaseRegAlloc::_total_framesize = 0;
-int PhaseRegAlloc::_max_framesize = 0;
+int PhaseRegAlloc::_max_framesize = 0; 
 #endif
 
 PhaseRegAlloc::PhaseRegAlloc( uint unique, PhaseCFG &cfg,
@@ -64,7 +67,7 @@ int PhaseRegAlloc::reg2offset_unchecked( OptoReg::Name reg ) const {
   // OptoReg::reg2stack(reg), in order to avoid asserts in the latter
   // function.  This routine must remain unchecked, so that dump_frame()
   // can do its work undisturbed.
-  // %%% not really clear why reg2stack would assert here
+  // %%% not really clear why reg2stack would assert here 
 
   return slot*VMRegImpl::stack_slot_size;
 }
@@ -84,10 +87,10 @@ int PhaseRegAlloc::reg2offset( OptoReg::Name reg ) const {
 //------------------------------offset2reg-------------------------------------
 OptoReg::Name PhaseRegAlloc::offset2reg(int stk_offset) const {
   int slot = stk_offset / jintSize;
-  int reg = (slot < (int) _framesize)
+  int reg = (slot < (int) _framesize) 
     ? slot + _matcher._new_SP
     : OptoReg::stack2reg(slot) - _framesize;
-  assert(stk_offset == reg2offset((OptoReg::Name) reg),
+  assert(stk_offset == reg2offset((OptoReg::Name) reg), 
          "offset2reg does not invert properly");
   return (OptoReg::Name) reg;
 }
@@ -125,3 +128,4 @@ PhaseRegAlloc::print_statistics() {
   }
 }
 #endif
+

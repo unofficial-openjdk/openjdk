@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)rframe.cpp	1.41 07/05/05 17:06:52 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,26 +22,26 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 
 #include "incls/_rframe.cpp.incl"
 
-static RFrame*const  noCaller    = (RFrame*) 0x1;               // no caller (i.e., initial frame)
-static RFrame*const  noCallerYet = (RFrame*) 0x0;               // caller not yet computed
+static RFrame*const  noCaller    = (RFrame*) 0x1;		// no caller (i.e., initial frame)
+static RFrame*const  noCallerYet = (RFrame*) 0x0;		// caller not yet computed
 
-RFrame::RFrame(frame fr, JavaThread* thread, RFrame*const callee) :
+RFrame::RFrame(frame fr, JavaThread* thread, RFrame*const callee) : 
   _fr(fr), _thread(thread), _callee(callee), _num(callee ? callee->num() + 1 : 0) {
   _caller = (RFrame*)noCallerYet;
   _invocations = 0;
   _distance = 0;
 }
 
-void RFrame::set_distance(int d) {
+void RFrame::set_distance(int d) { 
   assert(is_compiled() || d >= 0, "should be positive");
-  _distance = d;
+  _distance = d; 
 }
 
 InterpretedRFrame::InterpretedRFrame(frame fr, JavaThread* thread, RFrame*const callee)
@@ -61,12 +64,12 @@ InterpretedRFrame::InterpretedRFrame(frame fr, JavaThread* thread, methodHandle 
 }
 
 CompiledRFrame::CompiledRFrame(frame fr, JavaThread* thread, RFrame*const  callee)
-: RFrame(fr, thread, callee) {
+: RFrame(fr, thread, callee) { 
   init();
 }
 
 CompiledRFrame::CompiledRFrame(frame fr, JavaThread* thread)
-: RFrame(fr, thread, NULL) {
+: RFrame(fr, thread, NULL) { 
   init();
 }
 
@@ -79,7 +82,7 @@ RFrame* RFrame::new_RFrame(frame fr, JavaThread* thread, RFrame*const  callee) {
   if (fr.is_interpreted_frame()) {
     rf = new InterpretedRFrame(fr, thread, callee);
     dist++;
-  } else if (fr.is_compiled_frame()) {
+  } else if (fr.is_compiled_frame()) { 
     // Even deopted frames look compiled because the deopt
     // is invisible until it happens.
     rf = new CompiledRFrame(fr, thread, callee);
@@ -92,8 +95,8 @@ RFrame* RFrame::new_RFrame(frame fr, JavaThread* thread, RFrame*const  callee) {
 }
 
 RFrame* RFrame::caller() {
-  if (_caller != noCallerYet) return (_caller == noCaller) ? NULL : _caller;    // already computed caller
-
+  if (_caller != noCallerYet) return (_caller == noCaller) ? NULL : _caller;	// already computed caller
+  
   // caller not yet computed; do it now
   if (_fr.is_first_java_frame()) {
     _caller = (RFrame*)noCaller;
@@ -132,7 +135,7 @@ void CompiledRFrame::init() {
   assert(vf->is_compiled_frame(), "must be compiled");
   _nm = compiledVFrame::cast(vf)->code();
   vf = vf->top();
-  _vf = javaVFrame::cast(vf);
+  _vf = javaVFrame::cast(vf);  
   _method = methodHandle(thread(), CodeCache::find_nmethod(_fr.pc())->method());
   assert(_method(), "should have found a method");
 #ifndef PRODUCT
@@ -151,7 +154,7 @@ void RFrame::print(const char* kind) {
 #else
   int cnt = top_method()->invocation_count();
 #endif
-  tty->print("%3d %s ", _num, is_interpreted() ? "I" : "C");
+  tty->print("%3d %s ", _num, is_interpreted() ? "I" : "C"); 
   top_method()->print_short_name(tty);
   tty->print_cr(": inv=%5d(%d) cst=%4d", _invocations, cnt, cost());
 #endif
@@ -168,3 +171,4 @@ void InterpretedRFrame::print() {
 void DeoptimizedRFrame::print() {
   RFrame::print("deopt.");
 }
+

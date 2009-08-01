@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)templateInterpreter.hpp	1.2 07/09/25 17:07:43 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file contains the platform-independant parts
@@ -58,16 +61,16 @@ class DispatchTable VALUE_OBJ_CLASS_SPEC {
   enum { length = 1 << BitsPerByte };                 // an entry point for each byte value (also for undefined bytecodes)
 
  private:
-  address _table[number_of_states][length];           // dispatch tables, indexed by tosca and bytecode
+  address _table[number_of_states][length];	      // dispatch tables, indexed by tosca and bytecode
 
  public:
   // Attributes
   EntryPoint entry(int i) const;                      // return entry point for a given bytecode i
   void       set_entry(int i, EntryPoint& entry);     // set    entry point for a given bytecode i
-  address*   table_for(TosState state)          { return _table[state]; }
-  address*   table_for()                        { return table_for((TosState)0); }
-  int        distance_from(address *table)      { return table - table_for(); }
-  int        distance_from(TosState state)      { return distance_from(table_for(state)); }
+  address*   table_for(TosState state) 		{ return _table[state]; }
+  address*   table_for()			{ return table_for((TosState)0); }
+  int	     distance_from(address *table)	{ return table - table_for(); }
+  int	     distance_from(TosState state)	{ return distance_from(table_for(state)); }
 
   // Comparison
   bool operator == (DispatchTable& y);                // for debugging only
@@ -85,7 +88,7 @@ class TemplateInterpreter: public AbstractInterpreter {
     number_of_return_entries  = 9,                              // number of return entry points
     number_of_deopt_entries   = 9,                              // number of deoptimization entry points
     number_of_return_addrs    = 9                              // number of return addresses
-  };
+  };    
 
  protected:
 
@@ -119,7 +122,7 @@ class TemplateInterpreter: public AbstractInterpreter {
   static DispatchTable _normal_table;                           // the normal    dispatch table (used to set the active table in normal mode)
   static DispatchTable _safept_table;                           // the safepoint dispatch table (used to set the active table for safepoints)
   static address       _wentry_point[DispatchTable::length];    // wide instructions only (vtos tosca always)
-
+  
 
  public:
   // Initialization/debugging
@@ -165,10 +168,10 @@ class TemplateInterpreter: public AbstractInterpreter {
 
   // Deoptimization support
   static address    continuation_for(methodOop method,
-                                     address bcp,
-                                     int callee_parameters,
-                                     bool is_top_frame,
-                                     bool& use_next_mdp);
+				     address bcp,
+				     int callee_parameters,
+				     bool is_top_frame,
+				     bool& use_next_mdp);
 
 #include "incls/_templateInterpreter_pd.hpp.incl"
 

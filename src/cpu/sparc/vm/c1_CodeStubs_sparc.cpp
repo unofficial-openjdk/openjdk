@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)c1_CodeStubs_sparc.cpp	1.79 07/05/17 15:47:54 JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -268,7 +271,7 @@ void PatchingStub::align_patch_site(MacroAssembler* ) {
 void PatchingStub::emit_code(LIR_Assembler* ce) {
   // copy original code here
   assert(NativeCall::instruction_size <= _bytes_to_copy && _bytes_to_copy <= 0xFF,
-         "not enough room for call");
+	 "not enough room for call");
   assert((_bytes_to_copy & 0x3) == 0, "must copy a multiple of four bytes");
 
   Label call_patch;
@@ -456,3 +459,4 @@ void G1PostBarrierStub::emit_code(LIR_Assembler* ce) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 #undef __
+

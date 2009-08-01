@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -44,3 +44,4 @@ abstract class ReadWriteDecoder extends InstructionDecoder {
         return decodeReadWrite(instruction, factory, rs1Num, rdNum);
     }
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)frame.cpp	1.235 07/09/25 17:07:43 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 RegisterMap::RegisterMap(JavaThread *thread, bool update_map) {
   _thread         = thread;
-  _update_map     = update_map;
+  _update_map     = update_map;      
   clear();
   debug_only(_update_for_id = NULL;)
 #ifndef PRODUCT
@@ -40,10 +43,10 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   assert(map != NULL, "RegisterMap must be present");
   _thread                = map->thread();
   _update_map            = map->update_map();
-  _include_argument_oops = map->include_argument_oops();
+  _include_argument_oops = map->include_argument_oops();  
   debug_only(_update_for_id = map->_update_for_id;)
   pd_initialize_from(map);
-  if (update_map()) {
+  if (update_map()) {  
     for(int i = 0; i < location_valid_size; i++) {
       LocationValidType bits = !update_map() ? 0 : map->_location_valid[i];
       _location_valid[i] = bits;
@@ -61,7 +64,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   }
 }
 
-void RegisterMap::clear() {
+void RegisterMap::clear() {  
   set_include_argument_oops(true);
   if (_update_map) {
     for(int i = 0; i < location_valid_size; i++) {
@@ -78,7 +81,7 @@ void RegisterMap::clear() {
 void RegisterMap::print_on(outputStream* st) const {
   st->print_cr("Register map");
   for(int i = 0; i < reg_count; i++) {
-
+    
     VMReg r = VMRegImpl::as_VMReg(i);
     intptr_t* src = (intptr_t*) location(r);
     if (src != NULL) {
@@ -115,7 +118,7 @@ address frame::raw_pc() const {
 
 // Change the pc in a frame object. This does not change the actual pc in
 // actual frame. To do that use patch_pc.
-//
+// 
 void frame::set_pc(address   newpc ) {
 #ifdef ASSERT
   if (_cb != NULL && _cb->is_nmethod()) {
@@ -137,9 +140,9 @@ bool frame::is_deoptimized_frame() const {
 }
 
 bool frame::is_native_frame() const {
-  return (_cb != NULL &&
+  return (_cb != NULL && 
           _cb->is_nmethod() &&
-          ((nmethod*)_cb)->is_native_method());
+          ((nmethod*)_cb)->is_native_method());    
 }
 
 bool frame::is_java_frame() const {
@@ -150,11 +153,11 @@ bool frame::is_java_frame() const {
 
 
 bool frame::is_compiled_frame() const {
-  if (_cb != NULL &&
+  if (_cb != NULL && 
       _cb->is_nmethod() &&
       ((nmethod*)_cb)->is_java_method()) {
     return true;
-  }
+  } 
   return false;
 }
 
@@ -183,12 +186,12 @@ bool frame::entry_frame_is_first() const {
 
 
 bool frame::should_be_deoptimized() const {
-  if (_deopt_state == is_deoptimized ||
+  if (_deopt_state == is_deoptimized || 
       !is_compiled_frame() ) return false;
   assert(_cb != NULL && _cb->is_nmethod(), "must be an nmethod");
   nmethod* nm = (nmethod *)_cb;
   if (TraceDependencies) {
-    tty->print("checking (%s) ", nm->is_marked_for_deoptimization() ? "true" : "false");
+    tty->print("checking (%s) ", nm->is_marked_for_deoptimization() ? "true" : "false"); 
     nm->print_value_on(tty);
     tty->cr();
   }
@@ -224,7 +227,7 @@ void frame::deoptimize(JavaThread* thread, bool thread_is_known_safe) {
   if (NeedsDeoptSuspend && !thread_is_known_safe) {
 
     // It is possible especially with DeoptimizeALot/DeoptimizeRandom that
-    // we could see the frame again and ask for it to be deoptimized since
+    // we could see the frame again and ask for it to be deoptimized since 
     // it might move for a long time. That is harmless and we just ignore it.
     if (id() == thread->must_deopt_id()) {
       assert(thread->is_deopt_suspend(), "lost suspension");
@@ -251,7 +254,7 @@ void frame::deoptimize(JavaThread* thread, bool thread_is_known_safe) {
       // Therefore we can put an additional request for the thread to stop
       // no matter what no (like a suspend). This will cause the thread
       // to notice it needs to do the deopt on its own once it leaves native.
-      //
+      // 
       // The only reason we must do this is because on machine with register
       // windows we have a race with patching the return address and the
       // window coming live as the thread returns to the Java code (but still
@@ -313,7 +316,7 @@ frame frame::profile_find_Java_sender_frame(JavaThread *thread) {
     first_java_frame = *this;
   } else if (safe_for_sender(thread)) {
     for (frame sender_frame = sender(&map);
-      sender_frame.safe_for_sender(thread) && !sender_frame.is_first_frame();
+      sender_frame.safe_for_sender(thread) && !sender_frame.is_first_frame(); 
       sender_frame = sender_frame.sender(&map)) {
       if (sender_frame.is_java_frame()) {
         first_java_frame = sender_frame;
@@ -326,10 +329,10 @@ frame frame::profile_find_Java_sender_frame(JavaThread *thread) {
 
 // Interpreter frames
 
-
-void frame::interpreter_frame_set_locals(intptr_t* locs)  {
+ 
+void frame::interpreter_frame_set_locals(intptr_t* locs)  { 
   assert(is_interpreted_frame(), "Not an interpreted frame");
-  *interpreter_frame_locals_addr() = locs;
+  *interpreter_frame_locals_addr() = locs; 
 }
 
 methodOop frame::interpreter_frame_method() const {
@@ -432,7 +435,7 @@ void frame::interpreter_frame_set_mdp(address mdp) {
   interpreter_frame_set_mdx((intptr_t)mdp);
 }
 
-BasicObjectLock* frame::next_monitor_in_interpreter_frame(BasicObjectLock* current) const {
+BasicObjectLock* frame::next_monitor_in_interpreter_frame(BasicObjectLock* current) const { 
   assert(is_interpreted_frame(), "Not an interpreted frame");
 #ifdef ASSERT
   interpreter_frame_verify_monitor(current);
@@ -441,7 +444,7 @@ BasicObjectLock* frame::next_monitor_in_interpreter_frame(BasicObjectLock* curre
   return next;
 }
 
-BasicObjectLock* frame::previous_monitor_in_interpreter_frame(BasicObjectLock* current) const {
+BasicObjectLock* frame::previous_monitor_in_interpreter_frame(BasicObjectLock* current) const { 
   assert(is_interpreted_frame(), "Not an interpreted frame");
 #ifdef ASSERT
 //   // This verification needs to be checked before being enabled
@@ -490,7 +493,7 @@ void frame::interpreter_frame_set_expression_stack_tag(jint offset,
   interpreter_frame_expression_stack()[n] = (intptr_t)tag;
 }
 
-jint frame::interpreter_frame_expression_stack_size() const {
+jint frame::interpreter_frame_expression_stack_size() const { 
   // Number of elements on the interpreter expression stack
   // Callers should span by stackElementWords
   int element_size = Interpreter::stackElementWords();
@@ -498,7 +501,7 @@ jint frame::interpreter_frame_expression_stack_size() const {
     return (interpreter_frame_expression_stack() -
             interpreter_frame_tos_address() + 1)/element_size;
   } else {
-    return (interpreter_frame_tos_address() -
+    return (interpreter_frame_tos_address() - 
             interpreter_frame_expression_stack() + 1)/element_size;
   }
 }
@@ -540,7 +543,7 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
       desc->print();
       NOT_PRODUCT(begin = desc->code_begin(); end = desc->code_end();)
     } else {
-      st->print("~interpreter");
+      st->print("~interpreter"); 
     }
   }
   st->print_cr(")");
@@ -645,7 +648,7 @@ static void print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
   }
 
   // function name - os::dll_address_to_function_name() may return confusing
-  // names if pc is within jvm.dll or libjvm.so, because JVM only has
+  // names if pc is within jvm.dll or libjvm.so, because JVM only has 
   // JVM_xxxx and a few other symbols in the dynamic symbol table. Do this
   // only for native libraries.
   if (!in_vm) {
@@ -657,8 +660,8 @@ static void print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
   }
 }
 
-// frame::print_on_error() is called by fatal error handler. Notice that we may
-// crash inside this function if stack frame is corrupted. The fatal error
+// frame::print_on_error() is called by fatal error handler. Notice that we may 
+// crash inside this function if stack frame is corrupted. The fatal error 
 // handler can catch and handle the crash. Here we assume the frame is valid.
 //
 // First letter indicates type of the frame:
@@ -733,7 +736,7 @@ class InterpreterFrameClosure : public OffsetClosure {
 
  public:
   InterpreterFrameClosure(frame* fr, int max_locals, int max_stack,
-                          OopClosure* f) {
+			  OopClosure* f) {
     _fr         = fr;
     _max_locals = max_locals;
     _max_stack  = max_stack;
@@ -752,12 +755,12 @@ class InterpreterFrameClosure : public OffsetClosure {
       // this condition. Therefore, we call f only if addr is 'inside' the stack (i.e., addr >= esp for Intel).
       bool in_stack;
       if (frame::interpreter_frame_expression_stack_direction() > 0) {
-        in_stack = (intptr_t*)addr <= _fr->interpreter_frame_tos_address();
+	in_stack = (intptr_t*)addr <= _fr->interpreter_frame_tos_address();
       } else {
-        in_stack = (intptr_t*)addr >= _fr->interpreter_frame_tos_address();
+	in_stack = (intptr_t*)addr >= _fr->interpreter_frame_tos_address();
       }
       if (in_stack) {
-        _f->do_oop(addr);
+	_f->do_oop(addr);
       }
     }
   }
@@ -776,7 +779,7 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
 
   void set(int size, BasicType type) {
     _offset -= size;
-    if (type == T_OBJECT || type == T_ARRAY) oop_offset_do();
+    if (type == T_OBJECT || type == T_ARRAY) oop_offset_do();    
   }
 
   void oop_offset_do() {
@@ -789,12 +792,12 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
   InterpretedArgumentOopFinder(symbolHandle signature, bool is_static, frame* fr, OopClosure* f) : SignatureInfo(signature) {
     // compute size of arguments
     int args_size = ArgumentSizeComputer(signature).size() + (is_static ? 0 : 1);
-    assert(!fr->is_interpreted_frame() ||
+    assert(!fr->is_interpreted_frame() || 
            args_size <= fr->interpreter_frame_expression_stack_size(),
-            "args cannot be on stack anymore");
+	    "args cannot be on stack anymore");
     // initialize InterpretedArgumentOopFinder
     _f         = f;
-    _fr        = fr;
+    _fr        = fr;    
     _offset    = args_size;
     _is_static = is_static;
   }
@@ -818,7 +821,7 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
 // (sp+n)->|  first arg|
 //         +-----------+
 
-
+ 
 
 // visits and GC's all the arguments in entry frame
 class EntryFrameOopFinder: public SignatureInfo {
@@ -858,8 +861,8 @@ class EntryFrameOopFinder: public SignatureInfo {
 
 oop* frame::interpreter_callee_receiver_addr(symbolHandle signature) {
   ArgumentSizeComputer asc(signature);
-  int size = asc.size();
-  return (oop *)interpreter_frame_tos_at(size);
+  int size = asc.size();  
+  return (oop *)interpreter_frame_tos_at(size); 
 }
 
 
@@ -882,7 +885,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   ) {
 #ifdef ASSERT
     interpreter_frame_verify_monitor(current);
-#endif
+#endif    
     current->oops_do(f);
   }
 
@@ -893,7 +896,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   // Hmm what about the mdp?
 #ifdef CC_INTERP
   // Interpreter frame in the midst of a call have a methodOop within the
-  // object.
+  // object. 
   interpreterState istate = get_interpreterState();
   if (istate->msg() == BytecodeInterpreter::call_method) {
     f->do_oop((oop*)&istate->_result._to_call._callee);
@@ -910,12 +913,12 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   }
 
   int max_locals = m->is_native() ? m->size_of_parameters() : m->max_locals();
-
+  
   symbolHandle signature;
   bool is_static = false;
 
   // Process a callee's arguments if we are at a call site
-  // (i.e., if we are at an invoke bytecode)
+  // (i.e., if we are at an invoke bytecode)  
   // This is used sometimes for calling into the VM, not for another
   // interpreted or compiled frame.
   if (!m->is_native()) {
@@ -923,7 +926,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
     if (call != NULL) {
       signature = symbolHandle(thread, call->signature());
       is_static = call->is_invokestatic();
-      if (map->include_argument_oops() &&
+      if (map->include_argument_oops() && 
           interpreter_frame_expression_stack_size() > 0) {
         ResourceMark rm(thread);  // is this right ???
         // we are at a call site & the expression stack is not empty
@@ -935,7 +938,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
         //       fore handling the exception (the exception handling
         //       code in the interpreter calls a blocking runtime
         //       routine which can cause this code to be executed).
-        //       (was bug gri 7/27/98)
+        //       (was bug gri 7/27/98)      
         oops_interpreted_arguments_do(signature, is_static, f);
       }
     }
@@ -950,12 +953,12 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
     mask = &oopmap_mask;
 #endif // ASSERT
     oops_interpreted_locals_do(f, max_locals, mask);
-    oops_interpreted_expressions_do(f, signature, is_static,
+    oops_interpreted_expressions_do(f, signature, is_static, 
                                     m->max_stack(),
                                     max_locals, mask);
   } else {
     InterpreterFrameClosure blk(this, max_locals, m->max_stack(), f);
-
+  
     // process locals & expression stack
     InterpreterOopMap mask;
     if (query_oop_map_cache) {
@@ -1038,7 +1041,7 @@ void frame::oops_interpreted_expressions_do(OopClosure *f,
   }
 }
 
-void frame::oops_interpreted_arguments_do(symbolHandle signature, bool is_static, OopClosure* f) {
+void frame::oops_interpreted_arguments_do(symbolHandle signature, bool is_static, OopClosure* f) {  
   InterpretedArgumentOopFinder finder(signature, is_static, this, f);
   finder.oops_do();
 }
@@ -1051,7 +1054,7 @@ void frame::oops_code_blob_do(OopClosure* f, const RegisterMap* reg_map) {
     // Preserve potential arguments for a callee. We handle this by dispatching
     // on the codeblob. For c2i, we do
     if (reg_map->include_argument_oops()) {
-      _cb->preserve_callee_argument_oops(*this, reg_map, f);
+      _cb->preserve_callee_argument_oops(*this, reg_map, f);      
     }
   }
   // In cases where perm gen is collected, GC will want to mark
@@ -1077,14 +1080,14 @@ void frame::nmethods_code_blob_do() {
 
 class CompiledArgumentOopFinder: public SignatureInfo {
  protected:
-  OopClosure*     _f;
+  OopClosure*     _f;  
   int             _offset;      // the current offset, incremented with each argument
   bool            _is_static;   // true if the callee is a static method
   frame           _fr;
-  RegisterMap*    _reg_map;
+  RegisterMap*    _reg_map;      
   int             _arg_size;
   VMRegPair*      _regs;        // VMReg list of arguments
-
+  
   void set(int size, BasicType type) {
     if (type == T_OBJECT || type == T_ARRAY) handle_oop_offset();
     _offset += size;
@@ -1095,18 +1098,18 @@ class CompiledArgumentOopFinder: public SignatureInfo {
     // In LP64-land, the high-order bits are valid but unhelpful.
     VMReg reg = _regs[_offset].first();
     oop *loc = _fr.oopmapreg_to_location(reg, _reg_map);
-    _f->do_oop(loc);
+    _f->do_oop(loc); 
   }
 
  public:
-  CompiledArgumentOopFinder(symbolHandle signature, bool is_static, OopClosure* f, frame fr,  const RegisterMap* reg_map)
+  CompiledArgumentOopFinder(symbolHandle signature, bool is_static, OopClosure* f, frame fr,  const RegisterMap* reg_map) 
     : SignatureInfo(signature) {
 
     // initialize CompiledArgumentOopFinder
     _f         = f;
     _offset    = 0;
-    _is_static = is_static;
-    _fr        = fr;
+    _is_static = is_static;    
+    _fr        = fr;    
     _reg_map   = (RegisterMap*)reg_map;
     _arg_size  = ArgumentSizeComputer(signature).size() + (is_static ? 0 : 1);
 
@@ -1117,11 +1120,11 @@ class CompiledArgumentOopFinder: public SignatureInfo {
 
   void oops_do() {
     if (!_is_static) {
-      handle_oop_offset();
+      handle_oop_offset(); 
       _offset++;
     }
     iterate_parameters();
-  }
+  }  
 };
 
 void frame::oops_compiled_arguments_do(symbolHandle signature, bool is_static, const RegisterMap* reg_map, OopClosure* f) {
@@ -1131,26 +1134,26 @@ void frame::oops_compiled_arguments_do(symbolHandle signature, bool is_static, c
 }
 
 
-// Get receiver out of callers frame, i.e. find parameter 0 in callers
-// frame.  Consult ADLC for where parameter 0 is to be found.  Then
+// Get receiver out of callers frame, i.e. find parameter 0 in callers 
+// frame.  Consult ADLC for where parameter 0 is to be found.  Then 
 // check local reg_map for it being a callee-save register or argument
 // register, both of which are saved in the local frame.  If not found
-// there, it must be an in-stack argument of the caller.
+// there, it must be an in-stack argument of the caller. 
 // Note: caller.sp() points to callee-arguments
 oop frame::retrieve_receiver(RegisterMap* reg_map) {
   frame caller = *this;
 
   // First consult the ADLC on where it puts parameter 0 for this signature.
   VMReg reg = SharedRuntime::name_for_receiver();
-  oop r = *caller.oopmapreg_to_location(reg, reg_map);
+  oop r = *caller.oopmapreg_to_location(reg, reg_map);  
   assert( Universe::heap()->is_in_or_null(r), "bad receiver" );
   return r;
 }
 
 
 oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {
-  if(reg->is_reg()) {
-    // If it is passed in a register, it got spilled in the stub frame.
+  if(reg->is_reg()) {    
+    // If it is passed in a register, it got spilled in the stub frame.  
     return (oop *)reg_map->location(reg);
   } else {
     int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
@@ -1205,19 +1208,19 @@ void frame::oops_do_internal(OopClosure* f, RegisterMap* map, bool use_interpret
          if (is_interpreted_frame())    { oops_interpreted_do(f, map, use_interpreter_oop_map_cache);
   } else if (is_entry_frame())          { oops_entry_do      (f, map);
   } else if (CodeCache::contains(pc())) { oops_code_blob_do  (f, map);
-  } else {
+  } else { 
     ShouldNotReachHere();
-  }
+  }  
 }
 
 void frame::nmethods_do() {
   if (_cb != NULL && _cb->is_nmethod()) {
     nmethods_code_blob_do();
-  }
+  } 
 }
 
 
-void frame::gc_prologue() {
+void frame::gc_prologue() {  
   if (is_interpreted_frame()) {
     // set bcx to bci to become methodOop position independent during GC
     interpreter_frame_set_bcx(interpreter_frame_bci());
@@ -1261,7 +1264,7 @@ void frame::ZapDeadClosure::do_oop(oop* p) {
   if (TraceZapDeadLocals) tty->print_cr("zapping @ " INTPTR_FORMAT " containing " INTPTR_FORMAT, p, (address)*p);
   // Need cast because on _LP64 the conversion to oop is ambiguous.  Constant
   // can be either long or int.
-  *p = (oop)(int)0xbabebabe;
+  *p = (oop)(int)0xbabebabe; 
 }
 frame::ZapDeadClosure frame::_zap_dead;
 
@@ -1320,7 +1323,7 @@ void frame::zap_dead_interpreted_locals(JavaThread *thread, const RegisterMap* m
     // get frame map
     InterpreterOopMap mask;
     m->mask_for(bci, &mask);
-    mask.iterate_all( &oop_blk, &value_blk, &dead_blk);
+    mask.iterate_all( &oop_blk, &value_blk, &dead_blk); 
   }
 }
 
@@ -1366,9 +1369,9 @@ void frame::verify(const RegisterMap* map) {
 bool frame::verify_return_pc(address x) {
   if (StubRoutines::returns_to_call_stub(x)) {
     return true;
-  }
+  }  
   if (CodeCache::contains(x)) {
-    return true;
+    return true; 
   }
   if (Interpreter::contains(x)) {
     return true;
@@ -1400,7 +1403,8 @@ void frame::interpreter_frame_verify_monitor(BasicObjectLock* value) const {
 // StackFrameStream implementation
 
 StackFrameStream::StackFrameStream(JavaThread *thread, bool update) : _reg_map(thread, update) {
-  assert(thread->has_last_Java_frame(), "sanity check");
-  _fr = thread->last_frame();
+  assert(thread->has_last_Java_frame(), "sanity check");  
+  _fr = thread->last_frame(); 
   _is_done = false;
 }
+

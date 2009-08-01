@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)compilerOracle.cpp	1.35 07/09/13 11:29:49 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -139,17 +142,17 @@ bool MethodMatcher::match(symbolHandle candidate, symbolHandle match, Mode match
   ResourceMark rm;
   const char * candidate_string = candidate->as_C_string();
   const char * match_string = match->as_C_string();
-
+  
   switch (match_mode) {
   case Prefix:
     return strstr(candidate_string, match_string) == candidate_string;
-
+    
   case Suffix: {
     size_t clen = strlen(candidate_string);
     size_t mlen = strlen(match_string);
     return clen >= mlen && strcmp(candidate_string + clen - mlen, match_string) == 0;
   }
-
+  
   case Substring:
     return strstr(candidate_string, match_string) != NULL;
 
@@ -362,14 +365,14 @@ static void usage() {
 // The characters allowed in a class or method name.  All characters > 0x7f
 // are allowed in order to handle obfuscated class files (e.g. Volano)
 #define RANGEBASE "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$_<>" \
-        "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f" \
-        "\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f" \
-        "\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf" \
-        "\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf" \
-        "\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf" \
-        "\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf" \
-        "\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef" \
-        "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"
+	"\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f" \
+	"\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f" \
+	"\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf" \
+	"\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf" \
+	"\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf" \
+	"\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf" \
+	"\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef" \
+	"\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"
 
 #define RANGE0 "[*" RANGEBASE "]"
 #define RANGEDOT "[*" RANGEBASE ".]"
@@ -383,7 +386,7 @@ static void usage() {
 //   cmd  java.lang.String::foo
 //  VM syntax
 //   cmd  java/lang/String[. ]foo
-//
+// 
 
 static const char* patterns[] = {
   "%*[ \t]%255" RANGEDOT    " "     "%255"  RANGE0 "%n",
@@ -439,15 +442,15 @@ void CompilerOracle::parse_from_line(char* line) {
   for (char* lp = line; *lp != '\0'; lp++) {
     // Allow '.' to separate the class name from the method name.
     // This is the preferred spelling of methods:
-    //      exclude java/lang/String.indexOf(I)I
+    //	    exclude java/lang/String.indexOf(I)I
     // Allow ',' for spaces (eases command line quoting).
-    //      exclude,java/lang/String.indexOf
+    //	    exclude,java/lang/String.indexOf
     // For backward compatibility, allow space as separator also.
-    //      exclude java/lang/String indexOf
-    //      exclude,java/lang/String,indexOf
+    //	    exclude java/lang/String indexOf
+    //	    exclude,java/lang/String,indexOf
     // For easy cut-and-paste of method names, allow VM output format
     // as produced by methodOopDesc::print_short_name:
-    //      exclude java.lang.String::indexOf
+    //	    exclude java.lang.String::indexOf
     // For simple implementation convenience here, convert them all to space.
     if (have_colon) {
       if (*lp == '.')  *lp = '/';   // dots build the package prefix
@@ -558,7 +561,7 @@ void CompilerOracle::parse_from_file() {
       token[pos++] = c;
     }
     c = getc(stream);
-  }
+  }   
   token[pos++] = '\0';
   parse_from_line(token);
 
@@ -644,7 +647,7 @@ void CompilerOracle::parse_compile_only(char * line) {
         return;
       strncpy(newName, name, i);
       newName[i] = '\0';
-
+      
       if (className == NULL) {
         className = newName;
         c_match = MethodMatcher::Prefix;
@@ -652,7 +655,7 @@ void CompilerOracle::parse_compile_only(char * line) {
         methodName = newName;
       }
     }
-
+    
     if (*line == method_sep) {
       if (className == NULL) {
         className = "";
@@ -680,7 +683,7 @@ void CompilerOracle::parse_compile_only(char * line) {
         }
       }
     }
-
+  
     // each directive is terminated by , or NUL or . followed by NUL
     if (*line == ',' || *line == '\0' || (line[0] == '.' && line[1] == '\0')) {
       if (methodName == NULL) {
@@ -708,3 +711,5 @@ void CompilerOracle::parse_compile_only(char * line) {
     line = *line == '\0' ? line : line + 1;
   }
 }
+
+

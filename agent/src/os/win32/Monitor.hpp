@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)Monitor.hpp	1.10 07/05/05 17:02:05 JVM"
+#endif
 /*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _MONITOR_
@@ -35,7 +38,7 @@ public:
   void lock();
   void unlock();
   // Default time is forever (i.e, zero). Returns true if it times-out, otherwise
-  // false.
+  // false. 
   bool wait(long timeout = 0);
   bool notify();
   bool notifyAll();
@@ -46,7 +49,7 @@ private:
   bool ownedBySelf();
 
   HANDLE _owner;
-  long   _lock_count;
+  long   _lock_count; 
   HANDLE _lock_event;   // Auto-reset event for blocking in lock()
   HANDLE _wait_event;   // Manual-reset event for notifications
   long _counter;        // Current number of notifications

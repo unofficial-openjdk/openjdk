@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)nativeLookup.hpp	1.27 07/05/05 17:06:41 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// NativeLookup provides an interface for finding DLL entry points for
-// Java native functions.
+// NativeLookup provides an interface for finding DLL entry points for 
+// Java native functions. 
 
 class NativeLookup : AllStatic {
  private:
@@ -31,7 +34,7 @@ class NativeLookup : AllStatic {
   static char* pure_jni_name(methodHandle method);
   static char* long_jni_name(methodHandle method);
 
-  // Style specific lookup
+  // Style specific lookup 
   static address lookup_style(methodHandle method, char* pure_name, const char* long_name, int args_size, bool os_style, bool& in_base_library, TRAPS);
   static address lookup_base (methodHandle method, bool& in_base_library, TRAPS);
   static address lookup_entry(methodHandle method, bool& in_base_library, TRAPS);

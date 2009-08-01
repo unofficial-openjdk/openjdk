@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)salibproc.h	1.10 07/05/05 17:02:04 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 #ifndef _SALIBPROC_H_
 #define _SALIBPROC_H_
@@ -105,7 +108,7 @@ typedef int proc_stack_f(void *, const prgregset_t, uint_t, const long *);
 extern int Pstack_iter(struct ps_prochandle *,
     const prgregset_t, proc_stack_f *, void *);
 
-#define PR_OBJ_EVERY    ((const char *)-1)      /* search every load object */
+#define	PR_OBJ_EVERY	((const char *)-1)	/* search every load object */
 
 
 #ifdef __cplusplus

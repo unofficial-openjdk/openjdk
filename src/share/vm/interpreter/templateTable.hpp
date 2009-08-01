@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)templateTable.hpp	1.91 07/05/05 17:05:39 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef CC_INTERP
@@ -73,7 +76,7 @@ class TemplateTable: AllStatic {
  public:
   enum Operation { add, sub, mul, div, rem, _and, _or, _xor, shl, shr, ushr };
   enum Condition { equal, not_equal, less, less_equal, greater, greater_equal };
-
+  
  private:
   static bool            _is_initialized;        // true if TemplateTable has been initialized
   static Template        _template_table     [Bytecodes::number_of_codes];
@@ -148,7 +151,7 @@ class TemplateTable: AllStatic {
   static void baload();
   static void caload();
   static void saload();
-
+  
   static void iload(int n);
   static void lload(int n);
   static void fload(int n);
@@ -243,9 +246,9 @@ class TemplateTable: AllStatic {
   static void fast_binaryswitch();
 
   static void _return(TosState state);
-
+  
   static void resolve_cache_and_index(int byte_no, Register cache, Register index);
-  static void load_invoke_cp_cache_entry(int byte_no,
+  static void load_invoke_cp_cache_entry(int byte_no, 
                                          Register method,
                                          Register itable_index,
                                          Register flags,
@@ -279,7 +282,7 @@ class TemplateTable: AllStatic {
   static void instanceof();
 
   static void athrow();
-
+  
   static void monitorenter();
   static void monitorexit();
 

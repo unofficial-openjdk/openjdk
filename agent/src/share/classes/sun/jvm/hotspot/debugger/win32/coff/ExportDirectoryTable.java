@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -76,7 +76,7 @@ public interface ExportDirectoryTable {
 
   /** Address of the Ordinal Table, relative to the image base. */
   public int getOrdinalTableRVA();
-
+  
   /** Returns the <I>i</I>th exported symbol (from 0..{@link
       #getNumberOfNamePointers} - 1). These are arranged in sorted
       order to allow binary searches. */

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ciInstanceKlass.cpp	1.45 07/09/28 10:23:23 JVM"
+#endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -69,7 +72,7 @@ ciInstanceKlass::ciInstanceKlass(KlassHandle h_k) :
     _protection_domain = JNIHandles::make_global(h_protection_domain);
     _is_shared = true;
   }
-
+  
   // Lazy fields get filled in only upon request.
   _super  = NULL;
   _java_mirror = NULL;
@@ -207,7 +210,7 @@ ciInstanceKlass* ciInstanceKlass::get_canonical_holder(int offset) {
     // All header offsets belong properly to java/lang/Object.
     return CURRENT_ENV->Object_klass();
   }
-
+  
   ciInstanceKlass* self = this;
   for (;;) {
     assert(self->is_loaded(), "must be loaded to have size");

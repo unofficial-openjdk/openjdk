@@ -19,19 +19,19 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-public class SPARCV9FMOVrInstruction extends SPARCFPMoveInstruction
+public class SPARCV9FMOVrInstruction extends SPARCFPMoveInstruction 
                      implements SPARCV9Instruction {
     final private int regConditionCode;
     final private SPARCRegister rs1;
 
-    public SPARCV9FMOVrInstruction(String name, int opf, SPARCRegister rs1,
+    public SPARCV9FMOVrInstruction(String name, int opf, SPARCRegister rs1, 
                                    SPARCFloatRegister rs2, SPARCFloatRegister rd,
                                    int regConditionCode) {
         super(name, opf, rs2, rd);

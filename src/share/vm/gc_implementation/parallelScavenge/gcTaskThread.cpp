@@ -1,4 +1,7 @@
 
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)gcTaskThread.cpp	1.25 07/05/05 17:05:26 JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -20,7 +23,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -105,8 +108,8 @@ void GCTaskThread::run() {
   // Part of thread setup.
   // ??? Are these set up once here to make subsequent ones fast?
   HandleMark   hm_outer;
-  ResourceMark rm_outer;
-
+  ResourceMark rm_outer; 
+ 
   TimeStamp timer;
 
   for (;/* ever */;) {
@@ -148,3 +151,4 @@ void GCTaskThread::run() {
     }
   }
 }
+

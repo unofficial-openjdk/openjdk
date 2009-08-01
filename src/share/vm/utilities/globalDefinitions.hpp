@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)globalDefinitions.hpp	1.217 07/05/23 10:54:27 JVM"
+#endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file holds all globally used constants & types, class (forward)
@@ -57,7 +60,7 @@ const int BitsPerLong        = 1 << LogBitsPerLong;
 const int WordAlignmentMask  = (1 << LogBytesPerWord) - 1;
 const int LongAlignmentMask  = (1 << LogBytesPerLong) - 1;
 
-const int WordsPerLong       = 2;       // Number of stack entries for longs
+const int WordsPerLong       = 2;	// Number of stack entries for longs
 
 const int oopSize            = sizeof(char*); // Full-width oop
 extern int heapOopSize;                       // Oop within a java object
@@ -91,7 +94,7 @@ const int SerializePageShiftCount = 3;
 
 // An opaque struct of heap-word width, so that HeapWord* can be a generic
 // pointer into the heap.  We require that object sizes be measured in
-// units of heap words, so that that
+// units of heap words, so that that 
 //   HeapWord* hw;
 //   hw += oop(hw)->foo();
 // works, where foo is a method (like size or scavenge) that returns the
@@ -145,9 +148,9 @@ const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == 
 // Constants for converting from a base unit to milli-base units.  For
 // example from seconds to milliseconds and microseconds
 
-const int MILLIUNITS    = 1000;         // milli units per base unit
-const int MICROUNITS    = 1000000;      // micro units per base unit
-const int NANOUNITS     = 1000000000;   // nano units per base unit
+const int MILLIUNITS	= 1000;		// milli units per base unit
+const int MICROUNITS	= 1000000;	// micro units per base unit
+const int NANOUNITS	= 1000000000;	// nano units per base unit
 
 inline const char* proper_unit_for_byte_size(size_t s) {
   if (s >= 10*M) {
@@ -184,10 +187,10 @@ const intx  max_intx  = (uintx)min_intx - 1;
 const uintx max_uintx = (uintx)-1;
 
 // Table of values:
-//      sizeof intx         4               8
-// min_intx             0x80000000      0x8000000000000000
-// max_intx             0x7FFFFFFF      0x7FFFFFFFFFFFFFFF
-// max_uintx            0xFFFFFFFF      0xFFFFFFFFFFFFFFFF
+// 	sizeof intx	    4		    8
+// min_intx		0x80000000	0x8000000000000000
+// max_intx		0x7FFFFFFF	0x7FFFFFFFFFFFFFFF
+// max_uintx		0xFFFFFFFF	0xFFFFFFFFFFFFFFFF
 
 typedef unsigned int uint;   NEEDS_CLEANUP
 
@@ -200,10 +203,10 @@ typedef   signed char s_char;
 typedef unsigned char u_char;
 typedef u_char*       address;
 typedef uintptr_t     address_word; // unsigned integer which will hold a pointer
-                                    // except for some implementations of a C++
-                                    // linkage pointer to function. Should never
-                                    // need one of those to be placed in this
-                                    // type anyway.
+				    // except for some implementations of a C++
+				    // linkage pointer to function. Should never
+				    // need one of those to be placed in this
+				    // type anyway.
 
 //  Utility functions to "portably" (?) bit twiddle pointers
 //  Where portable means keep ANSI C++ compilers quiet
@@ -218,19 +221,19 @@ inline address_word  castable_address(address x)              { return address_w
 inline address_word  castable_address(void* x)                { return address_word(x) ; }
 
 // Pointer subtraction.
-// The idea here is to avoid ptrdiff_t, which is signed and so doesn't have
-// the range we might need to find differences from one end of the heap
+// The idea here is to avoid ptrdiff_t, which is signed and so doesn't have 
+// the range we might need to find differences from one end of the heap 
 // to the other.
 // A typical use might be:
 //     if (pointer_delta(end(), top()) >= size) {
 //       // enough room for an object of size
 //       ...
-// and then additions like
+// and then additions like 
 //       ... top() + size ...
 // are safe because we know that top() is at least size below end().
 inline size_t pointer_delta(const void* left,
-                            const void* right,
-                            size_t element_size) {
+			    const void* right,
+			    size_t element_size) {
   return (((uintptr_t) left) - ((uintptr_t) right)) / element_size;
 }
 // A version specialized for HeapWord*'s.
@@ -310,13 +313,13 @@ const int LogMinObjAlignmentInBytes  = LogMinObjAlignment + LogHeapWordSize;
 
 #define align_size_up_(size, alignment) (((size) + ((alignment) - 1)) & ~((alignment) - 1))
 
-inline intptr_t align_size_up(intptr_t size, intptr_t alignment) {
+inline intptr_t align_size_up(intptr_t size, intptr_t alignment) { 
   return align_size_up_(size, alignment);
 }
 
 #define align_size_down_(size, alignment) ((size) & ~((alignment) - 1))
 
-inline intptr_t align_size_down(intptr_t size, intptr_t alignment) {
+inline intptr_t align_size_down(intptr_t size, intptr_t alignment) { 
   return align_size_down_(size, alignment);
 }
 
@@ -324,7 +327,7 @@ inline intptr_t align_size_down(intptr_t size, intptr_t alignment) {
 
 #define align_object_size_(size) align_size_up_(size, MinObjAlignment)
 
-inline intptr_t align_object_size(intptr_t size) {
+inline intptr_t align_object_size(intptr_t size) { 
   return align_size_up(size, MinObjAlignment);
 }
 
@@ -362,7 +365,7 @@ inline double fabsd(double value) {
 inline jint low (jlong value)                    { return jint(value); }
 inline jint high(jlong value)                    { return jint(value >> 32); }
 
-// the fancy casts are a hopefully portable way
+// the fancy casts are a hopefully portable way 
 // to do unsigned 32 to 64 bit type conversion
 inline void set_low (jlong* value, jint low )    { *value &= (jlong)0xffffffff << 32;
                                                    *value |= (jlong)(julong)(juint)low; }
@@ -411,24 +414,24 @@ inline bool is_java_primitive(BasicType t) {
 // Convert a char from a classfile signature to a BasicType
 inline BasicType char2type(char c) {
   switch( c ) {
-  case 'B': return T_BYTE;
-  case 'C': return T_CHAR;
-  case 'D': return T_DOUBLE;
-  case 'F': return T_FLOAT;
-  case 'I': return T_INT;
-  case 'J': return T_LONG;
-  case 'S': return T_SHORT;
-  case 'Z': return T_BOOLEAN;
-  case 'V': return T_VOID;
-  case 'L': return T_OBJECT;
-  case '[': return T_ARRAY;
+  case 'B': return T_BYTE;    
+  case 'C': return T_CHAR;    
+  case 'D': return T_DOUBLE;  
+  case 'F': return T_FLOAT;   
+  case 'I': return T_INT;     
+  case 'J': return T_LONG;    
+  case 'S': return T_SHORT;   
+  case 'Z': return T_BOOLEAN; 
+  case 'V': return T_VOID;    
+  case 'L': return T_OBJECT;  
+  case '[': return T_ARRAY;   
   }
   return T_ILLEGAL;
 }
 
 extern char type2char_tab[T_CONFLICT+1];     // Map a BasicType to a jchar
 inline char type2char(BasicType t) { return (uint)t < T_CONFLICT+1 ? type2char_tab[t] : 0; }
-extern int type2size[T_CONFLICT+1];         // Map BasicType to result stack elements
+extern int type2size[T_CONFLICT+1];	    // Map BasicType to result stack elements
 extern const char* type2name_tab[T_CONFLICT+1];     // Map a BasicType to a jchar
 inline const char* type2name(BasicType t) { return (uint)t < T_CONFLICT+1 ? type2name_tab[t] : NULL; }
 extern BasicType name2type(const char* name);
@@ -502,11 +505,11 @@ class JavaValue {
     jlong    l;
     jobject  h;
   } JavaCallValue;
-
+ 
  private:
   BasicType _type;
   JavaCallValue _value;
-
+ 
  public:
   JavaValue(BasicType t = T_ILLEGAL) { _type = t; }
 
@@ -527,14 +530,14 @@ class JavaValue {
  jobject get_jobject() const { return _value.h; }
  JavaCallValue* get_value_addr() { return &_value; }
  BasicType get_type() const { return _type; }
-
+ 
  void set_jfloat(jfloat f) { _value.f = f;}
  void set_jdouble(jdouble d) { _value.d = d;}
  void set_jint(jint i) { _value.i = i;}
  void set_jlong(jlong l) { _value.l = l;}
  void set_jobject(jobject h) { _value.h = h;}
  void set_type(BasicType t) { _type = t; }
-
+ 
  jboolean get_jboolean() const { return (jboolean) (_value.i);}
  jbyte get_jbyte() const { return (jbyte) (_value.i);}
  jchar get_jchar() const { return (jchar) (_value.i);}
@@ -543,12 +546,12 @@ class JavaValue {
 };
 
 
-#define STACK_BIAS      0
+#define STACK_BIAS	0
 // V9 Sparc CPU's running in 64 Bit mode use a stack bias of 7ff
 // in order to extend the reach of the stack pointer.
 #if defined(SPARC) && defined(_LP64)
 #undef STACK_BIAS
-#define STACK_BIAS      0x7ff
+#define STACK_BIAS	0x7ff
 #endif
 
 
@@ -562,14 +565,14 @@ class JavaValue {
 // type specific operations (e.g. verification code).
 
 enum TosState {         // describes the tos cache contents
-  btos = 0,             // byte, bool tos cached
-  ctos = 1,             // short, char tos cached
-  stos = 2,             // short, char tos cached
+  btos = 0, 		// byte, bool tos cached
+  ctos = 1,		// short, char tos cached
+  stos = 2,		// short, char tos cached
   itos = 3,             // int tos cached
   ltos = 4,             // long tos cached
   ftos = 5,             // float tos cached
   dtos = 6,             // double tos cached
-  atos = 7,             // object cached
+  atos = 7, 		// object cached
   vtos = 8,             // tos not cached
   number_of_states,
   ilgl                  // illegal state: should not occur
@@ -638,7 +641,7 @@ enum JavaThreadState {
   _thread_in_Java           =  8, // running in Java or in stub code
   _thread_in_Java_trans     =  9, // corresponding transition state (not used, included for completness)
   _thread_blocked           = 10, // blocked in vm
-  _thread_blocked_trans     = 11, // corresponding transition state
+  _thread_blocked_trans     = 11, // corresponding transition state  
   _thread_max_state         = 12  // maximum thread state+1 - used for statistics allocation
 };
 
@@ -1071,7 +1074,7 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 
 // Printf-style formatters for fixed- and variable-width types as pointers and
 // integers.
-//
+// 
 // Each compiler-specific definitions file (e.g., globalDefinitions_gcc.hpp)
 // must define the macro FORMAT64_MODIFIER, which is the modifier for '%x' or
 // '%d' formats to indicate a 64-bit quantity; commonly "l" (in LP64) or "ll"
@@ -1080,8 +1083,8 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 // Format 32-bit quantities.
 #define INT32_FORMAT  "%d"
 #define UINT32_FORMAT "%u"
-#define INT32_FORMAT_W(width)   "%" #width "d"
-#define UINT32_FORMAT_W(width)  "%" #width "u"
+#define INT32_FORMAT_W(width)	"%" #width "d"
+#define UINT32_FORMAT_W(width)	"%" #width "u"
 
 #define PTR32_FORMAT  "0x%08x"
 
@@ -1096,28 +1099,28 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 // Format macros that allow the field width to be specified.  The width must be
 // a string literal (e.g., "8") or a macro that evaluates to one.
 #ifdef _LP64
-#define SSIZE_FORMAT_W(width)   INT64_FORMAT_W(width)
-#define SIZE_FORMAT_W(width)    UINT64_FORMAT_W(width)
+#define SSIZE_FORMAT_W(width)	INT64_FORMAT_W(width)
+#define SIZE_FORMAT_W(width)	UINT64_FORMAT_W(width)
 #else
-#define SSIZE_FORMAT_W(width)   INT32_FORMAT_W(width)
-#define SIZE_FORMAT_W(width)    UINT32_FORMAT_W(width)
+#define SSIZE_FORMAT_W(width)	INT32_FORMAT_W(width)
+#define SIZE_FORMAT_W(width)	UINT32_FORMAT_W(width)
 #endif // _LP64
 
 // Format pointers and size_t (or size_t-like integer types) which change size
 // between 32- and 64-bit.
-#ifdef  _LP64
+#ifdef	_LP64
 #define PTR_FORMAT    PTR64_FORMAT
 #define UINTX_FORMAT  UINT64_FORMAT
 #define INTX_FORMAT   INT64_FORMAT
 #define SIZE_FORMAT   UINT64_FORMAT
 #define SSIZE_FORMAT  INT64_FORMAT
-#else   // !_LP64
+#else	// !_LP64
 #define PTR_FORMAT    PTR32_FORMAT
 #define UINTX_FORMAT  UINT32_FORMAT
 #define INTX_FORMAT   INT32_FORMAT
 #define SIZE_FORMAT   UINT32_FORMAT
 #define SSIZE_FORMAT  INT32_FORMAT
-#endif  // _LP64
+#endif	// _LP64
 
 #define INTPTR_FORMAT PTR_FORMAT
 

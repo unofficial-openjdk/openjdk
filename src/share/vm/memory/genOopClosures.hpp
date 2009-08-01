@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)genOopClosures.hpp	1.64 07/05/29 09:44:15 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Generation;
@@ -51,7 +54,7 @@ class OopsInGenClosure : public OopClosure {
   // For assertions
   Generation* generation() { return _gen; }
   CardTableRS* rs() { return _rs; }
-
+ 
   // Derived classes that modify oops so that they might be old-to-young
   // pointers must call the method below.
   template <class T> void do_barrier(T* p);
@@ -70,8 +73,8 @@ class OopsInGenClosure : public OopClosure {
 
   // Problem with static closures: must have _gen_boundary set at some point,
   // but cannot do this until after the heap is initialized.
-  void set_orig_generation(Generation* gen) {
-    _orig_gen = gen;
+  void set_orig_generation(Generation* gen) { 
+    _orig_gen = gen; 
     set_generation(gen);
   }
 
@@ -97,7 +100,7 @@ class ScanClosure: public OopsInGenClosure {
   bool do_header() { return false; }
   Prefetch::style prefetch_style() {
     return Prefetch::do_write;
-  }
+  } 
 };
 
 // Closure for scanning DefNewGeneration.
@@ -120,7 +123,7 @@ class FastScanClosure: public OopsInGenClosure {
   bool do_header() { return false; }
   Prefetch::style prefetch_style() {
     return Prefetch::do_write;
-  }
+  } 
 };
 
 class FilteringClosure: public OopClosure {

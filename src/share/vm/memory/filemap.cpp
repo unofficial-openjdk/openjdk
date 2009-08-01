@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)filemap.cpp	1.25 07/05/05 17:05:41 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -46,15 +49,15 @@ static void fail(const char *msg, va_list ap) {
               " shared archive file.\n");
   jio_vfprintf(defaultStream::error_stream(), msg, ap);
   jio_fprintf(defaultStream::error_stream(), "\n");
-  vm_exit_during_initialization("Unable to use shared archive.", NULL);
+  vm_exit_during_initialization("Unable to use shared archive.", NULL);	
 }
 
 
 void FileMapInfo::fail_stop(const char *msg, ...) {
-        va_list ap;
+	va_list ap;
   va_start(ap, msg);
-  fail(msg, ap);        // Never returns.
-  va_end(ap);           // for completeness.
+  fail(msg, ap);	// Never returns.
+  va_end(ap);		// for completeness.
 }
 
 
@@ -279,7 +282,7 @@ void FileMapInfo::write_bytes_aligned(const void* buffer, int nbytes) {
 
 // Close the shared archive file.  This does NOT unmap mapped regions.
 
-void FileMapInfo::close() {
+void FileMapInfo::close() { 
   if (_file_open) {
     if (::close(_fd) < 0) {
       fail_stop("Unable to close the shared archive file.");
@@ -505,8 +508,8 @@ bool FileMapInfo::validate() {
 }
 
 // The following method is provided to see whether a given pointer
-// falls in the mapped shared space.
-// Param:
+// falls in the mapped shared space. 
+// Param: 
 // p, The given pointer
 // Return:
 // True if the p is within the mapped shared space, otherwise, false.

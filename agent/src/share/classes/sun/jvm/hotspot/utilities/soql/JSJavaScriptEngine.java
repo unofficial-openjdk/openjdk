@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -84,48 +84,48 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
     }
 
     /**
-       address function returns address of JSJavaObject as String. For other
+       address function returns address of JSJavaObject as String. For other 
        type of objects, the result is undefined.
     */
     public Object address(Object[] args) {
-        if (args.length != 1) return UNDEFINED;
-        Object o = args[0];
-        if (o != null && o instanceof JSJavaObject) {
-            return ((JSJavaObject)o).getOop().getHandle().toString();
-        } else {
-            return UNDEFINED;
-        }
+	if (args.length != 1) return UNDEFINED;
+	Object o = args[0];
+	if (o != null && o instanceof JSJavaObject) {
+	    return ((JSJavaObject)o).getOop().getHandle().toString();
+	} else {
+	    return UNDEFINED;
+	}
     }
 
 
     /**
-       classof function gets type of given JSJavaInstance or JSJavaArray. Or
-       given a string class name, this function gets the class object. For
+       classof function gets type of given JSJavaInstance or JSJavaArray. Or 
+       given a string class name, this function gets the class object. For 
        other type of objects, the result is undefined.
     */
     public Object classof(Object[] args) {
-        if (args.length != 1) {
-            return UNDEFINED;
-        }
-        Object o = args[0];
-        if (o != null) {
-            if (o instanceof JSJavaObject) {
-                if (o instanceof JSJavaInstance) {
-                    return ((JSJavaInstance)o).getJSJavaClass();
-                } else if (o instanceof JSJavaArray) {
-                    return ((JSJavaArray)o).getJSJavaClass();
-                } else {
-                    return UNDEFINED;
-                }
-            } else if (o instanceof String) {
-                InstanceKlass ik = SystemDictionaryHelper.findInstanceKlass((String) o);
-                return getJSJavaFactory().newJSJavaKlass(ik).getJSJavaClass();
-            } else {
-                return UNDEFINED;
-            }
-        } else {
-            return UNDEFINED;
-        }
+	if (args.length != 1) {
+	    return UNDEFINED;
+	}
+	Object o = args[0];
+	if (o != null) {
+	    if (o instanceof JSJavaObject) {
+		if (o instanceof JSJavaInstance) {
+		    return ((JSJavaInstance)o).getJSJavaClass();
+		} else if (o instanceof JSJavaArray) {
+		    return ((JSJavaArray)o).getJSJavaClass();
+		} else {
+		    return UNDEFINED;
+		}
+	    } else if (o instanceof String) {
+		InstanceKlass ik = SystemDictionaryHelper.findInstanceKlass((String) o);
+		return getJSJavaFactory().newJSJavaKlass(ik).getJSJavaClass();
+	    } else {
+		return UNDEFINED;
+	    }
+	} else {
+	    return UNDEFINED;
+	}
     }
 
     /**
@@ -135,71 +135,71 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
      * to '.'
     */
     public Object dumpClass(Object[] args) {
-        if (args.length == 0) {
-            return Boolean.FALSE;
-        }
-        Object clazz = args[0];
+	if (args.length == 0) {
+	    return Boolean.FALSE;
+	}
+	Object clazz = args[0];
       if (clazz == null) {
           return Boolean.FALSE;
       }
-        InstanceKlass ik = null;
-        if (clazz instanceof String) {
+	InstanceKlass ik = null;
+	if (clazz instanceof String) {
             String name = (String) clazz;
             if (name.startsWith("0x")) {
                 // treat it as address
-                VM vm = VM.getVM();
-                Address addr = vm.getDebugger().parseAddress(name);
-                Oop oop = vm.getObjectHeap().newOop(addr.addOffsetToAsOopHandle(0));
+	        VM vm = VM.getVM();
+	        Address addr = vm.getDebugger().parseAddress(name);
+	        Oop oop = vm.getObjectHeap().newOop(addr.addOffsetToAsOopHandle(0));
                 if (oop instanceof InstanceKlass) {
                     ik = (InstanceKlass) oop;
                 } else {
                     return Boolean.FALSE;
                 }
             } else {
-                ik = SystemDictionaryHelper.findInstanceKlass((String) clazz);
+	        ik = SystemDictionaryHelper.findInstanceKlass((String) clazz);
             }
-        } else if (clazz instanceof JSJavaClass) {
-            JSJavaKlass jk = ((JSJavaClass)clazz).getJSJavaKlass();
-            if (jk != null && jk instanceof JSJavaInstanceKlass) {
-                ik = ((JSJavaInstanceKlass)jk).getInstanceKlass();
-            }
-        } else {
-            return Boolean.FALSE;
-        }
+	} else if (clazz instanceof JSJavaClass) {
+	    JSJavaKlass jk = ((JSJavaClass)clazz).getJSJavaKlass();
+	    if (jk != null && jk instanceof JSJavaInstanceKlass) {
+	        ik = ((JSJavaInstanceKlass)jk).getInstanceKlass();
+	    }
+	} else {
+	    return Boolean.FALSE;
+	}
 
-        if (ik == null) return Boolean.FALSE;
-        StringBuffer buf = new StringBuffer();
-        if (args.length > 1) {
-            buf.append(args[1].toString());
-        } else {
-            buf.append('.');
-        }
+	if (ik == null) return Boolean.FALSE;
+	StringBuffer buf = new StringBuffer();
+	if (args.length > 1) {
+	    buf.append(args[1].toString());
+	} else {
+	    buf.append('.');
+	}
 
-        buf.append(File.separatorChar);
-        buf.append(ik.getName().asString().replace('/', File.separatorChar));
-        buf.append(".class");
-        String fileName = buf.toString();
-        File file = new File(fileName);
+	buf.append(File.separatorChar);
+	buf.append(ik.getName().asString().replace('/', File.separatorChar));
+	buf.append(".class");
+	String fileName = buf.toString();
+	File file = new File(fileName);	
 
-        try {
-            int index = fileName.lastIndexOf(File.separatorChar);
-            File dir = new File(fileName.substring(0, index));
-            dir.mkdirs();
-            FileOutputStream fos = new FileOutputStream(file);
-            ClassWriter cw = new ClassWriter(ik, fos);
-            cw.write();
-            fos.close();
-        } catch (IOException exp) {
-            printError(exp.toString(), exp);
-            return Boolean.FALSE;
-        }
+	try {
+	    int index = fileName.lastIndexOf(File.separatorChar);
+	    File dir = new File(fileName.substring(0, index));
+	    dir.mkdirs();
+	    FileOutputStream fos = new FileOutputStream(file);
+	    ClassWriter cw = new ClassWriter(ik, fos);
+	    cw.write();
+	    fos.close();
+	} catch (IOException exp) {
+	    printError(exp.toString(), exp);
+	    return Boolean.FALSE;
+	}
 
-        return Boolean.TRUE;
+	return Boolean.TRUE;
     }
 
     /**
      * dumpHeap function creates a heap dump file.
-     * On success, returns true. Else, returns false.
+     * On success, returns true. Else, returns false. 
     */
     public Object dumpHeap(Object[] args) {
         String fileName = "heap.bin";
@@ -213,37 +213,37 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
         help function prints help message for global functions and variables.
     */
     public void help(Object[] args) {
-        println("Function/Variable        Description");
-        println("=================        ===========");
-        println("address(jobject)         returns the address of the Java object");
-        println("classof(jobject)         returns the class object of the Java object");
-        println("dumpClass(jclass,[dir])  writes .class for the given Java Class");
-        println("dumpHeap([file])         writes heap in hprof binary format");
-        println("help()                   prints this help message");
-        println("identityHash(jobject)    returns the hashCode of the Java object");
-        println("mirror(jobject)          returns a local mirror of the Java object");
-        println("load([file1, file2,...]) loads JavaScript file(s). With no files, reads <stdin>");
-        println("object(string)           converts a string address into Java object");
-        println("owner(jobject)           returns the owner thread of this monitor or null");
-        println("sizeof(jobject)          returns the size of Java object in bytes");
-        println("staticof(jclass, field)  returns a static field of the given Java class");
-        println("read([prompt])           reads a single line from standard input");
-        println("quit()                   quits the interactive load call");
-        println("jvm                      the target jvm that is being debugged");
+	println("Function/Variable        Description");
+	println("=================        ===========");
+	println("address(jobject)         returns the address of the Java object");
+	println("classof(jobject)         returns the class object of the Java object");
+	println("dumpClass(jclass,[dir])  writes .class for the given Java Class");
+	println("dumpHeap([file])         writes heap in hprof binary format");
+	println("help()                   prints this help message");
+	println("identityHash(jobject)    returns the hashCode of the Java object");
+	println("mirror(jobject)          returns a local mirror of the Java object");
+	println("load([file1, file2,...]) loads JavaScript file(s). With no files, reads <stdin>");
+	println("object(string)           converts a string address into Java object");
+	println("owner(jobject)           returns the owner thread of this monitor or null");
+	println("sizeof(jobject)          returns the size of Java object in bytes");
+	println("staticof(jclass, field)  returns a static field of the given Java class");
+	println("read([prompt])           reads a single line from standard input");
+	println("quit()                   quits the interactive load call");
+	println("jvm                      the target jvm that is being debugged");
     }
 
     /**
-       identityHash function gets identity hash code value of given
+       identityHash function gets identity hash code value of given 
        JSJavaObject. For other type of objects, the result is undefined.
     */
     public Object identityHash(Object[] args) {
-        if (args.length != 1) return UNDEFINED;
-        Object o = args[0];
-        if (o != null && o instanceof JSJavaObject) {
-            return new Long(((JSJavaObject)o).getOop().identityHash());
-        } else {
-            return UNDEFINED;
-        }
+	if (args.length != 1) return UNDEFINED;
+	Object o = args[0];
+	if (o != null && o instanceof JSJavaObject) {
+	    return new Long(((JSJavaObject)o).getOop().identityHash());
+	} else {
+	    return UNDEFINED;
+	}
     }
 
 
@@ -263,61 +263,61 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
        mirror is undefined.
     */
     public Object mirror(Object[] args) {
-        Object o = args[0];
-        if (o != null && o instanceof JSJavaObject) {
-            Oop oop = ((JSJavaObject)o).getOop();
-            Object res = null;
-            try {
-                if (oop instanceof InstanceKlass) {
-                    res = getObjectReader().readClass((InstanceKlass) oop);
-                } else {
-                    res = getObjectReader().readObject(oop);
-                }
-            } catch (Exception e) {
-                if (debug) e.printStackTrace(getErrorStream());
-            }
-            return (res != null)? res : UNDEFINED;
-        } else {
-            return UNDEFINED;
-        }
+	Object o = args[0];
+	if (o != null && o instanceof JSJavaObject) {
+	    Oop oop = ((JSJavaObject)o).getOop();
+	    Object res = null;
+	    try {
+		if (oop instanceof InstanceKlass) {
+		    res = getObjectReader().readClass((InstanceKlass) oop);
+		} else {
+		    res = getObjectReader().readObject(oop);
+		}
+	    } catch (Exception e) {
+		if (debug) e.printStackTrace(getErrorStream());
+	    }
+	    return (res != null)? res : UNDEFINED;
+	} else {
+	    return UNDEFINED;
+	}
     }
 
     /**
-       owner function gets owning thread of given JSJavaObjec, if any, else
+       owner function gets owning thread of given JSJavaObjec, if any, else 
        returns null. For other type of objects, the result is undefined.
     */
     public Object owner(Object[] args) {
-        Object o = args[0];
-        if (o != null && o instanceof JSJavaObject) {
-            return getOwningThread((JSJavaObject)o);
-        } else {
-            return UNDEFINED;
-        }
+	Object o = args[0];
+	if (o != null && o instanceof JSJavaObject) {
+	    return getOwningThread((JSJavaObject)o);
+	} else {
+	    return UNDEFINED;
+	}
     }
 
     /**
-       object function takes a string address and returns a JSJavaObject.
+       object function takes a string address and returns a JSJavaObject. 
        For other type of objects, the result is undefined.
     */
     public Object object(Object[] args) {
-        Object o = args[0];
-        if (o != null && o instanceof String) {
-            VM vm = VM.getVM();
-            Address addr = vm.getDebugger().parseAddress((String)o);
-            Oop oop = vm.getObjectHeap().newOop(addr.addOffsetToAsOopHandle(0));
-            return getJSJavaFactory().newJSJavaObject(oop);
-        } else {
-            return UNDEFINED;
-        }
+	Object o = args[0];
+	if (o != null && o instanceof String) {
+	    VM vm = VM.getVM();
+	    Address addr = vm.getDebugger().parseAddress((String)o);
+	    Oop oop = vm.getObjectHeap().newOop(addr.addOffsetToAsOopHandle(0));
+	    return getJSJavaFactory().newJSJavaObject(oop);
+	} else {
+	    return UNDEFINED;
+	}
     }
 
     /**
-       sizeof function returns size of a Java object in bytes. For other type
+       sizeof function returns size of a Java object in bytes. For other type 
        of objects, the result is undefined.
     */
     public Object sizeof(Object[] args) {
-        if (args.length != 1) return UNDEFINED;
-        Object o = args[0];
+	if (args.length != 1) return UNDEFINED;
+	Object o = args[0];
         if (o != null && o instanceof JSJavaObject) {
             return new Long(((JSJavaObject)o).getOop().getObjectSize());
         } else {
@@ -331,55 +331,55 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
        no such named field.
     */
     public Object staticof(Object[] args) {
-        Object classname = args[0];
-        Object fieldname = args[1];
-        if (fieldname == null || classname == null ||
-            !(fieldname instanceof String)) {
-            return UNDEFINED;
-        }
+	Object classname = args[0];
+	Object fieldname = args[1];
+	if (fieldname == null || classname == null || 
+	    !(fieldname instanceof String)) {
+	    return UNDEFINED;
+	} 
 
-        InstanceKlass ik = null;
-        if (classname instanceof JSJavaClass) {
-            JSJavaClass jclass = (JSJavaClass) classname;
-            JSJavaKlass jk = jclass.getJSJavaKlass();
-            if (jk != null && jk instanceof JSJavaInstanceKlass) {
-                ik = ((JSJavaInstanceKlass)jk).getInstanceKlass();
-            }
-        } else if (classname instanceof String) {
-            ik = SystemDictionaryHelper.findInstanceKlass((String)classname);
-        } else {
-            return UNDEFINED;
-        }
+	InstanceKlass ik = null;
+	if (classname instanceof JSJavaClass) {
+	    JSJavaClass jclass = (JSJavaClass) classname;
+	    JSJavaKlass jk = jclass.getJSJavaKlass();
+	    if (jk != null && jk instanceof JSJavaInstanceKlass) {
+	        ik = ((JSJavaInstanceKlass)jk).getInstanceKlass();
+	    }
+	} else if (classname instanceof String) {
+	    ik = SystemDictionaryHelper.findInstanceKlass((String)classname);
+	} else {
+	    return UNDEFINED;
+	}
 
         if (ik == null) {
-            return UNDEFINED;
-        }
-        JSJavaFactory factory = getJSJavaFactory();
-        try {
-            return ((JSJavaInstanceKlass) factory.newJSJavaKlass(ik)).getStaticFieldValue((String)fieldname);
-        } catch (NoSuchFieldException e) {
-            return UNDEFINED;
-        }
+	    return UNDEFINED;
+	}
+	JSJavaFactory factory = getJSJavaFactory();
+	try {
+	    return ((JSJavaInstanceKlass) factory.newJSJavaKlass(ik)).getStaticFieldValue((String)fieldname);
+	} catch (NoSuchFieldException e) {
+	    return UNDEFINED;
+	}
     }
 
     /**
      * read function reads a single line of input from standard input
     */
     public Object read(Object[] args) {
-        BufferedReader in = getInputReader();
+	BufferedReader in = getInputReader();
       if (in == null) {
         return null;
       }
-        if (args.length > 0) {
-          print(args[0].toString());
-          print(":");
-        }
-        try {
-          return in.readLine();
-        } catch (IOException exp) {
+	if (args.length > 0) {
+	  print(args[0].toString());
+	  print(":");
+	}
+	try {
+	  return in.readLine();
+	} catch (IOException exp) {
         exp.printStackTrace();
-          throw new RuntimeException(exp);
-        }
+	  throw new RuntimeException(exp);
+	}
     }
 
     /**
@@ -387,7 +387,7 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
      * This only affects the interactive mode.
      */
     public void quit(Object[] args) {
-        quit();
+	quit();
     }
 
     public void writeln(Object[] args) {
@@ -422,7 +422,7 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
       // initialization steps, if any.
       loadUserInitFile();
 
-      JSJavaFactory fac = getJSJavaFactory();
+      JSJavaFactory fac = getJSJavaFactory();      
       JSJavaVM jvm = (fac != null)? fac.newJSJavaVM() : null;
       // call "main" function from "sa.js" -- main expects
       // 'this' object and jvm object
@@ -434,8 +434,8 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
       }
     }
 
-    protected JSJavaScriptEngine(boolean debug) {
-        this.debug = debug;
+    protected JSJavaScriptEngine(boolean debug) {	
+	this.debug = debug;	
       ScriptEngineManager manager = new ScriptEngineManager();
       engine = manager.getEngineByName("javascript");
       if (engine == null) {
@@ -456,36 +456,36 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
     }
 
     protected JSJavaScriptEngine() {
-        this(false);
+	this(false);
     }
 
     protected abstract ObjectReader getObjectReader();
     protected abstract JSJavaFactory getJSJavaFactory();
     protected void printPrompt(String str) {
-        System.err.print(str);
-        System.err.flush();
+	System.err.print(str);
+	System.err.flush();
     }
 
     protected void loadInitFile() {
       InputStream is = JSJavaScriptEngine.class.getResourceAsStream("sa.js");
       BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-      evalReader(reader, "sa.js");
+      evalReader(reader, "sa.js"); 
     }
 
     protected void loadUserInitFile() {
-        File initFile = new File(getUserInitFileDir(), getUserInitFileName());
-        if (initFile.exists() && initFile.isFile()) {
+	File initFile = new File(getUserInitFileDir(), getUserInitFileName());
+	if (initFile.exists() && initFile.isFile()) {
         // load the init script
-          processSource(initFile.getAbsolutePath());
-        }
+	  processSource(initFile.getAbsolutePath());
+	}
     }
 
     protected String getUserInitFileDir() {
-        return System.getProperty("user.home");
+	return System.getProperty("user.home");
     }
 
     protected String getUserInitFileName() {
-        return "jsdb.js";
+	return "jsdb.js";
     }
 
     protected BufferedReader getInputReader() {
@@ -512,60 +512,60 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
     }
 
     protected void printError(String message) {
-        printError(message, null);
+	printError(message, null);
     }
 
     protected void printError(String message, Exception exp) {
-        getErrorStream().println(message);
-        if (exp != null && debug) {
-          exp.printStackTrace(getErrorStream());
-        }
+	getErrorStream().println(message);
+	if (exp != null && debug) {
+	  exp.printStackTrace(getErrorStream());
+	}
     }
 
     protected boolean isQuitting() {
-        return quitting;
+	return quitting;
     }
 
     protected void quit() {
-        quitting = true;
-    }
+	quitting = true;
+    }   
 
     protected ScriptEngine getScriptEngine() {
       return engine;
     }
 
     private JSJavaThread getOwningThread(JSJavaObject jo) {
-        Oop oop = jo.getOop();
-        Mark mark = oop.getMark();
-        ObjectMonitor mon = null;
+	Oop oop = jo.getOop();
+	Mark mark = oop.getMark();
+	ObjectMonitor mon = null;
       Address owner = null;
-        JSJavaThread owningThread = null;
-        // check for heavyweight monitor
-        if (! mark.hasMonitor()) {
-            // check for lightweight monitor
-            if (mark.hasLocker()) {
-                owner = mark.locker().getAddress(); // save the address of the Lock word
-            }
-            // implied else: no owner
-        } else {
-            // this object has a heavyweight monitor
-            mon = mark.monitor();
+	JSJavaThread owningThread = null;
+	// check for heavyweight monitor
+	if (! mark.hasMonitor()) {
+	    // check for lightweight monitor
+	    if (mark.hasLocker()) {
+		owner = mark.locker().getAddress(); // save the address of the Lock word
+	    }
+	    // implied else: no owner
+	} else {
+  	    // this object has a heavyweight monitor
+	    mon = mark.monitor();
 
-            // The owner field of a heavyweight monitor may be NULL for no
-            // owner, a JavaThread * or it may still be the address of the
-            // Lock word in a JavaThread's stack. A monitor can be inflated
-            // by a non-owning JavaThread, but only the owning JavaThread
-            // can change the owner field from the Lock word to the
-            // JavaThread * and it may not have done that yet.
-            owner = mon.owner();
-        }
+	    // The owner field of a heavyweight monitor may be NULL for no
+	    // owner, a JavaThread * or it may still be the address of the
+	    // Lock word in a JavaThread's stack. A monitor can be inflated
+	    // by a non-owning JavaThread, but only the owning JavaThread
+	    // can change the owner field from the Lock word to the
+	    // JavaThread * and it may not have done that yet.
+ 	    owner = mon.owner();
+	}
 
-        // find the owning thread
-        if (owner != null) {
-            JSJavaFactory factory = getJSJavaFactory();
-            owningThread = (JSJavaThread) factory.newJSJavaThread(VM.getVM().getThreads().owningThreadFromMonitor(owner));
-        }
-        return owningThread;
+	// find the owning thread
+	if (owner != null) {
+	    JSJavaFactory factory = getJSJavaFactory();
+	    owningThread = (JSJavaThread) factory.newJSJavaThread(VM.getVM().getThreads().owningThreadFromMonitor(owner));
+	}
+	return owningThread;
     }
 
     /**
@@ -588,7 +588,7 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
                    break;
                 }
                 lineno++;
-                Object result = evalString(source.toString(), sourceName, startline);
+                Object result = evalString(source.toString(), sourceName, startline);                                                   
                 if (result != null) {
                     printError(result.toString());
                 }
@@ -597,7 +597,7 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
                     break;
                 }
             } while (!hitEOF);
-        } else {
+	} else {
             Reader in = null;
             try {
                 in = new BufferedReader(new FileReader(filename));
@@ -614,8 +614,8 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
          engine.put(ScriptEngine.FILENAME, filename);
          return engine.eval(source);
        } catch (ScriptException sexp) {
-         printError(sexp.toString(), sexp);
-         } catch (Exception exp) {
+         printError(sexp.toString(), sexp);         
+	 } catch (Exception exp) {
          printError(exp.toString(), exp);
        }
        return null;
@@ -627,8 +627,8 @@ public abstract class JSJavaScriptEngine extends MapScriptObject {
          return engine.eval(in);
        } catch (ScriptException sexp) {
          System.err.println(sexp);
-         printError(sexp.toString(), sexp);
-         } finally {
+         printError(sexp.toString(), sexp);         
+	 } finally {
          try {
            in.close();
          } catch (IOException ioe) {

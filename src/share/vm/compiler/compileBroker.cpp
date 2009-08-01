@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)compileBroker.cpp	1.147 07/05/17 15:50:51 JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -29,9 +32,9 @@
 
 // Only bother with this argument setup if dtrace is available
 
-HS_DTRACE_PROBE_DECL8(hotspot, method__compile__begin,
+HS_DTRACE_PROBE_DECL8(hotspot, method__compile__begin, 
   char*, intptr_t, char*, intptr_t, char*, intptr_t, char*, intptr_t);
-HS_DTRACE_PROBE_DECL9(hotspot, method__compile__end,
+HS_DTRACE_PROBE_DECL9(hotspot, method__compile__end, 
   char*, intptr_t, char*, intptr_t, char*, intptr_t, char*, intptr_t, bool);
 
 #define DTRACE_METHOD_COMPILE_BEGIN_PROBE(compiler, method)              \
@@ -189,7 +192,7 @@ void CompileTask::initialize(int compile_id,
   _is_complete = false;
   _is_success = false;
   _code_handle = NULL;
-
+ 
   _hot_method = NULL;
   _hot_count = hot_count;
   _time_queued = 0;  // tidy
@@ -248,8 +251,8 @@ void CompileTask::print() {
 // ------------------------------------------------------------------
 // CompileTask::print_line_on_error
 //
-// This function is called by fatal error handler when the thread
-// causing troubles is a compiler thread.
+// This function is called by fatal error handler when the thread 
+// causing troubles is a compiler thread. 
 //
 // Do not grab any lock, do not allocate memory.
 //
@@ -270,7 +273,7 @@ void CompileTask::print_line_on_error(outputStream* st, char* buf, int buflen) {
     const char compile_type   = is_osr                             ? '%' : ' ';
     const char sync_char      = method->is_synchronized()          ? 's' : ' ';
     const char exception_char = method->has_exception_handler()    ? '!' : ' ';
-    const char tier_char      =
+    const char tier_char      = 
       is_highest_tier_compile(comp_level())                        ? ' ' : ('0' + comp_level());
     st->print("%c%c%c%c%c ", compile_type, sync_char, exception_char, blocking_char, tier_char);
   }
@@ -307,7 +310,7 @@ void CompileTask::print_line() {
     const char compile_type   = is_osr                             ? '%' : ' ';
     const char sync_char      = method->is_synchronized()          ? 's' : ' ';
     const char exception_char = method->has_exception_handler()    ? '!' : ' ';
-    const char tier_char      =
+    const char tier_char      = 
       is_highest_tier_compile(comp_level())                        ? ' ' : ('0' + comp_level());
     tty->print("%c%c%c%c%c ", compile_type, sync_char, exception_char, blocking_char, tier_char);
   }
@@ -461,7 +464,7 @@ void CompileQueue::add(CompileTask* task) {
 // Get the next CompileTask from a CompileQueue
 CompileTask* CompileQueue::get() {
   MutexLocker locker(lock());
-
+  
   // Wait for an available CompileTask.
   while (_first == NULL) {
     // There is no work to be done right now.  Wait.
@@ -507,7 +510,7 @@ CompilerCounters::CompilerCounters(const char* thread_name, int instance, TRAPS)
     // counters  from having a ".0" namespace.
     const char* thread_i = (instance == -1) ? thread_name :
                       PerfDataManager::name_space(thread_name, instance);
-
+                      
 
     char* name = PerfDataManager::counter_name(thread_i, "method");
     _perf_current_method =
@@ -675,40 +678,40 @@ CompilerThread* CompileBroker::make_compiler_thread(const char* name, CompileQue
                                       true, CHECK_0);
   instanceKlassHandle klass (THREAD, k);
   instanceHandle thread_oop = klass->allocate_instance_handle(CHECK_0);
-  Handle string = java_lang_String::create_from_str(name, CHECK_0);
+  Handle string = java_lang_String::create_from_str(name, CHECK_0);    
 
-  // Initialize thread_oop to put it into the system threadGroup
+  // Initialize thread_oop to put it into the system threadGroup    
   Handle thread_group (THREAD,  Universe::system_thread_group());
   JavaValue result(T_VOID);
-  JavaCalls::call_special(&result, thread_oop,
-                       klass,
-                       vmSymbolHandles::object_initializer_name(),
-                       vmSymbolHandles::threadgroup_string_void_signature(),
-                       thread_group,
-                       string,
-                       CHECK_0);
+  JavaCalls::call_special(&result, thread_oop, 
+                       klass, 
+                       vmSymbolHandles::object_initializer_name(), 
+                       vmSymbolHandles::threadgroup_string_void_signature(), 
+                       thread_group, 
+                       string, 
+                       CHECK_0);  
 
   {
     MutexLocker mu(Threads_lock, THREAD);
     compiler_thread = new CompilerThread(queue, counters);
     // At this point the new CompilerThread data-races with this startup
     // thread (which I believe is the primoridal thread and NOT the VM
-    // thread).  This means Java bytecodes being executed at startup can
+    // thread).  This means Java bytecodes being executed at startup can 
     // queue compile jobs which will run at whatever default priority the
     // newly created CompilerThread runs at.
 
-
+   
     // At this point it may be possible that no osthread was created for the
     // JavaThread due to lack of memory. We would have to throw an exception
     // in that case. However, since this must work and we do not allow
     // exceptions anyway, check and abort if this fails.
 
     if (compiler_thread == NULL || compiler_thread->osthread() == NULL){
-      vm_exit_during_initialization("java.lang.OutOfMemoryError",
+      vm_exit_during_initialization("java.lang.OutOfMemoryError", 
                                     "unable to create new native thread");
     }
-
-    java_lang_Thread::set_thread(thread_oop(), compiler_thread);
+ 
+    java_lang_Thread::set_thread(thread_oop(), compiler_thread);      
 
     // Note that this only sets the JavaThread _priority field, which by
     // definition is limited to Java priorities and not OS priorities.
@@ -730,11 +733,11 @@ CompilerThread* CompileBroker::make_compiler_thread(const char* name, CompileQue
       // priorities and I am *explicitly* using OS priorities so that it's
       // possible to set the compiler thread priority higher than any Java
       // thread.
-
+    
     java_lang_Thread::set_daemon(thread_oop());
-
+    
     compiler_thread->set_threadObj(thread_oop());
-    Threads::add(compiler_thread);
+    Threads::add(compiler_thread);  
     Thread::start(compiler_thread);
   }
   // Let go of Threads_lock before yielding
@@ -794,12 +797,12 @@ bool CompileBroker::is_idle() {
 // CompileBroker::compile_method
 //
 // Request compilation of a method.
-void CompileBroker::compile_method_base(methodHandle method,
+void CompileBroker::compile_method_base(methodHandle method, 
                                         int osr_bci,
                                         int comp_level,
-                                        methodHandle hot_method,
+                                        methodHandle hot_method, 
                                         int hot_count,
-                                        const char* comment,
+                                        const char* comment, 
                                         TRAPS) {
   // do nothing if compiler thread(s) is not available
   if (!_initialized ) {
@@ -990,7 +993,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
     // osr compilation
 #ifndef TIERED
     // seems like an assert of dubious value
-    assert(comp_level == CompLevel_full_optimization,
+    assert(comp_level == CompLevel_full_optimization, 
            "all OSR compiles are assumed to be at a single compilation lavel");
 #endif // TIERED
     nmethod* nm = method->lookup_osr_nmethod_for(osr_bci);
@@ -1008,7 +1011,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
   }
 
   // If the method is native, do the lookup in the thread requesting
-  // the compilation. Native lookups can load code, which is not
+  // the compilation. Native lookups can load code, which is not 
   // permitted during compilation.
   //
   // Note: A native method implies non-osr compilation which is
@@ -1033,8 +1036,8 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
 
   // JVMTI -- post_compile_event requires jmethod_id() that may require
   // a lock the compiling thread can not acquire. Prefetch it here.
-  if (JvmtiExport::should_post_compiled_method_load()) {
-    method->jmethod_id();
+  if (JvmtiExport::should_post_compiled_method_load()) { 
+    method->jmethod_id(); 
   }
 
   // do the compilation
@@ -1119,7 +1122,7 @@ bool CompileBroker::compilation_is_prohibited(methodHandle method, int osr_bci, 
     method->set_not_compilable();
     return true;
   }
-
+  
   bool is_osr = (osr_bci != standard_entry_bci);
   // Some compilers may not support on stack replacement.
   if (is_osr &&
@@ -1171,7 +1174,7 @@ uint CompileBroker::assign_compile_id(methodHandle method, int osr_bci) {
       return id;
     }
   }
-
+  
   // Method was not in the appropriate compilation range.
   method->set_not_compilable();
   return 0;
@@ -1263,7 +1266,7 @@ void CompileBroker::wait_for_completion(CompileTask* task) {
 
   JavaThread *thread = JavaThread::current();
   thread->set_blocked_on_compilation(true);
-
+  
   methodHandle method(thread,
                       (methodOop)JNIHandles::resolve(task->method_handle()));
   {
@@ -1296,7 +1299,7 @@ void CompileBroker::compiler_thread_loop() {
 
   // For the thread that initializes the ciObjectFactory
   // this resource mark holds all the shared objects
-  ResourceMark rm;
+  ResourceMark rm; 
 
   // First thread to get here will initialize the compiler interface
 
@@ -1342,11 +1345,11 @@ void CompileBroker::compiler_thread_loop() {
             vm_direct_exit(CompileTheWorld ? 0 : 1);
           }
 #endif
-          UseCompiler               = false;
+          UseCompiler               = false;    
           AlwaysCompileLoopMethods  = false;
         }
       }
-
+      
       CompileTask* task = queue->get();
 
       // Give compiler threads an extra quanta.  They tend to be bursty and
@@ -1365,7 +1368,7 @@ void CompileBroker::compiler_thread_loop() {
       task->set_code_handle(&result_handle);
       methodHandle method(thread,
                      (methodOop)JNIHandles::resolve(task->method_handle()));
-
+    
       // Never compile a method if breakpoints are present in it
       if (method()->number_of_breakpoints() == 0) {
         // Compile the method.
@@ -1429,7 +1432,7 @@ void CompileBroker::init_compiler_thread_log() {
 
       if (xtty != NULL) {
         ttyLocker ttyl;
-
+        
         // Record any per thread log files
         xtty->elem("thread_logfile thread='%d' filename='%s'", thread_id, file);
       }
@@ -1572,7 +1575,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
 
   methodHandle method(thread,
                       (methodOop)JNIHandles::resolve(task->method_handle()));
-
+  
   DTRACE_METHOD_COMPILE_END_PROBE(compiler(task->comp_level()), method, task->is_success());
 
   collect_statistics(thread, time, task);
@@ -1721,7 +1724,7 @@ void CompileBroker::collect_statistics(CompilerThread* thread, elapsedTimer time
 
   assert(code == NULL || code->is_locked_by_vm(), "will survive the MutexLocker");
   MutexLocker locker(CompileStatistics_lock);
-
+  
   // _perf variables are production performance counters which are
   // updated regardless of the setting of the CITime and CITimeEach flags
   //

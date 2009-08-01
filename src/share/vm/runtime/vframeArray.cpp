@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)vframeArray.cpp	1.145 07/08/29 13:42:30 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -88,16 +91,16 @@ void vframeArrayElement::fill_in(compiledVFrame* vf) {
   for(index = 0; index < locs->size(); index++) {
     StackValue* value = locs->at(index);
     switch(value->type()) {
-      case T_OBJECT:
+      case T_OBJECT: 
         // preserve object type
-        _locals->add( new StackValue((intptr_t) (value->get_obj()()), T_OBJECT ));
+	_locals->add( new StackValue((intptr_t) (value->get_obj()()), T_OBJECT ));
         break;
       case T_CONFLICT:
-        // A dead local.  Will be initialized to null/zero.
-        _locals->add( new StackValue());
+	// A dead local.  Will be initialized to null/zero.
+	_locals->add( new StackValue());
         break;
       case T_INT:
-        _locals->add( new StackValue(value->get_int()));
+	_locals->add( new StackValue(value->get_int()));
         break;
       default:
         ShouldNotReachHere();
@@ -107,23 +110,23 @@ void vframeArrayElement::fill_in(compiledVFrame* vf) {
   // Now the expressions off-stack
   // Same silliness as above
 
-  StackValueCollection *exprs = vf->expressions();
+  StackValueCollection *exprs = vf->expressions();  
   _expressions = new StackValueCollection(exprs->size());
   for(index = 0; index < exprs->size(); index++) {
     StackValue* value = exprs->at(index);
     switch(value->type()) {
-      case T_OBJECT:
+      case T_OBJECT: 
         // preserve object type
-        _expressions->add( new StackValue((intptr_t) (value->get_obj()()), T_OBJECT ));
+	_expressions->add( new StackValue((intptr_t) (value->get_obj()()), T_OBJECT ));
         break;
       case T_CONFLICT:
-        // A dead stack element.  Will be initialized to null/zero.
+	// A dead stack element.  Will be initialized to null/zero.
         // This can occur when the compiler emits a state in which stack
         // elements are known to be dead (because of an imminent exception).
-        _expressions->add( new StackValue());
+	_expressions->add( new StackValue());
         break;
       case T_INT:
-        _expressions->add( new StackValue(value->get_int()));
+	_expressions->add( new StackValue(value->get_int()));
         break;
       default:
         ShouldNotReachHere();
@@ -134,10 +137,10 @@ void vframeArrayElement::fill_in(compiledVFrame* vf) {
 int unpack_counter = 0;
 
 void vframeArrayElement::unpack_on_stack(int callee_parameters,
-                                         int callee_locals,
-                                         frame* caller,
-                                         bool is_top_frame,
-                                         int exec_mode) {
+					 int callee_locals,
+					 frame* caller,
+					 bool is_top_frame,
+					 int exec_mode) {
   JavaThread* thread = (JavaThread*) Thread::current();
 
   // Look at bci and decide on bcp and continuation pc
@@ -163,7 +166,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   // For Compiler2, there should be no pending exception when deoptimizing at monitorenter
   // because there is no safepoint at the null pointer check (it is either handled explicitly
   // or prior to the monitorenter) and asynchronous exceptions are not made "pending" by the
-  // runtime interface for the slow case (see JRT_ENTRY_FOR_MONITORENTER).  If an asynchronous
+  // runtime interface for the slow case (see JRT_ENTRY_FOR_MONITORENTER).  If an asynchronous 
   // exception was processed, the bytecode pointer would have to be extended one bytecode beyond
   // the monitorenter to place it in the proper exception range.
   //
@@ -188,7 +191,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
 #else
         // Do an uncommon trap type entry. c++ interpreter will know
         // to pop frame and preserve the args
-        pc = Interpreter::deopt_entry(vtos, 0);
+	pc = Interpreter::deopt_entry(vtos, 0);
         use_next_mdp = false;
 #endif
       } else {
@@ -242,12 +245,12 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   Interpreter::layout_activation(method(),
                                  temps + callee_parameters,
                                  popframe_preserved_args_size_in_words,
-                                 locks,
-                                 callee_parameters,
-                                 callee_locals,
-                                 caller,
-                                 iframe(),
-                                 is_top_frame);
+				 locks,
+				 callee_parameters,
+				 callee_locals,
+				 caller,
+				 iframe(),
+				 is_top_frame);
 
   // Update the pc in the frame object and overwrite the temporary pc
   // we placed in the skeletal frame now that we finally know the
@@ -278,7 +281,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
     }
   }
 
-  // Unpack expression stack
+  // Unpack expression stack  
   // If this is an intermediate frame (i.e. not top frame) then this
   // only unpacks the part of the expression stack not used by callee
   // as parameters. The callee parameters are unpacked as part of the
@@ -295,7 +298,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
         *addr = value->get_int(T_OBJECT);
         break;
       case T_CONFLICT:
-        // A dead stack slot.  Initialize to null in case it is an oop.
+	// A dead stack slot.  Initialize to null in case it is an oop.
         *addr = NULL_WORD;
         break;
       default:
@@ -303,7 +306,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
     }
     if (TaggedStackInterpreter) {
       // Write tag to the stack
-      iframe()->interpreter_frame_set_expression_stack_tag(i,
+      iframe()->interpreter_frame_set_expression_stack_tag(i, 
                                   frame::tag_for_basic_type(value->type()));
     }
   }
@@ -313,7 +316,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   for(i = 0; i < locals()->size(); i++) {
     StackValue *value = locals()->at(i);
     intptr_t* addr  = iframe()->interpreter_frame_local_at(i);
-    switch(value->type()) {
+    switch(value->type()) {      
       case T_INT:
         *addr = value->get_int();
         break;
@@ -321,7 +324,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
         *addr = value->get_int(T_OBJECT);
         break;
       case T_CONFLICT:
-        // A dead location. If it is an oop then we need a NULL to prevent GC from following it
+	// A dead location. If it is an oop then we need a NULL to prevent GC from following it
         *addr = NULL_WORD;
         break;
       default:
@@ -329,7 +332,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
     }
     if (TaggedStackInterpreter) {
       // Write tag to stack
-      iframe()->interpreter_frame_set_local_tag(i,
+      iframe()->interpreter_frame_set_local_tag(i, 
                                   frame::tag_for_basic_type(value->type()));
     }
   }
@@ -374,10 +377,10 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
     vframe* f = vframe::new_vframe(iframe(), &map, thread);
     f->print();
     iframe()->interpreter_frame_print_on(tty);
-
+   
     tty->print_cr("locals size     %d", locals()->size());
     tty->print_cr("expression size %d", expressions()->size());
-
+    
     method()->print_value();
     tty->cr();
     // method()->print_codes();
@@ -401,13 +404,13 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
 }
 
 int vframeArrayElement::on_stack_size(int callee_parameters,
-                                      int callee_locals,
-                                      bool is_top_frame,
-                                      int popframe_extra_stack_expression_els) const {
+				      int callee_locals,
+				      bool is_top_frame,
+				      int popframe_extra_stack_expression_els) const {
   assert(method()->max_locals() == locals()->size(), "just checking");
   int locks = monitors() == NULL ? 0 : monitors()->number_of_monitors();
   int temps = expressions()->size();
-  return Interpreter::size_activation(method(),
+  return Interpreter::size_activation(method(), 
                                       temps + callee_parameters,
                                       popframe_extra_stack_expression_els,
                                       locks,
@@ -423,8 +426,8 @@ vframeArray* vframeArray::allocate(JavaThread* thread, int frame_size, GrowableA
 
   // Allocate the vframeArray
   vframeArray * result = (vframeArray*) AllocateHeap(sizeof(vframeArray) + // fixed part
-                                                     sizeof(vframeArrayElement) * (chunk->length() - 1), // variable part
-                                                     "vframeArray::allocate");
+						     sizeof(vframeArrayElement) * (chunk->length() - 1), // variable part
+						     "vframeArray::allocate");
   result->_frames = chunk->length();
   result->_owner_thread = thread;
   result->_sender = sender;
@@ -435,10 +438,10 @@ vframeArray* vframeArray::allocate(JavaThread* thread, int frame_size, GrowableA
   return result;
 }
 
-void vframeArray::fill_in(JavaThread* thread,
-                          int frame_size,
-                          GrowableArray<compiledVFrame*>* chunk,
-                          const RegisterMap *reg_map) {
+void vframeArray::fill_in(JavaThread* thread, 
+			  int frame_size, 
+			  GrowableArray<compiledVFrame*>* chunk, 
+			  const RegisterMap *reg_map) {
   // Set owner first, it is used when adding monitor chunks
 
   _frame_size = frame_size;
@@ -460,12 +463,12 @@ void vframeArray::fill_in(JavaThread* thread,
       // in frame_amd64.cpp and the values of the phantom high half registers
       // in amd64.ad.
       //      if (VMReg::Name(i) < SharedInfo::stack0 && is_even(i)) {
-        intptr_t* src = (intptr_t*) reg_map->location(VMRegImpl::as_VMReg(i));
-        _callee_registers[i] = src != NULL ? *src : NULL_WORD;
-        //      } else {
-        //      jint* src = (jint*) reg_map->location(VMReg::Name(i));
-        //      _callee_registers[i] = src != NULL ? *src : NULL_WORD;
-        //      }
+	intptr_t* src = (intptr_t*) reg_map->location(VMRegImpl::as_VMReg(i));
+	_callee_registers[i] = src != NULL ? *src : NULL_WORD;
+	//      } else {
+	//	jint* src = (jint*) reg_map->location(VMReg::Name(i));
+	//      _callee_registers[i] = src != NULL ? *src : NULL_WORD;
+	//      }
 #else
       jint* src = (jint*) reg_map->location(VMRegImpl::as_VMReg(i));
       _callee_registers[i] = src != NULL ? *src : NULL_WORD;
@@ -485,7 +488,7 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode) {
   // stack picture
   //   unpack_frame
   //   [new interpreter frames ] (frames are skeletal but walkable)
-  //   caller_frame
+  //   caller_frame 
   //
   //  This routine fills in the missing data for the skeletal interpreter frames
   //  in the above picture.
@@ -510,11 +513,11 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode) {
   for (index = frames() - 1; index >= 0 ; index--) {
     int callee_parameters = index == 0 ? 0 : element(index-1)->method()->size_of_parameters();
     int callee_locals     = index == 0 ? 0 : element(index-1)->method()->max_locals();
-    element(index)->unpack_on_stack(callee_parameters,
-                                    callee_locals,
-                                    &caller_frame,
-                                    index == 0,
-                                    exec_mode);
+    element(index)->unpack_on_stack(callee_parameters, 
+				    callee_locals,
+				    &caller_frame,
+				    index == 0,
+				    exec_mode);
     if (index == frames() - 1) {
       Deoptimization::unwind_callee_save_values(element(index)->iframe(), this);
     }

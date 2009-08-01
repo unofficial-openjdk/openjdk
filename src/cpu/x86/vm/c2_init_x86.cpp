@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)c2_init_x86.cpp	1.23 07/09/17 09:38:10 JVM"
+#endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 // processor dependent initialization for i486
 
-void Compile::pd_compiler2_init() {
+void Compile::pd_compiler2_init() {  
   guarantee(CodeEntryAlignment >= InteriorEntryAlignment, "" );
   // QQQ presumably all 64bit cpu's support this. Seems like the ifdef could
   // simply be left out.

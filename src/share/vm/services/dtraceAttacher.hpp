@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)dtraceAttacher.hpp	1.5 07/05/05 17:07:05 JVM"
+#endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #define DTRACE_ALLOC_PROBES    0x1
@@ -42,3 +45,4 @@ class DTrace : public AllStatic {
   // set ExtendedDTraceProbes flag
   static void set_extended_dprobes(bool value);
 };
+

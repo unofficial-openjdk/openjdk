@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jfieldIDWorkaround.hpp	1.11 07/05/05 17:06:51 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class jfieldIDWorkaround: AllStatic {
@@ -28,7 +31,7 @@ class jfieldIDWorkaround: AllStatic {
   // The workaround is to steal a low-order bit:
   //   a 1 means the jfieldID is an instance jfieldID,
   //             and the rest of the word is the offset of the field.
-  //   a 0 means the jfieldID is a static jfieldID,
+  //   a 0 means the jfieldID is a static jfieldID, 
   //             and the rest of the word is the JNIid*.
   //
   // Another low-order bit is used to mark if an instance field
@@ -141,7 +144,7 @@ class jfieldIDWorkaround: AllStatic {
 
   static JNIid* from_static_jfieldID(jfieldID id) {
     assert(jfieldIDWorkaround::is_static_jfieldID(id),
-           "to_JNIid, but not static jfieldID");
+	   "to_JNIid, but not static jfieldID");
     JNIid* result = (JNIid*) id;
     assert(result->is_static_field_id(), "to_JNIid, but not static field id");
     return result;

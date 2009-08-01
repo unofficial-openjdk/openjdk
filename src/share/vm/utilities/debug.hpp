@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)debug.hpp	1.50 07/05/05 17:07:07 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // assertions
@@ -45,12 +48,12 @@
     }
 #endif
 
-// This version of assert is for use with checking return status from
-// library calls that return actual error values eg. EINVAL,
-// ENOMEM etc, rather than returning -1 and setting errno.
-// When the status is not what is expected it is very useful to know
-// what status was actually returned, so we pass the status variable as
-// an extra arg and use strerror to convert it to a meaningful string
+// This version of assert is for use with checking return status from 
+// library calls that return actual error values eg. EINVAL, 
+// ENOMEM etc, rather than returning -1 and setting errno. 
+// When the status is not what is expected it is very useful to know 
+// what status was actually returned, so we pass the status variable as 
+// an extra arg and use strerror to convert it to a meaningful string 
 // like "Invalid argument", "out of memory" etc
 #define assert_status(p, status, msg)                                     \
    do {                                                                   \

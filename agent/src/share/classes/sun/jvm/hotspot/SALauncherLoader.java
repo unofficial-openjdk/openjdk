@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot;
@@ -31,17 +31,17 @@ import java.security.*;
 
 /**
  * SA uses native debugger back-end library - libsaproc.so on Unix platforms.
- * Starting from 5.0, in Solaris & Linux JDK "libsaproc.so" is shipped with JDK
+ * Starting from 5.0, in Solaris & Linux JDK "libsaproc.so" is shipped with JDK 
  * and is kept jre/lib/cpu directory (where all other JDK platform libraries
  * are kept). This implies that always that jre copy of libsaproc.so will be
  * used and the copy of libsaproc.so built from SA sources here will not
  * be used at all. We can override libsaproc.so using this class loader
- * as System class loader using "java.system.class.loader" property. This
- * class loader loads classes paths specified paths using the System property
- * "java.class.path". Because, this class loader loads SA debugger classes
- * (among other classes), JVM calls findLibrary override here. In this
+ * as System class loader using "java.system.class.loader" property. This 
+ * class loader loads classes paths specified paths using the System property 
+ * "java.class.path". Because, this class loader loads SA debugger classes 
+ * (among other classes), JVM calls findLibrary override here. In this 
  * findLibrary, we first check the library in the directories specified through
- * "sa.library.path" System property. This way updated/latest SA native library
+ * "sa.library.path" System property. This way updated/latest SA native library 
  * can be loaded instead of the one from JDK's jre/lib directory.
  */
 public class SALauncherLoader extends URLClassLoader {
@@ -51,19 +51,19 @@ public class SALauncherLoader extends URLClassLoader {
      * the System property "sa.library.path".
      */
     public String findLibrary(String name) {
-        name = System.mapLibraryName(name);
+	name = System.mapLibraryName(name);
         for (int i = 0; i < libpaths.length; i++) {
             File file = new File(new File(libpaths[i]), name);
             if (file.exists()) {
-                return file.getAbsolutePath();
+	        return file.getAbsolutePath();
             }
-        }
-        return null;
+	}
+	return null;
     }
 
     public SALauncherLoader(ClassLoader parent) {
         super(getClassPath(), parent);
-        String salibpath = System.getProperty("sa.library.path");
+	String salibpath = System.getProperty("sa.library.path");
         if (salibpath != null) {
             libpaths = salibpath.split(File.pathSeparator);
         } else {
@@ -75,7 +75,7 @@ public class SALauncherLoader extends URLClassLoader {
      * Override loadClass so we can checkPackageAccess.
      */
     public synchronized Class loadClass(String name, boolean resolve)
-            throws ClassNotFoundException {
+	    throws ClassNotFoundException {
         int i = name.lastIndexOf('.');
         if (i != -1) {
             SecurityManager sm = System.getSecurityManager();
@@ -87,13 +87,13 @@ public class SALauncherLoader extends URLClassLoader {
         Class clazz = findLoadedClass(name);
         if (clazz != null) return clazz;
 
-        /*
+        /* 
          * NOTE: Unlike 'usual' class loaders, we do *not* delegate to
-         * the parent loader first. We attempt to load the class
+         * the parent loader first. We attempt to load the class 
          * ourselves first and use parent loader only if we can't load.
-         * This is because the parent of this loader is 'default'
-         * System loader that can 'see' all SA classes in classpath and
-         * so will load those if delegated. And if parent loads SA classes,
+         * This is because the parent of this loader is 'default' 
+         * System loader that can 'see' all SA classes in classpath and 
+         * so will load those if delegated. And if parent loads SA classes, 
          * then JVM won't call findNative override in this class.
          */
         try {
@@ -120,8 +120,8 @@ public class SALauncherLoader extends URLClassLoader {
         final String s = System.getProperty("java.class.path");
         final File[] path = (s == null) ? new File[0] : getClassPath(s);
 
-        return pathToURLs(path);
-    }
+	return pathToURLs(path);
+    } 
 
     private static URL[] pathToURLs(File[] path) {
         URL[] urls = new URL[path.length];
@@ -145,7 +145,7 @@ public class SALauncherLoader extends URLClassLoader {
             file = file.getCanonicalFile();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } 
 
         try {
             return file.toURI().toURL();

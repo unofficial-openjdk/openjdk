@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)copy_windows_x86.inline.hpp	1.12 07/09/17 09:13:04 JVM"
+#endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 static void pd_conjoint_words(HeapWord* from, HeapWord* to, size_t count) {
@@ -38,7 +41,7 @@ static void pd_disjoint_words(HeapWord* from, HeapWord* to, size_t count) {
   case 2:  to[1] = from[1];
   case 1:  to[0] = from[0];
   case 0:  break;
-  default:
+  default: 
     (void)memcpy(to, from, count * HeapWordSize);
     break;
   }

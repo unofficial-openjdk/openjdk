@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)referenceProcessor.hpp	1.43 07/05/05 17:05:54 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ReferenceProcessor class encapsulates the per-"collector" processing
@@ -52,7 +55,7 @@ class ReferenceProcessor : public CHeapObj {
                      // subject to wkref discovery
   bool        _discovering_refs;      // true when discovery enabled
   bool        _discovery_is_atomic;   // if discovery is atomic wrt
-                                      // other collectors in configuration
+				      // other collectors in configuration
   bool        _discovery_is_mt;       // true if reference discovery is MT.
   // If true, setting "next" field of a discovered refs list requires
   // write barrier(s).  (Must be true if used in a collector in which
@@ -114,7 +117,7 @@ class ReferenceProcessor : public CHeapObj {
                                   OopClosure*                  keep_alive,
                                   VoidClosure*                 complete_gc,
                                   AbstractRefProcTaskExecutor* task_executor);
-
+                                          
   void process_phaseJNI(BoolObjectClosure* is_alive,
                         OopClosure*        keep_alive,
                         VoidClosure*       complete_gc);
@@ -131,7 +134,7 @@ class ReferenceProcessor : public CHeapObj {
   // reachable.
   inline void process_phase2(DiscoveredList&    refs_list,
                              BoolObjectClosure* is_alive,
-                             OopClosure*        keep_alive,
+                             OopClosure*        keep_alive, 
                              VoidClosure*       complete_gc) {
     if (discovery_is_atomic()) {
       // complete_gc is ignored in this case for this phase
@@ -175,7 +178,7 @@ class ReferenceProcessor : public CHeapObj {
                                       OopClosure*        keep_alive,
                                       VoidClosure*       complete_gc,
                                       YieldClosure*      yield);
-
+                                      
   // Delete entries in the discovered lists that have
   // either a null referent or are not active. Such
   // Reference objects can result from the clearing
@@ -184,12 +187,12 @@ class ReferenceProcessor : public CHeapObj {
   // For a definition of "active" see java.lang.ref.Reference;
   // Refs are born active, become inactive when enqueued,
   // and never become active again. The state of being
-  // active is encoded as follows: A Ref is active
+  // active is encoded as follows: A Ref is active 
   // if and only if its "next" field is NULL.
   void clean_up_discovered_references();
   void clean_up_discovered_reflist(DiscoveredList& refs_list);
 
-  // Returns the name of the discovered reference list
+  // Returns the name of the discovered reference list 
   // occupying the i / _num_q slot.
   const char* list_name(int i);
 
@@ -221,13 +224,13 @@ class ReferenceProcessor : public CHeapObj {
 
   // Calculate the number of jni handles.
   unsigned int count_jni_refs();
-
+  
   // Balances reference queues.
   void balance_queues(DiscoveredList ref_lists[]);
-
+  
   // Update (advance) the soft ref master clock field.
   void update_soft_ref_master_clock();
-
+  
  public:
   // constructor
   ReferenceProcessor():
@@ -254,7 +257,7 @@ class ReferenceProcessor : public CHeapObj {
 
   // Allocates and initializes a reference processor.
   static ReferenceProcessor* create_ref_processor(
-    MemRegion          span,
+    MemRegion          span, 
     bool               atomic_discovery,
     bool               mt_discovery,
     BoolObjectClosure* is_alive_non_header = NULL,
@@ -469,11 +472,11 @@ public:
   // Abstract tasks to execute.
   class ProcessTask;
   class EnqueueTask;
-
-  // Executes a task using worker threads.
+  
+  // Executes a task using worker threads.  
   virtual void execute(ProcessTask& task) = 0;
   virtual void execute(EnqueueTask& task) = 0;
-
+  
   // Switch to single threaded mode.
   virtual void set_single_threaded_mode() { };
 };
@@ -488,16 +491,16 @@ protected:
       _refs_lists(refs_lists),
       _marks_oops_alive(marks_oops_alive)
   { }
-
+    
 public:
   virtual void work(unsigned int work_id, BoolObjectClosure& is_alive,
                     OopClosure& keep_alive,
                     VoidClosure& complete_gc) = 0;
-
+    
   // Returns true if a task marks some oops as alive.
   bool marks_oops_alive() const
   { return _marks_oops_alive; }
-
+    
 protected:
   ReferenceProcessor& _ref_processor;
   DiscoveredList*     _refs_lists;
@@ -518,10 +521,10 @@ protected:
       _sentinel_ref(sentinel_ref),
       _n_queues(n_queues)
   { }
-
+    
 public:
   virtual void work(unsigned int work_id) = 0;
-
+    
 protected:
   ReferenceProcessor& _ref_processor;
   DiscoveredList*     _refs_lists;
@@ -529,3 +532,4 @@ protected:
   oop                 _sentinel_ref;
   int                 _n_queues;
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)compileBroker.hpp	1.55 07/05/05 17:05:24 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class nmethod;
@@ -247,16 +250,16 @@ class CompileBroker: AllStatic {
   static int _total_native_compile_count;
   static int _total_osr_compile_count;
   static int _total_standard_compile_count;
-
+  
   static int _sum_osr_bytes_compiled;
   static int _sum_standard_bytes_compiled;
   static int _sum_nmethod_size;
   static int _sum_nmethod_code_size;
 
-  static int compiler_count() {
+  static int compiler_count() { 
     return CICompilerCountPerCPU
       // Example: if CICompilerCountPerCPU is true, then we get
-      // max(log2(8)-1,1) = 2 compiler threads on an 8-way machine.
+      // max(log2(8)-1,1) = 2 compiler threads on an 8-way machine.  
       // May help big-app startup time.
       ? (MAX2(log2_intptr(os::active_processor_count())-1,1))
       : CICompilerCount;
@@ -291,12 +294,12 @@ class CompileBroker: AllStatic {
   static bool check_break_at(methodHandle method, int compile_id, bool is_osr);
   static void collect_statistics(CompilerThread* thread, elapsedTimer time, CompileTask* task);
 
-  static void compile_method_base(methodHandle method,
+  static void compile_method_base(methodHandle method, 
                                   int osr_bci,
                                   int comp_level,
-                                  methodHandle hot_method,
+                                  methodHandle hot_method, 
                                   int hot_count,
-                                  const char* comment,
+                                  const char* comment, 
                                   TRAPS);
 
  public:

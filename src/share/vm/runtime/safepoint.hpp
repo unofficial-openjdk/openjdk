@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)safepoint.hpp	1.105 07/08/27 21:52:08 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -43,13 +46,13 @@ class nmethod;
 
 //
 // Implements roll-forward to safepoint (safepoint synchronization)
-//
+// 
 class SafepointSynchronize : AllStatic {
  public:
   enum SynchronizeState {
       _not_synchronized = 0,                   // Threads not synchronized at a safepoint
                                                // Keep this value 0. See the coment in do_call_back()
-      _synchronizing    = 1,                   // Synchronizing in progress
+      _synchronizing    = 1,                   // Synchronizing in progress  
       _synchronized     = 2                    // All Java threads are stopped at a safepoint. Only VM thread is running
   };
 
@@ -64,12 +67,12 @@ class SafepointSynchronize : AllStatic {
     _blocking_timeout = 1
   };
 
-  typedef struct {
+  typedef struct { 
     int    _vmop_type;                         // type of VM operation triggers the safepoint
     int    _nof_total_threads;                 // total number of Java threads
     int    _nof_initial_running_threads;       // total number of initially seen running threads
     int    _nof_threads_wait_to_block;         // total number of threads waiting for to block
-    bool   _page_armed;                        // true if polling page is armed, false otherwise
+    bool   _page_armed;                        // true if polling page is armed, false otherwise 
     int    _nof_threads_hit_page_trap;         // total number of threads hitting the page trap
     jlong  _time_to_spin;                      // total time in millis spent in spinning
     jlong  _time_to_wait_to_block;             // total time in millis spent in waiting for to block
@@ -81,7 +84,7 @@ class SafepointSynchronize : AllStatic {
  private:
   static volatile SynchronizeState _state;     // Threads might read this flag directly, without acquireing the Threads_lock
   static volatile int _waiting_to_block;       // No. of threads we are waiting for to block.
-
+  
   // This counter is used for fast versions of jni_Get<Primitive>Field.
   // An even value means there is no ongoing safepoint operations.
   // The counter is incremented ONLY at the beginning and end of each
@@ -93,7 +96,7 @@ public:
 private:
 
   static jlong   _last_safepoint;      // Time of last safepoint
-
+  
   // statistics
   static SafepointStats*  _safepoint_stats;     // array of SafepointStats struct
   static int              _cur_stat_index;      // current index to the above array
@@ -110,7 +113,7 @@ private:
     Atomic::inc(&_safepoint_stats[_cur_stat_index]._nof_threads_hit_page_trap);
   }
 
-  // For debug long safepoint
+  // For debug long safepoint 
   static void print_safepoint_timeout(SafepointTimeoutReason timeout_reason);
 
 public:
@@ -131,10 +134,10 @@ public:
   inline static bool do_call_back() {
     return (_state != _not_synchronized);
   }
-
+  
   // Called when a thread volantary blocks
   static void   block(JavaThread *thread);
-  static void   signal_thread_at_safepoint()              { _waiting_to_block--; }
+  static void   signal_thread_at_safepoint()              { _waiting_to_block--; }  
 
   // Exception handling for page polling
   static void handle_polling_page_exception(JavaThread *thread);
@@ -147,7 +150,7 @@ public:
   // debugging
   static void print_state()                                PRODUCT_RETURN;
   static void safepoint_msg(const char* format, ...)       PRODUCT_RETURN;
-
+  
   static void deferred_initialize_stat();
   static void print_stat_on_exit();
   inline static void inc_vmop_coalesced_count() { _coalesced_vmop_count++; }
@@ -156,18 +159,18 @@ public:
   static void set_is_not_at_safepoint()                    { _state = _not_synchronized; }
 
   // assembly support
-  static address address_of_state()                        { return (address)&_state; }
+  static address address_of_state()                        { return (address)&_state; }  
 
   static address safepoint_counter_addr()                  { return (address)&_safepoint_counter; }
 };
 
 // State class for a thread suspended at a safepoint
 class ThreadSafepointState: public CHeapObj {
- public:
+ public:  
   // These states are maintained by VM thread while threads are being brought
   // to a safepoint.  After SafepointSynchronize::end(), they are reset to
   // _running.
-  enum suspend_type {
+  enum suspend_type {    
     _running                =  0, // Thread state not yet determined (i.e., not at a safepoint yet)
     _at_safepoint           =  1, // Thread at a safepoint (f.ex., when blocked on a lock)
     _call_back              =  2  // Keep executing and wait for callback (if thread is in interpreted or vm)
@@ -177,22 +180,22 @@ class ThreadSafepointState: public CHeapObj {
   // Thread has called back the safepoint code (for debugging)
   bool                           _has_called_back;
 
-  JavaThread *                   _thread;
-  volatile suspend_type          _type;
+  JavaThread *                   _thread;    
+  volatile suspend_type          _type;  
 
 
- public:
+ public:       
   ThreadSafepointState(JavaThread *thread);
 
-  // examine/roll-forward/restart
-  void examine_state_of_thread();
+  // examine/roll-forward/restart   
+  void examine_state_of_thread();               
   void roll_forward(suspend_type type);
-  void restart();
-
-  // Query
-  JavaThread*  thread() const         { return _thread; }
-  suspend_type type() const           { return _type; }
-  bool         is_running() const     { return (_type==_running); }
+  void restart();  
+  
+  // Query  
+  JavaThread*  thread() const	      { return _thread; }
+  suspend_type type() const	      { return _type; }    
+  bool         is_running() const     { return (_type==_running); } 
 
   // Support for safepoint timeout (debugging)
   bool has_called_back() const                   { return _has_called_back; }
@@ -202,9 +205,9 @@ class ThreadSafepointState: public CHeapObj {
 
   void handle_polling_page_exception();
 
-  // debugging
+  // debugging  
   void print_on(outputStream* st) const;
-  void print() const                        { print_on(tty); }
+  void print() const			    { print_on(tty); }
 
   // Initialize
   static void create(JavaThread *thread);
@@ -221,14 +224,14 @@ class ThreadSafepointState: public CHeapObj {
 };
 
 //
-// CounterDecay
+// CounterDecay 
 //
 // Interates through invocation counters and decrements them. This
-// is done at each safepoint.
+// is done at each safepoint. 
 //
-class CounterDecay : public AllStatic {
+class CounterDecay : public AllStatic {   
   static jlong _last_timestamp;
- public:
+ public: 
   static  void decay();
-  static  bool is_decay_needed() { return (os::javaTimeMillis() - _last_timestamp) > CounterDecayMinIntervalLength; }
+  static  bool is_decay_needed() { return (os::javaTimeMillis() - _last_timestamp) > CounterDecayMinIntervalLength; }  
 };

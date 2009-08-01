@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -35,7 +35,7 @@ public class VMVersionInfoPanel extends JPanel {
     private JEditorPane         versionPane;
 
     public VMVersionInfoPanel() {
-        initUI();
+	initUI();
     }
 
     private void initUI() {
@@ -75,7 +75,7 @@ public class VMVersionInfoPanel extends JPanel {
           buf.append(release);
           buf.append("</b></td></tr>");
        }
-
+ 
        // VM internal info
        String internalInfo = vm.getVMInternalInfo();
        if (internalInfo != null) {
@@ -83,7 +83,7 @@ public class VMVersionInfoPanel extends JPanel {
           buf.append(internalInfo);
           buf.append("</b></td></tr>");
        }
-
+ 
        buf.append("</table></body></html>");
        return buf.toString();
     }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)memprofiler.cpp	1.24 07/05/05 17:06:52 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -66,11 +69,11 @@ void MemProfiler::engage() {
     }
     fprintf(_log_fp, "MemProfiler: sizes are in Kb, time is in seconds since startup\n\n");
     fprintf(_log_fp, "  time, #thr, #cls,  heap,  heap,  perm,  perm,  code, hndls, rescs, oopmp\n");
-    fprintf(_log_fp, "                     used, total,  used, total, total, total, total, total\n");
-    fprintf(_log_fp, "--------------------------------------------------------------------------\n");
+    fprintf(_log_fp, "                     used, total,  used, total, total, total, total, total\n"); 
+    fprintf(_log_fp, "--------------------------------------------------------------------------\n");     
 
     _task = new MemProfilerTask(MemProfilingInterval);
-    _task->enroll();
+    _task->enroll();    
   }
 }
 
@@ -92,19 +95,19 @@ void MemProfiler::disengage() {
 }
 
 
-void MemProfiler::do_trace() {
+void MemProfiler::do_trace() {  
   // Calculate thread local sizes
   size_t handles_memory_usage    = VMThread::vm_thread()->handle_area()->size_in_bytes();
   size_t resource_memory_usage   = VMThread::vm_thread()->resource_area()->size_in_bytes();
   JavaThread *cur = Threads::first();
-  while (cur != NULL) {
+  while (cur != NULL) {    
     handles_memory_usage  += cur->handle_area()->size_in_bytes();
     resource_memory_usage += cur->resource_area()->size_in_bytes();
     cur = cur->next();
   }
-
+  
   // Print trace line in log
-  fprintf(_log_fp, "%6.1f,%5d,%5d,%6ld,%6ld,%6ld,%6ld,",
+  fprintf(_log_fp, "%6.1f,%5d,%5d,%6ld,%6ld,%6ld,%6ld,", 
       os::elapsedTime(),
       Threads::number_of_threads(),
       SystemDictionary::number_of_classes(),
@@ -122,4 +125,4 @@ void MemProfiler::do_trace() {
   fflush(_log_fp);
 }
 
-#endif
+#endif 

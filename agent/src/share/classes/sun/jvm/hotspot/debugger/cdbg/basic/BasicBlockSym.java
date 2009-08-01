@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -43,7 +43,7 @@ public class BasicBlockSym extends BasicSym implements BlockSym {
     this.length = length;
     this.addr   = addr;
   }
-
+  
   public BlockSym asBlock()   { return this; }
 
   public BlockSym getParent() { return parent; }
@@ -57,11 +57,11 @@ public class BasicBlockSym extends BasicSym implements BlockSym {
 
     return locals.size();
   }
-
+  
   public LocalSym getLocal(int i) {
     return (LocalSym) locals.get(i);
   }
-
+  
   public void addLocal(LocalSym local) {
     if (locals == null) {
       locals = new ArrayList();

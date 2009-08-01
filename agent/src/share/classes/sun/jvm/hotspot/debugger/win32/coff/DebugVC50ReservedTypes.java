@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -37,7 +37,7 @@ package sun.jvm.hotspot.debugger.win32.coff;
     <tr> <td> reserved <td> mode <td> type <td> reserved <td> size
     </table>
     </p>
-
+    
     <p>
     <table border="1" width="50%">
     <tr> <td> <i>type</i> <td> Type
@@ -81,10 +81,10 @@ package sun.jvm.hotspot.debugger.win32.coff;
     <tr> <td> 0x06 <td> Reserved
     <tr> <td> 0x07 <td> Reserved
     <tr> <td colspan="2"> Type = real and complex:
-    <tr> <td> 0x00 <td> 32 bit
-    <tr> <td> 0x01 <td> 64 bit
+    <tr> <td> 0x00 <td> 32 bit 
+    <tr> <td> 0x01 <td> 64 bit 
     <tr> <td> 0x02 <td> 80 bit
-    <tr> <td> 0x03 <td> 128 bit
+    <tr> <td> 0x03 <td> 128 bit 
     <tr> <td> 0x04 <td> 48 bit
     <tr> <td> 0x05 <td> Reserved
     <tr> <td> 0x06 <td> Reserved

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.remote.amd64;
@@ -29,7 +29,7 @@ import sun.jvm.hotspot.debugger.remote.*;
 
 public class RemoteAMD64ThreadFactory implements RemoteThreadFactory {
   private RemoteDebuggerClient debugger;
-
+  
   public RemoteAMD64ThreadFactory(RemoteDebuggerClient debugger) {
     this.debugger = debugger;
   }

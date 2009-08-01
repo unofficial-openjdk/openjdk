@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -50,7 +50,7 @@ public class COFFFileParser {
   private static final int LINE_NUMBER_SIZE = 6;
 
   private static final String US_ASCII = "US-ASCII";
-
+  
   private COFFFileParser() {}
 
   /** This class is a singleton; returns the sole instance. */
@@ -221,7 +221,7 @@ public class COFFFileParser {
         private MemoizedObject standardFields;
         private MemoizedObject windowsSpecificFields;
         private MemoizedObject dataDirectories;
-
+        
         private static final int STANDARD_FIELDS_OFFSET = 2;
         private static final int PE32_WINDOWS_SPECIFIC_FIELDS_OFFSET = 28;
         private static final int PE32_DATA_DIRECTORIES_OFFSET = 96;
@@ -238,7 +238,7 @@ public class COFFFileParser {
             (isPE32Plus
              ? PE32_PLUS_WINDOWS_SPECIFIC_FIELDS_OFFSET
              : PE32_WINDOWS_SPECIFIC_FIELDS_OFFSET);
-          final int dataDirectoriesOffset = offset +
+          final int dataDirectoriesOffset = offset + 
             (isPE32Plus
              ? PE32_PLUS_DATA_DIRECTORIES_OFFSET
              : PE32_DATA_DIRECTORIES_OFFSET);
@@ -426,7 +426,7 @@ public class COFFFileParser {
                 }
               };
           }
-
+          
           exportDirectoryTable = new MemoizedObject() {
               public Object computeValue() {
                 DataDirectory dir = getExportTable();
@@ -547,7 +547,7 @@ public class COFFFileParser {
         private MemoizedObject exportNamePointerTable;
         private MemoizedObject exportOrdinalTable;
         private MemoizedObject exportAddressTable;
-
+        
         ExportDirectoryTableImpl(int offset, int size) {
           this.offset = offset;
           this.size   = size;
@@ -677,7 +677,7 @@ public class COFFFileParser {
         private ExportNameTable getExportNameTable() {
           return (ExportNameTable) exportNameTable.getValue();
         }
-
+        
         private int[] getExportNamePointerTable() {
           return (int[]) exportNamePointerTable.getValue();
         }
@@ -802,7 +802,7 @@ public class COFFFileParser {
 
         private int subsectionDirectoryOffset;
         private MemoizedObject subsectionDirectory;
-
+        
         DebugVC50Impl(int offset) {
           lfaBase = offset;
           seek(offset);
@@ -842,17 +842,17 @@ public class COFFFileParser {
           int numEntries   = readInt();
           int endOffset    = subsectionDirectoryOffset + headerLength + numEntries * entryLength;
           seek(endOffset);
-
+          
           if (readByte() == 'N' &&
               readByte() == 'B' &&
               readByte() == '1' &&
               readByte() == '1') {
             return;
           }
-
+          
           throw new COFFException("Did not find NB11 signature at end of debug info");
         }
-
+      
         class DebugVC50SubsectionDirectoryImpl
           implements DebugVC50SubsectionDirectory,
                      DebugVC50SubsectionTypes {
@@ -1075,7 +1075,7 @@ public class COFFFileParser {
             seek(offset);
             cFile = readShort();
             cSeg  = readShort();
-
+            
             baseSrcFiles = new MemoizedObject() {
                 public Object computeValue() {
                   int[] offsets = new int[getNumSourceFiles()];
@@ -1263,7 +1263,7 @@ public class COFFFileParser {
           private int   cbSymbol;
           private int   cbSymHash;
           private int   cbAddrHash;
-
+          
           private static final int HEADER_SIZE = 16;
 
           DebugVC50SSSymbolBaseImpl(short ssType, short iMod, int ssSize, int offset) {
@@ -1276,13 +1276,13 @@ public class COFFFileParser {
             cbSymHash  = readInt();
             cbAddrHash = readInt();
           }
-
+          
           public short getSymHashIndex()  { return symHash; }
           public short getAddrHashIndex() { return addrHash; }
           public int getSymTabSize()      { return cbSymbol; }
           public int getSymHashSize()     { return cbSymHash; }
           public int getAddrHashSize()    { return cbAddrHash; }
-
+          
           public DebugVC50SymbolIterator getSymbolIterator() {
             return new DebugVC50SymbolIteratorImpl(offset + HEADER_SIZE, cbSymbol);
           }
@@ -1611,7 +1611,7 @@ public class COFFFileParser {
           //////////////////////////
           // S_CONSTANT accessors //
           //////////////////////////
-
+          
           public int getConstantType() {
             symSeek(0);
             return readInt();
@@ -1620,15 +1620,15 @@ public class COFFFileParser {
           public int getConstantValueAsInt() throws DebugVC50WrongNumericTypeException {
             return readIntNumericLeafAt(4);
           }
-
+          
           public long getConstantValueAsLong() throws DebugVC50WrongNumericTypeException {
             return readLongNumericLeafAt(4);
           }
-
+          
           public float getConstantValueAsFloat() throws DebugVC50WrongNumericTypeException {
             return readFloatNumericLeafAt(4);
           }
-
+          
           public double getConstantValueAsDouble() throws DebugVC50WrongNumericTypeException {
             return readDoubleNumericLeafAt(4);
           }
@@ -1649,11 +1649,11 @@ public class COFFFileParser {
           public String getUDTName() {
             return readLengthPrefixedStringAt(4);
           }
-
+          
           /////////////////////////
           // S_SSEARCH accessors //
           /////////////////////////
-
+          
           public int getSearchSymbolOffset() {
             symSeek(0);
             return readInt();
@@ -1669,7 +1669,7 @@ public class COFFFileParser {
           /////////////////////
 
           // (No accessors)
-
+          
           //////////////////////
           // S_SKIP accessors //
           //////////////////////
@@ -1706,7 +1706,7 @@ public class COFFFileParser {
           //////////////////////////
 
           // (Elided as they are irrelevant)
-
+          
           /////////////////////////
           // S_MANYREG accessors //
           /////////////////////////
@@ -1729,7 +1729,7 @@ public class COFFFileParser {
           public String getManyRegName() {
             return readLengthPrefixedStringAt(5 + getManyRegCount());
           }
-
+          
           ////////////////////////
           // S_RETURN accessors //
           ////////////////////////
@@ -1772,7 +1772,7 @@ public class COFFFileParser {
             curSymSize = tmpSymSize;
             curSymType = tmpSymType;
           }
-
+          
           ///////////////////////////////////////////////////////////////////////
           //                                                                   //
           //                                                                   //
@@ -1784,7 +1784,7 @@ public class COFFFileParser {
           /////////////////////////
           // S_BPREL32 accessors //
           /////////////////////////
-
+          
           public int getBPRelOffset() {
             symSeek(0);
             return readInt();
@@ -1802,7 +1802,7 @@ public class COFFFileParser {
           ///////////////////////////////////////
           // S_LDATA32 and S_GDATA32 accessors //
           ///////////////////////////////////////
-
+          
           public int getLGDataType() {
             symSeek(0);
             return readInt();
@@ -1865,7 +1865,7 @@ public class COFFFileParser {
             if (offs == 0) return null;
             return new DebugVC50SymbolIteratorImpl(base, size, offs);
           }
-
+          
           public int getLGProcNextOffset() {
             symSeek(8);
             int offs = readInt();
@@ -1887,12 +1887,12 @@ public class COFFFileParser {
             symSeek(20);
             return readInt();
           }
-
+          
           public int getLGProcType() {
             symSeek(24);
             return readInt();
           }
-
+          
           public int getLGProcOffset() {
             symSeek(28);
             return readInt();
@@ -1921,7 +1921,7 @@ public class COFFFileParser {
             if (offs == 0) return null;
             return new DebugVC50SymbolIteratorImpl(base, size, offs);
           }
-
+          
           public int getThunkParentOffset() {
             symSeek(0);
             int offs = readInt();
@@ -1934,7 +1934,7 @@ public class COFFFileParser {
             int offs = readInt();
             return new DebugVC50SymbolIteratorImpl(base, size, offs);
           }
-
+          
           public int getThunkEndOffset() {
             symSeek(4);
             int offs = readInt();
@@ -1949,7 +1949,7 @@ public class COFFFileParser {
             if (offs == 0) return null;
             return new DebugVC50SymbolIteratorImpl(base, size, base + offs);
           }
-
+          
           public int getThunkNextOffset() {
             symSeek(8);
             int offs = readInt();
@@ -1976,11 +1976,11 @@ public class COFFFileParser {
             symSeek(20);
             return readByte();
           }
-
+          
           public String getThunkName() {
             return readLengthPrefixedStringAt(21);
           }
-
+          
           public short getThunkAdjustorThisDelta() {
             symSeek(21 + lengthPrefixedStringLengthAt(21));
             return readShort();
@@ -2008,7 +2008,7 @@ public class COFFFileParser {
           /////////////////////////
           // S_BLOCK32 accessors //
           /////////////////////////
-
+          
           public DebugVC50SymbolIterator getBlockParent() {
             int offs = getBlockParentOffset();
             if (offs == 0) return null;
@@ -2027,7 +2027,7 @@ public class COFFFileParser {
             int offs = readInt();
             return new DebugVC50SymbolIteratorImpl(base, size, offs);
           }
-
+          
           public int getBlockEndOffset() {
             symSeek(4);
             int offs = readInt();
@@ -2046,7 +2046,7 @@ public class COFFFileParser {
             symSeek(12);
             return readInt();
           }
-
+          
           public short getBlockSegment() {
             symSeek(16);
             return readShort();
@@ -2084,7 +2084,7 @@ public class COFFFileParser {
           public String getLabelName() {
             return readLengthPrefixedStringAt(7);
           }
-
+          
           ////////////////////////////
           // S_CEXMODEL32 accessors //
           ////////////////////////////
@@ -2112,12 +2112,12 @@ public class COFFFileParser {
             symSeek(0);
             return readInt();
           }
-
+          
           public int getVTablePath() {
             symSeek(4);
             return readInt();
           }
-
+          
           public int getVTableOffset() {
             symSeek(8);
             return readInt();
@@ -2146,11 +2146,11 @@ public class COFFFileParser {
             symSeek(8);
             return readShort();
           }
-
+          
           public String getRegRelName() {
             return readLengthPrefixedStringAt(10);
           }
-
+          
           ///////////////////////////////////////////
           // S_LTHREAD32 and S_GTHREAD32 accessors //
           ///////////////////////////////////////////
@@ -2159,12 +2159,12 @@ public class COFFFileParser {
             symSeek(0);
             return readInt();
           }
-
+          
           public int getLThreadOffset() {
             symSeek(4);
             return readInt();
           }
-
+          
           public short getLThreadSegment() {
             symSeek(8);
             return readShort();
@@ -2253,7 +2253,7 @@ public class COFFFileParser {
           public short getLength() {
             return (short) typeRecordSize;
           }
-
+          
           public int getTypeIndex() {
             return biasTypeIndex(typeIndex);
           }
@@ -2302,7 +2302,7 @@ public class COFFFileParser {
             typeSeek(2);
             return readInt();
           }
-
+          
           public int getPointerAttributes() {
             typeSeek(6);
             return readInt();
@@ -2330,7 +2330,7 @@ public class COFFFileParser {
           ////////////////////////
           // LF_ARRAY accessors //
           ////////////////////////
-
+          
           public int getArrayElementType() {
             typeSeek(2);
             return readInt();
@@ -2352,7 +2352,7 @@ public class COFFFileParser {
           /////////////////////////////////////////
           // LF_CLASS and LF_STRUCTURE accessors //
           /////////////////////////////////////////
-
+          
           public short getClassCount() {
             typeSeek(2);
             return readShort();
@@ -2362,7 +2362,7 @@ public class COFFFileParser {
             typeSeek(4);
             return readShort();
           }
-
+          
           public int getClassFieldList() {
             typeSeek(6);
             return readInt();
@@ -2438,7 +2438,7 @@ public class COFFFileParser {
             typeSeek(4);
             return readShort();
           }
-
+          
           public int getEnumType() {
             typeSeek(6);
             return readInt();
@@ -2477,7 +2477,7 @@ public class COFFFileParser {
             typeSeek(8);
             return readShort();
           }
-
+          
           public int getProcedureArgumentList() {
             typeSeek(10);
             return readInt();
@@ -2517,7 +2517,7 @@ public class COFFFileParser {
             typeSeek(16);
             return readShort();
           }
-
+          
           public int getMFunctionArgumentList() {
             typeSeek(18);
             return readInt();
@@ -2564,7 +2564,7 @@ public class COFFFileParser {
           ////////////////////////
           // LF_LABEL accessors //
           ////////////////////////
-
+          
           public short getLabelAddressMode() {
             typeSeek(2);
             return readShort();
@@ -2583,7 +2583,7 @@ public class COFFFileParser {
             typeSeek(6);
             return readInt();
           }
-
+          
           public String getDimArrayName() {
             return readLengthPrefixedStringAt(10);
           }
@@ -2754,7 +2754,7 @@ public class COFFFileParser {
           }
 
           ///////////////////////////
-          // LF_IVBCLASS accessors //
+          // LF_IVBCLASS accessors //  
           ///////////////////////////
 
           public short getIVBClassAttribute() {
@@ -2945,7 +2945,7 @@ public class COFFFileParser {
           ///////////////////////////
           // LF_VFUNCOFF accessors //
           ///////////////////////////
-
+          
           public int getVFuncOffType() {
             typeSeek(4);
             return readInt();
@@ -3022,7 +3022,7 @@ public class COFFFileParser {
             // FIXME
             throw new RuntimeException("Unimplemented");
           }
-
+          
           public double getNumericDoubleAt(int byteOffset)
             throws DebugVC50WrongNumericTypeException {
             // FIXME
@@ -3166,22 +3166,22 @@ public class COFFFileParser {
             case LF_MEMBERMODIFY: return 8 + lengthPrefixedStringLengthAt(8);
 
             // Should not encounter numeric leaves with this routine
-            case LF_CHAR:
+            case LF_CHAR:       
             case LF_SHORT:
-            case LF_USHORT:
+            case LF_USHORT:     
             case LF_LONG:
-            case LF_ULONG:
-            case LF_REAL32:
-            case LF_REAL64:
-            case LF_REAL80:
-            case LF_REAL128:
+            case LF_ULONG:      
+            case LF_REAL32:     
+            case LF_REAL64:     
+            case LF_REAL80:     
+            case LF_REAL128:    
             case LF_QUADWORD:
-            case LF_UQUADWORD:
-            case LF_REAL48:
-            case LF_COMPLEX32:
-            case LF_COMPLEX64:
-            case LF_COMPLEX80:
-            case LF_COMPLEX128:
+            case LF_UQUADWORD:  
+            case LF_REAL48:     
+            case LF_COMPLEX32:  
+            case LF_COMPLEX64:  
+            case LF_COMPLEX80:  
+            case LF_COMPLEX128: 
             case LF_VARSTRING:  throw new RuntimeException("Unexpected numeric leaf " + typeStringLeaf +
                                                            "in type string");
             default:
@@ -3223,7 +3223,7 @@ public class COFFFileParser {
           case LF_USHORT:     return 4;
           case LF_LONG:
           case LF_ULONG:      return 6;
-          case LF_REAL32:     return 6;
+          case LF_REAL32:     return 6;     
           case LF_REAL64:     return 10;
           case LF_REAL80:     return 12;
           case LF_REAL128:    return 18;
@@ -3601,7 +3601,7 @@ public class COFFFileParser {
       }
 
       class AuxFileRecordImpl implements AuxFileRecord {
-        private String name;
+        private String name; 
 
         AuxFileRecordImpl(int offset) {
           seek(offset);
@@ -3688,7 +3688,7 @@ public class COFFFileParser {
         class COFFString {
           String str;
           int    offset;
-
+          
           COFFString(String str, int offset) {
             this.str = str; this.offset = offset;
           }
@@ -3742,7 +3742,7 @@ public class COFFFileParser {
         String get(int i) {
           return strings[i].str;
         }
-
+          
         /** This version takes an absolute offset in the file */
         String getAtOffset(int offset) {
           int i = Arrays.binarySearch(strings, new COFFString(null, offset),

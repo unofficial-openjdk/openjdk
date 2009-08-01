@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vectset.hpp	1.22 07/05/05 17:05:41 JVM"
+#endif
 /*
  * Copyright 1997 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _VECTOR_SET_
@@ -41,17 +44,17 @@
 
 //------------------------------VectorSet--------------------------------------
 class VectorSet : public Set {
-friend class VectorSetI;        // Friendly iterator class
+friend class VectorSetI;	// Friendly iterator class
 protected:
   uint size;                    // Size of data IN LONGWORDS (32bits)
   uint32 *data;                 // The data, bit packed
 
-  void slamin( const VectorSet& s );     // Initialize one set with another
+  void slamin( const VectorSet& s );	 // Initialize one set with another
   int compare(const VectorSet &s) const; // Compare set contents
   void grow(uint newsize);               // Grow vector to required bitsize
 
 public:
-  VectorSet(Arena *arena);                      // Creates a new, empty set.
+  VectorSet(Arena *arena);		        // Creates a new, empty set.
   VectorSet(const VectorSet &s) : Set(s._set_arena) {slamin(s);} // Set clone; deep-copy guts
   Set &operator =(const Set &s);                // Set clone; deep-copy guts
   VectorSet &operator =(const VectorSet &s)     // Set clone; deep-copy guts
@@ -91,10 +94,10 @@ public:
 
   int operator [](uint elem) const; // Test for membership
   uint getelem(void) const;         // Return a random element
-  void Clear(void);                 // Clear a set
+  void Clear(void);		    // Clear a set
   uint Size(void) const;            // Number of elements in the Set.
   void Sort(void);                  // Sort before iterating
-  int hash() const;                 // Hash function
+  int hash() const;		    // Hash function
 
   /* Removed for MCC BUG
      operator const VectorSet* (void) const { return this; } */
@@ -110,7 +113,7 @@ public:
   // With:
   //     if( visited.test_set(idx) ) return;
   //
-  int test_set( uint elem ) {
+  int test_set( uint elem ) { 
     uint word = elem >> 5;           // Get the longword offset
     if( word >= size )               // Beyond the last?
       return test_set_grow(elem);    // Then grow; set; return 0;
@@ -126,20 +129,20 @@ public:
 
   // Fast inlined test
   int test( uint elem ) const {
-    uint word = elem >> 5;      // Get the longword offset
+    uint word = elem >> 5;	// Get the longword offset
     if( word >= size ) return 0; // Beyond the last?
     uint32 mask = 1L << (elem & 31); // Get bit mask
-    return data[word] & mask;   // Get bit
+    return data[word] & mask;	// Get bit
   }
 
   // Fast inlined set
-  void set( uint elem ) {
-    uint word = elem >> 5;      // Get the longword offset
-    if( word >= size ) {        // Beyond the last?
-      test_set_grow(elem);      // Then grow and set
+  void set( uint elem ) { 
+    uint word = elem >> 5;	// Get the longword offset
+    if( word >= size ) {	// Beyond the last?
+      test_set_grow(elem);	// Then grow and set
     } else {
       uint32 mask = 1L << (elem & 31); // Get bit mask
-      data[word] |= mask;       // Set bit
+      data[word] |= mask;	// Set bit
     }
   }
 
@@ -174,3 +177,4 @@ public:
 };
 
 #endif // _VECTOR_SET_
+

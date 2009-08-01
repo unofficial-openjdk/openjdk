@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)cmsGCAdaptivePolicyCounters.cpp	1.16 07/05/05 17:05:25 JVM"
+#endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -37,25 +40,25 @@ CMSGCAdaptivePolicyCounters::CMSGCAdaptivePolicyCounters(const char* name_arg,
     EXCEPTION_MARK;
     ResourceMark rm;
 
-    const char* cname =
+    const char* cname = 
       PerfDataManager::counter_name(name_space(), "cmsCapacity");
     _cms_capacity_counter = PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_Bytes, (jlong) OldSize, CHECK);
 #ifdef NOT_PRODUCT
-    cname =
+    cname = 
       PerfDataManager::counter_name(name_space(), "initialPause");
     _initial_pause_counter = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Ticks,
+      PerfData::U_Ticks, 
       (jlong) cms_size_policy()->avg_initial_pause()->last_sample(),
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "remarkPause");
     _remark_pause_counter = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Ticks,
+      PerfData::U_Ticks, 
       (jlong) cms_size_policy()->avg_remark_pause()->last_sample(),
       CHECK);
 #endif
-    cname =
+    cname = 
       PerfDataManager::counter_name(name_space(), "avgInitialPause");
     _avg_initial_pause_counter = PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_Ticks,
@@ -69,82 +72,82 @@ CMSGCAdaptivePolicyCounters::CMSGCAdaptivePolicyCounters(const char* name_arg,
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgSTWGcCost");
-    _avg_cms_STW_gc_cost_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_cms_STW_gc_cost_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
+        PerfData::U_Ticks, 
       (jlong) cms_size_policy()->avg_cms_STW_gc_cost()->average(),
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgSTWTime");
-    _avg_cms_STW_time_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_cms_STW_time_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
+        PerfData::U_Ticks, 
       (jlong) cms_size_policy()->avg_cms_STW_time()->average(),
         CHECK);
 
 
     cname = PerfDataManager::counter_name(name_space(), "avgConcurrentTime");
-    _avg_concurrent_time_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_concurrent_time_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_concurrent_time()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_concurrent_time()->average(), 
         CHECK);
 
-    cname =
+    cname = 
       PerfDataManager::counter_name(name_space(), "avgConcurrentInterval");
-    _avg_concurrent_interval_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_concurrent_interval_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_concurrent_interval()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_concurrent_interval()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgConcurrentGcCost");
-    _avg_concurrent_gc_cost_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_concurrent_gc_cost_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_concurrent_gc_cost()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_concurrent_gc_cost()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgCMSFreeAtSweep");
-    _avg_cms_free_at_sweep_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_cms_free_at_sweep_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_cms_free_at_sweep()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_cms_free_at_sweep()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgCMSFree");
-    _avg_cms_free_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_cms_free_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_cms_free()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_cms_free()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgCMSPromo");
-    _avg_cms_promo_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_cms_promo_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_cms_promo()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_cms_promo()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgMscPause");
-    _avg_msc_pause_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_msc_pause_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_msc_pause()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_msc_pause()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgMscInterval");
-    _avg_msc_interval_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_msc_interval_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_msc_interval()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_msc_interval()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "mscGcCost");
-    _msc_gc_cost_counter = PerfDataManager::create_variable(SUN_GC,
+    _msc_gc_cost_counter = PerfDataManager::create_variable(SUN_GC, 
         cname,
-        PerfData::U_Ticks,
-        (jlong) cms_size_policy()->avg_msc_gc_cost()->average(),
+        PerfData::U_Ticks, 
+        (jlong) cms_size_policy()->avg_msc_gc_cost()->average(), 
         CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgMsPause");
@@ -203,13 +206,13 @@ CMSGCAdaptivePolicyCounters::CMSGCAdaptivePolicyCounters(const char* name_arg,
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         (jlong) cms_size_policy()->initial_pause_old_slope(), CHECK);
 
-    cname =
+    cname = 
       PerfDataManager::counter_name(name_space(), "remarkPauseYoungSlope") ;
     _remark_pause_young_slope_counter =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         (jlong) cms_size_policy()->remark_pause_young_slope(), CHECK);
 
-    cname =
+    cname = 
       PerfDataManager::counter_name(name_space(), "initialPauseYoungSlope");
     _initial_pause_young_slope_counter =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
@@ -217,7 +220,7 @@ CMSGCAdaptivePolicyCounters::CMSGCAdaptivePolicyCounters(const char* name_arg,
 
 
   }
-  assert(size_policy()->is_gc_cms_adaptive_size_policy(),
+  assert(size_policy()->is_gc_cms_adaptive_size_policy(), 
     "Wrong type of size policy");
 }
 

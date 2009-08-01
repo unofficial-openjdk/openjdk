@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)oopFactory.cpp	1.83 07/05/05 17:05:53 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -94,7 +97,7 @@ constantPoolCacheOop oopFactory::new_constantPoolCache(int length, TRAPS) {
 }
 
 
-klassOop oopFactory::new_instanceKlass(int vtable_len, int itable_len, int static_field_size,
+klassOop oopFactory::new_instanceKlass(int vtable_len, int itable_len, int static_field_size, 
                                        int nonstatic_oop_map_size, ReferenceType rt, TRAPS) {
   instanceKlassKlass* ikk = instanceKlassKlass::cast(Universe::instanceKlassKlassObj());
   return ikk->allocate_instance_klass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_size, rt, CHECK_NULL);
@@ -143,3 +146,4 @@ compiledICHolderOop oopFactory::new_compiledICHolder(methodHandle method, KlassH
   c->set_holder_klass(klass());
   return c;
 }
+

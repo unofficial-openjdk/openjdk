@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)memoryManager.hpp	1.15 07/05/05 17:07:05 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A memory manager is responsible for managing one or more memory pools.
@@ -54,7 +57,7 @@ public:
     ParNew,
     ConcurrentMarkSweep,
     PSScavenge,
-    PSMarkSweep
+    PSMarkSweep   
   };
 
   MemoryManager();
@@ -173,7 +176,7 @@ public:
 
 // These subclasses of GCMemoryManager are defined to include
 // GC-specific information.
-// TODO: Add GC-specific information
+// TODO: Add GC-specific information 
 class CopyMemoryManager : public GCMemoryManager {
 private:
 public:

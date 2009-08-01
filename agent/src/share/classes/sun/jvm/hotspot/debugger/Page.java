@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger;
@@ -70,7 +70,7 @@ public class Page {
   public Page getPrev() {
     return prev;
   }
-
+  
   public void setPrev(Page prev) {
     this.prev = prev;
   }
@@ -190,7 +190,7 @@ public class Page {
         ((data[start]     & 0xFFL));
     }
   }
-
+  
   public float getFloat(long address, boolean bigEndian) {
     return Float.intBitsToFloat(getInt(address, bigEndian));
   }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)gcLocker.inline.hpp	1.21 07/05/05 17:05:49 JVM"
+#endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline bool GC_locker::is_active() {
@@ -39,7 +42,7 @@ inline void GC_locker::lock() {
   CHECK_UNHANDLED_OOPS_ONLY(
     if (CheckUnhandledOops) { Thread::current()->_gc_locked_out_count++; })
   assert(Universe::heap() == NULL ||
-         !Universe::heap()->is_gc_active(), "locking failed");
+	 !Universe::heap()->is_gc_active(), "locking failed");
 }
 
 inline void GC_locker::unlock() {
@@ -70,3 +73,4 @@ inline void GC_locker::unlock_critical(JavaThread* thread) {
     }
   }
 }
+

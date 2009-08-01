@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)lowMemoryDetector.cpp	1.28 07/05/05 17:07:04 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -96,7 +99,7 @@ void LowMemoryDetector::low_memory_detector_thread_entry(JavaThread* jt, TRAPS) 
     bool   sensors_changed = false;
 
     {
-      // _no_safepoint_check_flag is used here as LowMemory_lock is a
+      // _no_safepoint_check_flag is used here as LowMemory_lock is a 
       // special lock and the VMThread may acquire this lock at safepoint.
       // Need state transition ThreadBlockInVM so that this thread
       // will be handled by safepoint correctly when this thread is
@@ -146,12 +149,12 @@ void LowMemoryDetector::detect_low_memory() {
   for (int i = 0; i < num_memory_pools; i++) {
     MemoryPool* pool = MemoryService::get_memory_pool(i);
     SensorInfo* sensor = pool->usage_sensor();
-    if (sensor != NULL &&
+    if (sensor != NULL && 
         pool->usage_threshold()->is_high_threshold_supported() &&
         pool->usage_threshold()->high_threshold() != 0) {
       MemoryUsage usage = pool->get_memory_usage();
       sensor->set_gauge_sensor_level(usage,
-                                     pool->usage_threshold());
+                                     pool->usage_threshold()); 
       has_pending_requests = has_pending_requests || sensor->has_pending_requests();
     }
   }
@@ -165,18 +168,18 @@ void LowMemoryDetector::detect_low_memory() {
 // and also VMThread.
 void LowMemoryDetector::detect_low_memory(MemoryPool* pool) {
   SensorInfo* sensor = pool->usage_sensor();
-  if (sensor == NULL ||
+  if (sensor == NULL || 
       !pool->usage_threshold()->is_high_threshold_supported() ||
       pool->usage_threshold()->high_threshold() == 0) {
     return;
   }
-
+  
   {
     MutexLockerEx ml(LowMemory_lock, Mutex::_no_safepoint_check_flag);
-
+  
     MemoryUsage usage = pool->get_memory_usage();
     sensor->set_gauge_sensor_level(usage,
-                                   pool->usage_threshold());
+                                   pool->usage_threshold()); 
     if (sensor->has_pending_requests()) {
       // notify sensor state update
       LowMemory_lock->notify_all();
@@ -187,15 +190,15 @@ void LowMemoryDetector::detect_low_memory(MemoryPool* pool) {
 // Only called by VMThread at GC time
 void LowMemoryDetector::detect_after_gc_memory(MemoryPool* pool) {
   SensorInfo* sensor = pool->gc_usage_sensor();
-  if (sensor == NULL ||
-      !pool->gc_usage_threshold()->is_high_threshold_supported() ||
+  if (sensor == NULL || 
+      !pool->gc_usage_threshold()->is_high_threshold_supported() || 
       pool->gc_usage_threshold()->high_threshold() == 0) {
     return;
   }
-
+  
   {
     MutexLockerEx ml(LowMemory_lock, Mutex::_no_safepoint_check_flag);
-
+  
     MemoryUsage usage = pool->get_last_collection_usage();
     sensor->set_counter_sensor_level(usage, pool->gc_usage_threshold());
 
@@ -203,7 +206,7 @@ void LowMemoryDetector::detect_after_gc_memory(MemoryPool* pool) {
       // notify sensor state update
       LowMemory_lock->notify_all();
     }
-  }
+  } 
 }
 
 // recompute enabled flag
@@ -232,8 +235,8 @@ SensorInfo::SensorInfo() {
 // as a gauge attribute.  Sensor notifications (trigger or
 // clear) is only emitted at the first time it crosses
 // a threshold.
-//
-// High and low thresholds are designed to provide a
+// 
+// High and low thresholds are designed to provide a 
 // hysteresis mechanism to avoid repeated triggering
 // of notifications when the attribute value makes small oscillations
 // around the high or low threshold value.
@@ -270,7 +273,7 @@ void SensorInfo::set_gauge_sensor_level(MemoryUsage usage, ThresholdSupport* hig
   bool is_below_low = high_low_threshold->is_low_threshold_crossed(usage);
 
   assert(!(is_over_high && is_below_low), "Can't be both true");
-
+  
   if (is_over_high &&
         ((!_sensor_on && _pending_trigger_count == 0) ||
          _pending_clear_count > 0)) {
@@ -285,12 +288,12 @@ void SensorInfo::set_gauge_sensor_level(MemoryUsage usage, ThresholdSupport* hig
       // pending requests to clear this sensor.
       // This trigger request needs to clear this clear count
       // since the resulting sensor flag should be on.
-      _pending_clear_count = 0;
+      _pending_clear_count = 0;  
     }
-  } else if (is_below_low &&
+  } else if (is_below_low && 
                ((_sensor_on && _pending_clear_count == 0) ||
                 (_pending_trigger_count > 0 && _pending_clear_count == 0))) {
-    // memory usage returns below the threshold
+    // memory usage returns below the threshold 
     // Request to clear the sensor if the sensor is on or will be on due to
     // _pending_trigger_count > 0 and also no clear request
     _pending_clear_count++;
@@ -298,11 +301,11 @@ void SensorInfo::set_gauge_sensor_level(MemoryUsage usage, ThresholdSupport* hig
 }
 
 // When this method is used, the memory usage is monitored as a
-// simple counter attribute.  The sensor will be triggered
+// simple counter attribute.  The sensor will be triggered 
 // whenever the usage is crossing the threshold to keep track
 // of the number of times the VM detects such a condition occurs.
 //
-// High and low thresholds are designed to provide a
+// High and low thresholds are designed to provide a 
 // hysteresis mechanism to avoid repeated triggering
 // of notifications when the attribute value makes small oscillations
 // around the high or low threshold value.
@@ -328,9 +331,9 @@ void SensorInfo::set_counter_sensor_level(MemoryUsage usage, ThresholdSupport* c
   if (is_over_high) {
     _pending_trigger_count++;
     _usage = usage;
-    _pending_clear_count = 0;
+    _pending_clear_count = 0;  
   } else if (is_below_low && (_sensor_on || _pending_trigger_count > 0)) {
-    _pending_clear_count++;
+    _pending_clear_count++;  
   }
 }
 
@@ -372,7 +375,7 @@ void SensorInfo::trigger(int count, TRAPS) {
                             vmSymbolHandles::trigger_method_signature(),
                             &args,
                             CHECK);
-  }
+  } 
 
   {
     // Holds LowMemory_lock and update the sensor state
@@ -381,14 +384,14 @@ void SensorInfo::trigger(int count, TRAPS) {
     _sensor_count += count;
     _pending_trigger_count = _pending_trigger_count - count;
   }
-}
+} 
 
 void SensorInfo::clear(int count, TRAPS) {
   if (_sensor_obj != NULL) {
     klassOop k = Management::sun_management_Sensor_klass(CHECK);
     instanceKlassHandle sensorKlass (THREAD, k);
     Handle sensor(THREAD, _sensor_obj);
-
+  
     JavaValue result(T_VOID);
     JavaCallArguments args(sensor);
     args.push_int((int) count);
@@ -417,6 +420,6 @@ void SensorInfo::print() {
   tty->print_cr("%s count = %ld pending_triggers = %ld pending_clears = %ld",
                 (_sensor_on ? "on" : "off"),
                 _sensor_count, _pending_trigger_count, _pending_clear_count);
-}
+} 
 
 #endif // PRODUCT

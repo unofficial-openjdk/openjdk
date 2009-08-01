@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)location.hpp	1.47 07/05/05 17:05:21 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A Location describes a concrete machine variable location
@@ -33,7 +36,7 @@
 //  Where:  [4]
 //  Offset: [31..5]
 
-class Location VALUE_OBJ_CLASS_SPEC {
+class Location VALUE_OBJ_CLASS_SPEC { 
   friend class VMStructs;
  public:
   enum Where {
@@ -100,9 +103,9 @@ class Location VALUE_OBJ_CLASS_SPEC {
 
   int stack_offset() const    { assert(where() == on_stack,    "wrong Where"); return offset()<<LogBytesPerInt; }
   int register_number() const { assert(where() == in_register, "wrong Where"); return offset()   ; }
-
+  
   VMReg reg() const { assert(where() == in_register, "wrong Where"); return VMRegImpl::as_VMReg(offset())   ; }
-
+  
   // Printing
   void print_on(outputStream* st) const;
 

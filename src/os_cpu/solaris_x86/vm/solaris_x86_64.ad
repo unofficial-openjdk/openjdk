@@ -19,7 +19,7 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//
+//  
 //
 
 // AMD64 Solaris Architecture Description File
@@ -72,7 +72,7 @@ encode %{
 
   enc_class solaris_breakpoint
   %{
-    MacroAssembler* masm = new MacroAssembler(&cbuf);
+    MacroAssembler* masm = new MacroAssembler(&cbuf);    
     masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
   %}
 
@@ -80,7 +80,7 @@ encode %{
   %{
     if (VerifyStackAtCalls) {
       // Check that stack depth is unchanged: find majik cookie on stack
-      int framesize =
+      int framesize = 
         ra_->reg2offset_unchecked(OptoReg::add(ra_->_matcher._old_SP, -3*VMRegImpl::slots_per_word));
       if (framesize) {
         if (framesize < 0x80) {

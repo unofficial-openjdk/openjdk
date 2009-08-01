@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.sparc;
@@ -102,7 +102,7 @@ public class SPARCRegisterMap extends RegisterMap {
     SPARCRegisterMap retval = new SPARCRegisterMap(this);
     return retval;
   }
-
+ 
   protected void clearPD() {
     if (thread.hasLastJavaFrame()) {
       Frame fr = thread.getLastFrame();
@@ -164,7 +164,7 @@ public class SPARCRegisterMap extends RegisterMap {
     // Only the window'd GPRs get handled this way; not the globals.
     return null;
   }
-
+  
   protected void initializePD() {
     window        = null;
     youngerWindow = null;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)forte.cpp	1.70 07/08/31 18:43:32 JVM"
+#endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -171,7 +174,7 @@ static bool is_decipherable_interpreted_frame(JavaThread* thread,
                                                 int* bci_p) {
   assert(fr->is_interpreted_frame(), "just checking");
 
-  // top frame is an interpreted frame
+  // top frame is an interpreted frame 
   // check if it is walkable (i.e. valid methodOop and valid bci)
 
   // Because we may be racing a gc thread the method and/or bci
@@ -458,7 +461,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 // Async-safe version of GetCallTrace being called from a signal handler
 // when a LWP gets interrupted by SIGPROF but the stack traces are filled
 // with different content (see below).
-//
+// 
 // This function must only be called when JVM/TI
 // CLASS_LOAD events have been enabled since agent startup. The enabled
 // event will cause the jmethodIDs to be allocated at class load time.
@@ -467,16 +470,16 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 //
 // void (*AsyncGetCallTrace)(ASGCT_CallTrace *trace, jint depth, void* ucontext)
 //
-// Called by the profiler to obtain the current method call stack trace for
-// a given thread. The thread is identified by the env_id field in the
-// ASGCT_CallTrace structure. The profiler agent should allocate a ASGCT_CallTrace
-// structure with enough memory for the requested stack depth. The VM fills in
-// the frames buffer and the num_frames field.
+// Called by the profiler to obtain the current method call stack trace for 
+// a given thread. The thread is identified by the env_id field in the 
+// ASGCT_CallTrace structure. The profiler agent should allocate a ASGCT_CallTrace 
+// structure with enough memory for the requested stack depth. The VM fills in 
+// the frames buffer and the num_frames field. 
 //
-// Arguments:
+// Arguments: 
 //
-//   trace    - trace data structure to be filled by the VM.
-//   depth    - depth of the call stack trace.
+//   trace    - trace data structure to be filled by the VM. 
+//   depth    - depth of the call stack trace. 
 //   ucontext - ucontext_t of the LWP
 //
 // ASGCT_CallTrace:
@@ -487,18 +490,18 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 //   } ASGCT_CallTrace;
 //
 // Fields:
-//   env_id     - ID of thread which executed this trace.
-//   num_frames - number of frames in the trace.
+//   env_id     - ID of thread which executed this trace. 
+//   num_frames - number of frames in the trace. 
 //                (< 0 indicates the frame is not walkable).
 //   frames     - the ASGCT_CallFrames that make up this trace. Callee followed by callers.
 //
 //  ASGCT_CallFrame:
 //    typedef struct {
-//        jint lineno;
-//        jmethodID method_id;
+//        jint lineno;                     
+//        jmethodID method_id;              
 //    } ASGCT_CallFrame;
 //
-//  Fields:
+//  Fields: 
 //    1) For Java frame (interpreted and compiled),
 //       lineno    - bci of the method being executed or -1 if bci is not available
 //       method_id - jmethodID of the method being executed
@@ -544,7 +547,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
     return;
   }
 
-  assert(JavaThread::current() == thread,
+  assert(JavaThread::current() == thread, 
          "AsyncGetCallTrace must be called by the current interrupted thread");
 
   if (!JvmtiExport::should_post_class_load()) {
@@ -573,7 +576,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
   case _thread_in_vm_trans:
     {
       frame fr;
-
+      
       // param isInJava == false - indicate we aren't in Java code
       if (!thread->pd_get_top_frame_for_signal_handler(&fr, ucontext, false)) {
         trace->num_frames = ticks_unknown_not_Java;  // -3 unknown frame
@@ -595,8 +598,8 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
       }
     }
     break;
-  case _thread_in_Java:
-  case _thread_in_Java_trans:
+  case _thread_in_Java: 
+  case _thread_in_Java_trans: 
     {
       frame fr;
 

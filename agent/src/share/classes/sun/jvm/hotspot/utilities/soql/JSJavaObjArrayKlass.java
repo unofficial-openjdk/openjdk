@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -45,7 +45,7 @@ public class JSJavaObjArrayKlass extends JSJavaArrayKlass {
       int dimension = (int) getObjArrayKlass().getDimension();
       StringBuffer buf = new StringBuffer();
       if (botKls instanceof TypeArrayKlass) {
-          dimension--;
+	  dimension--;
       }
       buf.append(factory.newJSJavaKlass(botKls).getName());
       for (int i = 0; i < dimension; i++) {

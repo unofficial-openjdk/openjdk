@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -61,7 +61,7 @@ public class X86Disassembler extends Disassembler
       new LogicalDecoder("orb", ADDR_REG, AL, ADDR_I, b_mode, RTLOP_OR),
       new LogicalDecoder("orS", ADDR_REG, EAX, ADDR_I, v_mode, RTLOP_OR),
       new InstructionDecoder("pushl", ADDR_REG, CS),
-      null,     /* 0x0f extended opcode escape */
+      null,	/* 0x0f extended opcode escape */
       /* 10 */
       new ArithmeticDecoder("adcb", ADDR_E, b_mode, ADDR_G, b_mode, RTLOP_ADDC),
       new ArithmeticDecoder("adcS", ADDR_E, v_mode, ADDR_G, v_mode, RTLOP_ADDC),
@@ -87,7 +87,7 @@ public class X86Disassembler extends Disassembler
       new LogicalDecoder("andS", ADDR_G, v_mode, ADDR_E, v_mode, RTLOP_AND),
       new LogicalDecoder("andb", ADDR_REG, AL, ADDR_I, b_mode, RTLOP_AND),
       new LogicalDecoder("andS", ADDR_REG, EAX, ADDR_I, v_mode, RTLOP_AND),
-      null,                     /* SEG es prefix */
+      null,			/* SEG es prefix */
       new InstructionDecoder("daa"),
       /* 28 */
       new ArithmeticDecoder("subb", ADDR_E, b_mode, ADDR_G, b_mode, RTLOP_SUB),
@@ -96,7 +96,7 @@ public class X86Disassembler extends Disassembler
       new ArithmeticDecoder("subS", ADDR_G, v_mode, ADDR_E, v_mode, RTLOP_SUB),
       new ArithmeticDecoder("subb", ADDR_REG, AL, ADDR_I, b_mode, RTLOP_SUB),
       new ArithmeticDecoder("subS", ADDR_REG, EAX, ADDR_I, v_mode, RTLOP_SUB),
-      null,                     /* SEG CS prefix */
+      null,			/* SEG CS prefix */
       new InstructionDecoder("das"),
       /* 30 */
       new LogicalDecoder("xorb", ADDR_E, b_mode, ADDR_G, b_mode, RTLOP_XOR),
@@ -105,7 +105,7 @@ public class X86Disassembler extends Disassembler
       new LogicalDecoder("xorS", ADDR_G, v_mode, ADDR_E, v_mode, RTLOP_XOR),
       new LogicalDecoder("xorb", ADDR_REG, AL, ADDR_I, b_mode, RTLOP_XOR),
       new LogicalDecoder("xorS", ADDR_REG, EAX, ADDR_I, v_mode, RTLOP_XOR),
-      null,     /* SEG SS prefix */
+      null,	/* SEG SS prefix */
       new InstructionDecoder("aaa"),
       /* 38 */
       new InstructionDecoder("cmpb", ADDR_E, b_mode, ADDR_G, b_mode),
@@ -157,12 +157,12 @@ public class X86Disassembler extends Disassembler
       new InstructionDecoder("popa"),
       new InstructionDecoder("boundS", ADDR_G, v_mode, ADDR_E, v_mode),
       new InstructionDecoder("arpl", ADDR_E, w_mode, ADDR_G, w_mode),
-      null,     /* seg fs */
-      null,     /* seg gs */
-      null,     /* op size prefix */
+      null,	/* seg fs */
+      null,	/* seg gs */
+      null,	/* op size prefix */
       null, /* adr size prefix */
       /* 68 */
-      new InstructionDecoder("pushS", ADDR_I, v_mode),  /* 386 book wrong */
+      new InstructionDecoder("pushS", ADDR_I, v_mode),	/* 386 book wrong */
       new ArithmeticDecoder("imulS", ADDR_G, v_mode, ADDR_E, v_mode, ADDR_I, v_mode, RTLOP_SMUL),
       new InstructionDecoder("pushl", ADDR_I, b_mode), /* push of byte really pushes 4 bytes */
       new ArithmeticDecoder("imulS", ADDR_G, v_mode, ADDR_E, v_mode, ADDR_I, b_mode, RTLOP_SMUL),
@@ -315,10 +315,10 @@ public class X86Disassembler extends Disassembler
       new InstructionDecoder("outb", INDIR_REG, DX, ADDR_REG,AL),
       new InstructionDecoder("outS", INDIR_REG, DX, ADDR_REG, EAX),
       /* f0 */
-      new InstructionDecoder("lock"),   /* lock prefix */
+      new InstructionDecoder("lock"),	/* lock prefix */
       null,
-      new InstructionDecoder("repne"),  /* repne */
-      new InstructionDecoder("rep"),    /* repz */
+      new InstructionDecoder("repne"),	/* repne */
+      new InstructionDecoder("rep"),	/* repz */
       new InstructionDecoder("hlt"),
       new InstructionDecoder("cmc"),
       new GRPDecoder(null, 9),
@@ -364,7 +364,7 @@ public class X86Disassembler extends Disassembler
       new SSEMoveDecoder("movhps", ADDR_V, q_mode, ADDR_W, q_mode),
       new SSEMoveDecoder("movhps", ADDR_W, q_mode, ADDR_V, q_mode),
       /* 18 */
-      new GRPDecoder(null, 21),
+      new GRPDecoder(null, 21),    
       null,
       null,
       null,
@@ -409,7 +409,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      /* 40 */
+      /* 40 */  
       new MoveDecoder("cmovo", ADDR_G, v_mode, ADDR_E, v_mode),
       new MoveDecoder("cmovno", ADDR_G, v_mode, ADDR_E, v_mode),
       new MoveDecoder("cmovb", ADDR_G, v_mode, ADDR_E, v_mode),
@@ -435,37 +435,37 @@ public class X86Disassembler extends Disassembler
       new SSELogicalDecoder("andps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_AND),
       new SSELogicalDecoder("andnps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_AND),
       new SSELogicalDecoder("orps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_OR),
-      new SSELogicalDecoder("xorps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_XOR),
+      new SSELogicalDecoder("xorps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_XOR),      
       /* 58 */
-      new SSEArithmeticDecoder("addps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_ADD),
-      new SSEArithmeticDecoder("mulps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_SMUL),
-      new SSEInstructionDecoder("cvtps2pd", ADDR_V, pd_mode, ADDR_W, ps_mode),
-      new SSEInstructionDecoder("cvtdq2ps", ADDR_V, ps_mode, ADDR_W, dq_mode),
-      new SSEArithmeticDecoder("subps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_SUB),
-      new SSEInstructionDecoder("minps", ADDR_V, ps_mode, ADDR_W, ps_mode),
+      new SSEArithmeticDecoder("addps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_ADD),      
+      new SSEArithmeticDecoder("mulps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_SMUL),      
+      new SSEInstructionDecoder("cvtps2pd", ADDR_V, pd_mode, ADDR_W, ps_mode),      
+      new SSEInstructionDecoder("cvtdq2ps", ADDR_V, ps_mode, ADDR_W, dq_mode),      
+      new SSEArithmeticDecoder("subps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_SUB),      
+      new SSEInstructionDecoder("minps", ADDR_V, ps_mode, ADDR_W, ps_mode),      
       new SSEArithmeticDecoder("divps", ADDR_V, ps_mode, ADDR_W, ps_mode, RTLOP_SDIV),
-      new SSEInstructionDecoder("maxps", ADDR_V, ps_mode, ADDR_W, ps_mode),
+      new SSEInstructionDecoder("maxps", ADDR_V, ps_mode, ADDR_W, ps_mode),      
       /* 60 */
-      new SSEInstructionDecoder("punpcklbw", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("punpcklwd", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("punpckldq", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("packsswb", ADDR_P, q_mode, ADDR_Q, q_mode),
-      new SSEInstructionDecoder("pcmpgtb", ADDR_P, q_mode, ADDR_Q, q_mode),
-      new SSEInstructionDecoder("pcmpgtw", ADDR_P, q_mode, ADDR_Q, q_mode),
-      new SSEInstructionDecoder("pcmpgtd", ADDR_P, q_mode, ADDR_Q, q_mode),
-      new SSEInstructionDecoder("packuswb", ADDR_P, q_mode, ADDR_Q, q_mode),
+      new SSEInstructionDecoder("punpcklbw", ADDR_P, q_mode, ADDR_Q, d_mode),      
+      new SSEInstructionDecoder("punpcklwd", ADDR_P, q_mode, ADDR_Q, d_mode),      
+      new SSEInstructionDecoder("punpckldq", ADDR_P, q_mode, ADDR_Q, d_mode),      
+      new SSEInstructionDecoder("packsswb", ADDR_P, q_mode, ADDR_Q, q_mode),      
+      new SSEInstructionDecoder("pcmpgtb", ADDR_P, q_mode, ADDR_Q, q_mode),      
+      new SSEInstructionDecoder("pcmpgtw", ADDR_P, q_mode, ADDR_Q, q_mode),      
+      new SSEInstructionDecoder("pcmpgtd", ADDR_P, q_mode, ADDR_Q, q_mode),      
+      new SSEInstructionDecoder("packuswb", ADDR_P, q_mode, ADDR_Q, q_mode),      
       /* 68 */
       new SSEInstructionDecoder("punpckhbw", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("punpckhwd", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("punpckhdq", ADDR_P, q_mode, ADDR_Q, d_mode),
-      new SSEInstructionDecoder("packssdw", ADDR_P, q_mode, ADDR_Q, d_mode),
+      new SSEInstructionDecoder("punpckhwd", ADDR_P, q_mode, ADDR_Q, d_mode),      
+      new SSEInstructionDecoder("punpckhdq", ADDR_P, q_mode, ADDR_Q, d_mode),      
+      new SSEInstructionDecoder("packssdw", ADDR_P, q_mode, ADDR_Q, d_mode),      
       null,
       null,
       new SSEMoveDecoder("movd", ADDR_P, d_mode, ADDR_E, d_mode),
       new SSEMoveDecoder("movq", ADDR_P, q_mode, ADDR_E, q_mode),
       /* 70 */
       new SSEInstructionDecoder("pshufw", ADDR_P, q_mode, ADDR_Q, q_mode, ADDR_I, b_mode),
-      new GRPDecoder(null, 17),
+      new GRPDecoder(null, 17),     
       new GRPDecoder(null, 18),
       new GRPDecoder(null, 19),
       new SSEInstructionDecoder("pcmpeqb", ADDR_P, q_mode, ADDR_Q, q_mode),
@@ -546,7 +546,7 @@ public class X86Disassembler extends Disassembler
       new MoveDecoder("movzwS", ADDR_G, v_mode, ADDR_E, w_mode),
       /* b8 */
       null,
-      null,
+      null,  
       new GRPDecoder(null, 15),
       new InstructionDecoder("btcS", ADDR_E, v_mode, ADDR_G, v_mode),
       new InstructionDecoder("bsfS", ADDR_G, v_mode, ADDR_E, v_mode),
@@ -615,7 +615,7 @@ public class X86Disassembler extends Disassembler
       new SSEArithmeticDecoder("pmuludq", ADDR_P, q_mode, ADDR_Q, q_mode, RTLOP_UMUL),
       new SSEArithmeticDecoder("pmaddwd", ADDR_P, q_mode, ADDR_Q, q_mode, RTLOP_ADD),
       new SSEArithmeticDecoder("psadbw", ADDR_P, q_mode, ADDR_Q, q_mode, RTLOP_ADD),
-      new SSEMoveDecoder("maskmoveq", ADDR_P, pi_mode, ADDR_Q, pi_mode),
+      new SSEMoveDecoder("maskmoveq", ADDR_P, pi_mode, ADDR_Q, pi_mode),      
       /* f8 */
       new SSEArithmeticDecoder("psubb", ADDR_P, q_mode, ADDR_Q, q_mode, RTLOP_SUB),
       new SSEArithmeticDecoder("psubw", ADDR_P, q_mode, ADDR_Q, q_mode, RTLOP_SUB),
@@ -663,7 +663,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* 20 */
       null,
       null,
@@ -807,7 +807,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* a0 */
       null,
       null,
@@ -917,7 +917,7 @@ public class X86Disassembler extends Disassembler
       null,
       null
    };
-
+   
    private static final InstructionDecoder twoBytePrefixF3Table[] = {
       /* 00 */
       null,
@@ -954,7 +954,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* 20 */
       null,
       null,
@@ -1098,7 +1098,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* a0 */
       null,
       null,
@@ -1245,7 +1245,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* 20 */
       null,
       null,
@@ -1319,26 +1319,26 @@ public class X86Disassembler extends Disassembler
       new SSEArithmeticDecoder("divpd", ADDR_V, pd_mode, ADDR_W, pd_mode, RTLOP_SDIV),
       new SSEInstructionDecoder("maxpd", ADDR_V, pd_mode, ADDR_W, pd_mode),
       /* 60 */
-      new SSEInstructionDecoder("punpcklbw", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("punpcklwd", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("punpckldq", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("packsswb", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("pcmpgtb", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("pcmpgtw", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("pcmpgtd", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("packuswb", ADDR_V, dq_mode, ADDR_W, dq_mode),
+      new SSEInstructionDecoder("punpcklbw", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("punpcklwd", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("punpckldq", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("packsswb", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("pcmpgtb", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("pcmpgtw", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("pcmpgtd", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("packuswb", ADDR_V, dq_mode, ADDR_W, dq_mode),      
       /* 68 */
       new SSEInstructionDecoder("punpckhbw", ADDR_P, dq_mode, ADDR_Q, dq_mode),
-      new SSEInstructionDecoder("punpckhwd", ADDR_P, dq_mode, ADDR_Q, dq_mode),
-      new SSEInstructionDecoder("punpckhdq", ADDR_P, dq_mode, ADDR_Q, dq_mode),
-      new SSEInstructionDecoder("packssdw", ADDR_P, dq_mode, ADDR_Q, dq_mode),
-      new SSEInstructionDecoder("punpcklqdq", ADDR_V, dq_mode, ADDR_W, dq_mode),
-      new SSEInstructionDecoder("punpckhqdq", ADDR_V, dq_mode, ADDR_W, dq_mode),
+      new SSEInstructionDecoder("punpckhwd", ADDR_P, dq_mode, ADDR_Q, dq_mode),      
+      new SSEInstructionDecoder("punpckhdq", ADDR_P, dq_mode, ADDR_Q, dq_mode),      
+      new SSEInstructionDecoder("packssdw", ADDR_P, dq_mode, ADDR_Q, dq_mode),      
+      new SSEInstructionDecoder("punpcklqdq", ADDR_V, dq_mode, ADDR_W, dq_mode),      
+      new SSEInstructionDecoder("punpckhqdq", ADDR_V, dq_mode, ADDR_W, dq_mode),      
       new SSEMoveDecoder("movd", ADDR_V, dq_mode, ADDR_E, d_mode),
       new SSEMoveDecoder("movdqa", ADDR_V, dq_mode, ADDR_W, dq_mode),
       /* 70 */
       new SSEInstructionDecoder("pshufd", ADDR_V, dq_mode, ADDR_W, dq_mode, ADDR_I, b_mode),
-      new GRPDecoder(null, 22),
+      new GRPDecoder(null, 22),     
       new GRPDecoder(null, 23),
       new GRPDecoder(null, 24),
       new SSEInstructionDecoder("pcmpeqb", ADDR_V, dq_mode, ADDR_W, dq_mode),
@@ -1389,7 +1389,7 @@ public class X86Disassembler extends Disassembler
       null,
       null,
       null,
-      null,
+      null, 
       /* a0 */
       null,
       null,
@@ -1488,7 +1488,7 @@ public class X86Disassembler extends Disassembler
       new SSEArithmeticDecoder("pmuludq", ADDR_V, dq_mode, ADDR_W, dq_mode, RTLOP_UMUL),
       new SSEArithmeticDecoder("pmaddwd", ADDR_V, dq_mode, ADDR_W, dq_mode, RTLOP_ADD),
       new SSEArithmeticDecoder("psadbw", ADDR_V, dq_mode, ADDR_W, dq_mode, RTLOP_ADD),
-      new SSEMoveDecoder("maskmovdqu", ADDR_V, dq_mode, ADDR_W, dq_mode),
+      new SSEMoveDecoder("maskmovdqu", ADDR_V, dq_mode, ADDR_W, dq_mode),      
       /* f8 */
       new SSEArithmeticDecoder("psubb", ADDR_V, dq_mode, ADDR_W, dq_mode, RTLOP_SUB),
       new SSEArithmeticDecoder("psubw", ADDR_V, dq_mode, ADDR_W, dq_mode, RTLOP_SUB),
@@ -1530,25 +1530,25 @@ public class X86Disassembler extends Disassembler
             if (opcode == 0x0f) {
                opcode = InstructionDecoder.readByte(code, byteIndex);
                byteIndex++;
-
+               
                //SSE: SSE instructions have reserved use of 0xF2, 0xF3, 0x66 prefixes
-               if ((prefixes & PREFIX_REPNZ) != 0) {
+               if ((prefixes & PREFIX_REPNZ) != 0) {  
                   instrDecoder = twoBytePrefixF2Table[opcode];
-               } else if ((prefixes & PREFIX_REPZ) != 0) {
+               } else if ((prefixes & PREFIX_REPZ) != 0) {   
                   instrDecoder = twoBytePrefixF3Table[opcode];
-               } else if ((prefixes & PREFIX_DATA) != 0) {
+               } else if ((prefixes & PREFIX_DATA) != 0) {   
                   instrDecoder = twoBytePrefix66Table[opcode];
                } else {
                   instrDecoder = twoByteTable[opcode];
-               }
-
+               }               
+                              
             } else {
                instrDecoder = oneByteTable[opcode];
             }
             if (instrDecoder != null) {
                instr = instrDecoder.decode(code, byteIndex, instrStartIndex, segmentOverride, prefixes, factory);
                visitor.visit(startPc + len, instr);
-               len = instrDecoder.getCurrentIndex();
+	       len = instrDecoder.getCurrentIndex();
             }
             else {
                len += 1;
@@ -1567,7 +1567,7 @@ public class X86Disassembler extends Disassembler
       while (isPrefix) {
          prefixByte = InstructionDecoder.readByte(code, byteIndex);
 
-         switch (prefixByte) {
+	 switch (prefixByte) {
             case 0xf3:
                prefixes |= PREFIX_REPZ;
                break;

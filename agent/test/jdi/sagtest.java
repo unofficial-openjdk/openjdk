@@ -19,12 +19,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /**
- *  @test *  @bug 0000000
- *  @summary This is just an exercise of various JDI elements for use in
+ *  @test @(#)sagtest.java	1.10 07/05/05
+ *  @bug 0000000
+ *  @summary This is just an exercise of various JDI elements for use in 
  *           testing the SA/JDI client
  *
  *  @author jjh
@@ -53,18 +54,18 @@ public class sagtest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new sagtest(args).startTests();
     }
 
     /********** event handlers **********/
 
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("sagtarg");
@@ -77,7 +78,7 @@ public class sagtest extends TestScaffold {
         stepOverLine(mainThread);  //stop on 21
         stepOverLine(mainThread);  //stop on 22
 
-        sagdoit mine = new sagdoit(vm());
+        sagdoit mine = new sagdoit(vm());        
         mine.doAll();
 
         if (!testFailed) {

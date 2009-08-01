@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)resolutionErrors.hpp	1.6 07/05/05 17:05:54 JVM"
+#endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ResolutionErrorEntry;
@@ -45,14 +48,14 @@ public:
   void add_entry(int index, ResolutionErrorEntry* new_entry) {
     Hashtable::add_entry(index, (HashtableEntry*)new_entry);
   }
-
+  
   void add_entry(int index, unsigned int hash,
-                 constantPoolHandle pool, int which, symbolHandle error);
-
+		 constantPoolHandle pool, int which, symbolHandle error);
+		 
 
   // find error given the constant pool and constant pool index
-  ResolutionErrorEntry* find_entry(int index, unsigned int hash,
-                                   constantPoolHandle pool, int cp_index);
+  ResolutionErrorEntry* find_entry(int index, unsigned int hash, 
+				   constantPoolHandle pool, int cp_index);
 
 
   unsigned int compute_hash(constantPoolHandle pool, int cp_index) {
@@ -60,9 +63,9 @@ public:
   }
 
   // purges unloaded entries from the table
-  void purge_resolution_errors(BoolObjectClosure* is_alive);
-
-  // this table keeps symbolOops alive
+  void purge_resolution_errors(BoolObjectClosure* is_alive);	
+ 
+  // this table keeps symbolOops alive 
   void always_strong_classes_do(OopClosure* blk);
 
   // GC support.
@@ -72,19 +75,19 @@ public:
 
 class ResolutionErrorEntry : public HashtableEntry {
  private:
-  int               _cp_index;
-  symbolOop         _error;
+  int		    _cp_index;
+  symbolOop	    _error;
 
  public:
-  constantPoolOop    pool() const               { return (constantPoolOop)literal(); }
-  constantPoolOop*   pool_addr()                { return (constantPoolOop*)literal_addr(); }
+  constantPoolOop    pool() const 		{ return (constantPoolOop)literal(); }
+  constantPoolOop*   pool_addr()  		{ return (constantPoolOop*)literal_addr(); }
 
-  int                cp_index() const           { return _cp_index; }
-  void               set_cp_index(int cp_index) { _cp_index = cp_index; }
+  int		     cp_index() const		{ return _cp_index; }
+  void		     set_cp_index(int cp_index) { _cp_index = cp_index; }
 
-  symbolOop          error() const              { return _error; }
-  void               set_error(symbolOop e)     { _error = e; }
-  symbolOop*         error_addr()               { return &_error; }
+  symbolOop          error() const 		{ return _error; }
+  void		     set_error(symbolOop e)	{ _error = e; }
+  symbolOop*         error_addr()		{ return &_error; }
 
   ResolutionErrorEntry* next() const {
     return (ResolutionErrorEntry*)HashtableEntry::next();
@@ -97,3 +100,4 @@ class ResolutionErrorEntry : public HashtableEntry {
   // GC support
   void oops_do(OopClosure* blk);
 };
+

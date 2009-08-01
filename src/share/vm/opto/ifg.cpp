@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ifg.cpp	1.62 07/05/05 17:06:13 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -260,7 +263,7 @@ void PhaseIFG::stats() const {
     h_cnt[neighbor_cnt(i)]++;
   }
   tty->print_cr("--Histogram of counts--");
-  for( i = 0; i < _maxlrg*2; i++ )
+  for( i = 0; i < _maxlrg*2; i++ ) 
     if( h_cnt[i] )
       tty->print("%d/%d ",i,h_cnt[i]);
   tty->print_cr("");
@@ -284,7 +287,7 @@ void PhaseIFG::verify( const PhaseChaitin *pc ) const {
       last = idx;
     }
     assert( !lrgs(i)._degree_valid ||
-            effective_degree(i) == lrgs(i).degree(), "degree is valid but wrong" );
+            effective_degree(i) == lrgs(i).degree(), "degree is valid but wrong" ); 
   }
 }
 #endif
@@ -295,14 +298,14 @@ void PhaseIFG::verify( const PhaseChaitin *pc ) const {
 // inteferences as an estimate of register pressure.
 void PhaseChaitin::interfere_with_live( uint r, IndexSet *liveout ) {
   uint retval = 0;
-  // Interfere with everything live.
+  // Interfere with everything live.  
   const RegMask &rm = lrgs(r).mask();
   // Check for interference by checking overlap of regmasks.
   // Only interfere if acceptable register masks overlap.
   IndexSetIterator elements(liveout);
   uint l;
-  while( (l = elements.next()) != 0 )
-    if( rm.overlap( lrgs(l).mask() ) )
+  while( (l = elements.next()) != 0 ) 
+    if( rm.overlap( lrgs(l).mask() ) ) 
       _ifg->add_edge( r, l );
 }
 
@@ -368,10 +371,10 @@ void PhaseChaitin::build_ifg_virtual( ) {
         // We generally want the USE-DEF register to refer to the
         // loop-varying quantity, to avoid a copy.
         uint op = mach->ideal_Opcode();
-        // Check that mach->num_opnds() == 3 to ensure instruction is
+        // Check that mach->num_opnds() == 3 to ensure instruction is 
         // not subsuming constants, effectively excludes addI_cin_imm
-        // Can NOT swap for instructions like addI_cin_imm since it
-        // is adding zero to yhi + carry and the second ideal-input
+        // Can NOT swap for instructions like addI_cin_imm since it 
+        // is adding zero to yhi + carry and the second ideal-input 
         // points to the result of adding low-halves.
         // Checking req() and num_opnds() does NOT distinguish addI_cout from addI_cout_imm
         if( (op == Op_AddI && mach->req() == 3 && mach->num_opnds() == 3) &&
@@ -473,7 +476,7 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
     uint last_inst = b->end_idx();
     // Compute last phi index
     uint last_phi;
-    for( last_phi = 1; last_phi < last_inst; last_phi++ )
+    for( last_phi = 1; last_phi < last_inst; last_phi++ ) 
       if( !b->_nodes[last_phi]->is_Phi() )
         break;
 
@@ -531,7 +534,7 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
 
       // Some special values do not allocate
       if( r ) {
-        // A DEF normally costs block frequency; rematerialized values are
+        // A DEF normally costs block frequency; rematerialized values are 
         // removed from the DEF sight, so LOWER costs here.
         lrgs(r)._cost += n->rematerialize() ? 0 : b->_freq;
 
@@ -587,7 +590,7 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
               hrp_index[1] = j-1;
             }
           }
-
+       
         } else {                // Else it is live
           // A DEF also ends 'area' partway through the block.
           lrgs(r)._area -= cost;
@@ -598,13 +601,13 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
               && lrgs(r).is_singledef()        // MultiDef live range can still split
               && n->outcnt() == 1              // and use must be in this block
               && _cfg._bbs[n->unique_out()->_idx] == b ) {
-            // All single-use MachSpillCopy(s) that immediately precede their
+            // All single-use MachSpillCopy(s) that immediately precede their 
             // use must color early.  If a longer live range steals their
-            // color, the spill copy will split and may push another spill copy
+            // color, the spill copy will split and may push another spill copy 
             // further away resulting in an infinite spill-split-retry cycle.
-            // Assigning a zero area results in a high score() and a good
+            // Assigning a zero area results in a high score() and a good 
             // location in the simplify list.
-            //
+            // 
 
             Node *single_use = n->unique_out();
             assert( b->find_node(single_use) >= j, "Use must be later in block");
@@ -614,14 +617,14 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
             // (j - 1) is index for current instruction 'n'
             Node *m = n;
             for( uint i = j; i <= last_inst && m->is_SpillCopy(); ++i ) { m = b->_nodes[i]; }
-            if( m == single_use ) {
+            if( m == single_use ) { 
               lrgs(r)._area = 0.0;
             }
           }
 
           // Remove from live-out set
           if( liveout.remove(r) ) {
-            // Adjust register pressure.
+            // Adjust register pressure.  
             // Capture last hi-to-lo pressure transition
             lower_pressure( &lrgs(r), j-1, b, pressure, hrp_index );
             assert( pressure[0] == count_int_pressure  (&liveout), "" );
@@ -635,7 +638,7 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
             uint x = n2lidx(n->in(idx));
             if( liveout.remove( x ) ) {
               lrgs(x)._area -= cost;
-              // Adjust register pressure.
+              // Adjust register pressure.  
               lower_pressure( &lrgs(x), j-1, b, pressure, hrp_index );
               assert( pressure[0] == count_int_pressure  (&liveout), "" );
               assert( pressure[1] == count_float_pressure(&liveout), "" );
@@ -647,9 +650,9 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
         // go in a particular register, just remove that register from
         // all conflicting parties and avoid the interference.
 
-        // Make exclusions for rematerializable defs.  Since rematerializable
-        // DEFs are not bound but the live range is, some uses must be bound.
-        // If we spill live range 'r', it can rematerialize at each use site
+        // Make exclusions for rematerializable defs.  Since rematerializable 
+        // DEFs are not bound but the live range is, some uses must be bound.  
+        // If we spill live range 'r', it can rematerialize at each use site 
         // according to its bindings.
         const RegMask &rmask = lrgs(r).mask();
         if( lrgs(r).is_bound() && !(n->rematerialize()) && rmask.is_NotEmpty() ) {
@@ -813,3 +816,4 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
 
   return must_spill;
 }
+

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.classbrowser;
@@ -60,7 +60,7 @@ public class ClassBrowserPanel extends JPanel implements ActionListener {
 
       classesEditor = new SAEditorPane();
       classesEditor.addHyperlinkListener(hyperListener);
-
+ 
       contentEditor = new SAEditorPane();
       contentEditor.addHyperlinkListener(hyperListener);
 
@@ -76,7 +76,7 @@ public class ClassBrowserPanel extends JPanel implements ActionListener {
       splitPane.setDividerLocation(0);
 
       setLayout(new BorderLayout());
-      add(splitPane, BorderLayout.CENTER);
+      add(splitPane, BorderLayout.CENTER); 
       statusBar = new StatusBar();
       add(statusBar, BorderLayout.SOUTH);
       toolBar = new ClassBrowserToolBar(statusBar);

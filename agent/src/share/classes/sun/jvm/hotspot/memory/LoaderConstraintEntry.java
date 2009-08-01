@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -81,10 +81,11 @@ public class LoaderConstraintEntry extends sun.jvm.hotspot.utilities.HashtableEn
     super(addr);
   }
 
-  /* covariant return type :-(
+  /* covariant return type :-( 
   public LoaderConstraintEntry next() {
     return (LoaderConstraintEntry) super.next();
   }
   For now, let the caller cast it ..
   */
 }
+

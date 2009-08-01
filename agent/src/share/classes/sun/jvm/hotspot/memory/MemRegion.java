@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -51,7 +51,7 @@ public class MemRegion implements Cloneable {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("MemRegion");
-
+    
     startField    = type.getAddressField("_start");
     wordSizeField = type.getCIntegerField("_word_size");
   }
@@ -106,7 +106,7 @@ public class MemRegion implements Cloneable {
     }
     return res;
   }
-
+  
   public MemRegion union(MemRegion mr2) {
     MemRegion res = new MemRegion();
     if (AddressOps.lt(mr2.start(), start())) {
@@ -161,7 +161,7 @@ public class MemRegion implements Cloneable {
   public boolean contains(Address addr) {
     return AddressOps.gte(addr, start()) && AddressOps.lt(addr, end());
   }
-
+  
   public long byteSize() {
     return byteSize;
   }

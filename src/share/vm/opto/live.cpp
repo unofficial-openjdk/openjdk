@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)live.cpp	1.70 07/05/17 17:44:00 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -38,7 +41,7 @@
 // remaining new live-out values are ANDed with what is locally defined.
 // Leftover bits become the new live-in for the predecessor block, and the pred
 // block is put on the worklist.
-//   The locally live-in stuff is computed once and added to predecessor
+//   The locally live-in stuff is computed once and added to predecessor 
 // live-out sets.  This seperate compilation is done in the outer loop below.
 PhaseLive::PhaseLive( const PhaseCFG &cfg, LRG_List &names, Arena *arena ) : Phase(LIVE), _cfg(cfg), _names(names), _arena(arena), _live(0) {
 }
@@ -55,7 +58,7 @@ void PhaseLive::compute(uint maxlrg) {
     _live[i].initialize(_maxlrg);
   }
 
-  // Init the sparse arrays for delta-sets.
+  // Init the sparse arrays for delta-sets.  
   ResourceMark rm;              // Nuke temp storage on exit
 
   // Does the memory used by _defs and _deltas get reclaimed?  Does it matter?  TT
@@ -121,12 +124,12 @@ void PhaseLive::compute(uint maxlrg) {
       add_liveout( p, use, first_pass );
 
       // PhiNode uses go in the live-out set of prior blocks.
-      for( uint k=i; k>0; k-- )
+      for( uint k=i; k>0; k-- ) 
         add_liveout( p, _names[b->_nodes[k-1]->in(l)->_idx], first_pass );
     }
     freeset( b );
     first_pass.set(b->_pre_order);
-
+    
     // Inner loop: blocks that picked up new live-out values to be propagated
     while( _worklist->size() ) {
         // !!!!!
@@ -138,7 +141,7 @@ void PhaseLive::compute(uint maxlrg) {
       assert( delta->count(), "missing delta set" );
 
       // Add new-live-in to predecessors live-out sets
-      for( uint l=1; l<b->num_preds(); l++ )
+      for( uint l=1; l<b->num_preds(); l++ ) 
         add_liveout( _cfg._bbs[b->pred(l)->_idx], delta, first_pass );
 
       freeset(b);
@@ -207,7 +210,7 @@ void PhaseLive::freeset( const Block *p ) {
   IndexSet *f = _deltas[p->_pre_order-1];
   f->set_next(_free_IndexSet);
   _free_IndexSet = f;           // Drop onto free list
-  _deltas[p->_pre_order-1] = NULL;
+  _deltas[p->_pre_order-1] = NULL;  
 }
 
 //------------------------------add_liveout------------------------------------
@@ -222,7 +225,7 @@ void PhaseLive::add_liveout( Block *p, uint r, VectorSet &first_pass ) {
       if( !_deltas[p->_pre_order-1] && // Not on worklist?
           first_pass.test(p->_pre_order) )
         _worklist->push(p);     // Actually go on worklist if already 1st pass
-      getset(p)->insert(r);
+      getset(p)->insert(r);  
     }
   }
 }
@@ -266,7 +269,7 @@ void PhaseLive::dump( const Block *b ) const {
     tty->print("L%d/", _names[b->_nodes[i]->_idx] );
     b->_nodes[i]->dump();
   }
-  tty->print("\n");
+  tty->print("\n");  
 }
 
 //------------------------------verify_base_ptrs-------------------------------

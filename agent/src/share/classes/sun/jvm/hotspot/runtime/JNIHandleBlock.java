@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -48,7 +48,7 @@ public class JNIHandleBlock extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JNIHandleBlock");
-
+    
     handlesField = type.getField("_handles");
     topField = type.getCIntegerField("_top");
     nextField = type.getAddressField("_next");
@@ -64,7 +64,7 @@ public class JNIHandleBlock extends VMObject {
     Address handleAddr = nextField.getValue(addr);
     if (handleAddr == null) {
       return null;
-    }
+    }    
 
     /* the next handle block is valid only if the current block is full */
     if (top() < blockSizeInOops) {
@@ -85,7 +85,7 @@ public class JNIHandleBlock extends VMObject {
         visitor.visitAddress(cur);
       }
     }
-
+    
     // Visit handles in subsequent blocks if necessary
     JNIHandleBlock n = next();
     if (n != null) {
@@ -152,3 +152,5 @@ public class JNIHandleBlock extends VMObject {
     }
   }
 }
+
+

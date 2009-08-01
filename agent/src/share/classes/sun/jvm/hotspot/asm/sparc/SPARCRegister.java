@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -116,7 +116,7 @@ public class SPARCRegister extends Register {
 
   public boolean isStackPointer() {
     return number == 14; // is O6?
-  }
+  } 
 
   public boolean isFloat() {
     return false;

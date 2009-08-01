@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)vmreg_sparc.inline.hpp	1.6 07/05/05 17:04:33 JVM"
+#endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline VMReg RegisterImpl::as_VMReg() {
@@ -31,7 +34,7 @@ inline VMReg FloatRegisterImpl::as_VMReg() { return VMRegImpl::as_VMReg( Concret
 
 
 inline bool VMRegImpl::is_Register() { return value() >= 0 && value() < ConcreteRegisterImpl::max_gpr; }
-inline bool VMRegImpl::is_FloatRegister() { return value() >= ConcreteRegisterImpl::max_gpr &&
+inline bool VMRegImpl::is_FloatRegister() { return value() >= ConcreteRegisterImpl::max_gpr && 
                                                    value() < ConcreteRegisterImpl::max_fpr; }
 inline Register VMRegImpl::as_Register() {
 
@@ -60,3 +63,4 @@ inline   bool VMRegImpl::is_concrete() {
   assert(false, "what register?");
   return false;
 }
+

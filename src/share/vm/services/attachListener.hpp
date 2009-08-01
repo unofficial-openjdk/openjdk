@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)attachListener.hpp	1.12 07/07/11 11:24:45 JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The AttachListener thread services a queue of operations that are enqueued
 // by client tools. Each operation is identified by a name and has up to 3
 // arguments. The operation name is mapped to a function which performs the
 // operation. The function is called with an outputStream which is can use to
-// write any result data (for examples the properties command serializes
-// properties names and values to the output stream). When the function
+// write any result data (for examples the properties command serializes 
+// properties names and values to the output stream). When the function 
 // complets the result value and any result data is returned to the client
 // tool.
 
@@ -64,7 +67,7 @@ class AttachListener: AllStatic {
   static volatile bool _initialized;
 
  public:
-  static bool is_initialized()                  { return _initialized; }
+  static bool is_initialized()			{ return _initialized; }
   static void set_initialized()                 { _initialized = true; }
 
   // indicates if this VM supports attach-on-demand
@@ -94,9 +97,9 @@ class AttachListener: AllStatic {
 class AttachOperation: public CHeapObj {
  public:
   enum {
-    name_length_max = 16,       // maximum length of  name
-    arg_length_max = 1024,      // maximum length of argument
-    arg_count_max = 3           // maximum number of arguments
+    name_length_max = 16,	// maximum length of  name
+    arg_length_max = 1024,	// maximum length of argument
+    arg_count_max = 3		// maximum number of arguments   
   };
 
   // name of special operation that can be enqueued when all
@@ -108,7 +111,7 @@ class AttachOperation: public CHeapObj {
   char _arg[arg_count_max][arg_length_max+1];
 
  public:
-  const char* name() const                      { return _name; }
+  const char* name() const			{ return _name; }
 
   // set the operation name
   void set_name(char* name) {

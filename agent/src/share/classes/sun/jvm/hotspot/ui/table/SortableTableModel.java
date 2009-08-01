@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.table;
@@ -36,7 +36,7 @@ import javax.swing.table.AbstractTableModel;
  * must be set for sorting to be enabled.
  */
 public abstract class SortableTableModel extends AbstractTableModel {
-
+    
     private TableModelComparator comparator;
 
     /**
@@ -48,24 +48,26 @@ public abstract class SortableTableModel extends AbstractTableModel {
      * This comparator must be set.
      */
     public void setComparator(TableModelComparator comparator) {
-        this.comparator = comparator;
+	this.comparator = comparator;
     }
 
     public void sortByColumn(int column, boolean ascending) {
-        comparator.addColumn(column);
-        comparator.setAscending(ascending);
+	comparator.addColumn(column);
+	comparator.setAscending(ascending);
 
-        Collections.sort(elements, comparator);
+	Collections.sort(elements, comparator);
 
-        fireTableChanged(new TableModelEvent(this));
+	fireTableChanged(new TableModelEvent(this));
     }
 
     public boolean isAscending() {
-        return comparator.isAscending();
+	return comparator.isAscending();
     }
 
     public int getColumn() {
-        return comparator.getColumn();
+	return comparator.getColumn();
     }
 
 }
+
+    

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)statSampler.hpp	1.12 07/05/05 17:06:58 JVM"
+#endif
 /*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class StatSamplerTask;
@@ -45,7 +48,7 @@ class StatSampler : AllStatic {
     static void create_misc_perfdata();
     static void create_sampled_perfdata();
     static void sample_data(PerfDataList* list);
-    static const char* get_system_property(const char* name, TRAPS);
+    static const char* get_system_property(const char* name, TRAPS); 
     static void create_system_property_instrumentation(TRAPS);
 
   public:

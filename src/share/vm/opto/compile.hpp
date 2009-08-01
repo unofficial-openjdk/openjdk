@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)compile.hpp	1.232 07/09/28 10:23:10 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Block;
@@ -55,7 +58,7 @@ class nmethod;
 class WarmCallInfo;
 
 //------------------------------Compile----------------------------------------
-// This class defines a top-level Compiler invocation.
+// This class defines a top-level Compiler invocation. 
 
 class Compile : public Phase {
  public:
@@ -223,7 +226,7 @@ class Compile : public Phase {
   PhaseCFG*             _cfg;                   // Results of CFG finding
   bool                  _select_24_bit_instr;   // We selected an instruction with a 24-bit result
   bool                  _in_24_bit_fp_mode;     // We are emitting instructions with 24-bit results
-  bool                  _has_java_calls;        // True if the method has java calls
+  bool                  _has_java_calls;        // True if the method has java calls 
   Matcher*              _matcher;               // Engine to map ideal to machine instructions
   PhaseRegAlloc*        _regalloc;              // Results of register allocation.
   int                   _frame_slots;           // Size of total frame in stack slots
@@ -367,14 +370,14 @@ class Compile : public Phase {
   bool              failure_reason_is(const char* r) { return (r==_failure_reason) || (r!=NULL && _failure_reason!=NULL && strcmp(r, _failure_reason)==0); }
 
   void record_failure(const char* reason);
-  void record_method_not_compilable(const char* reason, bool all_tiers = false) {
+  void record_method_not_compilable(const char* reason, bool all_tiers = false) { 
     // All bailouts cover "all_tiers" when TieredCompilation is off.
     if (!TieredCompilation) all_tiers = true;
     env()->record_method_not_compilable(reason, all_tiers);
     // Record failure reason.
     record_failure(reason);
   }
-  void record_method_not_compilable_all_tiers(const char* reason) {
+  void record_method_not_compilable_all_tiers(const char* reason) { 
     record_method_not_compilable(reason, true);
   }
   bool check_node_count(uint margin, const char* reason) {
@@ -570,7 +573,7 @@ class Compile : public Phase {
 
   // Second major entry point.  From the TypeFunc signature, generate code
   // to pass arguments from the Java calling convention to the C calling
-  // convention.
+  // convention.  
   Compile(ciEnv* ci_env, const TypeFunc *(*gen)(),
           address stub_function, const char *stub_name,
           int is_fancy_jump, bool pass_tls,
@@ -598,7 +601,7 @@ class Compile : public Phase {
 
   // returns true if adr overlaps with the given alias category
   bool can_alias(const TypePtr* adr, int alias_idx);
-
+  
   // Driver for converting compiler's IR into machine code bits
   void Output();
 
@@ -635,7 +638,7 @@ class Compile : public Phase {
   // Determine which variable sized branches can be shortened
   void Shorten_branches(Label *labels, int& code_size, int& reloc_size, int& stub_size, int& const_size);
 
-  // Compute the size of first NumberOfLoopInstrToAlign instructions
+  // Compute the size of first NumberOfLoopInstrToAlign instructions 
   // at the head of a loop.
   void compute_loop_first_inst_sizes();
 
@@ -648,7 +651,7 @@ class Compile : public Phase {
   uint in_preserve_stack_slots();
 
   // "Top of Stack" slots that may be unused by the calling convention but must
-  // otherwise be preserved.
+  // otherwise be preserved.  
   // On Intel these are not necessary and the value can be zero.
   // On Sparc this describes the words reserved for storing a register window
   // when an interrupt occurs.

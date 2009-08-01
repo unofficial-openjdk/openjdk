@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)gcUtil.cpp	1.21 07/05/05 17:05:32 JVM"
+#endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 // Catch-all file for utility classes
 
-float AdaptiveWeightedAverage::compute_adaptive_average(float new_sample,
+float AdaptiveWeightedAverage::compute_adaptive_average(float new_sample, 
                                                         float average) {
   // We smooth the samples by not using weight() directly until we've
   // had enough data to make it meaningful. We'd like the first weight
@@ -96,7 +99,7 @@ void LinearLeastSquareFit::update(double x, double y) {
   if ( _mean_x.count() > 1 ) {
     double slope_denominator;
     slope_denominator = (_mean_x.count() * _sum_x_squared - _sum_x * _sum_x);
-    // Some tolerance should be injected here.  A denominator that is
+    // Some tolerance should be injected here.  A denominator that is 
     // nearly 0 should be avoided.
 
     if (slope_denominator != 0.0) {
@@ -116,7 +119,7 @@ void LinearLeastSquareFit::update(double x, double y) {
 
 double LinearLeastSquareFit::y(double x) {
   double new_y;
-
+  
   if ( _mean_x.count() > 1 ) {
     new_y = (_intercept + _slope * x);
     return new_y;
@@ -134,8 +137,8 @@ double LinearLeastSquareFit::y(double x) {
 // since that untuitive expectation is not built into the complement.
 bool LinearLeastSquareFit::decrement_will_decrease() {
   return (_slope >= 0.00);
-}
+} 
 
 bool LinearLeastSquareFit::increment_will_decrease() {
   return (_slope <= 0.00);
-}
+} 

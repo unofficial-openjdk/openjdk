@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)objArrayKlass.hpp	1.87 07/05/29 09:44:23 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // objArrayKlass is the klass for objArrays
@@ -79,7 +82,7 @@ class objArrayKlass : public arrayKlass {
   // Casting from klassOop
   static objArrayKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_objArray_slow(), "cast to objArrayKlass");
-    return (objArrayKlass*) k->klass_part();
+    return (objArrayKlass*) k->klass_part(); 
   }
 
   // Sizing
@@ -134,3 +137,4 @@ class objArrayKlass : public arrayKlass {
   void oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty);
 
 };
+

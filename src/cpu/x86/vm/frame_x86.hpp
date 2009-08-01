@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)frame_x86.hpp	1.80 07/09/17 09:36:02 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A frame represents a physical stack frame (an activation).  Frames can be
 // C or Java frames, and the Java frames can be interpreted or compiled.
-// In contrast, vframes represent source-level activations, so that one physical frame
+// In contrast, vframes represent source-level activations, so that one physical frame 
 // can correspond to multiple source level frames because of inlining.
 // A frame is comprised of {pc, fp, sp}
 // ------------------------------ Asm interpreter ----------------------------------------
@@ -34,17 +37,17 @@
 //     ...                        | monitor block size
 //    [monitors              ]   /
 //    [monitor block size    ]
-//    [byte code index/pointr]                   = bcx()                bcx_offset
-//    [pointer to locals     ]                   = locals()             locals_offset
-//    [constant pool cache   ]                   = cache()              cache_offset
-//    [methodData            ]                   = mdp()                mdx_offset
-//    [methodOop             ]                   = method()             method_offset
+//    [byte code index/pointr]                   = bcx()		bcx_offset
+//    [pointer to locals     ]                   = locals()		locals_offset
+//    [constant pool cache   ]                   = cache()		cache_offset
+//    [methodData	     ]			 = mdp()		mdx_offset
+//    [methodOop             ]                   = method()		method_offset
 //    [last sp               ]                   = last_sp()            last_sp_offset
-//    [old stack pointer     ]                     (sender_sp)          sender_sp_offset
+//    [old stack pointer     ]                     (sender_sp)		sender_sp_offset
 //    [old frame pointer     ]   <- fp           = link()
 //    [return pc             ]
 //    [oop temp              ]                     (only for native calls)
-//    [locals and parameters ]
+//    [locals and parameters ]   
 //                               <- sender sp
 // ------------------------------ Asm interpreter ----------------------------------------
 
@@ -67,7 +70,7 @@
 //    [monitors                ]   / <- interpreter_state.monitor_base     |
 //    [struct interpretState   ] <-----------------------------------------|
 //    [return pc               ] (return to callee of frame manager [1]
-//    [locals and parameters   ]
+//    [locals and parameters   ]   
 //                               <- sender sp
 
 // [1] When the c++ interpreter calls a new method it returns to the frame
@@ -144,7 +147,7 @@
   }
 
   void ptr_at_put(int offset, intptr_t value) {
-    *ptr_at_addr(offset) = value;
+    *ptr_at_addr(offset) = value; 
   }
 
  private:
@@ -155,12 +158,12 @@
   // we need to know that value. However in order to compute the address
   // of the return address we need the real "raw" sp. Since sparc already
   // uses sp() to mean "raw" sp and unextended_sp() to mean the caller's
-  // original sp we use that convention.
+  // original sp we use that convention. 
 
   intptr_t*     _unextended_sp;
 
   intptr_t* ptr_at_addr(int offset) const {
-    return (intptr_t*) addr_at(offset);
+    return (intptr_t*) addr_at(offset); 
   }
 
  public:
@@ -179,7 +182,7 @@
 
   // return address of param, zero origin index.
   inline address* native_param_addr(int idx) const;
-
+  
   // expression stack tos if we are nested in a java call
   intptr_t* interpreter_frame_last_sp() const;
 

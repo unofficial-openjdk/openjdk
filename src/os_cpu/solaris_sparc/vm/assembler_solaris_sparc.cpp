@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)assembler_solaris_sparc.cpp	1.11 07/05/05 17:04:53 JVM"
+#endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@
 #include <v9/sys/psr_compat.h> // For V8 compatibility
 
 void MacroAssembler::read_ccr_trap(Register ccr_save) {
-  // Execute a trap to get the PSR, mask and shift
+  // Execute a trap to get the PSR, mask and shift 
   // to get the condition codes.
   get_psr_trap();
   nop();

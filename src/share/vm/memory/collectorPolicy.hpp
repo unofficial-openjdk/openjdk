@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)collectorPolicy.hpp	1.41 07/05/29 09:44:14 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class (or more correctly, subtypes of this class)
 // are used to define global garbage collector attributes.
 // This includes initialization of generations and any other
-// shared resources they may need.
+// shared resources they may need. 
 //
 // In general, all flag adjustment and validation should be
 // done in initialize_flags(), which is called prior to
@@ -34,7 +37,7 @@
 // This class is not fully developed yet. As more collector(s)
 // are added, it is expected that we will come across further
 // behavior that requires global attention. The correct place
-// to deal with those issues is this class.
+// to deal with those issues is this class. 
 
 // Forward declarations.
 class GenCollectorPolicy;
@@ -130,7 +133,7 @@ class CollectorPolicy : public CHeapObj {
   // Create the remembered set (to cover the given reserved region,
   // allowing breaking up into at most "max_covered_regions").
   virtual GenRemSet* create_rem_set(MemRegion reserved,
-                                    int max_covered_regions);
+				    int max_covered_regions);
 
   // This method controls how a collector satisfies a request
   // for a block of memory.  "gc_time_limit_was_exceeded" will
@@ -141,7 +144,7 @@ class CollectorPolicy : public CHeapObj {
   virtual HeapWord* mem_allocate_work(size_t size,
                                       bool is_tlab,
                                       bool* gc_overhead_limit_was_exceeded) = 0;
-
+  
   // This method controls how a collector handles one or more
   // of its generations being fully allocated.
   virtual HeapWord *satisfy_failed_allocation(size_t size, bool is_tlab) = 0;
@@ -151,18 +154,18 @@ class CollectorPolicy : public CHeapObj {
   // Create the jstat counters for the GC policy.  By default, policy's
   // don't have associated counters, and we complain if this is invoked.
   virtual void initialize_gc_policy_counters() {
-    ShouldNotReachHere();
+    ShouldNotReachHere(); 
   }
 
-  virtual CollectorPolicy::Name kind() {
-    return CollectorPolicy::CollectorPolicyKind;
+  virtual CollectorPolicy::Name kind() { 
+    return CollectorPolicy::CollectorPolicyKind; 
   }
-
+  
   // Returns true if a collector has eden space with soft end.
   virtual bool has_soft_ended_eden() {
     return false;
   }
-
+  
 };
 
 class GenCollectorPolicy : public CollectorPolicy {
@@ -187,7 +190,7 @@ class GenCollectorPolicy : public CollectorPolicy {
 
   // Try to allocate space by expanding the heap.
   virtual HeapWord* expand_heap_and_allocate(size_t size, bool is_tlab);
-
+    
   // compute max heap alignment
   size_t compute_max_alignment();
 
@@ -238,9 +241,9 @@ class GenCollectorPolicy : public CollectorPolicy {
   // Adaptive size policy
   AdaptiveSizePolicy* size_policy() { return _size_policy; }
   virtual void initialize_size_policy(size_t init_eden_size,
-                                      size_t init_promo_size,
-                                      size_t init_survivor_size);
-
+				      size_t init_promo_size,
+				      size_t init_survivor_size);
+  
 };
 
 
@@ -276,8 +279,8 @@ class TwoGenerationCollectorPolicy : public GenCollectorPolicy {
   BarrierSet::Name barrier_set_name()          { return BarrierSet::CardTableModRef; }
   GenRemSet::Name rem_set_name()               { return GenRemSet::CardTable; }
 
-  virtual CollectorPolicy::Name kind() {
-    return CollectorPolicy::TwoGenerationCollectorPolicyKind;
+  virtual CollectorPolicy::Name kind() { 
+    return CollectorPolicy::TwoGenerationCollectorPolicyKind; 
   }
 
   // Returns true is gen0 sizes were adjusted
@@ -296,3 +299,4 @@ class MarkSweepPolicy : public TwoGenerationCollectorPolicy {
 
   void initialize_gc_policy_counters();
 };
+

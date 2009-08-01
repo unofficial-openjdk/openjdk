@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)fieldType.cpp	1.27 07/05/05 17:06:47 JVM"
+#endif
 /*
  * Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -42,11 +45,11 @@ bool FieldType::is_valid_array_signature(symbolOop sig) {
   assert(sig->utf8_length() > 1, "this should already have been checked");
   assert(sig->byte_at(0) == '[', "this should already have been checked");
   // The first character is already checked
-  int i = 1;
-  int len = sig->utf8_length();
+  int i = 1; 
+  int len = sig->utf8_length();   
   // First skip all '['s
   while(i < len - 1 && sig->byte_at(i) == '[') i++;
-
+  
   // Check type
   switch(sig->byte_at(i)) {
     case 'B': // T_BYTE
@@ -56,20 +59,20 @@ bool FieldType::is_valid_array_signature(symbolOop sig) {
     case 'I': // T_INT
     case 'J': // T_LONG
     case 'S': // T_SHORT
-    case 'Z': // T_BOOLEAN
+    case 'Z': // T_BOOLEAN 
       // If it is an array, the type is the last character
       return (i + 1 == len);
     case 'L':
       // If it is an object, the last character must be a ';'
       return sig->byte_at(len - 1) == ';';
   }
-
+  
   return false;
 }
-
+  
 
 BasicType FieldType::get_array_info(symbolOop signature, jint* dimension, symbolOop* object_key, TRAPS) {
-  assert(basic_type(signature) == T_ARRAY, "must be array");
+  assert(basic_type(signature) == T_ARRAY, "must be array");  
   int index = 1;
   int dim   = 1;
   skip_optional_size(signature, &index);
@@ -79,14 +82,15 @@ BasicType FieldType::get_array_info(symbolOop signature, jint* dimension, symbol
     skip_optional_size(signature, &index);
   }
   ResourceMark rm;
-  symbolOop element = oopFactory::new_symbol(signature->as_C_string() + index, CHECK_(T_BYTE));
+  symbolOop element = oopFactory::new_symbol(signature->as_C_string() + index, CHECK_(T_BYTE));  
   BasicType element_type = FieldType::basic_type(element);
   if (element_type == T_OBJECT) {
     char* object_type = element->as_C_string();
     object_type[element->utf8_length() - 1] = '\0';
-    *object_key = oopFactory::new_symbol(object_type + 1, CHECK_(T_BYTE));
+    *object_key = oopFactory::new_symbol(object_type + 1, CHECK_(T_BYTE));                   
   }
   // Pass dimension back to caller
   *dimension = dim;
   return element_type;
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)addnode.hpp	1.59 07/10/23 13:12:52 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -39,10 +42,10 @@ public:
   }
 
   // Handle algebraic identities here.  If we have an identity, return the Node
-  // we are equivalent to.  We look for "add of zero" as an identity.
+  // we are equivalent to.  We look for "add of zero" as an identity.  
   virtual Node *Identity( PhaseTransform *phase );
 
-  // We also canonicalize the Node, moving constants to the right input,
+  // We also canonicalize the Node, moving constants to the right input, 
   // and flatten expressions (so that 1+x+2 becomes x+3).
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 
@@ -52,7 +55,7 @@ public:
 
   // Check if this addition involves the additive identity
   virtual const Type *add_of_identity( const Type *t1, const Type *t2 ) const;
-
+ 
   // Supplied function returns the sum of the inputs.
   // This also type-checks the inputs for sanity.  Guaranteed never to
   // be passed a TOP or BOTTOM type, these are filtered out by a pre-check.
@@ -211,7 +214,7 @@ public:
 // all the behavior of addition on a ring.  Only new thing is that we allow
 // 2 equal inputs to be equal.
 class MaxNode : public AddNode {
-public:
+public: 
   MaxNode( Node *in1, Node *in2 ) : AddNode(in1,in2) {}
   virtual int Opcode() const = 0;
 };

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)doCall.cpp	1.207 07/07/19 19:08:29 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -144,7 +147,7 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
       // The major receiver's count >= TypeProfileMajorReceiverPercent of site_count.
       bool have_major_receiver = (100.*profile.receiver_prob(0) >= (float)TypeProfileMajorReceiverPercent);
       ciMethod* receiver_method = NULL;
-      if (have_major_receiver || profile.morphism() == 1 ||
+      if (have_major_receiver || profile.morphism() == 1 || 
           (profile.morphism() == 2 && UseBimorphicInlining)) {
         // receiver_method = profile.method();
         // Profiles do not suggest methods now.  Look it up in the major receiver.
@@ -153,20 +156,20 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
       }
       if (receiver_method != NULL) {
         // The single majority receiver sufficiently outweighs the minority.
-        CallGenerator* hit_cg = this->call_generator(receiver_method,
+        CallGenerator* hit_cg = this->call_generator(receiver_method, 
               vtable_index, !call_is_virtual, jvms, allow_inline, prof_factor);
         if (hit_cg != NULL) {
           // Look up second receiver.
           CallGenerator* next_hit_cg = NULL;
           ciMethod* next_receiver_method = NULL;
-          if (profile.morphism() == 2 && UseBimorphicInlining) {
+          if (profile.morphism() == 2 && UseBimorphicInlining) { 
             next_receiver_method = call_method->resolve_invoke(jvms->method()->holder(),
                                                                profile.receiver(1));
             if (next_receiver_method != NULL) {
-              next_hit_cg = this->call_generator(next_receiver_method,
-                                  vtable_index, !call_is_virtual, jvms,
+              next_hit_cg = this->call_generator(next_receiver_method, 
+                                  vtable_index, !call_is_virtual, jvms, 
                                   allow_inline, prof_factor);
-              if (next_hit_cg != NULL && !next_hit_cg->is_inline() &&
+              if (next_hit_cg != NULL && !next_hit_cg->is_inline() && 
                   have_major_receiver && UseOnlyInlinedBimorphic) {
                   // Skip if we can't inline second receiver's method
                   next_hit_cg = NULL;
@@ -174,19 +177,19 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
             }
           }
           CallGenerator* miss_cg;
-          if (( profile.morphism() == 1 ||
-               (profile.morphism() == 2 && next_hit_cg != NULL) ) &&
+          if (( profile.morphism() == 1 || 
+               (profile.morphism() == 2 && next_hit_cg != NULL) ) && 
 
               !too_many_traps(Deoptimization::Reason_class_check)
 
               // Check only total number of traps per method to allow
-              // the transition from monomorphic to bimorphic case between
+              // the transition from monomorphic to bimorphic case between 
               // compilations without falling into virtual call.
-              // A monomorphic case may have the class_check trap flag is set
-              // due to the time gap between the uncommon trap processing
+              // A monomorphic case may have the class_check trap flag is set 
+              // due to the time gap between the uncommon trap processing 
               // when flags are set in MDO and the call site bytecode execution
               // in Interpreter when MDO counters are updated.
-              // There was also class_check trap in monomorphic case due to
+              // There was also class_check trap in monomorphic case due to 
               // the bug 6225440.
 
              ) {
@@ -356,7 +359,7 @@ void Parse::do_call() {
   // save across call, for a subsequent cast_not_null.
   Node* receiver = has_receiver ? argument(0) : NULL;
 
-  // Bump method data counters (We profile *before* the call is made
+  // Bump method data counters (We profile *before* the call is made 
   // because exceptions don't return to the call site.)
   profile_call(receiver);
 
@@ -463,7 +466,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
     // Do not introduce unloaded exception types into the graph:
     if (!h_klass->is_loaded()) {
       if (saw_unloaded->contains(h_bci)) {
-        /* We've already seen an unloaded exception with h_bci,
+        /* We've already seen an unloaded exception with h_bci, 
            so don't duplicate. Duplication will cause the CatchNode to be
            unnecessarily large. See 4713716. */
         continue;
@@ -596,7 +599,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
         ex_klass_node->init_req( i, k );
       }
       _gvn.set_type(ex_klass_node, TypeKlassPtr::OBJECT);
-
+      
     }
   }
 
@@ -670,7 +673,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
       C->dependencies()->assert_leaf_type(klass);
     }
 
-    // Implement precise test
+    // Implement precise test 
     const TypeKlassPtr *tk = TypeKlassPtr::make(klass);
     Node* con = _gvn.makecon(tk);
     Node* cmp = _gvn.transform( new (C, 3) CmpPNode(ex_klass_node, con) );
@@ -747,7 +750,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       switch (bc()) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_inlined_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_inlined_interface_calls_addr()); break;
-      case Bytecodes::_invokestatic:
+      case Bytecodes::_invokestatic:  
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_inlined_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }
@@ -755,7 +758,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       switch (bc()) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_normal_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_interface_calls_addr()); break;
-      case Bytecodes::_invokestatic:
+      case Bytecodes::_invokestatic:  
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }
@@ -766,7 +769,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
 
 
 // Identify possible target method and inlining style
-ciMethod* Parse::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass,
+ciMethod* Parse::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass, 
                                    ciMethod *dest_method, const TypeOopPtr* receiver_type) {
   // only use for virtual or interface calls
 

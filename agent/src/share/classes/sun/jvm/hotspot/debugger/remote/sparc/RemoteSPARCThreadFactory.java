@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.remote.sparc;
@@ -29,7 +29,7 @@ import sun.jvm.hotspot.debugger.remote.*;
 
 public class RemoteSPARCThreadFactory implements RemoteThreadFactory {
   private RemoteDebuggerClient debugger;
-
+  
   public RemoteSPARCThreadFactory(RemoteDebuggerClient debugger) {
     this.debugger = debugger;
   }

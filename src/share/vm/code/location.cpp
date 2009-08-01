@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)location.cpp	1.40 07/05/05 17:05:21 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -68,3 +71,4 @@ bool Location::legal_offset_in_bytes(int offset_in_bytes) {
   if ((offset_in_bytes % BytesPerInt) != 0)  return false;
   return (juint)(offset_in_bytes / BytesPerInt) < (OFFSET_MASK >> OFFSET_SHIFT);
 }
+

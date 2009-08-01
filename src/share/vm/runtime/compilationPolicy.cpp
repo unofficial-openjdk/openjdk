@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)compilationPolicy.cpp	1.45 07/05/05 17:06:45 JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -60,7 +63,7 @@ void CompilationPolicy::completed_vm_startup() {
 
 // Returns true if m must be compiled before executing it
 // This is intended to force compiles for methods (usually for
-// debugging) that would otherwise be interpreted for some reason.
+// debugging) that would otherwise be interpreted for some reason. 
 bool CompilationPolicy::mustBeCompiled(methodHandle m) {
   if (m->has_compiled_code()) return false;       // already compiled
   if (!canBeCompiled(m))      return false;
@@ -69,7 +72,7 @@ bool CompilationPolicy::mustBeCompiled(methodHandle m) {
          (UseCompiler && AlwaysCompileLoopMethods && m->has_loops()); // eagerly compile loop methods
 }
 
-// Returns true if m is allowed to be compiled
+// Returns true if m is allowed to be compiled   
 bool CompilationPolicy::canBeCompiled(methodHandle m) {
   if (m->is_abstract()) return false;
   if (DontCompileHugeMethods && m->code_size() > HugeMethodLimit) return false;
@@ -111,7 +114,7 @@ void CompilationPolicy::reset_counter_for_back_branch_event(methodHandle m) {
   InvocationCounter* b = m->backedge_counter();
 
   // Don't set invocation_counter's value too low otherwise the method will
-  // look like immature (ic < ~5300) which prevents the inlining based on
+  // look like immature (ic < ~5300) which prevents the inlining based on 
   // the type profiling.
   i->set(i->state(), CompileThreshold);
   // Don't reset counter too low - it is used to check if OSR method is ready.
@@ -195,14 +198,14 @@ void StackWalkCompPolicy::method_invocation_event(methodHandle m, TRAPS) {
   const char* comment = "count";
 
   if (m->code() == NULL && !delayCompilationDuringStartup() && canBeCompiled(m) && UseCompiler) {
-    ResourceMark rm(THREAD);
+    ResourceMark rm(THREAD);  
     JavaThread *thread = (JavaThread*)THREAD;
     frame       fr     = thread->last_frame();
     assert(fr.is_interpreted_frame(), "must be interpreted");
     assert(fr.interpreter_frame_method() == m(), "bad method");
 
     if (TraceCompilationPolicy) {
-      tty->print("method invocation trigger: ");
+      tty->print("method invocation trigger: "); 
       m->print_short_name(tty);
       tty->print(" ( interpreted " INTPTR_FORMAT ", size=%d ) ", (address)m(), m->code_size());
     }
@@ -213,9 +216,9 @@ void StackWalkCompPolicy::method_invocation_event(methodHandle m, TRAPS) {
 
     if (first->top_method()->code() != NULL) {
       // called obsolete method/nmethod -- no need to recompile
-      if (TraceCompilationPolicy) tty->print_cr(" --> " INTPTR_FORMAT, first->top_method()->code());
+      if (TraceCompilationPolicy) tty->print_cr(" --> " INTPTR_FORMAT, first->top_method()->code());    
     } else if (compilation_level(m, InvocationEntryBci) == CompLevel_fast_compile) {
-      // Tier1 compilation policy avaoids stack walking.
+      // Tier1 compilation policy avaoids stack walking.      
       CompileBroker::compile_method(m, InvocationEntryBci,
                                     m, hot_count, comment, CHECK);
     } else {
@@ -262,8 +265,8 @@ int StackWalkCompPolicy::compilation_level(methodHandle m, int osr_bci)
         if (m->interpreter_invocation_count() < Tier2CompileThreshold) {
           comp_level = CompLevel_fast_compile;
         }
-      } else if (m->invocation_count() + m->backedge_count() <
-                 Tier2CompileThreshold) {
+      } else if (m->invocation_count() + m->backedge_count() < 
+                 Tier2CompileThreshold) { 
         comp_level = CompLevel_fast_compile;
       }
     }
@@ -278,7 +281,7 @@ RFrame* StackWalkCompPolicy::findTopInlinableFrame(GrowableArray<RFrame*>* stack
   // into its caller
   RFrame* current = stack->at(0); // current choice for stopping
   assert( current && !current->is_compiled(), "" );
-  const char* msg = NULL;
+  const char* msg = NULL; 
 
   while (1) {
 
@@ -292,9 +295,9 @@ RFrame* StackWalkCompPolicy::findTopInlinableFrame(GrowableArray<RFrame*>* stack
     methodHandle next_m = next->top_method();
 
     if (TraceCompilationPolicy && Verbose) {
-      tty->print("[caller: ");
-      next_m->print_short_name(tty);
-      tty->print("] ");
+      tty->print("[caller: "); 
+      next_m->print_short_name(tty); 
+      tty->print("] "); 
     }
 
     if( !Inline ) {           // Inlining turned off
@@ -349,7 +352,7 @@ RFrame* StackWalkCompPolicy::findTopInlinableFrame(GrowableArray<RFrame*>* stack
     // Caller counts / call-site counts; i.e. is this call site
     // a hot call site for method next_m?
     int freq = (invcnt) ? cnt/invcnt : cnt;
-
+    
     // Check size and frequency limits
     if ((msg = shouldInline(m, freq, cnt)) != NULL) {
       break;
@@ -373,8 +376,8 @@ RFrame* StackWalkCompPolicy::findTopInlinableFrame(GrowableArray<RFrame*>* stack
     }
 
     if (TraceCompilationPolicy && Verbose) {
-      tty->print("\n\t     check caller: ");
-      next_m->print_short_name(tty);
+      tty->print("\n\t     check caller: "); 
+      next_m->print_short_name(tty); 
       tty->print(" ( interpreted " INTPTR_FORMAT ", size=%d ) ", (address)next_m(), next_m->code_size());
     }
 
@@ -423,17 +426,17 @@ const char* StackWalkCompPolicy::shouldInline(methodHandle m, float freq, int cn
 
 
 const char* StackWalkCompPolicy::shouldNotInline(methodHandle m) {
-  // negative filter: should send NOT be inlined?  returns NULL (--> inline) or rejection msg
+  // negative filter: should send NOT be inlined?  returns NULL (--> inline) or rejection msg 
   if (m->is_abstract()) return (_msg = "abstract method");
   // note: we allow ik->is_abstract()
   if (!instanceKlass::cast(m->method_holder())->is_initialized()) return (_msg = "method holder not initialized");
-  if (m->is_native()) return (_msg = "native method");
+  if (m->is_native()) return (_msg = "native method"); 
   nmethod* m_code = m->code();
-  if( m_code != NULL && m_code->instructions_size() > InlineSmallCode )
+  if( m_code != NULL && m_code->instructions_size() > InlineSmallCode ) 
     return (_msg = "already compiled into a big method");
 
   // use frequency-based objections only for non-trivial methods
-  if (m->code_size() <= MaxTrivialSize) return NULL;
+  if (m->code_size() <= MaxTrivialSize) return NULL;    
   if (UseInterpreter) {     // don't use counts with -Xcomp
     if ((m->code() == NULL) && m->was_never_executed()) return (_msg = "never executed");
     if (!m->was_executed_more_than(MIN2(MinInliningThreshold, CompileThreshold >> 1))) return (_msg = "executed < MinInliningThreshold times");
@@ -446,3 +449,4 @@ const char* StackWalkCompPolicy::shouldNotInline(methodHandle m) {
 
 
 #endif // COMPILER2
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)invocationCounter.cpp	1.60 07/05/05 17:05:38 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -34,7 +37,7 @@ void InvocationCounter::init() {
 }
 
 void InvocationCounter::reset() {
-  // Only reset the state and don't make the method look like it's never
+  // Only reset the state and don't make the method look like it's never 
   // been executed
   set_state(wait_for_compile);
 }
@@ -149,7 +152,7 @@ void InvocationCounter::reinitialize(bool delay_overflow) {
 
   // When methodData is collected, the backward branch limit is compared against a
   // methodData counter, rather than an InvocationCounter.  In the former case, we
-  // don't need the shift by number_of_noncount_bits, but we do need to adjust
+  // don't need the shift by number_of_noncount_bits, but we do need to adjust 
   // the factor by which we scale the threshold.
   if (ProfileInterpreter) {
     InterpreterBackwardBranchLimit = (CompileThreshold * (OnStackReplacePercentage - InterpreterProfilePercentage)) / 100;
@@ -158,13 +161,14 @@ void InvocationCounter::reinitialize(bool delay_overflow) {
   }
 
   assert(0 <= InterpreterBackwardBranchLimit,
-         "OSR threshold should be non-negative");
-  assert(0 <= InterpreterProfileLimit &&
-         InterpreterProfileLimit <= InterpreterInvocationLimit,
-         "profile threshold should be less than the compilation threshold "
-         "and non-negative");
+	 "OSR threshold should be non-negative");
+  assert(0 <= InterpreterProfileLimit && 
+	 InterpreterProfileLimit <= InterpreterInvocationLimit, 
+	 "profile threshold should be less than the compilation threshold "
+	 "and non-negative");
 }
 
 void invocationCounter_init() {
   InvocationCounter::reinitialize(DelayCompilationDuringStartup);
 }
+

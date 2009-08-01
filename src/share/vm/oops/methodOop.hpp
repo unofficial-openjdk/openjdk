@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)methodOop.hpp	1.221 08/11/24 12:22:56 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// A methodOop represents a Java method.
+// A methodOop represents a Java method. 
 //
 // Memory layout (each line represents a word). Note that most applications load thousands of methods,
 // so keeping the size of this structure small has a big impact on footprint.
@@ -36,10 +39,10 @@
 // Accessing the checked exceptions table is used by reflection, so we put that last to make access
 // to it fast.
 //
-// The line number table is compressed and inlined following the byte codes. It is found as the first
-// byte following the byte codes. The checked exceptions table and the local variable table are inlined
+// The line number table is compressed and inlined following the byte codes. It is found as the first 
+// byte following the byte codes. The checked exceptions table and the local variable table are inlined 
 // after the line number table, and indexed from the end of the method. We do not compress the checked
-// exceptions table since the average length is less than 2, and do not bother to compress the local
+// exceptions table since the average length is less than 2, and do not bother to compress the local 
 // variable table either since it is mostly absent.
 //
 // Note that native_function and signature_handler has to be at fixed offsets (required by the interpreter)
@@ -51,7 +54,7 @@
 // | constMethodOop                 (oop)                 |
 // | constants                      (oop)                 |
 // |------------------------------------------------------|
-// | methodData                     (oop)                 |
+// | methodData                     (oop)                 | 
 // | interp_invocation_count                              |
 // |------------------------------------------------------|
 // | access_flags                                         |
@@ -114,12 +117,12 @@ class methodOopDesc : public oopDesc {
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
 #endif
   // Entry point for calling both from and to the interpreter.
-  address _i2i_entry;           // All-args-on-stack calling convention
+  address _i2i_entry;		// All-args-on-stack calling convention
   // Adapter blob (i2c/c2i) for this methodOop. Set once when method is linked.
   AdapterHandlerEntry* _adapter;
   // Entry point for calling from compiled code, to compiled code if it exists
   // or else the interpreter.
-  volatile address _from_compiled_entry;        // Cache of: _code ? _code->entry_point() : _adapter->c2i_entry()
+  volatile address _from_compiled_entry;	// Cache of: _code ? _code->entry_point() : _adapter->c2i_entry()
   // The entry point for calling both from and to compiled code is
   // "_code->entry_point()".  Because of tiered compilation and de-opt, this
   // field can come and go.  It can transition from NULL to not-null at any
@@ -223,11 +226,11 @@ class methodOopDesc : public oopDesc {
   void clear_intrinsic_id_cache() { _intrinsic_id_cache = 0; }
 
   // Count of times method was exited via exception while interpreting
-  void interpreter_throwout_increment() {
+  void interpreter_throwout_increment() { 
     if (_interpreter_throwout_count < 65534) {
       _interpreter_throwout_count++;
     }
-  }
+  }   
 
   int  interpreter_throwout_count() const        { return _interpreter_throwout_count; }
   void set_interpreter_throwout_count(int count) { _interpreter_throwout_count = count; }
@@ -235,11 +238,11 @@ class methodOopDesc : public oopDesc {
   // size of parameters
   int  size_of_parameters() const                { return _size_of_parameters; }
 
-  bool has_stackmap_table() const {
-    return constMethod()->has_stackmap_table();
+  bool has_stackmap_table() const { 
+    return constMethod()->has_stackmap_table(); 
   }
 
-  typeArrayOop stackmap_data() const {
+  typeArrayOop stackmap_data() const { 
     return constMethod()->stackmap_data();
   }
 
@@ -256,9 +259,9 @@ class methodOopDesc : public oopDesc {
   // for ex_klass indicates that the exception klass is not known; in
   // this case it matches any constraint class. Returns -1 if the
   // exception cannot be handled in this method. The handler
-  // constraint classes are loaded if necessary. Note that this may
+  // constraint classes are loaded if necessary. Note that this may 
   // throw an exception if loading of the constraint classes causes
-  // an IllegalAccessError (bugid 4307310) or an OutOfMemoryError.
+  // an IllegalAccessError (bugid 4307310) or an OutOfMemoryError. 
   // If an exception is thrown, returns the bci of the
   // exception handler which caused the exception to be thrown, which
   // is needed for proper retries. See, for example,
@@ -266,10 +269,10 @@ class methodOopDesc : public oopDesc {
   int fast_exception_handler_bci_for(KlassHandle ex_klass, int throw_bci, TRAPS);
 
   // method data access
-  methodDataOop method_data() const              {
+  methodDataOop method_data() const              { 
     return _method_data;
   }
-  void set_method_data(methodDataOop data)       {
+  void set_method_data(methodDataOop data)       { 
     oop_store_without_check((oop*)&_method_data, (oop)data);
   }
 
@@ -298,7 +301,7 @@ class methodOopDesc : public oopDesc {
 
   // nmethod/verified compiler entry
   address verified_code_entry();
-  bool check_code() const;      // Not inline to avoid circular ref
+  bool check_code() const;	// Not inline to avoid circular ref
   nmethod* volatile code() const                 { assert( check_code(), "" ); return (nmethod *)OrderAccess::load_ptr_acquire(&_code); }
   void clear_code();            // Clear out any compiled code
   void set_code(methodHandle mh, nmethod* code);
@@ -414,7 +417,7 @@ class methodOopDesc : public oopDesc {
   bool is_abstract() const                       { return access_flags().is_abstract();    }
   bool is_strict() const                         { return access_flags().is_strict();      }
   bool is_synthetic() const                      { return access_flags().is_synthetic();   }
-
+  
   // returns true if contains only return operation
   bool is_empty_method() const;
 
@@ -429,13 +432,13 @@ class methodOopDesc : public oopDesc {
   bool can_be_statically_bound() const;
 
   // returns true if the method has any backward branches.
-  bool has_loops() {
-    return access_flags().loops_flag_init() ? access_flags().has_loops() : compute_has_loops_flag();
+  bool has_loops() { 
+    return access_flags().loops_flag_init() ? access_flags().has_loops() : compute_has_loops_flag(); 
   };
 
   bool compute_has_loops_flag();
-
-  bool has_jsrs() {
+  
+  bool has_jsrs() { 
     return access_flags().has_jsrs();
   };
   void set_has_jsrs() {
@@ -443,11 +446,11 @@ class methodOopDesc : public oopDesc {
   }
 
   // returns true if the method has any monitors.
-  bool has_monitors() const                      { return is_synchronized() || access_flags().has_monitor_bytecodes(); }
+  bool has_monitors() const                      { return is_synchronized() || access_flags().has_monitor_bytecodes(); } 
   bool has_monitor_bytecodes() const             { return access_flags().has_monitor_bytecodes(); }
 
   void set_has_monitor_bytecodes()               { _access_flags.set_has_monitor_bytecodes(); }
-
+  
   // monitor matching. This returns a conservative estimate of whether the monitorenter/monitorexit bytecodes
   // propererly nest in the method. It might return false, even though they actually nest properly, since the info.
   // has not been computed yet.
@@ -482,10 +485,10 @@ class methodOopDesc : public oopDesc {
   static ByteSize size_of_locals_offset()        { return byte_offset_of(methodOopDesc, _max_locals        ); }
   static ByteSize size_of_parameters_offset()    { return byte_offset_of(methodOopDesc, _size_of_parameters); }
   static ByteSize from_compiled_offset()         { return byte_offset_of(methodOopDesc, _from_compiled_entry); }
-  static ByteSize code_offset()                  { return byte_offset_of(methodOopDesc, _code); }
+  static ByteSize code_offset()                  { return byte_offset_of(methodOopDesc, _code); }  
   static ByteSize invocation_counter_offset()    { return byte_offset_of(methodOopDesc, _invocation_counter); }
   static ByteSize backedge_counter_offset()      { return byte_offset_of(methodOopDesc, _backedge_counter); }
-  static ByteSize method_data_offset()           {
+  static ByteSize method_data_offset()           { 
     return byte_offset_of(methodOopDesc, _method_data);
   }
   static ByteSize interpreter_invocation_counter_offset() { return byte_offset_of(methodOopDesc, _interpreter_invocation_count); }
@@ -496,11 +499,11 @@ class methodOopDesc : public oopDesc {
   static ByteSize from_interpreted_offset()      { return byte_offset_of(methodOopDesc, _from_interpreted_entry ); }
   static ByteSize interpreter_entry_offset()     { return byte_offset_of(methodOopDesc, _i2i_entry ); }
   static ByteSize signature_handler_offset()     { return in_ByteSize(sizeof(methodOopDesc) + wordSize);      }
-  static ByteSize max_stack_offset()             { return byte_offset_of(methodOopDesc, _max_stack         ); }
+  static ByteSize max_stack_offset()             { return byte_offset_of(methodOopDesc, _max_stack         ); } 
 
   // for code generation
   static int method_data_offset_in_bytes()       { return offset_of(methodOopDesc, _method_data); }
-  static int interpreter_invocation_counter_offset_in_bytes()
+  static int interpreter_invocation_counter_offset_in_bytes()       
                                                  { return offset_of(methodOopDesc, _interpreter_invocation_count); }
 
   // Static methods that are used to implement member methods where an exposed this pointer
@@ -532,7 +535,7 @@ class methodOopDesc : public oopDesc {
   void set_is_prefixed_native()                     { _access_flags.set_is_prefixed_native(); }
 
   // Rewriting support
-  static methodHandle clone_with_new_data(methodHandle m, u_char* new_code, int new_code_length,
+  static methodHandle clone_with_new_data(methodHandle m, u_char* new_code, int new_code_length, 
                                           u_char* new_compressed_linenumber_table, int new_compressed_linenumber_size, TRAPS);
 
   // Get this method's jmethodID -- allocate if it doesn't exist
@@ -564,7 +567,7 @@ class methodOopDesc : public oopDesc {
     }
   }
 
-  // On-stack replacement support
+  // On-stack replacement support   
   bool has_osr_nmethod()                         { return instanceKlass::cast(method_holder())->lookup_osr_nmethod(this, InvocationEntryBci) != NULL; }
   nmethod* lookup_osr_nmethod_for(int bci)       { return instanceKlass::cast(method_holder())->lookup_osr_nmethod(this, bci); }
 
@@ -739,3 +742,5 @@ class BreakpointInfo : public CHeapObj {
   void set(methodOop method);
   void clear(methodOop method);
 };
+
+

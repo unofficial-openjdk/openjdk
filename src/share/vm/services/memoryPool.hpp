@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)memoryPool.hpp	1.25 07/05/29 09:44:30 JVM"
+#endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A memory pool represents the memory area that the VM manages.
@@ -52,7 +55,7 @@ class MemoryPool : public CHeapObj {
   };
 
   // We could make some of the following as performance counters
-  // for external monitoring.
+  // for external monitoring. 
   const char*      _name;
   PoolType         _type;
   size_t           _initial_size;
@@ -80,13 +83,13 @@ class MemoryPool : public CHeapObj {
              size_t max_size,
              bool support_usage_threshold,
              bool support_gc_threshold);
-
+  
   const char* name()                       { return _name; }
   bool        is_heap()                    { return _type == Heap; }
   bool        is_non_heap()                { return _type == NonHeap; }
   size_t      initial_size()   const       { return _initial_size; }
   int         num_memory_managers() const  { return _num_managers; }
-  // max size could be changed
+  // max size could be changed  
   virtual size_t max_size()    const       { return _max_size; }
 
   bool is_pool(instanceHandle pool) { return (pool() == _memory_pool_obj); }
@@ -106,7 +109,7 @@ class MemoryPool : public CHeapObj {
   // Records current memory usage if it's a peak usage
   void record_peak_memory_usage();
 
-  MemoryUsage get_peak_memory_usage() {
+  MemoryUsage get_peak_memory_usage() { 
     // check current memory usage first and then return peak usage
     record_peak_memory_usage();
     return _peak_usage;
@@ -149,9 +152,9 @@ private:
 public:
   ContiguousSpacePool(ContiguousSpace* space, const char* name, PoolType type, size_t max_size, bool support_usage_threshold);
 
-  ContiguousSpace* space()              { return _space; }
+  ContiguousSpace* space()		{ return _space; }
   MemoryUsage get_memory_usage();
-  size_t used_in_bytes()                { return space()->used(); }
+  size_t used_in_bytes() 		{ return space()->used(); }
 };
 
 class SurvivorContiguousSpacePool : public CollectedMemoryPool {
@@ -161,8 +164,8 @@ private:
 public:
   SurvivorContiguousSpacePool(DefNewGeneration* gen,
                               const char* name,
-                              PoolType type,
-                              size_t max_size,
+                              PoolType type, 
+                              size_t max_size, 
                               bool support_usage_threshold);
 
   MemoryUsage get_memory_usage();
@@ -181,13 +184,13 @@ private:
   CompactibleFreeListSpace* _space;
 public:
   CompactibleFreeListSpacePool(CompactibleFreeListSpace* space,
-                               const char* name,
+                               const char* name, 
                                PoolType type,
                                size_t max_size,
                                bool support_usage_threshold);
 
   MemoryUsage get_memory_usage();
-  size_t used_in_bytes()            { return _space->used(); }
+  size_t used_in_bytes() 	    { return _space->used(); }
 };
 #endif // SERIALGC
 
@@ -199,7 +202,7 @@ public:
   GenerationPool(Generation* gen, const char* name, PoolType type, bool support_usage_threshold);
 
   MemoryUsage get_memory_usage();
-  size_t used_in_bytes()                { return _gen->used(); }
+  size_t used_in_bytes()		{ return _gen->used(); }
 };
 
 class CodeHeapPool: public MemoryPool {
@@ -208,5 +211,5 @@ private:
 public:
   CodeHeapPool(CodeHeap* codeHeap, const char* name, bool support_usage_threshold);
   MemoryUsage get_memory_usage();
-  size_t used_in_bytes()            { return _codeHeap->allocated_capacity(); }
+  size_t used_in_bytes()	    { return _codeHeap->allocated_capacity(); }
 };

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)codeBlob.hpp	1.125 07/05/05 17:05:18 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // CodeBlob - superclass for all entries in the CodeCache.
@@ -52,7 +55,7 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   int        _frame_complete_offset;             // instruction offsets in [0.._frame_complete_offset) have
                                                  // not finished setting up their frame. Beware of pc's in
                                                  // that range. There is a similar range(s) on returns
-                                                 // which we don't detect.
+                                                 // which we don't detect. 
   int        _data_offset;                       // offset to where data region begins
   int        _oops_offset;                       // offset to where embedded oop table begins (inside data)
   int        _oops_length;                       // number of embedded oops
@@ -66,9 +69,9 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   inline void initialize_immediate_oop(oop* dest, jobject handle);
 
  public:
-  // Returns the space needed for CodeBlob
+  // Returns the space needed for CodeBlob 
   static unsigned int allocation_size(CodeBuffer* cb, int header_size);
-
+  
   // Creation
   // a) simple CodeBlob
   // frame_complete is the offset from the beginning of the instructions
@@ -93,7 +96,7 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   virtual bool is_buffer_blob() const            { return false; }
   virtual bool is_nmethod() const                { return false; }
   virtual bool is_runtime_stub() const           { return false; }
-  virtual bool is_deoptimization_stub() const    { return false; }
+  virtual bool is_deoptimization_stub() const    { return false; }  
   virtual bool is_uncommon_trap_stub() const     { return false; }
   virtual bool is_exception_stub() const         { return false; }
   virtual bool is_safepoint_stub() const         { return false; }
@@ -110,7 +113,7 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   address    instructions_begin() const          { return (address)    header_begin() + _instructions_offset;  }
   address    instructions_end() const            { return (address)    header_begin() + _data_offset; }
   address    data_begin() const                  { return (address)    header_begin() + _data_offset; }
-  address    data_end() const                    { return (address)    header_begin() + _size; }
+  address    data_end() const                    { return (address)    header_begin() + _size; }  
   oop*       oops_begin() const                  { return (oop*)      (header_begin() + _oops_offset); }
   oop*       oops_end() const                    { return                oops_begin() + _oops_length; }
 
@@ -126,16 +129,16 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   int relocation_size() const                    { return (address) relocation_end() - (address) relocation_begin(); }
   int instructions_size() const                  { return instructions_end() - instructions_begin();  }
   int data_size() const                          { return data_end() - data_begin(); }
-  int oops_size() const                          { return (address) oops_end() - (address) oops_begin(); }
+  int oops_size() const                          { return (address) oops_end() - (address) oops_begin(); }  
 
-  // Containment
+  // Containment  
   bool blob_contains(address addr) const         { return header_begin()       <= addr && addr < data_end(); }
-  bool relocation_contains(relocInfo* addr) const{ return relocation_begin()   <= addr && addr < relocation_end(); }
+  bool relocation_contains(relocInfo* addr) const{ return relocation_begin()   <= addr && addr < relocation_end(); }     
   bool instructions_contains(address addr) const { return instructions_begin() <= addr && addr < instructions_end(); }
   bool data_contains(address addr) const         { return data_begin()         <= addr && addr < data_end(); }
   bool oops_contains(oop* addr) const            { return oops_begin()         <= addr && addr < oops_end(); }
   bool contains(address addr) const              { return instructions_contains(addr); }
-  bool is_frame_complete_at(address addr) const  { return instructions_contains(addr) &&
+  bool is_frame_complete_at(address addr) const  { return instructions_contains(addr) && 
                                                           addr >= instructions_begin() + _frame_complete_offset; }
 
   // Relocation support
@@ -155,13 +158,13 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   oop* oop_addr_at(int index) const{             // for GC
     // relocation indexes are biased by 1 (because 0 is reserved)
     assert(index > 0 && index <= _oops_length, "must be a valid non-zero index");
-    return &oops_begin()[index-1];
+    return &oops_begin()[index-1];  
   }
 
   void copy_oops(GrowableArray<jobject>* oops);
 
-  // CodeCache support: really only used by the nmethods, but in order to get
-  // asserts and certain bookkeeping to work in the CodeCache they are defined
+  // CodeCache support: really only used by the nmethods, but in order to get 
+  // asserts and certain bookkeeping to work in the CodeCache they are defined 
   // virtual here.
   virtual bool is_zombie() const                 { return false; }
   virtual bool is_locked_by_vm() const           { return false; }
@@ -175,8 +178,8 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
                             OopClosure* keep_alive,
                             bool unloading_occurred);
   virtual void oops_do(OopClosure* f) = 0;
-
-  // OopMap for frame
+  
+  // OopMap for frame  
   OopMapSet* oop_maps() const                    { return _oop_maps; }
   void set_oop_maps(OopMapSet* p);
   OopMap* oop_map_for_return_address(address return_address);
@@ -197,7 +200,7 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   virtual void verify();
   virtual void print() const                     PRODUCT_RETURN;
   virtual void print_value_on(outputStream* st) const PRODUCT_RETURN;
-
+  
   // Print the comment associated with offset on stream, if there is one
   void print_block_comment(outputStream* stream, intptr_t offset) {
     _comments.print_block_comment(stream, offset);
@@ -282,7 +285,7 @@ class RuntimeStub: public CodeBlob {
 
   // Typing
   bool is_runtime_stub() const                   { return true; }
-
+  
   // GC support
   bool caller_must_gc_arguments(JavaThread* thread) const { return _caller_must_gc_arguments; }
 
@@ -290,7 +293,7 @@ class RuntimeStub: public CodeBlob {
 
   // GC/Verification support
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f)  { /* nothing to do */ }
-  bool is_alive() const                          { return true; }
+  bool is_alive() const                          { return true; }   
   void do_unloading(BoolObjectClosure* is_alive,
                     OopClosure* keep_alive,
                     bool unloading_occurred)     { /* do nothing */ }
@@ -307,7 +310,7 @@ class RuntimeStub: public CodeBlob {
 
 class SingletonBlob: public CodeBlob {
   friend class VMStructs;
-  public:
+  public:  
    SingletonBlob(
      const char* name,
      CodeBuffer* cb,
@@ -367,7 +370,7 @@ class DeoptimizationBlob: public SingletonBlob {
   );
 
   // Typing
-  bool is_deoptimization_stub() const { return true; }
+  bool is_deoptimization_stub() const { return true; }  
   const DeoptimizationBlob *as_deoptimization_stub() const { return this; }
   bool exception_address_is_unpack_entry(address pc) const {
     address unpack_pc = unpack();
@@ -376,7 +379,7 @@ class DeoptimizationBlob: public SingletonBlob {
 
 
 
-
+  
   // GC for args
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f) { /* Nothing to do */ }
 
@@ -425,7 +428,7 @@ class UncommonTrapBlob: public SingletonBlob {
   // Creation
   static UncommonTrapBlob* create(
     CodeBuffer* cb,
-    OopMapSet*  oop_maps,
+    OopMapSet*  oop_maps, 
     int         frame_size
   );
 
@@ -469,11 +472,11 @@ class ExceptionBlob: public SingletonBlob {
 
   // Typing
   bool is_exception_stub() const                 { return true; }
-
+  
   // Iteration
   void oops_do(OopClosure* f) {}
 };
-#endif // COMPILER2
+#endif // COMPILER2 
 
 
 //----------------------------------------------------------------------------------------------------

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)arrayOop.hpp	1.35 07/05/05 17:06:00 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // arrayOopDesc is the abstract baseclass for all arrays.  It doesn't
@@ -74,7 +77,7 @@ class arrayOopDesc : public oopDesc {
   }
 
   // Tells whether index is within bounds.
-  bool is_within_bounds(int index) const        { return 0 <= index && index < length(); }
+  bool is_within_bounds(int index) const	{ return 0 <= index && index < length(); }
 
   // Accessors for instance variable which is not a C++ declared nonstatic
   // field.

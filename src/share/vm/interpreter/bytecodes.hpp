@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bytecodes.hpp	1.79 07/06/20 14:52:28 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Bytecodes specifies all bytecodes used in the VM and
@@ -234,7 +237,7 @@ class Bytecodes: AllStatic {
     _ifnonnull            = 199, // 0xc7
     _goto_w               = 200, // 0xc8
     _jsr_w                = 201, // 0xc9
-    _breakpoint           = 202, // 0xca
+    _breakpoint		  = 202, // 0xca
 
     number_of_java_codes,
 
@@ -305,10 +308,10 @@ class Bytecodes: AllStatic {
 
 
    // Fetch a bytecode, hiding breakpoints as necessary:
-   static Code       code_at(address bcp, methodOop method = NULL) {
-          Code code = cast(*bcp); return (code != _breakpoint) ? code : non_breakpoint_code_at(bcp, method);
+   static Code       code_at(address bcp, methodOop method = NULL) { 
+          Code code = cast(*bcp); return (code != _breakpoint) ? code : non_breakpoint_code_at(bcp, method); 
    }
-   static Code       java_code_at(address bcp, methodOop method = NULL) {
+   static Code       java_code_at(address bcp, methodOop method = NULL) { 
           return java_code(code_at(bcp, method));
    }
 
@@ -348,13 +351,14 @@ class Bytecodes: AllStatic {
   static int         java_length_at (address bcp)  { int l = length_for(java_code_at(bcp)); return l > 0 ? l : special_length_at(bcp); }
   static bool        is_java_code   (Code code)    { return 0 <= code && code < number_of_java_codes; }
 
-  static bool        is_aload       (Code code)    { return (code == _aload  || code == _aload_0  || code == _aload_1
+  static bool        is_aload       (Code code)    { return (code == _aload  || code == _aload_0  || code == _aload_1   
                                                                              || code == _aload_2  || code == _aload_3); }
-  static bool        is_astore      (Code code)    { return (code == _astore || code == _astore_0 || code == _astore_1
+  static bool        is_astore      (Code code)    { return (code == _astore || code == _astore_0 || code == _astore_1 
                                                                              || code == _astore_2 || code == _astore_3); }
 
-  static bool        is_zero_const  (Code code)    { return (code == _aconst_null || code == _iconst_0
+  static bool        is_zero_const  (Code code)    { return (code == _aconst_null || code == _iconst_0 
                                                            || code == _fconst_0 || code == _dconst_0); }
   // Initialization
   static void        initialize     ();
 };
+

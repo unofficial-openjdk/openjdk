@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)arrayKlass.hpp	1.66 07/05/05 17:05:58 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // arrayKlass is the abstract baseclass for all array classes
@@ -30,7 +33,7 @@ class arrayKlass: public Klass {
   int      _dimension;         // This is n'th-dimensional array.
   klassOop _higher_dimension;  // Refers the (n+1)'th-dimensional array (if present).
   klassOop _lower_dimension;   // Refers the (n-1)'th-dimensional array (if present).
-  int      _vtable_len;        // size of vtable for this klass
+  int      _vtable_len;        // size of vtable for this klass  
   juint    _alloc_size;        // allocation profiling support
   oop      _component_mirror;  // component type, as a java/lang/Class
 
@@ -132,3 +135,4 @@ class arrayKlass: public Klass {
   // Verification
   void oop_verify_on(oop obj, outputStream* st);
 };
+

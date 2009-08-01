@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger;
@@ -28,7 +28,7 @@ package sun.jvm.hotspot.debugger;
     handles the cIntegerType{Min,Max}Value methods. */
 
 public abstract class MachineDescriptionTwosComplement {
-
+  
   /** Handles 1, 2, 4, and 8-byte signed integers */
   private static final long[] signedMinValues = {
     Byte.MIN_VALUE,
@@ -70,7 +70,7 @@ public abstract class MachineDescriptionTwosComplement {
     if (isUnsigned) {
       return 0;
     }
-
+    
     return tableLookup(sizeInBytes, signedMinValues);
   }
 

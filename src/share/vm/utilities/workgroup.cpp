@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)workgroup.cpp	1.36 07/05/05 17:07:11 JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -119,16 +122,16 @@ void WorkGang::run_task(AbstractGangTask* task) {
   while (finished_workers() < total_workers()) {
     if (TraceWorkGang) {
       tty->print_cr("Waiting in work gang %s: %d/%d finished sequence %d",
-                    name(), finished_workers(), total_workers(),
-                    _sequence_number);
+		    name(), finished_workers(), total_workers(),
+		    _sequence_number);
     }
     monitor()->wait(/* no_safepoint_check */ true);
   }
   _task = NULL;
   if (TraceWorkGang) {
     tty->print_cr("/nFinished work gang %s: %d/%d sequence %d",
-                  name(), finished_workers(), total_workers(),
-                  _sequence_number);
+	          name(), finished_workers(), total_workers(),
+	          _sequence_number);
     }
 }
 
@@ -144,7 +147,7 @@ void AbstractWorkGang::stop() {
   while (finished_workers() < total_workers()) {
     if (TraceWorkGang) {
       tty->print_cr("Waiting in work gang %s: %d/%d finished",
-                    name(), finished_workers(), total_workers());
+		    name(), finished_workers(), total_workers());
     }
     monitor()->wait(/* no_safepoint_check */ true);
   }
@@ -182,7 +185,7 @@ void AbstractWorkGang::threads_do(ThreadClosure* tc) const {
   for (uint i = 0; i < num_thr; i++) {
     tc->do_thread(gang_worker(i));
   }
-}
+}  
 
 // GangWorker methods.
 
@@ -203,12 +206,12 @@ void GangWorker::initialize() {
   os::set_priority(this, NearMaxPriority);
   if (TraceWorkGang) {
     tty->print_cr("Running gang worker for gang %s id %d",
-                  gang()->name(), id());
+		  gang()->name(), id());
   }
   // The VM thread should not execute here because MutexLocker's are used
   // as (opposed to MutexLockerEx's).
   assert(!Thread::current()->is_VM_thread(), "VM thread should not be part"
-         " of a work gang");
+	 " of a work gang");
 }
 
 void GangWorker::loop() {
@@ -225,64 +228,64 @@ void GangWorker::loop() {
       // in the outer loop.
       gang()->internal_worker_poll(&data);
       if (TraceWorkGang) {
-        tty->print("Polled outside for work in gang %s worker %d",
-                   gang()->name(), id());
-        tty->print("  terminate: %s",
-                   data.terminate() ? "true" : "false");
-        tty->print("  sequence: %d (prev: %d)",
-                   data.sequence_number(), previous_sequence_number);
-        if (data.task() != NULL) {
-          tty->print("  task: %s", data.task()->name());
-        } else {
-          tty->print("  task: NULL");
-        }
-        tty->cr();
+	tty->print("Polled outside for work in gang %s worker %d",
+		   gang()->name(), id());
+	tty->print("  terminate: %s",
+		   data.terminate() ? "true" : "false");
+	tty->print("  sequence: %d (prev: %d)",
+		   data.sequence_number(), previous_sequence_number);
+	if (data.task() != NULL) {
+	  tty->print("  task: %s", data.task()->name());
+	} else {
+	  tty->print("  task: NULL");
+	}
+	tty->cr();
       }
       for ( ; /* break or return */; ) {
-        // Terminate if requested.
-        if (data.terminate()) {
-          gang()->internal_note_finish();
-          gang_monitor->notify_all();
-          return;
-        }
-        // Check for new work.
-        if ((data.task() != NULL) &&
-            (data.sequence_number() != previous_sequence_number)) {
-          gang()->internal_note_start();
-          gang_monitor->notify_all();
-          part = gang()->started_workers() - 1;
-          break;
-        }
-        // Nothing to do.
-        gang_monitor->wait(/* no_safepoint_check */ true);
-        gang()->internal_worker_poll(&data);
-        if (TraceWorkGang) {
-          tty->print("Polled inside for work in gang %s worker %d",
-                     gang()->name(), id());
-          tty->print("  terminate: %s",
-                     data.terminate() ? "true" : "false");
-          tty->print("  sequence: %d (prev: %d)",
-                     data.sequence_number(), previous_sequence_number);
-          if (data.task() != NULL) {
-            tty->print("  task: %s", data.task()->name());
-          } else {
-            tty->print("  task: NULL");
-          }
-          tty->cr();
-        }
+	// Terminate if requested.
+	if (data.terminate()) {
+	  gang()->internal_note_finish();
+	  gang_monitor->notify_all();
+	  return;
+	}
+	// Check for new work.
+	if ((data.task() != NULL) &&
+	    (data.sequence_number() != previous_sequence_number)) {
+	  gang()->internal_note_start();
+	  gang_monitor->notify_all();
+	  part = gang()->started_workers() - 1;
+	  break;
+	}
+	// Nothing to do.
+	gang_monitor->wait(/* no_safepoint_check */ true);
+	gang()->internal_worker_poll(&data);
+	if (TraceWorkGang) {
+	  tty->print("Polled inside for work in gang %s worker %d",
+		     gang()->name(), id());
+	  tty->print("  terminate: %s",
+		     data.terminate() ? "true" : "false");
+	  tty->print("  sequence: %d (prev: %d)",
+		     data.sequence_number(), previous_sequence_number);
+	  if (data.task() != NULL) {
+	    tty->print("  task: %s", data.task()->name());
+	  } else {
+	    tty->print("  task: NULL");
+	  }
+	  tty->cr();
+	}
       }
       // Drop gang mutex.
     }
     if (TraceWorkGang) {
       tty->print("Work for work gang %s id %d task %s part %d",
-                 gang()->name(), id(), data.task()->name(), part);
+		 gang()->name(), id(), data.task()->name(), part);
     }
     assert(data.task() != NULL, "Got null task");
     data.task()->work(part);
     {
       if (TraceWorkGang) {
-        tty->print("Finish for work gang %s id %d task %s part %d",
-                   gang()->name(), id(), data.task()->name(), part);
+	tty->print("Finish for work gang %s id %d task %s part %d",
+		   gang()->name(), id(), data.task()->name(), part);
       }
       // Grab the gang mutex.
       MutexLocker ml(gang_monitor);
@@ -386,7 +389,7 @@ bool SubTasksDone::valid() {
 void SubTasksDone::set_par_threads(int t) {
 #ifdef ASSERT
   assert(_claimed == 0 || _threads_completed == _n_threads,
-         "should not be called while tasks are being processed!");
+	 "should not be called while tasks are being processed!");
 #endif
   _n_threads = (t == 0 ? 1 : t);
 }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)prefetch_solaris_x86.inline.hpp	1.9 07/09/17 09:15:23 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 extern "C" {
@@ -39,3 +42,4 @@ inline void Prefetch::write(void *loc, intx interval) {
   _Prefetch_write(loc, interval);
 #endif // AMD64
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)interpreter.hpp	1.154 07/08/29 13:42:25 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file contains the platform-independant parts
@@ -106,8 +109,8 @@ class CodeletMark: ResourceMark {
     // create assembler for code generation
     masm  = new InterpreterMacroAssembler(&_cb);
     _masm = &masm;
-  }
-
+  }  
+  
   ~CodeletMark() {
     // align so printing shows nop's instead of random code at the end (Codelets are aligned)
     (*_masm)->align(wordSize);
@@ -132,3 +135,4 @@ class Interpreter: public CC_INTERP_ONLY(CppInterpreter) NOT_CC_INTERP(TemplateI
   static InterpreterCodelet* codelet_containing(address pc)     { return (InterpreterCodelet*)_code->stub_containing(pc); }
 #include "incls/_interpreter_pd.hpp.incl"
 };
+

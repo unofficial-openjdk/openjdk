@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)sweeper.cpp	1.39 07/05/05 17:06:50 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -34,9 +37,9 @@ jint      NMethodSweeper::_locked_seen = 0;
 jint      NMethodSweeper::_not_entrant_seen_on_stack = 0;
 bool      NMethodSweeper::_rescan = false;
 
-void NMethodSweeper::sweep() {
+void NMethodSweeper::sweep() {   
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at a safepoint");
-  if (!MethodFlushing) return;
+  if (!MethodFlushing) return;  
 
   // No need to synchronize access, since this is always executed at a
   // safepoint.  If we aren't in the middle of scan and a rescan
@@ -46,7 +49,7 @@ void NMethodSweeper::sweep() {
   // Make sure CompiledIC_lock in unlocked, since we might update some
   // inline caches. If it is, we just bail-out and try later.
   if (CompiledIC_lock->is_locked() || Patching_lock->is_locked()) return;
-
+  
   // Check for restart
   assert(CodeCache::find_blob_unsafe(_current) == _current, "Sweeper nmethod cached state invalid");
   if (_current == NULL) {
@@ -69,22 +72,22 @@ void NMethodSweeper::sweep() {
     tty->print_cr("### Sweep at %d out of %d. Invocations left: %d", _seen, CodeCache::nof_blobs(), _invocations);
   }
 
-  // We want to visit all nmethods after NmethodSweepFraction invocations.
+  // We want to visit all nmethods after NmethodSweepFraction invocations. 
   // If invocation is 1 we do the rest
   int todo = CodeCache::nof_blobs();
   if (_invocations != 1) {
-    todo = (CodeCache::nof_blobs() - _seen) / _invocations;
+    todo = (CodeCache::nof_blobs() - _seen) / _invocations;    
     _invocations--;
   }
-
-  for(int i = 0; i < todo && _current != NULL; i++) {
+      
+  for(int i = 0; i < todo && _current != NULL; i++) {      
     CodeBlob* next = CodeCache::next(_current); // Read next before we potentially delete current
     if (_current->is_nmethod()) {
-      process_nmethod((nmethod *)_current);
-    }
+      process_nmethod((nmethod *)_current);      
+    }    
     _seen++;
     _current = next;
-  }
+  }  
   // Because we could stop on a codeBlob other than an nmethod we skip forward
   // to the next nmethod (if any). codeBlobs other than nmethods can be freed
   // async to us and make _current invalid while we sleep.
@@ -105,8 +108,8 @@ void NMethodSweeper::sweep() {
   }
 }
 
-
-void NMethodSweeper::process_nmethod(nmethod *nm) {
+   
+void NMethodSweeper::process_nmethod(nmethod *nm) {  
   // Skip methods that are currently referenced by the VM
   if (nm->is_locked_by_vm()) {
     // But still remember to clean-up inline caches for alive nmethods
@@ -125,27 +128,27 @@ void NMethodSweeper::process_nmethod(nmethod *nm) {
     // there are no inline caches that referes to it.
     if (nm->is_marked_for_reclamation()) {
       assert(!nm->is_locked_by_vm(), "must not flush locked nmethods");
-      nm->flush();
+      nm->flush();      
     } else {
       nm->mark_for_reclamation();
       _rescan = true;
-    }
-  } else if (nm->is_not_entrant()) {
+    }  
+  } else if (nm->is_not_entrant()) {    
     // If there is no current activations of this method on the
     // stack we can safely convert it to a zombie method
     if (nm->can_not_entrant_be_converted()) {
       nm->make_zombie();
       _rescan = true;
     } else {
-      // Still alive, clean up its inline caches
-      nm->cleanup_inline_caches();
+      // Still alive, clean up its inline caches 
+      nm->cleanup_inline_caches();    
       // we coudn't transition this nmethod so don't immediately
       // request a rescan.  If this method stays on the stack for a
       // long time we don't want to keep rescanning at every safepoint.
       _not_entrant_seen_on_stack++;
     }
   } else if (nm->is_unloaded()) {
-    // Unloaded code, just make it a zombie
+    // Unloaded code, just make it a zombie 
     if (nm->is_osr_only_method()) {
       // No inline caches will ever point to osr methods, so we can just remove it
       nm->flush();
@@ -156,6 +159,6 @@ void NMethodSweeper::process_nmethod(nmethod *nm) {
   } else {
     assert(nm->is_alive(), "should be alive");
     // Clean-up all inline caches that points to zombie/non-reentrant methods
-    nm->cleanup_inline_caches();
+    nm->cleanup_inline_caches();    
   }
 }

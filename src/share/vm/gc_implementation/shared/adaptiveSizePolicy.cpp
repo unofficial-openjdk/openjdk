@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)adaptiveSizePolicy.cpp	1.13 07/05/05 17:05:33 JVM"
+#endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 #include "incls/_precompiled.incl"
 #include "incls/_adaptiveSizePolicy.cpp.incl"
@@ -27,18 +30,18 @@
 elapsedTimer AdaptiveSizePolicy::_minor_timer;
 elapsedTimer AdaptiveSizePolicy::_major_timer;
 
-// The throughput goal is implemented as
-//      _throughput_goal = 1 - ( 1 / (1 + gc_cost_ratio))
+// The throughput goal is implemented as 
+//	_throughput_goal = 1 - ( 1 / (1 + gc_cost_ratio))
 // gc_cost_ratio is the ratio
-//      application cost / gc cost
+//	application cost / gc cost
 // For example a gc_cost_ratio of 4 translates into a
 // throughput goal of .80
 
 AdaptiveSizePolicy::AdaptiveSizePolicy(size_t init_eden_size,
                                        size_t init_promo_size,
-                                       size_t init_survivor_size,
-                                       double gc_pause_goal_sec,
-                                       uint gc_cost_ratio) :
+				       size_t init_survivor_size,
+				       double gc_pause_goal_sec,
+				       uint gc_cost_ratio) :
     _eden_size(init_eden_size),
     _promo_size(init_promo_size),
     _survivor_size(init_survivor_size),
@@ -51,7 +54,7 @@ AdaptiveSizePolicy::AdaptiveSizePolicy(size_t init_eden_size,
     _threshold_tolerance_percent(1.0 + ThresholdTolerance/100.0),
     _young_gen_change_for_minor_throughput(0),
     _old_gen_change_for_major_throughput(0) {
-  _avg_minor_pause    =
+  _avg_minor_pause    = 
     new AdaptivePaddedAverage(AdaptiveTimeWeight, PausePadding);
   _avg_minor_interval = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
   _avg_minor_gc_cost  = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
@@ -112,42 +115,42 @@ void AdaptiveSizePolicy::minor_collection_end(GCCause::Cause gc_cause) {
       UseAdaptiveSizePolicyWithSystemGC) {
     double minor_pause_in_seconds = _minor_timer.seconds();
     double minor_pause_in_ms = minor_pause_in_seconds * MILLIUNITS;
-
+  
     // Sample for performance counter
     _avg_minor_pause->sample(minor_pause_in_seconds);
-
+  
     // Cost of collection (unit-less)
     double collection_cost = 0.0;
     if ((_latest_minor_mutator_interval_seconds > 0.0) &&
         (minor_pause_in_seconds > 0.0)) {
       double interval_in_seconds =
         _latest_minor_mutator_interval_seconds + minor_pause_in_seconds;
-      collection_cost =
+      collection_cost = 
         minor_pause_in_seconds / interval_in_seconds;
       _avg_minor_gc_cost->sample(collection_cost);
       // Sample for performance counter
       _avg_minor_interval->sample(interval_in_seconds);
     }
-
-    // The policy does not have enough data until at least some
+  
+    // The policy does not have enough data until at least some 
     // minor collections have been done.
-    _young_gen_policy_is_ready =
+    _young_gen_policy_is_ready = 
       (_avg_minor_gc_cost->count() >= AdaptiveSizePolicyReadyThreshold);
-
+  
     // Calculate variables used to estimate pause time vs. gen sizes
     double eden_size_in_mbytes = ((double)_eden_size)/((double)M);
     update_minor_pause_young_estimator(minor_pause_in_ms);
     update_minor_pause_old_estimator(minor_pause_in_ms);
-
+  
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print("AdaptiveSizePolicy::minor_collection_end: "
         "minor gc cost: %f  average: %f", collection_cost,
         _avg_minor_gc_cost->average());
-      gclog_or_tty->print_cr("  minor pause: %f minor period %f",
+      gclog_or_tty->print_cr("  minor pause: %f minor period %f", 
         minor_pause_in_ms,
         _latest_minor_mutator_interval_seconds * MILLIUNITS);
     }
-
+  
     // Calculate variable used to estimate collection cost vs. gen sizes
     assert(collection_cost >= 0.0, "Expected to be non-negative");
     _minor_collection_estimator->update(eden_size_in_mbytes, collection_cost);
@@ -200,7 +203,7 @@ double AdaptiveSizePolicy::time_since_major_gc() const {
   return result;
 }
 
-// Linear decay of major gc cost
+// Linear decay of major gc cost 
 double AdaptiveSizePolicy::decaying_major_gc_cost() const {
   double major_interval = major_gc_interval_average_for_decay();
   double major_gc_cost_average = major_gc_cost();
@@ -221,14 +224,14 @@ double AdaptiveSizePolicy::decaying_major_gc_cost() const {
 // Use a value of the major gc cost that has been decayed
 // by the factor
 //
-//      average-interval-between-major-gc * AdaptiveSizeMajorGCDecayTimeScale /
-//        time-since-last-major-gc
+//	average-interval-between-major-gc * AdaptiveSizeMajorGCDecayTimeScale /
+//	  time-since-last-major-gc
 //
 // if the average-interval-between-major-gc * AdaptiveSizeMajorGCDecayTimeScale
 // is less than time-since-last-major-gc.
 //
-// In cases where there are initial major gc's that
-// are of a relatively high cost but no later major
+// In cases where there are initial major gc's that 
+// are of a relatively high cost but no later major 
 // gc's, the total gc cost can remain high because
 // the major gc cost remains unchanged (since there are no major
 // gc's).  In such a situation the value of the unchanging
@@ -237,7 +240,7 @@ double AdaptiveSizePolicy::decaying_major_gc_cost() const {
 // small.  Use the decaying gc cost only to decide whether to
 // adjust for throughput.  Using it also to determine the adjustment
 // to be made for throughput also seems reasonable but there is
-// no test case to use to decide if it is the right thing to do
+// no test case to use to decide if it is the right thing to do 
 // don't do it yet.
 
 double AdaptiveSizePolicy::decaying_gc_cost() const {
@@ -248,7 +251,7 @@ double AdaptiveSizePolicy::decaying_gc_cost() const {
       (avg_major_interval > 0.00)) {
     double time_since_last_major_gc = time_since_major_gc();
 
-    // Decay the major gc cost?
+    // Decay the major gc cost?  
     if (time_since_last_major_gc >
         ((double) AdaptiveSizeMajorGCDecayTimeScale) * avg_major_interval) {
 
@@ -256,8 +259,8 @@ double AdaptiveSizePolicy::decaying_gc_cost() const {
       decayed_major_gc_cost = decaying_major_gc_cost();
       if (PrintGCDetails && Verbose) {
         gclog_or_tty->print_cr("\ndecaying_gc_cost: major interval average:"
-          " %f  time since last major gc: %f",
-          avg_major_interval, time_since_last_major_gc);
+	  " %f  time since last major gc: %f", 
+	  avg_major_interval, time_since_last_major_gc);
         gclog_or_tty->print_cr("  major gc cost: %f  decayed major gc cost: %f",
           major_gc_cost(), decayed_major_gc_cost);
       }
@@ -289,16 +292,16 @@ bool AdaptiveSizePolicy::print_adaptive_size_policy_on(outputStream* st) const {
   // Print goal for which action is needed.
   char* action = NULL;
   bool change_for_pause = false;
-  if ((change_old_gen_for_maj_pauses() ==
-         decrease_old_gen_for_maj_pauses_true) ||
-      (change_young_gen_for_min_pauses() ==
-         decrease_young_gen_for_min_pauses_true)) {
+  if ((change_old_gen_for_maj_pauses() == 
+	 decrease_old_gen_for_maj_pauses_true) ||
+      (change_young_gen_for_min_pauses() == 
+	 decrease_young_gen_for_min_pauses_true)) {
     action = (char*) " *** pause time goal ***";
     change_for_pause = true;
   } else if ((change_old_gen_for_throughput() ==
-               increase_old_gen_for_throughput_true) ||
+	       increase_old_gen_for_throughput_true) || 
             (change_young_gen_for_throughput() ==
-               increase_young_gen_for_througput_true)) {
+	       increase_young_gen_for_througput_true)) {
     action = (char*) " *** throughput goal ***";
   } else if (decrease_for_footprint()) {
     action = (char*) " *** reduced footprint ***";
@@ -330,16 +333,16 @@ bool AdaptiveSizePolicy::print_adaptive_size_policy_on(outputStream* st) const {
   } else if (change_for_pause) {
     tenured_gen_action = no_change_msg;
   }
-
+    
   // Throughput
   if (change_old_gen_for_throughput() == increase_old_gen_for_throughput_true) {
     assert(change_young_gen_for_throughput() ==
-           increase_young_gen_for_througput_true,
-           "Both generations should be growing");
+	   increase_young_gen_for_througput_true, 
+	   "Both generations should be growing");
     young_gen_action = grow_msg;
     tenured_gen_action = grow_msg;
-  } else if (change_young_gen_for_throughput() ==
-             increase_young_gen_for_througput_true) {
+  } else if (change_young_gen_for_throughput() == 
+	     increase_young_gen_for_througput_true) {
     // Only the young generation may grow at start up (before
     // enough full collections have been done to grow the old generation).
     young_gen_action = grow_msg;
@@ -347,7 +350,7 @@ bool AdaptiveSizePolicy::print_adaptive_size_policy_on(outputStream* st) const {
   }
 
   // Minimum footprint
-  if (decrease_for_footprint() != 0) {
+  if (decrease_for_footprint() != 0) { 
     young_gen_action = shrink_msg;
     tenured_gen_action = shrink_msg;
   }
@@ -364,8 +367,8 @@ bool AdaptiveSizePolicy::print_adaptive_size_policy_on(outputStream* st) const {
 }
 
 bool AdaptiveSizePolicy::print_adaptive_size_policy_on(
-                                            outputStream* st,
-                                            int tenuring_threshold_arg) const {
+                                            outputStream* st, 
+				            int tenuring_threshold_arg) const {
   if (!AdaptiveSizePolicy::print_adaptive_size_policy_on(st)) {
     return false;
   }
@@ -374,13 +377,13 @@ bool AdaptiveSizePolicy::print_adaptive_size_policy_on(
   bool tenuring_threshold_changed = true;
   if (decrement_tenuring_threshold_for_survivor_limit()) {
     st->print("    Tenuring threshold:    (attempted to decrease to avoid"
-              " survivor space overflow) = ");
+	      " survivor space overflow) = ");
   } else if (decrement_tenuring_threshold_for_gc_cost()) {
     st->print("    Tenuring threshold:    (attempted to decrease to balance"
-              " GC costs) = ");
+	      " GC costs) = ");
   } else if (increment_tenuring_threshold_for_gc_cost()) {
     st->print("    Tenuring threshold:    (attempted to increase to balance"
-              " GC costs) = ");
+	      " GC costs) = ");
   } else {
     tenuring_threshold_changed = false;
     assert(!tenuring_threshold_change(), "(no change was attempted)");

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)verifier.hpp	1.41 07/05/05 17:07:02 JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The verifier class
@@ -31,7 +34,7 @@ class Verifier : AllStatic {
   /**
    * Verify the bytecodes for a class.  If 'throw_exception' is true
    * then the appropriate VerifyError or ClassFormatError will be thrown.
-   * Otherwise, no exception is thrown and the return indicates the
+   * Otherwise, no exception is thrown and the return indicates the 
    * error.
    */
   static bool verify(instanceKlassHandle klass, Mode mode, TRAPS);
@@ -68,7 +71,7 @@ class StackMapTable;
 // Care needs to be taken to make sure resource objects don't outlive
 // the lifetime of their ResourceMark.
 
-// These macros are used similarly to CHECK macros but also check
+// These macros are used similarly to CHECK macros but also check 
 // the status of the verifier and return if that has an error.
 #define CHECK_VERIFY(verifier) \
   CHECK); if ((verifier)->has_error()) return; (0
@@ -103,33 +106,33 @@ class ClassVerifier : public StackObj {
   void verify_cp_class_type(int index, constantPoolHandle cp, TRAPS);
 
   u2 verify_stackmap_table(
-    u2 stackmap_index, u2 bci, StackMapFrame* current_frame,
+    u2 stackmap_index, u2 bci, StackMapFrame* current_frame, 
     StackMapTable* stackmap_table, bool no_control_flow, TRAPS);
 
   void verify_exception_handler_targets(
-    u2 bci, bool this_uninit, StackMapFrame* current_frame,
+    u2 bci, bool this_uninit, StackMapFrame* current_frame, 
     StackMapTable* stackmap_table, TRAPS);
 
   void verify_ldc(
-    int opcode, u2 index, StackMapFrame *current_frame,
+    int opcode, u2 index, StackMapFrame *current_frame, 
     constantPoolHandle cp, u2 bci, TRAPS);
 
   void verify_switch(
-    RawBytecodeStream* bcs, u4 code_length, char* code_data,
+    RawBytecodeStream* bcs, u4 code_length, char* code_data, 
     StackMapFrame* current_frame, StackMapTable* stackmap_table, TRAPS);
 
   void verify_field_instructions(
-    RawBytecodeStream* bcs, StackMapFrame* current_frame,
+    RawBytecodeStream* bcs, StackMapFrame* current_frame, 
     constantPoolHandle cp, TRAPS);
 
   void verify_invoke_init(
-    RawBytecodeStream* bcs, VerificationType ref_class_type,
-    StackMapFrame* current_frame, u4 code_length, bool* this_uninit,
+    RawBytecodeStream* bcs, VerificationType ref_class_type, 
+    StackMapFrame* current_frame, u4 code_length, bool* this_uninit, 
     constantPoolHandle cp, TRAPS);
 
   void verify_invoke_instructions(
-    RawBytecodeStream* bcs, u4 code_length, StackMapFrame* current_frame,
-    bool* this_uninit, VerificationType return_type,
+    RawBytecodeStream* bcs, u4 code_length, StackMapFrame* current_frame, 
+    bool* this_uninit, VerificationType return_type, 
     constantPoolHandle cp, TRAPS);
 
   VerificationType get_newarray_type(u2 index, u2 bci, TRAPS);
@@ -173,8 +176,8 @@ class ClassVerifier : public StackObj {
   instanceKlassHandle current_class() const { return _klass; }
   VerificationType current_type() const { return _this_type; }
 
-  // Verifies the class.  If a verify or class file format error occurs,
-  // the '_exception_name' symbols will set to the exception name and
+  // Verifies the class.  If a verify or class file format error occurs, 
+  // the '_exception_name' symbols will set to the exception name and 
   // the message_buffer will be filled in with the exception message.
   void verify_class(TRAPS);
 
@@ -182,7 +185,7 @@ class ClassVerifier : public StackObj {
   symbolHandle result() const { return _exception_type; }
   bool has_error() const { return !(result().is_null()); }
 
-  // Called when verify or class format errors are encountered.
+  // Called when verify or class format errors are encountered.  
   // May throw an exception based upon the mode.
   void verify_error(u2 offset, const char* fmt, ...);
   void verify_error(const char* fmt, ...);
@@ -208,13 +211,13 @@ inline int ClassVerifier::change_sig_to_verificationType(
   switch (bt) {
     case T_OBJECT:
     case T_ARRAY:
-      {
-        symbolOop name = sig_type->as_symbol(CHECK_0);
-        *inference_type =
+      { 
+        symbolOop name = sig_type->as_symbol(CHECK_0); 
+        *inference_type = 
           VerificationType::reference_type(symbolHandle(THREAD, name));
         return 1;
       }
-    case T_LONG:
+    case T_LONG: 
       *inference_type = VerificationType::long_type();
       *++inference_type = VerificationType::long2_type();
       return 2;

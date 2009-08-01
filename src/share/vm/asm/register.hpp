@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)register.hpp	1.13 07/05/05 17:05:03 JVM"
+#endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Use AbstractRegister as shortcut
@@ -61,18 +64,18 @@ class AbstractRegisterImpl {
 // invocation is terminated with a ;.
 //
 // CONSTANT_REGISTER_DECLARATION(Register, G0, 0);
-//
+// 
 // extern const Register G0 ;
-// enum { G0_RegisterEnumValue = 0 } ;
-//
+// enum { G0_RegisterEnumValue = 0 } ; 
+// 
 // REGISTER_DECLARATION(Register, Gmethod, G5);
-//
+// 
 // extern const Register Gmethod ;
-// enum { Gmethod_RegisterEnumValue = G5_RegisterEnumValue } ;
-//
+// enum { Gmethod_RegisterEnumValue = G5_RegisterEnumValue } ; 
+// 
 // REGISTER_DEFINITION(Register, G0);
-//
-// const Register G0 = ( ( Register ) G0_RegisterEnumValue ) ;
+// 
+// const Register G0 = ( ( Register ) G0_RegisterEnumValue ) ; 
 //
 
 #define AS_REGISTER(type,name)         ((type)name##_##type##EnumValue)

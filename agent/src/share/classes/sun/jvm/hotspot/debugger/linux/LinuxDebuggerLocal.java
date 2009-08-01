@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.linux;
@@ -63,11 +63,11 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
 
     // called by native method lookupByAddress0
     private ClosestSymbol createClosestSymbol(String name, long offset) {
-       return new ClosestSymbol(name, offset);
+       return new ClosestSymbol(name, offset); 
     }
 
     // called by native method attach0
-    private LoadObject createLoadObject(String fileName, long textsize,
+    private LoadObject createLoadObject(String fileName, long textsize, 
                                         long base) {
        File f = new File(fileName);
        Address baseAddr = newAddress(base);
@@ -76,13 +76,13 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
 
     // native methods
 
-    private native static void init0()
+    private native static void init0() 
                                 throws DebuggerException;
-    private native void attach0(int pid)
+    private native void attach0(int pid) 
                                 throws DebuggerException;
     private native void attach0(String execName, String coreName)
-                                throws DebuggerException;
-    private native void detach0()
+	                        throws DebuggerException;
+    private native void detach0() 
                                 throws DebuggerException;
     private native long lookupByName0(String objectName, String symbol)
                                 throws DebuggerException;
@@ -90,18 +90,18 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
                                 throws DebuggerException;
     private native long[] getThreadIntegerRegisterSet0(int lwp_id)
                                 throws DebuggerException;
-    private native byte[] readBytesFromProcess0(long address, long numBytes)
+    private native byte[] readBytesFromProcess0(long address, long numBytes) 
                                 throws DebuggerException;
     public native static int  getAddressSize() ;
 
     // Note on Linux threads are really processes. When target process is
     // attached by a serviceability agent thread, only that thread can do
     // ptrace operations on the target. This is because from kernel's point
-    // view, other threads are just separate processes and they are not
+    // view, other threads are just separate processes and they are not 
     // attached to the target. When they attempt to make ptrace calls,
     // an ESRCH error will be returned as kernel believes target is not
     // being traced by the caller.
-    // To work around the problem, we use a worker thread here to handle
+    // To work around the problem, we use a worker thread here to handle 
     // all JNI functions that are making ptrace calls.
 
     interface WorkerThreadTask {
@@ -179,7 +179,7 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
              if ( (address % alignment != 0)
                 &&(alignment != 8 || address % 4 != 0)) {
                 throw new UnalignedAddressException(
-                        "Trying to read at address: "
+                        "Trying to read at address: " 
                       + addressValueToString(address)
                       + " with alignment: " + alignment,
                         address);
@@ -199,11 +199,11 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
             // the UI. This is a cache of 4096 4K pages, or 16 MB. The page
             // size must be adjusted to be the hardware's page size.
             // (FIXME: should pick this up from the debugger.)
-            if (getCPU().equals("ia64")) {
-              initCache(16384, parseCacheNumPagesProperty(1024));
-            } else {
-              initCache(4096, parseCacheNumPagesProperty(4096));
-            }
+	    if (getCPU().equals("ia64")) {
+	      initCache(16384, parseCacheNumPagesProperty(1024));
+	    } else {
+	      initCache(4096, parseCacheNumPagesProperty(4096));
+	    }
         }
 
         workerThread = new LinuxDebuggerLocalWorkerThread(this);
@@ -222,12 +222,12 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
 
     private void checkAttached() throws DebuggerException {
         if (attached) {
-            if (isCore) {
-                throw new DebuggerException("attached to a core dump already");
-            } else {
-                throw new DebuggerException("attached to a process already");
-            }
-        }
+	    if (isCore) {
+		throw new DebuggerException("attached to a core dump already");
+	    } else {
+		throw new DebuggerException("attached to a process already");
+	    }
+	}
     }
 
     private void requireAttach() {
@@ -250,7 +250,7 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
 
     /** From the Debugger interface via JVMDebugger */
     public synchronized void attach(int processID) throws DebuggerException {
-        checkAttached();
+	checkAttached();
         threadList = new ArrayList();
         loadObjectList = new ArrayList();
         class AttachTask implements WorkerThreadTask {
@@ -258,7 +258,7 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
            public void doit(LinuxDebuggerLocal debugger) {
               debugger.attach0(pid);
               debugger.attached = true;
-              debugger.isCore = false;
+	      debugger.isCore = false;
               findABIVersion();
            }
         }
@@ -273,9 +273,9 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
         checkAttached();
         threadList = new ArrayList();
         loadObjectList = new ArrayList();
-        attach0(execName, coreName);
-        attached = true;
-        isCore = true;
+	attach0(execName, coreName);
+	attached = true;
+	isCore = true;
         findABIVersion();
     }
 
@@ -288,25 +288,25 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
         threadList = null;
         loadObjectList = null;
 
-        if (isCore) {
-            detach0();
-            attached = false;
-            return true;
-        } else {
-            class DetachTask implements WorkerThreadTask {
-                boolean result = false;
+	if (isCore) {
+	    detach0();
+	    attached = false; 
+	    return true;
+	} else {
+	    class DetachTask implements WorkerThreadTask {
+		boolean result = false;
 
-                public void doit(LinuxDebuggerLocal debugger) {
-                    debugger.detach0();
-                    debugger.attached = false;
-                    result = true;
-                }
-            }
-
-            DetachTask task = new DetachTask();
-            workerThread.execute(task);
-            return task.result;
-        }
+		public void doit(LinuxDebuggerLocal debugger) {
+		    debugger.detach0();
+		    debugger.attached = false;
+		    result = true;
+		}
+	    }
+	    
+	    DetachTask task = new DetachTask();
+	    workerThread.execute(task);
+	    return task.result;
+	}
     }
 
     /** From the Debugger interface via JVMDebugger */
@@ -357,26 +357,26 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
             return null;
         }
 
-        if (isCore) {
-            long addr = lookupByName0(objectName, symbol);
-            return (addr == 0)? null : new LinuxAddress(this, handleGCC32ABI(addr, symbol));
-        } else {
-            class LookupByNameTask implements WorkerThreadTask {
-                String objectName, symbol;
-                Address result;
+	if (isCore) {
+	    long addr = lookupByName0(objectName, symbol);
+	    return (addr == 0)? null : new LinuxAddress(this, handleGCC32ABI(addr, symbol));
+	} else {
+	    class LookupByNameTask implements WorkerThreadTask {
+		String objectName, symbol;
+		Address result;
 
-                public void doit(LinuxDebuggerLocal debugger) {
-                    long addr = debugger.lookupByName0(objectName, symbol);
-                    result = (addr == 0 ? null : new LinuxAddress(debugger, handleGCC32ABI(addr, symbol)));
-                }
-            }
+		public void doit(LinuxDebuggerLocal debugger) {
+		    long addr = debugger.lookupByName0(objectName, symbol);
+		    result = (addr == 0 ? null : new LinuxAddress(debugger, handleGCC32ABI(addr, symbol)));
+		}
+	    }
 
-            LookupByNameTask task = new LookupByNameTask();
-            task.objectName = objectName;
-            task.symbol = symbol;
-            workerThread.execute(task);
-            return task.result;
-        }
+	    LookupByNameTask task = new LookupByNameTask();
+	    task.objectName = objectName;
+	    task.symbol = symbol;
+	    workerThread.execute(task);
+	    return task.result;
+	}
     }
 
     /** From the SymbolLookup interface via Debugger and JVMDebugger */
@@ -450,22 +450,22 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
     public synchronized long[] getThreadIntegerRegisterSet(int lwp_id)
                                             throws DebuggerException {
         requireAttach();
-        if (isCore) {
-            return getThreadIntegerRegisterSet0(lwp_id);
-        } else {
-            class GetThreadIntegerRegisterSetTask implements WorkerThreadTask {
-                int lwp_id;
-                long[] result;
-                public void doit(LinuxDebuggerLocal debugger) {
-                    result = debugger.getThreadIntegerRegisterSet0(lwp_id);
-                }
-            }
+	if (isCore) {
+	    return getThreadIntegerRegisterSet0(lwp_id);
+	} else {
+	    class GetThreadIntegerRegisterSetTask implements WorkerThreadTask {
+		int lwp_id;
+		long[] result;
+		public void doit(LinuxDebuggerLocal debugger) {
+		    result = debugger.getThreadIntegerRegisterSet0(lwp_id);
+		}
+	    }
 
-            GetThreadIntegerRegisterSetTask task = new GetThreadIntegerRegisterSetTask();
-            task.lwp_id = lwp_id;
-            workerThread.execute(task);
-            return task.result;
-        }
+	    GetThreadIntegerRegisterSetTask task = new GetThreadIntegerRegisterSetTask();
+	    task.lwp_id = lwp_id;
+	    workerThread.execute(task);
+	    return task.result;
+	}
     }
 
     /** Need to override this to relax alignment checks on x86. */
@@ -558,28 +558,28 @@ public class LinuxDebuggerLocal extends DebuggerBase implements LinuxDebugger {
     public synchronized ReadResult readBytesFromProcess(long address,
             long numBytes) throws UnmappedAddressException, DebuggerException {
         requireAttach();
-        if (isCore) {
-            byte[] res = readBytesFromProcess0(address, numBytes);
-            return (res != null)? new ReadResult(res) : new ReadResult(address);
-        } else {
-            class ReadBytesFromProcessTask implements WorkerThreadTask {
-                long address, numBytes;
-                ReadResult result;
-                public void doit(LinuxDebuggerLocal debugger) {
-                    byte[] res = debugger.readBytesFromProcess0(address, numBytes);
-                    if (res != null)
-                        result = new ReadResult(res);
-                    else
-                        result = new ReadResult(address);
-                }
-            }
+	if (isCore) {
+	    byte[] res = readBytesFromProcess0(address, numBytes);
+	    return (res != null)? new ReadResult(res) : new ReadResult(address);
+	} else {
+	    class ReadBytesFromProcessTask implements WorkerThreadTask {
+		long address, numBytes;
+		ReadResult result;
+		public void doit(LinuxDebuggerLocal debugger) {
+		    byte[] res = debugger.readBytesFromProcess0(address, numBytes);
+		    if (res != null)
+			result = new ReadResult(res);
+		    else
+			result = new ReadResult(address);
+		}
+	    }
 
-            ReadBytesFromProcessTask task = new ReadBytesFromProcessTask();
-            task.address = address;
-            task.numBytes = numBytes;
-            workerThread.execute(task);
-            return task.result;
-        }
+	    ReadBytesFromProcessTask task = new ReadBytesFromProcessTask();
+	    task.address = address;
+	    task.numBytes = numBytes;
+	    workerThread.execute(task);
+	    return task.result;
+	}
     }
 
     public void writeBytesToProcess(long address, long numBytes, byte[] data)

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)methodOop.cpp	1.314 08/11/24 12:22:56 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -111,8 +114,8 @@ int  methodOopDesc::fast_exception_handler_bci_for(KlassHandle ex_klass, int thr
         // we know the exception class => get the constraint class
         // this may require loading of the constraint class; if verification
         // fails or some other exception occurs, return handler_bci
-        klassOop k = pool->klass_at(klass_index, CHECK_(handler_bci));
-        KlassHandle klass = KlassHandle(THREAD, k);
+	klassOop k = pool->klass_at(klass_index, CHECK_(handler_bci));
+	KlassHandle klass = KlassHandle(THREAD, k);
         assert(klass.not_null(), "klass not loaded");
         if (ex_klass->is_subtype_of(klass())) {
           return handler_bci;
@@ -136,7 +139,7 @@ methodOop methodOopDesc::method_from_bcp(address bcp) {
 
 
 void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
-
+    
   Thread* myThread    = Thread::current();
   methodHandle h_this(myThread, this);
 #ifdef ASSERT
@@ -148,7 +151,7 @@ void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
     if (!VerifyStack && !VerifyLastFrame) {
       // verify stack calls this outside VM thread
       warning("oopmap should only be accessed by the "
-              "VM, GC task or CMS threads (or during debugging)");
+              "VM, GC task or CMS threads (or during debugging)");  
       InterpreterOopMap local_mask;
       instanceKlass::cast(method_holder())->mask_for(h_this, bci, &local_mask);
       local_mask.print();
@@ -160,7 +163,7 @@ void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
 }
 
 
-int methodOopDesc::bci_from(address bcp) const {
+int methodOopDesc::bci_from(address bcp) const {  
   assert(is_native() && bcp == code_base() || contains(bcp), "bcp doesn't belong to this method");
   return bcp - code_base();
 }
@@ -311,8 +314,8 @@ void methodOopDesc::compute_size_of_parameters(Thread *thread) {
 }
 
 #ifdef CC_INTERP
-void methodOopDesc::set_result_index(BasicType type)          {
-  _result_index = Interpreter::BasicType_as_index(type);
+void methodOopDesc::set_result_index(BasicType type)          { 
+  _result_index = Interpreter::BasicType_as_index(type); 
 }
 #endif
 
@@ -337,7 +340,7 @@ bool methodOopDesc::is_vanilla_constructor() const {
   //   invokespecial
   //   indexbyte1
   //   indexbyte2
-  //
+  // 
   // followed by an (optional) sequence of:
   //
   //   aload_0
@@ -371,41 +374,41 @@ bool methodOopDesc::is_vanilla_constructor() const {
 }
 
 
-bool methodOopDesc::compute_has_loops_flag() {
+bool methodOopDesc::compute_has_loops_flag() {  
   BytecodeStream bcs(methodOop(this));
   Bytecodes::Code bc;
-
-  while ((bc = bcs.next()) >= 0) {
-    switch( bc ) {
-      case Bytecodes::_ifeq:
-      case Bytecodes::_ifnull:
-      case Bytecodes::_iflt:
-      case Bytecodes::_ifle:
-      case Bytecodes::_ifne:
-      case Bytecodes::_ifnonnull:
-      case Bytecodes::_ifgt:
-      case Bytecodes::_ifge:
-      case Bytecodes::_if_icmpeq:
-      case Bytecodes::_if_icmpne:
-      case Bytecodes::_if_icmplt:
-      case Bytecodes::_if_icmpgt:
-      case Bytecodes::_if_icmple:
-      case Bytecodes::_if_icmpge:
+    
+  while ((bc = bcs.next()) >= 0) {    
+    switch( bc ) {        
+      case Bytecodes::_ifeq: 
+      case Bytecodes::_ifnull: 
+      case Bytecodes::_iflt: 
+      case Bytecodes::_ifle: 
+      case Bytecodes::_ifne: 
+      case Bytecodes::_ifnonnull: 
+      case Bytecodes::_ifgt: 
+      case Bytecodes::_ifge: 
+      case Bytecodes::_if_icmpeq: 
+      case Bytecodes::_if_icmpne: 
+      case Bytecodes::_if_icmplt: 
+      case Bytecodes::_if_icmpgt: 
+      case Bytecodes::_if_icmple: 
+      case Bytecodes::_if_icmpge: 
       case Bytecodes::_if_acmpeq:
       case Bytecodes::_if_acmpne:
-      case Bytecodes::_goto:
-      case Bytecodes::_jsr:
+      case Bytecodes::_goto: 
+      case Bytecodes::_jsr:     
         if( bcs.dest() < bcs.next_bci() ) _access_flags.set_has_loops();
         break;
 
-      case Bytecodes::_goto_w:
-      case Bytecodes::_jsr_w:
-        if( bcs.dest_w() < bcs.next_bci() ) _access_flags.set_has_loops();
+      case Bytecodes::_goto_w:       
+      case Bytecodes::_jsr_w:        
+        if( bcs.dest_w() < bcs.next_bci() ) _access_flags.set_has_loops(); 
         break;
-    }
+    }  
   }
   _access_flags.set_loops_flag_init();
-  return _access_flags.has_loops();
+  return _access_flags.has_loops(); 
 }
 
 
@@ -506,9 +509,9 @@ bool methodOopDesc::is_klass_loaded_by_klass_index(int klass_index) const {
 bool methodOopDesc::is_klass_loaded(int refinfo_index, bool must_be_resolved) const {
   int klass_index = _constants->klass_ref_index_at(refinfo_index);
   if (must_be_resolved) {
-    // Make sure klass is resolved in constantpool.
+    // Make sure klass is resolved in constantpool.   
     if (constants()->tag_at(klass_index).is_unresolved_klass()) return false;
-  }
+  }  
   return is_klass_loaded_by_klass_index(klass_index);
 }
 
@@ -518,7 +521,7 @@ void methodOopDesc::set_native_function(address function, bool post_event_flag) 
   address* native_function = native_function_addr();
 
   // We can see racers trying to place the same native function into place. Once
-  // is plenty.
+  // is plenty. 
   address current = *native_function;
   if (current == function) return;
   if (post_event_flag && JvmtiExport::should_post_native_method_bind() &&
@@ -539,7 +542,7 @@ void methodOopDesc::set_native_function(address function, bool post_event_flag) 
   nmethod* nm = code(); // Put it into local variable to guard against concurrent updates
   if (nm != NULL) {
     nm->make_not_entrant();
-  }
+  }  
 }
 
 
@@ -557,7 +560,7 @@ void methodOopDesc::clear_native_function() {
 }
 
 
-void methodOopDesc::set_signature_handler(address handler) {
+void methodOopDesc::set_signature_handler(address handler) { 
   address* signature_handler =  signature_handler_addr();
   *signature_handler = handler;
 }
@@ -602,8 +605,8 @@ void methodOopDesc::set_not_compilable(int comp_level) {
 }
 
 // Revert to using the interpreter and clear out the nmethod
-void methodOopDesc::clear_code() {
-
+void methodOopDesc::clear_code() { 
+  
   // this may be NULL if c2i adapters have not been made yet
   // Only should happen at allocate time.
   if (_adapter == NULL) {
@@ -704,11 +707,11 @@ address methodOopDesc::verified_code_entry() {
 bool methodOopDesc::check_code() const {
   // cached in a register or local.  There's a race on the value of the field.
   nmethod *code = (nmethod *)OrderAccess::load_ptr_acquire(&_code);
-  return code == NULL || (code->method() == NULL) || (code->method() == (methodOop)this && !code->is_osr_method());
+  return code == NULL || (code->method() == NULL) || (code->method() == (methodOop)this && !code->is_osr_method()); 
 }
 
 // Install compiled code.  Instantly it can execute.
-void methodOopDesc::set_code(methodHandle mh, nmethod *code) {
+void methodOopDesc::set_code(methodHandle mh, nmethod *code) { 
   assert( code, "use clear_code to remove code" );
   assert( mh->check_code(), "" );
 
@@ -717,7 +720,7 @@ void methodOopDesc::set_code(methodHandle mh, nmethod *code) {
   // These writes must happen in this order, because the interpreter will
   // directly jump to from_interpreted_entry which jumps to an i2c adapter
   // which jumps to _from_compiled_entry.
-  mh->_code = code;             // Assign before allowing compiled code to exec
+  mh->_code = code;		// Assign before allowing compiled code to exec
 
   int comp_level = code->comp_level();
   // In theory there could be a race here. In practice it is unlikely
@@ -749,7 +752,7 @@ bool methodOopDesc::is_overridden_in(klassOop k) const {
       return false;
     }
     return true;
-  }
+  }  
 
   assert(ik->is_subclass_of(method_holder()), "should be subklass");
   assert(ik->vtable() != NULL, "vtable should exist");
@@ -908,7 +911,7 @@ bool methodOopDesc::has_unloaded_classes_in_signature(methodHandle m, TRAPS) {
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
     if (ss.type() == T_OBJECT) {
       symbolHandle name(THREAD, ss.as_symbol_or_null());
-      if (name() == NULL) return true;
+      if (name() == NULL) return true;   
       klassOop klass = SystemDictionary::find(name, class_loader, protection_domain, THREAD);
       if (klass == NULL) return true;
     }
@@ -1019,7 +1022,7 @@ void methodOopDesc::sort_methods(objArrayOop methods,
       compareFn compare = (compareFn) (idempotent ? method_compare_idempotent : method_compare);
       qsort(methods->base(), length, heapOopSize, compare);
     }
-
+    
     // Sort annotations if necessary
     assert(methods_annotations == NULL           || methods_annotations->length() == methods->length(), "");
     assert(methods_parameter_annotations == NULL || methods_parameter_annotations->length() == methods->length(), "");

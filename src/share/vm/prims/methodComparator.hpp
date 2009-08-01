@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)methodComparator.hpp	1.12 07/05/05 17:06:40 JVM"
+#endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BciMap;
@@ -81,13 +84,13 @@ class BciMap {
   // -----------------------------------------
   // Old method   |invokevirtual 5|aload 1|...
   // -----------------------------------------
-  //
-  //                                 |<- new_st_bci          |<- new_end_bci
+  //                                                         
+  //                                 |<- new_st_bci          |<- new_end_bci    
   // --------------------------------------------------------------------
   // New method       |invokevirual 5|aload 2|invokevirtual 6|aload 1|...
   // --------------------------------------------------------------------
-  //                                 ^^^^^^^^^^^^^^^^^^^^^^^^
-  //                                    Added fragment
+  //                                 ^^^^^^^^^^^^^^^^^^^^^^^^ 
+  //                                    Added fragment 
 
   void store_fragment_location(int old_bci, int new_st_bci, int new_end_bci) {
     if (_cur_pos == _cur_size) {

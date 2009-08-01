@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vtune.hpp	1.20 07/05/05 17:07:01 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,23 +22,23 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// Interface to Intel's VTune profiler.
+// Interface to Intel's VTune profiler. 
 
 class VTune : AllStatic {
  public:
    static void create_nmethod(nmethod* nm);      // register newly created nmethod
    static void delete_nmethod(nmethod* nm);      // unregister nmethod before discarding it
 
-   static void register_stub(const char* name, address start, address end);
+   static void register_stub(const char* name, address start, address end);    
                                                  // register internal VM stub
    static void start_GC();                       // start/end of GC or scavenge
    static void end_GC();
 
    static void start_class_load();               // start/end of class loading
-   static void end_class_load();
+   static void end_class_load();  
 
    static void exit();                           // VM exit
 };
@@ -53,3 +56,4 @@ class VTuneClassLoadMarker : StackObj {
    VTuneClassLoadMarker() { VTune::start_class_load(); }
   ~VTuneClassLoadMarker() { VTune::end_class_load(); }
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ciSignature.cpp	1.21 07/05/05 17:05:16 JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -53,7 +56,7 @@ ciSignature::ciSignature(ciKlass* accessing_klass, ciSymbol* symbol) {
     } else {
       symbolOop name = ss.as_symbol(THREAD);
       if (HAS_PENDING_EXCEPTION) {
-        type = ss.is_array() ? (ciType*)ciEnv::unloaded_ciobjarrayklass()
+        type = ss.is_array() ? (ciType*)ciEnv::unloaded_ciobjarrayklass() 
           : (ciType*)ciEnv::unloaded_ciinstance_klass();
         env->record_out_of_memory_failure();
         CLEAR_PENDING_EXCEPTION;
@@ -108,3 +111,4 @@ void ciSignature::print() {
   _accessing_klass->print();
   tty->print(" address=0x%x>", (address)this);
 }
+

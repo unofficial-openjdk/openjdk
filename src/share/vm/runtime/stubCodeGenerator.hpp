@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)stubCodeGenerator.hpp	1.25 07/05/17 16:06:33 JVM"
+#endif
 /*
  * Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // All the basic framework for stubcode generation/debugging/printing.
@@ -66,10 +69,10 @@ class StubCodeDesc: public CHeapObj {
     _next           = _list;
     _group          = group;
     _name           = name;
-    _index          = ++_count; // (never zero)
+    _index          = ++_count;	// (never zero)
     _begin          = begin;
     _end            = NULL;
-    _list           = this;
+    _list           = this;    
   };
 
   const char* group() const                      { return _group; }
@@ -79,7 +82,7 @@ class StubCodeDesc: public CHeapObj {
   address     end() const                        { return _end; }
   int         size_in_bytes() const              { return _end - _begin; }
   bool        contains(address pc) const         { return _begin <= pc && pc < _end; }
-  void        print();
+  void        print();  
 };
 
 // The base class for all stub-generating code generators.
@@ -112,9 +115,10 @@ class StubCodeMark: public StackObj {
  protected:
   StubCodeGenerator* _cgen;
   StubCodeDesc*      _cdesc;
-
+  
  public:
   StubCodeMark(StubCodeGenerator* cgen, const char* group, const char* name);
   ~StubCodeMark();
 
 };
+

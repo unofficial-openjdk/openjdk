@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)java.hpp	1.38 07/08/21 18:54:50 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Register function to be called by before_exit
@@ -32,7 +35,7 @@ extern void before_exit(JavaThread * thread);
 extern void vm_exit(int code);
 
 // Wrapper for ::exit()
-extern void vm_direct_exit(int code);
+extern void vm_direct_exit(int code); 
 
 // Shutdown the VM but do not exit the process
 extern void vm_shutdown();

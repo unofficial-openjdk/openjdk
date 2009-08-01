@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)psParallelCompact.cpp	1.64 08/06/19 15:33:02 JVM"
+#endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -64,9 +67,9 @@ double PSParallelCompact::_dwl_mean;
 double PSParallelCompact::_dwl_std_dev;
 double PSParallelCompact::_dwl_first_term;
 double PSParallelCompact::_dwl_adjustment;
-#ifdef  ASSERT
+#ifdef	ASSERT
 bool   PSParallelCompact::_dwl_initialized = false;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 #ifdef VALIDATE_MARK_SWEEP
 GrowableArray<void*>*   PSParallelCompact::_root_refs_stack = NULL;
@@ -199,8 +202,8 @@ print_generic_summary_region(size_t i, const ParallelCompactData::RegionData* c)
 
 void
 print_generic_summary_data(ParallelCompactData& summary_data,
-                           HeapWord* const beg_addr,
-                           HeapWord* const end_addr)
+			   HeapWord* const beg_addr,
+			   HeapWord* const end_addr)
 {
   size_t total_words = 0;
   size_t i = summary_data.addr_to_region_idx(beg_addr);
@@ -222,12 +225,12 @@ print_generic_summary_data(ParallelCompactData& summary_data,
 
 void
 print_generic_summary_data(ParallelCompactData& summary_data,
-                           SpaceInfo* space_info)
+			   SpaceInfo* space_info)
 {
   for (unsigned int id = 0; id < PSParallelCompact::last_space_id; ++id) {
     const MutableSpace* space = space_info[id].space();
     print_generic_summary_data(summary_data, space->bottom(),
-                               MAX2(space->top(), space_info[id].new_top()));
+			       MAX2(space->top(), space_info[id].new_top()));
   }
 }
 
@@ -247,7 +250,7 @@ print_initial_summary_region(size_t i,
 
 void
 print_initial_summary_data(ParallelCompactData& summary_data,
-                           const MutableSpace* space) {
+			   const MutableSpace* space) {
   if (space->top() == space->bottom()) {
     return;
   }
@@ -314,7 +317,7 @@ print_initial_summary_data(ParallelCompactData& summary_data,
 
 void
 print_initial_summary_data(ParallelCompactData& summary_data,
-                           SpaceInfo* space_info) {
+			   SpaceInfo* space_info) {
   unsigned int id = PSParallelCompact::perm_space_id;
   const MutableSpace* space;
   do {
@@ -327,14 +330,14 @@ print_initial_summary_data(ParallelCompactData& summary_data,
     print_generic_summary_data(summary_data, space->bottom(), space->top());
   } while (++id < PSParallelCompact::last_space_id);
 }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
-#ifdef  ASSERT
+#ifdef	ASSERT
 size_t add_obj_count;
 size_t add_obj_size;
 size_t mark_bitmap_count;
 size_t mark_bitmap_size;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 ParallelCompactData::ParallelCompactData()
 {
@@ -373,7 +376,7 @@ ParallelCompactData::create_vspace(size_t count, size_t element_size)
     MAX2(page_sz, granularity);
   ReservedSpace rs(bytes, rs_align, rs_align > 0);
   os::trace_page_sizes("par compact", raw_bytes, raw_bytes, page_sz, rs.base(),
-                       rs.size());
+		       rs.size());
   PSVirtualSpace* vspace = new PSVirtualSpace(rs, page_sz);
   if (vspace != 0) {
     if (vspace->expand_by(bytes)) {
@@ -741,7 +744,7 @@ klassOop ParallelCompactData::calc_new_klass(klassOop old_klass) {
   return updated_klass;
 }
 
-#ifdef  ASSERT
+#ifdef	ASSERT
 void ParallelCompactData::verify_clear(const PSVirtualSpace* vspace)
 {
   const size_t* const beg = (const size_t*)vspace->committed_low_addr();
@@ -755,7 +758,7 @@ void ParallelCompactData::verify_clear()
 {
   verify_clear(_region_vspace);
 }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 #ifdef NOT_PRODUCT
 ParallelCompactData::RegionData* debug_region(size_t region_index) {
@@ -857,7 +860,7 @@ void PSParallelCompact::initialize_space_info()
   _space_info[perm_space_id].set_min_dense_prefix(perm_space->top());
   if (TraceParallelOldGCDensePrefix) {
     tty->print_cr("perm min_dense_prefix=" PTR_FORMAT,
-                  _space_info[perm_space_id].min_dense_prefix());
+		  _space_info[perm_space_id].min_dense_prefix());
   }
 }
 
@@ -899,7 +902,7 @@ private:
 
 void
 PSParallelCompact::clear_data_covering_space(SpaceId id)
-{
+{ 
   // At this point, top is the value before GC, new_top() is the value that will
   // be set at the end of GC.  The marking bitmap is cleared to top; nothing
   // should be marked above top.  The summary data is cleared to the larger of
@@ -997,7 +1000,7 @@ void PSParallelCompact::post_compact()
   bool eden_empty = eden_space->is_empty();
   if (!eden_empty) {
     eden_empty = absorb_live_data_from_eden(heap->size_policy(),
-                                            heap->young_gen(), heap->old_gen());
+					    heap->young_gen(), heap->old_gen());
   }
 
   // Update heap occupancy information which is used as input to the soft ref
@@ -1038,7 +1041,7 @@ void PSParallelCompact::post_compact()
 
 HeapWord*
 PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
-                                                    bool maximum_compaction)
+						    bool maximum_compaction)
 {
   const size_t region_size = ParallelCompactData::RegionSize;
   const ParallelCompactData& sd = summary_data();
@@ -1076,11 +1079,11 @@ PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
 
   if (TraceParallelOldGCDensePrefix) {
     tty->print_cr("cur_dens=%5.3f dw_dens=%5.3f dw_goal=" SIZE_FORMAT,
-                  cur_density, deadwood_density, deadwood_goal);
+		  cur_density, deadwood_density, deadwood_goal);
     tty->print_cr("space_live=" SIZE_FORMAT " " "space_used=" SIZE_FORMAT " "
-                  "space_cap=" SIZE_FORMAT,
-                  space_live, space_used,
-                  space_capacity);
+		  "space_cap=" SIZE_FORMAT,
+		  space_live, space_used,
+		  space_capacity);
   }
 
   // XXX - Use binary search?
@@ -1137,11 +1140,11 @@ PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
   return dense_prefix;
 }
 
-#ifndef PRODUCT
+#ifndef	PRODUCT
 void PSParallelCompact::print_dense_prefix_stats(const char* const algorithm,
-                                                 const SpaceId id,
-                                                 const bool maximum_compaction,
-                                                 HeapWord* const addr)
+						 const SpaceId id,
+						 const bool maximum_compaction,
+						 HeapWord* const addr)
 {
   const size_t region_idx = summary_data().addr_to_region_idx(addr);
   RegionData* const cp = summary_data().region(region_idx);
@@ -1166,18 +1169,18 @@ void PSParallelCompact::print_dense_prefix_stats(const char* const algorithm,
                 dead_to_right, live_to_right,
                 double(dead_to_right) / live_to_right);
 }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
 // Return a fraction indicating how much of the generation can be treated as
 // "dead wood" (i.e., not reclaimed).  The function uses a normal distribution
 // based on the density of live objects in the generation to determine a limit,
 // which is then adjusted so the return value is min_percent when the density is
 // 1.
-//
+// 
 // The following table shows some return values for a different values of the
 // standard deviation (ParallelOldDeadWoodLimiterStdDev); the mean is 0.5 and
 // min_percent is 1.
-//
+// 
 //                          fraction allowed as dead wood
 //         -----------------------------------------------------------------
 // density std_dev=70 std_dev=75 std_dev=80 std_dev=85 std_dev=90 std_dev=95
@@ -1212,7 +1215,7 @@ double PSParallelCompact::dead_wood_limiter(double density, size_t min_percent)
   const double raw_limit = normal_distribution(density);
 
   // Adjust the raw limit so it becomes the minimum when the density is 1.
-  //
+  // 
   // First subtract the adjustment value (which is simply the precomputed value
   // normal_distribution(1.0)); this yields a value of 0 when the density is 1.
   // Then add the minimum value, so the minimum is returned when the density is
@@ -1325,7 +1328,7 @@ PSParallelCompact::reclaimed_ratio(const RegionData* const cp,
 // (maximum) reclaimed_ratio() is selected.
 HeapWord*
 PSParallelCompact::compute_dense_prefix(const SpaceId id,
-                                        bool maximum_compaction)
+					bool maximum_compaction)
 {
   if (ParallelOldGCSplitALot) {
     if (_space_info[id].dense_prefix() != _space_info[id].space()->bottom()) {
@@ -1374,21 +1377,21 @@ PSParallelCompact::compute_dense_prefix(const SpaceId id,
 
   const double density = double(space_live) / double(space_capacity);
   const size_t min_percent_free =
-          id == perm_space_id ? PermMarkSweepDeadRatio : MarkSweepDeadRatio;
+	  id == perm_space_id ? PermMarkSweepDeadRatio : MarkSweepDeadRatio;
   const double limiter = dead_wood_limiter(density, min_percent_free);
   const size_t dead_wood_max = space_used - space_live;
   const size_t dead_wood_limit = MIN2(size_t(space_capacity * limiter),
-                                      dead_wood_max);
+				      dead_wood_max);
 
   if (TraceParallelOldGCDensePrefix) {
     tty->print_cr("space_live=" SIZE_FORMAT " " "space_used=" SIZE_FORMAT " "
-                  "space_cap=" SIZE_FORMAT,
-                  space_live, space_used,
-                  space_capacity);
+		  "space_cap=" SIZE_FORMAT,
+		  space_live, space_used,
+		  space_capacity);
     tty->print_cr("dead_wood_limiter(%6.4f, %d)=%6.4f "
-                  "dead_wood_max=" SIZE_FORMAT " dead_wood_limit=" SIZE_FORMAT,
-                  density, min_percent_free, limiter,
-                  dead_wood_max, dead_wood_limit);
+		  "dead_wood_max=" SIZE_FORMAT " dead_wood_limit=" SIZE_FORMAT,
+		  density, min_percent_free, limiter,
+		  dead_wood_max, dead_wood_limit);
   }
 
   // Locate the region with the desired amount of dead space to the left.
@@ -1417,7 +1420,7 @@ PSParallelCompact::compute_dense_prefix(const SpaceId id,
     _maximum_compaction_gc_num = total_invocations();
     best_cp = full_cp;
   }
-#endif  // #if 0
+#endif	// #if 0
 
   return sd.region_to_addr(best_cp);
 }
@@ -1648,7 +1651,7 @@ void PSParallelCompact::fill_dense_prefix_end(SpaceId id)
     // Only enough dead space is filled so that any remaining dead space to the
     // left is larger than the minimum filler object.  (The remainder is filled
     // during the copy/update phase.)
-    //
+    // 
     // The size of the dead space to the right of the boundary is not a
     // concern, since compaction will be able to use whatever space is
     // available.
@@ -1660,41 +1663,41 @@ void PSParallelCompact::fill_dense_prefix_end(SpaceId id)
     //                              +---+
     // a) beg_bits:  ...  x   x   x | 0 | ||   0   x  x  ...
     //    end_bits:  ...  x   x   x | 0 | ||   0   x  x  ...
-    //                              +---+
+    // 				    +---+
     //
     // In the 64-bit VM, each bit represents one 64-bit word:
     //                              +------------+
     // b) beg_bits:  ...  x   x   x | 0   ||   0 | x  x  ...
     //    end_bits:  ...  x   x   1 | 0   ||   0 | x  x  ...
-    //                              +------------+
+    // 				    +------------+
     //                          +-------+
     // c) beg_bits:  ...  x   x | 0   0 | ||   0   x  x  ...
     //    end_bits:  ...  x   1 | 0   0 | ||   0   x  x  ...
-    //                          +-------+
+    //				+-------+
     //                      +-----------+
     // d) beg_bits:  ...  x | 0   0   0 | ||   0   x  x  ...
     //    end_bits:  ...  1 | 0   0   0 | ||   0   x  x  ...
-    //                      +-----------+
-    //                          +-------+
+    //			    +-----------+
+    // 				+-------+
     // e) beg_bits:  ...  0   0 | 0   0 | ||   0   x  x  ...
     //    end_bits:  ...  0   0 | 0   0 | ||   0   x  x  ...
-    //                          +-------+
+    //				+-------+
 
     // Initially assume case a, c or e will apply.
     size_t obj_len = (size_t)oopDesc::header_size();
     HeapWord* obj_beg = dense_prefix_end - obj_len;
 
-#ifdef  _LP64
+#ifdef	_LP64
     if (_mark_bitmap.is_obj_end(dense_prefix_bit - 2)) {
       // Case b above.
       obj_beg = dense_prefix_end - 1;
     } else if (!_mark_bitmap.is_obj_end(dense_prefix_bit - 3) &&
-               _mark_bitmap.is_obj_end(dense_prefix_bit - 4)) {
+	       _mark_bitmap.is_obj_end(dense_prefix_bit - 4)) {
       // Case d above.
       obj_beg = dense_prefix_end - 3;
       obj_len = 3;
     }
-#endif  // #ifdef _LP64
+#endif	// #ifdef _LP64
 
     CollectedHeap::fill_with_object(obj_beg, obj_len);
     _mark_bitmap.mark_obj(obj_beg, obj_len);
@@ -1799,7 +1802,7 @@ void PSParallelCompact::summary_phase_msg(SpaceId dst_space_id,
 #endif  // #ifndef PRODUCT
 
 void PSParallelCompact::summary_phase(ParCompactionManager* cm,
-                                      bool maximum_compaction)
+				      bool maximum_compaction)
 {
   EventMark m("2 summarize");
   TraceTime tm("summary phase", print_phases(), true, gclog_or_tty);
@@ -1808,13 +1811,13 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
 #ifdef  ASSERT
   if (TraceParallelOldGCMarkingPhase) {
     tty->print_cr("add_obj_count=" SIZE_FORMAT " "
-                  "add_obj_bytes=" SIZE_FORMAT,
-                  add_obj_count, add_obj_size * HeapWordSize);
+		  "add_obj_bytes=" SIZE_FORMAT,
+		  add_obj_count, add_obj_size * HeapWordSize);
     tty->print_cr("mark_bitmap_count=" SIZE_FORMAT " "
-                  "mark_bitmap_bytes=" SIZE_FORMAT,
-                  mark_bitmap_count, mark_bitmap_size * HeapWordSize);
+		  "mark_bitmap_bytes=" SIZE_FORMAT,
+		  mark_bitmap_count, mark_bitmap_size * HeapWordSize);
   }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
   // Quick summarization of each space into itself, to see how much is live.
   summarize_spaces_quick();
@@ -1833,7 +1836,7 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
   assert(perm_space_id < old_space_id, "should not count perm data here");
   for (unsigned int id = old_space_id; id < last_space_id; ++id) {
     old_space_total_live += pointer_delta(_space_info[id].new_top(),
-                                          _space_info[id].space()->bottom());
+					  _space_info[id].space()->bottom());
   }
 
   MutableSpace* const old_space = _space_info[old_space_id].space();
@@ -1927,7 +1930,7 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
 void PSParallelCompact::invoke(bool maximum_heap_compaction) {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(),
-         "should be in vm thread");
+	 "should be in vm thread");
   ParallelScavengeHeap* heap = gc_heap();
   GCCause::Cause gc_cause = heap->gc_cause();
   assert(!heap->is_gc_active(), "not reentrant");
@@ -2038,11 +2041,11 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
 #ifndef PRODUCT
     if (TraceParallelOldGCMarkingPhase) {
       gclog_or_tty->print_cr("marking_phase: cas_tries %d  cas_retries %d "
-        "cas_by_another %d",
-        mark_bitmap()->cas_tries(), mark_bitmap()->cas_retries(),
-        mark_bitmap()->cas_by_another());
+	"cas_by_another %d",
+	mark_bitmap()->cas_tries(), mark_bitmap()->cas_retries(),
+	mark_bitmap()->cas_by_another());
     }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
     bool max_on_system_gc = UseMaximumCompactionOnSystemGC && is_system_gc;
     summary_phase(vmthread_cm, maximum_heap_compaction || max_on_system_gc);
@@ -2078,12 +2081,12 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
         gclog_or_tty->stamp();
         gclog_or_tty->print_cr(" collection: %d ",
                        heap->total_collections());
-        if (Verbose) {
-          gclog_or_tty->print("old_gen_capacity: %d young_gen_capacity: %d"
-            " perm_gen_capacity: %d ",
-            old_gen->capacity_in_bytes(), young_gen->capacity_in_bytes(),
-            perm_gen->capacity_in_bytes());
-        }
+	if (Verbose) {
+	  gclog_or_tty->print("old_gen_capacity: %d young_gen_capacity: %d"
+	    " perm_gen_capacity: %d ",
+	    old_gen->capacity_in_bytes(), young_gen->capacity_in_bytes(),
+	    perm_gen->capacity_in_bytes());
+	}
       }
 
       // Don't check if the size_policy is ready here.  Let
@@ -2145,11 +2148,11 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
         // No GC timestamp here.  This is after GC so it would be confusing.
         young_gen->print_used_change(pre_gc_values.young_gen_used());
         old_gen->print_used_change(pre_gc_values.old_gen_used());
-        heap->print_heap_change(pre_gc_values.heap_used());
-        // Print perm gen last (print_heap_change() excludes the perm gen).
+	heap->print_heap_change(pre_gc_values.heap_used());
+	// Print perm gen last (print_heap_change() excludes the perm gen).
         perm_gen->print_used_change(pre_gc_values.perm_gen_used());
       } else {
-        heap->print_heap_change(pre_gc_values.heap_used());
+	heap->print_heap_change(pre_gc_values.heap_used());
       }
     }
 
@@ -2160,12 +2163,12 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     if (PrintGCDetails) {
       if (size_policy->print_gc_time_limit_would_be_exceeded()) {
         if (size_policy->gc_time_limit_exceeded()) {
-          gclog_or_tty->print_cr("      GC time is exceeding GCTimeLimit "
-            "of %d%%", GCTimeLimit);
+          gclog_or_tty->print_cr("	GC time is exceeding GCTimeLimit "
+	    "of %d%%", GCTimeLimit);
         } else {
-          gclog_or_tty->print_cr("      GC time would exceed GCTimeLimit "
-            "of %d%%", GCTimeLimit);
-        }
+          gclog_or_tty->print_cr("	GC time would exceed GCTimeLimit "
+	    "of %d%%", GCTimeLimit);
+	}
       }
       size_policy->set_print_gc_time_limit_would_be_exceeded(false);
     }
@@ -2198,20 +2201,20 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   }
   if (PrintGCTaskTimeStamps) {
     gclog_or_tty->print_cr("VM-Thread " INT64_FORMAT " " INT64_FORMAT " "
-                           INT64_FORMAT,
-                           marking_start.ticks(), compaction_start.ticks(),
-                           collection_exit.ticks());
+			   INT64_FORMAT,
+			   marking_start.ticks(), compaction_start.ticks(),
+			   collection_exit.ticks());
     gc_task_manager()->print_task_time_stamps();
   }
 }
 
 bool PSParallelCompact::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
-                                             PSYoungGen* young_gen,
-                                             PSOldGen* old_gen) {
+					     PSYoungGen* young_gen,
+					     PSOldGen* old_gen) {
   MutableSpace* const eden_space = young_gen->eden_space();
   assert(!eden_space->is_empty(), "eden must be non-empty");
   assert(young_gen->virtual_space()->alignment() ==
-         old_gen->virtual_space()->alignment(), "alignments do not match");
+	 old_gen->virtual_space()->alignment(), "alignments do not match");
 
   if (!(UseAdaptiveSizePolicy && UseAdaptiveGCBoundary)) {
     return false;
@@ -2245,14 +2248,14 @@ bool PSParallelCompact::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_po
 
   if (TraceAdaptiveGCBoundary && Verbose) {
     gclog_or_tty->print(" absorbing " SIZE_FORMAT "K:  "
-                        "eden " SIZE_FORMAT "K->" SIZE_FORMAT "K "
-                        "from " SIZE_FORMAT "K, to " SIZE_FORMAT "K "
-                        "young_gen " SIZE_FORMAT "K->" SIZE_FORMAT "K ",
-                        absorb_size / K,
-                        eden_capacity / K, (eden_capacity - absorb_size) / K,
-                        young_gen->from_space()->used_in_bytes() / K,
-                        young_gen->to_space()->used_in_bytes() / K,
-                        young_gen->capacity_in_bytes() / K, new_young_size / K);
+			"eden " SIZE_FORMAT "K->" SIZE_FORMAT "K "
+			"from " SIZE_FORMAT "K, to " SIZE_FORMAT "K "
+			"young_gen " SIZE_FORMAT "K->" SIZE_FORMAT "K ",
+			absorb_size / K,
+			eden_capacity / K, (eden_capacity - absorb_size) / K,
+			young_gen->from_space()->used_in_bytes() / K,
+			young_gen->to_space()->used_in_bytes() / K,
+			young_gen->capacity_in_bytes() / K, new_young_size / K);
   }
 
   // Fill the unused part of the old gen.
@@ -2272,7 +2275,7 @@ bool PSParallelCompact::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_po
   // from end to virtual_space->high() in debug builds).
   HeapWord* const new_top = eden_space->top();
   old_gen->virtual_space()->expand_into(young_gen->virtual_space(),
-                                        absorb_size);
+					absorb_size);
   young_gen->reset_after_change();
   old_space->set_top(new_top);
   old_space->set_end(new_top);
@@ -2300,7 +2303,7 @@ GCTaskManager* const PSParallelCompact::gc_task_manager() {
 }
 
 void PSParallelCompact::marking_phase(ParCompactionManager* cm,
-                                      bool maximum_heap_compaction) {
+			              bool maximum_heap_compaction) {
   // Recursively traverse all live objects and mark them
   EventMark m("1 mark object");
   TraceTime tm("marking phase", print_phases(), true, gclog_or_tty);
@@ -2331,7 +2334,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
     if (parallel_gc_threads > 1) {
       for (uint j = 0; j < parallel_gc_threads; j++) {
-        q->enqueue(new StealMarkingTask(&terminator));
+	q->enqueue(new StealMarkingTask(&terminator));
       }
     }
 
@@ -2366,7 +2369,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   // Follow code cache roots.
   CodeCache::do_unloading(is_alive_closure(), &mark_and_push_closure,
-                          purged_class);
+			  purged_class);
   follow_stack(cm); // Flush marking stack.
 
   // Update subklass/sibling/implementor links of live klasses
@@ -2421,7 +2424,7 @@ void PSParallelCompact::adjust_roots() {
   // Should the reference processor have a span that excludes
   // young gen objects?
   PSScavenge::reference_processor()->weak_oops_do(
-                                              adjust_root_pointer_closure());
+					      adjust_root_pointer_closure());
 }
 
 void PSParallelCompact::compact_perm(ParCompactionManager* cm) {
@@ -2478,8 +2481,8 @@ void PSParallelCompact::enqueue_region_draining_tasks(GCTaskQueue* q,
 
         // Assign regions to threads in round-robin fashion.
         if (++which == task_count) {
-          which = 0;
-        }
+	  which = 0;
+	}
       }
     }
   }
@@ -2640,7 +2643,7 @@ void PSParallelCompact::compact() {
   }
 }
 
-#ifdef  ASSERT
+#ifdef	ASSERT
 void PSParallelCompact::verify_complete(SpaceId space_id) {
   // All Regions between space bottom() to new_top() should be marked as filled
   // and all Regions between new_top() and top() should be available (i.e.,
@@ -2680,7 +2683,7 @@ void PSParallelCompact::verify_complete(SpaceId space_id) {
     print_region_ranges();
   }
 }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 void PSParallelCompact::compact_serial(ParCompactionManager* cm) {
   EventMark m("5 compact serial");
@@ -2754,7 +2757,7 @@ void PSParallelCompact::track_adjusted_pointer(void* p, bool isroot) {
         assert(last != p, "should be different");
         _root_refs_stack->at_put(index, last);
       } else {
-        _root_refs_stack->remove(p);
+	_root_refs_stack->remove(p);
       }
     }
   }
@@ -2819,9 +2822,9 @@ void PSParallelCompact::validate_live_oop(oop p, size_t size) {
 }
 
 void PSParallelCompact::live_oop_moved_to(HeapWord* q, size_t size,
-                                  HeapWord* compaction_top) {
+				  HeapWord* compaction_top) {
   assert(oop(q)->forwardee() == NULL || oop(q)->forwardee() == oop(compaction_top),
-         "should be moved to forwarded location");
+	 "should be moved to forwarded location");
   if (ValidateMarkSweep) {
     PSParallelCompact::validate_live_oop(oop(q), size);
     _live_oops_moved_to->push(oop(compaction_top));
@@ -2898,7 +2901,7 @@ PSParallelCompact::update_and_deadwood_in_dense_prefix(ParCompactionManager* cm,
   for (size_t claim_region = beg_region; claim_region < end_region; ++claim_region) {
     assert(sd.region(claim_region)->claim_unsafe(), "claim() failed");
   }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
   if (beg_addr != space(space_id)->bottom()) {
     // Find the first live object or block of dead space that *starts* in this
@@ -2926,7 +2929,7 @@ PSParallelCompact::update_and_deadwood_in_dense_prefix(ParCompactionManager* cm,
     FillClosure fill_closure(cm, space_id);
     ParMarkBitMap::IterationStatus status;
     status = mbm->iterate(&update_closure, &fill_closure, beg_addr, end_addr,
-                          dense_prefix_end);
+			  dense_prefix_end);
     if (status == ParMarkBitMap::incomplete) {
       update_closure.do_addr(update_closure.source());
     }
@@ -2957,7 +2960,7 @@ PSParallelCompact::SpaceId PSParallelCompact::space_id(HeapWord* addr) {
 }
 
 void PSParallelCompact::update_deferred_objects(ParCompactionManager* cm,
-                                                SpaceId id) {
+						SpaceId id) {
   assert(id < last_space_id, "bad space id");
 
   ParallelCompactData& sd = summary_data();
@@ -2976,7 +2979,7 @@ void PSParallelCompact::update_deferred_objects(ParCompactionManager* cm,
     HeapWord* const addr = cur_region->deferred_obj_addr();
     if (addr != NULL) {
       if (start_array != NULL) {
-        start_array->allocate_block(addr);
+	start_array->allocate_block(addr);
       }
       oop(addr)->update_contents(cm);
       assert(oop(addr)->is_oop_or_null(), "should be an oop now");
@@ -3256,16 +3259,16 @@ void PSParallelCompact::fill_region(ParCompactionManager* cm, size_t region_idx)
       assert(closure.source() < end_addr, "sanity")
       HeapWord* const obj_beg = closure.source();
       HeapWord* const range_end = MIN2(obj_beg + closure.words_remaining(),
-                                       src_space_top);
+				       src_space_top);
       HeapWord* const obj_end = bitmap->find_obj_end(obj_beg, range_end);
       if (obj_end < range_end) {
-        // The end was found; the entire object will fit.
-        status = closure.do_addr(obj_beg, bitmap->obj_size(obj_beg, obj_end));
-        assert(status != ParMarkBitMap::would_overflow, "sanity");
+	// The end was found; the entire object will fit.
+	status = closure.do_addr(obj_beg, bitmap->obj_size(obj_beg, obj_end));
+	assert(status != ParMarkBitMap::would_overflow, "sanity");
       } else {
-        // The end was not found; the object will not fit.
-        assert(range_end < src_space_top, "obj cannot cross space boundary");
-        status = ParMarkBitMap::would_overflow;
+	// The end was not found; the object will not fit.
+	assert(range_end < src_space_top, "obj cannot cross space boundary");
+	status = ParMarkBitMap::would_overflow;
       }
     }
 
@@ -3312,7 +3315,7 @@ PSParallelCompact::move_and_update(ParCompactionManager* cm, SpaceId space_id) {
   HeapWord* end_addr = sp->top();
 
 #ifdef ASSERT
-  assert(beg_addr <= dp_addr && dp_addr <= end_addr, "bad dense prefix");
+  assert(beg_addr <= dp_addr &&	dp_addr <= end_addr, "bad dense prefix");
   if (cm->should_verify_only()) {
     VerifyUpdateClosure verify_update(cm, sp);
     bitmap->iterate(&verify_update, beg_addr, end_addr);
@@ -3347,7 +3350,7 @@ PSParallelCompact::move_and_update(ParCompactionManager* cm, SpaceId space_id) {
     status = bitmap->iterate(&closure, dest_addr, end_addr);
     assert(status == ParMarkBitMap::full, "iteration not complete");
     assert(bitmap->find_obj_beg(closure.source(), end_addr) == end_addr,
-           "live objects skipped because closure is full");
+	   "live objects skipped because closure is full");
   }
 }
 
@@ -3402,7 +3405,7 @@ MoveAndUpdateClosure::do_addr(HeapWord* addr, size_t words) {
 
   _source = addr;
   assert(PSParallelCompact::summary_data().calc_new_pointer(source()) ==
-         destination(), "wrong destination");
+	 destination(), "wrong destination");
 
   if (words > words_remaining()) {
     return ParMarkBitMap::would_overflow;
@@ -3428,8 +3431,8 @@ MoveAndUpdateClosure::do_addr(HeapWord* addr, size_t words) {
 }
 
 UpdateOnlyClosure::UpdateOnlyClosure(ParMarkBitMap* mbm,
-                                     ParCompactionManager* cm,
-                                     PSParallelCompact::SpaceId space_id) :
+				     ParCompactionManager* cm,
+				     PSParallelCompact::SpaceId space_id) :
   ParMarkBitMapClosure(mbm, cm),
   _space_id(space_id),
   _start_array(PSParallelCompact::start_array(space_id))
@@ -3455,13 +3458,13 @@ PSParallelCompact::VerifyUpdateClosure::do_addr(HeapWord* addr, size_t words) {
   if (forwarding_ptr == NULL) {
     // The object is dead or not moving.
     assert(bitmap()->is_unmarked(obj) || (new_pointer == (HeapWord*) obj),
-           "Object liveness is wrong.");
+	   "Object liveness is wrong.");
     return ParMarkBitMap::incomplete;
   }
   assert(UseParallelOldGCDensePrefix ||
-         (HeapMaximumCompactionInterval > 1) ||
-         (MarkSweepAlwaysCompactCount > 1) ||
-         (forwarding_ptr == new_pointer),
+	 (HeapMaximumCompactionInterval > 1) ||
+	 (MarkSweepAlwaysCompactCount > 1) ||
+	 (forwarding_ptr == new_pointer),
     "Calculation of new location is incorrect");
   return ParMarkBitMap::incomplete;
 }

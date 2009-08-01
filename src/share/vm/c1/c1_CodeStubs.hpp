@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_CodeStubs.hpp	1.86 07/05/05 17:05:06 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class CodeEmitInfo;
@@ -107,7 +110,7 @@ class ConversionStub: public CodeStub {
  private:
   Bytecodes::Code _bytecode;
   LIR_Opr         _input;
-  LIR_Opr         _result;
+  LIR_Opr         _result; 
 
   static float float_zero;
   static double double_zero;

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -27,10 +27,10 @@ package sun.jvm.hotspot.jdi;
 import com.sun.jdi.*;
 
 /*
- * This interface allows us to pass fields, variables, and
+ * This interface allows us to pass fields, variables, and 
  * array components through the same interfaces. This currently allows
  * more common code for type checking. In the future we could use it for
- * more.
+ * more. 
  */
 interface ValueContainer {
     Type type() throws ClassNotLoadedException;
@@ -38,3 +38,5 @@ interface ValueContainer {
     String typeName();
     String signature();
 }
+
+

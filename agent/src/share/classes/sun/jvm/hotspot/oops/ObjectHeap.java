@@ -387,6 +387,13 @@ public class ObjectHeap {
       System.err.println("Unknown oop at " + handle);
       System.err.println("Oop's klass is " + klass);
     }
+    throw new UnknownOopException();
+  }
+
+    if (DEBUG) {
+      System.err.println("Unknown oop at " + handle);
+      System.err.println("Oop's klass is " + klass);
+    }
 
     throw new UnknownOopException();
   }

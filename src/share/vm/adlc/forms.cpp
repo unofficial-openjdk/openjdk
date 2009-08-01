@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)forms.cpp	1.161 07/05/05 17:04:59 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // FORMS.CPP - Definitions for ADL Parser Generic & Utility Forms Classes
@@ -29,7 +32,7 @@
 // allocate arena used by forms
 Arena  *Form::arena = Form::generate_arena(); //  = Form::generate_arena();
 Arena *Form::generate_arena() {
-  return (new Arena);
+  return (new Arena); 
 }
 
 //------------------------------NameList---------------------------------------
@@ -39,7 +42,7 @@ const char  *NameList::_signal2  = "$$SIGNAL2$$";
 const char  *NameList::_signal3  = "$$SIGNAL3$$";
 
 // Constructor and Destructor
-NameList::NameList() : _cur(0), _max(4), _iter(0), _justReset(true) {
+NameList::NameList() : _cur(0), _max(4), _iter(0), _justReset(true) { 
   _names = (const char**)malloc(_max*sizeof(char*));
 }
 NameList::~NameList() {
@@ -65,7 +68,7 @@ void   NameList::clear() {
 int    NameList::count()  const { return _cur; }
 
 void   NameList::reset()   { _iter = 0; _justReset = true;}
-const char  *NameList::iter()    {
+const char  *NameList::iter()    { 
   if (_justReset) {_justReset=false; return (_iter < _cur ? _names[_iter] : NULL);}
   else return (_iter <_cur-1 ? _names[++_iter] : NULL);
 }
@@ -117,7 +120,7 @@ void   NameList::output(FILE *fp) {
   int         iter       = 0;
   bool        justReset  = true;
 
-  while( ( name  = (justReset ?
+  while( ( name  = (justReset ? 
                     (justReset=false, (iter < _cur ? _names[iter] : NULL)) :
                     (iter < _cur-1 ? _names[++iter] : NULL)) )
          != NULL ) {
@@ -314,7 +317,7 @@ Form::InterfaceType Form::interface_type(FormDict &globals) const {
 
 //------------------------------FormList---------------------------------------
 // Destructor
-FormList::~FormList()  {
+FormList::~FormList()  { 
   // // This list may not own its elements
   // Form *cur  = _root;
   // Form *next = NULL;
@@ -333,8 +336,8 @@ FormDict::~FormDict() {
 }
 
 // Return # of name-Form pairs in dict
-int FormDict::Size(void) const {
-  return _form.Size();
+int FormDict::Size(void) const { 
+  return _form.Size(); 
 }
 
 // Insert inserts the given key-value pair into the dictionary.  The prior
@@ -343,7 +346,7 @@ const Form  *FormDict::Insert(const char *name, Form *form) {
   return (Form*)_form.Insert((void*)name, (void*)form);
 }
 
-// Finds the value of a given key; or NULL if not found.
+// Finds the value of a given key; or NULL if not found.  
 // The dictionary is NOT changed.
 const Form  *FormDict::operator [](const char *name) const {
   return (Form*)_form[name];
@@ -387,5 +390,6 @@ void SourceForm::dump() {                    // Debug printer
 }
 
 void SourceForm::output(FILE *fp) {
-  fprintf(fp,"\n//%s\n%s\n",classname(),(_code?_code:""));
-}
+  fprintf(fp,"\n//%s\n%s\n",classname(),(_code?_code:"")); 
+} 
+

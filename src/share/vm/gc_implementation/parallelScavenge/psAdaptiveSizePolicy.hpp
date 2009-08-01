@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)psAdaptiveSizePolicy.hpp	1.64 07/10/04 10:49:35 JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class keeps statistical information and computes the
@@ -40,7 +43,7 @@
 // 05/02/2003 Update
 // The 1.5 policy makes use of data gathered for the costs of GC on
 // specific generations.  That data does reference specific
-// generation.  Also diagnostics specific to generations have
+// generation.  Also diagnostics specific to generations have 
 // been added.
 
 // Forward decls
@@ -62,7 +65,7 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   // Footprint statistics
   AdaptiveWeightedAverage* _avg_base_footprint;
-
+ 
   // Statistical data gathered for GC
   GCStats _gc_stats;
 
@@ -128,8 +131,8 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   // Change the young generation size to achieve a minor GC pause time goal
   void adjust_for_minor_pause_time(bool is_full_gc,
-                                   size_t* desired_promo_size_ptr,
-                                   size_t* desired_eden_size_ptr);
+				   size_t* desired_promo_size_ptr,
+				   size_t* desired_eden_size_ptr);
   // Change the generation sizes to achieve a GC pause time goal
   // Returned sizes are not necessarily aligned.
   void adjust_for_pause_time(bool is_full_gc,
@@ -143,9 +146,9 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Change the generation sizes to achieve minimum footprint
   // Returned sizes are not aligned.
   size_t adjust_promo_for_footprint(size_t desired_promo_size,
-                                    size_t desired_total);
+			            size_t desired_total);
   size_t adjust_eden_for_footprint(size_t desired_promo_size,
-                                   size_t desired_total);
+			           size_t desired_total);
 
   // Size in bytes for an increment or decrement of eden.
   virtual size_t eden_increment(size_t cur_eden, uint percent_change);
@@ -171,20 +174,20 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Time accessors
 
   // Footprint accessors
-  size_t live_space() const {
+  size_t live_space() const { 
     return (size_t)(avg_base_footprint()->average() +
                     avg_young_live()->average() +
                     avg_old_live()->average());
   }
-  size_t free_space() const {
-    return _eden_size + _promo_size;
+  size_t free_space() const { 
+    return _eden_size + _promo_size; 
   }
 
-  void set_promo_size(size_t new_size) {
+  void set_promo_size(size_t new_size) { 
     _promo_size = new_size;
   }
-  void set_survivor_size(size_t new_size) {
-    _survivor_size = new_size;
+  void set_survivor_size(size_t new_size) { 
+    _survivor_size = new_size; 
   }
 
   // Update estimators
@@ -203,25 +206,25 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   virtual size_t promo_increment(size_t cur_promo);
 
   // Accessors for use by performance counters
-  AdaptivePaddedNoZeroDevAverage*  avg_promoted() const {
-    return _gc_stats.avg_promoted();
+  AdaptivePaddedNoZeroDevAverage*  avg_promoted() const { 
+    return _gc_stats.avg_promoted(); 
   }
-  AdaptiveWeightedAverage* avg_base_footprint() const {
-    return _avg_base_footprint;
+  AdaptiveWeightedAverage* avg_base_footprint() const { 
+    return _avg_base_footprint; 
   }
 
   // Input arguments are initial free space sizes for young and old
-  // generations, the initial survivor space size, the
+  // generations, the initial survivor space size, the 
   // alignment values and the pause & throughput goals.
   //
   // NEEDS_CLEANUP this is a singleton object
-  PSAdaptiveSizePolicy(size_t init_eden_size,
-                       size_t init_promo_size,
-                       size_t init_survivor_size,
-                       size_t intra_generation_alignment,
-                       double gc_pause_goal_sec,
-                       double gc_minor_pause_goal_sec,
-                       uint gc_time_ratio);
+  PSAdaptiveSizePolicy(size_t init_eden_size, 
+		       size_t init_promo_size, 
+		       size_t init_survivor_size, 
+		       size_t intra_generation_alignment,
+		       double gc_pause_goal_sec,
+		       double gc_minor_pause_goal_sec,
+		       uint gc_time_ratio);
 
   // Methods indicating events of interest to the adaptive size policy,
   // called by GC algorithms. It is the responsibility of users of this
@@ -229,7 +232,7 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   void major_collection_begin();
   void major_collection_end(size_t amount_live, GCCause::Cause gc_cause);
 
-  //
+  // 
   void tenured_allocation(size_t size) {
     _avg_pretenured->sample(size);
   }
@@ -253,25 +256,25 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
     return (size_t)avg_promoted()->padded_average();
   }
 
-  int change_young_gen_for_maj_pauses() {
-    return _change_young_gen_for_maj_pauses;
+  int change_young_gen_for_maj_pauses() { 
+    return _change_young_gen_for_maj_pauses; 
   }
-  void set_change_young_gen_for_maj_pauses(int v) {
-    _change_young_gen_for_maj_pauses = v;
+  void set_change_young_gen_for_maj_pauses(int v) { 
+    _change_young_gen_for_maj_pauses = v; 
   }
 
-  int change_old_gen_for_min_pauses() {
-    return _change_old_gen_for_min_pauses;
+  int change_old_gen_for_min_pauses() { 
+    return _change_old_gen_for_min_pauses; 
   }
-  void set_change_old_gen_for_min_pauses(int v) {
-    _change_old_gen_for_min_pauses = v;
+  void set_change_old_gen_for_min_pauses(int v) { 
+    _change_old_gen_for_min_pauses = v; 
   }
 
   // Return true if the old generation size was changed
   // to try to reach a pause time goal.
   bool old_gen_changed_for_pauses() {
     bool result = _change_old_gen_for_maj_pauses != 0 ||
-                  _change_old_gen_for_min_pauses != 0;
+		  _change_old_gen_for_min_pauses != 0;
     return result;
   }
 
@@ -279,7 +282,7 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // to try to reach a pause time goal.
   bool young_gen_changed_for_pauses() {
     bool result = _change_young_gen_for_min_pauses != 0 ||
-                  _change_young_gen_for_maj_pauses != 0;
+		  _change_young_gen_for_maj_pauses != 0;
     return result;
   }
   // end flags for pause goal
@@ -297,7 +300,7 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
     bool result = _change_young_gen_for_throughput != 0;
     return result;
   }
-
+		  
   int decrease_for_footprint() { return _decrease_for_footprint; }
 
 
@@ -316,8 +319,8 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   virtual void clear_generation_free_space_flags();
 
   float major_pause_old_slope() { return _major_pause_old_estimator->slope(); }
-  float major_pause_young_slope() {
-    return _major_pause_young_estimator->slope();
+  float major_pause_young_slope() { 
+    return _major_pause_young_estimator->slope(); 
   }
   float major_collection_slope() { return _major_collection_estimator->slope();}
 
@@ -333,14 +336,14 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // as an indication if a full gc has just been performed, for use
   // in deciding if an OOM error should be thrown.
   void compute_generation_free_space(size_t young_live,
-                                     size_t eden_live,
+				     size_t eden_live,
                                      size_t old_live,
                                      size_t perm_live,
-                                     size_t cur_eden,  // current eden in bytes
-                                     size_t max_old_gen_size,
-                                     size_t max_eden_size,
+				     size_t cur_eden,  // current eden in bytes
+				     size_t max_old_gen_size,
+				     size_t max_eden_size,
                                      bool   is_full_gc,
-                                     GCCause::Cause gc_cause);
+				     GCCause::Cause gc_cause);
 
   // Calculates new survivor space size;  returns a new tenuring threshold
   // value. Stores new survivor size in _survivor_size.
@@ -362,8 +365,8 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
     return sz > alignment ? align_size_down(sz, alignment) : alignment;
   }
 
-  size_t live_at_last_full_gc() {
-    return _live_at_last_full_gc;
+  size_t live_at_last_full_gc() { 
+    return _live_at_last_full_gc; 
   }
 
   size_t bytes_absorbed_from_eden() const { return _bytes_absorbed_from_eden; }
@@ -375,9 +378,9 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   // Update averages that are always used (even
   // if adaptive sizing is turned off).
-  void update_averages(bool is_survivor_overflow,
-                       size_t survived,
-                       size_t promoted);
+  void update_averages(bool is_survivor_overflow, 
+		       size_t survived, 
+		       size_t promoted);
 
   // Printing support
   virtual bool print_adaptive_size_policy_on(outputStream* st) const;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)handles.inline.hpp	1.28 07/05/05 17:06:48 JVM"
+#endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,17 +22,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // these inline functions are in a separate file to break an include cycle
 // between Thread and Handle
 
-inline Handle::Handle(oop obj) {
+inline Handle::Handle(oop obj) { 
   if (obj == NULL) {
     _handle = NULL;
   } else {
-    _handle = Thread::current()->handle_area()->allocate_handle(obj);
+    _handle = Thread::current()->handle_area()->allocate_handle(obj);     
   }
 }
 
@@ -40,7 +43,7 @@ inline Handle::Handle(Thread* thread, oop obj) {
   if (obj == NULL) {
     _handle = NULL;
   } else {
-    _handle = thread->handle_area()->allocate_handle(obj);
+    _handle = thread->handle_area()->allocate_handle(obj);    
   }
 }
 #endif // ASSERT

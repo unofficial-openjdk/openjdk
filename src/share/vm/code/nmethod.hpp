@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)nmethod.hpp	1.171 07/09/01 18:01:02 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class is used internally by nmethods, to cache
@@ -28,7 +31,7 @@
 class ExceptionCache : public CHeapObj {
   friend class VMStructs;
  private:
-  static address _unwind_handler;
+  static address _unwind_handler; 
   enum { cache_size = 16 };
   klassOop _exception_type;
   address  _pc[cache_size];
@@ -98,10 +101,10 @@ struct nmFlags {
 };
 
 
-// A nmethod contains:
+// A nmethod contains:    
 //  - header                 (the nmethod structure)
 //  [Relocation]
-//  - relocation information
+//  - relocation information  
 //  - constant part          (doubles, longs and floats used in nmethod)
 //  [Code]
 //  - code body
@@ -155,7 +158,7 @@ class nmethod : public CodeBlob {
   // location in frame (offset for sp) that deopt can store the original
   // pc during a deopt.
   int _orig_pc_offset;
-
+   
   int _compile_id;                     // which compilation made this nmethod
   int _comp_level;                     // compilation level
 
@@ -168,7 +171,7 @@ class nmethod : public CodeBlob {
   bool _markedForDeoptimization;       // Used for stack deoptimization
   enum { alive        = 0,
          not_entrant  = 1, // uncommon trap has happend but activations may still exist
-         zombie       = 2,
+         zombie       = 2, 
          unloaded     = 3 };
 
   // used by jvmti to track if an unload event has been posted for this nmethod.
@@ -179,7 +182,7 @@ class nmethod : public CodeBlob {
   // Nmethod Flushing lock (if non-zero, then the nmethod is not removed)
   jint  _lock_count;
 
-  // not_entrant method removal. Each mark_sweep pass will update
+  // not_entrant method removal. Each mark_sweep pass will update 
   // this mark to current sweep invocation count if it is seen on the
   // stack.  An not_entrant method can be removed when there is no
   // more activations, i.e., when the _stack_traversal_mark is less than
@@ -203,16 +206,16 @@ class nmethod : public CodeBlob {
   ByteSize _compiled_synchronized_native_basic_lock_sp_offset;
 
   friend class nmethodLocker;
-
+  
   // For native wrappers
   nmethod(methodOop method,
-          int nmethod_size,
+	  int nmethod_size,
           CodeOffsets* offsets,
-          CodeBuffer *code_buffer,
-          int frame_size,
+	  CodeBuffer *code_buffer,
+	  int frame_size,
           ByteSize basic_lock_owner_sp_offset, /* synchronized natives only */
           ByteSize basic_lock_sp_offset,       /* synchronized natives only */
-          OopMapSet* oop_maps);
+	  OopMapSet* oop_maps);
 
 #ifdef HAVE_DTRACE_H
   // For native wrappers
@@ -224,7 +227,7 @@ class nmethod : public CodeBlob {
 #endif // def HAVE_DTRACE_H
 
   // Creation support
-  nmethod(methodOop method,
+  nmethod(methodOop method,          
           int nmethod_size,
           int compile_id,
           int entry_bci,
@@ -250,7 +253,7 @@ class nmethod : public CodeBlob {
 
   // used to check that writes to nmFlags are done consistently.
   static void check_safepoint() PRODUCT_RETURN;
-
+ 
   // Used to manipulate the exception cache
   void add_exception_cache_entry(ExceptionCache* new_entry);
   ExceptionCache* exception_cache_entry_for_exception(Handle exception);
@@ -265,12 +268,12 @@ class nmethod : public CodeBlob {
                               int entry_bci,
                               CodeOffsets* offsets,
                               int orig_pc_offset,
-                              DebugInformationRecorder* recorder,
+                              DebugInformationRecorder* recorder, 
                               Dependencies* dependencies,
                               CodeBuffer *code_buffer,
-                              int frame_size,
-                              OopMapSet* oop_maps,
-                              ExceptionHandlerTable* handler_table,
+                              int frame_size, 
+                              OopMapSet* oop_maps, 
+                              ExceptionHandlerTable* handler_table, 
                               ImplicitExceptionTable* nul_chk_table,
                               AbstractCompiler* compiler,
                               int comp_level);
@@ -318,7 +321,7 @@ class nmethod : public CodeBlob {
 
   bool is_compiled_by_c1() const;
   bool is_compiled_by_c2() const;
-
+    
   // boundaries for different parts
   address code_begin         () const             { return _entry_point; }
   address code_end           () const             { return           header_begin() + _stub_offset          ; }
@@ -367,7 +370,7 @@ class nmethod : public CodeBlob {
   bool  is_alive() const                          { return flags.state == alive || flags.state == not_entrant; }
   bool  is_not_entrant() const                    { return flags.state == not_entrant; }
   bool  is_zombie() const                         { return flags.state == zombie; }
-  bool  is_unloaded() const                       { return flags.state == unloaded;   }
+  bool  is_unloaded() const                       { return flags.state == unloaded;   }      
 
   // Make the nmethod non entrant. The nmethod will continue to be alive.
   // It is used when an uncommon trap happens.
@@ -375,9 +378,9 @@ class nmethod : public CodeBlob {
   void  make_zombie()                             { make_not_entrant_or_zombie(zombie); }
 
   // used by jvmti to track if the unload event has been reported
-  bool  unload_reported()                         { return _unload_reported; }
-  void  set_unload_reported()                     { _unload_reported = true; }
-
+  bool  unload_reported()			  { return _unload_reported; }
+  void  set_unload_reported()			  { _unload_reported = true; }
+  
   bool  is_marked_for_deoptimization() const      { return _markedForDeoptimization; }
   void  mark_for_deoptimization()                 { _markedForDeoptimization = true; }
 
@@ -409,7 +412,7 @@ class nmethod : public CodeBlob {
 
   // Sweeper support
   long  stack_traversal_mark()                    { return _stack_traversal_mark; }
-  void  set_stack_traversal_mark(long l)          { _stack_traversal_mark = l; }
+  void  set_stack_traversal_mark(long l)          { _stack_traversal_mark = l; } 
 
   // Exception cache support
   ExceptionCache* exception_cache() const         { return _exception_cache; }
@@ -431,7 +434,7 @@ class nmethod : public CodeBlob {
   // tells whether frames described by this nmethod can be deoptimized
   // note: native wrappers cannot be deoptimized.
   bool can_be_deoptimized() const { return is_java_method(); }
-
+  
   // Inline cache support
   void clear_inline_caches();
   void cleanup_inline_caches();
@@ -439,9 +442,9 @@ class nmethod : public CodeBlob {
     return (addr >= instructions_begin() && addr < verified_entry_point());
   }
 
-  // unlink and deallocate this nmethod
+  // unlink and deallocate this nmethod 
   // Only NMethodSweeper class is expected to use this. NMethodSweeper is not
-  // expected to use any other private methods/data in this class.
+  // expected to use any other private methods/data in this class. 
 
  protected:
   void flush();
@@ -450,7 +453,7 @@ class nmethod : public CodeBlob {
   // If returning true, it is unsafe to remove this nmethod even though it is a zombie
   // nmethod, since the VM might have a reference to it. Should only be called from a  safepoint.
   bool is_locked_by_vm() const                    { return _lock_count >0; }
-
+ 
   // See comment at definition of _last_seen_on_stack
   void mark_as_seen_on_stack();
   bool can_not_entrant_be_converted();
@@ -465,7 +468,7 @@ class nmethod : public CodeBlob {
                   oop* root, bool unloading_occurred);
 
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map,
-                                     OopClosure* f);
+				     OopClosure* f);
   void oops_do(OopClosure* f);
 
   // ScopeDesc for an instruction
@@ -511,7 +514,7 @@ class nmethod : public CodeBlob {
   void verify();
   void verify_scopes();
   void verify_interrupt_point(address interrupt_point);
-
+  
   // printing support
   void print()                          const;
   void print_code();
@@ -564,11 +567,11 @@ class nmethod : public CodeBlob {
   // Fast breakpoint support. Tells if this compiled method is
   // dependent on the given method. Returns true if this nmethod
   // corresponds to the given method as well.
-  bool is_dependent_on_method(methodOop dependee);
+  bool is_dependent_on_method(methodOop dependee);  
 
   // is it ok to patch at address?
   bool is_patchable_at(address instr_address);
-
+  
   // UseBiasedLocking support
   ByteSize compiled_synchronized_native_basic_lock_owner_sp_offset() {
     return _compiled_synchronized_native_basic_lock_owner_sp_offset;
@@ -604,3 +607,5 @@ class nmethodLocker : public StackObj {
     lock_nmethod(_nm);
   }
 };
+
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)bitMap.cpp	1.48 07/05/05 17:07:07 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -153,10 +156,10 @@ void BitMap::set_large_range(idx_t beg, idx_t end) {
 
   idx_t beg_full_word = word_index_round_up(beg);
   idx_t end_full_word = word_index(end);
-
+  
   assert(end_full_word - beg_full_word >= 32,
-         "the range must include at least 32 bytes");
-
+	 "the range must include at least 32 bytes");
+  
   // The range includes at least one full word.
   set_range_within_word(beg, bit_index(beg_full_word));
   set_large_range_of_words(beg_full_word, end_full_word);
@@ -168,10 +171,10 @@ void BitMap::clear_large_range(idx_t beg, idx_t end) {
 
   idx_t beg_full_word = word_index_round_up(beg);
   idx_t end_full_word = word_index(end);
-
+             
   assert(end_full_word - beg_full_word >= 32,
-         "the range must include at least 32 bytes");
-
+	 "the range must include at least 32 bytes");
+  
   // The range includes at least one full word.
   clear_range_within_word(beg, bit_index(beg_full_word));
   clear_large_range_of_words(beg_full_word, end_full_word);
@@ -241,7 +244,7 @@ void BitMap::at_put(idx_t offset, bool value) {
     set_bit(offset);
   } else {
     clear_bit(offset);
-  }
+  }  
 }
 
 // Return true to indicate that this thread changed
@@ -315,10 +318,10 @@ void BitMap::par_at_put_large_range(idx_t beg, idx_t end, bool value) {
 
   idx_t beg_full_word = word_index_round_up(beg);
   idx_t end_full_word = word_index(end);
-
+             
   assert(end_full_word - beg_full_word >= 32,
-         "the range must include at least 32 bytes");
-
+	 "the range must include at least 32 bytes");
+  
   // The range includes at least one full word.
   par_put_range_within_word(beg, bit_index(beg_full_word), value);
   if (value) {

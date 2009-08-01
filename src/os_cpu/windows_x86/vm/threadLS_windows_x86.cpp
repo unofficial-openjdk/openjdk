@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)threadLS_windows_x86.cpp	1.20 07/09/17 10:00:35 JVM"
+#endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Provides an entry point we can link against and
@@ -36,8 +39,8 @@ static void call_wrapper_dummy() {}
 
 // We need to call the os_exception_wrapper once so that it sets
 // up the offset from FS of the thread pointer.
-void ThreadLocalStorage::generate_code_for_get_thread() {
-      os::os_exception_wrapper( (java_call_t)call_wrapper_dummy,
+void ThreadLocalStorage::generate_code_for_get_thread() { 
+      os::os_exception_wrapper( (java_call_t)call_wrapper_dummy, 
                                 NULL, NULL, NULL, NULL);
 }
 
@@ -46,3 +49,4 @@ void ThreadLocalStorage::pd_init() { }
 void ThreadLocalStorage::pd_set_thread(Thread* thread)  {
   os::thread_local_storage_at_put(ThreadLocalStorage::thread_index(), thread);
 }
+

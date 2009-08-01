@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)oopMap.cpp	1.153 07/09/28 10:23:20 JVM"
+#endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -75,7 +78,7 @@ OopMap::OopMap(int frame_size, int arg_count) {
   set_omv_data(NULL);
   set_omv_count(0);
 
-#ifdef ASSERT
+#ifdef ASSERT  
   _locs_length = VMRegImpl::stack2reg(0)->value() + frame_size + arg_count;
   _locs_used   = NEW_RESOURCE_ARRAY(OopMapValue::oop_types, _locs_length);
   for(int i = 0; i < _locs_length; i++) _locs_used[i] = OopMapValue::unused_value;
@@ -91,7 +94,7 @@ OopMap::OopMap(OopMap::DeepCopyToken, OopMap* source) {
   set_omv_count(0);
   set_offset(source->offset());
 
-#ifdef ASSERT
+#ifdef ASSERT  
   _locs_length = source->_locs_length;
   _locs_used = NEW_RESOURCE_ARRAY(OopMapValue::oop_types, _locs_length);
   for(int i = 0; i < _locs_length; i++) _locs_used[i] = OopMapValue::unused_value;
@@ -137,7 +140,7 @@ int OopMap::heap_size() const {
 // frame_size units are stack-slots (4 bytes) NOT intptr_t; we can name odd
 // slots to hold 4-byte values like ints and floats in the LP64 build.
 void OopMap::set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional) {
-
+  
   assert(reg->value() < _locs_length, "too big reg value for stack size");
   assert( _locs_used[reg->value()] == OopMapValue::unused_value, "cannot insert twice" );
   debug_only( _locs_used[reg->value()] = x; )
@@ -181,7 +184,7 @@ void OopMap::set_callee_saved(VMReg reg, VMReg caller_machine_register ) {
 
 void OopMap::set_derived_oop(VMReg reg, VMReg derived_from_local_register ) {
   if( reg == derived_from_local_register ) {
-    // Actually an oop, derived shares storage with base,
+    // Actually an oop, derived shares storage with base, 
     set_oop(reg);
   } else {
     set_xxx(reg, OopMapValue::derived_oop_value, derived_from_local_register);
@@ -198,7 +201,7 @@ OopMapSet::OopMapSet() {
 }
 
 
-void OopMapSet::grow_om_data() {
+void OopMapSet::grow_om_data() {  
   int new_size = om_size() * 2;
   OopMap** new_data = NEW_RESOURCE_ARRAY(OopMap*, new_size);
   memcpy(new_data,om_data(),om_size() * sizeof(OopMap*));
@@ -289,7 +292,7 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
     if( at(i)->offset() >= pc_offset )
       break;
   }
-
+  
   assert( i < len, "oopmap not found" );
 
   OopMap* m = at(i);
@@ -323,7 +326,7 @@ static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
   OopMap* map = cb->oop_map_for_return_address(fr->pc());
   map->print();
   if( cb->is_nmethod() ) {
-    nmethod* nm = (nmethod*)cb;
+    nmethod* nm = (nmethod*)cb;            
     // native wrappers have no scope data, it is implied
     if (nm->is_native_method()) {
       tty->print("bci: 0 (native)");
@@ -333,12 +336,12 @@ static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
     }
   }
   tty->cr();
-  fr->print_on(tty);
-  tty->print("     ");
+  fr->print_on(tty);   
+  tty->print("     "); 
   cb->print_value_on(tty);  tty->cr();
   reg_map->print();
   tty->print_cr("------ ");
-
+  
 }
 #endif // PRODUCT
 
@@ -348,7 +351,7 @@ void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure*
 }
 
 
-void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
+void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map, 
                        OopClosure* oop_fn, void derived_oop_fn(oop*, oop*),
                        OopClosure* value_fn) {
   CodeBlob* cb = fr->cb();
@@ -363,14 +366,14 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
   // handle derived pointers first (otherwise base pointer may be
   // changed before derived pointer offset has been collected)
   OopMapValue omv;
-  {
+  {    
     OopMapStream oms(map,OopMapValue::derived_oop_value);
     if (!oms.is_done()) {
 #ifndef TIERED
       COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !TIERED
       // Protect the operation on the derived pointers.  This
-      // protects the addition of derived pointers to the shared
+      // protects the addition of derived pointers to the shared 
       // derived pointer table in DerivedPointerTable::add().
       MutexLockerEx x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
       do {
@@ -379,10 +382,10 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
         if ( loc != NULL ) {
           oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
           oop *derived_loc = loc;
-          derived_oop_fn(base_loc, derived_loc);
+          derived_oop_fn(base_loc, derived_loc); 
         }
-        oms.next();
-      }  while (!oms.is_done());
+	oms.next();
+      }  while (!oms.is_done()); 
     }
   }
 
@@ -441,14 +444,14 @@ void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
          "already updated this map; do not 'update' it twice!" );
   debug_only(reg_map->_update_for_id = fr->id());
 
-  // Check if caller must update oop argument
-  assert((reg_map->include_argument_oops() ||
-          !cb->caller_must_gc_arguments(reg_map->thread())),
+  // Check if caller must update oop argument  
+  assert((reg_map->include_argument_oops() || 
+          !cb->caller_must_gc_arguments(reg_map->thread())), 
          "include_argument_oops should already be set");
 
   int nof_callee = 0;
-  oop*        locs[2*max_saved_on_entry_reg_count+1];
-  VMReg regs[2*max_saved_on_entry_reg_count+1];
+  oop*        locs[2*max_saved_on_entry_reg_count+1]; 
+  VMReg regs[2*max_saved_on_entry_reg_count+1]; 
   // ("+1" because max_saved_on_entry_reg_count might be zero)
 
   // Scan through oopmap and find location of all callee-saved registers
@@ -458,7 +461,7 @@ void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
 
   OopMap* map  = cb->oop_map_for_return_address(pc);
 
-  assert(map != NULL, " no ptr map found");
+  assert(map != NULL, " no ptr map found"); 
 
   OopMapValue omv;
   for(OopMapStream oms(map,OopMapValue::callee_saved_value); !oms.is_done(); oms.next()) {
@@ -471,7 +474,7 @@ void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
 
   // Check that runtime stubs save all callee-saved registers
 #ifdef COMPILER2
-  assert(cb->is_compiled_by_c1() || !cb->is_runtime_stub() ||
+  assert(cb->is_compiled_by_c1() || !cb->is_runtime_stub() || 
          (nof_callee >= SAVED_ON_ENTRY_REG_COUNT || nof_callee >= C_SAVED_ON_ENTRY_REG_COUNT),
          "must save all");
 #endif // COMPILER2
@@ -553,7 +556,7 @@ void OopMapSet::print_on(outputStream* st) const {
   int i, len = om_count();
 
   st->print_cr("OopMapSet contains %d OopMaps\n",len);
-
+  
   for( i = 0; i < len; i++) {
     OopMap* m = at(i);
     st->print_cr("#%d ",i);
@@ -571,7 +574,7 @@ void OopMapSet::print_on(outputStream* st) const {
 class DerivedPointerEntry : public CHeapObj {
  private:
   oop*     _location; // Location of derived pointer (also pointing to the base)
-  intptr_t _offset;   // Offset from base pointer
+  intptr_t _offset;   // Offset from base pointer   
  public:
   DerivedPointerEntry(oop* location, intptr_t offset) { _location = location; _offset = offset; }
   oop* location()    { return _location; }
@@ -600,48 +603,48 @@ void DerivedPointerTable::clear() {
 intptr_t value_of_loc(oop *pointer) { return (intptr_t)(*pointer); }
 
 
-void DerivedPointerTable::add(oop *derived_loc, oop *base_loc) {
-  assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop");
+void DerivedPointerTable::add(oop *derived_loc, oop *base_loc) {      
+  assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop");  
   assert(derived_loc != base_loc, "Base and derived in same location");
   if (_active) {
-    assert(*derived_loc != (oop)base_loc, "location already added");
+    assert(*derived_loc != (oop)base_loc, "location already added");    
     assert(_list != NULL, "list must exist");
     intptr_t offset = value_of_loc(derived_loc) - value_of_loc(base_loc);
     assert(offset >= -1000000, "wrong derived pointer info");
 
     if (TraceDerivedPointers) {
       tty->print_cr(
-        "Add derived pointer@" INTPTR_FORMAT
-        " - Derived: " INTPTR_FORMAT
-        " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: %d)",
+        "Add derived pointer@" INTPTR_FORMAT 
+	" - Derived: " INTPTR_FORMAT 
+	" Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: %d)", 
         derived_loc, (address)*derived_loc, (address)*base_loc, base_loc, offset
       );
-    }
+    }    
     // Set derived oop location to point to base.
-    *derived_loc = (oop)base_loc;
+    *derived_loc = (oop)base_loc;  
     assert_lock_strong(DerivedPointerTableGC_lock);
     DerivedPointerEntry *entry = new DerivedPointerEntry(derived_loc, offset);
-    _list->append(entry);
+    _list->append(entry);    
   }
 }
 
 
-void DerivedPointerTable::update_pointers() {
+void DerivedPointerTable::update_pointers() {  
   assert(_list != NULL, "list must exist");
   for(int i = 0; i < _list->length(); i++) {
     DerivedPointerEntry* entry = _list->at(i);
     oop* derived_loc = entry->location();
     intptr_t offset  = entry->offset();
     // The derived oop was setup to point to location of base
-    oop  base        = **(oop**)derived_loc;
+    oop  base        = **(oop**)derived_loc; 
     assert(Universe::heap()->is_in_or_null(base), "must be an oop");
-
+    
     *derived_loc = (oop)(((address)base) + offset);
     assert(value_of_loc(derived_loc) - value_of_loc(&base) == offset, "sanity check");
 
     if (TraceDerivedPointers) {
-      tty->print_cr("Updating derived pointer@" INTPTR_FORMAT
-                    " - Derived: " INTPTR_FORMAT "  Base: " INTPTR_FORMAT " (Offset: %d)",
+      tty->print_cr("Updating derived pointer@" INTPTR_FORMAT 
+		    " - Derived: " INTPTR_FORMAT "  Base: " INTPTR_FORMAT " (Offset: %d)",
           derived_loc, (address)*derived_loc, (address)base, offset);
     }
 

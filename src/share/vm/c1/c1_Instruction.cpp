@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)c1_Instruction.cpp	1.90 07/05/05 17:05:05 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -193,22 +196,22 @@ ciType* CheckCast::exact_type() const {
 }
 
 
-void ArithmeticOp::other_values_do(void f(Value*)) {
+void ArithmeticOp::other_values_do(void f(Value*)) { 
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
 
-void NullCheck::other_values_do(void f(Value*)) {
+void NullCheck::other_values_do(void f(Value*)) { 
   lock_stack()->values_do(f);
 }
 
-void AccessArray::other_values_do(void f(Value*)) {
+void AccessArray::other_values_do(void f(Value*)) { 
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
 
 
 // Implementation of AccessField
 
-void AccessField::other_values_do(void f(Value*)) {
+void AccessField::other_values_do(void f(Value*)) { 
   if (state_before() != NULL) state_before()->values_do(f);
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
@@ -232,7 +235,7 @@ bool ArithmeticOp::is_commutative() const {
     case Bytecodes::_imul: // fall through
     case Bytecodes::_lmul: // fall through
     case Bytecodes::_fmul: // fall through
-    case Bytecodes::_dmul: return true;
+    case Bytecodes::_dmul: return true; 
   }
   return false;
 }
@@ -270,7 +273,7 @@ bool LogicOp::is_commutative() const {
 
 // Implementation of CompareOp
 
-void CompareOp::other_values_do(void f(Value*)) {
+void CompareOp::other_values_do(void f(Value*)) { 
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
@@ -302,7 +305,7 @@ IRScope* StateSplit::scope() const {
 }
 
 
-void StateSplit::state_values_do(void f(Value*)) {
+void StateSplit::state_values_do(void f(Value*)) { 
   if (state() != NULL) state()->values_do(f);
 }
 
@@ -489,7 +492,7 @@ BlockBegin* Constant::compare(Instruction::Condition cond, Value right,
 }
 
 
-void Constant::other_values_do(void f(Value*)) {
+void Constant::other_values_do(void f(Value*)) { 
   if (state() != NULL) state()->values_do(f);
 }
 
@@ -525,7 +528,7 @@ void BlockBegin::set_end(BlockEnd* end) {
   if (old_end != NULL) {
     // disconnect from the old end
     old_end->set_begin(NULL);
-
+    
     // disconnect this block from it's current successors
     for (i = 0; i < _successors.length(); i++) {
       _successors.at(i)->remove_predecessor(this);
@@ -655,11 +658,11 @@ BlockBegin* BlockBegin::insert_block_between(BlockBegin* sux) {
   return new_sux;
 }
 
-
+  
 void BlockBegin::remove_successor(BlockBegin* pred) {
   int idx;
   while ((idx = _successors.index_of(pred)) >= 0) {
-    _successors.remove_at(idx);
+    _successors.remove_at(idx);    
   }
 }
 
@@ -672,7 +675,7 @@ void BlockBegin::add_predecessor(BlockBegin* pred) {
 void BlockBegin::remove_predecessor(BlockBegin* pred) {
   int idx;
   while ((idx = _predecessors.index_of(pred)) >= 0) {
-    _predecessors.remove_at(idx);
+    _predecessors.remove_at(idx);    
   }
 }
 
@@ -684,7 +687,7 @@ void BlockBegin::add_exception_handler(BlockBegin* b) {
 }
 
 int BlockBegin::add_exception_state(ValueStack* state) {
-  assert(is_set(exception_entry_flag), "only for xhandlers");
+  assert(is_set(exception_entry_flag), "only for xhandlers"); 
   if (_exception_states == NULL) {
     _exception_states = new ValueStackStack(4);
   }
@@ -732,7 +735,7 @@ void BlockBegin::block_values_do(void f(Value*)) {
 }
 
 
-#ifndef PRODUCT
+#ifndef PRODUCT               
   #define TRACE_PHI(code) if (PrintPhiFunctions) { code; }
 #else
   #define TRACE_PHI(coce)
@@ -788,11 +791,11 @@ bool BlockBegin::try_merge(ValueStack* new_state) {
           TRACE_PHI(tty->print_cr("creating phi-function %c%d for local %d", new_state->local_at(index)->type()->tchar(), new_state->local_at(index)->id(), index));
         }
       }
-    }
+    } 
 
     // initialize state of block
     set_state(new_state);
-
+    
   } else if (existing_state->is_same_across_scopes(new_state)) {
     TRACE_PHI(tty->print_cr("exisiting state found"));
 
@@ -962,7 +965,7 @@ void BlockEnd::substitute_sux(BlockBegin* old_sux, BlockBegin* new_sux) {
 }
 
 
-void BlockEnd::other_values_do(void f(Value*)) {
+void BlockEnd::other_values_do(void f(Value*)) {  
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
@@ -973,7 +976,7 @@ void BlockEnd::other_values_do(void f(Value*)) {
 // predecessor. Special handling is needed for xhanlder entries because there
 // the state of arbitrary instructions are needed.
 
-Value Phi::operand_at(int i) const {
+Value Phi::operand_at(int i) const { 
   ValueStack* state;
   if (_block->is_set(BlockBegin::exception_entry_flag)) {
     state = _block->exception_state_at(i);
@@ -983,14 +986,14 @@ Value Phi::operand_at(int i) const {
   assert(state != NULL, "");
 
   if (is_local()) {
-    return state->local_at(local_index());
+    return state->local_at(local_index()); 
   } else {
     return state->stack_at(stack_index());
   }
 }
 
 
-int Phi::operand_count() const {
+int Phi::operand_count() const { 
   if (_block->is_set(BlockBegin::exception_entry_flag)) {
     return _block->number_of_exception_states();
   } else {

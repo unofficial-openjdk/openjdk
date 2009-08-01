@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)heapInspection.hpp	1.17 07/07/02 11:47:11 JVM"
+#endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef SERVICES_KERNEL
@@ -30,7 +33,7 @@
 // KlassInfoTable is a bucket hash table that
 // maps klassOops to extra information:
 //    instance count and instance word size.
-//
+// 
 // A KlassInfoBucket is the head of a link list
 // of KlassInfoEntry's
 //

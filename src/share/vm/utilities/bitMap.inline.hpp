@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bitMap.inline.hpp	1.8 07/05/05 17:07:07 JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 
@@ -42,15 +45,15 @@ inline bool BitMap::par_set_bit(idx_t bit) {
   do {
     const idx_t new_val = old_val | mask;
     if (new_val == old_val) {
-      return false;     // Someone else beat us to it.
+      return false;	// Someone else beat us to it.
     }
     const idx_t cur_val = (idx_t) Atomic::cmpxchg_ptr((void*) new_val,
-                                                      (volatile void*) addr,
-                                                      (void*) old_val);
+						      (volatile void*) addr,
+						      (void*) old_val);
     if (cur_val == old_val) {
-      return true;      // Success.
+      return true;	// Success.
     }
-    old_val = cur_val;  // The value changed, try again.
+    old_val = cur_val;	// The value changed, try again.
   } while (true);
 }
 
@@ -63,15 +66,15 @@ inline bool BitMap::par_clear_bit(idx_t bit) {
   do {
     const idx_t new_val = old_val & mask;
     if (new_val == old_val) {
-      return false;     // Someone else beat us to it.
+      return false;	// Someone else beat us to it.
     }
     const idx_t cur_val = (idx_t) Atomic::cmpxchg_ptr((void*) new_val,
-                                                      (volatile void*) addr,
-                                                      (void*) old_val);
+						      (volatile void*) addr,
+						      (void*) old_val);
     if (cur_val == old_val) {
-      return true;      // Success.
+      return true;	// Success.
     }
-    old_val = cur_val;  // The value changed, try again.
+    old_val = cur_val;	// The value changed, try again.
   } while (true);
 }
 

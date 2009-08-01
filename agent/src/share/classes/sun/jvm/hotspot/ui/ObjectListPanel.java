@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -244,7 +244,7 @@ public class ObjectListPanel extends SAPanel {
       public Object getValueForColumn(Object obj, int column) {
         ObjectListTableModel omodel = (ObjectListTableModel)model;
         return omodel.getValueForColumn((Oop) obj, column);
-      }
+      }	
     }
   }
 
@@ -316,7 +316,7 @@ public class ObjectListPanel extends SAPanel {
     if (list == null) {
       return; // dead object
     }
-
+    
     for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
       SAListener listener = (SAListener) iter.next();
       listener.showLiveness(oop, list);

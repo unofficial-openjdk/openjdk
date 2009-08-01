@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)icache.cpp	1.23 07/05/05 17:06:49 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@
 AbstractICache::flush_icache_stub_t AbstractICache::_flush_icache_stub = NULL;
 
 void AbstractICache::initialize() {
-  // Making this stub must be FIRST use of assembler
+  // Making this stub must be FIRST use of assembler 
   ResourceMark rm;
 
   BufferBlob* b = BufferBlob::create("flush_icache_stub", ICache::stub_size);
@@ -50,7 +53,7 @@ void AbstractICache::call_flush_stub(address start, int lines) {
   // The business with the magic number is just a little security.
   // We cannot call the flush stub when generating the flush stub
   // because it isn't there yet.  So, the stub also returns its third
-  // parameter.  This is a cheap check that the stub was really executed.
+  // parameter.  This is a cheap check that the stub was really executed. 
   static int magic = 0xbaadbabe;
 
   int auto_magic = magic; // Make a local copy to avoid race condition
@@ -81,7 +84,7 @@ void AbstractICache::invalidate_range(address start, int nbytes) {
   static bool firstTime = true;
   if (firstTime) {
     guarantee(start == CAST_FROM_FN_PTR(address, _flush_icache_stub),
-              "first flush should be for flush stub");
+	      "first flush should be for flush stub");
     firstTime = false;
     return;
   }
@@ -96,7 +99,7 @@ void AbstractICache::invalidate_range(address start, int nbytes) {
     nbytes += line_offset;
   }
   call_flush_stub(start, round_to(nbytes, ICache::line_size) >>
-                         ICache::log2_line_size);
+		         ICache::log2_line_size);
 }
 
 // For init.cpp

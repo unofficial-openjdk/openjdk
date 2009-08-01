@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -38,7 +38,7 @@ public class SSEInstructionDecoder extends InstructionDecoder {
    public SSEInstructionDecoder(String name, int addrMode1, int operandType1, int addrMode2, int operandType2) {
       super(name, addrMode1, operandType1, addrMode2, operandType2);
    }
-
+   
    public SSEInstructionDecoder(String name, int addrMode1, int operandType1, int addrMode2, int operandType2, int addrMode3, int operandType3) {
       super(name, addrMode1, operandType1, addrMode2, operandType2, addrMode3, operandType3);
    }
@@ -51,3 +51,4 @@ public class SSEInstructionDecoder extends InstructionDecoder {
       return factory.newGeneralInstruction(name, op1, op2, op3, size, 0);
    }
 }
+

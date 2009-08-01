@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -47,8 +47,8 @@ public class JSList extends DefaultScriptObject {
 
    public Object get(int index) {
       if (isInRange(index)) {
-          Object item = list.get(index);
-          return wrapObject(item);
+	  Object item = list.get(index);
+	  return wrapObject(item);
       } else {
           return super.get(index);
       }
@@ -59,7 +59,7 @@ public class JSList extends DefaultScriptObject {
       final int size = list.size();
       Object[] res = new Object[superIds.length + size];
       for (int i = 0; i < size; i++) {
-          res[i] = new Integer(i);
+	  res[i] = new Integer(i);
       }
       System.arraycopy(superIds, 0, res, size, superIds.length);
       return res;
@@ -67,7 +67,7 @@ public class JSList extends DefaultScriptObject {
 
    public boolean has(String name) {
       if (name.equals("length")) {
-         return true;
+         return true; 
       } else {
          return super.has(name);
       }
@@ -97,10 +97,10 @@ public class JSList extends DefaultScriptObject {
        StringBuffer buf = new StringBuffer();
        buf.append('[');
        for (Iterator itr = list.iterator(); itr.hasNext();) {
-           buf.append(wrapObject(itr.next()));
-           if (itr.hasNext()) {
-               buf.append(", ");
-           }
+	   buf.append(wrapObject(itr.next()));
+	   if (itr.hasNext()) {
+	       buf.append(", ");
+	   }
        }
        buf.append(']');
        return buf.toString();

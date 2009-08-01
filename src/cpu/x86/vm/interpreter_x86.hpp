@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)interpreter_x86.hpp	1.37 07/09/17 09:58:27 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
  public:
@@ -46,11 +49,11 @@
   // Support for Tagged Stacks
 
   // Stack index relative to tos (which points at value)
-  static int expr_index_at(int i)     {
-    return stackElementWords() * i;
+  static int expr_index_at(int i)     { 
+    return stackElementWords() * i; 
   }
 
-  static int expr_tag_index_at(int i) {
+  static int expr_tag_index_at(int i) { 
     assert(TaggedStackInterpreter, "should not call this");
     // tag is one word above java stack element
     return stackElementWords() * i + 1;
@@ -67,3 +70,5 @@
     assert(TaggedStackInterpreter, "should not call this");
     return stackElementWords() * i + (tag_offset_in_bytes()/wordSize);
   }
+
+

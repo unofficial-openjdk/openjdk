@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)graphKit.hpp	1.59 07/08/07 15:24:25 JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class FastLockNode;
@@ -195,7 +198,7 @@ class GraphKit : public Phase {
     ex_map->set_next_exception(_exceptions);
     _exceptions = ex_map;
   }
-
+  
   // Turn the current JVM state into an exception state, appending the ex_oop.
   SafePointNode* make_exception_state(Node* ex_oop);
 
@@ -214,7 +217,7 @@ class GraphKit : public Phase {
     }
     return phi_map;
   }
-
+  
   // Combine the two exception states, building phis as necessary.
   // The second argument is updated to include contributions from the first.
   void combine_exception_states(SafePointNode* ex_map, SafePointNode* phi_map);
@@ -437,7 +440,7 @@ class GraphKit : public Phase {
   //
   // If val==NULL, it is taken to be a completely unknown value. QQQ
 
-  Node* store_oop_to_object(Node* ctl,
+  Node* store_oop_to_object(Node* ctl, 
                             Node* obj,   // containing obj
                             Node* adr,  // actual adress to store val at
                             const TypePtr* adr_type,
@@ -445,7 +448,7 @@ class GraphKit : public Phase {
                             const Type* val_type,
                             BasicType bt);
 
-  Node* store_oop_to_array(Node* ctl,
+  Node* store_oop_to_array(Node* ctl, 
                            Node* obj,   // containing obj
                            Node* adr,  // actual adress to store val at
                            const TypePtr* adr_type,
@@ -454,7 +457,7 @@ class GraphKit : public Phase {
                            BasicType bt);
 
   // Could be an array or object we don't know at compile time (unsafe ref.)
-  Node* store_oop_to_unknown(Node* ctl,
+  Node* store_oop_to_unknown(Node* ctl, 
                              Node* obj,   // containing obj
                              Node* adr,  // actual adress to store val at
                              const TypePtr* adr_type,
@@ -492,7 +495,7 @@ class GraphKit : public Phase {
   //--------------- stub generation -------------------
  public:
   void gen_stub(address C_function,
-                const char *name,
+                const char *name, 
                 int is_fancy_jump,
                 bool pass_tls,
                 bool return_pc);
@@ -740,3 +743,4 @@ class BuildCutout: public PreserveJVMState {
   BuildCutout(GraphKit* kit, Node* p, float prob, float cnt = COUNT_UNKNOWN);
   ~BuildCutout();
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)threadLS_windows_x86.hpp	1.20 07/05/05 17:04:57 JVM"
+#endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Processor dependent parts of ThreadLocalStorage
@@ -31,14 +34,15 @@ protected:
 public:
 
   // Java Thread
-  static inline Thread* thread() {
+  static inline Thread* thread() { 
     return (Thread*)TlsGetValue(thread_index());
   }
 
-  static inline Thread* get_thread() {
+  static inline Thread* get_thread() { 
     return (Thread*)TlsGetValue(thread_index());
   }
 
   static inline void set_thread_ptr_offset( int offset ) { _thread_ptr_offset = offset; }
 
   static inline int get_thread_ptr_offset() { return _thread_ptr_offset; }
+

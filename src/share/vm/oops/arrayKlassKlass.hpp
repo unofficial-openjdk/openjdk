@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)arrayKlassKlass.hpp	1.39 07/05/29 09:44:18 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // arrayKlassKlass is the abstract baseclass for all array class classes
@@ -32,11 +35,11 @@ class arrayKlassKlass : public klassKlass {
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(arrayKlassKlass);
   static klassOop create_klass(TRAPS);
-
+ 
   // Casting from klassOop
   static arrayKlassKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_klass(), "cast to arrayKlassKlass");
-    return (arrayKlassKlass*) k->klass_part();
+    return (arrayKlassKlass*) k->klass_part(); 
   }
 
   // Sizing
@@ -67,3 +70,4 @@ class arrayKlassKlass : public klassKlass {
   const char* internal_name() const;
   void oop_verify_on(oop obj, outputStream* st);
 };
+

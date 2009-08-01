@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_FrameMap.hpp	1.59 07/05/05 17:05:07 JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ciMethod;
@@ -46,7 +49,7 @@ class BasicTypeList;
 //  +----------+---+----------+-------+------------------------+-----+
 //  |arguments | x | monitors | spill | reserved argument area | ABI |
 //  +----------+---+----------+-------+------------------------+-----+
-//
+//  
 //  x =  ABI area (SPARC) or  return adress and link (i486)
 //  ABI  = ABI area (SPARC) or nothing (i486)
 

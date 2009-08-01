@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)concurrentMarkSweepThread.cpp	1.48 07/05/05 17:06:45 JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -129,7 +132,7 @@ void ConcurrentMarkSweepThread::run() {
     _cmst = NULL;
     Terminator_lock->notify();
   }
-
+  
   // Thread destructor usually does this..
   ThreadLocalStorage::set_thread(NULL);
 }
@@ -163,7 +166,7 @@ void ConcurrentMarkSweepThread::stop() {
   // it is ok to take late safepoints here, if needed
   {
     MutexLockerEx x(Terminator_lock);
-    _should_terminate = true;
+    _should_terminate = true;  
   }
   { // Now post a notify on CGC_lock so as to nudge
     // CMS thread(s) that might be slumbering in
@@ -176,7 +179,7 @@ void ConcurrentMarkSweepThread::stop() {
     while(cmst() != NULL) {
       Terminator_lock->wait();
     }
-  }
+  }  
 }
 
 void ConcurrentMarkSweepThread::threads_do(ThreadClosure* tc) {
@@ -184,7 +187,7 @@ void ConcurrentMarkSweepThread::threads_do(ThreadClosure* tc) {
   if (_cmst != NULL) {
     tc->do_thread(_cmst);
   }
-  assert(Universe::is_fully_initialized(),
+  assert(Universe::is_fully_initialized(), 
          "Called too early, make sure heap is fully initialized");
   if (_collector != NULL) {
     AbstractWorkGang* gang = _collector->conc_workers();
@@ -296,7 +299,7 @@ void ConcurrentMarkSweepThread::sleepBeforeNextCycle() {
     if (_collector->shouldConcurrentCollect()) {
       return;
     }
-    // .. collection criterion not yet met, let's go back
+    // .. collection criterion not yet met, let's go back 
     // and wait some more
   }
 }

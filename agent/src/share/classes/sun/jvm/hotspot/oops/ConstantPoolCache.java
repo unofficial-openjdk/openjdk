@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -68,19 +68,19 @@ public class ConstantPoolCache extends Oop {
   public ConstantPool getConstants() { return (ConstantPool) constants.getValue(this); }
 
   public long getObjectSize() {
-    return alignObjectSize(baseOffset + getLength() * elementSize);
+    return alignObjectSize(baseOffset + getLength() * elementSize); 
   }
 
   public ConstantPoolCacheEntry getEntryAt(int i) {
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that(0 <= i && i < getLength(), "index out of bounds");
+      Assert.that(0 <= i && i < getLength(), "index out of bounds");    
     }
     return new ConstantPoolCacheEntry(this, i);
   }
 
   public int getIntAt(int entry, int fld) {
     //alignObjectSize ?
-    long offset = baseOffset + /*alignObjectSize*/entry * elementSize + fld* getHeap().getIntSize();
+    long offset = baseOffset + /*alignObjectSize*/entry * elementSize + fld* getHeap().getIntSize(); 
     return (int) getHandle().getCIntegerAt(offset, getHeap().getIntSize(), true );
   }
 

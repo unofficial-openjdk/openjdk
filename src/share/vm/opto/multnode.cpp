@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)multnode.cpp	1.61 07/09/28 10:23:05 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 //=============================================================================
 //------------------------------MultiNode--------------------------------------
-const RegMask &MultiNode::out_RegMask() const {
+const RegMask &MultiNode::out_RegMask() const { 
   return RegMask::Empty;
 }
 
@@ -55,9 +58,9 @@ ProjNode* MultiNode::proj_out(uint which_proj) const {
 
 //=============================================================================
 //------------------------------ProjNode---------------------------------------
-uint ProjNode::hash() const {
+uint ProjNode::hash() const { 
   // only one input
-  return (uintptr_t)in(TypeFunc::Control) + (_con << 1) + (_is_io_use ? 1 : 0);
+  return (uintptr_t)in(TypeFunc::Control) + (_con << 1) + (_is_io_use ? 1 : 0); 
 }
 uint ProjNode::cmp( const Node &n ) const { return _con == ((ProjNode&)n)._con && ((ProjNode&)n)._is_io_use == _is_io_use; }
 uint ProjNode::size_of() const { return sizeof(ProjNode); }
@@ -68,13 +71,13 @@ bool ProjNode::is_CFG() const {
   return (_con == TypeFunc::Control && def->is_CFG());
 }
 
-const Type *ProjNode::bottom_type() const {
+const Type *ProjNode::bottom_type() const { 
   if (in(0) == NULL)  return Type::TOP;
   const Type *tb = in(0)->bottom_type();
   if( tb == Type::TOP ) return Type::TOP;
   if( tb == Type::BOTTOM ) return Type::BOTTOM;
   const TypeTuple *t = tb->is_tuple();
-  return t->field_at(_con);
+  return t->field_at(_con); 
 }
 
 const TypePtr *ProjNode::adr_type() const {
@@ -124,6 +127,8 @@ const RegMask &ProjNode::out_RegMask() const {
 }
 
 //------------------------------ideal_reg--------------------------------------
-uint ProjNode::ideal_reg() const {
+uint ProjNode::ideal_reg() const { 
   return Matcher::base2reg[bottom_type()->base()];
 }
+
+

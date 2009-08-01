@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)stubRoutines.hpp	1.118 07/10/05 19:48:47 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // StubRoutines provides entry points to assembly routines used by
@@ -80,7 +83,7 @@ class StubRoutines: AllStatic {
   static address _verify_oop_subroutine_entry;
 
   static address _call_stub_return_address;                // the return PC, when returning to a call stub
-  static address _call_stub_entry;
+  static address _call_stub_entry;  
   static address _forward_exception_entry;
   static address _catch_exception_entry;
   static address _throw_AbstractMethodError_entry;
@@ -160,8 +163,8 @@ class StubRoutines: AllStatic {
   }
 
   // Debugging
-  static jint    verify_oop_count()                        { return _verify_oop_count; }
-  static jint*   verify_oop_count_addr()                   { return &_verify_oop_count; }
+  static jint    verify_oop_count()                        { return _verify_oop_count; }  
+  static jint*   verify_oop_count_addr()                   { return &_verify_oop_count; }  
   // a subroutine for debugging the GC
   static address verify_oop_subroutine_entry_address()    { return (address)&_verify_oop_subroutine_entry; }
 

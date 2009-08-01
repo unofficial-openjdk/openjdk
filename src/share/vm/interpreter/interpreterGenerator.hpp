@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)interpreterGenerator.hpp	1.1 07/08/07 10:57:15 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file contains the platform-independant parts
 // of the interpreter generator.
 
 
-class InterpreterGenerator: public CC_INTERP_ONLY(CppInterpreterGenerator)
+class InterpreterGenerator: public CC_INTERP_ONLY(CppInterpreterGenerator) 
                                    NOT_CC_INTERP(TemplateInterpreterGenerator) {
 
 public:
@@ -36,3 +39,5 @@ InterpreterGenerator(StubQueue* _code);
 #include "incls/_interpreterGenerator_pd.hpp.incl"
 
 };
+
+

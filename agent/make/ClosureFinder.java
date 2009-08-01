@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import java.io.*;
@@ -59,48 +59,48 @@ public class ClosureFinder {
     private static final boolean isWindows = File.separatorChar != '/';
 
     public ClosureFinder(Collection roots, String classPath) {
-        this.roots = roots;
-        this.classPath = classPath;
-        parseClassPath();
+	this.roots = roots;
+	this.classPath = classPath;
+	parseClassPath();
     }
 
     // parse classPath into pathComponents array
     private void parseClassPath() {
-        List paths = new ArrayList();
-        StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
-        while (st.hasMoreTokens())
-            paths.add(st.nextToken());
+	List paths = new ArrayList();
+	StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
+	while (st.hasMoreTokens()) 
+	    paths.add(st.nextToken());
 
-        Object[] arr = paths.toArray();
-        pathComponents = new String[arr.length];
-        System.arraycopy(arr, 0, pathComponents, 0, arr.length);
+	Object[] arr = paths.toArray();
+	pathComponents = new String[arr.length];
+	System.arraycopy(arr, 0, pathComponents, 0, arr.length);
     }
 
     // if output is aleady not computed, compute it now
     // result is a map from class file name to base path where the .class was found
     public Map find() {
-        if (visitedClasses == null) {
-            visitedClasses = new HashMap();
-            computeClosure();
-        }
-        return visitedClasses;
+	if (visitedClasses == null) {
+	    visitedClasses = new HashMap();
+	    computeClosure();
+	}
+	return visitedClasses;
     }
 
     // compute closure for all given root classes
     private void computeClosure() {
-        for (Iterator rootsItr = roots.iterator(); rootsItr.hasNext();) {
+	for (Iterator rootsItr = roots.iterator(); rootsItr.hasNext();) {
             String name = (String) rootsItr.next();
             name = name.substring(0, name.indexOf(".class"));
-            computeClosure(name);
+	    computeClosure(name);
         }
     }
-
-
+     
+   
     // looks up for .class in pathComponents and returns
     // base path if found, else returns null
     private String lookupClassFile(String classNameAsPath) {
-        for (int i = 0; i < pathComponents.length; i++) {
-            File f =  new File(pathComponents[i] + File.separator +
+	for (int i = 0; i < pathComponents.length; i++) {
+	    File f =  new File(pathComponents[i] + File.separator +
                                classNameAsPath + ".class");
             if (f.exists()) {
                 if (isWindows) {
@@ -116,7 +116,7 @@ public class ClosureFinder {
                 return pathComponents[i];
             }
         }
-        return null;
+	return null;
     }
 
 
@@ -135,120 +135,121 @@ public class ClosureFinder {
 
     // whether a given string may be a class name?
     private boolean mayBeClassName(String internalClassName) {
-        int len = internalClassName.length();
-        for (int s = 0; s < len; s++) {
-            char c = internalClassName.charAt(s);
-            if (!Character.isJavaIdentifierPart(c) && c != '/')
-                return false;
-        }
+	int len = internalClassName.length();
+	for (int s = 0; s < len; s++) {
+	    char c = internalClassName.charAt(s);
+	    if (!Character.isJavaIdentifierPart(c) && c != '/')
+		return false;
+	}
         return true;
     }
 
-    // compute closure for a given class
+    // compute closure for a given class  
     private void computeClosure(String className) {
-        if (visitedClasses.get(className) != null) return;
-        String basePath = lookupClassFile(className);
-        if (basePath != null) {
-            visitedClasses.put(className, basePath);
-            try {
-                File classFile = new File(basePath + File.separator + className + ".class");
-                FileInputStream fis = new FileInputStream(classFile);
-                DataInputStream dis = new DataInputStream(fis);
-                // look for .class signature
-                if (dis.readInt() != 0xcafebabe) {
-                    System.err.println(classFile.getAbsolutePath() + " is not a valid .class file");
-                    return;
-                }
+	if (visitedClasses.get(className) != null) return;
+	String basePath = lookupClassFile(className);
+	if (basePath != null) {
+	    visitedClasses.put(className, basePath);
+	    try {
+		File classFile = new File(basePath + File.separator + className + ".class");
+		FileInputStream fis = new FileInputStream(classFile);
+		DataInputStream dis = new DataInputStream(fis);
+		// look for .class signature
+		if (dis.readInt() != 0xcafebabe) {
+		    System.err.println(classFile.getAbsolutePath() + " is not a valid .class file");
+		    return;
+		}
+		
+		// ignore major and minor version numbers
+		dis.readShort();
+		dis.readShort();
 
-                // ignore major and minor version numbers
-                dis.readShort();
-                dis.readShort();
+		// read number of constant pool constants
+		int numConsts = (int) dis.readShort();
+		String[] strings = new String[numConsts];
+		
+		// zero'th entry is unused
+		for (int cpIndex = 1; cpIndex < numConsts; cpIndex++) {
+		    int constType = (int) dis.readByte();
+		    switch (constType) {
+		    case CONSTANT_Class:
+		    case CONSTANT_String:
+			dis.readShort(); // string name index;
+			break;
+	       
+		    case CONSTANT_FieldRef:
+		    case CONSTANT_MethodRef:
+		    case CONSTANT_InterfaceMethodRef:
+		    case CONSTANT_NameAndType:
+		    case CONSTANT_Integer:
+		    case CONSTANT_Float:
+			// all these are 4 byte constants
+			dis.readInt();
+			break;
 
-                // read number of constant pool constants
-                int numConsts = (int) dis.readShort();
-                String[] strings = new String[numConsts];
+		    case CONSTANT_Long:
+		    case CONSTANT_Double:
+			// 8 byte constants
+			dis.readLong();
+		        // occupies 2 cp entries
+			cpIndex++;
+			break;
+		   
 
-                // zero'th entry is unused
-                for (int cpIndex = 1; cpIndex < numConsts; cpIndex++) {
-                    int constType = (int) dis.readByte();
-                    switch (constType) {
-                    case CONSTANT_Class:
-                    case CONSTANT_String:
-                        dis.readShort(); // string name index;
-                        break;
+		    case CONSTANT_Utf8: {
+			strings[cpIndex] = dis.readUTF();
+			break;
+		    }
 
-                    case CONSTANT_FieldRef:
-                    case CONSTANT_MethodRef:
-                    case CONSTANT_InterfaceMethodRef:
-                    case CONSTANT_NameAndType:
-                    case CONSTANT_Integer:
-                    case CONSTANT_Float:
-                        // all these are 4 byte constants
-                        dis.readInt();
-                        break;
+		    default:
+		        System.err.println("invalid constant pool entry");
+			return;
+		    }
+		}
 
-                    case CONSTANT_Long:
-                    case CONSTANT_Double:
-                        // 8 byte constants
-                        dis.readLong();
-                        // occupies 2 cp entries
-                        cpIndex++;
-                        break;
+	    // now walk thru the string constants and look for class names
+	    for (int s = 0; s < numConsts; s++) {
+		if (strings[s] != null && mayBeClassName(strings[s]))
+		    computeClosure(strings[s].replace('/', File.separatorChar));
+	    }
 
-
-                    case CONSTANT_Utf8: {
-                        strings[cpIndex] = dis.readUTF();
-                        break;
-                    }
-
-                    default:
-                        System.err.println("invalid constant pool entry");
-                        return;
-                    }
-                }
-
-            // now walk thru the string constants and look for class names
-            for (int s = 0; s < numConsts; s++) {
-                if (strings[s] != null && mayBeClassName(strings[s]))
-                    computeClosure(strings[s].replace('/', File.separatorChar));
-            }
-
-            } catch (IOException exp) {
-                // ignore for now
-            }
-
-        }
+	    } catch (IOException exp) {
+		// ignore for now
+	    }
+	    
+	}
     }
 
     // a sample main that accepts roots classes in a file and classpath as args
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.err.println("Usage: ClosureFinder <root class file> <class path>");
-            System.exit(1);
-        }
+	if (args.length != 2) {
+	    System.err.println("Usage: ClosureFinder <root class file> <class path>");
+	    System.exit(1);
+	}
 
-        List roots = new ArrayList();
-        try {
-            FileInputStream fis = new FileInputStream(args[0]);
-            DataInputStream dis = new DataInputStream(fis);
-            String line = null;
-            while ((line = dis.readLine()) != null) {
+	List roots = new ArrayList();
+	try {
+	    FileInputStream fis = new FileInputStream(args[0]);
+	    DataInputStream dis = new DataInputStream(fis);
+	    String line = null;
+	    while ((line = dis.readLine()) != null) {
                 if (isWindows) {
                     line = line.replace('/', File.separatorChar);
                 }
-                roots.add(line);
-            }
-        } catch (IOException exp) {
-            System.err.println(exp.getMessage());
-            System.exit(2);
-        }
+		roots.add(line);
+	    }
+	} catch (IOException exp) {
+	    System.err.println(exp.getMessage());
+	    System.exit(2);
+	}
 
-        ClosureFinder cf = new ClosureFinder(roots, args[1]);
-        Map out = cf.find();
-        Iterator res = out.keySet().iterator();
-        for(; res.hasNext(); ) {
-            String className = (String) res.next();
-            System.out.println(className + ".class");
-        }
+	ClosureFinder cf = new ClosureFinder(roots, args[1]);
+	Map out = cf.find();
+	Iterator res = out.keySet().iterator();
+	for(; res.hasNext(); ) {
+	    String className = (String) res.next();
+	    System.out.println(className + ".class");
+	}
     }
 }
+

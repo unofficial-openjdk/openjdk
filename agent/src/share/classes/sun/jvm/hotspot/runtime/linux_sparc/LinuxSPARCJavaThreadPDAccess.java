@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.linux_sparc;
@@ -54,17 +54,17 @@ public class LinuxSPARCJavaThreadPDAccess implements JavaThreadPDAccess {
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JavaThread");
     Type anchorType = db.lookupType("JavaFrameAnchor");
-
+    
     osThreadField           = type.getAddressField("_osthread");
     hasFlushed              = db.lookupIntConstant("JavaFrameAnchor::flushed").intValue();
-
+    
     type = db.lookupType("OSThread");
     osThreadThreadIDField   = type.getCIntegerField("_thread_id");
   }
 
   public    Address getLastJavaFP(Address addr) {
-        return null;
-
+	return null;
+    
   }
 
   public    Address getLastJavaPC(Address addr) {
@@ -97,7 +97,7 @@ public class LinuxSPARCJavaThreadPDAccess implements JavaThreadPDAccess {
 
     // sparc does a lazy window flush. The _flags field of the JavaFrameAnchor
     // encodes whether the windows have flushed. Whenever the windows have flushed
-    // there will be a last_Java_pc.
+    // there will be a last_Java_pc. 
     // In a relective system we'd have to  do something to force the thread to flush
     // its windows and give us the pc (or the younger_sp so we can find it ourselves)
     // In a debugger situation (process or core) the flush should have happened and
@@ -107,12 +107,12 @@ public class LinuxSPARCJavaThreadPDAccess implements JavaThreadPDAccess {
       return new SPARCFrame(SPARCFrame.biasSP(thread.getLastJavaSP()), thread.getLastJavaPC());
     } else {
       Frame top = getCurrentFrameGuess(thread, addr);
-      return new SPARCFrame(SPARCFrame.biasSP(thread.getLastJavaSP()),
-                            SPARCFrame.biasSP(SPARCFrame.findYoungerSP(top.getSP(), thread.getLastJavaSP())),
-                            false);
+      return new SPARCFrame(SPARCFrame.biasSP(thread.getLastJavaSP()), 
+			    SPARCFrame.biasSP(SPARCFrame.findYoungerSP(top.getSP(), thread.getLastJavaSP())),
+			    false);
     }
 
-
+    
   }
 
   public RegisterMap newRegisterMap(JavaThread thread, boolean updateMap) {

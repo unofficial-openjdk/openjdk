@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)exceptionHandlerTable.hpp	1.30 07/05/05 17:05:21 JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A HandlerTableEntry describes an individual entry of a subtable
@@ -84,7 +87,7 @@ class ExceptionHandlerTable VALUE_OBJ_CLASS_SPEC {
   ReallocMark        _nesting;  // assertion check for reallocations
 
   // add the entry & grow the table if needed
-  void add_entry(HandlerTableEntry entry);
+  void add_entry(HandlerTableEntry entry); 
   HandlerTableEntry* subtable_for(int catch_pco) const;
 
  public:
@@ -149,7 +152,7 @@ public:
 
   uint len() const { return _len; }
   int size_in_bytes() const { return len() == 0 ? 0 : ((2 * len() + 1) * sizeof(implicit_null_entry)); }
-
+  
   void copy_to(nmethod* nm);
   void print(address base) const;
   void verify(nmethod *nm) const;

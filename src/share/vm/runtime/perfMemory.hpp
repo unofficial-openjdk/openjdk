@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)perfMemory.hpp	1.23 07/05/05 17:06:54 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /*
@@ -41,8 +44,8 @@
  * to a machine with a native byte order different from that of the
  * originating machine.
  */
-#define PERFDATA_BIG_ENDIAN     0
-#define PERFDATA_LITTLE_ENDIAN  1
+#define PERFDATA_BIG_ENDIAN	0
+#define PERFDATA_LITTLE_ENDIAN	1
 
 /*
  * The PerfDataPrologue structure is known by the PerfDataBuffer Java class
@@ -76,7 +79,7 @@ typedef struct {
   jint entry_length;      // entry length in bytes
   jint name_offset;       // offset of the data item name
   jint vector_length;     // length of the vector. If 0, then scalar
-  jbyte data_type;        // type of the data item -
+  jbyte data_type;        // type of the data item - 
                           // 'B','Z','J','I','S','C','D','F','V','L','['
   jbyte flags;            // flags indicating misc attributes
   jbyte data_units;       // unit of measure for the data type
@@ -97,11 +100,11 @@ typedef struct {
 // Prefix of performance data file.
 extern const char PERFDATA_NAME[];
 
-// UINT_CHARS contains the number of characters holding a process id
-// (i.e. pid). pid is defined as unsigned "int" so the maximum possible pid value
-// would be 2^32 - 1 (4294967295) which can be represented as a 10 characters
-// string.
-static const size_t UINT_CHARS = 10;
+// UINT_CHARS contains the number of characters holding a process id 
+// (i.e. pid). pid is defined as unsigned "int" so the maximum possible pid value 
+// would be 2^32 - 1 (4294967295) which can be represented as a 10 characters 
+// string. 
+static const size_t UINT_CHARS = 10; 
 
 /* the PerfMemory class manages creation, destruction,
  * and allocation of the PerfData region.

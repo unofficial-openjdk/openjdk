@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)javaClasses.cpp	1.250 08/01/17 09:41:13 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -218,7 +221,7 @@ Handle java_lang_String::char_converter(Handle java_string, jchar from_char, jch
       c = to_char;
     }
     to_buffer->char_at_put(index, c);
-  }
+  }  
   return string;
 }
 
@@ -248,9 +251,9 @@ symbolHandle java_lang_String::as_symbol(Handle java_string, TRAPS) {
     char* chars = NEW_RESOURCE_ARRAY(char, utf8_length + 1);
     UNICODE::convert_to_utf8(value->char_at_addr(offset), length, chars);
     // Allocate the symbol
-    result = oopFactory::new_symbol_handle(chars, utf8_length, CHECK_(symbolHandle()));
+    result = oopFactory::new_symbol_handle(chars, utf8_length, CHECK_(symbolHandle()));  
   } else {
-    result = oopFactory::new_symbol_handle("", 0, CHECK_(symbolHandle()));
+    result = oopFactory::new_symbol_handle("", 0, CHECK_(symbolHandle()));  
   }
   return result;
 }
@@ -305,7 +308,7 @@ void java_lang_String::print(Handle java_string, outputStream* st) {
   int          offset = java_lang_String::offset(obj);
   int          length = java_lang_String::length(obj);
 
-  int end = MIN2(length, 100);
+  int end = MIN2(length, 100); 
   if (value == NULL) {
     // This can happen if, e.g., printing a String
     // object before its initializer has been called
@@ -412,7 +415,7 @@ void java_lang_Class::set_resolved_constructor(oop java_class, methodOop constru
 
 
 bool java_lang_Class::is_primitive(oop java_class) {
-  klassOop k = klassOop(java_class->obj_field(klass_offset));
+  klassOop k = klassOop(java_class->obj_field(klass_offset)); 
   return k == NULL;
 }
 
@@ -478,8 +481,8 @@ void java_lang_Class::set_classRedefinedCount(oop the_class_mirror, int value) {
 
 // Note: JDK1.1 and before had a privateInfo_offset field which was used for the
 //       platform thread structure, and a eetop offset which was used for thread
-//       local storage (and unused by the HotSpot VM). In JDK1.2 the two structures
-//       merged, so in the HotSpot VM we just use the eetop field for the thread
+//       local storage (and unused by the HotSpot VM). In JDK1.2 the two structures 
+//       merged, so in the HotSpot VM we just use the eetop field for the thread 
 //       instead of the privateInfo_offset.
 //
 // Note: The stackSize field is only present starting in 1.4.
@@ -496,7 +499,7 @@ int java_lang_Thread::_stackSize_offset = 0;
 int java_lang_Thread::_tid_offset = 0;
 int java_lang_Thread::_thread_status_offset = 0;
 int java_lang_Thread::_park_blocker_offset = 0;
-int java_lang_Thread::_park_event_offset = 0 ;
+int java_lang_Thread::_park_event_offset = 0 ; 
 
 
 void java_lang_Thread::compute_offsets() {
@@ -534,7 +537,7 @@ void java_lang_Thread::set_thread(oop java_thread, JavaThread* thread) {
 
 
 typeArrayOop java_lang_Thread::name(oop java_thread) {
-  oop name = java_thread->obj_field(_name_offset);
+  oop name = java_thread->obj_field(_name_offset);  
   assert(name == NULL || (name->is_typeArray() && typeArrayKlass::cast(name->klass())->element_type() == T_CHAR), "just checking");
   return typeArrayOop(name);
 }
@@ -633,7 +636,7 @@ java_lang_Thread::ThreadStatus java_lang_Thread::get_thread_status(oop java_thre
     if (thr == NULL) {
       // the thread hasn't run yet or is in the process of exiting
       return NEW;
-    }
+    } 
     return (java_lang_Thread::ThreadStatus)JVMTI_THREAD_STATE_ALIVE;
   }
 }
@@ -665,7 +668,7 @@ jlong java_lang_Thread::park_event(oop java_thread) {
   }
   return 0;
 }
-
+ 
 bool java_lang_Thread::set_park_event(oop java_thread, jlong ptr) {
   if (_park_event_offset > 0) {
     java_thread->long_field_put(_park_event_offset, ptr);
@@ -830,7 +833,7 @@ void java_lang_Throwable::print(Handle throwable, outputStream* st) {
 }
 
 // Print stack trace element to resource allocated buffer
-char* java_lang_Throwable::print_stack_element_to_buffer(methodOop method, int bci) {
+char* java_lang_Throwable::print_stack_element_to_buffer(methodOop method, int bci) { 
   // Get strings and string lengths
   instanceKlass* klass = instanceKlass::cast(method->method_holder());
   const char* klass_name  = klass->external_name();
@@ -852,14 +855,14 @@ char* java_lang_Throwable::print_stack_element_to_buffer(methodOop method, int b
   sprintf(buf, "\tat %s.%s", klass_name, method_name);
   if (method->is_native()) {
     strcat(buf, "(Native Method)");
-  } else {
+  } else {    
     int line_number = method->line_number_from_bci(bci);
     if (source_file_name != NULL && (line_number != -1)) {
       // Sourcename and linenumber
       sprintf(buf + (int)strlen(buf), "(%s:%d)", source_file_name, line_number);
     } else if (source_file_name != NULL) {
       // Just sourcename
-      sprintf(buf + (int)strlen(buf), "(%s)", source_file_name);
+      sprintf(buf + (int)strlen(buf), "(%s)", source_file_name);      
     } else {
       // Neither soucename and linenumber
       sprintf(buf + (int)strlen(buf), "(Unknown Source)");
@@ -874,13 +877,13 @@ char* java_lang_Throwable::print_stack_element_to_buffer(methodOop method, int b
 }
 
 
-void java_lang_Throwable::print_stack_element(Handle stream, methodOop method, int bci) {
+void java_lang_Throwable::print_stack_element(Handle stream, methodOop method, int bci) {  
   ResourceMark rm;
   char* buf = print_stack_element_to_buffer(method, bci);
   print_to_stream(stream, buf);
 }
 
-void java_lang_Throwable::print_stack_element(outputStream *st, methodOop method, int bci) {
+void java_lang_Throwable::print_stack_element(outputStream *st, methodOop method, int bci) {  
   ResourceMark rm;
   char* buf = print_stack_element_to_buffer(method, bci);
   st->print_cr("%s", buf);
@@ -894,12 +897,12 @@ void java_lang_Throwable::print_to_stream(Handle stream, const char* str) {
     JavaValue result(T_VOID);
     Handle arg (THREAD, oopFactory::new_charArray(str, THREAD));
     if (!HAS_PENDING_EXCEPTION) {
-      JavaCalls::call_virtual(&result,
-                              stream,
+      JavaCalls::call_virtual(&result, 
+                              stream, 
                               KlassHandle(THREAD, stream->klass()),
-                              vmSymbolHandles::println_name(),
-                              vmSymbolHandles::char_array_void_signature(),
-                              arg,
+                              vmSymbolHandles::println_name(), 
+                              vmSymbolHandles::char_array_void_signature(), 
+                              arg, 
                               THREAD);
     }
     // Ignore any exceptions. we are in the middle of exception handling. Same as classic VM.
@@ -924,11 +927,11 @@ void java_lang_Throwable::print_stack_trace(oop throwable, outputStream* st) {
       st->print_cr(no_stack_trace_message());
       return;
     }
-
+  
     while (result.not_null()) {
       objArrayHandle methods (THREAD,
                               objArrayOop(result->obj_at(trace_methods_offset)));
-      typeArrayHandle bcis (THREAD,
+      typeArrayHandle bcis (THREAD, 
                             typeArrayOop(result->obj_at(trace_bcis_offset)));
 
       if (methods.is_null() || bcis.is_null()) {
@@ -963,7 +966,7 @@ void java_lang_Throwable::print_stack_trace(oop throwable, outputStream* st) {
         h_throwable = Handle(THREAD, (oop) result.get_jobject());
         if (h_throwable.not_null()) {
           st->print("Caused by: ");
-          print(h_throwable, st);
+          print(h_throwable, st); 
           st->cr();
         }
       }
@@ -981,11 +984,11 @@ void java_lang_Throwable::print_stack_trace(oop throwable, oop print_stream) {
     print_to_stream(stream, no_stack_trace_message());
     return;
   }
-
+  
   while (result.not_null()) {
     objArrayHandle methods (thread,
                             objArrayOop(result->obj_at(trace_methods_offset)));
-    typeArrayHandle bcis (thread,
+    typeArrayHandle bcis (thread, 
                           typeArrayOop(result->obj_at(trace_bcis_offset)));
 
     if (methods.is_null() || bcis.is_null()) {
@@ -1120,13 +1123,13 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
   JavaThread* thread = (JavaThread*)THREAD;
   BacktraceBuilder bt(CHECK);
 
-  // Instead of using vframe directly, this version of fill_in_stack_trace
-  // basically handles everything by hand. This significantly improved the
-  // speed of this method call up to 28.5% on Solaris sparc. 27.1% on Windows.
+  // Instead of using vframe directly, this version of fill_in_stack_trace 
+  // basically handles everything by hand. This significantly improved the 
+  // speed of this method call up to 28.5% on Solaris sparc. 27.1% on Windows.  
   // See bug 6333838 for  more details.
   // The "ASSERT" here is to verify this method generates the exactly same stack
   // trace as utilizing vframe.
-#ifdef ASSERT
+#ifdef ASSERT 
   vframeStream st(thread);
   methodHandle st_method(THREAD, st.method());
 #endif
@@ -1136,11 +1139,11 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
   nmethod* nm = NULL;
   bool skip_fillInStackTrace_check = false;
   bool skip_throwableInit_check = false;
-
+ 
   for (frame fr = thread->last_frame(); max_depth != total_count;) {
     methodOop method = NULL;
     int bci = 0;
-
+    
     // Compiled java method case.
     if (decode_offset != 0) {
       DebugInfoReadStream stream(nm, decode_offset);
@@ -1148,7 +1151,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
       method = (methodOop)nm->oop_at(stream.read_int());
       bci = stream.read_bci();
     } else {
-      if (fr.is_first_frame()) break;
+      if (fr.is_first_frame()) break;      
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
         intptr_t bcx = fr.interpreter_frame_bcx();
@@ -1170,12 +1173,12 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
         } else {
           PcDesc* pd = nm->pc_desc_at(pc);
           decode_offset = pd->scope_decode_offset();
-          // if decode_offset is not equal to 0, it will execute the
+          // if decode_offset is not equal to 0, it will execute the 
           // "compiled java method case" at the beginning of the loop.
           continue;
         }
       }
-    }
+    }  
 #ifdef ASSERT
   assert(st_method() == method && st.bci() == bci,
          "Wrong stack trace");
@@ -1198,7 +1201,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
     // that belongs to a superclass of the exception  we are going to skipping
     // them in stack trace. This is simlar to classic VM.
     if (!skip_throwableInit_check) {
-      if (method->name() == vmSymbols::object_initializer_name() &&
+      if (method->name() == vmSymbols::object_initializer_name() &&  
           throwable->is_a(method->method_holder())) {
         continue;
       } else {
@@ -1219,24 +1222,24 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable) {
   if (!StackTraceInThrowable) {
     return;
   }
-
+ 
   // Disable stack traces for some preallocated out of memory errors
   if (!Universe::should_fill_in_stack_trace(throwable)) {
     return;
   }
-
+ 
   PRESERVE_EXCEPTION_MARK;
-
+ 
   JavaThread* thread = JavaThread::active();
   fill_in_stack_trace(throwable, thread);
   // ignore exceptions thrown during stack trace filling
-  CLEAR_PENDING_EXCEPTION;
+  CLEAR_PENDING_EXCEPTION;  
 }
 
 void java_lang_Throwable::allocate_backtrace(Handle throwable, TRAPS) {
   // Allocate stack trace - backtrace is created but not filled in
 
-  // No-op if stack trace is disabled
+  // No-op if stack trace is disabled 
   if (!StackTraceInThrowable) return;
 
   objArrayOop h_oop = oopFactory::new_objectArray(trace_size, CHECK);
@@ -1245,7 +1248,7 @@ void java_lang_Throwable::allocate_backtrace(Handle throwable, TRAPS) {
   objArrayHandle methods (THREAD, m_oop);
   typeArrayOop b = oopFactory::new_shortArray(trace_chunk_size, CHECK);
   typeArrayHandle bcis(THREAD, b);
-
+  
   // backtrace has space for one chunk (next is NULL)
   backtrace->obj_at_put(trace_methods_offset, methods());
   backtrace->obj_at_put(trace_bcis_offset, bcis());
@@ -1267,7 +1270,7 @@ void java_lang_Throwable::fill_in_stack_trace_of_preallocated_backtrace(Handle t
   oop m = objArrayOop(backtrace)->obj_at(trace_methods_offset);
   objArrayOop methods = objArrayOop(m);
   assert(methods != NULL && methods->length() > 0, "method array not preallocated");
-
+  
   oop b = objArrayOop(backtrace)->obj_at(trace_bcis_offset);
   typeArrayOop bcis = typeArrayOop(b);
   assert(bcis != NULL, "bci array not preallocated");
@@ -1276,16 +1279,16 @@ void java_lang_Throwable::fill_in_stack_trace_of_preallocated_backtrace(Handle t
 
   JavaThread* thread = JavaThread::current();
   ResourceMark rm(thread);
-  vframeStream st(thread);
+  vframeStream st(thread); 
 
-  // Unlike fill_in_stack_trace we do not skip fillInStackTrace or throwable init
-  // methods as preallocated errors aren't created by "java" code.
+  // Unlike fill_in_stack_trace we do not skip fillInStackTrace or throwable init 
+  // methods as preallocated errors aren't created by "java" code. 
 
   // fill in as much stack trace as possible
   int max_chunks = MIN2(methods->length(), (int)MaxJavaStackTraceDepth);
   int chunk_count = 0;
 
-  for (;!st.at_end(); st.next()) {
+  for (;!st.at_end(); st.next()) {    
     // add element
     bcis->ushort_at_put(chunk_count, st.bci());
     methods->obj_at_put(chunk_count, st.method());
@@ -1339,7 +1342,7 @@ oop java_lang_Throwable::get_stack_trace_element(oop throwable, int index, TRAPS
   int chunk_index = index % trace_chunk_size;
   while (chunk != NULL && skip_chunks > 0) {
     chunk = objArrayOop(chunk->obj_at(trace_next_offset));
-        skip_chunks--;
+	skip_chunks--;
   }
   if (chunk == NULL) {
     THROW_(vmSymbols::java_lang_IndexOutOfBoundsException(), NULL);
@@ -1387,7 +1390,7 @@ oop java_lang_StackTraceElement::create(methodHandle method, int bci, TRAPS) {
   // File in source line number
   int line_number;
   if (method->is_native()) {
-    // Negative value different from -1 below, enabling Java code in
+    // Negative value different from -1 below, enabling Java code in 
     // class java.lang.StackTraceElement to distinguish "native" from
     // "no LineNumberTable".
     line_number = -2;
@@ -1436,12 +1439,12 @@ void java_lang_reflect_Method::compute_offsets() {
   compute_optional_offset(annotation_default_offset,    k, vmSymbols::annotation_default_name(),    vmSymbols::byte_array_signature());
 }
 
-Handle java_lang_reflect_Method::create(TRAPS) {
+Handle java_lang_reflect_Method::create(TRAPS) {  
   assert(Universe::is_fully_initialized(), "Need to find another solution to the reflection problem");
   klassOop klass = SystemDictionary::reflect_method_klass();
   // This class is eagerly initialized during VM initialization, since we keep a refence
   // to one of the methods
-  assert(instanceKlass::cast(klass)->is_initialized(), "must be initialized");
+  assert(instanceKlass::cast(klass)->is_initialized(), "must be initialized");  
   return instanceKlass::cast(klass)->allocate_instance_handle(CHECK_NH);
 }
 
@@ -1717,7 +1720,7 @@ void java_lang_reflect_Field::compute_offsets() {
   compute_optional_offset(annotations_offset,  k, vmSymbols::annotations_name(),  vmSymbols::byte_array_signature());
 }
 
-Handle java_lang_reflect_Field::create(TRAPS) {
+Handle java_lang_reflect_Field::create(TRAPS) {  
   assert(Universe::is_fully_initialized(), "Need to find another solution to the reflection problem");
   symbolHandle name = vmSymbolHandles::java_lang_reflect_Field();
   klassOop k = SystemDictionary::resolve_or_fail(name, true, CHECK_NH);
@@ -1819,7 +1822,7 @@ void sun_reflect_ConstantPool::compute_offsets() {
 }
 
 
-Handle sun_reflect_ConstantPool::create(TRAPS) {
+Handle sun_reflect_ConstantPool::create(TRAPS) {  
   assert(Universe::is_fully_initialized(), "Need to find another solution to the reflection problem");
   klassOop k = SystemDictionary::reflect_constant_pool_klass();
   instanceKlassHandle klass (THREAD, k);
@@ -2048,7 +2051,7 @@ void java_security_AccessControlContext::compute_offsets() {
 }
 
 
-oop java_security_AccessControlContext::create(objArrayHandle context, bool isPrivileged, Handle privileged_context, TRAPS) {
+oop java_security_AccessControlContext::create(objArrayHandle context, bool isPrivileged, Handle privileged_context, TRAPS) {  
   assert(_isPrivileged_offset != 0, "offsets should have been initialized");
   // Ensure klass is initialized
   instanceKlass::cast(SystemDictionary::AccessControlContext_klass())->initialize(CHECK_0);
@@ -2211,8 +2214,8 @@ void java_lang_StackTraceElement::set_methodName(oop element, oop value) {
 void java_lang_StackTraceElement::set_lineNumber(oop element, int value) {
   element->int_field_put(lineNumber_offset, value);
 }
-
-
+  
+  
 // Support for java Assertions - java_lang_AssertionStatusDirectives.
 
 void java_lang_AssertionStatusDirectives::set_classes(oop o, oop val) {
@@ -2345,7 +2348,7 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_AssertionStatusDirectives::deflt_offset = java_lang_AssertionStatusDirectives::hc_deflt_offset * x + header;
 
 }
-
+  
 
 // Compute non-hard-coded field offsets of all the classes in this file
 void JavaClasses::compute_offsets() {
@@ -2375,7 +2378,7 @@ void JavaClasses::compute_offsets() {
 
 #ifndef PRODUCT
 
-// These functions exist to assert the validity of hard-coded field offsets to guard
+// These functions exist to assert the validity of hard-coded field offsets to guard 
 // against changes in the class files
 
 bool JavaClasses::check_offset(const char *klass_name, int hardcoded_offset, const char *field_name, const char* field_sig) {
@@ -2398,7 +2401,7 @@ bool JavaClasses::check_offset(const char *klass_name, int hardcoded_offset, con
   if (fd.offset() == hardcoded_offset ) {
     return true;
   } else {
-    tty->print_cr("Offset of nonstatic field %s.%s is hardcoded as %d but should really be %d.",
+    tty->print_cr("Offset of nonstatic field %s.%s is hardcoded as %d but should really be %d.", 
                   klass_name, field_name, hardcoded_offset, fd.offset());
     return false;
   }
@@ -2483,7 +2486,7 @@ void JavaClasses::check_offsets() {
   CHECK_OFFSET("java/lang/String", java_lang_String, offset, "I");
   CHECK_OFFSET("java/lang/String", java_lang_String, count, "I");
   CHECK_OFFSET("java/lang/String", java_lang_String, hash, "I");
-
+  
   // java.lang.Class
 
   // Fake fields
@@ -2497,7 +2500,7 @@ void JavaClasses::check_offsets() {
   CHECK_OFFSET("java/lang/Throwable", java_lang_Throwable, detailMessage, "Ljava/lang/String;");
   CHECK_OFFSET("java/lang/Throwable", java_lang_Throwable, cause, "Ljava/lang/Throwable;");
   CHECK_OFFSET("java/lang/Throwable", java_lang_Throwable, stackTrace, "[Ljava/lang/StackTraceElement;");
-
+  
   // Boxed primitive objects (java_lang_boxing_object)
 
   CHECK_OFFSET("java/lang/Boolean",   java_lang_boxing_object, value, "Z");
@@ -2542,7 +2545,7 @@ void JavaClasses::check_offsets() {
   CHECK_STATIC_OFFSET("java/lang/ref/SoftReference", java_lang_ref_SoftReference, clock, "J");
 
   // java.lang.AssertionStatusDirectives
-  //
+  // 
   // The CheckAssertionStatusDirectives boolean can be removed from here and
   // globals.hpp after the AssertionStatusDirectives class has been integrated
   // into merlin "for some time."  Without it, the vm will fail with early

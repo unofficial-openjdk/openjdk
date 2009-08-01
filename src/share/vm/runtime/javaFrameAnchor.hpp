@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)javaFrameAnchor.hpp	1.17 07/08/29 13:42:29 JVM"
+#endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 //
 // An object for encapsulating the machine/os dependent part of a JavaThread frame state
@@ -69,7 +72,7 @@ friend class JavaCallWrapper;
   // Invalidate the anchor so that has_last_frame is false
   // and no one should look at the other fields.
   void zap(void)                                     { _last_Java_sp = NULL; }
-
+  
 #include "incls/_javaFrameAnchor_pd.hpp.incl"
 
 public:
@@ -85,3 +88,4 @@ public:
   static ByteSize last_Java_pc_offset()          { return byte_offset_of(JavaFrameAnchor, _last_Java_pc); }
 
 };
+

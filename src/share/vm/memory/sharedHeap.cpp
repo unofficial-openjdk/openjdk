@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)sharedHeap.cpp	1.59 07/05/17 15:55:10 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -93,17 +96,17 @@ static AssertIsPermClosure assert_is_perm_closure;
 void SharedHeap::change_strong_roots_parity() {
   // Also set the new collection parity.
   assert(_strong_roots_parity >= 0 && _strong_roots_parity <= 2,
-         "Not in range.");
+	 "Not in range.");
   _strong_roots_parity++;
   if (_strong_roots_parity == 3) _strong_roots_parity = 1;
   assert(_strong_roots_parity >= 1 && _strong_roots_parity <= 2,
-         "Not in range.");
+	 "Not in range.");
 }
 
 void SharedHeap::process_strong_roots(bool collecting_perm_gen,
-                                      ScanningOption so,
-                                      OopClosure* roots,
-                                      OopsInGenClosure* perm_blk) {
+				      ScanningOption so,
+				      OopClosure* roots,
+				      OopsInGenClosure* perm_blk) {
   // General strong roots.
   if (n_par_threads() == 0) change_strong_roots_parity();
   if (!_process_strong_tasks->is_task_claimed(SH_PS_Universe_oops_do)) {
@@ -128,7 +131,7 @@ void SharedHeap::process_strong_roots(bool collecting_perm_gen,
   if (!_process_strong_tasks->is_task_claimed(SH_PS_Management_oops_do))
     Management::oops_do(roots);
   if (!_process_strong_tasks->is_task_claimed(SH_PS_jvmti_oops_do))
-    JvmtiExport::oops_do(roots);
+    JvmtiExport::oops_do(roots); 
 
   if (!_process_strong_tasks->is_task_claimed(SH_PS_SystemDictionary_oops_do)) {
     if (so & SO_AllClasses) {
@@ -173,7 +176,7 @@ void SharedHeap::process_strong_roots(bool collecting_perm_gen,
     }
     if (blk != NULL) {
       if (!_process_strong_tasks->is_task_claimed(SH_PS_vmSymbols_oops_do))
-        vmSymbols::oops_do(blk);
+	vmSymbols::oops_do(blk);
     }
   }
 
@@ -220,7 +223,7 @@ public:
 // just skip adjusting any shared entries in the string table.
 
 void SharedHeap::process_weak_roots(OopClosure* root_closure,
-                                    OopClosure* non_root_closure) {
+				    OopClosure* non_root_closure) {
   // Global (weak) JNI handles
   JNIHandles::weak_oops_do(&always_true, root_closure);
 

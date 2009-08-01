@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)register_x86.cpp	1.18 07/09/17 09:58:27 JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -31,9 +34,9 @@ const int ConcreteRegisterImpl::max_gpr = RegisterImpl::number_of_registers << 1
 #endif // AMD64
 
 
-const int ConcreteRegisterImpl::max_fpr = ConcreteRegisterImpl::max_gpr +
+const int ConcreteRegisterImpl::max_fpr = ConcreteRegisterImpl::max_gpr + 
                                                                  2 * FloatRegisterImpl::number_of_registers;
-const int ConcreteRegisterImpl::max_xmm = ConcreteRegisterImpl::max_fpr +
+const int ConcreteRegisterImpl::max_xmm = ConcreteRegisterImpl::max_fpr + 
                                                                  2 * XMMRegisterImpl::number_of_registers;
 const char* RegisterImpl::name() const {
   const char* names[number_of_registers] = {
@@ -63,3 +66,4 @@ const char* XMMRegisterImpl::name() const {
   };
   return is_valid() ? names[encoding()] : "xnoreg";
 }
+

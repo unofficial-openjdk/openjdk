@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)parNewGeneration.hpp	1.48 07/05/17 15:52:44 JVM"
+#endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ChunkArray;
@@ -30,7 +33,7 @@ class ParRootScanWithBarrierTwoGensClosure;
 class ParEvacuateFollowersClosure;
 
 // It would be better if these types could be kept local to the .cpp file,
-// but they must be here to allow ParScanClosure::do_oop_work to be defined
+// but they must be here to allow ParScanClosure::do_oop_work to be defined 
 // in genOopClosures.inline.hpp.
 
 typedef OopTaskQueue       ObjToScanQueue;
@@ -75,7 +78,7 @@ class ParScanThreadState {
   DefNewGeneration::IsAliveClosure     _is_alive_closure;
   ParScanWeakRefClosure                _scan_weak_ref_closure;
   ParKeepAliveClosure                  _keep_alive_closure;
-
+  
 
   Space* _to_space;
   Space* to_space() { return _to_space; }
@@ -114,7 +117,7 @@ class ParScanThreadState {
 
   void record_survivor_plab(HeapWord* plab_start, size_t plab_word_size);
 
-  ParScanThreadState(Space* to_space_, ParNewGeneration* gen_,
+  ParScanThreadState(Space* to_space_, ParNewGeneration* gen_, 
                      Generation* old_gen_, int thread_num_,
                      ObjToScanQueueSet* work_queue_set_,
                      GrowableArray<oop>** overflow_stack_set_,
@@ -123,13 +126,13 @@ class ParScanThreadState {
 
  public:
   ageTable* age_table() {return &_ageTable;}
-
+  
   ObjToScanQueue* work_queue() { return _work_queue; }
 
   ParGCAllocBuffer* to_space_alloc_buffer() {
     return &_to_space_alloc_buffer;
   }
-
+  
   ParEvacuateFollowersClosure&      evacuate_followers_closure() { return _evacuate_followers; }
   DefNewGeneration::IsAliveClosure& is_alive_closure() { return _is_alive_closure; }
   ParScanWeakRefClosure&            scan_weak_ref_closure() { return _scan_weak_ref_closure; }
@@ -220,9 +223,9 @@ class ParNewGenTask: public AbstractGangTask {
   class ParScanThreadStateSet* _state_set;
 
 public:
-  ParNewGenTask(ParNewGeneration*      gen,
+  ParNewGenTask(ParNewGeneration*      gen, 
                 Generation*            next_gen,
-                HeapWord*              young_old_boundary,
+		HeapWord*              young_old_boundary, 
                 ParScanThreadStateSet* state_set);
 
   HeapWord* young_old_boundary() { return _young_old_boundary; }
@@ -273,8 +276,8 @@ class ParNewRefProcTaskExecutor: public AbstractRefProcTaskExecutor {
                             ParScanThreadStateSet& state_set)
     : _generation(generation), _state_set(state_set)
   { }
-
-  // Executes a task using worker threads.
+  
+  // Executes a task using worker threads.  
   virtual void execute(ProcessTask& task);
   virtual void execute(EnqueueTask& task);
   // Switch to single threaded mode.
@@ -306,14 +309,14 @@ class ParNewGeneration: public DefNewGeneration {
   // Desired size of survivor space plab's
   PLABStats _plab_stats;
 
-  // A list of from-space images of to-be-scanned objects, threaded through
+  // A list of from-space images of to-be-scanned objects, threaded through 
   // klass-pointers (klass information already copied to the forwarded
   // image.)  Manipulated with CAS.
   oop _overflow_list;
 
   // If true, older generation does not support promotion undo, so avoid.
   static bool _avoid_promotion_undo;
-
+  
   // This closure is used by the reference processor to filter out
   // references to live referent.
   DefNewGeneration::IsAliveClosure _is_alive_closure;
@@ -321,8 +324,8 @@ class ParNewGeneration: public DefNewGeneration {
   static oop real_forwardee_slow(oop obj);
   static void waste_some_time();
 
-  // Preserve the mark of "obj", if necessary, in preparation for its mark
-  // word being overwritten with a self-forwarding-pointer.
+  // Preserve the mark of "obj", if necessary, in preparation for its mark 
+  // word being overwritten with a self-forwarding-pointer. 
   void preserve_mark_if_necessary(oop obj, markOop m);
 
  protected:
@@ -363,7 +366,7 @@ class ParNewGeneration: public DefNewGeneration {
   // Make the collection virtual.
   virtual void collect(bool   full,
                        bool   clear_all_soft_refs,
-                       size_t size,
+                       size_t size, 
                        bool   is_tlab);
 
   // This needs to be visible to the closure function.
@@ -371,20 +374,20 @@ class ParNewGeneration: public DefNewGeneration {
   // that must not contain a forwarding pointer (though one might be
   // inserted in "obj"s mark word by a parallel thread).
   inline oop copy_to_survivor_space(ParScanThreadState* par_scan_state,
-                             oop obj, size_t obj_sz, markOop m) {
+			     oop obj, size_t obj_sz, markOop m) {
     if (_avoid_promotion_undo) {
        return copy_to_survivor_space_avoiding_promotion_undo(par_scan_state,
-                                                             obj, obj_sz, m);
+                                         		     obj, obj_sz, m);
     }
 
     return copy_to_survivor_space_with_undo(par_scan_state, obj, obj_sz, m);
   }
 
   oop copy_to_survivor_space_avoiding_promotion_undo(ParScanThreadState* par_scan_state,
-                             oop obj, size_t obj_sz, markOop m);
+			     oop obj, size_t obj_sz, markOop m);
 
   oop copy_to_survivor_space_with_undo(ParScanThreadState* par_scan_state,
-                             oop obj, size_t obj_sz, markOop m);
+			     oop obj, size_t obj_sz, markOop m);
 
   // in support of testing overflow code
   NOT_PRODUCT(int _overflow_counter;)

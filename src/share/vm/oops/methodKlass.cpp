@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)methodKlass.cpp	1.120 07/05/29 09:44:23 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 klassOop methodKlass::create_klass(TRAPS) {
   methodKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
   KlassHandle k = base_create_klass(h_this_klass, header_size(), o.vtbl_value(), CHECK_NULL);
   // Make sure size calculation is right
   assert(k()->size() == align_object_size(header_size()), "wrong size for object");
@@ -71,12 +74,12 @@ methodOop methodKlass::allocate(constMethodHandle xconst,
   m->clear_intrinsic_id_cache();
   m->set_method_data(NULL);
   m->set_interpreter_throwout_count(0);
-  m->set_vtable_index(methodOopDesc::garbage_vtable_index);
+  m->set_vtable_index(methodOopDesc::garbage_vtable_index);  
 
-  // Fix and bury in methodOop
+  // Fix and bury in methodOop 
   m->set_interpreter_entry(NULL); // sets i2i entry and from_int
   m->set_highest_tier_compile(CompLevel_none);
-  m->set_adapter_entry(NULL);
+  m->set_adapter_entry(NULL); 
   m->clear_code(); // from_c/from_i get set to c2i/i2i
 
   if (access_flags.is_native()) {
@@ -103,7 +106,7 @@ methodOop methodKlass::allocate(constMethodHandle xconst,
 void methodKlass::oop_follow_contents(oop obj) {
   assert (obj->is_method(), "object must be method");
   methodOop m = methodOop(obj);
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::methodKlassObj never moves.
   MarkSweep::mark_and_push(m->adr_constMethod());
   MarkSweep::mark_and_push(m->adr_constants());
@@ -114,10 +117,10 @@ void methodKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void methodKlass::oop_follow_contents(ParCompactionManager* cm,
-                                      oop obj) {
+				      oop obj) {
   assert (obj->is_method(), "object must be method");
   methodOop m = methodOop(obj);
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::methodKlassObj never moves.
   PSParallelCompact::mark_and_push(cm, m->adr_constMethod());
   PSParallelCompact::mark_and_push(cm, m->adr_constants());
@@ -132,10 +135,10 @@ void methodKlass::oop_follow_contents(ParCompactionManager* cm,
 int methodKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   assert (obj->is_method(), "object must be method");
   methodOop m = methodOop(obj);
-  // Get size before changing pointers.
+  // Get size before changing pointers. 
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = m->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  int size = m->object_size();  
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::methodKlassObj never moves
   blk->do_oop(m->adr_constMethod());
   blk->do_oop(m->adr_constants());
@@ -151,8 +154,8 @@ int methodKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   methodOop m = methodOop(obj);
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = m->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  int size = m->object_size();  
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::methodKlassObj never moves.
   oop* adr;
   adr = m->adr_constMethod();
@@ -172,8 +175,8 @@ int methodKlass::oop_adjust_pointers(oop obj) {
   methodOop m = methodOop(obj);
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = m->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  int size = m->object_size();  
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::methodKlassObj never moves.
   MarkSweep::adjust_pointer(m->adr_constMethod());
   MarkSweep::adjust_pointer(m->adr_constants());
@@ -206,7 +209,7 @@ int methodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int methodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                     HeapWord* beg_addr, HeapWord* end_addr) {
+				     HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_method(), "should be method");
 
   oop* p;
@@ -334,9 +337,9 @@ void methodKlass::oop_verify_on(oop obj, outputStream* st) {
     guarantee(m->constMethod()->is_constMethod(), "should be constMethodOop");
     guarantee(m->constMethod()->is_perm(), "should be in permspace");
     methodDataOop method_data = m->method_data();
-    guarantee(method_data == NULL ||
+    guarantee(method_data == NULL || 
               method_data->is_perm(), "should be in permspace");
-    guarantee(method_data == NULL ||
+    guarantee(method_data == NULL || 
               method_data->is_methodData(), "should be method data");
   }
 }
@@ -359,3 +362,4 @@ void methodKlass::oop_set_partially_loaded(oop obj) {
   constMethodKlass* ck = constMethodKlass::cast(xconst->klass());
   ck->oop_set_partially_loaded(xconst);
 }
+

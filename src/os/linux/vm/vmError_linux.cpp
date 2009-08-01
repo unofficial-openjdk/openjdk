@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)vmError_linux.cpp	1.15 08/11/24 12:20:39 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -51,7 +54,7 @@ void VMError::show_message_box(char *buf, int buflen) {
 
     if (yes) {
       // yes, user asked VM to launch debugger
-      jio_snprintf(buf, buflen, "gdb /proc/%d/exe %d",
+      jio_snprintf(buf, buflen, "gdb /proc/%d/exe %d", 
                    os::current_process_id(), os::current_process_id());
 
       os::fork_and_exec(buf);
@@ -62,7 +65,7 @@ void VMError::show_message_box(char *buf, int buflen) {
 
 // Space for our "saved" signal flags and handlers
 static int resettedSigflags[2];
-static address resettedSighandler[2];
+static address resettedSighandler[2]; 
 
 static void save_signal(int idx, int sig)
 {
@@ -76,7 +79,7 @@ static void save_signal(int idx, int sig)
 
 int VMError::get_resetted_sigflags(int sig) {
   if(SIGSEGV == sig) {
-    return resettedSigflags[0];
+    return resettedSigflags[0];  
   } else if(SIGBUS == sig) {
     return resettedSigflags[1];
   }
@@ -85,7 +88,7 @@ int VMError::get_resetted_sigflags(int sig) {
 
 address VMError::get_resetted_sighandler(int sig) {
   if(SIGSEGV == sig) {
-    return resettedSighandler[0];
+    return resettedSighandler[0];  
   } else if(SIGBUS == sig) {
     return resettedSighandler[1];
   }

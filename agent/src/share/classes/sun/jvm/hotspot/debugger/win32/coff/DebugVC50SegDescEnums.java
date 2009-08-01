@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -46,10 +46,10 @@ public interface DebugVC50SegDescEnums {
 
   /** The segment is executable. */
   public static final short SEGMAP_EXECUTABLE_MASK = (short) 0x0004;
-
+  
   /** The segment is writable. */
   public static final short SEGMAP_WRITABLE_MASK = (short) 0x0002;
-
+  
   /** The segment is readable. */
   public static final short SEGMAP_READABLE_MASK = (short) 0x0001;
 }

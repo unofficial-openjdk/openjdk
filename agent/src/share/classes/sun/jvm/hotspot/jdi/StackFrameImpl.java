@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -43,13 +43,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Collections;
 
-public class StackFrameImpl extends MirrorImpl
+public class StackFrameImpl extends MirrorImpl 
                             implements StackFrame
 {
     /* Once false, frame should not be used.
      * access synchronized on (vm.state())
      */
-    private boolean isValid = true;
+    private boolean isValid = true;  
 
     private final ThreadReferenceImpl thread;
     private final JavaVFrame saFrame;
@@ -57,16 +57,16 @@ public class StackFrameImpl extends MirrorImpl
     private Map visibleVariables =  null;
     private ObjectReference thisObject = null;
 
-    StackFrameImpl(VirtualMachine vm, ThreadReferenceImpl thread,
+    StackFrameImpl(VirtualMachine vm, ThreadReferenceImpl thread, 
                    JavaVFrame jvf) {
         super(vm);
         this.thread = thread;
         this.saFrame = jvf;
-
+        
         sun.jvm.hotspot.oops.Method SAMethod = jvf.getMethod();
-
+        
         ReferenceType rt = ((VirtualMachineImpl)vm).referenceType(SAMethod.getMethodHolder());
-
+        
         this.location = new LocationImpl(vm, rt, SAMethod, (long)jvf.getBCI());
     }
 
@@ -77,7 +77,7 @@ public class StackFrameImpl extends MirrorImpl
     }
 
     JavaVFrame getJavaVFrame() {
-        return saFrame;
+	return saFrame;
     }
 
     /**
@@ -117,17 +117,17 @@ public class StackFrameImpl extends MirrorImpl
         if (currentMethod.isStatic() || currentMethod.isNative()) {
             return null;
         }
-        if (thisObject == null) {
-            StackValueCollection values = saFrame.getLocals();
-            if (Assert.ASSERTS_ENABLED) {
-                Assert.that(values.size() > 0, "this is missing");
-            }
-            // 'this' at index 0.
-            OopHandle handle = values.oopHandleAt(0);
-            ObjectHeap heap = vm.saObjectHeap();
-            thisObject = vm.objectMirror(heap.newOop(handle));
-        }
-        return thisObject;
+	if (thisObject == null) {
+	    StackValueCollection values = saFrame.getLocals();
+	    if (Assert.ASSERTS_ENABLED) {
+		Assert.that(values.size() > 0, "this is missing");
+	    }
+	    // 'this' at index 0.
+	    OopHandle handle = values.oopHandleAt(0);
+	    ObjectHeap heap = vm.saObjectHeap();
+	    thisObject = vm.objectMirror(heap.newOop(handle));
+	}
+	return thisObject;
     }
 
     /**
@@ -138,14 +138,14 @@ public class StackFrameImpl extends MirrorImpl
         if (visibleVariables == null) {
             List allVariables = location.method().variables();
             Map map = new HashMap(allVariables.size());
-
+        
             Iterator iter = allVariables.iterator();
             while (iter.hasNext()) {
                 LocalVariableImpl variable = (LocalVariableImpl)iter.next();
                 String name = variable.name();
                 if (variable.isVisible(this)) {
                     LocalVariable existing = (LocalVariable)map.get(name);
-                    if ((existing == null) ||
+                    if ((existing == null) || 
                         variable.hides(existing)) {
                         map.put(name, variable);
                     }
@@ -185,7 +185,7 @@ public class StackFrameImpl extends MirrorImpl
     }
 
     public Map getValues(List variables) {
-        validateStackFrame();
+	validateStackFrame();
         StackValueCollection values = saFrame.getLocals();
 
         int count = variables.size();
@@ -203,12 +203,12 @@ public class StackFrameImpl extends MirrorImpl
             valueImpl = getSlotValue(values, variableType, ss);
             map.put(variable, valueImpl);
         }
-        return map;
+        return map; 
     }
 
     public List getArgumentValues() {
         validateStackFrame();
-        StackValueCollection values = saFrame.getLocals();
+	StackValueCollection values = saFrame.getLocals();
         MethodImpl mmm = (MethodImpl)location.method();
         List argSigs = mmm.argumentSignatures();
         int count = argSigs.size();
@@ -223,31 +223,31 @@ public class StackFrameImpl extends MirrorImpl
                 slot++;
             }
         }
-        return res;
+        return res; 
     }
 
-    private ValueImpl getSlotValue(StackValueCollection values,
+    private ValueImpl getSlotValue(StackValueCollection values, 
                        BasicType variableType, int ss) {
         ValueImpl valueImpl = null;
-        OopHandle handle = null;
-        ObjectHeap heap = vm.saObjectHeap();
+	OopHandle handle = null;
+	ObjectHeap heap = vm.saObjectHeap();
         if (variableType == BasicType.T_BOOLEAN) {
             valueImpl = (BooleanValueImpl) vm.mirrorOf(values.booleanAt(ss));
-        } else if (variableType == BasicType.T_CHAR) {
+	} else if (variableType == BasicType.T_CHAR) {
             valueImpl = (CharValueImpl) vm.mirrorOf(values.charAt(ss));
-        } else if (variableType == BasicType.T_FLOAT) {
+	} else if (variableType == BasicType.T_FLOAT) {
             valueImpl = (FloatValueImpl) vm.mirrorOf(values.floatAt(ss));
-        } else if (variableType == BasicType.T_DOUBLE) {
+	} else if (variableType == BasicType.T_DOUBLE) {
             valueImpl = (DoubleValueImpl) vm.mirrorOf(values.doubleAt(ss));
-        } else if (variableType == BasicType.T_BYTE) {
+	} else if (variableType == BasicType.T_BYTE) {
             valueImpl = (ByteValueImpl) vm.mirrorOf(values.byteAt(ss));
-        } else if (variableType == BasicType.T_SHORT) {
+	} else if (variableType == BasicType.T_SHORT) {
             valueImpl = (ShortValueImpl) vm.mirrorOf(values.shortAt(ss));
-        } else if (variableType == BasicType.T_INT) {
+	} else if (variableType == BasicType.T_INT) {
             valueImpl = (IntegerValueImpl) vm.mirrorOf(values.intAt(ss));
-        } else if (variableType == BasicType.T_LONG) {
+	} else if (variableType == BasicType.T_LONG) {
             valueImpl = (LongValueImpl) vm.mirrorOf(values.longAt(ss));
-        } else if (variableType == BasicType.T_OBJECT) {
+	} else if (variableType == BasicType.T_OBJECT) {
             // we may have an [Ljava/lang/Object; - i.e., Object[] with the
             // elements themselves may be arrays because every array is an Object.
             handle = values.oopHandleAt(ss);
@@ -255,11 +255,11 @@ public class StackFrameImpl extends MirrorImpl
         } else if (variableType == BasicType.T_ARRAY) {
             handle = values.oopHandleAt(ss);
             valueImpl = vm.arrayMirror((Array)heap.newOop(handle));
-        } else if (variableType == BasicType.T_VOID) {
-            valueImpl = new VoidValueImpl(vm);
-        } else {
-            throw new RuntimeException("Should not read here");
-        }
+	} else if (variableType == BasicType.T_VOID) {
+	    valueImpl = new VoidValueImpl(vm);
+	} else {
+	    throw new RuntimeException("Should not read here");
+	}
 
         return valueImpl;
     }
@@ -274,3 +274,5 @@ public class StackFrameImpl extends MirrorImpl
         return location.toString() + " in thread " + thread.toString();
     }
 }
+
+ 

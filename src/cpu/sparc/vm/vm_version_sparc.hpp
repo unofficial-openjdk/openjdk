@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)vm_version_sparc.hpp	1.33 07/10/04 10:49:21 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class VM_Version: public Abstract_VM_Version {
@@ -81,7 +84,7 @@ public:
   static bool has_vis1()                { return (_features & vis1_instructions_m) != 0; }
   static bool has_vis2()                { return (_features & vis2_instructions_m) != 0; }
 
-  static bool supports_compare_and_exchange()
+  static bool supports_compare_and_exchange() 
                                         { return has_v9(); }
 
   static bool is_ultra3()               { return (_features & ultra3_m) == ultra3_m; }
@@ -92,7 +95,7 @@ public:
 
   static const char* cpu_features()     { return _features_str; }
 
-  static intx L1_data_cache_line_size()  {
+  static intx L1_data_cache_line_size()  { 
     return 64;  // default prefetch block size on sparc
   }
 

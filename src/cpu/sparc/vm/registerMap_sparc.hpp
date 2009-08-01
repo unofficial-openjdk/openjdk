@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)registerMap_sparc.hpp	1.23 07/05/05 17:04:30 JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // machine-dependent implemention for register maps
@@ -29,7 +32,7 @@
   intptr_t* _window;         // register window save area (for L and I regs)
   intptr_t* _younger_window; // previous save area (for O regs, if needed)
 
-  address pd_location(VMReg reg) const;
+  address pd_location(VMReg reg) const; 
   void pd_clear();
   void pd_initialize_from(const RegisterMap* map) {
     _window         = map->_window;

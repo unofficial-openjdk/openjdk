@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)jvmtiRedefineClasses.cpp	1.79 07/07/16 14:37:37 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,18 +30,18 @@
 
 
 objArrayOop VM_RedefineClasses::_old_methods = NULL;
-objArrayOop VM_RedefineClasses::_new_methods = NULL;
+objArrayOop VM_RedefineClasses::_new_methods = NULL;  
 methodOop*  VM_RedefineClasses::_matching_old_methods = NULL;
-methodOop*  VM_RedefineClasses::_matching_new_methods = NULL;
+methodOop*  VM_RedefineClasses::_matching_new_methods = NULL;  
 methodOop*  VM_RedefineClasses::_deleted_methods      = NULL;
-methodOop*  VM_RedefineClasses::_added_methods        = NULL;
-int         VM_RedefineClasses::_matching_methods_length = 0;
+methodOop*  VM_RedefineClasses::_added_methods        = NULL;  
+int         VM_RedefineClasses::_matching_methods_length = 0;  
 int         VM_RedefineClasses::_deleted_methods_length  = 0;
-int         VM_RedefineClasses::_added_methods_length    = 0;
+int         VM_RedefineClasses::_added_methods_length    = 0;  
 klassOop    VM_RedefineClasses::_the_class_oop = NULL;
 
 
-VM_RedefineClasses::VM_RedefineClasses(jint class_count,
+VM_RedefineClasses::VM_RedefineClasses(jint class_count, 
                                        const jvmtiClassDefinition *class_defs,
                                        JvmtiClassLoadKind class_load_kind) {
   _class_count = class_count;
@@ -325,7 +328,7 @@ void VM_RedefineClasses::append_entry(constantPoolHandle scratch_cp,
       }
       (*merge_cp_length_p)++;
     } break;
-
+  
     // this is a double-indirect CP entry so it needs special handling
     case JVM_CONSTANT_Fieldref:           // fall through
     case JVM_CONSTANT_InterfaceMethodref: // fall through
@@ -443,7 +446,7 @@ void VM_RedefineClasses::append_entry(constantPoolHandle scratch_cp,
       }
       (*merge_cp_length_p)++;
     } break;
-
+  
     // At this stage, Class or UnresolvedClass could be here, but not
     // ClassIndex
     case JVM_CONSTANT_ClassIndex: // fall through
@@ -457,7 +460,7 @@ void VM_RedefineClasses::append_entry(constantPoolHandle scratch_cp,
     // StringIndex
     case JVM_CONSTANT_StringIndex: // fall through
 
-    // At this stage JVM_CONSTANT_UnresolvedClassInError should not be
+    // At this stage JVM_CONSTANT_UnresolvedClassInError should not be 
     // here
     case JVM_CONSTANT_UnresolvedClassInError: // fall through
 
@@ -494,9 +497,9 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   int i;
 
   // Check superclasses, or rather their names, since superclasses themselves can be
-  // requested to replace.
+  // requested to replace. 
   // Check for NULL superclass first since this might be java.lang.Object
-  if (the_class->super() != scratch_class->super() &&
+  if (the_class->super() != scratch_class->super() && 
       (the_class->super() == NULL || scratch_class->super() == NULL ||
        Klass::cast(the_class->super())->name() !=
        Klass::cast(scratch_class->super())->name())) {
@@ -525,7 +528,7 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
 
   // Check whether class is in the error init state.
   if (the_class->is_in_error_state()) {
-    // TBD #5057930: special error code is needed in 1.6
+    // TBD #5057930: special error code is needed in 1.6 
     return JVMTI_ERROR_INVALID_CLASS;
   }
 
@@ -553,9 +556,9 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
     }
     // offset
-    if (k_old_fields->short_at(i + instanceKlass::low_offset) !=
+    if (k_old_fields->short_at(i + instanceKlass::low_offset) != 
         k_new_fields->short_at(i + instanceKlass::low_offset) ||
-        k_old_fields->short_at(i + instanceKlass::high_offset) !=
+        k_old_fields->short_at(i + instanceKlass::high_offset) != 
         k_new_fields->short_at(i + instanceKlass::high_offset)) {
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
     }
@@ -574,11 +577,11 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   }
 
   // Do a parallel walk through the old and new methods. Detect
-  // cases where they match (exist in both), have been added in
-  // the new methods, or have been deleted (exist only in the
+  // cases where they match (exist in both), have been added in 
+  // the new methods, or have been deleted (exist only in the 
   // old methods).  The class file parser places methods in order
-  // by method name, but does not order overloaded methods by
-  // signature.  In order to determine what fate befell the methods,
+  // by method name, but does not order overloaded methods by 
+  // signature.  In order to determine what fate befell the methods, 
   // this code places the overloaded new methods that have matching
   // old methods in the same order as the old methods and places
   // new overloaded methods at the end of overloaded methods of
@@ -587,8 +590,8 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   // Since we are swapping out of order entries as we find them,
   // we only have to search forward through the overloaded methods.
   // Methods which are added and have the same name as an existing
-  // method (but different signature) will be put at the end of
-  // the methods with that name, and the name mismatch code will
+  // method (but different signature) will be put at the end of 
+  // the methods with that name, and the name mismatch code will 
   // handle them.
   objArrayHandle k_old_methods(the_class->methods());
   objArrayHandle k_new_methods(scratch_class->methods());
@@ -630,7 +633,7 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
         method_was = matched;
       } else {
         // The name matches, but the signature doesn't, which means we have to
-        // search forward through the new overloaded methods.
+        // search forward through the new overloaded methods. 
         int nj;  // outside the loop for post-loop check
         for (nj = ni + 1; nj < n_new_methods; nj++) {
           methodOop m = (methodOop)k_new_methods->obj_at(nj);
@@ -643,7 +646,7 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
             // found a match so swap the methods
             k_new_methods->obj_at_put(ni, m);
             k_new_methods->obj_at_put(nj, k_new_method);
-            k_new_method = m;
+            k_new_method = m;            
             method_was = matched;
             break;
           }
@@ -860,8 +863,8 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     // load hook event.
     state->set_class_being_redefined(&the_class, _class_load_kind);
 
-    klassOop k = SystemDictionary::parse_stream(the_class_sym,
-                                                the_class_loader,
+    klassOop k = SystemDictionary::parse_stream(the_class_sym, 
+                                                the_class_loader, 
                                                 protection_domain,
                                                 &st,
                                                 THREAD);
@@ -869,7 +872,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     state->clear_class_being_redefined();
 
     // TODO: if this is retransform, and nothing changed we can skip it
-
+                                     
     instanceKlassHandle scratch_class (THREAD, k);
 
     if (HAS_PENDING_EXCEPTION) {
@@ -988,7 +991,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
         return JVMTI_ERROR_INTERNAL;
       }
     }
-
+  
     _scratch_classes[i] = scratch_class;
 
     // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
@@ -996,7 +999,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       ("loaded name=%s (avail_mem=" UINT64_FORMAT "K)",
       the_class->external_name(), os::available_memory() >> 10));
   }
-
+  
   return JVMTI_ERROR_NONE;
 }
 
@@ -1083,7 +1086,7 @@ bool VM_RedefineClasses::merge_constant_pools(constantPoolHandle old_cp,
         old_cp->copy_entry_to(old_i, *merge_cp_p, old_i, CHECK_0);
         old_i++;
         break;
-
+  
       default:
         // just copy the entry to *merge_cp_p
         old_cp->copy_entry_to(old_i, *merge_cp_p, old_i, CHECK_0);
@@ -1428,7 +1431,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_method(methodHandle method,
   for (int bci = 0; bci < code_length; bci += bc_length) {
     address bcp = code_base + bci;
     Bytecodes::Code c = (Bytecodes::Code)(*bcp);
-
+    
     bc_length = Bytecodes::length_for(c);
     if (bc_length == 0) {
       // More complicated bytecodes report a length of zero so
@@ -1534,7 +1537,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_method(methodHandle method,
           Bytes::put_Java_u2(p, new_index);
         }
       } break;
-    }
+    }  
   } // end for each bytecode
 } // end rewrite_cp_refs_in_method()
 
@@ -2085,7 +2088,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
     //   append_frame;
     //   full_frame;
     // }
-
+  
     assert(stackmap_p + 1 <= stackmap_end, "no room for frame_type");
     // The Linux compiler does not like frame_type to be u1 or u2. It
     // issues the following warning for the first if-statement below:
@@ -2094,14 +2097,14 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
     //
     u4 frame_type = *stackmap_p;
     stackmap_p++;
-
+  
     // same_frame {
     //   u1 frame_type = SAME; /* 0-63 */
     // }
     if (frame_type >= 0 && frame_type <= 63) {
       // nothing more to do for same_frame
     }
-
+  
     // same_locals_1_stack_item_frame {
     //   u1 frame_type = SAME_LOCALS_1_STACK_ITEM; /* 64-127 */
     //   verification_type_info stack[1];
@@ -2110,12 +2113,12 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
       rewrite_cp_refs_in_verification_type_info(stackmap_p, stackmap_end,
         calc_number_of_entries, frame_type, THREAD);
     }
-
+  
     // reserved for future use
     else if (frame_type >= 128 && frame_type <= 246) {
       // nothing more to do for reserved frame_types
     }
-
+  
     // same_locals_1_stack_item_frame_extended {
     //   u1 frame_type = SAME_LOCALS_1_STACK_ITEM_EXTENDED; /* 247 */
     //   u2 offset_delta;
@@ -2126,7 +2129,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
       rewrite_cp_refs_in_verification_type_info(stackmap_p, stackmap_end,
         calc_number_of_entries, frame_type, THREAD);
     }
-
+  
     // chop_frame {
     //   u1 frame_type = CHOP; /* 248-250 */
     //   u2 offset_delta;
@@ -2134,7 +2137,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
     else if (frame_type >= 248 && frame_type <= 250) {
       stackmap_p += 2;
     }
-
+  
     // same_frame_extended {
     //   u1 frame_type = SAME_FRAME_EXTENDED; /* 251*/
     //   u2 offset_delta;
@@ -2142,7 +2145,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
     else if (frame_type == 251) {
       stackmap_p += 2;
     }
-
+  
     // append_frame {
     //   u1 frame_type = APPEND; /* 252-254 */
     //   u2 offset_delta;
@@ -2158,7 +2161,7 @@ void VM_RedefineClasses::rewrite_cp_refs_in_stack_map_table(
           calc_number_of_entries, frame_type, THREAD);
       }
     }
-
+  
     // full_frame {
     //   u1 frame_type = FULL_FRAME; /* 255 */
     //   u2 offset_delta;
@@ -2573,7 +2576,7 @@ void VM_RedefineClasses::adjust_cpool_cache_and_vtable(klassOop k_oop,
     if (ik->vtable_length() > 0 && ik->is_subtype_of(_the_class_oop)) {
       // ik->vtable() creates a wrapper object; rm cleans it up
       ResourceMark rm(THREAD);
-      ik->vtable()->adjust_method_entries(_matching_old_methods,
+      ik->vtable()->adjust_method_entries(_matching_old_methods, 
                                           _matching_new_methods,
                                           _matching_methods_length,
                                           &trace_name_printed);
@@ -2589,7 +2592,7 @@ void VM_RedefineClasses::adjust_cpool_cache_and_vtable(klassOop k_oop,
         || ik->is_subclass_of(_the_class_oop))) {
       // ik->itable() creates a wrapper object; rm cleans it up
       ResourceMark rm(THREAD);
-      ik->itable()->adjust_method_entries(_matching_old_methods,
+      ik->itable()->adjust_method_entries(_matching_old_methods, 
                                           _matching_new_methods,
                                           _matching_methods_length,
                                           &trace_name_printed);
@@ -2616,13 +2619,13 @@ void VM_RedefineClasses::adjust_cpool_cache_and_vtable(klassOop k_oop,
       other_cp = constantPoolHandle(ik->constants());
       cp_cache = other_cp->cache();
       if (cp_cache != NULL) {
-        cp_cache->adjust_method_entries(_matching_old_methods,
+        cp_cache->adjust_method_entries(_matching_old_methods, 
                                         _matching_new_methods,
                                         _matching_methods_length,
                                         &trace_name_printed);
       }
     }
-    {
+    { 
       ResourceMark rm(THREAD);
       // PreviousVersionInfo objects returned via PreviousVersionWalker
       // contain a GrowableArray of handles. We have to clean up the
@@ -2636,7 +2639,7 @@ void VM_RedefineClasses::adjust_cpool_cache_and_vtable(klassOop k_oop,
           other_cp = pv_info->prev_constant_pool_handle();
           cp_cache = other_cp->cache();
           if (cp_cache != NULL) {
-            cp_cache->adjust_method_entries(_matching_old_methods,
+            cp_cache->adjust_method_entries(_matching_old_methods, 
                                             _matching_new_methods,
                                             _matching_methods_length,
                                             &trace_name_printed);
@@ -2816,7 +2819,7 @@ void VM_RedefineClasses::check_methods_and_mark_as_obsolete(
 //
 class TransferNativeFunctionRegistration {
  private:
-  instanceKlassHandle the_class;
+  instanceKlassHandle the_class;  
   int prefix_count;
   char** prefixes;
 
@@ -2827,7 +2830,7 @@ class TransferNativeFunctionRegistration {
   //    (1) without the prefix.
   //    (2) with the prefix.
   // where 'prefix' is the prefix at that 'depth' (first prefix, second prefix,...)
-  methodOop search_prefix_name_space(int depth, char* name_str, size_t name_len,
+  methodOop search_prefix_name_space(int depth, char* name_str, size_t name_len, 
                                      symbolOop signature) {
     symbolOop name_symbol = SymbolTable::probe(name_str, (int)name_len);
     if (name_symbol != NULL) {
@@ -2836,7 +2839,7 @@ class TransferNativeFunctionRegistration {
         // Even if prefixed, intermediate methods must exist.
         if (method->is_native()) {
           // Wahoo, we found a (possibly prefixed) version of the method, return it.
-          return method;
+          return method; 
         }
         if (depth < prefix_count) {
           // Try applying further prefixes (other than this one).
@@ -2848,7 +2851,7 @@ class TransferNativeFunctionRegistration {
           // Try adding this prefix to the method name and see if it matches
           // another method name.
           char* prefix = prefixes[depth];
-          size_t prefix_len = strlen(prefix);
+          size_t prefix_len = strlen(prefix);          
           size_t trial_len = name_len + prefix_len;
           char* trial_name_str = NEW_RESOURCE_ARRAY(char, trial_len + 1);
           strcpy(trial_name_str, prefix);
@@ -2882,7 +2885,7 @@ class TransferNativeFunctionRegistration {
     return name_str;
   }
 
-  // Strip any prefixes off the old native method, then try to find a
+  // Strip any prefixes off the old native method, then try to find a 
   // (possibly prefixed) new native that matches it.
   methodOop strip_and_search_for_new_native(methodOop method) {
     ResourceMark rm;
@@ -2905,12 +2908,12 @@ class TransferNativeFunctionRegistration {
   void transfer_registrations(methodOop* old_methods, int methods_length) {
     for (int j = 0; j < methods_length; j++) {
       methodOop old_method = old_methods[j];
-
+      
       if (old_method->is_native() && old_method->has_native_function()) {
         methodOop new_method = strip_and_search_for_new_native(old_method);
         if (new_method != NULL) {
           // Actually set the native function in the new method.
-          // Redefine does not send events (except CFLH), certainly not this
+          // Redefine does not send events (except CFLH), certainly not this 
           // behind the scenes re-registration.
           new_method->set_native_function(old_method->native_function(),
                               !methodOopDesc::native_bind_event_is_interesting);
@@ -2960,8 +2963,8 @@ void VM_RedefineClasses::flush_dependent_code(instanceKlassHandle k_h, TRAPS) {
 
     // Make the dependent methods not entrant (in VM_Deoptimize they are made zombies)
     CodeCache::make_marked_nmethods_not_entrant();
-
-    // From now on we know that the dependency information is complete
+ 
+    // From now on we know that the dependency information is complete 
     JvmtiExport::set_all_dependencies_are_recorded(true);
   }
 }
@@ -2974,10 +2977,10 @@ void VM_RedefineClasses::compute_added_deleted_matching_methods() {
   _matching_new_methods = NEW_RESOURCE_ARRAY(methodOop, _old_methods->length());
   _added_methods        = NEW_RESOURCE_ARRAY(methodOop, _new_methods->length());
   _deleted_methods      = NEW_RESOURCE_ARRAY(methodOop, _old_methods->length());
-
-  _matching_methods_length = 0;
+ 
+  _matching_methods_length = 0;  
   _deleted_methods_length  = 0;
-  _added_methods_length    = 0;
+  _added_methods_length    = 0;  
 
   int nj = 0;
   int oj = 0;
@@ -3053,7 +3056,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
 #ifndef JVMTI_KERNEL
   // Remove all breakpoints in methods of this class
   JvmtiBreakpoints& jvmti_breakpoints = JvmtiCurrentBreakpoints::get_jvmti_breakpoints();
-  jvmti_breakpoints.clearall_in_class_at_safepoint(the_class_oop);
+  jvmti_breakpoints.clearall_in_class_at_safepoint(the_class_oop); 
 #endif // !JVMTI_KERNEL
 
   if (the_class_oop == Universe::reflect_invoke_cache()->klass()) {
@@ -3126,7 +3129,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
 
   // Replace methods and constantpool
   the_class->set_methods(_new_methods);
-  scratch_class->set_methods(_old_methods);     // To prevent potential GCing of the old methods,
+  scratch_class->set_methods(_old_methods);     // To prevent potential GCing of the old methods, 
                                           // and to be able to undo operation easily.
 
   constantPoolOop old_constants = the_class->constants();
@@ -3152,7 +3155,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   // methods, the method holder is "the class" itself (as gotten from
   // the new constant pool). The check works fine in this case. The
   // check also works fine for methods inherited from super classes.
-  //
+  // 
   // Miranda methods are a little more complicated. A miranda method is
   // provided by an interface when the class implementing the interface
   // does not provide its own method.  These interfaces are implemented
@@ -3179,7 +3182,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   // with them was cached on the scratch class, move to the_class.
   // Note: we still want to do this if nothing needed caching since it
   // should get cleared in the_class too.
-  the_class->set_cached_class_file(scratch_class->get_cached_class_file_bytes(),
+  the_class->set_cached_class_file(scratch_class->get_cached_class_file_bytes(), 
                                    scratch_class->get_cached_class_file_len());
 
   // Replace inner_classes
@@ -3192,7 +3195,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   {
     ResourceMark rm(THREAD);
     // no exception should happen here since we explicitly
-    // do not check loader constraints.
+    // do not check loader constraints. 
     // compare_and_normalize_class_versions has already checked:
     //  - classloaders unchanged, signatures unchanged
     //  - all instanceKlasses for redefined classes reused & contents updated

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_FrameMap_sparc.hpp	1.44 07/06/18 14:25:22 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
  public:
@@ -67,7 +70,7 @@
 
   static LIR_Opr SP_opr;
   static LIR_Opr FP_opr;
-
+  
   static LIR_Opr G0_oop_opr;
   static LIR_Opr G1_oop_opr;
   static LIR_Opr G2_oop_opr;
@@ -106,7 +109,7 @@
 
   static LIR_Opr F0_opr;
   static LIR_Opr F0_double_opr;
-
+  
   static LIR_Opr Oexception_opr;
   static LIR_Opr Oissuing_pc_opr;
 
@@ -143,3 +146,4 @@
 
   static bool is_caller_save_register (LIR_Opr  reg);
   static bool is_caller_save_register (Register r);
+

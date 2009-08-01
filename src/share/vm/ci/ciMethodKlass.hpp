@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)ciMethodKlass.hpp	1.13 07/05/05 17:05:15 JVM"
+#endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciMethodKlass
@@ -36,7 +39,7 @@ protected:
   }
 
   methodKlass* get_methodKlass() { return (methodKlass*)get_Klass(); }
-
+  
   const char* type_string() { return "ciMethodKlass"; }
 
 public:
@@ -46,3 +49,4 @@ public:
   // Return the distinguished ciMethodKlass instance.
   static ciMethodKlass* make();
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)classFileStream.hpp	1.33 07/05/31 14:29:25 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Input stream for reading .class file
@@ -91,8 +94,8 @@ class ClassFileStream: public ResourceObj {
     return res;
   }
 
-  // Get direct pointer into stream at current position.
-  // Returns NULL if length elements are not remaining. The caller is
+  // Get direct pointer into stream at current position. 
+  // Returns NULL if length elements are not remaining. The caller is 
   // responsible for calling skip below if buffer contents is used.
   u1* get_u1_buffer() {
     return _current;

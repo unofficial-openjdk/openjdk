@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools.jcore;
@@ -52,7 +52,7 @@ public class ClassDump extends Tool {
             }
 
             outputDirectory = System.getProperty("sun.jvm.hotspot.tools.jcore.outputDir");
-            if (outputDirectory == null)
+            if (outputDirectory == null) 
                 outputDirectory = ".";
 
             // walk through the system dictionary
@@ -65,7 +65,7 @@ public class ClassDump extends Tool {
                 });
         }
         catch (AddressException e) {
-            System.err.println("Error accessing address 0x"
+            System.err.println("Error accessing address 0x" 
                                + Long.toHexString(e.getAddress()));
             e.printStackTrace();
         }
@@ -90,7 +90,7 @@ public class ClassDump extends Tool {
         } else {
             dir = new File(outputDirectory);
         }
-
+ 
         dir.mkdirs();
         File f = new File(dir, klassName.substring(klassName.lastIndexOf(File.separatorChar) + 1)
                           + ".class");
@@ -104,8 +104,8 @@ public class ClassDump extends Tool {
                 os.close();
             }
         } catch(IOException exp) {
-            exp.printStackTrace();
-        }
+            exp.printStackTrace(); 
+        } 
     }
 
     public static void main(String[] args) {

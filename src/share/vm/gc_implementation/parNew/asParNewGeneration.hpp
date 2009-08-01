@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)asParNewGeneration.hpp	1.8 07/05/05 17:05:25 JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A Generation that does parallel young-gen collection extended
@@ -27,23 +30,23 @@
 
 // Division of generation into spaces
 // done by DefNewGeneration::compute_space_boundaries()
-//      +---------------+
-//      | uncommitted   |
-//      |---------------|
-//      | ss0           |
-//      |---------------|
-//      | ss1           |
-//      |---------------|
-//      |               |
-//      | eden          |
-//      |               |
-//      +---------------+       <-- low end of VirtualSpace
+//	+---------------+
+//	| uncommitted	|
+//	|---------------|
+//	| ss0		|
+//	|---------------|
+//	| ss1		|
+//	|---------------|
+//	|		|
+//	| eden		|
+//	|		|
+//	+---------------+	<-- low end of VirtualSpace
 //
 class ASParNewGeneration: public ParNewGeneration {
 
   size_t _min_gen_size;
 
-  // Resize the generation based on the desired sizes of
+  // Resize the generation based on the desired sizes of 
   // the constituent spaces.
   bool resize_generation(size_t eden_size, size_t survivor_size);
   // Resize the spaces based on their desired sizes but
@@ -65,10 +68,10 @@ class ASParNewGeneration: public ParNewGeneration {
 
  public:
 
-  ASParNewGeneration(ReservedSpace rs,
-                     size_t initial_byte_size,
-                     size_t min_byte_size,
-                     int level);
+  ASParNewGeneration(ReservedSpace rs, 
+		     size_t initial_byte_size, 
+		     size_t min_byte_size,
+		     int level);
 
   virtual const char* short_name() const { return "ASParNew"; }
   virtual const char* name() const;
@@ -77,13 +80,13 @@ class ASParNewGeneration: public ParNewGeneration {
   // Change the sizes of eden and the survivor spaces in
   // the generation.  The parameters are desired sizes
   // and are not guaranteed to be met.  For example, if
-  // the total is larger than the generation.
+  // the total is larger than the generation. 
   void resize(size_t eden_size, size_t survivor_size);
 
   virtual void compute_new_size();
 
   size_t max_gen_size()                 { return _reserved.byte_size(); }
-  size_t min_gen_size() const           { return _min_gen_size; }
+  size_t min_gen_size() const		{ return _min_gen_size; }
 
   // Space boundary invariant checker
   void space_invariants() PRODUCT_RETURN;

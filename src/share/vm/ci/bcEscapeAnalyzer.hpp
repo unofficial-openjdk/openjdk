@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bcEscapeAnalyzer.hpp	1.6 07/05/05 17:05:11 JVM"
+#endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 define_array(ciObjectArray, ciObject*);
@@ -35,7 +38,7 @@ class  ciBlock;
 class BCEscapeAnalyzer : public ResourceObj {
  private:
   bool              _conservative; // If true, return maximally
-                                   // conservative results.
+				   // conservative results.
   ciMethod*         _method;
   ciMethodData*     _methodData;
   int               _arg_size;

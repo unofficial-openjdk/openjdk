@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)dtraceAttacher.cpp	1.8 07/05/23 10:54:23 JVM" 
+#endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -45,10 +48,10 @@ class VM_DeoptimizeTheWorld : public VM_Operation {
 };
 
 static void set_bool_flag(const char* flag, bool value) {
-  CommandLineFlags::boolAtPut((char*)flag, strlen(flag), &value,
+  CommandLineFlags::boolAtPut((char*)flag, strlen(flag), &value, 
                               ATTACH_ON_DEMAND);
 }
-
+  
 // Enable only the "fine grained" flags. Do *not* touch
 // the overall "ExtendedDTraceProbes" flag.
 void DTrace::enable_dprobes(int probes) {
@@ -74,7 +77,7 @@ void DTrace::enable_dprobes(int probes) {
 }
 
 // Disable only the "fine grained" flags. Do *not* touch
-// the overall "ExtendedDTraceProbes" flag.
+// the overall "ExtendedDTraceProbes" flag. 
 void DTrace::disable_dprobes(int probes) {
   bool changed = false;
   if (DTraceAllocProbes && (probes & DTRACE_ALLOC_PROBES)) {
@@ -120,15 +123,15 @@ void DTrace::set_extended_dprobes(bool flag) {
   if (flag) {
     enable_dprobes(DTRACE_ALL_PROBES);
   } else {
-    /*
+    /* 
      * FIXME: Revisit this: currently all-client-detach detection
      * does not work and hence disabled. The following scheme does
      * not work. So, we have to disable fine-grained flags here.
      *
      * disable_dprobes call has to be delayed till next "detach all "event.
      * This is to be  done so that concurrent DTrace clients that may
-     * have enabled one or more fine grained dprobes and may be running
-     * still. On "detach all" clients event, we would sync ExtendedDTraceProbes
+     * have enabled one or more fine grained dprobes and may be running 
+     * still. On "detach all" clients event, we would sync ExtendedDTraceProbes 
      * with  fine grained flags which would take care of disabling fine grained flags.
      */
     disable_dprobes(DTRACE_ALL_PROBES);

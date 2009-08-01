@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)symbolKlass.cpp	1.66 07/05/29 09:44:24 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,7 +31,7 @@
 symbolOop symbolKlass::allocate_symbol(u1* name, int len, TRAPS) {
   // Don't allow symbol oops to be created which cannot fit in a symbolOop.
   if (len > symbolOopDesc::max_length()) {
-    THROW_MSG_0(vmSymbols::java_lang_InternalError(),
+    THROW_MSG_0(vmSymbols::java_lang_InternalError(), 
                 "name is too long to represent");
   }
   int size = symbolOopDesc::object_size(len);
@@ -118,11 +121,11 @@ klassOop symbolKlass::create_klass(TRAPS) {
   return k();
 }
 
-int symbolKlass::oop_size(oop obj) const {
+int symbolKlass::oop_size(oop obj) const { 
   assert(obj->is_symbol(),"must be a symbol");
   symbolOop s = symbolOop(obj);
   int size = s->object_size();
-  return size;
+  return size; 
 }
 
 bool symbolKlass::oop_is_parsable(oop obj) const {
@@ -133,7 +136,7 @@ bool symbolKlass::oop_is_parsable(oop obj) const {
 
 void symbolKlass::oop_follow_contents(oop obj) {
   assert (obj->is_symbol(), "object must be symbol");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::symbolKlassObj never moves.
   // Note: do not follow next link here (see SymbolTable::follow_contents)
 }
@@ -141,7 +144,7 @@ void symbolKlass::oop_follow_contents(oop obj) {
 #ifndef SERIALGC
 void symbolKlass::oop_follow_contents(ParCompactionManager* cm, oop obj) {
   assert (obj->is_symbol(), "object must be symbol");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::symbolKlassObj never moves.
   // Note: do not follow next link here (see SymbolTable::follow_contents)
 }
@@ -153,7 +156,7 @@ int symbolKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
   int size = s->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::symbolKlassObj never moves.
   return size;
 }
@@ -165,7 +168,7 @@ int symbolKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
   int size = s->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::symbolKlassObj never moves.
   return size;
 }
@@ -177,7 +180,7 @@ int symbolKlass::oop_adjust_pointers(oop obj) {
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
   int size = s->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::symbolKlassObj never moves.
   return size;
 }
@@ -198,7 +201,7 @@ int symbolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int symbolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                     HeapWord* beg_addr, HeapWord* end_addr) {
+				     HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_symbol(), "should be symbol");
   return symbolOop(obj)->object_size();
 }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)vm_version_solaris_sparc.cpp	1.5 07/05/05 17:04:54 JVM"
+#endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -49,7 +52,7 @@ int VM_Version::platform_features(int features) {
       char *sparc_string = strstr(buf, "sparc");
       if (sparc_string != NULL) {            features |= v8_instructions_m;
         if (sparc_string[5] == 'v') {
-          if (sparc_string[6] == '8') {
+	  if (sparc_string[6] == '8') {
             if (sparc_string[7] == '-')      features |= hardware_int_muldiv_m;
             else if (sparc_string[7] == 'p') features |= generic_v9_m;
             else                      features |= generic_v8_m;

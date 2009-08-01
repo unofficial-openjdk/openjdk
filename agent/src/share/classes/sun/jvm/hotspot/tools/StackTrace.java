@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools;
@@ -36,15 +36,15 @@ public class StackTrace extends Tool {
         this.verbose = v;
         this.concurrentLocks = concurrentLocks;
     }
-
+    
     public StackTrace() {
         this(true, true);
     }
-
+   
     public void run() {
         run(System.out);
     }
-
+ 
     public void run(java.io.PrintStream tty) {
         // Ready to go with the database...
         try {
@@ -54,7 +54,7 @@ public class StackTrace extends Tool {
             exp.printStackTrace();
             tty.println("Can't print deadlocks:" + exp.getMessage());
         }
-
+        
         try {
             ConcurrentLocksPrinter concLocksPrinter = null;
             if (concurrentLocks) {
@@ -77,21 +77,21 @@ public class StackTrace extends Tool {
                             Method method = vf.getMethod();
                             tty.print(" - " + method.externalNameAndSignature() +
                             " @bci=" + vf.getBCI());
-
+                            
                             int lineNumber = method.getLineNumberFromBCI(vf.getBCI());
                             if (lineNumber != -1) {
                                 tty.print(", line=" + lineNumber);
                             }
-
+                            
                             if (verbose) {
                                 Address pc = vf.getFrame().getPC();
                                 if (pc != null) {
                                     tty.print(", pc=" + pc);
                                 }
-
+                                
                                 tty.print(", methodOop=" + method.getHandle());
                             }
-
+                            
                             if (vf.isCompiledFrame()) {
                                 tty.print(" (Compiled frame");
                                 if (vf.isDeoptimized()) {
@@ -104,7 +104,7 @@ public class StackTrace extends Tool {
                             if (vf.mayBeImpreciseDbg()) {
                                 tty.print("; information may be imprecise");
                             }
-
+                            
                             tty.println(")");
                         }
                     } catch (Exception e) {

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)coalesce.cpp	1.196 07/09/28 10:23:11 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -31,8 +34,8 @@ void PhaseChaitin::reset_uf_map( uint maxlrg ) {
   _maxlrg = maxlrg;
   // Force the Union-Find mapping to be at least this large
   _uf_map.extend(_maxlrg,0);
-  // Initialize it to be the ID mapping.
-  for( uint i=0; i<_maxlrg; i++ )
+  // Initialize it to be the ID mapping.  
+  for( uint i=0; i<_maxlrg; i++ ) 
     _uf_map.map(i,i);
 }
 
@@ -54,7 +57,7 @@ void PhaseChaitin::compress_uf_map_for_nodes( ) {
 // Straight out of Tarjan's union-find algorithm
 uint PhaseChaitin::Find_compress( uint lrg ) {
   uint cur = lrg;
-  uint next = _uf_map[cur];
+  uint next = _uf_map[cur]; 
   while( next != cur ) {        // Scan chain of equivalences
     assert( next < cur, "always union smaller" );
     cur = next;                 // until find a fixed-point
@@ -82,10 +85,10 @@ uint PhaseChaitin::Find_compress( const Node *n ) {
 // Like Find above, but no path compress, so bad asymptotic behavior
 uint PhaseChaitin::Find_const( uint lrg ) const {
   if( !lrg ) return lrg;        // Ignore the zero LRG
-  // Off the end?  This happens during debugging dumps when you got
+  // Off the end?  This happens during debugging dumps when you got 
   // brand new live ranges but have not told the allocator yet.
-  if( lrg >= _maxlrg ) return lrg;
-  uint next = _uf_map[lrg];
+  if( lrg >= _maxlrg ) return lrg;    
+  uint next = _uf_map[lrg]; 
   while( next != lrg ) {        // Scan chain of equivalences
     assert( next < lrg, "always union smaller" );
     lrg = next;                 // until find a fixed-point
@@ -165,7 +168,7 @@ void PhaseChaitin::compact() {
     printf("Compacted %d LRs from %d\n",i-j,i);
   // Now change the Node->LR mapping to reflect the compacted names
   uint unique = _names.Size();
-  for( i=0; i<unique; i++ )
+  for( i=0; i<unique; i++ ) 
     _names.map(i,_uf_map[_names[i]]);
 
   // Reset the Union-Find mapping
@@ -193,7 +196,7 @@ void PhaseCoalesce::dump() const {
     for( j=1; j<b->num_preds(); j++ )
       tty->print("B%d ", _phc._cfg._bbs[b->pred(j)->_idx]->_pre_order);
     tty->print("-> ");
-    for( j=0; j<b->_num_succs; j++ )
+    for( j=0; j<b->_num_succs; j++ ) 
       tty->print("B%d ",b->_succs[j]->_pre_order);
     tty->print(" IDom: B%d/#%d\n", b->_idom ? b->_idom->_pre_order : 0, b->_dom_depth);
     uint cnt = b->_nodes.size();
@@ -213,13 +216,13 @@ void PhaseCoalesce::dump() const {
           if( !any_prec++ ) tty->print(" |");
           dump( n->in(k) );
         }
-
+      
       // Dump node-specific info
       n->dump_spec(tty);
       tty->print("\n");
-
+      
     }
-    tty->print("\n");
+    tty->print("\n");  
   }
 }
 #endif
@@ -238,18 +241,18 @@ void PhaseCoalesce::combine_these_two( Node *n1, Node *n2 ) {
     // Now, why is int->oop OK?  We end up declaring a raw-pointer as an oop
     // and in general that's a bad thing.  However, int->oop conversions only
     // happen at GC points, so the lifetime of the misclassified raw-pointer
-    // is from the CheckCastPP (that converts it to an oop) backwards up
-    // through a merge point and into the slow-path call, and around the
+    // is from the CheckCastPP (that converts it to an oop) backwards up 
+    // through a merge point and into the slow-path call, and around the 
     // diamond up to the heap-top check and back down into the slow-path call.
     // The misclassified raw pointer is NOT live across the slow-path call,
-    // and so does not appear in any GC info, so the fact that it is
+    // and so does not appear in any GC info, so the fact that it is 
     // misclassified is OK.
 
     if( (lrg1->_is_oop || !lrg2->_is_oop) && // not an oop->int cast AND
         // Compatible final mask
-        lrg1->mask().overlap( lrg2->mask() ) ) {
+        lrg1->mask().overlap( lrg2->mask() ) ) { 
       // Merge larger into smaller.
-      if( lr1 > lr2 ) {
+      if( lr1 > lr2 ) {                                          
         uint  tmp =  lr1;  lr1 =  lr2;  lr2 =  tmp;
         Node   *n =   n1;   n1 =   n2;   n2 =    n;
         LRG *ltmp = lrg1; lrg1 = lrg2; lrg2 = ltmp;
@@ -280,12 +283,12 @@ void PhaseCoalesce::coalesce_driver( ) {
 //------------------------------insert_copy_with_overlap-----------------------
 // I am inserting copies to come out of SSA form.  In the general case, I am
 // doing a parallel renaming.  I'm in the Named world now, so I can't do a
-// general parallel renaming.  All the copies now use  "names" (live-ranges)
-// to carry values instead of the explicit use-def chains.  Suppose I need to
-// insert 2 copies into the same block.  They copy L161->L128 and L128->L132.
-// If I insert them in the wrong order then L128 will get clobbered before it
-// can get used by the second copy.  This cannot happen in the SSA model;
-// direct use-def chains get me the right value.  It DOES happen in the named
+// general parallel renaming.  All the copies now use  "names" (live-ranges) 
+// to carry values instead of the explicit use-def chains.  Suppose I need to 
+// insert 2 copies into the same block.  They copy L161->L128 and L128->L132.  
+// If I insert them in the wrong order then L128 will get clobbered before it 
+// can get used by the second copy.  This cannot happen in the SSA model; 
+// direct use-def chains get me the right value.  It DOES happen in the named 
 // model so I have to handle the reordering of copies.
 //
 // In general, I need to topo-sort the placed copies to avoid conflicts.
@@ -294,9 +297,9 @@ void PhaseCoalesce::coalesce_driver( ) {
 void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, uint dst_name, uint src_name ) {
 
   // Scan backwards for the locations of the last use of the dst_name.
-  // I am about to clobber the dst_name, so the copy must be inserted
+  // I am about to clobber the dst_name, so the copy must be inserted 
   // after the last use.  Last use is really first-use on a backwards scan.
-  uint i = b->end_idx()-1;
+  uint i = b->end_idx()-1; 
   while( 1 ) {
     Node *n = b->_nodes[i];
     // Check for end of virtual copies; this is also the end of the
@@ -309,12 +312,12 @@ void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, ui
   }
   uint last_use_idx = i;
 
-  // Also search for any kill of src_name that exits the block.
+  // Also search for any kill of src_name that exits the block.  
   // Since the copy uses src_name, I have to come before any kill.
   uint kill_src_idx = b->end_idx();
   // There can be only 1 kill that exits any block and that is
   // the last kill.  Thus it is the first kill on a backwards scan.
-  i = b->end_idx()-1;
+  i = b->end_idx()-1; 
   while( 1 ) {
     Node *n = b->_nodes[i];
     // Check for end of virtual copies; this is also the end of the
@@ -341,7 +344,7 @@ void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, ui
     _phc._cfg._bbs.map( tmp->_idx, b );
     last_use_idx++;
   }
-
+  
   // Insert just after last use
   b->_nodes.insert(last_use_idx+1,copy);
 }
@@ -362,9 +365,9 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
           liveout->insert(compressed_lrg);
         }
       }
-    }
+    }  
   }
-
+  
   // All new nodes added are actual copies to replace virtual copies.
   // Nodes with index less than '_unique' are original, non-virtual Nodes.
   _unique = C->unique();
@@ -415,7 +418,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
             Node *copy;
             assert(!m->is_Con() || m->is_Mach(), "all Con must be Mach");
             // Rematerialize constants instead of copying them
-            if( m->is_Mach() && m->as_Mach()->is_Con() &&
+            if( m->is_Mach() && m->as_Mach()->is_Con() && 
                 m->as_Mach()->rematerialize() ) {
               copy = m->clone();
               // Insert the copy in the predecessor basic block
@@ -450,7 +453,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
             assert(!m->is_Con() || m->is_Mach(), "all Con must be Mach");
             // At this point it is unsafe to extend live ranges (6550579).
             // Rematerialize only constants as we do for Phi above.
-            if( m->is_Mach() && m->as_Mach()->is_Con() &&
+            if( m->is_Mach() && m->as_Mach()->is_Con() && 
                 m->as_Mach()->rematerialize() ) {
               copy = m->clone();
               // Insert the copy in the basic block, just before us
@@ -469,7 +472,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
             _phc._names.extend( copy->_idx, name );
             _phc._cfg._bbs.map( copy->_idx, b );
           }
-
+          
         } // End of is two-adr
 
         // Insert a copy at a debug use for a lrg which has high frequency
@@ -488,8 +491,8 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
 
             // If this lrg has a high frequency use/def
             if( lrg._maxfreq >= OPTO_LRG_HIGH_FREQ ) {
-              // If the live range is also live out of this block (like it
-              // would be for a fast/slow idiom), the normal spill mechanism
+              // If the live range is also live out of this block (like it 
+              // would be for a fast/slow idiom), the normal spill mechanism 
               // does an excellent job.  If it is not live out of this block
               // (like it would be for debug info to uncommon trap) splitting
               // the live range now allows a better allocation in the high
@@ -497,7 +500,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
               //   Build_IFG_virtual has converted the live sets to
               // live-IN info, not live-OUT info.
               uint k;
-              for( k=0; k < b->_num_succs; k++ )
+              for( k=0; k < b->_num_succs; k++ ) 
                 if( _phc._live->live(b->_succs[k])->member( nidx ) )
                   break;      // Live in to some successor block?
               if( k < b->_num_succs )
@@ -556,7 +559,7 @@ void PhaseAggressiveCoalesce::coalesce( Block *b ) {
   for( i=0; i<b->_num_succs; i++ ) {
     Block *bs = b->_succs[i];
     // Find index of 'b' in 'bs' predecessors
-    uint j=1;
+    uint j=1; 
     while( _phc._cfg._bbs[bs->pred(j)->_idx] != b ) j++;
     // Visit all the Phis in successor block
     for( uint k = 1; k<bs->_nodes.size(); k++ ) {
@@ -565,7 +568,7 @@ void PhaseAggressiveCoalesce::coalesce( Block *b ) {
       combine_these_two( n, n->in(j) );
     }
   } // End of for all successor blocks
-
+  
 
   // Check _this_ block for 2-address instructions and copies.
   uint cnt = b->end_idx();
@@ -616,7 +619,7 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   if (lrgs(lr1)._maxfreq < lrgs(lr2)._maxfreq)
     lrgs(lr1)._maxfreq = lrgs(lr2)._maxfreq;
 
-  // Copy original value instead.  Intermediate copies go dead, and
+  // Copy original value instead.  Intermediate copies go dead, and 
   // the dst_copy becomes useless.
   int didx = dst_copy->is_Copy();
   dst_copy->set_req( didx, src_def );
@@ -626,8 +629,8 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   dst_copy->replace_by( dst_copy->in(didx) );
   dst_copy->set_req( didx, NULL);
   b->_nodes.remove(bindex);
-  if( bindex < b->_ihrp_index ) b->_ihrp_index--;
-  if( bindex < b->_fhrp_index ) b->_fhrp_index--;
+  if( bindex < b->_ihrp_index ) b->_ihrp_index--; 
+  if( bindex < b->_fhrp_index ) b->_fhrp_index--; 
 
   // Stretched lr1; add it to liveness of intermediate blocks
   Block *b2 = _phc._cfg._bbs[src_copy->_idx];
@@ -677,7 +680,7 @@ uint PhaseConservativeCoalesce::compute_separating_interferences(Node *dst_copy,
         rm_size = rm.Size();
         //if( rm._flags ) rm_size += 1000000;
         if( reg_degree >= rm_size ) return max_juint;
-      }
+      } 
       if( rm.overlap(lrgs(lidx).mask()) ) {
         // Insert lidx into union LRG; returns TRUE if actually inserted
         if( _ulr.insert(lidx) ) {
@@ -693,7 +696,7 @@ uint PhaseConservativeCoalesce::compute_separating_interferences(Node *dst_copy,
               return max_juint;
           } // End of if not infinite-stack neighbor
         } // End of if actually inserted
-      } // End of if live range overlaps
+      } // End of if live range overlaps 
     } // End of else collect intereferences for 1 node
   } // End of while forever, scan back for intereferences
   return reg_degree;
@@ -708,11 +711,11 @@ void PhaseConservativeCoalesce::update_ifg(uint lr1, uint lr2, IndexSet *n_lr1, 
   uint neighbor;
   LRG &lrg1 = lrgs(lr1);
   while ((neighbor = one.next()) != 0)
-    if( !_ulr.member(neighbor) )
+    if( !_ulr.member(neighbor) ) 
       if( _phc._ifg->neighbors(neighbor)->remove(lr1) )
         lrgs(neighbor).inc_degree( -lrg1.compute_degree(lrgs(neighbor)) );
 
-
+  
   // lr2 is now called (coalesced into) lr1.
   // Remove lr2 from the IFG.
   IndexSetIterator two(n_lr2);
@@ -720,7 +723,7 @@ void PhaseConservativeCoalesce::update_ifg(uint lr1, uint lr2, IndexSet *n_lr1, 
   while ((neighbor = two.next()) != 0)
     if( _phc._ifg->neighbors(neighbor)->remove(lr2) )
       lrgs(neighbor).inc_degree( -lrg2.compute_degree(lrgs(neighbor)) );
-
+  
   // Some neighbors of intermediate copies now interfere with the
   // combined live range.
   IndexSetIterator three(&_ulr);
@@ -743,13 +746,13 @@ static void record_bias( const PhaseIFG *ifg, int lr1, int lr2 ) {
 // final dest copy and the original src copy.  They can be the same Node.
 // Compute the compatible register masks.
 bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block *b, uint bindex ) {
-
+  
   if( !dst_copy->is_SpillCopy() ) return false;
   if( !src_copy->is_SpillCopy() ) return false;
   Node *src_def = src_copy->in(src_copy->is_Copy());
   uint lr1 = _phc.Find(dst_copy);
   uint lr2 = _phc.Find(src_def );
-
+  
   // Same live ranges already?
   if( lr1 == lr2 ) return false;
 
@@ -757,7 +760,7 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
   if( _phc._ifg->test_edge_sq( lr1, lr2 ) ) return false;
 
   // Not an oop->int cast; oop->oop, int->int, AND int->oop are OK.
-  if( !lrgs(lr1)._is_oop && lrgs(lr2)._is_oop ) // not an oop->int cast
+  if( !lrgs(lr1)._is_oop && lrgs(lr2)._is_oop ) // not an oop->int cast 
     return false;
 
   // Coalescing between an aligned live range and a mis-aligned live range?
@@ -768,12 +771,12 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
   // Sort; use smaller live-range number
   Node *lr1_node = dst_copy;
   Node *lr2_node = src_def;
-  if( lr1 > lr2 ) {
-    uint tmp = lr1; lr1 = lr2; lr2 = tmp;
+  if( lr1 > lr2 ) { 
+    uint tmp = lr1; lr1 = lr2; lr2 = tmp; 
     lr1_node = src_def;  lr2_node = dst_copy;
   }
 
-  // Check for compatibility of the 2 live ranges by
+  // Check for compatibility of the 2 live ranges by 
   // intersecting their allowed register sets.
   RegMask rm = lrgs(lr1).mask();
   rm.AND(lrgs(lr2).mask());
@@ -785,14 +788,14 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
   // Incompatible masks, no way to coalesce
   if( rm_size == 0 ) return false;
 
-  // Another early bail-out test is when we are double-coalescing and the
+  // Another early bail-out test is when we are double-coalescing and the 
   // 2 copies are seperated by some control flow.
   if( dst_copy != src_copy ) {
     Block *src_b = _phc._cfg._bbs[src_copy->_idx];
     Block *b2 = b;
     while( b2 != src_b ) {
       if( b2->num_preds() > 2 ){// Found merge-point
-        _phc._lost_opp_cflow_coalesce++;
+        _phc._lost_opp_cflow_coalesce++; 
         // extra record_bias commented out because Chris believes it is not
         // productive.  Since we can record only 1 bias, we want to choose one
         // that stands a chance of working and this one probably does not.
@@ -811,7 +814,7 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
     return false;
   }
 
-  // Now I need to compute all the interferences between dst_copy and
+  // Now I need to compute all the interferences between dst_copy and 
   // src_copy.  I'm not willing visit the entire interference graph, so
   // I limit my search to things in dst_copy's block or in a straight
   // line of previous blocks.  I give up at merge points or when I get
@@ -822,7 +825,7 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
       record_bias( _phc._ifg, lr1, lr2 );
       return false;
     }
-  } // End of if dst_copy & src_copy are different
+  } // End of if dst_copy & src_copy are different  
 
 
   // ---- THE COMBINED LRG IS COLORABLE ----
@@ -839,7 +842,7 @@ bool PhaseConservativeCoalesce::copy_copy( Node *dst_copy, Node *src_copy, Block
   _ulr.remove(lr1);
 
   // Uncomment the following code to trace Coalescing in great detail.
-  //
+  // 
   //if (false) {
   //  tty->cr();
   //  tty->print_cr("#######################################");
@@ -909,7 +912,8 @@ void PhaseConservativeCoalesce::coalesce( Block *b ) {
       i--;                      // Retry, same location in block
       PhaseChaitin::_conserv_coalesce_pair++; // Collect stats on success
       continue;
-    }
+    } 
     */
   }
 }
+

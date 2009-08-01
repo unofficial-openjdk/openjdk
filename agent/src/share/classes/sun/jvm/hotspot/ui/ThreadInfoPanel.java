@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -38,34 +38,34 @@ public class ThreadInfoPanel extends JPanel {
     private JTextArea textArea;
 
     public ThreadInfoPanel() {
-        initUI();
+	initUI();
     }
 
     private void initUI() {
-        setLayout(new BorderLayout());
+	setLayout(new BorderLayout());
 
-        // Simple at first
-        JScrollPane scroller = new JScrollPane();
-        textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        scroller.getViewport().add(textArea);
-        add(scroller, BorderLayout.CENTER);
+	// Simple at first
+	JScrollPane scroller = new JScrollPane();
+	textArea = new JTextArea();
+	textArea.setEditable(false);
+	textArea.setLineWrap(true);
+	textArea.setWrapStyleWord(true);
+	scroller.getViewport().add(textArea);
+	add(scroller, BorderLayout.CENTER);
     }
 
 
     public ThreadInfoPanel(final JavaThread thread) {
-        initUI();
-        setJavaThread(thread);
+	initUI();
+	setJavaThread(thread);
     }
 
     public void setJavaThread(final JavaThread thread) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        PrintStream tty = new PrintStream(bos);
-        tty.println("Thread Info: " + thread.getThreadName());
-        thread.printInfoOn(tty);
+	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	PrintStream tty = new PrintStream(bos);
+	tty.println("Thread Info: " + thread.getThreadName());	
+	thread.printInfoOn(tty);
 
-        textArea.setText(bos.toString());
+	textArea.setText(bos.toString());
     }
 }

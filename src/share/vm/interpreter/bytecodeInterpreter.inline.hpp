@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)bytecodeInterpreter.inline.hpp	1.10 07/08/29 13:42:24 JVM"
+#endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file holds platform-independant bodies of inline functions for the C++ based interpreter
@@ -29,12 +32,12 @@
 #ifdef ASSERT
 extern "C" { typedef void (*verify_oop_fn_t)(oop, const char *);};
 #define VERIFY_OOP(o) \
-        /*{ verify_oop_fn_t verify_oop_entry = \
+	/*{ verify_oop_fn_t verify_oop_entry = \
             *StubRoutines::verify_oop_subroutine_entry_address(); \
           if (verify_oop_entry) { \
-             (*verify_oop_entry)((o), "Not an oop!"); \
-          } \
-        }*/
+	     (*verify_oop_entry)((o), "Not an oop!"); \
+	  } \
+	}*/
 #else
 #define VERIFY_OOP(o)
 #endif

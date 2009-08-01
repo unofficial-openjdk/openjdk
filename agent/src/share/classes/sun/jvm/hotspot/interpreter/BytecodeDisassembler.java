@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -97,7 +97,7 @@ public class BytecodeDisassembler {
       addBytecodeClass(Bytecodes._astore, BytecodeStore.class);
       addBytecodeClass(Bytecodes._tableswitch, BytecodeTableswitch.class);
 
-      // only special fast_xxx cases. others are handled differently.
+      // only special fast_xxx cases. others are handled differently. 
       addBytecodeClass(Bytecodes._fast_iaccess_0, BytecodeFastAAccess0.class);
       addBytecodeClass(Bytecodes._fast_aaccess_0, BytecodeFastIAccess0.class);
    }
@@ -129,7 +129,7 @@ public class BytecodeDisassembler {
             }
          }
 
-         // All bytecode classes must have a constructor with signature
+         // All bytecode classes must have a constructor with signature 
          // (Lsun/jvm/hotspot/oops/Method;I)V
 
          Constructor cstr = null;
@@ -146,7 +146,7 @@ public class BytecodeDisassembler {
             bytecodeObj = cstr.newInstance(new Object[] { method, new Integer(bci) });
          } catch (Exception exp) {
             if (Assert.ASSERTS_ENABLED) {
-               Assert.that(false, "Bytecode instance of class "
+               Assert.that(false, "Bytecode instance of class " 
                            + clazz.getName() + " can not be created!");
             }
          }

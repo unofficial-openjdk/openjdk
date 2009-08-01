@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.remote;
@@ -44,7 +44,7 @@ public class RemoteDebuggerClient extends DebuggerBase implements JVMDebugger {
   private RemoteThreadFactory threadFactory;
   private boolean unalignedAccessesOkay = false;
   private static final int cacheSize = 16 * 1024 * 1024; // 16 MB
-
+  
   public RemoteDebuggerClient(RemoteDebugger remoteDebugger) throws DebuggerException {
     super();
     try {
@@ -65,8 +65,8 @@ public class RemoteDebuggerClient extends DebuggerBase implements JVMDebugger {
         cacheNumPages = parseCacheNumPagesProperty(cacheSize / cachePageSize);
         unalignedAccessesOkay = true;
       } else if (cpu.equals("amd64")) {
-        threadFactory = new RemoteAMD64ThreadFactory(this);
-        cachePageSize = 4096;
+	threadFactory = new RemoteAMD64ThreadFactory(this);
+	cachePageSize = 4096;
         cacheNumPages = parseCacheNumPagesProperty(cacheSize / cachePageSize);
         unalignedAccessesOkay = true;
       } else {
@@ -276,7 +276,7 @@ public class RemoteDebuggerClient extends DebuggerBase implements JVMDebugger {
   public void setMachineDescription(MachineDescription machDesc) {
     throw new DebuggerException("Should not be called on RemoteDebuggerClient");
   }
-
+  
   public int getRemoteProcessAddressSize() {
     throw new DebuggerException("Should not be called on RemoteDebuggerClient");
   }

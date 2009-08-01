@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger;
@@ -255,7 +255,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jbyteSize);
       return utils.dataToJByte(data, jbyteSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -269,7 +269,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jcharSize);
       return (char) utils.dataToJChar(data, jcharSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -283,7 +283,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jdoubleSize);
       return utils.dataToJDouble(data, jdoubleSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -297,7 +297,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jfloatSize);
       return utils.dataToJFloat(data, jfloatSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -311,7 +311,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jintSize);
       return utils.dataToJInt(data, jintSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -325,7 +325,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jlongSize);
       return utils.dataToJLong(data, jlongSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -339,7 +339,7 @@ public abstract class DebuggerBase implements Debugger {
       byte[] data = readBytes(address, jshortSize);
       return utils.dataToJShort(data, jshortSize);
     }
-  }
+  }  
 
   // NOTE: assumes value does not span pages (may be bad assumption on
   // Solaris/x86; see unalignedAccessesOkay in DbxDebugger hierarchy)
@@ -431,7 +431,7 @@ public abstract class DebuggerBase implements Debugger {
     utils.checkAlignment(address, jlongSize);
     byte[] data = utils.jlongToData(value);
     writeBytes(address, jlongSize, data);
-  }
+  }  
 
   public void writeJShort(long address, short value)
     throws UnmappedAddressException, UnalignedAddressException {
@@ -439,7 +439,7 @@ public abstract class DebuggerBase implements Debugger {
     utils.checkAlignment(address, jshortSize);
     byte[] data = utils.jshortToData(value);
     writeBytes(address, jshortSize, data);
-  }
+  }  
 
   public void writeCInteger(long address, long numBytes, long value)
     throws UnmappedAddressException, UnalignedAddressException {

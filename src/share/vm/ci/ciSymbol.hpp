@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)ciSymbol.hpp	1.16 07/09/28 10:23:21 JVM"
+#endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciSymbol
@@ -41,7 +44,7 @@ private:
   symbolOop get_symbolOop() { return (symbolOop)get_oop(); }
 
   const char* type_string() { return "ciSymbol"; }
-
+  
   void print_impl(outputStream* st);
 
   int         byte_at(int i);

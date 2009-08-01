@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -45,7 +45,7 @@ public class PlaceholderTable extends TwoOopHashtable {
     ObjectHeap heap = VM.getVM().getObjectHeap();
     int tblSize = tableSize();
     for (int index = 0; index < tblSize; index++) {
-      for (PlaceholderEntry probe = (PlaceholderEntry) bucket(index); probe != null;
+      for (PlaceholderEntry probe = (PlaceholderEntry) bucket(index); probe != null; 
                                           probe = (PlaceholderEntry) probe.next()) {
         Symbol sym = probe.klass();
         // array of primitive arrays are stored in system dictionary as placeholders

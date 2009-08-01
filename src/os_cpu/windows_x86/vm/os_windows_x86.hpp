@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)os_windows_x86.hpp	1.21 07/09/17 09:10:45 JVM"
+#endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-  //
+  // 
   // NOTE: we are back in class os here, not win32
   //
 #ifdef AMD64
@@ -59,5 +62,6 @@
 
   static void setup_fpu();
   static bool supports_sse() { return true; }
-
+  
   static bool      register_code_area(char *low, char *high);
+

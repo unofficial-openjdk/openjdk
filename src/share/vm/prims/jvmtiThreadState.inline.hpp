@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jvmtiThreadState.inline.hpp	1.7 07/05/05 17:06:40 JVM"
+#endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // JvmtiEnvThreadStateIterator implementation
 
 inline JvmtiEnvThreadStateIterator::JvmtiEnvThreadStateIterator(JvmtiThreadState* thread_state) {
   state = thread_state;
-  Thread::current()->entering_jvmti_env_iteration();
+  Thread::current()->entering_jvmti_env_iteration(); 
 }
 
 inline JvmtiEnvThreadStateIterator::~JvmtiEnvThreadStateIterator() {
@@ -40,23 +43,24 @@ inline JvmtiEnvThreadState* JvmtiEnvThreadStateIterator::first() {
 inline JvmtiEnvThreadState* JvmtiEnvThreadStateIterator::next(JvmtiEnvThreadState* ets) {
   return ets->next();
 }
-
+  
 // JvmtiThreadState implementation
 
 JvmtiEnvThreadState* JvmtiThreadState::env_thread_state(JvmtiEnvBase *env) {
-  JvmtiEnvThreadStateIterator it(this);
+  JvmtiEnvThreadStateIterator it(this); 
   for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
     if ((JvmtiEnvBase*)(ets->get_env()) == env) {
-      return ets;
+      return ets; 
     }
   }
   return NULL;
 }
 
-JvmtiEnvThreadState* JvmtiThreadState::head_env_thread_state() {
-  return _head_env_thread_state;
+JvmtiEnvThreadState* JvmtiThreadState::head_env_thread_state() { 
+  return _head_env_thread_state; 
 }
 
 void JvmtiThreadState::set_head_env_thread_state(JvmtiEnvThreadState* ets) {
-  _head_env_thread_state = ets;
+  _head_env_thread_state = ets; 
 }
+

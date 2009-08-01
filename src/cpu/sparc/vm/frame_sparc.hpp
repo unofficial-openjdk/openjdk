@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)frame_sparc.hpp	1.74 07/08/29 13:42:17 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A frame represents a physical stack frame (an activation).  Frames can be
 // C or Java frames, and the Java frames can be interpreted or compiled.
-// In contrast, vframes represent source-level activations, so that one physical frame
+// In contrast, vframes represent source-level activations, so that one physical frame 
 // can correspond to multiple source level frames because of inlining.
 // A frame is comprised of {pc, sp, younger_sp}
 
@@ -36,7 +39,7 @@
 // [last  extra incoming arg,  (local # Nargs > 6 ? Nargs-1 : undef)]
 // .. Note: incoming args are copied to local frame area upon entry
 // [first extra incoming arg,  (local # Nargs > 6 ? 6       : undef)]
-// [6 words for C-arg storage (unused)] Are this and next one really needed?
+// [6 words for C-arg storage (unused)] Are this and next one really needed? 
 // [C-aggregate-word (unused)] Yes, if want extra params to be  in same place as C convention
 // [16 words for register saving]                                    <--- FP
 // [interpreter_frame_vm_locals ] (see below)
@@ -47,7 +50,7 @@
 // [last local, i.e. local # Nlocals-1]
 
 // [monitors                 ]
-// ....
+// ....                       
 // [monitors                 ]    <-- Lmonitors (same as Llocals + 6*4 if none)
 //                                    (must be double-word aligned because
 //                                     monitor element size is constrained to
@@ -79,7 +82,7 @@
 //                 (lower-numbered locals have lower addresses)
 //    Lmonitors    the base pointer for accessing active monitors
 //    Lcache       a saved pointer to the method's constant pool cache
-//
+//    
 //
 // When calling out to another method,
 // G5_method is set to method to call, G5_inline_cache_klass may be set,
@@ -91,7 +94,7 @@
 
 
 
-// All frames:
+// All frames: 
 
  public:
 
@@ -121,7 +124,7 @@
  private:
   intptr_t*  _younger_sp;                 // optional SP of callee (used to locate O7)
   int        _sp_adjustment_by_callee;   // adjustment in words to SP by callee for making locals contiguous
-
+   
   // Note:  On SPARC, unlike Intel, the saved PC for a stack frame
   // is stored at a __variable__ distance from that frame's SP.
   // (In fact, it may be in the register save area of the callee frame,
@@ -226,8 +229,8 @@
 #ifndef CC_INTERP
   enum interpreter_frame_vm_locals {
        // 2 words, also used to save float regs across  calls to C
-       interpreter_frame_d_scratch_fp_offset          = -2,
-       interpreter_frame_l_scratch_fp_offset          = -4,
+       interpreter_frame_d_scratch_fp_offset          = -2, 
+       interpreter_frame_l_scratch_fp_offset          = -4, 
        interpreter_frame_padding_offset               = -5, // for native calls only
        interpreter_frame_oop_temp_offset              = -6, // for native calls only
        interpreter_frame_vm_locals_fp_offset          = -6, // should be same as above, and should be zero mod 8
@@ -256,7 +259,7 @@
   // the compiler frame has many of the same fields as the interpreter frame
   // %%%%% factor out declarations of the shared fields
   enum compiler_frame_fixed_locals {
-       compiler_frame_d_scratch_fp_offset          = -2,
+       compiler_frame_d_scratch_fp_offset          = -2, 
        compiler_frame_vm_locals_fp_offset          = -2, // should be same as above
 
        compiler_frame_vm_local_words = -compiler_frame_vm_locals_fp_offset
@@ -269,21 +272,21 @@
 #ifndef CC_INTERP
 
   // where Lmonitors is saved:
-  BasicObjectLock**  interpreter_frame_monitors_addr() const {
+  BasicObjectLock**  interpreter_frame_monitors_addr() const { 
     return (BasicObjectLock**) sp_addr_at(Lmonitors->sp_offset_in_saved_window());
   }
-  intptr_t** interpreter_frame_esp_addr() const {
+  intptr_t** interpreter_frame_esp_addr() const { 
     return (intptr_t**)sp_addr_at(Lesp->sp_offset_in_saved_window());
   }
 
   inline void interpreter_frame_set_tos_address(intptr_t* x);
 
 
-  // %%%%% Another idea: instead of defining 3 fns per item, just define one returning a ref
+  // %%%%% Another idea: instead of defining 3 fns per item, just define one returning a ref 
 
   // monitors:
 
-  // next two fns read and write Lmonitors value,
+  // next two fns read and write Lmonitors value, 
  private:
   BasicObjectLock* interpreter_frame_monitors()           const  { return *interpreter_frame_monitors_addr(); }
   void interpreter_frame_set_monitors(BasicObjectLock* monitors) {        *interpreter_frame_monitors_addr() = monitors; }

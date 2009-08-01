@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_Instruction.hpp	1.196 07/06/18 14:25:24 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Predefined classes
@@ -280,13 +283,13 @@ class Instruction: public CompilationResourceObj {
 
 #ifdef ASSERT
   HiWord*      _hi_word;
-#endif
+#endif  
 
   friend class UseCountComputer;
 
  protected:
   void set_bci(int bci)                          { assert(bci == SynchronizationEntryBCI || bci >= 0, "illegal bci"); _bci = bci; }
-  void set_type(ValueType* type) {
+  void set_type(ValueType* type) { 
     assert(type != NULL, "type must exist");
     _type = type;
   }
@@ -570,7 +573,7 @@ LEAF(Phi, Instruction)
   int         _index;    // to value on operand stack (index < 0) or to local
  public:
   // creation
-  Phi(ValueType* type, BlockBegin* b, int index)
+  Phi(ValueType* type, BlockBegin* b, int index) 
   : Instruction(type->base())
   , _pf_flags(0)
   , _block(b)
@@ -1487,7 +1490,7 @@ LEAF(BlockBegin, StateSplit)
                                                  // first instruction in this block
   Label      _label;                             // the label associated with this block
   LIR_List*  _lir;                               // the low level intermediate representation for this block
-
+ 
   BitMap      _live_in;                          // set of live LIR_Opr registers at entry to this block
   BitMap      _live_out;                         // set of live LIR_Opr registers at exit from this block
   BitMap      _live_gen;                         // set of registers used before any redefinition in this block
@@ -1593,11 +1596,11 @@ LEAF(BlockBegin, StateSplit)
   BlockBegin* sux_at(int i) const;
   void add_successor(BlockBegin* sux);
   void remove_successor(BlockBegin* pred);
-  bool is_successor(BlockBegin* sux) const       { return _successors.contains(sux); }
+  bool is_successor(BlockBegin* sux) const       { return _successors.contains(sux); }    
 
   void add_predecessor(BlockBegin* pred);
   void remove_predecessor(BlockBegin* pred);
-  bool is_predecessor(BlockBegin* pred) const    { return _predecessors.contains(pred); }
+  bool is_predecessor(BlockBegin* pred) const    { return _predecessors.contains(pred); }    
   int number_of_preds() const                    { return _predecessors.length(); }
   BlockBegin* pred_at(int i) const               { return _predecessors[i]; }
 
@@ -1607,7 +1610,7 @@ LEAF(BlockBegin, StateSplit)
   int  number_of_exception_handlers() const      { return _exception_handlers.length(); }
   BlockBegin* exception_handler_at(int i) const  { return _exception_handlers.at(i); }
 
-  // states of the instructions that have an edge to this exception handler
+  // states of the instructions that have an edge to this exception handler 
   int number_of_exception_states()               { assert(is_set(exception_entry_flag), "only for xhandlers"); return _exception_states == NULL ? 0 : _exception_states->length(); }
   ValueStack* exception_state_at(int idx) const  { assert(is_set(exception_entry_flag), "only for xhandlers"); return _exception_states->at(idx); }
   int add_exception_state(ValueStack* state);
@@ -1687,7 +1690,7 @@ BASE(BlockEnd, StateSplit)
   // accessors
   ValueStack* state_before() const               { return _state_before; }
   bool is_safepoint() const                      { return check_flag(IsSafepointFlag); }
-  BlockBegin* begin() const                      { return _begin; }
+  BlockBegin* begin() const                      { return _begin; } 
 
   // manipulation
   void set_begin(BlockBegin* begin);
@@ -1974,7 +1977,7 @@ LEAF(OsrEntry, Instruction)
 LEAF(ExceptionObject, Instruction)
  public:
   // creation
-  ExceptionObject() : Instruction(objectType, false) {
+  ExceptionObject() : Instruction(objectType, false) { 
     pin();
   }
 
@@ -2267,8 +2270,8 @@ LEAF(ProfileCounter, Instruction)
 
 class BlockPair: public CompilationResourceObj {
  private:
-  BlockBegin* _from;
-  BlockBegin* _to;
+  BlockBegin* _from; 
+  BlockBegin* _to;   
  public:
   BlockPair(BlockBegin* from, BlockBegin* to): _from(from), _to(to) {}
   BlockBegin* from() const { return _from; }

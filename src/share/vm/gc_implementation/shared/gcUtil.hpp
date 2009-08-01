@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)gcUtil.hpp	1.19 07/05/05 17:05:32 JVM"
+#endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Catch-all file for utility classes
@@ -28,14 +31,14 @@
 // of some float value (templates would be handy here if we
 // need different types).
 //
-// The average is adaptive in that we smooth it for the
+// The average is adaptive in that we smooth it for the 
 // initial samples; we don't use the weight until we have
 // enough samples for it to be meaningful.
 //
 // This serves as our best estimate of a future unknown.
 //
 class AdaptiveWeightedAverage : public CHeapObj {
- private:
+ private: 
   float            _average;        // The last computed average
   unsigned         _sample_count;   // How often we've sampled this average
   unsigned         _weight;         // The weight used to smooth the averages
@@ -43,18 +46,18 @@ class AdaptiveWeightedAverage : public CHeapObj {
                                     //   recent data.
 
  protected:
-  float            _last_sample;    // The last value sampled.
+  float		   _last_sample;    // The last value sampled.
 
   void  increment_count()       { _sample_count++;       }
   void  set_average(float avg)  { _average = avg;        }
 
-  // Helper function, computes an adaptive weighted average
+  // Helper function, computes an adaptive weighted average 
   // given a sample and the last average
   float compute_adaptive_average(float new_sample, float average);
 
  public:
   // Input weight must be between 0 and 100
-  AdaptiveWeightedAverage(unsigned weight) :
+  AdaptiveWeightedAverage(unsigned weight) : 
     _average(0.0), _sample_count(0), _weight(weight), _last_sample(0.0) {
   }
 
@@ -68,7 +71,7 @@ class AdaptiveWeightedAverage : public CHeapObj {
   float    average() const       { return _average;       }
   unsigned weight()  const       { return _weight;        }
   unsigned count()   const       { return _sample_count;  }
-  float    last_sample() const   { return _last_sample; }
+  float    last_sample() const	 { return _last_sample; }
 
   // Update data with a new sample.
   void sample(float new_sample);
@@ -93,7 +96,7 @@ class AdaptiveWeightedAverage : public CHeapObj {
 // unknown.
 class AdaptivePaddedAverage : public AdaptiveWeightedAverage {
  private:
-  float          _padded_avg;     // The last computed padded average
+  float          _padded_avg;     // The last computed padded average 
   float          _deviation;      // Running deviation from the average
   unsigned       _padding;        // A multiple which, added to the average,
                                   // gives us an upper bound guess.
@@ -108,14 +111,14 @@ class AdaptivePaddedAverage : public AdaptiveWeightedAverage {
     _padded_avg(0.0), _deviation(0.0), _padding(0) {}
 
   AdaptivePaddedAverage(unsigned weight, unsigned padding) :
-    AdaptiveWeightedAverage(weight),
+    AdaptiveWeightedAverage(weight), 
     _padded_avg(0.0), _deviation(0.0), _padding(padding) {}
 
   // Placement support
   void* operator new(size_t ignored, void* p) { return p; }
   // Allocator
   void* operator new(size_t size) { return CHeapObj::operator new(size); }
-
+  
   // Accessor
   float padded_average() const         { return _padded_avg; }
   float deviation()      const         { return _deviation;  }
@@ -152,17 +155,17 @@ public:
 //              y = intercept + slope * x
 
 class LinearLeastSquareFit : public CHeapObj {
-  double _sum_x;        // sum of all independent data points x
+  double _sum_x;  	// sum of all independent data points x
   double _sum_x_squared; // sum of all independent data points x**2
-  double _sum_y;        // sum of all dependent data points y
-  double _sum_xy;       // sum of all x * y.
+  double _sum_y;  	// sum of all dependent data points y
+  double _sum_xy; 	// sum of all x * y.
   double _intercept;     // constant term
-  double _slope;        // slope
+  double _slope;     	// slope
   // The weighted averages are not currently used but perhaps should
   // be used to get decaying averages.
   AdaptiveWeightedAverage _mean_x; // weighted mean of independent variable
   AdaptiveWeightedAverage _mean_y; // weighted mean of dependent variable
-
+  
  public:
   LinearLeastSquareFit(unsigned weight);
   void update(double x, double y);
@@ -186,3 +189,4 @@ class GCPauseTimer : StackObj {
     _timer->start();
   }
 };
+

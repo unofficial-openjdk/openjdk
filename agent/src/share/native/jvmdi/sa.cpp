@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)sa.cpp	1.12 07/06/21 15:54:22 JVM"
+#endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <stdio.h>
@@ -57,11 +60,11 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////
 
 extern "C" {
-  /////////////////////////////////////
+  /////////////////////////////////////  
   //                                 //
   // Events sent by the VM to the SA //
   //                                 //
-  /////////////////////////////////////
+  /////////////////////////////////////  
 
   // Set by the SA when it attaches. Indicates that events should be
   // posted via these exported variables, and that the VM should wait
@@ -75,7 +78,7 @@ extern "C" {
 
   // Kind of the event (from jvmdi.h)
   JNIEXPORT volatile int32_t saEventKind    = 0;
-
+  
   //
   // Exception events
   //
@@ -96,11 +99,11 @@ extern "C" {
   JNIEXPORT jmethodID saBreakpointMethod;
   JNIEXPORT jlocation saBreakpointLocation;
 
-  ///////////////////////////////////////
+  ///////////////////////////////////////  
   //                                   //
   // Commands sent by the SA to the VM //
   //                                   //
-  ///////////////////////////////////////
+  ///////////////////////////////////////  
 
   extern JNIEXPORT const int32_t SA_CMD_SUSPEND_ALL       = 0;
   extern JNIEXPORT const int32_t SA_CMD_RESUME_ALL        = 1;
@@ -166,7 +169,7 @@ extern "C" {
   // Output back to SA: method name the breakpoint was set in (valid
   // only if saCmdResult == 0)
   JNIEXPORT char    saCmdBkptResMethodName[SA_CMD_BUF_SIZE];
-
+  
   // Output back to SA: method signature (JNI style) the breakpoint
   // was set in (valid only if saCmdResult == 0)
   JNIEXPORT char    saCmdBkptResMethodSig[SA_CMD_BUF_SIZE];
@@ -306,8 +309,8 @@ executeOneCommand(JNIEnv* env) {
       reportErrorToSA("Error while getting thread list");
       return;
     }
-
-
+      
+    
     for (int i = 0; i < threadCount; i++) {
       jthread thr = threads[i];
       if (!env->IsSameObject(thr, debugThreadObj)) {
@@ -326,12 +329,12 @@ executeOneCommand(JNIEnv* env) {
 
     // Free up threads
     jvmdi->Deallocate((jbyte*) threads);
-
+      
     // Suspension is complete
     suspended = true;
     break;
   }
-
+        
   case SA_CMD_RESUME_ALL: {
     if (!suspended) {
       reportErrorToSA("Target process already suspended");
@@ -586,7 +589,7 @@ saEventHook(JNIEnv *env, JVMDI_Event *event)
 }
 
 extern "C" {
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 JVM_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
   jvm = vm;

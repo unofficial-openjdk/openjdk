@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)parse.hpp	1.274 07/09/28 10:23:03 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BytecodeParseHistogram;
@@ -38,7 +41,7 @@ class InlineTree : public ResourceObj {
   // Call-site count / interpreter invocation count, scaled recursively.
   // Always between 0.0 and 1.0.  Represents the percentage of the method's
   // total execution time used at this call site.
-  const float _site_invoke_ratio;
+  const float _site_invoke_ratio; 
   float compute_callee_frequency( int caller_bci ) const;
 
   GrowableArray<InlineTree*> _subtrees;
@@ -72,9 +75,9 @@ public:
 
   // InlineTree enum
   enum InlineStyle {
-    Inline_do_not_inline             =   0, //
-    Inline_cha_is_monomorphic        =   1, //
-    Inline_type_profile_monomorphic  =   2  //
+    Inline_do_not_inline             =   0, // 
+    Inline_cha_is_monomorphic        =   1, // 
+    Inline_type_profile_monomorphic  =   2  // 
   };
 
   // See if it is OK to inline.
@@ -151,7 +154,7 @@ class Parse : public GraphKit {
     SafePointNode* start_map() const       { assert(is_merged(),"");   return _start_map; }
     void set_start_map(SafePointNode* m)   { assert(!is_merged(), ""); _start_map = m; }
 
-    // True after any predecessor flows control into this block
+    // True after any predecessor flows control into this block 
     bool is_merged() const                 { return _start_map != NULL; }
 
     // True when all non-exception predecessors have been parsed.
@@ -436,9 +439,9 @@ class Parse : public GraphKit {
   bool can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass *klass);
 
   // Helper function to identify inlining potential at call-site
-  ciMethod* optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass,
+  ciMethod* optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass, 
                               ciMethod *dest_method, const TypeOopPtr* receiver_type);
-
+    
   // Helper function to setup for type-profile based inlining
   bool prepare_type_profile_inline(ciInstanceKlass* prof_klass, ciMethod* prof_method);
 
@@ -506,10 +509,10 @@ class Parse : public GraphKit {
   // helper functions for methodData style profiling
   void test_counter_against_threshold(Node* cnt, int limit);
   void increment_and_test_invocation_counter(int limit);
-  void test_for_osr_md_counter_at(ciMethodData* md, ciProfileData* data, ByteSize offset, int limit);
-  Node* method_data_addressing(ciMethodData* md, ciProfileData* data, ByteSize offset, Node* idx = NULL, uint stride = 0);
-  void increment_md_counter_at(ciMethodData* md, ciProfileData* data, ByteSize offset, Node* idx = NULL, uint stride = 0);
-  void set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_constant);
+  void test_for_osr_md_counter_at(ciMethodData* md, ciProfileData* data, ByteSize offset, int limit); 
+  Node* method_data_addressing(ciMethodData* md, ciProfileData* data, ByteSize offset, Node* idx = NULL, uint stride = 0); 
+  void increment_md_counter_at(ciMethodData* md, ciProfileData* data, ByteSize offset, Node* idx = NULL, uint stride = 0); 
+  void set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_constant); 
 
   void profile_method_entry();
   void profile_taken_branch(int target_bci, bool force_update = false);
@@ -539,7 +542,7 @@ class Parse : public GraphKit {
   // The call is either a Java call or the VM's rethrow stub
   void catch_call_exceptions(ciExceptionHandlerStream&);
 
-  // Handle all exceptions thrown by the inlined method.
+  // Handle all exceptions thrown by the inlined method.  
   // Also handles exceptions for individual bytecodes.
   void catch_inline_exceptions(SafePointNode* ex_map);
 
@@ -560,3 +563,4 @@ class Parse : public GraphKit {
   void dump_bci(int bci);
 #endif
 };
+

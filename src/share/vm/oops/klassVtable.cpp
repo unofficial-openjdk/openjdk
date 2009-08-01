@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)klassVtable.cpp	1.146 07/07/19 12:19:09 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -35,20 +38,20 @@ inline instanceKlass* klassVtable::ik() const {
 // this function computes the vtable size (including the size needed for miranda
 // methods) and the number of miranda methods in this class
 // Note on Miranda methods: Let's say there is a class C that implements
-// interface I.  Let's say there is a method m in I that neither C nor any
+// interface I.  Let's say there is a method m in I that neither C nor any 
 // of its super classes implement (i.e there is no method of any access, with
 // the same name and signature as m), then m is a Miranda method which is
 // entered as a public abstract method in C's vtable.  From then on it should
 // treated as any other public method in C for method over-ride purposes.
 void klassVtable::compute_vtable_size_and_num_mirandas(int &vtable_length,
-                                                       int &num_miranda_methods,
-                                                       klassOop super,
-                                                       objArrayOop methods,
-                                                       AccessFlags class_flags,
-                                                       oop classloader,
-                                                       symbolOop classname,
-                                                       objArrayOop local_interfaces
-                                                       ) {
+						       int &num_miranda_methods,
+						       klassOop super,
+						       objArrayOop methods, 
+						       AccessFlags class_flags, 
+						       oop classloader,
+						       symbolOop classname,
+						       objArrayOop local_interfaces
+						       ) {
 
   No_Safepoint_Verifier nsv;
 
@@ -59,34 +62,34 @@ void klassVtable::compute_vtable_size_and_num_mirandas(int &vtable_length,
   // start off with super's vtable length
   instanceKlass* sk = (instanceKlass*)super->klass_part();
   vtable_length = super == NULL ? 0 : sk->vtable_length();
-
+  
   // go thru each method in the methods table to see if it needs a new entry
   int len = methods->length();
   for (int i = 0; i < len; i++) {
     assert(methods->obj_at(i)->is_method(), "must be a methodOop");
     methodOop m = methodOop(methods->obj_at(i));
-
+    
     if (needs_new_vtable_entry(m, super, classloader, classname, class_flags)) {
-      vtable_length += vtableEntry::size(); // we need a new entry
+      vtable_length += vtableEntry::size(); // we need a new entry      
     }
   }
-
+  
   // compute the number of mirandas methods that must be added to the end
   num_miranda_methods = get_num_mirandas(super, methods, local_interfaces);
   vtable_length += (num_miranda_methods * vtableEntry::size());
-
+  
   if (Universe::is_bootstrapping() && vtable_length == 0) {
-    // array classes don't have their superclass set correctly during
+    // array classes don't have their superclass set correctly during 
     // bootstrapping
     vtable_length = Universe::base_vtable_size();
   }
 
-  if (super == NULL && !Universe::is_bootstrapping() &&
+  if (super == NULL && !Universe::is_bootstrapping() && 
       vtable_length != Universe::base_vtable_size()) {
     // Someone is attempting to redefine java.lang.Object incorrectly.  The
     // only way this should happen is from
     // SystemDictionary::resolve_from_stream(), which will detect this later
-    // and throw a security exception.  So don't assert here to let
+    // and throw a security exception.  So don't assert here to let 
     // the exception occur.
     vtable_length = Universe::base_vtable_size();
   }
@@ -116,7 +119,7 @@ int klassVtable::initialize_from_super(KlassHandle super) {
 #endif
     superVtable->copy_vtable_to(table());
 #ifndef PRODUCT
-    if (PrintVtables && Verbose) {
+    if (PrintVtables && Verbose) {  
       tty->print_cr("copy vtable from %s to %s size %d", sk->internal_name(), klass()->internal_name(), _length);
     }
 #endif
@@ -125,17 +128,17 @@ int klassVtable::initialize_from_super(KlassHandle super) {
 }
 
 // Revised lookup semantics   introduced 1.3 (Kestral beta)
-void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
-
+void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {  
+      
   // Note:  Arrays can have intermediate array supers.  Use java_super to skip them.
   KlassHandle super (THREAD, klass()->java_super());
   int nofNewEntries = 0;
-
+ 
 
   if (PrintVtables && !klass()->oop_is_array()) {
-    ResourceMark rm(THREAD);
-    tty->print_cr("Initializing: %s", _klass->name()->as_C_string());
-  }
+    ResourceMark rm(THREAD);      
+    tty->print_cr("Initializing: %s", _klass->name()->as_C_string());    
+  }  
 
 #ifdef ASSERT
   oop* end_of_obj = (oop*)_klass() + _klass()->size();
@@ -143,7 +146,7 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
   assert(end_of_vtable <= end_of_obj, "vtable extends beyond end");
 #endif
 
-  if (Universe::is_bootstrapping()) {
+  if (Universe::is_bootstrapping()) {    
     // just clear everything
     for (int i = 0; i < _length; i++) table()[i].clear();
     return;
@@ -154,33 +157,33 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
     assert(super_vtable_len == _length, "arrays shouldn't introduce new methods");
   } else {
     assert(_klass->oop_is_instance(), "must be instanceKlass");
-
-    objArrayHandle methods(THREAD, ik()->methods());
+    
+    objArrayHandle methods(THREAD, ik()->methods());    
     int len = methods()->length();
-    int initialized = super_vtable_len;
+    int initialized = super_vtable_len;    
 
     // update_super_vtable can stop for gc - ensure using handles
     for (int i = 0; i < len; i++) {
       HandleMark hm(THREAD);
-      assert(methods()->obj_at(i)->is_method(), "must be a methodOop");
+      assert(methods()->obj_at(i)->is_method(), "must be a methodOop");    
       methodHandle mh(THREAD, (methodOop)methods()->obj_at(i));
 
       bool needs_new_entry = update_super_vtable(ik(), mh, super_vtable_len, checkconstraints, CHECK);
 
       if (needs_new_entry) {
         put_method_at(mh(), initialized);
-        mh()->set_vtable_index(initialized); // set primary vtable index
-        initialized++;
-      }
+	mh()->set_vtable_index(initialized); // set primary vtable index
+	initialized++;        
+      } 
     }
 
     // add miranda methods; it will also update the value of initialized
     fill_in_mirandas(initialized);
-
-    // In class hierachieswhere the accesibility is not increasing (i.e., going from private ->
+  
+    // In class hierachieswhere the accesibility is not increasing (i.e., going from private -> 
     // package_private -> publicprotected), the vtable might actually be smaller than our initial
-    // calculation.
-    assert(initialized <= _length, "vtable initialization failed");
+    // calculation. 
+    assert(initialized <= _length, "vtable initialization failed");    
     for(;initialized < _length; initialized++) {
       put_method_at(NULL, initialized);
     }
@@ -194,18 +197,18 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
 klassVtable::AccessType klassVtable::vtable_accessibility_at(int i) {
   // This vtable is not implementing the specific method
   if (i >= length()) return acc_private;
-
+      
   // Compute AccessType for current method. public or protected we are done.
   methodOop m = method_at(i);
   if (m->is_protected() || m->is_public()) return acc_publicprotected;
-
+  
   AccessType acc = m->is_package_private() ? acc_package_private : acc_private;
 
   // Compute AccessType for method in super classes
-  klassOop super = klass()->super();
+  klassOop super = klass()->super();  
   AccessType super_acc = (super != NULL) ? instanceKlass::cast(klass()->super())->vtable()->vtable_accessibility_at(i)
                                          : acc_private;
-
+  
   // Merge
   return (AccessType)MAX2((int)acc, (int)super_acc);
 }
@@ -215,7 +218,7 @@ klassVtable::AccessType klassVtable::vtable_accessibility_at(int i) {
 // OR return true if a new vtable entry is required
 // Only called for instanceKlass's, i.e. not for arrays
 // If that changed, could not use _klass as handle for klass
-bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_method, int super_vtable_len, bool checkconstraints, TRAPS) {
+bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_method, int super_vtable_len, bool checkconstraints, TRAPS) {    
   ResourceMark rm;
   bool allocate_new = true;
   assert(klass->oop_is_instance(), "must be instanceKlass");
@@ -224,7 +227,7 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
   // If we allocate a vtable entry, we will update it to a non-negative number.
   target_method()->set_vtable_index(methodOopDesc::nonvirtual_vtable_index);
 
-  // Static and <init> methods are never in
+  // Static and <init> methods are never in 
   if (target_method()->is_static() || target_method()->name() ==  vmSymbols::object_initializer_name()) {
     return false;
   }
@@ -232,9 +235,9 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
   if (klass->is_final() || target_method()->is_final()) {
     // a final method never needs a new entry; final methods can be statically
     // resolved and they have to be present in the vtable only if they override
-    // a super's method, in which case they re-use its entry
+    // a super's method, in which case they re-use its entry          
     allocate_new = false;
-  }
+  }      
 
   // we need a new entry if there is no superclass
   if (klass->super() == NULL) {
@@ -245,25 +248,25 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
   if (target_method()->is_private()) {
     return allocate_new;
   }
-
+  
   // search through the vtable and update overridden entries
   // Since check_signature_loaders acquires SystemDictionary_lock
   // which can block for gc, once we are in this loop, use handles, not
   // unhandled oops unless they are reinitialized for each loop
   // handles for name, signature, klass, target_method
   // not for match_method, holder
-
+  
   symbolHandle name(THREAD,target_method()->name());
-  symbolHandle signature(THREAD,target_method()->signature());
+  symbolHandle signature(THREAD,target_method()->signature());    
   for(int i = 0; i < super_vtable_len; i++) {
     methodOop match_method = method_at(i);
     // Check if method name matches
     if (match_method->name() == name() && match_method->signature() == signature()) {
-
+      
       instanceKlass* holder = (THREAD, instanceKlass::cast(match_method->method_holder()));
 
       // Check if the match_method is accessable from current class
-
+      
       bool same_package_init = false;
       bool same_package_flag = false;
       bool simple_match = match_method->is_public()  || match_method->is_protected();
@@ -274,27 +277,27 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
         simple_match = match_method->is_package_private() && same_package_flag;
       }
       // match_method is the superclass' method. Note we can't override
-      // and shouldn't access superclass' ACC_PRIVATE methods
+      // and shouldn't access superclass' ACC_PRIVATE methods 
       // (although they have been copied into our vtable)
       // A simple form of this statement is:
       // if ( (match_method->is_public()  || match_method->is_protected()) ||
       //    (match_method->is_package_private() && holder->is_same_class_package(klass->class_loader(), klass->name()))) {
       //
       // The complexity is introduced it avoid recomputing 'is_same_class_package' which is expensive.
-      if (simple_match) {
+      if (simple_match) {      
         // Check if target_method and match_method has same level of accessibility. The accesibility of the
         // match method is the "most-general" visibility of all entries at it's particular vtable index for
         // all superclasses. This check must be done before we override the current entry in the vtable.
-        AccessType at = vtable_accessibility_at(i);
+        AccessType at = vtable_accessibility_at(i);        
         bool same_access = false;
 
-        if (  (at == acc_publicprotected && (target_method()->is_public() || target_method()->is_protected())
+        if (  (at == acc_publicprotected && (target_method()->is_public() || target_method()->is_protected()) 
            || (at == acc_package_private && (target_method()->is_package_private() &&
                                             (( same_package_init && same_package_flag) ||
                                              (!same_package_init && holder->is_same_class_package(_klass->class_loader(), _klass->name()))))))) {
            same_access = true;
         }
-
+        
         if (checkconstraints) {
         // Override vtable entry if passes loader constraint check
         // if loader constraint checking requested
@@ -308,65 +311,65 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
           Handle super_loader(THREAD, super_klass->class_loader());
 
           if (this_loader() != super_loader()) {
-            ResourceMark rm(THREAD);
-            char* failed_type_name =
-              SystemDictionary::check_signature_loaders(signature, this_loader,
-                                                        super_loader, true,
-                                                        CHECK_(false));
-            if (failed_type_name != NULL) {
-              const char* msg = "loader constraint violation: when resolving "
-                "overridden method \"%s\" the class loader (instance"
-                " of %s) of the current class, %s, and its superclass loader "
-                "(instance of %s), have different Class objects for the type "
-                "%s used in the signature";
-              char* sig = target_method()->name_and_sig_as_C_string();
-              const char* loader1 = SystemDictionary::loader_name(this_loader());
-              char* current = _klass->name()->as_C_string();
-              const char* loader2 = SystemDictionary::loader_name(super_loader());
-              size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) +
-                strlen(current) + strlen(loader2) + strlen(failed_type_name);
-              char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-              jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
-                           failed_type_name);
-              THROW_MSG_(vmSymbols::java_lang_LinkageError(), buf, false);
-            }
+	    ResourceMark rm(THREAD);
+            char* failed_type_name = 
+	      SystemDictionary::check_signature_loaders(signature, this_loader,
+							super_loader, true, 
+							CHECK_(false));
+	    if (failed_type_name != NULL) {
+	      const char* msg = "loader constraint violation: when resolving "
+		"overridden method \"%s\" the class loader (instance"
+		" of %s) of the current class, %s, and its superclass loader "
+		"(instance of %s), have different Class objects for the type "
+		"%s used in the signature";
+	      char* sig = target_method()->name_and_sig_as_C_string();
+	      const char* loader1 = SystemDictionary::loader_name(this_loader());
+	      char* current = _klass->name()->as_C_string();
+	      const char* loader2 = SystemDictionary::loader_name(super_loader());
+	      size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) + 
+		strlen(current) + strlen(loader2) + strlen(failed_type_name);
+	      char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
+	      jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
+			   failed_type_name);
+	      THROW_MSG_(vmSymbols::java_lang_LinkageError(), buf, false);
+	    }
           }
         }
         put_method_at(target_method(), i);
 
 
         if (same_access) {
-          // target and match has same accessiblity - share entry
+          // target and match has same accessiblity - share entry  
           allocate_new = false;
           target_method()->set_vtable_index(i);
 #ifndef PRODUCT
-          if (PrintVtables && Verbose) {
-            AccessType targetacc;
-            if (target_method()->is_protected() ||
+          if (PrintVtables && Verbose) {  
+            AccessType targetacc; 
+            if (target_method()->is_protected() || 
                  target_method()->is_public()) {
                targetacc =  acc_publicprotected;
             } else {
               targetacc = target_method()->is_package_private() ? acc_package_private : acc_private;
             }
-            tty->print_cr("overriding with %s::%s index %d, original flags: %x overriders flags: %x",
-             _klass->internal_name(), (target_method() != NULL) ?
+            tty->print_cr("overriding with %s::%s index %d, original flags: %x overriders flags: %x", 
+             _klass->internal_name(), (target_method() != NULL) ? 
              target_method()->name()->as_C_string() : "<NULL>", i,
              at, targetacc);
           }
 #endif /*PRODUCT*/
         } else {
 #ifndef PRODUCT
-          if (PrintVtables && Verbose) {
-            AccessType targetacc;
-            if (target_method()->is_protected() ||
+          if (PrintVtables && Verbose) {  
+            AccessType targetacc; 
+            if (target_method()->is_protected() || 
                  target_method()->is_public()) {
                targetacc =  acc_publicprotected;
             } else {
               targetacc = target_method()->is_package_private() ? acc_package_private : acc_private;
             }
-            tty->print_cr("override %s %s::%s at index %d, original flags: %x overriders flags: %x",
+            tty->print_cr("override %s %s::%s at index %d, original flags: %x overriders flags: %x", 
             allocate_new ? "+ new" : "only",
-            _klass->internal_name(), (target_method() != NULL) ?
+            _klass->internal_name(), (target_method() != NULL) ? 
             target_method()->name()->as_C_string() : "<NULL>", i,
             at, targetacc);
            }
@@ -377,14 +380,14 @@ bool klassVtable::update_super_vtable(instanceKlass* klass, methodHandle target_
   }
   return allocate_new;
 }
-
+      
 
 
 void klassVtable::put_method_at(methodOop m, int index) {
   assert(m->is_oop_or_null(), "Not an oop or null");
 #ifndef PRODUCT
-  if (PrintVtables && Verbose) {
-    tty->print_cr("adding %s::%s at index %d", _klass->internal_name(),
+  if (PrintVtables && Verbose) {  
+    tty->print_cr("adding %s::%s at index %d", _klass->internal_name(), 
       (m != NULL) ? m->name()->as_C_string() : "<NULL>", index);
   }
   assert(unchecked_method_at(index)->is_oop_or_null(), "Not an oop or null");
@@ -392,17 +395,17 @@ void klassVtable::put_method_at(methodOop m, int index) {
   table()[index].set(m);
 }
 
-// Find out if a method "m" with superclass "super", loader "classloader" and
+// Find out if a method "m" with superclass "super", loader "classloader" and 
 // name "classname" needs a new vtable entry.  Let P be a class package defined
 // by "classloader" and "classname".
 // NOTE: The logic used here is very similar to the one used for computing
 // the vtables indices for a method. We cannot directly use that function because,
 // when the Universe is boostrapping, a super's vtable might not be initialized.
-bool klassVtable::needs_new_vtable_entry(methodOop target_method,
-                                         klassOop super,
-                                         oop classloader,
-                                         symbolOop classname,
-                                         AccessFlags class_flags) {
+bool klassVtable::needs_new_vtable_entry(methodOop target_method, 
+					 klassOop super, 
+					 oop classloader,
+					 symbolOop classname,
+					 AccessFlags class_flags) {
   if ((class_flags.is_final() || target_method->is_final()) ||
       // a final method never needs a new entry; final methods can be statically
       // resolved and they have to be present in the vtable only if they override
@@ -443,33 +446,33 @@ bool klassVtable::needs_new_vtable_entry(methodOop target_method,
 
     if (!match_method->is_static()) { // we want only instance method matches
       if ((target_method->is_public() || target_method->is_protected()) &&
-          (match_method->is_public()  || match_method->is_protected())) {
-        // target and match are public/protected; we do not need a new entry
+	  (match_method->is_public()  || match_method->is_protected())) {
+	// target and match are public/protected; we do not need a new entry
         return false;
       }
 
       if (target_method->is_package_private() &&
-          match_method->is_package_private() &&
-          holder->is_same_class_package(classloader, classname)) {
-        // target and match are P private; we do not need a new entry
+	  match_method->is_package_private() &&
+	  holder->is_same_class_package(classloader, classname)) {
+	// target and match are P private; we do not need a new entry
         return false;
       }
     }
-
+    
     k = holder->super(); // haven't found a match yet; continue to look
   }
-
+  
   // if the target method is public or protected it may have a matching
   // miranda method in the super, whose entry it should re-use.
   if (target_method->is_public() || target_method->is_protected()) {
     instanceKlass *sk = instanceKlass::cast(super);
     if (sk->has_miranda_methods()) {
       if (sk->lookup_method_in_all_interfaces(name, signature) != NULL) {
-        return false;  // found a matching miranda; we do not need a new entry
+	return false;  // found a matching miranda; we do not need a new entry
       }
     }
   }
-
+  
   return true; // found no match; we need a new entry
 }
 
@@ -493,9 +496,9 @@ bool klassVtable::is_miranda_entry_at(int i) {
   methodOop m = method_at(i);
   klassOop method_holder = m->method_holder();
   instanceKlass *mhk = instanceKlass::cast(method_holder);
-
+  
   // miranda methods are interface methods in a class's vtable
-  if (mhk->is_interface()) {
+  if (mhk->is_interface()) {  
     assert(m->is_public() && m->is_abstract(), "should be public and abstract");
     assert(ik()->implements_interface(method_holder) , "this class should implement the interface");
     assert(is_miranda(m, ik()->methods(), ik()->super()), "should be a miranda_method");
@@ -516,18 +519,18 @@ bool klassVtable::is_miranda(methodOop m, objArrayOop class_methods, klassOop su
       return true;
     } else {
       if (instanceKlass::cast(super)->lookup_method(name, signature) == NULL) {
-        // super class hierarchy does not implement it
-        return true;
+	// super class hierarchy does not implement it
+	return true;
       }
-    }
+    } 
   }
-  return false;
+  return false; 
 }
 
 void klassVtable::add_new_mirandas_to_list(GrowableArray<methodOop>* list_of_current_mirandas,
-                                           objArrayOop current_interface_methods,
-                                           objArrayOop class_methods,
-                                           klassOop super) {
+					   objArrayOop current_interface_methods,
+					   objArrayOop class_methods,
+					   klassOop super) {
   // iterate thru the current interface's method to see if it a miranda
   int num_methods = current_interface_methods->length();
   for (int i = 0; i < num_methods; i++) {
@@ -538,29 +541,29 @@ void klassVtable::add_new_mirandas_to_list(GrowableArray<methodOop>* list_of_cur
     for (int j = 0; j < num_of_current_mirandas; j++) {
       methodOop miranda = list_of_current_mirandas->at(j);
       if ((im->name() == miranda->name()) &&
-          (im->signature() == miranda->signature())) {
-        is_duplicate = true;
-        break;
+	  (im->signature() == miranda->signature())) {
+	is_duplicate = true;
+	break;
       }
     }
-
+    
     if (!is_duplicate) { // we don't want duplicate miranda entries in the vtable
       if (is_miranda(im, class_methods, super)) { // is it a miranda at all?
-        instanceKlass *sk = instanceKlass::cast(super);
-        // check if it is a duplicate of a super's miranda
-        if (sk->lookup_method_in_all_interfaces(im->name(), im->signature()) == NULL) {
-          list_of_current_mirandas->append(im);
-        }
+	instanceKlass *sk = instanceKlass::cast(super);
+	// check if it is a duplicate of a super's miranda
+	if (sk->lookup_method_in_all_interfaces(im->name(), im->signature()) == NULL) {
+	  list_of_current_mirandas->append(im);
+	}
       }
     }
   }
 }
 
 void klassVtable::get_mirandas(GrowableArray<methodOop>* mirandas,
-                               klassOop super, objArrayOop class_methods,
-                               objArrayOop local_interfaces) {
+			       klassOop super, objArrayOop class_methods, 
+			       objArrayOop local_interfaces) {
   assert((mirandas->length() == 0) , "current mirandas must be 0");
-
+  
   // iterate thru the local interfaces looking for a miranda
   int num_local_ifs = local_interfaces->length();
   for (int i = 0; i < num_local_ifs; i++) {
@@ -668,7 +671,7 @@ void klassVtable::oop_update_pointers(ParCompactionManager* cm) {
 }
 
 void klassVtable::oop_update_pointers(ParCompactionManager* cm,
-                                      HeapWord* beg_addr, HeapWord* end_addr) {
+				      HeapWord* beg_addr, HeapWord* end_addr) {
   const int n = length();
   const int entry_size = vtableEntry::size();
 
@@ -701,7 +704,7 @@ void klassVtable::oop_oop_iterate_m(OopClosure* blk, MemRegion mr) {
   for (i = 0; i < len; i++) {
     if ((HeapWord*)adr_method_at(i) >= mr.start()) break;
   }
-  for (; i < len; i++) {
+  for (; i < len; i++) {  
     oop* adr = adr_method_at(i);
     if ((HeapWord*)adr < mr.end()) blk->do_oop(adr);
   }
@@ -726,13 +729,13 @@ klassItable::klassItable(instanceKlassHandle klass) {
       // First offset entry points to the first method_entry
       intptr_t* method_entry  = (intptr_t *)(((address)klass->as_klassOop()) + offset_entry->offset());
       intptr_t* end         = klass->end_of_itable();
-
+  
       _table_offset      = (intptr_t*)offset_entry - (intptr_t*)klass->as_klassOop();
       _size_offset_table = (method_entry - ((intptr_t*)offset_entry)) / itableOffsetEntry::size();
       _size_method_table = (end - method_entry)                  / itableMethodEntry::size();
       assert(_table_offset >= 0 && _size_offset_table >= 0 && _size_method_table >= 0, "wrong computation");
       return;
-    }
+    }    
   }
 
   // The length of the itable was either zero, or it has not yet been initialized.
@@ -811,7 +814,7 @@ void klassItable::oop_update_pointers(ParCompactionManager* cm) {
 }
 
 void klassItable::oop_update_pointers(ParCompactionManager* cm,
-                                      HeapWord* beg_addr, HeapWord* end_addr) {
+				      HeapWord* beg_addr, HeapWord* end_addr) {
   // offset table
   itableOffsetEntry* ioe = offset_entry(0);
   for(int i = 0; i < _size_offset_table; i++) {
@@ -889,9 +892,9 @@ void klassItable::initialize_itable(bool checkconstraints, TRAPS) {
     for(i = 0; i < num_interfaces; i++) {
       itableOffsetEntry* ioe = offset_entry(i);
       KlassHandle interf_h (THREAD, ioe->interface_klass());
-      assert(interf_h() != NULL && ioe->offset() != 0, "bad offset entry in itable");
-      initialize_itable_for_interface(ioe->offset(), interf_h, checkconstraints, CHECK);
-    }
+      assert(interf_h() != NULL && ioe->offset() != 0, "bad offset entry in itable");      
+      initialize_itable_for_interface(ioe->offset(), interf_h, checkconstraints, CHECK);      
+    } 
 
   }
   // Check that the last entry is empty
@@ -916,72 +919,72 @@ void klassItable::initialize_itable_for_interface(int method_table_offset, Klass
   // don't need preserving across check_signature_loaders call
   // methods needs a handle in case of gc from check_signature_loaders
   for(; i < nof_methods; i++) {
-    methodOop m = (methodOop)methods()->obj_at(i);
+    methodOop m = (methodOop)methods()->obj_at(i);    
     symbolOop method_name = m->name();
     symbolOop method_signature = m->signature();
-
+      
     // This is same code as in Linkresolver::lookup_instance_method_in_klasses
     methodOop target = klass->uncached_lookup_method(method_name, method_signature);
     while (target != NULL && target->is_static()) {
       // continue with recursive lookup through the superclass
       klassOop super = Klass::cast(target->method_holder())->super();
       target = (super == NULL) ? methodOop(NULL) : Klass::cast(super)->uncached_lookup_method(method_name, method_signature);
-    }
-    if (target == NULL || !target->is_public() || target->is_abstract()) {
+    }      
+    if (target == NULL || !target->is_public() || target->is_abstract()) {        
       // Entry do not resolve. Leave it empty
-    } else {
+    } else {            
       // Entry did resolve, check loader constraints before initializing
       // if checkconstraints requested
       methodHandle  target_h (THREAD, target); // preserve across gc
       if (checkconstraints) {
         Handle method_holder_loader (THREAD, instanceKlass::cast(target->method_holder())->class_loader());
         if (method_holder_loader() != interface_loader()) {
-          ResourceMark rm(THREAD);
-          char* failed_type_name =
-            SystemDictionary::check_signature_loaders(method_signature,
-                                                      method_holder_loader,
-                                                      interface_loader,
-                                                      true, CHECK);
-          if (failed_type_name != NULL) {
-            const char* msg = "loader constraint violation in interface "
-              "itable initialization: when resolving method \"%s\" the class"
-              " loader (instance of %s) of the current class, %s, "
-              "and the class loader (instance of %s) for interface "
-              "%s have different Class objects for the type %s "
-              "used in the signature";
-            char* sig = target_h()->name_and_sig_as_C_string();
-            const char* loader1 = SystemDictionary::loader_name(method_holder_loader());
-            char* current = klass->name()->as_C_string();
-            const char* loader2 = SystemDictionary::loader_name(interface_loader());
-            char* iface = instanceKlass::cast(interf_h())->name()->as_C_string();
-            size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) +
-              strlen(current) + strlen(loader2) + strlen(iface) +
-              strlen(failed_type_name);
-            char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-            jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
-                         iface, failed_type_name);
-            THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
-          }
+	  ResourceMark rm(THREAD);
+	  char* failed_type_name =
+	    SystemDictionary::check_signature_loaders(method_signature, 
+						      method_holder_loader, 
+						      interface_loader, 
+						      true, CHECK);
+	  if (failed_type_name != NULL) {
+	    const char* msg = "loader constraint violation in interface "
+	      "itable initialization: when resolving method \"%s\" the class"
+	      " loader (instance of %s) of the current class, %s, "
+	      "and the class loader (instance of %s) for interface "
+	      "%s have different Class objects for the type %s "
+	      "used in the signature";
+	    char* sig = target_h()->name_and_sig_as_C_string();
+	    const char* loader1 = SystemDictionary::loader_name(method_holder_loader());
+	    char* current = klass->name()->as_C_string();
+	    const char* loader2 = SystemDictionary::loader_name(interface_loader());
+	    char* iface = instanceKlass::cast(interf_h())->name()->as_C_string();
+	    size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) + 
+	      strlen(current) + strlen(loader2) + strlen(iface) + 
+	      strlen(failed_type_name);
+	    char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
+	    jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
+			 iface, failed_type_name);
+	    THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
+	  }
         }
       }
-
+      
       // ime may have moved during GC so recalculate address
       itableOffsetEntry::method_entry(_klass(), method_table_offset)[ime_num].initialize(target_h());
     }
     // Progress to next entry
     ime_num++;
-  }
+  }  
 }
 
 // Update entry for specific methodOop
 void klassItable::initialize_with_method(methodOop m) {
   itableMethodEntry* ime = method_entry(0);
-  for(int i = 0; i < _size_method_table; i++) {
-    if (ime->method() == m) {
-      ime->initialize(m);
+  for(int i = 0; i < _size_method_table; i++) {    
+    if (ime->method() == m) {      
+      ime->initialize(m);      
     }
     ime++;
-  }
+  }  
 }
 
 void klassItable::adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
@@ -1015,7 +1018,7 @@ void klassItable::adjust_method_entries(methodOop* old_methods, methodOop* new_m
       }
       ime++;
     }
-  }
+  } 
 }
 
 
@@ -1026,14 +1029,14 @@ class InterfaceVisiterClosure : public StackObj {
 };
 
 // Visit all interfaces with at-least one method (excluding <clinit>)
-void visit_all_interfaces(objArrayOop transitive_intf, InterfaceVisiterClosure *blk) {
-  // Handle array argument
+void visit_all_interfaces(objArrayOop transitive_intf, InterfaceVisiterClosure *blk) {  
+  // Handle array argument  
   for(int i = 0; i < transitive_intf->length(); i++) {
     klassOop intf = (klassOop)transitive_intf->obj_at(i);
     assert(Klass::cast(intf)->is_interface(), "sanity check");
-
+    
     // Find no. of methods excluding a <clinit>
-    int method_count = instanceKlass::cast(intf)->methods()->length();
+    int method_count = instanceKlass::cast(intf)->methods()->length();    
     if (method_count > 0) {
       methodOop m = (methodOop)instanceKlass::cast(intf)->methods()->obj_at(0);
       assert(m != NULL && m->is_method(), "sanity check");
@@ -1044,8 +1047,8 @@ void visit_all_interfaces(objArrayOop transitive_intf, InterfaceVisiterClosure *
 
     // Only count interfaces with at least one method
     if (method_count > 0) {
-      blk->doit(intf, method_count);
-    }
+      blk->doit(intf, method_count);       
+    }    
   }
 }
 
@@ -1071,41 +1074,41 @@ class SetupItableClosure : public InterfaceVisiterClosure  {
   SetupItableClosure(address klass_begin, itableOffsetEntry* offset_entry, itableMethodEntry* method_entry) {
     _klass_begin  = klass_begin;
     _offset_entry = offset_entry;
-    _method_entry = method_entry;
+    _method_entry = method_entry;    
   }
 
   itableMethodEntry* method_entry() const { return _method_entry; }
 
   void doit(klassOop intf, int method_count) {
     int offset = ((address)_method_entry) - _klass_begin;
-    _offset_entry->initialize(intf, offset);
+    _offset_entry->initialize(intf, offset);      
     _offset_entry++;
     _method_entry += method_count;
   }
 };
 
-int klassItable::compute_itable_size(objArrayHandle transitive_interfaces) {
+int klassItable::compute_itable_size(objArrayHandle transitive_interfaces) {    
   // Count no of interfaces and total number of interface methods
-  CountInterfacesClosure cic;
+  CountInterfacesClosure cic;  
   visit_all_interfaces(transitive_interfaces(), &cic);
 
   // There's alway an extra itable entry so we can null-terminate it.
   int itable_size = calc_itable_size(cic.nof_interfaces() + 1, cic.nof_methods());
 
   // Statistics
-  update_stats(itable_size * HeapWordSize);
-
+  update_stats(itable_size * HeapWordSize);  
+  
   return itable_size;
 }
 
 
 // Fill out offset table and interface klasses into the itable space
-void klassItable::setup_itable_offset_table(instanceKlassHandle klass) {
+void klassItable::setup_itable_offset_table(instanceKlassHandle klass) {  
   if (klass->itable_length() == 0) return;
   assert(!klass->is_interface(), "Should have zero length itable");
-
-  // Count no of interfaces and total number of interface methods
-  CountInterfacesClosure cic;
+    
+  // Count no of interfaces and total number of interface methods  
+  CountInterfacesClosure cic;  
   visit_all_interfaces(klass->transitive_interfaces(), &cic);
   int nof_methods    = cic.nof_methods();
   int nof_interfaces = cic.nof_interfaces();
@@ -1127,25 +1130,25 @@ void klassItable::setup_itable_offset_table(instanceKlassHandle klass) {
   // Visit all interfaces and initialize itable offset table
   SetupItableClosure sic((address)klass->as_klassOop(), ioe, ime);
   visit_all_interfaces(klass->transitive_interfaces(), &sic);
-
+    
 #ifdef ASSERT
   ime  = sic.method_entry();
   oop* v = (oop*) klass->end_of_itable();
   assert( (oop*)(ime) == v, "wrong offset calculation (2)");
-#endif
+#endif 
 }
 
 
 // m must be a method in an interface
-int klassItable::compute_itable_index(methodOop m) {
+int klassItable::compute_itable_index(methodOop m) {  
   klassOop intf = m->method_holder();
   assert(instanceKlass::cast(intf)->is_interface(), "sanity check");
-  objArrayOop methods = instanceKlass::cast(intf)->methods();
-  int index = 0;
+  objArrayOop methods = instanceKlass::cast(intf)->methods();  
+  int index = 0;  
   while(methods->obj_at(index) != m) {
     index++;
     assert(index < methods->length(), "should find index for resolve_invoke");
-  }
+  }  
   // Adjust for <clinit>, which is left out of table if first method
   if (methods->length() > 0 && ((methodOop)methods->obj_at(0))->name() == vmSymbols::class_initializer_name()) {
     index--;
@@ -1197,17 +1200,17 @@ void klassVtable::print() {
     tty->cr();
   }
 }
-#endif
+#endif    
 
 void vtableEntry::verify(klassVtable* vt, outputStream* st) {
   NOT_PRODUCT(FlagSetting fs(IgnoreLockingAssertions, true));
   assert(method() != NULL, "must have set method");
   method()->verify();
   // we sub_type, because it could be a miranda method
-  if (!vt->klass()->is_subtype_of(method()->method_holder())) {
+  if (!vt->klass()->is_subtype_of(method()->method_holder())) { 
 #ifndef PRODUCT
     print();
-#endif
+#endif    
     fatal1("vtableEntry %#lx: method is from subclass", this);
   }
 }
@@ -1260,13 +1263,13 @@ class VtableStats : AllStatic {
   }
 };
 
-int VtableStats::no_klasses = 0;
-int VtableStats::no_array_klasses = 0;
+int VtableStats::no_klasses = 0;         
+int VtableStats::no_array_klasses = 0;   
 int VtableStats::no_instance_klasses = 0;
-int VtableStats::sum_of_vtable_len = 0;
-int VtableStats::sum_of_array_vtable_len = 0;
-int VtableStats::fixed = 0;
-int VtableStats::filler = 0;
+int VtableStats::sum_of_vtable_len = 0; 
+int VtableStats::sum_of_array_vtable_len = 0; 
+int VtableStats::fixed = 0;     
+int VtableStats::filler = 0; 
 int VtableStats::entries = 0;
 int VtableStats::array_entries = 0;
 
@@ -1316,7 +1319,9 @@ long klassItable::_total_size;      // Total no. of bytes used for itables
 void klassItable::print_statistics() {
  tty->print_cr("itable statistics:");
  tty->print_cr("%6d classes with itables", _total_classes);
- tty->print_cr("%6d K uses for itables (average by class: %d bytes)", _total_size / K, _total_size / _total_classes);
+ tty->print_cr("%6d K uses for itables (average by class: %d bytes)", _total_size / K, _total_size / _total_classes); 
 }
 
 #endif // PRODUCT
+
+

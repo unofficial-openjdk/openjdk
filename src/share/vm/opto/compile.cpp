@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)compile.cpp	1.633 07/09/28 10:23:11 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -253,7 +256,7 @@ void Compile::remove_useless_nodes(Unique_Node_List &useful) {
   uint next = 0;
   while( next < useful.size() ) {
     Node *n = useful.at(next++);
-    // Use raw traversal of out edges since this code removes out edges
+    // Use raw traversal of out edges since this code removes out edges 
     int max = n->outcnt();
     for (int j = 0; j < max; ++j ) {
       Node* child = n->raw_out(j);
@@ -275,7 +278,7 @@ void Compile::remove_useless_nodes(Unique_Node_List &useful) {
 
 //------------------------------frame_size_in_words-----------------------------
 // frame_slots in units of words
-int Compile::frame_size_in_words() const {
+int Compile::frame_size_in_words() const { 
   // shift is 0 in LP32 and 1 in LP64
   const int shift = (LogBytesPerWord - LogBytesPerInt);
   int words = _frame_slots >> shift;
@@ -292,7 +295,7 @@ class CompileWrapper : public StackObj {
 
   ~CompileWrapper();
 };
-
+  
 CompileWrapper::CompileWrapper(Compile* compile) : _compile(compile) {
   // the Compile* pointer is stored in the current ciEnv:
   ciEnv* env = compile->env();
@@ -493,7 +496,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   // Node list that Iterative GVN will start with
   Unique_Node_List for_igvn(comp_arena());
   set_for_igvn(&for_igvn);
-
+  
   // GVN that will be run immediately on new nodes
   uint estimated_size = method()->code_size()*4+64;
   estimated_size = (estimated_size < MINIMUM_NODE_HASH ? MINIMUM_NODE_HASH : estimated_size);
@@ -636,7 +639,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   }
 #endif
 
-  // Now that we know the size of all the monitors we can add a fixed slot
+  // Now that we know the size of all the monitors we can add a fixed slot 
   // for the original deopt pc.
 
   _orig_pc_slot =  fixed_slots();
@@ -647,7 +650,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   Code_Gen();
   if (failing())  return;
 
-  // Check if we want to skip execution of all compiled code.
+  // Check if we want to skip execution of all compiled code.  
   {
 #ifndef PRODUCT
     if (OptoNoExecute) {
@@ -668,7 +671,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
     env()->register_method(_method, _entry_bci,
                            &_code_offsets,
                            _orig_pc_slot_offset_in_bytes,
-                           code_buffer(),
+                           code_buffer(), 
                            frame_size_in_words(), _oop_map_set,
                            &_handler_table, &_inc_table,
                            compiler,
@@ -778,7 +781,7 @@ void print_opto_verbose_signature( const TypeFunc *j_sig, const char *stub_name 
 }
 #endif
 
-void Compile::print_codes() {
+void Compile::print_codes() { 
 }
 
 //------------------------------Init-------------------------------------------
@@ -838,7 +841,7 @@ void Compile::Init(int aliaslevel) {
     set_do_inlining(Inline);
     set_max_inline_size(MaxInlineSize);
     set_freq_inline_size(FreqInlineSize);
-    set_do_scheduling(OptoScheduling);
+    set_do_scheduling(OptoScheduling);  
     set_do_count_invocations(false);
     set_do_method_data_update(false);
   }
@@ -851,7 +854,7 @@ void Compile::Init(int aliaslevel) {
 
   // // -- Initialize types before each compile --
   // // Update cached type information
-  // if( _method && _method->constants() )
+  // if( _method && _method->constants() ) 
   //   Type::update_loaded_types(_method, _method->constants());
 
   // Init alias_type map.
@@ -893,7 +896,7 @@ StartNode* Compile::start() const {
   assert(!failing(), "");
   for (DUIterator_Fast imax, i = root()->fast_outs(imax); i < imax; i++) {
     Node* start = root()->fast_out(i);
-    if( start->is_Start() )
+    if( start->is_Start() ) 
       return start->as_Start();
   }
   ShouldNotReachHere();
@@ -1043,7 +1046,7 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
         tj = ta = TypeAryPtr::make(ptr,ta->const_oop(),ta->ary(),ta->klass(),false,offset);
       } else if( offset == arrayOopDesc::length_offset_in_bytes() ) {
         // range is OK as-is.
-        tj = ta = TypeAryPtr::RANGE;
+        tj = ta = TypeAryPtr::RANGE; 
       } else if( offset == oopDesc::klass_offset_in_bytes() ) {
         tj = TypeInstPtr::KLASS; // all klass loads look alike
         ta = TypeAryPtr::RANGE; // generic ignored junk
@@ -1052,7 +1055,7 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
         tj = TypeInstPtr::MARK;
         ta = TypeAryPtr::RANGE; // generic ignored junk
         ptr = TypePtr::BotPTR;
-      } else {                  // Random constant offset into array body
+      } else {                  // Random constant offset into array body 
         offset = Type::OffsetBot;   // Flatten constant access into array body
         tj = ta = TypeAryPtr::make(ptr,ta->ary(),ta->klass(),false,offset);
       }
@@ -1136,7 +1139,7 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
     // If we are referencing a field within a Klass, we need
     // to assume the worst case of an Object.  Both exact and
     // inexact types must flatten to the same alias class.
-    // Since the flattened result for a klass is defined to be
+    // Since the flattened result for a klass is defined to be 
     // precisely java.lang.Object, use a constant ptr.
     if ( offset == Type::OffsetBot || (offset >= 0 && (size_t)offset < sizeof(Klass)) ) {
 
@@ -1177,8 +1180,8 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
 
   // Flatten all to bottom for now
   switch( _AliasLevel ) {
-  case 0:
-    tj = TypePtr::BOTTOM;
+  case 0: 
+    tj = TypePtr::BOTTOM; 
     break;
   case 1:                       // Flatten to: oop, static, field or array
     switch (tj->base()) {
@@ -1196,21 +1199,21 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
     break;
   default:
     Unimplemented();
-  }
+  } 
 
   offset = tj->offset();
   assert( offset != Type::OffsetTop, "Offset has fallen from constant" );
-
+  
   assert( (offset != Type::OffsetBot && tj->base() != Type::AryPtr) ||
           (offset == Type::OffsetBot && tj->base() == Type::AryPtr) ||
           (offset == Type::OffsetBot && tj == TypeOopPtr::BOTTOM) ||
           (offset == Type::OffsetBot && tj == TypePtr::BOTTOM) ||
           (offset == oopDesc::mark_offset_in_bytes() && tj->base() == Type::AryPtr) ||
           (offset == oopDesc::klass_offset_in_bytes() && tj->base() == Type::AryPtr) ||
-          (offset == arrayOopDesc::length_offset_in_bytes() && tj->base() == Type::AryPtr)  ,
+          (offset == arrayOopDesc::length_offset_in_bytes() && tj->base() == Type::AryPtr)  , 
           "For oops, klasses, raw offset must be constant; for arrays the offset is never known" );
   assert( tj->ptr() != TypePtr::TopPTR &&
-          tj->ptr() != TypePtr::AnyNull &&
+          tj->ptr() != TypePtr::AnyNull &&          
           tj->ptr() != TypePtr::Null, "No imprecise addresses" );
 //    assert( tj->ptr() != TypePtr::Constant ||
 //            tj->base() == Type::RawPtr ||
@@ -1529,7 +1532,7 @@ void Compile::Optimize() {
   }
 
   print_method("Iter GVN 1", 2);
-
+  
   if (failing())  return;
 
   // Loop transforms on the ideal graph.  Range Check Elimination,
@@ -1564,7 +1567,7 @@ void Compile::Optimize() {
   if (failing())  return;
 
   // Conditional Constant Propagation;
-  PhaseCCP ccp( &igvn );
+  PhaseCCP ccp( &igvn ); 
   assert( true, "Break here to ccp.dump_nodes_and_types(_root,999,1)");
   {
     TracePhase t2("ccp", &_t_ccp, true);
@@ -1582,14 +1585,14 @@ void Compile::Optimize() {
   }
 
   print_method("Iter GVN 2", 2);
-
+  
   if (failing())  return;
 
   // Loop transforms on the ideal graph.  Range Check Elimination,
   // peeling, unrolling, etc.
   if(loop_opts_cnt > 0) {
     debug_only( int cnt = 0; );
-    while(major_progress() && (loop_opts_cnt > 0)) {
+    while(major_progress() && (loop_opts_cnt > 0)) {      
       TracePhase t2("idealLoop", &_t_idealLoop, true);
       assert( cnt++ < 40, "infinite cycle in loop optimization" );
       PhaseIdealLoop ideal_loop( igvn, NULL, true );
@@ -1693,8 +1696,8 @@ void Compile::Code_Gen() {
   }
 
   // Prior to register allocation we kept empty basic blocks in case the
-  // the allocator needed a place to spill.  After register allocation we
-  // are not adding any new instructions.  If any basic block is empty, we
+  // the allocator needed a place to spill.  After register allocation we 
+  // are not adding any new instructions.  If any basic block is empty, we 
   // can now safely remove it.
   {
     NOT_PRODUCT( TracePhase t2("blockOrdering", &_t_blockOrdering, TimeCompiler); )
@@ -1762,8 +1765,8 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
       tty->print_cr("        # Empty connector block");
     } else if (b->num_preds() == 2 && b->pred(1)->is_CatchProj() && b->pred(1)->as_CatchProj()->_con == CatchProjNode::fall_through_index) {
       tty->print_cr("        # Block is sole successor of call");
-    }
-
+    } 
+    
     // For all instructions
     Node *delay = NULL;
     for( uint j = 0; j<b->_nodes.size(); j++ ) {
@@ -1843,17 +1846,17 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
 #endif
 
 //------------------------------Final_Reshape_Counts---------------------------
-// This class defines counters to help identify when a method
+// This class defines counters to help identify when a method 
 // may/must be executed using hardware with only 24-bit precision.
 struct Final_Reshape_Counts : public StackObj {
-  int  _call_count;             // count non-inlined 'common' calls
+  int  _call_count;             // count non-inlined 'common' calls 
   int  _float_count;            // count float ops requiring 24-bit precision
   int  _double_count;           // count double ops requiring more precision
-  int  _java_call_count;        // count non-inlined 'java' calls
+  int  _java_call_count;        // count non-inlined 'java' calls 
   VectorSet _visited;           // Visitation flags
   Node_List _tests;             // Set of IfNodes & PCTableNodes
 
-  Final_Reshape_Counts() :
+  Final_Reshape_Counts() : 
     _call_count(0), _float_count(0), _double_count(0), _java_call_count(0),
     _visited( Thread::current()->resource_area() ) { }
 
@@ -1894,7 +1897,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &fpu ) {
     case Op_AddI:  case Op_AddF:  case Op_AddD:  case Op_AddL:
     case Op_MaxI:  case Op_MinI:
     case Op_MulI:  case Op_MulF:  case Op_MulD:  case Op_MulL:
-    case Op_AndL:  case Op_XorL:  case Op_OrL:
+    case Op_AndL:  case Op_XorL:  case Op_OrL: 
     case Op_AndI:  case Op_XorI:  case Op_OrI: {
       // Move "last use" input to left by swapping inputs
       n->swap_edges(1, 2);
@@ -1959,7 +1962,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &fpu ) {
     CallNode *call = n->as_Call();
     // Count call sites where the FP mode bit would have to be flipped.
     // Do not count uncommon runtime calls:
-    // uncommon_trap, _complete_monitor_locking, _complete_monitor_unlocking,
+    // uncommon_trap, _complete_monitor_locking, _complete_monitor_unlocking, 
     // _new_Java, _new_typeArray, _new_objArray, _rethrow_Java, ...
     if( !call->is_CallStaticJava() || !call->as_CallStaticJava()->_name ) {
       fpu.inc_call_count();   // Count the call site
@@ -2034,7 +2037,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &fpu ) {
     Node *addp = n->in(AddPNode::Address);
     assert( !addp->is_AddP() ||
             addp->in(AddPNode::Base)->is_top() || // Top OK for allocation
-            addp->in(AddPNode::Base) == n->in(AddPNode::Base),
+            addp->in(AddPNode::Base) == n->in(AddPNode::Base), 
             "Base pointers must match" );
 #ifdef _LP64
     if (UseCompressedOops &&
@@ -2322,7 +2325,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &fpu ) {
       n->subsume_by(btp);
     }
     break;
-  default:
+  default: 
     assert( !n->is_Call(), "" );
     assert( !n->is_Mem(), "" );
     break;
@@ -2353,7 +2356,7 @@ static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Re
         if (m->is_SafePoint() && m->as_SafePoint()->jvms() != NULL)
           sfpt.push(m);
         cnt = m->req();
-        nstack.push(n, i); // put on stack parent and next input's index
+        nstack.push(n, i); // put on stack parent and next input's index 
         n = m;
         i = 0;
       }
@@ -2362,7 +2365,7 @@ static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Re
       final_graph_reshaping_impl( n, fpu );
       if (nstack.is_empty())
         break;             // finished
-      n = nstack.node();   // Get node from stack
+      n = nstack.node();   // Get node from stack 
       cnt = n->req();
       i = nstack.index();
       nstack.pop();        // Shift to the next node on stack
@@ -2406,10 +2409,10 @@ static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Re
 }
 
 //------------------------------final_graph_reshaping--------------------------
-// Final Graph Reshaping.
+// Final Graph Reshaping.  
 //
 // (1) Clone simple inputs to uncommon calls, so they can be scheduled late
-//     and not commoned up and forced early.  Must come after regular
+//     and not commoned up and forced early.  Must come after regular 
 //     optimizations to avoid GVN undoing the cloning.  Clone constant
 //     inputs to Loop Phis; these will be split by the allocator anyways.
 //     Remove Opaque nodes.
@@ -2424,7 +2427,7 @@ static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Re
 //     clearing the mode bit around call sites).  The mode bit is only used
 //     if the relative frequency of single FP ops to calls is low enough.
 //     This is a key transform for SPEC mpeg_audio.
-// (4) Detect infinite loops; blobs of code reachable from above but not
+// (4) Detect infinite loops; blobs of code reachable from above but not 
 //     below.  Several of the Code_Gen algorithms fail on such code shapes,
 //     so we simply bail out.  Happens a lot in ZKM.jar, but also happens
 //     from time to time in other codes (such as -Xcomp finalizer loops, etc).
@@ -2463,9 +2466,9 @@ bool Compile::final_graph_reshaping() {
             required_outcnt--;      // Rethrow always has 1 less kid
           } else if (call->req() > TypeFunc::Parms &&
                      call->is_CallDynamicJava()) {
-            // Check for null receiver. In such case, the optimizer has
-            // detected that the virtual call will always result in a null
-            // pointer exception. The fall-through projection of this CatchNode
+            // Check for null receiver. In such case, the optimizer has 
+            // detected that the virtual call will always result in a null 
+            // pointer exception. The fall-through projection of this CatchNode 
             // will not be populated.
             Node *arg0 = call->in(TypeFunc::Parms);
             if (arg0->is_Type() &&
@@ -2475,7 +2478,7 @@ bool Compile::final_graph_reshaping() {
           } else if (call->entry_point() == OptoRuntime::new_array_Java() &&
                      call->req() > TypeFunc::Parms+1 &&
                      call->is_CallStaticJava()) {
-            // Check for negative array length. In such case, the optimizer has
+            // Check for negative array length. In such case, the optimizer has 
             // detected that the allocation attempt will always result in an
             // exception. There is no fall-through projection of this CatchNode .
             Node *arg1 = call->in(TypeFunc::Parms+1);
@@ -2503,8 +2506,8 @@ bool Compile::final_graph_reshaping() {
 
   // If original bytecodes contained a mixture of floats and doubles
   // check if the optimizer has made it homogenous, item (3).
-  if( Use24BitFPMode && Use24BitFP &&
-      fpu.get_float_count() > 32 &&
+  if( Use24BitFPMode && Use24BitFP && 
+      fpu.get_float_count() > 32 && 
       fpu.get_double_count() == 0 &&
       (10 * fpu.get_call_count() < fpu.get_float_count()) ) {
     set_24_bit_selection_and_mode( false,  true );
@@ -2519,8 +2522,8 @@ bool Compile::final_graph_reshaping() {
 //-----------------------------too_many_traps----------------------------------
 // Report if there are too many traps at the current method and bci.
 // Return true if there was a trap, and/or PerMethodTrapLimit is exceeded.
-bool Compile::too_many_traps(ciMethod* method,
-                             int bci,
+bool Compile::too_many_traps(ciMethod* method, 
+                             int bci, 
                              Deoptimization::DeoptReason reason) {
   ciMethodData* md = method->method_data();
   if (md->is_empty()) {
@@ -2567,8 +2570,8 @@ bool Compile::too_many_traps(Deoptimization::DeoptReason reason,
 // Consults PerBytecodeRecompilationCutoff and PerMethodRecompilationCutoff.
 // Is not eager to return true, since this will cause the compiler to use
 // Action_none for a trap point, to avoid too many recompilations.
-bool Compile::too_many_recompiles(ciMethod* method,
-                                  int bci,
+bool Compile::too_many_recompiles(ciMethod* method, 
+                                  int bci, 
                                   Deoptimization::DeoptReason reason) {
   ciMethodData* md = method->method_data();
   if (md->is_empty()) {

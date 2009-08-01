@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-abstract class Format3ADecoder extends InstructionDecoder
+abstract class Format3ADecoder extends InstructionDecoder 
                            implements /* imports */ RTLOperations {
     final int op3;
     final String name;

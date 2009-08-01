@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)vmError_windows.cpp	1.17 07/09/17 09:59:36 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -67,8 +70,8 @@ address VMError::get_resetted_sighandler(int sig) {
 
 LONG WINAPI crash_handler(struct _EXCEPTION_POINTERS* exceptionInfo) {
   DWORD exception_code = exceptionInfo->ExceptionRecord->ExceptionCode;
-  VMError err(NULL, exception_code, NULL,
-                exceptionInfo->ExceptionRecord, exceptionInfo->ContextRecord);
+  VMError err(NULL, exception_code, NULL, 
+		exceptionInfo->ExceptionRecord, exceptionInfo->ContextRecord);
   err.report_and_die();
   return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -76,3 +79,4 @@ LONG WINAPI crash_handler(struct _EXCEPTION_POINTERS* exceptionInfo) {
 void VMError::reset_signal_handlers() {
   SetUnhandledExceptionFilter(crash_handler);
 }
+

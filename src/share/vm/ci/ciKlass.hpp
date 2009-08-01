@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)ciKlass.hpp	1.27 07/09/28 10:23:23 JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciKlass
@@ -46,7 +49,7 @@ protected:
   ciKlass(KlassHandle k_h, ciSymbol* name);
   ciKlass(ciSymbol* name, ciKlass* klass);
 
-  klassOop get_klassOop() const {
+  klassOop get_klassOop() const { 
     klassOop k = (klassOop)get_oop();
     assert(k != NULL, "illegal use of unloaded klass");
     return k;
@@ -117,3 +120,4 @@ public:
 
   void print_name_on(outputStream* st);
 };
+

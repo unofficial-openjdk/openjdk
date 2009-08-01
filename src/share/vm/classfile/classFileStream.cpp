@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)classFileStream.cpp	1.41 07/05/31 14:29:24 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -82,13 +85,13 @@ u8 ClassFileStream::get_u8(TRAPS) {
 void ClassFileStream::skip_u1(int length, TRAPS) {
   if (_need_verify) {
     guarantee_more(length, CHECK);
-  }
+  } 
   _current += length;
 }
 
 void ClassFileStream::skip_u2(int length, TRAPS) {
   if (_need_verify) {
     guarantee_more(length * 2, CHECK);
-  }
+  } 
   _current += length * 2;
 }

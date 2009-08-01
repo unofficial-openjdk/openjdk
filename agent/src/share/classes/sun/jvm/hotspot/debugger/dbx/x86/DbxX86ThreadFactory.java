@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.dbx.x86;
@@ -29,7 +29,7 @@ import sun.jvm.hotspot.debugger.dbx.*;
 
 public class DbxX86ThreadFactory implements DbxThreadFactory {
   private DbxDebugger debugger;
-
+  
   public DbxX86ThreadFactory(DbxDebugger debugger) {
     this.debugger = debugger;
   }

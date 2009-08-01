@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg;
@@ -38,7 +38,7 @@ public interface CFrame {
 
   /** Get the program counter of this frame */
   public Address pc();
-
+  
   /** Get the loadobject in which the PC lies. Returns null if the PC
       is not contained in any of the loadobjects in the target
       process. */

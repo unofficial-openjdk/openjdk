@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jniTypes_x86.hpp	1.21 07/09/17 09:30:08 JVM"
+#endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// This file holds platform-dependent routines used to write primitive jni
+// This file holds platform-dependent routines used to write primitive jni 
 // types to the array of arguments passed into JavaCalls::call
 
 class JNITypes : AllStatic {
@@ -39,14 +42,14 @@ private:
 
 #ifndef AMD64
   // 32bit Helper routines.
-  static inline void    put_int2r(jint *from, intptr_t *to)           { *(jint *)(to++) = from[1];
+  static inline void    put_int2r(jint *from, intptr_t *to)	      { *(jint *)(to++) = from[1];
                                                                         *(jint *)(to  ) = from[0]; }
   static inline void    put_int2r(jint *from, intptr_t *to, int& pos) { put_int2r(from, to + pos); pos += 2; }
 #endif // AMD64
 
 public:
   // Ints are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_int(jint  from, intptr_t *to)           { *(jint *)(to +   0  ) =  from; }
+  static inline void    put_int(jint  from, intptr_t *to)	    { *(jint *)(to +   0  ) =  from; }
   static inline void    put_int(jint  from, intptr_t *to, int& pos) { *(jint *)(to + pos++) =  from; }
   static inline void    put_int(jint *from, intptr_t *to, int& pos) { *(jint *)(to + pos++) = *from; }
 
@@ -54,33 +57,33 @@ public:
   // Longs are stored in native format in one JavaCallArgument slot at
   // *(to+1).
   static inline void put_long(jlong  from, intptr_t *to) {
-    *(jlong*) (to + 1) = from;
+    *(jlong*) (to + 1) = from; 
   }
 
   static inline void put_long(jlong  from, intptr_t *to, int& pos) {
     *(jlong*) (to + 1 + pos) = from;
-    pos += 2;
+    pos += 2; 
   }
 
   static inline void put_long(jlong *from, intptr_t *to, int& pos) {
     *(jlong*) (to + 1 + pos) = *from;
-    pos += 2;
+    pos += 2; 
   }
 #else
   // Longs are stored in big-endian word format in two JavaCallArgument slots at *to.
   // The high half is in *to and the low half in *(to+1).
-  static inline void    put_long(jlong  from, intptr_t *to)           { put_int2r((jint *)&from, to); }
+  static inline void    put_long(jlong  from, intptr_t *to)	      { put_int2r((jint *)&from, to); }
   static inline void    put_long(jlong  from, intptr_t *to, int& pos) { put_int2r((jint *)&from, to, pos); }
   static inline void    put_long(jlong *from, intptr_t *to, int& pos) { put_int2r((jint *) from, to, pos); }
 #endif // AMD64
 
   // Oops are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_obj(oop  from, intptr_t *to)           { *(oop *)(to +   0  ) =  from; }
+  static inline void    put_obj(oop  from, intptr_t *to)	   { *(oop *)(to +   0  ) =  from; }
   static inline void    put_obj(oop  from, intptr_t *to, int& pos) { *(oop *)(to + pos++) =  from; }
   static inline void    put_obj(oop *from, intptr_t *to, int& pos) { *(oop *)(to + pos++) = *from; }
 
   // Floats are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_float(jfloat  from, intptr_t *to)           { *(jfloat *)(to +   0  ) =  from;  }
+  static inline void    put_float(jfloat  from, intptr_t *to)   	{ *(jfloat *)(to +   0  ) =  from;  }
   static inline void    put_float(jfloat  from, intptr_t *to, int& pos) { *(jfloat *)(to + pos++) =  from; }
   static inline void    put_float(jfloat *from, intptr_t *to, int& pos) { *(jfloat *)(to + pos++) = *from; }
 
@@ -89,24 +92,24 @@ public:
 #define _JNI_SLOT_OFFSET 1
   // Doubles are stored in native word format in one JavaCallArgument
   // slot at *(to+1).
-  static inline void put_double(jdouble  from, intptr_t *to) {
-    *(jdouble*) (to + 1) = from;
+  static inline void put_double(jdouble  from, intptr_t *to) { 
+    *(jdouble*) (to + 1) = from; 
   }
 
   static inline void put_double(jdouble  from, intptr_t *to, int& pos) {
     *(jdouble*) (to + 1 + pos) = from;
-    pos += 2;
+    pos += 2; 
   }
 
   static inline void put_double(jdouble *from, intptr_t *to, int& pos) {
     *(jdouble*) (to + 1 + pos) = *from;
-    pos += 2;
+    pos += 2; 
   }
 #else
 #define _JNI_SLOT_OFFSET 0
   // Doubles are stored in big-endian word format in two JavaCallArgument slots at *to.
   // The high half is in *to and the low half in *(to+1).
-  static inline void    put_double(jdouble  from, intptr_t *to)           { put_int2r((jint *)&from, to); }
+  static inline void    put_double(jdouble  from, intptr_t *to)	          { put_int2r((jint *)&from, to); }
   static inline void    put_double(jdouble  from, intptr_t *to, int& pos) { put_int2r((jint *)&from, to, pos); }
   static inline void    put_double(jdouble *from, intptr_t *to, int& pos) { put_int2r((jint *) from, to, pos); }
 #endif // AMD64

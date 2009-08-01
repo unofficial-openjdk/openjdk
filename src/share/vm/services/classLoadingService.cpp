@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)classLoadingService.cpp	1.15 07/05/05 17:07:04 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -47,7 +50,7 @@ HS_DTRACE_PROBE_DECL4(hotspot, class__unloaded, char*, int, oop, bool);
 
 #else //  ndef DTRACE_ENABLED
 
-#define DTRACE_CLASSLOAD_PROBE(type, clss, shared)
+#define DTRACE_CLASSLOAD_PROBE(type, clss, shared) 
 
 #endif
 
@@ -134,7 +137,7 @@ void ClassLoadingService::notify_class_unloaded(instanceKlass* k) {
 
 void ClassLoadingService::notify_class_loaded(instanceKlass* k, bool shared_class) {
   DTRACE_CLASSLOAD_PROBE(loaded, k, shared_class);
-  PerfCounter* classes_counter = (shared_class ? _shared_classes_loaded_count
+  PerfCounter* classes_counter = (shared_class ? _shared_classes_loaded_count 
                                                : _classes_loaded_count);
   // increment the count
   classes_counter->inc();
@@ -197,14 +200,14 @@ LoadedClassesEnumerator::LoadedClassesEnumerator(Thread* cur_thread) {
 
   // For consistency of the loaded classes, grab the SystemDictionary lock
   MutexLocker sd_mutex(SystemDictionary_lock);
-
+  
   // Set _loaded_classes and _current_thread and begin enumerating all classes.
   // Only one thread will do the enumeration at a time.
   // These static variables are needed and they are used by the static method
   // add_loaded_class called from classes_do().
   _loaded_classes = _klass_handle_array;
   _current_thread = cur_thread;
-
+  
   SystemDictionary::classes_do(&add_loaded_class);
 
   // FIXME: Exclude array klasses for now

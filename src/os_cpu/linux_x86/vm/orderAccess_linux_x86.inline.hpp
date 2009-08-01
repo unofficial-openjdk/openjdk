@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)orderAccess_linux_x86.inline.hpp	1.12 07/09/17 09:20:12 JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Implementation of class OrderAccess.
@@ -83,21 +86,21 @@ inline void     OrderAccess::release_store_ptr(volatile void*     p, void*    v)
 
 inline void     OrderAccess::store_fence(jbyte*  p, jbyte  v) {
   __asm__ volatile (  "xchgb (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 inline void     OrderAccess::store_fence(jshort* p, jshort v) {
   __asm__ volatile (  "xchgw (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 inline void     OrderAccess::store_fence(jint*   p, jint   v) {
   __asm__ volatile (  "xchgl (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 
 inline void     OrderAccess::store_fence(jlong*   p, jlong   v) {
@@ -145,21 +148,21 @@ inline void     OrderAccess::store_ptr_fence(void**    p, void*    v) {
 // Must duplicate definitions instead of calling store_fence because we don't want to cast away volatile.
 inline void     OrderAccess::release_store_fence(volatile jbyte*  p, jbyte  v) {
   __asm__ volatile (  "xchgb (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 inline void     OrderAccess::release_store_fence(volatile jshort* p, jshort v) {
   __asm__ volatile (  "xchgw (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 inline void     OrderAccess::release_store_fence(volatile jint*   p, jint   v) {
   __asm__ volatile (  "xchgl (%2),%0"
-                    : "=r" (v)
-                    : "0" (v), "r" (p)
-                    : "memory");
+		    : "=r" (v)
+		    : "0" (v), "r" (p)
+		    : "memory");
 }
 
 inline void     OrderAccess::release_store_fence(volatile jlong*   p, jlong   v) {

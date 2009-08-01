@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -63,7 +63,7 @@ public class DictionaryEntry extends sun.jvm.hotspot.utilities.HashtableEntry {
   }
 
   public Klass klass() {
-    return (Klass) literal();
+    return (Klass) literal();      
   }
 
   public DictionaryEntry(Address addr) {
@@ -76,7 +76,7 @@ public class DictionaryEntry extends sun.jvm.hotspot.utilities.HashtableEntry {
     if (! ik.getName().equals(className)) {
       return false;
     } else {
-      return (loader == null)? (classLoader == null) :
+      return (loader == null)? (classLoader == null) : 
                                (loader.equals(classLoader));
     }
   }
@@ -103,10 +103,11 @@ public class DictionaryEntry extends sun.jvm.hotspot.utilities.HashtableEntry {
     return false;
   }
 
-  /* covariant return type :-(
+  /* covariant return type :-( 
   public DictionaryEntry next() {
     return (DictionaryEntry) super.next();
   }
   For now, let the caller cast it ..
   */
 }
+

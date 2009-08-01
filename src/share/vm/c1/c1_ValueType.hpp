@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_ValueType.hpp	1.35 07/05/05 17:05:10 JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // type hierarchy
@@ -98,7 +101,7 @@ class ValueType: public CompilationResourceObj {
 
   // accessors
   virtual ValueType* base() const                = 0; // the 'canonical' type (e.g., intType for an IntConstant)
-  ValueTag tag() const { return _tag; }          // the 'canonical' tag  (useful for type matching)
+  ValueTag tag() const { return _tag; }          // the 'canonical' tag  (useful for type matching) 
   int size() const {                             // the size of an object of the type in words
     assert(_size > -1, "shouldn't be asking for size");
     return _size;

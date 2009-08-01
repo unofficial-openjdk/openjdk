@@ -1,4 +1,6 @@
 /*
+ * @(#)InvocableCallable.java	1.3 07/05/05 17:03:43
+ *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,17 +38,17 @@ public class InvocableCallable implements Callable {
   private Object target;
   private String name;
   private Invocable invocable;
-
-  public InvocableCallable(Object target, String name,
+  
+  public InvocableCallable(Object target, String name, 
     Invocable invocable) {
     this.target = target;
     this.name = name;
     this.invocable = invocable;
   }
-
+  
   public Object call(Object[] args) throws ScriptException {
     try {
-      if (target == null) {
+      if (target == null) {      
         return invocable.invokeFunction(name, args);
       } else {
         return invocable.invokeMethod(target, name, args);

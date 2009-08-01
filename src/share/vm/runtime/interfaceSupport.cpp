@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)interfaceSupport.cpp	1.91 07/05/05 17:06:50 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
-#include "incls/_interfaceSupport.cpp.incl"
+#include "incls/_interfaceSupport.cpp.incl" 
 
 
 // Implementation of InterfaceSupport
@@ -69,7 +72,7 @@ void InterfaceSupport::gc_alot() {
   if (thread->is_VM_thread()) return; // Avoid concurrent calls
   // Check for new, not quite initialized thread. A thread in new mode cannot initiate a GC.
   JavaThread *current_thread = (JavaThread *)thread;
-  if (current_thread->active_handles() == NULL) return;
+  if (current_thread->active_handles() == NULL) return; 
 
   if (is_init_completed()) {
 
@@ -94,7 +97,7 @@ void InterfaceSupport::gc_alot() {
       if (FullGCALotInterval > 1) {
         _fullgc_alot_counter = 1+(long)((double)FullGCALotInterval*os::random()/(max_jint+1.0));
         if (PrintGCDetails && Verbose) {
-          tty->print_cr("Full gc no: %u\tInterval: %d", invocations,
+          tty->print_cr("Full gc no: %u\tInterval: %d", invocations, 
                         _fullgc_alot_counter);
         }
       } else {
@@ -135,7 +138,7 @@ vframe* vframe_array[50];
 int walk_stack_counter = 0;
 
 void InterfaceSupport::walk_stack_from(vframe* start_vf) {
-  // walk
+  // walk 
   int i = 0;
   for (vframe* f = start_vf; f; f = f->sender() ) {
     if (i < 50) vframe_array[i++] = f;
@@ -155,7 +158,7 @@ void InterfaceSupport::walk_stack() {
 
 # ifdef ENABLE_ZAP_DEAD_LOCALS
 
-static int zap_traversals = 0;
+static int zap_traversals = 0;  
 
 void InterfaceSupport::zap_dead_locals_old() {
   JavaThread* thread = JavaThread::current();
@@ -202,12 +205,12 @@ void InterfaceSupport::deoptimizeAll() {
 
 
 void InterfaceSupport::stress_derived_pointers() {
-#ifdef COMPILER2
+#ifdef COMPILER2  
   JavaThread *thread = JavaThread::current();
   if (!is_init_completed()) return;
   ResourceMark rm(thread);
-  bool found = false;
-  for (StackFrameStream sfs(thread); !sfs.is_done() && !found; sfs.next()) {
+  bool found = false;  
+  for (StackFrameStream sfs(thread); !sfs.is_done() && !found; sfs.next()) {    
     CodeBlob* cb = sfs.current()->cb();
     if (cb != NULL && cb->oop_maps() ) {
       // Find oopmap for current method
@@ -231,10 +234,10 @@ void InterfaceSupport::verify_stack() {
   ResourceMark rm(thread);
   // disabled because it throws warnings that oop maps should only be accessed
   // in VM thread or during debugging
-
+  
   if (!thread->has_pending_exception()) {
     // verification does not work if there are pending exceptions
-    StackFrameStream sfs(thread);
+    StackFrameStream sfs(thread);  
     CodeBlob* cb = sfs.current()->cb();
       // In case of exceptions we might not have a runtime_stub on
       // top of stack, hence, all callee-saved registers are not going
@@ -267,3 +270,4 @@ void InterfaceSupport_init() {
   }
 #endif
 }
+

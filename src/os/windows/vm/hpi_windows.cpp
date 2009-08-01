@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)hpi_windows.cpp	1.20 07/09/17 09:59:35 JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -37,7 +40,7 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
     lib_name[JVM_MAXPATHLEN - 1] = '\0';
   } else {
     os::jvm_path(lib_name, sizeof lib_name);
-
+    
 #ifdef PRODUCT
     const char *hpi_lib = "\\hpi.dll";
 #else
@@ -52,7 +55,7 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
     if (p != NULL) *p = '\0';             /* get rid of "\\hotspot" */
     strcat(lib_name, hpi_lib);
   }
-
+    
   // Load it.
   if (TraceHPI) tty->print_cr("Loading HPI %s ", lib_name);
   HINSTANCE lib_handle = LoadLibrary(lib_name);
@@ -60,7 +63,7 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
     if (TraceHPI) tty->print_cr("LoadLibrary failed, code = %d", GetLastError());
     return;
   }
-
+  
   // Find hpi initializer.
   init_t initer = (init_t)GetProcAddress(lib_handle, "DLL_Initialize");
   if (initer == NULL) {
@@ -73,7 +76,7 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
   if (init_result < 0) {
     if (TraceHPI) tty->print_cr("DLL_Initialize failed, returned %ld", init_result);
     return;
-  }
+  }     
 
   if (TraceHPI) tty->print_cr("success");
   return;

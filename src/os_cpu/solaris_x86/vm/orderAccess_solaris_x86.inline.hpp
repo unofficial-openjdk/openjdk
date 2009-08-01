@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)orderAccess_solaris_x86.inline.hpp	1.14 07/09/17 09:16:45 JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Implementation of class OrderAccess.
@@ -128,3 +131,4 @@ inline void     OrderAccess::release_store_fence(volatile jdouble* p, jdouble v)
 
 inline void     OrderAccess::release_store_ptr_fence(volatile intptr_t* p, intptr_t v) { *p = v; fence(); }
 inline void     OrderAccess::release_store_ptr_fence(volatile void*     p, void*    v) { *(void* volatile *)p = v; fence(); }
+

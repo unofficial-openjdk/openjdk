@@ -19,9 +19,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
-
+                                                                                          
 package sun.jvm.hotspot.tools;
 
 import sun.jvm.hotspot.tools.*;
@@ -49,31 +49,31 @@ public class FinalizerInfo extends Tool {
     }
 
     public void run() {
-        /*
-         * The implementation here has a dependency on the implementation of
-         * java.lang.ref.Finalizer. If the Finalizer implementation changes it's
-         * possible this method will require changes too. We looked into using
-         * ObjectReader to deserialize the objects from the target VM but as
-         * there aren't any public methods to traverse the queue it means using
-         * reflection which will also tie us to the implementation.
-         *
-         * The assumption here is that Finalizer.queue is the ReferenceQueue
-         * with the objects awaiting finalization. The ReferenceQueue queueLength
-         * is the number of objects in the queue, and 'head' is the head of the
-         * queue.
+	/*
+	 * The implementation here has a dependency on the implementation of
+	 * java.lang.ref.Finalizer. If the Finalizer implementation changes it's
+	 * possible this method will require changes too. We looked into using
+	 * ObjectReader to deserialize the objects from the target VM but as
+	 * there aren't any public methods to traverse the queue it means using
+	 * reflection which will also tie us to the implementation.
+	 *
+	 * The assumption here is that Finalizer.queue is the ReferenceQueue
+	 * with the objects awaiting finalization. The ReferenceQueue queueLength
+	 * is the number of objects in the queue, and 'head' is the head of the 
+	 * queue.
          */
-        InstanceKlass ik =
-            SystemDictionaryHelper.findInstanceKlass("java.lang.ref.Finalizer");
-        final OopField queueField[] = new OopField[1];
+        InstanceKlass ik = 
+	    SystemDictionaryHelper.findInstanceKlass("java.lang.ref.Finalizer");
+	final OopField queueField[] = new OopField[1];
         ik.iterateFields(new DefaultOopVisitor() {
-            public void doOop(OopField field, boolean isVMField) {
-                String name = field.getID().getName();
-                if (name.equals("queue")) {
-                    queueField[0] = field;
-                }
-            }
+	    public void doOop(OopField field, boolean isVMField) {
+	        String name = field.getID().getName();
+		if (name.equals("queue")) {
+		    queueField[0] = field;
+		}
+	    }
         }, false);
-        Oop queue = queueField[0].getValue(ik);
+        Oop queue = queueField[0].getValue(ik);	
 
         InstanceKlass k = (InstanceKlass) queue.getKlass();
 
@@ -83,55 +83,55 @@ public class FinalizerInfo extends Tool {
         OopField headField =  (OopField) k.findField("head", "Ljava/lang/ref/Reference;");
         Oop head = headField.getValue(queue);
 
-        System.out.println("Number of objects pending for finalization: " + queueLength);
+	System.out.println("Number of objects pending for finalization: " + queueLength);
 
-        /*
-         * If 'head' is non-NULL then it is the head of a list of References.
-         * We iterate over the list (end of list is when head.next == head)
-         */
+	/*
+	 * If 'head' is non-NULL then it is the head of a list of References.
+	 * We iterate over the list (end of list is when head.next == head)
+	 */
         if (head != null) {
-            k = (InstanceKlass) head.getKlass();
-            OopField referentField =
-                (OopField) k.findField("referent", "Ljava/lang/Object;");
-            OopField nextField =
-                (OopField) k.findField("next", "Ljava/lang/ref/Reference;");
+	    k = (InstanceKlass) head.getKlass();
+	    OopField referentField = 
+		(OopField) k.findField("referent", "Ljava/lang/Object;");
+	    OopField nextField =
+		(OopField) k.findField("next", "Ljava/lang/ref/Reference;");
 
-            HashMap map = new HashMap();
-            for (;;) {
-                Oop referent = referentField.getValue(head);
+	    HashMap map = new HashMap();
+	    for (;;) { 
+	        Oop referent = referentField.getValue(head);
 
-                Klass klass = referent.getKlass();
-                if (!map.containsKey(klass)) {
-                    map.put(klass, new ObjectHistogramElement(klass));
-                }
-                ((ObjectHistogramElement)map.get(klass)).updateWith(referent);
+	        Klass klass = referent.getKlass();
+	        if (!map.containsKey(klass)) {
+		    map.put(klass, new ObjectHistogramElement(klass));
+	        }
+    	        ((ObjectHistogramElement)map.get(klass)).updateWith(referent);
 
-                Oop next = nextField.getValue(head);
-                if (next == null || next.equals(head)) break;
-                head = next;
-            }
+	        Oop next = nextField.getValue(head);
+	        if (next == null || next.equals(head)) break;
+	        head = next;
+	    }
 
-            /*
-             * Sort results - decending order by total size
-             */
-            ArrayList list = new ArrayList();
-            list.addAll(map.values());
-            Collections.sort(list, new Comparator() {
-              public int compare(Object o1, Object o2) {
-                  return ((ObjectHistogramElement)o1).compare((ObjectHistogramElement)o2);
+	    /*
+	     * Sort results - decending order by total size
+	     */
+	    ArrayList list = new ArrayList();
+    	    list.addAll(map.values());
+    	    Collections.sort(list, new Comparator() {
+      	      public int compare(Object o1, Object o2) {
+        	  return ((ObjectHistogramElement)o1).compare((ObjectHistogramElement)o2);
               }
             });
 
-            /*
-             * Print summary of objects in queue
-             */
-            System.out.println("");
-            System.out.println("Count" + "\t" + "Class description");
-            System.out.println("-------------------------------------------------------");
-            for (int i=0; i<list.size(); i++) {
-                ObjectHistogramElement e = (ObjectHistogramElement)list.get(i);
-                System.out.println(e.getCount() + "\t" + e.getDescription());
-            }
+	    /*	
+	     * Print summary of objects in queue
+	     */
+	    System.out.println("");
+	    System.out.println("Count" + "\t" + "Class description");
+	    System.out.println("-------------------------------------------------------");
+	    for (int i=0; i<list.size(); i++) {
+	        ObjectHistogramElement e = (ObjectHistogramElement)list.get(i);
+		System.out.println(e.getCount() + "\t" + e.getDescription());
+	    }
        }
 
    }

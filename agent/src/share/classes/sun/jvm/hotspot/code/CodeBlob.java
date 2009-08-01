@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.code;
@@ -151,7 +151,7 @@ public class CodeBlob extends VMObject {
   // FIXME: add getRelocationSize()
   public int getInstructionsSize() { return (int) instructionsEnd().minus(instructionsBegin()); }
   public int getDataSize()         { return (int) dataEnd().minus(dataBegin());                 }
-
+  
   // Containment
   public boolean blobContains(Address addr)         { return headerBegin().lessThanOrEqual(addr) && dataEnd().greaterThan(addr);               }
   // FIXME: add relocationContains
@@ -159,7 +159,7 @@ public class CodeBlob extends VMObject {
   public boolean dataContains(Address addr)         { return dataBegin().lessThanOrEqual(addr) && dataEnd().greaterThan(addr);                 }
   public boolean oopsContains(Address addr)         { return oopsBegin().lessThanOrEqual(addr) && oopsEnd().greaterThan(addr);                 }
   public boolean contains(Address addr)             { return instructionsContains(addr);                                                       }
-  public boolean isFrameCompleteAt(Address a)       { return instructionsContains(a) && a.minus(instructionsBegin()) >= frameCompleteOffsetField.getValue(addr); }
+  public boolean isFrameCompleteAt(Address a)       { return instructionsContains(a) && a.minus(instructionsBegin()) >= frameCompleteOffsetField.getValue(addr); } 
 
   /** Support for oops in scopes and relocs. Note: index 0 is reserved for null. */
   public OopHandle getOopAt(int index) {
@@ -201,7 +201,7 @@ public class CodeBlob extends VMObject {
   public long getFrameSize() {
     return VM.getVM().getAddressSize() * frameSizeField.getValue(addr);
   }
-
+  
   // Returns true, if the next frame is responsible for GC'ing oops passed as arguments
   public boolean callerMustGCArguments(JavaThread thread) { return false; }
 
@@ -212,7 +212,7 @@ public class CodeBlob extends VMObject {
   // FIXME: NOT FINISHED
 
   // FIXME: add more accessors
-
+    
   public void print() {
     printOn(System.out);
   }

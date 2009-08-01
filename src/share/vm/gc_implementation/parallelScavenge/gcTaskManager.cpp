@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)gcTaskManager.cpp	1.35 07/06/29 04:07:55 JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -93,9 +96,9 @@ void GCTask::print(const char* message) const {
 }
 )
 
-//
+// 
 // GCTaskQueue
-//
+// 
 
 GCTaskQueue* GCTaskQueue::create() {
   GCTaskQueue* result = new GCTaskQueue(false);
@@ -135,10 +138,10 @@ void GCTaskQueue::destroy(GCTaskQueue* that) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " GCTaskQueue::destroy()"
                   "  is_c_heap_obj:  %s",
-                  that,
+                  that, 
                   that->is_c_heap_obj() ? "true" : "false");
   }
-  // That instance may have been allocated as a CHeapObj,
+  // That instance may have been allocated as a CHeapObj, 
   // in which case we have to free it explicitly.
   if (that != NULL) {
     that->destruct();
@@ -325,9 +328,9 @@ void GCTaskQueue::print(const char* message) const {
 }
 )
 
-//
+// 
 // SynchronizedGCTaskQueue
-//
+// 
 
 SynchronizedGCTaskQueue::SynchronizedGCTaskQueue(GCTaskQueue* queue_arg,
                                                  Monitor *       lock_arg) :
@@ -341,9 +344,9 @@ SynchronizedGCTaskQueue::~SynchronizedGCTaskQueue() {
   // Nothing to do.
 }
 
-//
+// 
 // GCTaskManager
-//
+// 
 GCTaskManager::GCTaskManager(uint workers) :
   _workers(workers),
   _ndc(NULL) {
@@ -450,7 +453,7 @@ void GCTaskManager::print_threads_on(outputStream* st) {
     thread(i)->print_on(st);
     st->cr();
   }
-}
+} 
 
 void GCTaskManager::threads_do(ThreadClosure* tc) {
   assert(tc != NULL, "Null ThreadClosure");
@@ -509,9 +512,9 @@ GCTask* GCTaskManager::get_task(uint which) {
   GCTask* result = NULL;
   // Grab the queue lock.
   MutexLockerEx ml(monitor(), Mutex::_no_safepoint_check_flag);
-  // Wait while the queue is block or
+  // Wait while the queue is block or 
   // there is nothing to do, except maybe release resources.
-  while (is_blocked() ||
+  while (is_blocked() || 
          (queue()->is_empty() && !should_release_resources(which))) {
     if (TraceGCTaskManager) {
       tty->print_cr("GCTaskManager::get_task(%u)"
@@ -605,7 +608,7 @@ void GCTaskManager::note_completion(uint which) {
                   emptied_queue());
   }
   // Tell everyone that a task has completed.
-  (void) monitor()->notify_all();
+  (void) monitor()->notify_all();  
   // Release monitor().
 }
 
@@ -657,7 +660,7 @@ void GCTaskManager::set_resource_flag(uint which, bool value) {
   _resource_flag[which] = value;
 }
 
-//
+// 
 // NoopGCTask
 //
 
@@ -692,7 +695,7 @@ void NoopGCTask::destruct() {
 
 void BarrierGCTask::do_it(GCTaskManager* manager, uint which) {
   // Wait for this to be the only busy worker.
-  // ??? I thought of having a StackObj class
+  // ??? I thought of having a StackObj class 
   //     whose constructor would grab the lock and come to the barrier,
   //     and whose destructor would release the lock,
   //     but that seems like too much mechanism for two lines of code.
@@ -719,7 +722,7 @@ void BarrierGCTask::destruct() {
   // Nothing else to do.
 }
 
-//
+// 
 // ReleasingBarrierGCTask
 //
 
@@ -735,9 +738,9 @@ void ReleasingBarrierGCTask::destruct() {
   // Nothing else to do.
 }
 
-//
+// 
 // NotifyingBarrierGCTask
-//
+// 
 
 void NotifyingBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
   MutexLockerEx ml(manager->lock(), Mutex::_no_safepoint_check_flag);
@@ -754,9 +757,9 @@ void NotifyingBarrierGCTask::destruct() {
   // Nothing else to do.
 }
 
-//
+// 
 // WaitForBarrierGCTask
-//
+// 
 WaitForBarrierGCTask* WaitForBarrierGCTask::create() {
   WaitForBarrierGCTask* result = new WaitForBarrierGCTask(false);
   return result;
@@ -774,7 +777,7 @@ WaitForBarrierGCTask::WaitForBarrierGCTask(bool on_c_heap) :
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " WaitForBarrierGCTask::WaitForBarrierGCTask()"
-                  "  monitor: " INTPTR_FORMAT,
+                  "  monitor: " INTPTR_FORMAT, 
                   this, monitor());
   }
 }
@@ -785,9 +788,9 @@ void WaitForBarrierGCTask::destroy(WaitForBarrierGCTask* that) {
       tty->print_cr("[" INTPTR_FORMAT "]"
                     " WaitForBarrierGCTask::destroy()"
                     "  is_c_heap_obj: %s"
-                    "  monitor: " INTPTR_FORMAT,
-                    that,
-                    that->is_c_heap_obj() ? "true" : "false",
+                    "  monitor: " INTPTR_FORMAT, 
+                    that, 
+                    that->is_c_heap_obj() ? "true" : "false", 
                     that->monitor());
     }
     that->destruct();
@@ -802,23 +805,23 @@ void WaitForBarrierGCTask::destruct() {
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " WaitForBarrierGCTask::destruct()"
-                  "  monitor: " INTPTR_FORMAT,
+                  "  monitor: " INTPTR_FORMAT, 
                   this, monitor());
   }
   this->BarrierGCTask::destruct();
-  // Clean up that should be in the destructor,
+  // Clean up that should be in the destructor, 
   // except that ResourceMarks don't call destructors.
    if (monitor() != NULL) {
      MonitorSupply::release(monitor());
   }
   _monitor = (Monitor*) 0xDEAD000F;
 }
-
+  
 void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " WaitForBarrierGCTask::do_it() waiting for idle"
-                  "  monitor: " INTPTR_FORMAT,
+                  "  monitor: " INTPTR_FORMAT, 
                   this, monitor());
   }
   {
@@ -836,7 +839,7 @@ void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
     if (TraceGCTaskManager) {
       tty->print_cr("[" INTPTR_FORMAT "]"
                     " WaitForBarrierGCTask::do_it()"
-                    "  [" INTPTR_FORMAT "] (%s)->notify_all()",
+                    "  [" INTPTR_FORMAT "] (%s)->notify_all()", 
                     this, monitor(), monitor()->name());
     }
     monitor()->notify_all();
@@ -848,7 +851,7 @@ void WaitForBarrierGCTask::wait_for() {
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " WaitForBarrierGCTask::wait_for()"
-      "  should_wait: %s",
+      "  should_wait: %s", 
       this, should_wait() ? "true" : "false");
   }
   {
@@ -858,7 +861,7 @@ void WaitForBarrierGCTask::wait_for() {
       if (TraceGCTaskManager) {
         tty->print_cr("[" INTPTR_FORMAT "]"
                       " WaitForBarrierGCTask::wait_for()"
-          "  [" INTPTR_FORMAT "] (%s)->wait()",
+          "  [" INTPTR_FORMAT "] (%s)->wait()", 
           this, monitor(), monitor()->name());
       }
       monitor()->wait(Mutex::_no_safepoint_check_flag, 0);
@@ -868,7 +871,7 @@ void WaitForBarrierGCTask::wait_for() {
     if (TraceGCTaskManager) {
       tty->print_cr("[" INTPTR_FORMAT "]"
                     " WaitForBarrierGCTask::wait_for() returns"
-        "  should_wait: %s",
+        "  should_wait: %s", 
         this, should_wait() ? "true" : "false");
     }
     // Release monitor().

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)stackMapFrame.cpp	1.24 07/05/05 17:06:57 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_stackMapFrame.cpp.incl"
 
-StackMapFrame::StackMapFrame(u2 max_locals, u2 max_stack, ClassVerifier* v) :
-                      _offset(0), _locals_size(0), _stack_size(0), _flags(0),
+StackMapFrame::StackMapFrame(u2 max_locals, u2 max_stack, ClassVerifier* v) : 
+                      _offset(0), _locals_size(0), _stack_size(0), _flags(0), 
                       _max_locals(max_locals), _max_stack(max_stack),
                       _verifier(v) {
   Thread* thr = v->thread();
@@ -38,7 +41,7 @@ StackMapFrame::StackMapFrame(u2 max_locals, u2 max_stack, ClassVerifier* v) :
   }
   for(i = 0; i < max_stack; i++) {
     _stack[i] = VerificationType::bogus_type();
-  }
+  }  
 }
 
 StackMapFrame* StackMapFrame::frame_in_exception_handler(u1 flags) {
@@ -79,7 +82,7 @@ void StackMapFrame::initialize_object(
   if (old_object == VerificationType::uninitialized_this_type()) {
     // "this" has been initialized - reset flags
     _flags = 0;
-  }
+  } 
 }
 
 VerificationType StackMapFrame::set_locals_from_arg(
@@ -97,12 +100,12 @@ VerificationType StackMapFrame::set_locals_from_arg(
     } else {
       _locals[0] = thisKlass;
     }
-  }
-
+  } 
+  
   // local num may be greater than size of parameters because long/double occupies two slots
   while(!ss.at_return_type()) {
     init_local_num += _verifier->change_sig_to_verificationType(
-      &ss, &_locals[init_local_num],
+      &ss, &_locals[init_local_num], 
       CHECK_VERIFY_(verifier(), VerificationType::bogus_type()));
     ss.next();
   }
@@ -131,7 +134,7 @@ VerificationType StackMapFrame::set_locals_from_arg(
 }
 
 void StackMapFrame::copy_locals(const StackMapFrame* src) {
-  int32_t len = src->locals_size() < _locals_size ?
+  int32_t len = src->locals_size() < _locals_size ? 
     src->locals_size() : _locals_size;
   for (int32_t i = 0; i < len; i++) {
     _locals[i] = src->locals()[i];
@@ -139,7 +142,7 @@ void StackMapFrame::copy_locals(const StackMapFrame* src) {
 }
 
 void StackMapFrame::copy_stack(const StackMapFrame* src) {
-  int32_t len = src->stack_size() < _stack_size ?
+  int32_t len = src->stack_size() < _stack_size ? 
     src->stack_size() : _stack_size;
   for (int32_t i = 0; i < len; i++) {
     _stack[i] = src->stack()[i];
@@ -194,9 +197,9 @@ VerificationType StackMapFrame::get_local(
     int32_t index, VerificationType type, TRAPS) {
   if (index >= _max_locals) {
     verifier()->verify_error(_offset, "Local variable table overflow");
-    return VerificationType::bogus_type();
+    return VerificationType::bogus_type(); 
   }
-  bool subtype = type.is_assignable_from(_locals[index],
+  bool subtype = type.is_assignable_from(_locals[index], 
     verifier()->current_class(), CHECK_(VerificationType::bogus_type()));
   if (!subtype) {
     verifier()->verify_error(_offset, "Bad local variable type");
@@ -244,7 +247,7 @@ void StackMapFrame::set_local(int32_t index, VerificationType type, TRAPS) {
   if (index >= _locals_size) {
 #ifdef ASSERT
     for (int i=_locals_size; i<index; i++) {
-      assert(_locals[i] == VerificationType::bogus_type(),
+      assert(_locals[i] == VerificationType::bogus_type(), 
              "holes must be bogus type");
     }
 #endif
@@ -275,7 +278,7 @@ void StackMapFrame::set_local_2(
   if (index >= _locals_size - 1) {
 #ifdef ASSERT
     for (int i=_locals_size; i<index; i++) {
-      assert(_locals[i] == VerificationType::bogus_type(),
+      assert(_locals[i] == VerificationType::bogus_type(), 
              "holes must be bogus type");
     }
 #endif
@@ -301,3 +304,4 @@ void StackMapFrame::print() const {
 }
 
 #endif
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)c1_FrameMap_sparc.cpp	1.75 07/06/18 14:25:22 JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -201,7 +204,7 @@ void FrameMap::init () {
   /*  5 */ map_register(i++, L5);
   /*  6 */ map_register(i++, L6);
   /*  7 */ map_register(i++, L7);
-
+  
   /*  8 */ map_register(i++, I0);
   /*  9 */ map_register(i++, I1);
   /* 10 */ map_register(i++, I2);

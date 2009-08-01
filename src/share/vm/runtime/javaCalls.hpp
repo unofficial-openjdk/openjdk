@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)javaCalls.hpp	1.81 07/05/05 17:06:47 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A JavaCallWrapper is constructed before each JavaCall and destructed after the call.
@@ -30,7 +33,7 @@ class JavaCallWrapper: StackObj {
   friend class VMStructs;
  private:
   JavaThread*      _thread;                 // the thread to which this call belongs
-  JNIHandleBlock*  _handles;                // the saved handle block
+  JNIHandleBlock*  _handles;                // the saved handle block      
   methodOop        _callee_method;          // to be able to collect arguments if entry frame is top frame
   oop              _receiver;               // the receiver of the call (if a non-static call)
 
@@ -48,7 +51,7 @@ class JavaCallWrapper: StackObj {
   JNIHandleBlock*  handles() const          { return _handles; }
 
   JavaFrameAnchor* anchor(void)             { return &_anchor; }
-
+  
   JavaValue*       result() const           { return _result; }
   // GC support
   methodOop        callee_method()          { return _callee_method; }
@@ -67,13 +70,13 @@ class JavaCallArguments : public StackObj {
 
   intptr_t    _value_buffer [_default_size + 1];
   intptr_t    _parameter_buffer [_default_size*2 + 1];
-  bool        _is_oop_buffer[_default_size + 1];
+  bool        _is_oop_buffer[_default_size + 1];    
 
-  intptr_t*   _value;
-  intptr_t*   _parameters;
+  intptr_t*   _value;     
+  intptr_t*   _parameters;     
   bool*       _is_oop;
   int         _size;
-  int         _max_size;
+  int         _max_size;  
   bool        _start_at_zero;      // Support late setting of receiver
 
   void initialize() {
@@ -90,7 +93,7 @@ class JavaCallArguments : public StackObj {
  public:
   JavaCallArguments() { initialize(); }
 
-  JavaCallArguments(Handle receiver) {
+  JavaCallArguments(Handle receiver) {    
     initialize();
     push_oop(receiver);
   }
@@ -103,32 +106,32 @@ class JavaCallArguments : public StackObj {
         _parameters  = NEW_RESOURCE_ARRAY(intptr_t, max_size*2 + 1);
       }
       // Reserve room for potential receiver in value and is_oop
-      _value++; _is_oop++;
+      _value++; _is_oop++;  
       _max_size = max_size;
       _size = 0;
       _start_at_zero = false;
     } else {
       initialize();
     }
-  }
-
+  }  
+  
   inline void push_oop(Handle h)    { _is_oop[_size] = true;
-                               JNITypes::put_obj((oop)h.raw_value(), _value, _size); }
+		               JNITypes::put_obj((oop)h.raw_value(), _value, _size); }
 
   inline void push_int(int i)       { _is_oop[_size] = false;
-                               JNITypes::put_int(i, _value, _size); }
+		               JNITypes::put_int(i, _value, _size); }
 
   inline void push_double(double d) { _is_oop[_size] = false; _is_oop[_size + 1] = false;
-                               JNITypes::put_double(d, _value, _size); }
-
+                               JNITypes::put_double(d, _value, _size); } 
+  
   inline void push_long(jlong l)    { _is_oop[_size] = false; _is_oop[_size + 1] = false;
                                JNITypes::put_long(l, _value, _size); }
-
+  
   inline void push_float(float f)   { _is_oop[_size] = false;
                                JNITypes::put_float(f, _value, _size); }
-
+  
   // receiver
-  Handle receiver() {
+  Handle receiver() {    
     assert(_size > 0, "must at least be one argument");
     assert(_is_oop[0], "first argument must be an oop");
     assert(_value[0] != 0, "receiver must be not-null");
@@ -142,12 +145,12 @@ class JavaCallArguments : public StackObj {
     _value--;
     _size++;
     _is_oop[0] = true;
-    _value[0] = (intptr_t)h.raw_value();
+    _value[0] = (intptr_t)h.raw_value();            
   }
 
   // Converts all Handles to oops, and returns a reference to parameter vector
   intptr_t* parameters() ;
-  int   size_of_parameters() const { return _size; }
+  int   size_of_parameters() const { return _size; }    
 
   // Verify that pushed arguments fits a given method
   void verify(methodHandle method, BasicType return_type, Thread *thread);
@@ -169,9 +172,9 @@ class JavaCalls: AllStatic {
   static void call_special(JavaValue* result, KlassHandle klass, symbolHandle name, symbolHandle signature, JavaCallArguments* args, TRAPS);
 
   static void call_special(JavaValue* result, Handle receiver, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS); // No args
-  static void call_special(JavaValue* result, Handle receiver, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, TRAPS);
-  static void call_special(JavaValue* result, Handle receiver, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, Handle arg2, TRAPS);
-
+  static void call_special(JavaValue* result, Handle receiver, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, TRAPS); 
+  static void call_special(JavaValue* result, Handle receiver, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, Handle arg2, TRAPS); 
+  
   // virtual call
   // ------------
 
@@ -179,13 +182,13 @@ class JavaCalls: AllStatic {
   static void call_virtual(JavaValue* result, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, JavaCallArguments* args, TRAPS);
 
   static void call_virtual(JavaValue* result, Handle receiver, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, TRAPS); // No args
-  static void call_virtual(JavaValue* result, Handle receiver, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, Handle arg1, TRAPS);
-  static void call_virtual(JavaValue* result, Handle receiver, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, Handle arg1, Handle arg2, TRAPS);
+  static void call_virtual(JavaValue* result, Handle receiver, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, Handle arg1, TRAPS); 
+  static void call_virtual(JavaValue* result, Handle receiver, KlassHandle spec_klass, symbolHandle name, symbolHandle signature, Handle arg1, Handle arg2, TRAPS);   
 
   // Static call
-  // -----------
+  // -----------  
   static void call_static(JavaValue* result, KlassHandle klass, symbolHandle name, symbolHandle signature, JavaCallArguments* args, TRAPS);
-
+ 
   static void call_static(JavaValue* result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
   static void call_static(JavaValue* result, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, TRAPS);
   static void call_static(JavaValue* result, KlassHandle klass, symbolHandle name, symbolHandle signature, Handle arg1, Handle arg2, TRAPS);
@@ -193,3 +196,4 @@ class JavaCalls: AllStatic {
   // Low-level interface
   static void call(JavaValue* result, methodHandle method, JavaCallArguments* args, TRAPS);
 };
+

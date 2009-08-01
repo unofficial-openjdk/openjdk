@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)sharedRuntime.hpp	1.158 07/10/05 19:47:48 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class AdapterHandlerEntry;
@@ -94,7 +97,7 @@ class SharedRuntime: AllStatic {
   static jdouble dexp(jdouble x);
   static jdouble dpow(jdouble x, jdouble y);
 
-
+  
   // exception handling across interpreter/compiler boundaries
   static address raw_exception_handler_for_return_address(address return_address);
   static address exception_handler_for_return_address(address return_address);
@@ -126,7 +129,7 @@ class SharedRuntime: AllStatic {
   // Shared stub locations
   static address get_poll_stub(address pc);
 
-  static address get_ic_miss_stub() {
+  static address get_ic_miss_stub() { 
     assert(_ic_miss_blob!= NULL, "oops");
     return _ic_miss_blob->instructions_begin();
   }
@@ -174,11 +177,11 @@ class SharedRuntime: AllStatic {
 
   // bytecode tracing is only used by the TraceBytecodes
   static intptr_t trace_bytecode(JavaThread* thread, intptr_t preserve_this_value, intptr_t tos, intptr_t tos2) PRODUCT_RETURN0;
-
+  
   // Used to back off a spin lock that is under heavy contention
   static void yield_all(JavaThread* thread, int attempts = 0);
 
-  static oop retrieve_receiver( symbolHandle sig, frame caller );
+  static oop retrieve_receiver( symbolHandle sig, frame caller );  
 
   static void verify_caller_frame(frame caller_frame, methodHandle callee_method) PRODUCT_RETURN;
   static methodHandle find_callee_method_inside_interpreter(frame caller_frame, methodHandle caller_method, int bci) PRODUCT_RETURN_(return methodHandle(););
@@ -201,30 +204,30 @@ class SharedRuntime: AllStatic {
 
   /**
    * Fill in the "X cannot be cast to a Y" message for ClassCastException
-   *
+   * 
    * @param thr the current thread
    * @param name the name of the class of the object attempted to be cast
    * @return the dynamically allocated exception message (must be freed
-   * by the caller using a resource mark)
+   * by the caller using a resource mark)  
    *
-   * BCP must refer to the current 'checkcast' opcode for the frame
-   * on top of the stack.
-   * The caller (or one of it's callers) must use a ResourceMark
+   * BCP must refer to the current 'checkcast' opcode for the frame 
+   * on top of the stack.  
+   * The caller (or one of it's callers) must use a ResourceMark 
    * in order to correctly free the result.
    */
   static char* generate_class_cast_message(JavaThread* thr, const char* name);
 
   /**
    * Fill in the "X cannot be cast to a Y" message for ClassCastException
-   *
+   * 
    * @param name the name of the class of the object attempted to be cast
    * @param klass the name of the target klass attempt
    * @return the dynamically allocated exception message (must be freed
-   * by the caller using a resource mark)
+   * by the caller using a resource mark)  
    *
    * This version does not require access the frame, so it can be called
    * from interpreted code
-   * The caller (or one of it's callers) must use a ResourceMark
+   * The caller (or one of it's callers) must use a ResourceMark 
    * in order to correctly free the result.
    */
   static char* generate_class_cast_message(const char* name, const char* klass);
@@ -258,7 +261,7 @@ class SharedRuntime: AllStatic {
 
  private:
   static Handle find_callee_info(JavaThread* thread,
-                                 Bytecodes::Code& bc,
+                                 Bytecodes::Code& bc, 
                                  CallInfo& callinfo, TRAPS);
   static Handle find_callee_info_helper(JavaThread* thread,
                                         vframeStream& vfst,
@@ -277,7 +280,7 @@ class SharedRuntime: AllStatic {
   // registers, those above refer to 4-byte stack slots.  All stack slots are
   // based off of the window top.  SharedInfo::stack0 refers to the first usable
   // slot in the bottom of the frame. SharedInfo::stack0+1 refers to the memory word
-  // 4-bytes higher. So for sparc because the register window save area is at
+  // 4-bytes higher. So for sparc because the register window save area is at 
   // the bottom of the frame the first 16 words will be skipped and SharedInfo::stack0
   // will be just above it. (
   // return value is the maximum number of VMReg stack slots the convention will use.
@@ -290,8 +293,8 @@ class SharedRuntime: AllStatic {
   // blobs. Unlike adapters in the tiger and earlier releases the code in these
   // blobs does not create a new frame and are therefore virtually invisible
   // to the stack walking code. In general these blobs extend the callers stack
-  // as needed for the conversion of argument locations.
-
+  // as needed for the conversion of argument locations. 
+  
   // When calling a c2i blob the code will always call the interpreter even if
   // by the time we reach the blob there is compiled code available. This allows
   // the blob to pass the incoming stack pointer (the sender sp) in a known
@@ -341,7 +344,7 @@ class SharedRuntime: AllStatic {
   static VMReg     name_for_receiver();
 
   // "Top of Stack" slots that may be unused by the calling convention but must
-  // otherwise be preserved.
+  // otherwise be preserved.  
   // On Intel these are not necessary and the value can be zero.
   // On Sparc this describes the words reserved for storing a register window
   // when an interrupt occurs.
@@ -381,20 +384,20 @@ class SharedRuntime: AllStatic {
   // exists.  Patch the caller so he no longer calls into the interpreter.
   static void fixup_callers_callsite(methodOopDesc* moop, address ret_pc);
 
-  // Slow-path Locking and Unlocking
-  static void complete_monitor_locking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread);
+  // Slow-path Locking and Unlocking    
+  static void complete_monitor_locking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread);  
   static void complete_monitor_unlocking_C(oopDesc* obj, BasicLock* lock);
 
   // Resolving of calls
-  static address resolve_static_call_C     (JavaThread *thread);
-  static address resolve_virtual_call_C    (JavaThread *thread);
-  static address resolve_opt_virtual_call_C(JavaThread *thread);
+  static address resolve_static_call_C     (JavaThread *thread);    
+  static address resolve_virtual_call_C    (JavaThread *thread);    
+  static address resolve_opt_virtual_call_C(JavaThread *thread);  
 
   // arraycopy, the non-leaf version.  (See StubRoutines for all the leaf calls.)
   static void slow_arraycopy_C(oopDesc* src,  jint src_pos,
                                oopDesc* dest, jint dest_pos,
                                jint length, JavaThread* thread);
-
+  
   // handle ic miss with caller being compiled code
   // wrong method handling (inline cache misses, zombie methods)
   static address handle_wrong_method(JavaThread* thread);
@@ -405,15 +408,15 @@ class SharedRuntime: AllStatic {
   // Collect and print inline cache miss statistics
  private:
   enum { maxICmiss_count = 100 };
-  static int     _ICmiss_index;                  // length of IC miss histogram
-  static int     _ICmiss_count[maxICmiss_count]; // miss counts
+  static int	 _ICmiss_index;                  // length of IC miss histogram
+  static int	 _ICmiss_count[maxICmiss_count]; // miss counts
   static address _ICmiss_at[maxICmiss_count];    // miss addresses
   static void trace_ic_miss(address at);
 
  public:
-  static int _monitor_enter_ctr;                 // monitor enter slow
+  static int _monitor_enter_ctr;	         // monitor enter slow
   static int _monitor_exit_ctr;                  // monitor exit slow
-  static int _throw_null_ctr;                    // throwing a null-pointer exception
+  static int _throw_null_ctr;	                 // throwing a null-pointer exception
   static int _ic_miss_ctr;                       // total # of IC misses
   static int _wrong_method_ctr;
   static int _resolve_static_ctr;
@@ -434,7 +437,7 @@ class SharedRuntime: AllStatic {
 
   static int _new_instance_ctr;            // 'new' object requires GC
   static int _new_array_ctr;               // 'new' array requires GC
-  static int _multi1_ctr, _multi2_ctr, _multi3_ctr, _multi4_ctr, _multi5_ctr;
+  static int _multi1_ctr, _multi2_ctr, _multi3_ctr, _multi4_ctr, _multi5_ctr; 
   static int _find_handler_ctr;            // find exception handler
   static int _rethrow_ctr;                 // rethrow exception
   static int _mon_enter_stub_ctr;          // monitor enter stub

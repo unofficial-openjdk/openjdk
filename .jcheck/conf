@@ -1,1 +1,3 @@
-project=jdk7
+project=jdk6
+whitespace=lax
+comments=lax

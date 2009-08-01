@@ -234,6 +234,8 @@ BUILD_DIR  = ../build
 OUTPUT_DIR = $(BUILD_DIR)/classes
 DOC_DIR    = $(BUILD_DIR)/doc
 
+
+
 # gnumake 3.78.1 does not accept the *s, 
 # so use the shell to expand them
 ALLFILES := $(patsubst %,$(SRC_DIR)/%,$(FILELIST))
@@ -285,7 +287,7 @@ filelist: $(ALLFILES)
           echo ""; \
           exit 1; \
         fi
-	@rm -f $@
+	@echo "$(MSG)"
 	@echo $(ALLFILES) > $@
 
 .PHONY: natives
@@ -299,8 +301,8 @@ sa-jdi.jar:
 docs:
 	@$(JAVADOC) -private -classpath $(CLASSPATH) -sourcepath $(SRC_DIR) -d $(DOC_DIR) $(PKGLIST)
 
-sizes: $(ALLFILES)
-	wc -l $(ALLFILES)
+sizes: filelist
+	wc -l `cat filelist`
 
 cscope: $(ALLFILES)
 	rm -f java.files

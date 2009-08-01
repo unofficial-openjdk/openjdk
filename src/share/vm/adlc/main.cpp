@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // MAIN.CPP - Entry point for the Architecture Description Language Compiler
@@ -28,8 +28,8 @@
 //------------------------------Prototypes-------------------------------------
 static void  usage(ArchDesc& AD);          // Print usage message and exit
 static char *strip_ext(char *fname);       // Strip off name extension
-static char *base_plus_suffix(const char* base, const char *suffix);// New concatenated string
-static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, const char *suffix);// New concatenated string
+static char *base_plus_suffix(const char* base, const char *suffix);// New concatenated string 
+static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, const char *suffix);// New concatenated string 
 static int get_legal_text(FileBuff &fbuf, char **legal_text); // Get pointer to legal text
 
 ArchDesc* globalAD = NULL;      // global reference to Architecture Description object
@@ -48,33 +48,33 @@ int main(int argc, char *argv[])
 
   // Read command line arguments and file names
   for( int i = 1; i < argc; i++ ) { // For all arguments
-    register char *s = argv[i]; // Get option/filename
+    register char *s = argv[i];	// Get option/filename
 
     if( *s++ == '-' ) {         // It's a flag? (not a filename)
-      if( !*s ) {               // Stand-alone `-' means stdin
-        //********** INSERT CODE HERE **********
+      if( !*s ) {		// Stand-alone `-' means stdin
+	//********** INSERT CODE HERE **********	
       } else while (*s != '\0') { // While have flags on option
-        switch (*s++) {         // Handle flag
-        case 'd':               // Debug flag
-          AD._dfa_debug += 1;   // Set Debug Flag
-          break;
-        case 'g':               // Debug ad location flag
-          AD._adlocation_debug += 1;       // Set Debug ad location Flag
-          break;
-        case 'o':               // No Output Flag
-          AD._no_output ^= 1;   // Toggle no_output flag
-          break;
-        case 'q':               // Quiet Mode Flag
-          AD._quiet_mode ^= 1;  // Toggle quiet_mode flag
-          break;
-        case 'w':               // Disable Warnings Flag
-          AD._disable_warnings ^= 1; // Toggle disable_warnings flag
-          break;
-        case 'T':               // Option to make DFA as many subroutine calls.
-          AD._dfa_small += 1;   // Set Mode Flag
-          break;
-        case 'c': {             // Set C++ Output file name
-          AD._CPP_file._name = s;
+	switch (*s++) { 	// Handle flag
+	case 'd':               // Debug flag
+	  AD._dfa_debug += 1;   // Set Debug Flag
+	  break;
+	case 'g':               // Debug ad location flag
+	  AD._adlocation_debug += 1;       // Set Debug ad location Flag
+	  break;
+	case 'o':               // No Output Flag
+	  AD._no_output ^= 1;   // Toggle no_output flag
+	  break;
+	case 'q':               // Quiet Mode Flag
+	  AD._quiet_mode ^= 1;  // Toggle quiet_mode flag
+	  break;
+	case 'w':               // Disable Warnings Flag
+	  AD._disable_warnings ^= 1; // Toggle disable_warnings flag
+	  break;
+	case 'T':               // Option to make DFA as many subroutine calls.
+	  AD._dfa_small += 1;   // Set Mode Flag
+	  break;
+	case 'c': {             // Set C++ Output file name
+	  AD._CPP_file._name = s;
           const char *base = strip_ext(strdup(s));
           AD._CPP_CLONE_file._name    = base_plus_suffix(base,"_clone.cpp");
           AD._CPP_EXPAND_file._name   = base_plus_suffix(base,"_expand.cpp");
@@ -84,48 +84,48 @@ int main(int argc, char *argv[])
           AD._CPP_PEEPHOLE_file._name = base_plus_suffix(base,"_peephole.cpp");
           AD._CPP_PIPELINE_file._name = base_plus_suffix(base,"_pipeline.cpp");
           s += strlen(s);
-          break;
+	  break;
         }
-        case 'h':               // Set C++ Output file name
-          AD._HPP_file._name = s; s += strlen(s);
-          break;
-        case 'v':               // Set C++ Output file name
-          AD._VM_file._name = s; s += strlen(s);
-          break;
-        case 'a':               // Set C++ Output file name
-          AD._DFA_file._name = s;
-          AD._bug_file._name = s;
-          s += strlen(s);
-          break;
-        case '#':               // Special internal debug flag
-          AD._adl_debug++;      // Increment internal debug level
-          break;
-        case 's':               // Output which instructions are cisc-spillable
-          AD._cisc_spill_debug = true;
-          break;
-        case 'D':               // Flag Definition
-          {
-            char* flag = s;
-            s += strlen(s);
-            char* def = strchr(flag, '=');
-            if (def == NULL)  def = (char*)"1";
-            else              *def++ = '\0';
-            AD.set_preproc_def(flag, def);
-          }
-          break;
-        case 'U':               // Flag Un-Definition
-          {
-            char* flag = s;
-            s += strlen(s);
-            AD.set_preproc_def(flag, NULL);
-          }
-          break;
-        default:                // Unknown option
-          usage(AD);            // So print usage and exit
-        }                       // End of switch on options...
-      }                         // End of while have options...
+	case 'h':               // Set C++ Output file name
+	  AD._HPP_file._name = s; s += strlen(s);
+	  break;
+	case 'v':               // Set C++ Output file name
+	  AD._VM_file._name = s; s += strlen(s);
+	  break;
+	case 'a':               // Set C++ Output file name
+	  AD._DFA_file._name = s;
+	  AD._bug_file._name = s;
+	  s += strlen(s);
+	  break;
+	case '#':               // Special internal debug flag
+	  AD._adl_debug++;      // Increment internal debug level
+	  break;
+	case 's':               // Output which instructions are cisc-spillable
+	  AD._cisc_spill_debug = true;
+	  break;
+	case 'D':               // Flag Definition
+	  {
+	    char* flag = s;
+	    s += strlen(s);
+	    char* def = strchr(flag, '=');
+	    if (def == NULL)  def = (char*)"1";
+	    else              *def++ = '\0';
+	    AD.set_preproc_def(flag, def);
+	  }
+	  break;
+	case 'U':               // Flag Un-Definition
+	  {
+	    char* flag = s;
+	    s += strlen(s);
+	    AD.set_preproc_def(flag, NULL);
+	  }
+	  break;
+	default:		// Unknown option
+	  usage(AD);            // So print usage and exit
+	}			// End of switch on options...
+      } 			// End of while have options...
 
-    } else {                    // Not an option; must be a filename
+    } else {			// Not an option; must be a filename
       AD._ADL_file._name = argv[i]; // Set the input filename
 
       // // Files for storage, based on input file name
@@ -146,12 +146,12 @@ int main(int argc, char *argv[])
       delete temp;
       temp = base_plus_suffix("adGlobals_",base);
       AD._VM_file._name = base_plus_suffix(temp,".hpp");
-      delete temp;
+      delete temp;      
       temp = base_plus_suffix("bugs_",base);
       AD._bug_file._name = base_plus_suffix(temp,".out");
       delete temp;
-    }                           // End of files vs options...
-  }                             // End of while have command line arguments
+    }				// End of files vs options...
+  }				// End of while have command line arguments
 
   // Open files used to store the matcher and its components
   if (AD.open_files() == 0) return 1; // Open all input/output files
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
   // Verify that the results of the parse are consistent
   AD.verify();
 
-  // Prepare to generate the result files:
+  // Prepare to generate the result files: 
   AD.generateMatchLists();
   AD.identify_unique_operands();
   AD.identify_cisc_spill_instructions();
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
   AD.machineDependentIncludes(AD._CPP_MISC_file);      // .cpp
   AD.machineDependentIncludes(AD._CPP_PEEPHOLE_file);  // .cpp
   AD.machineDependentIncludes(AD._CPP_PIPELINE_file);  // .cpp
-  // Generate the result files:
+  // Generate the result files: 
   // enumerations, class definitions, object generators, and the DFA
   // file containing enumeration of machine operands & instructions (hpp)
   AD.addPreHeaderBlocks(AD._HPP_file._fp);        // .hpp
@@ -272,7 +272,7 @@ static void usage(ArchDesc& AD)
   printf("Usage: adl [-doqw] [-Dflag[=def]] [-Uflag] [-cFILENAME] [-hFILENAME] [-aDFAFILE] ADLFILE\n");
   printf(" d  produce DFA debugging info\n");
   printf(" o  no output produced, syntax and semantic checking only\n");
-  printf(" q  quiet mode, supresses all non-essential messages\n");
+  printf(" q  quiet mode, supresses all non-essential messages\n"); 
   printf(" w  suppress warning messages\n");
   printf(" c  specify CPP file name (default: %s)\n", AD._CPP_file._name);
   printf(" h  specify HPP file name (default: %s)\n", AD._HPP_file._name);
@@ -349,15 +349,15 @@ void ArchDesc::close_files(int delete_out)
     }
     else {
       if (_ADL_file._name) printf("%s --> ", _ADL_file._name);
-      printf("%s, %s, %s, %s, %s, %s, %s, %s, %s",
-             _CPP_file._name,
-             _CPP_CLONE_file._name,
-             _CPP_EXPAND_file._name,
-             _CPP_FORMAT_file._name,
-             _CPP_GEN_file._name,
-             _CPP_MISC_file._name,
-             _CPP_PEEPHOLE_file._name,
-             _CPP_PIPELINE_file._name,
+      printf("%s, %s, %s, %s, %s, %s, %s, %s, %s", 
+             _CPP_file._name, 
+             _CPP_CLONE_file._name, 
+             _CPP_EXPAND_file._name, 
+             _CPP_FORMAT_file._name, 
+             _CPP_GEN_file._name, 
+             _CPP_MISC_file._name, 
+             _CPP_PEEPHOLE_file._name, 
+             _CPP_PIPELINE_file._name, 
              _HPP_file._name, _DFA_file._name);
     }
     printf("\n");
@@ -368,11 +368,11 @@ void ArchDesc::close_files(int delete_out)
 static char *strip_ext(char *fname)
 {
   char *ep;
-
+   
   if (fname) {
     ep = fname + strlen(fname) - 1; // start at last character and look for '.'
     while (ep >= fname && *ep != '.') --ep;
-    if (*ep == '.')     *ep = '\0'; // truncate string at '.'
+    if (*ep == '.')	*ep = '\0'; // truncate string at '.' 
   }
   return fname;
 }
@@ -382,19 +382,19 @@ static char *strip_path_and_ext(char *fname)
 {
   char *ep;
   char *sp;
-
+   
   if (fname) {
     for (sp = fname; *sp; sp++)
       if (*sp == '/')  fname = sp+1;
     ep = fname;                    // start at first character and look for '.'
     while (ep <= (fname + strlen(fname) - 1) && *ep != '.') ep++;
-    if (*ep == '.')     *ep = '\0'; // truncate string at '.'
+    if (*ep == '.')	*ep = '\0'; // truncate string at '.' 
   }
   return fname;
 }
 
 //------------------------------base_plus_suffix-------------------------------
-// New concatenated string
+// New concatenated string 
 static char *base_plus_suffix(const char* base, const char *suffix)
 {
   int len = (int)strlen(base) + (int)strlen(suffix) + 1;
@@ -406,7 +406,7 @@ static char *base_plus_suffix(const char* base, const char *suffix)
 
 
 //------------------------------prefix_plus_base_plus_suffix-------------------
-// New concatenated string
+// New concatenated string 
 static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, const char *suffix)
 {
   int len = (int)strlen(prefix) + (int)strlen(base) + (int)strlen(suffix) + 1;
@@ -420,7 +420,7 @@ static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, 
 // Get pointer to legal text at the beginning of AD file.
 // This code assumes that a legal text starts at the beginning of .ad files,
 // is commented by "//" at each line and ends with empty line.
-//
+// 
 int get_legal_text(FileBuff &fbuf, char **legal_text)
 {
   char* legal_start = fbuf.get_line();

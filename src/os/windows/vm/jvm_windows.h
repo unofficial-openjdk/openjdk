@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jvm_windows.h	1.24 07/05/05 17:04:43 JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,16 +22,16 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _JAVASOFT_JVM_MD_H_
 #define _JAVASOFT_JVM_MD_H_
 
-/*
- * This file is currently collecting system-specific dregs for the
- * JNI conversion, which should be sorted out later.
- */
+/*  
+ * This file is currently collecting system-specific dregs for the 
+ * JNI conversion, which should be sorted out later. 
+ */ 
 
 #include <windows.h>
 // #include <windef.h>
@@ -106,3 +109,4 @@ JVM_GetThreadInterruptEvent();
 #define SHUTDOWN2_SIGNAL SIGTERM
 
 #endif /* !_JAVASOFT_JVM_MD_H_ */
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)attachListener.cpp	1.24 07/06/30 11:09:32 JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@ volatile bool AttachListener::_initialized;
 // Implementation of "properties" command.
 //
 // Invokes sun.misc.VMSupport.serializePropertiesToByteArray to serialize
-// the system properties into a byte array.
+// the system properties into a byte array. 
 
 static klassOop load_and_initialize_klass(symbolHandle sh, TRAPS) {
   klassOop k = SystemDictionary::resolve_or_fail(sh, true, CHECK_NULL);
@@ -139,7 +142,7 @@ static jint thread_dump(AttachOperation* op, outputStream* out) {
 
 #ifndef SERVICES_KERNEL   // Heap dumping not supported
 // Implementation of "dumpheap" command.
-//
+// 
 // Input arguments :-
 //   arg0: Name of the dump file
 //   arg1: "-live" or "-all"
@@ -166,7 +169,7 @@ jint dump_heap(AttachOperation* op, outputStream* out) {
     if (res == 0) {
       out->print_cr("Heap dump file created");
     } else {
-      // heap dump failed
+      // heap dump failed 
       ResourceMark rm;
       char* error = dumper.error_as_C_string();
       if (error == NULL) {
@@ -209,9 +212,9 @@ static jint set_bool_flag(const char* name, AttachOperation* op, outputStream* o
     if (n != 1) {
       out->print_cr("flag value has to be boolean (1 or 0)");
       return JNI_ERR;
-    }
+    } 
     value = (tmp != 0);
-  }
+  }  
   bool res = CommandLineFlags::boolAtPut((char*)name, &value, ATTACH_ON_DEMAND);
   if (! res) {
     out->print_cr("setting flag %s failed", name);
@@ -228,8 +231,8 @@ static jint set_intx_flag(const char* name, AttachOperation* op, outputStream* o
     if (n != 1) {
       out->print_cr("flag value has to be integer");
       return JNI_ERR;
-    }
-  }
+    } 
+  }  
   bool res = CommandLineFlags::intxAtPut((char*)name,  &value, ATTACH_ON_DEMAND);
   if (! res) {
     out->print_cr("setting flag %s failed", name);
@@ -248,7 +251,7 @@ static jint set_uintx_flag(const char* name, AttachOperation* op, outputStream* 
       out->print_cr("flag value has to be integer");
       return JNI_ERR;
     }
-  }
+  }  
   bool res = CommandLineFlags::uintxAtPut((char*)name,  &value, ATTACH_ON_DEMAND);
   if (! res) {
     out->print_cr("setting flag %s failed", name);
@@ -263,7 +266,7 @@ static jint set_ccstr_flag(const char* name, AttachOperation* op, outputStream* 
   if ((value = op->arg(1)) == NULL) {
     out->print_cr("flag value has to be a string");
     return JNI_ERR;
-  }
+  }  
   bool res = CommandLineFlags::ccstrAtPut((char*)name,  &value, ATTACH_ON_DEMAND);
   if (res) {
     FREE_C_HEAP_ARRAY(char, value);
@@ -276,7 +279,7 @@ static jint set_ccstr_flag(const char* name, AttachOperation* op, outputStream* 
 
 // Implementation of "setflag" command
 static jint set_flag(AttachOperation* op, outputStream* out) {
-
+   
   const char* name = NULL;
   if ((name = op->arg(0)) == NULL) {
     out->print_cr("flag name is missing");
@@ -286,13 +289,13 @@ static jint set_flag(AttachOperation* op, outputStream* out) {
   Flag* f = Flag::find_flag((char*)name, strlen(name));
   if (f && f->is_external() && f->is_writeable()) {
     if (f->is_bool()) {
-      return set_bool_flag(name, op, out);
+      return set_bool_flag(name, op, out); 
     } else if (f->is_intx()) {
-      return set_intx_flag(name, op, out);
+      return set_intx_flag(name, op, out); 
     } else if (f->is_uintx()) {
-      return set_uintx_flag(name, op, out);
+      return set_uintx_flag(name, op, out); 
     } else if (f->is_ccstr()) {
-      return set_ccstr_flag(name, op, out);
+      return set_ccstr_flag(name, op, out); 
     } else {
       ShouldNotReachHere();
       return JNI_ERR;
@@ -323,38 +326,38 @@ static jint print_flag(AttachOperation* op, outputStream* out) {
 
 // names must be of length <= AttachOperation::name_length_max
 static AttachOperationFunctionInfo funcs[] = {
-  { "agentProperties",  get_agent_properties },
+  { "agentProperties", 	get_agent_properties },
   { "datadump",         data_dump },
 #ifndef SERVICES_KERNEL
   { "dumpheap",         dump_heap },
 #endif  // SERVICES_KERNEL
   { "load",             JvmtiExport::load_agent_library },
   { "properties",       get_system_properties },
-  { "threaddump",       thread_dump },
+  { "threaddump",	thread_dump },
   { "inspectheap",      heap_inspection },
   { "setflag",          set_flag },
   { "printflag",        print_flag },
-  { NULL,               NULL }
+  { NULL, 		NULL }
 };
 
 
 
 // The Attach Listener threads services a queue. It dequeues an operation
 // from the queue, examines the operation name (command), and dispatches
-// to the corresponding function to perform the operation.
+// to the corresponding function to perform the operation. 
 
 static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
   os::set_priority(thread, NearMaxPriority);
 
   if (AttachListener::pd_init() != 0) {
     return;
-  }
+  } 
   AttachListener::set_initialized();
 
   for (;;) {
     AttachOperation* op = AttachListener::dequeue();
     if (op == NULL) {
-      return;   // dequeue failed or shutdown
+      return;	// dequeue failed or shutdown
     }
 
     ResourceMark rm;
@@ -371,7 +374,7 @@ static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
         const char* name = funcs[i].name;
         assert(strlen(name) <= AttachOperation::name_length_max, "operation <= name_length_max");
         if (strcmp(op->name(), name) == 0) {
-          info = &(funcs[i]);
+  	  info = &(funcs[i]);
           break;
         }
       }
@@ -403,18 +406,18 @@ void AttachListener::init() {
   instanceHandle thread_oop = klass->allocate_instance_handle(CHECK);
 
   const char thread_name[] = "Attach Listener";
-  Handle string = java_lang_String::create_from_str(thread_name, CHECK);
+  Handle string = java_lang_String::create_from_str(thread_name, CHECK);    
 
   // Initialize thread_oop to put it into the system threadGroup
   Handle thread_group (THREAD, Universe::system_thread_group());
   JavaValue result(T_VOID);
-  JavaCalls::call_special(&result, thread_oop,
-                       klass,
-                       vmSymbolHandles::object_initializer_name(),
-                       vmSymbolHandles::threadgroup_string_void_signature(),
-                       thread_group,
-                       string,
-                       CHECK);
+  JavaCalls::call_special(&result, thread_oop, 
+                       klass, 
+                       vmSymbolHandles::object_initializer_name(), 
+                       vmSymbolHandles::threadgroup_string_void_signature(), 
+                       thread_group, 
+                       string, 
+                       CHECK);  
 
   KlassHandle group(THREAD, SystemDictionary::threadGroup_klass());
   JavaCalls::call_special(&result,
@@ -422,12 +425,12 @@ void AttachListener::init() {
                         group,
                         vmSymbolHandles::add_method_name(),
                         vmSymbolHandles::thread_void_signature(),
-                        thread_oop,             // ARG 1
+			thread_oop,		// ARG 1
                         CHECK);
 
   { MutexLocker mu(Threads_lock);
     JavaThread* listener_thread = new JavaThread(&attach_listener_thread_entry);
-
+                                                                                                                              
     // Check that thread and osthread were created
     if (listener_thread == NULL || listener_thread->osthread() == NULL) {
       vm_exit_during_initialization("java.lang.OutOfMemoryError",
@@ -436,7 +439,7 @@ void AttachListener::init() {
 
     java_lang_Thread::set_thread(thread_oop(), listener_thread);
     java_lang_Thread::set_daemon(thread_oop());
-
+         
     listener_thread->set_threadObj(thread_oop());
     Threads::add(listener_thread);
     Thread::start(listener_thread);

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)phase.cpp	1.59 07/05/17 16:00:26 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -54,11 +57,11 @@ elapsedTimer Phase::_t_registerMethod;
 elapsedTimer Phase::_t_temporaryTimer1;
 elapsedTimer Phase::_t_temporaryTimer2;
 
-// Subtimers for _t_optimizer
+// Subtimers for _t_optimizer 
 elapsedTimer   Phase::_t_iterGVN;
 elapsedTimer   Phase::_t_iterGVN2;
 
-// Subtimers for _t_registerAllocation
+// Subtimers for _t_registerAllocation 
 elapsedTimer   Phase::_t_ctorChaitin;
 elapsedTimer   Phase::_t_buildIFGphysical;
 elapsedTimer   Phase::_t_computeLive;
@@ -66,13 +69,13 @@ elapsedTimer   Phase::_t_regAllocSplit;
 elapsedTimer   Phase::_t_postAllocCopyRemoval;
 elapsedTimer   Phase::_t_fixupSpills;
 
-// Subtimers for _t_output
+// Subtimers for _t_output 
 elapsedTimer   Phase::_t_instrSched;
 elapsedTimer   Phase::_t_buildOopMaps;
 #endif
 
 //------------------------------Phase------------------------------------------
-Phase::Phase( PhaseNumber pnum ) : _pnum(pnum), C( pnum == Compiler ? NULL : Compile::current()) {
+Phase::Phase( PhaseNumber pnum ) : _pnum(pnum), C( pnum == Compiler ? NULL : Compile::current()) { 
   // Poll for requests from shutdown mechanism to quiesce comiler (4448539, 4448544).
   // This is an effective place to poll, since the compiler is full of phases.
   // In particular, every inlining site uses a recursively created Parse phase.
@@ -104,8 +107,8 @@ void Phase::print_timers() {
     tty->print_cr ("      ccp          : %3.3f sec", Phase::_t_ccp.seconds());
     tty->print_cr ("      iterGVN2     : %3.3f sec", Phase::_t_iterGVN2.seconds());
     tty->print_cr ("      graphReshape : %3.3f sec", Phase::_t_graphReshaping.seconds());
-    double optimizer_subtotal = Phase::_t_iterGVN.seconds() +
-      Phase::_t_idealLoop.seconds() + Phase::_t_ccp.seconds() +
+    double optimizer_subtotal = Phase::_t_iterGVN.seconds() + 
+      Phase::_t_idealLoop.seconds() + Phase::_t_ccp.seconds() + 
       Phase::_t_graphReshaping.seconds();
     double percent_of_optimizer = ((optimizer_subtotal == 0.0) ? 0.0 : (optimizer_subtotal / Phase::_t_optimizer.seconds() * 100.0));
     tty->print_cr ("      subtotal     : %3.3f sec,  %3.2f %%", optimizer_subtotal, percent_of_optimizer);
@@ -120,8 +123,8 @@ void Phase::print_timers() {
     tty->print_cr ("      regAllocSplit: %3.3f sec", Phase::_t_regAllocSplit.seconds());
     tty->print_cr ("      postAllocCopyRemoval: %3.3f sec", Phase::_t_postAllocCopyRemoval.seconds());
     tty->print_cr ("      fixupSpills  : %3.3f sec", Phase::_t_fixupSpills.seconds());
-    double regalloc_subtotal = Phase::_t_ctorChaitin.seconds() +
-      Phase::_t_buildIFGphysical.seconds() + Phase::_t_computeLive.seconds() +
+    double regalloc_subtotal = Phase::_t_ctorChaitin.seconds() + 
+      Phase::_t_buildIFGphysical.seconds() + Phase::_t_computeLive.seconds() + 
       Phase::_t_regAllocSplit.seconds()    + Phase::_t_fixupSpills.seconds() +
       Phase::_t_postAllocCopyRemoval.seconds();
     double percent_of_regalloc = ((regalloc_subtotal == 0.0) ? 0.0 : (regalloc_subtotal / Phase::_t_registerAllocation.seconds() * 100.0));
@@ -133,7 +136,7 @@ void Phase::print_timers() {
   tty->print_cr ("    codeGen      : %3.3f sec", Phase::_t_codeGeneration.seconds());
   tty->print_cr ("    install_code : %3.3f sec", Phase::_t_registerMethod.seconds());
   tty->print_cr ("    ------------ : ----------");
-  double phase_subtotal = Phase::_t_parser.seconds() +
+  double phase_subtotal = Phase::_t_parser.seconds() + 
     (DoEscapeAnalysis ? Phase::_t_escapeAnalysis.seconds() : 0.0) +
     Phase::_t_optimizer.seconds() + Phase::_t_graphReshaping.seconds() +
     Phase::_t_matcher.seconds() + Phase::_t_scheduler.seconds() +
@@ -145,8 +148,8 @@ void Phase::print_timers() {
   // so phase-total can be greater than 100%
   tty->print_cr ("    total        : %3.3f sec,  %3.2f %%", phase_subtotal, percent_of_method_compile);
 
-  assert( percent_of_method_compile > expected_method_compile_coverage ||
-          phase_subtotal < minimum_meaningful_method_compile,
+  assert( percent_of_method_compile > expected_method_compile_coverage || 
+          phase_subtotal < minimum_meaningful_method_compile, 
           "Must account for method compilation");
 
   if( Phase::_t_temporaryTimer1.seconds() > minimum_reported_time ) {

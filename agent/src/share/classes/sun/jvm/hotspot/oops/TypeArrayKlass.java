@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -108,7 +108,7 @@ public class TypeArrayKlass extends ArrayKlass {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(dimension <= n, "check order of chain");
     }
-    if (dimension == n)
+    if (dimension == n) 
       return this;
     ObjArrayKlass ak = (ObjArrayKlass) getHigherDimension();
     if (ak == null) {

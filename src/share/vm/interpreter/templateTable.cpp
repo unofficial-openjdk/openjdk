@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)templateTable.cpp	1.108 07/05/05 17:05:37 JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -254,8 +257,8 @@ void TemplateTable::initialize() {
   const int  disp = 1 << Template::does_dispatch_bit;
   const int  clvm = 1 << Template::calls_vm_bit;
   const int  iswd = 1 << Template::wide_bit;
-  //                                    interpr. templates
-  // Java spec bytecodes                ubcp|disp|clvm|iswd  in    out   generator             argument
+  //                                    interpr. templates                                                  
+  // Java spec bytecodes                ubcp|disp|clvm|iswd  in    out   generator             argument     
   def(Bytecodes::_nop                 , ____|____|____|____, vtos, vtos, nop                 ,  _           );
   def(Bytecodes::_aconst_null         , ____|____|____|____, vtos, atos, aconst_null         ,  _           );
   def(Bytecodes::_iconst_m1           , ____|____|____|____, vtos, itos, iconst              , -1           );
@@ -401,9 +404,9 @@ void TemplateTable::initialize() {
   def(Bytecodes::_d2i                 , ____|____|____|____, dtos, itos, convert             ,  _           );
   def(Bytecodes::_d2l                 , ____|____|____|____, dtos, ltos, convert             ,  _           );
   def(Bytecodes::_d2f                 , ____|____|____|____, dtos, ftos, convert             ,  _           );
-  def(Bytecodes::_i2b                 , ____|____|____|____, itos, itos, convert             ,  _           );
-  def(Bytecodes::_i2c                 , ____|____|____|____, itos, itos, convert             ,  _           );
-  def(Bytecodes::_i2s                 , ____|____|____|____, itos, itos, convert             ,  _           );
+  def(Bytecodes::_i2b	              , ____|____|____|____, itos, itos, convert             ,  _           );
+  def(Bytecodes::_i2c	              , ____|____|____|____, itos, itos, convert             ,  _           );
+  def(Bytecodes::_i2s	              , ____|____|____|____, itos, itos, convert             ,  _           );
   def(Bytecodes::_lcmp                , ____|____|____|____, ltos, itos, lcmp                ,  _           );
   def(Bytecodes::_fcmpl               , ____|____|____|____, ftos, itos, float_cmp           , -1           );
   def(Bytecodes::_fcmpg               , ____|____|____|____, ftos, itos, float_cmp           ,  1           );
@@ -415,25 +418,25 @@ void TemplateTable::initialize() {
   def(Bytecodes::_ifge                , ubcp|____|clvm|____, itos, vtos, if_0cmp             , greater_equal);
   def(Bytecodes::_ifgt                , ubcp|____|clvm|____, itos, vtos, if_0cmp             , greater      );
   def(Bytecodes::_ifle                , ubcp|____|clvm|____, itos, vtos, if_0cmp             , less_equal   );
-  def(Bytecodes::_if_icmpeq           , ubcp|____|clvm|____, itos, vtos, if_icmp             , equal        );
-  def(Bytecodes::_if_icmpne           , ubcp|____|clvm|____, itos, vtos, if_icmp             , not_equal    );
-  def(Bytecodes::_if_icmplt           , ubcp|____|clvm|____, itos, vtos, if_icmp             , less         );
+  def(Bytecodes::_if_icmpeq	      , ubcp|____|clvm|____, itos, vtos, if_icmp             , equal        );
+  def(Bytecodes::_if_icmpne	      , ubcp|____|clvm|____, itos, vtos, if_icmp             , not_equal    );
+  def(Bytecodes::_if_icmplt	      , ubcp|____|clvm|____, itos, vtos, if_icmp             , less         );
   def(Bytecodes::_if_icmpge           , ubcp|____|clvm|____, itos, vtos, if_icmp             , greater_equal);
-  def(Bytecodes::_if_icmpgt           , ubcp|____|clvm|____, itos, vtos, if_icmp             , greater      );
-  def(Bytecodes::_if_icmple           , ubcp|____|clvm|____, itos, vtos, if_icmp             , less_equal   );
-  def(Bytecodes::_if_acmpeq           , ubcp|____|clvm|____, atos, vtos, if_acmp             , equal        );
-  def(Bytecodes::_if_acmpne           , ubcp|____|clvm|____, atos, vtos, if_acmp             , not_equal    );
-  def(Bytecodes::_goto                , ubcp|disp|clvm|____, vtos, vtos, _goto               ,  _           );
-  def(Bytecodes::_jsr                 , ubcp|disp|____|____, vtos, vtos, jsr                 ,  _           ); // result is not an oop, so do not transition to atos
-  def(Bytecodes::_ret                 , ubcp|disp|____|____, vtos, vtos, ret                 ,  _           );
+  def(Bytecodes::_if_icmpgt	      , ubcp|____|clvm|____, itos, vtos, if_icmp             , greater      );
+  def(Bytecodes::_if_icmple	      , ubcp|____|clvm|____, itos, vtos, if_icmp             , less_equal   );
+  def(Bytecodes::_if_acmpeq	      , ubcp|____|clvm|____, atos, vtos, if_acmp             , equal        );
+  def(Bytecodes::_if_acmpne	      , ubcp|____|clvm|____, atos, vtos, if_acmp             , not_equal    );
+  def(Bytecodes::_goto	              , ubcp|disp|clvm|____, vtos, vtos, _goto               ,  _           );
+  def(Bytecodes::_jsr	              , ubcp|disp|____|____, vtos, vtos, jsr                 ,  _           ); // result is not an oop, so do not transition to atos
+  def(Bytecodes::_ret	              , ubcp|disp|____|____, vtos, vtos, ret                 ,  _           );
   def(Bytecodes::_tableswitch         , ubcp|disp|____|____, itos, vtos, tableswitch         ,  _           );
   def(Bytecodes::_lookupswitch        , ubcp|disp|____|____, itos, itos, lookupswitch        ,  _           );
-  def(Bytecodes::_ireturn             , ____|disp|clvm|____, itos, itos, _return             , itos         );
-  def(Bytecodes::_lreturn             , ____|disp|clvm|____, ltos, ltos, _return             , ltos         );
-  def(Bytecodes::_freturn             , ____|disp|clvm|____, ftos, ftos, _return             , ftos         );
-  def(Bytecodes::_dreturn             , ____|disp|clvm|____, dtos, dtos, _return             , dtos         );
-  def(Bytecodes::_areturn             , ____|disp|clvm|____, atos, atos, _return             , atos         );
-  def(Bytecodes::_return              , ____|disp|clvm|____, vtos, vtos, _return             , vtos         );
+  def(Bytecodes::_ireturn	      , ____|disp|clvm|____, itos, itos, _return             , itos         );
+  def(Bytecodes::_lreturn	      , ____|disp|clvm|____, ltos, ltos, _return             , ltos         );
+  def(Bytecodes::_freturn	      , ____|disp|clvm|____, ftos, ftos, _return             , ftos         );
+  def(Bytecodes::_dreturn	      , ____|disp|clvm|____, dtos, dtos, _return             , dtos         );
+  def(Bytecodes::_areturn	      , ____|disp|clvm|____, atos, atos, _return             , atos         );
+  def(Bytecodes::_return	      , ____|disp|clvm|____, vtos, vtos, _return             , vtos         );
   def(Bytecodes::_getstatic           , ubcp|____|clvm|____, vtos, vtos, getstatic           ,  1           );
   def(Bytecodes::_putstatic           , ubcp|____|clvm|____, vtos, vtos, putstatic           ,  2           );
   def(Bytecodes::_getfield            , ubcp|____|clvm|____, vtos, vtos, getfield            ,  1           );
@@ -443,21 +446,21 @@ void TemplateTable::initialize() {
   def(Bytecodes::_invokestatic        , ubcp|disp|clvm|____, vtos, vtos, invokestatic        ,  1           );
   def(Bytecodes::_invokeinterface     , ubcp|disp|clvm|____, vtos, vtos, invokeinterface     ,  1           );
   def(Bytecodes::_new                 , ubcp|____|clvm|____, vtos, atos, _new                ,  _           );
-  def(Bytecodes::_newarray            , ubcp|____|clvm|____, itos, atos, newarray            ,  _           );
-  def(Bytecodes::_anewarray           , ubcp|____|clvm|____, itos, atos, anewarray           ,  _           );
+  def(Bytecodes::_newarray	      , ubcp|____|clvm|____, itos, atos, newarray            ,  _           );
+  def(Bytecodes::_anewarray	      , ubcp|____|clvm|____, itos, atos, anewarray           ,  _           );
   def(Bytecodes::_arraylength         , ____|____|____|____, atos, itos, arraylength         ,  _           );
-  def(Bytecodes::_athrow              , ____|disp|____|____, atos, vtos, athrow              ,  _           );
-  def(Bytecodes::_checkcast           , ubcp|____|clvm|____, atos, atos, checkcast           ,  _           );
-  def(Bytecodes::_instanceof          , ubcp|____|clvm|____, atos, itos, instanceof          ,  _           );
+  def(Bytecodes::_athrow	      , ____|disp|____|____, atos, vtos, athrow              ,  _           );
+  def(Bytecodes::_checkcast	      , ubcp|____|clvm|____, atos, atos, checkcast           ,  _           );
+  def(Bytecodes::_instanceof	      , ubcp|____|clvm|____, atos, itos, instanceof          ,  _           );
   def(Bytecodes::_monitorenter        , ____|disp|clvm|____, atos, vtos, monitorenter        ,  _           );
   def(Bytecodes::_monitorexit         , ____|____|clvm|____, atos, vtos, monitorexit         ,  _           );
-  def(Bytecodes::_wide                , ubcp|disp|____|____, vtos, vtos, wide                ,  _           );
+  def(Bytecodes::_wide	              , ubcp|disp|____|____, vtos, vtos, wide                ,  _           );
   def(Bytecodes::_multianewarray      , ubcp|____|clvm|____, vtos, atos, multianewarray      ,  _           );
-  def(Bytecodes::_ifnull              , ubcp|____|clvm|____, atos, vtos, if_nullcmp          , equal        );
-  def(Bytecodes::_ifnonnull           , ubcp|____|clvm|____, atos, vtos, if_nullcmp          , not_equal    );
-  def(Bytecodes::_goto_w              , ubcp|____|clvm|____, vtos, vtos, goto_w              ,  _           );
-  def(Bytecodes::_jsr_w               , ubcp|____|____|____, vtos, vtos, jsr_w               ,  _           );
-
+  def(Bytecodes::_ifnull	      , ubcp|____|clvm|____, atos, vtos, if_nullcmp          , equal        );
+  def(Bytecodes::_ifnonnull	      , ubcp|____|clvm|____, atos, vtos, if_nullcmp          , not_equal    );
+  def(Bytecodes::_goto_w	      , ubcp|____|clvm|____, vtos, vtos, goto_w              ,  _           );
+  def(Bytecodes::_jsr_w	              , ubcp|____|____|____, vtos, vtos, jsr_w               ,  _           );
+     
   // wide Java spec bytecodes
   def(Bytecodes::_iload               , ubcp|____|____|iswd, vtos, itos, wide_iload          ,  _           );
   def(Bytecodes::_lload               , ubcp|____|____|iswd, vtos, ltos, wide_lload          ,  _           );
@@ -470,9 +473,9 @@ void TemplateTable::initialize() {
   def(Bytecodes::_dstore              , ubcp|____|____|iswd, vtos, vtos, wide_dstore         ,  _           );
   def(Bytecodes::_astore              , ubcp|____|____|iswd, vtos, vtos, wide_astore         ,  _           );
   def(Bytecodes::_iinc                , ubcp|____|____|iswd, vtos, vtos, wide_iinc           ,  _           );
-  def(Bytecodes::_ret                 , ubcp|disp|____|iswd, vtos, vtos, wide_ret            ,  _           );
+  def(Bytecodes::_ret	              , ubcp|disp|____|iswd, vtos, vtos, wide_ret            ,  _           );
   def(Bytecodes::_breakpoint          , ubcp|disp|clvm|____, vtos, vtos, _breakpoint         ,  _           );
-
+  
   // JVM bytecodes
   def(Bytecodes::_fast_agetfield      , ubcp|____|____|____, atos, atos, fast_accessfield    ,  atos        );
   def(Bytecodes::_fast_bgetfield      , ubcp|____|____|____, atos, itos, fast_accessfield    ,  itos        );
@@ -535,7 +538,7 @@ void templateTable_init() {
 }
 
 
-void TemplateTable::unimplemented_bc() {
+void TemplateTable::unimplemented_bc() {  
   _masm->unimplemented( Bytecodes::name(_desc->bytecode()));
 }
 #endif /* !CC_INTERP */

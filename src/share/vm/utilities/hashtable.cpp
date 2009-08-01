@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)hashtable.cpp	1.13 07/05/05 17:07:10 JVM"
+#endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -38,7 +41,7 @@ HS_DTRACE_PROBE_DECL4(hs_private, hashtable__new_entry,
 
 BasicHashtableEntry* BasicHashtable::new_entry(unsigned int hashValue) {
   BasicHashtableEntry* entry;
-
+  
   if (_free_list) {
     entry = _free_list;
     _free_list = _free_list->next();
@@ -66,7 +69,7 @@ HashtableEntry* Hashtable::new_entry(unsigned int hashValue, oop obj) {
 
   entry = (HashtableEntry*)BasicHashtable::new_entry(hashValue);
   entry->set_literal(obj);   // clears literal string field
-  HS_DTRACE_PROBE4(hs_private, hashtable__new_entry,
+  HS_DTRACE_PROBE4(hs_private, hashtable__new_entry, 
     this, hashValue, obj, entry);
   return entry;
 }
@@ -230,7 +233,7 @@ void BasicHashtable::copy_buckets(char** top, char* end) {
 
 #ifndef PRODUCT
 
-void Hashtable::print() {
+void Hashtable::print() {  
   ResourceMark rm;
 
   for (int i = 0; i < table_size(); i++) {
@@ -264,7 +267,7 @@ void BasicHashtable::verify() {
 void BasicHashtable::verify_lookup_length(double load) {
   if ((double)_lookup_length / (double)_lookup_count > load * 2.0) {
     warning("Performance bug: SystemDictionary lookup_count=%d "
-            "lookup_length=%d average=%lf load=%f",
+            "lookup_length=%d average=%lf load=%f", 
             _lookup_count, _lookup_length,
             (double) _lookup_length / _lookup_count, load);
   }

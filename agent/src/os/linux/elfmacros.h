@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)elfmacros.h	1.13 07/05/05 17:02:02 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,18 +22,18 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _ELFMACROS_H_
 #define _ELFMACROS_H_
 
 #if defined(_LP64)
-#define ELF_EHDR        Elf64_Ehdr
-#define ELF_SHDR        Elf64_Shdr
-#define ELF_PHDR        Elf64_Phdr
+#define ELF_EHDR    	Elf64_Ehdr
+#define ELF_SHDR 	Elf64_Shdr
+#define ELF_PHDR    	Elf64_Phdr
 #define ELF_SYM         Elf64_Sym
-#define ELF_NHDR        Elf64_Nhdr
+#define ELF_NHDR	Elf64_Nhdr
 #define ELF_DYN         Elf64_Dyn
 #define ELF_ADDR        Elf64_Addr
 
@@ -38,17 +41,17 @@
 
 #else
 
-#define ELF_EHDR        Elf32_Ehdr
-#define ELF_SHDR        Elf32_Shdr
-#define ELF_PHDR        Elf32_Phdr
-#define ELF_SYM         Elf32_Sym
-#define ELF_NHDR        Elf32_Nhdr
+#define ELF_EHDR 	Elf32_Ehdr
+#define ELF_SHDR 	Elf32_Shdr
+#define ELF_PHDR 	Elf32_Phdr
+#define ELF_SYM 	Elf32_Sym
+#define ELF_NHDR 	Elf32_Nhdr
 #define ELF_DYN         Elf32_Dyn
 #define ELF_ADDR        Elf32_Addr
 
 #define ELF_ST_TYPE     ELF32_ST_TYPE
 
-#endif
+#endif 
 
 
 #endif /* _ELFMACROS_H_ */

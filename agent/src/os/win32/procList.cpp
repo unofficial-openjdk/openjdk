@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)procList.cpp	1.13 07/05/05 17:02:06 JVM"
+#endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "procList.hpp"
@@ -122,7 +125,7 @@ procListImplNT4(ProcEntryList& processes) {
                                                      "ZwQuerySystemInformation");
     assert(query != NULL);
   }
-
+  
   ULONG n = 0x100;
   PSYSTEM_PROCESSES sp = new SYSTEM_PROCESSES[n];
   while ((*query)(SystemProcessesAndThreadsInformation,
@@ -152,7 +155,7 @@ procListImplToolHelp(ProcEntryList& processes) {
 
   if (snapshotFunc == NULL) {
     HMODULE dll = loadDLL();
-
+    
     snapshotFunc =
       (CreateToolhelp32SnapshotFunc*) GetProcAddress(dll,
                                                      "CreateToolhelp32Snapshot");
@@ -162,7 +165,7 @@ procListImplToolHelp(ProcEntryList& processes) {
 
     nextFunc = (Process32NextFunc*) GetProcAddress(dll,
                                                    "Process32Next");
-
+    
     assert(snapshotFunc != NULL);
     assert(firstFunc    != NULL);
     assert(nextFunc     != NULL);

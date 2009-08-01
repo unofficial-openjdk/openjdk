@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -50,10 +50,10 @@ public class CommandProcessorPanel extends JPanel {
     private static final boolean DEBUGGING = false;
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
-
+    
 
     public CommandProcessorPanel(CommandProcessor cp) {
-
+        
         commands = cp;
 
         setLayout(new BorderLayout());

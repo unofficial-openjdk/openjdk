@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)interpreterRuntime.hpp	1.143 07/05/05 17:05:38 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The InterpreterRuntime is called by the interpreter for everything
@@ -31,7 +34,7 @@ class InterpreterRuntime: AllStatic {
 
  private:
   // Helper functions to access current interpreter state
-  static frame     last_frame(JavaThread *thread)    { return thread->last_frame(); }
+  static frame     last_frame(JavaThread *thread)    { return thread->last_frame(); }  
   static methodOop method(JavaThread *thread)        { return last_frame(thread).interpreter_frame_method(); }
   static address   bcp(JavaThread *thread)           { return last_frame(thread).interpreter_frame_bcp(); }
   static void      set_bcp_and_mdp(address bcp, JavaThread*thread);
@@ -72,12 +75,12 @@ class InterpreterRuntime: AllStatic {
   static void    throw_pending_exception(JavaThread* thread);
 
   // Statics & fields
-  static void    resolve_get_put(JavaThread* thread, Bytecodes::Code bytecode);
-
+  static void    resolve_get_put(JavaThread* thread, Bytecodes::Code bytecode);  
+  
   // Synchronization
   static void    monitorenter(JavaThread* thread, BasicObjectLock* elem);
   static void    monitorexit (JavaThread* thread, BasicObjectLock* elem);
-
+  
   static void    throw_illegal_monitor_state_exception(JavaThread* thread);
   static void    new_illegal_monitor_state_exception(JavaThread* thread);
 
@@ -104,8 +107,8 @@ class InterpreterRuntime: AllStatic {
 
   // Native signature handlers
   static void prepare_native_call(JavaThread* thread, methodOopDesc* method);
-  static address slow_signature_handler(JavaThread* thread,
-                                        methodOopDesc* method,
+  static address slow_signature_handler(JavaThread* thread, 
+                                        methodOopDesc* method, 
                                         intptr_t* from, intptr_t* to);
 
 #if defined(IA32) || defined(AMD64)
@@ -118,7 +121,7 @@ class InterpreterRuntime: AllStatic {
 
   // Interpreter's frequency counter overflow
   static nmethod* frequency_counter_overflow(JavaThread* thread, address branch_bcp);
-
+  
   // Interpreter profiling support
   static jint    bcp_to_di(methodOopDesc* method, address cur_bcp);
   static jint    profile_method(JavaThread* thread, address cur_bcp);

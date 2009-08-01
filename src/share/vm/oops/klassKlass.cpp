@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)klassKlass.cpp	1.70 07/08/09 09:12:01 JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -51,7 +54,7 @@ void klassKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(k->adr_secondary_supers());
   MarkSweep::mark_and_push(k->adr_java_mirror());
   MarkSweep::mark_and_push(k->adr_name());
-  // We follow the subklass and sibling links at the end of the
+  // We follow the subklass and sibling links at the end of the 
   // marking phase, since otherwise following them will prevent
   // class unloading (all classes are transitively linked from
   // java.lang.Object).
@@ -61,7 +64,7 @@ void klassKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void klassKlass::oop_follow_contents(ParCompactionManager* cm,
-                                     oop obj) {
+				     oop obj) {
   Klass* k = Klass::cast(klassOop(obj));
   // If we are alive it is valid to keep our superclass and subtype caches alive
   PSParallelCompact::mark_and_push(cm, k->adr_super());
@@ -71,7 +74,7 @@ void klassKlass::oop_follow_contents(ParCompactionManager* cm,
   PSParallelCompact::mark_and_push(cm, k->adr_secondary_supers());
   PSParallelCompact::mark_and_push(cm, k->adr_java_mirror());
   PSParallelCompact::mark_and_push(cm, k->adr_name());
-  // We follow the subklass and sibling links at the end of the
+  // We follow the subklass and sibling links at the end of the 
   // marking phase, since otherwise following them will prevent
   // class unloading (all classes are transitively linked from
   // java.lang.Object).
@@ -180,7 +183,7 @@ int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                    HeapWord* beg_addr, HeapWord* end_addr) {
+				    HeapWord* beg_addr, HeapWord* end_addr) {
   Klass* k = Klass::cast(klassOop(obj));
 
   oop* const beg_oop = MAX2((oop*)beg_addr, k->oop_block_beg());
@@ -246,7 +249,7 @@ void klassKlass::oop_verify_on(oop obj, outputStream* st) {
   }
   if (k->name() != NULL) {
     guarantee(Universe::heap()->is_in_permanent(k->name()),
-              "should be in permspace");
+	      "should be in permspace");
     guarantee(k->name()->is_symbol(), "should be symbol");
   }
 }

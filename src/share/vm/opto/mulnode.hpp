@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)mulnode.hpp	1.53 07/05/05 17:06:18 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -39,10 +42,10 @@ public:
   }
 
   // Handle algebraic identities here.  If we have an identity, return the Node
-  // we are equivalent to.  We look for "add of zero" as an identity.
+  // we are equivalent to.  We look for "add of zero" as an identity.  
   virtual Node *Identity( PhaseTransform *phase );
 
-  // We also canonicalize the Node, moving constants to the right input,
+  // We also canonicalize the Node, moving constants to the right input, 
   // and flatten expressions (so that 1+x+2 becomes x+3).
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 
@@ -255,3 +258,4 @@ public:
   const Type *bottom_type() const { return TypeLong::LONG; }
   virtual uint ideal_reg() const { return Op_RegL; }
 };
+

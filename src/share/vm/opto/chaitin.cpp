@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)chaitin.cpp	1.116 07/09/28 10:23:12 JVM"
+#endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -92,7 +95,7 @@ double LRG::score() const {
   // to turn a divide by a constant into a multiply by the reciprical).
   double score = raw_score( _cost, _area);
 
-  // Account for area.  Basically, LRGs covering large areas are better
+  // Account for area.  Basically, LRGs covering large areas are better 
   // to spill because more other LRGs get freed up.
   if( _area == 0.0 )            // No area?  Then no progress to spill
     return 1e35;
@@ -117,12 +120,12 @@ LRG_List::LRG_List( uint max ) : _cnt(max), _max(max), _lidxs(NEW_RESOURCE_ARRAY
 void LRG_List::extend( uint nidx, uint lidx ) {
   _nesting.check();
   if( nidx >= _max ) {
-    uint size = 16;
+    uint size = 16; 
     while( size <= nidx ) size <<=1;
     _lidxs = REALLOC_RESOURCE_ARRAY( uint, _lidxs, _max, size );
     _max = size;
   }
-  while( _cnt <= nidx )
+  while( _cnt <= nidx ) 
     _lidxs[_cnt++] = 0;
   _lidxs[nidx] = lidx;
 }
@@ -262,8 +265,8 @@ void PhaseChaitin::Register_Allocate() {
   // Aggressive (but pessimistic) copy coalescing.
   // This pass works on virtual copies.  Any virtual copies which are not
   // coalesced get manifested as actual copies
-  {
-    // The IFG is/was triangular.  I am 'squaring it up' so Union can run
+  { 
+    // The IFG is/was triangular.  I am 'squaring it up' so Union can run 
     // faster.  Union requires a 'for all' operation which is slow on the
     // triangular adjacency matrix (quick reminder: the IFG is 'sparse' -
     // meaning I can visit all the Nodes neighbors less than a Node in time
@@ -271,7 +274,7 @@ void PhaseChaitin::Register_Allocate() {
     // given Node and search them for an instance, i.e., time O(#MaxLRG)).
     _ifg->SquareUp();
 
-    PhaseAggressiveCoalesce coalesce( *this );
+    PhaseAggressiveCoalesce coalesce( *this ); 
     coalesce.coalesce_driver( );
     // Insert un-coalesced copies.  Visit all Phis.  Where inputs to a Phi do
     // not match the Phi itself, insert a copy.
@@ -295,7 +298,7 @@ void PhaseChaitin::Register_Allocate() {
   uint must_spill = 0;
   must_spill = build_ifg_physical( &live_arena );
   // If we have a guaranteed spill, might as well spill now
-  if( must_spill ) {
+  if( must_spill ) {  
     if( !_maxlrg ) return;
     // Bail out if unique gets too large (ie - unique > MaxNodeLimit)
     C->check_node_count(10*must_spill, "out of nodes before split");
@@ -355,11 +358,11 @@ void PhaseChaitin::Register_Allocate() {
 
   // Simplify the InterFerence Graph by removing LRGs of low degree.
   // LRGs of low degree are trivially colorable.
-  Simplify();
+  Simplify(); 
 
   // Select colors by re-inserting LRGs back into the IFG in reverse order.
   // Return whether or not something spills.
-  uint spills = Select( );
+  uint spills = Select( ); 
 
   // If we spill, split and recycle the entire thing
   while( spills ) {
@@ -370,7 +373,7 @@ void PhaseChaitin::Register_Allocate() {
         return;
       }
     }
-
+  
     if( !_maxlrg ) return;
     _maxlrg = Split( _maxlrg );        // Split spilling LRG everywhere
     // Bail out if unique gets too large (ie - unique > MaxNodeLimit - 2*NodeLimitFudgeFactor)
@@ -393,7 +396,7 @@ void PhaseChaitin::Register_Allocate() {
       IndexSet::reset_memory(C, &live_arena);
       ifg.init(_maxlrg);
 
-      // Create LiveRanGe array.
+      // Create LiveRanGe array. 
       // Intersect register masks for all USEs and DEFs
       gather_lrg_masks( true );
       live.compute( _maxlrg );
@@ -418,7 +421,7 @@ void PhaseChaitin::Register_Allocate() {
 
     // Simplify the InterFerence Graph by removing LRGs of low degree.
     // LRGs of low degree are trivially colorable.
-    Simplify();
+    Simplify(); 
 
     // Select colors by re-inserting LRGs back into the IFG in reverse order.
     // Return whether or not something spills.
@@ -434,7 +437,7 @@ void PhaseChaitin::Register_Allocate() {
 
   // max_reg is past the largest *register* used.
   // Convert that to a frame_slot number.
-  if( _max_reg <= _matcher._new_SP )
+  if( _max_reg <= _matcher._new_SP ) 
     _framesize = C->out_preserve_stack_slots();
   else _framesize = _max_reg -_matcher._new_SP;
   assert((int)(_matcher._new_SP+_framesize) >= (int)_matcher._out_arg_limit, "framesize must be large enough");
@@ -486,7 +489,7 @@ void PhaseChaitin::Register_Allocate() {
     }
   }
 
-  // Done!
+  // Done!  
   _live = NULL;
   _ifg = NULL;
   C->set_indexSet_arena(NULL);  // ResourceArea is at end of scope
@@ -560,10 +563,10 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         // further spilling is unlikely to make progress.
         if( _spilled_once.test(n->_idx) ) {
           lrg._was_spilled1 = 1;
-          if( _spilled_twice.test(n->_idx) )
+          if( _spilled_twice.test(n->_idx) ) 
             lrg._was_spilled2 = 1;
         }
-
+        
 #ifndef PRODUCT
         if (trace_spilling() && lrg._def != NULL) {
           // collect defs for MultiDef printing
@@ -606,35 +609,35 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
           lrg._is_bound = 1;
           break;
         case Op_RegP:
-#ifdef _LP64
+#ifdef _LP64          
           lrg.set_num_regs(2);  // Size is 2 stack words
 #else
-          lrg.set_num_regs(1);  // Size is 1 stack word
+          lrg.set_num_regs(1);  // Size is 1 stack word 
 #endif
-          // Register pressure is tracked relative to the maximum values
-          // suggested for that platform, INTPRESSURE and FLOATPRESSURE,
+          // Register pressure is tracked relative to the maximum values 
+          // suggested for that platform, INTPRESSURE and FLOATPRESSURE, 
           // and relative to other types which compete for the same regs.
-          //
-          // The following table contains suggested values based on the
+          // 
+          // The following table contains suggested values based on the 
           // architectures as defined in each .ad file.
-          // INTPRESSURE and FLOATPRESSURE may be tuned differently for
+          // INTPRESSURE and FLOATPRESSURE may be tuned differently for 
           // compile-speed or performance.
-          // Note1:
-          // SPARC and SPARCV9 reg_pressures are at 2 instead of 1
-          // since .ad registers are defined as high and low halves.
-          // These reg_pressure values remain compatible with the code
-          // in is_high_pressure() which relates get_invalid_mask_size(),
-          // Block::_reg_pressure and INTPRESSURE, FLOATPRESSURE.
-          // Note2:
-          // SPARC -d32 has 24 registers available for integral values,
-          // but only 10 of these are safe for 64-bit longs.
-          // Using set_reg_pressure(2) for both int and long means
-          // the allocator will believe it can fit 26 longs into
-          // registers.  Using 2 for longs and 1 for ints means the
+          // Note1: 
+          // SPARC and SPARCV9 reg_pressures are at 2 instead of 1 
+          // since .ad registers are defined as high and low halves. 
+          // These reg_pressure values remain compatible with the code 
+          // in is_high_pressure() which relates get_invalid_mask_size(), 
+          // Block::_reg_pressure and INTPRESSURE, FLOATPRESSURE.  
+          // Note2: 
+          // SPARC -d32 has 24 registers available for integral values, 
+          // but only 10 of these are safe for 64-bit longs.  
+          // Using set_reg_pressure(2) for both int and long means 
+          // the allocator will believe it can fit 26 longs into 
+          // registers.  Using 2 for longs and 1 for ints means the 
           // allocator will attempt to put 52 integers into registers.
-          // The settings below limit this problem to methods with
+          // The settings below limit this problem to methods with 
           // many long values which are being run on 32-bit SPARC.
-          //
+          //        
           // ------------------- reg_pressure --------------------
           // Each entry is reg_pressure_per_value,number_of_regs
           //         RegL  RegI  RegFlags   RegF RegD    INTPRESSURE  FLOATPRESSURE
@@ -665,10 +668,10 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
           } else {
             lrg.set_reg_pressure(1);
           }
-#else
+#else 
           lrg.set_reg_pressure(1);  // normally one value per register
 #endif
-          // If this def of a double forces a mis-aligned double,
+          // If this def of a double forces a mis-aligned double, 
           // flag as '_fat_proj' - really flag as allowing misalignment
           // AND changes how we count interferences.  A mis-aligned
           // double can interfere with TWO aligned pairs, or effectively
@@ -734,11 +737,11 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         // }
 
         // Limit result register mask to acceptable registers.
-        // Do not limit registers from uncommon uses before
-        // AggressiveCoalesce.  This effectively pre-virtual-splits
+        // Do not limit registers from uncommon uses before 
+        // AggressiveCoalesce.  This effectively pre-virtual-splits 
         // around uncommon uses of common defs.
         const RegMask &rm = n->in_RegMask(k);
-        if( !after_aggressive &&
+        if( !after_aggressive && 
           _cfg._bbs[n->in(k)->_idx]->_freq > 1000*b->_freq ) {
           // Since we are BEFORE aggressive coalesce, leave the register
           // mask untrimmed by the call.  This encourages more coalescing.
@@ -751,7 +754,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         const RegMask &lrgmask = lrg.mask();
         if( lrgmask.is_bound1() || lrgmask.is_bound2() )
           lrg._is_bound = 1;
-        // If this use of a double forces a mis-aligned double,
+        // If this use of a double forces a mis-aligned double, 
         // flag as '_fat_proj' - really flag as allowing misalignment
         // AND changes how we count interferences.  A mis-aligned
         // double can interfere with TWO aligned pairs, or effectively
@@ -771,7 +774,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         // Check for maximum frequency value
         if( lrg._maxfreq < b->_freq )
           lrg._maxfreq = b->_freq;
-
+            
       } // End for all allocated inputs
     } // end for all instructions
   } // end for all blocks
@@ -787,7 +790,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
       lrg._direct_conflict = 1;
     }
     lrg.set_degree(0);          // no neighbors in IFG yet
-  }
+  }  
 }
 
 //------------------------------set_was_low------------------------------------
@@ -804,7 +807,7 @@ void PhaseChaitin::set_was_low() {
     if( lrgs(i).lo_degree() ) {
       lrgs(i)._was_lo = 1;      // Trivially of low degree
     } else {                    // Else check the Brigg's assertion
-      // Brigg's observation is that the lo-degree neighbors of a
+      // Brigg's observation is that the lo-degree neighbors of a 
       // hi-degree live range will not interfere with the color choices
       // of said hi-degree live range.  The Simplify reverse-stack-coloring
       // order takes care of the details.  Hence you do not have to count
@@ -814,10 +817,10 @@ void PhaseChaitin::set_was_low() {
       IndexSetIterator elements(s);
       uint lidx;
       while((lidx = elements.next()) != 0) {
-        if( !lrgs(lidx).lo_degree() )
+        if( !lrgs(lidx).lo_degree() ) 
           briggs_degree += MAX2(size,lrgs(lidx).num_regs());
       }
-      if( briggs_degree < lrgs(i).degrees_of_freedom() )
+      if( briggs_degree < lrgs(i).degrees_of_freedom() ) 
         lrgs(i)._was_lo = 1;    // Low degree via the briggs assertion
     }
     assert(old_was_lo <= lrgs(i)._was_lo, "_was_lo may not decrease");
@@ -878,16 +881,16 @@ void PhaseChaitin::Pre_Simplify( ) {
 
   while( lo_no_copy ) {
     uint lo = lo_no_copy;
-    lo_no_copy = lrgs(lo)._next;
+    lo_no_copy = lrgs(lo)._next; 
     int size = lrgs(lo).num_regs();
 
     // Put the simplified guy on the simplified list.
     lrgs(lo)._next = _simplified;
     _simplified = lo;
-
-    // Yank this guy from the IFG.
+    
+    // Yank this guy from the IFG.  
     IndexSet *adj = _ifg->remove_node( lo );
-
+      
     // If any neighbors' degrees fall below their number of
     // allowed registers, then put that neighbor on the low degree
     // list.  Note that 'degree' can only fall and 'numregs' is
@@ -903,9 +906,9 @@ void PhaseChaitin::Pre_Simplify( ) {
       if( n->just_lo_degree() && !n->_has_copy ) {
         assert(!(*_ifg->_yanked)[neighbor],"Cannot move to lo degree twice");
         // Put on lo-degree list
-        n->_next = lo_no_copy;
+        n->_next = lo_no_copy; 
         lo_no_copy = neighbor;
-      }
+      } 
     }
   } // End of while lo-degree no_copy worklist not empty
 
@@ -942,10 +945,10 @@ void PhaseChaitin::Simplify( ) {
           lrgs(datum)._risk_bias = lo;
         }
       }
-
-      // Yank this guy from the IFG.
+      
+      // Yank this guy from the IFG.  
       IndexSet *adj = _ifg->remove_node( lo );
-
+      
       // If any neighbors' degrees fall below their number of
       // allowed registers, then put that neighbor on the low degree
       // list.  Note that 'degree' can only fall and 'numregs' is
@@ -971,7 +974,7 @@ void PhaseChaitin::Simplify( ) {
           if( prev ) lrgs(prev)._next = next;
           else _hi_degree = next;
           lrgs(next)._prev = prev;
-          n->_next = _lo_degree;
+          n->_next = _lo_degree; 
           _lo_degree = neighbor;
         }
       }
@@ -984,7 +987,7 @@ void PhaseChaitin::Simplify( ) {
     uint lo_score = _hi_degree;
     double score = lrgs(lo_score).score();
     double area = lrgs(lo_score)._area;
-
+    
     // Find cheapest guy
     debug_only( int lo_no_simplify=0; );
     for( uint i = _hi_degree; i; i = lrgs(i)._next ) {
@@ -1032,7 +1035,7 @@ void PhaseChaitin::Simplify( ) {
     lrgs(lo_score)._at_risk = true;
     _lo_degree = lo_score;
     lo_lrg->_next = 0;
-
+    
   } // End of while not simplified everything
 
 }
@@ -1092,15 +1095,15 @@ OptoReg::Name PhaseChaitin::bias_color( LRG &lrg, int chunk ) {
   if( lrg.num_regs() == 2 ) {
     // Find an aligned pair
     return OptoReg::add(lrg.mask().find_first_pair(),chunk);
-  }
-
+  } 
+ 
   // CNC - Fun hack.  Alternate 1st and 2nd selection.  Enables post-allocate
   // copy removal to remove many more copies, by preventing a just-assigned
   // register from being repeatedly assigned.
   OptoReg::Name reg = lrg.mask().find_first_elem();
   if( (++_alternate & 1) && OptoReg::is_valid(reg) ) {
     // This 'Remove; find; Insert' idiom is an expensive way to find the
-    // SECOND element in the mask.
+    // SECOND element in the mask.  
     lrg.Remove(reg);
     OptoReg::Name reg2 = lrg.mask().find_first_elem();
     lrg.Insert(reg);
@@ -1112,7 +1115,7 @@ OptoReg::Name PhaseChaitin::bias_color( LRG &lrg, int chunk ) {
 
 //------------------------------choose_color-----------------------------------
 // Choose a color in the current chunk
-OptoReg::Name PhaseChaitin::choose_color( LRG &lrg, int chunk ) {
+OptoReg::Name PhaseChaitin::choose_color( LRG &lrg, int chunk ) {  
   assert( C->in_preserve_stack_slots() == 0 || chunk != 0 || lrg._is_bound || lrg.mask().is_bound1() || !lrg.mask().Member(OptoReg::Name(_matcher._old_SP-1)), "must not allocate stack0 (inside preserve area)");
   assert(C->out_preserve_stack_slots() == 0 || chunk != 0 || lrg._is_bound || lrg.mask().is_bound1() || !lrg.mask().Member(OptoReg::Name(_matcher._old_SP+0)), "must not allocate stack0 (inside preserve area)");
 
@@ -1123,7 +1126,7 @@ OptoReg::Name PhaseChaitin::choose_color( LRG &lrg, int chunk ) {
 
   assert( lrg.num_regs() >= 2, "dead live ranges do not color" );
 
-  // Fat-proj case or misaligned double argument.
+  // Fat-proj case or misaligned double argument. 
   assert(lrg.compute_mask_size() == lrg.num_regs() ||
          lrg.num_regs() == 2,"fat projs exactly color" );
   assert( !chunk, "always color in 1st chunk" );
@@ -1227,7 +1230,7 @@ uint PhaseChaitin::Select( ) {
       // Bump register mask up to next stack chunk
       chunk += RegMask::CHUNK_SIZE;
       lrg->Set_All();
-
+      
       goto retry_next_chunk;
     }
 
@@ -1278,7 +1281,7 @@ uint PhaseChaitin::Select( ) {
 
     //---------------
     // Live range is live and no colors available
-    else {
+    else {   
       assert( lrg->alive(), "" );
       assert( !lrg->_fat_proj || lrg->is_multidef() ||
               lrg->_def->outcnt() > 0, "fat_proj cannot spill");
@@ -1402,7 +1405,7 @@ void PhaseChaitin::fixup_spills() {
           ++_unused_cisc_instructions;    // input can be on stack
         }
       }
-
+      
     } // End of for all instructions
 
   } // End of for all blocks
@@ -1417,7 +1420,7 @@ Node *PhaseChaitin::find_base_for_derived( Node **derived_base_map, Node *derive
   if( derived_base_map[derived->_idx] )
     return derived_base_map[derived->_idx];
 
-  // See if this happens to be a base.
+  // See if this happens to be a base.  
   // NOTE: we use TypePtr instead of TypeOopPtr because we can have
   // pointers derived from NULL!  These are always along paths that
   // can't happen at run-time but the optimizer cannot deduce it so
@@ -1506,7 +1509,7 @@ bool PhaseChaitin::stretch_base_pointer_live_ranges( ResourceArea *a ) {
   // For all blocks in RPO do...
   for( uint i=0; i<_cfg._num_blocks; i++ ) {
     Block *b = _cfg._blocks[i];
-    // Note use of deep-copy constructor.  I cannot hammer the original
+    // Note use of deep-copy constructor.  I cannot hammer the original 
     // liveout bits, because they are needed by the following coalesce pass.
     IndexSet liveout(_live->live(b));
 
@@ -1567,7 +1570,7 @@ bool PhaseChaitin::stretch_base_pointer_live_ranges( ResourceArea *a ) {
             // pair of inputs
             n->add_req( derived );
             n->add_req( base );
-
+          
             // See if the base pointer is already live to this point.
             // Since I'm working on the SSA form, live-ness amounts to
             // reaching def's.  So if I find the base's live range then
@@ -1599,7 +1602,7 @@ bool PhaseChaitin::stretch_base_pointer_live_ranges( ResourceArea *a ) {
     liveout.clear();  // Free the memory used by liveout.
 
   } // End of forall blocks
-  _maxlrg = maxlrg;
+  _maxlrg = maxlrg;  
 
   // If I created a new live range I need to recompute live
   if( maxlrg != _ifg->_maxlrg )
@@ -1685,7 +1688,7 @@ void PhaseChaitin::dump( const Node *n ) const {
   else n->dump_spec(tty);
   if( _spilled_once.test(n->_idx ) ) {
     tty->print(" Spill_1");
-    if( _spilled_twice.test(n->_idx ) )
+    if( _spilled_twice.test(n->_idx ) ) 
       tty->print(" Spill_2");
   }
   tty->print("\n");
@@ -1693,9 +1696,9 @@ void PhaseChaitin::dump( const Node *n ) const {
 
 void PhaseChaitin::dump( const Block * b ) const {
   b->dump_head( &_cfg._bbs );
-
+  
   // For all instructions
-  for( uint j = 0; j < b->_nodes.size(); j++ )
+  for( uint j = 0; j < b->_nodes.size(); j++ ) 
     dump(b->_nodes[j]);
   // Print live-out info at end of block
   if( _live ) {
@@ -1717,7 +1720,7 @@ void PhaseChaitin::dump() const {
               _matcher._new_SP, _framesize );
 
   // For all blocks
-  for( uint i = 0; i < _cfg._num_blocks; i++ )
+  for( uint i = 0; i < _cfg._num_blocks; i++ ) 
     dump(_cfg._blocks[i]);
   // End of per-block dump
   tty->print("\n");
@@ -1733,7 +1736,7 @@ void PhaseChaitin::dump() const {
     tty->print("L%d: ",i2);
     if( i2 < _ifg->_maxlrg ) lrgs(i2).dump( );
     else tty->print("new LRG");
-  }
+  }  
   tty->print_cr("");
 
   // Dump lo-degree list
@@ -1773,7 +1776,7 @@ void PhaseChaitin::dump_degree_lists() const {
   tty->print("Hi degree: ");
   for(uint i3 = _hi_degree; i3; i3 = lrgs(i3)._next )
     tty->print("L%d ",i3);
-  tty->print_cr("");
+  tty->print_cr("");  
 }
 
 //------------------------------dump_simplified--------------------------------
@@ -1810,7 +1813,7 @@ char *PhaseChaitin::dump_register( const Node *n, char *buf  ) const {
       sprintf(buf,"L%d",lidx);  // No register binding yet
     } else if( !lidx ) {        // Special, not allocated value
       strcpy(buf,"Special");
-    } else if( (lrgs(lidx).num_regs() == 1)
+    } else if( (lrgs(lidx).num_regs() == 1) 
                 ? !lrgs(lidx).mask().is_bound1()
                 : !lrgs(lidx).mask().is_bound2() ) {
       sprintf(buf,"L%d",lidx); // No register binding yet
@@ -1881,7 +1884,7 @@ void PhaseChaitin::dump_frame() const {
         break;
       }
     }
-    if( j >= argcnt )
+    if( j >= argcnt ) 
       tty->print_cr("HOLE, owned by SELF");
   }
 
@@ -1901,7 +1904,7 @@ void PhaseChaitin::dump_frame() const {
     tty->print("#r%3.3d %s+%2d: ",reg,fp,reg2offset_unchecked(reg));
     if( _matcher.return_addr() == reg )
       tty->print_cr("return address");
-    else if( _matcher.return_addr() == OptoReg::add(reg,1) &&
+    else if( _matcher.return_addr() == OptoReg::add(reg,1) && 
              VerifyStackAtCalls )
       tty->print_cr("0xBADB100D   +VerifyStackAtCalls");
     else if ((int)OptoReg::reg2stack(reg) < C->fixed_slots())
@@ -1993,14 +1996,14 @@ void PhaseChaitin::dump_lrg( uint lidx ) const {
 #endif // not PRODUCT
 
 //------------------------------print_chaitin_statistics-------------------------------
-int PhaseChaitin::_final_loads  = 0;
-int PhaseChaitin::_final_stores = 0;
-int PhaseChaitin::_final_memoves= 0;
-int PhaseChaitin::_final_copies = 0;
-double PhaseChaitin::_final_load_cost  = 0;
-double PhaseChaitin::_final_store_cost = 0;
-double PhaseChaitin::_final_memove_cost= 0;
-double PhaseChaitin::_final_copy_cost  = 0;
+int PhaseChaitin::_final_loads  = 0; 
+int PhaseChaitin::_final_stores = 0; 
+int PhaseChaitin::_final_memoves= 0; 
+int PhaseChaitin::_final_copies = 0; 
+double PhaseChaitin::_final_load_cost  = 0; 
+double PhaseChaitin::_final_store_cost = 0; 
+double PhaseChaitin::_final_memove_cost= 0; 
+double PhaseChaitin::_final_copy_cost  = 0; 
 int PhaseChaitin::_conserv_coalesce = 0;
 int PhaseChaitin::_conserv_coalesce_pair = 0;
 int PhaseChaitin::_conserv_coalesce_trie = 0;
@@ -2020,10 +2023,10 @@ uint PhaseChaitin::_low_pressure            = 0;
 void PhaseChaitin::print_chaitin_statistics() {
   tty->print_cr("Inserted %d spill loads, %d spill stores, %d mem-mem moves and %d copies.", _final_loads, _final_stores, _final_memoves, _final_copies);
   tty->print_cr("Total load cost= %6.0f, store cost = %6.0f, mem-mem cost = %5.2f, copy cost = %5.0f.", _final_load_cost, _final_store_cost, _final_memove_cost, _final_copy_cost);
-  tty->print_cr("Adjusted spill cost = %7.0f.",
-                _final_load_cost*4.0 + _final_store_cost  * 2.0 +
+  tty->print_cr("Adjusted spill cost = %7.0f.", 
+                _final_load_cost*4.0 + _final_store_cost  * 2.0 + 
                 _final_copy_cost*1.0 + _final_memove_cost*12.0);
-  tty->print("Conservatively coalesced %d copies, %d pairs",
+  tty->print("Conservatively coalesced %d copies, %d pairs", 
                 _conserv_coalesce, _conserv_coalesce_pair);
   if( _conserv_coalesce_trie || _conserv_coalesce_quad )
     tty->print(", %d tries, %d quads", _conserv_coalesce_trie, _conserv_coalesce_quad);

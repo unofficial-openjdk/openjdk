@@ -23,6 +23,8 @@
 #
 
 #
+# @(#)cscope.make	1.16 07/05/05 17:03:56
+#
 # The cscope.out file is made in the current directory and spans the entire
 # source tree.
 #

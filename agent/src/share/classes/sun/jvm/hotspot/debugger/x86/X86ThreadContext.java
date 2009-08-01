@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.x86;
@@ -88,7 +88,7 @@ public abstract class X86ThreadContext implements ThreadContext {
 
   // Ought to be int on x86 but we're stuck
   private long[] data;
-
+  
   public X86ThreadContext() {
     data = new long[NPRGREG];
   }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)klass.hpp	1.142 07/05/29 09:44:17 JVM"
+#endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A Klass is the part of the klassOop that provides:
 //  1: language level class object (method dictionary etc.)
 //  2: provide vm dispatch behavior for the object
 // Both functions are combined into one C++ class. The toplevel class "Klass"
-// implements purpose 1 whereas all subclasses provide extra virtual functions
+// implements purpose 1 whereas all subclasses provide extra virtual functions 
 // for purpose 2.
 
 // One reason for the oop/klass dichotomy in the implementation is
@@ -205,7 +208,7 @@ class Klass : public Klass_vtbl {
   // must remain first and last, unless oop_block_beg() and/or oop_block_end()
   // are updated.  Grouping the oop fields in a single block simplifies oop
   // iteration.
-  //
+  // 
 
   // Cache of last observed secondary supertype
   klassOop    _secondary_super_cache;
@@ -227,7 +230,7 @@ class Klass : public Klass_vtbl {
 
   //
   // End of the oop block.
-  //
+  // 
 
   jint        _modifier_flags;  // Processed access flags, for use by Class.getModifiers.
   AccessFlags _access_flags;    // Access flags. The class/interface distinction is stored here.
@@ -335,7 +338,7 @@ class Klass : public Klass_vtbl {
  protected:                                // internal accessors
   klassOop subklass_oop() const            { return _subklass; }
   klassOop next_sibling_oop() const        { return _next_sibling; }
-  void     set_subklass(klassOop s);
+  void     set_subklass(klassOop s); 
   void     set_next_sibling(klassOop s);
 
   oop* adr_super()           const { return (oop*)&_super;             }
@@ -457,7 +460,7 @@ class Klass : public Klass_vtbl {
   // subclass check
   bool is_subclass_of(klassOop k) const;
   // subtype check: true if is_subclass_of, or if k is interface and receiver implements it
-  bool is_subtype_of(klassOop k) const {
+  bool is_subtype_of(klassOop k) const { 
     juint    off = k->klass_part()->super_check_offset();
     klassOop sup = *(klassOop*)( (address)as_klassOop() + off );
     const juint secondary_offset = secondary_super_cache_offset_in_bytes() + sizeof(oopDesc);
@@ -481,7 +484,7 @@ class Klass : public Klass_vtbl {
   // Casting
   static Klass* cast(klassOop k) {
     assert(k->is_klass(), "cast to Klass");
-    return k->klass_part();
+    return k->klass_part(); 
   }
 
   // array copying
@@ -494,7 +497,7 @@ class Klass : public Klass_vtbl {
   // lookup operation for MethodLookupCache
   friend class MethodLookupCache;
   virtual methodOop uncached_lookup_method(symbolOop name, symbolOop signature) const;
- public:
+ public:  
   methodOop lookup_method(symbolOop name, symbolOop signature) const {
     return uncached_lookup_method(name, signature);
   }
@@ -538,10 +541,10 @@ class Klass : public Klass_vtbl {
 
   // Returns the Java name for a class (Resource allocated)
   // For arrays, this returns the name of the element with a leading '['.
-  // For classes, this returns the name with the package separators
+  // For classes, this returns the name with the package separators 
   //     turned into '.'s.
   const char* external_name() const;
-  // Returns the name for a class (Resource allocated) as the class
+  // Returns the name for a class (Resource allocated) as the class 
   // would appear in a signature.
   // For arrays, this returns the name of the element with a leading '['.
   // For classes, this returns the name with a leading 'L' and a trailing ';'
@@ -565,7 +568,7 @@ class Klass : public Klass_vtbl {
   virtual bool oop_is_klass()               const { return false; }
   virtual bool oop_is_thread()              const { return false; }
   virtual bool oop_is_method()              const { return false; }
-  virtual bool oop_is_constMethod()         const { return false; }
+  virtual bool oop_is_constMethod()	    const { return false; }
   virtual bool oop_is_methodData()          const { return false; }
   virtual bool oop_is_constantPool()        const { return false; }
   virtual bool oop_is_constantPoolCache()   const { return false; }
@@ -604,7 +607,7 @@ class Klass : public Klass_vtbl {
                                                     layout_helper_is_typeArray(layout_helper()),
                                                     oop_is_typeArray_slow()); }
   #undef assert_same_query
-
+          
   // Unless overridden, oop is parsable if it has a klass pointer.
   virtual bool oop_is_parsable(oop obj) const { return true; }
 
@@ -786,3 +789,4 @@ class Klass : public Klass_vtbl {
   void verify_vtable_index(int index);
 #endif
 };
+

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -54,7 +54,7 @@ public class StringTable extends sun.jvm.hotspot.utilities.Hashtable {
   // Accessors
   public static StringTable getTheTable() {
     Address tmp = theTableField.getValue();
-    return (StringTable) VMObjectFactory.newObject(StringTable.class, tmp);
+    return (StringTable) VMObjectFactory.newObject(StringTable.class, tmp); 
   }
 
   public static int getStringTableSize() {
@@ -64,7 +64,7 @@ public class StringTable extends sun.jvm.hotspot.utilities.Hashtable {
   public StringTable(Address addr) {
     super(addr);
   }
-
+    
   public interface StringVisitor {
     public void visit(Instance string);
   }

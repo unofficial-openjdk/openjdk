@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jni_x86.h	1.21 07/05/05 17:04:12 JVM"
+#endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -45,3 +48,4 @@
 typedef signed char jbyte;
 
 #endif /* !_JAVASOFT_JNI_MD_H_ */
+

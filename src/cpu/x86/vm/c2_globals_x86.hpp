@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c2_globals_x86.hpp	1.61 07/09/19 11:49:08 JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -28,7 +31,7 @@
 
 define_pd_global(bool, BackgroundCompilation,        true);
 define_pd_global(bool, UseTLAB,                      true);
-define_pd_global(bool, ResizeTLAB,                   true);
+define_pd_global(bool, ResizeTLAB,		     true);
 define_pd_global(bool, CICompileOSR,                 true);
 define_pd_global(bool, InlineIntrinsics,             true);
 define_pd_global(bool, PreferInterpreterNativeStubs, false);
@@ -57,7 +60,7 @@ define_pd_global(intx, Tier4BackEdgeThreshold,       100000);
 define_pd_global(intx, OnStackReplacePercentage,     140);
 define_pd_global(intx, ConditionalMoveLimit,         3);
 define_pd_global(intx, FLOATPRESSURE,                6);
-define_pd_global(intx, FreqInlineSize,               325);
+define_pd_global(intx, FreqInlineSize,		     325);
 #ifdef AMD64
 define_pd_global(intx, INTPRESSURE,                  13);
 define_pd_global(intx, InteriorEntryAlignment,       16);

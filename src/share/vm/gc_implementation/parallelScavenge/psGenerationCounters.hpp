@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)psGenerationCounters.hpp	1.8 07/05/05 17:05:29 JVM"
+#endif
 
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -20,7 +23,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A PSGenerationCounter is a holder class for performance counters

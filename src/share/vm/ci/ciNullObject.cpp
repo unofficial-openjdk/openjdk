@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)ciNullObject.cpp	1.12 07/09/28 10:23:22 JVM"
+#endif
 /*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -46,3 +49,4 @@ void ciNullObject::print_impl(outputStream* st) {
 ciNullObject* ciNullObject::make() {
   return CURRENT_ENV->_null_object_instance->as_null_object();
 }
+

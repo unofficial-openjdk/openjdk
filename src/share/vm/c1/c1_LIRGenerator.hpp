@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)c1_LIRGenerator.hpp	1.14 07/06/18 14:25:25 JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The classes responsible for code emission and register allocation
@@ -67,9 +70,9 @@ class ResolveNode: public CompilationResourceObj {
   bool       _assigned;      // Value assigned to this Node?
   bool       _visited;       // Node already visited?
   bool       _start_node;    // Start node already visited?
-
+  
  public:
-  ResolveNode(LIR_Opr operand)
+  ResolveNode(LIR_Opr operand) 
     : _operand(operand)
     , _assigned(false)
     , _visited(false)
@@ -78,7 +81,7 @@ class ResolveNode: public CompilationResourceObj {
   // accessors
   LIR_Opr operand() const           { return _operand; }
   int no_of_destinations() const    { return _destinations.length(); }
-  ResolveNode* destination_at(int i)     { return _destinations[i]; }
+  ResolveNode* destination_at(int i)     { return _destinations[i]; } 
   bool assigned() const             { return _assigned; }
   bool visited() const              { return _visited; }
   bool start_node() const           { return _start_node; }
@@ -169,7 +172,7 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
 #endif
   LIR_List* lir() const {
     return _lir;
-  }
+  }  
 
   // a simple cache of constants used within a block
   GrowableArray<LIR_Const*>       _constants;

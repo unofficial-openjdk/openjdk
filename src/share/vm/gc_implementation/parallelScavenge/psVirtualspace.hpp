@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)psVirtualspace.hpp	1.15 07/05/05 17:05:31 JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // VirtualSpace for the parallel scavenge collector.
-//
+// 
 // VirtualSpace is data structure for committing a previously reserved address
 // range in smaller chunks.
 
@@ -36,7 +39,7 @@ class PSVirtualSpace : public CHeapObj {
 
   // Reserved area
   char* _reserved_low_addr;
-  char* _reserved_high_addr;
+  char* _reserved_high_addr; 
 
   // Committed area
   char* _committed_low_addr;
@@ -139,9 +142,9 @@ class PSVirtualSpaceHighToLow : public PSVirtualSpace {
 #endif
 };
 
-//
+// 
 // PSVirtualSpace inlines.
-//
+// 
 inline size_t
 PSVirtualSpace::pointer_delta(const char* left, const char* right) {
   return ::pointer_delta((void *)left, (void*)right, sizeof(char));
