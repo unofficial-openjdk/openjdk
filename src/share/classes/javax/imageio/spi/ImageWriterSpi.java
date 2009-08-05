@@ -228,7 +228,11 @@ public abstract class ImageWriterSpi extends ImageReaderWriterSpi {
             throw new IllegalArgumentException
                 ("outputTypes.length == 0!");
         }
-        this.outputTypes = (Class[])outputTypes.clone();
+
+        this.outputTypes = (outputTypes == STANDARD_OUTPUT_TYPE) ?
+            new Class<?>[] { ImageOutputStream.class } :
+            outputTypes.clone();
+
         // If length == 0, leave it null
         if (readerSpiNames != null && readerSpiNames.length > 0) {
             this.readerSpiNames = (String[])readerSpiNames.clone();

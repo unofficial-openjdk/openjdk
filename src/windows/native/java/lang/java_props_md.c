@@ -715,9 +715,10 @@ GetJavaProperties(JNIEnv* env)
          *      where ((&ver.wServicePackMinor) + 2) = 1
          *       and  si.wProcessorArchitecture = 9
          * Windows Vista family         6               0
-         * Windows 2008                 6               0
+         * Windows Server 2008          6               0
          *      where ((&ver.wServicePackMinor) + 2) = 1
          * Windows 7                    6               1
+         * Windows Server 2008 R2       6               1
          *
          * This mapping will presumably be augmented as new Windows
          * versions are released.
@@ -784,7 +785,11 @@ GetJavaProperties(JNIEnv* env)
                     default: sprops.os_name = "Windows NT (unknown)";
                     }
                 } else {
-                    sprops.os_name = "Windows Server 2008";
+                    switch (ver.dwMinorVersion) {
+                    case  0: sprops.os_name = "Windows Server 2008";     break;
+                    case  1: sprops.os_name = "Windows Server 2008 R2";  break;
+                    default: sprops.os_name = "Windows NT (unknown)";
+                    }
                 }
             } else {
                 sprops.os_name = "Windows NT (unknown)";
