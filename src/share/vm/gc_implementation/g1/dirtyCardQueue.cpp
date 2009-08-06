@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,8 +80,8 @@ void DirtyCardQueueSet::initialize(Monitor* cbl_mon, Mutex* fl_lock,
                                    int max_completed_queue,
                                    Mutex* lock, PtrQueueSet* fl_owner) {
   PtrQueueSet::initialize(cbl_mon, fl_lock, max_completed_queue, fl_owner);
-  set_buffer_size(DCQBarrierQueueBufferSize);
-  set_process_completed_threshold(DCQBarrierProcessCompletedThreshold);
+  set_buffer_size(G1UpdateBufferSize);
+  set_process_completed_threshold(G1UpdateBufferQueueProcessingThreshold);
 
   _shared_dirty_card_queue.set_lock(lock);
   _free_ids = new FreeIdSet((int) num_par_ids(), _cbl_mon);

@@ -1591,7 +1591,7 @@ jint G1CollectedHeap::initialize() {
 
   JavaThread::dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
                                                 DirtyCardQ_FL_lock,
-                                                G1DirtyCardQueueMax,
+                                                G1UpdateBufferQueueMaxLength,
                                                 Shared_DirtyCardQ_lock);
 
   if (G1DeferredRSUpdate) {
@@ -1637,6 +1637,9 @@ size_t G1CollectedHeap::capacity() const {
 
 void G1CollectedHeap::iterate_dirty_card_closure(bool concurrent,
                                                  int worker_i) {
+  // Clean cards in the hot card cache
+  concurrent_g1_refine()->clean_up_cache(worker_i, g1_rem_set());
+
   DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   int n_completed_buffers = 0;
   while (dcqs.apply_closure_to_completed_buffer(worker_i, 0, true)) {
@@ -1645,9 +1648,6 @@ void G1CollectedHeap::iterate_dirty_card_closure(bool concurrent,
   g1_policy()->record_update_rs_processed_buffers(worker_i,
                                                   (double) n_completed_buffers);
   dcqs.clear_n_completed_buffers();
-  // Finish up the queue...
-  if (worker_i == 0) concurrent_g1_refine()->clean_up_cache(worker_i,
-                                                            g1_rem_set());
   assert(!dcqs.completed_buffers_exist_dirty(), "Completed buffers exist!");
 }
 
@@ -1655,9 +1655,8 @@ void G1CollectedHeap::iterate_dirty_card_closure(bool concurrent,
 // Computes the sum of the storage used by the various regions.
 
 size_t G1CollectedHeap::used() const {
-  // Temporarily, until 6859911 is fixed. XXX
-  // assert(Heap_lock->owner() != NULL,
-  //        "Should be owned on this thread's behalf.");
+  assert(Heap_lock->owner() != NULL,
+         "Should be owned on this thread's behalf.");
   size_t result = _summary_bytes_used;
   // Read only once in case it is set to NULL concurrently
   HeapRegion* hr = _cur_alloc_region;
@@ -2415,8 +2414,6 @@ void G1CollectedHeap::gc_threads_do(ThreadClosure* tc) const {
 }
 
 void G1CollectedHeap::print_tracing_info() const {
-  concurrent_g1_refine()->print_final_card_counts();
-
   // We'll overload this to mean "trace GC pause statistics."
   if (TraceGen0Time || TraceGen1Time) {
     // The "G1CollectorPolicy" is keeping track of these stats, so delegate
@@ -2846,6 +2843,11 @@ G1CollectedHeap::do_collection_pause_at_safepoint() {
   if (PrintHeapAtGC) {
     Universe::print_heap_after_gc();
   }
+  if (G1SummarizeRSetStats &&
+      (G1SummarizeRSetStatsPeriod > 0) &&
+      (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
+    g1_rem_set()->print_summary_info();
+  }
 }
 
 void G1CollectedHeap::set_gc_alloc_region(int purpose, HeapRegion* r) {
@@ -2981,6 +2983,7 @@ void G1CollectedHeap::get_gc_alloc_regions() {
 
   for (int ap = 0; ap < GCAllocPurposeCount; ++ap) {
     assert(_gc_alloc_regions[ap] == NULL, "invariant");
+    assert(_gc_alloc_region_counts[ap] == 0, "invariant");
 
     // Create new GC alloc regions.
     HeapRegion* alloc_region = _retained_gc_alloc_regions[ap];
@@ -3009,6 +3012,9 @@ void G1CollectedHeap::get_gc_alloc_regions() {
     if (alloc_region == NULL) {
       // we will get a new GC alloc region
       alloc_region = newAllocRegionWithExpansion(ap, 0);
+    } else {
+      // the region was retained from the last collection
+      ++_gc_alloc_region_counts[ap];
     }
 
     if (alloc_region != NULL) {
@@ -3047,11 +3053,11 @@ void G1CollectedHeap::release_gc_alloc_regions(bool totally) {
   for (int ap = 0; ap < GCAllocPurposeCount; ++ap) {
     HeapRegion* r = _gc_alloc_regions[ap];
     _retained_gc_alloc_regions[ap] = NULL;
+    _gc_alloc_region_counts[ap] = 0;
 
     if (r != NULL) {
       // we retain nothing on _gc_alloc_regions between GCs
       set_gc_alloc_region(ap, NULL);
-      _gc_alloc_region_counts[ap] = 0;
 
       if (r->is_empty()) {
         // we didn't actually allocate anything in it; let's just put
@@ -4103,6 +4109,8 @@ void G1CollectedHeap::evacuate_collection_set() {
 
   g1_rem_set()->prepare_for_oops_into_collection_set_do();
   concurrent_g1_refine()->set_use_cache(false);
+  concurrent_g1_refine()->clear_hot_cache_claimed_index();
+
   int n_workers = (ParallelGCThreads > 0 ? workers()->total_workers() : 1);
   set_par_threads(n_workers);
   G1ParTask g1_par_task(this, n_workers, _task_queues);
@@ -4135,6 +4143,7 @@ void G1CollectedHeap::evacuate_collection_set() {
   }
   g1_rem_set()->cleanup_after_oops_into_collection_set_do();
 
+  concurrent_g1_refine()->clear_hot_cache();
   concurrent_g1_refine()->set_use_cache(true);
 
   finalize_for_evac_failure();
