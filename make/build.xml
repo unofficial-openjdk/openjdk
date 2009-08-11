@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -398,6 +398,8 @@
             <attribute name="lib.dir" default="${dist.lib.dir}"/>
             <attribute name="java" default="java"/>
             <attribute name="javac.bootclasspath" default="${build.bootstrap.dir}/classes"/>
+            <attribute name="javac.java.home" default="${boot.java.home}"/>
+            <attribute name="javac.source" default="${javac.source}"/>
             <attribute name="javac.target" default="${javac.target}"/>
             <attribute name="jarmainclass" default="com.sun.tools.@{name}.Main"/>
             <attribute name="jarclasspath" default=""/>
@@ -416,6 +418,7 @@
                     release="@{release}"
                     full.version="@{full.version}"
                     javac.bootclasspath="@{javac.bootclasspath}"
+                    javac.source="@{javac.source}"
                     javac.target="@{javac.target}"
                 />
                 <mkdir dir="@{bin.dir}"/>
@@ -439,6 +442,8 @@
             <attribute name="gensrc.dir" default="${build.gensrc.dir}"/>
             <attribute name="lib.dir" default="${dist.lib.dir}"/>
             <attribute name="javac.bootclasspath" default="${build.bootstrap.dir}/classes"/>
+            <attribute name="javac.java.home" default="${boot.java.home}"/>
+            <attribute name="javac.source" default="${javac.source}"/>
             <attribute name="javac.target" default="${javac.target}"/>
             <attribute name="jarmainclass" default="com.sun.tools.@{name}.Main"/>
             <attribute name="jarclasspath" default=""/>
@@ -454,6 +459,7 @@
                     release="@{release}"
                     full.version="@{full.version}"
                     javac.bootclasspath="@{javac.bootclasspath}"
+                    javac.source="@{javac.source}"
                     javac.target="@{javac.target}"
                 />
                 <mkdir dir="@{lib.dir}"/>
@@ -477,6 +483,8 @@
             <attribute name="classes.dir" default="${build.classes.dir}"/>
             <attribute name="gensrc.dir" default="${build.gensrc.dir}"/>
             <attribute name="javac.bootclasspath" default="${build.bootstrap.dir}/classes"/>
+            <attribute name="javac.java.home" default="${boot.java.home}"/>
+            <attribute name="javac.source" default="${javac.source}"/>
             <attribute name="javac.target" default="${javac.target}"/>
             <attribute name="release" default="${release}"/>
             <attribute name="full.version" default="${full.version}"/>
@@ -487,7 +495,7 @@
                           destdir="@{gensrc.dir}"
                           includes="@{includes}"/>
                 <copy todir="@{gensrc.dir}">
-                    <fileset dir="${src.classes.dir}" includes="${javac.includes}"/>
+                    <fileset dir="${src.classes.dir}" includes="@{includes}"/>
                     <globmapper from="*.properties-template" to="*.properties"/>
                     <filterset begintoken="$(" endtoken=")">
                         <filter token="JDK_VERSION" value="${jdk.version}"/>
@@ -499,23 +507,27 @@
                           destdir="@{gensrc.dir}"
                           includes="**/*.properties"/>
                 <javac fork="true"
+                       executable="@{javac.java.home}/bin/javac"
                        srcdir="@{gensrc.dir}"
                        destdir="@{classes.dir}"
                        includes="@{includes}"
                        sourcepath=""
                        includeAntRuntime="no"
+                       source="@{javac.source}"
                        target="@{javac.target}">
                     <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
                     <compilerarg line="${javac.version.opt}"/>
                     <compilerarg line="-Xlint"/>
                 </javac>
                 <javac fork="true"
+                       executable="@{javac.java.home}/bin/javac"
                        srcdir="${src.classes.dir}"
                        destdir="@{classes.dir}"
                        includes="@{includes}"
                        excludes="@{excludes}"
                        sourcepath=""
                        includeAntRuntime="no"
+                       source="@{javac.source}"
                        target="@{javac.target}"
                        debug="${javac.debug}" 
                        debuglevel="${javac.debuglevel}">
@@ -541,6 +553,7 @@
     <target name="-def-build-bootstrap-tool" depends="-check-boot.java.home,-def-build-tool">
         <presetdef name="build-bootstrap-tool">
             <build-tool
+                javac.source="${boot.javac.source}"
                 javac.target="${boot.javac.target}"
                 gensrc.dir="${build.bootstrap.dir}/gensrc"
                 classes.dir="${build.bootstrap.dir}/classes"
@@ -556,6 +569,7 @@
     <target name="-def-build-bootstrap-jar" depends="-def-build-jar">
         <presetdef name="build-bootstrap-jar">
             <build-jar
+                javac.source="${boot.javac.source}"
                 javac.target="${boot.javac.target}"
                 gensrc.dir="${build.bootstrap.dir}/gensrc"
                 classes.dir="${build.bootstrap.dir}/classes"
@@ -568,7 +582,9 @@
     
     <target name="-def-pcompile">
         <mkdir dir="${build.toolclasses.dir}"/>
-        <javac srcdir="${make.tools.dir}/CompileProperties"
+        <javac fork="true"
+               executable="${boot.java.home}/bin/javac"
+               srcdir="${make.tools.dir}/CompileProperties"
                destdir="${build.toolclasses.dir}/"
                classpath="${ant.home}/lib/ant.jar"/>
         <taskdef name="pcompile"
@@ -659,7 +675,7 @@
                 <!-- the next two properties are for convenience, when only 
                      a single instance of jtreg will be invoked. -->
                 <condition property="jtreg.passed">
-                    <equals arg1="${jtreg.javac.result}" arg2="0"/>
+                    <equals arg1="${jtreg.@{name}.result}" arg2="0"/>
                 </condition>
                 <property name="jtreg.report" value="${build.jtreg.dir}/@{name}/report"/>
             </sequential>
