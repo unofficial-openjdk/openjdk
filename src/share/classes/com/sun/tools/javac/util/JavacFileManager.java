@@ -25,10 +25,8 @@
 
 package com.sun.tools.javac.util;
 
-import com.sun.tools.javac.main.JavacOption;
-import com.sun.tools.javac.main.OptionName;
-import com.sun.tools.javac.main.RecognizedOptions;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,6 +37,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -63,6 +62,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -70,11 +70,13 @@ import javax.lang.model.SourceVersion;
 import javax.tools.FileObject;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
 
 import com.sun.tools.javac.code.Source;
+import com.sun.tools.javac.main.JavacOption;
+import com.sun.tools.javac.main.OptionName;
+import com.sun.tools.javac.main.RecognizedOptions;
 import com.sun.tools.javac.util.JCDiagnostic.SimpleDiagnosticPosition;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.tools.StandardJavaFileManager;
 
 import com.sun.tools.javac.zip.*;
 import java.io.ByteArrayInputStream;
@@ -143,6 +145,7 @@ public class JavacFileManager implements StandardJavaFileManager {
 
     protected boolean mmappedIO;
     protected boolean ignoreSymbolFile;
+    protected String classLoaderClass;
 
     /**
      * User provided charset (through javax.tools).
@@ -192,6 +195,7 @@ public class JavacFileManager implements StandardJavaFileManager {
 
         mmappedIO = options.get("mmappedIO") != null;
         ignoreSymbolFile = options.get("ignore.symbol.file") != null;
+        classLoaderClass = options.get("procloader");
     }
 
     public JavaFileObject getFileForInput(String name) {
@@ -865,8 +869,40 @@ public class JavacFileManager implements StandardJavaFileManager {
                 throw new AssertionError(e);
             }
         }
-        return new URLClassLoader(lb.toArray(new URL[lb.size()]),
-            getClass().getClassLoader());
+
+        URL[] urls = lb.toArray(new URL[lb.size()]);
+        ClassLoader thisClassLoader = getClass().getClassLoader();
+
+        // Bug: 6558476
+        // Ideally, ClassLoader should be Closeable, but before JDK7 it is not.
+        // On older versions, try the following, to get a closeable classloader.
+
+        // 1: Allow client to specify the class to use via hidden option
+        if (classLoaderClass != null) {
+            try {
+                Class<? extends ClassLoader> loader =
+                        Class.forName(classLoaderClass).asSubclass(ClassLoader.class);
+                Class<?>[] constrArgTypes = { URL[].class, ClassLoader.class };
+                Constructor<? extends ClassLoader> constr = loader.getConstructor(constrArgTypes);
+                return constr.newInstance(new Object[] { urls, thisClassLoader });
+            } catch (Throwable t) {
+                // ignore errors loading user-provided class loader, fall through
+            }
+        }
+
+        // 2: If URLClassLoader implements Closeable, use that.
+        if (Closeable.class.isAssignableFrom(URLClassLoader.class))
+            return new URLClassLoader(urls, thisClassLoader);
+
+        // 3: Try using private reflection-based CloseableURLClassLoader
+        try {
+            return new CloseableURLClassLoader(urls, thisClassLoader);
+        } catch (Throwable t) {
+            // ignore errors loading workaround class loader, fall through
+        }
+
+        // 4: If all else fails, use plain old standard URLClassLoader
+        return new URLClassLoader(urls, thisClassLoader);
     }
 
     public Iterable<JavaFileObject> list(Location location,
