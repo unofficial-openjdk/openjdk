@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2401,7 +2401,7 @@ class CSMarkOopClosure: public OopClosure {
         // Now process this portion of this one.
         int lim = MIN2(next_arr_ind, len);
         for (int j = arr_ind; j < lim; j++) {
-          do_oop(aobj->obj_at_addr<T>(j));
+          do_oop(aobj->objArrayOopDesc::obj_at_addr<T>(j));
         }
 
       } else {

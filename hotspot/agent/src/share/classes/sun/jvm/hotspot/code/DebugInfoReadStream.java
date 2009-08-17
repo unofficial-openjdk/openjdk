@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,9 +80,5 @@ public class DebugInfoReadStream extends CompressedReadStream {
     }
     Assert.that(false, "should not reach here");
     return null;
-  }
-
-  public int readBCI() {
-    return readInt() + InvocationEntryBCI;
   }
 }
