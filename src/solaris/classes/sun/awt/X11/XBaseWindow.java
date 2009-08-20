@@ -824,7 +824,9 @@ public class XBaseWindow implements XConstants, XUtilConstants {
      * The active grab overrides activated automatic grab.
      */
     public boolean grabInput() {
-        grabLog.log(Level.FINE, "Grab input on {0}", new Object[] {this});
+        if (grabLog.isLoggable(Level.FINE)) {
+            grabLog.log(Level.FINE, "Grab input on {0}", new Object[] {String.valueOf(this)});
+        }
 
         XToolkit.awtLock();
         try {
@@ -879,7 +881,10 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         XToolkit.awtLock();
         try {
             XBaseWindow grabWindow = XAwtState.getGrabWindow();
-            grabLog.log(Level.FINE, "UnGrab input on {0}", new Object[] {grabWindow});
+            if (grabLog.isLoggable(Level.FINE)) {
+                grabLog.log(Level.FINE, "UnGrab input on {0}",
+                            new Object[] {String.valueOf(grabWindow)});
+            }
             if (grabWindow != null) {
                 grabWindow.ungrabInputImpl();
                 XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), CurrentTime);
@@ -930,7 +935,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             XPropertyCache.clearCache(window, XAtom.get(msg.get_atom()));
         }
         if (eventLog.isLoggable(Level.FINER)) {
-            eventLog.log(Level.FINER, "{0}", new Object[] {msg});
+            eventLog.log(Level.FINER, "{0}", new Object[] {String.valueOf(msg)});
         }
     }
 
@@ -1000,8 +1005,10 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     }
     public void handleConfigureNotifyEvent(XEvent xev) {
         XConfigureEvent xe = xev.get_xconfigure();
-        insLog.log(Level.FINER, "Configure, {0}",
-                   new Object[] {xe});
+        if (insLog.isLoggable(Level.FINER)) {
+            insLog.log(Level.FINER, "Configure, {0}",
+                       new Object[] {String.valueOf(xe)});
+        }
         x = xe.get_x();
         y = xe.get_y();
         width = xe.get_width();

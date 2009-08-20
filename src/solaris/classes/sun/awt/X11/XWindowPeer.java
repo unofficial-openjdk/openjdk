@@ -376,7 +376,7 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         if (iconLog.isLoggable(Level.FINEST)) {
             iconLog.log(Level.FINEST, ">>> Sizes of icon images:");
             for (Iterator<XIconInfo> i = icons.iterator(); i.hasNext(); ) {
-                iconLog.log(Level.FINEST, "    {0}", i.next());
+                iconLog.log(Level.FINEST, "    {0}", String.valueOf(i.next()));
             }
         }
     }
@@ -826,7 +826,9 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
     public void handleFocusEvent(XEvent xev) {
         XFocusChangeEvent xfe = xev.get_xfocus();
         FocusEvent fe;
-        focusLog.log(Level.FINE, "{0}", new Object[] {xfe});
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.log(Level.FINER, "{0}", new Object[] {String.valueOf(xfe)});
+        }
         if (isEventDisabled(xev)) {
             return;
         }
@@ -1438,7 +1440,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             synchronized(getStateLock()) {
                 XDialogPeer blockerPeer = (XDialogPeer) ComponentAccessor.getPeer(d);
                 if (blocked) {
-                    log.log(Level.FINE, "{0} is blocked by {1}", new Object[] { this, blockerPeer});
+                    if (log.isLoggable(Level.FINE)) {
+                        log.log(Level.FINE, "{0} is blocked by {1}",
+                                new Object[] { String.valueOf(this), String.valueOf(blockerPeer)});
+                    }
                     modalBlocker = d;
 
                     if (isReparented() || XWM.isNonReparentingWM()) {
@@ -1899,7 +1904,9 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             wm_set_insets = XWM.getInsetsFromProp(getWindow(), changedAtom);
         }
 
-        insLog.log(Level.FINER, "FRAME_EXTENTS: {0}", new Object[]{wm_set_insets});
+        if (insLog.isLoggable(Level.FINER)) {
+            insLog.log(Level.FINER, "FRAME_EXTENTS: {0}", new Object[]{String.valueOf(wm_set_insets)});
+        }
 
         if (wm_set_insets != null) {
             handleWMSetInsets(wm_set_insets);
@@ -1942,7 +1949,8 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         XCrossingEvent xce = xev.get_xcrossing();
         if (grabLog.isLoggable(Level.FINE)) {
             grabLog.log(Level.FINE, "{0}, when grabbed {1}, contains {2}",
-                        new Object[] {xce, isGrabbed(), containsGlobal(xce.get_x_root(), xce.get_y_root())});
+                        new Object[] {String.valueOf(xce), isGrabbed(),
+                                      containsGlobal(xce.get_x_root(), xce.get_y_root())});
         }
         if (isGrabbed()) {
             // When window is grabbed, all events are dispatched to
@@ -1953,7 +1961,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             // since it generates MOUSE_ENTERED/MOUSE_EXITED for frame and dialog.
             // (fix for 6390326)
             XBaseWindow target = XToolkit.windowToXWindow(xce.get_window());
-            grabLog.log(Level.FINER, "  -  Grab event target {0}", new Object[] {target});
+            if (grabLog.isLoggable(Level.FINER)) {
+                grabLog.log(Level.FINER, "  -  Grab event target {0}",
+                            new Object[] {String.valueOf(target)});
+            }
             if (target != null && target != this) {
                 target.dispatchEvent(xev);
                 return;
@@ -1966,7 +1977,8 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         XMotionEvent xme = xev.get_xmotion();
         if (grabLog.isLoggable(Level.FINE)) {
             grabLog.log(Level.FINER, "{0}, when grabbed {1}, contains {2}",
-                        new Object[] {xme, isGrabbed(), containsGlobal(xme.get_x_root(), xme.get_y_root())});
+                        new Object[] {String.valueOf(xme), isGrabbed(),
+                                      containsGlobal(xme.get_x_root(), xme.get_y_root())});
         }
         if (isGrabbed()) {
             boolean dragging = (xme.get_state() & (Button1Mask | Button2Mask | Button3Mask)) != 0;
@@ -1986,7 +1998,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
                 xme.set_x(xme.get_x_root() - target.getX());
                 xme.set_y(xme.get_y_root() - target.getY());
             }
-            grabLog.log(Level.FINER, "  -  Grab event target {0}", new Object[] {target});
+            if (grabLog.isLoggable(Level.FINER)) {
+                grabLog.log(Level.FINER, "  -  Grab event target {0}",
+                            new Object[] {String.valueOf(target)});
+            }
             if (target != null) {
                 if (target != getContentXWindow() && target != this) {
                     target.dispatchEvent(xev);
@@ -2011,7 +2026,8 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
         XButtonEvent xbe = xev.get_xbutton();
         if (grabLog.isLoggable(Level.FINE)) {
             grabLog.log(Level.FINE, "{0}, when grabbed {1}, contains {2} ({3}, {4}, {5}x{6})",
-                        new Object[] {xbe, isGrabbed(), containsGlobal(xbe.get_x_root(), xbe.get_y_root()), getAbsoluteX(), getAbsoluteY(), getWidth(), getHeight()});
+                        new Object[] {String.valueOf(xbe), isGrabbed(), containsGlobal(xbe.get_x_root(),
+                                      xbe.get_y_root()), getAbsoluteX(), getAbsoluteY(), getWidth(), getHeight()});
         }
         if (isGrabbed()) {
             // When window is grabbed, all events are dispatched to
@@ -2020,7 +2036,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             // translation)
             XBaseWindow target = XToolkit.windowToXWindow(xbe.get_window());
             try {
-                grabLog.log(Level.FINER, "  -  Grab event target {0} (press target {1})", new Object[] {target, pressTarget});
+                if (grabLog.isLoggable(Level.FINER)) {
+                    grabLog.log(Level.FINER, "  -  Grab event target {0} (press target {1})",
+                                new Object[] {String.valueOf(target), String.valueOf(pressTarget)});
+                }
                 if (xbe.get_type() == XConstants.ButtonPress
                     && xbe.get_button() == XlibWrapper.Button1)
                 {
@@ -2052,7 +2071,10 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
                         // Outside this toplevel hierarchy
                         // According to the specification of UngrabEvent, post it
                         // when press occurs outside of the window and not on its owned windows
-                        grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because not inside of shell", this);
+                        if (grabLog.isLoggable(Level.FINE)) {
+                            grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because not inside of shell",
+                                        String.valueOf(this));
+                        }
                         postEventToEventQueue(new sun.awt.UngrabEvent(getEventSource()));
                         return;
                     }
@@ -2070,18 +2092,27 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
                             // toplevel == null - outside of
                             // hierarchy, toplevel is Dialog - should
                             // send ungrab (but shouldn't for Window)
-                            grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because hierarchy ended", this);
+                            if (grabLog.isLoggable(Level.FINE)) {
+                                grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because hierarchy ended",
+                                            String.valueOf(this));
+                            }
                             postEventToEventQueue(new sun.awt.UngrabEvent(getEventSource()));
                         }
                     } else {
                         // toplevel is null - outside of hierarchy
-                        grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because toplevel is null", this);
+                        if (grabLog.isLoggable(Level.FINE)) {
+                            grabLog.log(Level.FINE, "Generating UngrabEvent on {0} because toplevel is null",
+                                        String.valueOf(this));
+                        }
                         postEventToEventQueue(new sun.awt.UngrabEvent(getEventSource()));
                         return;
                     }
                 } else {
                     // target doesn't map to XAWT window - outside of hierarchy
-                    grabLog.log(Level.FINE, "Generating UngrabEvent on because target is null {0}", this);
+                    if (grabLog.isLoggable(Level.FINE)) {
+                        grabLog.log(Level.FINE, "Generating UngrabEvent on because target is null {0}",
+                                    String.valueOf(this));
+                    }
                     postEventToEventQueue(new sun.awt.UngrabEvent(getEventSource()));
                     return;
                 }
