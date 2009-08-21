@@ -52,7 +52,13 @@
             <ul>
                 <li><a href="#introduction">Introduction</a></li>
                 <li><a href="#MBE">Minimum Build Environments</a></li>
-                <li><a href="#SDBE">Specific Developer Build Environments</a></li>
+                <li><a href="#SDBE">Specific Developer Build Environments</a>
+                    <ul>
+		        <li><a href="#fedora">Fedora</a></li>
+		        <li><a href="#debian">Debian</a></li>
+		        <li><a href="#ubuntu">Ubuntu</a></li>
+		    </ul>
+		</li>
                 <li><a href="#directories">Source Directory Structure</a> </li>
                 <li><a href="#building">Build Information</a>
                     <ul>
@@ -244,7 +250,7 @@
 		The simplest way to install the build dependencies is to 
 		execute the following commands as user <tt>root</tt>:
 		<p/>
-		<code>aptitude buid-dep openjdk-6</code>
+		<code>aptitude build-dep openjdk-6</code>
 		<p/>
 		<code>aptitude install openjdk-6-jdk libmotif-dev</code>
 		<p/>
@@ -271,7 +277,7 @@
 		The simplest way to install the build dependencies is to 
 		execute the following commands:
 		<p/>
-		<code>sudo aptitude buid-dep openjdk-6</code>
+		<code>sudo aptitude build-dep openjdk-6</code>
 		<p/>
 		<code>sudo aptitude install openjdk-6-jdk libmotif-dev</code>
 		<p/>
@@ -287,7 +293,7 @@
 		you need to install several build dependencies. The simplest
 		way to do it is to execute the following commands:
 		<p/>
-		<code>sudo aptitude buid-dep openjdk-6</code>
+		<code>sudo aptitude build-dep openjdk-6</code>
 		<p/>
 		<code>sudo aptitude install openjdk-6-jdk libmotif-dev gcc-4.2 g++-4.2</code>
 		<p/>
@@ -309,7 +315,7 @@
 		you need to install several build dependencies. The simplest
 		way to do it is to execute the following commands:
 		<p/>
-		<code>sudo aptitude buid-dep openjdk-6</code>
+		<code>sudo aptitude build-dep openjdk-6</code>
 		<p/>
 		<code>sudo aptitude install openjdk-6-jdk libmotif-dev gcc-4.2 g++-4.2</code>
 		<p/>
@@ -419,7 +425,11 @@
                 </li>
                 <li>
                     <strong>Windows:</strong>
-                    Make sure you start your build inside a bash/sh/ksh shell.
+                    Make sure you start your build inside a bash/sh/ksh shell
+		    and are using a <tt>make.exe</tt> utility built for that
+		    environment (a cygwin <tt>make.exe</tt> is not the same
+		    as a <tt>make.exe</tt> built for something like
+		    <a href="http://www.mkssoftware.com/">MKS</a>).
                     <br>
                     <b>WARNING:</b> Watch out for make version 3.81, it may
                     not work due to a lack of support for drive letter paths
