@@ -1089,8 +1089,12 @@ bool LibraryCallKit::inline_string_indexOf() {
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
 
+  Node* alloc = NULL;
+  if (DoEscapeAnalysis && argument->is_Con())
+    alloc = AllocateNode::Ideal_allocation(receiver, &_gvn);
+
   Node* result;
-  if (Matcher::has_match_rule(Op_StrIndexOf) &&
+  if (Matcher::has_match_rule(Op_StrIndexOf) && alloc == NULL &&
       UseSSE42Intrinsics) {
     // Generate SSE4.2 version of indexOf
     // We currently only have match rules that use SSE4.2
