@@ -3882,6 +3882,13 @@ encode %{
     masm.bind(LOAD_SUBSTR);
     masm.movptr(rdi, Address(rsp, 8));
     masm.movl(rax, Address(rsp, 0));
+    // We came here after the beginninig of the substring was
+    // matched but the rest of it was not so we need to search
+    // again. Start from the next element after the previous match.
+    masm.subptr(rsi, rbx); // Restore counter
+    masm.shrl(rsi, 1);
+    masm.addl(rdx, rsi);
+    masm.lea(rsi, Address(rbx, 2));
 
     // Load substr
     masm.bind(PREP_FOR_SCAN);
