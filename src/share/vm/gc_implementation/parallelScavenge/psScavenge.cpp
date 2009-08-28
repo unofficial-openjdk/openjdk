@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -614,6 +614,10 @@ bool PSScavenge::invoke_no_policy() {
                   scavenge_exit.ticks());
     gc_task_manager()->print_task_time_stamps();
   }
+
+#ifdef TRACESPINNING
+  ParallelTaskTerminator::print_termination_counts();
+#endif
 
   return !promotion_failure_occurred;
 }

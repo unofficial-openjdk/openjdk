@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ class Thread;
 class CollectedHeap : public CHeapObj {
   friend class VMStructs;
   friend class IsGCActiveMark; // Block structured external access to _is_gc_active
+  friend class constantPoolCacheKlass; // allocate() method inserts is_conc_safe
 
 #ifdef ASSERT
   static int       _fire_out_of_memory_count;
@@ -81,8 +82,6 @@ class CollectedHeap : public CHeapObj {
 
   // Reinitialize tlabs before resuming mutators.
   virtual void resize_all_tlabs();
-
-  debug_only(static void check_for_valid_allocation_state();)
 
  protected:
   // Allocate from the current thread's TLAB, with broken-out slow path.
@@ -142,6 +141,7 @@ class CollectedHeap : public CHeapObj {
     PRODUCT_RETURN;
   virtual void check_for_non_bad_heap_word_value(HeapWord* addr, size_t size)
     PRODUCT_RETURN;
+  debug_only(static void check_for_valid_allocation_state();)
 
  public:
   enum Name {
@@ -466,6 +466,10 @@ class CollectedHeap : public CHeapObj {
   // This includes objects in permanent memory.
   virtual void object_iterate(ObjectClosure* cl) = 0;
 
+  // Similar to object_iterate() except iterates only
+  // over live objects.
+  virtual void safe_object_iterate(ObjectClosure* cl) = 0;
+
   // Behaves the same as oop_iterate, except only traverses
   // interior pointers contained in permanent memory. If there
   // is no permanent memory, does nothing.
@@ -510,6 +514,10 @@ class CollectedHeap : public CHeapObj {
   // Perform any cleanup actions necessary before allowing a verification.
   virtual void prepare_for_verify() = 0;
 
+  // Generate any dumps preceding or following a full gc
+  void pre_full_gc_dump();
+  void post_full_gc_dump();
+
   virtual void print() const = 0;
   virtual void print_on(outputStream* st) const = 0;
 
@@ -525,7 +533,7 @@ class CollectedHeap : public CHeapObj {
   virtual void print_tracing_info() const = 0;
 
   // Heap verification
-  virtual void verify(bool allow_dirty, bool silent) = 0;
+  virtual void verify(bool allow_dirty, bool silent, bool option) = 0;
 
   // Non product verification and debugging.
 #ifndef PRODUCT

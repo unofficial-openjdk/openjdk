@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,6 +107,13 @@ class oopDesc {
   // Some perm gen objects are not parseble immediately after
   // installation of their klass pointer.
   bool is_parsable();
+
+  // Some perm gen objects that have been allocated and initialized
+  // can be changed by the VM when not at a safe point (class rededfinition
+  // is an example).  Such objects should not be examined by the
+  // concurrent processing of a garbage collector if is_conc_safe()
+  // returns false.
+  bool is_conc_safe();
 
   // type test operations (inlined in oop.inline.h)
   bool is_instance()           const;
@@ -255,6 +262,9 @@ class oopDesc {
 
   jdouble double_field_acquire(int offset) const;
   void release_double_field_put(int offset, jdouble contents);
+
+  address address_field_acquire(int offset) const;
+  void release_address_field_put(int offset, address contents);
 
   // printing functions for VM debugging
   void print_on(outputStream* st) const;         // First level print

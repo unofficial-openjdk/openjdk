@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,7 @@ class ConcurrentZFThread: public ConcurrentGCThread {
   // while holding the ZF_needed_mon lock.
 
   // shutdown
-  static void stop();
+  void stop();
 
   // Stats
   static void note_region_alloc() {_region_allocs++; }

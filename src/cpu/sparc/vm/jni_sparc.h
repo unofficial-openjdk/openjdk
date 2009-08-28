@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,5 +28,11 @@
 #define JNICALL
 
 typedef int jint;
-typedef long long jlong;
+
+#ifdef _LP64
+  typedef long jlong;
+#else
+  typedef long long jlong;
+#endif
+
 typedef signed char jbyte;

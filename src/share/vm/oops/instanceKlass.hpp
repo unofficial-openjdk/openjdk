@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,6 +163,8 @@ class instanceKlass: public Klass {
   klassOop        _implementors[implementors_limit];
   // Generic signature, or null if none.
   symbolOop       _generic_signature;
+  // invokedynamic bootstrap method (a java.dyn.MethodHandle)
+  oop             _bootstrap_method;
   // Annotations for this class, or null if none.
   typeArrayOop    _class_annotations;
   // Annotation objects (byte arrays) for fields, or null if no annotations.
@@ -303,10 +305,29 @@ class instanceKlass: public Klass {
     inner_class_next_offset = 4
   };
 
+  // method override check
+  bool is_override(methodHandle super_method, Handle targetclassloader, symbolHandle targetclassname, TRAPS);
+
   // package
   bool is_same_class_package(klassOop class2);
   bool is_same_class_package(oop classloader2, symbolOop classname2);
   static bool is_same_class_package(oop class_loader1, symbolOop class_name1, oop class_loader2, symbolOop class_name2);
+
+  // find an enclosing class (defined where original code was, in jvm.cpp!)
+  klassOop compute_enclosing_class(symbolOop& simple_name_result, TRAPS) {
+    instanceKlassHandle self(THREAD, this->as_klassOop());
+    return compute_enclosing_class_impl(self, simple_name_result, THREAD);
+  }
+  static klassOop compute_enclosing_class_impl(instanceKlassHandle self,
+                                               symbolOop& simple_name_result, TRAPS);
+
+  // tell if two classes have the same enclosing class (at package level)
+  bool is_same_package_member(klassOop class2, TRAPS) {
+    instanceKlassHandle self(THREAD, this->as_klassOop());
+    return is_same_package_member_impl(self, class2, THREAD);
+  }
+  static bool is_same_package_member_impl(instanceKlassHandle self,
+                                          klassOop class2, TRAPS);
 
   // initialization state
   bool is_loaded() const                   { return _init_state >= loaded; }
@@ -444,6 +465,10 @@ class instanceKlass: public Klass {
   void set_enclosing_method_indices(u2 class_index,
                                     u2 method_index)  { _enclosing_method_class_index  = class_index;
                                                         _enclosing_method_method_index = method_index; }
+
+  // JSR 292 support
+  oop bootstrap_method() const                        { return _bootstrap_method; }
+  void set_bootstrap_method(oop mh)                   { oop_store(&_bootstrap_method, mh); }
 
   // jmethodID support
   static jmethodID get_jmethod_id(instanceKlassHandle ik_h, size_t idnum,
@@ -725,6 +750,7 @@ private:
   oop* adr_inner_classes() const     { return (oop*)&this->_inner_classes;}
   oop* adr_implementors() const      { return (oop*)&this->_implementors[0];}
   oop* adr_generic_signature() const { return (oop*)&this->_generic_signature;}
+  oop* adr_bootstrap_method() const  { return (oop*)&this->_bootstrap_method;}
   oop* adr_methods_jmethod_ids() const             { return (oop*)&this->_methods_jmethod_ids;}
   oop* adr_methods_cached_itable_indices() const   { return (oop*)&this->_methods_cached_itable_indices;}
   oop* adr_class_annotations() const   { return (oop*)&this->_class_annotations;}

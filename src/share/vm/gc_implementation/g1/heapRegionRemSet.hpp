@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ class SparsePRT;
 //      is represented.  If a deleted PRT is re-used, a thread adding a bit,
 //      thinking the PRT is for a different region, does no harm.
 
-class OtherRegionsTable: public CHeapObj {
+class OtherRegionsTable VALUE_OBJ_CLASS_SPEC {
   friend class HeapRegionRemSetIterator;
 
   G1CollectedHeap* _g1h;
@@ -116,9 +116,9 @@ public:
 
   // For now.  Could "expand" some tables in the future, so that this made
   // sense.
-  void add_reference(oop* from, int tid);
+  void add_reference(OopOrNarrowOopStar from, int tid);
 
-  void add_reference(oop* from) {
+  void add_reference(OopOrNarrowOopStar from) {
     return add_reference(from, 0);
   }
 
@@ -140,8 +140,8 @@ public:
   static size_t static_mem_size();
   static size_t fl_mem_size();
 
-  bool contains_reference(oop* from) const;
-  bool contains_reference_locked(oop* from) const;
+  bool contains_reference(OopOrNarrowOopStar from) const;
+  bool contains_reference_locked(OopOrNarrowOopStar from) const;
 
   void clear();
 
@@ -177,8 +177,6 @@ private:
   G1BlockOffsetSharedArray* _bosa;
   G1BlockOffsetSharedArray* bosa() const { return _bosa; }
 
-  static bool _par_traversal;
-
   OtherRegionsTable _other_regions;
 
   // One set bit for every region that has an entry for this one.
@@ -188,42 +186,16 @@ private:
   // the _outgoing_region_map.
   void clear_outgoing_entries();
 
-#if MAYBE
-  // Audit the given card index.
-  void audit_card(size_t card_num, HeapRegion* hr, u2* rc_arr,
-                  HeapRegionRemSet* empty_cards, size_t* one_obj_cards);
-
-  // Assumes that "audit_stage1" has been called for "hr", to set up
-  // "shadow" and "new_rs" appropriately.  Identifies individual popular
-  // objects; returns "true" if any are found.
-  bool audit_find_pop(HeapRegion* hr, u2* rc_arr);
-
-  // Assumes that "audit_stage1" has been called for "hr", to set up
-  // "shadow" and "new_rs" appropriately.  Identifies individual popular
-  // objects, and determines the number of entries in "new_rs" if any such
-  // popular objects are ignored.  If this is sufficiently small, returns
-  // "false" to indicate that a constraint should not be introduced.
-  // Otherwise, returns "true" to indicate that we should go ahead with
-  // adding the constraint.
-  bool audit_stag(HeapRegion* hr, u2* rc_arr);
-
-
-  u2* alloc_rc_array();
-
-  SeqHeapRegionRemSet* audit_post(u2* rc_arr, size_t multi_obj_crds,
-                                  SeqHeapRegionRemSet* empty_cards);
-#endif
-
   enum ParIterState { Unclaimed, Claimed, Complete };
   ParIterState _iter_state;
 
   // Unused unless G1RecordHRRSOops is true.
 
   static const int MaxRecorded = 1000000;
-  static oop**        _recorded_oops;
-  static HeapWord**   _recorded_cards;
-  static HeapRegion** _recorded_regions;
-  static int          _n_recorded;
+  static OopOrNarrowOopStar* _recorded_oops;
+  static HeapWord**          _recorded_cards;
+  static HeapRegion**        _recorded_regions;
+  static int                 _n_recorded;
 
   static const int MaxRecordedEvents = 1000;
   static Event*       _recorded_events;
@@ -237,8 +209,6 @@ public:
                    HeapRegion* hr);
 
   static int num_par_rem_sets();
-  static bool par_traversal() { return _par_traversal; }
-  static void set_par_traversal(bool b);
 
   HeapRegion* hr() const {
     return _other_regions.hr();
@@ -261,16 +231,14 @@ public:
 
   /* Used in the sequential case.  Returns "true" iff this addition causes
      the size limit to be reached. */
-  bool add_reference(oop* from) {
+  void add_reference(OopOrNarrowOopStar from) {
     _other_regions.add_reference(from);
-    return false;
   }
 
   /* Used in the parallel case.  Returns "true" iff this addition causes
      the size limit to be reached. */
-  bool add_reference(oop* from, int tid) {
+  void add_reference(OopOrNarrowOopStar from, int tid) {
     _other_regions.add_reference(from, tid);
-    return false;
   }
 
   // Records the fact that the current region contains an outgoing
@@ -333,24 +301,10 @@ public:
     return OtherRegionsTable::fl_mem_size();
   }
 
-  bool contains_reference(oop* from) const {
+  bool contains_reference(OopOrNarrowOopStar from) const {
     return _other_regions.contains_reference(from);
   }
   void print() const;
-
-#if MAYBE
-  // We are about to introduce a constraint, requiring the collection time
-  // of the region owning this RS to be <= "hr", and forgetting pointers
-  // from the owning region to "hr."  Before doing so, examines this rem
-  // set for pointers to "hr", possibly identifying some popular objects.,
-  // and possibly finding some cards to no longer contain pointers to "hr",
-  //
-  // These steps may prevent the the constraint from being necessary; in
-  // which case returns a set of cards now thought to contain no pointers
-  // into HR.  In the normal (I assume) case, returns NULL, indicating that
-  // we should go ahead and add the constraint.
-  virtual SeqHeapRegionRemSet* audit(HeapRegion* hr) = 0;
-#endif
 
   // Called during a stop-world phase to perform any deferred cleanups.
   // The second version may be called by parallel threads after then finish
@@ -375,7 +329,7 @@ public:
   }
 #endif
 
-  static void record(HeapRegion* hr, oop* f);
+  static void record(HeapRegion* hr, OopOrNarrowOopStar f);
   static void print_recorded();
   static void record_event(Event evnt);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -347,6 +347,8 @@ class PhaseCFG : public Phase {
   // Helper function to insert a node into a block
   void schedule_node_into_block( Node *n, Block *b );
 
+  void replace_block_proj_ctrl( Node *n );
+
   // Set the basic block for pinned Nodes
   void schedule_pinned_nodes( VectorSet &visited );
 
@@ -369,12 +371,17 @@ class PhaseCFG : public Phase {
   Block *_broot;                // Basic block of root
   uint _rpo_ctr;
   CFGLoop* _root_loop;
+  float _outer_loop_freq;       // Outmost loop frequency
 
   // Per node latency estimation, valid only during GCM
   GrowableArray<uint> _node_latency;
 
 #ifndef PRODUCT
   bool _trace_opto_pipelining;  // tracing flag
+#endif
+
+#ifdef ASSERT
+  Unique_Node_List _raw_oops;
 #endif
 
   // Build dominators
@@ -535,6 +542,7 @@ class CFGLoop : public CFGElement {
   void compute_loop_depth(int depth);
   void compute_freq(); // compute frequency with loop assuming head freq 1.0f
   void scale_freq();   // scale frequency by loop trip count (including outer loops)
+  float outer_loop_freq() const; // frequency of outer loop
   bool in_loop_nest(Block* b);
   float trip_count() const { return 1.0f / _exit_prob; }
   virtual bool is_loop()  { return true; }
@@ -607,7 +615,7 @@ class Trace : public ResourceObj {
   Block * next(Block *b) const { return _next_list[b->_pre_order]; }
   void set_next(Block *b, Block *n) const { _next_list[b->_pre_order] = n; }
 
-  // Return the block that preceeds "b" in the trace.
+  // Return the block that precedes "b" in the trace.
   Block * prev(Block *b) const { return _prev_list[b->_pre_order]; }
   void set_prev(Block *b, Block *p) const { _prev_list[b->_pre_order] = p; }
 

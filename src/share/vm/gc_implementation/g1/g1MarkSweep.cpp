@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
 
   mark_sweep_phase1(marked_for_unloading, clear_all_softrefs);
 
-  if (G1VerifyConcMark) {
+  if (VerifyDuringGC) {
       G1CollectedHeap* g1h = G1CollectedHeap::heap();
       g1h->checkConcurrentMark();
   }
@@ -157,7 +157,6 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 class G1PrepareCompactClosure: public HeapRegionClosure {
   ModRefBarrierSet* _mrbs;
   CompactPoint _cp;
-  bool _popular_only;
 
   void free_humongous_region(HeapRegion* hr) {
     HeapWord* bot = hr->bottom();
@@ -172,17 +171,11 @@ class G1PrepareCompactClosure: public HeapRegionClosure {
   }
 
 public:
-  G1PrepareCompactClosure(CompactibleSpace* cs, bool popular_only) :
+  G1PrepareCompactClosure(CompactibleSpace* cs) :
     _cp(NULL, cs, cs->initialize_threshold()),
-    _mrbs(G1CollectedHeap::heap()->mr_bs()),
-    _popular_only(popular_only)
+    _mrbs(G1CollectedHeap::heap()->mr_bs())
   {}
   bool doHeapRegion(HeapRegion* hr) {
-    if (_popular_only && !hr->popular())
-      return true; // terminate early
-    else if (!_popular_only && hr->popular())
-      return false; // skip this one.
-
     if (hr->isHumongous()) {
       if (hr->startsHumongous()) {
         oop obj = oop(hr->bottom());
@@ -203,20 +196,15 @@ public:
     return false;
   }
 };
-// Stolen verbatim from g1CollectedHeap.cpp
+
+// Finds the first HeapRegion.
 class FindFirstRegionClosure: public HeapRegionClosure {
   HeapRegion* _a_region;
-  bool _find_popular;
 public:
-  FindFirstRegionClosure(bool find_popular) :
-    _a_region(NULL), _find_popular(find_popular) {}
+  FindFirstRegionClosure() : _a_region(NULL) {}
   bool doHeapRegion(HeapRegion* r) {
-    if (r->popular() == _find_popular) {
-      _a_region = r;
-      return true;
-    } else {
-      return false;
-    }
+    _a_region = r;
+    return true;
   }
   HeapRegion* result() { return _a_region; }
 };
@@ -242,30 +230,15 @@ void G1MarkSweep::mark_sweep_phase2() {
   TraceTime tm("phase 2", PrintGC && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace("2");
 
-  // First we compact the popular regions.
-  if (G1NumPopularRegions > 0) {
-    CompactibleSpace* sp = g1h->first_compactible_space();
-    FindFirstRegionClosure cl(true /*find_popular*/);
-    g1h->heap_region_iterate(&cl);
-    HeapRegion *r = cl.result();
-    assert(r->popular(), "should have found a popular region.");
-    assert(r == sp, "first popular heap region should "
-                    "== first compactible space");
-    G1PrepareCompactClosure blk(sp, true/*popular_only*/);
-    g1h->heap_region_iterate(&blk);
-  }
-
-  // Now we do the regular regions.
-  FindFirstRegionClosure cl(false /*find_popular*/);
+  FindFirstRegionClosure cl;
   g1h->heap_region_iterate(&cl);
   HeapRegion *r = cl.result();
-  assert(!r->popular(), "should have founda non-popular region.");
   CompactibleSpace* sp = r;
   if (r->isHumongous() && oop(r->bottom())->is_gc_marked()) {
     sp = r->next_compaction_space();
   }
 
-  G1PrepareCompactClosure blk(sp, false/*popular_only*/);
+  G1PrepareCompactClosure blk(sp);
   g1h->heap_region_iterate(&blk);
 
   CompactPoint perm_cp(pg, NULL, NULL);

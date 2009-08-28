@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -191,6 +191,9 @@ class Thread: public ThreadShadow {
   NOT_PRODUCT(int _allow_safepoint_count;)       // If 0, thread allow a safepoint to happen
   debug_only (int _allow_allocation_count;)      // If 0, the thread is allowed to allocate oops.
 
+  // Used by SkipGCALot class.
+  NOT_PRODUCT(bool _skip_gcalot;)                // Should we elide gc-a-lot?
+
   // Record when GC is locked out via the GC_locker mechanism
   CHECK_UNHANDLED_OOPS_ONLY(int _gc_locked_out_count;)
 
@@ -199,14 +202,6 @@ class Thread: public ThreadShadow {
   friend class Pause_No_Safepoint_Verifier;
   friend class ThreadLocalStorage;
   friend class GC_locker;
-
-  // In order for all threads to be able to use fast locking, we need to know the highest stack
-  // address of where a lock is on the stack (stacks normally grow towards lower addresses). This
-  // variable is initially set to NULL, indicating no locks are used by the thread. During the thread's
-  // execution, it will be set whenever locking can happen, i.e., when we call out to Java code or use
-  // an ObjectLocker. The value is never decreased, hence, it will over the lifetime of a thread
-  // approximate the real stackbase.
-  address _highest_lock;                         // Highest stack address where a JavaLock exist
 
   ThreadLocalAllocBuffer _tlab;                  // Thread-local eden
 
@@ -316,6 +311,11 @@ class Thread: public ThreadShadow {
   bool is_gc_locked_out() { return _gc_locked_out_count > 0; }
 #endif // CHECK_UNHANDLED_OOPS
 
+#ifndef PRODUCT
+  bool skip_gcalot()           { return _skip_gcalot; }
+  void set_skip_gcalot(bool v) { _skip_gcalot = v;    }
+#endif
+
  public:
   // Installs a pending exception to be inserted later
   static void send_async_exception(oop thread_oop, oop java_throwable);
@@ -400,18 +400,14 @@ public:
   // Sweeper support
   void nmethods_do();
 
-  // Fast-locking support
-  address highest_lock() const                   { return _highest_lock; }
-  void update_highest_lock(address base)         { if (base > _highest_lock) _highest_lock = base; }
-
   // Tells if adr belong to this thread. This is used
   // for checking if a lock is owned by the running thread.
-  // Warning: the method can only be used on the running thread
-  // Fast lock support uses these methods
-  virtual bool lock_is_in_stack(address adr) const;
+
+  // Used by fast lock support
   virtual bool is_lock_owned(address adr) const;
 
   // Check if address is in the stack of the thread (not just for locks).
+  // Warning: the method can only be used on the running thread
   bool is_in_stack(address adr) const;
 
   // Sets this thread as starting thread. Returns failure if thread
@@ -1345,6 +1341,13 @@ public:
  public:
   // Thread local information maintained by JVMTI.
   void set_jvmti_thread_state(JvmtiThreadState *value)                           { _jvmti_thread_state = value; }
+  // A JvmtiThreadState is lazily allocated. This jvmti_thread_state()
+  // getter is used to get this JavaThread's JvmtiThreadState if it has
+  // one which means NULL can be returned. JvmtiThreadState::state_for()
+  // is used to get the specified JavaThread's JvmtiThreadState if it has
+  // one or it allocates a new JvmtiThreadState for the JavaThread and
+  // returns it. JvmtiThreadState::state_for() will return NULL only if
+  // the specified JavaThread is exiting.
   JvmtiThreadState *jvmti_thread_state() const                                   { return _jvmti_thread_state; }
   static ByteSize jvmti_thread_state_offset()                                    { return byte_offset_of(JavaThread, _jvmti_thread_state); }
   void set_jvmti_get_loaded_classes_closure(JvmtiGetLoadedClassesClosure* value) { _jvmti_get_loaded_classes_closure = value; }

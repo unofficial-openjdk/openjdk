@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,6 +190,9 @@
                                                                             \
   notproduct(bool, VerifyHashTableKeys, true,                               \
           "Verify the immutability of keys in the VN hash tables")          \
+                                                                            \
+  notproduct(bool, VerifyRegisterAllocator , false,                         \
+          "Verify Register Allocator")                                      \
                                                                             \
   develop_pd(intx, FLOATPRESSURE,                                           \
           "Number of float LRG's that constitute high register pressure")   \
@@ -388,7 +391,7 @@
   product(intx, EliminateAllocationArraySizeLimit, 64,                      \
           "Array size (number of elements) limit for scalar replacement")   \
                                                                             \
-  product(bool, UseOptoBiasInlining, true,                                 \
+  product(bool, UseOptoBiasInlining, true,                                  \
           "Generate biased locking code in C2 ideal graph")                 \
                                                                             \
   product(intx, ValueSearchLimit, 1000,                                     \
@@ -407,7 +410,7 @@
           "Miniumum %% of a successor (predecessor) for which block layout "\
           "a will allow a fork (join) in a single chain")                   \
                                                                             \
-  product(bool, BlockLayoutRotateLoops, false,                              \
+  product(bool, BlockLayoutRotateLoops, true,                               \
           "Allow back branches to be fall throughs in the block layour")    \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)

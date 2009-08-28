@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,14 @@ define_pd_global(uintx, JVMInvokeMethodSlack,    8*K);
 // ThreadStackSize 320 allows TaggedStackInterpreter and a couple of test cases
 // to run while keeping the number of threads that can be created high.
 define_pd_global(intx, ThreadStackSize,          320);
-define_pd_global(intx, VMThreadStackSize,        256);
+define_pd_global(intx, VMThreadStackSize,        512);
 define_pd_global(intx, SurvivorRatio,            8);
 define_pd_global(uintx, JVMInvokeMethodSlack,    10*K);
 #endif // AMD64
 
 define_pd_global(intx, CompilerThreadStackSize,  0);
 
+// Only used on 64 bit platforms
+define_pd_global(uintx, HeapBaseMinAddress,      256*M);
 // Only used on 64 bit Windows platforms
 define_pd_global(bool, UseVectoredExceptions,    false);

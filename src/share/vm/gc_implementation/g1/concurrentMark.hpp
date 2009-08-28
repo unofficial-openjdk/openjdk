@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ typedef GenericTaskQueueSet<oop> CMTaskQueueSet;
 // A generic CM bit map.  This is essentially a wrapper around the BitMap
 // class, with one bit per (1<<_shifter) HeapWords.
 
-class CMBitMapRO {
+class CMBitMapRO VALUE_OBJ_CLASS_SPEC {
  protected:
   HeapWord* _bmStartWord;      // base address of range covered by map
   size_t    _bmWordSize;       // map size (in #HeapWords covered)
@@ -139,7 +139,7 @@ class CMBitMap : public CMBitMapRO {
 
 // Represents a marking stack used by the CM collector.
 // Ideally this should be GrowableArray<> just like MSC's marking stack(s).
-class CMMarkStack {
+class CMMarkStack VALUE_OBJ_CLASS_SPEC {
   ConcurrentMark* _cm;
   oop*   _base;      // bottom of stack
   jint   _index;     // one more than last occupied index
@@ -237,7 +237,7 @@ class CMMarkStack {
   void oops_do(OopClosure* f);
 };
 
-class CMRegionStack {
+class CMRegionStack VALUE_OBJ_CLASS_SPEC {
   MemRegion* _base;
   jint _capacity;
   jint _index;
@@ -312,7 +312,7 @@ typedef enum {
 
 class ConcurrentMarkThread;
 
-class ConcurrentMark {
+class ConcurrentMark: public CHeapObj {
   friend class ConcurrentMarkThread;
   friend class CMTask;
   friend class CMBitMapClosure;
@@ -763,6 +763,7 @@ private:
   CMBitMap*                   _nextMarkBitMap;
   // the task queue of this task
   CMTaskQueue*                _task_queue;
+private:
   // the task queue set---needed for stealing
   CMTaskQueueSet*             _task_queues;
   // indicates whether the task has been claimed---this is only  for

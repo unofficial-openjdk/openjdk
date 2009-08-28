@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,6 +215,7 @@ public:
   void oop_iterate(OopClosure* cl);
   void oop_iterate(MemRegion mr, OopClosure* cl);
   void object_iterate(ObjectClosure* cl);
+  void safe_object_iterate(ObjectClosure* cl);
   void object_iterate_since_last_GC(ObjectClosure* cl);
   Space* space_containing(const void* addr) const;
 
@@ -324,7 +325,7 @@ public:
   void prepare_for_verify();
 
   // Override.
-  void verify(bool allow_dirty, bool silent);
+  void verify(bool allow_dirty, bool silent, bool /* option */);
 
   // Override.
   void print() const;

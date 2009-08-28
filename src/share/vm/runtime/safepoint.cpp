@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ void SafepointSynchronize::begin() {
     // In the future we should investigate whether CMS can use the
     // more-general mechanism below.  DLD (01/05).
     ConcurrentMarkSweepThread::synchronize(false);
-  } else {
+  } else if (UseG1GC) {
     ConcurrentGCThread::safepoint_synchronize();
   }
 #endif // SERIALGC
@@ -369,7 +369,7 @@ void SafepointSynchronize::end() {
 
     // Start suspended threads
     for(JavaThread *current = Threads::first(); current; current = current->next()) {
-      // A problem occuring on Solaris is when attempting to restart threads
+      // A problem occurring on Solaris is when attempting to restart threads
       // the first #cpus - 1 go well, but then the VMThread is preempted when we get
       // to the next one (since it has been running the longest).  We then have
       // to wait for a cpu to become available before we can continue restarting
@@ -400,7 +400,7 @@ void SafepointSynchronize::end() {
   // If there are any concurrent GC threads resume them.
   if (UseConcMarkSweepGC) {
     ConcurrentMarkSweepThread::desynchronize(false);
-  } else {
+  } else if (UseG1GC) {
     ConcurrentGCThread::safepoint_desynchronize();
   }
 #endif // SERIALGC
@@ -730,7 +730,7 @@ void SafepointSynchronize::print_safepoint_timeout(SafepointTimeoutReason reason
   if (DieOnSafepointTimeout) {
     char msg[1024];
     VM_Operation *op = VMThread::vm_operation();
-    sprintf(msg, "Safepoint sync time longer than %d ms detected when executing %s.",
+    sprintf(msg, "Safepoint sync time longer than " INTX_FORMAT "ms detected when executing %s.",
             SafepointTimeoutDelay,
             op != NULL ? op->name() : "no vm operation");
     fatal(msg);

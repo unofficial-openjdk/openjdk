@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,6 +229,7 @@ public:
 
   inline void set_base(const char* base);
   inline void add_prefix(const char* prefix);
+  inline void add_suffix_to_prefix(const char* suffix);
   inline void add_suffix(const char* suffix);
   inline void reset_path(const char* base);
 
@@ -288,6 +289,10 @@ inline void SysClassPath::set_base(const char* base) {
 
 inline void SysClassPath::add_prefix(const char* prefix) {
   _items[_scp_prefix] = add_to_path(_items[_scp_prefix], prefix, true);
+}
+
+inline void SysClassPath::add_suffix_to_prefix(const char* suffix) {
+  _items[_scp_prefix] = add_to_path(_items[_scp_prefix], suffix, false);
 }
 
 inline void SysClassPath::add_suffix(const char* suffix) {
@@ -512,7 +517,6 @@ static bool set_bool_flag(char* name, bool value, FlagValueOrigin origin) {
   return CommandLineFlags::boolAtPut(name, &value, origin);
 }
 
-
 static bool set_fp_numeric_flag(char* name, char* value, FlagValueOrigin origin) {
   double v;
   if (sscanf(value, "%lf", &v) != 1) {
@@ -524,7 +528,6 @@ static bool set_fp_numeric_flag(char* name, char* value, FlagValueOrigin origin)
   }
   return false;
 }
-
 
 static bool set_numeric_flag(char* name, char* value, FlagValueOrigin origin) {
   julong v;
@@ -554,7 +557,6 @@ static bool set_numeric_flag(char* name, char* value, FlagValueOrigin origin) {
   }
   return false;
 }
-
 
 static bool set_string_flag(char* name, const char* value, FlagValueOrigin origin) {
   if (!CommandLineFlags::ccstrAtPut(name, &value, origin))  return false;
@@ -590,7 +592,6 @@ static bool append_to_string_flag(char* name, const char* new_value, FlagValueOr
   }
   return true;
 }
-
 
 bool Arguments::parse_argument(const char* arg, FlagValueOrigin origin) {
 
@@ -651,7 +652,6 @@ bool Arguments::parse_argument(const char* arg, FlagValueOrigin origin) {
 
   return false;
 }
-
 
 void Arguments::add_string(char*** bldarray, int* count, const char* arg) {
   assert(bldarray != NULL, "illegal argument");
@@ -756,7 +756,6 @@ bool Arguments::process_argument(const char* arg,
   return true;
 }
 
-
 bool Arguments::process_settings_file(const char* file_name, bool should_exist, jboolean ignore_unrecognized) {
   FILE* stream = fopen(file_name, "rb");
   if (stream == NULL) {
@@ -853,16 +852,13 @@ bool Arguments::add_property(const char* prop) {
       FreeHeap(value);
     }
     return true;
-  }
-  else if (strcmp(key, "sun.java.command") == 0) {
-
+  } else if (strcmp(key, "sun.java.command") == 0) {
     _java_command = value;
 
     // don't add this property to the properties exposed to the java application
     FreeHeap(key);
     return true;
-  }
-  else if (strcmp(key, "sun.java.launcher.pid") == 0) {
+  } else if (strcmp(key, "sun.java.launcher.pid") == 0) {
     // launcher.pid property is private and is processed
     // in process_sun_java_launcher_properties();
     // the sun.java.launcher property is passed on to the java application
@@ -871,13 +867,14 @@ bool Arguments::add_property(const char* prop) {
       FreeHeap(value);
     }
     return true;
-  }
-  else if (strcmp(key, "java.vendor.url.bug") == 0) {
+  } else if (strcmp(key, "java.vendor.url.bug") == 0) {
     // save it in _java_vendor_url_bug, so JVM fatal error handler can access
     // its value without going through the property list or making a Java call.
     _java_vendor_url_bug = value;
+  } else if (strcmp(key, "sun.boot.library.path") == 0) {
+    PropertyList_unique_add(&_system_properties, key, value, true);
+    return true;
   }
-
   // Create new property and add at the end of the list
   PropertyList_unique_add(&_system_properties, key, value);
   return true;
@@ -896,7 +893,7 @@ void Arguments::set_mode_flags(Mode mode) {
   // Ensure Agent_OnLoad has the correct initial values.
   // This may not be the final mode; mode may change later in onload phase.
   PropertyList_unique_add(&_system_properties, "java.vm.info",
-     (char*)Abstract_VM_Version::vm_info_string());
+                          (char*)Abstract_VM_Version::vm_info_string(), false);
 
   UseInterpreter             = true;
   UseCompiler                = true;
@@ -932,7 +929,6 @@ void Arguments::set_mode_flags(Mode mode) {
   }
 }
 
-
 // Conflict: required to use shared spaces (-Xshare:on), but
 // incompatible command line options were chosen.
 
@@ -945,7 +941,6 @@ static void no_shared_spaces() {
     FLAG_SET_DEFAULT(UseSharedSpaces, false);
   }
 }
-
 
 // If the user has chosen ParallelGCThreads > 0, we set UseParNewGC
 // if it's not explictly set or unset. If the user has chosen
@@ -974,7 +969,7 @@ void Arguments::set_parnew_gc_flags() {
   } else {
     no_shared_spaces();
 
-    // By default YoungPLABSize and OldPLABSize are set to 4096 and 1024 correspondinly,
+    // By default YoungPLABSize and OldPLABSize are set to 4096 and 1024 respectively,
     // these settings are default for Parallel Scavenger. For ParNew+Tenured configuration
     // we set them to 1024 and 1024.
     // See CR 6362902.
@@ -990,6 +985,16 @@ void Arguments::set_parnew_gc_flags() {
     if (AlwaysTenure) {
       FLAG_SET_CMDLINE(intx, MaxTenuringThreshold, 0);
     }
+    // When using compressed oops, we use local overflow stacks,
+    // rather than using a global overflow list chained through
+    // the klass word of the object's pre-image.
+    if (UseCompressedOops && !ParGCUseLocalOverflow) {
+      if (!FLAG_IS_DEFAULT(ParGCUseLocalOverflow)) {
+        warning("Forcing +ParGCUseLocalOverflow: needed if using compressed references");
+      }
+      FLAG_SET_DEFAULT(ParGCUseLocalOverflow, true);
+    }
+    assert(ParGCUseLocalOverflow || !UseCompressedOops, "Error");
   }
 }
 
@@ -1049,7 +1054,15 @@ void Arguments::set_cms_and_parnew_gc_flags() {
 
   // Unless explicitly requested otherwise, size young gen
   // for "short" pauses ~ 4M*ParallelGCThreads
-  if (FLAG_IS_DEFAULT(MaxNewSize)) {  // MaxNewSize not set at command-line
+
+  // If either MaxNewSize or NewRatio is set on the command line,
+  // assume the user is trying to set the size of the young gen.
+
+  if (FLAG_IS_DEFAULT(MaxNewSize) && FLAG_IS_DEFAULT(NewRatio)) {
+
+    // Set MaxNewSize to our calculated preferred_max_new_size unless
+    // NewSize was set on the command line and it is larger than
+    // preferred_max_new_size.
     if (!FLAG_IS_DEFAULT(NewSize)) {   // NewSize explicitly set at command-line
       FLAG_SET_ERGO(uintx, MaxNewSize, MAX2(NewSize, preferred_max_new_size));
     } else {
@@ -1058,15 +1071,32 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     if(PrintGCDetails && Verbose) {
       // Too early to use gclog_or_tty
       tty->print_cr("Ergo set MaxNewSize: " SIZE_FORMAT, MaxNewSize);
-  }
-  }
-  // Unless explicitly requested otherwise, prefer a large
-  // Old to Young gen size so as to shift the collection load
-  // to the old generation concurrent collector
-  if (FLAG_IS_DEFAULT(NewRatio)) {
+    }
+
+    // Unless explicitly requested otherwise, prefer a large
+    // Old to Young gen size so as to shift the collection load
+    // to the old generation concurrent collector
+
+    // If this is only guarded by FLAG_IS_DEFAULT(NewRatio)
+    // then NewSize and OldSize may be calculated.  That would
+    // generally lead to some differences with ParNewGC for which
+    // there was no obvious reason.  Also limit to the case where
+    // MaxNewSize has not been set.
+
     FLAG_SET_ERGO(intx, NewRatio, MAX2(NewRatio, new_ratio));
 
-    size_t min_new  = align_size_up(ScaleForWordSize(min_new_default), os::vm_page_size());
+    // Code along this path potentially sets NewSize and OldSize
+
+    // Calculate the desired minimum size of the young gen but if
+    // NewSize has been set on the command line, use it here since
+    // it should be the final value.
+    size_t min_new;
+    if (FLAG_IS_DEFAULT(NewSize)) {
+      min_new = align_size_up(ScaleForWordSize(min_new_default),
+                              os::vm_page_size());
+    } else {
+      min_new = NewSize;
+    }
     size_t prev_initial_size = initial_heap_size();
     if (prev_initial_size != 0 && prev_initial_size < min_new+OldSize) {
       set_initial_heap_size(min_new+OldSize);
@@ -1078,9 +1108,11 @@ void Arguments::set_cms_and_parnew_gc_flags() {
                 initial_heap_size()/M, prev_initial_size/M);
       }
     }
+
     // MaxHeapSize is aligned down in collectorPolicy
-    size_t max_heap = align_size_down(MaxHeapSize,
-                                      CardTableRS::ct_max_alignment_constraint());
+    size_t max_heap =
+      align_size_down(MaxHeapSize,
+                      CardTableRS::ct_max_alignment_constraint());
 
     if(PrintGCDetails && Verbose) {
       // Too early to use gclog_or_tty
@@ -1145,8 +1177,9 @@ void Arguments::set_cms_and_parnew_gc_flags() {
       // CMSParPromoteBlocksToClaim is a collector-specific flag, so
       // we'll let it to take precedence.
       jio_fprintf(defaultStream::error_stream(),
-                  "Both OldPLABSize and CMSParPromoteBlocksToClaim options are specified "
-                  "for the CMS collector. CMSParPromoteBlocksToClaim will take precedence.\n");
+                  "Both OldPLABSize and CMSParPromoteBlocksToClaim"
+                  " options are specified for the CMS collector."
+                  " CMSParPromoteBlocksToClaim will take precedence.\n");
     }
   }
 }
@@ -1197,24 +1230,21 @@ void Arguments::set_ergonomics_flags() {
   }
 
 #ifdef _LP64
-  // Compressed Headers do not work with CMS, which uses a bit in the klass
-  // field offset to determine free list chunk markers.
   // Check that UseCompressedOops can be set with the max heap size allocated
   // by ergonomics.
   if (MaxHeapSize <= max_heap_for_compressed_oops()) {
-    if (FLAG_IS_DEFAULT(UseCompressedOops) && !UseG1GC) {
+    if (FLAG_IS_DEFAULT(UseCompressedOops)) {
       // Turn off until bug is fixed.
       // the following line to return it to default status.
       // FLAG_SET_ERGO(bool, UseCompressedOops, true);
-    } else if (UseCompressedOops && UseG1GC) {
-      warning(" UseCompressedOops does not currently work with UseG1GC; switching off UseCompressedOops. ");
-      FLAG_SET_DEFAULT(UseCompressedOops, false);
     }
 #ifdef _WIN64
     if (UseLargePages && UseCompressedOops) {
       // Cannot allocate guard pages for implicit checks in indexed addressing
       // mode, when large pages are specified on windows.
-      FLAG_SET_DEFAULT(UseImplicitNullCheckForNarrowOop, false);
+      // This flag could be switched ON if narrow oop base address is set to 0,
+      // see code in Universe::initialize_heap().
+      Universe::set_narrow_oop_use_implicit_null_checks(false);
     }
 #endif //  _WIN64
   } else {
@@ -1281,10 +1311,14 @@ void Arguments::set_g1_gc_flags() {
                      Abstract_VM_Version::parallel_worker_threads());
   if (ParallelGCThreads == 0) {
     FLAG_SET_DEFAULT(ParallelGCThreads,
-                     Abstract_VM_Version::parallel_worker_threads
-());
+                     Abstract_VM_Version::parallel_worker_threads());
   }
   no_shared_spaces();
+
+  // Set the maximum pause time goal to be a reasonable default.
+  if (FLAG_IS_DEFAULT(MaxGCPauseMillis)) {
+    FLAG_SET_DEFAULT(MaxGCPauseMillis, 200);
+  }
 }
 
 void Arguments::set_server_heap_size() {
@@ -1361,14 +1395,11 @@ void Arguments::set_aggressive_opts_flags() {
 
     // Feed the cache size setting into the JDK
     char buffer[1024];
-    sprintf(buffer, "java.lang.Integer.IntegerCache.high=%d", AutoBoxCacheMax);
+    sprintf(buffer, "java.lang.Integer.IntegerCache.high=" INTX_FORMAT, AutoBoxCacheMax);
     add_property(buffer);
   }
   if (AggressiveOpts && FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
     FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(SpecialArraysEquals)) {
-    FLAG_SET_DEFAULT(SpecialArraysEquals, true);
   }
   if (AggressiveOpts && FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
     FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
@@ -1446,6 +1477,7 @@ bool Arguments::check_gc_consistency() {
   if (UseSerialGC)                       i++;
   if (UseConcMarkSweepGC || UseParNewGC) i++;
   if (UseParallelGC || UseParallelOldGC) i++;
+  if (UseG1GC)                           i++;
   if (i > 1) {
     jio_fprintf(defaultStream::error_stream(),
                 "Conflicting collector combinations in option list; "
@@ -1714,6 +1746,21 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
     return result;
   }
 
+  if (AggressiveOpts) {
+    // Insert alt-rt.jar between user-specified bootclasspath
+    // prefix and the default bootclasspath.  os::set_boot_path()
+    // uses meta_index_dir as the default bootclasspath directory.
+    const char* altclasses_jar = "alt-rt.jar";
+    size_t altclasses_path_len = strlen(get_meta_index_dir()) + 1 +
+                                 strlen(altclasses_jar);
+    char* altclasses_path = NEW_C_HEAP_ARRAY(char, altclasses_path_len);
+    strcpy(altclasses_path, get_meta_index_dir());
+    strcat(altclasses_path, altclasses_jar);
+    scp.add_suffix_to_prefix(altclasses_path);
+    scp_assembly_required = true;
+    FREE_C_HEAP_ARRAY(char, altclasses_path);
+  }
+
   // Parse _JAVA_OPTIONS environment variable (if present) (mimics classic VM)
   result = parse_java_options_environment_variable(&scp, &scp_assembly_required);
   if (result != JNI_OK) {
@@ -1728,7 +1775,6 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
 
   return JNI_OK;
 }
-
 
 jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
                                        SysClassPath* scp_p,
@@ -1795,7 +1841,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       *scp_assembly_required_p = true;
     // -Xrun
     } else if (match_option(option, "-Xrun", &tail)) {
-      if(tail != NULL) {
+      if (tail != NULL) {
         const char* pos = strchr(tail, ':');
         size_t len = (pos == NULL) ? strlen(tail) : pos - tail;
         char* name = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len + 1), tail, len);
@@ -2478,7 +2524,7 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
     vm_args.version = JNI_VERSION_1_2;
     vm_args.options = options;
     vm_args.nOptions = i;
-    vm_args.ignoreUnrecognized = false;
+    vm_args.ignoreUnrecognized = IgnoreUnrecognizedVMOptions;
 
     if (PrintVMOptions) {
       const char* tail;
@@ -2525,13 +2571,12 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 
   // If flag "-XX:Flags=flags-file" is used it will be the first option to be processed.
   bool settings_file_specified = false;
+  const char* flags_file;
   int index;
   for (index = 0; index < args->nOptions; index++) {
     const JavaVMOption *option = args->options + index;
     if (match_option(option, "-XX:Flags=", &tail)) {
-      if (!process_settings_file(tail, true, args->ignoreUnrecognized)) {
-        return JNI_EINVAL;
-      }
+      flags_file = tail;
       settings_file_specified = true;
     }
     if (match_option(option, "-XX:+PrintVMOptions", &tail)) {
@@ -2539,6 +2584,24 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     }
     if (match_option(option, "-XX:-PrintVMOptions", &tail)) {
       PrintVMOptions = false;
+    }
+    if (match_option(option, "-XX:+IgnoreUnrecognizedVMOptions", &tail)) {
+      IgnoreUnrecognizedVMOptions = true;
+    }
+    if (match_option(option, "-XX:-IgnoreUnrecognizedVMOptions", &tail)) {
+      IgnoreUnrecognizedVMOptions = false;
+    }
+  }
+
+  if (IgnoreUnrecognizedVMOptions) {
+    // uncast const to modify the flag args->ignoreUnrecognized
+    *(jboolean*)(&args->ignoreUnrecognized) = true;
+  }
+
+  // Parse specified settings file
+  if (settings_file_specified) {
+    if (!process_settings_file(flags_file, true, args->ignoreUnrecognized)) {
+      return JNI_EINVAL;
     }
   }
 
@@ -2558,27 +2621,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     }
   }
 
-
   // Parse JavaVMInitArgs structure passed in, as well as JAVA_TOOL_OPTIONS and _JAVA_OPTIONS
   jint result = parse_vm_init_args(args);
   if (result != JNI_OK) {
     return result;
-  }
-
-  // These are hacks until G1 is fully supported and tested
-  // but lets you force -XX:+UseG1GC in PRT and get it where it (mostly) works
-  if (UseG1GC) {
-    if (UseConcMarkSweepGC || UseParNewGC || UseParallelGC || UseParallelOldGC || UseSerialGC) {
-#ifndef PRODUCT
-      tty->print_cr("-XX:+UseG1GC is incompatible with other collectors, using UseG1GC");
-#endif // PRODUCT
-      UseConcMarkSweepGC = false;
-      UseParNewGC        = false;
-      UseParallelGC      = false;
-      UseParallelOldGC   = false;
-      UseSerialGC        = false;
-    }
-    no_shared_spaces();
   }
 
 #ifndef PRODUCT
@@ -2592,6 +2638,19 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     }
   }
 #endif // PRODUCT
+
+  if (EnableInvokeDynamic && !EnableMethodHandles) {
+    if (!FLAG_IS_DEFAULT(EnableMethodHandles)) {
+      warning("forcing EnableMethodHandles true to allow EnableInvokeDynamic");
+    }
+    EnableMethodHandles = true;
+  }
+  if (EnableMethodHandles && !AnonymousClasses) {
+    if (!FLAG_IS_DEFAULT(AnonymousClasses)) {
+      warning("forcing AnonymousClasses true to enable EnableMethodHandles");
+    }
+    AnonymousClasses = true;
+  }
 
   if (PrintGCDetails) {
     // Turn on -verbose:gc options as well
@@ -2625,10 +2684,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   } else if (UseParNewGC) {
     // Set some flags for ParNew
     set_parnew_gc_flags();
-  }
-  // Temporary; make the "if" an "else-if" before
-  // we integrate G1. XXX
-  if (UseG1GC) {
+  } else if (UseG1GC) {
     // Set some flags for garbage-first, if needed.
     set_g1_gc_flags();
   }
@@ -2738,7 +2794,7 @@ void Arguments::PropertyList_add(SystemProperty** plist, const char* k, char* v)
 }
 
 // This add maintains unique property key in the list.
-void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, char* v) {
+void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, char* v, jboolean append) {
   if (plist == NULL)
     return;
 
@@ -2746,7 +2802,11 @@ void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, c
   SystemProperty* prop;
   for (prop = *plist; prop != NULL; prop = prop->next()) {
     if (strcmp(k, prop->key()) == 0) {
-      prop->set_value(v);
+      if (append) {
+        prop->append_value(v);
+      } else {
+        prop->set_value(v);
+      }
       return;
     }
   }

@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -89,9 +89,11 @@ checkAndBuildSA:: $(SAWINDBG)
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 !elseif "$(BUILDARCH)" == "amd64"
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+!if "$(COMPILER_NAME)" == "VS2005"
 # On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
 # otherwise we get missing __security_check_cookie externals at link time. 
 SA_LINK_FLAGS = bufferoverflowU.lib
+!endif
 !else
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /ZI /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 !endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -316,6 +316,21 @@ class GenerationObjIterateClosure : public SpaceClosure {
 
 void Generation::object_iterate(ObjectClosure* cl) {
   GenerationObjIterateClosure blk(cl);
+  space_iterate(&blk);
+}
+
+class GenerationSafeObjIterateClosure : public SpaceClosure {
+ private:
+  ObjectClosure* _cl;
+ public:
+  virtual void do_space(Space* s) {
+    s->safe_object_iterate(_cl);
+  }
+  GenerationSafeObjIterateClosure(ObjectClosure* cl) : _cl(cl) {}
+};
+
+void Generation::safe_object_iterate(ObjectClosure* cl) {
+  GenerationSafeObjIterateClosure blk(cl);
   space_iterate(&blk);
 }
 

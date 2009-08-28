@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,7 @@ testing.
 to figure out which test post-dominates.  The real problem is that it doesn't
 matter which one you pick.  After you pick up, the dominating-test elider in
 IGVN can remove the test and allow you to hoist up to the dominating test on
-the choosen oop bypassing the test on the not-choosen oop.  Seen in testing.
+the chosen oop bypassing the test on the not-chosen oop.  Seen in testing.
 Oops.
 
 (3) Leave the CastPP's in.  This makes the graph more accurate in some sense;
@@ -128,6 +128,10 @@ Node *CMoveNode::is_cmove_id( PhaseTransform *phase, Node *cmp, Node *t, Node *f
       // Swapped Cmp is OK
       (phase->eqv(cmp->in(2),f) &&
        phase->eqv(cmp->in(1),t)) ) {
+    // Give up this identity check for floating points because it may choose incorrect
+    // value around 0.0 and -0.0
+    if ( cmp->Opcode()==Op_CmpF || cmp->Opcode()==Op_CmpD )
+      return NULL;
     // Check for "(t==f)?t:f;" and replace with "f"
     if( b->_test._test == BoolTest::eq )
       return f;
@@ -433,7 +437,7 @@ Node *ConstraintCastNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
 // If not converting int->oop, throw away cast after constant propagation
 Node *CastPPNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
   const Type *t = ccp->type(in(1));
-  if (!t->isa_oop_ptr() || in(1)->is_DecodeN()) {
+  if (!t->isa_oop_ptr() || (in(1)->is_DecodeN() && Universe::narrow_oop_use_implicit_null_checks())) {
     return NULL; // do not transform raw pointers or narrow oops
   }
   return ConstraintCastNode::Ideal_DU_postCCP(ccp);
@@ -1250,4 +1254,94 @@ const Type *MoveD2LNode::Value( PhaseTransform *phase ) const {
   JavaValue v;
   v.set_jdouble(td->getd());
   return TypeLong::make( v.get_jlong() );
+}
+
+//------------------------------Value------------------------------------------
+const Type* CountLeadingZerosINode::Value(PhaseTransform* phase) const {
+  const Type* t = phase->type(in(1));
+  if (t == Type::TOP) return Type::TOP;
+  const TypeInt* ti = t->isa_int();
+  if (ti && ti->is_con()) {
+    jint i = ti->get_con();
+    // HD, Figure 5-6
+    if (i == 0)
+      return TypeInt::make(BitsPerInt);
+    int n = 1;
+    unsigned int x = i;
+    if (x >> 16 == 0) { n += 16; x <<= 16; }
+    if (x >> 24 == 0) { n +=  8; x <<=  8; }
+    if (x >> 28 == 0) { n +=  4; x <<=  4; }
+    if (x >> 30 == 0) { n +=  2; x <<=  2; }
+    n -= x >> 31;
+    return TypeInt::make(n);
+  }
+  return TypeInt::INT;
+}
+
+//------------------------------Value------------------------------------------
+const Type* CountLeadingZerosLNode::Value(PhaseTransform* phase) const {
+  const Type* t = phase->type(in(1));
+  if (t == Type::TOP) return Type::TOP;
+  const TypeLong* tl = t->isa_long();
+  if (tl && tl->is_con()) {
+    jlong l = tl->get_con();
+    // HD, Figure 5-6
+    if (l == 0)
+      return TypeInt::make(BitsPerLong);
+    int n = 1;
+    unsigned int x = (((julong) l) >> 32);
+    if (x == 0) { n += 32; x = (int) l; }
+    if (x >> 16 == 0) { n += 16; x <<= 16; }
+    if (x >> 24 == 0) { n +=  8; x <<=  8; }
+    if (x >> 28 == 0) { n +=  4; x <<=  4; }
+    if (x >> 30 == 0) { n +=  2; x <<=  2; }
+    n -= x >> 31;
+    return TypeInt::make(n);
+  }
+  return TypeInt::INT;
+}
+
+//------------------------------Value------------------------------------------
+const Type* CountTrailingZerosINode::Value(PhaseTransform* phase) const {
+  const Type* t = phase->type(in(1));
+  if (t == Type::TOP) return Type::TOP;
+  const TypeInt* ti = t->isa_int();
+  if (ti && ti->is_con()) {
+    jint i = ti->get_con();
+    // HD, Figure 5-14
+    int y;
+    if (i == 0)
+      return TypeInt::make(BitsPerInt);
+    int n = 31;
+    y = i << 16; if (y != 0) { n = n - 16; i = y; }
+    y = i <<  8; if (y != 0) { n = n -  8; i = y; }
+    y = i <<  4; if (y != 0) { n = n -  4; i = y; }
+    y = i <<  2; if (y != 0) { n = n -  2; i = y; }
+    y = i <<  1; if (y != 0) { n = n -  1; }
+    return TypeInt::make(n);
+  }
+  return TypeInt::INT;
+}
+
+//------------------------------Value------------------------------------------
+const Type* CountTrailingZerosLNode::Value(PhaseTransform* phase) const {
+  const Type* t = phase->type(in(1));
+  if (t == Type::TOP) return Type::TOP;
+  const TypeLong* tl = t->isa_long();
+  if (tl && tl->is_con()) {
+    jlong l = tl->get_con();
+    // HD, Figure 5-14
+    int x, y;
+    if (l == 0)
+      return TypeInt::make(BitsPerLong);
+    int n = 63;
+    y = (int) l; if (y != 0) { n = n - 32; x = y; } else x = (((julong) l) >> 32);
+    y = x << 16; if (y != 0) { n = n - 16; x = y; }
+    y = x <<  8; if (y != 0) { n = n -  8; x = y; }
+    y = x <<  4; if (y != 0) { n = n -  4; x = y; }
+    y = x <<  2; if (y != 0) { n = n -  2; x = y; }
+    y = x <<  1; if (y != 0) { n = n -  1; }
+    return TypeInt::make(n);
+  }
+  return TypeInt::INT;
 }

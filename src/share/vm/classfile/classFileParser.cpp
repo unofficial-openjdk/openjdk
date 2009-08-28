@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -232,7 +232,9 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
     length >= 1, "Illegal constant pool size %u in class file %s",
     length, CHECK_(nullHandle));
   constantPoolOop constant_pool =
-                      oopFactory::new_constantPool(length, CHECK_(nullHandle));
+                      oopFactory::new_constantPool(length,
+                                                   methodOopDesc::IsSafeConc,
+                                                   CHECK_(nullHandle));
   constantPoolHandle cp (THREAD, constant_pool);
 
   cp->set_partially_loaded();    // Enables heap verify to work on partial constantPoolOops
@@ -545,7 +547,6 @@ objArrayHandle ClassFileParser::parse_interfaces(constantPoolHandle cp,
                                                  int length,
                                                  Handle class_loader,
                                                  Handle protection_domain,
-                                                 PerfTraceTime* vmtimer,
                                                  symbolHandle class_name,
                                                  TRAPS) {
   ClassFileStream* cfs = stream();
@@ -573,13 +574,11 @@ objArrayHandle ClassFileParser::parse_interfaces(constantPoolHandle cp,
       guarantee_property(unresolved_klass->byte_at(0) != JVM_SIGNATURE_ARRAY,
                          "Bad interface name in class file %s", CHECK_(nullHandle));
 
-      vmtimer->suspend();  // do not count recursive loading twice
       // Call resolve_super so classcircularity is checked
       klassOop k = SystemDictionary::resolve_super_or_fail(class_name,
                     unresolved_klass, class_loader, protection_domain,
                     false, CHECK_(nullHandle));
       interf = KlassHandle(THREAD, k);
-      vmtimer->resume();
 
       if (LinkWellKnownClasses)  // my super type is well known to me
         cp->klass_at_put(interface_index, interf()); // eagerly resolve
@@ -1675,7 +1674,8 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
   // All sizing information for a methodOop is finally available, now create it
   methodOop m_oop  = oopFactory::new_method(
     code_length, access_flags, linenumber_table_length,
-    total_lvt_length, checked_exceptions_length, CHECK_(nullHandle));
+    total_lvt_length, checked_exceptions_length,
+    methodOopDesc::IsSafeConc, CHECK_(nullHandle));
   methodHandle m (THREAD, m_oop);
 
   ClassLoadingService::add_class_method_size(m_oop->size()*HeapWordSize);
@@ -1837,6 +1837,11 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
       signature() == vmSymbols::void_method_signature() &&
       m->is_vanilla_constructor()) {
     _has_vanilla_constructor = true;
+  }
+
+  if (EnableMethodHandles && m->is_method_handle_invoke()) {
+    THROW_MSG_(vmSymbols::java_lang_VirtualMachineError(),
+               "Method handle invokers must be defined internally to the VM", nullHandle);
   }
 
   return m;
@@ -2462,9 +2467,84 @@ void ClassFileParser::java_lang_Class_fix_post(int* next_nonstatic_oop_offset_pt
 }
 
 
+// Force MethodHandle.vmentry to be an unmanaged pointer.
+// There is no way for a classfile to express this, so we must help it.
+void ClassFileParser::java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
+                                                    typeArrayHandle* fields_ptr,
+                                                    FieldAllocationCount *fac_ptr,
+                                                    TRAPS) {
+  // Add fake fields for java.dyn.MethodHandle instances
+  //
+  // This is not particularly nice, but since there is no way to express
+  // a native wordSize field in Java, we must do it at this level.
+
+  if (!EnableMethodHandles)  return;
+
+  int word_sig_index = 0;
+  const int cp_size = cp->length();
+  for (int index = 1; index < cp_size; index++) {
+    if (cp->tag_at(index).is_utf8() &&
+        cp->symbol_at(index) == vmSymbols::machine_word_signature()) {
+      word_sig_index = index;
+      break;
+    }
+  }
+
+  if (word_sig_index == 0)
+    THROW_MSG(vmSymbols::java_lang_VirtualMachineError(),
+              "missing I or J signature (for vmentry) in java.dyn.MethodHandle");
+
+  bool found_vmentry = false;
+
+  const int n = (*fields_ptr)()->length();
+  for (int i = 0; i < n; i += instanceKlass::next_offset) {
+    int name_index = (*fields_ptr)->ushort_at(i + instanceKlass::name_index_offset);
+    int sig_index  = (*fields_ptr)->ushort_at(i + instanceKlass::signature_index_offset);
+    int acc_flags  = (*fields_ptr)->ushort_at(i + instanceKlass::access_flags_offset);
+    symbolOop f_name = cp->symbol_at(name_index);
+    symbolOop f_sig  = cp->symbol_at(sig_index);
+    if (f_sig == vmSymbols::byte_signature() &&
+        f_name == vmSymbols::vmentry_name() &&
+        (acc_flags & JVM_ACC_STATIC) == 0) {
+      // Adjust the field type from byte to an unmanaged pointer.
+      assert(fac_ptr->nonstatic_byte_count > 0, "");
+      fac_ptr->nonstatic_byte_count -= 1;
+      (*fields_ptr)->ushort_at_put(i + instanceKlass::signature_index_offset,
+                                   word_sig_index);
+      if (wordSize == jintSize) {
+        fac_ptr->nonstatic_word_count += 1;
+      } else {
+        fac_ptr->nonstatic_double_count += 1;
+      }
+
+      FieldAllocationType atype = (FieldAllocationType) (*fields_ptr)->ushort_at(i+4);
+      assert(atype == NONSTATIC_BYTE, "");
+      FieldAllocationType new_atype = NONSTATIC_WORD;
+      if (wordSize > jintSize) {
+        if (Universe::field_type_should_be_aligned(T_LONG)) {
+          atype = NONSTATIC_ALIGNED_DOUBLE;
+        } else {
+          atype = NONSTATIC_DOUBLE;
+        }
+      }
+      (*fields_ptr)->ushort_at_put(i+4, new_atype);
+
+      found_vmentry = true;
+      break;
+    }
+  }
+
+  if (!found_vmentry)
+    THROW_MSG(vmSymbols::java_lang_VirtualMachineError(),
+              "missing vmentry byte field in java.dyn.MethodHandle");
+
+}
+
+
 instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
                                                     Handle class_loader,
                                                     Handle protection_domain,
+                                                    KlassHandle host_klass,
                                                     GrowableArray<Handle>* cp_patches,
                                                     symbolHandle& parsed_name,
                                                     TRAPS) {
@@ -2475,7 +2555,15 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
 
   ClassFileStream* cfs = stream();
   // Timing
-  PerfTraceTime vmtimer(ClassLoader::perf_accumulated_time());
+  assert(THREAD->is_Java_thread(), "must be a JavaThread");
+  JavaThread* jt = (JavaThread*) THREAD;
+
+  PerfClassTraceTime ctimer(ClassLoader::perf_class_parse_time(),
+                            ClassLoader::perf_class_parse_selftime(),
+                            NULL,
+                            jt->get_thread_stat()->perf_recursion_counts_addr(),
+                            jt->get_thread_stat()->perf_timers_addr(),
+                            PerfClassTraceTime::PARSE_CLASS);
 
   _has_finalizer = _has_empty_finalizer = _has_vanilla_constructor = false;
 
@@ -2497,6 +2585,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     }
   }
 
+  _host_klass = host_klass;
   _cp_patches = cp_patches;
 
   instanceKlassHandle nullHandle;
@@ -2654,7 +2743,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     if (itfs_len == 0) {
       local_interfaces = objArrayHandle(THREAD, Universe::the_empty_system_obj_array());
     } else {
-      local_interfaces = parse_interfaces(cp, itfs_len, class_loader, protection_domain, &vmtimer, _class_name, CHECK_(nullHandle));
+      local_interfaces = parse_interfaces(cp, itfs_len, class_loader, protection_domain, _class_name, CHECK_(nullHandle));
     }
 
     // Fields (offsets are filled in later)
@@ -2698,6 +2787,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
                                                            protection_domain,
                                                            true,
                                                            CHECK_(nullHandle));
+
       KlassHandle kh (THREAD, k);
       super_klass = instanceKlassHandle(THREAD, kh());
       if (LinkWellKnownClasses)  // my super class is well known to me
@@ -2744,9 +2834,10 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
                                                       super_klass(),
                                                       methods(),
                                                       access_flags,
-                                                      class_loader(),
-                                                      class_name(),
-                                                      local_interfaces());
+                                                      class_loader,
+                                                      class_name,
+                                                      local_interfaces(),
+                                                      CHECK_(nullHandle));
 
     // Size of Java itable (in words)
     itable_size = access_flags.is_interface() ? 0 : klassItable::compute_itable_size(transitive_interfaces);
@@ -2802,6 +2893,11 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     // Add fake fields for java.lang.Class instances (also see below)
     if (class_name() == vmSymbols::java_lang_Class() && class_loader.is_null()) {
       java_lang_Class_fix_pre(&methods, &fac, CHECK_(nullHandle));
+    }
+
+    // adjust the vmentry field declaration in java.dyn.MethodHandle
+    if (EnableMethodHandles && class_name() == vmSymbols::sun_dyn_MethodHandleImpl() && class_loader.is_null()) {
+      java_dyn_MethodHandle_fix_pre(cp, &fields, &fac, CHECK_(nullHandle));
     }
 
     // Add a fake "discovered" field if it is not present
@@ -3130,7 +3226,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     this_klass->set_method_ordering(method_ordering());
     this_klass->set_initial_method_idnum(methods->length());
     this_klass->set_name(cp->klass_name_at(this_class_index));
-    if (LinkWellKnownClasses)  // I am well known to myself
+    if (LinkWellKnownClasses || is_anonymous())  // I am well known to myself
       cp->klass_at_put(this_class_index, this_klass()); // eagerly resolve
     this_klass->set_protection_domain(protection_domain());
     this_klass->set_fields_annotations(fields_annotations());
@@ -3140,6 +3236,16 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
 
     this_klass->set_minor_version(minor_version);
     this_klass->set_major_version(major_version);
+
+    // Set up methodOop::intrinsic_id as soon as we know the names of methods.
+    // (We used to do this lazily, but now we query it in Rewriter,
+    // which is eagerly done for every method, so we might as well do it now,
+    // when everything is fresh in memory.)
+    if (methodOopDesc::klass_id_for_intrinsics(this_klass->as_klassOop()) != vmSymbols::NO_SID) {
+      for (int j = 0; j < methods->length(); j++) {
+        ((methodOop)methods->obj_at(j))->init_intrinsic_id();
+      }
+    }
 
     if (cached_class_file_bytes != NULL) {
       // JVMTI: we have an instanceKlass now, tell it about the cached bytes
@@ -3226,7 +3332,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
       // print out the superclass.
       const char * from = Klass::cast(this_klass())->external_name();
       if (this_klass->java_super() != NULL) {
-        tty->print("RESOLVE %s %s\n", from, instanceKlass::cast(this_klass->java_super())->external_name());
+        tty->print("RESOLVE %s %s (super)\n", from, instanceKlass::cast(this_klass->java_super())->external_name());
       }
       // print out each of the interface classes referred to by this class.
       objArrayHandle local_interfaces(THREAD, this_klass->local_interfaces());
@@ -3236,7 +3342,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
           klassOop k = klassOop(local_interfaces->obj_at(i));
           instanceKlass* to_class = instanceKlass::cast(k);
           const char * to = to_class->external_name();
-          tty->print("RESOLVE %s %s\n", from, to);
+          tty->print("RESOLVE %s %s (interface)\n", from, to);
         }
       }
     }

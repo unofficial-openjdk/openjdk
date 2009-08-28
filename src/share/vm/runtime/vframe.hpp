@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,18 +230,36 @@ class MonitorInfo : public ResourceObj {
  private:
   oop        _owner; // the object owning the monitor
   BasicLock* _lock;
+  oop        _owner_klass; // klass if owner was scalar replaced
   bool       _eliminated;
+  bool       _owner_is_scalar_replaced;
  public:
   // Constructor
-  MonitorInfo(oop owner, BasicLock* lock, bool eliminated) {
-    _owner = owner;
+  MonitorInfo(oop owner, BasicLock* lock, bool eliminated, bool owner_is_scalar_replaced) {
+    if (!owner_is_scalar_replaced) {
+      _owner = owner;
+      _owner_klass = NULL;
+    } else {
+      assert(eliminated, "monitor should be eliminated for scalar replaced object");
+      _owner = NULL;
+      _owner_klass = owner;
+    }
     _lock  = lock;
     _eliminated = eliminated;
+    _owner_is_scalar_replaced = owner_is_scalar_replaced;
   }
   // Accessors
-  oop        owner() const { return _owner; }
+  oop        owner() const {
+    assert(!_owner_is_scalar_replaced, "should not be called for scalar replaced object");
+    return _owner;
+  }
+  klassOop   owner_klass() const {
+    assert(_owner_is_scalar_replaced, "should not be called for not scalar replaced object");
+    return (klassOop)_owner_klass;
+  }
   BasicLock* lock()  const { return _lock;  }
   bool eliminated()  const { return _eliminated; }
+  bool owner_is_scalar_replaced()  const { return _owner_is_scalar_replaced; }
 };
 
 class vframeStreamCommon : StackObj {
@@ -384,7 +402,12 @@ inline void vframeStreamCommon::fill_from_compiled_frame(int decode_offset) {
   DebugInfoReadStream buffer(nm(), decode_offset);
   _sender_decode_offset = buffer.read_int();
   _method               = methodOop(buffer.read_oop());
-  _bci                  = buffer.read_bci();
+  // Deoptimization needs reexecute bit to determine whether to reexecute the bytecode
+  // only at the time when it "unpack_frames", and the reexecute bit info could always
+  // be obtained from the scopeDesc in the compiledVFrame. As a result, we don't keep
+  // the reexecute bit here.
+  bool dummy_reexecute;
+  _bci                  = buffer.read_bci_and_reexecute(dummy_reexecute);
 
   assert(_method->is_method(), "checking type of decoded method");
 }

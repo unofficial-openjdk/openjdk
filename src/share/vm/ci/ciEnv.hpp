@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,18 @@ private:
 
   char* _name_buffer;
   int   _name_buffer_len;
+
+  // Cache Jvmti state
+  bool  _jvmti_can_hotswap_or_post_breakpoint;
+  bool  _jvmti_can_examine_or_deopt_anywhere;
+  bool  _jvmti_can_access_local_variables;
+  bool  _jvmti_can_post_exceptions;
+
+  // Cache DTrace flags
+  bool  _dtrace_extended_probes;
+  bool  _dtrace_monitor_probes;
+  bool  _dtrace_method_probes;
+  bool  _dtrace_alloc_probes;
 
   // Distinguished instances of certain ciObjects..
   static ciObject*              _null_object_instance;
@@ -235,6 +247,20 @@ public:
 
   bool break_at_compile() { return _break_at_compile; }
   void set_break_at_compile(bool z) { _break_at_compile = z; }
+
+  // Cache Jvmti state
+  void  cache_jvmti_state();
+  bool  jvmti_can_hotswap_or_post_breakpoint() const { return _jvmti_can_hotswap_or_post_breakpoint; }
+  bool  jvmti_can_examine_or_deopt_anywhere()  const { return _jvmti_can_examine_or_deopt_anywhere; }
+  bool  jvmti_can_access_local_variables()     const { return _jvmti_can_access_local_variables; }
+  bool  jvmti_can_post_exceptions()            const { return _jvmti_can_post_exceptions; }
+
+  // Cache DTrace flags
+  void  cache_dtrace_flags();
+  bool  dtrace_extended_probes() const { return _dtrace_extended_probes; }
+  bool  dtrace_monitor_probes()  const { return _dtrace_monitor_probes; }
+  bool  dtrace_method_probes()   const { return _dtrace_method_probes; }
+  bool  dtrace_alloc_probes()    const { return _dtrace_alloc_probes; }
 
   // The compiler task which has created this env.
   // May be useful to find out compile_id, comp_level, etc.

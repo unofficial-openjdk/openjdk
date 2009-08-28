@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,7 @@ define_pd_global(uintx, NewSize,                  1024 * K);
 define_pd_global(intx, StackShadowPages, 3 DEBUG_ONLY(+1));
 #endif // AMD64
 define_pd_global(intx,  InlineFrequencyCount,     100);
+define_pd_global(intx,  InlineSmallCode,          1000);
 define_pd_global(intx,  PreInflateSpin,           10);
 
 define_pd_global(intx, StackYellowPages, 2);

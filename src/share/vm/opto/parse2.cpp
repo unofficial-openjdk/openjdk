@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ extern int explicit_null_checks_inserted,
 void Parse::array_load(BasicType elem_type) {
   const Type* elem = Type::TOP;
   Node* adr = array_addressing(elem_type, 0, &elem);
-  if (stopped())  return;     // guarenteed null or range check
+  if (stopped())  return;     // guaranteed null or range check
   _sp -= 2;                   // Pop array and index
   const TypeAryPtr* adr_type = TypeAryPtr::get_array_body_type(elem_type);
   Node* ld = make_load(control(), adr, elem, elem_type, adr_type);
@@ -43,7 +43,7 @@ void Parse::array_load(BasicType elem_type) {
 //--------------------------------array_store----------------------------------
 void Parse::array_store(BasicType elem_type) {
   Node* adr = array_addressing(elem_type, 1);
-  if (stopped())  return;     // guarenteed null or range check
+  if (stopped())  return;     // guaranteed null or range check
   Node* val = pop();
   _sp -= 2;                   // Pop array and index
   const TypeAryPtr* adr_type = TypeAryPtr::get_array_body_type(elem_type);
@@ -1541,14 +1541,14 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_aaload: array_load(T_OBJECT); break;
   case Bytecodes::_laload: {
     a = array_addressing(T_LONG, 0);
-    if (stopped())  return;     // guarenteed null or range check
+    if (stopped())  return;     // guaranteed null or range check
     _sp -= 2;                   // Pop array and index
     push_pair( make_load(control(), a, TypeLong::LONG, T_LONG, TypeAryPtr::LONGS));
     break;
   }
   case Bytecodes::_daload: {
     a = array_addressing(T_DOUBLE, 0);
-    if (stopped())  return;     // guarenteed null or range check
+    if (stopped())  return;     // guaranteed null or range check
     _sp -= 2;                   // Pop array and index
     push_pair( make_load(control(), a, Type::DOUBLE, T_DOUBLE, TypeAryPtr::DOUBLES));
     break;
@@ -1560,19 +1560,19 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_fastore: array_store(T_FLOAT); break;
   case Bytecodes::_aastore: {
     d = array_addressing(T_OBJECT, 1);
-    if (stopped())  return;     // guarenteed null or range check
+    if (stopped())  return;     // guaranteed null or range check
     array_store_check();
     c = pop();                  // Oop to store
     b = pop();                  // index (already used)
     a = pop();                  // the array itself
-    const Type* elemtype  = _gvn.type(a)->is_aryptr()->elem();
+    const TypeOopPtr* elemtype  = _gvn.type(a)->is_aryptr()->elem()->make_oopptr();
     const TypeAryPtr* adr_type = TypeAryPtr::OOPS;
     Node* store = store_oop_to_array(control(), a, d, adr_type, c, elemtype, T_OBJECT);
     break;
   }
   case Bytecodes::_lastore: {
     a = array_addressing(T_LONG, 2);
-    if (stopped())  return;     // guarenteed null or range check
+    if (stopped())  return;     // guaranteed null or range check
     c = pop_pair();
     _sp -= 2;                   // Pop array and index
     store_to_memory(control(), a, c, T_LONG, TypeAryPtr::LONGS);
@@ -1580,7 +1580,7 @@ void Parse::do_one_bytecode() {
   }
   case Bytecodes::_dastore: {
     a = array_addressing(T_DOUBLE, 2);
-    if (stopped())  return;     // guarenteed null or range check
+    if (stopped())  return;     // guaranteed null or range check
     c = pop_pair();
     _sp -= 2;                   // Pop array and index
     c = dstore_rounding(c);
@@ -2052,7 +2052,7 @@ void Parse::do_one_bytecode() {
     // null exception oop throws NULL pointer exception
     do_null_check(peek(), T_OBJECT);
     if (stopped())  return;
-    if (JvmtiExport::can_post_exceptions()) {
+    if (env()->jvmti_can_post_exceptions()) {
       // "Full-speed throwing" is not necessary here,
       // since we're notifying the VM on every throw.
       uncommon_trap(Deoptimization::Reason_unhandled,
@@ -2156,6 +2156,7 @@ void Parse::do_one_bytecode() {
     break;
 
   case Bytecodes::_invokestatic:
+  case Bytecodes::_invokedynamic:
   case Bytecodes::_invokespecial:
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:

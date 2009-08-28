@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
   CallGenerator* cg;
 
   // Dtrace currently doesn't work unless all calls are vanilla
-  if (DTraceMethodProbes) {
+  if (env()->dtrace_method_probes()) {
     allow_inline = false;
   }
 
@@ -245,6 +245,14 @@ bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* kl
       !holder_klass->is_interface()) {
     uncommon_trap(Deoptimization::Reason_uninitialized,
                   Deoptimization::Action_reinterpret,
+                  holder_klass);
+    return true;
+  }
+  if (dest_method->is_method_handle_invoke()
+      && holder_klass->name() == ciSymbol::java_dyn_Dynamic()) {
+    // FIXME: NYI
+    uncommon_trap(Deoptimization::Reason_unhandled,
+                  Deoptimization::Action_none,
                   holder_klass);
     return true;
   }
@@ -748,6 +756,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_inlined_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_inlined_interface_calls_addr()); break;
       case Bytecodes::_invokestatic:
+      case Bytecodes::_invokedynamic:
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_inlined_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }
@@ -756,6 +765,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_normal_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_interface_calls_addr()); break;
       case Bytecodes::_invokestatic:
+      case Bytecodes::_invokedynamic:
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -531,6 +531,7 @@ void VMThread::execute(VM_Operation* op) {
   Thread* t = Thread::current();
 
   if (!t->is_VM_thread()) {
+    SkipGCALot sgcalot(t);    // avoid re-entrant attempts to gc-a-lot
     // JavaThread or WatcherThread
     t->check_for_valid_safepoint_state(true);
 

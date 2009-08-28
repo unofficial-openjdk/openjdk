@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -226,6 +226,7 @@ void Type::Initialize_shared(Compile* current) {
   TypeInt::CC_LE   = TypeInt::make(-1, 0, WidenMin);
   TypeInt::CC_GE   = TypeInt::make( 0, 1, WidenMin);  // == TypeInt::BOOL
   TypeInt::BYTE    = TypeInt::make(-128,127,     WidenMin); // Bytes
+  TypeInt::UBYTE   = TypeInt::make(0, 255,       WidenMin); // Unsigned Bytes
   TypeInt::CHAR    = TypeInt::make(0,65535,      WidenMin); // Java chars
   TypeInt::SHORT   = TypeInt::make(-32768,32767, WidenMin); // Java shorts
   TypeInt::POS     = TypeInt::make(0,max_jint,   WidenMin); // Non-neg values
@@ -486,6 +487,23 @@ bool Type::is_nan()    const {
   return false;
 }
 
+//----------------------interface_vs_oop---------------------------------------
+#ifdef ASSERT
+bool Type::interface_vs_oop(const Type *t) const {
+  bool result = false;
+
+  const TypeInstPtr* this_inst = this->isa_instptr();
+  const TypeInstPtr*    t_inst =    t->isa_instptr();
+  if( this_inst && this_inst->is_loaded() && t_inst && t_inst->is_loaded() ) {
+    bool this_interface = this_inst->klass()->is_interface();
+    bool    t_interface =    t_inst->klass()->is_interface();
+    result = this_interface ^ t_interface;
+  }
+
+  return result;
+}
+#endif
+
 //------------------------------meet-------------------------------------------
 // Compute the MEET of two types.  NOT virtual.  It enforces that meet is
 // commutative and the lattice is symmetric.
@@ -506,16 +524,8 @@ const Type *Type::meet( const Type *t ) const {
   // Interface meet Oop is Not Symmetric:
   // Interface:AnyNull meet Oop:AnyNull == Interface:AnyNull
   // Interface:NotNull meet Oop:NotNull == java/lang/Object:NotNull
-  const TypeInstPtr* this_inst = this->isa_instptr();
-  const TypeInstPtr*    t_inst =    t->isa_instptr();
-  bool interface_vs_oop = false;
-  if( this_inst && this_inst->is_loaded() && t_inst && t_inst->is_loaded() ) {
-    bool this_interface = this_inst->klass()->is_interface();
-    bool    t_interface =    t_inst->klass()->is_interface();
-    interface_vs_oop = this_interface ^ t_interface;
-  }
 
-  if( !interface_vs_oop && (t2t != t->_dual || t2this != _dual) ) {
+  if( !interface_vs_oop(t) && (t2t != t->_dual || t2this != _dual) ) {
     tty->print_cr("=== Meet Not Symmetric ===");
     tty->print("t   =                   ");         t->dump(); tty->cr();
     tty->print("this=                   ");            dump(); tty->cr();
@@ -1022,6 +1032,7 @@ const TypeInt *TypeInt::CC_EQ;  // [0]   == ZERO
 const TypeInt *TypeInt::CC_LE;  // [-1,0]
 const TypeInt *TypeInt::CC_GE;  // [0,1] == BOOL (!)
 const TypeInt *TypeInt::BYTE;   // Bytes, -128 to 127
+const TypeInt *TypeInt::UBYTE;  // Unsigned Bytes, 0 to 255
 const TypeInt *TypeInt::CHAR;   // Java chars, 0-65535
 const TypeInt *TypeInt::SHORT;  // Java shorts, -32768-32767
 const TypeInt *TypeInt::POS;    // Positive 32-bit integers or zero
@@ -1798,6 +1809,17 @@ int TypeAry::hash(void) const {
   return (intptr_t)_elem + (intptr_t)_size;
 }
 
+//----------------------interface_vs_oop---------------------------------------
+#ifdef ASSERT
+bool TypeAry::interface_vs_oop(const Type *t) const {
+  const TypeAry* t_ary = t->is_ary();
+  if (t_ary) {
+    return _elem->interface_vs_oop(t_ary->_elem);
+  }
+  return false;
+}
+#endif
+
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
 void TypeAry::dump2( Dict &d, uint depth, outputStream *st ) const {
@@ -2455,7 +2477,7 @@ intptr_t TypeOopPtr::get_con() const {
     // code and dereferenced at the time the nmethod is made.  Until that time,
     // it is not reasonable to do arithmetic with the addresses of oops (we don't
     // have access to the addresses!).  This does not seem to currently happen,
-    // but this assertion here is to help prevent its occurrance.
+    // but this assertion here is to help prevent its occurence.
     tty->print_cr("Found oop constant with non-zero offset");
     ShouldNotReachHere();
   }
@@ -2471,6 +2493,8 @@ const Type *TypeOopPtr::filter( const Type *kills ) const {
   const Type* ft = join(kills);
   const TypeInstPtr* ftip = ft->isa_instptr();
   const TypeInstPtr* ktip = kills->isa_instptr();
+  const TypeKlassPtr* ftkp = ft->isa_klassptr();
+  const TypeKlassPtr* ktkp = kills->isa_klassptr();
 
   if (ft->empty()) {
     // Check for evil case of 'this' being a class and 'kills' expecting an
@@ -2483,6 +2507,8 @@ const Type *TypeOopPtr::filter( const Type *kills ) const {
     // into a Phi which "knows" it's an Interface type we'll have to
     // uplift the type.
     if (!empty() && ktip != NULL && ktip->is_loaded() && ktip->klass()->is_interface())
+      return kills;             // Uplift to interface
+    if (!empty() && ktkp != NULL && ktkp->klass()->is_loaded() && ktkp->klass()->is_interface())
       return kills;             // Uplift to interface
 
     return Type::TOP;           // Canonical empty value
@@ -2498,6 +2524,12 @@ const Type *TypeOopPtr::filter( const Type *kills ) const {
       ktip->is_loaded() && !ktip->klass()->is_interface()) {
     // Happens in a CTW of rt.jar, 320-341, no extra flags
     return ktip->cast_to_ptr_type(ftip->ptr());
+  }
+  if (ftkp != NULL && ktkp != NULL &&
+      ftkp->is_loaded() &&  ftkp->klass()->is_interface() &&
+      ktkp->is_loaded() && !ktkp->klass()->is_interface()) {
+    // Happens in a CTW of rt.jar, 320-341, no extra flags
+    return ktkp->cast_to_ptr_type(ftkp->ptr());
   }
 
   return ft;
@@ -2751,7 +2783,7 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
       // LCA is object_klass, but if we subclass from the top we can do better
       if( above_centerline(_ptr) ) { // if( _ptr == TopPTR || _ptr == AnyNull )
         // If 'this' (InstPtr) is above the centerline and it is Object class
-        // then we can subclass in the Java class heirarchy.
+        // then we can subclass in the Java class hierarchy.
         if (klass()->equals(ciEnv::current()->Object_klass())) {
           // that is, tp's array type is a subtype of my klass
           return TypeAryPtr::make(ptr, tp->ary(), tp->klass(), tp->klass_is_exact(), offset, instance_id);
@@ -3012,7 +3044,7 @@ ciType* TypeInstPtr::java_mirror_type() const {
 
 //------------------------------xdual------------------------------------------
 // Dual: do NOT dual on klasses.  This means I do NOT understand the Java
-// inheritence mechanism.
+// inheritance mechanism.
 const Type *TypeInstPtr::xdual() const {
   return new TypeInstPtr( dual_ptr(), klass(), klass_is_exact(), const_oop(), dual_offset(), dual_instance_id()  );
 }
@@ -3166,7 +3198,7 @@ const TypeInt* TypeAryPtr::narrow_size_type(const TypeInt* size) const {
   bool chg = false;
   if (lo < min_lo) { lo = min_lo; chg = true; }
   if (hi > max_hi) { hi = max_hi; chg = true; }
-  // Negative length arrays will produce weird intermediate dead fath-path code
+  // Negative length arrays will produce weird intermediate dead fast-path code
   if (lo > hi)
     return TypeInt::ZERO;
   if (!chg)
@@ -3348,7 +3380,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
       // LCA is object_klass, but if we subclass from the top we can do better
       if (above_centerline(tp->ptr())) {
         // If 'tp'  is above the centerline and it is Object class
-        // then we can subclass in the Java class heirarchy.
+        // then we can subclass in the Java class hierarchy.
         if( tp->klass()->equals(ciEnv::current()->Object_klass()) ) {
           // that is, my array type is a subtype of 'tp' klass
           return make( ptr, _ary, _klass, _klass_is_exact, offset, instance_id );
@@ -3376,6 +3408,17 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
 const Type *TypeAryPtr::xdual() const {
   return new TypeAryPtr( dual_ptr(), _const_oop, _ary->dual()->is_ary(),_klass, _klass_is_exact, dual_offset(), dual_instance_id() );
 }
+
+//----------------------interface_vs_oop---------------------------------------
+#ifdef ASSERT
+bool TypeAryPtr::interface_vs_oop(const Type *t) const {
+  const TypeAryPtr* t_aryptr = t->isa_aryptr();
+  if (t_aryptr) {
+    return _ary->interface_vs_oop(t_aryptr->_ary);
+  }
+  return false;
+}
+#endif
 
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
@@ -3441,27 +3484,27 @@ const TypeNarrowOop* TypeNarrowOop::make(const TypePtr* type) {
 //------------------------------hash-------------------------------------------
 // Type-specific hashing function.
 int TypeNarrowOop::hash(void) const {
-  return _ooptype->hash() + 7;
+  return _ptrtype->hash() + 7;
 }
 
 
 bool TypeNarrowOop::eq( const Type *t ) const {
   const TypeNarrowOop* tc = t->isa_narrowoop();
   if (tc != NULL) {
-    if (_ooptype->base() != tc->_ooptype->base()) {
+    if (_ptrtype->base() != tc->_ptrtype->base()) {
       return false;
     }
-    return tc->_ooptype->eq(_ooptype);
+    return tc->_ptrtype->eq(_ptrtype);
   }
   return false;
 }
 
 bool TypeNarrowOop::singleton(void) const {    // TRUE if type is a singleton
-  return _ooptype->singleton();
+  return _ptrtype->singleton();
 }
 
 bool TypeNarrowOop::empty(void) const {
-  return _ooptype->empty();
+  return _ptrtype->empty();
 }
 
 //------------------------------xmeet------------------------------------------
@@ -3495,7 +3538,7 @@ const Type *TypeNarrowOop::xmeet( const Type *t ) const {
     return this;
 
   case NarrowOop: {
-    const Type* result = _ooptype->xmeet(t->make_ptr());
+    const Type* result = _ptrtype->xmeet(t->make_ptr());
     if (result->isa_ptr()) {
       return TypeNarrowOop::make(result->is_ptr());
     }
@@ -3511,13 +3554,13 @@ const Type *TypeNarrowOop::xmeet( const Type *t ) const {
 }
 
 const Type *TypeNarrowOop::xdual() const {    // Compute dual right now.
-  const TypePtr* odual = _ooptype->dual()->is_ptr();
+  const TypePtr* odual = _ptrtype->dual()->is_ptr();
   return new TypeNarrowOop(odual);
 }
 
 const Type *TypeNarrowOop::filter( const Type *kills ) const {
   if (kills->isa_narrowoop()) {
-    const Type* ft =_ooptype->filter(kills->is_narrowoop()->_ooptype);
+    const Type* ft =_ptrtype->filter(kills->is_narrowoop()->_ptrtype);
     if (ft->empty())
       return Type::TOP;           // Canonical empty value
     if (ft->isa_ptr()) {
@@ -3525,7 +3568,7 @@ const Type *TypeNarrowOop::filter( const Type *kills ) const {
     }
     return ft;
   } else if (kills->isa_ptr()) {
-    const Type* ft = _ooptype->join(kills);
+    const Type* ft = _ptrtype->join(kills);
     if (ft->empty())
       return Type::TOP;           // Canonical empty value
     return ft;
@@ -3536,13 +3579,13 @@ const Type *TypeNarrowOop::filter( const Type *kills ) const {
 
 
 intptr_t TypeNarrowOop::get_con() const {
-  return _ooptype->get_con();
+  return _ptrtype->get_con();
 }
 
 #ifndef PRODUCT
 void TypeNarrowOop::dump2( Dict & d, uint depth, outputStream *st ) const {
   st->print("narrowoop: ");
-  _ooptype->dump2(d, depth, st);
+  _ptrtype->dump2(d, depth, st);
 }
 #endif
 
@@ -3657,7 +3700,7 @@ const TypePtr *TypeKlassPtr::add_offset( intptr_t offset ) const {
 
 //------------------------------cast_to_ptr_type-------------------------------
 const Type *TypeKlassPtr::cast_to_ptr_type(PTR ptr) const {
-  assert(_base == OopPtr, "subclass must override cast_to_ptr_type");
+  assert(_base == KlassPtr, "subclass must override cast_to_ptr_type");
   if( ptr == _ptr ) return this;
   return make(ptr, _klass, _offset);
 }

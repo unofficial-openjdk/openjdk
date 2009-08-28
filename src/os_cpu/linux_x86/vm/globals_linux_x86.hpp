@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,5 +43,7 @@ define_pd_global(intx, SurvivorRatio,            8);
 
 define_pd_global(uintx, JVMInvokeMethodSlack,    8192);
 
+// Only used on 64 bit platforms
+define_pd_global(uintx, HeapBaseMinAddress,      2*G);
 // Only used on 64 bit Windows platforms
 define_pd_global(bool, UseVectoredExceptions,    false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,9 @@ public:
                dca      : 1,
                sse4_1   : 1,
                sse4_2   : 1,
-                        : 11;
+                        : 2,
+               popcnt   : 1,
+                        : 8;
     } bits;
   };
 
@@ -112,6 +114,20 @@ public:
     } bits;
   };
 
+  union ExtCpuid1Ecx {
+    uint32_t value;
+    struct {
+      uint32_t LahfSahf     : 1,
+               CmpLegacy    : 1,
+                            : 4,
+               lzcnt        : 1,
+               sse4a        : 1,
+               misalignsse  : 1,
+               prefetchw    : 1,
+                            : 22;
+    } bits;
+  };
+
   union ExtCpuid1Edx {
     uint32_t value;
     struct {
@@ -123,20 +139,6 @@ public:
                long_mode : 1,
                tdnow2    : 1,
                tdnow     : 1;
-    } bits;
-  };
-
-  union ExtCpuid1Ecx {
-    uint32_t value;
-    struct {
-      uint32_t LahfSahf     : 1,
-               CmpLegacy    : 1,
-                            : 4,
-               abm          : 1,
-               sse4a        : 1,
-               misalignsse  : 1,
-               prefetchw    : 1,
-                            : 22;
     } bits;
   };
 
@@ -167,19 +169,21 @@ protected:
    static const char* _features_str;
 
    enum {
-     CPU_CX8  = (1 << 0), // next bits are from cpuid 1 (EDX)
-     CPU_CMOV = (1 << 1),
-     CPU_FXSR = (1 << 2),
-     CPU_HT   = (1 << 3),
-     CPU_MMX  = (1 << 4),
-     CPU_3DNOW= (1 << 5),
-     CPU_SSE  = (1 << 6),
-     CPU_SSE2 = (1 << 7),
-     CPU_SSE3 = (1 << 8),
-     CPU_SSSE3= (1 << 9),
-     CPU_SSE4A= (1 <<10),
+     CPU_CX8    = (1 << 0), // next bits are from cpuid 1 (EDX)
+     CPU_CMOV   = (1 << 1),
+     CPU_FXSR   = (1 << 2),
+     CPU_HT     = (1 << 3),
+     CPU_MMX    = (1 << 4),
+     CPU_3DNOW  = (1 << 5), // 3DNow comes from cpuid 0x80000001 (EDX)
+     CPU_SSE    = (1 << 6),
+     CPU_SSE2   = (1 << 7),
+     CPU_SSE3   = (1 << 8), // SSE3 comes from cpuid 1 (ECX)
+     CPU_SSSE3  = (1 << 9),
+     CPU_SSE4A  = (1 << 10),
      CPU_SSE4_1 = (1 << 11),
-     CPU_SSE4_2 = (1 << 12)
+     CPU_SSE4_2 = (1 << 12),
+     CPU_POPCNT = (1 << 13),
+     CPU_LZCNT  = (1 << 14)
    } cpuFeatureFlags;
 
   // cpuid information block.  All info derived from executing cpuid with
@@ -274,8 +278,6 @@ protected:
     if (_cpuid_info.std_cpuid1_edx.bits.mmx != 0 || is_amd() &&
         _cpuid_info.ext_cpuid1_edx.bits.mmx != 0)
       result |= CPU_MMX;
-    if (is_amd() && _cpuid_info.ext_cpuid1_edx.bits.tdnow != 0)
-      result |= CPU_3DNOW;
     if (_cpuid_info.std_cpuid1_edx.bits.sse != 0)
       result |= CPU_SSE;
     if (_cpuid_info.std_cpuid1_edx.bits.sse2 != 0)
@@ -284,12 +286,23 @@ protected:
       result |= CPU_SSE3;
     if (_cpuid_info.std_cpuid1_ecx.bits.ssse3 != 0)
       result |= CPU_SSSE3;
-    if (is_amd() && _cpuid_info.ext_cpuid1_ecx.bits.sse4a != 0)
-      result |= CPU_SSE4A;
     if (_cpuid_info.std_cpuid1_ecx.bits.sse4_1 != 0)
       result |= CPU_SSE4_1;
     if (_cpuid_info.std_cpuid1_ecx.bits.sse4_2 != 0)
       result |= CPU_SSE4_2;
+    if (_cpuid_info.std_cpuid1_ecx.bits.popcnt != 0)
+      result |= CPU_POPCNT;
+
+    // AMD features.
+    if (is_amd()) {
+      if (_cpuid_info.ext_cpuid1_edx.bits.tdnow != 0)
+        result |= CPU_3DNOW;
+      if (_cpuid_info.ext_cpuid1_ecx.bits.lzcnt != 0)
+        result |= CPU_LZCNT;
+      if (_cpuid_info.ext_cpuid1_ecx.bits.sse4a != 0)
+        result |= CPU_SSE4A;
+    }
+
     return result;
   }
 
@@ -360,7 +373,7 @@ public:
       result = _cpuid_info.ext_cpuid5_ecx.bits.L1_line_size;
     }
     if (result < 32) // not defined ?
-      result = 32;   // 32 bytes by default for other x64
+      result = 32;   // 32 bytes by default on x86 and other x64
     return result;
   }
 
@@ -379,12 +392,14 @@ public:
   static bool supports_ssse3()    { return (_cpuFeatures & CPU_SSSE3)!= 0; }
   static bool supports_sse4_1()   { return (_cpuFeatures & CPU_SSE4_1) != 0; }
   static bool supports_sse4_2()   { return (_cpuFeatures & CPU_SSE4_2) != 0; }
+  static bool supports_popcnt()   { return (_cpuFeatures & CPU_POPCNT) != 0; }
   //
   // AMD features
   //
   static bool supports_3dnow()    { return (_cpuFeatures & CPU_3DNOW) != 0; }
   static bool supports_mmx_ext()  { return is_amd() && _cpuid_info.ext_cpuid1_edx.bits.mmx_amd != 0; }
   static bool supports_3dnow2()   { return is_amd() && _cpuid_info.ext_cpuid1_edx.bits.tdnow2 != 0; }
+  static bool supports_lzcnt()    { return (_cpuFeatures & CPU_LZCNT) != 0; }
   static bool supports_sse4a()    { return (_cpuFeatures & CPU_SSE4A) != 0; }
 
   static bool supports_compare_and_exchange() { return true; }
@@ -395,26 +410,36 @@ public:
     // This method should be called before allocate_prefetch_style().
     //
     // Hardware prefetching (distance/size in bytes):
+    // Pentium 3 -  64 /  32
     // Pentium 4 - 256 / 128
+    // Athlon    -  64 /  32 ????
     // Opteron   - 128 /  64 only when 2 sequential cache lines accessed
     // Core      - 128 /  64
     //
     // Software prefetching (distance in bytes / instruction with best score):
+    // Pentium 3 - 128 / prefetchnta
     // Pentium 4 - 512 / prefetchnta
+    // Athlon    - 128 / prefetchnta
     // Opteron   - 256 / prefetchnta
     // Core      - 256 / prefetchnta
     // It will be used only when AllocatePrefetchStyle > 0
 
     intx count = AllocatePrefetchDistance;
-    if (count < 0) {  // default ?
-      if (is_amd()) { // AMD
-        count = 256;  // Opteron
-      } else {        // Intel
-        if (cpu_family() == 6) {
-          count = 256;// Pentium M, Core, Core2
-        } else {
-          count = 512;// Pentium 4
-        }
+    if (count < 0) {   // default ?
+      if (is_amd()) {  // AMD
+        if (supports_sse2())
+          count = 256; // Opteron
+        else
+          count = 128; // Athlon
+      } else {         // Intel
+        if (supports_sse2())
+          if (cpu_family() == 6) {
+            count = 256; // Pentium M, Core, Core2
+          } else {
+            count = 512; // Pentium 4
+          }
+        else
+          count = 128; // Pentium 3 (and all other old CPUs)
       }
     }
     return count;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,6 +119,7 @@ JRT_LEAF(void, SharedRuntime::g1_wb_pre(oopDesc* orig, JavaThread *thread))
     assert(false, "should be optimized out");
     return;
   }
+  assert(orig->is_oop(true /* ignore mark word */), "Error");
   // store the original value that was in the field reference
   thread->satb_mark_queue().enqueue(orig);
 JRT_END
@@ -192,64 +193,46 @@ JRT_END
 
 
 JRT_LEAF(jint, SharedRuntime::f2i(jfloat  x))
-  if (g_isnan(x)) {return 0;}
-  jlong lltmp = (jlong)x;
-  jint ltmp   = (jint)lltmp;
-  if (ltmp == lltmp) {
-    return ltmp;
-  } else {
-    if (x < 0) {
-      return min_jint;
-    } else {
-      return max_jint;
-    }
-  }
+  if (g_isnan(x))
+    return 0;
+  if (x >= (jfloat) max_jint)
+    return max_jint;
+  if (x <= (jfloat) min_jint)
+    return min_jint;
+  return (jint) x;
 JRT_END
 
 
 JRT_LEAF(jlong, SharedRuntime::f2l(jfloat  x))
-  if (g_isnan(x)) {return 0;}
-  jlong lltmp = (jlong)x;
-  if (lltmp != min_jlong) {
-    return lltmp;
-  } else {
-    if (x < 0) {
-      return min_jlong;
-    } else {
-      return max_jlong;
-    }
-  }
+  if (g_isnan(x))
+    return 0;
+  if (x >= (jfloat) max_jlong)
+    return max_jlong;
+  if (x <= (jfloat) min_jlong)
+    return min_jlong;
+  return (jlong) x;
 JRT_END
 
 
 JRT_LEAF(jint, SharedRuntime::d2i(jdouble x))
-  if (g_isnan(x)) {return 0;}
-  jlong lltmp = (jlong)x;
-  jint ltmp   = (jint)lltmp;
-  if (ltmp == lltmp) {
-    return ltmp;
-  } else {
-    if (x < 0) {
-      return min_jint;
-    } else {
-      return max_jint;
-    }
-  }
+  if (g_isnan(x))
+    return 0;
+  if (x >= (jdouble) max_jint)
+    return max_jint;
+  if (x <= (jdouble) min_jint)
+    return min_jint;
+  return (jint) x;
 JRT_END
 
 
 JRT_LEAF(jlong, SharedRuntime::d2l(jdouble x))
-  if (g_isnan(x)) {return 0;}
-  jlong lltmp = (jlong)x;
-  if (lltmp != min_jlong) {
-    return lltmp;
-  } else {
-    if (x < 0) {
-      return min_jlong;
-    } else {
-      return max_jlong;
-    }
-  }
+  if (g_isnan(x))
+    return 0;
+  if (x >= (jdouble) max_jlong)
+    return max_jlong;
+  if (x <= (jdouble) min_jlong)
+    return min_jlong;
+  return (jlong) x;
 JRT_END
 
 
@@ -394,6 +377,32 @@ void SharedRuntime::throw_and_post_jvmti_exception(JavaThread *thread, symbolOop
   Handle h_exception = Exceptions::new_exception(thread, name, message);
   throw_and_post_jvmti_exception(thread, h_exception);
 }
+
+// The interpreter code to call this tracing function is only
+// called/generated when TraceRedefineClasses has the right bits
+// set. Since obsolete methods are never compiled, we don't have
+// to modify the compilers to generate calls to this function.
+//
+JRT_LEAF(int, SharedRuntime::rc_trace_method_entry(
+    JavaThread* thread, methodOopDesc* method))
+  assert(RC_TRACE_IN_RANGE(0x00001000, 0x00002000), "wrong call");
+
+  if (method->is_obsolete()) {
+    // We are calling an obsolete method, but this is not necessarily
+    // an error. Our method could have been redefined just after we
+    // fetched the methodOop from the constant pool.
+
+    // RC_TRACE macro has an embedded ResourceMark
+    RC_TRACE_WITH_THREAD(0x00001000, thread,
+                         ("calling obsolete method '%s'",
+                          method->name_and_sig_as_C_string()));
+    if (RC_TRACE_ENABLED(0x00002000)) {
+      // this option is provided to debug calls to obsolete methods
+      guarantee(false, "faulting at call to an obsolete method.");
+    }
+  }
+  return 0;
+JRT_END
 
 // ret_pc points into caller; we are returning caller's exception handler
 // for given exception
@@ -665,48 +674,6 @@ JRT_END
 JRT_ENTRY(void, SharedRuntime::yield_all(JavaThread* thread, int attempts))
   os::yield_all(attempts);
 JRT_END
-
-
-// ---------------------------------------------------------------------------------------------------------
-// Non-product code
-#ifndef PRODUCT
-
-void SharedRuntime::verify_caller_frame(frame caller_frame, methodHandle callee_method) {
-  ResourceMark rm;
-  assert (caller_frame.is_interpreted_frame(), "sanity check");
-  assert (callee_method->has_compiled_code(), "callee must be compiled");
-  methodHandle caller_method (Thread::current(), caller_frame.interpreter_frame_method());
-  jint bci = caller_frame.interpreter_frame_bci();
-  methodHandle method = find_callee_method_inside_interpreter(caller_frame, caller_method, bci);
-  assert (callee_method == method, "incorrect method");
-}
-
-methodHandle SharedRuntime::find_callee_method_inside_interpreter(frame caller_frame, methodHandle caller_method, int bci) {
-  EXCEPTION_MARK;
-  Bytecode_invoke* bytecode = Bytecode_invoke_at(caller_method, bci);
-  methodHandle staticCallee = bytecode->static_target(CATCH); // Non-product code
-
-  bytecode = Bytecode_invoke_at(caller_method, bci);
-  int bytecode_index = bytecode->index();
-  Bytecodes::Code bc = bytecode->adjusted_invoke_code();
-
-  Handle receiver;
-  if (bc == Bytecodes::_invokeinterface ||
-      bc == Bytecodes::_invokevirtual ||
-      bc == Bytecodes::_invokespecial) {
-    symbolHandle signature (THREAD, staticCallee->signature());
-    receiver = Handle(THREAD, retrieve_receiver(signature, caller_frame));
-  } else {
-    receiver = Handle();
-  }
-  CallInfo result;
-  constantPoolHandle constants (THREAD, caller_method->constants());
-  LinkResolver::resolve_invoke(result, receiver, constants, bytecode_index, bc, CATCH); // Non-product code
-  methodHandle calleeMethod = result.selected_method();
-  return calleeMethod;
-}
-
-#endif  // PRODUCT
 
 
 JRT_ENTRY_NO_ASYNC(void, SharedRuntime::register_finalizer(JavaThread* thread, oopDesc* obj))
@@ -1505,9 +1472,73 @@ char* SharedRuntime::generate_class_cast_message(
   return generate_class_cast_message(objName, targetKlass->external_name());
 }
 
+char* SharedRuntime::generate_wrong_method_type_message(JavaThread* thread,
+                                                        oopDesc* required,
+                                                        oopDesc* actual) {
+  assert(EnableMethodHandles, "");
+  oop singleKlass = wrong_method_type_is_for_single_argument(thread, required);
+  if (singleKlass != NULL) {
+    const char* objName = "argument or return value";
+    if (actual != NULL) {
+      // be flexible about the junk passed in:
+      klassOop ak = (actual->is_klass()
+                     ? (klassOop)actual
+                     : actual->klass());
+      objName = Klass::cast(ak)->external_name();
+    }
+    Klass* targetKlass = Klass::cast(required->is_klass()
+                                     ? (klassOop)required
+                                     : java_lang_Class::as_klassOop(required));
+    return generate_class_cast_message(objName, targetKlass->external_name());
+  } else {
+    // %%% need to get the MethodType string, without messing around too much
+    // Get a signature from the invoke instruction
+    const char* mhName = "method handle";
+    const char* targetType = "the required signature";
+    vframeStream vfst(thread, true);
+    if (!vfst.at_end()) {
+      Bytecode_invoke* call = Bytecode_invoke_at(vfst.method(), vfst.bci());
+      methodHandle target;
+      {
+        EXCEPTION_MARK;
+        target = call->static_target(THREAD);
+        if (HAS_PENDING_EXCEPTION) { CLEAR_PENDING_EXCEPTION; }
+      }
+      if (target.not_null()
+          && target->is_method_handle_invoke()
+          && required == target->method_handle_type()) {
+        targetType = target->signature()->as_C_string();
+      }
+    }
+    klassOop kignore; int fignore;
+    methodOop actual_method = MethodHandles::decode_method(actual,
+                                                          kignore, fignore);
+    if (actual_method != NULL) {
+      if (actual_method->name() == vmSymbols::invoke_name())
+        mhName = "$";
+      else
+        mhName = actual_method->signature()->as_C_string();
+      if (mhName[0] == '$')
+        mhName = actual_method->signature()->as_C_string();
+    }
+    return generate_class_cast_message(mhName, targetType,
+                                       " cannot be called as ");
+  }
+}
+
+oop SharedRuntime::wrong_method_type_is_for_single_argument(JavaThread* thr,
+                                                            oopDesc* required) {
+  if (required == NULL)  return NULL;
+  if (required->klass() == SystemDictionary::class_klass())
+    return required;
+  if (required->is_klass())
+    return Klass::cast(klassOop(required))->java_mirror();
+  return NULL;
+}
+
+
 char* SharedRuntime::generate_class_cast_message(
-    const char* objName, const char* targetKlassName) {
-  const char* desc = " cannot be cast to ";
+    const char* objName, const char* targetKlassName, const char* desc) {
   size_t msglen = strlen(objName) + strlen(desc) + strlen(targetKlassName) + 1;
 
   char* message = NEW_RESOURCE_ARRAY(char, msglen);
@@ -1746,7 +1777,14 @@ const char* AdapterHandlerEntry::name = "I2C/C2I adapters";
 GrowableArray<uint64_t>* AdapterHandlerLibrary::_fingerprints = NULL;
 GrowableArray<AdapterHandlerEntry* >* AdapterHandlerLibrary::_handlers = NULL;
 const int AdapterHandlerLibrary_size = 16*K;
-u_char                   AdapterHandlerLibrary::_buffer[AdapterHandlerLibrary_size + 32];
+BufferBlob* AdapterHandlerLibrary::_buffer = NULL;
+
+BufferBlob* AdapterHandlerLibrary::buffer_blob() {
+  // Should be called only when AdapterHandlerLibrary_lock is active.
+  if (_buffer == NULL) // Initialize lazily
+      _buffer = BufferBlob::create("adapters", AdapterHandlerLibrary_size);
+  return _buffer;
+}
 
 void AdapterHandlerLibrary::initialize() {
   if (_fingerprints != NULL) return;
@@ -1782,7 +1820,9 @@ int AdapterHandlerLibrary::get_create_adapter_index(methodHandle method) {
   assert(ic_miss != NULL, "must have handler");
 
   int result;
+  NOT_PRODUCT(int code_size);
   BufferBlob *B = NULL;
+  AdapterHandlerEntry* entry = NULL;
   uint64_t fingerprint;
   {
     MutexLocker mu(AdapterHandlerLibrary_lock);
@@ -1820,42 +1860,45 @@ int AdapterHandlerLibrary::get_create_adapter_index(methodHandle method) {
 
     // Create I2C & C2I handlers
     ResourceMark rm;
-    // Improve alignment slightly
-    u_char *buf = (u_char*)(((intptr_t)_buffer + CodeEntryAlignment-1) & ~(CodeEntryAlignment-1));
-    CodeBuffer buffer(buf, AdapterHandlerLibrary_size);
-    short buffer_locs[20];
-    buffer.insts()->initialize_shared_locs((relocInfo*)buffer_locs,
-                                           sizeof(buffer_locs)/sizeof(relocInfo));
-    MacroAssembler _masm(&buffer);
 
-    // Fill in the signature array, for the calling-convention call.
-    int total_args_passed = method->size_of_parameters(); // All args on stack
+    BufferBlob*  buf = buffer_blob(); // the temporary code buffer in CodeCache
+    if (buf != NULL) {
+      CodeBuffer buffer(buf->instructions_begin(), buf->instructions_size());
+      short buffer_locs[20];
+      buffer.insts()->initialize_shared_locs((relocInfo*)buffer_locs,
+                                             sizeof(buffer_locs)/sizeof(relocInfo));
+      MacroAssembler _masm(&buffer);
 
-    BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType,total_args_passed);
-    VMRegPair  * regs   = NEW_RESOURCE_ARRAY(VMRegPair  ,total_args_passed);
-    int i=0;
-    if( !method->is_static() )  // Pass in receiver first
-      sig_bt[i++] = T_OBJECT;
-    for( SignatureStream ss(method->signature()); !ss.at_return_type(); ss.next()) {
-      sig_bt[i++] = ss.type();  // Collect remaining bits of signature
-      if( ss.type() == T_LONG || ss.type() == T_DOUBLE )
-        sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+      // Fill in the signature array, for the calling-convention call.
+      int total_args_passed = method->size_of_parameters(); // All args on stack
+
+      BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType,total_args_passed);
+      VMRegPair  * regs   = NEW_RESOURCE_ARRAY(VMRegPair  ,total_args_passed);
+      int i=0;
+      if( !method->is_static() )  // Pass in receiver first
+        sig_bt[i++] = T_OBJECT;
+      for( SignatureStream ss(method->signature()); !ss.at_return_type(); ss.next()) {
+        sig_bt[i++] = ss.type();  // Collect remaining bits of signature
+        if( ss.type() == T_LONG || ss.type() == T_DOUBLE )
+          sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+      }
+      assert( i==total_args_passed, "" );
+
+      // Now get the re-packed compiled-Java layout.
+      int comp_args_on_stack;
+
+      // Get a description of the compiled java calling convention and the largest used (VMReg) stack slot usage
+      comp_args_on_stack = SharedRuntime::java_calling_convention(sig_bt, regs, total_args_passed, false);
+
+      entry = SharedRuntime::generate_i2c2i_adapters(&_masm,
+                                                     total_args_passed,
+                                                     comp_args_on_stack,
+                                                     sig_bt,
+                                                     regs);
+
+      B = BufferBlob::create(AdapterHandlerEntry::name, &buffer);
+      NOT_PRODUCT(code_size = buffer.code_size());
     }
-    assert( i==total_args_passed, "" );
-
-    // Now get the re-packed compiled-Java layout.
-    int comp_args_on_stack;
-
-    // Get a description of the compiled java calling convention and the largest used (VMReg) stack slot usage
-    comp_args_on_stack = SharedRuntime::java_calling_convention(sig_bt, regs, total_args_passed, false);
-
-    AdapterHandlerEntry* entry = SharedRuntime::generate_i2c2i_adapters(&_masm,
-                                                                        total_args_passed,
-                                                                        comp_args_on_stack,
-                                                                        sig_bt,
-                                                                        regs);
-
-    B = BufferBlob::create(AdapterHandlerEntry::name, &buffer);
     if (B == NULL) {
       // CodeCache is full, disable compilation
       // Ought to log this but compile log is only per compile thread
@@ -1882,9 +1925,9 @@ int AdapterHandlerLibrary::get_create_adapter_index(methodHandle method) {
       tty->cr();
       tty->print_cr("i2c argument handler #%d for: %s %s (fingerprint = 0x%llx, %d bytes generated)",
                     _handlers->length(), (method->is_static() ? "static" : "receiver"),
-                    method->signature()->as_C_string(), fingerprint, buffer.code_size() );
+                    method->signature()->as_C_string(), fingerprint, code_size );
       tty->print_cr("c2i argument handler starts at %p",entry->get_c2i_entry());
-      Disassembler::decode(entry->get_i2c_entry(), entry->get_i2c_entry() + buffer.code_size());
+      Disassembler::decode(entry->get_i2c_entry(), entry->get_i2c_entry() + code_size);
     }
 #endif
 
@@ -1952,42 +1995,44 @@ nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
       return nm;
     }
 
-    // Improve alignment slightly
-    u_char* buf = (u_char*)(((intptr_t)_buffer + CodeEntryAlignment-1) & ~(CodeEntryAlignment-1));
-    CodeBuffer buffer(buf, AdapterHandlerLibrary_size);
-    // Need a few relocation entries
-    double locs_buf[20];
-    buffer.insts()->initialize_shared_locs((relocInfo*)locs_buf, sizeof(locs_buf) / sizeof(relocInfo));
-    MacroAssembler _masm(&buffer);
+    ResourceMark rm;
 
-    // Fill in the signature array, for the calling-convention call.
-    int total_args_passed = method->size_of_parameters();
+    BufferBlob*  buf = buffer_blob(); // the temporary code buffer in CodeCache
+    if (buf != NULL) {
+      CodeBuffer buffer(buf->instructions_begin(), buf->instructions_size());
+      double locs_buf[20];
+      buffer.insts()->initialize_shared_locs((relocInfo*)locs_buf, sizeof(locs_buf) / sizeof(relocInfo));
+      MacroAssembler _masm(&buffer);
 
-    BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType,total_args_passed);
-    VMRegPair  * regs   = NEW_RESOURCE_ARRAY(VMRegPair  ,total_args_passed);
-    int i=0;
-    if( !method->is_static() )  // Pass in receiver first
-      sig_bt[i++] = T_OBJECT;
-    SignatureStream ss(method->signature());
-    for( ; !ss.at_return_type(); ss.next()) {
-      sig_bt[i++] = ss.type();  // Collect remaining bits of signature
-      if( ss.type() == T_LONG || ss.type() == T_DOUBLE )
-        sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+      // Fill in the signature array, for the calling-convention call.
+      int total_args_passed = method->size_of_parameters();
+
+      BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType,total_args_passed);
+      VMRegPair*   regs = NEW_RESOURCE_ARRAY(VMRegPair,total_args_passed);
+      int i=0;
+      if( !method->is_static() )  // Pass in receiver first
+        sig_bt[i++] = T_OBJECT;
+      SignatureStream ss(method->signature());
+      for( ; !ss.at_return_type(); ss.next()) {
+        sig_bt[i++] = ss.type();  // Collect remaining bits of signature
+        if( ss.type() == T_LONG || ss.type() == T_DOUBLE )
+          sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+      }
+      assert( i==total_args_passed, "" );
+      BasicType ret_type = ss.type();
+
+      // Now get the compiled-Java layout as input arguments
+      int comp_args_on_stack;
+      comp_args_on_stack = SharedRuntime::java_calling_convention(sig_bt, regs, total_args_passed, false);
+
+      // Generate the compiled-to-native wrapper code
+      nm = SharedRuntime::generate_native_wrapper(&_masm,
+                                                  method,
+                                                  total_args_passed,
+                                                  comp_args_on_stack,
+                                                  sig_bt,regs,
+                                                  ret_type);
     }
-    assert( i==total_args_passed, "" );
-    BasicType ret_type = ss.type();
-
-    // Now get the compiled-Java layout as input arguments
-    int comp_args_on_stack;
-    comp_args_on_stack = SharedRuntime::java_calling_convention(sig_bt, regs, total_args_passed, false);
-
-    // Generate the compiled-to-native wrapper code
-    nm = SharedRuntime::generate_native_wrapper(&_masm,
-                                                method,
-                                                total_args_passed,
-                                                comp_args_on_stack,
-                                                sig_bt,regs,
-                                                ret_type);
   }
 
   // Must unlock before calling set_code
@@ -2047,18 +2092,20 @@ nmethod *AdapterHandlerLibrary::create_dtrace_nmethod(methodHandle method) {
       return nm;
     }
 
-    // Improve alignment slightly
-    u_char* buf = (u_char*)
-        (((intptr_t)_buffer + CodeEntryAlignment-1) & ~(CodeEntryAlignment-1));
-    CodeBuffer buffer(buf, AdapterHandlerLibrary_size);
-    // Need a few relocation entries
-    double locs_buf[20];
-    buffer.insts()->initialize_shared_locs(
-        (relocInfo*)locs_buf, sizeof(locs_buf) / sizeof(relocInfo));
-    MacroAssembler _masm(&buffer);
+    ResourceMark rm;
 
-    // Generate the compiled-to-native wrapper code
-    nm = SharedRuntime::generate_dtrace_nmethod(&_masm, method);
+    BufferBlob*  buf = buffer_blob(); // the temporary code buffer in CodeCache
+    if (buf != NULL) {
+      CodeBuffer buffer(buf->instructions_begin(), buf->instructions_size());
+      // Need a few relocation entries
+      double locs_buf[20];
+      buffer.insts()->initialize_shared_locs(
+        (relocInfo*)locs_buf, sizeof(locs_buf) / sizeof(relocInfo));
+      MacroAssembler _masm(&buffer);
+
+      // Generate the compiled-to-native wrapper code
+      nm = SharedRuntime::generate_dtrace_nmethod(&_masm, method);
+    }
   }
   return nm;
 }

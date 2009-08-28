@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ class GCCause : public AllStatic {
     _old_generation_too_full_to_scavenge,
     _adaptive_size_policy,
 
-    _g1_inc_collection_pause, _g1_pop_region_collection_pause,
+    _g1_inc_collection_pause,
 
     _last_ditch_collection,
     _last_gc_cause

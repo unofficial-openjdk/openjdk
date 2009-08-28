@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,8 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
   _flow               = NULL;
 #endif // COMPILER2
 
-  if (JvmtiExport::can_hotswap_or_post_breakpoint() && _is_compilable) {
+  ciEnv *env = CURRENT_ENV;
+  if (env->jvmti_can_hotswap_or_post_breakpoint() && _is_compilable) {
     // 6328518 check hotswap conditions under the right lock.
     MutexLocker locker(Compile_lock);
     if (Dependencies::check_evol_method(h_m()) != NULL) {
@@ -84,7 +85,6 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
   if (_can_be_statically_bound && h_m()->is_abstract())
     _can_be_statically_bound = false;
 
-  ciEnv *env = CURRENT_ENV;
   // generating _signature may allow GC and therefore move m.
   // These fields are always filled in.
   _name = env->get_object(h_m()->name())->as_symbol();
@@ -337,7 +337,7 @@ MethodLivenessResult ciMethod::liveness_at_bci(int bci) {
     _liveness->compute_liveness();
   }
   MethodLivenessResult result = _liveness->get_liveness_at(bci);
-  if (JvmtiExport::can_access_local_variables() || DeoptimizeALot || CompileTheWorld) {
+  if (CURRENT_ENV->jvmti_can_access_local_variables() || DeoptimizeALot || CompileTheWorld) {
     // Keep all locals live for the user's edification and amusement.
     result.at_put_range(0, result.size(), true);
   }
@@ -673,6 +673,30 @@ int ciMethod::scale_count(int count, float prof_factor) {
   }
   return count;
 }
+
+// ------------------------------------------------------------------
+// invokedynamic support
+//
+bool ciMethod::is_method_handle_invoke() {
+  check_is_loaded();
+  bool flag = ((flags().as_int() & JVM_MH_INVOKE_BITS) == JVM_MH_INVOKE_BITS);
+#ifdef ASSERT
+  {
+    VM_ENTRY_MARK;
+    bool flag2 = get_methodOop()->is_method_handle_invoke();
+    assert(flag == flag2, "consistent");
+  }
+#endif //ASSERT
+  return flag;
+}
+
+ciInstance* ciMethod::method_handle_type() {
+  check_is_loaded();
+  VM_ENTRY_MARK;
+  oop mtype = get_methodOop()->method_handle_type();
+  return CURRENT_THREAD_ENV->get_object(mtype)->as_instance();
+}
+
 
 // ------------------------------------------------------------------
 // ciMethod::build_method_data

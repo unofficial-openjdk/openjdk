@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,7 +161,7 @@ void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
 
 
 int methodOopDesc::bci_from(address bcp) const {
-  assert(is_native() && bcp == code_base() || contains(bcp), "bcp doesn't belong to this method");
+  assert(is_native() && bcp == code_base() || contains(bcp) || is_error_reported(), "bcp doesn't belong to this method");
   return bcp - code_base();
 }
 
@@ -301,6 +301,12 @@ void methodOopDesc::build_interpreter_method_data(methodHandle method, TRAPS) {
 void methodOopDesc::cleanup_inline_caches() {
   // The current system doesn't use inline caches in the interpreter
   // => nothing to do (keep this method around for future use)
+}
+
+
+int methodOopDesc::extra_stack_words() {
+  // not an inline function, to avoid a header dependency on Interpreter
+  return extra_stack_entries() * Interpreter::stackElementSize();
 }
 
 
@@ -564,6 +570,11 @@ void methodOopDesc::set_signature_handler(address handler) {
 
 
 bool methodOopDesc::is_not_compilable(int comp_level) const {
+  if (is_method_handle_invoke()) {
+    // compilers must recognize this method specially, or not at all
+    return true;
+  }
+
   methodDataOop mdo = method_data();
   if (mdo != NULL
       && (uint)mdo->decompile_count() > (uint)PerMethodRecompilationCutoff) {
@@ -651,7 +662,7 @@ void methodOopDesc::link_method(methodHandle h_method, TRAPS) {
   assert(entry != NULL, "interpreter entry must be non-null");
   // Sets both _i2i_entry and _from_interpreted_entry
   set_interpreter_entry(entry);
-  if (is_native()) {
+  if (is_native() && !is_method_handle_invoke()) {
     set_native_function(
       SharedRuntime::native_method_throw_unsatisfied_link_error_entry(),
       !native_bind_event_is_interesting);
@@ -783,6 +794,100 @@ bool methodOopDesc::should_not_be_cached() const {
   return false;
 }
 
+// Constant pool structure for invoke methods:
+enum {
+  _imcp_invoke_name = 1,        // utf8: 'invoke'
+  _imcp_invoke_signature,       // utf8: (variable symbolOop)
+  _imcp_method_type_value,      // string: (variable java/dyn/MethodType, sic)
+  _imcp_limit
+};
+
+oop methodOopDesc::method_handle_type() const {
+  if (!is_method_handle_invoke()) { assert(false, "caller resp."); return NULL; }
+  oop mt = constants()->resolved_string_at(_imcp_method_type_value);
+  assert(mt->klass() == SystemDictionary::MethodType_klass(), "");
+  return mt;
+}
+
+jint* methodOopDesc::method_type_offsets_chain() {
+  static jint pchase[] = { -1, -1, -1 };
+  if (pchase[0] == -1) {
+    jint step0 = in_bytes(constants_offset());
+    jint step1 = (constantPoolOopDesc::header_size() + _imcp_method_type_value) * HeapWordSize;
+    // do this in reverse to avoid races:
+    OrderAccess::release_store(&pchase[1], step1);
+    OrderAccess::release_store(&pchase[0], step0);
+  }
+  return pchase;
+}
+
+methodHandle methodOopDesc::make_invoke_method(KlassHandle holder,
+                                               symbolHandle signature,
+                                               Handle method_type, TRAPS) {
+  methodHandle empty;
+
+  assert(holder() == SystemDictionary::MethodHandle_klass(),
+         "must be a JSR 292 magic type");
+
+  if (TraceMethodHandles) {
+    tty->print("Creating invoke method for ");
+    signature->print_value();
+    tty->cr();
+  }
+
+  constantPoolHandle cp;
+  {
+    constantPoolOop cp_oop = oopFactory::new_constantPool(_imcp_limit, IsSafeConc, CHECK_(empty));
+    cp = constantPoolHandle(THREAD, cp_oop);
+  }
+  cp->symbol_at_put(_imcp_invoke_name,       vmSymbols::invoke_name());
+  cp->symbol_at_put(_imcp_invoke_signature,  signature());
+  cp->string_at_put(_imcp_method_type_value, vmSymbols::void_signature());
+  cp->set_pool_holder(holder());
+
+  // set up the fancy stuff:
+  cp->pseudo_string_at_put(_imcp_method_type_value, method_type());
+  methodHandle m;
+  {
+    int flags_bits = (JVM_MH_INVOKE_BITS | JVM_ACC_PUBLIC | JVM_ACC_FINAL);
+    methodOop m_oop = oopFactory::new_method(0, accessFlags_from(flags_bits),
+                                             0, 0, 0, IsSafeConc, CHECK_(empty));
+    m = methodHandle(THREAD, m_oop);
+  }
+  m->set_constants(cp());
+  m->set_name_index(_imcp_invoke_name);
+  m->set_signature_index(_imcp_invoke_signature);
+  assert(m->name() == vmSymbols::invoke_name(), "");
+  assert(m->signature() == signature(), "");
+#ifdef CC_INTERP
+  ResultTypeFinder rtf(signature());
+  m->set_result_index(rtf.type());
+#endif
+  m->compute_size_of_parameters(THREAD);
+  m->set_exception_table(Universe::the_empty_int_array());
+
+  // Finally, set up its entry points.
+  assert(m->method_handle_type() == method_type(), "");
+  assert(m->can_be_statically_bound(), "");
+  m->set_vtable_index(methodOopDesc::nonvirtual_vtable_index);
+  m->link_method(m, CHECK_(empty));
+
+#ifdef ASSERT
+  // Make sure the pointer chase works.
+  address p = (address) m();
+  for (jint* pchase = method_type_offsets_chain(); (*pchase) != -1; pchase++) {
+    p = *(address*)(p + (*pchase));
+  }
+  assert((oop)p == method_type(), "pointer chase is correct");
+#endif
+
+  if (TraceMethodHandles)
+    m->print_on(tty);
+
+  return m;
+}
+
+
 
 methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_code, int new_code_length,
                                                 u_char* new_compressed_linenumber_table, int new_compressed_linenumber_size, TRAPS) {
@@ -792,15 +897,34 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
   AccessFlags flags = m->access_flags();
   int checked_exceptions_len = m->checked_exceptions_length();
   int localvariable_len = m->localvariable_table_length();
-  methodOop newm_oop = oopFactory::new_method(new_code_length, flags, new_compressed_linenumber_size, localvariable_len, checked_exceptions_len, CHECK_(methodHandle()));
+  // Allocate newm_oop with the is_conc_safe parameter set
+  // to IsUnsafeConc to indicate that newm_oop is not yet
+  // safe for concurrent processing by a GC.
+  methodOop newm_oop = oopFactory::new_method(new_code_length,
+                                              flags,
+                                              new_compressed_linenumber_size,
+                                              localvariable_len,
+                                              checked_exceptions_len,
+                                              IsUnsafeConc,
+                                              CHECK_(methodHandle()));
   methodHandle newm (THREAD, newm_oop);
   int new_method_size = newm->method_size();
   // Create a shallow copy of methodOopDesc part, but be careful to preserve the new constMethodOop
   constMethodOop newcm = newm->constMethod();
   int new_const_method_size = newm->constMethod()->object_size();
+
   memcpy(newm(), m(), sizeof(methodOopDesc));
   // Create shallow copy of constMethodOopDesc, but be careful to preserve the methodOop
+  // is_conc_safe is set to false because that is the value of
+  // is_conc_safe initialzied into newcm and the copy should
+  // not overwrite that value.  During the window during which it is
+  // tagged as unsafe, some extra work could be needed during precleaning
+  // or concurrent marking but those phases will be correct.  Setting and
+  // resetting is done in preference to a careful copying into newcm to
+  // avoid having to know the precise layout of a constMethodOop.
+  m->constMethod()->set_is_conc_safe(false);
   memcpy(newcm, m->constMethod(), sizeof(constMethodOopDesc));
+  m->constMethod()->set_is_conc_safe(true);
   // Reset correct method/const method, method size, and parameter info
   newcm->set_method(newm());
   newm->set_constMethod(newcm);
@@ -831,28 +955,45 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
            m->localvariable_table_start(),
            localvariable_len * sizeof(LocalVariableTableElement));
   }
+
+  // Only set is_conc_safe to true when changes to newcm are
+  // complete.
+  newcm->set_is_conc_safe(true);
   return newm;
 }
 
-vmIntrinsics::ID methodOopDesc::compute_intrinsic_id() const {
-  assert(vmIntrinsics::_none == 0, "correct coding of default case");
-  const uintptr_t max_cache_uint = right_n_bits((int)(sizeof(_intrinsic_id_cache) * BitsPerByte));
-  assert((uintptr_t)vmIntrinsics::ID_LIMIT <= max_cache_uint, "else fix cache size");
+vmSymbols::SID methodOopDesc::klass_id_for_intrinsics(klassOop holder) {
   // if loader is not the default loader (i.e., != NULL), we can't know the intrinsics
   // because we are not loading from core libraries
-  if (instanceKlass::cast(method_holder())->class_loader() != NULL) return vmIntrinsics::_none;
+  if (instanceKlass::cast(holder)->class_loader() != NULL)
+    return vmSymbols::NO_SID;   // regardless of name, no intrinsics here
 
   // see if the klass name is well-known:
-  symbolOop klass_name    = instanceKlass::cast(method_holder())->name();
-  vmSymbols::SID klass_id = vmSymbols::find_sid(klass_name);
-  if (klass_id == vmSymbols::NO_SID)  return vmIntrinsics::_none;
+  symbolOop klass_name = instanceKlass::cast(holder)->name();
+  return vmSymbols::find_sid(klass_name);
+}
+
+void methodOopDesc::init_intrinsic_id() {
+  assert(_intrinsic_id == vmIntrinsics::_none, "do this just once");
+  const uintptr_t max_id_uint = right_n_bits((int)(sizeof(_intrinsic_id) * BitsPerByte));
+  assert((uintptr_t)vmIntrinsics::ID_LIMIT <= max_id_uint, "else fix size");
+
+  // the klass name is well-known:
+  vmSymbols::SID klass_id = klass_id_for_intrinsics(method_holder());
+  assert(klass_id != vmSymbols::NO_SID, "caller responsibility");
 
   // ditto for method and signature:
   vmSymbols::SID  name_id = vmSymbols::find_sid(name());
-  if (name_id  == vmSymbols::NO_SID)  return vmIntrinsics::_none;
+  if (name_id  == vmSymbols::NO_SID)  return;
   vmSymbols::SID   sig_id = vmSymbols::find_sid(signature());
-  if (sig_id   == vmSymbols::NO_SID)  return vmIntrinsics::_none;
+  if (sig_id   == vmSymbols::NO_SID)  return;
   jshort flags = access_flags().as_short();
+
+  vmIntrinsics::ID id = vmIntrinsics::find_id(klass_id, name_id, sig_id, flags);
+  if (id != vmIntrinsics::_none) {
+    set_intrinsic_id(id);
+    return;
+  }
 
   // A few slightly irregular cases:
   switch (klass_id) {
@@ -864,14 +1005,17 @@ vmIntrinsics::ID methodOopDesc::compute_intrinsic_id() const {
     case vmSymbols::VM_SYMBOL_ENUM_NAME(sqrt_name):
       // pretend it is the corresponding method in the non-strict class:
       klass_id = vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Math);
+      id = vmIntrinsics::find_id(klass_id, name_id, sig_id, flags);
       break;
     }
   }
 
-  // return intrinsic id if any
-  return vmIntrinsics::find_id(klass_id, name_id, sig_id, flags);
+  if (id != vmIntrinsics::_none) {
+    // Set up its iid.  It is an alias method.
+    set_intrinsic_id(id);
+    return;
+  }
 }
-
 
 // These two methods are static since a GC may move the methodOopDesc
 bool methodOopDesc::load_signature_classes(methodHandle m, TRAPS) {

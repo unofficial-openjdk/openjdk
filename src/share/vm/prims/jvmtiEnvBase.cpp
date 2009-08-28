@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,6 +91,35 @@ JvmtiEnvBase::initialize() {
   if (_globally_initialized == false) {
     globally_initialize();
   }
+}
+
+
+bool
+JvmtiEnvBase::is_valid() {
+  jint value = 0;
+
+  // This object might not be a JvmtiEnvBase so we can't assume
+  // the _magic field is properly aligned. Get the value in a safe
+  // way and then check against JVMTI_MAGIC.
+
+  switch (sizeof(_magic)) {
+  case 2:
+    value = Bytes::get_native_u2((address)&_magic);
+    break;
+
+  case 4:
+    value = Bytes::get_native_u4((address)&_magic);
+    break;
+
+  case 8:
+    value = Bytes::get_native_u8((address)&_magic);
+    break;
+
+  default:
+    guarantee(false, "_magic field is an unexpected size");
+  }
+
+  return value == JVMTI_MAGIC;
 }
 
 
@@ -577,6 +606,7 @@ JvmtiEnvBase::count_locked_objects(JavaThread *java_thread, Handle hobj) {
     if (!mons->is_empty()) {
       for (int i = 0; i < mons->length(); i++) {
         MonitorInfo *mi = mons->at(i);
+        if (mi->owner_is_scalar_replaced()) continue;
 
         // see if owner of the monitor is our object
         if (mi->owner() != NULL && mi->owner() == hobj()) {
@@ -696,6 +726,8 @@ JvmtiEnvBase::get_locked_objects_in_frame(JavaThread* calling_thread, JavaThread
 
   for (int i = 0; i < mons->length(); i++) {
     MonitorInfo *mi = mons->at(i);
+
+    if (mi->owner_is_scalar_replaced()) continue;
 
     oop obj = mi->owner();
     if (obj == NULL) {
@@ -1322,15 +1354,18 @@ JvmtiEnvBase::force_early_return(JavaThread* java_thread, jvalue value, TosState
   HandleMark   hm(current_thread);
   uint32_t debug_bits = 0;
 
+  // retrieve or create the state
+  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
+
   // Check if java_thread is fully suspended
   if (!is_thread_fully_suspended(java_thread,
                                  true /* wait for suspend completion */,
                                  &debug_bits)) {
     return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
   }
-
-  // retreive or create the state
-  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
 
   // Check to see if a ForceEarlyReturn was already in progress
   if (state->is_earlyret_pending()) {

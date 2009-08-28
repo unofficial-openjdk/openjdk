@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,17 +32,17 @@ enum G1Barrier {
   G1BarrierNone, G1BarrierRS, G1BarrierEvac
 };
 
-template<bool do_gen_barrier, G1Barrier barrier, bool do_mark_forwardee>
+template<bool do_gen_barrier, G1Barrier barrier,
+         bool do_mark_forwardee, bool skip_cset_test>
 class G1ParCopyClosure;
 class G1ParScanClosure;
 
-typedef G1ParCopyClosure<false, G1BarrierEvac, false> G1ParScanHeapEvacClosure;
+typedef G1ParCopyClosure<false, G1BarrierEvac, false, true> G1ParScanHeapEvacClosure;
 
 class FilterIntoCSClosure;
 class FilterOutOfRegionClosure;
 class FilterInHeapRegionAndIntoCSClosure;
 class FilterAndMarkInHeapRegionAndIntoCSClosure;
-class G1ScanAndBalanceClosure;
 
 #ifdef FURTHER_SPECIALIZED_OOP_OOP_ITERATE_CLOSURES
 #error "FURTHER_SPECIALIZED_OOP_OOP_ITERATE_CLOSURES already defined."
@@ -54,8 +54,7 @@ class G1ScanAndBalanceClosure;
       f(FilterIntoCSClosure,_nv)                        \
       f(FilterOutOfRegionClosure,_nv)                   \
       f(FilterInHeapRegionAndIntoCSClosure,_nv)         \
-      f(FilterAndMarkInHeapRegionAndIntoCSClosure,_nv)  \
-      f(G1ScanAndBalanceClosure,_nv)
+      f(FilterAndMarkInHeapRegionAndIntoCSClosure,_nv)
 
 #ifdef FURTHER_SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES
 #error "FURTHER_SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES already defined."

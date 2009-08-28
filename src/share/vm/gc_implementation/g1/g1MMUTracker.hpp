@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 /***** ALL TIMES ARE IN SECS!!!!!!! *****/
 
 // this is the "interface"
-class G1MMUTracker {
+class G1MMUTracker: public CHeapObj {
 protected:
   double          _time_slice;
   double          _max_gc_time; // this is per time slice
@@ -67,7 +67,7 @@ public:
   }
 };
 
-class G1MMUTrackerQueueElem {
+class G1MMUTrackerQueueElem VALUE_OBJ_CLASS_SPEC {
 private:
   double _start_time;
   double _end_time;

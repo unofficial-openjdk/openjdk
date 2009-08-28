@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,8 +104,7 @@ class HeapRegionSeq: public CHeapObj {
 
   void print();
 
-  // Prints out runs of empty regions.  If the arg is "true" reserved
-  // (popular regions are considered "empty".
-  void print_empty_runs(bool reserved_are_empty);
+  // Prints out runs of empty regions.
+  void print_empty_runs();
 
 };
