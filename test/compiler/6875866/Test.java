@@ -26,7 +26,7 @@
  * @bug 6875866
  * @summary Intrinsic for String.indexOf() is broken on x86 with SSE4.2
  *
- * @run main -Xcomp Test
+ * @run main/othervm -Xcomp Test
  */
 
 public class Test {
