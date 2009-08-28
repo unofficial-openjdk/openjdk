@@ -3991,7 +3991,7 @@ encode %{
     masm.bind(LOAD_SUBSTR);
     masm.movptr(rdi, Address(rsp, 4));
     masm.movl(rax, Address(rsp, 0));
-    // We came here after the beginninig of the substring was
+    // We came here after the beginning of the substring was
     // matched but the rest of it was not so we need to search
     // again. Start from the next element after the previous match.
     masm.subptr(rsi, rbx); // Restore counter
@@ -12743,7 +12743,7 @@ instruct string_equals(eDIRegP str1, eSIRegP str2, regXD tmp1, regXD tmp2,
   effect(TEMP tmp1, TEMP tmp2, USE_KILL str1, USE_KILL str2, KILL tmp3, KILL tmp4, KILL cr);
 
   format %{ "String Equals $str1,$str2 -> $result    // KILL EBX, ECX" %}
-  ins_encode( enc_String_Equals(tmp1, tmp2, str1, str2, tmp3, tmp4, result) );
+  ins_encode( enc_String_Equals(str1, str2, tmp1, tmp2, tmp3, tmp4, result) );
   ins_pipe( pipe_slow );
 %}
 
