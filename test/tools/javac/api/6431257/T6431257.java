@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug     6431257
+ * @bug     6431257 6878069
  * @summary JSR 199: Changes to JavaFileManager to support JSR 269 Filer API
  * @author  Peter von der Ah\u00e9
  * @library ../lib

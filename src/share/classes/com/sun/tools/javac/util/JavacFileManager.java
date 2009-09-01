@@ -918,7 +918,8 @@ public class JavacFileManager implements StandardJavaFileManager {
         Iterable<? extends File> path = getLocation(location);
         if (path == null)
             return List.nil();
-        String subdirectory = externalizeFileName(packageName);
+	// allow use of binary package names, per the JavaFileManager spec
+        String subdirectory = externalizeFileName(packageName.replace('/', '.'));
         ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
         for (File directory : path)
