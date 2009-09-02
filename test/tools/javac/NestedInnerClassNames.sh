@@ -48,13 +48,13 @@ echo "CLASSPATH=${CLASSPATH}"
 OS=`uname -s`
 case "$OS" in
   SunOS | Linux )
-    NULL=/dev/null
-    PS=":"
     FS="/"
     ;;
+  CYGWIN* )
+    FS="/"
+    DIFFOPTS="--strip-trailing-cr"
+    ;;
   Windows* )
-    NULL=NUL
-    PS=";"
     FS="\\"
     ;;
   * )
@@ -69,7 +69,7 @@ cp "${TESTSRC}${FS}NestedInnerClassNames.java" .
 "${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} NestedInnerClassNames.java 2> ${TMP1}
 cat ${TMP1}
 
-diff -c "${TESTSRC}${FS}NestedInnerClassNames.out" ${TMP1}
+diff ${DIFFOPTS} -c "${TESTSRC}${FS}NestedInnerClassNames.out" ${TMP1}
 result=$?
 rm ${TMP1}
 
