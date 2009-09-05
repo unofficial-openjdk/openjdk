@@ -37,6 +37,7 @@ import java.security.cert.CertPathValidatorException.BasicReason;
 import java.net.*;
 import javax.security.auth.x500.X500Principal;
 
+import sun.misc.IOUtils;
 import sun.security.util.*;
 import sun.security.x509.*;
 
@@ -296,12 +297,29 @@ class OCSPChecker extends PKIXCertPathChecker {
                     }
                     if (filter != null) {
                         List<CertStore> certStores = pkixParams.getCertStores();
+                        AlgorithmChecker algChecker=
+                                                AlgorithmChecker.getInstance();
                         for (CertStore certStore : certStores) {
-                            Iterator i =
-                                certStore.getCertificates(filter).iterator();
-                            if (i.hasNext()) {
-                                responderCert = (X509Certificate) i.next();
-                                seekResponderCert = false; // done
+                            for (Certificate selected :
+                                    certStore.getCertificates(filter)) {
+                                try {
+                                    // don't bother to trust algorithm disabled
+                                    // certificate as responder
+                                    algChecker.check(selected);
+
+                                    responderCert = (X509Certificate)selected;
+                                    seekResponderCert = false; // done
+                                    break;
+                                } catch (CertPathValidatorException cpve) {
+                                    if (DEBUG != null) {
+                                        DEBUG.println(
+                                            "OCSP responder certificate " +
+                                            "algorithm check failed: " + cpve);
+                                    }
+                                }
+                            }
+
+                            if (!seekResponderCert) {
                                 break;
                             }
                         }
@@ -351,27 +369,8 @@ class OCSPChecker extends PKIXCertPathChecker {
             }
             in = con.getInputStream();
 
-            byte[] response = null;
-            int total = 0;
             int contentLength = con.getContentLength();
-            if (contentLength != -1) {
-                response = new byte[contentLength];
-            } else {
-                response = new byte[2048];
-                contentLength = Integer.MAX_VALUE;
-            }
-
-            while (total < contentLength) {
-                int count = in.read(response, total, response.length - total);
-                if (count < 0)
-                    break;
-
-                total += count;
-                if (total >= response.length && total < contentLength) {
-                    response = Arrays.copyOf(response, total * 2);
-                }
-            }
-            response = Arrays.copyOf(response, total);
+            byte[] response = IOUtils.readFully(in, contentLength, false);
 
             OCSPResponse ocspResponse = new OCSPResponse(response, pkixParams,
                 responderCert);
