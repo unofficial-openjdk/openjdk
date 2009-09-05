@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import java.security.cert.*;
 import java.net.*;
 import javax.security.auth.x500.X500Principal;
 
+import sun.misc.IOUtils;
 import sun.security.util.*;
 import sun.security.x509.*;
 
@@ -344,17 +345,7 @@ class OCSPChecker extends PKIXCertPathChecker {
             in = con.getInputStream();
 
             int contentLength = con.getContentLength();
-            if (contentLength == -1) {
-                contentLength = Integer.MAX_VALUE;
-            }
-
-            byte[] response = new byte[contentLength];
-            int total = 0;
-            int count = 0;
-            while (count != -1 && total < contentLength) {
-                count = in.read(response, total, response.length - total);
-                total += count;
-            }
+            byte[] response = IOUtils.readFully(in, contentLength, false);
 
             OCSPResponse ocspResponse = new OCSPResponse(response, pkixParams,
                 responderCert);
