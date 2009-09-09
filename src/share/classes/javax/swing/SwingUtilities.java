@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,6 @@ import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.dnd.DropTarget;
-
-import java.util.Vector;
-import java.util.Hashtable;
 
 import java.lang.reflect.*;
 
@@ -1750,8 +1747,7 @@ public class SwingUtilities implements SwingConstants
 
 
     // Don't use String, as it's not guaranteed to be unique in a Hashtable.
-    private static final Object sharedOwnerFrameKey =
-       new StringBuffer("SwingUtilities.sharedOwnerFrame");
+    private static final Object sharedOwnerFrameKey = new Object(); // SwingUtilities.sharedOwnerFrame
 
     static class SharedOwnerFrame extends Frame implements WindowListener {
         public void addNotify() {

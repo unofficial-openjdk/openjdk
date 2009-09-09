@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,10 @@
 package javax.swing;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import java.beans.PropertyVetoException;
 import java.beans.PropertyChangeEvent;
-import java.util.EventListener;
 
-import javax.swing.border.Border;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
 import javax.swing.plaf.*;
@@ -40,9 +37,7 @@ import javax.swing.plaf.*;
 import javax.accessibility.*;
 
 import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 import java.io.IOException;
-import java.lang.StringBuilder;
 import java.beans.PropertyChangeListener;
 import sun.awt.AppContext;
 import sun.swing.SwingUtilities2;
@@ -226,8 +221,7 @@ public class JInternalFrame extends JComponent implements
     /** Constrained property name indicating that the internal frame is iconified. */
     public final static String IS_ICON_PROPERTY = "icon";
 
-    private static final Object PROPERTY_CHANGE_LISTENER_KEY =
-        new StringBuilder("InternalFramePropertyChangeListener");
+    private static final Object PROPERTY_CHANGE_LISTENER_KEY = new Object(); // InternalFramePropertyChangeListener
 
     private static void addPropertyChangeListenerIfNecessary() {
         if (AppContext.getAppContext().get(PROPERTY_CHANGE_LISTENER_KEY) ==

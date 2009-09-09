@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,6 @@ package javax.swing;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeListener;
-import java.util.Locale;
-import java.util.Vector;
-import java.io.Serializable;
-
 import javax.accessibility.*;
 
 
@@ -130,8 +125,7 @@ public class JFrame  extends Frame implements WindowConstants,
      * Key into the AppContext, used to check if should provide decorations
      * by default.
      */
-    private static final Object defaultLookAndFeelDecoratedKey =
-            new StringBuffer("JFrame.defaultLookAndFeelDecorated");
+    private static final Object defaultLookAndFeelDecoratedKey = new Object(); // JFrame.defaultLookAndFeelDecorated
 
     private int defaultCloseOperation = HIDE_ON_CLOSE;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,16 +30,12 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.datatransfer.*;
-import java.awt.dnd.*;
 import java.beans.*;
-import java.io.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.TooManyListenersException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import javax.swing.plaf.ActionMapUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.TreeUI;
@@ -61,8 +57,7 @@ import sun.swing.UIAction;
 
 public class BasicTreeUI extends TreeUI
 {
-    private static final StringBuilder BASELINE_COMPONENT_KEY =
-        new StringBuilder("Tree.baselineComponent");
+    private static final Object BASELINE_COMPONENT_KEY = new Object(); // Tree.baselineComponent
 
     // Old actions forward to an instance of this.
     static private final Actions SHARED_ACTION = new Actions();

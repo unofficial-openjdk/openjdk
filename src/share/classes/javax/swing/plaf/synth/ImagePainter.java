@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,8 +41,7 @@ import sun.swing.plaf.synth.Paint9Painter;
  * @author Scott Violet
  */
 class ImagePainter extends SynthPainter {
-    private static final StringBuffer CACHE_KEY =
-                               new StringBuffer("SynthCacheKey");
+    private static final Object CACHE_KEY = new Object(); // SynthCacheKey
 
     private Image image;
     private Insets sInsets;

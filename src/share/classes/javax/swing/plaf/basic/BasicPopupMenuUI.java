@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,26 +28,18 @@ package javax.swing.plaf.basic;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.*;
-import javax.swing.plaf.basic.*;
-import javax.swing.border.*;
 
 import java.applet.Applet;
 
 import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.*;
 import java.awt.AWTEvent;
 import java.awt.Toolkit;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
-
 import java.util.*;
 
-import sun.swing.DefaultLookup;
 import sun.swing.UIAction;
 
 import sun.awt.AppContext;
@@ -61,10 +53,8 @@ import sun.awt.AppContext;
  * @author Arnaud Weber
  */
 public class BasicPopupMenuUI extends PopupMenuUI {
-    static final StringBuilder MOUSE_GRABBER_KEY = new StringBuilder(
-                   "javax.swing.plaf.basic.BasicPopupMenuUI.MouseGrabber");
-    static final StringBuilder MENU_KEYBOARD_HELPER_KEY = new StringBuilder(
-                   "javax.swing.plaf.basic.BasicPopupMenuUI.MenuKeyboardHelper");
+    static final Object MOUSE_GRABBER_KEY = new Object(); // javax.swing.plaf.basic.BasicPopupMenuUI.MouseGrabber
+    static final Object MENU_KEYBOARD_HELPER_KEY = new Object(); // javax.swing.plaf.basic.BasicPopupMenuUI.MenuKeyboardHelper
 
     protected JPopupMenu popupMenu = null;
     private transient PopupMenuListener popupMenuListener = null;
