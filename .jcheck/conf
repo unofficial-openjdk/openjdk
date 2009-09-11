@@ -1,3 +1,4 @@
 project=jdk6
 whitespace=lax
 comments=lax
+bugids=dup
