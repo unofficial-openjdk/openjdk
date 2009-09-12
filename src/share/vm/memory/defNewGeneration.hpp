@@ -2,7 +2,7 @@
 #pragma ident "@(#)defNewGeneration.hpp	1.40 07/05/17 15:54:44 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 class EdenSpace;
 class ContiguousSpace;
+class ScanClosure;
 
 // DefNewGeneration is a young generation containing eden, from- and
 // to-space.
@@ -158,17 +159,21 @@ protected:
   protected:
     ScanWeakRefClosure* _cl;
     CardTableRS* _rs;
+    template <class T> void do_oop_work(T* p);
   public:
     KeepAliveClosure(ScanWeakRefClosure* cl);
-    void do_oop(oop* p);
+    virtual void do_oop(oop* p);
+    virtual void do_oop(narrowOop* p);
   };
 
   class FastKeepAliveClosure: public KeepAliveClosure {
   protected:
     HeapWord* _boundary;
+    template <class T> void do_oop_work(T* p);
   public:
     FastKeepAliveClosure(DefNewGeneration* g, ScanWeakRefClosure* cl);
-    void do_oop(oop* p);
+    virtual void do_oop(oop* p);
+    virtual void do_oop(narrowOop* p);
   };
 
   class EvacuateFollowersClosure: public VoidClosure {
@@ -209,7 +214,7 @@ protected:
   ContiguousSpace* from() const           { return _from_space;  }
   ContiguousSpace* to()   const           { return _to_space;    }
 
-  inline CompactibleSpace* first_compaction_space() const;
+  virtual CompactibleSpace* first_compaction_space() const;
 
   // Space enquiries
   size_t capacity() const;
@@ -229,8 +234,8 @@ protected:
 
   // Thread-local allocation buffers
   bool supports_tlab_allocation() const { return true; }
-  inline size_t tlab_capacity() const;
-  inline size_t unsafe_max_tlab_alloc() const;
+  size_t tlab_capacity() const;
+  size_t unsafe_max_tlab_alloc() const;
 
   // Grow the generation by the specified number of bytes.
   // The size of bytes is assumed to be properly aligned.
@@ -268,14 +273,17 @@ protected:
     return result;
   }
 
-  inline HeapWord* allocate(size_t word_size, bool is_tlab);
+  HeapWord* allocate(size_t word_size, bool is_tlab);
   HeapWord* allocate_from_space(size_t word_size);
 
-  inline HeapWord* par_allocate(size_t word_size, bool is_tlab);
+  HeapWord* par_allocate(size_t word_size, bool is_tlab);
 
   // Prologue & Epilogue
-  inline virtual void gc_prologue(bool full);
+  virtual void gc_prologue(bool full);
   virtual void gc_epilogue(bool full);
+
+  // Save the tops for eden, from, and to
+  virtual void record_spaces_top();
 
   // Doesn't require additional work during GC prologue and epilogue
   virtual bool performs_in_place_marking() const { return false; }
@@ -297,8 +305,11 @@ protected:
   
   // For non-youngest collection, the DefNewGeneration can contribute
   // "to-space".
-  void contribute_scratch(ScratchBlock*& list, Generation* requestor,
-			  size_t max_alloc_words);
+  virtual void contribute_scratch(ScratchBlock*& list, Generation* requestor,
+                          size_t max_alloc_words);
+
+  // Reset for contribution of "to-space".
+  virtual void reset_scratch();
 
   // GC support
   virtual void compute_new_size();
@@ -310,7 +321,7 @@ protected:
 				bool is_tlab,
 				bool parallel = false);
 
-  oop copy_to_survivor_space(oop old, oop* from);
+  oop copy_to_survivor_space(oop old);
   int tenuring_threshold() { return _tenuring_threshold; }
 
   // Performance Counter support
@@ -329,7 +340,12 @@ protected:
   void verify(bool allow_dirty);
 
  protected:
-  void compute_space_boundaries(uintx minimum_eden_size);
+  // If clear_space is true, clear the survivor spaces.  Eden is
+  // cleared if the minimum size of eden is 0.  If mangle_space
+  // is true, also mangle the space in debug mode.
+  void compute_space_boundaries(uintx minimum_eden_size,
+                                bool clear_space,
+                                bool mangle_space);
   // Scavenge support
   void swap_spaces();
 };

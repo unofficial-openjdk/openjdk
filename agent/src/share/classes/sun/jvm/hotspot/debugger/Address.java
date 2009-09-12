@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,6 +87,8 @@ public interface Address {
     throws UnmappedAddressException, UnalignedAddressException;
   /** This returns null if the address at the given offset is NULL. */
   public Address    getAddressAt       (long offset) throws UnmappedAddressException, UnalignedAddressException;
+  /** Returns the decoded address at the given offset */
+  public Address    getCompOopAddressAt (long offset) throws UnmappedAddressException, UnalignedAddressException;
 
   //
   // Java-related routines
@@ -102,6 +104,8 @@ public interface Address {
   public short      getJShortAt        (long offset) throws UnmappedAddressException, UnalignedAddressException;
   /** This returns null if the address at the given offset is NULL. */
   public OopHandle  getOopHandleAt     (long offset)
+    throws UnmappedAddressException, UnalignedAddressException, NotInHeapException;
+  public OopHandle  getCompOopHandleAt (long offset)
     throws UnmappedAddressException, UnalignedAddressException, NotInHeapException;
 
   //

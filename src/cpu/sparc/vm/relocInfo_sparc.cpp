@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)relocInfo_sparc.cpp	1.31 07/05/05 17:04:31 JVM"
-#endif
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -56,9 +53,9 @@ void Relocation::pd_set_data_value(address x, intptr_t o) {
         case Assembler::stdf_op3:
         case Assembler::casa_op3:
         case Assembler::casxa_op3:
-	  break;
+          break;
         default:
-	  ShouldNotReachHere();
+          ShouldNotReachHere();
       }
       goto do_non_sethi;
     #endif
@@ -69,9 +66,9 @@ void Relocation::pd_set_data_value(address x, intptr_t o) {
         case Assembler::or_op3:
         case Assembler::add_op3:
         case Assembler::jmpl_op3:
-	  break;
+          break;
         default:
-	  ShouldNotReachHere();
+          ShouldNotReachHere();
       }
     do_non_sethi:;
     #endif
@@ -90,7 +87,18 @@ void Relocation::pd_set_data_value(address x, intptr_t o) {
 #ifdef _LP64
     jint inst2;
     guarantee(Assembler::inv_op2(inst)==Assembler::sethi_op2, "must be sethi");
-    ip->set_data64_sethi( ip->addr_at(0), (intptr_t)x ); 
+    if (format() != 0) {
+      assert(type() == relocInfo::oop_type, "only narrow oops case");
+      jint np = oopDesc::encode_heap_oop((oop)x);
+      inst &= ~Assembler::hi22(-1);
+      inst |=  Assembler::hi22((intptr_t)np);
+      ip->set_long_at(0, inst);
+      inst2 = ip->long_at( NativeInstruction::nop_instruction_size );
+      guarantee(Assembler::inv_op(inst2)==Assembler::arith_op, "arith op");
+      ip->set_long_at(NativeInstruction::nop_instruction_size, ip->set_data32_simm13( inst2, (intptr_t)np));
+      break;
+    }
+    ip->set_data64_sethi( ip->addr_at(0), (intptr_t)x );
 #ifdef COMPILER2
     // [RGV] Someone must have missed putting in a reloc entry for the
     // add in compiler2.
@@ -195,4 +203,10 @@ void Relocation::pd_swap_out_breakpoint(address x, short* instrs, int instrlen) 
   }
   NativeInstruction* ni = nativeInstruction_at(x);
   ni->set_long_at(0, u.l);
+}
+
+void poll_Relocation::fix_relocation_after_move(const CodeBuffer* src, CodeBuffer* dest) {
+}
+
+void poll_return_Relocation::fix_relocation_after_move(const CodeBuffer* src, CodeBuffer* dest) {
 }

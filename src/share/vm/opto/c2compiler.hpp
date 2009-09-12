@@ -2,7 +2,7 @@
 #pragma ident "@(#)c2compiler.hpp	1.28 07/05/05 17:06:11 JVM"
 #endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ public:
   
   // sentinel value used to trigger backtracking in compile_method().
   static const char* retry_no_subsuming_loads();
+  static const char* retry_no_escape_analysis();
 
   // Print compilation timers and statistics
   void print_timers();

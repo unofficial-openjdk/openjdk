@@ -2,7 +2,7 @@
 #pragma ident "@(#)cardTableModRefBS.cpp	1.60 07/12/05 23:34:34 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,8 +199,10 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
   assert(_whole_heap.contains(new_region), 
 	   "attempt to cover area not in reserved area");
   debug_only(verify_guard();)
-  int ind = find_covering_region_by_base(new_region.start());
-  MemRegion old_region = _covered[ind];
+  // collided is true if the expansion would push into another committed region
+  debug_only(bool collided = false;)
+  int const ind = find_covering_region_by_base(new_region.start());
+  MemRegion const old_region = _covered[ind];
   assert(old_region.start() == new_region.start(), "just checking");
   if (new_region.word_size() != old_region.word_size()) {
     // Commit new or uncommit old pages, if necessary.
@@ -208,22 +210,46 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     // Extend the end of this _commited region 
     // to cover the end of any lower _committed regions.
     // This forms overlapping regions, but never interior regions.
-    HeapWord* max_prev_end = largest_prev_committed_end(ind);
+    HeapWord* const max_prev_end = largest_prev_committed_end(ind);
     if (max_prev_end > cur_committed.end()) {
       cur_committed.set_end(max_prev_end);
     }
     // Align the end up to a page size (starts are already aligned).
-    jbyte* new_end = byte_after(new_region.last());
+    jbyte* const new_end = byte_after(new_region.last());
     HeapWord* new_end_aligned =
-      (HeapWord*)align_size_up((uintptr_t)new_end, _page_size);
+      (HeapWord*) align_size_up((uintptr_t)new_end, _page_size);
     assert(new_end_aligned >= (HeapWord*) new_end,
            "align up, but less");
+    int ri = 0;
+    for (ri = 0; ri < _cur_covered_regions; ri++) {
+      if (ri != ind) {
+        if (_committed[ri].contains(new_end_aligned)) {
+          assert((new_end_aligned >= _committed[ri].start()) &&
+                 (_committed[ri].start() > _committed[ind].start()),
+                 "New end of committed region is inconsistent");
+          new_end_aligned = _committed[ri].start();
+          assert(new_end_aligned > _committed[ind].start(),
+            "New end of committed region is before start");
+          debug_only(collided = true;)
+          // Should only collide with 1 region
+          break;
+        }
+      }
+    }
+#ifdef ASSERT
+    for (++ri; ri < _cur_covered_regions; ri++) {
+      assert(!_committed[ri].contains(new_end_aligned),
+        "New end of committed region is in a second committed region");
+    }
+#endif
     // The guard page is always committed and should not be committed over.
-    HeapWord* new_end_for_commit = MIN2(new_end_aligned, _guard_region.start());
+    HeapWord* const new_end_for_commit = MIN2(new_end_aligned,
+                                              _guard_region.start());
+
     if (new_end_for_commit > cur_committed.end()) {
       // Must commit new pages.
-      MemRegion new_committed =
-	MemRegion(cur_committed.end(), new_end_for_commit);
+      MemRegion const new_committed =
+        MemRegion(cur_committed.end(), new_end_for_commit);
 
       assert(!new_committed.is_empty(), "Region should not be empty here");
       if (!os::commit_memory((char*)new_committed.start(),
@@ -236,15 +262,17 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     // the cur_committed region may include the guard region.
     } else if (new_end_aligned < cur_committed.end()) {
       // Must uncommit pages.
-      MemRegion uncommit_region = 
+      MemRegion const uncommit_region =
         committed_unique_to_self(ind, MemRegion(new_end_aligned,
                                                 cur_committed.end()));
       if (!uncommit_region.is_empty()) {
         if (!os::uncommit_memory((char*)uncommit_region.start(),
-			         uncommit_region.byte_size())) {
-          // Do better than this for Merlin
-          vm_exit_out_of_memory(uncommit_region.byte_size(),
-            "card table contraction");
+                                 uncommit_region.byte_size())) {
+          assert(false, "Card table contraction failed");
+          // The call failed so don't change the end of the
+          // committed region.  This is better than taking the
+          // VM down.
+          new_end_aligned = _committed[ind].end();
         }
       }
     }
@@ -258,10 +286,27 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     } else {
       entry = byte_after(old_region.last());
     }
-    assert(index_for(new_region.last()) < (int) _guard_index,
+    assert(index_for(new_region.last()) <  _guard_index,
       "The guard card will be overwritten");
-    jbyte* end = byte_after(new_region.last());
+    // This line commented out cleans the newly expanded region and
+    // not the aligned up expanded region.
+    // jbyte* const end = byte_after(new_region.last());
+    jbyte* const end = (jbyte*) new_end_for_commit;
+    assert((end >= byte_after(new_region.last())) || collided,
+      "Expect to be beyond new region unless impacting another region");
     // do nothing if we resized downward.
+#ifdef ASSERT
+    for (int ri = 0; ri < _cur_covered_regions; ri++) {
+      if (ri != ind) {
+        // The end of the new committed region should not
+        // be in any existing region unless it matches
+        // the start of the next region.
+        assert(!_committed[ri].contains(end) ||
+               (_committed[ri].start() == (HeapWord*) end),
+               "Overlapping committed regions");
+      }
+    }
+#endif
     if (entry < end) {
       memset(entry, clean_card, pointer_delta(end, entry, sizeof(jbyte)));
     }
@@ -297,8 +342,63 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
 // Note that these versions are precise!  The scanning code has to handle the
 // fact that the write barrier may be either precise or imprecise.
 
-void CardTableModRefBS::write_ref_field_work(oop* field, oop newVal) {
+void CardTableModRefBS::write_ref_field_work(void* field, oop newVal) {
   inline_write_ref_field(field, newVal);
+}
+
+/*
+   Claimed and deferred bits are used together in G1 during the evacuation
+   pause. These bits can have the following state transitions:
+   1. The claimed bit can be put over any other card state. Except that
+      the "dirty -> dirty and claimed" transition is checked for in
+      G1 code and is not used.
+   2. Deferred bit can be set only if the previous state of the card
+      was either clean or claimed. mark_card_deferred() is wait-free.
+      We do not care if the operation is be successful because if
+      it does not it will only result in duplicate entry in the update
+      buffer because of the "cache-miss". So it's not worth spinning.
+ */
+
+
+bool CardTableModRefBS::claim_card(size_t card_index) {
+  jbyte val = _byte_map[card_index];
+  assert(val != dirty_card_val(), "Shouldn't claim a dirty card");
+  while (val == clean_card_val() ||
+         (val & (clean_card_mask_val() | claimed_card_val())) != claimed_card_val()) {
+    jbyte new_val = val;
+    if (val == clean_card_val()) {
+      new_val = (jbyte)claimed_card_val();
+    } else {
+      new_val = val | (jbyte)claimed_card_val();
+    }
+    jbyte res = Atomic::cmpxchg(new_val, &_byte_map[card_index], val);
+    if (res == val) {
+      return true;
+    }
+    val = res;
+  }
+  return false;
+}
+
+bool CardTableModRefBS::mark_card_deferred(size_t card_index) {
+  jbyte val = _byte_map[card_index];
+  // It's already processed
+  if ((val & (clean_card_mask_val() | deferred_card_val())) == deferred_card_val()) {
+    return false;
+  }
+  // Cached bit can be installed either on a clean card or on a claimed card.
+  jbyte new_val = val;
+  if (val == clean_card_val()) {
+    new_val = (jbyte)deferred_card_val();
+  } else {
+    if (val & claimed_card_val()) {
+      new_val = val | (jbyte)deferred_card_val();
+    }
+  }
+  if (new_val != val) {
+    Atomic::cmpxchg(new_val, &_byte_map[card_index], val);
+  }
+  return true;
 }
 
 
@@ -401,7 +501,7 @@ void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
   }
 }
 
-void CardTableModRefBS::invalidate(MemRegion mr) {
+void CardTableModRefBS::invalidate(MemRegion mr, bool whole_heap) {
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) dirty_MemRegion(mri);
@@ -429,11 +529,15 @@ void CardTableModRefBS::clear(MemRegion mr) {
   }
 }
 
+void CardTableModRefBS::dirty(MemRegion mr) {
+  jbyte* first = byte_for(mr.start());
+  jbyte* last  = byte_after(mr.last());
+  memset(first, dirty_card, last-first);
+}
+
 // NOTES:
 // (1) Unlike mod_oop_in_space_iterate() above, dirty_card_iterate()
 //     iterates over dirty cards ranges in increasing address order.
-// (2) Unlike, e.g., dirty_card_range_after_preclean() below,
-//     this method does not make the dirty cards prelceaned.
 void CardTableModRefBS::dirty_card_iterate(MemRegion mr,
                                            MemRegionClosure* cl) {
   for (int i = 0; i < _cur_covered_regions; i++) {
@@ -459,7 +563,9 @@ void CardTableModRefBS::dirty_card_iterate(MemRegion mr,
   }
 }
 
-MemRegion CardTableModRefBS::dirty_card_range_after_preclean(MemRegion mr) {
+MemRegion CardTableModRefBS::dirty_card_range_after_reset(MemRegion mr,
+                                                          bool reset,
+                                                          int reset_val) {
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) {
@@ -476,8 +582,10 @@ MemRegion CardTableModRefBS::dirty_card_range_after_preclean(MemRegion mr) {
                dirty_cards++, next_entry++);
           MemRegion cur_cards(addr_for(cur_entry),
                               dirty_cards*card_size_in_words);
-          for (size_t i = 0; i < dirty_cards; i++) {
-             cur_entry[i] = precleaned_card;
+          if (reset) {
+            for (size_t i = 0; i < dirty_cards; i++) {
+              cur_entry[i] = reset_val;
+            }
           }
           return cur_cards;
         }

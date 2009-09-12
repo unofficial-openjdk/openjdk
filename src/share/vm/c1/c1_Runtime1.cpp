@@ -2,7 +2,7 @@
 #pragma ident "@(#)c1_Runtime1.cpp	1.245 08/11/07 15:47:09 JVM"
 #endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -171,6 +171,8 @@ void Runtime1::generate_blob_for(StubID id) {
   switch (id) {
     // These stubs don't need to have an oopmap
     case dtrace_object_alloc_id:
+    case g1_pre_barrier_slow_id:
+    case g1_post_barrier_slow_id:
     case slow_subtype_check_id:
     case fpu2long_stub_id:
     case unwind_exception_id:
@@ -339,21 +341,6 @@ JRT_ENTRY(void, Runtime1::new_multi_array(JavaThread* thread, klassOopDesc* klas
 
   assert(oop(klass)->is_klass(), "not a class");
   assert(rank >= 1, "rank must be nonzero");
-#ifdef _LP64
-// In 64 bit mode, the sizes are stored in the top 32 bits
-// of each 64 bit stack entry.
-// dims is actually an intptr_t * because the arguments
-// are pushed onto a 64 bit stack.
-// We must create an array of jints to pass to multi_allocate.
-// We reuse the current stack because it will be popped
-// after this bytecode is completed.
-  if ( rank > 1 ) {
-    int index;
-    for ( index = 1; index < rank; index++ ) {  // First size is ok
-        dims[index] = dims[index*2];
-    }
-  }
-#endif
   oop obj = arrayKlass::cast(klass)->multi_allocate(rank, dims, CHECK);
   thread->set_vm_result(obj);
 JRT_END
@@ -1084,17 +1071,49 @@ JRT_LEAF(void, Runtime1::trace_block_entry(jint block_id))
 JRT_END
 
 
+// Array copy return codes.
+enum {
+  ac_failed = -1, // arraycopy failed
+  ac_ok = 0       // arraycopy succeeded
+};
+
+
+template <class T> int obj_arraycopy_work(oopDesc* src, T* src_addr,
+                                          oopDesc* dst, T* dst_addr,
+                                          int length) {
+
+  // For performance reasons, we assume we are using a card marking write
+  // barrier. The assert will fail if this is not the case.
+  // Note that we use the non-virtual inlineable variant of write_ref_array.
+  BarrierSet* bs = Universe::heap()->barrier_set();
+  assert(bs->has_write_ref_array_opt(),
+         "Barrier set must have ref array opt");
+  if (src == dst) {
+    // same object, no check
+    Copy::conjoint_oops_atomic(src_addr, dst_addr, length);
+    bs->write_ref_array(MemRegion((HeapWord*)dst_addr,
+                                  (HeapWord*)(dst_addr + length)));
+    return ac_ok;
+  } else {
+    klassOop bound = objArrayKlass::cast(dst->klass())->element_klass();
+    klassOop stype = objArrayKlass::cast(src->klass())->element_klass();
+    if (stype == bound || Klass::cast(stype)->is_subtype_of(bound)) {
+      // Elements are guaranteed to be subtypes, so no check necessary
+      Copy::conjoint_oops_atomic(src_addr, dst_addr, length);
+      bs->write_ref_array(MemRegion((HeapWord*)dst_addr,
+                                    (HeapWord*)(dst_addr + length)));
+      return ac_ok;
+    }
+  }
+  return ac_failed;
+}
+
 // fast and direct copy of arrays; returning -1, means that an exception may be thrown
 // and we did not copy anything
 JRT_LEAF(int, Runtime1::arraycopy(oopDesc* src, int src_pos, oopDesc* dst, int dst_pos, int length))
 #ifndef PRODUCT
   _generic_arraycopy_cnt++;        // Slow-path oop array copy
 #endif
-
-  enum {
-    ac_failed = -1, // arraycopy failed
-    ac_ok = 0       // arraycopy succeeded
-  };
 
   if (src == NULL || dst == NULL || src_pos < 0 || dst_pos < 0 || length < 0) return ac_failed;
   if (!dst->is_array() || !src->is_array()) return ac_failed;
@@ -1115,30 +1134,14 @@ JRT_LEAF(int, Runtime1::arraycopy(oopDesc* src, int src_pos, oopDesc* dst, int d
     memmove(dst_addr, src_addr, length << l2es);
     return ac_ok;
   } else if (src->is_objArray() && dst->is_objArray()) {
-    oop* src_addr = objArrayOop(src)->obj_at_addr(src_pos);
-    oop* dst_addr = objArrayOop(dst)->obj_at_addr(dst_pos);
-    // For performance reasons, we assume we are using a card marking write
-    // barrier. The assert will fail if this is not the case.
-    // Note that we use the non-virtual inlineable variant of write_ref_array.
-    BarrierSet* bs = Universe::heap()->barrier_set();
-    assert(bs->has_write_ref_array_opt(),
-	   "Barrier set must have ref array opt");
-    if (src == dst) {
-      // same object, no check
-      Copy::conjoint_oops_atomic(src_addr, dst_addr, length);
-      bs->write_ref_array(MemRegion((HeapWord*)dst_addr,
-                                    (HeapWord*)(dst_addr + length)));
-      return ac_ok;
+    if (UseCompressedOops) {  // will need for tiered
+      narrowOop *src_addr  = objArrayOop(src)->obj_at_addr<narrowOop>(src_pos);
+      narrowOop *dst_addr  = objArrayOop(dst)->obj_at_addr<narrowOop>(dst_pos);
+      return obj_arraycopy_work(src, src_addr, dst, dst_addr, length);
     } else {
-      klassOop bound = objArrayKlass::cast(dst->klass())->element_klass();
-      klassOop stype = objArrayKlass::cast(src->klass())->element_klass();
-      if (stype == bound || Klass::cast(stype)->is_subtype_of(bound)) {
-        // Elements are guaranteed to be subtypes, so no check necessary
-        Copy::conjoint_oops_atomic(src_addr, dst_addr, length);
-        bs->write_ref_array(MemRegion((HeapWord*)dst_addr,
-                                      (HeapWord*)(dst_addr + length)));
-        return ac_ok;
-      }
+      oop *src_addr  = objArrayOop(src)->obj_at_addr<oop>(src_pos);
+      oop *dst_addr  = objArrayOop(dst)->obj_at_addr<oop>(dst_pos);
+      return obj_arraycopy_work(src, src_addr, dst, dst_addr, length);
     }
   }
   return ac_failed;

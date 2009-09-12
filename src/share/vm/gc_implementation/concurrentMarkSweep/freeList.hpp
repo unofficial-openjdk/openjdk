@@ -2,7 +2,7 @@
 #pragma ident "@(#)freeList.hpp	1.32 08/04/09 19:18:54 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,11 +42,12 @@ class Mutex;
 class FreeList VALUE_OBJ_CLASS_SPEC {
   friend class CompactibleFreeListSpace;
   friend class VMStructs;
-  FreeChunk*	_head;		// List of free chunks
-  FreeChunk*	_tail;		// Tail of list of free chunks
-  size_t	_size;		// Size in Heap words of each chunks
-  ssize_t	_count;		// Number of entries in list
-  size_t        _hint;		// next larger size list with a positive surplus
+  friend class printTreeCensusClosure;
+  FreeChunk*    _head;          // List of free chunks
+  FreeChunk*    _tail;          // Tail of list of free chunks
+  size_t        _size;          // Size in Heap words of each chunks
+  ssize_t       _count;         // Number of entries in list
+  size_t        _hint;          // next larger size list with a positive surplus
 
   AllocationStats _allocation_stats;		// statistics for smart allocation
 
@@ -67,10 +68,11 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
  protected:
   void init_statistics();
   void set_count(ssize_t v) { _count = v;}
-  void increment_count() { _count++; }
+  void increment_count()    { _count++; }
   void decrement_count() {
     _count--;
-    assert(_count >= 0, "Count should not be negative"); }
+    assert(_count >= 0, "Count should not be negative");
+  }
 
  public:
   // Constructor
@@ -162,6 +164,10 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
 
   ssize_t desired() const {
     return _allocation_stats.desired();
+  }
+  void set_desired(ssize_t v) {
+    assert_proper_lock_protection();
+    _allocation_stats.set_desired(v);
   }
   void compute_desired(float inter_sweep_current,
                        float inter_sweep_estimate) {
@@ -302,4 +308,8 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
   // Verify that the chunk is in the list.
   // found.  Return NULL if "fc" is not found.
   bool verifyChunkInFreeLists(FreeChunk* fc) const;
+
+  // Printing support
+  static void print_labels_on(outputStream* st, const char* c);
+  void print_on(outputStream* st, const char* c = NULL) const;
 };

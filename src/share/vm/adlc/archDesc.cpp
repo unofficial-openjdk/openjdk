@@ -1,5 +1,5 @@
 //
-// Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -137,11 +137,11 @@ bool MatchList::search(const char *opc, const char *res, const char *lch,
   if ((res == _resultStr) || (res && _resultStr && !strcmp(res, _resultStr))) {
     if ((lch == _lchild) || (lch && _lchild && !strcmp(lch, _lchild))) {
       if ((rch == _rchild) || (rch && _rchild && !strcmp(rch, _rchild))) {
-	char * predStr = get_pred();
-	char * prStr = pr?pr->_pred:NULL;
-	if ((prStr == predStr) || (prStr && predStr && !strcmp(prStr, predStr))) {
-	  return true;
-	}
+        char * predStr = get_pred();
+        char * prStr = pr?pr->_pred:NULL;
+        if (ADLParser::equivalent_expressions(prStr, predStr)) {
+          return true;
+        }
       }
     }
   }
@@ -211,9 +211,9 @@ ArchDesc::ArchDesc()
       // Initialize I/O Files
       _ADL_file._name = NULL; _ADL_file._fp = NULL;
       // Machine dependent output files
-      _DFA_file._name    = "dfa_i486.cpp";  _DFA_file._fp = NULL;
-      _HPP_file._name    = "ad_i486.hpp";   _HPP_file._fp = NULL;
-      _CPP_file._name    = "ad_i486.cpp";   _CPP_file._fp = NULL;
+      _DFA_file._name    = NULL;  _DFA_file._fp = NULL;
+      _HPP_file._name    = NULL;  _HPP_file._fp = NULL;
+      _CPP_file._name    = NULL;  _CPP_file._fp = NULL;
       _bug_file._name    = "bugs.out";      _bug_file._fp = NULL;
 
       // Initialize Register & Pipeline Form Pointers
@@ -866,6 +866,7 @@ const char *ArchDesc::reg_mask(InstructForm &inForm) {
   Form *form = (Form*)_globalNames[result];
   assert( form, "Result operand must be defined");
   OperandForm *oper = form->is_operand();
+  if (oper == NULL) form->dump();
   assert( oper, "Result must be an OperandForm");
   return reg_mask( *oper );
 }
@@ -907,6 +908,7 @@ const char *ArchDesc::getIdealType(const char *idealOp) {
   switch( last_char ) {
   case 'I':    return "TypeInt::INT";
   case 'P':    return "TypePtr::BOTTOM";
+  case 'N':    return "TypeNarrowOop::BOTTOM";
   case 'F':    return "Type::FLOAT";
   case 'D':    return "Type::DOUBLE";
   case 'L':    return "TypeLong::LONG";
@@ -943,7 +945,7 @@ void ArchDesc::initBaseOpTypes() {
   // Create InstructForm and assign type for each ideal instruction.
   for ( int j = _last_machine_leaf+1; j < _last_opcode; ++j) {
     char         *ident    = (char *)NodeClassNames[j];
-    if(!strcmp(ident, "ConI") || !strcmp(ident, "ConP") || 
+    if(!strcmp(ident, "ConI") || !strcmp(ident, "ConP") || !strcmp(ident, "ConN") ||
        !strcmp(ident, "ConF") || !strcmp(ident, "ConD") ||
        !strcmp(ident, "ConL") || !strcmp(ident, "Con" ) ||
        !strcmp(ident, "Bool") ) {
@@ -1108,6 +1110,7 @@ void ArchDesc::buildMustCloneMap(FILE *fp_hpp, FILE *fp_cpp) {
     if ( strcmp(idealName,"CmpI") == 0
          || strcmp(idealName,"CmpU") == 0
          || strcmp(idealName,"CmpP") == 0
+         || strcmp(idealName,"CmpN") == 0
          || strcmp(idealName,"CmpL") == 0
          || strcmp(idealName,"CmpD") == 0
          || strcmp(idealName,"CmpF") == 0

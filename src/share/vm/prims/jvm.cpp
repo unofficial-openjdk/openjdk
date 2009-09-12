@@ -2,7 +2,7 @@
 #pragma ident "@(#)jvm.cpp	1.570 07/08/17 11:48:55 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -380,7 +380,11 @@ JVM_END
 JVM_ENTRY_NO_ENV(jlong, JVM_FreeMemory(void))
   JVMWrapper("JVM_FreeMemory");
   CollectedHeap* ch = Universe::heap();
-  size_t n = ch->capacity() - ch->used();
+  size_t n;
+  {
+     MutexLocker x(Heap_lock);
+     n = ch->capacity() - ch->used();
+  }
   return convert_size_t_to_jlong(n);
 JVM_END
 
@@ -627,12 +631,11 @@ JVM_ENTRY(void, JVM_ResolveClass(JNIEnv* env, jclass cls))
   if (PrintJVMWarnings) warning("JVM_ResolveClass not implemented");
 JVM_END
 
-
-JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name, 
-                                               jboolean init, jobject loader, 
-                                               jboolean throwError))
-  JVMWrapper3("JVM_FindClassFromClassLoader %s throw %s", name, 
-               throwError ? "error" : "exception");
+// Common implementation for JVM_FindClassFromBootLoader and
+// JVM_FindClassFromLoader
+static jclass jvm_find_class_from_class_loader(JNIEnv* env, const char* name,
+                                  jboolean init, jobject loader,
+                                  jboolean throwError, TRAPS) {
   // Java libraries should ensure that name is never null...
   if (name == NULL || (int)strlen(name) > symbolOopDesc::max_length()) {
     // It's impossible to create this class;  the name cannot fit
@@ -645,14 +648,47 @@ JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name,
   }
   symbolHandle h_name = oopFactory::new_symbol_handle(name, CHECK_NULL);
   Handle h_loader(THREAD, JNIHandles::resolve(loader));
-  jclass result = find_class_from_class_loader(env, h_name, init, h_loader, 
-                                               Handle(), throwError, thread);
+  jclass result = find_class_from_class_loader(env, h_name, init, h_loader,
+                                               Handle(), throwError, THREAD);
 
   if (TraceClassResolution && result != NULL) {
     trace_class_resolution(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(result)));
   }
-
   return result;
+}
+
+// Rationale behind JVM_FindClassFromBootLoader
+// a> JVM_FindClassFromClassLoader was never exported in the export tables.
+// b> because of (a) java.dll has a direct dependecy on the  unexported
+//    private symbol "_JVM_FindClassFromClassLoader@20".
+// c> the launcher cannot use the private symbol as it dynamically opens
+//    the entry point, so if something changes, the launcher will fail
+//    unexpectedly at runtime, it is safest for the launcher to dlopen a
+//    stable exported interface.
+// d> re-exporting JVM_FindClassFromClassLoader as public, will cause its
+//    signature to change from _JVM_FindClassFromClassLoader@20 to
+//    JVM_FindClassFromClassLoader and will not be backward compatible
+//    with older JDKs.
+// Thus a public/stable exported entry point is the right solution,
+// public here means public in linker semantics, and is exported only
+// to the JDK, and is not intended to be a public API.
+
+JVM_ENTRY(jclass, JVM_FindClassFromBootLoader(JNIEnv* env,
+                                              const char* name,
+                                              jboolean throwError))
+  JVMWrapper3("JVM_FindClassFromBootLoader %s throw %s", name,
+              throwError ? "error" : "exception");
+  return jvm_find_class_from_class_loader(env, name, JNI_FALSE,
+                                          (jobject)NULL, throwError, THREAD);
+JVM_END
+
+JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name,
+                                               jboolean init, jobject loader,
+                                               jboolean throwError))
+  JVMWrapper3("JVM_FindClassFromClassLoader %s throw %s", name,
+               throwError ? "error" : "exception");
+  return jvm_find_class_from_class_loader(env, name, init, loader,
+                                          throwError, THREAD);
 JVM_END
 
 
@@ -711,6 +747,7 @@ static void is_lock_held_by_thread(Handle loader, PerfCounter* counter, TRAPS) {
 
 // common code for JVM_DefineClass() and JVM_DefineClassWithSource()
 static jclass jvm_define_class_common(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len, jobject pd, const char *source, TRAPS) {
+  if (source == NULL)  source = "__JVM_DefineClass__";
 
   // Since exceptions can be thrown, class initialization can take place  
   // if name is NULL no check for class name in .class stream has to be made.
@@ -749,7 +786,7 @@ static jclass jvm_define_class_common(JNIEnv *env, const char *name, jobject loa
 JVM_ENTRY(jclass, JVM_DefineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len, jobject pd))
   JVMWrapper2("JVM_DefineClass %s", name);
 
-  return jvm_define_class_common(env, name, loader, buf, len, pd, "__JVM_DefineClass__", THREAD);
+  return jvm_define_class_common(env, name, loader, buf, len, pd, NULL, THREAD);
 JVM_END
 
 
@@ -2441,7 +2478,8 @@ void jio_print(const char* s) {
   if (Arguments::vfprintf_hook() != NULL) {
     jio_fprintf(defaultStream::output_stream(), "%s", s);    
   } else {
-    ::write(defaultStream::output_fd(), s, (int)strlen(s));
+    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    size_t count = ::write(defaultStream::output_fd(), s, (int)strlen(s));
   }  
 }
 
@@ -4169,6 +4207,36 @@ JVM_ENTRY(jboolean, JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fid, jlong o
   res = Atomic::cmpxchg(newVal, addr, oldVal);
 
   return res == oldVal;
+JVM_END
+
+// DTrace ///////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(jint, JVM_DTraceGetVersion(JNIEnv* env))
+  JVMWrapper("JVM_DTraceGetVersion");
+  return (jint)JVM_TRACING_DTRACE_VERSION;
+JVM_END
+
+JVM_ENTRY(jlong,JVM_DTraceActivate(
+    JNIEnv* env, jint version, jstring module_name, jint providers_count,
+    JVM_DTraceProvider* providers))
+  JVMWrapper("JVM_DTraceActivate");
+  return DTraceJSDT::activate(
+    version, module_name, providers_count, providers, CHECK_0);
+JVM_END
+
+JVM_ENTRY(jboolean,JVM_DTraceIsProbeEnabled(JNIEnv* env, jmethodID method))
+  JVMWrapper("JVM_DTraceIsProbeEnabled");
+  return DTraceJSDT::is_probe_enabled(method);
+JVM_END
+
+JVM_ENTRY(void,JVM_DTraceDispose(JNIEnv* env, jlong handle))
+  JVMWrapper("JVM_DTraceDispose");
+  DTraceJSDT::dispose(handle);
+JVM_END
+
+JVM_ENTRY(jboolean,JVM_DTraceIsSupported(JNIEnv* env))
+  JVMWrapper("JVM_DTraceIsSupported");
+  return DTraceJSDT::is_supported();
 JVM_END
 
 // Returns an array of all live Thread objects (VM internal JavaThreads,

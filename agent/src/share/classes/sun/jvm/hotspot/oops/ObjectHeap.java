@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -72,7 +72,7 @@ public class ObjectHeap {
   private MethodKlass            methodKlassObj;
   private ConstMethodKlass       constMethodKlassObj;
   private MethodDataKlass        methodDataKlassObj;
-  private ConstantPoolKlass      constantPoolKlassObj; 
+  private ConstantPoolKlass      constantPoolKlassObj;
   private ConstantPoolCacheKlass constantPoolCacheKlassObj;
   private KlassKlass             klassKlassObj;
   private InstanceKlassKlass     instanceKlassKlassObj;
@@ -158,7 +158,7 @@ public class ObjectHeap {
 
   public ObjectHeap(TypeDataBase db) throws WrongTypeException {
     // Get commonly used sizes of basic types
-    oopSize     = db.getOopSize();
+    oopSize     = VM.getVM().getOopSize();
     byteSize    = db.getJByteType().getSize();
     charSize    = db.getJCharType().getSize();
     booleanSize = db.getJBooleanType().getSize();
@@ -203,10 +203,10 @@ public class ObjectHeap {
   public MethodKlass            getMethodKlassObj()            { return methodKlassObj; }
   public ConstMethodKlass       getConstMethodKlassObj()       { return constMethodKlassObj; }
   public MethodDataKlass        getMethodDataKlassObj()        { return methodDataKlassObj; }
-  public ConstantPoolKlass      getConstantPoolKlassObj()      { return constantPoolKlassObj; } 
-  public ConstantPoolCacheKlass getConstantPoolCacheKlassObj() { return constantPoolCacheKlassObj; } 
-  public KlassKlass             getKlassKlassObj()             { return klassKlassObj; } 
-  public ArrayKlassKlass        getArrayKlassKlassObj()        { return arrayKlassKlassObj; } 
+  public ConstantPoolKlass      getConstantPoolKlassObj()      { return constantPoolKlassObj; }
+  public ConstantPoolCacheKlass getConstantPoolCacheKlassObj() { return constantPoolCacheKlassObj; }
+  public KlassKlass             getKlassKlassObj()             { return klassKlassObj; }
+  public ArrayKlassKlass        getArrayKlassKlassObj()        { return arrayKlassKlassObj; }
   public InstanceKlassKlass     getInstanceKlassKlassObj()     { return instanceKlassKlassObj; }
   public ObjArrayKlassKlass     getObjArrayKlassKlassObj()     { return objArrayKlassKlassObj; }
   public TypeArrayKlassKlass    getTypeArrayKlassKlassObj()    { return typeArrayKlassKlassObj; }
@@ -254,20 +254,20 @@ public class ObjectHeap {
     iterateLiveRegions(collectLiveRegions(), visitor, of);
   }
 
-  /** iterate objects of given Klass. param 'includeSubtypes' tells whether to 
+  /** iterate objects of given Klass. param 'includeSubtypes' tells whether to
    *  include objects of subtypes or not */
   public void iterateObjectsOfKlass(HeapVisitor visitor, final Klass k, boolean includeSubtypes) {
     if (includeSubtypes) {
       if (k.isFinal()) {
-        // do the simpler "exact" klass loop 
+        // do the simpler "exact" klass loop
         iterateExact(visitor, k);
-      } else { 
+      } else {
         iterateSubtypes(visitor, k);
       }
     } else {
       // there can no object of abstract classes and interfaces
       if (!k.isAbstract() && !k.isInterface()) {
-        iterateExact(visitor, k); 
+        iterateExact(visitor, k);
       }
     }
   }
@@ -316,9 +316,17 @@ public class ObjectHeap {
     iterateLiveRegions(liveRegions, visitor, null);
   }
 
+  public boolean isValidMethod(OopHandle handle) {
+    OopHandle klass = Oop.getKlassForOopHandle(handle);
+    if (klass != null && klass.equals(methodKlassHandle)) {
+      return true;
+    }
+    return false;
+  }
+
   // Creates an instance from the Oop hierarchy based based on the handle
   public Oop newOop(OopHandle handle) {
-    // The only known way to detect the right type of an oop is 
+    // The only known way to detect the right type of an oop is
     // traversing the class chain until a well-known klass is recognized.
     // A more direct solution would require the klasses to expose
     // the C++ vtbl structure.
@@ -374,20 +382,13 @@ public class ObjectHeap {
         if (klassKlass.equals(typeArrayKlassKlassHandle))   return new TypeArray(handle, this);
       }
     }
-    
+
     if (DEBUG) {
       System.err.println("Unknown oop at " + handle);
       System.err.println("Oop's klass is " + klass);
     }
-    throw new UnknownOopException();
-  }
 
-  public boolean isValidMethod(OopHandle handle) {
-    OopHandle klass = Oop.getKlassForOopHandle(handle);
-    if (klass != null && klass.equals(methodKlassHandle)) {
-      return true;
-    }
-    return false;
+    throw new UnknownOopException();
   }
 
   // Print all objects in the object heap
@@ -402,7 +403,7 @@ public class ObjectHeap {
 
   private void iterateExact(HeapVisitor visitor, final Klass k) {
     iterateLiveRegions(collectLiveRegions(), visitor, new ObjectFilter() {
-	  public boolean canInclude(Oop obj) {
+          public boolean canInclude(Oop obj) {
             Klass tk = obj.getKlass();
             // null Klass is seen sometimes!
             return (tk != null && tk.equals(k));
@@ -412,7 +413,7 @@ public class ObjectHeap {
 
   private void iterateSubtypes(HeapVisitor visitor, final Klass k) {
     iterateLiveRegions(collectLiveRegions(), visitor, new ObjectFilter() {
-	  public boolean canInclude(Oop obj) {
+          public boolean canInclude(Oop obj) {
             Klass tk = obj.getKlass();
             // null Klass is seen sometimes!
             return (tk != null && tk.isSubtypeOf(k));
@@ -455,12 +456,16 @@ public class ObjectHeap {
       try {
         // Traverses the space from bottom to top
         OopHandle handle = bottom.addOffsetToAsOopHandle(0);
+
         while (handle.lessThan(top)) {
         Oop obj = null;
-          
+
           try {
             obj = newOop(handle);
           } catch (UnknownOopException exp) {
+            if (DEBUG) {
+              throw new RuntimeException(" UnknownOopException  " + exp);
+            }
           }
           if (obj == null) {
              //Find the object size using Printezis bits and skip over
@@ -472,25 +477,25 @@ public class ObjectHeap {
              } else if ((cmsSpacePerm != null) && cmsSpacePerm.contains(handle) ){
                  size = cmsSpacePerm.collector().blockSizeUsingPrintezisBits(handle);
              }
-             
+
              if (size <= 0) {
                 //Either Printezis bits not set or handle is not in cms space.
                 throw new UnknownOopException();
              }
-         
+
              handle = handle.addOffsetToAsOopHandle(CompactibleFreeListSpace.adjustObjectSizeInBytes(size));
              continue;
           }
-	  if (of == null || of.canInclude(obj)) {
-		  if (visitor.doObj(obj)) {
-			 // doObj() returns true to abort this loop.
-			  break;
-		  }
-	  }
+          if (of == null || of.canInclude(obj)) {
+                  if (visitor.doObj(obj)) {
+                         // doObj() returns true to abort this loop.
+                          break;
+                  }
+          }
           if ( (cmsSpaceOld != null) && cmsSpaceOld.contains(handle) ||
                (cmsSpacePerm != null) && cmsSpacePerm.contains(handle) ) {
               handle = handle.addOffsetToAsOopHandle(CompactibleFreeListSpace.adjustObjectSizeInBytes(obj.getObjectSize()) );
-          } else {    
+          } else {
               handle = handle.addOffsetToAsOopHandle(obj.getObjectSize());
           }
         }
@@ -508,7 +513,7 @@ public class ObjectHeap {
 
   private void addPermGenLiveRegions(List output, CollectedHeap heap) {
     LiveRegionsCollector lrc = new LiveRegionsCollector(output);
-    if (heap instanceof GenCollectedHeap) { 
+    if (heap instanceof GenCollectedHeap) {
        GenCollectedHeap genHeap = (GenCollectedHeap) heap;
        Generation gen = genHeap.permGen();
        gen.spaceIterate(lrc, true);
@@ -550,7 +555,7 @@ public class ObjectHeap {
      }
      private List liveRegions;
   }
-                                            
+
   // Returns a List<Address> where the addresses come in pairs. These
   // designate the live regions of the heap.
   private List collectLiveRegions() {
@@ -623,13 +628,13 @@ public class ObjectHeap {
       }
     }
 
-    // Now sort live regions 
+    // Now sort live regions
     sortLiveRegions(liveRegions);
 
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(liveRegions.size() % 2 == 0, "Must have even number of region boundaries");
     }
-    
+
     return liveRegions;
   }
 

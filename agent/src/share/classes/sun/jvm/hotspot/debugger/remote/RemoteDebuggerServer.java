@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,6 +114,17 @@ public class RemoteDebuggerServer extends UnicastRemoteObject
     return debugger.getJShortSize();
   }
 
+  public long getHeapBase() throws RemoteException {
+    return debugger.getHeapBase();
+  }
+
+  public long getHeapOopSize() throws RemoteException {
+    return debugger.getHeapOopSize();
+  }
+
+  public long getLogMinObjAlignmentInBytes() throws RemoteException {
+    return debugger.getLogMinObjAlignmentInBytes();
+  }
   public boolean   areThreadsEqual(long addrOrId1, boolean isAddress1,
                                    long addrOrId2, boolean isAddress2) throws RemoteException {
     ThreadProxy t1 = getThreadProxy(addrOrId1, isAddress1);

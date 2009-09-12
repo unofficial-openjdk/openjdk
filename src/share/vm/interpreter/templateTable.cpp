@@ -175,6 +175,7 @@ Template                   TemplateTable::_template_table_wide[Bytecodes::number
 
 Template*                  TemplateTable::_desc;
 InterpreterMacroAssembler* TemplateTable::_masm;
+BarrierSet*                TemplateTable::_bs;
 
 
 void TemplateTable::def(Bytecodes::Code code, int flags, TosState in, TosState out, void (*gen)(), char filler) {
@@ -246,6 +247,8 @@ void TemplateTable::initialize() {
 
   // Initialize table
   TraceTime timer("TemplateTable initialization", TraceStartupTime);
+
+  _bs = Universe::heap()->barrier_set();
 
   // For better readability
   const char _    = ' ';

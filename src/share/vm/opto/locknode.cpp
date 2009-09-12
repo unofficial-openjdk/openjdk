@@ -2,7 +2,7 @@
 #pragma ident "@(#)locknode.cpp	1.49 07/05/17 15:59:05 JVM"
 #endif
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,17 +39,23 @@ const RegMask &BoxLockNode::out_RegMask() const {
 
 uint BoxLockNode::size_of() const { return sizeof(*this); }
 
-BoxLockNode::BoxLockNode( int slot ) : Node( Compile::current()->root() ), _slot(slot) {
+BoxLockNode::BoxLockNode( int slot ) : Node( Compile::current()->root() ),
+                                       _slot(slot), _is_eliminated(false) {
   init_class_id(Class_BoxLock);
   init_flags(Flag_rematerialize);
   OptoReg::Name reg = OptoReg::stack2reg(_slot);
   _inmask.Insert(reg);
 }
 
+//-----------------------------hash--------------------------------------------
+uint BoxLockNode::hash() const {
+  return Node::hash() + _slot + (_is_eliminated ? Compile::current()->fixed_slots() : 0);
+}
+
 //------------------------------cmp--------------------------------------------
 uint BoxLockNode::cmp( const Node &n ) const {
   const BoxLockNode &bn = (const BoxLockNode &)n;
-  return bn._slot == _slot;
+  return bn._slot == _slot && bn._is_eliminated == _is_eliminated;
 }
 
 OptoReg::Name BoxLockNode::stack_slot(Node* box_node) {

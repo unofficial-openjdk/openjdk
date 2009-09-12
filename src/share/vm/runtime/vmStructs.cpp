@@ -2,7 +2,7 @@
 #pragma ident "@(#)vmStructs.cpp	1.189 08/04/09 19:20:08 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,8 @@ static inline uint64_t cast_uint64_t(size_t x)
   /******************************************************************/                                                               \
                                                                                                                                      \
   volatile_nonstatic_field(oopDesc,            _mark,                                         markOop)                               \
-  nonstatic_field(oopDesc,                     _klass,                                        klassOop)                              \
+  volatile_nonstatic_field(oopDesc,            _metadata._klass,                              wideKlassOop)                          \
+  volatile_nonstatic_field(oopDesc,            _metadata._compressed_klass,                   narrowOop)                             \
      static_field(oopDesc,                     _bs,                                           BarrierSet*)                           \
   nonstatic_field(arrayKlass,                  _dimension,                                    int)                                   \
   nonstatic_field(arrayKlass,                  _higher_dimension,                             klassOop)                              \
@@ -82,13 +83,14 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(arrayKlass,                  _vtable_len,                                   int)                                   \
   nonstatic_field(arrayKlass,                  _alloc_size,                                   juint)                                 \
   nonstatic_field(arrayKlass,                  _component_mirror,                             oop)                                   \
-  nonstatic_field(arrayOopDesc,                _length,                                       int)                                   \
   nonstatic_field(compiledICHolderKlass,       _alloc_size,                                   juint)                                 \
   nonstatic_field(compiledICHolderOopDesc,     _holder_method,                                methodOop)                             \
   nonstatic_field(compiledICHolderOopDesc,     _holder_klass,                                 klassOop)                              \
   nonstatic_field(constantPoolOopDesc,         _tags,                                         typeArrayOop)                          \
   nonstatic_field(constantPoolOopDesc,         _cache,                                        constantPoolCacheOop)                  \
   nonstatic_field(constantPoolOopDesc,         _pool_holder,                                  klassOop)                              \
+  nonstatic_field(constantPoolOopDesc,         _length,                                       int)                                   \
+  nonstatic_field(constantPoolCacheOopDesc,    _length,                                       int)                                   \
   nonstatic_field(constantPoolCacheOopDesc,    _constant_pool,                                constantPoolOop)                       \
   nonstatic_field(instanceKlass,               _array_klasses,                                klassOop)                              \
   nonstatic_field(instanceKlass,               _methods,                                      objArrayOop)                           \
@@ -264,6 +266,7 @@ static inline uint64_t cast_uint64_t(size_t x)
      static_field(Universe,                    _bootstrapping,                                bool)                                  \
      static_field(Universe,                    _fully_initialized,                            bool)                                  \
      static_field(Universe,                    _verify_count,                                 int)                                   \
+     static_field(Universe,                    _heap_base,                                    address)                                   \
                                                                                                                                      \
   /**********************************************************************************/                                               \
   /* Generation and Space hierarchies                                               */                                               \
@@ -302,14 +305,12 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(CardTableModRefBS,           _guard_region,                                 MemRegion)                             \
   nonstatic_field(CardTableModRefBS,           byte_map_base,                                 jbyte*)                                \
                                                                                                                                      \
-  nonstatic_field(CardTableRS,                 _ct_bs,                                        CardTableModRefBS)                     \
+  nonstatic_field(CardTableRS,                 _ct_bs,                                        CardTableModRefBSForCTRS*)             \
                                                                                                                                      \
   nonstatic_field(CollectedHeap,               _reserved,                                     MemRegion)                             \
   nonstatic_field(SharedHeap,                  _perm_gen,                                     PermGen*)                              \
   nonstatic_field(CollectedHeap,               _barrier_set,                                  BarrierSet*)                           \
   nonstatic_field(CollectedHeap,               _is_gc_active,                                 bool)                                  \
-  nonstatic_field(CollectedHeap,               _max_heap_capacity,                            size_t)                                \
-                                                                                                                                     \
   nonstatic_field(CompactibleSpace,            _compaction_top,                               HeapWord*)                             \
   nonstatic_field(CompactibleSpace,            _first_dead,                                   HeapWord*)                             \
   nonstatic_field(CompactibleSpace,            _end_of_live,                                  HeapWord*)                             \
@@ -455,40 +456,40 @@ static inline uint64_t cast_uint64_t(size_t x)
       static_field(SystemDictionary,            _shared_dictionary,                            Dictionary*)                          \
       static_field(SystemDictionary,            _system_loader_lock_obj,                       oop)                                  \
       static_field(SystemDictionary,            _loader_constraints,                           LoaderConstraintTable*)               \
-      static_field(SystemDictionary,            _object_klass,                                 klassOop)                             \
-      static_field(SystemDictionary,            _string_klass,                                 klassOop)                             \
-      static_field(SystemDictionary,            _class_klass,                                  klassOop)                             \
-      static_field(SystemDictionary,            _cloneable_klass,                              klassOop)                             \
-      static_field(SystemDictionary,            _classloader_klass,                            klassOop)                             \
-      static_field(SystemDictionary,            _serializable_klass,                           klassOop)                             \
-      static_field(SystemDictionary,            _system_klass,                                 klassOop)                             \
-      static_field(SystemDictionary,            _throwable_klass,                              klassOop)                             \
-      static_field(SystemDictionary,            _threaddeath_klass,                            klassOop)                             \
-      static_field(SystemDictionary,            _error_klass,                                  klassOop)                             \
-      static_field(SystemDictionary,            _exception_klass,                              klassOop)                             \
-      static_field(SystemDictionary,            _runtime_exception_klass,                      klassOop)                             \
-      static_field(SystemDictionary,            _classNotFoundException_klass,                 klassOop)                             \
-      static_field(SystemDictionary,            _noClassDefFoundError_klass,                   klassOop)                             \
-      static_field(SystemDictionary,            _linkageError_klass,                           klassOop)                             \
-      static_field(SystemDictionary,            _classCastException_klass,                     klassOop)                             \
-      static_field(SystemDictionary,            _arrayStoreException_klass,                    klassOop)                             \
-      static_field(SystemDictionary,            _virtualMachineError_klass,                    klassOop)                             \
-      static_field(SystemDictionary,            _outOfMemoryError_klass,                       klassOop)                             \
-      static_field(SystemDictionary,            _StackOverflowError_klass,                     klassOop)                             \
-      static_field(SystemDictionary,            _protectionDomain_klass,                       klassOop)                             \
-      static_field(SystemDictionary,            _AccessControlContext_klass,                   klassOop)                             \
-      static_field(SystemDictionary,            _reference_klass,                              klassOop)                             \
-      static_field(SystemDictionary,            _soft_reference_klass,                         klassOop)                             \
-      static_field(SystemDictionary,            _weak_reference_klass,                         klassOop)                             \
-      static_field(SystemDictionary,            _final_reference_klass,                        klassOop)                             \
-      static_field(SystemDictionary,            _phantom_reference_klass,                      klassOop)                             \
-      static_field(SystemDictionary,            _finalizer_klass,                              klassOop)                             \
-      static_field(SystemDictionary,            _thread_klass,                                 klassOop)                             \
-      static_field(SystemDictionary,            _threadGroup_klass,                            klassOop)                             \
-      static_field(SystemDictionary,            _properties_klass,                             klassOop)                             \
-      static_field(SystemDictionary,            _stringBuffer_klass,                           klassOop)                             \
-      static_field(SystemDictionary,            _vector_klass,                                 klassOop)                             \
-      static_field(SystemDictionary,            _hashtable_klass,                              klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(object_klass),                        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(string_klass),                        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(class_klass),                         klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(cloneable_klass),                     klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(classloader_klass),                   klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(serializable_klass),                  klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(system_klass),                        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(throwable_klass),                     klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(threaddeath_klass),                   klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(error_klass),                         klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(exception_klass),                     klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(runtime_exception_klass),             klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(classNotFoundException_klass),        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(noClassDefFoundError_klass),          klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(linkageError_klass),                  klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(ClassCastException_klass),            klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(ArrayStoreException_klass),           klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(virtualMachineError_klass),           klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(OutOfMemoryError_klass),              klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(StackOverflowError_klass),            klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(protectionDomain_klass),              klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(AccessControlContext_klass),          klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(reference_klass),                     klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(soft_reference_klass),                klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(weak_reference_klass),                klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(final_reference_klass),               klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(phantom_reference_klass),             klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(finalizer_klass),                     klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(thread_klass),                        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(threadGroup_klass),                   klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(properties_klass),                    klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(stringBuffer_klass),                  klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(vector_klass),                        klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(hashtable_klass),                     klassOop)                             \
       static_field(SystemDictionary,            _box_klasses[0],                               klassOop)                             \
       static_field(SystemDictionary,            _java_system_loader,                           oop)                                  \
                                                                                                                                      \
@@ -585,7 +586,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /***********************************/                                                                                              \
                                                                                                                                      \
      static_field(StubRoutines,                _call_stub_return_address,                     address)                               \
-     IA32_ONLY(static_field(StubRoutines::i486,_call_stub_compiled_return,                    address))                              \
+     IA32_ONLY(static_field(StubRoutines::x86,_call_stub_compiled_return,                     address))                              \
                                                                                                                                      \
   /***************************************/                                                                                          \
   /* PcDesc and other compiled code info */                                                                                          \
@@ -656,7 +657,6 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                                                                                      \
    volatile_nonstatic_field(Thread,            _suspend_flags,                                uint32_t)                              \
   nonstatic_field(Thread,                      _active_handles,                               JNIHandleBlock*)                       \
-  nonstatic_field(Thread,                      _highest_lock,                                 address)                               \
   nonstatic_field(Thread,                      _tlab,                                         ThreadLocalAllocBuffer)                \
   nonstatic_field(Thread,                      _current_pending_monitor,                      ObjectMonitor*)                        \
   nonstatic_field(Thread,                      _current_pending_monitor_is_from_java,         bool)                                  \
@@ -763,8 +763,9 @@ static inline uint64_t cast_uint64_t(size_t x)
   static_field(Abstract_VM_Version,            _vm_minor_version,                             int)                                   \
   static_field(Abstract_VM_Version,            _vm_build_number,                              int)                                   \
                                                                                                                                      \
-  static_field(JDK_Version,                    _pre_jdk16_version,                            bool)                                  \
-  static_field(JDK_Version,                    _jdk_version,                                  int)                                   \
+  static_field(JDK_Version,                    _current,                                      JDK_Version)                           \
+  nonstatic_field(JDK_Version,                 _partially_initialized,                        bool)                                  \
+  nonstatic_field(JDK_Version,                 _major,                                        unsigned char)                         \
                                                                                                                                      \
                                                                                                                                      \
                                                                                                                                      \
@@ -916,12 +917,12 @@ static inline uint64_t cast_uint64_t(size_t x)
            declare_type(arrayKlass, Klass)                                \
            declare_type(arrayKlassKlass, klassKlass)                      \
            declare_type(arrayOopDesc, oopDesc)                            \
-   declare_type(compiledICHolderKlass, Klass)                     \
-   declare_type(compiledICHolderOopDesc, oopDesc)                 \
-           declare_type(constantPoolKlass, arrayKlass)                    \
-           declare_type(constantPoolOopDesc, arrayOopDesc)                \
-           declare_type(constantPoolCacheKlass, arrayKlass)               \
-           declare_type(constantPoolCacheOopDesc, arrayOopDesc)           \
+   declare_type(compiledICHolderKlass, Klass)                             \
+   declare_type(compiledICHolderOopDesc, oopDesc)                         \
+           declare_type(constantPoolKlass, Klass)                         \
+           declare_type(constantPoolOopDesc, oopDesc)                     \
+           declare_type(constantPoolCacheKlass, Klass)                    \
+           declare_type(constantPoolCacheOopDesc, oopDesc)                \
            declare_type(instanceKlass, Klass)                             \
            declare_type(instanceKlassKlass, klassKlass)                   \
            declare_type(instanceOopDesc, oopDesc)                         \
@@ -953,9 +954,11 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_oop_type(klassOop)                                              \
   declare_oop_type(markOop)                                               \
   declare_oop_type(methodOop)                                             \
-  declare_oop_type(methodDataOop)                                 \
+  declare_oop_type(methodDataOop)                                         \
   declare_oop_type(objArrayOop)                                           \
   declare_oop_type(oop)                                                   \
+  declare_oop_type(narrowOop)                                             \
+  declare_oop_type(wideKlassOop)                                          \
   declare_oop_type(constMethodOop)                                        \
   declare_oop_type(symbolOop)                                             \
   declare_oop_type(typeArrayOop)                                          \
@@ -994,6 +997,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_toplevel_type(BarrierSet)                                       \
            declare_type(ModRefBarrierSet,             BarrierSet)         \
            declare_type(CardTableModRefBS,            ModRefBarrierSet)   \
+           declare_type(CardTableModRefBSForCTRS,     CardTableModRefBS)  \
   declare_toplevel_type(GenRemSet)                                        \
            declare_type(CardTableRS,                  GenRemSet)          \
   declare_toplevel_type(BlockOffsetSharedArray)                           \
@@ -1021,6 +1025,10 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_toplevel_type(BlockOffsetSharedArray*)                          \
   declare_toplevel_type(GenRemSet*)                                       \
   declare_toplevel_type(CardTableRS*)                                     \
+  declare_toplevel_type(CardTableModRefBS*)                               \
+  declare_toplevel_type(CardTableModRefBS**)                              \
+  declare_toplevel_type(CardTableModRefBSForCTRS*)                        \
+  declare_toplevel_type(CardTableModRefBSForCTRS**)                       \
   declare_toplevel_type(CollectedHeap*)                                   \
   declare_toplevel_type(ContiguousSpace*)                                 \
   declare_toplevel_type(DefNewGeneration*)                                \
@@ -1106,7 +1114,7 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                           \
   declare_toplevel_type(StubQueue)                                        \
   declare_toplevel_type(StubRoutines)                                     \
-  IA32_ONLY(declare_toplevel_type(StubRoutines::i486))                    \
+  IA32_ONLY(declare_toplevel_type(StubRoutines::x86))                     \
   declare_toplevel_type(Stub)                                             \
            declare_type(InterpreterCodelet, Stub)                         \
                                                                           \
@@ -1311,6 +1319,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* Object sizes */                                                      \
   /****************/                                                      \
                                                                           \
+  declare_constant(oopSize)                                               \
   declare_constant(LogBytesPerWord)                                       \
   declare_constant(BytesPerLong)                                          \
                                                                           \
@@ -1318,7 +1327,9 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* Object alignment */                                                  \
   /********************/                                                  \
                                                                           \
+  declare_constant(MinObjAlignment)                                       \
   declare_constant(MinObjAlignmentInBytes)                                \
+  declare_constant(LogMinObjAlignmentInBytes)                             \
                                                                           \
   /********************************************/                          \
   /* Generation and Space Hierarchy Constants */                          \
@@ -1365,7 +1376,6 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                           \
   declare_constant(HeapWordSize)                                          \
   declare_constant(LogHeapWordSize)                                       \
-  declare_constant(HeapWordsPerOop)                                       \
                                                                           \
   /* constants from PermGen::Name enum */                                 \
                                                                           \
@@ -1574,6 +1584,7 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                           \
   declare_constant(Location::normal)                                      \
   declare_constant(Location::oop)                                         \
+  declare_constant(Location::narrowoop)                                   \
   declare_constant(Location::int_in_long)                                 \
   declare_constant(Location::lng)                                         \
   declare_constant(Location::float_in_dbl)                                \
@@ -1614,7 +1625,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_constant(OopMapValue::unused_value)                             \
   declare_constant(OopMapValue::oop_value)                                \
   declare_constant(OopMapValue::value_value)                              \
-  declare_constant(OopMapValue::dead_value)                               \
+  declare_constant(OopMapValue::narrowoop_value)                          \
   declare_constant(OopMapValue::callee_saved_value)                       \
   declare_constant(OopMapValue::derived_oop_value)                        \
                                                                           \
@@ -1693,7 +1704,12 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_constant(markOopDesc::no_hash)                                  \
   declare_constant(markOopDesc::no_hash_in_place)                         \
   declare_constant(markOopDesc::no_lock_in_place)                         \
-  declare_constant(markOopDesc::max_age)
+  declare_constant(markOopDesc::max_age)                                  \
+                                                                          \
+  /* Constants in markOop used by CMS. */                                 \
+  declare_constant(markOopDesc::cms_shift)                                \
+  declare_constant(markOopDesc::cms_mask)                                 \
+  declare_constant(markOopDesc::size_shift)                               \
 
   /* NOTE that we do not use the last_entry() macro here; it is used   */
   /* in vmStructs_<os>_<cpu>.hpp's VM_LONG_CONSTANTS_OS_CPU macro (and */
@@ -1957,6 +1973,7 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
                         GENERATE_STATIC_VM_STRUCT_ENTRY)
 
   VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
+                 GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
                  GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif // SERIALGC
 
@@ -2098,6 +2115,7 @@ VMStructs::init() {
              CHECK_STATIC_VM_STRUCT_ENTRY);
 
   VM_STRUCTS_CMS(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
+             CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
              CHECK_STATIC_VM_STRUCT_ENTRY);
 #endif // SERIALGC
 
@@ -2202,6 +2220,7 @@ VMStructs::init() {
   debug_only(VM_STRUCTS_PARALLELGC(ENSURE_FIELD_TYPE_PRESENT, \
                                    ENSURE_FIELD_TYPE_PRESENT));
   debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT, \
+                            ENSURE_FIELD_TYPE_PRESENT, \
                             ENSURE_FIELD_TYPE_PRESENT));
 #endif // SERIALGC
   debug_only(VM_STRUCTS_CPU(ENSURE_FIELD_TYPE_PRESENT, \

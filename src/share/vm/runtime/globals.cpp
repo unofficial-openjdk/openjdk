@@ -2,7 +2,7 @@
 #pragma ident "@(#)globals.cpp	1.50 07/09/13 20:51:49 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,20 +31,26 @@
 
 RUNTIME_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PD_DEVELOPER_FLAG, \
               MATERIALIZE_PRODUCT_FLAG, MATERIALIZE_PD_PRODUCT_FLAG, \
-              MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_NOTPRODUCT_FLAG, \
-              MATERIALIZE_MANAGEABLE_FLAG, MATERIALIZE_PRODUCT_RW_FLAG)
+              MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_EXPERIMENTAL_FLAG, \
+              MATERIALIZE_NOTPRODUCT_FLAG, \
+              MATERIALIZE_MANAGEABLE_FLAG, MATERIALIZE_PRODUCT_RW_FLAG, \
+              MATERIALIZE_LP64_PRODUCT_FLAG)
 
 RUNTIME_OS_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PD_DEVELOPER_FLAG, \
                  MATERIALIZE_PRODUCT_FLAG, MATERIALIZE_PD_PRODUCT_FLAG, \
                  MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_NOTPRODUCT_FLAG)
 
 bool Flag::is_unlocker() const {
-  return strcmp(name, "UnlockDiagnosticVMOptions") == 0;
+  return strcmp(name, "UnlockDiagnosticVMOptions") == 0     ||
+         strcmp(name, "UnlockExperimentalVMOptions") == 0;
+
 }
 
 bool Flag::is_unlocked() const {
   if (strcmp(kind, "{diagnostic}") == 0) {
     return UnlockDiagnosticVMOptions;
+  } else if (strcmp(kind, "{experimental}") == 0) {
+    return UnlockExperimentalVMOptions;
   } else {
     return true;
   }
@@ -71,18 +77,20 @@ void Flag::print_on(outputStream* st) {
   if (is_uintx()) st->print("%-16lu", get_uintx());
   if (is_ccstr()) {
     const char* cp = get_ccstr();
-    const char* eol;
-    while ((eol = strchr(cp, '\n')) != NULL) {
-      char format_buffer[FORMAT_BUFFER_LEN];
-      size_t llen = pointer_delta(eol, cp, sizeof(char));
-      jio_snprintf(format_buffer, FORMAT_BUFFER_LEN, 
-		   "%%." SIZE_FORMAT "s", llen);
-      st->print(format_buffer, cp);
-      st->cr();
-      cp = eol+1;
-      st->print("%5s %-35s += ", "", name);
+    if (cp != NULL) {
+      const char* eol;
+      while ((eol = strchr(cp, '\n')) != NULL) {
+        char format_buffer[FORMAT_BUFFER_LEN];
+        size_t llen = pointer_delta(eol, cp, sizeof(char));
+        jio_snprintf(format_buffer, FORMAT_BUFFER_LEN,
+                     "%%." SIZE_FORMAT "s", llen);
+        st->print(format_buffer, cp);
+        st->cr();
+        cp = eol+1;
+        st->print("%5s %-35s += ", "", name);
+      }
+      st->print("%-16s", cp);
     }
-    st->print("%-16s", cp);
   }
   st->print(" %s", kind);
   st->cr();
@@ -97,18 +105,21 @@ void Flag::print_as_flag(outputStream* st) {
     st->print("-XX:%s=" UINTX_FORMAT, name, get_uintx());
   } else if (is_ccstr()) {
     st->print("-XX:%s=", name);
-    // Need to turn embedded '\n's back into separate arguments
-    // Not so efficient to print one character at a time, 
-    // but the choice is to do the transformation to a buffer 
-    // and print that.  And this need not be efficient.
-    for (const char* cp = get_ccstr(); *cp != '\0'; cp += 1) {
-      switch (*cp) {
-      default:
-        st->print("%c", *cp);
-        break;
-      case '\n': 
-        st->print(" -XX:%s=", name);
-        break;
+    const char* cp = get_ccstr();
+    if (cp != NULL) {
+      // Need to turn embedded '\n's back into separate arguments
+      // Not so efficient to print one character at a time,
+      // but the choice is to do the transformation to a buffer
+      // and print that.  And this need not be efficient.
+      for (; *cp != '\0'; cp += 1) {
+        switch (*cp) {
+          default:
+            st->print("%c", *cp);
+            break;
+          case '\n':
+            st->print(" -XX:%s=", name);
+            break;
+        }
       }
     }
   } else {
@@ -122,6 +133,7 @@ void Flag::print_as_flag(outputStream* st) {
 #define RUNTIME_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{product}", DEFAULT },
 #define RUNTIME_PD_PRODUCT_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{pd product}", DEFAULT },
 #define RUNTIME_DIAGNOSTIC_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{diagnostic}", DEFAULT },
+#define RUNTIME_EXPERIMENTAL_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{experimental}", DEFAULT },
 #define RUNTIME_MANAGEABLE_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{manageable}", DEFAULT },
 #define RUNTIME_PRODUCT_RW_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{product rw}", DEFAULT },
 
@@ -134,6 +146,12 @@ void Flag::print_as_flag(outputStream* st) {
   #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{pd}", DEFAULT }, 
   #define RUNTIME_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{notproduct}", DEFAULT },
 #endif
+
+#ifdef _LP64
+  #define RUNTIME_LP64_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{lp64_product}", DEFAULT },
+#else
+  #define RUNTIME_LP64_PRODUCT_FLAG_STRUCT(type, name, value, doc) /* flag is constant */
+#endif // _LP64
 
 #define C1_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C1 product}", DEFAULT },
 #define C1_PD_PRODUCT_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C1 pd product}", DEFAULT },
@@ -163,8 +181,11 @@ void Flag::print_as_flag(outputStream* st) {
 
 
 static Flag flagTable[] = {
- RUNTIME_FLAGS(RUNTIME_DEVELOP_FLAG_STRUCT, RUNTIME_PD_DEVELOP_FLAG_STRUCT, RUNTIME_PRODUCT_FLAG_STRUCT, RUNTIME_PD_PRODUCT_FLAG_STRUCT, RUNTIME_DIAGNOSTIC_FLAG_STRUCT, RUNTIME_NOTPRODUCT_FLAG_STRUCT, RUNTIME_MANAGEABLE_FLAG_STRUCT, RUNTIME_PRODUCT_RW_FLAG_STRUCT)
+ RUNTIME_FLAGS(RUNTIME_DEVELOP_FLAG_STRUCT, RUNTIME_PD_DEVELOP_FLAG_STRUCT, RUNTIME_PRODUCT_FLAG_STRUCT, RUNTIME_PD_PRODUCT_FLAG_STRUCT, RUNTIME_DIAGNOSTIC_FLAG_STRUCT, RUNTIME_EXPERIMENTAL_FLAG_STRUCT, RUNTIME_NOTPRODUCT_FLAG_STRUCT, RUNTIME_MANAGEABLE_FLAG_STRUCT, RUNTIME_PRODUCT_RW_FLAG_STRUCT, RUNTIME_LP64_PRODUCT_FLAG_STRUCT)
  RUNTIME_OS_FLAGS(RUNTIME_DEVELOP_FLAG_STRUCT, RUNTIME_PD_DEVELOP_FLAG_STRUCT, RUNTIME_PRODUCT_FLAG_STRUCT, RUNTIME_PD_PRODUCT_FLAG_STRUCT, RUNTIME_DIAGNOSTIC_FLAG_STRUCT, RUNTIME_NOTPRODUCT_FLAG_STRUCT)
+#ifndef SERIALGC
+ G1_FLAGS(RUNTIME_DEVELOP_FLAG_STRUCT, RUNTIME_PD_DEVELOP_FLAG_STRUCT, RUNTIME_PRODUCT_FLAG_STRUCT, RUNTIME_PD_PRODUCT_FLAG_STRUCT, RUNTIME_DIAGNOSTIC_FLAG_STRUCT, RUNTIME_EXPERIMENTAL_FLAG_STRUCT, RUNTIME_NOTPRODUCT_FLAG_STRUCT, RUNTIME_MANAGEABLE_FLAG_STRUCT, RUNTIME_PRODUCT_RW_FLAG_STRUCT)
+#endif // SERIALGC
 #ifdef COMPILER1
  C1_FLAGS(C1_DEVELOP_FLAG_STRUCT, C1_PD_DEVELOP_FLAG_STRUCT, C1_PRODUCT_FLAG_STRUCT, C1_PD_PRODUCT_FLAG_STRUCT, C1_NOTPRODUCT_FLAG_STRUCT)
 #endif
@@ -187,8 +208,9 @@ Flag* Flag::find_flag(char* name, size_t length) {
   for (Flag* current = &flagTable[0]; current->name; current++) {
     if (str_equal(current->name, name, length)) {
       if (!(current->is_unlocked() || current->is_unlocker())) {
-	// disable use of diagnostic flags until they are unlocked
-	return NULL;
+        // disable use of diagnostic or experimental flags until they
+        // are explicitly unlocked
+        return NULL;
       }
       return current;
     }
@@ -206,6 +228,18 @@ bool CommandLineFlagsEx::is_default(CommandLineFlag flag) {
   assert((size_t)flag < Flag::numFlags, "bad command line flag index");
   Flag* f = &Flag::flags[flag];
   return (f->origin == DEFAULT);
+}
+
+bool CommandLineFlagsEx::is_ergo(CommandLineFlag flag) {
+  assert((size_t)flag < Flag::numFlags, "bad command line flag index");
+  Flag* f = &Flag::flags[flag];
+  return (f->origin == ERGONOMIC);
+}
+
+bool CommandLineFlagsEx::is_cmdline(CommandLineFlag flag) {
+  assert((size_t)flag < Flag::numFlags, "bad command line flag index");
+  Flag* f = &Flag::flags[flag];
+  return (f->origin == COMMAND_LINE);
 }
 
 bool CommandLineFlags::wasSetOnCmdline(const char* name, bool* value) {
@@ -334,8 +368,11 @@ bool CommandLineFlags::ccstrAtPut(char* name, size_t len, ccstr* value, FlagValu
   if (result == NULL) return false;
   if (!result->is_ccstr()) return false;
   ccstr old_value = result->get_ccstr();
-  char* new_value = NEW_C_HEAP_ARRAY(char, strlen(*value)+1);
-  strcpy(new_value, *value);
+  char* new_value = NULL;
+  if (*value != NULL) {
+    new_value = NEW_C_HEAP_ARRAY(char, strlen(*value)+1);
+    strcpy(new_value, *value);
+  }
   result->set_ccstr(new_value);
   if (result->origin == DEFAULT && old_value != NULL) {
     // Prior value is NOT heap allocated, but was a literal constant.

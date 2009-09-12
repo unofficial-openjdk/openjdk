@@ -1,5 +1,5 @@
 #
-# Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ endef
 # When the tree of subdirs is built, this setting is stored in each flags.make.
 GAMMADIR := $(shell until ([ -d dev ]&&echo $${GAMMADIR:-/GAMMADIR/}) || ([ -d src/share/vm ]&&pwd); do cd ..; done)
 HS_SRC_DIR=$(GAMMADIR)/src
+HS_MAKE_DIR=$(GAMMADIR)/make
 HS_BUILD_DIR=$(GAMMADIR)/build
 
 ifeq ($(USER),)
@@ -170,17 +171,17 @@ endif
 
 # The platform dependent defs.make defines platform specific variable such 
 # as ARCH, EXPORT_LIST etc. We must place the include here after BOOTDIR is defined.
-include $(GAMMADIR)/build/$(OSNAME)/makefiles/defs.make
+include $(GAMMADIR)/make/$(OSNAME)/makefiles/defs.make
 
 # We are trying to put platform specific defintions
-# files to build/$(OSNAME)/makefiles dictory. However
+# files to make/$(OSNAME)/makefiles dictory. However
 # some definitions are common for both linux and solaris,
 # so we put them here.
 ifneq ($(OSNAME),windows)
-  ABS_OUTPUTDIR     := $(shell $(CD) $(OUTPUTDIR); $(PWD))
+  ABS_OUTPUTDIR     := $(shell mkdir -p $(OUTPUTDIR); $(CD) $(OUTPUTDIR); $(PWD))
   ABS_BOOTDIR       := $(shell $(CD) $(BOOTDIR); $(PWD))
   ABS_GAMMADIR      := $(shell $(CD) $(GAMMADIR); $(PWD))
-  ABS_OS_MAKEFILE   := $(shell $(CD) $(HS_BUILD_DIR)/$(OSNAME); $(PWD))/Makefile
+  ABS_OS_MAKEFILE   := $(shell $(CD) $(HS_MAKE_DIR)/$(OSNAME); $(PWD))/Makefile
 
   # uname, HotSpot source directory, build directory and JDK use different names
   # for CPU architectures.
@@ -227,6 +228,7 @@ endif
 
 # Required make macro settings for all platforms
 MAKE_ARGS += JAVA_HOME=$(ABS_BOOTDIR)
+MAKE_ARGS += OUTPUTDIR=$(ABS_OUTPUTDIR)
 MAKE_ARGS += GAMMADIR=$(ABS_GAMMADIR)
 MAKE_ARGS += MAKE_VERBOSE=$(MAKE_VERBOSE)
 MAKE_ARGS += HOTSPOT_RELEASE_VERSION=$(HOTSPOT_RELEASE_VERSION)

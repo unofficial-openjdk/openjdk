@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytes_linux_x86.inline.hpp	1.12 07/09/17 09:21:07 JVM"
-#endif
 /*
- * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include <byteswap.h>
@@ -54,7 +51,7 @@ inline u4   Bytes::swap_u4(u4 x) {
   __asm__ __volatile__ (
     "bswap %0"
     :"=r" (ret)      // output : register 0 => ret
-    :"0"  (x)        // input  : x => register 0 
+    :"0"  (x)        // input  : x => register 0
     :"0"             // clobbered register
   );
   return ret;
@@ -63,7 +60,18 @@ inline u4   Bytes::swap_u4(u4 x) {
 
 #ifdef AMD64
 inline u8 Bytes::swap_u8(u8 x) {
+#ifdef SPARC_WORKS
+  // workaround for SunStudio12 CR6615391
+  __asm__ __volatile__ (
+    "bswapq %0"
+    :"=r" (x)        // output : register 0 => x
+    :"0"  (x)        // input  : x => register 0
+    :"0"             // clobbered register
+  );
+  return x;
+#else
   return bswap_64(x);
+#endif
 }
 #else
 // Helper function for swap_u8
@@ -75,4 +83,3 @@ inline u8 Bytes::swap_u8(u8 x) {
   return swap_u8_base(*(u4*)&x, *(((u4*)&x)+1));
 }
 #endif // !AMD64
-

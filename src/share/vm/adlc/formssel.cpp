@@ -2,7 +2,7 @@
 #pragma ident "@(#)formssel.cpp	1.185 07/09/28 10:23:26 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -729,7 +729,11 @@ bool InstructForm::captures_bottom_type() const {
   if( _matrule && _matrule->_rChild && 
        (!strcmp(_matrule->_rChild->_opType,"CastPP")     ||  // new result type
         !strcmp(_matrule->_rChild->_opType,"CastX2P")    ||  // new result type
-        !strcmp(_matrule->_rChild->_opType,"CreateEx")   ||  // type of exception 
+        !strcmp(_matrule->_rChild->_opType,"DecodeN")    ||
+        !strcmp(_matrule->_rChild->_opType,"EncodeP")    ||
+        !strcmp(_matrule->_rChild->_opType,"LoadN")      ||
+        !strcmp(_matrule->_rChild->_opType,"LoadNKlass") ||
+        !strcmp(_matrule->_rChild->_opType,"CreateEx")   ||  // type of exception
         !strcmp(_matrule->_rChild->_opType,"CheckCastPP")) ) return true;
   else if ( is_ideal_load() == Form::idealP )                return true;
   else if ( is_ideal_store() != Form::none  )                return true;
@@ -1101,10 +1105,7 @@ bool equivalent_predicates( const InstructForm *instr1, const InstructForm *inst
   }
   if( pred1 != NULL && pred2 != NULL ) {
     // compare the predicates
-    const char *str1 = pred1->_pred;
-    const char *str2 = pred2->_pred;
-    if( (str1 == NULL && str2 == NULL)
-        || (str1 != NULL && str2 != NULL && strcmp(str1,str2) == 0) ) {
+    if (ADLParser::equivalent_expressions(pred1->_pred, pred2->_pred)) {
       return true;
     }
   }
@@ -1573,10 +1574,10 @@ Opcode::opcode_type Opcode::as_opcode_type(const char *param) {
   return Opcode::NOT_AN_OPCODE;
 }
 
-void Opcode::print_opcode(FILE *fp, Opcode::opcode_type desired_opcode) {
+bool Opcode::print_opcode(FILE *fp, Opcode::opcode_type desired_opcode) {
   // Default values previously provided by MachNode::primary()...
-  const char *description = "default_opcode()";
-  const char *value       = "-1";
+  const char *description = NULL;
+  const char *value       = NULL;
   // Check if user provided any opcode definitions
   if( this != NULL ) {
     // Update 'value' if user provided a definition in the instruction
@@ -1598,7 +1599,10 @@ void Opcode::print_opcode(FILE *fp, Opcode::opcode_type desired_opcode) {
       break;
     }
   }
-  fprintf(fp, "(%s /*%s*/)", value, description);
+  if (value != NULL) {
+    fprintf(fp, "(%s /*%s*/)", value, description);
+  }
+  return value != NULL;
 }
 
 void Opcode::dump() {
@@ -2104,6 +2108,7 @@ bool OperandForm::is_bound_register() const {
   if (strcmp(name,"RegF")==0) size =  1;
   if (strcmp(name,"RegD")==0) size =  2;
   if (strcmp(name,"RegL")==0) size =  2;
+  if (strcmp(name,"RegN")==0) size =  1;
   if (strcmp(name,"RegP")==0) size =  globalAD->get_preproc_def("_LP64") ? 2 : 1;
   if (size == 0) return false;
   return size == reg_class->size();
@@ -2368,11 +2373,12 @@ void  OperandForm::ext_format(FILE *fp, FormDict &globals, uint index) {
 
 void OperandForm::format_constant(FILE *fp, uint const_index, uint const_type) {
   switch(const_type) {
-  case Form::idealI: fprintf(fp,"st->print(\"#%%d\", _c%d);\n", const_index); break;
-  case Form::idealP: fprintf(fp,"_c%d->dump_on(st);\n",         const_index); break;
-  case Form::idealL: fprintf(fp,"st->print(\"#%%lld\", _c%d);\n", const_index); break;
-  case Form::idealF: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
-  case Form::idealD: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealI:  fprintf(fp,"st->print(\"#%%d\", _c%d);\n", const_index); break;
+  case Form::idealP:  fprintf(fp,"_c%d->dump_on(st);\n",         const_index); break;
+  case Form::idealN:  fprintf(fp,"_c%d->dump_on(st);\n",         const_index); break;
+  case Form::idealL:  fprintf(fp,"st->print(\"#%%lld\", _c%d);\n", const_index); break;
+  case Form::idealF:  fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealD:  fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
   default:
     assert( false, "ShouldNotReachHere()");
   }
@@ -2607,14 +2613,19 @@ void MemInterface::output(FILE *fp) {
 }
 
 //------------------------------CondInterface----------------------------------
-CondInterface::CondInterface(char *equal,      char *not_equal, 
-                             char *less,       char *greater_equal, 
-                             char *less_equal, char *greater) 
-  : Interface("COND_INTER"), 
-    _equal(equal), _not_equal(not_equal), 
-    _less(less), _greater_equal(greater_equal),
-    _less_equal(less_equal), _greater(greater) {
-      // 
+CondInterface::CondInterface(const char* equal,         const char* equal_format,
+                             const char* not_equal,     const char* not_equal_format,
+                             const char* less,          const char* less_format,
+                             const char* greater_equal, const char* greater_equal_format,
+                             const char* less_equal,    const char* less_equal_format,
+                             const char* greater,       const char* greater_format)
+  : Interface("COND_INTER"),
+    _equal(equal),                 _equal_format(equal_format),
+    _not_equal(not_equal),         _not_equal_format(not_equal_format),
+    _less(less),                   _less_format(less_format),
+    _greater_equal(greater_equal), _greater_equal_format(greater_equal_format),
+    _less_equal(less_equal),       _less_equal_format(less_equal_format),
+    _greater(greater),             _greater_format(greater_format) {
 }
 CondInterface::~CondInterface() {
   // not owner of any character arrays
@@ -3303,18 +3314,18 @@ void MatchNode::output(FILE *fp) {
 
 int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
   static const char *needs_ideal_memory_list[] = {
-    "StoreI","StoreL","StoreP","StoreD","StoreF" ,
+    "StoreI","StoreL","StoreP","StoreN","StoreD","StoreF" ,
     "StoreB","StoreC","Store" ,"StoreFP",
-    "LoadI" ,"LoadL", "LoadP" ,"LoadD" ,"LoadF"  ,
-    "LoadB" ,"LoadC" ,"LoadS" ,"Load"   , 
+    "LoadI" ,"LoadL", "LoadP" ,"LoadN", "LoadD" ,"LoadF"  ,
+    "LoadB" ,"LoadC" ,"LoadS" ,"Load"   ,
     "Store4I","Store2I","Store2L","Store2D","Store4F","Store2F","Store16B",
     "Store8B","Store4B","Store8C","Store4C","Store2C",
     "Load4I" ,"Load2I" ,"Load2L" ,"Load2D" ,"Load4F" ,"Load2F" ,"Load16B" ,
     "Load8B" ,"Load4B" ,"Load8C" ,"Load4C" ,"Load2C" ,"Load8S", "Load4S","Load2S",
-    "LoadRange", "LoadKlass", "LoadL_unaligned", "LoadD_unaligned",
+    "LoadRange", "LoadKlass", "LoadNKlass", "LoadL_unaligned", "LoadD_unaligned",
     "LoadPLocked", "LoadLLocked",
-    "StorePConditional", "StoreLConditional",
-    "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP", 
+    "StorePConditional", "StoreIConditional", "StoreLConditional",
+    "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP", "CompareAndSwapN",
     "StoreCM",
     "ClearArray"
   };
@@ -3712,12 +3723,13 @@ bool MatchRule::is_base_register(FormDict &globals) const {
   const char  *opType   = NULL;
   if (!base_operand(position, globals, result, name, opType)) {
     position = 0;
-    if( base_operand(position, globals, result, name, opType) && 
-        (strcmp(opType,"RegI")==0 || 
-         strcmp(opType,"RegP")==0 || 
-         strcmp(opType,"RegL")==0 || 
-         strcmp(opType,"RegF")==0 || 
-         strcmp(opType,"RegD")==0 || 
+    if( base_operand(position, globals, result, name, opType) &&
+        (strcmp(opType,"RegI")==0 ||
+         strcmp(opType,"RegP")==0 ||
+         strcmp(opType,"RegN")==0 ||
+         strcmp(opType,"RegL")==0 ||
+         strcmp(opType,"RegF")==0 ||
+         strcmp(opType,"RegD")==0 ||
          strcmp(opType,"Reg" )==0) ) {
       return 1;
     }
@@ -3764,6 +3776,10 @@ bool MatchRule::is_chain_rule(FormDict &globals) const {
 int MatchRule::is_ideal_copy() const {
   if( _rChild ) {
     const char  *opType = _rChild->_opType;
+#if 1
+    if( strcmp(opType,"CastIP")==0 )
+      return 1;
+#else
     if( strcmp(opType,"CastII")==0 )
       return 1;
     // Do not treat *CastPP this way, because it
@@ -3783,6 +3799,7 @@ int MatchRule::is_ideal_copy() const {
     //  return 1;
     //if( strcmp(opType,"CastP2X")==0 )
     //  return 1;
+#endif
   }
   if( is_chain_rule(_AD.globalNames()) &&
       _lChild && strncmp(_lChild->_opType,"stackSlot",9)==0 )
@@ -3821,6 +3838,8 @@ int MatchRule::is_expensive() const {
         strcmp(opType,"ConvL2D")==0 ||
         strcmp(opType,"ConvL2F")==0 ||
         strcmp(opType,"ConvL2I")==0 ||
+        strcmp(opType,"DecodeN")==0 ||
+        strcmp(opType,"EncodeP")==0 ||
         strcmp(opType,"RoundDouble")==0 ||
         strcmp(opType,"RoundFloat")==0 ||
         strcmp(opType,"ReverseBytesI")==0 ||

@@ -2,7 +2,7 @@
 #pragma ident "@(#)sharedRuntime.cpp	1.383 08/05/13 16:13:34 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,6 +113,25 @@ void SharedRuntime::print_ic_miss_histogram() {
   }
 }
 #endif // PRODUCT
+
+#ifndef SERIALGC
+
+// G1 write-barrier pre: executed before a pointer store.
+JRT_LEAF(void, SharedRuntime::g1_wb_pre(oopDesc* orig, JavaThread *thread))
+  if (orig == NULL) {
+    assert(false, "should be optimized out");
+    return;
+  }
+  // store the original value that was in the field reference
+  thread->satb_mark_queue().enqueue(orig);
+JRT_END
+
+// G1 write-barrier post: executed after a pointer store.
+JRT_LEAF(void, SharedRuntime::g1_wb_post(void* card_addr, JavaThread* thread))
+  thread->dirty_card_queue().enqueue(card_addr);
+JRT_END
+
+#endif // !SERIALGC
 
 
 JRT_LEAF(jlong, SharedRuntime::lmul(jlong y, jlong x))
@@ -379,6 +398,32 @@ void SharedRuntime::throw_and_post_jvmti_exception(JavaThread *thread, symbolOop
   throw_and_post_jvmti_exception(thread, h_exception);
 }
 
+// The interpreter code to call this tracing function is only
+// called/generated when TraceRedefineClasses has the right bits
+// set. Since obsolete methods are never compiled, we don't have
+// to modify the compilers to generate calls to this function.
+//
+JRT_LEAF(int, SharedRuntime::rc_trace_method_entry(
+    JavaThread* thread, methodOopDesc* method))
+  assert(RC_TRACE_IN_RANGE(0x00001000, 0x00002000), "wrong call");
+
+  if (method->is_obsolete()) {
+    // We are calling an obsolete method, but this is not necessarily
+    // an error. Our method could have been redefined just after we
+    // fetched the methodOop from the constant pool.
+
+    // RC_TRACE macro has an embedded ResourceMark
+    RC_TRACE_WITH_THREAD(0x00001000, thread,
+                         ("calling obsolete method '%s'",
+                          method->name_and_sig_as_C_string()));
+    if (RC_TRACE_ENABLED(0x00002000)) {
+      // this option is provided to debug calls to obsolete methods
+      guarantee(false, "faulting at call to an obsolete method.");
+    }
+  }
+  return 0;
+JRT_END
+
 // ret_pc points into caller; we are returning caller's exception handler
 // for given exception
 address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc, Handle& exception,
@@ -540,7 +585,10 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
           // the caller was at a call site, it's safe to destroy all
           // caller-saved registers, as these entry points do.
           VtableStub* vt_stub = VtableStubs::stub_containing(pc);
-          guarantee(vt_stub != NULL, "unable to find SEGVing vtable stub");
+
+          // If vt_stub is NULL, then return NULL to signal handler to report the SEGV error.
+          if (vt_stub == NULL) return NULL;
+
           if (vt_stub->is_abstract_method_error(pc)) {
             assert(!vt_stub->is_vtable_stub(), "should never see AbstractMethodErrors from vtable-type VtableStubs");
             return StubRoutines::throw_AbstractMethodError_entry();
@@ -549,7 +597,9 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
           }
         } else {
           CodeBlob* cb = CodeCache::find_blob(pc);
-          guarantee(cb != NULL, "exception happened outside interpreter, nmethods and vtable stubs (1)");
+
+          // If code blob is NULL, then return NULL to signal handler to report the SEGV error.
+          if (cb == NULL) return NULL;
 
           // Exception happened in CodeCache. Must be either:
           // 1. Inline-cache check in C2I handler blob,
@@ -558,7 +608,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
           
           if (!cb->is_nmethod()) {
             guarantee(cb->is_adapter_blob(),
-                      "exception happened outside interpreter, nmethods and vtable stubs (2)");
+                      "exception happened outside interpreter, nmethods and vtable stubs (1)");
             // There is no handler here, so we will simply unwind.
             return StubRoutines::throw_NullPointerException_at_call_entry();
           }
@@ -1492,7 +1542,7 @@ char* SharedRuntime::generate_class_cast_message(
   char* message = NEW_RESOURCE_ARRAY(char, msglen);
   if (NULL == message) {
     // Shouldn't happen, but don't cause even more problems if it does
-    message = const_cast<char*>(objName); 
+    message = const_cast<char*>(objName);
   } else {
     jio_snprintf(message, msglen, "%s%s%s", objName, desc, targetKlassName);
   }
@@ -1751,12 +1801,7 @@ int AdapterHandlerLibrary::get_create_adapter_index(methodHandle method) {
   // _fingerprints array (it is not safe for concurrent readers and a single
   // writer: this can be fixed if it becomes a problem).
 
-  // Shouldn't be here if running -Xint
-  if (Arguments::mode() == Arguments::_int) {
-    ShouldNotReachHere();
-  }
-
-  // Get the address of the ic_miss handlers before we grab the 
+  // Get the address of the ic_miss handlers before we grab the
   // AdapterHandlerLibrary_lock. This fixes bug 6236259 which
   // was caused by the initialization of the stubs happening
   // while we held the lock and then notifying jvmti while
@@ -1840,7 +1885,25 @@ int AdapterHandlerLibrary::get_create_adapter_index(methodHandle method) {
                                                                         regs);
 
     B = BufferBlob::create(AdapterHandlerEntry::name, &buffer);
-    if (B == NULL)  return -2;		// Out of CodeCache space
+    if (B == NULL) {
+      // CodeCache is full, disable compilation
+      // Ought to log this but compile log is only per compile thread
+      // and we're some non descript Java thread.
+      UseInterpreter = true;
+      if (UseCompiler || AlwaysCompileLoopMethods ) {
+#ifndef PRODUCT
+        warning("CodeCache is full. Compiler has been disabled");
+        if (CompileTheWorld || ExitOnFullCodeCache) {
+          before_exit(JavaThread::current());
+          exit_globals(); // will delete tty
+          vm_direct_exit(CompileTheWorld ? 0 : 1);
+        }
+#endif
+        UseCompiler               = false;
+        AlwaysCompileLoopMethods  = false;
+      }
+      return 0; // Out of CodeCache space (_handlers[0] == NULL)
+    }
     entry->relocate(B->instructions_begin());
 #ifndef PRODUCT
     // debugging suppport
@@ -1981,6 +2044,64 @@ nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
   }
   return nm;
 }
+
+#ifdef HAVE_DTRACE_H
+// Create a dtrace nmethod for this method.  The wrapper converts the
+// java compiled calling convention to the native convention, makes a dummy call
+// (actually nops for the size of the call instruction, which become a trap if
+// probe is enabled). The returns to the caller. Since this all looks like a
+// leaf no thread transition is needed.
+
+nmethod *AdapterHandlerLibrary::create_dtrace_nmethod(methodHandle method) {
+  ResourceMark rm;
+  nmethod* nm = NULL;
+
+  if (PrintCompilation) {
+    ttyLocker ttyl;
+    tty->print("---   n%s  ");
+    method->print_short_name(tty);
+    if (method->is_static()) {
+      tty->print(" (static)");
+    }
+    tty->cr();
+  }
+
+  {
+    // perform the work while holding the lock, but perform any printing
+    // outside the lock
+    MutexLocker mu(AdapterHandlerLibrary_lock);
+    // See if somebody beat us to it
+    nm = method->code();
+    if (nm) {
+      return nm;
+    }
+
+    // Improve alignment slightly
+    u_char* buf = (u_char*)
+        (((intptr_t)_buffer + CodeEntryAlignment-1) & ~(CodeEntryAlignment-1));
+    CodeBuffer buffer(buf, AdapterHandlerLibrary_size);
+    // Need a few relocation entries
+    double locs_buf[20];
+    buffer.insts()->initialize_shared_locs(
+        (relocInfo*)locs_buf, sizeof(locs_buf) / sizeof(relocInfo));
+    MacroAssembler _masm(&buffer);
+
+    // Generate the compiled-to-native wrapper code
+    nm = SharedRuntime::generate_dtrace_nmethod(&_masm, method);
+  }
+  return nm;
+}
+
+// the dtrace method needs to convert java lang string to utf8 string.
+void SharedRuntime::get_utf(oopDesc* src, address dst) {
+  typeArrayOop jlsValue  = java_lang_String::value(src);
+  int          jlsOffset = java_lang_String::offset(src);
+  int          jlsLen    = java_lang_String::length(src);
+  jchar*       jlsPos    = (jlsLen == 0) ? NULL :
+                                           jlsValue->char_at_addr(jlsOffset);
+  (void) UNICODE::as_utf8(jlsPos, jlsLen, (char *)dst, max_dtrace_string_size);
+}
+#endif // ndef HAVE_DTRACE_H
 
 // -------------------------------------------------------------------------
 // Java-Java calling convention
@@ -2160,6 +2281,8 @@ JRT_END
 
 #ifndef PRODUCT
 bool AdapterHandlerLibrary::contains(CodeBlob* b) {
+
+  if (_handlers == NULL) return false;
 
   for (int i = 0 ; i < _handlers->length() ; i++) {
     AdapterHandlerEntry* a = get_entry(i);

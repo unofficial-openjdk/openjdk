@@ -2,7 +2,7 @@
 #pragma ident "@(#)immutableSpace.cpp	1.13 07/05/05 17:05:34 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ void ImmutableSpace::print() const {
 
 #endif
 
-void ImmutableSpace::verify(bool allow_dirty) const {
+void ImmutableSpace::verify(bool allow_dirty) {
   HeapWord* p = bottom();
   HeapWord* t = end();
   HeapWord* prev_p = NULL;

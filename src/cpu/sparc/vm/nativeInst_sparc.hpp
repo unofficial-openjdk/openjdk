@@ -2,7 +2,7 @@
 #pragma ident "@(#)nativeInst_sparc.hpp	1.89 07/05/05 17:04:31 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
     nop_instruction_size        =    4
   };
 
+  bool is_dtrace_trap();
   bool is_nop()                        { return long_at(0) == nop_instruction(); }
   bool is_call()                       { return is_op(long_at(0), Assembler::call_op); }
   bool is_sethi()		       { return (is_op2(long_at(0), Assembler::sethi_op2) 

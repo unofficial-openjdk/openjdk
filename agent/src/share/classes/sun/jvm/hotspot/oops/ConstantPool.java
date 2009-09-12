@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -31,10 +31,10 @@ import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
 
-// A ConstantPool is an array containing class constants
+// A ConstantPool is an oop containing class constants
 // as described in the class file
 
-public class ConstantPool extends Array implements ClassConstants {
+public class ConstantPool extends Oop implements ClassConstants {
   // Used for debugging this code
   private static final boolean DEBUG = false;
 
@@ -55,8 +55,9 @@ public class ConstantPool extends Array implements ClassConstants {
     tags        = new OopField(type.getOopField("_tags"), 0);
     cache       = new OopField(type.getOopField("_cache"), 0);
     poolHolder  = new OopField(type.getOopField("_pool_holder"), 0);
+    length      = new CIntField(type.getCIntegerField("_length"), 0);
     headerSize  = type.getSize();
-    elementSize = db.getOopSize();
+    elementSize = 0;
   }
 
   ConstantPool(OopHandle handle, ObjectHeap heap) {
@@ -65,23 +66,33 @@ public class ConstantPool extends Array implements ClassConstants {
 
   public boolean isConstantPool()      { return true; }
 
-  private static OopField tags;  
+  private static OopField tags;
   private static OopField cache;
   private static OopField poolHolder;
-    
+  private static CIntField length; // number of elements in oop
 
   private static long headerSize;
-  private static long elementSize; 
+  private static long elementSize;
 
   public TypeArray         getTags()       { return (TypeArray)         tags.getValue(this); }
   public ConstantPoolCache getCache()      { return (ConstantPoolCache) cache.getValue(this); }
   public Klass             getPoolHolder() { return (Klass)             poolHolder.getValue(this); }
+  public int               getLength()     { return (int)length.getValue(this); }
+
+  private long getElementSize() {
+    if (elementSize !=0 ) {
+      return elementSize;
+    } else {
+      elementSize = VM.getVM().getOopSize();
+    }
+    return elementSize;
+  }
 
   private long indexOffset(long index) {
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that(index > 0 && index < getLength(),  "invalid cp index");
+      Assert.that(index > 0 && index < getLength(),  "invalid cp index " + index + " " + getLength());
     }
-    return (index * elementSize) + headerSize;
+    return (index * getElementSize()) + headerSize;
   }
 
   public ConstantTag getTagAt(long index) {
@@ -232,7 +243,7 @@ public class ConstantPool extends Array implements ClassConstants {
     }
     return i;
   }
-    
+
   final private static String[] nameForTag = new String[] {
   };
 
@@ -258,14 +269,14 @@ public class ConstantPool extends Array implements ClassConstants {
     }
     throw new InternalError("unknown tag");
   }
-  
+
   public void iterateFields(OopVisitor visitor, boolean doVMFields) {
     super.iterateFields(visitor, doVMFields);
     if (doVMFields) {
       visitor.doOop(tags, true);
       visitor.doOop(cache, true);
       visitor.doOop(poolHolder, true);
-      
+
       final int length = (int) getLength();
       // zero'th pool entry is always invalid. ignore it.
       for (int index = 1; index < length; index++) {
@@ -276,30 +287,30 @@ public class ConstantPool extends Array implements ClassConstants {
         case JVM_CONSTANT_Integer:
           visitor.doInt(new IntField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           break;
-          
+
         case JVM_CONSTANT_Float:
           visitor.doFloat(new FloatField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           break;
-          
+
         case JVM_CONSTANT_Long:
           visitor.doLong(new LongField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           // long entries occupy two slots
           index++;
           break;
-          
+
         case JVM_CONSTANT_Double:
           visitor.doDouble(new DoubleField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           // double entries occupy two slots
           index++;
           break;
-          
+
         case JVM_CONSTANT_UnresolvedClass:
         case JVM_CONSTANT_Class:
         case JVM_CONSTANT_UnresolvedString:
         case JVM_CONSTANT_Utf8:
           visitor.doOop(new OopField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           break;
-          
+
         case JVM_CONSTANT_Fieldref:
         case JVM_CONSTANT_Methodref:
         case JVM_CONSTANT_InterfaceMethodref:
@@ -317,17 +328,17 @@ public class ConstantPool extends Array implements ClassConstants {
     }
     */
   }
-    
+
   public void writeBytes(OutputStream os) throws IOException {
-	  // Map between any modified UTF-8 and it's constant pool index.
-	  Map utf8ToIndex = new HashMap();
+          // Map between any modified UTF-8 and it's constant pool index.
+          Map utf8ToIndex = new HashMap();
       DataOutputStream dos = new DataOutputStream(os);
       TypeArray tags = getTags();
       int len = (int)getLength();
       int ci = 0; // constant pool index
 
       // collect all modified UTF-8 Strings from Constant Pool
-      
+
       for (ci = 1; ci < len; ci++) {
           byte cpConstType = tags.getByteAt(ci);
           if(cpConstType == JVM_CONSTANT_Utf8) {
@@ -340,7 +351,7 @@ public class ConstantPool extends Array implements ClassConstants {
           }
       }
 
-      
+
       for(ci = 1; ci < len; ci++) {
           int cpConstType = (int)tags.getByteAt(ci);
           // write cp_info
@@ -354,22 +365,22 @@ public class ConstantPool extends Array implements ClassConstants {
                   if (DEBUG) debugMessage("CP[" + ci + "] = modified UTF-8 " + sym.asString());
                   break;
               }
-              
+
               case JVM_CONSTANT_Unicode:
                   throw new IllegalArgumentException("Unicode constant!");
-                  
+
               case JVM_CONSTANT_Integer:
                   dos.writeByte(cpConstType);
                   dos.writeInt(getIntAt(ci));
                   if (DEBUG) debugMessage("CP[" + ci + "] = int " + getIntAt(ci));
                   break;
-                  
+
               case JVM_CONSTANT_Float:
                   dos.writeByte(cpConstType);
                   dos.writeFloat(getFloatAt(ci));
                   if (DEBUG) debugMessage("CP[" + ci + "] = float " + getFloatAt(ci));
                   break;
-                  
+
               case JVM_CONSTANT_Long: {
                   dos.writeByte(cpConstType);
                   long l = getLongAt(ci);
@@ -378,14 +389,14 @@ public class ConstantPool extends Array implements ClassConstants {
                   dos.writeLong(l);
                   break;
               }
-              
+
               case JVM_CONSTANT_Double:
                   dos.writeByte(cpConstType);
                   dos.writeDouble(getDoubleAt(ci));
                   // double entries occupy two pool entries
                   ci++;
                   break;
-                  
+
               case JVM_CONSTANT_Class: {
                   dos.writeByte(cpConstType);
                   // Klass already resolved. ConstantPool constains klassOop.
@@ -395,9 +406,9 @@ public class ConstantPool extends Array implements ClassConstants {
                   dos.writeShort(s.shortValue());
                   if (DEBUG) debugMessage("CP[" + ci  + "] = class " + s);
                   break;
-              } 
-              
-              // case JVM_CONSTANT_ClassIndex: 
+              }
+
+              // case JVM_CONSTANT_ClassIndex:
               case JVM_CONSTANT_UnresolvedClass: {
                   dos.writeByte(JVM_CONSTANT_Class);
                   String klassName = getSymbolAt(ci).asString();
@@ -406,7 +417,7 @@ public class ConstantPool extends Array implements ClassConstants {
                   if (DEBUG) debugMessage("CP[" + ci + "] = class " + s);
                   break;
               }
-              
+
               case JVM_CONSTANT_String: {
                   dos.writeByte(cpConstType);
                   String str = OopUtilities.stringOopToString(getObjAt(ci));
@@ -415,18 +426,18 @@ public class ConstantPool extends Array implements ClassConstants {
                   if (DEBUG) debugMessage("CP[" + ci + "] = string " + s);
                   break;
               }
-              
-                  // case JVM_CONSTANT_StringIndex: 
-              case JVM_CONSTANT_UnresolvedString: { 
+
+                  // case JVM_CONSTANT_StringIndex:
+              case JVM_CONSTANT_UnresolvedString: {
                   dos.writeByte(JVM_CONSTANT_String);
                   String val = getSymbolAt(ci).asString();
-                  
+
                   Short s = (Short) utf8ToIndex.get(val);
                   dos.writeShort(s.shortValue());
                   if (DEBUG) debugMessage("CP[" + ci + "] = string " + s);
                   break;
               }
-              
+
               // all external, internal method/field references
               case JVM_CONSTANT_Fieldref:
               case JVM_CONSTANT_Methodref:
@@ -441,7 +452,7 @@ public class ConstantPool extends Array implements ClassConstants {
                                           klassIndex + ", N&T = " + nameAndTypeIndex);
                   break;
               }
-              
+
               case JVM_CONSTANT_NameAndType: {
                   dos.writeByte(cpConstType);
                   int value = getIntAt(ci);
@@ -449,7 +460,7 @@ public class ConstantPool extends Array implements ClassConstants {
                   short signatureIndex = (short) extractHighShortFromInt(value);
                   dos.writeShort(nameIndex);
                   dos.writeShort(signatureIndex);
-                  if (DEBUG) debugMessage("CP[" + ci + "] = N&T name = " + nameIndex 
+                  if (DEBUG) debugMessage("CP[" + ci + "] = N&T name = " + nameIndex
                                           + ", type = " + signatureIndex);
                   break;
               }
@@ -458,13 +469,13 @@ public class ConstantPool extends Array implements ClassConstants {
       dos.flush();
       return;
   }
-    
+
   public void printValueOn(PrintStream tty) {
     tty.print("ConstantPool for " + getPoolHolder().getName().asString());
   }
 
   public long getObjectSize() {
-    return alignObjectSize(headerSize + (getLength() * elementSize)); 
+    return alignObjectSize(headerSize + (getLength() * getElementSize()));
   }
 
   //----------------------------------------------------------------------

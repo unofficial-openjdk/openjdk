@@ -1,5 +1,5 @@
 //
-// Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ binaryTreeDictionary.cpp                allocationStats.hpp
 binaryTreeDictionary.cpp                binaryTreeDictionary.hpp
 binaryTreeDictionary.cpp                globals.hpp
 binaryTreeDictionary.cpp                ostream.hpp
+binaryTreeDictionary.cpp                spaceDecorator.hpp
 
 binaryTreeDictionary.hpp                freeBlockDictionary.hpp
 binaryTreeDictionary.hpp                freeList.hpp
@@ -114,6 +115,7 @@ compactibleFreeListSpace.cpp            java.hpp
 compactibleFreeListSpace.cpp            liveRange.hpp
 compactibleFreeListSpace.cpp            oop.inline.hpp
 compactibleFreeListSpace.cpp            resourceArea.hpp
+compactibleFreeListSpace.cpp            spaceDecorator.hpp
 compactibleFreeListSpace.cpp            universe.inline.hpp
 compactibleFreeListSpace.cpp            vmThread.hpp
 
@@ -122,17 +124,6 @@ compactibleFreeListSpace.hpp            freeList.hpp
 compactibleFreeListSpace.hpp            space.hpp
 
 compactingPermGenGen.cpp                concurrentMarkSweepGeneration.inline.hpp
-
-concurrentGCThread.cpp                  concurrentGCThread.hpp
-concurrentGCThread.cpp                  init.hpp
-concurrentGCThread.cpp                  instanceRefKlass.hpp
-concurrentGCThread.cpp                  interfaceSupport.hpp
-concurrentGCThread.cpp                  java.hpp
-concurrentGCThread.cpp                  javaCalls.hpp
-concurrentGCThread.cpp                  oop.inline.hpp
-concurrentGCThread.cpp                  systemDictionary.hpp
-
-concurrentGCThread.hpp                  thread.hpp
 
 concurrentMarkSweepGeneration.cpp       cardTableRS.hpp
 concurrentMarkSweepGeneration.cpp       cmsAdaptiveSizePolicy.hpp
@@ -165,7 +156,7 @@ concurrentMarkSweepGeneration.cpp       systemDictionary.hpp
 concurrentMarkSweepGeneration.cpp       vmCMSOperations.hpp
 concurrentMarkSweepGeneration.cpp       vmThread.hpp
 
-concurrentMarkSweepGeneration.hpp       bitMap.hpp
+concurrentMarkSweepGeneration.hpp       bitMap.inline.hpp
 concurrentMarkSweepGeneration.hpp       freeBlockDictionary.hpp
 concurrentMarkSweepGeneration.hpp       gSpaceCounters.hpp
 concurrentMarkSweepGeneration.hpp       gcStats.hpp
@@ -206,6 +197,7 @@ freeBlockDictionary.cpp                 thread_<os_family>.inline.hpp
 
 freeBlockDictionary.hpp                 allocation.hpp
 freeBlockDictionary.hpp                 debug.hpp
+freeBlockDictionary.hpp                 freeChunk.hpp
 freeBlockDictionary.hpp                 globalDefinitions.hpp
 freeBlockDictionary.hpp                 memRegion.hpp
 freeBlockDictionary.hpp                 mutex.hpp
@@ -213,6 +205,14 @@ freeBlockDictionary.hpp                 ostream.hpp
 
 freeChunk.cpp                           copy.hpp
 freeChunk.cpp                           freeBlockDictionary.hpp
+
+freeChunk.hpp                           allocation.hpp
+freeChunk.hpp                           debug.hpp
+freeChunk.hpp                           globalDefinitions.hpp
+freeChunk.hpp                           markOop.hpp
+freeChunk.hpp                           memRegion.hpp
+freeChunk.hpp                           mutex.hpp
+freeChunk.hpp                           ostream.hpp
 
 freeList.cpp                            freeBlockDictionary.hpp
 freeList.cpp                            freeList.hpp

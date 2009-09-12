@@ -2,7 +2,7 @@
 #pragma ident "@(#)ifg.cpp	1.62 07/05/05 17:06:13 JVM"
 #endif
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -488,8 +488,9 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
     // Liveout things are presumed live for the whole block.  We accumulate
     // 'area' accordingly.  If they get killed in the block, we'll subtract
     // the unused part of the block from the area.
-    double cost = b->_freq * double(last_inst-last_phi);
-    assert( cost >= 0, "negative spill cost" );
+    int inst_count = last_inst - last_phi;
+    double cost = (inst_count <= 0) ? 0.0 : b->_freq * double(inst_count);
+    assert(!(cost < 0.0), "negative spill cost" );
     IndexSetIterator elements(&liveout);
     uint lidx;
     while ((lidx = elements.next()) != 0) {
@@ -593,10 +594,10 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
         } else {                // Else it is live
           // A DEF also ends 'area' partway through the block.
           lrgs(r)._area -= cost;
-          assert( lrgs(r)._area >= 0, "negative spill area" );
+          assert(!(lrgs(r)._area < 0.0), "negative spill area" );
 
           // Insure high score for immediate-use spill copies so they get a color
-          if( n->is_SpillCopy()             
+          if( n->is_SpillCopy()
               && lrgs(r).is_singledef()        // MultiDef live range can still split
               && n->outcnt() == 1              // and use must be in this block
               && _cfg._bbs[n->unique_out()->_idx] == b ) {
@@ -706,8 +707,9 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
 
       } // End of if normal register-allocated value
 
-      cost -= b->_freq;         // Area remaining in the block
-      if( cost < 0.0 ) cost = 0.0;  // Cost goes negative in the Phi area
+      // Area remaining in the block
+      inst_count--;
+      cost = (inst_count <= 0) ? 0.0 : b->_freq * double(inst_count);
 
       // Make all inputs live
       if( !n->is_Phi() ) {      // Phi function uses come from prior block
@@ -754,7 +756,7 @@ uint PhaseChaitin::build_ifg_physical( ResourceArea *a ) {
             assert( pressure[0] == count_int_pressure  (&liveout), "" );
             assert( pressure[1] == count_float_pressure(&liveout), "" );
           }
-          assert( lrg._area >= 0, "negative spill area" );
+          assert(!(lrg._area < 0.0), "negative spill area" );
         }
       }
     } // End of reverse pass over all instructions in block

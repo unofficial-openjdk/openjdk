@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_LIRGenerator_x86.cpp	1.16 07/09/17 09:25:58 JVM"
-#endif
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -80,10 +77,10 @@ LIR_Opr LIRGenerator::result_register_for(ValueType* type, bool callee) {
   switch (type->tag()) {
     case intTag:     opr = FrameMap::rax_opr;          break;
     case objectTag:  opr = FrameMap::rax_oop_opr;      break;
-    case longTag:    opr = FrameMap::rax_rdx_long_opr; break; 
+    case longTag:    opr = FrameMap::long0_opr;        break;
     case floatTag:   opr = UseSSE >= 1 ? FrameMap::xmm0_float_opr  : FrameMap::fpu0_float_opr;  break;
     case doubleTag:  opr = UseSSE >= 2 ? FrameMap::xmm0_double_opr : FrameMap::fpu0_double_opr;  break;
-    
+
     case addressTag:
     default: ShouldNotReachHere(); return LIR_OprFact::illegalOpr;
   }
@@ -120,12 +117,14 @@ bool LIRGenerator::can_store_as_constant(Value v, BasicType type) const {
 
 
 bool LIRGenerator::can_inline_as_constant(Value v) const {
+  if (v->type()->tag() == longTag) return false;
   return v->type()->tag() != objectTag ||
     (v->type()->is_constant() && v->type()->as_ObjectType()->constant_value()->is_null_object());
 }
 
 
 bool LIRGenerator::can_inline_as_constant(LIR_Const* c) const {
+  if (c->type() == T_LONG) return false;
   return c->type() != T_OBJECT || c->as_jobject() == NULL;
 }
 
@@ -154,10 +153,17 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
 
   LIR_Address* addr;
   if (index_opr->is_constant()) {
-    int elem_size = type2aelembytes[type];
+    int elem_size = type2aelembytes(type);
     addr = new LIR_Address(array_opr,
                            offset_in_bytes + index_opr->as_jint() * elem_size, type);
   } else {
+#ifdef _LP64
+    if (index_opr->type() == T_INT) {
+      LIR_Opr tmp = new_register(T_LONG);
+      __ convert(Bytecodes::_i2l, index_opr, tmp);
+      index_opr = tmp;
+    }
+#endif // _LP64
     addr =  new LIR_Address(array_opr,
                             index_opr,
                             LIR_Address::scale(type),
@@ -167,7 +173,7 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
     // This store will need a precise card mark, so go ahead and
     // compute the full adddres instead of computing once for the
     // store and again for the card mark.
-    LIR_Opr tmp = new_register(T_INT);
+    LIR_Opr tmp = new_pointer_register();
     __ leal(LIR_OprFact::address(addr), tmp);
     return new LIR_Address(tmp, 0, type);
   } else {
@@ -177,9 +183,8 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
 
 
 void LIRGenerator::increment_counter(address counter, int step) {
-  LIR_Opr temp = new_register(T_INT);
-  LIR_Opr pointer = new_register(T_INT);
-  __ move(LIR_OprFact::intConst((int)counter), pointer);
+  LIR_Opr pointer = new_pointer_register();
+  __ move(LIR_OprFact::intptrConst(counter), pointer);
   LIR_Address* addr = new LIR_Address(pointer, 0, T_INT);
   increment_counter(addr, step);
 }
@@ -291,14 +296,16 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
     LIR_Opr tmp1 = new_register(objectType);
     LIR_Opr tmp2 = new_register(objectType);
     LIR_Opr tmp3 = new_register(objectType);
-    
+
     CodeEmitInfo* store_check_info = new CodeEmitInfo(range_check_info);
     __ store_check(value.result(), array.result(), tmp1, tmp2, tmp3, store_check_info);
   }
 
   if (obj_store) {
+    // Needs GC write barriers.
+    pre_barrier(LIR_OprFact::address(array_addr), false, NULL);
     __ move(value.result(), array_addr, null_check_info);
-    // Seems to be a precise 
+    // Seems to be a precise
     post_barrier(LIR_OprFact::address(array_addr), value.result());
   } else {
     __ move(value.result(), array_addr, null_check_info);
@@ -353,7 +360,7 @@ void LIRGenerator::do_NegateOp(NegateOp* x) {
   value.load_item();
   LIR_Opr reg = rlock(x);
   __ negate(value.result(), reg);
-  
+
   set_result(x, round_item(reg));
 }
 
@@ -388,7 +395,7 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
       must_load_right = UseSSE < 2 && (c->is_one_double() || c->is_zero_double());
     }
   }
-    
+
   if (must_load_both) {
     // frem and drem destroy also right operand, so move it to a new register
     right.set_destroys_register();
@@ -416,7 +423,7 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
     }
     __ move(right.result(), fpu1); // order of left and right operand is important!
     __ move(left.result(), fpu0);
-    __ rem (fpu0, fpu1, fpu0); 
+    __ rem (fpu0, fpu1, fpu0);
     __ move(fpu0, reg);
 
   } else {
@@ -484,7 +491,7 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
     left.load_item();
     right.load_item();
 
-    LIR_Opr reg = FrameMap::rax_rdx_long_opr;
+    LIR_Opr reg = FrameMap::long0_opr;
     arithmetic_op_long(x->op(), reg, left.result(), right.result(), NULL);
     LIR_Opr result = rlock_result(x);
     __ move(reg, result);
@@ -691,16 +698,16 @@ void LIRGenerator::do_AttemptUpdate(Intrinsic* x) {
   LIRItem obj       (x->argument_at(0), this);  // AtomicLong object
   LIRItem cmp_value (x->argument_at(1), this);  // value to compare with field
   LIRItem new_value (x->argument_at(2), this);  // replace field with new_value if it matches cmp_value
-  
+
   // compare value must be in rdx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
-  cmp_value.load_item_force(FrameMap::rax_rdx_long_opr);
-  
+  cmp_value.load_item_force(FrameMap::long0_opr);
+
   // new value must be in rcx,ebx (hi,lo)
-  new_value.load_item_force(FrameMap::rbx_rcx_long_opr);
-  
+  new_value.load_item_force(FrameMap::long1_opr);
+
   // object pointer register is overwritten with field address
   obj.load_item();
-  
+
   // generate compare-and-swap; produces zero condition if swap occurs
   int value_offset = sun_misc_AtomicLongCSImpl::value_offset();
   LIR_Opr addr = obj.result();
@@ -708,7 +715,7 @@ void LIRGenerator::do_AttemptUpdate(Intrinsic* x) {
   LIR_Opr t1 = LIR_OprFact::illegalOpr;  // no temp needed
   LIR_Opr t2 = LIR_OprFact::illegalOpr;  // no temp needed
   __ cas_long(addr, cmp_value.result(), new_value.result(), t1, t2);
-  
+
   // generate conditional move of boolean result
   LIR_Opr result = rlock_result(x);
   __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result);
@@ -723,7 +730,10 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   LIRItem val   (x->argument_at(3), this);  // replace field with val if matches cmp
 
   assert(obj.type()->tag() == objectTag, "invalid type");
-  assert(offset.type()->tag() == intTag, "invalid type");
+
+  // In 64bit the type can be long, sparc doesn't have this assert
+  // assert(offset.type()->tag() == intTag, "invalid type");
+
   assert(cmp.type()->tag() == type->tag(), "invalid type");
   assert(val.type()->tag() == type->tag(), "invalid type");
 
@@ -738,8 +748,8 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
     cmp.load_item_force(FrameMap::rax_opr);
     val.load_item();
   } else if (type == longType) {
-    cmp.load_item_force(FrameMap::rax_rdx_long_opr);
-    val.load_item_force(FrameMap::rbx_rcx_long_opr);
+    cmp.load_item_force(FrameMap::long0_opr);
+    val.load_item_force(FrameMap::long1_opr);
   } else {
     ShouldNotReachHere();
   }
@@ -748,10 +758,13 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   __ move(obj.result(), addr);
   __ add(addr, offset.result(), addr);
 
-
+  if (type == objectType) {  // Write-barrier needed for Object fields.
+    // Do the pre-write barrier, if any.
+    pre_barrier(addr, false, NULL);
+  }
 
   LIR_Opr ill = LIR_OprFact::illegalOpr;  // for convenience
-  if (type == objectType) 
+  if (type == objectType)
     __ cas_obj(addr, cmp.result(), val.result(), ill, ill);
   else if (type == intType)
     __ cas_int(addr, cmp.result(), val.result(), ill, ill);
@@ -760,12 +773,12 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   else {
     ShouldNotReachHere();
   }
-  
+
   // generate conditional move of boolean result
   LIR_Opr result = rlock_result(x);
   __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result);
   if (type == objectType) {   // Write-barrier needed for Object fields.
-    // Seems to be precise 
+    // Seems to be precise
     post_barrier(addr, val.result());
   }
 }
@@ -836,12 +849,33 @@ void LIRGenerator::do_ArrayCopy(Intrinsic* x) {
   // operands for arraycopy must use fixed registers, otherwise
   // LinearScan will fail allocation (because arraycopy always needs a
   // call)
+
+#ifndef _LP64
   src.load_item_force     (FrameMap::rcx_oop_opr);
   src_pos.load_item_force (FrameMap::rdx_opr);
   dst.load_item_force     (FrameMap::rax_oop_opr);
   dst_pos.load_item_force (FrameMap::rbx_opr);
   length.load_item_force  (FrameMap::rdi_opr);
   LIR_Opr tmp =           (FrameMap::rsi_opr);
+#else
+
+  // The java calling convention will give us enough registers
+  // so that on the stub side the args will be perfect already.
+  // On the other slow/special case side we call C and the arg
+  // positions are not similar enough to pick one as the best.
+  // Also because the java calling convention is a "shifted" version
+  // of the C convention we can process the java args trivially into C
+  // args without worry of overwriting during the xfer
+
+  src.load_item_force     (FrameMap::as_oop_opr(j_rarg0));
+  src_pos.load_item_force (FrameMap::as_opr(j_rarg1));
+  dst.load_item_force     (FrameMap::as_oop_opr(j_rarg2));
+  dst_pos.load_item_force (FrameMap::as_opr(j_rarg3));
+  length.load_item_force  (FrameMap::as_opr(j_rarg4));
+
+  LIR_Opr tmp =           FrameMap::as_opr(j_rarg5);
+#endif // LP64
+
   set_no_result(x);
 
   int flags;
@@ -860,9 +894,9 @@ LIR_Opr fixed_register_for(BasicType type) {
     case T_FLOAT:  return FrameMap::fpu0_float_opr;
     case T_DOUBLE: return FrameMap::fpu0_double_opr;
     case T_INT:    return FrameMap::rax_opr;
-    case T_LONG:   return FrameMap::rax_rdx_long_opr;
+    case T_LONG:   return FrameMap::long0_opr;
     default:       ShouldNotReachHere(); return LIR_OprFact::illegalOpr;
-  }        
+  }
 }
 
 void LIRGenerator::do_Convert(Convert* x) {
@@ -959,7 +993,7 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
   LIR_Opr klass_reg = FrameMap::rdx_oop_opr;
   LIR_Opr len = length.result();
   BasicType elem_type = x->elt_type();
-  
+
   __ oop2reg(ciTypeArrayKlass::make(elem_type)->encoding(), klass_reg);
 
   CodeStub* slow_path = new NewTypeArrayStub(klass_reg, len, reg, info);
@@ -1164,9 +1198,13 @@ void LIRGenerator::do_If(If* x) {
 
 
 LIR_Opr LIRGenerator::getThreadPointer() {
+#ifdef _LP64
+  return FrameMap::as_pointer_opr(r15_thread);
+#else
   LIR_Opr result = new_register(T_INT);
   __ get_thread(result);
   return result;
+#endif //
 }
 
 void LIRGenerator::trace_block_entry(BlockBegin* block) {
@@ -1253,6 +1291,8 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
     LIR_Address* addr = new LIR_Address(src, offset, type);
     bool is_obj = (type == T_ARRAY || type == T_OBJECT);
     if (is_obj) {
+      // Do the pre-write barrier, if any.
+      pre_barrier(LIR_OprFact::address(addr), false, NULL);
       __ move(data, addr);
       assert(src->is_register(), "must be register");
       // Seems to be a precise address

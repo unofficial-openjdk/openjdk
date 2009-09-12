@@ -1,6 +1,3 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)hpi_windows.hpp	1.17 07/05/05 17:04:44 JVM"
-#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Win32 delegates these to the HPI.  Solaris provides its own
@@ -73,26 +70,26 @@ HPIDECL(connect, "connect", _socket, Connect, int, "%d",
         (int fd, struct sockaddr *him, int len),
         ("fd = %d, him = %p, len = %d", fd, him, len),
         (fd, him, len));
-    
+
 HPIDECL(accept, "accept", _socket, Accept, int, "%d",
         (int fd, struct sockaddr *him, int *len),
         ("fd = %d, him = %p, len = %p", fd, him, len),
         (fd, him, len));
-    
+
 HPIDECL(sendto, "sendto", _socket, SendTo, int, "%d",
         (int fd, char *buf, int len, int flags,
          struct sockaddr *to, int tolen),
         ("fd = %d, buf = %p, len = %d, flags = %d, to = %p, tolen = %d",
          fd, buf, len, flags, to, tolen),
         (fd, buf, len, flags, to, tolen));
-    
+
 HPIDECL(recvfrom, "recvfrom", _socket, RecvFrom, int, "%d",
         (int fd, char *buf, int nbytes, int flags,
          struct sockaddr *from, int *fromlen),
         ("fd = %d, buf = %p, len = %d, flags = %d, frm = %p, frmlen = %d",
          fd, buf, nbytes, flags, from, fromlen),
         (fd, buf, nbytes, flags, from, fromlen));
-    
+
 HPIDECL(recv, "recv", _socket, Recv, int, "%d",
         (int fd, char *buf, int nBytes, int flags),
         ("fd = %d, buf = %p, nBytes = %d, flags = %d",
@@ -105,6 +102,10 @@ HPIDECL(send, "send", _socket, Send, int, "%d",
          fd, buf, nBytes, flags),
         (fd, buf, nBytes, flags));
 
+inline int hpi::raw_send(int fd, char *buf, int nBytes, int flags) {
+  return send(fd, buf, nBytes, flags);
+}
+
 HPIDECL(timeout, "timeout", _socket, Timeout, int, "%d",
         (int fd, long timeout),
         ("fd = %d, timeout = %ld", fd, timeout),
@@ -116,20 +117,20 @@ HPIDECL(get_host_by_name, "get_host_by_name", _socket, GetHostByName,
         ("%s", name),
         (name));
 
-HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown, 
+HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown,
         int, "%d",
         (int fd, int howto),
         ("fd = %d, howto = %d", fd, howto),
         (fd, howto));
 
-HPIDECL(bind, "bind", _socket, Bind, 
+HPIDECL(bind, "bind", _socket, Bind,
         int, "%d",
         (int fd, struct sockaddr *him, int len),
         ("fd = %d, him = %p, len = %d",
          fd, him, len),
         (fd, him, len));
 
-HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName, 
+HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName,
         int, "%d",
         (int fd, struct sockaddr *him, int *len),
         ("fd = %d, him = %p, len = %p",
@@ -142,7 +143,7 @@ HPIDECL(get_host_name, "get_host_name", _socket, GetHostName, int, "%d",
          hostname, namelen),
         (hostname, namelen));
 
-HPIDECL(get_host_by_addr, "get_host_by_addr", _socket, GetHostByAddr, 
+HPIDECL(get_host_by_addr, "get_host_by_addr", _socket, GetHostByAddr,
         struct hostent *, "(struct hostent *)%p",
         (const char* name, int len, int type),
         ("name = %p, len = %d, type = %d",
@@ -161,10 +162,9 @@ HPIDECL(set_sock_opt, "set_sock_opt", _socket, SocketSetOption, int, "%d",
          fd, level, optname, optval, optlen),
         (fd, level, optname, optval, optlen));
 
-HPIDECL(get_proto_by_name, "get_proto_by_name", _socket, GetProtoByName, 
+HPIDECL(get_proto_by_name, "get_proto_by_name", _socket, GetProtoByName,
         struct protoent *, "(struct protoent *)%p",
         (char* name),
         ("name = %p",
          name),
         (name));
-

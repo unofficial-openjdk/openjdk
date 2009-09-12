@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package sun.jvm.hotspot.types.basic;
 import java.util.*;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.runtime.VM;
 
 /** <P> This is a basic implementation of the TypeDataBase interface.
     It allows an external type database builder to add types to be
@@ -146,7 +147,7 @@ public class BasicTypeDataBase implements TypeDataBase {
   }
 
   public long getOopSize() {
-    return machDesc.getOopSize();
+    return VM.getVM().getOopSize();
   }
 
   public boolean addressTypeIsEqualToType(Address addr, Type type) {

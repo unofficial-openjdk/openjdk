@@ -2,7 +2,7 @@
 #pragma ident "@(#)oopMap.hpp	1.81 07/09/28 10:23:19 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ private:
 
 public:
   // Constants
-  enum { type_bits                = 6,
+  enum { type_bits                = 5,
          register_bits            = BitsPerShort - type_bits };
  
   enum { type_shift               = 0,
@@ -64,10 +64,9 @@ public:
          unused_value =0,       // powers of 2, for masking OopMapStream
          oop_value = 1,
          value_value = 2,
-         dead_value = 4,
+         narrowoop_value = 4,
          callee_saved_value = 8,
-         derived_oop_value= 16,
-         stack_obj = 32 };
+         derived_oop_value= 16 };
 
   // Constructors
   OopMapValue () { set_value(0); set_content_reg(VMRegImpl::Bad()); }
@@ -91,19 +90,17 @@ public:
   }
 
   // Querying
-  bool is_oop()               { return mask_bits(value(), type_mask_in_place) == oop_value; } 
-  bool is_value()             { return mask_bits(value(), type_mask_in_place) == value_value; } 
-  bool is_dead()              { return mask_bits(value(), type_mask_in_place) == dead_value; } 
-  bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; } 
-  bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; } 
-  bool is_stack_obj()         { return mask_bits(value(), type_mask_in_place) == stack_obj; }
+  bool is_oop()               { return mask_bits(value(), type_mask_in_place) == oop_value; }
+  bool is_value()             { return mask_bits(value(), type_mask_in_place) == value_value; }
+  bool is_narrowoop()           { return mask_bits(value(), type_mask_in_place) == narrowoop_value; }
+  bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
+  bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
 
-  void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); } 
-  void set_value()            { set_value((value() & register_mask_in_place) | value_value); } 
-  void set_dead()             { set_value((value() & register_mask_in_place) | dead_value); } 
-  void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); } 
-  void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); } 
-  void set_stack_obj()        { set_value((value() & register_mask_in_place) | stack_obj); }
+  void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
+  void set_value()            { set_value((value() & register_mask_in_place) | value_value); }
+  void set_narrowoop()          { set_value((value() & register_mask_in_place) | narrowoop_value); }
+  void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
+  void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
 
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
   oop_types type() const      { return (oop_types)mask_bits(value(), type_mask_in_place); }
@@ -132,7 +129,8 @@ public:
     return reg()->reg2stack();
   }
 
-  void print( ) const PRODUCT_RETURN;
+  void print_on(outputStream* st) const;
+  void print() const { print_on(tty); }
 };
 
 
@@ -178,10 +176,10 @@ class OopMap: public ResourceObj {
   // slots to hold 4-byte values like ints and floats in the LP64 build.
   void set_oop  ( VMReg local);
   void set_value( VMReg local);
+  void set_narrowoop(VMReg local);
   void set_dead ( VMReg local);
   void set_callee_saved( VMReg local, VMReg caller_machine_register );
   void set_derived_oop ( VMReg local, VMReg derived_from_local_register );
-  void set_stack_obj( VMReg local);
   void set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional);
 
   int heap_size() const;
@@ -195,7 +193,7 @@ class OopMap: public ResourceObj {
   }
 
   // Printing
-  void print_on(outputStream* st) const PRODUCT_RETURN;
+  void print_on(outputStream* st) const;
   void print() const { print_on(tty); }
 };
 
@@ -246,11 +244,11 @@ class OopMapSet : public ResourceObj {
   // Iterates through frame for a compiled method for dead ones and values, too
   static void all_do(const frame* fr, const RegisterMap* reg_map,
                      OopClosure* oop_fn,
-		     void derived_oop_fn(oop* base, oop* derived),
-                     OopClosure* value_fn, OopClosure* dead_fn);
+                     void derived_oop_fn(oop* base, oop* derived),
+                     OopClosure* value_fn);
 
   // Printing
-  void print_on(outputStream* st) const PRODUCT_RETURN;
+  void print_on(outputStream* st) const;
   void print() const { print_on(tty); }
 };
 

@@ -2,7 +2,7 @@
 #pragma ident "@(#)concurrentMarkSweepGeneration.inline.hpp	1.47 07/05/17 15:52:12 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -268,9 +268,9 @@ inline bool CMSCollector::is_dead_obj(oop obj) const {
 	  && _cmsGen->cmsSpace()->block_is_obj(addr))
 	 ||
          (_permGen->cmsSpace()->is_in_reserved(addr)
-	  && _permGen->cmsSpace()->block_is_obj(addr)),
-	 "must be object");
-  return  cms_should_unload_classes() &&
+          && _permGen->cmsSpace()->block_is_obj(addr)),
+         "must be object");
+  return  should_unload_classes() &&
           _collectorState == Sweeping &&
          !_markBitMap.isMarked(addr);
 }

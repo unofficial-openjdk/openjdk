@@ -39,7 +39,7 @@ public class Test {
     static Test cache = null;
 
     Object get(int i) {
-        Test t = list;  
+        Test t = list;
         list = t.next;
         size -= 1;
         Object o = t.value;

@@ -2,7 +2,7 @@
 #pragma ident "@(#)parse2.cpp	1.364 08/07/16 09:47:25 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,12 +70,13 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   const Type*       elemtype = arytype->elem();
 
   if (UseUniqueSubclasses && result2 != NULL) {
-    const TypeInstPtr* toop = elemtype->isa_instptr();
-    if (toop) {
+    const Type* el = elemtype->make_ptr();
+    if (el && el->isa_instptr()) {
+      const TypeInstPtr* toop = el->is_instptr();
       if (toop->klass()->as_instance_klass()->unique_concrete_subklass()) {
         // If we load from "AbstractClass[]" we must see "ConcreteSubClass".
         const Type* subklass = Type::get_const_type(toop->klass());
-        elemtype = subklass->join(elemtype);
+        elemtype = subklass->join(el);
       }
     }
   }
@@ -102,12 +103,22 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
 
   // Do the range check
   if (GenerateRangeChecks && need_range_check) {
-    // Range is constant in array-oop, so we can use the original state of mem
-    Node* len = load_array_length(ary);
-    // Test length vs index (standard trick using unsigned compare)
-    Node* chk = _gvn.transform( new (C, 3) CmpUNode(idx, len) );
-    BoolTest::mask btest = BoolTest::lt;
-    Node* tst = _gvn.transform( new (C, 2) BoolNode(chk, btest) );
+    Node* tst;
+    if (sizetype->_hi <= 0) {
+      // The greatest array bound is negative, so we can conclude that we're
+      // compiling unreachable code, but the unsigned compare trick used below
+      // only works with non-negative lengths.  Instead, hack "tst" to be zero so
+      // the uncommon_trap path will always be taken.
+      tst = _gvn.intcon(0);
+    } else {
+      // Range is constant in array-oop, so we can use the original state of mem
+      Node* len = load_array_length(ary);
+
+      // Test length vs index (standard trick using unsigned compare)
+      Node* chk = _gvn.transform( new (C, 3) CmpUNode(idx, len) );
+      BoolTest::mask btest = BoolTest::lt;
+      tst = _gvn.transform( new (C, 2) BoolNode(chk, btest) );
+    }
     // Branch to failure if out of bounds
     { BuildCutout unless(this, tst, PROB_MAX);
       if (C->allow_range_check_smearing()) {
@@ -130,9 +141,12 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   // Check for always knowing you are throwing a range-check exception
   if (stopped())  return top();
 
-  Node* ptr = array_element_address( ary, idx, type, sizetype);
+  Node* ptr = array_element_address(ary, idx, type, sizetype);
 
   if (result2 != NULL)  *result2 = elemtype;
+
+  assert(ptr != top(), "top should go hand-in-hand with stopped");
+
   return ptr;
 }
 
@@ -887,7 +901,7 @@ inline void Parse::repush_if_args() {
 }
 
 //----------------------------------do_ifnull----------------------------------
-void Parse::do_ifnull(BoolTest::mask btest) {
+void Parse::do_ifnull(BoolTest::mask btest, Node *c) {
   int target_bci = iter().get_dest();
 
   Block* branch_block = successor_for_bci(target_bci);
@@ -899,7 +913,7 @@ void Parse::do_ifnull(BoolTest::mask btest) {
     // (An earlier version of do_ifnull omitted this trap for OSR methods.)
 #ifndef PRODUCT
     if (PrintOpto && Verbose)
-      tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
+      tty->print_cr("Never-taken edge stops compilation at bci %d",bci());
 #endif
     // We need to mark this branch as taken so that if we recompile we will
     // see that it is possible. In the tiered system the interpreter doesn't
@@ -917,18 +931,7 @@ void Parse::do_ifnull(BoolTest::mask btest) {
     return;
   }
 
-  // If this is a backwards branch in the bytecodes, add Safepoint
-  maybe_add_safepoint(target_bci);
-
   explicit_null_checks_inserted++;
-  Node* a = null();
-  Node* b = pop();  
-  Node* c = _gvn.transform( new (C, 3) CmpPNode(b, a) );
-
-  // Make a cast-away-nullness that is control dependent on the test
-  const Type *t = _gvn.type(b);
-  const Type *t_not_null = t->join(TypePtr::NOTNULL);
-  Node *cast = new (C, 2) CastPPNode(b,t_not_null);
 
   // Generate real control flow
   Node   *tst = _gvn.transform( new (C, 2) BoolNode( c, btest ) );
@@ -990,7 +993,7 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   if (prob == PROB_UNKNOWN) {
 #ifndef PRODUCT
     if (PrintOpto && Verbose)
-      tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
+      tty->print_cr("Never-taken edge stops compilation at bci %d",bci());
 #endif
     repush_if_args(); // to gather stats on loop
     // We need to mark this branch as taken so that if we recompile we will
@@ -1026,10 +1029,27 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   Node* tst = _gvn.transform(tst0);
   BoolTest::mask taken_btest   = BoolTest::illegal;
   BoolTest::mask untaken_btest = BoolTest::illegal;
-  if (btest == BoolTest::ne) {
-    // For now, these are the only cases of btest that matter.  (More later.)
-    taken_btest   = taken_if_true ?        btest : BoolTest::eq;
-    untaken_btest = taken_if_true ? BoolTest::eq :        btest;
+
+  if (tst->is_Bool()) {
+    // Refresh c from the transformed bool node, since it may be
+    // simpler than the original c.  Also re-canonicalize btest.
+    // This wins when (Bool ne (Conv2B p) 0) => (Bool ne (CmpP p NULL)).
+    // That can arise from statements like: if (x instanceof C) ...
+    if (tst != tst0) {
+      // Canonicalize one more time since transform can change it.
+      btest = tst->as_Bool()->_test._test;
+      if (!BoolTest(btest).is_canonical()) {
+        // Reverse edges one more time...
+        tst   = _gvn.transform( tst->as_Bool()->negate(&_gvn) );
+        btest = tst->as_Bool()->_test._test;
+        assert(BoolTest(btest).is_canonical(), "sanity");
+        taken_if_true = !taken_if_true;
+      }
+      c = tst->in(1);
+    }
+    BoolTest::mask neg_btest = BoolTest(btest).negate();
+    taken_btest   = taken_if_true ?     btest : neg_btest;
+    untaken_btest = taken_if_true ? neg_btest :     btest;
   }
 
   // Generate real control flow
@@ -2077,11 +2097,15 @@ void Parse::do_one_bytecode() {
     break;
   }
 
-  case Bytecodes::_ifnull:
-    do_ifnull(BoolTest::eq);
-    break;
-  case Bytecodes::_ifnonnull:
-    do_ifnull(BoolTest::ne);
+  case Bytecodes::_ifnull:    btest = BoolTest::eq; goto handle_if_null;
+  case Bytecodes::_ifnonnull: btest = BoolTest::ne; goto handle_if_null;
+  handle_if_null:
+    // If this is a backwards branch in the bytecodes, add Safepoint
+    maybe_add_safepoint(iter().get_dest());
+    a = null();
+    b = pop();
+    c = _gvn.transform( new (C, 3) CmpPNode(b, a) );
+    do_ifnull(btest, c);
     break;
 
   case Bytecodes::_if_acmpeq: btest = BoolTest::eq; goto handle_if_acmp;
@@ -2197,7 +2221,7 @@ void Parse::do_one_bytecode() {
     sprintf(buffer, "Bytecode %d: %s", bci(), Bytecodes::name(bc()));
     bool old = printer->traverse_outs();
     printer->set_traverse_outs(true);
-    printer->print_method(C, buffer, 3);
+    printer->print_method(C, buffer, 4);
     printer->set_traverse_outs(old);
   }
 #endif

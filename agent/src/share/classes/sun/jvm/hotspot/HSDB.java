@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1011,8 +1011,21 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                         Assert.that(addr.andWithMask(VM.getVM().getAddressSize() - 1) == null,
                                     "Address " + addr + "should have been aligned");
                       }
-                      // Check contents
                       OopHandle handle = addr.getOopHandleAt(0);
+                      addAnnotation(addr, handle);
+                    }
+
+                    public void visitCompOopAddress(Address addr) {
+                      if (Assert.ASSERTS_ENABLED) {
+                        Assert.that(addr.andWithMask(VM.getVM().getAddressSize() - 1) == null,
+                                    "Address " + addr + "should have been aligned");
+                      }
+                      OopHandle handle = addr.getCompOopHandleAt(0);
+                      addAnnotation(addr, handle);
+                    }
+
+                    public void addAnnotation(Address addr, OopHandle handle) {
+                      // Check contents
                       String anno = "null oop";
                       if (handle != null) {
                         // Find location

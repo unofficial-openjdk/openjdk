@@ -2,7 +2,7 @@
 #pragma ident "@(#)vm_operations.hpp	1.130 07/05/23 10:54:21 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,11 +52,16 @@
   template(GenCollectFull)                        \
   template(GenCollectFullConcurrent)              \
   template(GenCollectForAllocation)               \
+  template(GenCollectForPermanentAllocation)      \
   template(ParallelGCFailedAllocation)            \
   template(ParallelGCFailedPermanentAllocation)   \
   template(ParallelGCSystemGC)                    \
+  template(CGC_Operation)                         \
   template(CMS_Initial_Mark)                      \
   template(CMS_Final_Remark)                      \
+  template(G1CollectFull)                         \
+  template(G1CollectForAllocation)                \
+  template(G1IncCollectionPause)                  \
   template(EnableBiasedLocking)                   \
   template(RevokeBias)                            \
   template(BulkRevokeBias)                        \

@@ -2,7 +2,7 @@
 #pragma ident "@(#)connode.cpp	1.222 07/10/16 13:32:21 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,13 +40,14 @@ uint ConNode::hash() const {
 ConNode *ConNode::make( Compile* C, const Type *t ) {
   switch( t->basic_type() ) {
   case T_INT:       return new (C, 1) ConINode( t->is_int() );
-  case T_ARRAY:     return new (C, 1) ConPNode( t->is_aryptr() );
   case T_LONG:      return new (C, 1) ConLNode( t->is_long() );
   case T_FLOAT:     return new (C, 1) ConFNode( t->is_float_constant() );
   case T_DOUBLE:    return new (C, 1) ConDNode( t->is_double_constant() );
   case T_VOID:      return new (C, 1) ConNode ( Type::TOP );
   case T_OBJECT:    return new (C, 1) ConPNode( t->is_oopptr() );
+  case T_ARRAY:     return new (C, 1) ConPNode( t->is_aryptr() );
   case T_ADDRESS:   return new (C, 1) ConPNode( t->is_ptr() );
+  case T_NARROWOOP: return new (C, 1) ConNNode( t->is_narrowoop() );
     // Expected cases:  TypePtr::NULL_PTR, any is_rawptr()
     // Also seen: AnyPtr(TopPTR *+top); from command line:
     //   r -XX:+PrintOpto -XX:CIStart=285 -XX:+CompileTheWorld -XX:CompileTheWorldStartAt=660
@@ -103,8 +104,10 @@ matter ever).
 // Move constants to the right.
 Node *CMoveNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( in(0) && remove_dead_region(phase, can_reshape) ) return this;
-  assert( !phase->eqv(in(Condition), this) &&  
-          !phase->eqv(in(IfFalse), this) && 
+  // Don't bother trying to transform a dead node
+  if( in(0) && in(0)->is_top() )  return NULL;
+  assert( !phase->eqv(in(Condition), this) &&
+          !phase->eqv(in(IfFalse), this) &&
           !phase->eqv(in(IfTrue), this), "dead loop in CMoveNode::Ideal" );
   if( phase->type(in(Condition)) == Type::TOP )
     return NULL; // return NULL when Condition is dead
@@ -187,6 +190,7 @@ CMoveNode *CMoveNode::make( Compile *C, Node *c, Node *bol, Node *left, Node *ri
   case T_LONG:    return new (C, 4) CMoveLNode( bol, left, right, t->is_long() );
   case T_OBJECT:  return new (C, 4) CMovePNode( c, bol, left, right, t->is_oopptr() );
   case T_ADDRESS: return new (C, 4) CMovePNode( c, bol, left, right, t->is_ptr() );
+  case T_NARROWOOP: return new (C, 4) CMoveNNode( c, bol, left, right, t );
   default:
     ShouldNotReachHere();
     return NULL;
@@ -432,8 +436,8 @@ Node *ConstraintCastNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
 // If not converting int->oop, throw away cast after constant propagation
 Node *CastPPNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
   const Type *t = ccp->type(in(1));
-  if (!t->isa_oop_ptr()) {
-    return NULL;                // do not transform raw pointers
+  if (!t->isa_oop_ptr() || in(1)->is_DecodeN()) {
+    return NULL; // do not transform raw pointers or narrow oops
   }
   return ConstraintCastNode::Ideal_DU_postCCP(ccp);
 }
@@ -464,7 +468,8 @@ static bool can_cause_alias(Node *n, PhaseTransform *phase) {
     possible_alias = n->is_Phi() ||
         opc == Op_CheckCastPP ||
         opc == Op_StorePConditional ||
-        opc == Op_CompareAndSwapP;
+        opc == Op_CompareAndSwapP ||
+        opc == Op_CompareAndSwapN;
   }
   return possible_alias;
 }
@@ -550,6 +555,52 @@ const Type *CheckCastPPNode::Value( PhaseTransform *phase ) const {
 // control copies
 Node *CheckCastPPNode::Ideal(PhaseGVN *phase, bool can_reshape){
   return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL; 
+}
+
+
+Node* DecodeNNode::Identity(PhaseTransform* phase) {
+  const Type *t = phase->type( in(1) );
+  if( t == Type::TOP ) return in(1);
+
+  if (in(1)->is_EncodeP()) {
+    // (DecodeN (EncodeP p)) -> p
+    return in(1)->in(1);
+  }
+  return this;
+}
+
+const Type *DecodeNNode::Value( PhaseTransform *phase ) const {
+  const Type *t = phase->type( in(1) );
+  if (t == Type::TOP) return Type::TOP;
+  if (t == TypeNarrowOop::NULL_PTR) return TypePtr::NULL_PTR;
+
+  assert(t->isa_narrowoop(), "only  narrowoop here");
+  return t->make_ptr();
+}
+
+Node* EncodePNode::Identity(PhaseTransform* phase) {
+  const Type *t = phase->type( in(1) );
+  if( t == Type::TOP ) return in(1);
+
+  if (in(1)->is_DecodeN()) {
+    // (EncodeP (DecodeN p)) -> p
+    return in(1)->in(1);
+  }
+  return this;
+}
+
+const Type *EncodePNode::Value( PhaseTransform *phase ) const {
+  const Type *t = phase->type( in(1) );
+  if (t == Type::TOP) return Type::TOP;
+  if (t == TypePtr::NULL_PTR) return TypeNarrowOop::NULL_PTR;
+
+  assert(t->isa_oopptr(), "only oopptr here");
+  return t->make_narrowoop();
+}
+
+
+Node *EncodePNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
+  return MemNode::Ideal_common_DU_postCCP(ccp, this, in(1));
 }
 
 //=============================================================================
@@ -985,34 +1036,9 @@ Node *ConvL2INode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return new (phase->C, 3) AddINode(add1,add2);
   }
 
-  // Fold up with a prior LoadL: LoadL->ConvL2I ==> LoadI
-  // Requires we understand the 'endianess' of Longs.
-  if( andl_op == Op_LoadL ) { 
-    Node *adr = andl->in(MemNode::Address);
-    // VM_LITTLE_ENDIAN is #defined appropriately in the Makefiles
-#ifndef VM_LITTLE_ENDIAN
-    // The transformation can cause problems on BIG_ENDIAN architectures
-    // where the jint is not the same address as the jlong. Specifically, we
-    // will fail to insert an anti-dependence in GCM between the LoadI and a
-    // subsequent StoreL because different memory offsets provoke
-    // flatten_alias_type() into indicating two different types.  See bug
-    // 4755222.
-    
-    // Node *base = adr->is_AddP() ? adr->in(AddPNode::Base) : adr;
-    // adr = phase->transform( new (phase->C, 4) AddPNode(base,adr,phase->MakeConX(sizeof(jint))));
-    return NULL;
-#else
-    if (phase->C->alias_type(andl->adr_type())->is_volatile()) {
-      // Picking up the low half by itself bypasses the atomic load and we could
-      // end up with more than one non-atomic load.  See bugs 4432655 and 4526490.
-      // We could go to the trouble of iterating over andl's output edges and
-      // punting only if there's more than one real use, but we don't bother.
-      return NULL;
-    }
-    return new (phase->C, 3) LoadINode(andl->in(MemNode::Control),andl->in(MemNode::Memory),adr,((LoadLNode*)andl)->raw_adr_type());
-#endif
-  }
-
+  // Disable optimization: LoadL->ConvL2I ==> LoadI.
+  // It causes problems (sizes of Load and Store nodes do not match)
+  // in objects initialization code and Escape Analysis.
   return NULL;
 }
 

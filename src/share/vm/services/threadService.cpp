@@ -2,7 +2,7 @@
 #pragma ident "@(#)threadService.cpp	1.54 07/05/17 16:07:12 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -544,6 +544,7 @@ bool ThreadStackTrace::is_owned_monitor_on_stack(oop object) {
 
 Handle ThreadStackTrace::allocate_fill_stack_trace_element_array(TRAPS) {
   klassOop k = SystemDictionary::stackTraceElement_klass();
+  assert(k != NULL, "must be loaded in 1.4+");
   instanceKlassHandle ik(THREAD, k);
 
   // Allocate an array of java/lang/StackTraceElement object
@@ -746,7 +747,7 @@ ThreadSnapshot::ThreadSnapshot(JavaThread* thread) {
   }
 
   // Support for JSR-166 locks
-  if (JDK_Version::supports_thread_park_blocker() &&
+  if (JDK_Version::current().supports_thread_park_blocker() &&
         (_thread_status == java_lang_Thread::PARKED ||
          _thread_status == java_lang_Thread::PARKED_TIMED)) {
 

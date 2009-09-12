@@ -2,7 +2,7 @@
 #pragma ident "@(#)jvmtiTagMap.cpp	1.85 07/06/27 00:30:05 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -403,16 +403,28 @@ MemRegion JvmtiTagMap::_young_gen;
 
 // get the memory region used for the young generation
 void JvmtiTagMap::get_young_generation() {
-  if (Universe::heap()->kind() == CollectedHeap::GenCollectedHeap) {
-    GenCollectedHeap* gch = GenCollectedHeap::heap();
-    _young_gen = gch->get_gen(0)->reserved();
-  } else {
+  CollectedHeap* ch = Universe::heap();
+  switch (ch->kind()) {
+    case (CollectedHeap::GenCollectedHeap): {
+      _young_gen = ((GenCollectedHeap*)ch)->get_gen(0)->reserved();
+      break;
+    }
 #ifndef SERIALGC
-    ParallelScavengeHeap* psh = ParallelScavengeHeap::heap();
-    _young_gen= psh->young_gen()->reserved();
-#else  // SERIALGC
-    fatal("SerialGC only supported in this configuration.");
-#endif // SERIALGC
+    case (CollectedHeap::ParallelScavengeHeap): {
+      _young_gen = ((ParallelScavengeHeap*)ch)->young_gen()->reserved();
+      break;
+    }
+    case (CollectedHeap::G1CollectedHeap): {
+      // Until a more satisfactory solution is implemented, all
+      // oops in the tag map will require rehash at each gc.
+      // This is a correct, if extremely inefficient solution.
+      // See RFE 6621729 for related commentary.
+      _young_gen = ch->reserved_region();
+      break;
+    }
+#endif  // !SERIALGC
+    default:
+      ShouldNotReachHere();
   }
 }
 
@@ -2665,6 +2677,7 @@ class SimpleRootsClosure : public OopClosure {
     _continue = CallbackInvoker::report_simple_root(kind, o);
    
   }
+  virtual void do_oop(narrowOop* obj_p) { ShouldNotReachHere(); }
 };
 
 // A supporting closure used to process JNI locals
@@ -2707,6 +2720,7 @@ class JNILocalRootsClosure : public OopClosure {
     // invoke the callback    
     _continue = CallbackInvoker::report_jni_local_root(_thread_tag, _tid, _depth, _method, o);
   }
+  virtual void do_oop(narrowOop* obj_p) { ShouldNotReachHere(); }
 };
 
 
@@ -2881,9 +2895,11 @@ inline bool VM_HeapWalkOperation::iterate_over_type_array(oop o) {
 }
 
 // verify that a static oop field is in range
-static inline bool verify_static_oop(instanceKlass* ik, oop* obj_p) {
-  oop* start = ik->start_of_static_fields();
-  oop* end = start + ik->static_oop_field_size();
+static inline bool verify_static_oop(instanceKlass* ik,
+                                     klassOop k, int offset) {
+  address obj_p = (address)k + offset;
+  address start = (address)ik->start_of_static_fields();
+  address end = start + (ik->static_oop_field_size() * heapOopSize);
   assert(end >= start, "sanity check");
   
   if (obj_p >= start && obj_p < end) {
@@ -2982,26 +2998,15 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
     ClassFieldMap* field_map = ClassFieldMap::create_map_of_static_fields(k);
     for (i=0; i<field_map->field_count(); i++) {
       ClassFieldDescriptor* field = field_map->field_at(i);
-      char type = field->field_type();  
-      if (!is_primitive_field_type(type)) {	 
-        address addr = (address)k + field->field_offset();
-	oop* f = (oop*)addr;
-	assert(verify_static_oop(ik, f), "sanity check");
-	oop fld_o = *f;
-	if (fld_o != NULL) {	 
-	  int slot = field->field_index();
-	  if (!CallbackInvoker::report_static_field_reference(mirror, fld_o, slot)) {
-	    delete field_map;
-	    return false;
-	  }
-	}	  
-      } else {
-	 if (is_reporting_primitive_fields()) {
-	   address addr = (address)k + field->field_offset();
-	   int slot = field->field_index();
-           if (!CallbackInvoker::report_primitive_static_field(mirror, slot, addr, type)) {                       
-	     delete field_map;
-             return false;            
+      char type = field->field_type();
+      if (!is_primitive_field_type(type)) {
+        oop fld_o = k->obj_field(field->field_offset());
+        assert(verify_static_oop(ik, k, field->field_offset()), "sanity check");
+        if (fld_o != NULL) {
+          int slot = field->field_index();
+          if (!CallbackInvoker::report_static_field_reference(mirror, fld_o, slot)) {
+            delete field_map;
+            return false;
           }
         }	  	 
       }
@@ -3029,9 +3034,7 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
     ClassFieldDescriptor* field = field_map->field_at(i);
     char type = field->field_type();
     if (!is_primitive_field_type(type)) {
-      address addr = (address)o + field->field_offset();
-      oop* f = (oop*)addr;
-      oop fld_o = *f;
+      oop fld_o = o->obj_field(field->field_offset());
       if (fld_o != NULL) {
  	// reflection code may have a reference to a klassOop.
 	// - see sun.reflect.UnsafeStaticFieldAccessorImpl and sun.misc.Unsafe

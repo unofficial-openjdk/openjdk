@@ -2,7 +2,7 @@
 #pragma ident "@(#)gcLocker.cpp	1.52 07/05/17 15:54:45 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,12 @@ volatile bool GC_locker::_doing_gc       = false;
 
 void GC_locker::stall_until_clear() {
   assert(!JavaThread::current()->in_critical(), "Would deadlock");
+  if (PrintJNIGCStalls && PrintGCDetails) {
+    ResourceMark rm; // JavaThread::name() allocates to convert to UTF8
+    gclog_or_tty->print_cr(
+      "Allocation failed. Thread \"%s\" is stalled by JNI critical section.",
+      JavaThread::current()->name());
+  }
   MutexLocker   ml(JNICritical_lock);
   // Wait for _needs_gc  to be cleared
   while (GC_locker::needs_gc()) {

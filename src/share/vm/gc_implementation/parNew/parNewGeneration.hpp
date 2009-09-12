@@ -2,7 +2,7 @@
 #pragma ident "@(#)parNewGeneration.hpp	1.48 07/05/17 15:52:44 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,24 +36,29 @@ class ParEvacuateFollowersClosure;
 // but they must be here to allow ParScanClosure::do_oop_work to be defined 
 // in genOopClosures.inline.hpp.
 
-
-typedef OopTaskQueue    ObjToScanQueue;
-typedef OopTaskQueueSet ObjToScanQueueSet;
+typedef OopTaskQueue       ObjToScanQueue;
+typedef OopTaskQueueSet    ObjToScanQueueSet;
 
 // Enable this to get push/pop/steal stats.
 const int PAR_STATS_ENABLED = 0;
 
 class ParKeepAliveClosure: public DefNewGeneration::KeepAliveClosure {
+ private:
   ParScanWeakRefClosure* _par_cl;
+ protected:
+  template <class T> void do_oop_work(T* p);
  public:
   ParKeepAliveClosure(ParScanWeakRefClosure* cl);
-  void do_oop(oop* p);
+  virtual void do_oop(oop* p);
+  virtual void do_oop(narrowOop* p);
 };
 
 // The state needed by thread performing parallel young-gen collection.
 class ParScanThreadState {
   friend class ParScanThreadStateSet;
+ private:
   ObjToScanQueue *_work_queue;
+  GrowableArray<oop>* _overflow_stack;
 
   ParGCAllocBuffer _to_space_alloc_buffer;
 
@@ -77,6 +82,9 @@ class ParScanThreadState {
 
   Space* _to_space;
   Space* to_space() { return _to_space; }
+
+  ParNewGeneration* _young_gen;
+  ParNewGeneration* young_gen() const { return _young_gen; }
 
   Generation* _old_gen;
   Generation* old_gen() { return _old_gen; }
@@ -111,10 +119,12 @@ class ParScanThreadState {
 
   ParScanThreadState(Space* to_space_, ParNewGeneration* gen_, 
                      Generation* old_gen_, int thread_num_,
-                     ObjToScanQueueSet* work_queue_set_, size_t desired_plab_sz_,
+                     ObjToScanQueueSet* work_queue_set_,
+                     GrowableArray<oop>** overflow_stack_set_,
+                     size_t desired_plab_sz_,
                      ParallelTaskTerminator& term_);
 
-public:
+ public:
   ageTable* age_table() {return &_ageTable;}
   
   ObjToScanQueue* work_queue() { return _work_queue; }
@@ -132,6 +142,11 @@ public:
 
   // Decrease queue size below "max_size".
   void trim_queues(int max_size);
+
+  // Private overflow stack usage
+  GrowableArray<oop>* overflow_stack() { return _overflow_stack; }
+  bool take_from_overflow_stack();
+  void push_on_overflow_stack(oop p);
 
   // Is new_obj a candidate for scan_partial_array_and_push_remainder method.
   inline bool should_be_partially_scanned(oop new_obj, oop old_obj) const;
@@ -198,13 +213,13 @@ public:
   double elapsed() {
     return os::elapsedTime() - _start;
   }
-
 };
 
 class ParNewGenTask: public AbstractGangTask {
-  ParNewGeneration* _gen;
-  Generation* _next_gen;
-  HeapWord* _young_old_boundary;
+ private:
+  ParNewGeneration*            _gen;
+  Generation*                  _next_gen;
+  HeapWord*                    _young_old_boundary;
   class ParScanThreadStateSet* _state_set;
 
 public:
@@ -219,35 +234,44 @@ public:
 };
 
 class KeepAliveClosure: public DefNewGeneration::KeepAliveClosure {
+ protected:
+  template <class T> void do_oop_work(T* p);
  public:
   KeepAliveClosure(ScanWeakRefClosure* cl);
-  void do_oop(oop* p);
+  virtual void do_oop(oop* p);
+  virtual void do_oop(narrowOop* p);
 };
 
 class EvacuateFollowersClosureGeneral: public VoidClosure {
-    GenCollectedHeap* _gch;
-    int _level;
-    OopsInGenClosure* _scan_cur_or_nonheap;
-    OopsInGenClosure* _scan_older;
-  public:
-    EvacuateFollowersClosureGeneral(GenCollectedHeap* gch, int level,
-                                    OopsInGenClosure* cur,
-                                    OopsInGenClosure* older);
-    void do_void();
+ private:
+  GenCollectedHeap* _gch;
+  int               _level;
+  OopsInGenClosure* _scan_cur_or_nonheap;
+  OopsInGenClosure* _scan_older;
+ public:
+  EvacuateFollowersClosureGeneral(GenCollectedHeap* gch, int level,
+                                  OopsInGenClosure* cur,
+                                  OopsInGenClosure* older);
+  virtual void do_void();
 };
 
 // Closure for scanning ParNewGeneration.
 // Same as ScanClosure, except does parallel GC barrier.
 class ScanClosureWithParBarrier: public ScanClosure {
-public:
+ protected:
+  template <class T> void do_oop_work(T* p);
+ public:
   ScanClosureWithParBarrier(ParNewGeneration* g, bool gc_barrier);
-  void do_oop(oop* p);
+  virtual void do_oop(oop* p);
+  virtual void do_oop(narrowOop* p);
 };
 
 // Implements AbstractRefProcTaskExecutor for ParNew.
 class ParNewRefProcTaskExecutor: public AbstractRefProcTaskExecutor {
-public:
-
+ private:
+  ParNewGeneration&      _generation;
+  ParScanThreadStateSet& _state_set;
+ public:
   ParNewRefProcTaskExecutor(ParNewGeneration& generation,
                             ParScanThreadStateSet& state_set)
     : _generation(generation), _state_set(state_set)
@@ -258,9 +282,6 @@ public:
   virtual void execute(EnqueueTask& task);
   // Switch to single threaded mode.
   virtual void set_single_threaded_mode();
-private:
-  ParNewGeneration&      _generation;
-  ParScanThreadStateSet& _state_set;
 };
 
 
@@ -272,14 +293,18 @@ class ParNewGeneration: public DefNewGeneration {
   friend class ParNewRefProcTaskExecutor;
   friend class ParScanThreadStateSet;
 
+ private:
   // XXX use a global constant instead of 64!
   struct ObjToScanQueuePadded {
         ObjToScanQueue work_queue;
         char pad[64 - sizeof(ObjToScanQueue)];  // prevent false sharing
   };
 
-  // The per-thread work queues, available here for stealing.
+  // The per-worker-thread work queues
   ObjToScanQueueSet* _task_queues;
+
+  // Per-worker-thread local overflow stacks
+  GrowableArray<oop>** _overflow_stacks;
 
   // Desired size of survivor space plab's
   PLABStats _plab_stats;
@@ -317,7 +342,7 @@ class ParNewGeneration: public DefNewGeneration {
   // the details of the policy.
   virtual void adjust_desired_tenuring_threshold();
 
-public:
+ public:
   ParNewGeneration(ReservedSpace rs, size_t initial_byte_size, int level);
 
   ~ParNewGeneration() {
@@ -364,13 +389,21 @@ public:
   oop copy_to_survivor_space_with_undo(ParScanThreadState* par_scan_state,
 			     oop obj, size_t obj_sz, markOop m);
 
+  // in support of testing overflow code
+  NOT_PRODUCT(int _overflow_counter;)
+  NOT_PRODUCT(bool should_simulate_overflow();)
+
+  // Accessor for overflow list
+  oop overflow_list() { return _overflow_list; }
+
   // Push the given (from-space) object on the global overflow list.
-  void push_on_overflow_list(oop from_space_obj);
+  void push_on_overflow_list(oop from_space_obj, ParScanThreadState* par_scan_state);
 
   // If the global overflow list is non-empty, move some tasks from it
   // onto "work_q" (which must be empty).  No more than 1/4 of the
   // max_elems of "work_q" are moved.
   bool take_from_overflow_list(ParScanThreadState* par_scan_state);
+  bool take_from_overflow_list_work(ParScanThreadState* par_scan_state);
 
   // The task queues to be used by parallel GC threads.
   ObjToScanQueueSet* task_queues() {

@@ -2,7 +2,7 @@
 #pragma ident "@(#)vmreg.cpp	1.35 07/05/05 17:05:22 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,16 +39,14 @@ const int VMRegImpl::register_count = ConcreteRegisterImpl::number_of_registers;
 // Register names
 const char *VMRegImpl::regName[ConcreteRegisterImpl::number_of_registers];
 
-void VMRegImpl::print() {
-#ifndef PRODUCT
+void VMRegImpl::print_on(outputStream* st) const {
   if( is_reg() ) {
     assert( VMRegImpl::regName[value()], "" );
-    tty->print("%s",VMRegImpl::regName[value()]);
+    st->print("%s",VMRegImpl::regName[value()]);
   } else if (is_stack()) {
     int stk = value() - stack0->value();
-    tty->print("[%d]", stk*4);
+    st->print("[%d]", stk*4);
   } else {
-    tty->print("BAD!");
+    st->print("BAD!");
   }
-#endif // PRODUCT
 }

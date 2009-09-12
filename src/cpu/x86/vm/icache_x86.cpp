@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)icache_x86.cpp	1.22 07/09/17 09:33:47 JVM"
-#endif
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -51,7 +48,7 @@ void ICacheStubGenerator::generate_icache_flush(ICache::flush_icache_stub_t* flu
 
   __ bind(flush_line);
   __ clflush(Address(addr, 0));
-  __ addq(addr, ICache::line_size);
+  __ addptr(addr, ICache::line_size);
   __ decrementl(lines);
   __ jcc(Assembler::notZero, flush_line);
 
@@ -63,7 +60,7 @@ void ICacheStubGenerator::generate_icache_flush(ICache::flush_icache_stub_t* flu
   const Address magic(rsp, 3*wordSize);
   __ lock(); __ addl(Address(rsp, 0), 0);
 #endif // AMD64
-  __ movl(rax, magic); // Handshake with caller to make sure it happened!
+  __ movptr(rax, magic); // Handshake with caller to make sure it happened!
   __ ret(0);
 
   // Must be set here so StubCodeMark destructor can call the flush stub.

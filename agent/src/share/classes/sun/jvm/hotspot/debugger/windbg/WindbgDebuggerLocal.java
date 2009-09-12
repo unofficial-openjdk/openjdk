@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import sun.jvm.hotspot.debugger.cdbg.*;
 import sun.jvm.hotspot.debugger.cdbg.basic.BasicDebugEvent;
 import sun.jvm.hotspot.utilities.*;
 import sun.jvm.hotspot.utilities.memo.*;
+import sun.jvm.hotspot.runtime.*;
 
 /** <P> An implementation of the JVMDebugger interface which talks to
     windbg and symbol table management is done in Java. </P>
@@ -315,10 +316,20 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
     return (WindbgAddress) newAddress(readAddressValue(address));
   }
 
+  public WindbgAddress readCompOopAddress(long address)
+    throws UnmappedAddressException, UnalignedAddressException {
+    return (WindbgAddress) newAddress(readCompOopAddressValue(address));
+  }
+
   /** From the WindbgDebugger interface */
   public WindbgOopHandle readOopHandle(long address)
     throws UnmappedAddressException, UnalignedAddressException, NotInHeapException {
     long value = readAddressValue(address);
+    return (value == 0 ? null : new WindbgOopHandle(this, value));
+  }
+  public WindbgOopHandle readCompOopHandle(long address)
+    throws UnmappedAddressException, UnalignedAddressException, NotInHeapException {
+    long value = readCompOopAddressValue(address);
     return (value == 0 ? null : new WindbgOopHandle(this, value));
   }
 

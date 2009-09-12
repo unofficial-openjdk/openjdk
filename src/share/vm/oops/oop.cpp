@@ -2,7 +2,7 @@
 #pragma ident "@(#)oop.cpp	1.99 07/05/29 09:44:21 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,10 +108,14 @@ void oopDesc::verify() {
 }
 
 
+// XXX verify_old_oop doesn't do anything (should we remove?)
 void oopDesc::verify_old_oop(oop* p, bool allow_dirty) {
   blueprint()->oop_verify_old_oop(this, p, allow_dirty);
 }
 
+void oopDesc::verify_old_oop(narrowOop* p, bool allow_dirty) {
+  blueprint()->oop_verify_old_oop(this, p, allow_dirty);
+}
 
 bool oopDesc::partially_loaded() {
   return blueprint()->oop_partially_loaded(this);
@@ -133,3 +137,6 @@ intptr_t oopDesc::slow_identity_hash() {
 }
 
 VerifyOopClosure VerifyOopClosure::verify_oop;
+
+void VerifyOopClosure::do_oop(oop* p)       { VerifyOopClosure::do_oop_work(p); }
+void VerifyOopClosure::do_oop(narrowOop* p) { VerifyOopClosure::do_oop_work(p); }

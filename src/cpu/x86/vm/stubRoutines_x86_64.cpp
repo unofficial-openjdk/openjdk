@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)stubRoutines_x86_64.cpp	1.13 07/09/17 09:26:00 JVM"
-#endif
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -31,17 +28,16 @@
 // Implementation of the platform-specific part of StubRoutines - for
 // a description of how to extend it, see the stubRoutines.hpp file.
 
-address StubRoutines::amd64::_get_previous_fp_entry = NULL;
+address StubRoutines::x86::_get_previous_fp_entry = NULL;
 
-address StubRoutines::amd64::_verify_mxcsr_entry = NULL;
+address StubRoutines::x86::_verify_mxcsr_entry = NULL;
 
-address StubRoutines::amd64::_f2i_fixup = NULL;
-address StubRoutines::amd64::_f2l_fixup = NULL;
-address StubRoutines::amd64::_d2i_fixup = NULL;
-address StubRoutines::amd64::_d2l_fixup = NULL;
-address StubRoutines::amd64::_float_sign_mask = NULL;
-address StubRoutines::amd64::_float_sign_flip = NULL;
-address StubRoutines::amd64::_double_sign_mask = NULL;
-address StubRoutines::amd64::_double_sign_flip = NULL;
-address StubRoutines::amd64::_mxcsr_std = NULL;
-
+address StubRoutines::x86::_f2i_fixup = NULL;
+address StubRoutines::x86::_f2l_fixup = NULL;
+address StubRoutines::x86::_d2i_fixup = NULL;
+address StubRoutines::x86::_d2l_fixup = NULL;
+address StubRoutines::x86::_float_sign_mask = NULL;
+address StubRoutines::x86::_float_sign_flip = NULL;
+address StubRoutines::x86::_double_sign_mask = NULL;
+address StubRoutines::x86::_double_sign_flip = NULL;
+address StubRoutines::x86::_mxcsr_std = NULL;

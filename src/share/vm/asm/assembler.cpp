@@ -2,7 +2,7 @@
 #pragma ident "@(#)assembler.cpp	1.41 07/05/05 17:05:03 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -249,6 +249,21 @@ void AbstractAssembler::block_comment(const char* comment) {
   }
 }
 
+bool MacroAssembler::needs_explicit_null_check(intptr_t offset) {
+  // Exception handler checks the nmethod's implicit null checks table
+  // only when this method returns false.
+  if (UseCompressedOops) {
+    // The first page after heap_base is unmapped and
+    // the 'offset' is equal to [heap_base + offset] for
+    // narrow oop implicit null checks.
+    uintptr_t heap_base = (uintptr_t)Universe::heap_base();
+    if ((uintptr_t)offset >= heap_base) {
+      // Normalize offset for the next check.
+      offset = (intptr_t)(pointer_delta((void*)offset, (void*)heap_base, 1));
+    }
+  }
+  return offset < 0 || os::vm_page_size() <= offset;
+}
 
 #ifndef PRODUCT
 void Label::print_instructions(MacroAssembler* masm) const {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -90,7 +90,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
    // Accessing block offset table
    public CMSCollector collector() {
     return (CMSCollector) VMObjectFactory.newObject(
-                                 CMSCollector.class, 
+                                 CMSCollector.class,
                                  collectorField.getValue(addr));
    }
 
@@ -122,7 +122,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
          size += i*freeList.count();
          cur= cur.addOffsetTo(IndexSetStride*FreeList.sizeOf());
       }
-      
+
       // large block
       BinaryTreeDictionary bfbd = (BinaryTreeDictionary) VMObjectFactory.newObject(BinaryTreeDictionary.class,
                                                                                    dictionaryField.getValue(addr));
@@ -179,7 +179,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
          // FIXME: need to do a better job here.
          // can I use bitMap here?
          if (klassOop == null) {
-            //Find the object size using Printezis bits and skip over 
+            //Find the object size using Printezis bits and skip over
             System.err.println("Finding object size using Printezis bits and skipping over...");
             long size = collector().blockSizeUsingPrintezisBits(cur);
             if (size == -1) {
@@ -189,7 +189,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
             cur = cur.addOffsetTo(adjustObjectSizeInBytes(size));
          }
 
-         if (FreeChunk.secondWordIndicatesFreeChunk(dbg.getAddressValue(klassOop))) {
+         if (FreeChunk.indicatesFreeChunk(cur)) {
             if (! cur.equals(regionStart)) {
                res.add(new MemRegion(regionStart, cur));
             }

@@ -2,7 +2,7 @@
 #pragma ident "@(#)immutableSpace.hpp	1.14 07/05/05 17:05:33 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,8 @@ class ImmutableSpace: public CHeapObj {
   size_t capacity_in_bytes() const            { return capacity_in_words() * HeapWordSize; }
 
   // Size computations.  Sizes are in heapwords.
-  size_t capacity_in_words() const            { return pointer_delta(end(), bottom()); }
+  size_t capacity_in_words() const                { return pointer_delta(end(), bottom()); }
+  virtual size_t capacity_in_words(Thread*) const { return capacity_in_words(); }
 
   // Iteration.
   virtual void oop_iterate(OopClosure* cl);
@@ -62,5 +63,5 @@ class ImmutableSpace: public CHeapObj {
   // Debugging
   virtual void print() const            PRODUCT_RETURN;
   virtual void print_short() const      PRODUCT_RETURN;
-  virtual void verify(bool allow_dirty) const;
+  virtual void verify(bool allow_dirty);
 };

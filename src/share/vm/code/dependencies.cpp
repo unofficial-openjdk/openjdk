@@ -2,7 +2,7 @@
 #pragma ident "@(#)dependencies.cpp	1.18 08/02/29 12:46:18 JVM"
 #endif
 /*
- * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1502,9 +1502,12 @@ bool DepChange::ContextStream::next() {
     // fall through:
     _change_type = Change_new_sub;
   case Change_new_sub:
-    _klass = instanceKlass::cast(_klass)->super();
-    if (_klass != NULL) {
-      return true;
+    // 6598190: brackets workaround Sun Studio C++ compiler bug 6629277
+    {
+      _klass = instanceKlass::cast(_klass)->super();
+      if (_klass != NULL) {
+        return true;
+      }
     }
     // else set up _ti_limit and fall through:
     _ti_limit = (_ti_base == NULL) ? 0 : _ti_base->length();

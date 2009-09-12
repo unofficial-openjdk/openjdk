@@ -2,7 +2,7 @@
 #pragma ident "@(#)locknode.hpp	1.40 07/09/28 10:23:10 JVM"
 #endif
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ class BoxLockNode : public Node {
 public:
   const int _slot;
   RegMask   _inmask;
+  bool _is_eliminated;    // indicates this lock was safely eliminated
 
   BoxLockNode( int lock );
   virtual int Opcode() const;
@@ -38,12 +39,16 @@ public:
   virtual const RegMask &in_RegMask(uint) const;
   virtual const RegMask &out_RegMask() const;
   virtual uint size_of() const;
-  virtual uint hash() const { return Node::hash() + _slot; }
+  virtual uint hash() const;
   virtual uint cmp( const Node &n ) const;
   virtual const class Type *bottom_type() const { return TypeRawPtr::BOTTOM; }
   virtual uint ideal_reg() const { return Op_RegP; }
 
   static OptoReg::Name stack_slot(Node* box_node);
+
+  bool is_eliminated()  { return _is_eliminated; }
+  // mark lock as eliminated.
+  void set_eliminated() { _is_eliminated = true; }
 
 #ifndef PRODUCT
   virtual void format( PhaseRegAlloc *, outputStream *st ) const;

@@ -2,7 +2,7 @@
 #pragma ident "@(#)loopopts.cpp	1.222 08/11/24 12:23:09 JVM"
 #endif
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@
 //------------------------------split_thru_phi---------------------------------
 // Split Node 'n' through merge point if there is enough win.
 Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
-  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::BOTTOM) {
+  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::LONG) {
     // ConvI2L may have type information on it which is unsafe to push up
     // so disable this for now
     return NULL;
@@ -40,7 +40,18 @@ Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
   int wins = 0;
   assert( !n->is_CFG(), "" );
   assert( region->is_Region(), "" );
-  Node *phi = new (C, region->req()) PhiNode( region, n->bottom_type() );
+
+  const Type* type = n->bottom_type();
+  const TypeOopPtr *t_oop = _igvn.type(n)->isa_oopptr();
+  Node *phi;
+  if( t_oop != NULL && t_oop->is_known_instance_field() ) {
+    int iid    = t_oop->instance_id();
+    int index  = C->get_alias_index(t_oop);
+    int offset = t_oop->offset();
+    phi = new (C,region->req()) PhiNode(region, type, NULL, iid, index, offset);
+  } else {
+    phi = new (C,region->req()) PhiNode(region, type);
+  }
   uint old_unique = C->unique();
   for( uint i = 1; i < region->req(); i++ ) {
     Node *x;
@@ -88,6 +99,10 @@ Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
       // our new node, even though we may throw the node away.
       // (Note: This tweaking with igvn only works because x is a new node.)
       _igvn.set_type(x, t);
+      // If x is a TypeNode, capture any more-precise type permanently into Node
+      // othewise it will be not updated during igvn->transform since
+      // igvn->type(x) is set to x->Value() already.
+      x->raise_bottom_type(t);
       Node *y = x->Identity(&_igvn);
       if( y != x ) {
         wins++;
@@ -443,9 +458,11 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
 
   // Check profitability
   int cost = 0;
+  int phis = 0;
   for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
     Node *out = region->fast_out(i);
     if( !out->is_Phi() ) continue; // Ignore other control edges, etc
+    phis++;
     PhiNode* phi = out->as_Phi();
     switch (phi->type()->basic_type()) {
     case T_LONG:
@@ -456,8 +473,9 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     case T_ADDRESS:             // (RawPtr)
       cost++;
       break;
+    case T_NARROWOOP: // Fall through
     case T_OBJECT: {            // Base oops are OK, but not derived oops
-      const TypeOopPtr *tp = phi->type()->isa_oopptr();
+      const TypeOopPtr *tp = phi->type()->make_ptr()->isa_oopptr();
       // Derived pointers are Bad (tm): what's the Base (for GC purposes) of a
       // CMOVE'd derived pointer?  It's a CMOVE'd derived base.  Thus
       // CMOVE'ing a derived pointer requires we also CMOVE the base.  If we
@@ -488,15 +506,21 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
             return NULL;        // Too much speculative goo
       }
     }
-    // See if the Phi is used by a Cmp.  This will likely Split-If, a
-    // higher-payoff operation.
+    // See if the Phi is used by a Cmp or Narrow oop Decode/Encode.
+    // This will likely Split-If, a higher-payoff operation.
     for (DUIterator_Fast kmax, k = phi->fast_outs(kmax); k < kmax; k++) {
       Node* use = phi->fast_out(k);
-      if( use->is_Cmp() )
+      if( use->is_Cmp() || use->is_DecodeN() || use->is_EncodeP() )
         return NULL;
     }
   }
   if( cost >= ConditionalMoveLimit ) return NULL; // Too much goo
+  Node* bol = iff->in(1);
+  assert( bol->Opcode() == Op_Bool, "" );
+  int cmp_op = bol->in(1)->Opcode();
+  // It is expensive to generate flags from a float compare.
+  // Avoid duplicated float compare.
+  if( phis > 1 && (cmp_op == Op_CmpF || cmp_op == Op_CmpD)) return NULL;
 
   // --------------
   // Now replace all Phis with CMOV's
@@ -561,7 +585,8 @@ Node *PhaseIdealLoop::split_if_with_blocks_pre( Node *n ) {
     Node *cmov = conditional_move( n );
     if( cmov ) return cmov;
   }
-  if( n->is_CFG() || n_op == Op_StorePConditional || n_op == Op_StoreLConditional || n_op == Op_CompareAndSwapI || n_op == Op_CompareAndSwapL ||n_op == Op_CompareAndSwapP)  return n;
+  if( n->is_CFG() || n->is_LoadStore() )
+    return n;
   if( n_op == Op_Opaque1 ||     // Opaque nodes cannot be mod'd
       n_op == Op_Opaque2 ) {
     if( !C->major_progress() )   // If chance of no more loop opts...
@@ -910,7 +935,7 @@ void PhaseIdealLoop::split_if_with_blocks_post( Node *n ) {
             // to fold a StoreP and an AddP together (as part of an
             // address expression) and the AddP and StoreP have
             // different controls.
-            if( !x->is_Load() ) _igvn._worklist.yank(x);
+            if( !x->is_Load() && !x->is_DecodeN() ) _igvn._worklist.yank(x);
           }
           _igvn.remove_dead_node(n);
         }
@@ -1874,18 +1899,16 @@ void PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, N
     _igvn.hash_delete(use);
     use->set_req(j, n_clone);
     _igvn._worklist.push(use);
+    Node* use_c;
     if (!use->is_Phi()) {
-      Node* use_c = has_ctrl(use) ? get_ctrl(use) : use->in(0);
-      set_ctrl(n_clone, use_c);
-      assert(!loop->is_member(get_loop(use_c)), "should be outside loop");
-      get_loop(use_c)->_body.push(n_clone);
+      use_c = has_ctrl(use) ? get_ctrl(use) : use->in(0);
     } else {
       // Use in a phi is considered a use in the associated predecessor block
-      Node *prevbb = use->in(0)->in(j);
-      set_ctrl(n_clone, prevbb);
-      assert(!loop->is_member(get_loop(prevbb)), "should be outside loop");
-      get_loop(prevbb)->_body.push(n_clone);
+      use_c = use->in(0)->in(j);
     }
+    set_ctrl(n_clone, use_c);
+    assert(!loop->is_member(get_loop(use_c)), "should be outside loop");
+    get_loop(use_c)->_body.push(n_clone);
     _igvn.register_new_node_with_optimizer(n_clone);
 #if !defined(PRODUCT)
     if (TracePartialPeeling) {
@@ -2240,6 +2263,9 @@ bool PhaseIdealLoop::is_valid_clone_loop_form( IdealLoopTree *loop, Node_List& p
 //           exitA
 //
 bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
+
+  if (!loop->_head->is_Loop()) {
+    return false;  }
 
   LoopNode *head  = loop->_head->as_Loop();
 
@@ -2641,6 +2667,10 @@ void PhaseIdealLoop::reorg_offsets( IdealLoopTree *loop ) {
   // Fix this by adjusting to use the post-increment trip counter.
   Node *phi = cl->phi();
   if( !phi ) return;            // Dead infinite loop
+
+  // Shape messed up, probably by iteration_split_impl
+  if (phi->in(LoopNode::LoopBackControl) != cl->incr()) return;
+
   bool progress = true;
   while (progress) {
     progress = false;
@@ -2665,7 +2695,7 @@ void PhaseIdealLoop::reorg_offsets( IdealLoopTree *loop ) {
       if( !cle->stride_is_con() ) continue;
       // Hit!  Refactor use to use the post-incremented tripcounter.
       // Compute a post-increment tripcounter.
-      Node *opaq = new (C, 2) Opaque2Node( cle->incr() );
+      Node *opaq = new (C, 2) Opaque2Node( C, cle->incr() );
       register_new_node( opaq, u_ctrl );
       Node *neg_stride = _igvn.intcon(-cle->stride_con());
       set_ctrl(neg_stride, C->root());

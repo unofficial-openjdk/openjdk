@@ -2,7 +2,7 @@
 #pragma ident "@(#)heapInspection.hpp	1.17 07/07/02 11:47:11 JVM"
 #endif
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,8 +101,9 @@ class KlassInfoTable: public StackObj {
   };
   KlassInfoTable(int size, HeapWord* ref);
   ~KlassInfoTable();
-  void record_instance(const oop obj);
+  bool record_instance(const oop obj);
   void iterate(KlassInfoClosure* cic);
+  bool allocation_failed() { return _buckets == NULL; }
 };
 
 class KlassInfoHisto : public StackObj {

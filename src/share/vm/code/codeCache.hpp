@@ -2,7 +2,7 @@
 #pragma ident "@(#)codeCache.hpp	1.68 07/09/01 18:01:02 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,10 +73,25 @@ class CodeCache : AllStatic {
   // Lookup that does not fail if you lookup a zombie method (if you call this, be sure to know
   // what you are doing)
   static CodeBlob* find_blob_unsafe(void* start) {
-    CodeBlob* result = (CodeBlob*)_heap->find_start(start); 
-    assert(result == NULL || result->blob_contains((address)start), "found wrong CodeBlob");      
-    return result;   
-  } 
+    CodeBlob* result = (CodeBlob*)_heap->find_start(start);
+    // this assert is too strong because the heap code will return the
+    // heapblock containing start. That block can often be larger than
+    // the codeBlob itself. If you look up an address that is within
+    // the heapblock but not in the codeBlob you will assert.
+    //
+    // Most things will not lookup such bad addresses. However
+    // AsyncGetCallTrace can see intermediate frames and get that kind
+    // of invalid address and so can a developer using hsfind.
+    //
+    // The more correct answer is to return NULL if blob_contains() returns
+    // false.
+    // assert(result == NULL || result->blob_contains((address)start), "found wrong CodeBlob");
+
+    if (result != NULL && !result->blob_contains((address)start)) {
+      result = NULL;
+    }
+    return result;
+  }
 
   // Iteration
   static CodeBlob* first();

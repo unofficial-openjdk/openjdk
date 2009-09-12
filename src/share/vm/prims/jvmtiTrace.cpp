@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiTrace.cpp	1.1 07/07/16 15:03:49 JVM"
-#endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -73,10 +70,10 @@ void JvmtiTrace::initialize() {
     return;
   }
   SafeResourceMark rm;
-  
+
   const char *very_end;
   const char *curr;
-  if (strlen(TraceJVMTI)) {
+  if (TraceJVMTI != NULL) {
     curr = TraceJVMTI;
   } else {
     curr = "";  // hack in fixed tracing here
@@ -106,25 +103,25 @@ void JvmtiTrace::initialize() {
     jbyte bits = 0;
     for (; flags < flags_end; ++flags) {
       switch (*flags) {
-      case 'i': 
+      case 'i':
         bits |= SHOW_IN;
         break;
-      case 'I': 
+      case 'I':
         bits |= SHOW_IN_DETAIL;
         break;
-      case 'e': 
+      case 'e':
         bits |= SHOW_ERROR;
         break;
-      case 'o': 
+      case 'o':
         bits |= SHOW_OUT;
         break;
-      case 'O': 
+      case 'O':
         bits |= SHOW_OUT_DETAIL;
         break;
-      case 't': 
+      case 't':
         bits |= SHOW_EVENT_TRIGGER;
         break;
-      case 's': 
+      case 's':
         bits |= SHOW_EVENT_SENT;
         break;
       default:
@@ -274,7 +271,7 @@ const char *JvmtiTrace::safe_get_thread_name(Thread *thread) {
   }
   return UNICODE::as_utf8((jchar*) name->base(T_CHAR), name->length());
 }
-    
+
 
 // return the name of the current thread
 const char *JvmtiTrace::safe_get_current_thread_name() {

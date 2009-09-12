@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,9 @@ public interface LinuxDebugger extends JVMDebugger {
   public long         readCInteger(long address, long numBytes, boolean isUnsigned)
     throws DebuggerException;
   public LinuxAddress readAddress(long address) throws DebuggerException;
+  public LinuxAddress readCompOopAddress(long address) throws DebuggerException;
   public LinuxOopHandle readOopHandle(long address) throws DebuggerException;
+  public LinuxOopHandle readCompOopHandle(long address) throws DebuggerException;
   public long[]       getThreadIntegerRegisterSet(int lwp_id) throws DebuggerException;
   public long         getAddressValue(Address addr) throws DebuggerException;
   public Address      newAddress(long value) throws DebuggerException;

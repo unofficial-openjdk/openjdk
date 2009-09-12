@@ -2,7 +2,7 @@
 #pragma ident "@(#)oop.hpp	1.118 07/08/31 18:42:30 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,12 @@
 // no virtual functions allowed
 
 // store into oop with store check
-void oop_store(oop* p, oop v);
-void oop_store(volatile oop* p, oop v);
+template <class T> void oop_store(T* p, oop v);
+template <class T> void oop_store(volatile T* p, oop v);
 
 // store into oop without store check
-void oop_store_without_check(oop* p, oop v);
-void oop_store_without_check(volatile oop* p, oop v);
+template <class T> void oop_store_without_check(T* p, oop v);
+template <class T> void oop_store_without_check(volatile T* p, oop v);
 
 
 extern bool always_do_update_barrier;
@@ -58,7 +58,10 @@ class oopDesc {
   friend class VMStructs;
  private:
   volatile markOop  _mark;
-  klassOop _klass;
+  union _metadata {
+    wideKlassOop    _klass;
+    narrowOop       _compressed_klass;
+  } _metadata;
 
   // Fast access to barrier set.  Must be initialized.
   static BarrierSet* _bs;
@@ -76,16 +79,21 @@ class oopDesc {
   // objects during a GC) -- requires a valid klass pointer
   void init_mark();
 
-  klassOop klass() const        { return _klass; }
-  oop* klass_addr() const       { return (oop*) &_klass; }
+  klassOop klass() const;
+  klassOop klass_or_null() const volatile;
+  oop* klass_addr();
+  narrowOop* compressed_klass_addr();
 
   void set_klass(klassOop k);
+
+  // For klass field compression
+  int klass_gap() const;
+  void set_klass_gap(int z);
   // For when the klass pointer is being used as a linked list "next" field.
   void set_klass_to_list_ptr(oop k);
 
-  // size of object header
-  static int header_size()      { return sizeof(oopDesc)/HeapWordSize; }
-  static int header_size_in_bytes() { return sizeof(oopDesc); }
+  // size of object header, aligned to platform wordSize
+  static int header_size()          { return sizeof(oopDesc)/HeapWordSize; }
 
   Klass* blueprint() const;
 
@@ -122,7 +130,6 @@ class oopDesc {
 
  private:
   // field addresses in oop
-  // byte/char/bool/short fields are always stored as full words
   void*     field_base(int offset)        const;
 
   jbyte*    byte_field_addr(int offset)   const;
@@ -133,13 +140,70 @@ class oopDesc {
   jlong*    long_field_addr(int offset)   const;
   jfloat*   float_field_addr(int offset)  const;
   jdouble*  double_field_addr(int offset) const;
+  address*  address_field_addr(int offset) const;
 
  public:
-  // need this as public for garbage collection
-  oop* obj_field_addr(int offset) const;
+  // Need this as public for garbage collection.
+  template <class T> T* obj_field_addr(int offset) const;
 
+  // Oop encoding heap max
+  static const uint64_t OopEncodingHeapMax =
+              (uint64_t(max_juint) + 1) << LogMinObjAlignmentInBytes;
+
+  static bool is_null(oop obj);
+  static bool is_null(narrowOop obj);
+
+  // Decode an oop pointer from a narrowOop if compressed.
+  // These are overloaded for oop and narrowOop as are the other functions
+  // below so that they can be called in template functions.
+  static oop decode_heap_oop_not_null(oop v);
+  static oop decode_heap_oop_not_null(narrowOop v);
+  static oop decode_heap_oop(oop v);
+  static oop decode_heap_oop(narrowOop v);
+
+  // Encode an oop pointer to a narrow oop.  The or_null versions accept
+  // null oop pointer, others do not in order to eliminate the
+  // null checking branches.
+  static narrowOop encode_heap_oop_not_null(oop v);
+  static narrowOop encode_heap_oop(oop v);
+
+  // Load an oop out of the Java heap
+  static narrowOop load_heap_oop(narrowOop* p);
+  static oop       load_heap_oop(oop* p);
+
+  // Load an oop out of Java heap and decode it to an uncompressed oop.
+  static oop load_decode_heap_oop_not_null(narrowOop* p);
+  static oop load_decode_heap_oop_not_null(oop* p);
+  static oop load_decode_heap_oop(narrowOop* p);
+  static oop load_decode_heap_oop(oop* p);
+
+  // Store an oop into the heap.
+  static void store_heap_oop(narrowOop* p, narrowOop v);
+  static void store_heap_oop(oop* p, oop v);
+
+  // Encode oop if UseCompressedOops and store into the heap.
+  static void encode_store_heap_oop_not_null(narrowOop* p, oop v);
+  static void encode_store_heap_oop_not_null(oop* p, oop v);
+  static void encode_store_heap_oop(narrowOop* p, oop v);
+  static void encode_store_heap_oop(oop* p, oop v);
+
+  static void release_store_heap_oop(volatile narrowOop* p, narrowOop v);
+  static void release_store_heap_oop(volatile oop* p, oop v);
+
+  static void release_encode_store_heap_oop_not_null(volatile narrowOop* p, oop v);
+  static void release_encode_store_heap_oop_not_null(volatile oop* p, oop v);
+  static void release_encode_store_heap_oop(volatile narrowOop* p, oop v);
+  static void release_encode_store_heap_oop(volatile oop* p, oop v);
+
+  static oop atomic_exchange_oop(oop exchange_value, volatile HeapWord *dest);
+  static oop atomic_compare_exchange_oop(oop exchange_value,
+                                         volatile HeapWord *dest,
+                                         oop compare_value);
+
+  // Access to fields in a instanceOop through these methods.
   oop obj_field(int offset) const;
   void obj_field_put(int offset, oop value);
+  void obj_field_raw_put(int offset, oop value);
 
   jbyte byte_field(int offset) const;
   void byte_field_put(int offset, jbyte contents);
@@ -164,6 +228,9 @@ class oopDesc {
 
   jdouble double_field(int offset) const;
   void double_field_put(int offset, jdouble contents);
+
+  address address_field(int offset) const;
+  void address_field_put(int offset, address contents);
 
   oop obj_field_acquire(int offset) const;
   void release_obj_field_put(int offset, oop value);
@@ -210,6 +277,7 @@ class oopDesc {
   void verify_on(outputStream* st);
   void verify();
   void verify_old_oop(oop* p, bool allow_dirty);
+  void verify_old_oop(narrowOop* p, bool allow_dirty);
 
   // tells whether this oop is partially constructed (gc during class loading)
   bool partially_loaded();
@@ -231,8 +299,8 @@ class oopDesc {
   bool is_gc_marked() const;
   // Apply "MarkSweep::mark_and_push" to (the address of) every non-NULL
   // reference field in "this".
-  void follow_contents();
-  void follow_header();
+  void follow_contents(void);
+  void follow_header(void);
 
 #ifndef SERIALGC
   // Parallel Scavenge
@@ -298,12 +366,21 @@ class oopDesc {
   static void set_bs(BarrierSet* bs) { _bs = bs; }
 
   // iterators, returns size of object
-#define OOP_ITERATE_DECL(OopClosureType, nv_suffix)                             \
+#define OOP_ITERATE_DECL(OopClosureType, nv_suffix)                      \
   int oop_iterate(OopClosureType* blk);                                  \
   int oop_iterate(OopClosureType* blk, MemRegion mr);  // Only in mr.
 
-  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL) 
-  ALL_OOP_OOP_ITERATE_CLOSURES_3(OOP_ITERATE_DECL) 
+  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_DECL)
+
+#ifndef SERIALGC
+
+#define OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix)            \
+  int oop_iterate_backwards(OopClosureType* blk);
+
+  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_BACKWARDS_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_2(OOP_ITERATE_BACKWARDS_DECL)
+#endif
 
   void oop_iterate_header(OopClosure* blk);
   void oop_iterate_header(OopClosure* blk, MemRegion mr);
@@ -320,6 +397,7 @@ class oopDesc {
   void     set_displaced_mark(markOop m);
 
   // for code generation
-  static int klass_offset_in_bytes()   { return offset_of(oopDesc, _klass); }
   static int mark_offset_in_bytes()    { return offset_of(oopDesc, _mark); }
+  static int klass_offset_in_bytes()   { return offset_of(oopDesc, _metadata._klass); }
+  static int klass_gap_offset_in_bytes();
 };

@@ -2,7 +2,7 @@
 #pragma ident "@(#)cfgnode.hpp	1.117 07/10/23 13:12:52 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,14 +113,15 @@ class JProjNode : public ProjNode {
 // input in slot 0.
 class PhiNode : public TypeNode {
   const TypePtr* const _adr_type; // non-null only for Type::MEMORY nodes.
+  const int _inst_id;     // Instance id of the memory slice.
+  const int _inst_index;  // Alias index of the instance memory slice.
+  // Array elements references have the same alias_idx but different offset.
+  const int _inst_offset; // Offset of the instance memory slice.
   // Size is bigger to hold the _adr_type field.
   virtual uint hash() const;    // Check the type
   virtual uint cmp( const Node &n ) const;
   virtual uint size_of() const { return sizeof(*this); }
 
-  // Determine a unique non-trivial input, if any.
-  // Ignore casts if it helps.  Return NULL on failure.
-  Node* unique_input(PhaseTransform *phase);
   // Determine if CMoveNode::is_cmove_id can be used at this join point.
   Node* is_cmove_id(PhaseTransform* phase, int true_path);
 
@@ -130,8 +131,16 @@ public:
          Input                  // Input values are [1..len)
   };
 
-  PhiNode( Node *r, const Type *t, const TypePtr* at = NULL )
-    : TypeNode(t,r->req()), _adr_type(at) {
+  PhiNode( Node *r, const Type *t, const TypePtr* at = NULL,
+           const int iid = TypeOopPtr::InstanceTop,
+           const int iidx = Compile::AliasIdxTop,
+           const int ioffs = Type::OffsetTop )
+    : TypeNode(t,r->req()),
+      _adr_type(at),
+      _inst_id(iid),
+      _inst_index(iidx),
+      _inst_offset(ioffs)
+  {
     init_class_id(Class_Phi);
     init_req(0, r);
     verify_adr_type();
@@ -142,6 +151,7 @@ public:
   static PhiNode* make( Node* r, Node* x, const Type *t, const TypePtr* at = NULL );
   // create a new phi with narrowed memory type
   PhiNode* slice_memory(const TypePtr* adr_type) const;
+  PhiNode* split_out_instance(const TypePtr* at, PhaseIterGVN *igvn) const;
   // like make(r, x), but does not initialize the in edges to x
   static PhiNode* make_blank( Node* r, Node* x );
 
@@ -155,6 +165,12 @@ public:
     return NULL;  // not a copy!
   }
 
+  bool is_tripcount() const;
+
+  // Determine a unique non-trivial input, if any.
+  // Ignore casts if it helps.  Return NULL on failure.
+  Node* unique_input(PhaseTransform *phase);
+
   // Check for a simple dead loop.
   enum LoopSafety { Safe = 0, Unsafe, UnsafeLoop };
   LoopSafety simple_data_loop_check(Node *in) const;
@@ -164,6 +180,18 @@ public:
   virtual int Opcode() const;
   virtual bool pinned() const { return in(0) != 0; }
   virtual const TypePtr *adr_type() const { verify_adr_type(true); return _adr_type; }
+
+  const int inst_id()     const { return _inst_id; }
+  const int inst_index()  const { return _inst_index; }
+  const int inst_offset() const { return _inst_offset; }
+  bool is_same_inst_field(const Type* tp, int id, int index, int offset) {
+    return type()->basic_type() == tp->basic_type() &&
+           inst_id()     == id     &&
+           inst_index()  == index  &&
+           inst_offset() == offset &&
+           type()->higher_equal(tp);
+  }
+
   virtual const Type *Value( PhaseTransform *phase ) const;
   virtual Node *Identity( PhaseTransform *phase );
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
@@ -221,6 +249,8 @@ public:
   MultiBranchNode( uint required ) : MultiNode(required) {
     init_class_id(Class_MultiBranch);
   }
+  // returns required number of users to be well formed.
+  virtual int required_outcnt() const = 0;
 };
 
 //------------------------------IfNode-----------------------------------------
@@ -310,6 +340,7 @@ public:
   virtual const Type *bottom_type() const { return TypeTuple::IFBOTH; }
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual const Type *Value( PhaseTransform *phase ) const;
+  virtual int required_outcnt() const { return 2; }
   virtual const RegMask &out_RegMask() const;
   void dominated_by(Node* prev_dom, PhaseIterGVN* igvn);
   int is_range_check(Node* &range, Node* &index, jint &offset);
@@ -368,6 +399,7 @@ public:
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual const Type *bottom_type() const;
   virtual bool pinned() const { return true; }
+  virtual int required_outcnt() const { return _size; }
 };
 
 //------------------------------JumpNode---------------------------------------
@@ -481,7 +513,9 @@ public:
   virtual int Opcode() const;
   virtual bool pinned() const { return true; };
   virtual const Type *bottom_type() const { return TypeTuple::IFBOTH; }
-
+  virtual const Type *Value( PhaseTransform *phase ) const;
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+  virtual int required_outcnt() const { return 2; }
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const { }
   virtual uint size(PhaseRegAlloc *ra_) const { return 0; }
 #ifndef PRODUCT

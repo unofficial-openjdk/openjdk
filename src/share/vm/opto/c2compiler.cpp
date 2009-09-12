@@ -2,7 +2,7 @@
 #pragma ident "@(#)c2compiler.cpp	1.29 07/05/05 17:06:11 JVM"
 #endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,9 @@ extern const int  register_save_type[];
 
 const char* C2Compiler::retry_no_subsuming_loads() {
   return "retry without subsuming loads";
+}
+const char* C2Compiler::retry_no_escape_analysis() {
+  return "retry without escape analysis";
 }
 void C2Compiler::initialize_runtime() {
 
@@ -104,15 +107,21 @@ void C2Compiler::compile_method(ciEnv* env,
     initialize();
   }
   bool subsume_loads = true;
+  bool do_escape_analysis = DoEscapeAnalysis;
   while (!env->failing()) {
     // Attempt to compile while subsuming loads into machine instructions.
-    Compile C(env, this, target, entry_bci, subsume_loads);
+    Compile C(env, this, target, entry_bci, subsume_loads, do_escape_analysis);
 
     // Check result and retry if appropriate.
     if (C.failure_reason() != NULL) {
-        if (C.failure_reason_is(retry_no_subsuming_loads())) {
+      if (C.failure_reason_is(retry_no_subsuming_loads())) {
         assert(subsume_loads, "must make progress");
         subsume_loads = false;
+        continue;  // retry
+      }
+      if (C.failure_reason_is(retry_no_escape_analysis())) {
+        assert(do_escape_analysis, "must make progress");
+        do_escape_analysis = false;
         continue;  // retry
       }
       // Pass any other failure reason up to the ciEnv.

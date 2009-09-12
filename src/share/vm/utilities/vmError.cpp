@@ -2,7 +2,7 @@
 #pragma ident "@(#)vmError.cpp	1.34 07/09/13 20:51:49 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -173,7 +173,8 @@ static void print_bug_submit_message(outputStream *out, Thread *thread) {
   out->print_raw_cr(Arguments::java_vendor_url_bug());
   // If the crash is in native code, encourage user to submit a bug to the
   // provider of that code.
-  if (thread && thread->is_Java_thread()) {
+  if (thread && thread->is_Java_thread() &&
+      !thread->is_hidden_from_external_view()) {
     JavaThread* jt = (JavaThread*)thread;
     if (jt->thread_state() == _thread_in_native) {
       out->print_cr("# The crash happened outside the Java Virtual Machine in native code.\n# See problematic frame for where to report the bug.");
@@ -252,10 +253,10 @@ void VMError::report(outputStream* st) {
 
   BEGIN
 
-  STEP(10, "(printing unexpected error message)")
+  STEP(10, "(printing fatal error message)")
 
      st->print_cr("#");
-     st->print_cr("# An unexpected error has been detected by Java Runtime Environment:");
+     st->print_cr("# A fatal error has been detected by the Java Runtime Environment:");
 
   STEP(15, "(printing type of error)")
 
@@ -265,7 +266,7 @@ void VMError::report(outputStream* st) {
          st->print("# java.lang.OutOfMemoryError: ");
          if (_size) {
            st->print("requested ");
-           sprintf(buf,"%d",_size);
+           sprintf(buf,SIZE_FORMAT,_size);
            st->print(buf);
            st->print(" bytes");
            if (_message != NULL) {
@@ -334,11 +335,14 @@ void VMError::report(outputStream* st) {
 
      // VM version
      st->print_cr("#");
-     st->print_cr("# Java VM: %s (%s %s %s)",
+     JDK_Version::current().to_string(buf, sizeof(buf));
+     st->print_cr("# JRE version: %s", buf);
+     st->print_cr("# Java VM: %s (%s %s %s %s)",
                    Abstract_VM_Version::vm_name(),
                    Abstract_VM_Version::vm_release(),
                    Abstract_VM_Version::vm_info_string(),
-                   Abstract_VM_Version::vm_platform_string()
+                   Abstract_VM_Version::vm_platform_string(),
+                   UseCompressedOops ? "compressed oops" : ""
                  );
 
   STEP(60, "(printing problematic frame)")

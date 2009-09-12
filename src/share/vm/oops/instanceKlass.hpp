@@ -2,7 +2,7 @@
 #pragma ident "@(#)instanceKlass.hpp	1.201 08/11/24 12:22:50 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,6 +150,10 @@ class instanceKlass: public Klass {
   oop             _class_loader;
   // Protection domain.
   oop             _protection_domain;
+  // Host class, which grants its access privileges to this class also.
+  // This is only non-null for an anonymous class (AnonymousClasses enabled).
+  // The host class is either named, or a previously loaded anonymous class.
+  klassOop        _host_klass;
   // Class signers.
   objArrayOop     _signers;
   // Name of source file containing this klass, NULL if not specified.
@@ -183,12 +187,15 @@ class instanceKlass: public Klass {
   // End of the oop block.
   //
 
-  int             _nonstatic_field_size; // number of non-static fields in this klass (including inherited fields)
-  int             _static_field_size;    // number of static fields (oop and non-oop) in this klass
+  // Number of heapOopSize words used by non-static fields in this klass
+  // (including inherited fields but after header_size()).
+  int             _nonstatic_field_size;
+  int             _static_field_size;    // number words used by static fields (oop and non-oop) in this klass
   int             _static_oop_field_size;// number of static oop fields in this klass
   int             _nonstatic_oop_map_size;// number of nonstatic oop-map blocks allocated at end of this klass
   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
   bool            _rewritten;            // methods rewritten.
+  bool            _has_nonstatic_fields; // for sizing with UseCompressedOops
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
   ClassState      _init_state;           // state of class
@@ -224,6 +231,9 @@ class instanceKlass: public Klass {
   friend class SystemDictionary;
 
  public:
+  bool has_nonstatic_fields() const        { return _has_nonstatic_fields; }
+  void set_has_nonstatic_fields(bool b)    { _has_nonstatic_fields = b; }
+
   // field sizes
   int nonstatic_field_size() const         { return _nonstatic_field_size; }
   void set_nonstatic_field_size(int size)  { _nonstatic_field_size = size; }
@@ -342,9 +352,8 @@ class instanceKlass: public Klass {
   klassOop find_field(symbolOop name, symbolOop sig, bool is_static, fieldDescriptor* fd) const;
   
   // find a non-static or static field given its offset within the class.
-  bool contains_field_offset(int offset) { 
-      return ((offset/wordSize) >= instanceOopDesc::header_size() && 
-             (offset/wordSize)-instanceOopDesc::header_size() < nonstatic_field_size()); 
+  bool contains_field_offset(int offset) {
+    return instanceOopDesc::contains_field_offset(offset, nonstatic_field_size());
   }
 
   bool find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
@@ -372,6 +381,11 @@ class instanceKlass: public Klass {
   // protection domain
   oop protection_domain()                  { return _protection_domain; }
   void set_protection_domain(oop pd)       { oop_store((oop*) &_protection_domain, pd); }
+
+  // host class
+  oop host_klass() const                   { return _host_klass; }
+  void set_host_klass(oop host)            { oop_store((oop*) &_host_klass, host); }
+  bool is_anonymous() const                { return _host_klass != NULL; }
 
   // signers
   objArrayOop signers() const              { return _signers; }
@@ -435,8 +449,10 @@ class instanceKlass: public Klass {
                                                         _enclosing_method_method_index = method_index; }
 
   // jmethodID support
-  static jmethodID jmethod_id_for_impl(instanceKlassHandle ik_h, methodHandle method_h);      
-  jmethodID jmethod_id_or_null(methodOop method);      
+  static jmethodID get_jmethod_id(instanceKlassHandle ik_h, size_t idnum,
+                                  jmethodID new_id, jmethodID* new_jmeths);
+  static jmethodID jmethod_id_for_impl(instanceKlassHandle ik_h, methodHandle method_h);
+  jmethodID jmethod_id_or_null(methodOop method);
 
   // cached itable index support
   void set_cached_itable_index(size_t idnum, int index);
@@ -571,12 +587,21 @@ class instanceKlass: public Klass {
   intptr_t* start_of_itable() const        { return start_of_vtable() + align_object_offset(vtable_length()); }  
   int  itable_offset_in_words() const { return start_of_itable() - (intptr_t*)as_klassOop(); }
 
-  oop* start_of_static_fields() const { return (oop*)(start_of_itable() + align_object_offset(itable_length())); }
-  intptr_t* end_of_itable() const          { return start_of_itable() + itable_length(); }
-  oop* end_of_static_fields() const   { return start_of_static_fields() + static_field_size(); }
-  int offset_of_static_fields() const { return (intptr_t)start_of_static_fields() - (intptr_t)as_klassOop(); }
+  // Static field offset is an offset into the Heap, should be converted by
+  // based on UseCompressedOop for traversal
+  HeapWord* start_of_static_fields() const {
+    return (HeapWord*)(start_of_itable() + align_object_offset(itable_length()));
+  }
 
-  OopMapBlock* start_of_nonstatic_oop_maps() const { return (OopMapBlock*) (start_of_static_fields() + static_field_size()); }
+  intptr_t* end_of_itable() const          { return start_of_itable() + itable_length(); }
+
+  int offset_of_static_fields() const {
+    return (intptr_t)start_of_static_fields() - (intptr_t)as_klassOop();
+  }
+
+  OopMapBlock* start_of_nonstatic_oop_maps() const {
+    return (OopMapBlock*) (start_of_static_fields() + static_field_size());
+  }
 
   // Allocation profiling support
   juint alloc_size() const            { return _alloc_count * size_helper(); }
@@ -642,13 +667,21 @@ class instanceKlass: public Klass {
     return oop_oop_iterate_v_m(obj, blk, mr);
   }
 
-#define InstanceKlass_OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)   \
-  int  oop_oop_iterate##nv_suffix(oop obj, OopClosureType* blk);        \
-  int  oop_oop_iterate##nv_suffix##_m(oop obj, OopClosureType* blk,     \
+#define InstanceKlass_OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)      \
+  int  oop_oop_iterate##nv_suffix(oop obj, OopClosureType* blk);           \
+  int  oop_oop_iterate##nv_suffix##_m(oop obj, OopClosureType* blk,        \
                                       MemRegion mr);
 
   ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceKlass_OOP_OOP_ITERATE_DECL)
-  ALL_OOP_OOP_ITERATE_CLOSURES_3(InstanceKlass_OOP_OOP_ITERATE_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceKlass_OOP_OOP_ITERATE_DECL)
+
+#ifndef SERIALGC
+#define InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix) \
+  int  oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* blk);
+
+  ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DECL)
+#endif // !SERIALGC
 
   void iterate_static_fields(OopClosure* closure);
   void iterate_static_fields(OopClosure* closure, MemRegion mr);
@@ -688,6 +721,7 @@ private:
   oop* adr_constants() const         { return (oop*)&this->_constants;}
   oop* adr_class_loader() const      { return (oop*)&this->_class_loader;}
   oop* adr_protection_domain() const { return (oop*)&this->_protection_domain;}
+  oop* adr_host_klass() const        { return (oop*)&this->_host_klass;}
   oop* adr_signers() const           { return (oop*)&this->_signers;}
   oop* adr_source_file_name() const  { return (oop*)&this->_source_file_name;}
   oop* adr_source_debug_extension() const { return (oop*)&this->_source_debug_extension;}

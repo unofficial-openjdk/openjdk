@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)frame_x86.inline.hpp	1.76 07/09/17 09:35:34 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Inline functions for Intel frames:
 
 // Constructors:
 
-inline frame::frame() { 
+inline frame::frame() {
   _pc = NULL;
   _sp = NULL;
   _unextended_sp = NULL;
@@ -38,7 +35,7 @@ inline frame::frame() {
   _deopt_state = unknown;
 }
 
-inline frame:: frame(intptr_t* sp, intptr_t* fp, address pc) { 
+inline frame:: frame(intptr_t* sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = sp;
   _fp = fp;
@@ -54,7 +51,7 @@ inline frame:: frame(intptr_t* sp, intptr_t* fp, address pc) {
   }
 }
 
-inline frame:: frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) { 
+inline frame:: frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = unextended_sp;
   _fp = fp;
@@ -75,15 +72,20 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
   _unextended_sp = sp;
   _fp = fp;
   _pc = (address)(sp[-1]);
-  assert(_pc != NULL, "no pc?");
-  _cb = CodeCache::find_blob(_pc);
-  // In case of native stubs, the pc retreived here might be 
-  // wrong. (the _last_native_pc will have the right value)
-  // So do not put add any asserts on the _pc here.
 
-  // QQQ The above comment is wrong and has been wrong for years. This constructor
-  // should (and MUST) not be called in that situation. In the native situation
-  // the pc should be supplied to the constructor.
+  // Here's a sticky one. This constructor can be called via AsyncGetCallTrace
+  // when last_Java_sp is non-null but the pc fetched is junk. If we are truly
+  // unlucky the junk value could be to a zombied method and we'll die on the
+  // find_blob call. This is also why we can have no asserts on the validity
+  // of the pc we find here. AsyncGetCallTrace -> pd_get_top_frame_for_signal_handler
+  // -> pd_last_frame should use a specialized version of pd_last_frame which could
+  // call a specilaized frame constructor instead of this one.
+  // Then we could use the assert below. However this assert is of somewhat dubious
+  // value.
+  // assert(_pc != NULL, "no pc?");
+
+  _cb = CodeCache::find_blob(_pc);
+
   _deopt_state = not_deoptimized;
   if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
     _pc = (((nmethod*)_cb)->get_original_pc(this));
@@ -109,14 +111,14 @@ inline bool frame::equal(frame other) const {
 // frame.
 inline intptr_t* frame::id(void) const { return unextended_sp(); }
 
-// Relationals on frames based 
+// Relationals on frames based
 // Return true if the frame is younger (more recent activation) than the frame represented by id
 inline bool frame::is_younger(intptr_t* id) const { assert(this->id() != NULL && id != NULL, "NULL frame id");
-					            return this->id() < id ; }
+                                                    return this->id() < id ; }
 
 // Return true if the frame is older (less recent activation) than the frame represented by id
 inline bool frame::is_older(intptr_t* id) const   { assert(this->id() != NULL && id != NULL, "NULL frame id");
-					            return this->id() > id ; }
+                                                    return this->id() > id ; }
 
 
 
@@ -140,7 +142,7 @@ inline interpreterState frame::get_interpreterState() const {
   return ((interpreterState)addr_at( -sizeof(BytecodeInterpreter)/wordSize ));
 }
 
-inline intptr_t*    frame::sender_sp()        const { 
+inline intptr_t*    frame::sender_sp()        const {
   // Hmm this seems awfully expensive QQQ, is this really called with interpreted frames?
   if (is_interpreted_frame()) {
     assert(false, "should never happen");
@@ -150,14 +152,14 @@ inline intptr_t*    frame::sender_sp()        const {
   }
 }
 
-inline intptr_t** frame::interpreter_frame_locals_addr() const { 
+inline intptr_t** frame::interpreter_frame_locals_addr() const {
   assert(is_interpreted_frame(), "must be interpreted");
   return &(get_interpreterState()->_locals);
 }
 
 inline intptr_t* frame::interpreter_frame_bcx_addr() const {
   assert(is_interpreted_frame(), "must be interpreted");
-  return (jint*) &(get_interpreterState()->_bcp);
+  return (intptr_t*) &(get_interpreterState()->_bcp);
 }
 
 
@@ -170,14 +172,14 @@ inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
 
 // Method
 
-inline methodOop* frame::interpreter_frame_method_addr() const { 
+inline methodOop* frame::interpreter_frame_method_addr() const {
   assert(is_interpreted_frame(), "must be interpreted");
   return &(get_interpreterState()->_method);
 }
 
 inline intptr_t* frame::interpreter_frame_mdx_addr() const {
   assert(is_interpreted_frame(), "must be interpreted");
-  return (jint*) &(get_interpreterState()->_mdx);
+  return (intptr_t*) &(get_interpreterState()->_mdx);
 }
 
 // top of expression stack
@@ -189,12 +191,12 @@ inline intptr_t* frame::interpreter_frame_tos_address() const {
 #else /* asm interpreter */
 inline intptr_t*    frame::sender_sp()        const { return            addr_at(   sender_sp_offset); }
 
-inline intptr_t** frame::interpreter_frame_locals_addr() const { 
-  return (intptr_t**)addr_at(interpreter_frame_locals_offset); 
+inline intptr_t** frame::interpreter_frame_locals_addr() const {
+  return (intptr_t**)addr_at(interpreter_frame_locals_offset);
 }
 
 inline intptr_t* frame::interpreter_frame_last_sp() const {
-  return *(intptr_t**)addr_at(interpreter_frame_last_sp_offset); 
+  return *(intptr_t**)addr_at(interpreter_frame_last_sp_offset);
 }
 
 inline intptr_t* frame::interpreter_frame_bcx_addr() const {
@@ -216,7 +218,7 @@ inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
 
 // Method
 
-inline methodOop* frame::interpreter_frame_method_addr() const { 
+inline methodOop* frame::interpreter_frame_method_addr() const {
   return (methodOop*)addr_at(interpreter_frame_method_offset);
 }
 
@@ -248,7 +250,7 @@ inline int frame::interpreter_frame_monitor_size() {
 
 inline intptr_t* frame::interpreter_frame_expression_stack() const {
   intptr_t* monitor_end = (intptr_t*) interpreter_frame_monitor_end();
-  return monitor_end-1; 
+  return monitor_end-1;
 }
 
 
@@ -257,15 +259,15 @@ inline jint frame::interpreter_frame_expression_stack_direction() { return -1; }
 
 // Entry frames
 
-inline JavaCallWrapper* frame::entry_frame_call_wrapper() const { 
- return (JavaCallWrapper*)at(entry_frame_call_wrapper_offset); 
+inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {
+ return (JavaCallWrapper*)at(entry_frame_call_wrapper_offset);
 }
 
 
 // Compiled frames
 
 inline int frame::local_offset_for_compiler(int local_index, int nof_args, int max_nof_locals, int max_nof_monitors) {
-  return (nof_args - local_index + (local_index < nof_args ? 1: -1)); 
+  return (nof_args - local_index + (local_index < nof_args ? 1: -1));
 }
 
 inline int frame::monitor_offset_for_compiler(int local_index, int nof_args, int max_nof_locals, int max_nof_monitors) {
@@ -282,11 +284,10 @@ inline bool frame::volatile_across_calls(Register reg) {
 
 
 
-inline oop frame::saved_oop_result(RegisterMap* map) const       { 
+inline oop frame::saved_oop_result(RegisterMap* map) const       {
   return *((oop*) map->location(rax->as_VMReg()));
 }
 
 inline void frame::set_saved_oop_result(RegisterMap* map, oop obj) {
   *((oop*) map->location(rax->as_VMReg())) = obj;
 }
-

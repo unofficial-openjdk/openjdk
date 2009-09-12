@@ -2,7 +2,7 @@
 #pragma ident "@(#)output.cpp	1.290 07/09/20 11:01:49 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@ void Compile::Output() {
   // Initialize the space for the BufferBlob used to find and verify
   // instruction size in MachNode::emit_size()
   init_scratch_buffer_blob();
+  if (failing())  return; // Out of memory
 
   // Make sure I can find the Start Node
   Block_Array& bbs = _cfg->_bbs;
@@ -265,7 +266,7 @@ bool Compile::is_node_getting_a_safepoint( Node* n) {
 # endif // ENABLE_ZAP_DEAD_LOCALS
 
 //------------------------------compute_loop_first_inst_sizes------------------
-// Compute the size of first NumberOfLoopInstrToAlign instructions at head 
+// Compute the size of first NumberOfLoopInstrToAlign instructions at the top
 // of a loop. When aligning a loop we need to provide enough instructions
 // in cpu's fetch buffer to feed decoders. The loop alignment could be
 // avoided if we have enough instructions in fetch buffer at the head of a loop.
@@ -286,34 +287,23 @@ void Compile::compute_loop_first_inst_sizes() {
     for( uint i=1; i <= last_block; i++ ) {
       Block *b = _cfg->_blocks[i];
       // Check the first loop's block which requires an alignment.
-      if( b->head()->is_Loop() && 
-          b->code_alignment() > (uint)relocInfo::addr_unit() ) {
+      if( b->loop_alignment() > (uint)relocInfo::addr_unit() ) {
         uint sum_size = 0;
         uint inst_cnt = NumberOfLoopInstrToAlign;
-        inst_cnt = b->compute_first_inst_size(sum_size, inst_cnt,
-                                              _regalloc);
-        // Check the next fallthrough block if first loop's block does not have
-        // enough instructions.
-        if( inst_cnt > 0 && i < last_block ) {
-          // First, check if the first loop's block contains whole loop.
-          // LoopNode::LoopBackControl == 2.
-          Block *bx = _cfg->_bbs[b->pred(2)->_idx];
-          // Skip connector blocks (with limit in case of irreducible loops).
-          int search_limit = 16;
-          while( bx->is_connector() && search_limit-- > 0) {
-            bx = _cfg->_bbs[bx->pred(1)->_idx];
-          }
-          if( bx != b ) { // loop body is in several blocks.
-            Block *nb = NULL;
-            while( inst_cnt > 0 && i < last_block && nb != bx &&
-                  !_cfg->_blocks[i+1]->head()->is_Loop() ) {
-              i++;
-              nb = _cfg->_blocks[i];
-              inst_cnt  = nb->compute_first_inst_size(sum_size, inst_cnt, 
-                                                      _regalloc);
-            } // while( inst_cnt > 0 && i < last_block  )
-          } // if( bx != b )
-        } // if( inst_cnt > 0 && i < last_block )
+        inst_cnt = b->compute_first_inst_size(sum_size, inst_cnt, _regalloc);
+
+        // Check subsequent fallthrough blocks if the loop's first
+        // block(s) does not have enough instructions.
+        Block *nb = b;
+        while( inst_cnt > 0 &&
+               i < last_block &&
+               !_cfg->_blocks[i+1]->has_loop_alignment() &&
+               !nb->has_successor(b) ) {
+          i++;
+          nb = _cfg->_blocks[i];
+          inst_cnt  = nb->compute_first_inst_size(sum_size, inst_cnt, _regalloc);
+        } // while( inst_cnt > 0 && i < last_block  )
+
         b->set_first_inst_size(sum_size);
       } // f( b->head()->is_Loop() )
     } // for( i <= last_block )
@@ -334,6 +324,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
   uint *jmp_end    = NEW_RESOURCE_ARRAY(uint,_cfg->_num_blocks);
   uint *blk_starts = NEW_RESOURCE_ARRAY(uint,_cfg->_num_blocks+1);
   DEBUG_ONLY( uint *jmp_target = NEW_RESOURCE_ARRAY(uint,_cfg->_num_blocks); )
+  DEBUG_ONLY( uint *jmp_rule = NEW_RESOURCE_ARRAY(uint,_cfg->_num_blocks); )
   blk_starts[0]    = 0;
 
   // Initialize the sizes to 0
@@ -445,15 +436,17 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
         uintptr_t target = blk_starts[bnum];
         if( mach->is_pc_relative() ) {
           int offset = target-(blk_starts[i] + jmp_end[i]);
-          if (_matcher->is_short_branch_offset(offset)) {
+          if (_matcher->is_short_branch_offset(mach->rule(), offset)) {
             // We've got a winner.  Replace this branch.
-            MachNode *replacement = mach->short_branch_version(this);
+            MachNode* replacement = mach->short_branch_version(this);
             b->_nodes.map(j, replacement);
-          
+            mach->subsume_by(replacement);
+
             // Update the jmp_end size to save time in our
             // next pass.
             jmp_end[i] -= (mach->size(_regalloc) - replacement->size(_regalloc));
             DEBUG_ONLY( jmp_target[i] = bnum; );
+            DEBUG_ONLY( jmp_rule[i] = mach->rule(); );
           }
         } else {
 #ifndef PRODUCT
@@ -511,7 +504,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
       // Get the size of the block
       uint blk_size = adr - blk_starts[i];
 
-      // When the next block starts a loop, we may insert pad NOP
+      // When the next block is the top of a loop, we may insert pad NOP
       // instructions.
       Block *nb = _cfg->_blocks[i+1];
       int current_offset = blk_starts[i] + blk_size;
@@ -525,10 +518,10 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
   for( i=0; i<_cfg->_num_blocks; i++ ) { // For all blocks
     if( jmp_target[i] != 0 ) {
       int offset = blk_starts[jmp_target[i]]-(blk_starts[i] + jmp_end[i]);
-      if (!_matcher->is_short_branch_offset(offset)) {
+      if (!_matcher->is_short_branch_offset(jmp_rule[i], offset)) {
         tty->print_cr("target (%d) - jmp_end(%d) = offset (%d), jmp_block B%d, target_block B%d", blk_starts[jmp_target[i]], blk_starts[i] + jmp_end[i], offset, i, jmp_target[i]);
       }
-      assert(_matcher->is_short_branch_offset(offset), "Displacement too large for short jmp");
+      assert(_matcher->is_short_branch_offset(jmp_rule[i], offset), "Displacement too large for short jmp");
     }
   }
 #endif
@@ -564,7 +557,30 @@ static LocationValue *new_loc_value( PhaseRegAlloc *ra, OptoReg::Name regnum, Lo
     : new LocationValue(Location::new_stk_loc(l_type,  ra->reg2offset(regnum)));
 }
 
-void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *array ) {
+
+ObjectValue*
+Compile::sv_for_node_id(GrowableArray<ScopeValue*> *objs, int id) {
+  for (int i = 0; i < objs->length(); i++) {
+    assert(objs->at(i)->is_object(), "corrupt object cache");
+    ObjectValue* sv = (ObjectValue*) objs->at(i);
+    if (sv->id() == id) {
+      return sv;
+    }
+  }
+  // Otherwise..
+  return NULL;
+}
+
+void Compile::set_sv_for_object_node(GrowableArray<ScopeValue*> *objs,
+                                     ObjectValue* sv ) {
+  assert(sv_for_node_id(objs, sv->id()) == NULL, "Precondition");
+  objs->append(sv);
+}
+
+
+void Compile::FillLocArray( int idx, MachSafePointNode* sfpt, Node *local,
+                            GrowableArray<ScopeValue*> *array,
+                            GrowableArray<ScopeValue*> *objs ) {
   assert( local, "use _top instead of null" );
   if (array->length() != idx) {
     assert(array->length() == idx + 1, "Unexpected array count");
@@ -580,6 +596,29 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
     array->pop();
   }
   const Type *t = local->bottom_type();
+
+  // Is it a safepoint scalar object node?
+  if (local->is_SafePointScalarObject()) {
+    SafePointScalarObjectNode* spobj = local->as_SafePointScalarObject();
+
+    ObjectValue* sv = Compile::sv_for_node_id(objs, spobj->_idx);
+    if (sv == NULL) {
+      ciKlass* cik = t->is_oopptr()->klass();
+      assert(cik->is_instance_klass() ||
+             cik->is_array_klass(), "Not supported allocation.");
+      sv = new ObjectValue(spobj->_idx,
+                           new ConstantOopWriteValue(cik->encoding()));
+      Compile::set_sv_for_object_node(objs, sv);
+
+      uint first_ind = spobj->first_index();
+      for (uint i = 0; i < spobj->n_fields(); i++) {
+        Node* fld_node = sfpt->in(first_ind+i);
+        (void)FillLocArray(sv->field_values()->length(), sfpt, fld_node, sv->field_values(), objs);
+      }
+    }
+    array->append(sv);
+    return;
+  }
 
   // Grab the register number for the local
   OptoReg::Name regnum = _regalloc->get_reg_first(local);
@@ -640,6 +679,8 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
     } else if( t->base() == Type::Int && OptoReg::is_reg(regnum) ) { 
       array->append(new_loc_value( _regalloc, regnum, Matcher::int_in_long 
                                    ? Location::int_in_long : Location::normal ));
+    } else if( t->base() == Type::NarrowOop ) {
+      array->append(new_loc_value( _regalloc, regnum, Location::narrowoop ));
     } else {
       array->append(new_loc_value( _regalloc, regnum, _regalloc->is_oop(local) ? Location::oop : Location::normal ));
     }
@@ -659,8 +700,15 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
   case Type::KlassPtr:          // fall through
     array->append(new ConstantOopWriteValue(t->isa_oopptr()->const_oop()->encoding()));
     break;
-  case Type::Int:    
-    array->append(new ConstantIntValue(t->is_int()->get_con())); 
+  case Type::NarrowOop:
+    if (t == TypeNarrowOop::NULL_PTR) {
+      array->append(new ConstantOopWriteValue(NULL));
+    } else {
+      array->append(new ConstantOopWriteValue(t->make_ptr()->isa_oopptr()->const_oop()->encoding()));
+    }
+    break;
+  case Type::Int:
+    array->append(new ConstantIntValue(t->is_int()->get_con()));
     break;
   case Type::RawPtr:
     // A return address (T_ADDRESS).
@@ -758,6 +806,11 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
   JVMState* youngest_jvms = sfn->jvms();
   int max_depth = youngest_jvms->depth();
 
+  // Allocate the object pool for scalar-replaced objects -- the map from
+  // small-integer keys (which can be recorded in the local and ostack
+  // arrays) to descriptions of the object state.
+  GrowableArray<ScopeValue*> *objs = new GrowableArray<ScopeValue*>();
+
   // Visit scopes from oldest to youngest.
   for (int depth = 1; depth <= max_depth; depth++) {
     JVMState* jvms = youngest_jvms->of_depth(depth);
@@ -776,13 +829,13 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
     // Insert locals into the locarray
     GrowableArray<ScopeValue*> *locarray = new GrowableArray<ScopeValue*>(num_locs);
     for( idx = 0; idx < num_locs; idx++ ) {
-      FillLocArray( idx, sfn->local(jvms, idx), locarray );
+      FillLocArray( idx, sfn, sfn->local(jvms, idx), locarray, objs );
     }
 
     // Insert expression stack entries into the exparray
     GrowableArray<ScopeValue*> *exparray = new GrowableArray<ScopeValue*>(num_exps);
     for( idx = 0; idx < num_exps; idx++ ) {
-      FillLocArray( idx,  sfn->stack(jvms, idx), exparray );
+      FillLocArray( idx,  sfn, sfn->stack(jvms, idx), exparray, objs );
     }
 
     // Add in mappings of the monitors
@@ -799,23 +852,51 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
     // Loop over monitors and insert into array
     for(idx = 0; idx < num_mon; idx++) {
       // Grab the node that defines this monitor
-      Node* box_node;
-      Node* obj_node;
-      box_node = sfn->monitor_box(jvms, idx);
-      obj_node = sfn->monitor_obj(jvms, idx);
+      Node* box_node = sfn->monitor_box(jvms, idx);
+      Node* obj_node = sfn->monitor_obj(jvms, idx);
 
       // Create ScopeValue for object
       ScopeValue *scval = NULL;
-      if( !obj_node->is_Con() ) {
+
+      if( obj_node->is_SafePointScalarObject() ) {
+        SafePointScalarObjectNode* spobj = obj_node->as_SafePointScalarObject();
+        scval = Compile::sv_for_node_id(objs, spobj->_idx);
+        if (scval == NULL) {
+          const Type *t = obj_node->bottom_type();
+          ciKlass* cik = t->is_oopptr()->klass();
+          assert(cik->is_instance_klass() ||
+                 cik->is_array_klass(), "Not supported allocation.");
+          ObjectValue* sv = new ObjectValue(spobj->_idx,
+                                new ConstantOopWriteValue(cik->encoding()));
+          Compile::set_sv_for_object_node(objs, sv);
+
+          uint first_ind = spobj->first_index();
+          for (uint i = 0; i < spobj->n_fields(); i++) {
+            Node* fld_node = sfn->in(first_ind+i);
+            (void)FillLocArray(sv->field_values()->length(), sfn, fld_node, sv->field_values(), objs);
+          }
+          scval = sv;
+        }
+      } else if( !obj_node->is_Con() ) {
         OptoReg::Name obj_reg = _regalloc->get_reg_first(obj_node);
-        scval = new_loc_value( _regalloc, obj_reg, Location::oop );
+        if( obj_node->bottom_type()->base() == Type::NarrowOop ) {
+          scval = new_loc_value( _regalloc, obj_reg, Location::narrowoop );
+        } else {
+          scval = new_loc_value( _regalloc, obj_reg, Location::oop );
+        }
       } else {
-        scval = new ConstantOopWriteValue(obj_node->bottom_type()->is_instptr()->const_oop()->encoding());
+        const TypePtr *tp = obj_node->bottom_type()->make_ptr();
+        scval = new ConstantOopWriteValue(tp->is_instptr()->const_oop()->encoding());
       }
 
       OptoReg::Name box_reg = BoxLockNode::stack_slot(box_node);
-      monarray->append(new MonitorValue(scval, Location::new_stk_loc(Location::normal,_regalloc->reg2offset(box_reg))));
-    }     
+      Location basic_lock = Location::new_stk_loc(Location::normal,_regalloc->reg2offset(box_reg));
+      while( !box_node->is_BoxLock() )  box_node = box_node->in(1);
+      monarray->append(new MonitorValue(scval, basic_lock, box_node->as_BoxLock()->is_eliminated()));
+    }
+
+    // We dump the object pool first, since deoptimization reads it in first.
+    debug_info()->dump_object_pool(objs);
 
     // Build first class objects to pass to scope
     DebugToken *locvals = debug_info()->create_scope_values(locarray);
@@ -826,6 +907,7 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
     ciMethod* scope_method = method ? method : _method;
     // Describe the scope here
     assert(jvms->bci() >= InvocationEntryBci && jvms->bci() <= 0x10000, "must be a valid or entry BCI");
+    // Now we can describe the scope.
     debug_info()->describe_scope(safepoint_pc_offset,scope_method,jvms->bci(),locvals,expvals,monvals);
   } // End jvms loop
 
@@ -924,11 +1006,8 @@ static void turn_off_compiler(Compile* C) {
     // blown the code cache size.
     C->record_failure("excessive request to CodeCache");
   } else {
-    UseInterpreter            = true;
-    UseCompiler               = false;    
-    AlwaysCompileLoopMethods  = false;
+    // Let CompilerBroker disable further compilations.
     C->record_failure("CodeCache is full");
-    warning("CodeCache is full. Compiling has been disabled");
   }
 }
 
@@ -983,7 +1062,7 @@ void Compile::Fill_buffer() {
 
   // If this machine supports different size branch offsets, then pre-compute
   // the length of the blocks
-  if( _matcher->is_short_branch_offset(0) ) {
+  if( _matcher->is_short_branch_offset(-1, 0) ) {
     Shorten_branches(blk_labels, code_req, locs_req, stub_req, const_req);
     labels_not_set = false;
   }
@@ -1294,8 +1373,8 @@ void Compile::Fill_buffer() {
 
     } // End for all instructions in block
 
-    // If the next block _starts_ a loop, pad this block out to align
-    // the loop start a little. Helps prevent pipe stalls at loop starts
+    // If the next block is the top of a loop, pad this block out to align
+    // the loop top a little. Helps prevent pipe stalls at loop back branches.
     int nop_size = (new (this) MachNopNode())->size(_regalloc);
     if( i<_cfg->_num_blocks-1 ) {
       Block *nb = _cfg->_blocks[i+1];

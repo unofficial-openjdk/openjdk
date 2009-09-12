@@ -2,7 +2,7 @@
 #pragma ident "@(#)idealKit.cpp	1.8 07/06/18 14:25:26 JVM"
 #endif
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -348,7 +348,7 @@ Node* IdealKit::load(Node* ctl,
   if (require_atomic_access && bt == T_LONG) {
     ld = LoadLNode::make_atomic(C, ctl, mem, adr, adr_type, t);
   } else {
-    ld = LoadNode::make(C, ctl, mem, adr, adr_type, t, bt);
+    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt);
   }
   return transform(ld);
 }
@@ -364,7 +364,7 @@ Node* IdealKit::store(Node* ctl, Node* adr, Node *val, BasicType bt,
   if (require_atomic_access && bt == T_LONG) {
     st = StoreLNode::make_atomic(C, ctl, mem, adr, adr_type, val);
   } else {
-    st = StoreNode::make(C, ctl, mem, adr, adr_type, val, bt);
+    st = StoreNode::make(_gvn, ctl, mem, adr, adr_type, val, bt);
   }
   st = transform(st);
   set_memory(st, adr_idx);

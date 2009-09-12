@@ -2,7 +2,7 @@
 #pragma ident "@(#)compactingPermGenGen.cpp	1.22 08/11/24 12:22:45 JVM"
 #endif
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,9 +52,9 @@ public:
 // to prevent visiting any object twice.
 
 class RecursiveAdjustSharedObjectClosure : public OopClosure {
-public:
-  void do_oop(oop* o) {
-    oop obj = *o;
+ protected:
+  template <class T> inline void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
     if (obj->is_shared_readwrite()) {
       if (obj->mark()->is_marked()) {
         obj->init_mark();         // Don't revisit this object.
@@ -74,7 +74,10 @@ public:
         }
       }
     }
-  };
+  }
+ public:
+  virtual void do_oop(oop* p)       { RecursiveAdjustSharedObjectClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { RecursiveAdjustSharedObjectClosure::do_oop_work(p); }
 };
 
 
@@ -89,9 +92,9 @@ public:
 // as doing so can cause hash codes to be computed, destroying
 // forwarding pointers.
 class TraversePlaceholdersClosure : public OopClosure {
- public:
-  void do_oop(oop* o) {
-    oop obj = *o;
+ protected:
+  template <class T> inline void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
     if (obj->klass() == Universe::symbolKlassObj() &&
         obj->is_shared_readonly()) {
       symbolHandle sym((symbolOop) obj);
@@ -102,6 +105,10 @@ class TraversePlaceholdersClosure : public OopClosure {
       }
     }
   }
+ public:
+  virtual void do_oop(oop* p)       { TraversePlaceholdersClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { TraversePlaceholdersClosure::do_oop_work(p); }
+
 };
 
 
@@ -414,28 +421,6 @@ size_t CompactingPermGenGen::max_capacity() const {
     "If not used, the size of shared spaces should be 0");
   return OneContigSpaceCardGeneration::max_capacity()
           - _shared_space_size;
-}
-
-
-
-bool CompactingPermGenGen::grow_by(size_t bytes) {
-  // Don't allow _virtual_size to expand into shared spaces.
-  size_t max_bytes = _virtual_space.uncommitted_size() - _shared_space_size;
-  if (bytes > _shared_space_size) {
-    bytes = _shared_space_size;
-  }
-  return OneContigSpaceCardGeneration::grow_by(bytes);
-}
-
-
-void CompactingPermGenGen::grow_to_reserved() {
-  // Don't allow _virtual_size to expand into shared spaces.
-  if (_virtual_space.uncommitted_size() > _shared_space_size) {
-    size_t remaining_bytes = 
-      _virtual_space.uncommitted_size() - _shared_space_size;
-    bool success = OneContigSpaceCardGeneration::grow_by(remaining_bytes);
-    DEBUG_ONLY(if (!success) warning("grow to reserved failed");)
-  }
 }
 
 

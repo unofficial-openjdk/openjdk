@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vtableStubs_x86_32.cpp	1.56 07/10/08 13:01:12 JVM"
-#endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -52,7 +49,7 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
 #ifndef PRODUCT
 
   if (CountCompiledCalls) {
-    __ increment(ExternalAddress((address) SharedRuntime::nof_megamorphic_calls_addr()));
+    __ incrementl(ExternalAddress((address) SharedRuntime::nof_megamorphic_calls_addr()));
   }
 #endif /* PRODUCT */
 
@@ -61,11 +58,11 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
 
   // get receiver klass
   address npe_addr = __ pc();
-  __ movl(rax, Address(rcx, oopDesc::klass_offset_in_bytes()));
+  __ movptr(rax, Address(rcx, oopDesc::klass_offset_in_bytes()));
   // compute entry offset (in words)
   int entry_offset = instanceKlass::vtable_start_offset() + vtable_index*vtableEntry::size();
 #ifndef PRODUCT
-  if (DebugVtables) { 
+  if (DebugVtables) {
     Label L;
     // check offset vs vtable length
     __ cmpl(Address(rax, instanceKlass::vtable_length_offset()*wordSize), vtable_index*vtableEntry::size());
@@ -79,18 +76,18 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
   const Register method = rbx;
 
   // load methodOop and target address
-  __ movl(method, Address(rax, entry_offset*wordSize + vtableEntry::method_offset_in_bytes()));
+  __ movptr(method, Address(rax, entry_offset*wordSize + vtableEntry::method_offset_in_bytes()));
   if (DebugVtables) {
     Label L;
-    __ cmpl(method, NULL_WORD);
+    __ cmpptr(method, (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, L);
-    __ cmpl(Address(method, methodOopDesc::from_compiled_offset()), NULL_WORD);
+    __ cmpptr(Address(method, methodOopDesc::from_compiled_offset()), (int32_t)NULL_WORD);
     __ jcc(Assembler::notZero, L);
     __ stop("Vtable entry is NULL");
     __ bind(L);
   }
 
-  // rax,: receiver klass 
+  // rax,: receiver klass
   // method (rbx): methodOop
   // rcx: receiver
   address ame_addr = __ pc();
@@ -102,7 +99,7 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
 }
 
 
-VtableStub* VtableStubs::create_itable_stub(int vtable_index) {  
+VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   // Note well: pd_code_size_limit is the absolute minimum we can get away with.  If you
   //            add code here, bump the code stub size returned by pd_code_size_limit!
   const int i486_code_length = VtableStub::pd_code_size_limit(false);
@@ -110,76 +107,76 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   ResourceMark rm;
   CodeBuffer cb(s->entry_point(), i486_code_length);
   MacroAssembler* masm = new MacroAssembler(&cb);
-  
+
   // Entry arguments:
   //  rax,: Interface
   //  rcx: Receiver
-  
+
 #ifndef PRODUCT
   if (CountCompiledCalls) {
-    __ increment(ExternalAddress((address) SharedRuntime::nof_megamorphic_calls_addr()));
+    __ incrementl(ExternalAddress((address) SharedRuntime::nof_megamorphic_calls_addr()));
   }
 #endif /* PRODUCT */
   // get receiver (need to skip return address on top of stack)
- 
+
   assert(VtableStub::receiver_location() == rcx->as_VMReg(), "receiver expected in rcx");
-  
+
   // get receiver klass (also an implicit null-check)
   address npe_addr = __ pc();
-  __ movl(rbx, Address(rcx, oopDesc::klass_offset_in_bytes()));    
+  __ movptr(rbx, Address(rcx, oopDesc::klass_offset_in_bytes()));
 
-  __ movl(rsi, rbx);   // Save klass in free register    
+  __ mov(rsi, rbx);   // Save klass in free register
   // Most registers are in use, so save a few
-  __ pushl(rdx);
-  // compute itable entry offset (in words)  
-  const int base = instanceKlass::vtable_start_offset() * wordSize;    
+  __ push(rdx);
+  // compute itable entry offset (in words)
+  const int base = instanceKlass::vtable_start_offset() * wordSize;
   assert(vtableEntry::size() * wordSize == 4, "adjust the scaling in the code below");
   __ movl(rdx, Address(rbx, instanceKlass::vtable_length_offset() * wordSize)); // Get length of vtable
-  __ leal(rbx, Address(rbx, rdx, Address::times_4, base));
+  __ lea(rbx, Address(rbx, rdx, Address::times_ptr, base));
   if (HeapWordsPerLong > 1) {
     // Round up to align_object_offset boundary
     __ round_to(rbx, BytesPerLong);
   }
 
   Label hit, next, entry, throw_icce;
-  
+
   __ jmpb(entry);
 
   __ bind(next);
-  __ addl(rbx, itableOffsetEntry::size() * wordSize);
-  
+  __ addptr(rbx, itableOffsetEntry::size() * wordSize);
+
   __ bind(entry);
 
   // If the entry is NULL then we've reached the end of the table
   // without finding the expected interface, so throw an exception
-  __ movl(rdx, Address(rbx, itableOffsetEntry::interface_offset_in_bytes()));
-  __ testl(rdx, rdx);
+  __ movptr(rdx, Address(rbx, itableOffsetEntry::interface_offset_in_bytes()));
+  __ testptr(rdx, rdx);
   __ jcc(Assembler::zero, throw_icce);
-  __ cmpl(rax, rdx);
-  __ jcc(Assembler::notEqual, next);    
-  
+  __ cmpptr(rax, rdx);
+  __ jcc(Assembler::notEqual, next);
+
   // We found a hit, move offset into rbx,
   __ movl(rdx, Address(rbx, itableOffsetEntry::offset_offset_in_bytes()));
 
-  // Compute itableMethodEntry.  
+  // Compute itableMethodEntry.
   const int method_offset = (itableMethodEntry::size() * wordSize * vtable_index) + itableMethodEntry::method_offset_in_bytes();
-  
-  // Get methodOop and entrypoint for compiler    
+
+  // Get methodOop and entrypoint for compiler
   const Register method = rbx;
-  __ movl(method, Address(rsi, rdx, Address::times_1, method_offset));  
+  __ movptr(method, Address(rsi, rdx, Address::times_1, method_offset));
 
   // Restore saved register, before possible trap.
-  __ popl(rdx);
+  __ pop(rdx);
 
   // method (rbx): methodOop
   // rcx: receiver
-  
+
 #ifdef ASSERT
   if (DebugVtables) {
       Label L1;
-      __ cmpl(method, NULL_WORD);
+      __ cmpptr(method, (int32_t)NULL_WORD);
       __ jcc(Assembler::equal, L1);
-      __ cmpl(Address(method, methodOopDesc::from_compiled_offset()), NULL_WORD);
+      __ cmpptr(Address(method, methodOopDesc::from_compiled_offset()), (int32_t)NULL_WORD);
       __ jcc(Assembler::notZero, L1);
       __ stop("methodOop is null");
       __ bind(L1);
@@ -191,9 +188,9 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
 
   __ bind(throw_icce);
   // Restore saved register
-  __ popl(rdx);
+  __ pop(rdx);
   __ jump(RuntimeAddress(StubRoutines::throw_IncompatibleClassChangeError_entry()));
-    
+
   masm->flush();
 
   guarantee(__ pc() <= s->code_end(), "overflowed buffer");

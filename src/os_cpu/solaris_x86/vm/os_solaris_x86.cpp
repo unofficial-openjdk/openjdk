@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os_solaris_x86.cpp	1.122 07/09/17 09:16:14 JVM"
-#endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // do not include  precompiled  header file
@@ -93,10 +90,10 @@ char* os::non_memory_address_word() {
 //
 // Validate a ucontext retrieved from walking a uc_link of a ucontext.
 // There are issues with libthread giving out uc_links for different threads
-// on the same uc_link chain and bad or circular links. 
+// on the same uc_link chain and bad or circular links.
 //
 bool os::Solaris::valid_ucontext(Thread* thread, ucontext_t* valid, ucontext_t* suspect) {
-  if (valid >= suspect || 
+  if (valid >= suspect ||
       valid->uc_stack.ss_flags != suspect->uc_stack.ss_flags ||
       valid->uc_stack.ss_sp    != suspect->uc_stack.ss_sp    ||
       valid->uc_stack.ss_size  != suspect->uc_stack.ss_size) {
@@ -175,7 +172,7 @@ ExtendedPC os::Solaris::fetch_frame_from_ucontext(Thread* thread,
   return os::fetch_frame_from_context(luc, ret_sp, ret_fp);
 }
 
-ExtendedPC os::fetch_frame_from_context(void* ucVoid, 
+ExtendedPC os::fetch_frame_from_context(void* ucVoid,
                     intptr_t** ret_sp, intptr_t** ret_fp) {
 
   ExtendedPC  epc;
@@ -206,16 +203,17 @@ frame os::get_sender_for_C_frame(frame* fr) {
   return frame(fr->sender_sp(), fr->link(), fr->sender_pc());
 }
 
-extern "C" intptr_t *_get_previous_fp();  // in .il file.
+extern "C" intptr_t *_get_current_fp();  // in .il file
 
 frame os::current_frame() {
-  intptr_t* fp = _get_previous_fp();
-  frame myframe((intptr_t*)os::current_stack_pointer(), 
+  intptr_t* fp = _get_current_fp();  // it's inlined so want current fp
+  frame myframe((intptr_t*)os::current_stack_pointer(),
                 (intptr_t*)fp,
                 CAST_FROM_FN_PTR(address, os::current_frame));
   if (os::is_first_C_frame(&myframe)) {
     // stack is not walkable
-    return frame(NULL, NULL, NULL);
+    frame ret; // This will be a null useless frame
+    return ret;
   } else {
     return os::get_sender_for_C_frame(&myframe);
   }
@@ -232,7 +230,7 @@ void GetThreadPC_Callback::execute(OSThread::InterruptArguments *args) {
   intptr_t* sp;
 
   assert(ProfileVM && thread->is_VM_thread(), "just checking");
-    
+
   ExtendedPC new_addr((address)uc->uc_mcontext.gregs[REG_PC]);
   _addr = new_addr;
 }
@@ -245,13 +243,13 @@ static int threadgetstate(thread_t tid, int *flags, lwpid_t *lwp, stack_t *ss, g
     return (err);
   if (*flags == TRS_LWPID) {
     sprintf(lwpstatusfile, "/proc/%d/lwp/%d/lwpstatus", getpid(),
-	    *lwp);
+            *lwp);
     if ((lwpfd = open(lwpstatusfile, O_RDONLY)) < 0) {
       perror("thr_mutator_status: open lwpstatus");
       return (EINVAL);
     }
     if (pread(lwpfd, lwpstatus, sizeof (lwpstatus_t), (off_t)0) !=
-	sizeof (lwpstatus_t)) {
+        sizeof (lwpstatus_t)) {
       perror("thr_mutator_status: read lwpstatus");
       (void) close(lwpfd);
       return (EINVAL);
@@ -278,7 +276,7 @@ static void  check_for_sse_support() {
     return;
   }
   // looking for _sse_hw in libc.so, if it does not exist or
-  // the value (int) is 0, OS has no support for SSE 
+  // the value (int) is 0, OS has no support for SSE
   int *sse_hwp;
   void *h;
 
@@ -331,7 +329,7 @@ bool os::is_allocatable(size_t bytes) {
 
 extern "C" int JVM_handle_solaris_signal(int signo, siginfo_t* siginfo, void* ucontext, int abort_if_unrecognized);
 
-extern "C" void Fetch32PFI () ; 
+extern "C" void Fetch32PFI () ;
 extern "C" void Fetch32Resume () ;
 #ifdef AMD64
 extern "C" void FetchNPFI () ;
@@ -373,10 +371,10 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
   if (os::Solaris::signal_handlers_are_installed) {
     if (t != NULL ){
       if(t->is_Java_thread()) {
-	thread = (JavaThread*)t;
+        thread = (JavaThread*)t;
       }
       else if(t->is_VM_thread()){
-	vmthread = (VMThread *)t;
+        vmthread = (VMThread *)t;
       }
     }
   }
@@ -387,8 +385,8 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     if(thread){
       OSThread::InterruptArguments args(thread, uc);
       thread->osthread()->do_interrupt_callbacks_at_interrupt(&args);
-      return true; 
-    } 
+      return true;
+    }
     else if(vmthread){
       OSThread::InterruptArguments args(vmthread, uc);
       vmthread->osthread()->do_interrupt_callbacks_at_interrupt(&args);
@@ -420,14 +418,14 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     pc = (address) uc->uc_mcontext.gregs[REG_PC];
 
     // SafeFetch32() support
-    if (pc == (address) Fetch32PFI) { 
-      uc->uc_mcontext.gregs[REG_PC] = intptr_t(Fetch32Resume) ; 
-      return true ; 
+    if (pc == (address) Fetch32PFI) {
+      uc->uc_mcontext.gregs[REG_PC] = intptr_t(Fetch32Resume) ;
+      return true ;
     }
 #ifdef AMD64
-    if (pc == (address) FetchNPFI) { 
-       uc->uc_mcontext.gregs [REG_PC] = intptr_t(FetchNResume) ; 
-       return true ; 
+    if (pc == (address) FetchNPFI) {
+       uc->uc_mcontext.gregs [REG_PC] = intptr_t(FetchNResume) ;
+       return true ;
     }
 #endif // AMD64
 
@@ -435,20 +433,20 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     if (sig == SIGSEGV && info->si_code == SEGV_ACCERR) {
       address addr = (address) info->si_addr;
       if (thread->in_stack_yellow_zone(addr)) {
-	thread->disable_stack_yellow_zone();
-	if (thread->thread_state() == _thread_in_Java) {
-	  // Throw a stack overflow exception.  Guard pages will be reenabled
-	  // while unwinding the stack.
-	  stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::STACK_OVERFLOW);
-	} else {
-	  // Thread was in the vm or native code.  Return and try to finish.
-	  return true;
-	}
+        thread->disable_stack_yellow_zone();
+        if (thread->thread_state() == _thread_in_Java) {
+          // Throw a stack overflow exception.  Guard pages will be reenabled
+          // while unwinding the stack.
+          stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::STACK_OVERFLOW);
+        } else {
+          // Thread was in the vm or native code.  Return and try to finish.
+          return true;
+        }
       } else if (thread->in_stack_red_zone(addr)) {
-	// Fatal red zone violation.  Disable the guard pages and fall through
-	// to handle_unexpected_exception way down below.
-	thread->disable_stack_red_zone();
-	tty->print_raw_cr("An irrecoverable stack overflow has occurred.");
+        // Fatal red zone violation.  Disable the guard pages and fall through
+        // to handle_unexpected_exception way down below.
+        thread->disable_stack_red_zone();
+        tty->print_raw_cr("An irrecoverable stack overflow has occurred.");
       }
     }
 
@@ -473,42 +471,42 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
           stub = StubRoutines::handler_for_unsafe_access();
         }
       }
-      else 
+      else
       if (sig == SIGFPE && info->si_code == FPE_INTDIV) {
-	// integer divide by zero
+        // integer divide by zero
         stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_DIVIDE_BY_ZERO);
       }
 #ifndef AMD64
       else if (sig == SIGFPE && info->si_code == FPE_FLTDIV) {
-	// floating-point divide by zero
+        // floating-point divide by zero
         stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_DIVIDE_BY_ZERO);
       }
       else if (sig == SIGFPE && info->si_code == FPE_FLTINV) {
-	// The encoding of D2I in i486.ad can cause an exception prior
-	// to the fist instruction if there was an invalid operation 
-	// pending. We want to dismiss that exception. From the win_32
-	// side it also seems that if it really was the fist causing
-	// the exception that we do the d2i by hand with different
-	// rounding. Seems kind of weird. QQQ TODO
-	// Note that we take the exception at the NEXT floating point instruction.
-	if (pc[0] == 0xDB) {
-	    assert(pc[0] == 0xDB, "not a FIST opcode");
-	    assert(pc[1] == 0x14, "not a FIST opcode");
-	    assert(pc[2] == 0x24, "not a FIST opcode");
-	    return true;
-	} else {
-	    assert(pc[-3] == 0xDB, "not an flt invalid opcode");
-	    assert(pc[-2] == 0x14, "not an flt invalid opcode");
-	    assert(pc[-1] == 0x24, "not an flt invalid opcode");
-	}
+        // The encoding of D2I in i486.ad can cause an exception prior
+        // to the fist instruction if there was an invalid operation
+        // pending. We want to dismiss that exception. From the win_32
+        // side it also seems that if it really was the fist causing
+        // the exception that we do the d2i by hand with different
+        // rounding. Seems kind of weird. QQQ TODO
+        // Note that we take the exception at the NEXT floating point instruction.
+        if (pc[0] == 0xDB) {
+            assert(pc[0] == 0xDB, "not a FIST opcode");
+            assert(pc[1] == 0x14, "not a FIST opcode");
+            assert(pc[2] == 0x24, "not a FIST opcode");
+            return true;
+        } else {
+            assert(pc[-3] == 0xDB, "not an flt invalid opcode");
+            assert(pc[-2] == 0x14, "not an flt invalid opcode");
+            assert(pc[-1] == 0x24, "not an flt invalid opcode");
+        }
       }
       else if (sig == SIGFPE ) {
         tty->print_cr("caught SIGFPE, info 0x%x.", info->si_code);
       }
 #endif // !AMD64
 
-	// QQQ It doesn't seem that we need to do this on x86 because we should be able
-	// to return properly from the handler without this extra stuff on the back side.
+        // QQQ It doesn't seem that we need to do this on x86 because we should be able
+        // to return properly from the handler without this extra stuff on the back side.
 
       else if (sig == SIGSEGV && info->si_code > 0 && !MacroAssembler::needs_explicit_null_check((intptr_t)info->si_addr)) {
         // Determination of interpreter/vtable stub/compiled code null exception
@@ -541,7 +539,7 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
   //
   // Preventative code for future versions of Solaris which may
   // enable execution protection when running the 32-bit VM on AMD64.
-  // 
+  //
   // This should be kept as the last step in the triage.  We don't
   // have a dedicated trap number for a no-execute fault, so be
   // conservative and allow other handlers the first shot.
@@ -564,25 +562,26 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     // different - we still want to unguard the 2nd page in this case.
     //
     // 15 bytes seems to be a (very) safe value for max instruction size.
-    bool pc_is_near_addr = 
+    bool pc_is_near_addr =
       (pointer_delta((void*) addr, (void*) pc, sizeof(char)) < 15);
     bool instr_spans_page_boundary =
       (align_size_down((intptr_t) pc ^ (intptr_t) addr,
                        (intptr_t) page_size) > 0);
-    
+
     if (pc == addr || (pc_is_near_addr && instr_spans_page_boundary)) {
       static volatile address last_addr =
         (address) os::non_memory_address_word();
-      
+
       // In conservative mode, don't unguard unless the address is in the VM
       if (addr != last_addr &&
           (UnguardOnExecutionViolation > 1 || os::address_is_in_vm(addr))) {
-        
-        // Unguard and retry
+
+        // Make memory rwx and retry
         address page_start =
           (address) align_size_down((intptr_t) addr, (intptr_t) page_size);
-        bool res = os::unguard_memory((char*) page_start, page_size);
-        
+        bool res = os::protect_memory((char*) page_start, page_size,
+                                      os::MEM_PROT_RWX);
+
         if (PrintMiscellaneous && Verbose) {
           char buf[256];
           jio_snprintf(buf, sizeof(buf), "Execution protection violation "
@@ -593,23 +592,23 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
         }
         stub = pc;
 
-	// Set last_addr so if we fault again at the same address, we don't end
-	// up in an endless loop.
-	// 
-	// There are two potential complications here.  Two threads trapping at
-	// the same address at the same time could cause one of the threads to
-	// think it already unguarded, and abort the VM.  Likely very rare.
-	// 
-	// The other race involves two threads alternately trapping at
-	// different addresses and failing to unguard the page, resulting in
-	// an endless loop.  This condition is probably even more unlikely than
-	// the first.
-	//
-	// Although both cases could be avoided by using locks or thread local
-	// last_addr, these solutions are unnecessary complication: this
-	// handler is a best-effort safety net, not a complete solution.  It is
-	// disabled by default and should only be used as a workaround in case
-	// we missed any no-execute-unsafe VM code.
+        // Set last_addr so if we fault again at the same address, we don't end
+        // up in an endless loop.
+        //
+        // There are two potential complications here.  Two threads trapping at
+        // the same address at the same time could cause one of the threads to
+        // think it already unguarded, and abort the VM.  Likely very rare.
+        //
+        // The other race involves two threads alternately trapping at
+        // different addresses and failing to unguard the page, resulting in
+        // an endless loop.  This condition is probably even more unlikely than
+        // the first.
+        //
+        // Although both cases could be avoided by using locks or thread local
+        // last_addr, these solutions are unnecessary complication: this
+        // handler is a best-effort safety net, not a complete solution.  It is
+        // disabled by default and should only be used as a workaround in case
+        // we missed any no-execute-unsafe VM code.
 
         last_addr = addr;
       }
@@ -644,8 +643,8 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
   // infinite loop if some other move to fs caused the GP fault. Note that
   // this loop counter is ultimately a heuristic as it is possible for
   // more than one thread to generate this fault at a time in an MP system.
-  // In the case of the loop count being exceeded or if the poll fails 
-  // just fall through to a fatal error. 
+  // In the case of the loop count being exceeded or if the poll fails
+  // just fall through to a fatal error.
   // If there is some other source of T_GPFLT traps and the text at EIP is
   // unreadable this code will loop infinitely until the stack is exausted.
   // The key to diagnosis in this case is to look for the bottom signal handler
@@ -653,28 +652,28 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
 
   if(! IgnoreLibthreadGPFault) {
     if (sig == SIGSEGV && uc->uc_mcontext.gregs[TRAPNO] == T_GPFLT) {
-      const unsigned char *p = 
-			(unsigned const char *) uc->uc_mcontext.gregs[EIP];
+      const unsigned char *p =
+                        (unsigned const char *) uc->uc_mcontext.gregs[EIP];
 
       // Expected instruction?
 
       if(p[0] == movlfs[0] && p[1] == movlfs[1]) {
 
-	Atomic::inc(&ldtr_refresh);
+        Atomic::inc(&ldtr_refresh);
 
-	// Infinite loop?
+        // Infinite loop?
 
-	if(ldtr_refresh < ((2 << 16) / PAGESIZE)) {
+        if(ldtr_refresh < ((2 << 16) / PAGESIZE)) {
 
-	  // No, force scheduling to get a fresh view of the LDTR
+          // No, force scheduling to get a fresh view of the LDTR
 
-	  if(poll(NULL, 0, 10) == 0) {
+          if(poll(NULL, 0, 10) == 0) {
 
-	    // Retry the move
+            // Retry the move
 
-	    return false;
-	  }
-	}      
+            return false;
+          }
+        }
       }
     }
   }
@@ -690,7 +689,7 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     sigaction(sig, (struct sigaction *)0, &oldAct);
     if (oldAct.sa_sigaction != signalHandler) {
       void* sighand = oldAct.sa_sigaction ? CAST_FROM_FN_PTR(void*,  oldAct.sa_sigaction)
-					  : CAST_FROM_FN_PTR(void*, oldAct.sa_handler);
+                                          : CAST_FROM_FN_PTR(void*, oldAct.sa_handler);
       warning("Unexpected Signal %d occured under user-defined signal handler %#lx", sig, (long)sighand);
     }
   }
@@ -879,4 +878,3 @@ void os::setup_fpu() {
   _solaris_raw_setup_fpu(fpu_cntrl);
 }
 #endif // AMD64
-

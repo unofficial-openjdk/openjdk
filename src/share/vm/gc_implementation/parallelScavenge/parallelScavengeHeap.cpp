@@ -2,7 +2,7 @@
 #pragma ident "@(#)parallelScavengeHeap.cpp	1.95 07/10/04 10:49:31 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,8 +111,8 @@ jint ParallelScavengeHeap::initialize() {
   // size than is needed or wanted for the perm gen.  Use the "compound
   // alignment" ReservedSpace ctor to avoid having to use the same page size for
   // all gens.
-  ReservedSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
-			og_align);
+  ReservedHeapSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
+                            og_align);
   os::trace_page_sizes("ps perm", pg_min_size, pg_max_size, pg_page_sz,
 		       heap_rs.base(), pg_max_size);
   os::trace_page_sizes("ps main", og_min_size + yg_min_size,
@@ -174,13 +174,13 @@ jint ParallelScavengeHeap::initialize() {
   const size_t initial_promo_size = MIN2(eden_capacity, old_capacity);
   _size_policy =
     new PSAdaptiveSizePolicy(eden_capacity,
-			     initial_promo_size,
-			     young_gen()->to_space()->capacity_in_bytes(),
-			     intra_generation_alignment(),
-			     max_gc_pause_sec,
-			     max_gc_minor_pause_sec,
-			     GCTimeRatio
-			     );
+                             initial_promo_size,
+                             young_gen()->to_space()->capacity_in_bytes(),
+                             intra_heap_alignment(),
+                             max_gc_pause_sec,
+                             max_gc_minor_pause_sec,
+                             GCTimeRatio
+                             );
 
   _perm_gen = new PSPermGen(perm_rs,
 			    pg_align,
@@ -213,10 +213,6 @@ void ParallelScavengeHeap::post_initialize() {
   PSScavenge::initialize();
   if (UseParallelOldGC) {
     PSParallelCompact::post_initialize();
-    if (VerifyParallelOldWithMarkSweep) {
-      // Will be used for verification of par old.
-      PSMarkSweep::initialize();
-    }
   } else {
     PSMarkSweep::initialize();
   }
@@ -405,7 +401,7 @@ HeapWord* ParallelScavengeHeap::mem_allocate(
         return result;
       }
       if (!is_tlab &&
-          size >= (young_gen()->eden_space()->capacity_in_words() / 2)) {
+          size >= (young_gen()->eden_space()->capacity_in_words(Thread::current()) / 2)) {
         result = old_gen()->allocate(size, is_tlab);
         if (result != NULL) {
           return result;
@@ -593,6 +589,31 @@ HeapWord* ParallelScavengeHeap::permanent_mem_allocate(size_t size) {
       full_gc_count = Universe::heap()->total_full_collections();
 
       result = perm_gen()->allocate_permanent(size);
+
+      if (result != NULL) {
+        return result;
+      }
+
+      if (GC_locker::is_active_and_needs_gc()) {
+        // If this thread is not in a jni critical section, we stall
+        // the requestor until the critical section has cleared and
+        // GC allowed. When the critical section clears, a GC is
+        // initiated by the last thread exiting the critical section; so
+        // we retry the allocation sequence from the beginning of the loop,
+        // rather than causing more, now probably unnecessary, GC attempts.
+        JavaThread* jthr = JavaThread::current();
+        if (!jthr->in_critical()) {
+          MutexUnlocker mul(Heap_lock);
+          GC_locker::stall_until_clear();
+          continue;
+        } else {
+          if (CheckJNICalls) {
+            fatal("Possible deadlock due to allocating while"
+                  " in jni critical section");
+          }
+          return NULL;
+        }
+      }
     }
 
     if (result == NULL) {
@@ -625,14 +646,20 @@ HeapWord* ParallelScavengeHeap::permanent_mem_allocate(size_t size) {
       if (op.prologue_succeeded()) {
         assert(Universe::heap()->is_in_permanent_or_null(op.result()), 
           "result not in heap");
-	// If a NULL results is being returned, an out-of-memory
-	// will be thrown now.  Clear the gc_time_limit_exceeded
-	// flag to avoid the following situation.
-	// 	gc_time_limit_exceeded is set during a collection
-	//	the collection fails to return enough space and an OOM is thrown
-	//	the next GC is skipped because the gc_time_limit_exceeded
-	//	  flag is set and another OOM is thrown
-	if (op.result() == NULL) {
+        // If GC was locked out during VM operation then retry allocation
+        // and/or stall as necessary.
+        if (op.gc_locked()) {
+          assert(op.result() == NULL, "must be NULL if gc_locked() is true");
+          continue;  // retry and/or stall as necessary
+        }
+        // If a NULL results is being returned, an out-of-memory
+        // will be thrown now.  Clear the gc_time_limit_exceeded
+        // flag to avoid the following situation.
+        //      gc_time_limit_exceeded is set during a collection
+        //      the collection fails to return enough space and an OOM is thrown
+        //      the next GC is skipped because the gc_time_limit_exceeded
+        //        flag is set and another OOM is thrown
+        if (op.result() == NULL) {
           size_policy()->set_gc_time_limit_exceeded(false);
 	}
         return op.result();
@@ -909,4 +936,24 @@ void ParallelScavengeHeap::resize_old_gen(size_t desired_free_space) {
 
   // Delegate the resize to the generation.
   _old_gen->resize(desired_free_space);
-} 
+}
+
+#ifndef PRODUCT
+void ParallelScavengeHeap::record_gen_tops_before_GC() {
+  if (ZapUnusedHeapArea) {
+    young_gen()->record_spaces_top();
+    old_gen()->record_spaces_top();
+    perm_gen()->record_spaces_top();
+  }
+}
+
+void ParallelScavengeHeap::gen_mangle_unused_area() {
+  if (ZapUnusedHeapArea) {
+    young_gen()->eden_space()->mangle_unused_area();
+    young_gen()->to_space()->mangle_unused_area();
+    young_gen()->from_space()->mangle_unused_area();
+    old_gen()->object_space()->mangle_unused_area();
+    perm_gen()->object_space()->mangle_unused_area();
+  }
+}
+#endif

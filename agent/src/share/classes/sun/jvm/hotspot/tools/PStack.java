@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.tools;
@@ -36,7 +36,7 @@ import sun.jvm.hotspot.runtime.*;
 public class PStack extends Tool {
     // in non-verbose mode, methodOops are not printed in java frames
    public PStack(boolean v, boolean concurrentLocks) {
-      this.verbose = v; 
+      this.verbose = v;
       this.concurrentLocks = concurrentLocks;
    }
 
@@ -147,7 +147,7 @@ public class PStack extends Tool {
                               printUnknown(out);
                            }
                         }
-                        // print java frames, if any 
+                        // print java frames, if any
                         if (names != null && names.length != 0) {
                            // print java frame(s)
                            for (int i = 0; i < names.length; i++) {
@@ -172,11 +172,11 @@ public class PStack extends Tool {
             }
          } // for threads
       } else {
-	  if (getDebugeeType() == DEBUGEE_REMOTE) {
-	      out.println("remote configuration is not yet implemented");
-	  } else {
-	      out.println("not yet implemented (debugger does not support CDebugger)!");
-	  }
+          if (getDebugeeType() == DEBUGEE_REMOTE) {
+              out.println("remote configuration is not yet implemented");
+          } else {
+              out.println("not yet implemented (debugger does not support CDebugger)!");
+          }
       }
    }
 
@@ -212,7 +212,7 @@ public class PStack extends Tool {
             // may be we may get frames for other threads, continue
             // after printing stack trace.
             exp.printStackTrace();
-         } 
+         }
          JavaVFrame[] jvframes = new JavaVFrame[tmp.size()];
          System.arraycopy(tmp.toArray(), 0, jvframes, 0, jvframes.length);
          jframeCache.put(cur.getThreadProxy(), jvframes);
@@ -221,7 +221,7 @@ public class PStack extends Tool {
    }
 
    private void printUnknown(PrintStream out) {
-      out.println("????????");
+      out.println("\t????????");
    }
 
    private String[] getJavaNames(ThreadProxy th, Address fp) {
@@ -267,6 +267,6 @@ public class PStack extends Tool {
       }
       String[] res = new String[names.size()];
       System.arraycopy(names.toArray(), 0, res, 0, res.length);
-      return res; 
+      return res;
    }
 }

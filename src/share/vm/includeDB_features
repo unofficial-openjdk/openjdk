@@ -1,5 +1,5 @@
 //
-// Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -51,12 +51,13 @@ dump.cpp                                oop.hpp
 dump.cpp                                oopFactory.hpp
 dump.cpp                                resourceArea.hpp
 dump.cpp                                signature.hpp
+dump.cpp                                spaceDecorator.hpp
 dump.cpp                                symbolTable.hpp
 dump.cpp                                systemDictionary.hpp
 dump.cpp                                vmThread.hpp
 dump.cpp                                vm_operations.hpp
 
-dump_<arch_model>.cpp                   assembler_<arch_model>.inline.hpp
+dump_<arch_model>.cpp                   assembler_<arch>.inline.hpp
 dump_<arch_model>.cpp                   compactingPermGenGen.hpp
 
 forte.cpp                               collectedHeap.inline.hpp
@@ -98,6 +99,7 @@ heapDumper.cpp                          ostream.hpp
 heapDumper.cpp                          reflectionUtils.hpp
 heapDumper.cpp                          symbolTable.hpp
 heapDumper.cpp                          systemDictionary.hpp
+heapDumper.cpp                          threadService.hpp
 heapDumper.cpp                          universe.hpp
 heapDumper.cpp                          vframe.hpp
 heapDumper.cpp                          vmGCOperations.hpp
@@ -112,6 +114,8 @@ heapInspection.cpp                      heapInspection.hpp
 heapInspection.cpp                      klassOop.hpp
 heapInspection.cpp                      os.hpp
 heapInspection.cpp                      resourceArea.hpp
+
+javaCalls.cpp                           jniCheck.hpp
 
 jniCheck.cpp                            fieldDescriptor.hpp
 jniCheck.cpp                            handles.hpp

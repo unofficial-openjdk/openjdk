@@ -2,7 +2,7 @@
 #pragma ident "@(#)genMarkSweep.cpp	1.40 07/05/17 15:54:55 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,9 @@ void GenMarkSweep::invoke_at_safepoint(int level, ReferenceProcessor* rp,
 
   // hook up weak ref data so it can be used during Mark-Sweep
   assert(ref_processor() == NULL, "no stomping");
-  _ref_processor = rp;
   assert(rp != NULL, "should be non-NULL");
+  _ref_processor = rp;
+  rp->setup_policy(clear_all_softrefs);
 
   TraceTime t1("Full GC", PrintGC && !PrintGCDetails, true, gclog_or_tty);
 
@@ -76,8 +77,7 @@ void GenMarkSweep::invoke_at_safepoint(int level, ReferenceProcessor* rp,
 
   VALIDATE_MARK_SWEEP_ONLY(
     if (ValidateMarkSweep) {
-      guarantee(_root_refs_stack->length() == 0,
-                "should be empty by now");
+      guarantee(_root_refs_stack->length() == 0, "should be empty by now");
     }
   )
 
@@ -168,9 +168,9 @@ void GenMarkSweep::allocate_stacks() {
 
 #ifdef VALIDATE_MARK_SWEEP
   if (ValidateMarkSweep) {
-    _root_refs_stack    = new (ResourceObj::C_HEAP) GrowableArray<oop*>(100, true);
-    _other_refs_stack   = new (ResourceObj::C_HEAP) GrowableArray<oop*>(100, true);
-    _adjusted_pointers  = new (ResourceObj::C_HEAP) GrowableArray<oop*>(100, true);
+    _root_refs_stack    = new (ResourceObj::C_HEAP) GrowableArray<void*>(100, true);
+    _other_refs_stack   = new (ResourceObj::C_HEAP) GrowableArray<void*>(100, true);
+    _adjusted_pointers  = new (ResourceObj::C_HEAP) GrowableArray<void*>(100, true);
     _live_oops          = new (ResourceObj::C_HEAP) GrowableArray<oop>(100, true);
     _live_oops_moved_to = new (ResourceObj::C_HEAP) GrowableArray<oop>(100, true);
     _live_oops_size     = new (ResourceObj::C_HEAP) GrowableArray<size_t>(100, true);
@@ -194,6 +194,12 @@ void GenMarkSweep::allocate_stacks() {
 
 
 void GenMarkSweep::deallocate_stacks() {
+
+  if (!UseG1GC) {
+    GenCollectedHeap* gch = GenCollectedHeap::heap();
+    gch->release_scratch();
+  }
+
   if (_preserved_oop_stack) {
     delete _preserved_mark_stack;
     _preserved_mark_stack = NULL;
@@ -243,20 +249,9 @@ void GenMarkSweep::mark_sweep_phase1(int level,
 
   // Process reference objects found during marking
   {
-    ReferencePolicy *soft_ref_policy;
-    if (clear_all_softrefs) {
-      soft_ref_policy = new AlwaysClearPolicy();
-    } else {
-#ifdef COMPILER2
-      soft_ref_policy = new LRUMaxHeapPolicy();
-#else
-      soft_ref_policy = new LRUCurrentHeapPolicy();
-#endif // COMPILER2
-    }
-    assert(soft_ref_policy != NULL,"No soft reference policy");
+    ref_processor()->setup_policy(clear_all_softrefs);
     ref_processor()->process_discovered_references(
-      soft_ref_policy, &is_alive, &keep_alive,
-      &follow_stack_closure, NULL);
+      &is_alive, &keep_alive, &follow_stack_closure, NULL);
   }
 
   // Follow system dictionary roots and unload classes

@@ -2,7 +2,7 @@
 #pragma ident "@(#)lcm.cpp	1.102 07/05/17 15:58:55 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,9 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     not_null_block = _succs[0];
     null_block     = _succs[1];
   }
+  while (null_block->is_Empty() == Block::empty_with_goto) {
+    null_block     = null_block->_succs[0];
+  }
 
   // Search the exception block for an uncommon trap.
   // (See Parse::do_if and Parse::do_ifnull for the reason
@@ -113,8 +116,10 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     case Op_LoadI:
     case Op_LoadL:
     case Op_LoadP:
+    case Op_LoadN:
     case Op_LoadS:
     case Op_LoadKlass:
+    case Op_LoadNKlass:
     case Op_LoadRange:
     case Op_LoadD_unaligned:
     case Op_LoadL_unaligned:
@@ -127,14 +132,16 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     case Op_StoreI:
     case Op_StoreL:
     case Op_StoreP:
+    case Op_StoreN:
       was_store = true;         // Memory op is a store op
       // Stores will have their address in slot 2 (memory in slot 1).
       // If the value being nul-checked is in another slot, it means we
       // are storing the checked value, which does NOT check the value!
       if( mach->in(2) != val ) continue;
       break;                    // Found a memory op?
-    case Op_StrComp:            
-      // Not a legit memory op for implicit null check regardless of 
+    case Op_StrComp:
+    case Op_AryEq:
+      // Not a legit memory op for implicit null check regardless of
       // embedded loads
       continue;
     default:                    // Also check for embedded loads
@@ -148,6 +155,10 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
       const TypePtr *adr_type = NULL;  // Do not need this return value here
       const Node* base = mach->get_base_and_disp(offset, adr_type);
       if (base == NULL || base == NodeSentinel) {
+        // Narrow oop address doesn't have base, only index
+        if( val->bottom_type()->isa_narrowoop() &&
+            MacroAssembler::needs_explicit_null_check(offset) )
+          continue;             // Give up if offset is beyond page size
         // cannot reason about it; is probably not implicit null exception
       } else {
         const TypePtr* tptr = base->bottom_type()->is_ptr();
@@ -321,7 +332,7 @@ Node *Block::select(PhaseCFG *cfg, Node_List &worklist, int *ready_cnt, VectorSe
   uint choice  = 0; // Bigger is most important
   uint latency = 0; // Bigger is scheduled first
   uint score   = 0; // Bigger is better
-  uint idx;         // Index in worklist
+  int idx = -1;     // Index in worklist
 
   for( uint i=0; i<cnt; i++ ) { // Inspect entire worklist
     // Order in worklist is used to break ties.
@@ -411,9 +422,10 @@ Node *Block::select(PhaseCFG *cfg, Node_List &worklist, int *ready_cnt, VectorSe
     }
   } // End of for all ready nodes in worklist
 
-  Node *n = worklist[idx];      // Get the winner
+  assert(idx >= 0, "index should be set");
+  Node *n = worklist[(uint)idx];      // Get the winner
 
-  worklist.map(idx,worklist.pop());     // Compress worklist
+  worklist.map((uint)idx, worklist.pop());     // Compress worklist
   return n;
 }
 
@@ -586,7 +598,7 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
 
       // A few node types require changing a required edge to a precedence edge
       // before allocation.
-      if( UseConcMarkSweepGC ) {
+      if( UseConcMarkSweepGC || UseG1GC ) {
         if( n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_StoreCM ) {
           // Note: Required edges with an index greater than oper_input_base
           // are not supported by the allocator.
@@ -598,7 +610,14 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
           assert(cfg->_bbs[oop_store->_idx]->_dom_depth <= this->_dom_depth, "oop_store must dominate card-mark");
         }
       }
-      if( n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_MemBarAcquire ) {
+      if( n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_MemBarAcquire &&
+          n->req() > TypeFunc::Parms ) {
+        // MemBarAcquire could be created without Precedent edge.
+        // del_req() replaces the specified edge with the last input edge
+        // and then removes the last edge. If the specified edge > number of
+        // edges the last edge will be moved outside of the input edges array
+        // and the edge will be lost. This is why this code should be
+        // executed only when Precedent (== TypeFunc::Parms) edge is present.
         Node *x = n->in(TypeFunc::Parms);
         n->del_req(TypeFunc::Parms);
         n->add_prec(x);
@@ -630,6 +649,10 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
         // of the phi to be scheduled first. The select() method breaks
         // ties in scheduling by worklist order.
         delay.push(m);
+      } else if (m->is_Mach() && m->as_Mach()->ideal_Opcode() == Op_CreateEx) {
+        // Force the CreateEx to the top of the list so it's processed
+        // first and ends up at the start of the block.
+        worklist.insert(0, m);
       } else {
         worklist.push(m);         // Then on to worklist!
       }

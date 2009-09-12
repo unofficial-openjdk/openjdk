@@ -2,7 +2,7 @@
 #pragma ident "@(#)filebuff.hpp	1.27 07/05/05 17:05:01 JVM"
 #endif
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@ class FileBuff {
 
   int   _err;                   // Error flag for file seek/read operations
   long  _filepos;               // Current offset from start of file
+  int   _linenum;
 
   ArchDesc& _AD;                // Reference to Architecture Description
 
@@ -69,6 +70,8 @@ class FileBuff {
   // This returns a pointer to the start of the current line in the buffer,
   // and increments bufeol and filepos to point at the end of that line.
   char *get_line(void);
+  int linenum() const { return _linenum; }
+  void set_linenum(int line) { _linenum = line; }
 
   // This converts a pointer into the buffer to a file offset.	It only works
   // when the pointer is valid (i.e. just obtained from getline()).

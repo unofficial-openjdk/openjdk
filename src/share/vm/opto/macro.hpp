@@ -2,7 +2,7 @@
 #pragma ident "@(#)macro.hpp	1.11 07/07/19 19:08:26 JVM"
 #endif
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,14 +81,23 @@ private:
                               Node* length,
                               const TypeFunc* slow_call_type,
                               address slow_call_address);
-  void eliminate_locking_node(AbstractLockNode *alock);
+  Node *value_from_mem(Node *mem, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, Node *alloc);
+  Node *value_from_mem_phi(Node *mem, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, Node *alloc, Node_Stack *value_phis, int level);
+
+  bool eliminate_allocate_node(AllocateNode *alloc);
+  bool can_eliminate_allocation(AllocateNode *alloc, GrowableArray <SafePointNode *>& safepoints);
+  bool scalar_replacement(AllocateNode *alloc, GrowableArray <SafePointNode *>& safepoints_done);
+  void process_users_of_allocation(AllocateNode *alloc);
+
+  void eliminate_card_mark(Node *cm);
+  bool eliminate_locking_node(AbstractLockNode *alock);
   void expand_lock_node(LockNode *lock);
   void expand_unlock_node(UnlockNode *unlock);
 
   int replace_input(Node *use, Node *oldref, Node *newref);
   void copy_call_debug_info(CallNode *oldcall, CallNode * newcall);
-  Node* opt_iff(Node* region, Node* iff);
-  void copy_predefined_input_for_runtime_call(Node * ctrl, CallNode* oldcall, CallNode* call); 
+  Node* opt_bits_test(Node* ctrl, Node* region, int edge, Node* word, int mask, int bits, bool return_fast_path = false);
+  void copy_predefined_input_for_runtime_call(Node * ctrl, CallNode* oldcall, CallNode* call);
   CallNode* make_slow_call(CallNode *oldcall, const TypeFunc* slow_call_type, address slow_call,
                        const char* leaf_name, Node* slow_path, Node* parm0, Node* parm1); 
   void extract_call_projections(CallNode *call);
@@ -104,7 +113,9 @@ private:
                             Node* length);
 
 public:
-  PhaseMacroExpand(PhaseIterGVN &igvn) : Phase(Macro_Expand), _igvn(igvn) {}
+  PhaseMacroExpand(PhaseIterGVN &igvn) : Phase(Macro_Expand), _igvn(igvn) {
+    _igvn.set_delay_transform(true);
+  }
   bool expand_macro_nodes();
 
 };

@@ -2,7 +2,7 @@
 #pragma ident "@(#)os_solaris.cpp	1.402 07/10/04 10:49:26 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,6 +123,13 @@ struct memcntl_mha {
 #endif
 #ifndef MADV_ACCESS_MANY
 # define  MADV_ACCESS_MANY        8       /* many processes to access heavily */
+#endif
+
+#ifndef LGRP_RSRC_CPU
+# define LGRP_RSRC_CPU           0       /* CPU resources */
+#endif
+#ifndef LGRP_RSRC_MEM
+# define LGRP_RSRC_MEM           1       /* memory resources */
 #endif
 
 // Some more macros from sys/mman.h that are not present in Solaris 8.
@@ -319,6 +326,10 @@ size_t os::current_stack_size() {
   return (size_t)(base - bottom);
 }
 
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
+}
+
 // interruptible infrastructure
 
 // setup_interruptible saves the thread state before going into an
@@ -458,16 +469,14 @@ int os::active_processor_count() {
   int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
   pid_t pid = getpid();
   psetid_t pset = PS_NONE;
-  // Are we running in a processor set?
+  // Are we running in a processor set or is there any processor set around?
   if (pset_bind(PS_QUERY, P_PID, pid, &pset) == 0) {
-    if (pset != PS_NONE) {
-      uint_t pset_cpus;
-      // Query number of cpus in processor set
-      if (pset_info(pset, NULL, &pset_cpus, NULL) == 0) {
-	assert(pset_cpus > 0 && pset_cpus <= online_cpus, "sanity check");
-	_processors_online = pset_cpus;
-	return pset_cpus;
-      }
+    uint_t pset_cpus;
+    // Query the number of cpus available to us.
+    if (pset_info(pset, NULL, &pset_cpus, NULL) == 0) {
+      assert(pset_cpus > 0 && pset_cpus <= online_cpus, "sanity check");
+      _processors_online = pset_cpus;
+      return pset_cpus;
     }
   }
   // Otherwise return number of online cpus
@@ -1636,16 +1645,24 @@ inline hrtime_t oldgetTimeNanos() {
 // getTimeNanos is guaranteed to not move backward on Solaris
 inline hrtime_t getTimeNanos() {
   if (VM_Version::supports_cx8()) {
-    bool retry = false;
-    hrtime_t newtime = gethrtime();
-    hrtime_t oldmaxtime = max_hrtime;
-    hrtime_t retmaxtime = oldmaxtime;
-    while ((newtime > retmaxtime) && (retry == false || retmaxtime != oldmaxtime)) {
-      oldmaxtime = retmaxtime;
-      retmaxtime = Atomic::cmpxchg(newtime, (volatile jlong *)&max_hrtime, oldmaxtime);
-      retry = true;
-    }
-    return (newtime > retmaxtime) ? newtime : retmaxtime;
+    const hrtime_t now = gethrtime();
+    const hrtime_t prev = max_hrtime;
+    if (now <= prev)  return prev;   // same or retrograde time;
+    const hrtime_t obsv = Atomic::cmpxchg(now, (volatile jlong*)&max_hrtime, prev);
+    assert(obsv >= prev, "invariant");   // Monotonicity
+    // If the CAS succeeded then we're done and return "now".
+    // If the CAS failed and the observed value "obs" is >= now then
+    // we should return "obs".  If the CAS failed and now > obs > prv then
+    // some other thread raced this thread and installed a new value, in which case
+    // we could either (a) retry the entire operation, (b) retry trying to install now
+    // or (c) just return obs.  We use (c).   No loop is required although in some cases
+    // we might discard a higher "now" value in deference to a slightly lower but freshly
+    // installed obs value.   That's entirely benign -- it admits no new orderings compared
+    // to (a) or (b) -- and greatly reduces coherence traffic.
+    // We might also condition (c) on the magnitude of the delta between obs and now.
+    // Avoiding excessive CAS operations to hot RW locations is critical.
+    // See http://blogs.sun.com/dave/entry/cas_and_cache_trivia_invalidate
+    return (prev == obsv) ? now : obsv ;
   } else {
     return oldgetTimeNanos();
   }
@@ -1687,6 +1704,40 @@ bool os::getTimesSecs(double* process_real_time,
   }
 }
 
+bool os::supports_vtime() { return true; }
+
+bool os::enable_vtime() {
+  int fd = open("/proc/self/ctl", O_WRONLY);
+  if (fd == -1)
+    return false;
+
+  long cmd[] = { PCSET, PR_MSACCT };
+  int res = write(fd, cmd, sizeof(long) * 2);
+  close(fd);
+  if (res != sizeof(long) * 2)
+    return false;
+
+  return true;
+}
+
+bool os::vtime_enabled() {
+  int fd = open("/proc/self/status", O_RDONLY);
+  if (fd == -1)
+    return false;
+
+  pstatus_t status;
+  int res = read(fd, (void*) &status, sizeof(pstatus_t));
+  close(fd);
+  if (res != sizeof(pstatus_t))
+    return false;
+
+  return status.pr_flags & PR_MSACCT;
+}
+
+double os::elapsedVTime() {
+  return (double)gethrvtime() / (double)hrtime_hz;
+}
+
 // Used internally for comparisons only
 // getTimeMillis guaranteed to not move backwards on Solaris
 jlong getTimeMillis() {
@@ -1694,17 +1745,12 @@ jlong getTimeMillis() {
   return (jlong)(nanotime / NANOSECS_PER_MILLISECS);
 }
 
-jlong os::timeofday() {
+// Must return millis since Jan 1 1970 for JVM_CurrentTimeMillis
+jlong os::javaTimeMillis() {
   timeval t;
   if (gettimeofday( &t, NULL) == -1)
-    fatal1("timeofday: gettimeofday (%s)", strerror(errno));
+    fatal1("os::javaTimeMillis: gettimeofday (%s)", strerror(errno));
   return jlong(t.tv_sec) * 1000  +  jlong(t.tv_usec) / 1000;
-}
-
-// Must return millis since Jan 1 1970 for JVM_CurrentTimeMillis
-// _use_global_time is only set if CacheTimeMillis is true
-jlong os::javaTimeMillis() {
-  return (_use_global_time ? read_global_time() : timeofday());
 }
 
 jlong os::javaTimeNanos() {
@@ -1783,6 +1829,54 @@ void os::set_error_file(const char *logfile) {}
 const char* os::dll_file_extension() { return ".so"; }
 
 const char* os::get_temp_directory() { return "/tmp/"; }
+
+static bool file_exists(const char* filename) {
+  struct stat statbuf;
+  if (filename == NULL || strlen(filename) == 0) {
+    return false;
+  }
+  return os::stat(filename, &statbuf) == 0;
+}
+
+void os::dll_build_name(char* buffer, size_t buflen,
+                        const char* pname, const char* fname) {
+  // Copied from libhpi
+  const size_t pnamelen = pname ? strlen(pname) : 0;
+
+  // Quietly truncate on buffer overflow.  Should be an error.
+  if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
+    *buffer = '\0';
+    return;
+  }
+
+  if (pnamelen == 0) {
+    snprintf(buffer, buflen, "lib%s.so", fname);
+  } else if (strchr(pname, *os::path_separator()) != NULL) {
+    int n;
+    char** pelements = split_path(pname, &n);
+    for (int i = 0 ; i < n ; i++) {
+      // really shouldn't be NULL but what the heck, check can't hurt
+      if (pelements[i] == NULL || strlen(pelements[i]) == 0) {
+        continue; // skip the empty path values
+      }
+      snprintf(buffer, buflen, "%s/lib%s.so", pelements[i], fname);
+      if (file_exists(buffer)) {
+        break;
+      }
+    }
+    // release the storage
+    for (int i = 0 ; i < n ; i++) {
+      if (pelements[i] != NULL) {
+        FREE_C_HEAP_ARRAY(char, pelements[i]);
+      }
+    }
+    if (pelements != NULL) {
+      FREE_C_HEAP_ARRAY(char*, pelements);
+    }
+  } else {
+    snprintf(buffer, buflen, "%s/lib%s.so", pname, fname);
+  }
+}
 
 const char* os::get_current_directory(char *buf, int buflen) {
   return getcwd(buf, buflen);
@@ -2035,6 +2129,9 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
   return NULL;
 }
 
+void* os::dll_lookup(void* handle, const char* name) {
+  return dlsym(handle, name);
+}
 
 
 bool _print_ascii_file(const char* filename, outputStream* st) {
@@ -2610,7 +2707,7 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 }
 
 // Tell the OS to make the range local to the first-touching LWP
-void os::numa_make_local(char *addr, size_t bytes) {
+void os::numa_make_local(char *addr, size_t bytes, int lgrp_hint) {
   assert((intptr_t)addr % os::vm_page_size() == 0, "Address should be page-aligned.");
   if (madvise(addr, bytes, MADV_ACCESS_LWP) < 0) {
     debug_only(warning("MADV_ACCESS_LWP failed."));
@@ -2648,16 +2745,27 @@ size_t os::numa_get_leaf_groups(int *ids, size_t size) {
        return 1;
      }
      if (!r) {
+       // That's a leaf node.
        assert (bottom <= cur, "Sanity check");
-       ids[bottom++] = ids[cur];
+       // Check if the node has memory
+       if (Solaris::lgrp_resources(Solaris::lgrp_cookie(), ids[cur],
+                                   NULL, 0, LGRP_RSRC_MEM) > 0) {
+         ids[bottom++] = ids[cur];
+       }
      }
      top += r;
      cur++;
    }
+   if (bottom == 0) {
+     // Handle a situation, when the OS reports no memory available.
+     // Assume UMA architecture.
+     ids[0] = 0;
+     return 1;
+   }
    return bottom;
 }
 
-// Detect the topology change. Typically happens during CPU pluggin-unplugging.
+// Detect the topology change. Typically happens during CPU plugging-unplugging.
 bool os::numa_topology_changed() {
   int is_stale = Solaris::lgrp_cookie_stale(Solaris::lgrp_cookie());
   if (is_stale != -1 && is_stale) {
@@ -2672,11 +2780,20 @@ bool os::numa_topology_changed() {
 
 // Get the group id of the current LWP.
 int os::numa_get_group_id() {
-  int lgrp_id = os::Solaris::lgrp_home(P_LWPID, P_MYID);
+  int lgrp_id = Solaris::lgrp_home(P_LWPID, P_MYID);
   if (lgrp_id == -1) {
     return 0;
   }
-  return lgrp_id;
+  const int size = os::numa_get_groups_num();
+  int *ids = (int*)alloca(size * sizeof(int));
+
+  // Get the ids of all lgroups with memory; r is the count.
+  int r = Solaris::lgrp_resources(Solaris::lgrp_cookie(), lgrp_id,
+                                  (Solaris::lgrp_id_t*)ids, size, LGRP_RSRC_MEM);
+  if (r <= 0) {
+    return 0;
+  }
+  return ids[os::random() % r];
 }
 
 // Request information about the page.
@@ -2788,16 +2905,15 @@ char* os::Solaris::mmap_chunk(char *addr, size_t size, int flags, int prot) {
   return b;
 }
 
-char*
-os::reserve_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
-  char* addr = NULL;
-  int   flags;
+char* os::Solaris::anon_mmap(char* requested_addr, size_t bytes, size_t alignment_hint, bool fixed) {
+  char* addr = requested_addr;
+  int flags = MAP_PRIVATE | MAP_NORESERVE;
 
-  flags = MAP_PRIVATE | MAP_NORESERVE;
-  if (requested_addr != NULL) {
-      flags |= MAP_FIXED;
-      addr = requested_addr;
-  } else if (has_map_align && alignment_hint > (size_t) vm_page_size()) {
+  assert(!(fixed && (alignment_hint > 0)), "alignment hint meaningless with fixed mmap");
+
+  if (fixed) {
+    flags |= MAP_FIXED;
+  } else if (has_map_align && (alignment_hint > (size_t) vm_page_size())) {
     flags |= MAP_ALIGN;
     addr = (char*) alignment_hint;
   }
@@ -2805,11 +2921,14 @@ os::reserve_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
   // Map uncommitted pages PROT_NONE so we fail early if we touch an
   // uncommitted page. Otherwise, the read/write might succeed if we
   // have enough swap space to back the physical page.
-  addr = Solaris::mmap_chunk(addr, bytes, flags, PROT_NONE);
+  return mmap_chunk(addr, bytes, flags, PROT_NONE);
+}
+
+char* os::reserve_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
+  char* addr = Solaris::anon_mmap(requested_addr, bytes, alignment_hint, (requested_addr != NULL));
 
   guarantee(requested_addr == NULL || requested_addr == addr,
-	    "OS failed to return requested mmap address.");
-
+            "OS failed to return requested mmap address.");
   return addr;
 }
 
@@ -2835,6 +2954,31 @@ char* os::attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
   // in one of the methods further up the call chain.  See bug 5044738.
   assert(bytes % os::vm_page_size() == 0, "reserving unexpected size block");
 
+  // Since snv_84, Solaris attempts to honor the address hint - see 5003415.
+  // Give it a try, if the kernel honors the hint we can return immediately.
+  char* addr = Solaris::anon_mmap(requested_addr, bytes, 0, false);
+  volatile int err = errno;
+  if (addr == requested_addr) {
+    return addr;
+  } else if (addr != NULL) {
+    unmap_memory(addr, bytes);
+  }
+
+  if (PrintMiscellaneous && Verbose) {
+    char buf[256];
+    buf[0] = '\0';
+    if (addr == NULL) {
+      jio_snprintf(buf, sizeof(buf), ": %s", strerror(err));
+    }
+    warning("attempt_reserve_memory_at: couldn't reserve %d bytes at "
+            PTR_FORMAT ": reserve_memory_helper returned " PTR_FORMAT
+            "%s", bytes, requested_addr, addr, buf);
+  }
+
+  // Address hint method didn't work.  Fall back to the old method.
+  // In theory, once SNV becomes our oldest supported platform, this
+  // code will no longer be needed.
+  //
   // Repeatedly allocate blocks until the block is allocated at the
   // right spot. Give up after max_tries.
   int i;
@@ -2925,10 +3069,23 @@ static bool solaris_mprotect(char* addr, size_t bytes, int prot) {
   return retVal == 0;
 }
 
-// Protect memory (make it read-only. (Used to pass readonly pages through
+// Protect memory (Used to pass readonly pages through
 // JNI GetArray<type>Elements with empty arrays.)
-bool os::protect_memory(char* addr, size_t bytes) {
-  return solaris_mprotect(addr, bytes, PROT_READ);
+// Also, used for serialization page and for compressed oops null pointer
+// checking.
+bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
+                        bool is_committed) {
+  unsigned int p = 0;
+  switch (prot) {
+  case MEM_PROT_NONE: p = PROT_NONE; break;
+  case MEM_PROT_READ: p = PROT_READ; break;
+  case MEM_PROT_RW:   p = PROT_READ|PROT_WRITE; break;
+  case MEM_PROT_RWX:  p = PROT_READ|PROT_WRITE|PROT_EXEC; break;
+  default:
+    ShouldNotReachHere();
+  }
+  // is_committed is unused.
+  return solaris_mprotect(addr, bytes, p);
 }
 
 // guard_memory and unguard_memory only happens within stack guard pages.
@@ -2939,7 +3096,7 @@ bool os::guard_memory(char* addr, size_t bytes) {
 }
 
 bool os::unguard_memory(char* addr, size_t bytes) {
-  return solaris_mprotect(addr, bytes, PROT_READ|PROT_WRITE|PROT_EXEC);
+  return solaris_mprotect(addr, bytes, PROT_READ|PROT_WRITE);
 }
 
 // Large page support
@@ -3070,6 +3227,8 @@ bool os::large_page_init() {
   if (UseISM) {
     // ISM disables MPSS to be compatible with old JDK behavior
     UseMPSS = false;
+    _page_sizes[0] = _large_page_size;
+    _page_sizes[1] = vm_page_size();
   }
 
   UseMPSS = UseMPSS &&
@@ -3156,6 +3315,10 @@ size_t os::large_page_size() {
 // MPSS allows application to commit large page memory on demand; with ISM
 // the entire memory region must be allocated as shared memory.
 bool os::can_commit_large_page_memory() {
+  return UseISM ? false : true;
+}
+
+bool os::can_execute_large_page_memory() {
   return UseISM ? false : true;
 }
 
@@ -3639,12 +3802,11 @@ int	set_lwp_priority (int ThreadID, int lwpid, int newPrio )
     iaparms_t *iaInfo  = (iaparms_t*)ParmInfo.pc_clparms;
     int maxClamped     = MIN2(iaLimits.maxPrio, (int)iaInfo->ia_uprilim);
     iaInfo->ia_upri    = scale_to_lwp_priority(iaLimits.minPrio, maxClamped, newPrio);
-    iaInfo->ia_uprilim = IA_NOCHANGE; 
-    iaInfo->ia_nice    = IA_NOCHANGE; 
-    iaInfo->ia_mode    = IA_NOCHANGE; 
-    if (ThreadPriorityVerbose) { 
-      tty->print_cr ("IA: [%d...%d] %d->%d\n", 
-               iaLimits.minPrio, maxClamped, newPrio, iaInfo->ia_upri); 
+    iaInfo->ia_uprilim = IA_NOCHANGE;
+    iaInfo->ia_mode    = IA_NOCHANGE;
+    if (ThreadPriorityVerbose) {
+      tty->print_cr ("IA: [%d...%d] %d->%d\n",
+               iaLimits.minPrio, maxClamped, newPrio, iaInfo->ia_upri);
     }
   } else if (ParmInfo.pc_cid == tsLimits.schedPolicy) {
     tsparms_t *tsInfo  = (tsparms_t*)ParmInfo.pc_clparms; 
@@ -4328,6 +4490,7 @@ os::Solaris::lgrp_init_func_t os::Solaris::_lgrp_init;
 os::Solaris::lgrp_fini_func_t os::Solaris::_lgrp_fini;
 os::Solaris::lgrp_root_func_t os::Solaris::_lgrp_root;
 os::Solaris::lgrp_children_func_t os::Solaris::_lgrp_children;
+os::Solaris::lgrp_resources_func_t os::Solaris::_lgrp_resources;
 os::Solaris::lgrp_nlgrps_func_t os::Solaris::_lgrp_nlgrps;
 os::Solaris::lgrp_cookie_stale_func_t os::Solaris::_lgrp_cookie_stale;
 os::Solaris::lgrp_cookie_t os::Solaris::_lgrp_cookie = 0;
@@ -4366,61 +4529,52 @@ static address resolve_symbol(const char *name) {
 // threads. Calling thr_setprio is meaningless in this case. 
 //
 bool isT2_libthread() {
-  int i, rslt;
-  static prheader_t * lwpArray = NULL;             
+  static prheader_t * lwpArray = NULL;
   static int lwpSize = 0;
   static int lwpFile = -1;
   lwpstatus_t * that;
-  int aslwpcount;
   char lwpName [128];
   bool isT2 = false;
 
 #define ADR(x)  ((uintptr_t)(x))
 #define LWPINDEX(ary,ix)   ((lwpstatus_t *)(((ary)->pr_entsize * (ix)) + (ADR((ary) + 1))))
 
-  aslwpcount = 0;
-  lwpSize = 16*1024;
-  lwpArray = ( prheader_t *)NEW_C_HEAP_ARRAY (char, lwpSize);
-  lwpFile = open ("/proc/self/lstatus", O_RDONLY, 0);
-  if (lwpArray == NULL) {
-      if ( ThreadPriorityVerbose ) warning ("Couldn't allocate T2 Check array\n");
-      return(isT2);
-  }
+  lwpFile = open("/proc/self/lstatus", O_RDONLY, 0);
   if (lwpFile < 0) {
-      if ( ThreadPriorityVerbose ) warning ("Couldn't open /proc/self/lstatus\n");
-      return(isT2);
+      if (ThreadPriorityVerbose) warning ("Couldn't open /proc/self/lstatus\n");
+      return false;
   }
+  lwpSize = 16*1024;
   for (;;) {
     lseek (lwpFile, 0, SEEK_SET);
-    rslt = read (lwpFile, lwpArray, lwpSize);
-    if ((lwpArray->pr_nent * lwpArray->pr_entsize) <= lwpSize) {
+    lwpArray = (prheader_t *)NEW_C_HEAP_ARRAY(char, lwpSize);
+    if (read(lwpFile, lwpArray, lwpSize) < 0) {
+      if (ThreadPriorityVerbose) warning("Error reading /proc/self/lstatus\n");
       break;
     }
-    FREE_C_HEAP_ARRAY(char, lwpArray);
+    if ((lwpArray->pr_nent * lwpArray->pr_entsize) <= lwpSize) {
+       // We got a good snapshot - now iterate over the list.
+      int aslwpcount = 0;
+      for (int i = 0; i < lwpArray->pr_nent; i++ ) {
+        that = LWPINDEX(lwpArray,i);
+        if (that->pr_flags & PR_ASLWP) {
+          aslwpcount++;
+        }
+      }
+      if (aslwpcount == 0) isT2 = true;
+      break;
+    }
     lwpSize = lwpArray->pr_nent * lwpArray->pr_entsize;
-    lwpArray = ( prheader_t *)NEW_C_HEAP_ARRAY (char, lwpSize);
-    if (lwpArray == NULL) {
-        if ( ThreadPriorityVerbose ) warning ("Couldn't allocate T2 Check array\n");
-        return(isT2);
-    }
+    FREE_C_HEAP_ARRAY(char, lwpArray);  // retry.
   }
-
-  // We got a good snapshot - now iterate over the list.
-  for (i = 0; i < lwpArray->pr_nent; i++ ) {
-    that = LWPINDEX(lwpArray,i);
-    if (that->pr_flags & PR_ASLWP) {
-      aslwpcount++;
-    }
-  }
-  if ( aslwpcount == 0 ) isT2 = true;
 
   FREE_C_HEAP_ARRAY(char, lwpArray);
   close (lwpFile);
-  if ( ThreadPriorityVerbose ) {
-    if ( isT2 ) tty->print_cr("We are running with a T2 libthread\n");
+  if (ThreadPriorityVerbose) {
+    if (isT2) tty->print_cr("We are running with a T2 libthread\n");
     else tty->print_cr("We are not running with a T2 libthread\n");
   }
-  return (isT2);
+  return isT2;
 }
 
 
@@ -4531,23 +4685,24 @@ void os::Solaris::synchronization_init() {
   }
 }
 
-void os::Solaris::liblgrp_init() {
-  void *handle = dlopen("liblgrp.so", RTLD_LAZY);
+bool os::Solaris::liblgrp_init() {
+  void *handle = dlopen("liblgrp.so.1", RTLD_LAZY);
   if (handle != NULL) {
     os::Solaris::set_lgrp_home(CAST_TO_FN_PTR(lgrp_home_func_t, dlsym(handle, "lgrp_home")));
     os::Solaris::set_lgrp_init(CAST_TO_FN_PTR(lgrp_init_func_t, dlsym(handle, "lgrp_init")));
     os::Solaris::set_lgrp_fini(CAST_TO_FN_PTR(lgrp_fini_func_t, dlsym(handle, "lgrp_fini")));
     os::Solaris::set_lgrp_root(CAST_TO_FN_PTR(lgrp_root_func_t, dlsym(handle, "lgrp_root")));
     os::Solaris::set_lgrp_children(CAST_TO_FN_PTR(lgrp_children_func_t, dlsym(handle, "lgrp_children")));
+    os::Solaris::set_lgrp_resources(CAST_TO_FN_PTR(lgrp_resources_func_t, dlsym(handle, "lgrp_resources")));
     os::Solaris::set_lgrp_nlgrps(CAST_TO_FN_PTR(lgrp_nlgrps_func_t, dlsym(handle, "lgrp_nlgrps")));
     os::Solaris::set_lgrp_cookie_stale(CAST_TO_FN_PTR(lgrp_cookie_stale_func_t,
                                        dlsym(handle, "lgrp_cookie_stale")));
 
     lgrp_cookie_t c = lgrp_init(LGRP_VIEW_CALLER);
     set_lgrp_cookie(c);
-  } else {
-    warning("your OS does not support NUMA");
+    return true;
   }
+  return false;
 }
 
 void os::Solaris::misc_sym_init() {
@@ -4716,9 +4871,25 @@ jint os::init_2(void) {
         vm_page_size()));
 
   Solaris::libthread_init();
+
   if (UseNUMA) {
-    Solaris::liblgrp_init();
+    if (!Solaris::liblgrp_init()) {
+      UseNUMA = false;
+    } else {
+      size_t lgrp_limit = os::numa_get_groups_num();
+      int *lgrp_ids = NEW_C_HEAP_ARRAY(int, lgrp_limit);
+      size_t lgrp_num = os::numa_get_leaf_groups(lgrp_ids, lgrp_limit);
+      FREE_C_HEAP_ARRAY(int, lgrp_ids);
+      if (lgrp_num < 2) {
+        // There's only one locality group, disable NUMA.
+        UseNUMA = false;
+      }
+    }
+    if (!UseNUMA && ForceNUMA) {
+      UseNUMA = true;
+    }
   }
+
   Solaris::misc_sym_init();
   Solaris::signal_sets_init();
   Solaris::init_signal_mem();

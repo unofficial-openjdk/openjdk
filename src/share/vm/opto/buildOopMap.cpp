@@ -2,7 +2,7 @@
 #pragma ident "@(#)buildOopMap.cpp	1.37 07/05/05 17:06:11 JVM"
 #endif
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -318,6 +318,26 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
         }
       }
 
+    } else if( t->isa_narrowoop() ) {
+      assert( !OptoReg::is_valid(_callees[reg]), "oop can't be callee save" );
+      // Check for a legal reg name in the oopMap and bailout if it is not.
+      if (!omap->legal_vm_reg_name(r)) {
+        regalloc->C->record_method_not_compilable("illegal oopMap register name");
+        continue;
+      }
+      if( mcall ) {
+          // Outgoing argument GC mask responsibility belongs to the callee,
+          // not the caller.  Inspect the inputs to the call, to see if
+          // this live-range is one of them.
+        uint cnt = mcall->tf()->domain()->cnt();
+        uint j;
+        for( j = TypeFunc::Parms; j < cnt; j++)
+          if( mcall->in(j) == def )
+            break;            // reaching def is an argument oop
+        if( j < cnt )         // arg oops dont go in GC map
+          continue;           // Continue on to the next register
+      }
+      omap->set_narrowoop(r);
     } else if( OptoReg::is_valid(_callees[reg])) { // callee-save?
       // It's a callee-save value
       assert( dup_check[_callees[reg]]==0, "trying to callee save same reg twice" );

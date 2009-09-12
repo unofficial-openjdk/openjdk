@@ -25,6 +25,10 @@
  *  
  */
 
+inline HeapWord* Space::block_start(const void* p) {
+  return block_start_const(p);
+}
+
 inline HeapWord* OffsetTableContigSpace::allocate(size_t size) {
   HeapWord* res = ContiguousSpace::allocate(size);
   if (res != NULL) {
@@ -53,7 +57,8 @@ inline HeapWord* OffsetTableContigSpace::par_allocate(size_t size) {
   return res;
 }
 
-inline HeapWord* OffsetTableContigSpace::block_start(const void* p) const {
+inline HeapWord*
+OffsetTableContigSpace::block_start_const(const void* p) const {
   return _offsets.block_start(p);
 }
 

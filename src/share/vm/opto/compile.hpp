@@ -2,7 +2,7 @@
 #pragma ident "@(#)compile.hpp	1.232 07/09/28 10:23:10 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ class InlineTree;
 class Int_Array;
 class Matcher;
 class MachNode;
+class MachSafePointNode;
 class Node;
 class Node_Array;
 class Node_Notes;
@@ -55,9 +56,6 @@ class TypeFunc;
 class Unique_Node_List;
 class nmethod;
 class WarmCallInfo;
-#ifdef ENABLE_ZAP_DEAD_LOCALS
-class MachSafePointNode;
-#endif
 
 //------------------------------Compile----------------------------------------
 // This class defines a top-level Compiler invocation. 
@@ -130,6 +128,7 @@ class Compile : public Phase {
   const int             _compile_id;
   const bool            _save_argument_registers; // save/restore arg regs for trampolines
   const bool            _subsume_loads;         // Load can be matched as part of a larger op.
+  const bool            _do_escape_analysis;    // Do escape analysis.
   ciMethod*             _method;                // The method being compiled.
   int                   _entry_bci;             // entry bci for osr methods.
   const TypeFunc*       _tf;                    // My kind of signature
@@ -158,12 +157,14 @@ class Compile : public Phase {
   uint                  _decompile_count;       // Cumulative decompilation counts.
   bool                  _do_inlining;           // True if we intend to do inlining
   bool                  _do_scheduling;         // True if we intend to do scheduling
+  bool                  _do_freq_based_layout;  // True if we intend to do frequency based block layout
   bool                  _do_count_invocations;  // True if we generate code to count invocations
   bool                  _do_method_data_update; // True if we generate code to update methodDataOops
   int                   _AliasLevel;            // Locally-adjusted version of AliasLevel flag.
   bool                  _print_assembly;        // True if we should dump assembly code for this compilation
 #ifndef PRODUCT
   bool                  _trace_opto_output;
+  bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
 #endif
 
   // Compilation environment.
@@ -263,6 +264,8 @@ class Compile : public Phase {
   // instructions that subsume a load may result in an unschedulable
   // instruction sequence.
   bool              subsume_loads() const       { return _subsume_loads; }
+  // Do escape analysis.
+  bool              do_escape_analysis() const  { return _do_escape_analysis; }
   bool              save_argument_registers() const { return _save_argument_registers; }
 
 
@@ -308,6 +311,8 @@ class Compile : public Phase {
   void          set_do_inlining(bool z)         { _do_inlining = z; }
   bool              do_scheduling() const       { return _do_scheduling; }
   void          set_do_scheduling(bool z)       { _do_scheduling = z; }
+  bool              do_freq_based_layout() const{ return _do_freq_based_layout; }
+  void          set_do_freq_based_layout(bool z){ _do_freq_based_layout = z; }
   bool              do_count_invocations() const{ return _do_count_invocations; }
   void          set_do_count_invocations(bool z){ _do_count_invocations = z; }
   bool              do_method_data_update() const { return _do_method_data_update; }
@@ -321,6 +326,8 @@ class Compile : public Phase {
   }
 #ifndef PRODUCT
   bool          trace_opto_output() const       { return _trace_opto_output; }
+  bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
+  void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
 #endif
 
   void begin_method() {
@@ -487,7 +494,6 @@ class Compile : public Phase {
   PhaseGVN*         initial_gvn()               { return _initial_gvn; }
   Unique_Node_List* for_igvn()                  { return _for_igvn; }
   inline void       record_for_igvn(Node* n);   // Body is after class Unique_Node_List.
-  void              record_for_escape_analysis(Node* n);
   void          set_initial_gvn(PhaseGVN *gvn)           { _initial_gvn = gvn; }
   void          set_for_igvn(Unique_Node_List *for_igvn) { _for_igvn = for_igvn; }
 
@@ -563,7 +569,7 @@ class Compile : public Phase {
   // replacement, entry_bci indicates the bytecode for which to compile a
   // continuation.
   Compile(ciEnv* ci_env, C2Compiler* compiler, ciMethod* target,
-          int entry_bci, bool subsume_loads);
+          int entry_bci, bool subsume_loads, bool do_escape_analysis);
 
   // Second major entry point.  From the TypeFunc signature, generate code
   // to pass arguments from the Java calling convention to the C calling
@@ -608,8 +614,20 @@ class Compile : public Phase {
 
   // Build OopMaps for each GC point
   void BuildOopMaps();
-  // Append debug info for the node to the array
-  void FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *array );
+
+  // Append debug info for the node "local" at safepoint node "sfpt" to the
+  // "array",   May also consult and add to "objs", which describes the
+  // scalar-replaced objects.
+  void FillLocArray( int idx, MachSafePointNode* sfpt,
+                     Node *local, GrowableArray<ScopeValue*> *array,
+                     GrowableArray<ScopeValue*> *objs );
+
+  // If "objs" contains an ObjectValue whose id is "id", returns it, else NULL.
+  static ObjectValue* sv_for_node_id(GrowableArray<ScopeValue*> *objs, int id);
+  // Requres that "objs" does not contains an ObjectValue whose id matches
+  // that of "sv.  Appends "sv".
+  static void set_sv_for_object_node(GrowableArray<ScopeValue*> *objs,
+                                     ObjectValue* sv );
 
   // Process an OopMap Element while emitting nodes
   void Process_OopMap_Node(MachNode *mach, int code_offset);

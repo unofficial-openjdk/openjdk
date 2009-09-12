@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)register_definitions_x86.cpp	1.13 07/09/17 09:28:17 JVM"
-#endif
 /*
- * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +19,8 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
-
-// make sure the defines don't screw up the declarations later on in this file
-#define DONT_USE_REGISTER_DEFINES
 
 #include "incls/_precompiled.incl"
 #include "incls/_register_definitions_x86.cpp.incl"
@@ -109,6 +103,7 @@ REGISTER_DEFINITION(XMMRegister, j_farg7);
 REGISTER_DEFINITION(Register, rscratch1);
 REGISTER_DEFINITION(Register, rscratch2);
 
+REGISTER_DEFINITION(Register, r12_heapbase);
 REGISTER_DEFINITION(Register, r15_thread);
 #endif // AMD64
 

@@ -2,7 +2,7 @@
 #pragma ident "@(#)subnode.cpp	1.162 07/09/28 10:33:21 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,10 +48,13 @@ Node *SubNode::Identity( PhaseTransform *phase ) {
     return in(2)->in(2);
   }
 
-  // Convert "(X+Y) - Y" into X
+  // Convert "(X+Y) - Y" into X and "(X+Y) - X" into Y
   if( in(1)->Opcode() == Op_AddI ) {
     if( phase->eqv(in(1)->in(2),in(2)) )
       return in(1)->in(1);
+    if (phase->eqv(in(1)->in(1),in(2)))
+      return in(1)->in(2);
+
     // Also catch: "(X + Opaque2(Y)) - Y".  In this case, 'Y' is a loop-varying
     // trip counter and X is likely to be loop-invariant (that's how O2 Nodes
     // are originally used, although the optimizer sometimes jiggers things).
@@ -205,6 +208,14 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   // Convert "(A+X) - (B+X)" into "A - B"
   if( op1 == Op_AddI && op2 == Op_AddI && in1->in(2) == in2->in(2) )
     return new (phase->C, 3) SubINode( in1->in(1), in2->in(1) );
+
+  // Convert "(A+X) - (X+B)" into "A - B"
+  if( op1 == Op_AddI && op2 == Op_AddI && in1->in(2) == in2->in(1) )
+    return new (phase->C, 3) SubINode( in1->in(1), in2->in(2) );
+
+  // Convert "(X+A) - (B+X)" into "A - B"
+  if( op1 == Op_AddI && op2 == Op_AddI && in1->in(1) == in2->in(2) )
+    return new (phase->C, 3) SubINode( in1->in(2), in2->in(1) );
 
   // Convert "A-(B-C)" into (A+C)-B", since add is commutative and generally
   // nicer to optimize than subtract.
@@ -617,6 +628,13 @@ const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
   const TypeOopPtr* p0 = r0->isa_oopptr();
   const TypeOopPtr* p1 = r1->isa_oopptr();
   if (p0 && p1) {
+    Node* in1 = in(1)->uncast();
+    Node* in2 = in(2)->uncast();
+    AllocateNode* alloc1 = AllocateNode::Ideal_allocation(in1, NULL);
+    AllocateNode* alloc2 = AllocateNode::Ideal_allocation(in2, NULL);
+    if (MemNode::detect_ptr_independence(in1, alloc1, in2, alloc2, NULL)) {
+      return TypeInt::CC_GT;  // different pointers
+    }
     ciKlass* klass0 = p0->klass();
     bool    xklass0 = p0->klass_is_exact();
     ciKlass* klass1 = p1->klass();
@@ -626,20 +644,31 @@ const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
         kps != 1 &&             // both or neither are klass pointers
         !klass0->is_interface() && // do not trust interfaces
         !klass1->is_interface()) {
+      bool unrelated_classes = false;
       // See if neither subclasses the other, or if the class on top
-      // is precise.  In either of these cases, the compare must fail.
+      // is precise.  In either of these cases, the compare is known
+      // to fail if at least one of the pointers is provably not null.
       if (klass0->equals(klass1)   ||   // if types are unequal but klasses are
           !klass0->is_java_klass() ||   // types not part of Java language?
           !klass1->is_java_klass()) {   // types not part of Java language?
         // Do nothing; we know nothing for imprecise types
       } else if (klass0->is_subtype_of(klass1)) {
-        // If klass1's type is PRECISE, then we can fail.
-        if (xklass1)  return TypeInt::CC_GT;
+        // If klass1's type is PRECISE, then classes are unrelated.
+        unrelated_classes = xklass1;
       } else if (klass1->is_subtype_of(klass0)) {
-        // If klass0's type is PRECISE, then we can fail.
-        if (xklass0)  return TypeInt::CC_GT;
+        // If klass0's type is PRECISE, then classes are unrelated.
+        unrelated_classes = xklass0;
       } else {                  // Neither subtypes the other
-        return TypeInt::CC_GT;  // ...so always fail
+        unrelated_classes = true;
+      }
+      if (unrelated_classes) {
+        // The oops classes are known to be unrelated. If the joined PTRs of
+        // two oops is not Null and not Bottom, then we are sure that one
+        // of the two oops is non-null, and the comparison will always fail.
+        TypePtr::PTR jp = r0->join_ptr(r1->_ptr);
+        if (jp != TypePtr::Null && jp != TypePtr::BotPTR) {
+          return TypeInt::CC_GT;
+        }
       }
     }
   }
@@ -674,7 +703,11 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
 
   // Now check for LoadKlass on left.
   Node* ldk1 = in(1);
-  if (ldk1->Opcode() != Op_LoadKlass)
+  if (ldk1->is_DecodeN()) {
+    ldk1 = ldk1->in(1);
+    if (ldk1->Opcode() != Op_LoadNKlass )
+      return NULL;
+  } else if (ldk1->Opcode() != Op_LoadKlass )
     return NULL;
   // Take apart the address of the LoadKlass:
   Node* adr1 = ldk1->in(MemNode::Address);
@@ -695,7 +728,11 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
 
   // Check for a LoadKlass from primary supertype array.
   // Any nested loadklass from loadklass+con must be from the p.s. array.
-  if (ldk2->Opcode() != Op_LoadKlass)
+  if (ldk2->is_DecodeN()) {
+    // Keep ldk2 as DecodeN since it could be used in CmpP below.
+    if (ldk2->in(1)->Opcode() != Op_LoadNKlass )
+      return NULL;
+  } else if (ldk2->Opcode() != Op_LoadKlass)
     return NULL;
 
   // Verify that we understand the situation
@@ -729,6 +766,86 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
   this->set_req(1,ldk2);
 
   return this;
+}
+
+//=============================================================================
+//------------------------------sub--------------------------------------------
+// Simplify an CmpN (compare 2 pointers) node, based on local information.
+// If both inputs are constants, compare them.
+const Type *CmpNNode::sub( const Type *t1, const Type *t2 ) const {
+  const TypePtr *r0 = t1->make_ptr(); // Handy access
+  const TypePtr *r1 = t2->make_ptr();
+
+  // Undefined inputs makes for an undefined result
+  if( TypePtr::above_centerline(r0->_ptr) ||
+      TypePtr::above_centerline(r1->_ptr) )
+    return Type::TOP;
+
+  if (r0 == r1 && r0->singleton()) {
+    // Equal pointer constants (klasses, nulls, etc.)
+    return TypeInt::CC_EQ;
+  }
+
+  // See if it is 2 unrelated classes.
+  const TypeOopPtr* p0 = r0->isa_oopptr();
+  const TypeOopPtr* p1 = r1->isa_oopptr();
+  if (p0 && p1) {
+    ciKlass* klass0 = p0->klass();
+    bool    xklass0 = p0->klass_is_exact();
+    ciKlass* klass1 = p1->klass();
+    bool    xklass1 = p1->klass_is_exact();
+    int kps = (p0->isa_klassptr()?1:0) + (p1->isa_klassptr()?1:0);
+    if (klass0 && klass1 &&
+        kps != 1 &&             // both or neither are klass pointers
+        !klass0->is_interface() && // do not trust interfaces
+        !klass1->is_interface()) {
+      bool unrelated_classes = false;
+      // See if neither subclasses the other, or if the class on top
+      // is precise.  In either of these cases, the compare is known
+      // to fail if at least one of the pointers is provably not null.
+      if (klass0->equals(klass1)   ||   // if types are unequal but klasses are
+          !klass0->is_java_klass() ||   // types not part of Java language?
+          !klass1->is_java_klass()) {   // types not part of Java language?
+        // Do nothing; we know nothing for imprecise types
+      } else if (klass0->is_subtype_of(klass1)) {
+        // If klass1's type is PRECISE, then classes are unrelated.
+        unrelated_classes = xklass1;
+      } else if (klass1->is_subtype_of(klass0)) {
+        // If klass0's type is PRECISE, then classes are unrelated.
+        unrelated_classes = xklass0;
+      } else {                  // Neither subtypes the other
+        unrelated_classes = true;
+      }
+      if (unrelated_classes) {
+        // The oops classes are known to be unrelated. If the joined PTRs of
+        // two oops is not Null and not Bottom, then we are sure that one
+        // of the two oops is non-null, and the comparison will always fail.
+        TypePtr::PTR jp = r0->join_ptr(r1->_ptr);
+        if (jp != TypePtr::Null && jp != TypePtr::BotPTR) {
+          return TypeInt::CC_GT;
+        }
+      }
+    }
+  }
+
+  // Known constants can be compared exactly
+  // Null can be distinguished from any NotNull pointers
+  // Unknown inputs makes an unknown result
+  if( r0->singleton() ) {
+    intptr_t bits0 = r0->get_con();
+    if( r1->singleton() )
+      return bits0 == r1->get_con() ? TypeInt::CC_EQ : TypeInt::CC_GT;
+    return ( r1->_ptr == TypePtr::NotNull && bits0==0 ) ? TypeInt::CC_GT : TypeInt::CC;
+  } else if( r1->singleton() ) {
+    intptr_t bits1 = r1->get_con();
+    return ( r0->_ptr == TypePtr::NotNull && bits1==0 ) ? TypeInt::CC_GT : TypeInt::CC;
+  } else
+    return TypeInt::CC;
+}
+
+//------------------------------Ideal------------------------------------------
+Node *CmpNNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
+  return NULL;
 }
 
 //=============================================================================

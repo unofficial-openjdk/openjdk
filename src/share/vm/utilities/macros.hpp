@@ -2,7 +2,7 @@
 #pragma ident "@(#)macros.hpp	1.44 07/08/29 13:42:30 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,8 +68,10 @@
 // COMPILER2 variant
 #ifdef COMPILER2
 #define COMPILER2_PRESENT(code) code
+#define NOT_COMPILER2(code)
 #else // COMPILER2
 #define COMPILER2_PRESENT(code)
+#define NOT_COMPILER2(code) code
 #endif // COMPILER2
 
 
@@ -145,6 +147,14 @@
 #else
 #define WINDOWS_ONLY(code)
 #define NOT_WINDOWS(code) code
+#endif
+
+#if defined(IA32) || defined(AMD64)
+#define X86
+#define X86_ONLY(code) code
+#else
+#undef X86
+#define X86_ONLY(code)
 #endif
 
 #ifdef IA32

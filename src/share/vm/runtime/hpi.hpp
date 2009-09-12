@@ -69,6 +69,8 @@ public:
   static inline int    socket_shutdown(int fd, int howto);
   static inline int    recv(int fd, char *buf, int nBytes, int flags);
   static inline int    send(int fd, char *buf, int nBytes, int flags);
+  // Variant of send that doesn't support interruptible I/O
+  static inline int    raw_send(int fd, char *buf, int nBytes, int flags);
   static inline int    timeout(int fd, long timeout);
   static inline int    listen(int fd, int count);
   static inline int    connect(int fd, struct sockaddr *him, int len);
@@ -91,7 +93,7 @@ public:
   static inline struct protoent* get_proto_by_name(char* name);
 
   // HPI_LibraryInterface
-  static inline void   dll_build_name(char *buf, int buf_len, char* path,
+  static inline void   dll_build_name(char *buf, int buf_len, const char* path,
                                       const char *name);
   static inline void*  dll_load(const char *name, char *ebuf, int ebuflen);
   static inline void   dll_unload(void *lib);
@@ -138,7 +140,15 @@ public:
     return result;                            \
   }
 
-
+#define VM_HPIDECL_VOID(name, names, func, arg_type, arg_print, arg)   \
+  inline void  hpi::name arg_type {           \
+    if (TraceHPI) {                           \
+      tty->print("hpi::" names "(");          \
+      tty->print arg_print;                   \
+      tty->print(") = ");                     \
+    }                                         \
+    func arg;                                 \
+  }
 
 #define HPIDECL_VOID(name, names, intf, func, arg_type, arg_print, arg) \
   inline void hpi::name arg_type {            \
@@ -198,11 +208,11 @@ HPIDECL(fsize, "fsize", _file, FileSizeFD, int, "%d",
         (fd, size));
 
 // HPI_LibraryInterface
-HPIDECL_VOID(dll_build_name, "dll_build_name", _library, BuildLibName,
-             (char *buf, int buf_len, char *path, const char *name),
-             ("buf = %p, buflen = %d, path = %s, name = %s",
-              buf, buf_len, path, name),
-             (buf, buf_len, path, name));
+VM_HPIDECL_VOID(dll_build_name, "dll_build_name", os::dll_build_name,
+               (char *buf, int buf_len, const char *path, const char *name),
+               ("buf = %p, buflen = %d, path = %s, name = %s",
+                buf, buf_len, path, name),
+               (buf, buf_len, path, name));
 
 VM_HPIDECL(dll_load, "dll_load", os::dll_load,
         void *, "(void *)%p",

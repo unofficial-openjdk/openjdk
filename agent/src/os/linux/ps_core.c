@@ -2,7 +2,7 @@
 #pragma ident "@(#)ps_core.c	1.27 07/05/05 17:02:02 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -521,10 +521,10 @@ static bool core_get_lwp_regs(struct ps_prochandle* ph, lwpid_t lwp_id,
 }
                           
 static ps_prochandle_ops core_ops = {
-   release:  core_release,
-   p_pread:  core_read_data,
-   p_pwrite: core_write_data,
-   get_lwp_regs: core_get_lwp_regs
+   .release=  core_release,
+   .p_pread=  core_read_data,
+   .p_pwrite= core_write_data,
+   .get_lwp_regs= core_get_lwp_regs
 };
 
 // read regs and create thread from NT_PRSTATUS entries from core file

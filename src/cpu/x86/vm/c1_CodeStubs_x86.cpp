@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_CodeStubs_x86.cpp	1.101 07/09/17 09:25:57 JVM"
-#endif
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -46,11 +43,12 @@ void ConversionStub::emit_code(LIR_Assembler* ce) {
     __ comisd(input()->as_xmm_double_reg(),
               ExternalAddress((address)&double_zero));
   } else {
-    __ pushl(rax);
+    LP64_ONLY(ShouldNotReachHere());
+    __ push(rax);
     __ ftst();
     __ fnstsw_ax();
     __ sahf();
-    __ popl(rax);
+    __ pop(rax);
   }
 
   Label NaN, do_return;
@@ -59,12 +57,12 @@ void ConversionStub::emit_code(LIR_Assembler* ce) {
 
   // input is > 0 -> return maxInt
   // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
-  __ decrement(result()->as_register()); 
+  __ decrement(result()->as_register());
   __ jmpb(do_return);
 
   // input is NaN -> return 0
   __ bind(NaN);
-  __ xorl(result()->as_register(), result()->as_register());
+  __ xorptr(result()->as_register(), result()->as_register());
 
   __ bind(do_return);
   __ jmp(_continuation);
@@ -88,7 +86,7 @@ RangeCheckStub::RangeCheckStub(CodeEmitInfo* info, LIR_Opr index,
                                bool throw_index_out_of_bounds_exception)
   : _throw_index_out_of_bounds_exception(throw_index_out_of_bounds_exception)
   , _index(index)
-{ 
+{
   _info = info == NULL ? NULL : new CodeEmitInfo(info);
 }
 
@@ -127,7 +125,7 @@ void DivByZeroStub::emit_code(LIR_Assembler* ce) {
 // Implementation of NewInstanceStub
 
 NewInstanceStub::NewInstanceStub(LIR_Opr klass_reg, LIR_Opr result, ciInstanceKlass* klass, CodeEmitInfo* info, Runtime1::StubID stub_id) {
-  _result = result; 
+  _result = result;
   _klass = klass;
   _klass_reg = klass_reg;
   _info = new CodeEmitInfo(info);
@@ -142,7 +140,7 @@ NewInstanceStub::NewInstanceStub(LIR_Opr klass_reg, LIR_Opr result, ciInstanceKl
 void NewInstanceStub::emit_code(LIR_Assembler* ce) {
   assert(__ rsp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  __ movl(rdx, _klass_reg->as_register());
+  __ movptr(rdx, _klass_reg->as_register());
   __ call(RuntimeAddress(Runtime1::entry_for(_stub_id)));
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
@@ -176,7 +174,7 @@ void NewTypeArrayStub::emit_code(LIR_Assembler* ce) {
 
 // Implementation of NewObjectArrayStub
 
-NewObjectArrayStub::NewObjectArrayStub(LIR_Opr klass_reg, LIR_Opr length, LIR_Opr result, CodeEmitInfo* info) {  
+NewObjectArrayStub::NewObjectArrayStub(LIR_Opr klass_reg, LIR_Opr length, LIR_Opr result, CodeEmitInfo* info) {
   _klass_reg = klass_reg;
   _result = result;
   _length = length;
@@ -243,13 +241,13 @@ void MonitorExitStub::emit_code(LIR_Assembler* ce) {
 }
 
 
-// Implementation of patching: 
+// Implementation of patching:
 // - Copy the code at given offset to an inlined buffer (first the bytes, then the number of bytes)
 // - Replace original code with a call to the stub
 // At Runtime:
-// - call to stub, jump to runtime 
+// - call to stub, jump to runtime
 // - in runtime: preserve all registers (rspecially objects, i.e., source and destination object)
-// - in runtime: after initializing class, restore original code, reexecute instruction 
+// - in runtime: after initializing class, restore original code, reexecute instruction
 
 int PatchingStub::_patch_info_offset = -NativeGeneralJump::instruction_size;
 
@@ -309,10 +307,10 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
     assert(_obj != noreg, "must be a valid register");
     Register tmp = rax;
     if (_obj == tmp) tmp = rbx;
-    __ pushl(tmp);
+    __ push(tmp);
     __ get_thread(tmp);
-    __ cmpl(tmp, Address(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
-    __ popl(tmp);
+    __ cmpptr(tmp, Address(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
+    __ pop(tmp);
     __ jcc(Assembler::notEqual, call_patch);
 
     // access_field patches may execute the patched code before it's
@@ -386,7 +384,7 @@ void ImplicitNullCheckStub::emit_code(LIR_Assembler* ce) {
 
 void SimpleExceptionStub::emit_code(LIR_Assembler* ce) {
   assert(__ rsp_offset() == 0, "frame size should be fixed");
-  
+
   __ bind(_entry);
   // pass the object on stack because all registers must be preserved
   if (_obj->is_cpu_register()) {
@@ -437,7 +435,7 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
     VMReg r_1 = args[i].first();
     if (r_1->is_stack()) {
       int st_off = r_1->reg2stack() * wordSize;
-      __ movl (Address(rsp, st_off), r[i]);
+      __ movptr (Address(rsp, st_off), r[i]);
     } else {
       assert(r[i] == args[i].first()->as_Register(), "Wrong register for arg ");
     }
@@ -452,11 +450,56 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
   ce->add_call_info_here(info());
 
 #ifndef PRODUCT
-  __ increment(ExternalAddress((address)&Runtime1::_arraycopy_slowcase_cnt));
+  __ incrementl(ExternalAddress((address)&Runtime1::_arraycopy_slowcase_cnt));
 #endif
-  
+
   __ jmp(_continuation);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+#ifndef SERIALGC
+
+void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
+
+  // At this point we know that marking is in progress
+
+  __ bind(_entry);
+  assert(pre_val()->is_register(), "Precondition.");
+
+  Register pre_val_reg = pre_val()->as_register();
+
+  ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false);
+
+  __ cmpptr(pre_val_reg, (int32_t) NULL_WORD);
+  __ jcc(Assembler::equal, _continuation);
+  ce->store_parameter(pre_val()->as_register(), 0);
+  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::g1_pre_barrier_slow_id)));
+  __ jmp(_continuation);
+
+}
+
+jbyte* G1PostBarrierStub::_byte_map_base = NULL;
+
+jbyte* G1PostBarrierStub::byte_map_base_slow() {
+  BarrierSet* bs = Universe::heap()->barrier_set();
+  assert(bs->is_a(BarrierSet::G1SATBCTLogging),
+         "Must be if we're using this.");
+  return ((G1SATBCardTableModRefBS*)bs)->byte_map_base;
+}
+
+void G1PostBarrierStub::emit_code(LIR_Assembler* ce) {
+  __ bind(_entry);
+  assert(addr()->is_register(), "Precondition.");
+  assert(new_val()->is_register(), "Precondition.");
+  Register new_val_reg = new_val()->as_register();
+  __ cmpptr(new_val_reg, (int32_t) NULL_WORD);
+  __ jcc(Assembler::equal, _continuation);
+  ce->store_parameter(addr()->as_register(), 0);
+  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::g1_post_barrier_slow_id)));
+  __ jmp(_continuation);
+}
+
+#endif // SERIALGC
+/////////////////////////////////////////////////////////////////////////////
 
 #undef __

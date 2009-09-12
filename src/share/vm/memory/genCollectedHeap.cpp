@@ -2,7 +2,7 @@
 #pragma ident "@(#)genCollectedHeap.cpp	1.190 07/06/15 16:44:02 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -225,9 +225,9 @@ char* GenCollectedHeap::allocate(size_t alignment,
 
   *_total_reserved = total_reserved;
   *_n_covered_regions = n_covered_regions;
-  *heap_rs = ReservedSpace(total_reserved, alignment,
-                           UseLargePages, heap_address); 
-  
+  *heap_rs = ReservedHeapSpace(total_reserved, alignment,
+                               UseLargePages, heap_address);
+
   return heap_address;
 }
 
@@ -468,6 +468,11 @@ void GenCollectedHeap::do_collection(bool  full,
         _gens[i]->stat_record()->invocations++;
         _gens[i]->stat_record()->accumulated_time.start();
 
+        // Must be done anew before each collection because
+        // a previous collection will do mangling and will
+        // change top of some spaces.
+        record_gen_tops_before_GC();
+
         if (PrintGC && Verbose) {
           gclog_or_tty->print("level=%d invoke=%d size=" SIZE_FORMAT,
                      i,
@@ -523,8 +528,9 @@ void GenCollectedHeap::do_collection(bool  full,
           if (rp->discovery_is_atomic()) {
             rp->verify_no_references_recorded();
             rp->enable_discovery();
+            rp->setup_policy(clear_all_soft_refs);
           } else {
-            // collect() will enable discovery as appropriate
+            // collect() below will enable discovery as appropriate
           }
           _gens[i]->collect(full, clear_all_soft_refs, size, is_tlab);
           if (!rp->enqueuing_is_done()) {
@@ -627,6 +633,7 @@ public:
   void do_oop(oop* p) {
     assert((*p) == NULL || (*p)->is_perm(), "Referent should be perm.");
   }
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 static AssertIsPermClosure assert_is_perm_closure;
 
@@ -1060,6 +1067,12 @@ ScratchBlock* GenCollectedHeap::gather_scratch(Generation* requestor,
   return res;
 }
 
+void GenCollectedHeap::release_scratch() {
+  for (int i = 0; i < _n_gens; i++) {
+    _gens[i]->reset_scratch();
+  }
+}
+
 size_t GenCollectedHeap::large_typearray_limit() {
   return gen_policy()->large_typearray_limit();
 }
@@ -1287,6 +1300,24 @@ void GenCollectedHeap::gc_epilogue(bool full) {
   always_do_update_barrier = UseConcMarkSweepGC;
 };
 
+#ifndef PRODUCT
+class GenGCSaveTopsBeforeGCClosure: public GenCollectedHeap::GenClosure {
+ private:
+ public:
+  void do_generation(Generation* gen) {
+    gen->record_spaces_top();
+  }
+};
+
+void GenCollectedHeap::record_gen_tops_before_GC() {
+  if (ZapUnusedHeapArea) {
+    GenGCSaveTopsBeforeGCClosure blk;
+    generation_iterate(&blk, false);  // not old-to-young.
+    perm_gen()->record_spaces_top();
+  }
+}
+#endif  // not PRODUCT
+
 class GenEnsureParsabilityClosure: public GenCollectedHeap::GenClosure {
  public:
   void do_generation(Generation* gen) {
@@ -1302,9 +1333,8 @@ void GenCollectedHeap::ensure_parsability(bool retire_tlabs) {
 }
 
 oop GenCollectedHeap::handle_failed_promotion(Generation* gen,
-					      oop obj,
-					      size_t obj_size,
-					      oop* ref) {
+                                              oop obj,
+                                              size_t obj_size) {
   assert(obj_size == (size_t)obj->size(), "bad obj_size passed in");
   HeapWord* result = NULL;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -36,6 +36,7 @@ import sun.jvm.hotspot.memory.*;
 import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.runtime.*;
 
 /** <P> This class encapsulates the global state of the VM; the
     universe, object heap, interpreter, etc. It is a Singleton and
@@ -93,6 +94,10 @@ public class VM {
   private boolean      isLP64;
   private int          bytesPerLong;
   private int          minObjAlignmentInBytes;
+  private int          logMinObjAlignmentInBytes;
+  private int          heapWordSize;
+  private int          heapOopSize;
+  private int          oopSize;
   /** This is only present in a non-core build */
   private CodeCache    codeCache;
   /** This is only present in a C1 build */
@@ -117,7 +122,8 @@ public class VM {
   private static Type uintxType;
   private static CIntegerType boolType;
   private Boolean sharingEnabled;
- 
+  private Boolean compressedOopsEnabled;
+
   // command line flags supplied to VM - see struct Flag in globals.hpp
   public static final class Flag {
      private String type;
@@ -174,7 +180,7 @@ public class VM {
      public boolean isUIntx() {
         return type.equals("uintx");
      }
- 
+
      public long getUIntx() {
         if (Assert.ASSERTS_ENABLED) {
            Assert.that(isUIntx(), "not a uintx flag!");
@@ -197,11 +203,11 @@ public class VM {
 
   private static void checkVMVersion(String vmRelease) {
      if (System.getProperty("sun.jvm.hotspot.runtime.VM.disableVersionCheck") == null) {
-	// read sa build version.
-	String versionProp = "sun.jvm.hotspot.runtime.VM.saBuildVersion";
-	String saVersion = saProps.getProperty(versionProp);
-	if (saVersion == null)
-	   throw new RuntimeException("Missing property " + versionProp);
+        // read sa build version.
+        String versionProp = "sun.jvm.hotspot.runtime.VM.saBuildVersion";
+        String saVersion = saProps.getProperty(versionProp);
+        if (saVersion == null)
+           throw new RuntimeException("Missing property " + versionProp);
 
         // Strip nonproduct VM version substring (note: saVersion doesn't have it).
         String vmVersion = vmRelease.replaceAll("(-fastdebug)|(-debug)|(-jvmg)|(-optimized)|(-profiled)","");
@@ -218,8 +224,8 @@ public class VM {
         } else {
            // Otherwise print warning to allow mismatch not release versions
            // during development.
-           System.err.println("WARNING: Hotspot VM version " + vmRelease + 
-                              " does not match with SA version " + saVersion + 
+           System.err.println("WARNING: Hotspot VM version " + vmRelease +
+                              " does not match with SA version " + saVersion +
                               "." + " You may see unexpected results. ");
         }
      } else {
@@ -240,8 +246,8 @@ public class VM {
        saProps.load(new BufferedInputStream(url.openStream()));
      } catch (Exception e) {
        throw new RuntimeException("Unable to load properties  " +
-				  (url == null ? "null" : url.toString()) +
-				  ": " + e.getMessage());
+                                  (url == null ? "null" : url.toString()) +
+                                  ": " + e.getMessage());
      }
 
      disableDerivedPrinterTableCheck = System.getProperty("sun.jvm.hotspot.runtime.VM.disableDerivedPointerTableCheck") != null;
@@ -308,6 +314,11 @@ public class VM {
     }
     bytesPerLong = db.lookupIntConstant("BytesPerLong").intValue();
     minObjAlignmentInBytes = db.lookupIntConstant("MinObjAlignmentInBytes").intValue();
+    // minObjAlignment = db.lookupIntConstant("MinObjAlignment").intValue();
+    logMinObjAlignmentInBytes = db.lookupIntConstant("LogMinObjAlignmentInBytes").intValue();
+    heapWordSize = db.lookupIntConstant("HeapWordSize").intValue();
+    oopSize  = db.lookupIntConstant("oopSize").intValue();
+    heapOopSize  = db.lookupIntConstant("heapOopSize").intValue();
 
     intxType = db.lookupType("intx");
     uintxType = db.lookupType("uintx");
@@ -331,6 +342,8 @@ public class VM {
       throw new RuntimeException("Attempt to initialize VM twice");
     }
     soleInstance = new VM(db, debugger, debugger.getMachineDescription().isBigEndian());
+    debugger.putHeapConst(Universe.getHeapBase(), soleInstance.getHeapOopSize(),
+                          soleInstance.logMinObjAlignmentInBytes);
     for (Iterator iter = vmInitializedObservers.iterator(); iter.hasNext(); ) {
       ((Observer) iter.next()).update(null, null);
     }
@@ -440,11 +453,15 @@ public class VM {
   }
 
   public long getOopSize() {
-    return db.getOopSize();
+    return oopSize;
   }
 
   public long getLogAddressSize() {
     return logAddressSize;
+  }
+
+  public long getIntSize() {
+    return db.getJIntType().getSize();
   }
 
   /** NOTE: this offset is in BYTES in this system! */
@@ -467,10 +484,24 @@ public class VM {
   }
 
   /** Get minimum object alignment in bytes. */
-  public int getMinObjAlignmentInBytes() {
+  public int getMinObjAlignment() {
     return minObjAlignmentInBytes;
   }
 
+  public int getMinObjAlignmentInBytes() {
+    return minObjAlignmentInBytes;
+  }
+  public int getLogMinObjAlignmentInBytes() {
+    return logMinObjAlignmentInBytes;
+  }
+
+  public int getHeapWordSize() {
+    return heapWordSize;
+  }
+
+  public int getHeapOopSize() {
+    return heapOopSize;
+  }
   /** Utility routine for getting data structure alignment correct */
   public long alignUp(long size, long alignment) {
     return (size + alignment - 1) & ~(alignment - 1);
@@ -590,6 +621,11 @@ public class VM {
     return bytes;
   }
 
+  /** Returns true if this is a isBigEndian, false otherwise */
+  public boolean isBigEndian() {
+    return isBigEndian;
+  }
+
   /** Returns true if this is a "core" build, false if either C1 or C2
       is present */
   public boolean isCore() {
@@ -608,7 +644,7 @@ public class VM {
 
   /** Returns true if C2 derived pointer table should be used, false otherwise */
   public boolean useDerivedPointerTable() {
-    return !disableDerivedPrinterTableCheck; 
+    return !disableDerivedPrinterTableCheck;
   }
 
   /** Returns the code cache; should not be used if is core build */
@@ -695,12 +731,20 @@ public class VM {
   public boolean isSharingEnabled() {
     if (sharingEnabled == null) {
       Flag flag = getCommandLineFlag("UseSharedSpaces");
-      sharingEnabled = (flag == null)? Boolean.FALSE : 
+      sharingEnabled = (flag == null)? Boolean.FALSE :
           (flag.getBool()? Boolean.TRUE: Boolean.FALSE);
     }
     return sharingEnabled.booleanValue();
   }
 
+  public boolean isCompressedOopsEnabled() {
+    if (compressedOopsEnabled == null) {
+        Flag flag = getCommandLineFlag("UseCompressedOops");
+        compressedOopsEnabled = (flag == null) ? Boolean.FALSE:
+             (flag.getBool()? Boolean.TRUE: Boolean.FALSE);
+    }
+    return compressedOopsEnabled.booleanValue();
+  }
 
   // returns null, if not available.
   public Flag[] getCommandLineFlags() {

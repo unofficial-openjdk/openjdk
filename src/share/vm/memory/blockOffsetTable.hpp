@@ -2,7 +2,7 @@
 #pragma ident "@(#)blockOffsetTable.hpp	1.57 07/05/05 17:05:43 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -202,6 +202,12 @@ public:
   // "index" in "_offset_array".
   HeapWord* address_for_index(size_t index) const;
 
+  // Return the address "p" incremented by the size of
+  // a region.  This method does not align the address
+  // returned to the start of a region.  It is a simple
+  // primitive.
+  HeapWord* inc_by_region_size(HeapWord* p) const { return p + N_words; }
+
   // Shared space support
   void serialize(SerializeOopClosure* soc, HeapWord* start, HeapWord* end);
 };
@@ -211,6 +217,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 class BlockOffsetArray: public BlockOffsetTable {
   friend class VMStructs;
+  friend class G1BlockOffsetArray; // temp. until we restructure and cleanup
  protected:
   // The following enums are used by do_block_internal() below
   enum Action {

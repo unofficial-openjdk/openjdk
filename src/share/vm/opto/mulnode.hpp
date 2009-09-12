@@ -2,7 +2,7 @@
 #pragma ident "@(#)mulnode.hpp	1.53 07/05/05 17:06:18 JVM"
 #endif
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,6 +136,16 @@ public:
   virtual uint ideal_reg() const { return Op_RegD; }
 };
 
+//-------------------------------MulHiLNode------------------------------------
+// Upper 64 bits of a 64 bit by 64 bit multiply
+class MulHiLNode : public Node {
+public:
+  MulHiLNode( Node *in1, Node *in2 ) : Node(0,in1,in2) {}
+  virtual int Opcode() const;
+  virtual const Type *Value( PhaseTransform *phase ) const;
+  const Type *bottom_type() const { return TypeLong::LONG; }
+  virtual uint ideal_reg() const { return Op_RegL; }
+};
 
 //------------------------------AndINode---------------------------------------
 // Logically AND 2 integers.  Included with the MUL nodes because it inherits

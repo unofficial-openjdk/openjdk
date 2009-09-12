@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiRedefineClassesTrace.hpp	1.2 07/12/20 10:58:59 JVM"
-#endif
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // RedefineClasses tracing support via the TraceRedefineClasses
@@ -34,7 +31,7 @@
 // the old cumulative behavior, pick the level after the one in
 // which you are interested and subtract one, e.g., 33554431 will
 // print every tracing message.
-// 
+//
 //    0x00000000 |          0 - default; no tracing messages
 //    0x00000001 |          1 - name each target class before loading, after
 //                              loading and after redefinition is completed
@@ -52,10 +49,10 @@
 //    0x00000400 |       1024 - previous class weak reference mgmt during
 //                              add previous ops (GC)
 //    0x00000800 |       2048 - previous class breakpoint mgmt
-//    0x00001000 |       4096 - unused
-//    0x00002000 |       8192 - unused
+//    0x00001000 |       4096 - detect calls to obsolete methods
+//    0x00002000 |       8192 - fail a guarantee() in addition to detection
 //    0x00004000 |      16384 - unused
-//    0x00008000 |      32768 - old/new method matching/add/delete 
+//    0x00008000 |      32768 - old/new method matching/add/delete
 //    0x00010000 |      65536 - impl details: CP size info
 //    0x00020000 |     131072 - impl details: CP merge pass info
 //    0x00040000 |     262144 - impl details: CP index maps
@@ -124,5 +121,3 @@
   if (RC_TRACE_ENABLED(0x00000004)) { \
     t.stop(); \
   } while (0)
-
-

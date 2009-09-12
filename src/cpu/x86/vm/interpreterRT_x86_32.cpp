@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)interpreterRT_x86_32.cpp	1.58 07/09/17 09:26:03 JVM"
-#endif
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -37,8 +34,8 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_int() {
   move(offset(), jni_offset() + 1);
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_long() { 
-   move(offset(), jni_offset() + 2); 
+void InterpreterRuntime::SignatureHandlerGenerator::pass_long() {
+   move(offset(), jni_offset() + 2);
    move(offset() + 1, jni_offset() + 1);
 }
 
@@ -53,13 +50,13 @@ void InterpreterRuntime::SignatureHandlerGenerator::move(int from_offset, int to
 
 
 void InterpreterRuntime::SignatureHandlerGenerator::box(int from_offset, int to_offset) {
-  __ leal(temp(), Address(from(), Interpreter::local_offset_in_bytes(from_offset)));
-  __ cmpl(Address(from(), Interpreter::local_offset_in_bytes(from_offset)), 0); // do not use temp() to avoid AGI
+  __ lea(temp(), Address(from(), Interpreter::local_offset_in_bytes(from_offset)));
+  __ cmpptr(Address(from(), Interpreter::local_offset_in_bytes(from_offset)), (int32_t)NULL_WORD); // do not use temp() to avoid AGI
   Label L;
   __ jcc(Assembler::notZero, L);
-  __ movl(temp(), 0);
+  __ movptr(temp(), ((int32_t)NULL_WORD));
   __ bind(L);
-  __ movl(Address(to(), to_offset * wordSize), temp());
+  __ movptr(Address(to(), to_offset * wordSize), temp());
 }
 
 
@@ -96,21 +93,21 @@ class SlowSignatureHandler: public NativeSignatureIterator {
   }
 #endif // ASSERT
 
-  virtual void pass_int() { 
-    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0)); 
+  virtual void pass_int() {
+    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0));
     debug_only(verify_tag(frame::TagValue));
     _from -= Interpreter::stackElementSize();
   }
 
-  virtual void pass_long() { 
+  virtual void pass_long() {
     _to[0] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1));
     _to[1] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(0));
     debug_only(verify_tag(frame::TagValue));
-    _to += 2; 
+    _to += 2;
     _from -= 2*Interpreter::stackElementSize();
   }
 
-  virtual void pass_object() { 
+  virtual void pass_object() {
     // pass address of from
     intptr_t from_addr = (intptr_t)(_from + Interpreter::local_offset_in_bytes(0));
     *_to++ = (*(intptr_t*)from_addr == 0) ? NULL : from_addr;
@@ -119,7 +116,7 @@ class SlowSignatureHandler: public NativeSignatureIterator {
    }
 
  public:
-  SlowSignatureHandler(methodHandle method, address from, intptr_t* to) : 
+  SlowSignatureHandler(methodHandle method, address from, intptr_t* to) :
     NativeSignatureIterator(method) {
     _from = from;
     _to   = to + (is_static() ? 2 : 1);

@@ -2,7 +2,7 @@
 #pragma ident "@(#)machnode.cpp	1.200 07/09/28 10:23:08 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -265,10 +265,19 @@ const Node* MachNode::get_base_and_disp(intptr_t &offset, const TypePtr* &adr_ty
     // Now we have collected every part of the ADLC MEMORY_INTER.
     // See if it adds up to a base + offset.
     if (index != NULL) {
-      if (!index->is_Con()) {
+      const Type* t_index = index->bottom_type();
+      if (t_index->isa_narrowoop()) { // EncodeN, LoadN, LoadConN, LoadNKlass.
+        // Memory references through narrow oops have a
+        // funny base so grab the type from the index:
+        // [R12 + narrow_oop_reg<<3 + offset]
+        assert(base == NULL, "Memory references through narrow oops have no base");
+        offset = disp;
+        adr_type = t_index->make_ptr()->add_offset(offset);
+        return NULL;
+      } else if (!index->is_Con()) {
         disp = Type::OffsetBot;
       } else if (disp != Type::OffsetBot) {
-        const TypeX* ti = index->bottom_type()->isa_intptr_t();
+        const TypeX* ti = t_index->isa_intptr_t();
         if (ti == NULL) {
           disp = Type::OffsetBot;  // a random constant??
         } else {

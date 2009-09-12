@@ -2,7 +2,7 @@
 #pragma ident "@(#)jniHandles.cpp	1.64 07/05/17 16:06:13 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -209,9 +209,10 @@ private:
   int _count;
 public:
   CountHandleClosure(): _count(0) {}
-  void do_oop(oop* unused) {
+  virtual void do_oop(oop* unused) {
     _count++;
   }
+  virtual void do_oop(narrowOop* unused) { ShouldNotReachHere(); }
   int count() { return _count; }
 };
 
@@ -233,9 +234,10 @@ void JNIHandles::print_on(outputStream* st) {
 
 class VerifyHandleClosure: public OopClosure {
 public:
-  void do_oop(oop* root) {
+  virtual void do_oop(oop* root) {
     (*root)->verify();
   }
+  virtual void do_oop(narrowOop* root) { ShouldNotReachHere(); }
 };
 
 void JNIHandles::verify() {

@@ -2,7 +2,7 @@
 #pragma ident "@(#)jni.cpp	1.436 07/07/11 09:47:42 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -138,7 +138,10 @@ intptr_t jfieldIDWorkaround::encode_klass_hash(klassOop k, intptr_t offset) {
   if (offset <= small_offset_mask) {
     klassOop field_klass = k;
     klassOop super_klass = Klass::cast(field_klass)->super();
-    while (instanceKlass::cast(super_klass)->contains_field_offset(offset)) {
+    // With compressed oops the most super class with nonstatic fields would
+    // be the owner of fields embedded in the header.
+    while (instanceKlass::cast(super_klass)->has_nonstatic_fields() &&
+           instanceKlass::cast(super_klass)->contains_field_offset(offset)) {
       field_klass = super_klass;   // super contains the field also
       super_klass = Klass::cast(field_klass)->super();
     }
@@ -631,7 +634,7 @@ JNI_ENTRY(void, jni_FatalError(JNIEnv *env, const char *msg))
   DTRACE_PROBE2(hotspot_jni, FatalError__entry, env, msg);
   tty->print_cr("FATAL ERROR in native method: %s", msg);
   thread->print_stack();
-  os::abort(false); // Prevent core dump, causes a jck failure.
+  os::abort(); // Dump core and abort
 JNI_END
 
 
@@ -2173,8 +2176,8 @@ static char* get_bad_address() {
     size_t size = os::vm_allocation_granularity();
     bad_address = os::reserve_memory(size);
     if (bad_address != NULL) {
-      os::commit_memory(bad_address, size);
-      os::protect_memory(bad_address, size);
+      os::protect_memory(bad_address, size, os::MEM_PROT_READ,
+                         /*is_committed*/false);
     }
   }
   return bad_address;

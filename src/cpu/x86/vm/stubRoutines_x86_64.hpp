@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)stubRoutines_x86_64.hpp	1.13 07/05/05 17:04:08 JVM"
-#endif
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file holds the platform specific parts of the StubRoutines
@@ -31,19 +28,19 @@
 
 static bool    returns_to_call_stub(address return_pc)   { return return_pc == _call_stub_return_address; }
 
-enum platform_dependent_constants 
+enum platform_dependent_constants
 {
-  code_size1 =  9000, // simply increase if too small (assembler will
+  code_size1 =  19000, // simply increase if too small (assembler will
                       // crash if too small)
   code_size2 = 22000  // simply increase if too small (assembler will
                       // crash if too small)
 };
 
-class amd64 {
+class x86 {
  friend class StubGenerator;
 
  private:
-  static address _get_previous_fp_entry;  
+  static address _get_previous_fp_entry;
   static address _verify_mxcsr_entry;
 
   static address _f2i_fixup;
@@ -65,15 +62,15 @@ class amd64 {
   }
 
   static address verify_mxcsr_entry()
-  { 
-    return _verify_mxcsr_entry; 
+  {
+    return _verify_mxcsr_entry;
   }
 
   static address f2i_fixup()
   {
     return _f2i_fixup;
   }
-  
+
   static address f2l_fixup()
   {
     return _f2l_fixup;
@@ -83,7 +80,7 @@ class amd64 {
   {
     return _d2i_fixup;
   }
-  
+
   static address d2l_fixup()
   {
     return _d2l_fixup;
@@ -100,18 +97,17 @@ class amd64 {
   }
 
   static address double_sign_mask()
-  { 
-    return _double_sign_mask; 
+  {
+    return _double_sign_mask;
   }
 
-  static address double_sign_flip() 
-  { 
+  static address double_sign_flip()
+  {
     return _double_sign_flip;
   }
 
-  static address mxcsr_std() 
-  { 
+  static address mxcsr_std()
+  {
     return _mxcsr_std;
   }
 };
-

@@ -2,7 +2,7 @@
 #pragma ident "@(#)c1_LIRAssembler.cpp	1.135 07/07/02 16:50:41 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,6 +77,7 @@ void LIR_Assembler::patching_epilog(PatchingStub* patch, LIR_PatchCode patch_cod
 LIR_Assembler::LIR_Assembler(Compilation* c): 
    _compilation(c)
  , _masm(c->masm())
+ , _bs(Universe::heap()->barrier_set())
  , _frame_map(c->frame_map())
  , _current_block(NULL)
  , _pending_non_safepoint(NULL)
@@ -218,7 +219,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 #endif /* PRODUCT */
 
   assert(block->lir() != NULL, "must have LIR");
-  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
+  X86_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 
 #ifndef PRODUCT
   if (CommentedAssembly) {
@@ -230,7 +231,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 
   emit_lir_list(block->lir());
 
-  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
+  X86_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 }
 
 
@@ -437,7 +438,7 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
     break;
   default: ShouldNotReachHere();
   }
-#if defined(IA32) && defined(TIERED)
+#if defined(X86) && defined(TIERED)
   // C2 leave fpu stack dirty clean it
   if (UseSSE < 2) {
     int i;
@@ -448,7 +449,7 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
       ffree(0);
     }
   }
-#endif // IA32 && TIERED
+#endif // X86 && TIERED
 }
 
 

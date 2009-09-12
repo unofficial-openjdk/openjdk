@@ -2,7 +2,7 @@
 #pragma ident "@(#)register_definitions_sparc.cpp	1.13 07/08/29 13:42:18 JVM"
 #endif
 /*
- * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,6 +134,7 @@ REGISTER_DEFINITION(FloatRegister, Ftos_d2);
 
 
 REGISTER_DEFINITION(Register, G2_thread);
+REGISTER_DEFINITION(Register, G6_heapbase);
 REGISTER_DEFINITION(Register, G5_method);
 REGISTER_DEFINITION(Register, G5_megamorphic_method);
 REGISTER_DEFINITION(Register, G5_inline_cache_reg);

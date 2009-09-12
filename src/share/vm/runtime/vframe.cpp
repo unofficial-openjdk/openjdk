@@ -2,7 +2,7 @@
 #pragma ident "@(#)vframe.cpp	1.163 07/08/29 13:42:30 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -209,7 +209,7 @@ GrowableArray<MonitorInfo*>* interpretedVFrame::monitors() const {
   for (BasicObjectLock* current = (fr().previous_monitor_in_interpreter_frame(fr().interpreter_frame_monitor_begin()));
        current >= fr().interpreter_frame_monitor_end();
        current = fr().previous_monitor_in_interpreter_frame(current)) {
-    result->push(new MonitorInfo(current->obj(), current->lock()));
+    result->push(new MonitorInfo(current->obj(), current->lock(), false));
   }
   return result;
 }

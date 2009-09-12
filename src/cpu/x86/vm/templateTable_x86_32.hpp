@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)templateTable_x86_32.hpp	1.20 07/05/05 17:04:20 JVM"
-#endif
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
   static void prepare_invoke(Register method, Register index, int byte_no,
                              Bytecodes::Code code);
   static void invokevirtual_helper(Register index, Register recv,
                                    Register flags);
-  static void volatile_barrier( );
+  static void volatile_barrier(Assembler::Membar_mask_bits order_constraint );
 
   // Helpers
   static void index_check(Register array, Register index);

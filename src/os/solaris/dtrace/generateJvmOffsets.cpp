@@ -2,7 +2,7 @@
 #pragma ident "@(#)generateJvmOffsets.cpp	1.33 07/05/05 17:04:38 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,7 +199,7 @@ int generateJvmOffsets(GEN_variant gen_variant) {
   printf("\n");
 
   GEN_VALUE(OFFSET_HeapBlockHeader_used, offset_of(HeapBlock::Header, _used));
-  GEN_OFFS(oopDesc, _klass);
+  GEN_OFFS(oopDesc, _metadata);
   printf("\n");
 
   GEN_VALUE(AccessFlags_NATIVE, JVM_ACC_NATIVE);

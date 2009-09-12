@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)disassembler_x86.hpp	1.22 07/05/05 17:04:15 JVM"
-#endif
 /*
- * Copyright 1997-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +19,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// The disassembler prints out intel 386 code annotated
-// with Java specific information.
+  static int pd_instruction_alignment() {
+    return 1;
+  }
 
-class Disassembler {
-#ifndef PRODUCT
- private:
-  typedef address (*decode_func)(address start, DisassemblerEnv* env);
-  // points the library.
-  static void*    _library;
-  // points to the decode function.
-  static decode_func _decode_instruction;
-  // tries to load library and return whether it succedded.
-  static bool load_library();
-  // decodes one instruction and return the start of the next instruction.
-  static address decode_instruction(address start, DisassemblerEnv* env);
-#endif
- public:
-  static void decode(CodeBlob *cb,               outputStream* st = NULL) PRODUCT_RETURN;
-  static void decode(nmethod* nm,                outputStream* st = NULL) PRODUCT_RETURN;
-  static void decode(u_char* begin, u_char* end, outputStream* st = NULL) PRODUCT_RETURN;
-};
-
+  static const char* pd_cpu_opts() {
+    return "";
+  }

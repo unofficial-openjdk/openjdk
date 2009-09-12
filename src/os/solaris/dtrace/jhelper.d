@@ -2,7 +2,7 @@
 #pragma ident "@(#)jhelper.d	1.25 07/05/05 17:04:38"
 #endif
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ extern pointer __JvmOffsets;
 extern pointer __1cJCodeCacheF_heap_;
 extern pointer __1cIUniverseP_methodKlassObj_;
 extern pointer __1cIUniverseO_collectedHeap_;
+extern pointer __1cIUniverseK_heap_base_;
 
 extern pointer __1cHnmethodG__vtbl_;
 extern pointer __1cKBufferBlobG__vtbl_;
@@ -110,7 +111,7 @@ dtrace:helper:ustack:
   copyin_offset(OFFSET_constantPoolOopDesc_pool_holder);
 
   copyin_offset(OFFSET_HeapBlockHeader_used);
-  copyin_offset(OFFSET_oopDesc_klass);
+  copyin_offset(OFFSET_oopDesc_metadata);
 
   copyin_offset(OFFSET_symbolOopDesc_length);
   copyin_offset(OFFSET_symbolOopDesc_body);
@@ -153,6 +154,7 @@ dtrace:helper:ustack:
 
   this->Universe_methodKlassOop = copyin_ptr(&``__1cIUniverseP_methodKlassObj_);
   this->CodeCache_heap_address = copyin_ptr(&``__1cJCodeCacheF_heap_);
+  this->Universe_heap_base = copyin_ptr(&``__1cIUniverseK_heap_base_);
 
   /* Reading volatile values */
   this->CodeCache_low = copyin_ptr(this->CodeCache_heap_address + 
@@ -296,10 +298,27 @@ dtrace:helper:ustack:
 
 dtrace:helper:ustack:
 /!this->done && this->vtbl == this->BufferBlob_vtbl &&
+this->Universe_heap_base == NULL &&
 this->methodOopPtr > this->heap_start && this->methodOopPtr < this->heap_end/
 {
   MARK_LINE;
-  this->klass = copyin_ptr(this->methodOopPtr + OFFSET_oopDesc_klass);
+  this->klass = copyin_ptr(this->methodOopPtr + OFFSET_oopDesc_metadata);
+  this->methodOop = this->klass == this->Universe_methodKlassOop;
+  this->done = !this->methodOop;
+}
+
+dtrace:helper:ustack:
+/!this->done && this->vtbl == this->BufferBlob_vtbl &&
+this->Universe_heap_base != NULL &&
+this->methodOopPtr > this->heap_start && this->methodOopPtr < this->heap_end/
+{
+  MARK_LINE;
+  /*
+   * Read compressed pointer and  decode heap oop, same as oop.inline.hpp
+   */
+  this->cklass = copyin_uint32(this->methodOopPtr + OFFSET_oopDesc_metadata);
+  this->klass = (uint64_t)((uintptr_t)this->Universe_heap_base +
+                ((uintptr_t)this->cklass << 3));
   this->methodOop = this->klass == this->Universe_methodKlassOop;
   this->done = !this->methodOop;
 }

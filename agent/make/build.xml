@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@
 
   <property name="app.name" value="sa"/>
   <property name="dist.jar" value="${app.name}.jar"/>
-  <property name="libs"     value="../closed/src/share/lib"/>
   <property name="classes"  value="../build/classes"/>
 
 <!-- The "prepare" target is used to construct the deployment home

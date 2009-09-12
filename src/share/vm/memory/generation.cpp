@@ -2,7 +2,7 @@
 #pragma ident "@(#)generation.cpp	1.245 07/05/05 17:05:51 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,12 @@ Generation::Generation(ReservedSpace rs, size_t initial_size, int level) :
   if (!_virtual_space.initialize(rs, initial_size)) {
     vm_exit_during_initialization("Could not reserve enough space for "
 		    "object heap");
+  }
+  // Mangle all of the the initial generation.
+  if (ZapUnusedHeapArea) {
+    MemRegion mangle_region((HeapWord*)_virtual_space.low(),
+      (HeapWord*)_virtual_space.high());
+    SpaceMangler::mangle_region(mangle_region);
   }
   _reserved = MemRegion((HeapWord*)_virtual_space.low_boundary(),
 	  (HeapWord*)_virtual_space.high_boundary());
@@ -174,7 +180,7 @@ bool Generation::promotion_attempt_is_safe(size_t promotion_in_bytes,
 }
 
 // Ignores "ref" and calls allocate().
-oop Generation::promote(oop obj, size_t obj_size, oop* ref) {
+oop Generation::promote(oop obj, size_t obj_size) {
   assert(obj_size == (size_t)obj->size(), "bad obj_size passed in");
 
 #ifndef	PRODUCT
@@ -189,7 +195,7 @@ oop Generation::promote(oop obj, size_t obj_size, oop* ref) {
     return oop(result);
   } else {
     GenCollectedHeap* gch = GenCollectedHeap::heap();
-    return gch->handle_failed_promotion(this, obj, obj_size, ref);
+    return gch->handle_failed_promotion(this, obj, obj_size);
   }
 }
 
@@ -376,6 +382,41 @@ CardGeneration::CardGeneration(ReservedSpace rs, size_t initial_byte_size,
   }
 }
 
+bool CardGeneration::expand(size_t bytes, size_t expand_bytes) {
+  assert_locked_or_safepoint(Heap_lock);
+  if (bytes == 0) {
+    return true;  // That's what grow_by(0) would return
+  }
+  size_t aligned_bytes  = ReservedSpace::page_align_size_up(bytes);
+  if (aligned_bytes == 0){
+    // The alignment caused the number of bytes to wrap.  An expand_by(0) will
+    // return true with the implication that an expansion was done when it
+    // was not.  A call to expand implies a best effort to expand by "bytes"
+    // but not a guarantee.  Align down to give a best effort.  This is likely
+    // the most that the generation can expand since it has some capacity to
+    // start with.
+    aligned_bytes = ReservedSpace::page_align_size_down(bytes);
+  }
+  size_t aligned_expand_bytes = ReservedSpace::page_align_size_up(expand_bytes);
+  bool success = false;
+  if (aligned_expand_bytes > aligned_bytes) {
+    success = grow_by(aligned_expand_bytes);
+  }
+  if (!success) {
+    success = grow_by(aligned_bytes);
+  }
+  if (!success) {
+    success = grow_to_reserved();
+  }
+  if (PrintGC && Verbose) {
+    if (success && GC_locker::is_active()) {
+      gclog_or_tty->print_cr("Garbage collection disabled, expanded heap instead");
+    }
+  }
+
+  return success;
+}
+
 
 // No young generation references, clear this generation's cards.
 void CardGeneration::clear_remembered_set() {
@@ -438,25 +479,9 @@ OneContigSpaceCardGeneration::expand_and_allocate(size_t word_size,
   }
 }
 
-void OneContigSpaceCardGeneration::expand(size_t bytes, size_t expand_bytes) {
+bool OneContigSpaceCardGeneration::expand(size_t bytes, size_t expand_bytes) {
   GCMutexLocker x(ExpandHeap_lock);
-  size_t aligned_bytes  = ReservedSpace::page_align_size_up(bytes);
-  size_t aligned_expand_bytes = ReservedSpace::page_align_size_up(expand_bytes);
-  bool success = false;
-  if (aligned_expand_bytes > aligned_bytes) {
-    success = grow_by(aligned_expand_bytes);
-  }
-  if (!success) {
-    success = grow_by(aligned_bytes);
-  }
-  if (!success) {
-    grow_to_reserved();
-  }
-  if (GC_locker::is_active()) {
-    if (PrintGC && Verbose) {
-      gclog_or_tty->print_cr("Garbage collection disabled, expanded heap instead");
-    }
-  }
+  return CardGeneration::expand(bytes, expand_bytes);
 }
 
 
@@ -508,8 +533,11 @@ bool OneContigSpaceCardGeneration::grow_by(size_t bytes) {
     _bts->resize(new_word_size);
 
     // Fix for bug #4668531
-    MemRegion mangle_region(_the_space->end(), (HeapWord*)_virtual_space.high());
-    _the_space->mangle_region(mangle_region);
+    if (ZapUnusedHeapArea) {
+      MemRegion mangle_region(_the_space->end(),
+      (HeapWord*)_virtual_space.high());
+      SpaceMangler::mangle_region(mangle_region);
+    }
 
     // Expand space -- also expands space's BOT
     // (which uses (part of) shared array above)
@@ -625,6 +653,14 @@ void OneContigSpaceCardGeneration::gc_epilogue(bool full) {
 
   // update the generation and space performance counters
   update_counters();
+  if (ZapUnusedHeapArea) {
+    the_space()->check_mangled_unused_area_complete();
+  }
+}
+
+void OneContigSpaceCardGeneration::record_spaces_top() {
+  assert(ZapUnusedHeapArea, "Not mangling unused space");
+  the_space()->set_top_for_allocations();
 }
 
 void OneContigSpaceCardGeneration::verify(bool allow_dirty) {

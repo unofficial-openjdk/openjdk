@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)interp_masm_x86_64.hpp	1.23 07/07/02 16:50:28 JVM"
-#endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file specializes the assember with interpreter-specific macros
 
 
-class InterpreterMacroAssembler 
-  : public MacroAssembler {
+class InterpreterMacroAssembler: public MacroAssembler {
+#ifndef CC_INTERP
  protected:
   // Interpreter specific version of call_VM_base
   virtual void call_VM_leaf_base(address entry_point,
@@ -47,59 +44,61 @@ class InterpreterMacroAssembler
 
   // base routine for all dispatches
   void dispatch_base(TosState state, address* table, bool verifyoop = true);
+#endif // CC_INTERP
 
  public:
-  InterpreterMacroAssembler(CodeBuffer* code) 
-    : MacroAssembler(code) 
-  {}
+  InterpreterMacroAssembler(CodeBuffer* code) : MacroAssembler(code) {}
 
   void load_earlyret_value(TosState state);
 
+#ifdef CC_INTERP
+  void save_bcp()                                          { /*  not needed in c++ interpreter and harmless */ }
+  void restore_bcp()                                       { /*  not needed in c++ interpreter and harmless */ }
+
+  // Helpers for runtime call arguments/results
+  void get_method(Register reg);
+
+#else
+
   // Interpreter-specific registers
-  void save_bcp()
-  {
-    movq(Address(rbp, frame::interpreter_frame_bcx_offset * wordSize), r13); 
+  void save_bcp() {
+    movptr(Address(rbp, frame::interpreter_frame_bcx_offset * wordSize), r13);
   }
 
-  void restore_bcp()
-  {
-    movq(r13, Address(rbp, frame::interpreter_frame_bcx_offset * wordSize));
+  void restore_bcp() {
+    movptr(r13, Address(rbp, frame::interpreter_frame_bcx_offset * wordSize));
   }
 
-  void restore_locals()
-  {
-    movq(r14, Address(rbp, frame::interpreter_frame_locals_offset * wordSize));
+  void restore_locals() {
+    movptr(r14, Address(rbp, frame::interpreter_frame_locals_offset * wordSize));
   }
 
   // Helpers for runtime call arguments/results
-  void get_method(Register reg)
-  {
-    movq(reg, Address(rbp, frame::interpreter_frame_method_offset * wordSize));
+  void get_method(Register reg) {
+    movptr(reg, Address(rbp, frame::interpreter_frame_method_offset * wordSize));
   }
 
-  void get_constant_pool(Register reg)
-  {
+  void get_constant_pool(Register reg) {
     get_method(reg);
-    movq(reg, Address(reg, methodOopDesc::constants_offset()));
+    movptr(reg, Address(reg, methodOopDesc::constants_offset()));
   }
 
-  void get_constant_pool_cache(Register reg)
-  {
+  void get_constant_pool_cache(Register reg) {
     get_constant_pool(reg);
-    movq(reg, Address(reg, constantPoolOopDesc::cache_offset_in_bytes()));
+    movptr(reg, Address(reg, constantPoolOopDesc::cache_offset_in_bytes()));
   }
 
-  void get_cpool_and_tags(Register cpool, Register tags)
-  {
+  void get_cpool_and_tags(Register cpool, Register tags) {
     get_constant_pool(cpool);
-    movq(tags, Address(cpool, constantPoolOopDesc::tags_offset_in_bytes()));
+    movptr(tags, Address(cpool, constantPoolOopDesc::tags_offset_in_bytes()));
   }
 
   void get_unsigned_2_byte_index_at_bcp(Register reg, int bcp_offset);
-  void get_cache_and_index_at_bcp(Register cache, Register index, 
+  void get_cache_and_index_at_bcp(Register cache, Register index,
                                   int bcp_offset);
-  void get_cache_entry_pointer_at_bcp(Register cache, Register tmp, 
+  void get_cache_entry_pointer_at_bcp(Register cache, Register tmp,
                                       int bcp_offset);
+
 
   void pop_ptr(Register r = rax);
   void pop_i(Register r = rax);
@@ -112,14 +111,22 @@ class InterpreterMacroAssembler
   void push_f(XMMRegister r = xmm0);
   void push_d(XMMRegister r = xmm0);
 
+  void pop(Register r ) { ((MacroAssembler*)this)->pop(r); }
+
+  void push(Register r ) { ((MacroAssembler*)this)->push(r); }
+  void push(int32_t imm ) { ((MacroAssembler*)this)->push(imm); }
+
   void pop(TosState state); // transition vtos -> state
   void push(TosState state); // transition state -> vtos
 
   // Tagged stack support, pop and push both tag and value.
   void pop_ptr(Register r, Register tag);
   void push_ptr(Register r, Register tag);
+#endif // CC_INTERP
 
   DEBUG_ONLY(void verify_stack_tag(frame::Tag t);)
+
+#ifndef CC_INTERP
 
   // Tagged stack helpers for swap and dup
   void load_ptr_and_tag(int n, Register val, Register tag);
@@ -136,19 +143,19 @@ class InterpreterMacroAssembler
   void verify_local_tag(frame::Tag tag, Register idx);
 #endif // ASSERT
 
+
   void empty_expression_stack()
-  { 
-    movq(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset *
-                      wordSize));
+  {
+    movptr(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset * wordSize));
     // NULL last_sp until next java call
-    movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
+    movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD);
   }
 
   // Super call_VM calls - correspond to MacroAssembler::call_VM(_leaf) calls
   void super_call_VM_leaf(address entry_point);
   void super_call_VM_leaf(address entry_point, Register arg_1);
   void super_call_VM_leaf(address entry_point, Register arg_1, Register arg_2);
-  void super_call_VM_leaf(address entry_point, 
+  void super_call_VM_leaf(address entry_point,
                           Register arg_1, Register arg_2, Register arg_3);
 
   // Generate a subtype check: branch to ok_is_subtype if sub_klass is
@@ -176,22 +183,25 @@ class InterpreterMacroAssembler
   //
   // Removes the current activation (incl. unlocking of monitors)
   // and sets up the return address.  This code is also used for
-  // exception unwindwing. In that case, we do not want to throw 
-  // IllegalMonitorStateExceptions, since that might get us into an 
+  // exception unwindwing. In that case, we do not want to throw
+  // IllegalMonitorStateExceptions, since that might get us into an
   // infinite rethrow exception loop.
   // Additionally this code is used for popFrame and earlyReturn.
   // In popFrame case we want to skip throwing an exception,
   // installing an exception, and notifying jvmdi.
   // In earlyReturn case we only want to skip throwing an exception
   // and installing an exception.
-  void remove_activation(TosState state, Register ret_addr, 
-                         bool throw_monitor_exception = true, 
+  void remove_activation(TosState state, Register ret_addr,
+                         bool throw_monitor_exception = true,
                          bool install_monitor_exception = true,
                          bool notify_jvmdi = true);
+#endif // CC_INTERP
 
   // Object locking
   void lock_object  (Register lock_reg);
   void unlock_object(Register lock_reg);
+
+#ifndef CC_INTERP
 
   // Interpreter profiling operations
   void set_method_data_pointer_for_bcp();
@@ -240,10 +250,11 @@ class InterpreterMacroAssembler
   // only if +VerifyFPU  && (state == ftos || state == dtos)
   void verify_FPU(int stack_depth, TosState state = ftos);
 
+#endif // !CC_INTERP
+
   typedef enum { NotifyJVMTI, SkipNotifyJVMTI } NotifyMethodExitMode;
 
   // support for jvmti/dtrace
   void notify_method_entry();
   void notify_method_exit(TosState state, NotifyMethodExitMode mode);
 };
-

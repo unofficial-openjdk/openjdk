@@ -2,7 +2,7 @@
 #pragma ident "@(#)jvm.h	1.88 07/08/15 20:22:47 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -393,6 +393,17 @@ JVM_FindClassFromClassLoader(JNIEnv *env, const char *name, jboolean init,
 			     jobject loader, jboolean throwError);
 
 /*
+ * Find a class from a boot class loader. Throw ClassNotFoundException
+ * or NoClassDefFoundError depending on the value of the last
+ * argument. This is the same as FindClassFromClassLoader but provided
+ * as a convenience method exported correctly on all platforms for
+ * JSR 277 launcher class loading.
+ */
+JNIEXPORT jclass JNICALL
+JVM_FindClassFromBootLoader(JNIEnv *env, const char *name,
+                            jboolean throwError);
+
+/*
  * Find a class from a given class.
  */
 JNIEXPORT jclass JNICALL
@@ -413,6 +424,14 @@ JNIEXPORT jclass JNICALL
 JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
                           const jbyte *buf, jsize len, jobject pd,
                           const char *source);
+
+/* Define a class with a source (MLVM) */
+JNIEXPORT jclass JNICALL
+JVM_DefineClassWithCP(JNIEnv *env, const char *name, jobject loader,
+                      const jbyte *buf, jsize len, jobject pd,
+                      const char *source,
+                      // same args as JVM_DefineClassWithSource to this point
+                      jobjectArray constants);
 
 /*
  * Reflection support functions
@@ -608,6 +627,83 @@ JVM_SupportsCX8(void);
 
 JNIEXPORT jboolean JNICALL
 JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fldID, jlong oldVal, jlong newVal);
+
+/*
+ * com.sun.dtrace.jsdt support
+ */
+
+#define JVM_TRACING_DTRACE_VERSION 1
+
+/*
+ * Structure to pass one probe description to JVM.
+ *
+ * The VM will overwrite the definition of the referenced method with
+ * code that will fire the probe.
+ */
+typedef struct {
+    jmethodID method;
+    jstring   function;
+    jstring   name;
+    void*     reserved[4];     // for future use
+} JVM_DTraceProbe;
+
+/**
+ * Encapsulates the stability ratings for a DTrace provider field
+ */
+typedef struct {
+    jint nameStability;
+    jint dataStability;
+    jint dependencyClass;
+} JVM_DTraceInterfaceAttributes;
+
+/*
+ * Structure to pass one provider description to JVM
+ */
+typedef struct {
+    jstring                       name;
+    JVM_DTraceProbe*              probes;
+    jint                          probe_count;
+    JVM_DTraceInterfaceAttributes providerAttributes;
+    JVM_DTraceInterfaceAttributes moduleAttributes;
+    JVM_DTraceInterfaceAttributes functionAttributes;
+    JVM_DTraceInterfaceAttributes nameAttributes;
+    JVM_DTraceInterfaceAttributes argsAttributes;
+    void*                         reserved[4]; // for future use
+} JVM_DTraceProvider;
+
+/*
+ * Get the version number the JVM was built with
+ */
+JNIEXPORT jint JNICALL
+JVM_DTraceGetVersion(JNIEnv* env);
+
+/*
+ * Register new probe with given signature, return global handle
+ *
+ * The version passed in is the version that the library code was
+ * built with.
+ */
+JNIEXPORT jlong JNICALL
+JVM_DTraceActivate(JNIEnv* env, jint version, jstring module_name,
+  jint providers_count, JVM_DTraceProvider* providers);
+
+/*
+ * Check JSDT probe
+ */
+JNIEXPORT jboolean JNICALL
+JVM_DTraceIsProbeEnabled(JNIEnv* env, jmethodID method);
+
+/*
+ * Destroy custom DOF
+ */
+JNIEXPORT void JNICALL
+JVM_DTraceDispose(JNIEnv* env, jlong handle);
+
+/*
+ * Check to see if DTrace is supported by OS
+ */
+JNIEXPORT jboolean JNICALL
+JVM_DTraceIsSupported(JNIEnv* env);
 
 /*************************************************************************
  PART 2: Support for the Verifier and Class File Format Checker

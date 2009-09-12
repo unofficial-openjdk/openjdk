@@ -2,7 +2,7 @@
 #pragma ident "@(#)os.cpp	1.185 07/10/04 10:49:22 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,84 +36,13 @@ volatile int32_t* os::_mem_serialize_page = NULL;
 uintptr_t         os::_serialize_page_mask = 0;
 long              os::_rand_seed          = 1;
 int               os::_processor_count    = 0;
-volatile jlong    os::_global_time        = 0;
-volatile int      os::_global_time_lock   = 0;
-bool              os::_use_global_time    = false;
-size_t		  os::_page_sizes[os::page_sizes_max];
+size_t            os::_page_sizes[os::page_sizes_max];
 
 #ifndef PRODUCT
 int os::num_mallocs = 0;            // # of calls to malloc/realloc
 size_t os::alloc_bytes = 0;         // # of bytes allocated
 int os::num_frees = 0;              // # of calls to free
 #endif
-
-// Atomic read of a jlong is assured by a seqlock; see update_global_time()
-jlong os::read_global_time() {
-#ifdef _LP64
-  return _global_time;
-#else
-  volatile int lock;
-  volatile jlong current_time;
-  int ctr = 0;
-
-  for (;;) {
-    lock = _global_time_lock;
-
-    // spin while locked
-    while ((lock & 0x1) != 0) {
-      ++ctr;
-      if ((ctr & 0xFFF) == 0) {
-        // Guarantee writer progress.  Can't use yield; yield is advisory
-        // and has almost no effect on some platforms.  Don't need a state
-        // transition - the park call will return promptly.
-        assert(Thread::current() != NULL, "TLS not initialized");
-        assert(Thread::current()->_ParkEvent != NULL, "sync not initialized");
-        Thread::current()->_ParkEvent->park(1);
-      }
-      lock = _global_time_lock;
-    }
-
-    OrderAccess::loadload();
-    current_time = _global_time;
-    OrderAccess::loadload();
-
-    // ratify seqlock value
-    if (lock == _global_time_lock) {
-      return current_time;
-    }
-  }
-#endif
-}
-
-//
-// NOTE - Assumes only one writer thread!
-//
-// We use a seqlock to guarantee that jlong _global_time is updated
-// atomically on 32-bit platforms.  A locked value is indicated by
-// the lock variable LSB == 1.  Readers will initially read the lock
-// value, spinning until the LSB == 0.  They then speculatively read
-// the global time value, then re-read the lock value to ensure that
-// it hasn't changed.  If the lock value has changed, the entire read
-// sequence is retried.
-//
-// Writers simply set the LSB = 1 (i.e. increment the variable),
-// update the global time, then release the lock and bump the version
-// number (i.e. increment the variable again.)  In this case we don't
-// even need a CAS since we ensure there's only one writer.
-//
-void os::update_global_time() {
-#ifdef _LP64
-  _global_time = timeofday();
-#else
-  assert((_global_time_lock & 0x1) == 0, "multiple writers?");
-  jlong current_time = timeofday();
-  _global_time_lock++; // lock
-  OrderAccess::storestore();
-  _global_time = current_time;
-  OrderAccess::storestore();
-  _global_time_lock++; // unlock
-#endif
-}
 
 // Fill in buffer with current local time as an ISO-8601 string.
 // E.g., yyyy-mm-ddThh:mm:ss-zzzz.
@@ -141,20 +70,19 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     return NULL;
   }
   // Get the current time
-  jlong milliseconds_since_19700101 = timeofday();
+  jlong milliseconds_since_19700101 = javaTimeMillis();
   const int milliseconds_per_microsecond = 1000;
   const time_t seconds_since_19700101 =
     milliseconds_since_19700101 / milliseconds_per_microsecond;
   const int milliseconds_after_second =
     milliseconds_since_19700101 % milliseconds_per_microsecond;
   // Convert the time value to a tm and timezone variable
-  const struct tm *time_struct_temp = localtime(&seconds_since_19700101);
-  if (time_struct_temp == NULL) {
-    assert(false, "Failed localtime");
+  struct tm time_struct;
+  if (localtime_pd(&seconds_since_19700101, &time_struct) == NULL) {
+    assert(false, "Failed localtime_pd");
     return NULL;
   }
-  // Save the results of localtime
-  const struct tm time_struct = *time_struct_temp;
+
   const time_t zone = timezone;
   
   // If daylight savings time is in effect, 
@@ -167,10 +95,10 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     UTC_to_local = UTC_to_local - seconds_per_hour;
   }
   // Compute the time zone offset.
-  //    localtime(3C) sets timezone to the difference (in seconds)
+  //    localtime_pd sets timezone to the difference (in seconds)
   //    between UTC and and local time.
-  //    ISO 8601 says we need the difference between local time and UTC, 
-  //    we change the sign of the localtime(3C) result.
+  //    ISO 8601 says we need the difference between local time and UTC,
+  //    we change the sign of the localtime_pd result.
   const time_t local_to_UTC = -(UTC_to_local);
   // Then we have to figure out if if we are ahead (+) or behind (-) UTC.
   char sign_local_to_UTC = '+';
@@ -410,29 +338,38 @@ void* os::native_java_library() {
     char buffer[JVM_MAXPATHLEN];
     char ebuf[1024];
 
-    // Try to load verify dll first. In 1.3 java dll depends on it and is not always
-    // able to find it when the loading executable is outside the JDK. 
+    // Try to load verify dll first. In 1.3 java dll depends on it and is not
+    // always able to find it when the loading executable is outside the JDK.
     // In order to keep working with 1.2 we ignore any loading errors.
-    hpi::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), "verify");
-    hpi::dll_load(buffer, ebuf, sizeof(ebuf));
+    dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), "verify");
+    dll_load(buffer, ebuf, sizeof(ebuf));
 
     // Load java dll
-    hpi::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), "java");
-    _native_java_library = hpi::dll_load(buffer, ebuf, sizeof(ebuf));
+    dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), "java");
+    _native_java_library = dll_load(buffer, ebuf, sizeof(ebuf));
     if (_native_java_library == NULL) {
       vm_exit_during_initialization("Unable to load native library", ebuf);
     }
-    // The JNI_OnLoad handling is normally done by method load in java.lang.ClassLoader$NativeLibrary,
-    // but the VM loads the base library explicitly so we have to check for JNI_OnLoad as well
-    const char *onLoadSymbols[] = JNI_ONLOAD_SYMBOLS;
-    JNI_OnLoad_t JNI_OnLoad = CAST_TO_FN_PTR(JNI_OnLoad_t, hpi::dll_lookup(_native_java_library, onLoadSymbols[0]));
-    if (JNI_OnLoad != NULL) {
-      JavaThread* thread = JavaThread::current();
-      ThreadToNativeFromVM ttn(thread);
-      HandleMark hm(thread);
-      jint ver = (*JNI_OnLoad)(&main_vm, NULL);
-      if (!Threads::is_supported_jni_version_including_1_1(ver)) {
-        vm_exit_during_initialization("Unsupported JNI version");
+  }
+  static jboolean onLoaded = JNI_FALSE;
+  if (onLoaded) {
+    // We may have to wait to fire OnLoad until TLS is initialized.
+    if (ThreadLocalStorage::is_initialized()) {
+      // The JNI_OnLoad handling is normally done by method load in
+      // java.lang.ClassLoader$NativeLibrary, but the VM loads the base library
+      // explicitly so we have to check for JNI_OnLoad as well
+      const char *onLoadSymbols[] = JNI_ONLOAD_SYMBOLS;
+      JNI_OnLoad_t JNI_OnLoad = CAST_TO_FN_PTR(
+          JNI_OnLoad_t, dll_lookup(_native_java_library, onLoadSymbols[0]));
+      if (JNI_OnLoad != NULL) {
+        JavaThread* thread = JavaThread::current();
+        ThreadToNativeFromVM ttn(thread);
+        HandleMark hm(thread);
+        jint ver = (*JNI_OnLoad)(&main_vm, NULL);
+        onLoaded = JNI_TRUE;
+        if (!Threads::is_supported_jni_version_including_1_1(ver)) {
+          vm_exit_during_initialization("Unsupported JNI version");
+        }
       }
     }
   }
@@ -929,7 +866,6 @@ char* os::format_boot_path(const char* format_string,
 
 
 bool os::set_boot_path(char fileSep, char pathSep) {
-
     const char* home = Arguments::get_java_home();
     int home_len = (int)strlen(home);
 
@@ -959,6 +895,59 @@ bool os::set_boot_path(char fileSep, char pathSep) {
     return true;
 }
 
+/*
+ * Splits a path, based on its separator, the number of
+ * elements is returned back in n.
+ * It is the callers responsibility to:
+ *   a> check the value of n, and n may be 0.
+ *   b> ignore any empty path elements
+ *   c> free up the data.
+ */
+char** os::split_path(const char* path, int* n) {
+  *n = 0;
+  if (path == NULL || strlen(path) == 0) {
+    return NULL;
+  }
+  const char psepchar = *os::path_separator();
+  char* inpath = (char*)NEW_C_HEAP_ARRAY(char, strlen(path) + 1);
+  if (inpath == NULL) {
+    return NULL;
+  }
+  strncpy(inpath, path, strlen(path));
+  int count = 1;
+  char* p = strchr(inpath, psepchar);
+  // Get a count of elements to allocate memory
+  while (p != NULL) {
+    count++;
+    p++;
+    p = strchr(p, psepchar);
+  }
+  char** opath = (char**) NEW_C_HEAP_ARRAY(char*, count);
+  if (opath == NULL) {
+    return NULL;
+  }
+
+  // do the actual splitting
+  p = inpath;
+  for (int i = 0 ; i < count ; i++) {
+    size_t len = strcspn(p, os::path_separator());
+    if (len > JVM_MAXPATHLEN) {
+      return NULL;
+    }
+    // allocate the string and add terminator storage
+    char* s  = (char*)NEW_C_HEAP_ARRAY(char, len + 1);
+    if (s == NULL) {
+      return NULL;
+    }
+    strncpy(s, p, len);
+    s[len] = '\0';
+    opath[i] = s;
+    p += len + 1;
+  }
+  FREE_C_HEAP_ARRAY(char, inpath);
+  *n = count;
+  return opath;
+}
 
 void os::set_memory_serialize_page(address page) { 
   int count = log2_intptr(sizeof(class JavaThread)) - log2_intptr(64);
@@ -970,6 +959,8 @@ void os::set_memory_serialize_page(address page) {
   set_serialize_page_mask((uintptr_t)(vm_page_size() - sizeof(int32_t)));
 }
 
+static volatile intptr_t SerializePageLock = 0;
+
 // This method is called from signal handler when SIGSEGV occurs while the current
 // thread tries to store to the "read-only" memory serialize page during state 
 // transition.
@@ -977,30 +968,29 @@ void os::block_on_serialize_page_trap() {
   if (TraceSafepoint) {
     tty->print_cr("Block until the serialize page permission restored");
   }
-  // When VMThread is holding the SerializePage_lock during modifying the 
+  // When VMThread is holding the SerializePageLock during modifying the
   // access permission of the memory serialize page, the following call
   // will block until the permission of that page is restored to rw.
   // Generally, it is unsafe to manipulate locks in signal handlers, but in
   // this case, it's OK as the signal is synchronous and we know precisely when
-  // it can occur. SerializePage_lock is a transiently-held leaf lock, so 
-  // lock_without_safepoint_check should be safe.
-  SerializePage_lock->lock_without_safepoint_check();
-  SerializePage_lock->unlock();
+  // it can occur.
+  Thread::muxAcquire(&SerializePageLock, "set_memory_serialize_page");
+  Thread::muxRelease(&SerializePageLock);
 }
 
 // Serialize all thread state variables
 void os::serialize_thread_states() {
-  // On some platforms such as Solaris & Linux, the time duration of the page 
-  // permission restoration is observed to be much longer than expected  due to 
-  // scheduler starvation problem etc. To avoid the long synchronization 
-  // time and expensive page trap spinning, 'SerializePage_lock' is used to block 
-  // the mutator thread if such case is encountered. Since this method is always 
-  // called by VMThread during safepoint, lock_without_safepoint_check is used 
-  // instead. See bug 6546278.
-  SerializePage_lock->lock_without_safepoint_check();
-  os::protect_memory( (char *)os::get_memory_serialize_page(), os::vm_page_size() );
-  os::unguard_memory( (char *)os::get_memory_serialize_page(), os::vm_page_size() );
-  SerializePage_lock->unlock();
+  // On some platforms such as Solaris & Linux, the time duration of the page
+  // permission restoration is observed to be much longer than expected  due to
+  // scheduler starvation problem etc. To avoid the long synchronization
+  // time and expensive page trap spinning, 'SerializePageLock' is used to block
+  // the mutator thread if such case is encountered. See bug 6546278 for details.
+  Thread::muxAcquire(&SerializePageLock, "serialize_thread_states");
+  os::protect_memory((char *)os::get_memory_serialize_page(),
+                     os::vm_page_size(), MEM_PROT_READ);
+  os::protect_memory((char *)os::get_memory_serialize_page(),
+                     os::vm_page_size(), MEM_PROT_RW);
+  Thread::muxRelease(&SerializePageLock);
 }
 
 // Returns true if the current stack pointer is above the stack shadow

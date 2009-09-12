@@ -2,7 +2,7 @@
 #pragma ident "@(#)c1_GraphBuilder.hpp	1.75 07/05/17 15:49:37 JVM"
 #endif
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -286,8 +286,6 @@ class GraphBuilder VALUE_OBJ_CLASS_SPEC {
   Dependencies* dependency_recorder() const; // = compilation()->dependencies()
   bool direct_compare(ciKlass* k);
 
-  void kill_field(ciField* field);
-  void kill_array(Value value);
   void kill_all();
 
   ValueStack* lock_stack();

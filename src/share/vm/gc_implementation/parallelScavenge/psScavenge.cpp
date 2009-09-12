@@ -2,7 +2,7 @@
 #pragma ident "@(#)psScavenge.cpp	1.99 07/09/07 09:53:34 JVM"
 #endif
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,16 +68,18 @@ public:
     assert(_promotion_manager != NULL, "Sanity");
   }
 
-  void do_oop(oop* p) {
-    assert (*p != NULL, "expected non-null ref");
-    assert ((*p)->is_oop(), "expected an oop while scanning weak refs");
-  
-    oop obj = oop(*p);
+  template <class T> void do_oop_work(T* p) {
+    assert (!oopDesc::is_null(*p), "expected non-null ref");
+    assert ((oopDesc::load_decode_heap_oop_not_null(p))->is_oop(),
+            "expected an oop while scanning weak refs");
+
     // Weak refs may be visited more than once.
-    if (PSScavenge::should_scavenge(obj, _to_space)) {
+    if (PSScavenge::should_scavenge(p, _to_space)) {
       PSScavenge::copy_and_push_safe_barrier(_promotion_manager, p);
     }
   }
+  virtual void do_oop(oop* p)       { PSKeepAliveClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { PSKeepAliveClosure::do_oop_work(p); }
 };
 
 class PSEvacuateFollowersClosure: public VoidClosure {
@@ -86,7 +88,7 @@ class PSEvacuateFollowersClosure: public VoidClosure {
  public:
   PSEvacuateFollowersClosure(PSPromotionManager* pm) : _promotion_manager(pm) {}
 
-  void do_void() {
+  virtual void do_void() {
     assert(_promotion_manager != NULL, "Sanity");
     _promotion_manager->drain_stacks(true);
     guarantee(_promotion_manager->stacks_empty(),
@@ -266,6 +268,11 @@ bool PSScavenge::invoke_no_policy() {
     young_gen->eden_space()->accumulate_statistics();
   }
 
+  if (ZapUnusedHeapArea) {
+    // Save information needed to minimize mangling
+    heap->record_gen_tops_before_GC();
+  }
+
   if (PrintHeapAtGC) {
     Universe::print_heap_before_gc();
   }
@@ -315,8 +322,8 @@ bool PSScavenge::invoke_no_policy() {
     
     if (!ScavengeWithObjectsInToSpace) {
       assert(young_gen->to_space()->is_empty(),
-	     "Attempt to scavenge with live objects in to_space");
-      young_gen->to_space()->clear();
+             "Attempt to scavenge with live objects in to_space");
+      young_gen->to_space()->clear(SpaceDecorator::Mangle);
     } else if (ZapUnusedHeapArea) {
       young_gen->to_space()->mangle_unused_area();
     }
@@ -326,7 +333,8 @@ bool PSScavenge::invoke_no_policy() {
     COMPILER2_PRESENT(DerivedPointerTable::clear());
 
     reference_processor()->enable_discovery();
-    
+    reference_processor()->setup_policy(false);
+
     // We track how much was promoted to the next generation for
     // the AdaptiveSizePolicy.
     size_t old_gen_used_before = old_gen->used_in_bytes();
@@ -390,24 +398,16 @@ bool PSScavenge::invoke_no_policy() {
 
     // Process reference objects discovered during scavenge
     {
-#ifdef COMPILER2
-      ReferencePolicy *soft_ref_policy = new LRUMaxHeapPolicy();
-#else
-      ReferencePolicy *soft_ref_policy = new LRUCurrentHeapPolicy();
-#endif // COMPILER2
-    
+      reference_processor()->setup_policy(false); // not always_clear
       PSKeepAliveClosure keep_alive(promotion_manager);
       PSEvacuateFollowersClosure evac_followers(promotion_manager);
-      assert(soft_ref_policy != NULL,"No soft reference policy");
       if (reference_processor()->processing_is_mt()) {
         PSRefProcTaskExecutor task_executor;
         reference_processor()->process_discovered_references(
-          soft_ref_policy, &_is_alive_closure, &keep_alive, &evac_followers, 
-          &task_executor);
+          &_is_alive_closure, &keep_alive, &evac_followers, &task_executor);
       } else {
         reference_processor()->process_discovered_references(
-          soft_ref_policy, &_is_alive_closure, &keep_alive, &evac_followers,
-          NULL);
+          &_is_alive_closure, &keep_alive, &evac_followers, NULL);
       }
     }
     
@@ -438,8 +438,10 @@ bool PSScavenge::invoke_no_policy() {
 
     if (!promotion_failure_occurred) {
       // Swap the survivor spaces.
-      young_gen->eden_space()->clear();
-      young_gen->from_space()->clear();
+
+
+      young_gen->eden_space()->clear(SpaceDecorator::Mangle);
+      young_gen->from_space()->clear(SpaceDecorator::Mangle);
       young_gen->swap_spaces();
 
       size_t survived = young_gen->from_space()->used_in_bytes();
@@ -599,6 +601,12 @@ bool PSScavenge::invoke_no_policy() {
 
   if (PrintHeapAtGC) {
     Universe::print_heap_after_gc();
+  }
+
+  if (ZapUnusedHeapArea) {
+    young_gen->eden_space()->check_mangled_unused_area_complete();
+    young_gen->from_space()->check_mangled_unused_area_complete();
+    young_gen->to_space()->check_mangled_unused_area_complete();
   }
 
   scavenge_exit.update();

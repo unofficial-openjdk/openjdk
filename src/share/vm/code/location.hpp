@@ -2,7 +2,7 @@
 #pragma ident "@(#)location.hpp	1.47 07/05/05 17:05:21 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,10 @@
 //
 // Encoding:
 //
-// bits:
-//  Where:  [15]
-//  Type:   [14..12]
-//  Offset: [11..0]
+// bits (use low bits for best compression):
+//  Type:   [3..0]
+//  Where:  [4]
+//  Offset: [31..5]
 
 class Location VALUE_OBJ_CLASS_SPEC { 
   friend class VMStructs;
@@ -45,6 +45,7 @@ class Location VALUE_OBJ_CLASS_SPEC {
   };
 
   enum Type {
+    invalid,                    // Invalid location
     normal,                     // Ints, floats, double halves
     oop,                        // Oop (please GC me!)
     int_in_long,                // Integer held in long register
@@ -52,21 +53,21 @@ class Location VALUE_OBJ_CLASS_SPEC {
     float_in_dbl,               // Float held in double register
     dbl,                        // Double held in one register
     addr,                       // JSR return address
-    invalid                     // Invalid location
+    narrowoop                   // Narrow Oop (please GC me!)
   };
 
 
  private:
   enum {
-    OFFSET_MASK  = (jchar) 0x0FFF,
-    OFFSET_SHIFT = 0,
-    TYPE_MASK    = (jchar) 0x7000,
-    TYPE_SHIFT   = 12,
-    WHERE_MASK   = (jchar) 0x8000,
-    WHERE_SHIFT  = 15
+    TYPE_MASK    = (juint) 0x0F,
+    TYPE_SHIFT   = 0,
+    WHERE_MASK   = (juint) 0x10,
+    WHERE_SHIFT  = 4,
+    OFFSET_MASK  = (juint) 0xFFFFFFE0,
+    OFFSET_SHIFT = 5
   };
-    
-  uint16_t _value;
+
+  juint _value;
 
   // Create a bit-packed Location
   Location(Where where_, Type type_, unsigned offset_) {
@@ -77,9 +78,9 @@ class Location VALUE_OBJ_CLASS_SPEC {
   }
 
   inline void set(Where where_, Type type_, unsigned offset_) {
-    _value = (uint16_t) ((where_  << WHERE_SHIFT) |
-                         (type_   << TYPE_SHIFT)  |
-                         ((offset_ << OFFSET_SHIFT) & OFFSET_MASK));
+    _value = (juint) ((where_  << WHERE_SHIFT) |
+                      (type_   << TYPE_SHIFT)  |
+                      ((offset_ << OFFSET_SHIFT) & OFFSET_MASK));
   }
 
  public:
@@ -89,7 +90,7 @@ class Location VALUE_OBJ_CLASS_SPEC {
   // Register location Factory
   static Location new_reg_loc( Type t, VMReg reg ) { return Location(in_register, t, reg->value()); }
   // Default constructor
-  Location() { set(on_stack,invalid,(unsigned) -1); }
+  Location() { set(on_stack,invalid,0); }
 
   // Bit field accessors
   Where where()  const { return (Where)       ((_value & WHERE_MASK)  >> WHERE_SHIFT);}

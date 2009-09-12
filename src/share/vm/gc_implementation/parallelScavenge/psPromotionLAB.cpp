@@ -2,7 +2,7 @@
 #pragma ident "@(#)psPromotionLAB.cpp	1.17 07/05/05 17:05:30 JVM"
 #endif
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_psPromotionLAB.cpp.incl"
 
-const size_t PSPromotionLAB::filler_header_size = align_object_size(typeArrayOopDesc::header_size(T_INT));
+size_t PSPromotionLAB::filler_header_size;
 
 // This is the shared initialization code. It sets up the basic pointers,
 // and allows enough extra space for a filler object. We call a virtual
@@ -43,6 +43,10 @@ void PSPromotionLAB::initialize(MemRegion lab) {
   set_bottom(bottom);
   set_end(end);
   set_top(bottom);
+
+  // Initialize after VM starts up because header_size depends on compressed
+  // oops.
+  filler_header_size = align_object_size(typeArrayOopDesc::header_size(T_INT));
 
   // We can be initialized to a zero size!
   if (free() > 0) {

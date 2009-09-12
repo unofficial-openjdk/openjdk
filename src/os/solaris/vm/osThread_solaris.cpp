@@ -2,7 +2,7 @@
 #pragma ident "@(#)osThread_solaris.cpp	1.59 07/06/29 04:03:46 JVM"
 #endif
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,15 +72,15 @@ void OSThread::pd_destroy() {
 static intptr_t compare_and_exchange_current_callback (
        intptr_t callback, intptr_t *addr, intptr_t compare_value, Mutex *sync) {
   if (VM_Version::supports_compare_and_exchange()) {
-     return Atomic::cmpxchg_ptr(callback, addr, compare_value);
+    return Atomic::cmpxchg_ptr(callback, addr, compare_value);
   } else {
-     MutexLockerEx(sync, Mutex::_no_safepoint_check_flag);
-     if (*addr == compare_value) {
-       *addr = callback;
-       return compare_value;
-     } else {
-       return callback;
-     }
+    MutexLockerEx ml(sync, Mutex::_no_safepoint_check_flag);
+    if (*addr == compare_value) {
+      *addr = callback;
+      return compare_value;
+    } else {
+      return callback;
+    }
   }
 }
 
@@ -89,7 +89,7 @@ static intptr_t exchange_current_callback(intptr_t callback, intptr_t *addr, Mut
   if (VM_Version::supports_compare_and_exchange()) {
     return Atomic::xchg_ptr(callback, addr);  
   } else {
-    MutexLockerEx(sync, Mutex::_no_safepoint_check_flag);
+    MutexLockerEx ml(sync, Mutex::_no_safepoint_check_flag);
     intptr_t cb = *addr;
     *addr = callback;
     return cb;

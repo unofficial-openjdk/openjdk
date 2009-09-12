@@ -2,7 +2,7 @@
 #pragma ident "@(#)vmSymbols.cpp	1.29 07/07/19 19:08:29 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -321,6 +321,11 @@ inline bool match_F_SN(jshort flags) {
   const int neg = JVM_ACC_SYNCHRONIZED;
   return (flags & (req | neg)) == req;
 }
+inline bool match_F_RNY(jshort flags) {
+  const int req = JVM_ACC_NATIVE | JVM_ACC_SYNCHRONIZED;
+  const int neg = JVM_ACC_STATIC;
+  return (flags & (req | neg)) == req;
+}
 
 // These are for forming case labels:
 #define ID3(x, y, z) (( jint)(z) +                                  \
@@ -362,6 +367,7 @@ const char* vmIntrinsics::short_name_as_C_string(vmIntrinsics::ID id, char* buf,
   case F_RN: fname = "native ";        break;
   case F_SN: fname = "native static "; break;
   case F_S:  fname = "static ";        break;
+  case F_RNY:fname = "native synchronized "; break;
   }
   const char* kptr = strrchr(kname, '/');
   if (kptr != NULL)  kname = kptr + 1;
@@ -488,7 +494,7 @@ void vmIntrinsics::verify_method(ID actual_id, methodOop m) {
   if (PrintMiscellaneous && (WizardMode || Verbose)) {
     tty->print_cr("*** misidentified method; %s(%d) should be %s(%d):",
                   declared_name, declared_id, actual_name, actual_id);
-    m->print_short_name(tty);
+    mh()->print_short_name(tty);
     tty->cr();
   }
 }

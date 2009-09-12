@@ -2,7 +2,7 @@
 #pragma ident "@(#)opcodes.hpp	1.31 07/05/05 17:06:24 JVM"
 #endif
 /*
- * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 enum Opcodes {
   Op_Node = 0,
   macro(Set)                    // Instruction selection match rule
+  macro(RegN)                   // Machine narrow oop register
   macro(RegI)                   // Machine integer register
   macro(RegP)                   // Machine pointer register
   macro(RegF)                   // Machine float   register

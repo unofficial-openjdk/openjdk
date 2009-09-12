@@ -2,7 +2,7 @@
 #pragma ident "@(#)output_c.cpp	1.185 07/07/02 16:50:40 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1549,6 +1549,18 @@ void ArchDesc::defineExpand(FILE *fp, InstructForm *node) {
 
     // Build a mapping from operand index to input edges
     fprintf(fp,"  unsigned idx0 = oper_input_base();\n");
+
+    // The order in which inputs are added to a node is very
+    // strange.  Store nodes get a memory input before Expand is
+    // called and all other nodes get it afterwards so
+    // oper_input_base is wrong during expansion.  This code adjusts
+    // is so that expansion will work correctly.
+    bool missing_memory_edge = node->_matrule->needs_ideal_memory_edge(_globalNames) &&
+                               node->is_ideal_store() == Form::none;
+    if (missing_memory_edge) {
+      fprintf(fp,"  idx0--; // Adjust base because memory edge hasn't been inserted yet\n");
+    }
+
     for( i = 0; i < node->num_opnds(); i++ ) {
       fprintf(fp,"  unsigned idx%d = idx%d + num%d;\n",
               i+1,i,i);
@@ -1603,11 +1615,14 @@ void ArchDesc::defineExpand(FILE *fp, InstructForm *node) {
         int node_mem_op = node->memory_operand(_globalNames);
         assert( node_mem_op != InstructForm::NO_MEMORY_OPERAND, 
                 "expand rule member needs memory but top-level inst doesn't have any" );
-        // Copy memory edge
-        fprintf(fp,"  n%d->add_req(_in[1]);\t// Add memory edge\n", cnt);
+        if (!missing_memory_edge) {
+          // Copy memory edge
+          fprintf(fp,"  n%d->add_req(_in[1]);\t// Add memory edge\n", cnt);
+        }
       }
 
       // Iterate over the new instruction's operands
+      int prev_pos = -1;
       for( expand_instr->reset(); (opid = expand_instr->iter()) != NULL; ) {
         // Use 'parameter' at current position in list of new instruction's formals
         // instead of 'opid' when looking up info internal to new_inst
@@ -1631,7 +1646,19 @@ void ArchDesc::defineExpand(FILE *fp, InstructForm *node) {
           // ins = (InstructForm *) _globalNames[new_id];
           exp_pos = node->operand_position_format(opid);
           assert(exp_pos != -1, "Bad expand rule");
-          
+          if (prev_pos > exp_pos && expand_instruction->_matrule != NULL) {
+            // For the add_req calls below to work correctly they need
+            // to added in the same order that a match would add them.
+            // This means that they would need to be in the order of
+            // the components list instead of the formal parameters.
+            // This is a sort of hidden invariant that previously
+            // wasn't checked and could lead to incorrectly
+            // constructed nodes.
+            syntax_err(node->_linenum, "For expand in %s to work, parameter declaration order in %s must follow matchrule\n",
+                       node->_ident, new_inst->_ident);
+          }
+          prev_pos = exp_pos;
+
           new_pos = new_inst->operand_position(parameter,Component::USE);
           if (new_pos != -1) {
             // Copy the operand from the ExpandNode to the new node
@@ -2295,7 +2322,12 @@ private:
     _processing_noninput = false;
     // A replacement variable, originally '$'
     if ( Opcode::as_opcode_type(rep_var) != Opcode::NOT_AN_OPCODE ) {
-      _inst._opcode->print_opcode(_fp, Opcode::as_opcode_type(rep_var) );
+      if (!_inst._opcode->print_opcode(_fp, Opcode::as_opcode_type(rep_var) )) {
+        // Missing opcode
+        _AD.syntax_err( _inst._linenum,
+                        "Missing $%s opcode definition in %s, used by encoding %s\n",
+                        rep_var, _inst._ident, _encoding._name);
+      }
     }
     else {
       // Lookup its position in parameter list
@@ -2337,7 +2369,13 @@ private:
       else if( Opcode::as_opcode_type(inst_rep_var) != Opcode::NOT_AN_OPCODE ) {
         // else check if "primary", "secondary", "tertiary"
         assert( _constant_status == LITERAL_ACCESSED, "Must be processing a literal constant parameter");
-        _inst._opcode->print_opcode(_fp, Opcode::as_opcode_type(inst_rep_var) );
+        if (!_inst._opcode->print_opcode(_fp, Opcode::as_opcode_type(inst_rep_var) )) {
+          // Missing opcode
+          _AD.syntax_err( _inst._linenum,
+                          "Missing $%s opcode definition in %s\n",
+                          rep_var, _inst._ident);
+
+        }
         _constant_status = LITERAL_OUTPUT;
       }
       else if((_AD.get_registers() != NULL ) && (_AD.get_registers()->getRegDef(inst_rep_var) != NULL)) {
@@ -2365,6 +2403,8 @@ void ArchDesc::defineSize(FILE *fp, InstructForm &inst) {
   // Output instruction's emit prototype
   fprintf(fp,"uint  %sNode::size(PhaseRegAlloc *ra_) const {\n",
           inst._ident);
+
+  fprintf(fp, " assert(VerifyOops || MachNode::size(ra_) <= %s, \"bad fixed size\");\n", inst._size);
 
   //(2)
   // Print the size
@@ -3429,6 +3469,8 @@ static void path_to_constant(FILE *fp, FormDict &globals,
       fprintf(fp, "_leaf->get_int()");
     } else if ( (strcmp(optype,"ConP") == 0) ) {
       fprintf(fp, "_leaf->bottom_type()->is_ptr()");
+    } else if ( (strcmp(optype,"ConN") == 0) ) {
+      fprintf(fp, "_leaf->bottom_type()->is_narrowoop()");
     } else if ( (strcmp(optype,"ConF") == 0) ) {
       fprintf(fp, "_leaf->getf()");
     } else if ( (strcmp(optype,"ConD") == 0) ) {

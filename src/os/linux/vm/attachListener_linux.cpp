@@ -2,7 +2,7 @@
 #pragma ident "@(#)attachListener_linux.cpp	1.14 07/05/05 17:04:34 JVM"
 #endif
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -235,7 +235,7 @@ LinuxAttachOperation* LinuxAttachListener::read_request(int s) {
   // where <ver> is the protocol version (1), <cmd> is the command
   // name ("load", "datadump", ...), and <arg> is an argument
   int expected_str_count = 2 + AttachOperation::arg_count_max;
-  int max_len = (strlen(ver_str) + 1) + (AttachOperation::name_length_max + 1) +
+  const int max_len = (sizeof(ver_str) + 1) + (AttachOperation::name_length_max + 1) +
     AttachOperation::arg_count_max*(AttachOperation::arg_length_max + 1);
 
   char buf[max_len];	

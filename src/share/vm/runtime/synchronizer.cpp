@@ -427,7 +427,7 @@ void ObjectSynchronizer::Initialize () {
 // asserts is that error message -- often something about negative array
 // indices -- is opaque. 
 
-#define CTASSERT(x) { int tag[1-(2*!(x))]; printf ("Tag @%X\n", tag); } 
+#define CTASSERT(x) { int tag[1-(2*!(x))]; printf ("Tag @" INTPTR_FORMAT "\n", (intptr_t)tag); }
 
 void ObjectMonitor::ctAsserts() { 
   CTASSERT(offset_of (ObjectMonitor, _header) == 0); 
@@ -1123,7 +1123,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
           // m->OwnerIsThread = 1.  Note that a thread can inflate an object
           // that it has stack-locked -- as might happen in wait() -- directly
           // with CAS.  That is, we can avoid the xchg-NULL .... ST idiom.
-          m->set_owner (mark->locker());
+          m->set_owner(mark->locker());
           m->set_object(object);
           // TODO-FIXME: assert BasicLock->dhw != 0.
 
@@ -1219,8 +1219,7 @@ void ObjectSynchronizer::fast_enter(Handle obj, BasicLock* lock, bool attempt_re
     assert(!obj->mark()->has_bias_pattern(), "biases should be revoked by now");
   }
 
-  THREAD->update_highest_lock((address)lock);
-  slow_enter (obj, lock, THREAD) ; 
+ slow_enter (obj, lock, THREAD) ;
 }
 
 void ObjectSynchronizer::fast_exit(oop object, BasicLock* lock, TRAPS) {
@@ -3366,13 +3365,13 @@ void ObjectMonitor::ExitEpilog (Thread * Self, ObjectWaiter * Wakee) {
    //   If the wakee is cold then transiently setting it's affinity
    //   to the current CPU is a good idea.  
    //   See http://j2se.east/~dice/PERSIST/050624-PullAffinity.txt
+   DTRACE_MONITOR_PROBE(contended__exit, this, object(), Self);
    Trigger->unpark() ;
 
    // Maintain stats and report events to JVMTI
    if (ObjectSynchronizer::_sync_Parks != NULL) { 
       ObjectSynchronizer::_sync_Parks->inc() ; 
    }
-   DTRACE_MONITOR_PROBE(contended__exit, this, object(), Self);
 }
 
 

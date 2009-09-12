@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,6 +118,9 @@ public interface Debugger extends SymbolLookup, ThreadAccess {
   public long getJIntSize();
   public long getJLongSize();
   public long getJShortSize();
+  public long getHeapBase();
+  public long getHeapOopSize();
+  public long getLogMinObjAlignmentInBytes();
 
   public ReadResult readBytesFromProcess(long address, long numBytes)
     throws DebuggerException;

@@ -2,7 +2,7 @@
 #pragma ident "@(#)universe.cpp	1.361 07/09/01 18:01:02 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,16 +52,16 @@ klassOop Universe::_constantPoolKlassObj              = NULL;
 klassOop Universe::_constantPoolCacheKlassObj         = NULL;
 klassOop Universe::_compiledICHolderKlassObj          = NULL;
 klassOop Universe::_systemObjArrayKlassObj            = NULL;
-oop Universe::_int_mirror                             =  NULL;
-oop Universe::_float_mirror                           =  NULL;
-oop Universe::_double_mirror                          =  NULL;
-oop Universe::_byte_mirror                            =  NULL;
-oop Universe::_bool_mirror                            =  NULL;
-oop Universe::_char_mirror                            =  NULL;
-oop Universe::_long_mirror                            =  NULL;
-oop Universe::_short_mirror                           =  NULL;
-oop Universe::_void_mirror                            =  NULL;
-oop Universe::_mirrors[T_VOID+1]                      =  { NULL /*, NULL...*/ };
+oop Universe::_int_mirror                             = NULL;
+oop Universe::_float_mirror                           = NULL;
+oop Universe::_double_mirror                          = NULL;
+oop Universe::_byte_mirror                            = NULL;
+oop Universe::_bool_mirror                            = NULL;
+oop Universe::_char_mirror                            = NULL;
+oop Universe::_long_mirror                            = NULL;
+oop Universe::_short_mirror                           = NULL;
+oop Universe::_void_mirror                            = NULL;
+oop Universe::_mirrors[T_VOID+1]                      = { NULL /*, NULL...*/ };
 oop Universe::_main_thread_group                      = NULL;
 oop Universe::_system_thread_group                    = NULL;
 typeArrayOop Universe::_the_empty_byte_array          = NULL;
@@ -99,9 +99,10 @@ bool            Universe::_bootstrapping = false;
 bool            Universe::_fully_initialized = false;
 
 size_t          Universe::_heap_capacity_at_last_gc;
-size_t          Universe::_heap_used_at_last_gc;
+size_t          Universe::_heap_used_at_last_gc = 0;
 
 CollectedHeap*  Universe::_collectedHeap = NULL;
+address         Universe::_heap_base = NULL;
 
 
 void Universe::basic_type_classes_do(void f(klassOop)) {
@@ -259,16 +260,16 @@ void Universe::genesis(TRAPS) {
         _typeArrayKlassObjs[T_INT]     = _intArrayKlassObj;
         _typeArrayKlassObjs[T_LONG]    = _longArrayKlassObj;
 
-        _methodKlassObj         = methodKlass::create_klass(CHECK);
-        _constMethodKlassObj    = constMethodKlass::create_klass(CHECK);
-        _methodDataKlassObj     = methodDataKlass::create_klass(CHECK);
+        _methodKlassObj             = methodKlass::create_klass(CHECK);
+        _constMethodKlassObj        = constMethodKlass::create_klass(CHECK);
+        _methodDataKlassObj         = methodDataKlass::create_klass(CHECK);
         _constantPoolKlassObj       = constantPoolKlass::create_klass(CHECK);
         _constantPoolCacheKlassObj  = constantPoolCacheKlass::create_klass(CHECK);
 
         _compiledICHolderKlassObj   = compiledICHolderKlass::create_klass(CHECK);
         _systemObjArrayKlassObj     = objArrayKlassKlass::cast(objArrayKlassKlassObj())->allocate_system_objArray_klass(CHECK);
 
-        _the_empty_byte_array      = oopFactory::new_permanent_byteArray(0, CHECK);
+        _the_empty_byte_array       = oopFactory::new_permanent_byteArray(0, CHECK);
         _the_empty_short_array      = oopFactory::new_permanent_shortArray(0, CHECK);
         _the_empty_int_array        = oopFactory::new_permanent_intArray(0, CHECK);
         _the_empty_system_obj_array = oopFactory::new_system_objArray(0, CHECK);
@@ -276,7 +277,6 @@ void Universe::genesis(TRAPS) {
         _the_array_interfaces_array = oopFactory::new_system_objArray(2, CHECK);
         _vm_exception               = oopFactory::new_symbol("vm exception holder", CHECK);
       } else {
-
         FileMapInfo *mapinfo = FileMapInfo::current_info();
         char* buffer = mapinfo->region_base(CompactingPermGenGen::md);
         void** vtbl_list = (void**)buffer;
@@ -369,26 +369,31 @@ void Universe::genesis(TRAPS) {
   // Only 1.3 or later has the java.lang.Shutdown class.
   // Only 1.4 or later has the java.lang.CharSequence interface.
   // Only 1.5 or later has the java.lang.management.MemoryUsage class.
-  if (JDK_Version::is_pre_jdk16_version()) {
-    klassOop k = SystemDictionary::resolve_or_null(vmSymbolHandles::java_lang_management_MemoryUsage(), THREAD);
+  if (JDK_Version::is_partially_initialized()) {
+    uint8_t jdk_version;
+    klassOop k = SystemDictionary::resolve_or_null(
+        vmSymbolHandles::java_lang_management_MemoryUsage(), THREAD);
     CLEAR_PENDING_EXCEPTION; // ignore exceptions
     if (k == NULL) {
-      k = SystemDictionary::resolve_or_null(vmSymbolHandles::java_lang_CharSequence(), THREAD);
+      k = SystemDictionary::resolve_or_null(
+          vmSymbolHandles::java_lang_CharSequence(), THREAD);
       CLEAR_PENDING_EXCEPTION; // ignore exceptions
       if (k == NULL) {
-        k = SystemDictionary::resolve_or_null(vmSymbolHandles::java_lang_Shutdown(), THREAD);
+        k = SystemDictionary::resolve_or_null(
+            vmSymbolHandles::java_lang_Shutdown(), THREAD);
         CLEAR_PENDING_EXCEPTION; // ignore exceptions
         if (k == NULL) {
-          JDK_Version::set_jdk12x_version();
+          jdk_version = 2;
         } else {
-          JDK_Version::set_jdk13x_version();
+          jdk_version = 3;
         }
       } else {
-          JDK_Version::set_jdk14x_version();
+        jdk_version = 4;
       }
     } else {
-          JDK_Version::set_jdk15x_version();
+      jdk_version = 5;
     }
+    JDK_Version::fully_initialize(jdk_version);
   }
 
   #ifdef ASSERT
@@ -467,7 +472,7 @@ void Universe::init_self_patching_vtbl_list(void** list, int count) {
 
 class FixupMirrorClosure: public ObjectClosure {
  public:
-  void do_object(oop obj) {
+  virtual void do_object(oop obj) {
     if (obj->is_klass()) {
       EXCEPTION_MARK;
       KlassHandle k(THREAD, klassOop(obj));
@@ -670,7 +675,7 @@ jint universe_init() {
 	 "LogHeapWordSize is incorrect.");
   guarantee(sizeof(oop) >= sizeof(HeapWord), "HeapWord larger than oop?");
   guarantee(sizeof(oop) % sizeof(HeapWord) == 0,
-	 "oop size is not not a multiple of HeapWord size");
+            "oop size is not not a multiple of HeapWord size");
   TraceTime timer("Genesis", TraceStartupTime);
   GC_locker::lock();  // do not allow gc during bootstrapping
   JavaClasses::compute_hard_coded_offsets();
@@ -736,6 +741,15 @@ jint Universe::initialize_heap() {
     fatal("UseParallelGC not supported in java kernel vm.");
 #endif // SERIALGC
 
+  } else if (UseG1GC) {
+#ifndef SERIALGC
+    G1CollectorPolicy* g1p = new G1CollectorPolicy_BestRegionsFirst();
+    G1CollectedHeap* g1h = new G1CollectedHeap(g1p);
+    Universe::_collectedHeap = g1h;
+#else  // SERIALGC
+    fatal("UseG1GC not supported in java kernel vm.");
+#endif // SERIALGC
+
   } else {
     GenCollectorPolicy *gc_policy;
 
@@ -761,6 +775,15 @@ jint Universe::initialize_heap() {
   jint status = Universe::heap()->initialize();
   if (status != JNI_OK) {
     return status;
+  }
+  if (UseCompressedOops) {
+    // Subtract a page because something can get allocated at heap base.
+    // This also makes implicit null checking work, because the
+    // memory+1 page below heap_base needs to cause a signal.
+    // See needs_explicit_null_check.
+    // Only set the heap base for compressed oops because it indicates
+    // compressed oops for pstack code.
+    Universe::_heap_base = Universe::heap()->base() - os::vm_page_size();
   }
 
   // We will never reach the CATCH below since Exceptions::_throw will cause
@@ -926,7 +949,10 @@ bool universe_post_init() {
 
   // This needs to be done before the first scavenge/gc, since
   // it's an input to soft ref clearing policy.
-  Universe::update_heap_info_at_gc();
+  {
+    MutexLocker x(Heap_lock);
+    Universe::update_heap_info_at_gc();
+  }
 
   // ("weak") refs processing infrastructure initialization
   Universe::heap()->post_initialize();
@@ -1182,10 +1208,11 @@ uintptr_t Universe::verify_klass_mask() {
     // ???: What if a CollectedHeap doesn't have a permanent generation?
     ShouldNotReachHere();
     break;
-  case CollectedHeap::GenCollectedHeap: {
-    GenCollectedHeap* gch = (GenCollectedHeap*) Universe::heap();
-    permanent_reserved = gch->perm_gen()->reserved();
-    break;
+  case CollectedHeap::GenCollectedHeap:
+  case CollectedHeap::G1CollectedHeap: {
+    SharedHeap* sh = (SharedHeap*) Universe::heap();
+    permanent_reserved = sh->perm_gen()->reserved();
+   break;
   }
 #ifndef SERIALGC
   case CollectedHeap::ParallelScavengeHeap: {

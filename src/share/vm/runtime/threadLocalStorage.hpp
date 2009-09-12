@@ -2,7 +2,7 @@
 #pragma ident "@(#)threadLocalStorage.hpp	1.45 07/05/05 17:07:00 JVM"
 #endif
 /*
- * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ class ThreadLocalStorage : AllStatic {
   // Initialization
   // Called explicitly from VMThread::activate_system instead of init_globals.
   static void init();
+  static bool is_initialized();
 
  private:
   static int     _thread_index;

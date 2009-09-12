@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -885,7 +885,12 @@ public class CommandProcessor {
                                         out.println("found at " + addr);
                                     }
                                 }
-
+                                public void visitCompOopAddress(Address addr) {
+                                    Address val = addr.getCompOopAddressAt(0);
+                                    if (AddressOps.equal(val, value)) {
+                                        out.println("found at " + addr);
+                                    }
+                                }
                                 public void epilogue() {
                                 }
                             };

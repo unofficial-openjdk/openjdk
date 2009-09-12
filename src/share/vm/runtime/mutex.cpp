@@ -3,7 +3,7 @@
 #endif
 
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1122,21 +1122,26 @@ Monitor::~Monitor() {
   assert ((UNS(_owner)|UNS(_LockWord.FullWord)|UNS(_EntryList)|UNS(_WaitSet)|UNS(_OnDeck)) == 0, "") ; 
 }
 
-void Monitor::ClearMonitor (Monitor * m) { 
-  m->_owner             = NULL ; 
-  m->_snuck             = false ; 
-  m->_name              = "UNKNOWN" ; 
-  m->_LockWord.FullWord = 0 ; 
-  m->_EntryList         = NULL ; 
-  m->_OnDeck            = NULL ; 
-  m->_WaitSet           = NULL ; 
-  m->_WaitLock[0]       = 0 ; 
+void Monitor::ClearMonitor (Monitor * m, const char *name) {
+  m->_owner             = NULL ;
+  m->_snuck             = false ;
+  if (name == NULL) {
+    strcpy(m->_name, "UNKNOWN") ;
+  } else {
+    strncpy(m->_name, name, MONITOR_NAME_LEN - 1);
+    m->_name[MONITOR_NAME_LEN - 1] = '\0';
+  }
+  m->_LockWord.FullWord = 0 ;
+  m->_EntryList         = NULL ;
+  m->_OnDeck            = NULL ;
+  m->_WaitSet           = NULL ;
+  m->_WaitLock[0]       = 0 ;
 }
 
 Monitor::Monitor() { ClearMonitor(this); } 
 
-Monitor::Monitor (int Rank, const char * name, bool allow_vm_block) { 
-  ClearMonitor (this) ; 
+Monitor::Monitor (int Rank, const char * name, bool allow_vm_block) {
+  ClearMonitor (this, name) ;
 #ifdef ASSERT
   _allow_vm_block  = allow_vm_block;
   _rank            = Rank ; 
@@ -1147,8 +1152,8 @@ Mutex::~Mutex() {
   assert ((UNS(_owner)|UNS(_LockWord.FullWord)|UNS(_EntryList)|UNS(_WaitSet)|UNS(_OnDeck)) == 0, "") ; 
 }
 
-Mutex::Mutex (int Rank, const char * name, bool allow_vm_block) { 
-  ClearMonitor ((Monitor *) this) ; 
+Mutex::Mutex (int Rank, const char * name, bool allow_vm_block) {
+  ClearMonitor ((Monitor *) this, name) ;
 #ifdef ASSERT
  _allow_vm_block   = allow_vm_block;
  _rank             = Rank ; 

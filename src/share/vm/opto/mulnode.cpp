@@ -2,7 +2,7 @@
 #pragma ident "@(#)mulnode.cpp	1.134 07/07/19 19:08:26 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,6 +154,14 @@ const Type *MulNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   if( t1 == Type::BOTTOM || t2 == Type::BOTTOM )
     return bottom_type();
+
+#if defined(IA32)
+  // Can't trust native compilers to properly fold strict double
+  // multiplication with round-to-zero on this platform.
+  if (op == Op_MulD && phase->C->method()->is_strict()) {
+    return TypeD::DOUBLE;
+  }
+#endif
 
   return mul_ring(t1,t2);            // Local flavor of type multiplication
 }
@@ -363,8 +371,27 @@ const Type *MulFNode::mul_ring(const Type *t0, const Type *t1) const {
 // Compute the product type of two double ranges into this node.
 const Type *MulDNode::mul_ring(const Type *t0, const Type *t1) const {
   if( t0 == Type::DOUBLE || t1 == Type::DOUBLE ) return Type::DOUBLE;
-  // We must be adding 2 double constants.
+  // We must be multiplying 2 double constants.
   return TypeD::make( t0->getd() * t1->getd() );
+}
+
+//=============================================================================
+//------------------------------Value------------------------------------------
+const Type *MulHiLNode::Value( PhaseTransform *phase ) const {
+  // Either input is TOP ==> the result is TOP
+  const Type *t1 = phase->type( in(1) );
+  const Type *t2 = phase->type( in(2) );
+  if( t1 == Type::TOP ) return Type::TOP;
+  if( t2 == Type::TOP ) return Type::TOP;
+
+  // Either input is BOTTOM ==> the result is the local BOTTOM
+  const Type *bot = bottom_type();
+  if( (t1 == bot) || (t2 == bot) ||
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
+    return bot;
+
+  // It is not worth trying to constant fold this stuff!
+  return TypeLong::LONG;
 }
 
 //=============================================================================
@@ -425,9 +452,10 @@ Node *AndINode::Identity( PhaseTransform *phase ) {
     // needed either.
     if( lop == Op_URShiftI ) {
       const TypeInt *t12 = phase->type( load->in(2) )->isa_int();
-      if( t12 && t12->is_con() ) {
-        int shift_con = t12->get_con();
-        int mask = max_juint >> shift_con;
+      if( t12 && t12->is_con() ) {  // Shift is by a constant
+        int shift = t12->get_con();
+        shift &= BitsPerJavaInteger - 1;  // semantics of Java shifts
+        int mask = max_juint >> shift;
         if( (mask&con) == mask )  // If AND is useless, skip it
           return load;
       }
@@ -555,9 +583,10 @@ Node *AndLNode::Identity( PhaseTransform *phase ) {
     // needed either.
     if( lop == Op_URShiftL ) {
       const TypeInt *t12 = phase->type( usr->in(2) )->isa_int();
-      if( t12 && t12->is_con() ) {
-        int shift_con = t12->get_con();
-        jlong mask = max_julong >> shift_con;
+      if( t12 && t12->is_con() ) {  // Shift is by a constant
+        int shift = t12->get_con();
+        shift &= BitsPerJavaLong - 1;  // semantics of Java shifts
+        jlong mask = max_julong >> shift;
         if( (mask&con) == mask )  // If AND is useless, skip it
           return usr;
       }
@@ -581,9 +610,9 @@ Node *AndLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     const TypeInt *t12 = phase->type(rsh->in(2))->isa_int();
     if( t12 && t12->is_con() ) { // Shift is by a constant
       int shift = t12->get_con();
-      shift &= (BitsPerJavaInteger*2)-1;  // semantics of Java shifts
-      const jlong sign_bits_mask = ~(((jlong)CONST64(1) << (jlong)(BitsPerJavaInteger*2 - shift)) -1);
-      // If the AND'ing of the 2 masks has no bits, then only original shifted 
+      shift &= BitsPerJavaLong - 1;  // semantics of Java shifts
+      const jlong sign_bits_mask = ~(((jlong)CONST64(1) << (jlong)(BitsPerJavaLong - shift)) -1);
+      // If the AND'ing of the 2 masks has no bits, then only original shifted
       // bits survive.  NO sign-extension bits survive the maskings.
       if( (sign_bits_mask & mask) == 0 ) {
         // Use zero-fill shift instead
@@ -762,7 +791,7 @@ Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Check for ((x & ((CONST64(1)<<(64-c0))-1)) << c0) which ANDs off high bits
   // before shifting them away.
-  const jlong bits_mask = ((jlong)CONST64(1) << (jlong)(BitsPerJavaInteger*2 - con)) - CONST64(1);
+  const jlong bits_mask = ((jlong)CONST64(1) << (jlong)(BitsPerJavaLong - con)) - CONST64(1);
   if( add1_op == Op_AndL &&
       phase->type(add1->in(2)) == TypeLong::make( bits_mask ) )
     return new (phase->C, 3) LShiftLNode( add1->in(1), in(2) );
@@ -796,7 +825,7 @@ const Type *LShiftLNode::Value( PhaseTransform *phase ) const {
     return TypeLong::LONG;
 
   uint shift = r2->get_con();
-  shift &= (BitsPerJavaInteger*2)-1;  // semantics of Java shifts
+  shift &= BitsPerJavaLong - 1;  // semantics of Java shifts
   // Shift by a multiple of 64 does nothing:
   if (shift == 0)  return t1;
 
@@ -1211,7 +1240,7 @@ Node *URShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if ( con == 0 ) return NULL;  // let Identity() handle a 0 shift count
                               // note: mask computation below does not work for 0 shift count
   // We'll be wanting the right-shift amount as a mask of that many bits
-  const jlong mask = (((jlong)CONST64(1) << (jlong)(BitsPerJavaInteger*2 - con)) -1);
+  const jlong mask = (((jlong)CONST64(1) << (jlong)(BitsPerJavaLong - con)) -1);
 
   // Check for ((x << z) + Y) >>> z.  Replace with x + con>>>z
   // The idiom for rounding to a power of 2 is "(Q+(2^z-1)) >>> z".
@@ -1278,7 +1307,7 @@ const Type *URShiftLNode::Value( PhaseTransform *phase ) const {
 
   if (r2->is_con()) {
     uint shift = r2->get_con();
-    shift &= (2*BitsPerJavaInteger)-1;  // semantics of Java shifts
+    shift &= BitsPerJavaLong - 1;  // semantics of Java shifts
     // Shift by a multiple of 64 does nothing:
     if (shift == 0)  return t1;
     // Calculate reasonably aggressive bounds for the result.
@@ -1301,7 +1330,7 @@ const Type *URShiftLNode::Value( PhaseTransform *phase ) const {
     const TypeLong* tl = TypeLong::make(lo, hi, MAX2(r1->_widen,r2->_widen));
     #ifdef ASSERT
     // Make sure we get the sign-capture idiom correct.
-    if (shift == (2*BitsPerJavaInteger)-1) {
+    if (shift == BitsPerJavaLong - 1) {
       if (r1->_lo >= 0) assert(tl == TypeLong::ZERO, ">>>63 of + is 0");
       if (r1->_hi < 0)  assert(tl == TypeLong::ONE,  ">>>63 of - is +1");
     }

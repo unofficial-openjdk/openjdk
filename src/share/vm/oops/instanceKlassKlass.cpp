@@ -2,7 +2,7 @@
 #pragma ident "@(#)instanceKlassKlass.cpp	1.157 07/07/27 16:19:58 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,7 @@ void instanceKlassKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(ik->adr_source_debug_extension());
   MarkSweep::mark_and_push(ik->adr_inner_classes());
   MarkSweep::mark_and_push(ik->adr_protection_domain());
+  MarkSweep::mark_and_push(ik->adr_host_klass());
   MarkSweep::mark_and_push(ik->adr_signers());
   MarkSweep::mark_and_push(ik->adr_generic_signature());
   MarkSweep::mark_and_push(ik->adr_class_annotations());
@@ -123,6 +124,7 @@ void instanceKlassKlass::oop_follow_contents(ParCompactionManager* cm,
   PSParallelCompact::mark_and_push(cm, ik->adr_source_debug_extension());
   PSParallelCompact::mark_and_push(cm, ik->adr_inner_classes());
   PSParallelCompact::mark_and_push(cm, ik->adr_protection_domain());
+  PSParallelCompact::mark_and_push(cm, ik->adr_host_klass());
   PSParallelCompact::mark_and_push(cm, ik->adr_signers());
   PSParallelCompact::mark_and_push(cm, ik->adr_generic_signature());
   PSParallelCompact::mark_and_push(cm, ik->adr_class_annotations());
@@ -162,6 +164,7 @@ int instanceKlassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   blk->do_oop(ik->adr_constants());
   blk->do_oop(ik->adr_class_loader());
   blk->do_oop(ik->adr_protection_domain());
+  blk->do_oop(ik->adr_host_klass());
   blk->do_oop(ik->adr_signers());
   blk->do_oop(ik->adr_source_file_name());
   blk->do_oop(ik->adr_source_debug_extension());
@@ -214,6 +217,8 @@ int instanceKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_protection_domain();
   if (mr.contains(adr)) blk->do_oop(adr);
+  adr = ik->adr_host_klass();
+  if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_signers();
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_source_file_name();
@@ -263,6 +268,7 @@ int instanceKlassKlass::oop_adjust_pointers(oop obj) {
   MarkSweep::adjust_pointer(ik->adr_constants());
   MarkSweep::adjust_pointer(ik->adr_class_loader());
   MarkSweep::adjust_pointer(ik->adr_protection_domain());
+  MarkSweep::adjust_pointer(ik->adr_host_klass());
   MarkSweep::adjust_pointer(ik->adr_signers());
   MarkSweep::adjust_pointer(ik->adr_source_file_name());
   MarkSweep::adjust_pointer(ik->adr_source_debug_extension());
@@ -289,17 +295,22 @@ void instanceKlassKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
   ik->copy_static_fields(pm);
 
   oop* loader_addr = ik->adr_class_loader();
-  if (PSScavenge::should_scavenge(*loader_addr)) {
+  if (PSScavenge::should_scavenge(loader_addr)) {
     pm->claim_or_forward_breadth(loader_addr);
   }
 
   oop* pd_addr = ik->adr_protection_domain();
-  if (PSScavenge::should_scavenge(*pd_addr)) {
+  if (PSScavenge::should_scavenge(pd_addr)) {
     pm->claim_or_forward_breadth(pd_addr);
   }
 
+  oop* hk_addr = ik->adr_host_klass();
+  if (PSScavenge::should_scavenge(hk_addr)) {
+    pm->claim_or_forward_breadth(hk_addr);
+  }
+
   oop* sg_addr = ik->adr_signers();
-  if (PSScavenge::should_scavenge(*sg_addr)) {
+  if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_breadth(sg_addr);
   }
 
@@ -312,17 +323,22 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   ik->push_static_fields(pm);
 
   oop* loader_addr = ik->adr_class_loader();
-  if (PSScavenge::should_scavenge(*loader_addr)) {
+  if (PSScavenge::should_scavenge(loader_addr)) {
     pm->claim_or_forward_depth(loader_addr);
   }
 
   oop* pd_addr = ik->adr_protection_domain();
-  if (PSScavenge::should_scavenge(*pd_addr)) {
+  if (PSScavenge::should_scavenge(pd_addr)) {
     pm->claim_or_forward_depth(pd_addr);
   }
 
+  oop* hk_addr = ik->adr_host_klass();
+  if (PSScavenge::should_scavenge(hk_addr)) {
+    pm->claim_or_forward_depth(hk_addr);
+  }
+
   oop* sg_addr = ik->adr_signers();
-  if (PSScavenge::should_scavenge(*sg_addr)) {
+  if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_depth(sg_addr);
   }
 
@@ -424,6 +440,7 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
     ik->set_constants(NULL);
     ik->set_class_loader(NULL);
     ik->set_protection_domain(NULL);
+    ik->set_host_klass(NULL);
     ik->set_signers(NULL);
     ik->set_source_file_name(NULL);
     ik->set_source_debug_extension(NULL);
@@ -529,6 +546,7 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->print(" - constants:         "); ik->constants()->print_value_on(st);         st->cr();
   st->print(" - class loader:      "); ik->class_loader()->print_value_on(st);      st->cr();
   st->print(" - protection domain: "); ik->protection_domain()->print_value_on(st); st->cr();
+  st->print(" - host class: ");        ik->host_klass()->print_value_on(st);        st->cr();
   st->print(" - signers:           "); ik->signers()->print_value_on(st);           st->cr();
   if (ik->source_file_name() != NULL) {
     st->print(" - source file:       "); 
@@ -584,7 +602,7 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
   OopMapBlock* end_map = map + ik->nonstatic_oop_map_size();
   while (map < end_map) {
-    st->print("%d-%d ", map->offset(), map->offset() + oopSize*(map->length() - 1));
+    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->length() - 1));
     map++;
   }
   st->cr();
@@ -605,15 +623,17 @@ const char* instanceKlassKlass::internal_name() const {
 
 // Verification
 
-
 class VerifyFieldClosure: public OopClosure {
- public:
-  void do_oop(oop* p) {
+ protected:
+  template <class T> void do_oop_work(T* p) {
     guarantee(Universe::heap()->is_in(p), "should be in heap");
-    guarantee((*p)->is_oop_or_null(), "should be in heap");
+    oop obj = oopDesc::load_decode_heap_oop(p);
+    guarantee(obj->is_oop_or_null(), "should be in heap");
   }
+ public:
+  virtual void do_oop(oop* p)       { VerifyFieldClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { VerifyFieldClosure::do_oop_work(p); }
 };
-
 
 void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
   klassKlass::oop_verify_on(obj, st);
@@ -627,7 +647,7 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     ik->_verify_count = Universe::verify_count();
 #endif
     // Verify that klass is present in SystemDictionary
-    if (ik->is_loaded()) {
+    if (ik->is_loaded() && !ik->is_anonymous()) {
       symbolHandle h_name (thread, ik->name());
       Handle h_loader (thread, ik->class_loader());
       Handle h_obj(thread, obj);
@@ -764,6 +784,9 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     }
     if (ik->protection_domain() != NULL) {
       guarantee(ik->protection_domain()->is_oop(),  "should be oop");
+    }
+    if (ik->host_klass() != NULL) {
+      guarantee(ik->host_klass()->is_oop(),  "should be oop");
     }
     if (ik->signers() != NULL) {
       guarantee(ik->signers()->is_objArray(),       "should be obj array");

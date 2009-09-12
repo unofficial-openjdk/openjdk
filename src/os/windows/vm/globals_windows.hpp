@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)globals_windows.hpp	1.11 07/05/29 13:32:14 JVM"
-#endif
 /*
- * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -40,7 +37,6 @@
 // platforms, but they may have different default values on other platforms.
 //
 define_pd_global(bool, UseLargePages, false);
+define_pd_global(bool, UseLargePagesIndividualAllocation, true);
 define_pd_global(bool, UseOSErrorReporting, false);  // for now.
-define_pd_global(bool, UseThreadPriorities, true) ; 
-
-
+define_pd_global(bool, UseThreadPriorities, true) ;

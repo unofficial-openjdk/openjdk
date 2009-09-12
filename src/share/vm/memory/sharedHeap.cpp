@@ -2,7 +2,7 @@
 #pragma ident "@(#)sharedHeap.cpp	1.59 07/05/17 15:55:10 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,15 +60,24 @@ SharedHeap::SharedHeap(CollectorPolicy* policy_) :
   }
   _sh = this;  // ch is static, should be set only once.
   if ((UseParNewGC ||
-      (UseConcMarkSweepGC && CMSParallelRemarkEnabled)) &&
+      (UseConcMarkSweepGC && CMSParallelRemarkEnabled) ||
+       UseG1GC) &&
       ParallelGCThreads > 0) {
-    _workers = new WorkGang("Parallel GC Threads", ParallelGCThreads, true);
+    _workers = new WorkGang("Parallel GC Threads", ParallelGCThreads,
+                            /* are_GC_task_threads */true,
+                            /* are_ConcurrentGC_threads */false);
     if (_workers == NULL) {
       vm_exit_during_initialization("Failed necessary allocation.");
     }
   }
 }
 
+bool SharedHeap::heap_lock_held_for_gc() {
+  Thread* t = Thread::current();
+  return    Heap_lock->owned_by_self()
+         || (   (t->is_GC_task_thread() ||  t->is_VM_thread())
+             && _thread_holds_heap_lock_for_gc);
+}
 
 void SharedHeap::set_par_threads(int t) {
   _n_par_threads = t;
@@ -77,9 +86,10 @@ void SharedHeap::set_par_threads(int t) {
 
 class AssertIsPermClosure: public OopClosure {
 public:
-  void do_oop(oop* p) {
+  virtual void do_oop(oop* p) {
     assert((*p) == NULL || (*p)->is_perm(), "Referent should be perm.");
   }
+  virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 static AssertIsPermClosure assert_is_perm_closure;
 
@@ -190,12 +200,13 @@ class SkipAdjustingSharedStrings: public OopClosure {
 public:
   SkipAdjustingSharedStrings(OopClosure* clo) : _clo(clo) {}
 
-  void do_oop(oop* p) {
+  virtual void do_oop(oop* p) {
     oop o = (*p);
     if (!o->is_shared_readwrite()) {
       _clo->do_oop(p);
     }
   }
+  virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 
 // Unmarked shared Strings in the StringTable (which got there due to
@@ -240,55 +251,16 @@ void SharedHeap::ref_processing_init() {
   perm_gen()->ref_processor_init();
 }
 
-void SharedHeap::fill_region_with_object(MemRegion mr) {
-  // Disable the posting of JVMTI VMObjectAlloc events as we
-  // don't want the filling of tlabs with filler arrays to be
-  // reported to the profiler.
-  NoJvmtiVMObjectAllocMark njm;    
-  
-  // Disable low memory detector because there is no real allocation.
-  LowMemoryDetectorDisabler lmd_dis;
-
-  // It turns out that post_allocation_setup_array takes a handle, so the
-  // call below contains an implicit conversion.  Best to free that handle
-  // as soon as possible.
-  HandleMark hm;
-
-  size_t word_size = mr.word_size();
-  size_t aligned_array_header_size =
-    align_object_size(typeArrayOopDesc::header_size(T_INT));
-
-  if (word_size >= aligned_array_header_size) {
-    const size_t array_length =
-      pointer_delta(mr.end(), mr.start()) -
-      typeArrayOopDesc::header_size(T_INT);
-    const size_t array_length_words =
-      array_length * (HeapWordSize/sizeof(jint));
-    post_allocation_setup_array(Universe::intArrayKlassObj(),
-				mr.start(),
-				mr.word_size(),
-				(int)array_length_words);
-#ifdef ASSERT
-    HeapWord* elt_words = (mr.start() + typeArrayOopDesc::header_size(T_INT));
-    Copy::fill_to_words(elt_words, array_length, 0xDEAFBABE);
-#endif
-  } else {
-    assert(word_size == (size_t)oopDesc::header_size(), "Unaligned?");
-    post_allocation_setup_obj(SystemDictionary::object_klass(),
-			      mr.start(),
-			      mr.word_size());
-  }
-}
-
 // Some utilities.
-void SharedHeap::print_size_transition(size_t bytes_before,
-				       size_t bytes_after,
-				       size_t capacity) {
-  tty->print(" %d%s->%d%s(%d%s)",
-	     byte_size_in_proper_unit(bytes_before),
-	     proper_unit_for_byte_size(bytes_before),
-	     byte_size_in_proper_unit(bytes_after),
-	     proper_unit_for_byte_size(bytes_after),
-	     byte_size_in_proper_unit(capacity),
-	     proper_unit_for_byte_size(capacity));  
+void SharedHeap::print_size_transition(outputStream* out,
+                                       size_t bytes_before,
+                                       size_t bytes_after,
+                                       size_t capacity) {
+  out->print(" %d%s->%d%s(%d%s)",
+             byte_size_in_proper_unit(bytes_before),
+             proper_unit_for_byte_size(bytes_before),
+             byte_size_in_proper_unit(bytes_after),
+             proper_unit_for_byte_size(bytes_after),
+             byte_size_in_proper_unit(capacity),
+             proper_unit_for_byte_size(capacity));
 }

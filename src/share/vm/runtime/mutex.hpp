@@ -2,7 +2,7 @@
 #pragma ident "@(#)mutex.hpp	1.70 07/07/09 15:32:56 JVM"
 #endif
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,6 +85,9 @@ class ParkEvent ;
 // *in that order*.  If their implementations change such that these
 // assumptions are violated, a whole lot of code will break.
 
+// The default length of monitor name is choosen to be 64 to avoid false sharing.
+static const int MONITOR_NAME_LEN = 64;
+
 class Monitor : public CHeapObj {
 
  public:
@@ -127,11 +130,10 @@ class Monitor : public CHeapObj {
   ParkEvent * volatile _EntryList ;      // List of threads waiting for entry
   ParkEvent * volatile _OnDeck ;         // heir-presumptive
   volatile intptr_t _WaitLock [1] ;      // Protects _WaitSet
-  ParkEvent * volatile  _WaitSet ;       // LL of ParkEvents 
-  volatile bool     _snuck;              // Used for sneaky locking (evil).  
-  const char * _name;                    // Name of mutex  
+  ParkEvent * volatile  _WaitSet ;       // LL of ParkEvents
+  volatile bool     _snuck;              // Used for sneaky locking (evil).
   int NotifyCount ;                      // diagnostic assist
-  double pad [8] ;                       // avoid false sharing
+  char _name[MONITOR_NAME_LEN];          // Name of mutex
 
   // Debugging fields for naming, deadlock detection, etc. (some only used in debug mode)
 #ifndef PRODUCT
@@ -173,8 +175,8 @@ class Monitor : public CHeapObj {
    int  ILocked () ; 
 
  protected:
-   static void ClearMonitor (Monitor * m) ; 
-   Monitor() ; 
+   static void ClearMonitor (Monitor * m, const char* name = NULL) ;
+   Monitor() ;
 
  public:
   Monitor(int rank, const char *name, bool allow_vm_block=false);

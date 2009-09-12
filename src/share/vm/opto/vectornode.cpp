@@ -2,7 +2,7 @@
 #pragma ident "@(#)vectornode.cpp	1.5 07/05/17 16:02:33 JVM"
 #endif
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -138,7 +138,7 @@ Node* PackNode::binaryTreePack(Compile* C, int lo, int hi) {
   int mid = lo + ct/2;
   Node* n1 = ct == 2 ? in(lo)   : binaryTreePack(C, lo,  mid);
   Node* n2 = ct == 2 ? in(lo+1) : binaryTreePack(C, mid, hi );
-  int rslt_bsize = ct * type2aelembytes[elt_basic_type()];
+  int rslt_bsize = ct * type2aelembytes(elt_basic_type());
   if (bottom_type()->is_floatingpoint()) {
     switch (rslt_bsize) {
     case  8: return new (C, 3) PackFNode(n1, n2);

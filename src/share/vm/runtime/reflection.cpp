@@ -2,7 +2,7 @@
 #pragma ident "@(#)reflection.cpp	1.179 07/08/09 09:12:05 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -459,12 +459,34 @@ bool Reflection::verify_class_access(klassOop current_class, klassOop new_class,
   return can_relax_access_check_for(current_class, new_class, classloader_only);
 }    
 
+static bool under_host_klass(instanceKlass* ik, klassOop host_klass) {
+  DEBUG_ONLY(int inf_loop_check = 1000 * 1000 * 1000);
+  for (;;) {
+    klassOop hc = (klassOop) ik->host_klass();
+    if (hc == NULL)        return false;
+    if (hc == host_klass)  return true;
+    ik = instanceKlass::cast(hc);
+
+    // There's no way to make a host class loop short of patching memory.
+    // Therefore there cannot be a loop here unles there's another bug.
+    // Still, let's check for it.
+    assert(--inf_loop_check > 0, "no host_klass loop");
+  }
+}
+
 bool Reflection::can_relax_access_check_for(
     klassOop accessor, klassOop accessee, bool classloader_only) {
   instanceKlass* accessor_ik = instanceKlass::cast(accessor);
   instanceKlass* accessee_ik  = instanceKlass::cast(accessee);
-  if (RelaxAccessControlCheck || 
-      (accessor_ik->major_version() < JAVA_1_5_VERSION && 
+
+  // If either is on the other's host_klass chain, access is OK,
+  // because one is inside the other.
+  if (under_host_klass(accessor_ik, accessee) ||
+      under_host_klass(accessee_ik, accessor))
+    return true;
+
+  if (RelaxAccessControlCheck ||
+      (accessor_ik->major_version() < JAVA_1_5_VERSION &&
        accessee_ik->major_version() < JAVA_1_5_VERSION)) {
     return classloader_only &&
       Verifier::relax_verify_for(accessor_ik->class_loader()) &&
@@ -503,7 +525,8 @@ bool Reflection::verify_field_access(klassOop current_class,
     if (!protected_restriction) {
       // See if current_class is a subclass of field_class
       if (Klass::cast(current_class)->is_subclass_of(field_class)) {
-        if (current_class == resolved_class ||
+        if (access.is_static() || // static fields are ok, see 6622385
+            current_class == resolved_class ||
             field_class == resolved_class ||
             Klass::cast(current_class)->is_subclass_of(resolved_class) ||
             Klass::cast(resolved_class)->is_subclass_of(current_class)) {
@@ -1551,10 +1574,11 @@ oop Reflection::invoke_method(oop method_mirror, Handle receiver, objArrayHandle
   }
 
   instanceKlassHandle klass(THREAD, java_lang_Class::as_klassOop(mirror));
-  if (!klass->methods()->is_within_bounds(slot)) {
+  methodOop m = klass->method_with_idnum(slot);
+  if (m == NULL) {
     THROW_MSG_0(vmSymbols::java_lang_InternalError(), "invoke");
   }
-  methodHandle method(THREAD, methodOop(klass->methods()->obj_at(slot)));
+  methodHandle method(THREAD, m);
 
   return invoke(klass, method, receiver, override, ptypes, rtype, args, true, THREAD);
 }
@@ -1566,11 +1590,12 @@ oop Reflection::invoke_constructor(oop constructor_mirror, objArrayHandle args, 
   bool override          = java_lang_reflect_Constructor::override(constructor_mirror) != 0;
   objArrayHandle ptypes(THREAD, objArrayOop(java_lang_reflect_Constructor::parameter_types(constructor_mirror)));
 
-  instanceKlassHandle klass(THREAD, java_lang_Class::as_klassOop(mirror));  
-  if (!klass->methods()->is_within_bounds(slot)) {
+  instanceKlassHandle klass(THREAD, java_lang_Class::as_klassOop(mirror));
+  methodOop m = klass->method_with_idnum(slot);
+  if (m == NULL) {
     THROW_MSG_0(vmSymbols::java_lang_InternalError(), "invoke");
   }
-  methodHandle method(THREAD, methodOop(klass->methods()->obj_at(slot)));
+  methodHandle method(THREAD, m);
   assert(method->name() == vmSymbols::object_initializer_name(), "invalid constructor");
 
   // Make sure klass gets initialize

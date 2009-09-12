@@ -2,7 +2,7 @@
 #pragma ident "@(#)barrierSet.hpp	1.18 07/05/05 17:05:43 JVM"
 #endif
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,8 @@ public:
     ModRef,
     CardTableModRef,
     CardTableExtension,
+    G1SATBCT,
+    G1SATBCTLogging,
     Other,
     Uninit
   };
@@ -45,29 +47,32 @@ protected:
   
 public:
 
+  BarrierSet() { _kind = Uninit; }
   // To get around prohibition on RTTI.
-  virtual BarrierSet::Name kind() { return _kind; }
+  BarrierSet::Name kind() { return _kind; }
   virtual bool is_a(BarrierSet::Name bsn) = 0;
 
   // These operations indicate what kind of barriers the BarrierSet has.
   virtual bool has_read_ref_barrier() = 0;
   virtual bool has_read_prim_barrier() = 0;
   virtual bool has_write_ref_barrier() = 0;
+  virtual bool has_write_ref_pre_barrier() = 0;
   virtual bool has_write_prim_barrier() = 0;
 
   // These functions indicate whether a particular access of the given
   // kinds requires a barrier.
-  virtual bool read_ref_needs_barrier(oop* field) = 0;
+  virtual bool read_ref_needs_barrier(void* field) = 0;
   virtual bool read_prim_needs_barrier(HeapWord* field, size_t bytes) = 0;
-  virtual bool write_ref_needs_barrier(oop* field, oop new_val) = 0;
-  virtual bool write_prim_needs_barrier(HeapWord* field, size_t bytes, juint val1, juint val2) = 0;
+  virtual bool write_ref_needs_barrier(void* field, oop new_val) = 0;
+  virtual bool write_prim_needs_barrier(HeapWord* field, size_t bytes,
+                                        juint val1, juint val2) = 0;
 
   // The first four operations provide a direct implementation of the
   // barrier set.  An interpreter loop, for example, could call these
   // directly, as appropriate.
 
   // Invoke the barrier, if any, necessary when reading the given ref field.
-  virtual void read_ref_field(oop* field) = 0;
+  virtual void read_ref_field(void* field) = 0;
 
   // Invoke the barrier, if any, necessary when reading the given primitive
   // "field" of "bytes" bytes in "obj".
@@ -78,9 +83,16 @@ public:
   // (For efficiency reasons, this operation is specialized for certain
   // barrier types.  Semantically, it should be thought of as a call to the 
   // virtual "_work" function below, which must implement the barrier.)
-  inline void write_ref_field(oop* field, oop new_val);
+  // First the pre-write versions...
+  inline void write_ref_field_pre(void* field, oop new_val);
 protected:
-  virtual void write_ref_field_work(oop* field, oop new_val) = 0;
+  virtual void write_ref_field_pre_work(void* field, oop new_val) {};
+public:
+
+  // ...then the post-write version.
+  inline void write_ref_field(void* field, oop new_val);
+protected:
+  virtual void write_ref_field_work(void* field, oop new_val) = 0;
 public:
 
   // Invoke the barrier, if any, necessary when writing the "bytes"-byte
@@ -95,6 +107,7 @@ public:
   // the particular barrier.
   virtual bool has_read_ref_array_opt() = 0;
   virtual bool has_read_prim_array_opt() = 0;
+  virtual bool has_write_ref_array_pre_opt() { return true; }
   virtual bool has_write_ref_array_opt() = 0;
   virtual bool has_write_prim_array_opt() = 0;
 
@@ -106,8 +119,14 @@ public:
   // barrier for an array whose elements are all in the given memory region.
   virtual void read_ref_array(MemRegion mr) = 0;
   virtual void read_prim_array(MemRegion mr) = 0;
-  
+
+  virtual void write_ref_array_pre(MemRegion mr) {}
   inline void write_ref_array(MemRegion mr);
+
+  // Static versions, suitable for calling from generated code.
+  static void static_write_ref_array_pre(HeapWord* start, size_t count);
+  static void static_write_ref_array_post(HeapWord* start, size_t count);
+
 protected:
   virtual void write_ref_array_work(MemRegion mr) = 0;
 public:
@@ -122,33 +141,6 @@ public:
 protected:
   virtual void write_region_work(MemRegion mr) = 0;
 public:
-
-  // The remaining sets of operations are called by compilers or other code
-  // generators to insert barriers into generated code.  There may be
-  // several such code generators; the signatures of these
-  // barrier-generating functions may differ from generator to generator.
-  // There will be a set of four function signatures for each code
-  // generator, which accomplish the generation of barriers of the four
-  // kinds listed above.
-
-#ifdef TBD
-  // Generates code to invoke the barrier, if any, necessary when reading
-  // the ref field at "offset" in "obj".
-  virtual void gen_read_ref_field() = 0;
-
-  // Generates code to invoke the barrier, if any, necessary when reading
-  // the primitive field of "bytes" bytes at offset" in "obj".
-  virtual void gen_read_prim_field() = 0;
-
-  // Generates code to invoke the barrier, if any, necessary when writing
-  // "new_val" into the ref field at "offset" in "obj".
-  virtual void gen_write_ref_field() = 0;
-
-  // Generates code to invoke the barrier, if any, necessary when writing
-  // the "bytes"-byte value "new_val" into the primitive field at "offset"
-  // in "obj".
-  virtual void gen_write_prim_field() = 0;
-#endif
 
   // Some barrier sets create tables whose elements correspond to parts of
   // the heap; the CardTableModRefBS is an example.  Such barrier sets will

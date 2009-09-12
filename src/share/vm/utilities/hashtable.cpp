@@ -2,7 +2,7 @@
 #pragma ident "@(#)hashtable.cpp	1.13 07/05/05 17:07:10 JVM"
 #endif
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,9 +46,11 @@ BasicHashtableEntry* BasicHashtable::new_entry(unsigned int hashValue) {
     entry = _free_list;
     _free_list = _free_list->next();
   } else {
-    const int block_size = 500;
-    if (_first_free_entry == _end_block) {
+    if (_first_free_entry + _entry_size >= _end_block) {
+      int block_size = MIN2(512, MAX2((int)_table_size / 2, (int)_number_of_entries));
       int len = _entry_size * block_size;
+      len = 1 << log2_intptr(len); // round down to power of 2
+      assert(len >= _entry_size, "");
       _first_free_entry = NEW_C_HEAP_ARRAY(char, len);
       _end_block = _first_free_entry + len;
     }
@@ -56,6 +58,7 @@ BasicHashtableEntry* BasicHashtable::new_entry(unsigned int hashValue) {
     _first_free_entry += _entry_size;
   }
 
+  assert(_entry_size % HeapWordSize == 0, "");
   entry->set_hash(hashValue);
   return entry;
 }

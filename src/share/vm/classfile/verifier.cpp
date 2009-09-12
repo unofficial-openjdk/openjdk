@@ -2,7 +2,7 @@
 #pragma ident "@(#)verifier.cpp	1.113 07/05/23 10:53:19 JVM"
 #endif
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1208,7 +1208,7 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
         case Bytecodes::_arraylength :
           type = current_frame.pop_stack(
             VerificationType::reference_check(), CHECK_VERIFY(this));
-          if (!type.is_array()) {
+          if (!(type.is_null() || type.is_array())) {
             verify_error(bci, bad_type_msg, "arraylength");
           }
           current_frame.push_stack(
@@ -1603,7 +1603,11 @@ void ClassVerifier::verify_ldc(
     types = (1 << JVM_CONSTANT_Double) | (1 << JVM_CONSTANT_Long);
     verify_cp_type(index, cp, types, CHECK_VERIFY(this));
   }
-  if (tag.is_string() || tag.is_unresolved_string()) {
+  if (tag.is_string() && cp->is_pseudo_string_at(index)) {
+    current_frame->push_stack(
+      VerificationType::reference_type(
+        vmSymbols::java_lang_Object()), CHECK_VERIFY(this));
+  } else if (tag.is_string() || tag.is_unresolved_string()) {
     current_frame->push_stack(
       VerificationType::reference_type(
         vmSymbols::java_lang_String()), CHECK_VERIFY(this));

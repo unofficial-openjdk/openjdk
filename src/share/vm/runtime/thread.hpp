@@ -2,7 +2,7 @@
 #pragma ident "@(#)thread.hpp	1.456 07/09/28 10:22:58 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -203,14 +203,6 @@ class Thread: public ThreadShadow {
   friend class ThreadLocalStorage;
   friend class GC_locker;
 
-  // In order for all threads to be able to use fast locking, we need to know the highest stack
-  // address of where a lock is on the stack (stacks normally grow towards lower addresses). This
-  // variable is initially set to NULL, indicating no locks are used by the thread. During the thread's
-  // execution, it will be set whenever locking can happen, i.e., when we call out to Java code or use
-  // an ObjectLocker. The value is never decreased, hence, it will over the lifetime of a thread
-  // approximate the real stackbase. 
-  address _highest_lock;                         // Highest stack address where a JavaLock exist
-  
   ThreadLocalAllocBuffer _tlab;                  // Thread-local eden
 
   int   _vm_operation_started_count;             // VM_Operation support
@@ -401,20 +393,14 @@ public:
   }
 
   // Sweeper support
-  void nmethods_do();  
-  
-  // Fast-locking support
-  address highest_lock() const                   { return _highest_lock; }
-  void update_highest_lock(address base)         { if (base > _highest_lock) _highest_lock = base; }
+  void nmethods_do();
 
-  // Tells if adr belong to this thread. This is used
-  // for checking if a lock is owned by the running thread.
-  // Warning: the method can only be used on the running thread
-  // Fast lock support uses these methods
-  virtual bool lock_is_in_stack(address adr) const;
-  virtual bool is_lock_owned(address adr) const;  
+  // Tells if adr belong to this thread. This is used for checking if a lock
+  // is owned by the running thread. It is used to support fast lock.
+  virtual bool is_lock_owned(address adr) const;
 
   // Check if address is in the stack of the thread (not just for locks).
+  // Warning: the method can only be used on the running thread
   bool is_in_stack(address adr) const;
 
   // Sets this thread as starting thread. Returns failure if thread
@@ -785,6 +771,20 @@ class JavaThread: public Thread {
       int _line;
   }   _jmp_ring[ jump_ring_buffer_size ];
 #endif /* PRODUCT */
+
+#ifndef SERIALGC
+  // Support for G1 barriers
+
+  ObjPtrQueue _satb_mark_queue;          // Thread-local log for SATB barrier.
+  // Set of all such queues.
+  static SATBMarkQueueSet _satb_mark_queue_set;
+
+  DirtyCardQueue _dirty_card_queue;      // Thread-local log for dirty cards.
+  // Set of all such queues.
+  static DirtyCardQueueSet _dirty_card_queue_set;
+
+  void flush_barrier_queues();
+#endif // !SERIALGC
 
   friend class VMThread;
   friend class ThreadWaitTransition;
@@ -1171,6 +1171,11 @@ class JavaThread: public Thread {
 
   static ByteSize do_not_unlock_if_synchronized_offset() { return byte_offset_of(JavaThread, _do_not_unlock_if_synchronized); }
 
+#ifndef SERIALGC
+  static ByteSize satb_mark_queue_offset()       { return byte_offset_of(JavaThread, _satb_mark_queue); }
+  static ByteSize dirty_card_queue_offset()      { return byte_offset_of(JavaThread, _dirty_card_queue); }
+#endif // !SERIALGC
+
   // Returns the jni environment for this thread
   JNIEnv* jni_environment()                      { return &_jni_environment; }
 
@@ -1329,6 +1334,13 @@ public:
  public:
   // Thread local information maintained by JVMTI. 
   void set_jvmti_thread_state(JvmtiThreadState *value)                           { _jvmti_thread_state = value; }
+  // A JvmtiThreadState is lazily allocated. This jvmti_thread_state()
+  // getter is used to get this JavaThread's JvmtiThreadState if it has
+  // one which means NULL can be returned. JvmtiThreadState::state_for()
+  // is used to get the specified JavaThread's JvmtiThreadState if it has
+  // one or it allocates a new JvmtiThreadState for the JavaThread and
+  // returns it. JvmtiThreadState::state_for() will return NULL only if
+  // the specified JavaThread is exiting.
   JvmtiThreadState *jvmti_thread_state() const                                   { return _jvmti_thread_state; }
   static ByteSize jvmti_thread_state_offset()                                    { return byte_offset_of(JavaThread, _jvmti_thread_state); }
   void set_jvmti_get_loaded_classes_closure(JvmtiGetLoadedClassesClosure* value) { _jvmti_get_loaded_classes_closure = value; }
@@ -1416,7 +1428,21 @@ public:
   static inline void set_stack_size_at_create(size_t value) { 
     _stack_size_at_create = value;
   }
-  
+
+#ifndef SERIALGC
+  // SATB marking queue support
+  ObjPtrQueue& satb_mark_queue() { return _satb_mark_queue; }
+  static SATBMarkQueueSet& satb_mark_queue_set() {
+    return _satb_mark_queue_set;
+  }
+
+  // Dirty card queue support
+  DirtyCardQueue& dirty_card_queue() { return _dirty_card_queue; }
+  static DirtyCardQueueSet& dirty_card_queue_set() {
+    return _dirty_card_queue_set;
+  }
+#endif // !SERIALGC
+
   // Machine dependent stuff
   #include "incls/_thread_pd.hpp.incl"
 
@@ -1448,6 +1474,14 @@ public:
   // clearing/querying jni attach status
   bool is_attaching() const { return _is_attaching; }
   void set_attached() { _is_attaching = false; OrderAccess::fence(); }
+private:
+  // This field is used to determine if a thread has claimed
+  // a par_id: it is -1 if the thread has not claimed a par_id;
+  // otherwise its value is the par_id that has been claimed.
+  int _claimed_par_id;
+public:
+  int get_claimed_par_id() { return _claimed_par_id; }
+  void set_claimed_par_id(int id) { _claimed_par_id = id;}
 };
 
 // Inline implementation of JavaThread::current

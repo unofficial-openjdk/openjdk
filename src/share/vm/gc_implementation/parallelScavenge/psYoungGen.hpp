@@ -2,7 +2,7 @@
 #pragma ident "@(#)psYoungGen.hpp	1.48 07/05/05 17:05:31 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -182,4 +182,12 @@ class PSYoungGen : public CHeapObj {
 
   // Space boundary invariant checker
   void space_invariants() PRODUCT_RETURN;
+
+  // Helper for mangling survivor spaces.
+  void mangle_survivors(MutableSpace* s1,
+                        MemRegion s1MR,
+                        MutableSpace* s2,
+                        MemRegion s2MR) PRODUCT_RETURN;
+
+  void record_spaces_top() PRODUCT_RETURN;
 };

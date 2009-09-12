@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)stubRoutines_x86_32.cpp	1.72 07/09/17 09:26:00 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -31,6 +28,6 @@
 // Implementation of the platform-specific part of StubRoutines - for
 // a description of how to extend it, see the stubRoutines.hpp file.
 
-address StubRoutines::i486::_verify_mxcsr_entry        = NULL;
-address StubRoutines::i486::_verify_fpu_cntrl_wrd_entry= NULL;
-address StubRoutines::i486::_call_stub_compiled_return = NULL;
+address StubRoutines::x86::_verify_mxcsr_entry        = NULL;
+address StubRoutines::x86::_verify_fpu_cntrl_wrd_entry= NULL;
+address StubRoutines::x86::_call_stub_compiled_return = NULL;

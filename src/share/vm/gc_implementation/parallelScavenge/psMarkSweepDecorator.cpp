@@ -2,7 +2,7 @@
 #pragma ident "@(#)psMarkSweepDecorator.cpp	1.26 07/05/17 15:52:53 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,10 +93,10 @@ void PSMarkSweepDecorator::precompact() {
    */
   bool skip_dead = ((PSMarkSweep::total_invocations() % MarkSweepAlwaysCompactCount) != 0);
 
-  ssize_t allowed_deadspace = 0;
+  size_t allowed_deadspace = 0;
   if (skip_dead) {
-    int ratio = allowed_dead_ratio();
-    allowed_deadspace = (space()->capacity_in_bytes() * ratio / 100) / HeapWordSize;
+    const size_t ratio = allowed_dead_ratio();
+    allowed_deadspace = space()->capacity_in_words() * ratio / 100;
   }
 
   // Fetch the current destination decorator
@@ -155,23 +155,18 @@ void PSMarkSweepDecorator::precompact() {
         oop(q)->forward_to(oop(compact_top));
         assert(oop(q)->is_gc_marked(), "encoding the pointer should preserve the mark");
       } else {
-	// Don't clear the mark since it's confuses parallel old
-	// verification.
-	if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
-          // if the object isn't moving we can just set the mark to the default
-          // mark and handle it specially later on.  
-          oop(q)->init_mark();
-	}
+        // if the object isn't moving we can just set the mark to the default
+        // mark and handle it specially later on.
+        oop(q)->init_mark();
         assert(oop(q)->forwardee() == NULL, "should be forwarded to NULL");
       }
 
       // Update object start array
-      if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
-        if (start_array)
-          start_array->allocate_block(compact_top);
+      if (start_array) {
+        start_array->allocate_block(compact_top);
       }
 
-      debug_only(MarkSweep::register_live_oop(oop(q), size));
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::register_live_oop(oop(q), size));
       compact_top += size;
       assert(compact_top <= dest->space()->end(), 
 	"Exceeding space in destination");
@@ -222,22 +217,17 @@ void PSMarkSweepDecorator::precompact() {
             assert(oop(q)->is_gc_marked(), "encoding the pointer should preserve the mark");
           } else {
             // if the object isn't moving we can just set the mark to the default
-	    // Don't clear the mark since it's confuses parallel old
-	    // verification.
-	    if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
-              // mark and handle it specially later on.  
-              oop(q)->init_mark();
-	    }
+            // mark and handle it specially later on.
+            oop(q)->init_mark();
             assert(oop(q)->forwardee() == NULL, "should be forwarded to NULL");
           }
 
-          if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
-            // Update object start array
-            if (start_array)
-              start_array->allocate_block(compact_top);
-	  }
+          // Update object start array
+          if (start_array) {
+            start_array->allocate_block(compact_top);
+          }
 
-          debug_only(MarkSweep::register_live_oop(oop(q), sz));
+          VALIDATE_MARK_SWEEP_ONLY(MarkSweep::register_live_oop(oop(q), sz));
           compact_top += sz;
           assert(compact_top <= dest->space()->end(), 
 	    "Exceeding space in destination");
@@ -284,26 +274,13 @@ void PSMarkSweepDecorator::precompact() {
   dest->set_compaction_top(compact_top);
 }
 
-bool PSMarkSweepDecorator::insert_deadspace(ssize_t& allowed_deadspace_words, 
-                                       HeapWord* q, size_t deadlength) {
-  allowed_deadspace_words -= deadlength;
-  if (allowed_deadspace_words >= 0) {
-    oop(q)->set_mark(markOopDesc::prototype()->set_marked());
-    const size_t aligned_min_int_array_size =
-      align_object_size(typeArrayOopDesc::header_size(T_INT));
-    if (deadlength >= aligned_min_int_array_size) {
-      oop(q)->set_klass(Universe::intArrayKlassObj());
-      assert(((deadlength - aligned_min_int_array_size) * (HeapWordSize/sizeof(jint))) < (size_t)max_jint,
-                "deadspace too big for Arrayoop");
-      typeArrayOop(q)->set_length((int)((deadlength - aligned_min_int_array_size)
-                                            * (HeapWordSize/sizeof(jint))));
-    } else {
-      assert((int) deadlength == instanceOopDesc::header_size(),
-	     "size for smallest fake dead object doesn't match");
-      oop(q)->set_klass(SystemDictionary::object_klass());
-    }
-    assert((int) deadlength == oop(q)->size(),
-	   "make sure size for fake dead object match");
+bool PSMarkSweepDecorator::insert_deadspace(size_t& allowed_deadspace_words,
+                                            HeapWord* q, size_t deadlength) {
+  if (allowed_deadspace_words >= deadlength) {
+    allowed_deadspace_words -= deadlength;
+    CollectedHeap::fill_with_object(q, deadlength);
+    oop(q)->set_mark(oop(q)->mark()->set_marked());
+    assert((int) deadlength == oop(q)->size(), "bad filler object size");
     // Recall that we required "q == compaction_top".
     return true;
   } else {
@@ -329,15 +306,11 @@ void PSMarkSweepDecorator::adjust_pointers() {
     HeapWord* end = _first_dead;
 
     while (q < end) {
-      debug_only(MarkSweep::track_interior_pointers(oop(q)));
-
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::track_interior_pointers(oop(q)));
       // point all the oops to the new location
       size_t size = oop(q)->adjust_pointers();
-	
-      debug_only(MarkSweep::check_interior_pointers());
-      
-      debug_only(MarkSweep::validate_live_oop(oop(q), size));
-      
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::check_interior_pointers());
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::validate_live_oop(oop(q), size));
       q += size;
     }
 
@@ -357,11 +330,11 @@ void PSMarkSweepDecorator::adjust_pointers() {
     Prefetch::write(q, interval);
     if (oop(q)->is_gc_marked()) {
       // q is alive
-      debug_only(MarkSweep::track_interior_pointers(oop(q)));
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::track_interior_pointers(oop(q)));
       // point all the oops to the new location
       size_t size = oop(q)->adjust_pointers();
-      debug_only(MarkSweep::check_interior_pointers());
-      debug_only(MarkSweep::validate_live_oop(oop(q), size));
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::check_interior_pointers());
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::validate_live_oop(oop(q), size));
       debug_only(prev_q = q);
       q += size;
     } else {
@@ -395,7 +368,7 @@ void PSMarkSweepDecorator::compact(bool mangle_free_space ) {
     while (q < end) {
       size_t size = oop(q)->size();
       assert(!oop(q)->is_gc_marked(), "should be unmarked (special dense prefix handling)");
-      debug_only(MarkSweep::live_oop_moved_to(q, size, q));
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::live_oop_moved_to(q, size, q));
       debug_only(prev_q = q);
       q += size;
     }
@@ -430,7 +403,7 @@ void PSMarkSweepDecorator::compact(bool mangle_free_space ) {
       Prefetch::write(compaction_top, copy_interval);
 
       // copy object and reinit its mark
-      debug_only(MarkSweep::live_oop_moved_to(q, size, compaction_top));
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::live_oop_moved_to(q, size, compaction_top));
       assert(q != compaction_top, "everything in this pass should be moving");
       Copy::aligned_conjoint_words(q, compaction_top, size);
       oop(compaction_top)->init_mark();
@@ -445,5 +418,7 @@ void PSMarkSweepDecorator::compact(bool mangle_free_space ) {
          "should point inside space");
   space()->set_top(compaction_top());
 
-  if (mangle_free_space) space()->mangle_unused_area();
+  if (mangle_free_space) {
+    space()->mangle_unused_area();
+  }
 }

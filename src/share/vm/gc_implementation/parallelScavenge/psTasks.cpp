@@ -2,7 +2,7 @@
 #pragma ident "@(#)psTasks.cpp	1.29 07/09/25 16:47:43 JVM"
 #endif
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,15 +37,17 @@ class PSScavengeRootsClosure: public OopClosure {
  private:
   PSPromotionManager* _promotion_manager;
 
- public:
-  PSScavengeRootsClosure(PSPromotionManager* pm) : _promotion_manager(pm) { }
-
-  virtual void do_oop(oop* p) {
-    if (PSScavenge::should_scavenge(*p)) {
+ protected:
+  template <class T> void do_oop_work(T *p) {
+    if (PSScavenge::should_scavenge(p)) {
       // We never card mark roots, maybe call a func without test?
       PSScavenge::copy_and_push_safe_barrier(_promotion_manager, p);
     }
   }
+ public:
+  PSScavengeRootsClosure(PSPromotionManager* pm) : _promotion_manager(pm) { }
+  void do_oop(oop* p)       { PSScavengeRootsClosure::do_oop_work(p); }
+  void do_oop(narrowOop* p) { PSScavengeRootsClosure::do_oop_work(p); }
 };
 
 void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
@@ -138,7 +140,7 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
   int random_seed = 17;
   if (pm->depth_first()) {
     while(true) {
-      oop* p;
+      StarTask p;
       if (PSPromotionManager::steal_depth(which, &random_seed, p)) {
 #if PS_PM_STATS
         pm->increment_steals(p);
@@ -167,8 +169,7 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
       }
     }
   }
-  guarantee(pm->stacks_empty(),
-            "stacks should be empty at this point");
+  guarantee(pm->stacks_empty(), "stacks should be empty at this point");
 }
 
 //

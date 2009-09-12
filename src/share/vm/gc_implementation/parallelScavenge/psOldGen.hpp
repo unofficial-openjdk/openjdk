@@ -2,7 +2,7 @@
 #pragma ident "@(#)psOldGen.hpp	1.37 07/05/05 17:05:30 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -188,4 +188,8 @@ class PSOldGen : public CHeapObj {
 
   // Printing support
   virtual const char* name() const { return _name; }
+
+  // Debugging support
+  // Save the tops of all spaces for later use during mangling.
+  void record_spaces_top() PRODUCT_RETURN;
 };

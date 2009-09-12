@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)runtime_x86_32.cpp	1.113 07/09/17 09:26:02 JVM"
-#endif
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
@@ -36,7 +33,7 @@ ExceptionBlob*     OptoRuntime::_exception_blob;
 //------------------------------generate_exception_blob---------------------------
 // creates exception blob at the end
 // Using exception blob, this code is jumped from a compiled method.
-// 
+//
 // Given an exception pc at a call we call into the runtime for the
 // handler in this method. This handler might merely restore state
 // (i.e. callee save registers) unwind the frame and jump to the
@@ -44,7 +41,7 @@ ExceptionBlob*     OptoRuntime::_exception_blob;
 // for the nmethod.
 //
 // This code is entered with a jmp.
-// 
+//
 // Arguments:
 //   rax,: exception oop
 //   rdx: exception pc
@@ -53,56 +50,56 @@ ExceptionBlob*     OptoRuntime::_exception_blob;
 //   rax,: exception oop
 //   rdx: exception pc in caller or ???
 //   destination: exception handler of caller
-// 
+//
 // Note: the exception pc MUST be at a call (precise debug information)
 //       Only register rax, rdx, rcx are not callee saved.
 //
 
 void OptoRuntime::generate_exception_blob() {
 
-  // Capture info about frame layout  
-  enum layout { 
-    thread_off,                 // last_java_sp                
+  // Capture info about frame layout
+  enum layout {
+    thread_off,                 // last_java_sp
     // The frame sender code expects that rbp will be in the "natural" place and
     // will override any oopMap setting for it. We must therefore force the layout
     // so that it agrees with the frame sender code.
-    rbp_off,                
+    rbp_off,
     return_off,                 // slot for return address
-    framesize 
+    framesize
   };
 
   // allocate space for the code
   ResourceMark rm;
-  // setup code generation tools  
+  // setup code generation tools
   CodeBuffer   buffer("exception_blob", 512, 512);
   MacroAssembler* masm = new MacroAssembler(&buffer);
 
   OopMapSet *oop_maps = new OopMapSet();
 
-  address start = __ pc();  
+  address start = __ pc();
 
-  __ pushl(rdx);
-  __ subl(rsp, return_off * wordSize);   // Prolog!
+  __ push(rdx);
+  __ subptr(rsp, return_off * wordSize);   // Prolog!
 
   // rbp, location is implicitly known
-  __ movl(Address(rsp,rbp_off  *wordSize),rbp);
-          
+  __ movptr(Address(rsp,rbp_off  *wordSize), rbp);
+
   // Store exception in Thread object. We cannot pass any arguments to the
   // handle_exception call, since we do not want to make any assumption
   // about the size of the frame where the exception happened in.
   __ get_thread(rcx);
-  __ movl(Address(rcx, JavaThread::exception_oop_offset()), rax);
-  __ movl(Address(rcx, JavaThread::exception_pc_offset()),  rdx);
+  __ movptr(Address(rcx, JavaThread::exception_oop_offset()), rax);
+  __ movptr(Address(rcx, JavaThread::exception_pc_offset()),  rdx);
 
   // This call does all the hard work.  It checks if an exception handler
-  // exists in the method.  
+  // exists in the method.
   // If so, it returns the handler address.
-  // If not, it prepares for stack-unwinding, restoring the callee-save 
+  // If not, it prepares for stack-unwinding, restoring the callee-save
   // registers of the frame being removed.
-  //  
-  __ movl(Address(rsp, thread_off * wordSize), rcx); // Thread is first argument
+  //
+  __ movptr(Address(rsp, thread_off * wordSize), rcx); // Thread is first argument
   __ set_last_Java_frame(rcx, noreg, noreg, NULL);
-  
+
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, OptoRuntime::handle_exception_C)));
 
   // No registers to map, rbp is known implicitly
@@ -111,34 +108,34 @@ void OptoRuntime::generate_exception_blob() {
   __ reset_last_Java_frame(rcx, false, false);
 
   // Restore callee-saved registers
-  __ movl(rbp, Address(rsp, rbp_off * wordSize));
+  __ movptr(rbp, Address(rsp, rbp_off * wordSize));
 
-  __ addl(rsp, return_off * wordSize);   // Epilog!
-  __ popl(rdx); // Exception pc
+  __ addptr(rsp, return_off * wordSize);   // Epilog!
+  __ pop(rdx); // Exception pc
 
 
   // rax,: exception handler for given <exception oop/exception pc>
-  
+
   // We have a handler in rax, (could be deopt blob)
   // rdx - throwing pc, deopt blob will need it.
 
-  __ pushl(rax); 
+  __ push(rax);
 
   // rcx contains handler address
 
   __ get_thread(rcx);           // TLS
   // Get the exception
-  __ movl(rax, Address(rcx, JavaThread::exception_oop_offset()));
+  __ movptr(rax, Address(rcx, JavaThread::exception_oop_offset()));
   // Get the exception pc in case we are deoptimized
-  __ movl(rdx, Address(rcx, JavaThread::exception_pc_offset()));
+  __ movptr(rdx, Address(rcx, JavaThread::exception_pc_offset()));
 #ifdef ASSERT
-  __ movl(Address(rcx, JavaThread::exception_handler_pc_offset()), 0);
-  __ movl(Address(rcx, JavaThread::exception_pc_offset()), 0); 
+  __ movptr(Address(rcx, JavaThread::exception_handler_pc_offset()), (int32_t)NULL_WORD);
+  __ movptr(Address(rcx, JavaThread::exception_pc_offset()), (int32_t)NULL_WORD);
 #endif
   // Clear the exception oop so GC no longer processes it as a root.
-  __ movl(Address(rcx, JavaThread::exception_oop_offset()), 0);
+  __ movptr(Address(rcx, JavaThread::exception_oop_offset()), (int32_t)NULL_WORD);
 
-  __ popl(rcx);
+  __ pop(rcx);
 
   // rax,: exception oop
   // rcx: exception handler
@@ -147,7 +144,7 @@ void OptoRuntime::generate_exception_blob() {
 
   // -------------
   // make sure all code is generated
-  masm->flush();  
+  masm->flush();
 
-  _exception_blob = ExceptionBlob::create(&buffer, oop_maps, framesize);  
+  _exception_blob = ExceptionBlob::create(&buffer, oop_maps, framesize);
 }

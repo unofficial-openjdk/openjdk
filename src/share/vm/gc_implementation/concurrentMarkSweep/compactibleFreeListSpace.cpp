@@ -2,7 +2,7 @@
 #pragma ident "@(#)compactibleFreeListSpace.cpp	1.144 08/09/06 09:20:55 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ CompactibleFreeListSpace::CompactibleFreeListSpace(BlockOffsetSharedArray* bs,
   _collector(NULL)
 {
   _bt.set_space(this);
-  initialize(mr, true);
+  initialize(mr, SpaceDecorator::Clear, SpaceDecorator::Mangle);
   // We have all of "mr", all of which we place in the dictionary
   // as one big chunk. We'll need to decide here which of several
   // possible alternative dictionary implementations to use. For
@@ -180,7 +180,7 @@ HeapWord* CompactibleFreeListSpace::forward(oop q, size_t size,
     assert(q->forwardee() == NULL, "should be forwarded to NULL");
   }
 
-  debug_only(MarkSweep::register_live_oop(q, adjusted_size));
+  VALIDATE_MARK_SWEEP_ONLY(MarkSweep::register_live_oop(q, adjusted_size));
   compact_top += adjusted_size;
 
   // we need to update the offset table so that the beginnings of objects can be
@@ -793,7 +793,7 @@ CompactibleFreeListSpace::object_iterate_careful_m(MemRegion mr,
 }
 
 
-HeapWord* CompactibleFreeListSpace::block_start(const void* p) const {
+HeapWord* CompactibleFreeListSpace::block_start_const(const void* p) const {
   NOT_PRODUCT(verify_objects_initialized());
   return _bt.block_start(p);
 }
@@ -808,28 +808,30 @@ size_t CompactibleFreeListSpace::block_size(const HeapWord* p) const {
   // This must be volatile, or else there is a danger that the compiler
   // will compile the code below into a sometimes-infinite loop, by keeping 
   // the value read the first time in a register.
-  oop o = (oop)p;
-  volatile oop* second_word_addr = o->klass_addr();
   while (true) {
-    klassOop k = (klassOop)(*second_word_addr);
     // We must do this until we get a consistent view of the object.
-    if (FreeChunk::secondWordIndicatesFreeChunk((intptr_t)k)) {
-      FreeChunk* fc = (FreeChunk*)p;
-      volatile size_t* sz_addr = (volatile size_t*)(fc->size_addr());
-      size_t res = (*sz_addr);
-      klassOop k2 = (klassOop)(*second_word_addr);  // Read to confirm.
-      if (k == k2) {
+    if (FreeChunk::indicatesFreeChunk(p)) {
+      volatile FreeChunk* fc = (volatile FreeChunk*)p;
+      size_t res = fc->size();
+      // If the object is still a free chunk, return the size, else it
+      // has been allocated so try again.
+      if (FreeChunk::indicatesFreeChunk(p)) {
         assert(res != 0, "Block size should not be 0");
         return res;
       }
-    } else if (k != NULL) {
-      assert(k->is_oop(true /* ignore mark word */), "Should really be klass oop.");
-      assert(o->is_parsable(), "Should be parsable");
-      assert(o->is_oop(true /* ignore mark word */), "Should be an oop.");
-      size_t res = o->size_given_klass(k->klass_part());
-      res = adjustObjectSize(res);
-      assert(res != 0, "Block size should not be 0");
-      return res;
+    } else {
+      // must read from what 'p' points to in each loop.
+      klassOop k = ((volatile oopDesc*)p)->klass_or_null();
+      if (k != NULL) {
+        assert(k->is_oop(true /* ignore mark word */), "Should really be klass oop.");
+        oop o = (oop)p;
+        assert(o->is_parsable(), "Should be parsable");
+        assert(o->is_oop(true /* ignore mark word */), "Should be an oop.");
+        size_t res = o->size_given_klass(k->klass_part());
+        res = adjustObjectSize(res);
+        assert(res != 0, "Block size should not be 0");
+        return res;
+      }
     }
   }
 }
@@ -848,31 +850,31 @@ const {
   // This must be volatile, or else there is a danger that the compiler
   // will compile the code below into a sometimes-infinite loop, by keeping
   // the value read the first time in a register.
-  oop o = (oop)p;
-  volatile oop* second_word_addr = o->klass_addr();
   DEBUG_ONLY(uint loops = 0;)
   while (true) {
-    klassOop k = (klassOop)(*second_word_addr);
     // We must do this until we get a consistent view of the object.
-    if (FreeChunk::secondWordIndicatesFreeChunk((intptr_t)k)) {
-      FreeChunk* fc = (FreeChunk*)p;
-      volatile size_t* sz_addr = (volatile size_t*)(fc->size_addr());
-      size_t res = (*sz_addr);
-      klassOop k2 = (klassOop)(*second_word_addr);  // Read to confirm.
-      if (k == k2) {
+    if (FreeChunk::indicatesFreeChunk(p)) {
+      volatile FreeChunk* fc = (volatile FreeChunk*)p;
+      size_t res = fc->size();
+      if (FreeChunk::indicatesFreeChunk(p)) {
         assert(res != 0, "Block size should not be 0");
         assert(loops == 0, "Should be 0");
         return res;
       }
-    } else if (k != NULL && o->is_parsable()) {
-      assert(k->is_oop(), "Should really be klass oop.");
-      assert(o->is_oop(), "Should be an oop");
-      size_t res = o->size_given_klass(k->klass_part());
-      res = adjustObjectSize(res);
-      assert(res != 0, "Block size should not be 0");
-      return res;
     } else {
-      return c->block_size_if_printezis_bits(p);
+      // must read from what 'p' points to in each loop.
+      klassOop k = ((volatile oopDesc*)p)->klass_or_null();
+      if (k != NULL && ((oopDesc*)p)->is_parsable()) {
+        assert(k->is_oop(), "Should really be klass oop.");
+        oop o = (oop)p;
+        assert(o->is_oop(), "Should be an oop");
+        size_t res = o->size_given_klass(k->klass_part());
+        res = adjustObjectSize(res);
+        assert(res != 0, "Block size should not be 0");
+        return res;
+      } else {
+        return c->block_size_if_printezis_bits(p);
+      }
     }
     assert(loops == 0, "Can loop at most once");
     DEBUG_ONLY(loops++;)
@@ -910,9 +912,8 @@ bool CompactibleFreeListSpace::block_is_obj(const HeapWord* p) const {
   // and those objects (if garbage) may have been modified to hold
   // live range information.
   // assert(ParallelGCThreads > 0 || _bt.block_start(p) == p, "Should be a block boundary");
-  klassOop k = oop(p)->klass();
-  intptr_t ki = (intptr_t)k;
-  if (FreeChunk::secondWordIndicatesFreeChunk(ki)) return false;
+  if (FreeChunk::indicatesFreeChunk(p)) return false;
+  klassOop k = oop(p)->klass_or_null();
   if (k != NULL) {
     // Ignore mark word because it may have been used to
     // chain together promoted objects (the last one
@@ -1030,7 +1031,7 @@ HeapWord* CompactibleFreeListSpace::allocate(size_t size) {
     FreeChunk* fc = (FreeChunk*)res;
     fc->markNotFree();
     assert(!fc->isFree(), "shouldn't be marked free");
-    assert(oop(fc)->klass() == NULL, "should look uninitialized");
+    assert(oop(fc)->klass_or_null() == NULL, "should look uninitialized");
     // Verify that the block offset table shows this to
     // be a single block, but not one which is unallocated.
     _bt.verify_single_block(res, size); 
@@ -1214,7 +1215,7 @@ FreeChunk* CompactibleFreeListSpace::allocateScratch(size_t size) {
   return fc;
 }
 
-oop CompactibleFreeListSpace::promote(oop obj, size_t obj_size, oop* ref) {
+oop CompactibleFreeListSpace::promote(oop obj, size_t obj_size) {
   assert(obj_size == (size_t)obj->size(), "bad obj_size passed in");
   assert_locked();
 
@@ -1838,7 +1839,7 @@ void CompactibleFreeListSpace::object_iterate_since_last_GC(ObjectClosure* cl) {
   guarantee(false, "NYI");
 }
 
-bool CompactibleFreeListSpace::linearAllocationWouldFail() {
+bool CompactibleFreeListSpace::linearAllocationWouldFail() const {
   return _smallLinearAllocBlock._word_size == 0;
 }
 
@@ -1907,6 +1908,13 @@ CompactibleFreeListSpace::refillLinearAllocBlock(LinearAllocBlock* blk) {
     blk->_word_size = fc->size();
     fc->dontCoalesce();   // to prevent sweeper from sweeping us up
   }
+}
+
+// Support for concurrent collection policy decisions.
+bool CompactibleFreeListSpace::should_concurrent_collect() const {
+  // In the future we might want to add in frgamentation stats --
+  // including erosion of the "mountain" into this decision as well.
+  return !adaptive_freelists() && linearAllocationWouldFail();
 }
 
 // Support for compaction
@@ -2016,11 +2024,11 @@ void CompactibleFreeListSpace::clearFLCensus() {
   }
 }
 
-void CompactibleFreeListSpace::endSweepFLCensus(int sweepCt) {
+void CompactibleFreeListSpace::endSweepFLCensus(size_t sweep_count) {
   setFLSurplus();
   setFLHints();
   if (PrintGC && PrintFLSCensus > 0) {
-    printFLCensus(sweepCt);
+    printFLCensus(sweep_count);
   }
   clearFLCensus();
   assert_locked();
@@ -2112,7 +2120,6 @@ void CompactibleFreeListSpace::split(size_t from, size_t to1) {
   splitBirth(to2);
 }
 
-
 void CompactibleFreeListSpace::print() const {
   tty->print(" CompactibleFreeListSpace");
   Space::print();
@@ -2126,6 +2133,7 @@ void CompactibleFreeListSpace::prepare_for_verify() {
 }
 
 class VerifyAllBlksClosure: public BlkClosure {
+ private:
   const CompactibleFreeListSpace* _sp;
   const MemRegion                 _span;
 
@@ -2133,7 +2141,7 @@ class VerifyAllBlksClosure: public BlkClosure {
   VerifyAllBlksClosure(const CompactibleFreeListSpace* sp,
     MemRegion span) :  _sp(sp), _span(span) { }
 
-  size_t do_blk(HeapWord* addr) {
+  virtual size_t do_blk(HeapWord* addr) {
     size_t res;
     if (_sp->block_is_obj(addr)) {
       oop p = oop(addr);
@@ -2156,11 +2164,53 @@ class VerifyAllBlksClosure: public BlkClosure {
 };
 
 class VerifyAllOopsClosure: public OopClosure {
+ private:
   const CMSCollector*             _collector;
   const CompactibleFreeListSpace* _sp;
   const MemRegion                 _span;
   const bool                      _past_remark;
   const CMSBitMap*                _bit_map;
+
+ protected:
+  void do_oop(void* p, oop obj) {
+    if (_span.contains(obj)) { // the interior oop points into CMS heap
+      if (!_span.contains(p)) { // reference from outside CMS heap
+        // Should be a valid object; the first disjunct below allows
+        // us to sidestep an assertion in block_is_obj() that insists
+        // that p be in _sp. Note that several generations (and spaces)
+        // are spanned by _span (CMS heap) above.
+        guarantee(!_sp->is_in_reserved(obj) ||
+                  _sp->block_is_obj((HeapWord*)obj),
+                  "Should be an object");
+        guarantee(obj->is_oop(), "Should be an oop");
+        obj->verify();
+        if (_past_remark) {
+          // Remark has been completed, the object should be marked
+          _bit_map->isMarked((HeapWord*)obj);
+        }
+      } else { // reference within CMS heap
+        if (_past_remark) {
+          // Remark has been completed -- so the referent should have
+          // been marked, if referring object is.
+          if (_bit_map->isMarked(_collector->block_start(p))) {
+            guarantee(_bit_map->isMarked((HeapWord*)obj), "Marking error?");
+          }
+        }
+      }
+    } else if (_sp->is_in_reserved(p)) {
+      // the reference is from FLS, and points out of FLS
+      guarantee(obj->is_oop(), "Should be an oop");
+      obj->verify();
+    }
+  }
+
+  template <class T> void do_oop_work(T* p) {
+    T heap_oop = oopDesc::load_heap_oop(p);
+    if (!oopDesc::is_null(heap_oop)) {
+      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+      do_oop(p, obj);
+    }
+  }
 
  public:
   VerifyAllOopsClosure(const CMSCollector* collector,
@@ -2169,40 +2219,8 @@ class VerifyAllOopsClosure: public OopClosure {
     OopClosure(), _collector(collector), _sp(sp), _span(span),
     _past_remark(past_remark), _bit_map(bit_map) { }
 
-  void do_oop(oop* ptr) {
-    oop p = *ptr;
-    if (p != NULL) {
-      if (_span.contains(p)) { // the interior oop points into CMS heap
-        if (!_span.contains(ptr)) { // reference from outside CMS heap
-          // Should be a valid object; the first disjunct below allows
-          // us to sidestep an assertion in block_is_obj() that insists
-          // that p be in _sp. Note that several generations (and spaces)
-          // are spanned by _span (CMS heap) above.
-          guarantee(!_sp->is_in_reserved(p) || _sp->block_is_obj((HeapWord*)p),
-                    "Should be an object");
-          guarantee(p->is_oop(), "Should be an oop");
-          p->verify();
-          if (_past_remark) {
-            // Remark has been completed, the object should be marked
-            _bit_map->isMarked((HeapWord*)p);
-          }
-        }
-        else { // reference within CMS heap
-          if (_past_remark) {
-            // Remark has been completed -- so the referent should have
-            // been marked, if referring object is.
-            if (_bit_map->isMarked(_collector->block_start(ptr))) {
-              guarantee(_bit_map->isMarked((HeapWord*)p), "Marking error?");
-            }
-          }
-        }
-      } else if (_sp->is_in_reserved(ptr)) {
-        // the reference is from FLS, and points out of FLS
-        guarantee(p->is_oop(), "Should be an oop");
-        p->verify();
-      }
-    }
-  }
+  virtual void do_oop(oop* p)       { VerifyAllOopsClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { VerifyAllOopsClosure::do_oop_work(p); }
 };
 
 void CompactibleFreeListSpace::verify(bool ignored) const {
@@ -2271,9 +2289,9 @@ void CompactibleFreeListSpace::verifyIndexedFreeLists() const {
 }
 
 void CompactibleFreeListSpace::verifyIndexedFreeList(size_t size) const {
-  guarantee(size % 2 == 0, "Odd slots should be empty");
-  for (FreeChunk* fc = _indexedFreeList[size].head(); fc != NULL;
-    fc = fc->next()) {
+  FreeChunk* fc =  _indexedFreeList[size].head();
+  guarantee((size % 2 == 0) || fc == NULL, "Odd slots should be empty");
+  for (; fc != NULL; fc = fc->next()) {
     guarantee(fc->size() == size, "Size inconsistency");
     guarantee(fc->isFree(), "!free?");
     guarantee(fc->next() == NULL || fc->next()->prev() == fc, "Broken list");
@@ -2296,59 +2314,37 @@ void CompactibleFreeListSpace::checkFreeListConsistency() const {
 }
 #endif
 
-void CompactibleFreeListSpace::printFLCensus(int sweepCt) const {
+void CompactibleFreeListSpace::printFLCensus(size_t sweep_count) const {
   assert_lock_strong(&_freelistLock);
-  ssize_t bfrSurp     = 0;
-  ssize_t surplus     = 0;
-  ssize_t desired     = 0;
-  ssize_t prevSweep   = 0;
-  ssize_t beforeSweep = 0;
-  ssize_t count       = 0;
-  ssize_t coalBirths  = 0;
-  ssize_t coalDeaths  = 0;
-  ssize_t splitBirths = 0;
-  ssize_t splitDeaths = 0;
-  gclog_or_tty->print("end sweep# %d\n", sweepCt);
-  gclog_or_tty->print("%4s\t"    "%7s\t"      "%7s\t"      "%7s\t"      "%7s\t"
-             "%7s\t"    "%7s\t"      "%7s\t"      "%7s\t"      "%7s\t"
-             "%7s\t"    "\n",
-             "size",    "bfrsurp",   "surplus",   "desired",   "prvSwep",     
-             "bfrSwep", "count",     "cBirths",   "cDeaths",   "sBirths",
-             "sDeaths");
-
+  FreeList total;
+  gclog_or_tty->print("end sweep# " SIZE_FORMAT "\n", sweep_count);
+  FreeList::print_labels_on(gclog_or_tty, "size");
   size_t totalFree = 0;
   for (size_t i = IndexSetStart; i < IndexSetSize; i += IndexSetStride) {
-    const FreeList *fl = &_indexedFreeList[i];                                                       
-	totalFree += fl->count() * fl->size();
-
-    gclog_or_tty->print("%4d\t"          "%7d\t"             "%7d\t"        "%7d\t"
-               "%7d\t"          "%7d\t"             "%7d\t"        "%7d\t"
-               "%7d\t"          "%7d\t"             "%7d\t"        "\n",
-               fl->size(),       fl->bfrSurp(),     fl->surplus(), fl->desired(), 
-	       fl->prevSweep(),  fl->beforeSweep(), fl->count(),   fl->coalBirths(), 
-	       fl->coalDeaths(), fl->splitBirths(), fl->splitDeaths());
-    bfrSurp     += fl->bfrSurp();
-    surplus     += fl->surplus();
-    desired     += fl->desired();
-    prevSweep   += fl->prevSweep();
-    beforeSweep += fl->beforeSweep();
-    count       += fl->count();
-    coalBirths  += fl->coalBirths();
-    coalDeaths  += fl->coalDeaths();
-    splitBirths += fl->splitBirths();
-    splitDeaths += fl->splitDeaths();
-  }                                                                                             
-  gclog_or_tty->print("%4s\t"
-            "%7d\t"      "%7d\t"     "%7d\t"        "%7d\t"       "%7d\t"
-            "%7d\t"      "%7d\t"     "%7d\t"        "%7d\t"       "%7d\t" "\n",
-            "totl",
-            bfrSurp,     surplus,     desired,     prevSweep,     beforeSweep,
-            count,       coalBirths,  coalDeaths,  splitBirths,   splitDeaths);
-  gclog_or_tty->print_cr("Total free in indexed lists %d words", totalFree);
+    const FreeList *fl = &_indexedFreeList[i];
+    totalFree += fl->count() * fl->size();
+    if (i % (40*IndexSetStride) == 0) {
+      FreeList::print_labels_on(gclog_or_tty, "size");
+    }
+    fl->print_on(gclog_or_tty);
+    total.set_bfrSurp(    total.bfrSurp()     + fl->bfrSurp()    );
+    total.set_surplus(    total.surplus()     + fl->surplus()    );
+    total.set_desired(    total.desired()     + fl->desired()    );
+    total.set_prevSweep(  total.prevSweep()   + fl->prevSweep()  );
+    total.set_beforeSweep(total.beforeSweep() + fl->beforeSweep());
+    total.set_count(      total.count()       + fl->count()      );
+    total.set_coalBirths( total.coalBirths()  + fl->coalBirths() );
+    total.set_coalDeaths( total.coalDeaths()  + fl->coalDeaths() );
+    total.set_splitBirths(total.splitBirths() + fl->splitBirths());
+    total.set_splitDeaths(total.splitDeaths() + fl->splitDeaths());
+  }
+  total.print_on(gclog_or_tty, "TOTAL");
+  gclog_or_tty->print_cr("Total free in indexed lists "
+                         SIZE_FORMAT " words", totalFree);
   gclog_or_tty->print("growth: %8.5f  deficit: %8.5f\n",
-    (double)(splitBirths+coalBirths-splitDeaths-coalDeaths)/
-	    (prevSweep != 0 ? (double)prevSweep : 1.0),
-    (double)(desired - count)/(desired != 0 ? (double)desired : 1.0));
+    (double)(total.splitBirths()+total.coalBirths()-total.splitDeaths()-total.coalDeaths())/
+            (total.prevSweep() != 0 ? (double)total.prevSweep() : 1.0),
+    (double)(total.desired() - total.count())/(total.desired() != 0 ? (double)total.desired() : 1.0));
   _dictionary->printDictCensus();
 }
 
@@ -2601,7 +2597,7 @@ HeapWord* CFLS_LAB::alloc(size_t word_sz) {
   }
   res->markNotFree();
   assert(!res->isFree(), "shouldn't be marked free");
-  assert(oop(res)->klass() == NULL, "should look uninitialized");
+  assert(oop(res)->klass_or_null() == NULL, "should look uninitialized");
   // mangle a just allocated object with a distinct pattern.
   debug_only(res->mangleAllocated(word_sz));
   return (HeapWord*)res;
@@ -2799,10 +2795,9 @@ initialize_sequential_subtasks_for_rescan(int n_threads) {
   size_t n_tasks = (used_region().word_size() + task_size - 1)/task_size;
   assert((n_tasks == 0) == used_region().is_empty(), "n_tasks incorrect");
   assert(n_tasks == 0 ||
-  ((used_region().start() + (n_tasks - 1)*task_size < used_region().end()) &&
-  (used_region().start() + n_tasks*task_size >= used_region().end())),
-  "n_tasks calculation incorrect"); 
-
+         ((used_region().start() + (n_tasks - 1)*task_size < used_region().end()) &&
+          (used_region().start() + n_tasks*task_size >= used_region().end())),
+         "n_tasks calculation incorrect");
   SequentialSubTasksDone* pst = conc_par_seq_tasks();
   assert(!pst->valid(), "Clobbering existing data?");
   pst->set_par_threads(n_threads);

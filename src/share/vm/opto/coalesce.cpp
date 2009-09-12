@@ -2,7 +2,7 @@
 #pragma ident "@(#)coalesce.cpp	1.196 07/09/28 10:23:11 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -608,7 +608,7 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   // and def_copy powers the other.  After merging, src_def powers
   // the combined live range.
   lrgs(lr1)._def = (lrgs(lr1).is_multidef() ||
-                        lrgs(lr2).is_multidef() ) 
+                        lrgs(lr2).is_multidef() )
     ? NodeSentinel : src_def;
   lrgs(lr2)._def = NULL;    // No def for lrg 2
   lrgs(lr2).Clear();        // Force empty mask for LRG 2

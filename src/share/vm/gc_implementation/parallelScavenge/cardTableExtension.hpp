@@ -2,7 +2,7 @@
 #pragma ident "@(#)cardTableExtension.hpp	1.20 07/05/05 17:05:26 JVM"
 #endif
 /*
- * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,7 @@ class CardTableExtension : public CardTableModRefBS {
   static bool card_is_verify(int value)     { return value == verify_card; }
 
   // Card marking
-  void inline_write_ref_field_gc(oop* field, oop new_val) {
+  void inline_write_ref_field_gc(void* field, oop new_val) {
     jbyte* byte = byte_for(field);
     *byte = youngergen_card;
   }

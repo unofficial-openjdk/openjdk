@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_windows.hpp	1.55 07/05/05 17:04:46 JVM"
-#endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Win32_OS defines the interface to windows operating systems
@@ -36,12 +33,13 @@ class win32 {
   static int    _processor_level;
   static julong _physical_memory;
   static size_t _default_stack_size;
-  static bool   _is_nt;  
+  static bool   _is_nt;
+  static bool   _is_windows_2003;
 
  public:
   // Windows-specific interface:
   static void   initialize_system_info();
-  static void   setmode_streams();  
+  static void   setmode_streams();
 
   // Processor info as provided by NT
   static int processor_type()  { return _processor_type;  }
@@ -62,6 +60,9 @@ class win32 {
 
   // Tells whether the platform is NT or Windown95
   static bool is_nt() { return _is_nt; }
+
+  // Tells whether the platform is Windows 2003
+  static bool is_windows_2003() { return _is_windows_2003; }
 
   // Returns the byte size of a virtual memory page
   static int vm_page_size() { return _vm_page_size; }
@@ -89,7 +90,7 @@ class PlatformEvent : public CHeapObj {
   private:
     double CachePad [4] ;   // increase odds that _Event is sole occupant of cache line
     volatile int _Event ;
-    HANDLE _ParkHandle ; 
+    HANDLE _ParkHandle ;
 
   public:       // TODO-FIXME: make dtor private
     ~PlatformEvent() { guarantee (0, "invariant") ; }
@@ -97,8 +98,8 @@ class PlatformEvent : public CHeapObj {
   public:
     PlatformEvent() {
       _Event   = 0 ;
-      _ParkHandle = CreateEvent (NULL, false, false, NULL) ; 
-      guarantee (_ParkHandle != NULL, "invariant") ; 
+      _ParkHandle = CreateEvent (NULL, false, false, NULL) ;
+      guarantee (_ParkHandle != NULL, "invariant") ;
     }
 
     // Exercise caution using reset() and fired() - they may require MEMBARs
@@ -111,19 +112,15 @@ class PlatformEvent : public CHeapObj {
 
 
 
-class PlatformParker : public CHeapObj { 
+class PlatformParker : public CHeapObj {
   protected:
-    HANDLE _ParkEvent ; 
+    HANDLE _ParkEvent ;
 
   public:
-    ~PlatformParker () { guarantee (0, "invariant") ; } 
-    PlatformParker  () { 
-      _ParkEvent = CreateEvent (NULL, true, false, NULL) ; 
-      guarantee (_ParkEvent != NULL, "invariant") ; 
+    ~PlatformParker () { guarantee (0, "invariant") ; }
+    PlatformParker  () {
+      _ParkEvent = CreateEvent (NULL, true, false, NULL) ;
+      guarantee (_ParkEvent != NULL, "invariant") ;
     }
 
-} ; 
-
-
-
-
+} ;

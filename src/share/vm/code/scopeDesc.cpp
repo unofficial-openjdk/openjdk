@@ -2,7 +2,7 @@
 #pragma ident "@(#)scopeDesc.cpp	1.58 07/07/27 16:13:17 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,7 +94,9 @@ GrowableArray<ScopeValue*>* ScopeDesc::decode_object_values(int decode_offset) {
   DebugInfoReadStream* stream = new DebugInfoReadStream(_code, decode_offset, result);
   int length = stream->read_int();
   for (int index = 0; index < length; index++) {
-    result->push(ScopeValue::read_from(stream));
+    // Objects values are pushed to 'result' array during read so that
+    // object's fields could reference it (OBJECT_ID_CODE).
+    (void)ScopeValue::read_from(stream);
   }
   assert(result->length() == length, "inconsistent debug information");
   return result;

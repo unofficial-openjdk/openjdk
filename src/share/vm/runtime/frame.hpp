@@ -2,7 +2,7 @@
 #pragma ident "@(#)frame.hpp	1.164 07/08/29 13:42:28 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,7 +111,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool is_first_frame() const; // oldest frame? (has no sender)
   bool is_first_java_frame() const;              // same for Java frame
 
-  bool is_interpreted_frame_valid() const;       // performs sanity checks on interpreted frames.
+  bool is_interpreted_frame_valid(JavaThread* thread) const;       // performs sanity checks on interpreted frames.
 
   // tells whether this frame is marked for deoptimization
   bool should_be_deoptimized() const;
@@ -253,7 +253,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   oop interpreter_callee_receiver(symbolHandle signature)     { return *interpreter_callee_receiver_addr(signature); }
 
 
-  oop *interpreter_callee_receiver_addr(symbolHandle signature);
+  oop* interpreter_callee_receiver_addr(symbolHandle signature);
 
 
   // expression stack (may go up or down, direction == 1 or -1)
@@ -405,19 +405,25 @@ class frame VALUE_OBJ_CLASS_SPEC {
 # ifdef ENABLE_ZAP_DEAD_LOCALS
  private:
   class CheckValueClosure: public OopClosure {
-  public: void do_oop(oop* p);
+   public:
+    void do_oop(oop* p);
+    void do_oop(narrowOop* p) { ShouldNotReachHere(); }
   };
   static CheckValueClosure _check_value;
 
   class CheckOopClosure: public OopClosure {
-  public: void do_oop(oop* p);
+   public:
+    void do_oop(oop* p);
+    void do_oop(narrowOop* p) { ShouldNotReachHere(); }
   };
   static CheckOopClosure _check_oop;
 
   static void check_derived_oop(oop* base, oop* derived);
 
   class ZapDeadClosure: public OopClosure {
-  public: void do_oop(oop* p);
+   public:
+    void do_oop(oop* p);
+    void do_oop(narrowOop* p) { ShouldNotReachHere(); }
   };
   static ZapDeadClosure _zap_dead;
 

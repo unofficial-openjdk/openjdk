@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -273,6 +273,10 @@ public class BasicType implements Type {
     return (OopField) field;
   }
 
+  public NarrowOopField getNarrowOopField(String fieldName) throws WrongTypeException {
+    return (NarrowOopField) new BasicNarrowOopField(getOopField(fieldName));
+  }
+
   public AddressField getAddressField(String fieldName) {
     // This type can not be inferred (for now), so provide a wrapper
     Field field = getField(fieldName);
@@ -287,7 +291,7 @@ public class BasicType implements Type {
       name was already present in this class. */
   public void addField(Field field) {
     if (nameToFieldMap.get(field.getName()) != null) {
-      throw new RuntimeException("field of name \"" + field.getName() + "\" already present");
+      throw new RuntimeException("field of name \"" + field.getName() + "\" already present in type " + this);
     }
 
     nameToFieldMap.put(field.getName(), field);

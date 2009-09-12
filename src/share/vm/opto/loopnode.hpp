@@ -2,7 +2,7 @@
 #pragma ident "@(#)loopnode.hpp	1.146 07/10/23 13:12:55 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -195,6 +195,8 @@ public:
   int is_main_no_pre_loop() const { return _loop_flags & Main_Has_No_Pre_Loop; }
   void set_main_no_pre_loop() { _loop_flags |= Main_Has_No_Pre_Loop; }
 
+  int main_idx() const { return _main_idx; }
+
 
   void set_pre_loop  (CountedLoopNode *main) { assert(is_normal_loop(),""); _loop_flags |= Pre ; _main_idx = main->_idx; }
   void set_main_loop (                     ) { assert(is_normal_loop(),""); _loop_flags |= Main;                         }
@@ -292,13 +294,15 @@ public:
         _has_sfpt:1,            // True if has non-call safepoint
         _rce_candidate:1;       // True if candidate for range check elimination
 
-  Node_List* _required_safept;      // A inner loop cannot delete these safepts;
+  Node_List* _required_safept;  // A inner loop cannot delete these safepts;
+  bool  _allow_optimizations;   // Allow loop optimizations
 
   IdealLoopTree( PhaseIdealLoop* phase, Node *head, Node *tail )
     : _parent(0), _next(0), _child(0),
       _head(head), _tail(tail),
       _phase(phase),
       _required_safept(NULL),
+      _allow_optimizations(true),
       _nest(0), _irreducible(0), _has_call(0), _has_sfpt(0), _rce_candidate(0)
   { }
 
@@ -324,12 +328,14 @@ public:
   // Returns TRUE if loop tree is structurally changed.
   bool beautify_loops( PhaseIdealLoop *phase );
 
-  // Perform iteration-splitting on inner loops.  Split iterations to avoid
-  // range checks or one-shot null checks.
-  void iteration_split( PhaseIdealLoop *phase, Node_List &old_new );
+  // Perform iteration-splitting on inner loops.  Split iterations to
+  // avoid range checks or one-shot null checks.  Returns false if the
+  // current round of loop opts should stop.
+  bool iteration_split( PhaseIdealLoop *phase, Node_List &old_new );
 
-  // Driver for various flavors of iteration splitting
-  void iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_new );
+  // Driver for various flavors of iteration splitting.  Returns false
+  // if the current round of loop opts should stop.
+  bool iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_new );
 
   // Given dominators, try to find loops with calls that must always be
   // executed (call dominates loop tail).  These loops do not need non-call

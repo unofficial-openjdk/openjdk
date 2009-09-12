@@ -2,7 +2,7 @@
 #pragma ident "@(#)collectorPolicy.hpp	1.41 07/05/29 09:44:14 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,12 @@
 // Forward declarations.
 class GenCollectorPolicy;
 class TwoGenerationCollectorPolicy;
+class AdaptiveSizePolicy;
 #ifndef SERIALGC
 class ConcurrentMarkSweepPolicy;
+class G1CollectorPolicy;
 #endif // SERIALGC
-class AdaptiveSizePolicy;
+
 class GCPolicyCounters;
 class PermanentGenerationSpec;
 class MarkSweepPolicy;
@@ -58,7 +60,7 @@ class CollectorPolicy : public CHeapObj {
   // Requires that the concrete subclass sets the alignment constraints
   // before calling.
   virtual void initialize_flags();
-  virtual void initialize_size_info() = 0;
+  virtual void initialize_size_info();
   // Initialize "_permanent_generation" to a spec for the given kind of
   // Perm Gen.
   void initialize_perm_generation(PermGen::Name pgnm);
@@ -85,33 +87,40 @@ class CollectorPolicy : public CHeapObj {
   size_t max_alignment()                       { return _max_alignment; }
 
   size_t initial_heap_byte_size() { return _initial_heap_byte_size; }
+  void set_initial_heap_byte_size(size_t v) { _initial_heap_byte_size = v; }
   size_t max_heap_byte_size()     { return _max_heap_byte_size; }
+  void set_max_heap_byte_size(size_t v) { _max_heap_byte_size = v; }
   size_t min_heap_byte_size()     { return _min_heap_byte_size; }
+  void set_min_heap_byte_size(size_t v) { _min_heap_byte_size = v; }
 
   enum Name {
     CollectorPolicyKind,
     TwoGenerationCollectorPolicyKind,
-    TrainPolicyKind,
     ConcurrentMarkSweepPolicyKind,
-    ASConcurrentMarkSweepPolicyKind
+    ASConcurrentMarkSweepPolicyKind,
+    G1CollectorPolicyKind
   };
 
   // Identification methods.
-  virtual GenCollectorPolicy*           as_generation_policy()          { return NULL; }
+  virtual GenCollectorPolicy*           as_generation_policy()            { return NULL; }
   virtual TwoGenerationCollectorPolicy* as_two_generation_policy()        { return NULL; }
   virtual MarkSweepPolicy*              as_mark_sweep_policy()            { return NULL; }
 #ifndef SERIALGC
   virtual ConcurrentMarkSweepPolicy*    as_concurrent_mark_sweep_policy() { return NULL; }
-#endif // SERIALGC 
+  virtual G1CollectorPolicy*            as_g1_policy()                    { return NULL; }
+#endif // SERIALGC
   // Note that these are not virtual.
   bool is_generation_policy()            { return as_generation_policy() != NULL; }
   bool is_two_generation_policy()        { return as_two_generation_policy() != NULL; }
   bool is_mark_sweep_policy()            { return as_mark_sweep_policy() != NULL; }
 #ifndef SERIALGC
   bool is_concurrent_mark_sweep_policy() { return as_concurrent_mark_sweep_policy() != NULL; }
+  bool is_g1_policy()                    { return as_g1_policy() != NULL; }
 #else  // SERIALGC
   bool is_concurrent_mark_sweep_policy() { return false; }
+  bool is_g1_policy()                    { return false; }
 #endif // SERIALGC
+
 
   virtual PermanentGenerationSpec *permanent_generation() {
     assert(_permanent_generation != NULL, "Sanity check");
@@ -185,8 +194,24 @@ class GenCollectorPolicy : public CollectorPolicy {
   // compute max heap alignment
   size_t compute_max_alignment();
 
+ // Scale the base_size by NewRation according to
+ //     result = base_size / (NewRatio + 1)
+ // and align by min_alignment()
+ size_t scale_by_NewRatio_aligned(size_t base_size);
+
+ // Bound the value by the given maximum minus the
+ // min_alignment.
+ size_t bound_minus_alignment(size_t desired_size, size_t maximum_size);
 
  public:
+  // Accessors
+  size_t min_gen0_size() { return _min_gen0_size; }
+  void set_min_gen0_size(size_t v) { _min_gen0_size = v; }
+  size_t initial_gen0_size() { return _initial_gen0_size; }
+  void set_initial_gen0_size(size_t v) { _initial_gen0_size = v; }
+  size_t max_gen0_size() { return _max_gen0_size; }
+  void set_max_gen0_size(size_t v) { _max_gen0_size = v; }
+
   virtual int number_of_generations() = 0;
 
   virtual GenerationSpec **generations()       {
@@ -239,6 +264,14 @@ class TwoGenerationCollectorPolicy : public GenCollectorPolicy {
   void initialize_generations()                { ShouldNotReachHere(); }
 
  public:
+  // Accessors
+  size_t min_gen1_size() { return _min_gen1_size; }
+  void set_min_gen1_size(size_t v) { _min_gen1_size = v; }
+  size_t initial_gen1_size() { return _initial_gen1_size; }
+  void set_initial_gen1_size(size_t v) { _initial_gen1_size = v; }
+  size_t max_gen1_size() { return _max_gen1_size; }
+  void set_max_gen1_size(size_t v) { _max_gen1_size = v; }
+
   // Inherited methods
   TwoGenerationCollectorPolicy* as_two_generation_policy() { return this; }
 
@@ -249,6 +282,10 @@ class TwoGenerationCollectorPolicy : public GenCollectorPolicy {
   virtual CollectorPolicy::Name kind() { 
     return CollectorPolicy::TwoGenerationCollectorPolicyKind; 
   }
+
+  // Returns true is gen0 sizes were adjusted
+  bool adjust_gen0_sizes(size_t* gen0_size_ptr, size_t* gen1_size_ptr,
+                               size_t heap_size, size_t min_gen1_size);
 };
 
 class MarkSweepPolicy : public TwoGenerationCollectorPolicy {

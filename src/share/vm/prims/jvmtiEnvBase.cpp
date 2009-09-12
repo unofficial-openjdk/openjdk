@@ -2,7 +2,7 @@
 #pragma ident "@(#)jvmtiEnvBase.cpp	1.90 07/07/16 14:37:39 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,7 +124,7 @@ JvmtiEnvBase::JvmtiEnvBase() : _env_event_enable() {
   JvmtiEventController::env_initialize((JvmtiEnv*)this);
 
 #ifdef JVMTI_TRACE
-  _jvmti_external.functions = strlen(TraceJVMTI)? &jvmtiTrace_Interface : &jvmti_Interface;
+  _jvmti_external.functions = TraceJVMTI != NULL ? &jvmtiTrace_Interface : &jvmti_Interface;
 #else
   _jvmti_external.functions = &jvmti_Interface;
 #endif
@@ -1325,15 +1325,18 @@ JvmtiEnvBase::force_early_return(JavaThread* java_thread, jvalue value, TosState
   HandleMark   hm(current_thread);
   uint32_t debug_bits = 0;
 
+  // retrieve or create the state
+  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
+
   // Check if java_thread is fully suspended
   if (!is_thread_fully_suspended(java_thread,
                                  true /* wait for suspend completion */,
                                  &debug_bits)) {
     return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
   }
-
-  // retreive or create the state
-  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
 
   // Check to see if a ForceEarlyReturn was already in progress
   if (state->is_earlyret_pending()) {

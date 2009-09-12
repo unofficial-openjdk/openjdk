@@ -2,7 +2,7 @@
 #pragma ident "@(#)chaitin.cpp	1.116 07/09/28 10:23:12 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -443,9 +443,7 @@ void PhaseChaitin::Register_Allocate() {
   assert((int)(_matcher._new_SP+_framesize) >= (int)_matcher._out_arg_limit, "framesize must be large enough");
 
   // This frame must preserve the required fp alignment
-  const int stack_alignment_in_words = Matcher::stack_alignment_in_slots(); 
-  if (stack_alignment_in_words > 0)
-    _framesize = round_to(_framesize, Matcher::stack_alignment_in_bytes());
+  _framesize = round_to(_framesize, Matcher::stack_alignment_in_slots());
   assert( _framesize >= 0 && _framesize <= 1000000, "sanity check" );
 #ifndef PRODUCT
   _total_framesize += _framesize;
@@ -685,6 +683,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
           break;
         case Op_RegF:
         case Op_RegI:
+        case Op_RegN:
         case Op_RegFlags:
         case 0:                 // not an ideal register
           lrg.set_num_regs(1);
@@ -766,7 +765,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         }
         // if the LRG is an unaligned pair, we will have to spill
         // so clear the LRG's register mask if it is not already spilled
-        if ( !n->is_SpillCopy() && 
+        if ( !n->is_SpillCopy() &&
                (lrg._def == NULL || lrg.is_multidef() || !lrg._def->is_SpillCopy()) &&
                lrgmask.is_misaligned_Pair()) {
           lrg.Clear();
@@ -1387,8 +1386,8 @@ void PhaseChaitin::fixup_spills() {
             cisc->ins_req(1,src);         // Requires a memory edge
           }
           b->_nodes.map(j,cisc);          // Insert into basic block
-          n->replace_by(cisc); // Correct graph
-          // 
+          n->subsume_by(cisc); // Correct graph
+          //
           ++_used_cisc_instructions;
 #ifndef PRODUCT
           if( TraceCISCSpill ) {

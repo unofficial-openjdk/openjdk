@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)frame_x86.cpp	1.219 07/09/17 09:36:42 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -40,47 +37,190 @@ bool frame::safe_for_sender(JavaThread *thread) {
   address   sp = (address)_sp;
   address   fp = (address)_fp;
   address   unextended_sp = (address)_unextended_sp;
-  bool sp_safe = (sp != NULL && 
-                 (sp <= thread->stack_base()) &&
-                 (sp >= thread->stack_base() - thread->stack_size()));
-  bool unextended_sp_safe = (unextended_sp != NULL && 
-                 (unextended_sp <= thread->stack_base()) &&
-                 (unextended_sp >= thread->stack_base() - thread->stack_size()));
-  bool fp_safe = (fp != NULL && 
-                 (fp <= thread->stack_base()) &&
-                 (fp >= thread->stack_base() - thread->stack_size()));
-  if (sp_safe && unextended_sp_safe && fp_safe) {
+  // sp must be within the stack
+  bool sp_safe = (sp <= thread->stack_base()) &&
+                 (sp >= thread->stack_base() - thread->stack_size());
+
+  if (!sp_safe) {
+    return false;
+  }
+
+  // unextended sp must be within the stack and above or equal sp
+  bool unextended_sp_safe = (unextended_sp <= thread->stack_base()) &&
+                            (unextended_sp >= sp);
+
+  if (!unextended_sp_safe) {
+    return false;
+  }
+
+  // an fp must be within the stack and above (but not equal) sp
+  bool fp_safe = (fp <= thread->stack_base()) && (fp > sp);
+
+  // We know sp/unextended_sp are safe only fp is questionable here
+
+  // If the current frame is known to the code cache then we can attempt to
+  // to construct the sender and do some validation of it. This goes a long way
+  // toward eliminating issues when we get in frame construction code
+
+  if (_cb != NULL ) {
+
+    // First check if frame is complete and tester is reliable
     // Unfortunately we can only check frame complete for runtime stubs and nmethod
     // other generic buffer blobs are more problematic so we just assume they are
     // ok. adapter blobs never have a frame complete and are never ok.
-    if (_cb != NULL && !_cb->is_frame_complete_at(_pc)) {
+
+    if (!_cb->is_frame_complete_at(_pc)) {
       if (_cb->is_nmethod() || _cb->is_adapter_blob() || _cb->is_runtime_stub()) {
         return false;
       }
     }
+    // Entry frame checks
+    if (is_entry_frame()) {
+      // an entry frame must have a valid fp.
+
+      if (!fp_safe) return false;
+
+      // Validate the JavaCallWrapper an entry frame must have
+
+      address jcw = (address)entry_frame_call_wrapper();
+
+      bool jcw_safe = (jcw <= thread->stack_base()) && ( jcw > fp);
+
+      return jcw_safe;
+
+    }
+
+    intptr_t* sender_sp = NULL;
+    address   sender_pc = NULL;
+
+    if (is_interpreted_frame()) {
+      // fp must be safe
+      if (!fp_safe) {
+        return false;
+      }
+
+      sender_pc = (address) this->fp()[return_addr_offset];
+      sender_sp = (intptr_t*) addr_at(sender_sp_offset);
+
+    } else {
+      // must be some sort of compiled/runtime frame
+      // fp does not have to be safe (although it could be check for c1?)
+
+      sender_sp = _unextended_sp + _cb->frame_size();
+      // On Intel the return_address is always the word on the stack
+      sender_pc = (address) *(sender_sp-1);
+    }
+
+    // We must always be able to find a recognizable pc
+    CodeBlob* sender_blob = CodeCache::find_blob_unsafe(sender_pc);
+    if (sender_pc == NULL ||  sender_blob == NULL) {
+      return false;
+    }
+
+
+    // If the potential sender is the interpreter then we can do some more checking
+    if (Interpreter::contains(sender_pc)) {
+
+      // ebp is always saved in a recognizable place in any code we generate. However
+      // only if the sender is interpreted/call_stub (c1 too?) are we certain that the saved ebp
+      // is really a frame pointer.
+
+      intptr_t *saved_fp = (intptr_t*)*(sender_sp - frame::sender_sp_offset);
+      bool saved_fp_safe = ((address)saved_fp <= thread->stack_base()) && (saved_fp > sender_sp);
+
+      if (!saved_fp_safe) {
+        return false;
+      }
+
+      // construct the potential sender
+
+      frame sender(sender_sp, saved_fp, sender_pc);
+
+      return sender.is_interpreted_frame_valid(thread);
+
+    }
+
+    // Could just be some random pointer within the codeBlob
+
+    if (!sender_blob->instructions_contains(sender_pc)) return false;
+
+    // We should never be able to see an adapter if the current frame is something from code cache
+
+    if ( sender_blob->is_adapter_blob()) {
+      return false;
+    }
+
+    // Could be the call_stub
+
+    if (StubRoutines::returns_to_call_stub(sender_pc)) {
+      intptr_t *saved_fp = (intptr_t*)*(sender_sp - frame::sender_sp_offset);
+      bool saved_fp_safe = ((address)saved_fp <= thread->stack_base()) && (saved_fp > sender_sp);
+
+      if (!saved_fp_safe) {
+        return false;
+      }
+
+      // construct the potential sender
+
+      frame sender(sender_sp, saved_fp, sender_pc);
+
+      // Validate the JavaCallWrapper an entry frame must have
+      address jcw = (address)sender.entry_frame_call_wrapper();
+
+      bool jcw_safe = (jcw <= thread->stack_base()) && ( jcw > (address)sender.fp());
+
+      return jcw_safe;
+    }
+
+    // If the frame size is 0 something is bad because every nmethod has a non-zero frame size
+    // because the return address counts against the callee's frame.
+
+    if (sender_blob->frame_size() == 0) {
+      assert(!sender_blob->is_nmethod(), "should count return address at least");
+      return false;
+    }
+
+    // We should never be able to see anything here except an nmethod. If something in the
+    // code cache (current frame) is called by an entity within the code cache that entity
+    // should not be anything but the call stub (already covered), the interpreter (already covered)
+    // or an nmethod.
+
+    assert(sender_blob->is_nmethod(), "Impossible call chain");
+
+    // Could put some more validation for the potential non-interpreted sender
+    // frame we'd create by calling sender if I could think of any. Wait for next crash in forte...
+
+    // One idea is seeing if the sender_pc we have is one that we'd expect to call to current cb
+
+    // We've validated the potential sender that would be created
     return true;
   }
-  // Note: fp == NULL is not really a prerequisite for this to be safe to
-  // walk for c2. However we've modified the code such that if we get
-  // a failure with fp != NULL that we then try with FP == NULL.
-  // This is basically to mimic what a last_frame would look like if
-  // c2 had generated it.
-  if (sp_safe && unextended_sp_safe && fp == NULL) {
-    // frame must be complete if fp == NULL as fp == NULL is only sensible
-    // if we are looking at a nmethod and frame complete assures us of that.
-    if (_cb != NULL && _cb->is_frame_complete_at(_pc) && _cb->is_compiled_by_c2()) {
-        return true;
-    }
+
+  // Must be native-compiled frame. Since sender will try and use fp to find
+  // linkages it must be safe
+
+  if (!fp_safe) {
+    return false;
   }
-  return false;
+
+  // Will the pc we fetch be non-zero (which we'll find at the oldest frame)
+
+  if ( (address) this->fp()[return_addr_offset] == NULL) return false;
+
+
+  // could try and do some more potential verification of native frame if we could think of some...
+
+  return true;
+
 }
 
 
-void frame::patch_pc(Thread* thread, address pc) { 
+void frame::patch_pc(Thread* thread, address pc) {
   if (TracePcPatching) {
-    tty->print_cr("patch_pc at address  0x%x [0x%x -> 0x%x] ", &((address *)sp())[-1], ((address *)sp())[-1], pc);
+    tty->print_cr("patch_pc at address" INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "] ",
+                  &((address *)sp())[-1], ((address *)sp())[-1], pc);
   }
-  ((address *)sp())[-1] = pc; 
+  ((address *)sp())[-1] = pc;
   _cb = CodeCache::find_blob(pc);
   if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
     address orig = (((nmethod*)_cb)->get_original_pc(this));
@@ -173,11 +313,11 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   // frame of that chunk as the sender
   JavaFrameAnchor* jfa = entry_frame_call_wrapper()->anchor();
   assert(!entry_frame_is_first(), "next Java fp must be non zero");
-  assert(jfa->last_Java_sp() > sp(), "must be above this frame on stack");  
-  map->clear(); 
+  assert(jfa->last_Java_sp() > sp(), "must be above this frame on stack");
+  map->clear();
   assert(map->include_argument_oops(), "should be set by clear");
   if (jfa->last_Java_pc() != NULL ) {
-    frame fr(jfa->last_Java_sp(), jfa->last_Java_fp(), jfa->last_Java_pc());  
+    frame fr(jfa->last_Java_sp(), jfa->last_Java_fp(), jfa->last_Java_pc());
     return fr;
   }
   frame fr(jfa->last_Java_sp(), jfa->last_Java_fp());
@@ -222,7 +362,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
   const bool c1_compiled = _cb->is_compiled_by_c1();
 
-  // frame owned by optimizing compiler 
+  // frame owned by optimizing compiler
   intptr_t* sender_sp = NULL;
 
   assert(_cb->frame_size() >= 0, "must have non-zero frame size");
@@ -233,7 +373,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
 
   // This is the saved value of ebp which may or may not really be an fp.
   // it is only an fp if the sender is an interpreter frame (or c1?)
- 
+
   intptr_t *saved_fp = (intptr_t*)*(sender_sp - frame::sender_sp_offset);
 
   if (map->update_map()) {
@@ -263,7 +403,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   return frame(sender_sp, saved_fp, sender_pc);
 }
 
-frame frame::sender(RegisterMap* map) const {  
+frame frame::sender(RegisterMap* map) const {
   // Default is we done have to follow them. The sender_for_xxx will
   // update it accordingly
   map->set_include_argument_oops(false);
@@ -273,7 +413,7 @@ frame frame::sender(RegisterMap* map) const {
   assert(_cb == CodeCache::find_blob(pc()),"Must be the same");
 
   if (_cb != NULL) {
-    return sender_for_compiled_frame(map);      
+    return sender_for_compiled_frame(map);
   }
   // Must be native-compiled frame, i.e. the marshaling code for native
   // methods that exists in the core system.
@@ -285,7 +425,7 @@ bool frame::interpreter_frame_equals_unpacked_fp(intptr_t* fp) {
   assert(is_interpreted_frame(), "must be interpreter frame");
   methodOop method = interpreter_frame_method();
   // When unpacking an optimized frame the frame pointer is
-  // adjusted with: 
+  // adjusted with:
   int diff = (method->max_locals() - method->size_of_parameters()) *
              Interpreter::stackElementWords();
   return _fp == (fp - diff);
@@ -295,7 +435,7 @@ void frame::pd_gc_epilog() {
   // nothing done here now
 }
 
-bool frame::is_interpreted_frame_valid() const {
+bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
 // QQQ
 #ifdef CC_INTERP
 #else
@@ -315,9 +455,45 @@ bool frame::is_interpreted_frame_valid() const {
   if (fp() <= sp()) {        // this attempts to deal with unsigned comparison above
     return false;
   }
-  if (fp() - sp() > 4096) {  // stack frames shouldn't be large.
+
+  // do some validation of frame elements
+
+  // first the method
+
+  methodOop m = *interpreter_frame_method_addr();
+
+  // validate the method we'd find in this potential sender
+  if (!Universe::heap()->is_valid_method(m)) return false;
+
+  // stack frames shouldn't be much larger than max_stack elements
+
+  if (fp() - sp() > 1024 + m->max_stack()*Interpreter::stackElementSize()) {
     return false;
   }
+
+  // validate bci/bcx
+
+  intptr_t  bcx    = interpreter_frame_bcx();
+  if (m->validate_bci_from_bcx(bcx) < 0) {
+    return false;
+  }
+
+  // validate constantPoolCacheOop
+
+  constantPoolCacheOop cp = *interpreter_frame_cache_addr();
+
+  if (cp == NULL ||
+      !Space::is_aligned(cp) ||
+      !Universe::heap()->is_permanent((void*)cp)) return false;
+
+  // validate locals
+
+  address locals =  (address) *interpreter_frame_locals_addr();
+
+  if (locals > thread->stack_base() || locals < (address) fp()) return false;
+
+  // We'd have to be pretty unlucky to be mislead at this point
+
 #endif // CC_INTERP
   return true;
 }
@@ -353,7 +529,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
   }
 
   switch (type) {
-    case T_OBJECT  : 
+    case T_OBJECT  :
     case T_ARRAY   : {
       oop obj;
       if (method->is_native()) {
@@ -374,18 +550,18 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
     case T_BYTE    : value_result->b = *(jbyte*)tos_addr; break;
     case T_CHAR    : value_result->c = *(jchar*)tos_addr; break;
     case T_SHORT   : value_result->s = *(jshort*)tos_addr; break;
-    case T_INT	   : value_result->i = *(jint*)tos_addr; break;
+    case T_INT     : value_result->i = *(jint*)tos_addr; break;
     case T_LONG    : value_result->j = *(jlong*)tos_addr; break;
     case T_FLOAT   : {
 #ifdef AMD64
         value_result->f = *(jfloat*)tos_addr;
 #else
       if (method->is_native()) {
-	jdouble d = *(jdouble*)tos_addr;  // Result was in ST0 so need to convert to jfloat
-	value_result->f = (jfloat)d;
+        jdouble d = *(jdouble*)tos_addr;  // Result was in ST0 so need to convert to jfloat
+        value_result->f = (jfloat)d;
       } else {
-	value_result->f = *(jfloat*)tos_addr; 
-      }	    
+        value_result->f = *(jfloat*)tos_addr;
+      }
 #endif // AMD64
       break;
     }
@@ -398,7 +574,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
 }
 
 
-intptr_t* frame::interpreter_frame_tos_at(jint offset) const { 
+intptr_t* frame::interpreter_frame_tos_at(jint offset) const {
   int index = (Interpreter::expr_offset_in_bytes(offset)/wordSize);
   return &interpreter_frame_tos_address()[index];
 }

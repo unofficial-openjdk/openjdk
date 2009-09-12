@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os_linux_x86.cpp	1.98 07/11/15 11:29:19 JVM"
-#endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // do not include  precompiled  header file
@@ -65,8 +62,14 @@
 #endif // AMD64
 
 address os::current_stack_pointer() {
+#ifdef SPARC_WORKS
+  register void *esp;
+  __asm__("mov %%"SPELL_REG_SP", %0":"=r"(esp));
+  return (address) ((char*)esp + sizeof(long)*2);
+#else
   register void *esp __asm__ (SPELL_REG_SP);
   return (address) esp;
+#endif
 }
 
 char* os::non_memory_address_word() {
@@ -96,7 +99,7 @@ intptr_t* os::Linux::ucontext_get_fp(ucontext_t * uc) {
 // For Forte Analyzer AsyncGetCallTrace profiling support - thread
 // is currently interrupted by SIGPROF.
 // os::Solaris::fetch_frame_from_ucontext() tries to skip nested signal
-// frames. Currently we don't do that on Linux, so it's the same as 
+// frames. Currently we don't do that on Linux, so it's the same as
 // os::fetch_frame_from_context().
 ExtendedPC os::Linux::fetch_frame_from_ucontext(Thread* thread,
   ucontext_t* uc, intptr_t** ret_sp, intptr_t** ret_fp) {
@@ -142,14 +145,19 @@ frame os::get_sender_for_C_frame(frame* fr) {
 }
 
 intptr_t* _get_previous_fp() {
+#ifdef SPARC_WORKS
+  register intptr_t **ebp;
+  __asm__("mov %%"SPELL_REG_FP", %0":"=r"(ebp));
+#else
   register intptr_t **ebp __asm__ (SPELL_REG_FP);
+#endif
   return (intptr_t*) *ebp;   // we want what it points to.
 }
 
 
 frame os::current_frame() {
   intptr_t* fp = _get_previous_fp();
-  frame myframe((intptr_t*)os::current_stack_pointer(), 
+  frame myframe((intptr_t*)os::current_stack_pointer(),
                 (intptr_t*)fp,
                 CAST_FROM_FN_PTR(address, os::current_frame));
   if (os::is_first_C_frame(&myframe)) {
@@ -167,14 +175,14 @@ enum {
   trap_page_fault = 0xE
 };
 
-extern "C" void Fetch32PFI () ; 
-extern "C" void Fetch32Resume () ; 
+extern "C" void Fetch32PFI () ;
+extern "C" void Fetch32Resume () ;
 #ifdef AMD64
 extern "C" void FetchNPFI () ;
 extern "C" void FetchNResume () ;
 #endif // AMD64
 
-extern "C" int 
+extern "C" int
 JVM_handle_linux_signal(int sig,
                         siginfo_t* info,
                         void* ucVoid,
@@ -188,8 +196,8 @@ JVM_handle_linux_signal(int sig,
   // Note: it's not uncommon that JNI code uses signal/sigset to install
   // then restore certain signal handler (e.g. to temporarily block SIGPIPE,
   // or have a SIGILL handler when detecting CPU type). When that happens,
-  // JVM_handle_linux_signal() might be invoked with junk info/ucVoid. To 
-  // avoid unnecessary crash when libjsig is not preloaded, try handle signals 
+  // JVM_handle_linux_signal() might be invoked with junk info/ucVoid. To
+  // avoid unnecessary crash when libjsig is not preloaded, try handle signals
   // that do not require siginfo/ucontext first.
 
   if (sig == SIGPIPE || sig == SIGXFSZ) {
@@ -199,7 +207,7 @@ JVM_handle_linux_signal(int sig,
     } else {
       if (PrintMiscellaneous && (WizardMode || Verbose)) {
         char buf[64];
-        warning("Ignoring %s - see bugs 4229104 or 646499219", 
+        warning("Ignoring %s - see bugs 4229104 or 646499219",
                 os::exception_name(sig, buf, sizeof(buf)));
       }
       return true;
@@ -236,15 +244,15 @@ JVM_handle_linux_signal(int sig,
   if (info != NULL && uc != NULL && thread != NULL) {
     pc = (address) os::Linux::ucontext_get_pc(uc);
 
-    if (pc == (address) Fetch32PFI) { 
-       uc->uc_mcontext.gregs[REG_PC] = intptr_t(Fetch32Resume) ; 
-       return 1 ;  
+    if (pc == (address) Fetch32PFI) {
+       uc->uc_mcontext.gregs[REG_PC] = intptr_t(Fetch32Resume) ;
+       return 1 ;
     }
 #ifdef AMD64
-    if (pc == (address) FetchNPFI) { 
-       uc->uc_mcontext.gregs[REG_PC] = intptr_t (FetchNResume) ; 
-       return 1 ; 
-    } 
+    if (pc == (address) FetchNPFI) {
+       uc->uc_mcontext.gregs[REG_PC] = intptr_t (FetchNResume) ;
+       return 1 ;
+    }
 #endif // AMD64
 
     // Handle ALL stack overflow variations here
@@ -296,24 +304,24 @@ JVM_handle_linux_signal(int sig,
       if (sig == SIGSEGV && os::is_poll_address((address)info->si_addr)) {
         stub = SharedRuntime::get_poll_stub(pc);
       } else if (sig == SIGBUS /* && info->si_code == BUS_OBJERR */) {
-	// BugId 4454115: A read from a MappedByteBuffer can fault
-	// here if the underlying file has been truncated.
-	// Do not crash the VM in such a case.
+        // BugId 4454115: A read from a MappedByteBuffer can fault
+        // here if the underlying file has been truncated.
+        // Do not crash the VM in such a case.
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         nmethod* nm = cb->is_nmethod() ? (nmethod*)cb : NULL;
         if (nm != NULL && nm->has_unsafe_access()) {
-	  stub = StubRoutines::handler_for_unsafe_access();
-	}
+          stub = StubRoutines::handler_for_unsafe_access();
+        }
       }
       else
 
 #ifdef AMD64
-      if (sig == SIGFPE  && 
+      if (sig == SIGFPE  &&
           (info->si_code == FPE_INTDIV || info->si_code == FPE_FLTDIV)) {
-        stub = 
+        stub =
           SharedRuntime::
           continuation_for_implicit_exception(thread,
-                                              pc, 
+                                              pc,
                                               SharedRuntime::
                                               IMPLICIT_DIVIDE_BY_ZERO);
 #else
@@ -351,7 +359,7 @@ JVM_handle_linux_signal(int sig,
     } else if (thread->thread_state() == _thread_in_vm &&
                sig == SIGBUS && /* info->si_code == BUS_OBJERR && */
                thread->doing_unsafe_access()) {
-        stub = StubRoutines::handler_for_unsafe_access(); 
+        stub = StubRoutines::handler_for_unsafe_access();
     }
 
     // jni_fast_Get<Primitive>Field can trap at certain pc's if a GC kicks in
@@ -400,24 +408,25 @@ JVM_handle_linux_signal(int sig,
     // different - we still want to unguard the 2nd page in this case.
     //
     // 15 bytes seems to be a (very) safe value for max instruction size.
-    bool pc_is_near_addr = 
+    bool pc_is_near_addr =
       (pointer_delta((void*) addr, (void*) pc, sizeof(char)) < 15);
     bool instr_spans_page_boundary =
       (align_size_down((intptr_t) pc ^ (intptr_t) addr,
                        (intptr_t) page_size) > 0);
-    
+
     if (pc == addr || (pc_is_near_addr && instr_spans_page_boundary)) {
       static volatile address last_addr =
         (address) os::non_memory_address_word();
-      
+
       // In conservative mode, don't unguard unless the address is in the VM
       if (addr != last_addr &&
           (UnguardOnExecutionViolation > 1 || os::address_is_in_vm(addr))) {
-        
-        // Unguard and retry
+
+        // Set memory to RWX and retry
         address page_start =
           (address) align_size_down((intptr_t) addr, (intptr_t) page_size);
-        bool res = os::unguard_memory((char*) page_start, page_size);
+        bool res = os::protect_memory((char*) page_start, page_size,
+                                      os::MEM_PROT_RWX);
 
         if (PrintMiscellaneous && Verbose) {
           char buf[256];
@@ -429,23 +438,23 @@ JVM_handle_linux_signal(int sig,
         }
         stub = pc;
 
-	// Set last_addr so if we fault again at the same address, we don't end
-	// up in an endless loop.
-	// 
-	// There are two potential complications here.  Two threads trapping at
-	// the same address at the same time could cause one of the threads to
-	// think it already unguarded, and abort the VM.  Likely very rare.
-	// 
-	// The other race involves two threads alternately trapping at
-	// different addresses and failing to unguard the page, resulting in
-	// an endless loop.  This condition is probably even more unlikely than
-	// the first.
-	//
-	// Although both cases could be avoided by using locks or thread local
-	// last_addr, these solutions are unnecessary complication: this
-	// handler is a best-effort safety net, not a complete solution.  It is
-	// disabled by default and should only be used as a workaround in case
-	// we missed any no-execute-unsafe VM code.
+        // Set last_addr so if we fault again at the same address, we don't end
+        // up in an endless loop.
+        //
+        // There are two potential complications here.  Two threads trapping at
+        // the same address at the same time could cause one of the threads to
+        // think it already unguarded, and abort the VM.  Likely very rare.
+        //
+        // The other race involves two threads alternately trapping at
+        // different addresses and failing to unguard the page, resulting in
+        // an endless loop.  This condition is probably even more unlikely than
+        // the first.
+        //
+        // Although both cases could be avoided by using locks or thread local
+        // last_addr, these solutions are unnecessary complication: this
+        // handler is a best-effort safety net, not a complete solution.  It is
+        // disabled by default and should only be used as a workaround in case
+        // we missed any no-execute-unsafe VM code.
 
         last_addr = addr;
       }
@@ -563,10 +572,12 @@ bool os::Linux::supports_variable_stack_size() {  return true; }
 #else
 size_t os::Linux::min_stack_allowed  =  (48 DEBUG_ONLY(+4))*K;
 
+#ifdef __GNUC__
 #define GET_GS() ({int gs; __asm__ volatile("movw %%gs, %w0":"=q"(gs)); gs&0xffff;})
+#endif
 
 // Test if pthread library can support variable thread stack size. LinuxThreads
-// in fixed stack mode allocates 2M fixed slot for each thread. LinuxThreads 
+// in fixed stack mode allocates 2M fixed slot for each thread. LinuxThreads
 // in floating stack mode and NPTL support variable stack size.
 bool os::Linux::supports_variable_stack_size() {
   if (os::Linux::is_NPTL()) {
@@ -575,26 +586,30 @@ bool os::Linux::supports_variable_stack_size() {
 
   } else {
     // Note: We can't control default stack size when creating a thread.
-    // If we use non-default stack size (pthread_attr_setstacksize), both 
-    // floating stack and non-floating stack LinuxThreads will return the 
+    // If we use non-default stack size (pthread_attr_setstacksize), both
+    // floating stack and non-floating stack LinuxThreads will return the
     // same value. This makes it impossible to implement this function by
     // detecting thread stack size directly.
-    // 
+    //
     // An alternative approach is to check %gs. Fixed-stack LinuxThreads
     // do not use %gs, so its value is 0. Floating-stack LinuxThreads use
     // %gs (either as LDT selector or GDT selector, depending on kernel)
-    // to access thread specific data. 
+    // to access thread specific data.
     //
-    // Note that %gs is a reserved glibc register since early 2001, so 
-    // applications are not allowed to change its value (Ulrich Drepper from 
-    // Redhat confirmed that all known offenders have been modified to use
-    // either %fs or TSD). In the worst case scenario, when VM is embedded in 
-    // a native application that plays with %gs, we might see non-zero %gs 
-    // even LinuxThreads is running in fixed stack mode. As the result, we'll 
-    // return true and skip _thread_safety_check(), so we may not be able to 
+    // Note that %gs is a reserved glibc register since early 2001, so
+    // applications are not allowed to change its value (Ulrich Drepper from
+    // Red Hat confirmed that all known offenders have been modified to use
+    // either %fs or TSD). In the worst case scenario, when VM is embedded in
+    // a native application that plays with %gs, we might see non-zero %gs
+    // even LinuxThreads is running in fixed stack mode. As the result, we'll
+    // return true and skip _thread_safety_check(), so we may not be able to
     // detect stack-heap collisions. But otherwise it's harmless.
     //
+#ifdef __GNUC__
     return (GET_GS() != 0);
+#else
+    return false;
+#endif
   }
 }
 #endif // AMD64
@@ -608,14 +623,14 @@ size_t os::Linux::default_stack_size(os::ThreadType thr_type) {
   size_t s = (thr_type == os::compiler_thread ? 2 * M : 512 * K);
 #endif // AMD64
   return s;
-} 
-  
+}
+
 size_t os::Linux::default_guard_size(os::ThreadType thr_type) {
   // Creating guard page is very expensive. Java thread has HotSpot
   // guard page, only enable glibc guard page for non-Java threads.
   return (thr_type == java_thread ? 0 : page_size());
 }
-  
+
 // Java thread:
 //
 //   Low memory addresses

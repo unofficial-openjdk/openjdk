@@ -2,7 +2,7 @@
 #pragma ident "@(#)ciMethod.cpp	1.109 07/09/28 10:23:23 JVM"
 #endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,7 +149,7 @@ void ciMethod::load_code() {
   memcpy(_code, me->code_base(), code_size());
 
   // Revert any breakpoint bytecodes in ci's copy
-  if (_is_compilable && me->number_of_breakpoints() > 0) {
+  if (me->number_of_breakpoints() > 0) {
     BreakpointInfo* bp = instanceKlass::cast(me->method_holder())->breakpoints();
     for (; bp != NULL; bp = bp->next()) {
       if (bp->match(me)) {
@@ -881,7 +881,7 @@ int ciMethod::instructions_size() {
         (TieredCompilation && code->compiler() != NULL && code->compiler()->is_c1())) {
       return 0;
     }
-    return code->code_size();
+    return code->code_end() - code->verified_entry_point();
   )
 }
 

@@ -2,7 +2,7 @@
 #pragma ident "@(#)compactingPermGenGen.hpp	1.22 07/08/31 18:41:29 JVM"
 #endif
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ public:
 
   enum {
     vtbl_list_size = 16, // number of entries in the shared space vtable list.
-    num_virtuals = 100   // number of virtual methods in Klass (or
+    num_virtuals = 200   // number of virtual methods in Klass (or
                          // subclass) objects, or greater.
   };
 
@@ -186,8 +186,6 @@ public:
   void compact();
   void post_compact();
   size_t contiguous_available() const;
-  bool grow_by(size_t bytes);
-  void grow_to_reserved();
 
   void clear_remembered_set();
   void invalidate_remembered_set();

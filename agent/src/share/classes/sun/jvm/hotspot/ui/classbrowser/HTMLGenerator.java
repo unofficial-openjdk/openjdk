@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1077,8 +1077,8 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       oms = new OopMapStream(map, OopMapValue.OopTypes.VALUE_VALUE);
       buf.append(omvIterator.iterate(oms, "Value:", false));
 
-      oms = new OopMapStream(map, OopMapValue.OopTypes.DEAD_VALUE);
-      buf.append(omvIterator.iterate(oms, "Dead:", false));
+      oms = new OopMapStream(map, OopMapValue.OopTypes.NARROWOOP_VALUE);
+      buf.append(omvIterator.iterate(oms, "Oop:", false));
 
       oms = new OopMapStream(map, OopMapValue.OopTypes.CALLEE_SAVED_VALUE);
       buf.append(omvIterator.iterate(oms, "Callee saved:",  true));
@@ -1135,6 +1135,8 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
             buf.append("normal");
          } else if (type == Location.Type.OOP) {
             buf.append("oop");
+         } else if (type == Location.Type.NARROWOOP) {
+            buf.append("narrowoop");
          } else if (type == Location.Type.INT_IN_LONG) {
             buf.append("int");
          } else if (type == Location.Type.LNG) {

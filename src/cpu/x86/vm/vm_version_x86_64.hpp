@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vm_version_x86_64.hpp	1.15 07/05/05 17:04:09 JVM"
-#endif
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class VM_Version : public Abstract_VM_Version {
@@ -71,9 +68,9 @@ public:
                cmpxchg16: 1,
                         : 4,
                dca      : 1,
-                        : 4,
-               popcnt   : 1,
-                        : 8;
+               sse4_1   : 1,
+               sse4_2   : 1,
+                        : 11;
     } bits;
   };
 
@@ -165,8 +162,8 @@ protected:
    static int _cpu;
    static int _model;
    static int _stepping;
-   static int _cpuFeatures;	// features returned by the "cpuid" instruction
-				// 0 if this instruction is not available
+   static int _cpuFeatures;     // features returned by the "cpuid" instruction
+                                // 0 if this instruction is not available
    static const char* _features_str;
 
    enum {
@@ -180,8 +177,9 @@ protected:
      CPU_SSE2 = (1 << 7),
      CPU_SSE3 = (1 << 8),
      CPU_SSSE3= (1 << 9),
-     CPU_SSE4 = (1 <<10),
-     CPU_SSE4A= (1 <<11)
+     CPU_SSE4A= (1 <<10),
+     CPU_SSE4_1 = (1 << 11),
+     CPU_SSE4_2 = (1 << 12)
    } cpuFeatureFlags;
 
   // cpuid information block.  All info derived from executing cpuid with
@@ -243,22 +241,14 @@ protected:
   static CpuidInfo _cpuid_info;
 
   // Extractors and predicates
-  static bool is_extended_cpu_family() {
-    const uint32_t Extended_Cpu_Family = 0xf;
-    return _cpuid_info.std_cpuid1_eax.bits.family == Extended_Cpu_Family;
-  }
   static uint32_t extended_cpu_family() {
     uint32_t result = _cpuid_info.std_cpuid1_eax.bits.family;
-    if (is_extended_cpu_family()) {
-      result += _cpuid_info.std_cpuid1_eax.bits.ext_family;
-    }
+    result += _cpuid_info.std_cpuid1_eax.bits.ext_family;
     return result;
   }
   static uint32_t extended_cpu_model() {
     uint32_t result = _cpuid_info.std_cpuid1_eax.bits.model;
-    if (is_extended_cpu_family()) {
-      result |= _cpuid_info.std_cpuid1_eax.bits.ext_model << 4;
-    }
+    result |= _cpuid_info.std_cpuid1_eax.bits.ext_model << 4;
     return result;
   }
   static uint32_t cpu_stepping() {
@@ -275,13 +265,13 @@ protected:
       result |= CPU_CX8;
     if (_cpuid_info.std_cpuid1_edx.bits.cmov != 0)
       result |= CPU_CMOV;
-    if (_cpuid_info.std_cpuid1_edx.bits.fxsr != 0 || is_amd() && 
+    if (_cpuid_info.std_cpuid1_edx.bits.fxsr != 0 || is_amd() &&
         _cpuid_info.ext_cpuid1_edx.bits.fxsr != 0)
       result |= CPU_FXSR;
     // HT flag is set for multi-core processors also.
     if (threads_per_core() > 1)
       result |= CPU_HT;
-    if (_cpuid_info.std_cpuid1_edx.bits.mmx != 0 || is_amd() && 
+    if (_cpuid_info.std_cpuid1_edx.bits.mmx != 0 || is_amd() &&
         _cpuid_info.ext_cpuid1_edx.bits.mmx != 0)
       result |= CPU_MMX;
     if (is_amd() && _cpuid_info.ext_cpuid1_edx.bits.tdnow != 0)
@@ -296,6 +286,10 @@ protected:
       result |= CPU_SSSE3;
     if (is_amd() && _cpuid_info.ext_cpuid1_ecx.bits.sse4a != 0)
       result |= CPU_SSE4A;
+    if (_cpuid_info.std_cpuid1_ecx.bits.sse4_1 != 0)
+      result |= CPU_SSE4_1;
+    if (_cpuid_info.std_cpuid1_ecx.bits.sse4_2 != 0)
+      result |= CPU_SSE4_2;
     return result;
   }
 
@@ -339,26 +333,26 @@ public:
   static bool is_amd()            { assert_is_initialized(); return _cpuid_info.std_vendor_name_0 == 0x68747541; } // 'htuA'
   static bool is_intel()          { assert_is_initialized(); return _cpuid_info.std_vendor_name_0 == 0x756e6547; } // 'uneG'
 
-  static uint cores_per_cpu()  { 
+  static uint cores_per_cpu()  {
     uint result = 1;
     if (is_intel()) {
       result = (_cpuid_info.dcp_cpuid4_eax.bits.cores_per_cpu + 1);
     } else if (is_amd()) {
       result = (_cpuid_info.ext_cpuid8_ecx.bits.cores_per_cpu + 1);
     }
-    return result; 
+    return result;
   }
 
-  static uint threads_per_core()  { 
+  static uint threads_per_core()  {
     uint result = 1;
     if (_cpuid_info.std_cpuid1_edx.bits.ht != 0) {
-      result = _cpuid_info.std_cpuid1_ebx.bits.threads_per_cpu / 
+      result = _cpuid_info.std_cpuid1_ebx.bits.threads_per_cpu /
                cores_per_cpu();
     }
-    return result; 
+    return result;
   }
 
-  static intx L1_data_cache_line_size()  { 
+  static intx L1_data_cache_line_size()  {
     intx result = 0;
     if (is_intel()) {
       result = (_cpuid_info.dcp_cpuid4_ebx.bits.L1_line_size + 1);
@@ -367,7 +361,7 @@ public:
     }
     if (result < 32) // not defined ?
       result = 32;   // 32 bytes by default for other x64
-    return result; 
+    return result;
   }
 
   //
@@ -383,7 +377,8 @@ public:
   static bool supports_sse2()     { return (_cpuFeatures & CPU_SSE2) != 0; }
   static bool supports_sse3()     { return (_cpuFeatures & CPU_SSE3) != 0; }
   static bool supports_ssse3()    { return (_cpuFeatures & CPU_SSSE3)!= 0; }
-  static bool supports_sse4()     { return (_cpuFeatures & CPU_SSE4) != 0; }
+  static bool supports_sse4_1()   { return (_cpuFeatures & CPU_SSE4_1) != 0; }
+  static bool supports_sse4_2()   { return (_cpuFeatures & CPU_SSE4_2) != 0; }
   //
   // AMD features
   //
@@ -408,7 +403,7 @@ public:
     // Pentium 4 - 512 / prefetchnta
     // Opteron   - 256 / prefetchnta
     // Core      - 256 / prefetchnta
-    // It will be used only when AllocatePrefetchStyle > 0 
+    // It will be used only when AllocatePrefetchStyle > 0
 
     intx count = AllocatePrefetchDistance;
     if (count < 0) {  // default ?

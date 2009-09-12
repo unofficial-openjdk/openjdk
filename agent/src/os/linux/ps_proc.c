@@ -2,7 +2,7 @@
 #pragma ident "@(#)ps_proc.c	1.17 07/05/05 17:02:02 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -294,10 +294,10 @@ static void process_cleanup(struct ps_prochandle* ph) {
 }
 
 static ps_prochandle_ops process_ops = {
-  release:  process_cleanup,
-  p_pread:  process_read_data,
-  p_pwrite: process_write_data,
-  get_lwp_regs: process_get_lwp_regs
+  .release=  process_cleanup,
+  .p_pread=  process_read_data,
+  .p_pwrite= process_write_data,
+  .get_lwp_regs= process_get_lwp_regs
 };
 
 // attach to the process. One and only one exposed stuff

@@ -2,7 +2,7 @@
 #pragma ident "@(#)globalDefinitions.hpp	1.217 07/05/23 10:54:27 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,24 +62,28 @@ const int LongAlignmentMask  = (1 << LogBytesPerLong) - 1;
 
 const int WordsPerLong       = 2;	// Number of stack entries for longs
 
-const int oopSize            = sizeof(char*);
-const int wordSize           = sizeof(char*); 
+const int oopSize            = sizeof(char*); // Full-width oop
+extern int heapOopSize;                       // Oop within a java object
+const int wordSize           = sizeof(char*);
 const int longSize           = sizeof(jlong);
 const int jintSize           = sizeof(jint);
 const int size_tSize         = sizeof(size_t);
 
+const int BytesPerOop        = BytesPerWord;  // Full-width oop
+
+extern int LogBytesPerHeapOop;                // Oop within a java object
+extern int LogBitsPerHeapOop;
+extern int BytesPerHeapOop;
+extern int BitsPerHeapOop;
+
+const int BitsPerJavaInteger = 32;
+const int BitsPerJavaLong    = 64;
+const int BitsPerSize_t      = size_tSize * BitsPerByte;
+
 // Size of a char[] needed to represent a jint as a string in decimal.
 const int jintAsStringSize = 12;
 
-const int LogBytesPerOop     = LogBytesPerWord;
-const int LogBitsPerOop      = LogBitsPerWord;
-const int BytesPerOop        = 1 << LogBytesPerOop;
-const int BitsPerOop         = 1 << LogBitsPerOop;
- 
-const int BitsPerJavaInteger = 32;
-const int BitsPerSize_t      = size_tSize * BitsPerByte;
-
-// In fact this should be 
+// In fact this should be
 // log2_intptr(sizeof(class JavaThread)) - log2_intptr(64);
 // see os::set_memory_serialize_page()
 #ifdef _LP64
@@ -97,19 +101,23 @@ const int SerializePageShiftCount = 3;
 // object size.
 class HeapWord {
   friend class VMStructs;
-private:
+ private:
   char* i;
+#ifndef PRODUCT
+ public:
+  char* value() { return i; }
+#endif
 };
 
 // HeapWordSize must be 2^LogHeapWordSize.
-const int HeapWordSize     = sizeof(HeapWord);
+const int HeapWordSize        = sizeof(HeapWord);
 #ifdef _LP64
-const int LogHeapWordSize  = 3;
+const int LogHeapWordSize     = 3;
 #else
-const int LogHeapWordSize  = 2;
+const int LogHeapWordSize     = 2;
 #endif
-const int HeapWordsPerOop  = oopSize      / HeapWordSize;
-const int HeapWordsPerLong = BytesPerLong / HeapWordSize;
+const int HeapWordsPerLong    = BytesPerLong / HeapWordSize;
+const int LogHeapWordsPerLong = LogBytesPerLong - LogHeapWordSize;
 
 // The larger HeapWordSize for 64bit requires larger heaps
 // for the same application running in 64bit.  See bug 4967770.
@@ -287,6 +295,9 @@ const int MinObjAlignment            = HeapWordsPerLong;
 const int MinObjAlignmentInBytes     = MinObjAlignment * HeapWordSize;
 const int MinObjAlignmentInBytesMask = MinObjAlignmentInBytes - 1;
 
+const int LogMinObjAlignment         = LogHeapWordsPerLong;
+const int LogMinObjAlignmentInBytes  = LogMinObjAlignment + LogHeapWordSize;
+
 // Machine dependent stuff
 
 #include "incls/_globalDefinitions_pd.hpp.incl"
@@ -374,7 +385,7 @@ union jlong_accessor {
   jlong long_value;
 };
 
-void check_basic_types(); // cannot define here; uses assert
+void basic_types_init(); // cannot define here; uses assert
 
 
 // NOTE: replicated in SA in vm/agent/sun/jvm/hotspot/runtime/BasicType.java
@@ -391,9 +402,14 @@ enum BasicType {
   T_ARRAY    = 13,
   T_VOID     = 14,
   T_ADDRESS  = 15,
-  T_CONFLICT = 16, // for stack value type with conflicting contents
+  T_NARROWOOP= 16,
+  T_CONFLICT = 17, // for stack value type with conflicting contents
   T_ILLEGAL  = 99
 };
+
+inline bool is_java_primitive(BasicType t) {
+  return T_BOOLEAN <= t && t <= T_LONG;
+}
 
 // Convert a char from a classfile signature to a BasicType
 inline BasicType char2type(char c) {
@@ -437,6 +453,7 @@ enum BasicTypeSize {
   T_LONG_size    = 2,
   T_OBJECT_size  = 1,
   T_ARRAY_size   = 1,
+  T_NARROWOOP_size = 1,
   T_VOID_size    = 0
 };
 
@@ -464,10 +481,16 @@ enum ArrayElementSize {
   T_OBJECT_aelem_bytes  = 4,
   T_ARRAY_aelem_bytes   = 4,
 #endif
+  T_NARROWOOP_aelem_bytes = 4,
   T_VOID_aelem_bytes    = 0
 };
 
-extern int type2aelembytes[T_CONFLICT+1]; // maps a BasicType to nof bytes used by its array element
+extern int _type2aelembytes[T_CONFLICT+1]; // maps a BasicType to nof bytes used by its array element
+#ifdef ASSERT
+extern int type2aelembytes(BasicType t, bool allow_address = false); // asserts
+#else
+inline int type2aelembytes(BasicType t) { return _type2aelembytes[t]; }
+#endif
 
 
 // JavaValue serves as a container for arbitrary Java values.
@@ -875,7 +898,7 @@ inline int log2_long(jlong x) {
     i++; p *= 2;
   }
   // p = 2^(i+1) && x < p (i.e., 2^i <= x < 2^(i+1))
-  // (if p = 0 then overflow occured and i = 31)
+  // (if p = 0 then overflow occured and i = 63)
   return i;
 }
 
@@ -885,6 +908,14 @@ inline int exact_log2(intptr_t x) {
     if (!is_power_of_2(x)) basic_fatal("x must be a power of 2");
   #endif
   return log2_intptr(x);
+}
+
+//* the argument must be exactly a power of 2
+inline int exact_log2_long(jlong x) {
+  #ifdef ASSERT
+    if (!is_power_of_2_long(x)) basic_fatal("x must be a power of 2");
+  #endif
+  return log2_long(x);
 }
 
 
@@ -1068,15 +1099,24 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 // Format macros that allow the field width to be specified.  The width must be
 // a string literal (e.g., "8") or a macro that evaluates to one.
 #ifdef _LP64
+#define UINTX_FORMAT_W(width)   UINT64_FORMAT_W(width)
 #define SSIZE_FORMAT_W(width)	INT64_FORMAT_W(width)
 #define SIZE_FORMAT_W(width)	UINT64_FORMAT_W(width)
 #else
+#define UINTX_FORMAT_W(width)   UINT32_FORMAT_W(width)
 #define SSIZE_FORMAT_W(width)	INT32_FORMAT_W(width)
 #define SIZE_FORMAT_W(width)	UINT32_FORMAT_W(width)
 #endif // _LP64
 
 // Format pointers and size_t (or size_t-like integer types) which change size
-// between 32- and 64-bit.
+// between 32- and 64-bit. The pointer format theoretically should be "%p",
+// however, it has different output on different platforms. On Windows, the data
+// will be padded with zeros automatically. On Solaris, we can use "%016p" &
+// "%08p" on 64 bit & 32 bit platforms to make the data padded with extra zeros.
+// On Linux, "%016p" or "%08p" is not be allowed, at least on the latest GCC
+// 4.3.2. So we have to use "%016x" or "%08x" to simulate the printing format.
+// GCC 4.3.2, however requires the data to be converted to "intptr_t" when
+// using "%x".
 #ifdef	_LP64
 #define PTR_FORMAT    PTR64_FORMAT
 #define UINTX_FORMAT  UINT64_FORMAT

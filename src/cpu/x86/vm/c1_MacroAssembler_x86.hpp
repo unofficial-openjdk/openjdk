@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_MacroAssembler_x86.hpp	1.36 07/07/02 16:50:32 JVM"
-#endif
 /*
- * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // C1_MacroAssembler contains high-level macros for C1
@@ -91,22 +88,23 @@
   // slow_case  : exit to slow case implementation if fast allocation fails
   void allocate_array(Register obj, Register len, Register t, Register t2, int header_size, Address::ScaleFactor f, Register klass, Label& slow_case);
 
-  int  rsp_offset() const { return _rsp_offset; } 
+  int  rsp_offset() const { return _rsp_offset; }
   void set_rsp_offset(int n) { _rsp_offset = n; }
 
   // Note: NEVER push values directly, but only through following push_xxx functions;
   //       This helps us to track the rsp changes compared to the entry rsp (->_rsp_offset)
 
-  void push_jint (jint i)     { _rsp_offset++; pushl(i); }
+  void push_jint (jint i)     { _rsp_offset++; push(i); }
   void push_oop  (jobject o)  { _rsp_offset++; pushoop(o); }
-  void push_addr (Address a)  { _rsp_offset++; pushl(a); }
-  void push_reg  (Register r) { _rsp_offset++; pushl(r); }
-  void pop       (Register r) { _rsp_offset--; popl (r); assert(_rsp_offset >= 0, "stack offset underflow"); }
+  // Seems to always be in wordSize
+  void push_addr (Address a)  { _rsp_offset++; pushptr(a); }
+  void push_reg  (Register r) { _rsp_offset++; push(r); }
+  void pop_reg   (Register r) { _rsp_offset--; pop(r); assert(_rsp_offset >= 0, "stack offset underflow"); }
 
   void dec_stack (int nof_words) {
     _rsp_offset -= nof_words;
     assert(_rsp_offset >= 0, "stack offset underflow");
-    addl(rsp, wordSize * nof_words);
+    addptr(rsp, wordSize * nof_words);
   }
 
   void dec_stack_after_call (int nof_words) {

@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)interp_masm_x86_32.hpp	1.88 07/08/29 13:42:13 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file specializes the assember with interpreter-specific macros
@@ -68,15 +65,15 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
 #else
 
-  void save_bcp()                                          { movl(Address(rbp, frame::interpreter_frame_bcx_offset * wordSize), rsi); }
-  void restore_bcp()                                       { movl(rsi, Address(rbp, frame::interpreter_frame_bcx_offset * wordSize)); }
-  void restore_locals()                                    { movl(rdi, Address(rbp, frame::interpreter_frame_locals_offset * wordSize)); }
+  void save_bcp()                                          { movptr(Address(rbp, frame::interpreter_frame_bcx_offset * wordSize), rsi); }
+  void restore_bcp()                                       { movptr(rsi, Address(rbp, frame::interpreter_frame_bcx_offset * wordSize)); }
+  void restore_locals()                                    { movptr(rdi, Address(rbp, frame::interpreter_frame_locals_offset * wordSize)); }
 
   // Helpers for runtime call arguments/results
-  void get_method(Register reg)                            { movl(reg, Address(rbp, frame::interpreter_frame_method_offset * wordSize)); }
-  void get_constant_pool(Register reg)                     { get_method(reg); movl(reg, Address(reg, methodOopDesc::constants_offset())); }
-  void get_constant_pool_cache(Register reg)               { get_constant_pool(reg); movl(reg, Address(reg, constantPoolOopDesc::cache_offset_in_bytes())); }
-  void get_cpool_and_tags(Register cpool, Register tags)   { get_constant_pool(cpool); movl(tags, Address(cpool, constantPoolOopDesc::tags_offset_in_bytes()));
+  void get_method(Register reg)                            { movptr(reg, Address(rbp, frame::interpreter_frame_method_offset * wordSize)); }
+  void get_constant_pool(Register reg)                     { get_method(reg); movptr(reg, Address(reg, methodOopDesc::constants_offset())); }
+  void get_constant_pool_cache(Register reg)               { get_constant_pool(reg); movptr(reg, Address(reg, constantPoolOopDesc::cache_offset_in_bytes())); }
+  void get_cpool_and_tags(Register cpool, Register tags)   { get_constant_pool(cpool); movptr(tags, Address(cpool, constantPoolOopDesc::tags_offset_in_bytes()));
   }
   void get_unsigned_2_byte_index_at_bcp(Register reg, int bcp_offset);
   void get_cache_and_index_at_bcp(Register cache, Register index, int bcp_offset);
@@ -85,8 +82,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // Expression stack
   void f2ieee();                                           // truncate ftos to 32bits
   void d2ieee();                                           // truncate dtos to 64bits
-#endif // CC_INTERP
-
 
   void pop_ptr(Register r = rax);
   void pop_ptr(Register r, Register tag);
@@ -107,14 +102,25 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void pop(TosState state);        // transition vtos -> state
   void push(TosState state);       // transition state -> vtos
 
+  void pop(Register r ) { ((MacroAssembler*)this)->pop(r); }
+
+  void push(Register r ) { ((MacroAssembler*)this)->push(r); }
+  void push(int32_t imm ) { ((MacroAssembler*)this)->push(imm); }
+
+  // These are dummies to prevent surprise implicit conversions to Register
+  void pop(void* v ); // Add unimplemented ambiguous method
+  void push(void* v );   // Add unimplemented ambiguous method
+
   DEBUG_ONLY(void verify_stack_tag(frame::Tag t);)
+
+#endif // CC_INTERP
 
 #ifndef CC_INTERP
 
-  void empty_expression_stack()                            { 
-       movl(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset * wordSize));
+  void empty_expression_stack()                            {
+       movptr(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset * wordSize));
       // NULL last_sp until next java call
-      movl(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
+      movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD);
   }
 
   // Tagged stack helpers for swap and dup
@@ -161,16 +167,16 @@ class InterpreterMacroAssembler: public MacroAssembler {
   //
   // Removes the current activation (incl. unlocking of monitors)
   // and sets up the return address.  This code is also used for
-  // exception unwindwing. In that case, we do not want to throw 
-  // IllegalMonitorStateExceptions, since that might get us into an 
+  // exception unwindwing. In that case, we do not want to throw
+  // IllegalMonitorStateExceptions, since that might get us into an
   // infinite rethrow exception loop.
   // Additionally this code is used for popFrame and earlyReturn.
   // In popFrame case we want to skip throwing an exception,
   // installing an exception, and notifying jvmdi.
   // In earlyReturn case we only want to skip throwing an exception
   // and installing an exception.
-  void remove_activation(TosState state, Register ret_addr, 
-                         bool throw_monitor_exception = true, 
+  void remove_activation(TosState state, Register ret_addr,
+                         bool throw_monitor_exception = true,
                          bool install_monitor_exception = true,
                          bool notify_jvmdi = true);
 #endif /* !CC_INTERP */
@@ -179,7 +185,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void verify_oop(Register reg, TosState state = atos);    // only if +VerifyOops && state == atos
 #ifndef CC_INTERP
   void verify_FPU(int stack_depth, TosState state = ftos); // only if +VerifyFPU  && (state == ftos || state == dtos)
-    
+
 #endif /* !CC_INTERP */
 
   // Object locking
@@ -234,6 +240,5 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // support for jvmti
   void notify_method_entry();
   void notify_method_exit(TosState state, NotifyMethodExitMode mode);
-  
-};
 
+};

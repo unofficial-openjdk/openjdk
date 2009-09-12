@@ -2,7 +2,7 @@
 #pragma ident "@(#)generationSizer.hpp	1.17 07/05/05 17:05:27 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,10 @@ class GenerationSizer : public TwoGenerationCollectorPolicy {
     
     // If the user hasn't explicitly set the number of worker
     // threads, set the count.
-    if (ParallelGCThreads == 0) {
-      assert(UseParallelGC, "Setting ParallelGCThreads without UseParallelGC");
-      ParallelGCThreads = os::active_processor_count();
-    }
+    assert(UseSerialGC ||
+           !FLAG_IS_DEFAULT(ParallelGCThreads) ||
+           (ParallelGCThreads > 0),
+           "ParallelGCThreads should be set before flag initialization");
 
     // The survivor ratio's are calculated "raw", unlike the
     // default gc, which adds 2 to the ratio value. We need to

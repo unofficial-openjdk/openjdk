@@ -1,5 +1,5 @@
 //
-// Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//  
+//
 //
 
 // NOTE: DO NOT CHANGE THIS COPYRIGHT TO NEW STYLE - IT WILL BREAK makeDeps!
@@ -46,13 +46,13 @@
 // as dependencies.  Header files named H.inline.hpp generally contain
 // bodies for inline functions declared in H.hpp.
 //
-// NOTE: Files that use the token "generate_platform_dependent_include" 
+// NOTE: Files that use the token "generate_platform_dependent_include"
 // are expected to contain macro references like <os>, <arch_model>, ... and
 // makedeps has a dependency on these platform files looking like:
-// foo_<macro>.trailing_string 
+// foo_<macro>.trailing_string
 // (where "trailing_string" can be any legal filename strings but typically
 // is "hpp" or "inline.hpp").
-// 
+//
 // The dependency in makedeps (and enforced) is that an underscore
 // will precedure the macro invocation. Note that this restriction
 // is only enforced on filenames that have the dependency token
@@ -148,12 +148,6 @@ allocation.hpp                          globals.hpp
 
 allocation.inline.hpp                   os.hpp
 
-allocationStats.cpp                     allocationStats.hpp
-
-allocationStats.hpp                     allocation.hpp
-allocationStats.hpp                     gcUtil.hpp
-allocationStats.hpp                     globalDefinitions.hpp
-
 aprofiler.cpp                           aprofiler.hpp
 aprofiler.cpp                           collectedHeap.inline.hpp
 aprofiler.cpp                           oop.inline.hpp
@@ -184,6 +178,7 @@ arguments.cpp                           os_<os_family>.inline.hpp
 arguments.cpp                           universe.inline.hpp
 arguments.cpp                           vm_version_<arch_model>.hpp
 
+arguments.hpp                           java.hpp
 arguments.hpp                           perfData.hpp
 arguments.hpp                           top.hpp
 
@@ -197,7 +192,6 @@ array.hpp                               allocation.inline.hpp
 arrayKlass.cpp                          arrayKlass.hpp
 arrayKlass.cpp                          arrayKlassKlass.hpp
 arrayKlass.cpp                          arrayOop.hpp
-arrayKlass.cpp                          collectedHeap.hpp
 arrayKlass.cpp                          collectedHeap.inline.hpp
 arrayKlass.cpp                          gcLocker.hpp
 arrayKlass.cpp                          instanceKlass.hpp
@@ -217,6 +211,7 @@ arrayKlass.hpp                          universe.hpp
 arrayKlassKlass.cpp                     arrayKlassKlass.hpp
 arrayKlassKlass.cpp                     handles.inline.hpp
 arrayKlassKlass.cpp                     javaClasses.hpp
+arrayKlassKlass.cpp                     markSweep.inline.hpp
 arrayKlassKlass.cpp                     oop.inline.hpp
 
 arrayKlassKlass.hpp                     arrayKlass.hpp
@@ -233,7 +228,7 @@ arrayOop.hpp                            universe.inline.hpp
 
 assembler.cpp                           assembler.hpp
 assembler.cpp                           assembler.inline.hpp
-assembler.cpp                           assembler_<arch_model>.inline.hpp
+assembler.cpp                           assembler_<arch>.inline.hpp
 assembler.cpp                           codeBuffer.hpp
 assembler.cpp                           icache.hpp
 assembler.cpp                           os.hpp
@@ -250,32 +245,32 @@ assembler.hpp                           vm_version_<arch_model>.hpp
 
 assembler.inline.hpp                    assembler.hpp
 assembler.inline.hpp                    codeBuffer.hpp
-assembler.inline.hpp                    disassembler_<arch>.hpp
+assembler.inline.hpp                    disassembler.hpp
 assembler.inline.hpp                    threadLocalStorage.hpp
 
-assembler_<arch_model>.cpp              assembler_<arch_model>.inline.hpp
-assembler_<arch_model>.cpp              biasedLocking.hpp
-assembler_<arch_model>.cpp              cardTableModRefBS.hpp
-assembler_<arch_model>.cpp              collectedHeap.hpp
-assembler_<arch_model>.cpp              interfaceSupport.hpp
-assembler_<arch_model>.cpp              interpreter.hpp
-assembler_<arch_model>.cpp              objectMonitor.hpp
-assembler_<arch_model>.cpp              os.hpp
-assembler_<arch_model>.cpp              resourceArea.hpp
-assembler_<arch_model>.cpp              sharedRuntime.hpp
-assembler_<arch_model>.cpp              stubRoutines.hpp
+assembler_<arch>.cpp              assembler_<arch>.inline.hpp
+assembler_<arch>.cpp              biasedLocking.hpp
+assembler_<arch>.cpp              cardTableModRefBS.hpp
+assembler_<arch>.cpp              collectedHeap.inline.hpp
+assembler_<arch>.cpp              interfaceSupport.hpp
+assembler_<arch>.cpp              interpreter.hpp
+assembler_<arch>.cpp              objectMonitor.hpp
+assembler_<arch>.cpp              os.hpp
+assembler_<arch>.cpp              resourceArea.hpp
+assembler_<arch>.cpp              sharedRuntime.hpp
+assembler_<arch>.cpp              stubRoutines.hpp
 
-assembler_<arch_model>.hpp              generate_platform_dependent_include
+assembler_<arch>.hpp              generate_platform_dependent_include
 
-assembler_<arch_model>.inline.hpp       assembler.inline.hpp
-assembler_<arch_model>.inline.hpp       codeBuffer.hpp
-assembler_<arch_model>.inline.hpp       codeCache.hpp
-assembler_<arch_model>.inline.hpp       handles.inline.hpp
+assembler_<arch>.inline.hpp       assembler.inline.hpp
+assembler_<arch>.inline.hpp       codeBuffer.hpp
+assembler_<arch>.inline.hpp       codeCache.hpp
+assembler_<arch>.inline.hpp       handles.inline.hpp
 
-assembler_<os_arch_model>.cpp           assembler.hpp
-assembler_<os_arch_model>.cpp           assembler_<arch_model>.inline.hpp
-assembler_<os_arch_model>.cpp           os.hpp
-assembler_<os_arch_model>.cpp           threadLocalStorage.hpp
+assembler_<os_arch>.cpp           assembler.hpp
+assembler_<os_arch>.cpp           assembler_<arch>.inline.hpp
+assembler_<os_arch>.cpp           os.hpp
+assembler_<os_arch>.cpp           threadLocalStorage.hpp
 
 atomic.cpp                              atomic.hpp
 atomic.cpp                              atomic_<os_arch>.inline.hpp
@@ -293,6 +288,10 @@ attachListener.hpp                      allocation.hpp
 attachListener.hpp                      debug.hpp
 attachListener.hpp                      ostream.hpp
 
+barrierSet.cpp				barrierSet.hpp
+barrierSet.cpp			        collectedHeap.hpp
+barrierSet.cpp				universe.hpp
+
 barrierSet.hpp                          memRegion.hpp
 barrierSet.hpp                          oopsHierarchy.hpp
 
@@ -300,7 +299,7 @@ barrierSet.inline.hpp                   barrierSet.hpp
 barrierSet.inline.hpp                   cardTableModRefBS.hpp
 
 bcEscapeAnalyzer.cpp                    bcEscapeAnalyzer.hpp
-bcEscapeAnalyzer.cpp                    bitMap.hpp
+bcEscapeAnalyzer.cpp                    bitMap.inline.hpp
 bcEscapeAnalyzer.cpp                    bytecode.hpp
 bcEscapeAnalyzer.cpp                    ciConstant.hpp
 bcEscapeAnalyzer.cpp                    ciField.hpp
@@ -325,21 +324,19 @@ biasedLocking.cpp                       vm_operations.hpp
 biasedLocking.hpp                       growableArray.hpp
 biasedLocking.hpp                       handles.hpp
 
-bitMap.cpp                              bitMap.hpp
+bitMap.cpp                              allocation.inline.hpp
 bitMap.cpp                              bitMap.inline.hpp
 bitMap.cpp                              copy.hpp
 bitMap.cpp                              os_<os_family>.inline.hpp
 
 bitMap.hpp                              allocation.hpp
-bitMap.hpp                              ostream.hpp
 bitMap.hpp                              top.hpp
 
 bitMap.inline.hpp                       atomic.hpp
 bitMap.inline.hpp                       bitMap.hpp
 
-blockOffsetTable.cpp                    blockOffsetTable.hpp
 blockOffsetTable.cpp                    blockOffsetTable.inline.hpp
-blockOffsetTable.cpp                    collectedHeap.hpp
+blockOffsetTable.cpp                    collectedHeap.inline.hpp
 blockOffsetTable.cpp                    iterator.hpp
 blockOffsetTable.cpp                    java.hpp
 blockOffsetTable.cpp                    oop.inline.hpp
@@ -651,6 +648,7 @@ ciKlassKlass.hpp                        ciSymbol.hpp
 ciMethod.cpp                            abstractCompiler.hpp
 ciMethod.cpp                            allocation.inline.hpp
 ciMethod.cpp                            bcEscapeAnalyzer.hpp
+ciMethod.cpp                            bitMap.inline.hpp
 ciMethod.cpp                            ciCallProfile.hpp
 ciMethod.cpp                            ciExceptionHandler.hpp
 ciMethod.cpp                            ciInstanceKlass.hpp
@@ -719,6 +717,11 @@ ciNullObject.hpp                        ciUtilities.hpp
 ciObjArray.hpp                          ciArray.hpp
 ciObjArray.hpp                          ciClassList.hpp
 ciObjArray.hpp                          objArrayOop.hpp
+
+ciObjArray.cpp                          ciObjArray.hpp
+ciObjArray.cpp                          ciNullObject.hpp
+ciObjArray.cpp                          ciUtilities.hpp
+ciObjArray.cpp                          objArrayOop.hpp
 
 ciObjArray.cpp                          ciObjArray.hpp
 ciObjArray.cpp                          ciNullObject.hpp
@@ -952,7 +955,7 @@ codeBlob.cpp                            allocation.inline.hpp
 codeBlob.cpp                            bytecode.hpp
 codeBlob.cpp                            codeBlob.hpp
 codeBlob.cpp                            codeCache.hpp
-codeBlob.cpp                            disassembler_<arch>.hpp
+codeBlob.cpp                            disassembler.hpp
 codeBlob.cpp                            forte.hpp
 codeBlob.cpp                            handles.inline.hpp
 codeBlob.cpp                            heap.hpp
@@ -974,7 +977,7 @@ codeBlob.hpp                            oopMap.hpp
 
 codeBuffer.cpp                          codeBuffer.hpp
 codeBuffer.cpp                          copy.hpp
-codeBuffer.cpp                          disassembler_<arch>.hpp
+codeBuffer.cpp                          disassembler.hpp
 
 codeBuffer.hpp                          assembler.hpp
 codeBuffer.hpp                          oopRecorder.hpp
@@ -996,6 +999,7 @@ codeCache.cpp                           methodOop.hpp
 codeCache.cpp                           mutexLocker.hpp
 codeCache.cpp                           nmethod.hpp
 codeCache.cpp                           objArrayOop.hpp
+codeCache.cpp                           oop.inline.hpp
 codeCache.cpp                           pcDesc.hpp
 codeCache.cpp                           resourceArea.hpp
 
@@ -1130,7 +1134,7 @@ compiledICHolderKlass.cpp               collectedHeap.inline.hpp
 compiledICHolderKlass.cpp               compiledICHolderKlass.hpp
 compiledICHolderKlass.cpp               handles.inline.hpp
 compiledICHolderKlass.cpp               javaClasses.hpp
-compiledICHolderKlass.cpp               markSweep.hpp
+compiledICHolderKlass.cpp               markSweep.inline.hpp
 compiledICHolderKlass.cpp               oop.inline.hpp
 compiledICHolderKlass.cpp               oop.inline2.hpp
 compiledICHolderKlass.cpp               permGen.hpp
@@ -1198,6 +1202,7 @@ constMethodKlass.cpp                    constMethodOop.hpp
 constMethodKlass.cpp                    gcLocker.hpp
 constMethodKlass.cpp                    handles.inline.hpp
 constMethodKlass.cpp                    interpreter.hpp
+constMethodKlass.cpp                    markSweep.inline.hpp
 constMethodKlass.cpp                    oop.inline.hpp
 constMethodKlass.cpp                    oop.inline2.hpp
 constMethodKlass.cpp                    resourceArea.hpp
@@ -1216,6 +1221,8 @@ constantPoolKlass.cpp                   collectedHeap.inline.hpp
 constantPoolKlass.cpp                   constantPoolKlass.hpp
 constantPoolKlass.cpp                   constantPoolOop.hpp
 constantPoolKlass.cpp                   handles.inline.hpp
+constantPoolKlass.cpp                   javaClasses.hpp
+constantPoolKlass.cpp                   markSweep.inline.hpp
 constantPoolKlass.cpp                   oop.inline.hpp
 constantPoolKlass.cpp                   oop.inline2.hpp
 constantPoolKlass.cpp                   oopFactory.hpp
@@ -1267,7 +1274,8 @@ cpCacheKlass.cpp                        collectedHeap.hpp
 cpCacheKlass.cpp                        constantPoolOop.hpp
 cpCacheKlass.cpp                        cpCacheKlass.hpp
 cpCacheKlass.cpp                        handles.inline.hpp
-cpCacheKlass.cpp                        markSweep.hpp
+cpCacheKlass.cpp                        javaClasses.hpp
+cpCacheKlass.cpp                        markSweep.inline.hpp
 cpCacheKlass.cpp                        oop.inline.hpp
 cpCacheKlass.cpp                        permGen.hpp
 
@@ -1279,7 +1287,6 @@ cpCacheOop.cpp                          cpCacheOop.hpp
 cpCacheOop.cpp                          handles.inline.hpp
 cpCacheOop.cpp                          interpreter.hpp
 cpCacheOop.cpp                          jvmtiRedefineClassesTrace.hpp
-cpCacheOop.cpp                          markSweep.hpp
 cpCacheOop.cpp                          markSweep.inline.hpp
 cpCacheOop.cpp                          objArrayOop.hpp
 cpCacheOop.cpp                          oop.inline.hpp
@@ -1329,7 +1336,7 @@ debug.cpp                               codeCache.hpp
 debug.cpp                               collectedHeap.hpp
 debug.cpp                               compileBroker.hpp
 debug.cpp                               defaultStream.hpp
-debug.cpp                               disassembler_<arch>.hpp
+debug.cpp                               disassembler.hpp
 debug.cpp                               events.hpp
 debug.cpp                               frame.hpp
 debug.cpp                               heapDumper.hpp
@@ -1391,7 +1398,6 @@ debug_<arch>.cpp                        top.hpp
 
 defNewGeneration.cpp                    collectorCounters.hpp
 defNewGeneration.cpp                    copy.hpp
-defNewGeneration.cpp                    defNewGeneration.hpp
 defNewGeneration.cpp                    defNewGeneration.inline.hpp
 defNewGeneration.cpp                    gcLocker.inline.hpp
 defNewGeneration.cpp                    gcPolicyCounters.hpp
@@ -1403,8 +1409,8 @@ defNewGeneration.cpp                    iterator.hpp
 defNewGeneration.cpp                    java.hpp
 defNewGeneration.cpp                    oop.inline.hpp
 defNewGeneration.cpp                    referencePolicy.hpp
-defNewGeneration.cpp                    space.hpp
 defNewGeneration.cpp                    space.inline.hpp
+defNewGeneration.cpp                    spaceDecorator.hpp
 defNewGeneration.cpp                    thread_<os_family>.inline.hpp
 
 defNewGeneration.hpp                    ageTable.hpp
@@ -1412,6 +1418,7 @@ defNewGeneration.hpp                    cSpaceCounters.hpp
 defNewGeneration.hpp                    generation.inline.hpp
 defNewGeneration.hpp                    generationCounters.hpp
 
+defNewGeneration.inline.hpp             cardTableRS.hpp
 defNewGeneration.inline.hpp             defNewGeneration.hpp
 defNewGeneration.inline.hpp             space.hpp
 
@@ -1448,7 +1455,7 @@ deoptimization.hpp                      allocation.hpp
 deoptimization.hpp                      frame.inline.hpp
 
 depChecker_<arch>.cpp                   depChecker_<arch>.hpp
-depChecker_<arch>.cpp                   disassembler_<arch>.hpp
+depChecker_<arch>.cpp                   disassembler.hpp
 depChecker_<arch>.cpp                   hpi.hpp
 
 dependencies.cpp                        ciArrayKlass.hpp
@@ -1478,21 +1485,21 @@ dictionary.hpp                          instanceKlass.hpp
 dictionary.hpp                          oop.hpp
 dictionary.hpp                          systemDictionary.hpp
 
-disassemblerEnv.hpp                     globals.hpp
+disassembler_<arch>.hpp                 generate_platform_dependent_include
 
-disassembler_<arch>.cpp                 cardTableModRefBS.hpp
-disassembler_<arch>.cpp                 codeCache.hpp
-disassembler_<arch>.cpp                 collectedHeap.hpp
-disassembler_<arch>.cpp                 depChecker_<arch>.hpp
-disassembler_<arch>.cpp                 disassembler_<arch>.hpp
-disassembler_<arch>.cpp                 fprofiler.hpp
-disassembler_<arch>.cpp                 handles.inline.hpp
-disassembler_<arch>.cpp                 hpi.hpp
-disassembler_<arch>.cpp                 stubCodeGenerator.hpp
-disassembler_<arch>.cpp                 stubRoutines.hpp
+disassembler.cpp                        cardTableModRefBS.hpp
+disassembler.cpp                        codeCache.hpp
+disassembler.cpp                        collectedHeap.hpp
+disassembler.cpp                        depChecker_<arch>.hpp
+disassembler.cpp                        disassembler.hpp
+disassembler.cpp                        fprofiler.hpp
+disassembler.cpp                        handles.inline.hpp
+disassembler.cpp                        hpi.hpp
+disassembler.cpp                        stubCodeGenerator.hpp
+disassembler.cpp                        stubRoutines.hpp
 
-disassembler_<arch>.hpp                 disassemblerEnv.hpp
-disassembler_<arch>.hpp                 os_<os_family>.inline.hpp
+disassembler.hpp                        globals.hpp
+disassembler.hpp                        os_<os_family>.inline.hpp
 
 dtraceAttacher.cpp                      codeCache.hpp
 dtraceAttacher.cpp                      deoptimization.hpp
@@ -1500,6 +1507,30 @@ dtraceAttacher.cpp                      dtraceAttacher.hpp
 dtraceAttacher.cpp                      resourceArea.hpp
 dtraceAttacher.cpp                      vmThread.hpp
 dtraceAttacher.cpp                      vm_operations.hpp
+
+dtraceJSDT.cpp                          allocation.hpp
+dtraceJSDT.cpp                          codeBlob.hpp
+dtraceJSDT.cpp                          dtraceJSDT.hpp
+dtraceJSDT.cpp                          exceptions.hpp
+dtraceJSDT.cpp                          globalDefinitions.hpp
+dtraceJSDT.cpp                          javaClasses.hpp
+dtraceJSDT.cpp                          jniHandles.hpp
+dtraceJSDT.cpp                          jvm.h
+dtraceJSDT.cpp                          os.hpp
+dtraceJSDT.cpp                          utf8.hpp
+
+dtraceJSDT.hpp                          nativeInst_<arch>.hpp
+dtraceJSDT.hpp                          nmethod.hpp
+
+dtraceJSDT_<os_family>.cpp              allocation.hpp
+dtraceJSDT_<os_family>.cpp              codeBlob.hpp
+dtraceJSDT_<os_family>.cpp              dtraceJSDT.hpp
+dtraceJSDT_<os_family>.cpp              globalDefinitions.hpp
+dtraceJSDT_<os_family>.cpp              javaClasses.hpp
+dtraceJSDT_<os_family>.cpp              jniHandles.hpp
+dtraceJSDT_<os_family>.cpp              jvm.h
+dtraceJSDT_<os_family>.cpp              os.hpp
+dtraceJSDT_<os_family>.cpp              signature.hpp
 
 // dump is jck optional, put cpp deps in includeDB_features
 
@@ -1642,6 +1673,7 @@ frame_<arch>.inline.hpp                 generate_platform_dependent_include
 
 gcLocker.cpp                            gcLocker.inline.hpp
 gcLocker.cpp                            sharedHeap.hpp
+gcLocker.cpp                            resourceArea.hpp
 
 gcLocker.hpp                            collectedHeap.hpp
 gcLocker.hpp                            genCollectedHeap.hpp
@@ -1731,7 +1763,7 @@ genRemSet.cpp                           genRemSet.hpp
 
 genRemSet.hpp                           oop.hpp
 
-generateOopMap.cpp                      bitMap.hpp
+generateOopMap.cpp                      bitMap.inline.hpp
 generateOopMap.cpp                      bytecodeStream.hpp
 generateOopMap.cpp                      generateOopMap.hpp
 generateOopMap.cpp                      handles.inline.hpp
@@ -1763,6 +1795,7 @@ generation.cpp                          generation.inline.hpp
 generation.cpp                          java.hpp
 generation.cpp                          oop.hpp
 generation.cpp                          oop.inline.hpp
+generation.cpp                          spaceDecorator.hpp
 generation.cpp                          space.inline.hpp
 
 generation.hpp                          allocation.hpp
@@ -1778,6 +1811,8 @@ generation.hpp                          watermark.hpp
 generation.inline.hpp                   genCollectedHeap.hpp
 generation.inline.hpp                   generation.hpp
 generation.inline.hpp                   space.hpp
+
+genOopClosures.hpp                      oop.hpp
 
 generationSpec.cpp                      compactPermGen.hpp
 generationSpec.cpp                      defNewGeneration.hpp
@@ -1897,7 +1932,7 @@ hpi_<os_family>.cpp                     os.hpp
 
 hpi_imported.h                          jni.h
 
-icBuffer.cpp                            assembler_<arch_model>.inline.hpp
+icBuffer.cpp                            assembler_<arch>.inline.hpp
 icBuffer.cpp                            collectedHeap.inline.hpp
 icBuffer.cpp                            compiledIC.hpp
 icBuffer.cpp                            icBuffer.hpp
@@ -1918,7 +1953,7 @@ icBuffer.hpp                            bytecodes.hpp
 icBuffer.hpp                            stubs.hpp
 
 icBuffer_<arch>.cpp                     assembler.hpp
-icBuffer_<arch>.cpp                     assembler_<arch_model>.inline.hpp
+icBuffer_<arch>.cpp                     assembler_<arch>.inline.hpp
 icBuffer_<arch>.cpp                     bytecodes.hpp
 icBuffer_<arch>.cpp                     collectedHeap.inline.hpp
 icBuffer_<arch>.cpp                     icBuffer.hpp
@@ -1933,14 +1968,14 @@ icache.cpp                              resourceArea.hpp
 icache.hpp                              allocation.hpp
 icache.hpp                              stubCodeGenerator.hpp
 
-icache_<arch>.cpp                       assembler_<arch_model>.inline.hpp
+icache_<arch>.cpp                       assembler_<arch>.inline.hpp
 icache_<arch>.cpp                       icache.hpp
 
 icache_<arch>.hpp                       generate_platform_dependent_include
 
 init.cpp                                bytecodes.hpp
 init.cpp                                collectedHeap.hpp
-init.cpp				handles.inline.hpp
+init.cpp                                handles.inline.hpp
 init.cpp                                icBuffer.hpp
 init.cpp                                icache.hpp
 init.cpp                                init.hpp
@@ -1962,6 +1997,7 @@ instanceKlass.cpp                       javaClasses.hpp
 instanceKlass.cpp                       jvmti.h
 instanceKlass.cpp                       jvmtiExport.hpp
 instanceKlass.cpp                       jvmtiRedefineClassesTrace.hpp
+instanceKlass.cpp                       markSweep.inline.hpp
 instanceKlass.cpp                       methodOop.hpp
 instanceKlass.cpp                       mutexLocker.hpp
 instanceKlass.cpp                       objArrayKlassKlass.hpp
@@ -1997,6 +2033,7 @@ instanceKlassKlass.cpp                  instanceKlassKlass.hpp
 instanceKlassKlass.cpp                  instanceRefKlass.hpp
 instanceKlassKlass.cpp                  javaClasses.hpp
 instanceKlassKlass.cpp                  jvmtiExport.hpp
+instanceKlassKlass.cpp                  markSweep.inline.hpp
 instanceKlassKlass.cpp                  objArrayKlassKlass.hpp
 instanceKlassKlass.cpp                  objArrayOop.hpp
 instanceKlassKlass.cpp                  oop.inline.hpp
@@ -2018,7 +2055,7 @@ instanceRefKlass.cpp                    genCollectedHeap.hpp
 instanceRefKlass.cpp                    genOopClosures.inline.hpp
 instanceRefKlass.cpp                    instanceRefKlass.hpp
 instanceRefKlass.cpp                    javaClasses.hpp
-instanceRefKlass.cpp                    markSweep.hpp
+instanceRefKlass.cpp                    markSweep.inline.hpp
 instanceRefKlass.cpp                    oop.inline.hpp
 instanceRefKlass.cpp                    preserveException.hpp
 instanceRefKlass.cpp                    systemDictionary.hpp
@@ -2056,6 +2093,7 @@ interp_masm_<arch_model>.cpp            interp_masm_<arch_model>.hpp
 interp_masm_<arch_model>.cpp            interpreterRuntime.hpp
 interp_masm_<arch_model>.cpp            interpreter.hpp
 interp_masm_<arch_model>.cpp            jvmtiExport.hpp
+interp_masm_<arch_model>.cpp            jvmtiRedefineClassesTrace.hpp
 interp_masm_<arch_model>.cpp            jvmtiThreadState.hpp
 interp_masm_<arch_model>.cpp            markOop.hpp
 interp_masm_<arch_model>.cpp            methodDataOop.hpp
@@ -2064,7 +2102,7 @@ interp_masm_<arch_model>.cpp            sharedRuntime.hpp
 interp_masm_<arch_model>.cpp            synchronizer.hpp
 interp_masm_<arch_model>.cpp            thread_<os_family>.inline.hpp
 
-interp_masm_<arch_model>.hpp            assembler_<arch_model>.inline.hpp
+interp_masm_<arch_model>.hpp            assembler_<arch>.inline.hpp
 interp_masm_<arch_model>.hpp            invocationCounter.hpp
 
 interpreter.cpp                         allocation.inline.hpp
@@ -2188,6 +2226,11 @@ invocationCounter.hpp                   allocation.hpp
 invocationCounter.hpp                   exceptions.hpp
 invocationCounter.hpp                   handles.hpp
 
+intHisto.cpp				intHisto.hpp
+
+intHisto.hpp				allocation.hpp
+intHisto.hpp                            growableArray.hpp
+
 iterator.cpp                            iterator.hpp
 iterator.cpp                            oop.inline.hpp
 
@@ -2261,6 +2304,7 @@ javaCalls.cpp                           handles.inline.hpp
 javaCalls.cpp                           interfaceSupport.hpp
 javaCalls.cpp                           interpreter.hpp
 javaCalls.cpp                           javaCalls.hpp
+javaCalls.cpp                           jniCheck.hpp
 javaCalls.cpp                           linkResolver.hpp
 javaCalls.cpp                           mutexLocker.hpp
 javaCalls.cpp                           nmethod.hpp
@@ -2371,7 +2415,7 @@ jniFastGetField.cpp                     jniFastGetField.hpp
 jniFastGetField.hpp                     allocation.hpp
 jniFastGetField.hpp                     jvm_misc.hpp
 
-jniFastGetField_<arch_model>.cpp        assembler_<arch_model>.inline.hpp
+jniFastGetField_<arch_model>.cpp        assembler_<arch>.inline.hpp
 jniFastGetField_<arch_model>.cpp        jniFastGetField.hpp
 jniFastGetField_<arch_model>.cpp        jvm_misc.hpp
 jniFastGetField_<arch_model>.cpp        resourceArea.hpp
@@ -2402,6 +2446,7 @@ jvm.cpp                                 classLoader.hpp
 jvm.cpp                                 collectedHeap.inline.hpp
 jvm.cpp                                 copy.hpp
 jvm.cpp                                 defaultStream.hpp
+jvm.cpp                                 dtraceJSDT.hpp
 jvm.cpp                                 events.hpp
 jvm.cpp                                 handles.inline.hpp
 jvm.cpp                                 histogram.hpp
@@ -2498,7 +2543,7 @@ klassKlass.cpp                          instanceKlass.hpp
 klassKlass.cpp                          instanceOop.hpp
 klassKlass.cpp                          klassKlass.hpp
 klassKlass.cpp                          klassOop.hpp
-klassKlass.cpp                          markSweep.hpp
+klassKlass.cpp                          markSweep.inline.hpp
 klassKlass.cpp                          methodKlass.hpp
 klassKlass.cpp                          objArrayKlass.hpp
 klassKlass.cpp                          oop.inline.hpp
@@ -2525,7 +2570,7 @@ klassVtable.cpp                         instanceKlass.hpp
 klassVtable.cpp                         jvmtiRedefineClassesTrace.hpp
 klassVtable.cpp                         klassOop.hpp
 klassVtable.cpp                         klassVtable.hpp
-klassVtable.cpp                         markSweep.hpp
+klassVtable.cpp                         markSweep.inline.hpp
 klassVtable.cpp                         methodOop.hpp
 klassVtable.cpp                         objArrayOop.hpp
 klassVtable.cpp                         oop.inline.hpp
@@ -2638,6 +2683,9 @@ markOop.inline.hpp                      klassOop.hpp
 markOop.inline.hpp                      markOop.hpp
 
 markSweep.cpp                           compileBroker.hpp
+
+markSweep.hpp                           collectedHeap.hpp
+
 memRegion.cpp                           globals.hpp
 memRegion.cpp                           memRegion.hpp
 
@@ -2737,7 +2785,7 @@ methodDataKlass.cpp                     collectedHeap.inline.hpp
 methodDataKlass.cpp                     gcLocker.hpp
 methodDataKlass.cpp                     handles.inline.hpp
 methodDataKlass.cpp                     klassOop.hpp
-methodDataKlass.cpp                     markSweep.hpp
+methodDataKlass.cpp                     markSweep.inline.hpp
 methodDataKlass.cpp                     methodDataKlass.hpp
 methodDataKlass.cpp                     methodDataOop.hpp
 methodDataKlass.cpp                     oop.inline.hpp
@@ -2752,7 +2800,6 @@ methodDataOop.cpp                       bytecodeStream.hpp
 methodDataOop.cpp                       deoptimization.hpp
 methodDataOop.cpp                       handles.inline.hpp
 methodDataOop.cpp                       linkResolver.hpp
-methodDataOop.cpp                       markSweep.hpp
 methodDataOop.cpp                       markSweep.inline.hpp
 methodDataOop.cpp                       methodDataOop.hpp
 methodDataOop.cpp                       oop.inline.hpp
@@ -2770,7 +2817,7 @@ methodKlass.cpp                         handles.inline.hpp
 methodKlass.cpp                         interpreter.hpp
 methodKlass.cpp                         javaClasses.hpp
 methodKlass.cpp                         klassOop.hpp
-methodKlass.cpp                         markSweep.hpp
+methodKlass.cpp                         markSweep.inline.hpp
 methodKlass.cpp                         methodDataOop.hpp
 methodKlass.cpp                         methodKlass.hpp
 methodKlass.cpp                         oop.inline.hpp
@@ -2784,6 +2831,7 @@ methodKlass.hpp                         klassOop.hpp
 methodKlass.hpp                         methodOop.hpp
 
 methodLiveness.cpp                      allocation.inline.hpp
+methodLiveness.cpp                      bitMap.inline.hpp
 methodLiveness.cpp                      bytecode.hpp
 methodLiveness.cpp                      bytecodes.hpp
 methodLiveness.cpp                      ciMethod.hpp
@@ -2871,7 +2919,7 @@ mutex_<os_family>.inline.hpp            interfaceSupport.hpp
 mutex_<os_family>.inline.hpp            os_<os_family>.inline.hpp
 mutex_<os_family>.inline.hpp            thread_<os_family>.inline.hpp
 
-nativeInst_<arch>.cpp                   assembler_<arch_model>.inline.hpp
+nativeInst_<arch>.cpp                   assembler_<arch>.inline.hpp
 nativeInst_<arch>.cpp                   handles.hpp
 nativeInst_<arch>.cpp                   nativeInst_<arch>.hpp
 nativeInst_<arch>.cpp                   oop.hpp
@@ -2915,7 +2963,7 @@ nmethod.cpp                             codeCache.hpp
 nmethod.cpp                             compileLog.hpp
 nmethod.cpp                             compiledIC.hpp
 nmethod.cpp                             compilerOracle.hpp
-nmethod.cpp                             disassembler_<arch>.hpp
+nmethod.cpp                             disassembler.hpp
 nmethod.cpp                             dtrace.hpp
 nmethod.cpp                             events.hpp
 nmethod.cpp                             jvmtiRedefineClassesTrace.hpp
@@ -2929,6 +2977,11 @@ nmethod.cpp                             xmlstream.hpp
 
 nmethod.hpp                             codeBlob.hpp
 nmethod.hpp                             pcDesc.hpp
+
+numberSeq.cpp				debug.hpp
+numberSeq.cpp				numberSeq.hpp
+numberSeq.cpp				globalDefinitions.hpp
+numberSeq.cpp				allocation.inline.hpp
 
 objArrayKlass.cpp                       collectedHeap.inline.hpp
 objArrayKlass.cpp                       copy.hpp
@@ -2947,6 +3000,7 @@ objArrayKlass.cpp                       systemDictionary.hpp
 objArrayKlass.cpp                       universe.inline.hpp
 objArrayKlass.cpp                       vmSymbols.hpp
 
+
 objArrayKlass.hpp                       arrayKlass.hpp
 objArrayKlass.hpp                       instanceKlass.hpp
 objArrayKlass.hpp                       specialized_oop_closures.hpp
@@ -2954,6 +3008,7 @@ objArrayKlass.hpp                       specialized_oop_closures.hpp
 objArrayKlassKlass.cpp                  collectedHeap.inline.hpp
 objArrayKlassKlass.cpp                  instanceKlass.hpp
 objArrayKlassKlass.cpp                  javaClasses.hpp
+objArrayKlassKlass.cpp                  markSweep.inline.hpp
 objArrayKlassKlass.cpp                  objArrayKlassKlass.hpp
 objArrayKlassKlass.cpp                  oop.inline.hpp
 objArrayKlassKlass.cpp                  oop.inline2.hpp
@@ -2962,6 +3017,7 @@ objArrayKlassKlass.cpp                  systemDictionary.hpp
 objArrayKlassKlass.hpp                  arrayKlassKlass.hpp
 objArrayKlassKlass.hpp                  objArrayKlass.hpp
 
+objArrayOop.cpp                         objArrayKlass.hpp
 objArrayOop.cpp                         objArrayOop.hpp
 objArrayOop.cpp                         oop.inline.hpp
 
@@ -3011,7 +3067,6 @@ oop.inline.hpp                          generation.hpp
 oop.inline.hpp                          klass.hpp
 oop.inline.hpp                          klassOop.hpp
 oop.inline.hpp                          markOop.inline.hpp
-oop.inline.hpp                          markSweep.hpp
 oop.inline.hpp                          markSweep.inline.hpp
 oop.inline.hpp                          oop.hpp
 oop.inline.hpp                          os.hpp
@@ -3067,11 +3122,13 @@ oopMap.cpp                              scopeDesc.hpp
 oopMap.cpp                              signature.hpp
 
 oopMap.hpp                              allocation.hpp
+oopMapCache.cpp                         jvmtiRedefineClassesTrace.hpp
 oopMap.hpp                              compressedStream.hpp
 oopMap.hpp                              growableArray.hpp
 oopMap.hpp                              vmreg.hpp
 
 oopMapCache.cpp                         allocation.inline.hpp
+oopMapCache.cpp                         jvmtiRedefineClassesTrace.hpp
 oopMapCache.cpp                         handles.inline.hpp
 oopMapCache.cpp                         jvmtiRedefineClassesTrace.hpp
 oopMapCache.cpp                         oop.inline.hpp
@@ -3137,7 +3194,7 @@ os.hpp                                  top.hpp
 
 os_<os_arch>.cpp                        allocation.inline.hpp
 os_<os_arch>.cpp                        arguments.hpp
-os_<os_arch>.cpp                        assembler_<arch_model>.inline.hpp
+os_<os_arch>.cpp                        assembler_<arch>.inline.hpp
 os_<os_arch>.cpp                        classLoader.hpp
 os_<os_arch>.cpp                        events.hpp
 os_<os_arch>.cpp                        extendedPC.hpp
@@ -3171,7 +3228,7 @@ os_<os_arch>.hpp                        generate_platform_dependent_include
 
 os_<os_family>.cpp                      allocation.inline.hpp
 os_<os_family>.cpp                      arguments.hpp
-os_<os_family>.cpp                      assembler_<arch_model>.inline.hpp
+os_<os_family>.cpp                      assembler_<arch>.inline.hpp
 os_<os_family>.cpp                      attachListener.hpp
 os_<os_family>.cpp                      classLoader.hpp
 os_<os_family>.cpp                      compileBroker.hpp
@@ -3180,6 +3237,7 @@ os_<os_family>.cpp                      events.hpp
 os_<os_family>.cpp                      extendedPC.hpp
 os_<os_family>.cpp                      filemap.hpp
 os_<os_family>.cpp                      globals.hpp
+os_<os_family>.cpp                      growableArray.hpp
 os_<os_family>.cpp                      hpi.hpp
 os_<os_family>.cpp                      icBuffer.hpp
 os_<os_family>.cpp                      interfaceSupport.hpp
@@ -3229,7 +3287,7 @@ osThread.hpp                            javaFrameAnchor.hpp
 osThread.hpp                            objectMonitor.hpp
 osThread.hpp                            top.hpp
 
-osThread_<os_family>.cpp                assembler_<arch_model>.inline.hpp
+osThread_<os_family>.cpp                assembler_<arch>.inline.hpp
 osThread_<os_family>.cpp                atomic.hpp
 osThread_<os_family>.cpp                handles.inline.hpp
 osThread_<os_family>.cpp                mutexLocker.hpp
@@ -3321,6 +3379,10 @@ permGen.cpp                             java.hpp
 permGen.cpp                             oop.inline.hpp
 permGen.cpp                             permGen.hpp
 permGen.cpp                             universe.hpp
+permGen.cpp                             gcLocker.hpp
+permGen.cpp                             gcLocker.inline.hpp
+permGen.cpp                             vmGCOperations.hpp
+permGen.cpp                             vmThread.hpp
 
 permGen.hpp                             gcCause.hpp
 permGen.hpp                             generation.hpp
@@ -3364,8 +3426,6 @@ referencePolicy.cpp                     javaClasses.hpp
 referencePolicy.cpp                     referencePolicy.hpp
 referencePolicy.cpp                     universe.hpp
 
-referencePolicy.hpp                     oop.hpp
-
 referenceProcessor.cpp                  collectedHeap.hpp
 referenceProcessor.cpp                  collectedHeap.inline.hpp
 referenceProcessor.cpp                  java.hpp
@@ -3377,6 +3437,7 @@ referenceProcessor.cpp                  referenceProcessor.hpp
 referenceProcessor.cpp                  systemDictionary.hpp
 
 referenceProcessor.hpp                  instanceRefKlass.hpp
+referenceProcessor.hpp                  referencePolicy.hpp
 
 reflection.cpp                          arguments.hpp
 reflection.cpp                          handles.inline.hpp
@@ -3438,7 +3499,7 @@ register_definitions_<arch>.cpp         interp_masm_<arch_model>.hpp
 register_definitions_<arch>.cpp         register.hpp
 register_definitions_<arch>.cpp         register_<arch>.hpp
 
-relocInfo.cpp                           assembler_<arch_model>.inline.hpp
+relocInfo.cpp                           assembler_<arch>.inline.hpp
 relocInfo.cpp                           compiledIC.hpp
 relocInfo.cpp                           copy.hpp
 relocInfo.cpp                           nativeInst_<arch>.hpp
@@ -3451,8 +3512,9 @@ relocInfo.hpp                           allocation.hpp
 relocInfo.hpp                           top.hpp
 
 relocInfo_<arch>.cpp                    assembler.inline.hpp
-relocInfo_<arch>.cpp                    assembler_<arch_model>.inline.hpp
+relocInfo_<arch>.cpp                    assembler_<arch>.inline.hpp
 relocInfo_<arch>.cpp                    nativeInst_<arch>.hpp
+relocInfo_<arch>.cpp                    oop.inline.hpp
 relocInfo_<arch>.cpp                    relocInfo.hpp
 relocInfo_<arch>.cpp                    safepoint.hpp
 
@@ -3609,6 +3671,7 @@ sharedRuntime.cpp                       interpreterRuntime.hpp
 sharedRuntime.cpp                       interpreter.hpp
 sharedRuntime.cpp                       javaCalls.hpp
 sharedRuntime.cpp                       jvmtiExport.hpp
+sharedRuntime.cpp                       jvmtiRedefineClassesTrace.hpp
 sharedRuntime.cpp                       nativeInst_<arch>.hpp
 sharedRuntime.cpp                       nativeLookup.hpp
 sharedRuntime.cpp                       oop.inline.hpp
@@ -3633,11 +3696,12 @@ sharedRuntime.hpp                       resourceArea.hpp
 sharedRuntime.hpp                       threadLocalStorage.hpp
 
 sharedRuntime_<arch_model>.cpp          assembler.hpp
-sharedRuntime_<arch_model>.cpp          assembler_<arch_model>.inline.hpp
+sharedRuntime_<arch_model>.cpp          assembler_<arch>.inline.hpp
 sharedRuntime_<arch_model>.cpp          compiledICHolderOop.hpp
 sharedRuntime_<arch_model>.cpp          debugInfoRec.hpp
 sharedRuntime_<arch_model>.cpp          icBuffer.hpp
 sharedRuntime_<arch_model>.cpp          interpreter.hpp
+sharedRuntime_<arch_model>.cpp          jvmtiRedefineClassesTrace.hpp
 sharedRuntime_<arch_model>.cpp          sharedRuntime.hpp
 sharedRuntime_<arch_model>.cpp          vframeArray.hpp
 sharedRuntime_<arch_model>.cpp          vmreg_<arch>.inline.hpp
@@ -3682,6 +3746,7 @@ space.cpp                               oop.inline2.hpp
 space.cpp                               safepoint.hpp
 space.cpp                               space.hpp
 space.cpp                               space.inline.hpp
+space.cpp                               spaceDecorator.hpp
 space.cpp                               systemDictionary.hpp
 space.cpp                               universe.inline.hpp
 space.cpp                               vmSymbols.hpp
@@ -3704,8 +3769,17 @@ space.inline.hpp                        safepoint.hpp
 space.inline.hpp                        space.hpp
 space.inline.hpp                        universe.hpp
 
+spaceDecorator.hpp                      globalDefinitions.hpp
+spaceDecorator.hpp                      mutableSpace.hpp
+spaceDecorator.hpp                      space.hpp
+
+spaceDecorator.cpp                      copy.hpp
+spaceDecorator.cpp                      spaceDecorator.hpp
+
 specialized_oop_closures.cpp            ostream.hpp
 specialized_oop_closures.cpp            specialized_oop_closures.hpp
+
+specialized_oop_closures.hpp            atomic.hpp
 
 stackMapFrame.cpp                       globalDefinitions.hpp
 stackMapFrame.cpp                       handles.inline.hpp
@@ -3768,8 +3842,8 @@ statSampler.cpp                         vm_version_<arch_model>.hpp
 statSampler.hpp                         perfData.hpp
 statSampler.hpp                         task.hpp
 
-stubCodeGenerator.cpp                   assembler_<arch_model>.inline.hpp
-stubCodeGenerator.cpp                   disassembler_<arch>.hpp
+stubCodeGenerator.cpp                   assembler_<arch>.inline.hpp
+stubCodeGenerator.cpp                   disassembler.hpp
 stubCodeGenerator.cpp                   forte.hpp
 stubCodeGenerator.cpp                   oop.inline.hpp
 stubCodeGenerator.cpp                   stubCodeGenerator.hpp
@@ -3779,7 +3853,7 @@ stubCodeGenerator.hpp                   allocation.hpp
 stubCodeGenerator.hpp                   assembler.hpp
 
 stubGenerator_<arch_model>.cpp          assembler.hpp
-stubGenerator_<arch_model>.cpp          assembler_<arch_model>.inline.hpp
+stubGenerator_<arch_model>.cpp          assembler_<arch>.inline.hpp
 stubGenerator_<arch_model>.cpp          frame.inline.hpp
 stubGenerator_<arch_model>.cpp          handles.inline.hpp
 stubGenerator_<arch_model>.cpp          instanceOop.hpp
@@ -3949,7 +4023,6 @@ taskqueue.cpp                           thread_<os_family>.inline.hpp
 
 taskqueue.hpp                           allocation.hpp
 taskqueue.hpp                           allocation.inline.hpp
-taskqueue.hpp                           debug.hpp
 taskqueue.hpp                           mutex.hpp
 taskqueue.hpp                           orderAccess_<os_arch>.inline.hpp
 
@@ -3987,6 +4060,7 @@ templateInterpreter_<arch>.hpp          generate_platform_dependent_include
 
 templateInterpreterGenerator_<arch>.hpp generate_platform_dependent_include
 
+templateTable.cpp                       collectedHeap.hpp
 templateTable.cpp                       templateTable.hpp
 templateTable.cpp                       timer.hpp
 
@@ -4491,6 +4565,7 @@ vm_operations.cpp                       compileBroker.hpp
 vm_operations.cpp                       compilerOracle.hpp
 vm_operations.cpp                       deoptimization.hpp
 vm_operations.cpp                       interfaceSupport.hpp
+vm_operations.cpp                       isGCActiveMark.hpp
 vm_operations.cpp                       resourceArea.hpp
 vm_operations.cpp                       threadService.hpp
 vm_operations.cpp                       thread_<os_family>.inline.hpp
@@ -4511,7 +4586,7 @@ vm_version.cpp                          vm_version_<arch_model>.hpp
 vm_version.hpp                          allocation.hpp
 vm_version.hpp                          ostream.hpp
 
-vm_version_<arch_model>.cpp             assembler_<arch_model>.inline.hpp
+vm_version_<arch_model>.cpp             assembler_<arch>.inline.hpp
 vm_version_<arch_model>.cpp             java.hpp
 vm_version_<arch_model>.cpp             os_<os_family>.inline.hpp
 vm_version_<arch_model>.cpp             resourceArea.hpp
@@ -4536,12 +4611,13 @@ vmreg_<arch>.cpp                        vmreg.hpp
 vmreg_<arch>.hpp                        generate_platform_dependent_include
 
 vtableStubs.cpp                         allocation.inline.hpp
-vtableStubs.cpp                         disassembler_<arch>.hpp
+vtableStubs.cpp                         disassembler.hpp
 vtableStubs.cpp                         forte.hpp
 vtableStubs.cpp                         handles.inline.hpp
 vtableStubs.cpp                         instanceKlass.hpp
 vtableStubs.cpp                         jvmtiExport.hpp
 vtableStubs.cpp                         klassVtable.hpp
+vtableStubs.cpp                         oop.inline.hpp
 vtableStubs.cpp                         mutexLocker.hpp
 vtableStubs.cpp                         resourceArea.hpp
 vtableStubs.cpp                         sharedRuntime.hpp
@@ -4551,7 +4627,7 @@ vtableStubs.cpp                         vtune.hpp
 vtableStubs.hpp                         allocation.hpp
 
 vtableStubs_<arch_model>.cpp            assembler.hpp
-vtableStubs_<arch_model>.cpp            assembler_<arch_model>.inline.hpp
+vtableStubs_<arch_model>.cpp            assembler_<arch>.inline.hpp
 vtableStubs_<arch_model>.cpp            instanceKlass.hpp
 vtableStubs_<arch_model>.cpp            interp_masm_<arch_model>.hpp
 vtableStubs_<arch_model>.cpp            klassVtable.hpp

@@ -2,7 +2,7 @@
 #pragma ident "@(#)pcTasks.cpp	1.22 07/06/22 16:49:49 JVM"
 #endif
 /*
- * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,7 +149,7 @@ void RefProcTaskExecutor::execute(ProcessTask& task)
 {
   ParallelScavengeHeap* heap = PSParallelCompact::gc_heap();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
+  RegionTaskQueueSet* qset = ParCompactionManager::region_array();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
   GCTaskQueue* q = GCTaskQueue::create();
   for(uint i=0; i<parallel_gc_threads; i++) {
@@ -208,38 +208,38 @@ void StealMarkingTask::do_it(GCTaskManager* manager, uint which) {
 }
 
 //
-// StealChunkCompactionTask
+// StealRegionCompactionTask
 //
 
 
-StealChunkCompactionTask::StealChunkCompactionTask(ParallelTaskTerminator* t) :
-  _terminator(t) {};
+StealRegionCompactionTask::StealRegionCompactionTask(ParallelTaskTerminator* t):
+  _terminator(t) {}
 
-void StealChunkCompactionTask::do_it(GCTaskManager* manager, uint which) {
+void StealRegionCompactionTask::do_it(GCTaskManager* manager, uint which) {
   assert(Universe::heap()->is_gc_active(), "called outside gc");
 
-  NOT_PRODUCT(TraceTime tm("StealChunkCompactionTask", 
+  NOT_PRODUCT(TraceTime tm("StealRegionCompactionTask",
     PrintGCDetails && TraceParallelOldGCTasks, true, gclog_or_tty));
 
   ParCompactionManager* cm = 
     ParCompactionManager::gc_thread_compaction_manager(which);
 
-  // Has to drain stacks first because there may be chunks on
+  // Has to drain stacks first because there may be regions on
   // preloaded onto the stack and this thread may never have
   // done a draining task.  Are the draining tasks needed?
 
-  cm->drain_chunk_stacks();
+  cm->drain_region_stacks();
 
-  size_t chunk_index = 0;
+  size_t region_index = 0;
   int random_seed = 17;
 
   // If we're the termination task, try 10 rounds of stealing before
   // setting the termination flag
 
   while(true) {
-    if (ParCompactionManager::steal(which, &random_seed, chunk_index)) {
-      PSParallelCompact::fill_and_update_chunk(cm, chunk_index);
-      cm->drain_chunk_stacks();
+    if (ParCompactionManager::steal(which, &random_seed, region_index)) {
+      PSParallelCompact::fill_and_update_region(cm, region_index);
+      cm->drain_region_stacks();
     } else {
       if (terminator()->offer_termination()) {
 	break;
@@ -251,12 +251,11 @@ void StealChunkCompactionTask::do_it(GCTaskManager* manager, uint which) {
 }
 
 UpdateDensePrefixTask::UpdateDensePrefixTask(
-				   PSParallelCompact::SpaceId space_id,
-                                   size_t chunk_index_start,
-                                   size_t chunk_index_end) :
-  _space_id(space_id), _chunk_index_start(chunk_index_start),
-  _chunk_index_end(chunk_index_end)
-{}
+                                   PSParallelCompact::SpaceId space_id,
+                                   size_t region_index_start,
+                                   size_t region_index_end) :
+  _space_id(space_id), _region_index_start(region_index_start),
+  _region_index_end(region_index_end) {}
 
 void UpdateDensePrefixTask::do_it(GCTaskManager* manager, uint which) {
 
@@ -268,8 +267,8 @@ void UpdateDensePrefixTask::do_it(GCTaskManager* manager, uint which) {
 
   PSParallelCompact::update_and_deadwood_in_dense_prefix(cm,
                                                          _space_id,
-                                                         _chunk_index_start,
-                                                         _chunk_index_end);
+                                                         _region_index_start,
+                                                         _region_index_end);
 }
 
 void DrainStacksCompactionTask::do_it(GCTaskManager* manager, uint which) {
@@ -281,7 +280,7 @@ void DrainStacksCompactionTask::do_it(GCTaskManager* manager, uint which) {
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
 
-  // Process any chunks already in the compaction managers stacks.
-  cm->drain_chunk_stacks();
+  // Process any regions already in the compaction managers stacks.
+  cm->drain_region_stacks();
 }
 

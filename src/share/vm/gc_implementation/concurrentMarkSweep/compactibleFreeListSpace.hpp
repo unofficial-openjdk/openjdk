@@ -2,7 +2,7 @@
 #pragma ident "@(#)compactibleFreeListSpace.hpp	1.91 07/05/05 17:05:45 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -421,7 +421,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // chunk exists, return NULL.
   FreeChunk* find_chunk_at_end();
 
-  bool adaptive_freelists() { return _adaptive_freelists; }
+  bool adaptive_freelists() const { return _adaptive_freelists; }
 
   void set_collector(CMSCollector* collector) { _collector = collector; }
 
@@ -505,7 +505,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
 
   void blk_iterate(BlkClosure* cl);
   void blk_iterate_careful(BlkClosureCareful* cl);
-  HeapWord* block_start(const void* p) const;
+  HeapWord* block_start_const(const void* p) const;
   HeapWord* block_start_careful(const void* p) const;
   size_t block_size(const HeapWord* p) const;
   size_t block_size_no_stall(HeapWord* p, const CMSCollector* c) const;
@@ -543,7 +543,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   HeapWord* allocate(size_t size);
   HeapWord* par_allocate(size_t size);
 
-  oop       promote(oop obj, size_t obj_size, oop* ref);
+  oop       promote(oop obj, size_t obj_size);
   void      gc_prologue();
   void      gc_epilogue();
 
@@ -569,7 +569,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   FreeChunk* allocateScratch(size_t size);
 
   // returns true if either the small or large linear allocation buffer is empty.
-  bool       linearAllocationWouldFail();
+  bool       linearAllocationWouldFail() const;
 
   // Adjust the chunk for the minimum size.  This version is called in
   // most cases in CompactibleFreeListSpace methods.
@@ -587,6 +587,9 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   void      removeFreeChunkFromFreeLists(FreeChunk* chunk);
   void      addChunkAndRepairOffsetTable(HeapWord* chunk, size_t size,
               bool coalesced);
+
+  // Support for decisions regarding concurrent collection policy
+  bool should_concurrent_collect() const;
 
   // Support for compaction
   void prepare_for_compaction(CompactPoint* cp);
@@ -625,7 +628,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // coalescing of chunks during the sweep of garbage.
 
   // Print the statistics for the free lists.
-  void printFLCensus(int sweepCt)	  const;
+  void printFLCensus(size_t sweep_count) const;
 
   // Statistics functions
   // Initialize census for lists before the sweep.
@@ -638,11 +641,10 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Clear the census for each of the free lists.
   void clearFLCensus();
   // Perform functions for the census after the end of the sweep.
-  void endSweepFLCensus(int sweepCt);
+  void endSweepFLCensus(size_t sweep_count);
   // Return true if the count of free chunks is greater
   // than the desired number of free chunks.
   bool coalOverPopulated(size_t size);
-
 
 // Record (for each size):
 // 

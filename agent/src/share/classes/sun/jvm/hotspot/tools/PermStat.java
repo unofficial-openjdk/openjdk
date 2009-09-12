@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.tools;
@@ -80,7 +80,7 @@ public class PermStat extends Tool {
             // String has a field named 'value' of type 'char[]'.
             stringValueField = (OopField) strKlass.findField("value", "[C");
          }
- 
+
          private long stringSize(Instance instance) {
             // We include String content in size calculation.
             return instance.getObjectSize() +
@@ -93,7 +93,7 @@ public class PermStat extends Tool {
          }
 
          public void print() {
-            System.out.println(count + 
+            System.out.println(count +
                   " intern Strings occupying " + size + " bytes.");
          }
       }
@@ -101,7 +101,7 @@ public class PermStat extends Tool {
       StringStat stat = new StringStat();
       StringTable strTable = VM.getVM().getStringTable();
       strTable.stringsDo(stat);
-      stat.print(); 
+      stat.print();
    }
 
    private void printClassLoaderStatistics() {
@@ -118,12 +118,12 @@ public class PermStat extends Tool {
       ObjectHeap heap = vm.getObjectHeap();
       Klass classLoaderKlass = vm.getSystemDictionary().getClassLoaderKlass();
       try {
-	 heap.iterateObjectsOfKlass(new DefaultHeapVisitor() {
-			 public boolean doObj(Oop oop) {
+         heap.iterateObjectsOfKlass(new DefaultHeapVisitor() {
+                         public boolean doObj(Oop oop) {
                             loaderMap.put(oop, new LoaderData());
-							return false;
+                                                        return false;
                          }
-	              }, classLoaderKlass);
+                      }, classLoaderKlass);
       } catch (Exception se) {
          se.printStackTrace();
       }
@@ -139,13 +139,13 @@ public class PermStat extends Tool {
                            if (! (k instanceof InstanceKlass)) {
                               return;
                            }
-                           LoaderData ld = (loader != null) ? (LoaderData)loaderMap.get(loader) 
+                           LoaderData ld = (loader != null) ? (LoaderData)loaderMap.get(loader)
                                                             : bootstrapLoaderData;
                            if (ld != null) {
                               ld.numClasses++;
                               long size = computeSize((InstanceKlass)k);
                               ld.classDetail.add(new ClassData(k, size));
-                              ld.classSize += size;                               
+                              ld.classSize += size;
                            }
                         }
                      });
@@ -174,7 +174,7 @@ public class PermStat extends Tool {
          analysis.run();
       } catch (Exception e) {
          // e.printStackTrace();
-         if (verbose) 
+         if (verbose)
            err.println("liveness analysis may be inaccurate ...");
       }
       ReversePtrs liveness = VM.getVM().getRevPtrs();
@@ -260,51 +260,57 @@ public class PermStat extends Tool {
       out.print("alive=");
       out.print(numAliveLoaders);
       out.print(", dead=");
-      out.print(numDeadLoaders); 
+      out.print(numDeadLoaders);
       out.print('\t');
       out.print("    N/A    ");
       out.println();
    }
 
+   private static long objectSize(Oop oop) {
+      return oop == null ? 0L : oop.getObjectSize();
+   }
+
+   // Don't count the shared empty arrays
+   private static long arraySize(Array arr) {
+     return arr.getLength() != 0L ? arr.getObjectSize() : 0L;
+   }
+
    private long computeSize(InstanceKlass k) {
       long size = 0L;
-      // InstanceKlass object size
+      // the InstanceKlass object itself
       size += k.getObjectSize();
 
-      // add ConstantPool size
-      size += k.getConstants().getObjectSize();
+      // Constant pool
+      ConstantPool cp = k.getConstants();
+      size += cp.getObjectSize();
+      size += objectSize(cp.getCache());
+      size += objectSize(cp.getTags());
 
-      // add ConstantPoolCache, if any
-      ConstantPoolCache cpCache = k.getConstants().getCache();
-      if (cpCache != null) {
-         size += cpCache.getObjectSize();
-      }
+      // Interfaces
+      size += arraySize(k.getLocalInterfaces());
+      size += arraySize(k.getTransitiveInterfaces());
 
-      // add interfaces size
-      ObjArray interfaces = k.getLocalInterfaces();
-      size +=  (interfaces.getLength() != 0L)? interfaces.getObjectSize() : 0L;
-      ObjArray transitiveInterfaces = k.getTransitiveInterfaces();
-      size += (transitiveInterfaces.getLength() != 0L)? transitiveInterfaces.getObjectSize() : 0L;
+      // Inner classes
+      size += objectSize(k.getInnerClasses());
 
-      // add inner classes size
-      TypeArray innerClasses = k.getInnerClasses();
-      size += innerClasses.getObjectSize();
+      // Fields
+      size += objectSize(k.getFields());
 
-      // add fields size
-      size += k.getFields().getObjectSize(); 
-
-      // add methods size
+      // Methods
       ObjArray methods = k.getMethods();
-      size += (methods.getLength() != 0L)? methods.getObjectSize() : 0L;
-      TypeArray methodOrdering = k.getMethodOrdering();
-      size += (methodOrdering.getLength() != 0L)? methodOrdering.getObjectSize() : 0;
-
-      // add each method's size
-      int numMethods = (int) methods.getLength();
-      for (int i = 0; i < numMethods; i++) {
-         Method m = (Method) methods.getObjAt(i);
-         size += m.getObjectSize();
+      int nmethods = (int) methods.getLength();
+      if (nmethods != 0L) {
+         size += methods.getObjectSize();
+         for (int i = 0; i < nmethods; ++i) {
+            Method m = (Method) methods.getObjAt(i);
+            size += m.getObjectSize();
+            size += objectSize(m.getConstMethod());
+         }
       }
+
+      // MethodOrdering - an int array that records the original
+      // ordering of methods in the class file
+      size += arraySize(k.getMethodOrdering());
 
       return size;
    }

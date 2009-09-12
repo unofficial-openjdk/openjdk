@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -43,7 +43,7 @@ public class ObjArray extends Array {
 
   private static synchronized void initialize(TypeDataBase db) throws WrongTypeException {
     Type type   = db.lookupType("objArrayOopDesc");
-    elementSize = db.getOopSize();
+    elementSize = VM.getVM().getHeapOopSize();
   }
 
   ObjArray(OopHandle handle, ObjectHeap heap) {
@@ -54,9 +54,17 @@ public class ObjArray extends Array {
 
   private static long elementSize;
 
+  public OopHandle getOopHandleAt(long index) {
+    long offset = baseOffsetInBytes(BasicType.T_OBJECT) + (index * elementSize);
+    if (VM.getVM().isCompressedOopsEnabled()) {
+      return getHandle().getCompOopHandleAt(offset);
+    } else {
+      return getHandle().getOopHandleAt(offset);
+    }
+  }
+
   public Oop getObjAt(long index) {
-    long offset = baseOffsetInBytes(BasicType.T_OBJECT) + (index * elementSize); 
-    return getHeap().newOop(getHandle().getOopHandleAt(offset));
+      return getHeap().newOop(getOopHandleAt(index));
   }
 
   public void printValueOn(PrintStream tty) {
@@ -69,7 +77,13 @@ public class ObjArray extends Array {
     long baseOffset = baseOffsetInBytes(BasicType.T_OBJECT);
     for (int index = 0; index < length; index++) {
       long offset = baseOffset + (index * elementSize);
-      visitor.doOop(new OopField(new IndexableFieldIdentifier(index), offset, false), false);
+      OopField field;
+      if (VM.getVM().isCompressedOopsEnabled()) {
+        field = new NarrowOopField(new IndexableFieldIdentifier(index), offset, false);
+      } else {
+        field = new OopField(new IndexableFieldIdentifier(index), offset, false);
+      }
+      visitor.doOop(field, false);
     }
   }
 }

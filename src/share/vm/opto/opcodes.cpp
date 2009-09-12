@@ -2,7 +2,7 @@
 #pragma ident "@(#)opcodes.cpp	1.15 07/05/05 17:06:24 JVM"
 #endif
 /*
- * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 const char *NodeClassNames[] = {
   "Node",
   "Set",
+  "RegN",
   "RegI",
   "RegP",
   "RegF",

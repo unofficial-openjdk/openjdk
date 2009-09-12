@@ -2,7 +2,7 @@
 #pragma ident "@(#)arguments.hpp	1.104 07/09/04 17:30:49 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -294,15 +294,17 @@ class Arguments : AllStatic {
   static bool _CIDynamicCompilePriority;
   static intx _Tier2CompileThreshold;
 
-  // GC processing
-  static int nof_parallel_gc_threads();
   // CMS/ParNew garbage collectors
   static void set_parnew_gc_flags();
   static void set_cms_and_parnew_gc_flags();
-  // UseParallelGC
+  // UseParallel[Old]GC
   static void set_parallel_gc_flags();
+  // Garbage-First (UseG1GC)
+  static void set_g1_gc_flags();
   // GC ergonomics
   static void set_ergonomics_flags();
+  // Setup heap size for a server platform
+  static void set_server_heap_size();
   // Based on automatic selection criteria, should the
   // low pause collector be used.
   static bool should_auto_select_low_pause_collector();
@@ -340,9 +342,9 @@ class Arguments : AllStatic {
   }
   static bool verify_percentage(uintx value, const char* name);
   static void describe_range_error(ArgsRange errcode);
-  static ArgsRange check_memory_size(jlong size, jlong min_size);
-  static ArgsRange parse_memory_size(const char* s, jlong* long_arg,
-				     jlong min_size);
+  static ArgsRange check_memory_size(julong size, julong min_size);
+  static ArgsRange parse_memory_size(const char* s, julong* long_arg,
+                                     julong min_size);
 
   // methods to build strings from individual args
   static void build_jvm_args(const char* arg);
@@ -362,9 +364,11 @@ class Arguments : AllStatic {
     short* methodsNum, short* methodsMax, char*** methods, bool** allClasses
   ); 
 
-  // Returns true if the string s is in the list of
-  // flags made obsolete in 1.5.0.
-  static bool made_obsolete_in_1_5_0(const char* s);
+  // Returns true if the string s is in the list of flags that have recently
+  // been made obsolete.  If we detect one of these flags on the command
+  // line, instead of failing we print a warning message and ignore the
+  // flag.  This gives the user a release or so to stop using the flag.
+  static bool is_newly_obsolete(const char* s, JDK_Version* buffer);
 
   static short	CompileOnlyClassesNum;
   static short	CompileOnlyClassesMax;
@@ -388,6 +392,8 @@ class Arguments : AllStatic {
  public:
   // Parses the arguments
   static jint parse(const JavaVMInitArgs* args);
+  // Check for consistency in the selection of the garbage collector.
+  static bool check_gc_consistency();
   // Check consistecy or otherwise of VM argument settings
   static bool check_vm_args_consistency();
   // Used by os_solaris
@@ -472,10 +478,13 @@ class Arguments : AllStatic {
   // System properties
   static void init_system_properties();
 
-  // Proptery List manipulation
+  // Property List manipulation
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
   static void PropertyList_add(SystemProperty** plist, const char* k, char* v);
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v);
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v) {
+    PropertyList_unique_add(plist, k, v, false);
+  }
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v, jboolean append);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);

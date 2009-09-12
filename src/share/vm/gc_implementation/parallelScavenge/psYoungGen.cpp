@@ -2,7 +2,7 @@
 #pragma ident "@(#)psYoungGen.cpp	1.68 07/10/04 10:49:36 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ PSYoungGen::PSYoungGen(size_t        initial_size,
 void PSYoungGen::initialize_virtual_space(ReservedSpace rs, size_t alignment) {
   assert(_init_gen_size != 0, "Should have a finite size");
   _virtual_space = new PSVirtualSpace(rs, alignment);
-  if (!_virtual_space->expand_by(_init_gen_size)) {
+  if (!virtual_space()->expand_by(_init_gen_size)) {
     vm_exit_during_initialization("Could not reserve enough space for "
 				  "object heap");
   }
@@ -52,12 +52,19 @@ void PSYoungGen::initialize(ReservedSpace rs, size_t alignment) {
 
 void PSYoungGen::initialize_work() {
 
-  _reserved = MemRegion((HeapWord*)_virtual_space->low_boundary(),
-                        (HeapWord*)_virtual_space->high_boundary());
+  _reserved = MemRegion((HeapWord*)virtual_space()->low_boundary(),
+                        (HeapWord*)virtual_space()->high_boundary());
 
-  MemRegion cmr((HeapWord*)_virtual_space->low(),
-		(HeapWord*)_virtual_space->high());
+  MemRegion cmr((HeapWord*)virtual_space()->low(),
+                (HeapWord*)virtual_space()->high());
   Universe::heap()->barrier_set()->resize_covered_region(cmr);
+
+  if (ZapUnusedHeapArea) {
+    // Mangle newly committed space immediately because it
+    // can be done here more simply that after the new
+    // spaces have been computed.
+    SpaceMangler::mangle_region(cmr);
+  }
 
   if (UseNUMA) {
     _eden_space = new MutableNUMASpace();
@@ -91,8 +98,8 @@ void PSYoungGen::initialize_work() {
 
   // Compute maximum space sizes for performance counters
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  size_t alignment = heap->intra_generation_alignment();
-  size_t size = _virtual_space->reserved_size();
+  size_t alignment = heap->intra_heap_alignment();
+  size_t size = virtual_space()->reserved_size();
 
   size_t max_survivor_size;
   size_t max_eden_size;
@@ -144,8 +151,8 @@ void PSYoungGen::compute_initial_space_boundaries() {
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
 
   // Compute sizes
-  size_t alignment = heap->intra_generation_alignment();
-  size_t size = _virtual_space->committed_size();
+  size_t alignment = heap->intra_heap_alignment();
+  size_t size = virtual_space()->committed_size();
 
   size_t survivor_size = size / InitialSurvivorRatio;
   survivor_size = align_size_down(survivor_size, alignment);
@@ -167,18 +174,18 @@ void PSYoungGen::compute_initial_space_boundaries() {
 }
 
 void PSYoungGen::set_space_boundaries(size_t eden_size, size_t survivor_size) {
-  assert(eden_size < _virtual_space->committed_size(), "just checking");
+  assert(eden_size < virtual_space()->committed_size(), "just checking");
   assert(eden_size > 0  && survivor_size > 0, "just checking");
 
   // Initial layout is Eden, to, from. After swapping survivor spaces,
   // that leaves us with Eden, from, to, which is step one in our two
   // step resize-with-live-data procedure.
-  char *eden_start = _virtual_space->low();
+  char *eden_start = virtual_space()->low();
   char *to_start   = eden_start + eden_size;
   char *from_start = to_start   + survivor_size;
   char *from_end   = from_start + survivor_size;
 
-  assert(from_end == _virtual_space->high(), "just checking");
+  assert(from_end == virtual_space()->high(), "just checking");
   assert(is_object_aligned((intptr_t)eden_start), "checking alignment");
   assert(is_object_aligned((intptr_t)to_start),   "checking alignment");
   assert(is_object_aligned((intptr_t)from_start), "checking alignment");
@@ -187,15 +194,15 @@ void PSYoungGen::set_space_boundaries(size_t eden_size, size_t survivor_size) {
   MemRegion to_mr  ((HeapWord*)to_start, (HeapWord*)from_start);
   MemRegion from_mr((HeapWord*)from_start, (HeapWord*)from_end);
 
-  eden_space()->initialize(eden_mr, true);
-    to_space()->initialize(to_mr  , true);
-  from_space()->initialize(from_mr, true);
+  eden_space()->initialize(eden_mr, true, ZapUnusedHeapArea);
+    to_space()->initialize(to_mr  , true, ZapUnusedHeapArea);
+  from_space()->initialize(from_mr, true, ZapUnusedHeapArea);
 }
 
 #ifndef PRODUCT
 void PSYoungGen::space_invariants() {
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  const size_t alignment = heap->intra_generation_alignment();
+  const size_t alignment = heap->intra_heap_alignment();
 
   // Currently, our eden size cannot shrink to zero
   guarantee(eden_space()->capacity_in_bytes() >= alignment, "eden too small");
@@ -210,7 +217,7 @@ void PSYoungGen::space_invariants() {
   char* to_start   = (char*)to_space()->bottom();
   char* to_end     = (char*)to_space()->end();
 
-  guarantee(eden_start >= _virtual_space->low(), "eden bottom");
+  guarantee(eden_start >= virtual_space()->low(), "eden bottom");
   guarantee(eden_start < eden_end, "eden space consistency");
   guarantee(from_start < from_end, "from space consistency");
   guarantee(to_start < to_end, "to space consistency");
@@ -220,29 +227,29 @@ void PSYoungGen::space_invariants() {
     // Eden, from, to
     guarantee(eden_end <= from_start, "eden/from boundary");
     guarantee(from_end <= to_start,   "from/to boundary");
-    guarantee(to_end <= _virtual_space->high(), "to end");
+    guarantee(to_end <= virtual_space()->high(), "to end");
   } else {
     // Eden, to, from
     guarantee(eden_end <= to_start, "eden/to boundary");
     guarantee(to_end <= from_start, "to/from boundary");
-    guarantee(from_end <= _virtual_space->high(), "from end");
+    guarantee(from_end <= virtual_space()->high(), "from end");
   }
 
   // More checks that the virtual space is consistent with the spaces
-  assert(_virtual_space->committed_size() >=
+  assert(virtual_space()->committed_size() >=
     (eden_space()->capacity_in_bytes() +
      to_space()->capacity_in_bytes() +
      from_space()->capacity_in_bytes()), "Committed size is inconsistent");
-  assert(_virtual_space->committed_size() <= _virtual_space->reserved_size(),
+  assert(virtual_space()->committed_size() <= virtual_space()->reserved_size(),
     "Space invariant");
   char* eden_top = (char*)eden_space()->top();
   char* from_top = (char*)from_space()->top();
   char* to_top = (char*)to_space()->top();
-  assert(eden_top <= _virtual_space->high(), "eden top");
-  assert(from_top <= _virtual_space->high(), "from top");
-  assert(to_top <= _virtual_space->high(), "to top");
+  assert(eden_top <= virtual_space()->high(), "eden top");
+  assert(from_top <= virtual_space()->high(), "from top");
+  assert(to_top <= virtual_space()->high(), "to top");
 
-  _virtual_space->verify();
+  virtual_space()->verify();
 }
 #endif
 
@@ -268,8 +275,8 @@ void PSYoungGen::resize(size_t eden_size, size_t survivor_size) {
 
 
 bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
-  const size_t alignment = _virtual_space->alignment();
-  size_t orig_size = _virtual_space->committed_size();
+  const size_t alignment = virtual_space()->alignment();
+  size_t orig_size = virtual_space()->committed_size();
   bool size_changed = false;
 
   // There used to be this guarantee there.
@@ -291,10 +298,18 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
     // Grow the generation
     size_t change = desired_size - orig_size;
     assert(change % alignment == 0, "just checking");
-    if (!_virtual_space->expand_by(change)) {
+    HeapWord* prev_high = (HeapWord*) virtual_space()->high();
+    if (!virtual_space()->expand_by(change)) {
       return false; // Error if we fail to resize!
     }
-
+    if (ZapUnusedHeapArea) {
+      // Mangle newly committed space immediately because it
+      // can be done here more simply that after the new
+      // spaces have been computed.
+      HeapWord* new_high = (HeapWord*) virtual_space()->high();
+      MemRegion mangle_region(prev_high, new_high);
+      SpaceMangler::mangle_region(mangle_region);
+    }
     size_changed = true;
   } else if (desired_size < orig_size) {
     size_t desired_change = orig_size - desired_size;
@@ -324,19 +339,95 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
     post_resize();
 
     if (Verbose && PrintGC) {
-      size_t current_size  = _virtual_space->committed_size();
+      size_t current_size  = virtual_space()->committed_size();
       gclog_or_tty->print_cr("PSYoung generation size changed: "
 			     SIZE_FORMAT "K->" SIZE_FORMAT "K",
 			     orig_size/K, current_size/K);
     }
   }
 
-  guarantee(eden_plus_survivors <= _virtual_space->committed_size() ||
-	    _virtual_space->committed_size() == max_size(), "Sanity");
+  guarantee(eden_plus_survivors <= virtual_space()->committed_size() ||
+            virtual_space()->committed_size() == max_size(), "Sanity");
 
   return true;
 }
 
+#ifndef PRODUCT
+// In the numa case eden is not mangled so a survivor space
+// moving into a region previously occupied by a survivor
+// may find an unmangled region.  Also in the PS case eden
+// to-space and from-space may not touch (i.e., there may be
+// gaps between them due to movement while resizing the
+// spaces).  Those gaps must be mangled.
+void PSYoungGen::mangle_survivors(MutableSpace* s1,
+                                  MemRegion s1MR,
+                                  MutableSpace* s2,
+                                  MemRegion s2MR) {
+  // Check eden and gap between eden and from-space, in deciding
+  // what to mangle in from-space.  Check the gap between from-space
+  // and to-space when deciding what to mangle.
+  //
+  //      +--------+   +----+    +---+
+  //      | eden   |   |s1  |    |s2 |
+  //      +--------+   +----+    +---+
+  //                 +-------+ +-----+
+  //                 |s1MR   | |s2MR |
+  //                 +-------+ +-----+
+  // All of survivor-space is properly mangled so find the
+  // upper bound on the mangling for any portion above current s1.
+  HeapWord* delta_end = MIN2(s1->bottom(), s1MR.end());
+  MemRegion delta1_left;
+  if (s1MR.start() < delta_end) {
+    delta1_left = MemRegion(s1MR.start(), delta_end);
+    s1->mangle_region(delta1_left);
+  }
+  // Find any portion to the right of the current s1.
+  HeapWord* delta_start = MAX2(s1->end(), s1MR.start());
+  MemRegion delta1_right;
+  if (delta_start < s1MR.end()) {
+    delta1_right = MemRegion(delta_start, s1MR.end());
+    s1->mangle_region(delta1_right);
+  }
+
+  // Similarly for the second survivor space except that
+  // any of the new region that overlaps with the current
+  // region of the first survivor space has already been
+  // mangled.
+  delta_end = MIN2(s2->bottom(), s2MR.end());
+  delta_start = MAX2(s2MR.start(), s1->end());
+  MemRegion delta2_left;
+  if (s2MR.start() < delta_end) {
+    delta2_left = MemRegion(s2MR.start(), delta_end);
+    s2->mangle_region(delta2_left);
+  }
+  delta_start = MAX2(s2->end(), s2MR.start());
+  MemRegion delta2_right;
+  if (delta_start < s2MR.end()) {
+    s2->mangle_region(delta2_right);
+  }
+
+  if (TraceZapUnusedHeapArea) {
+    // s1
+    gclog_or_tty->print_cr("Current region: [" PTR_FORMAT ", " PTR_FORMAT ") "
+      "New region: [" PTR_FORMAT ", " PTR_FORMAT ")",
+      s1->bottom(), s1->end(), s1MR.start(), s1MR.end());
+    gclog_or_tty->print_cr("    Mangle before: [" PTR_FORMAT ", "
+      PTR_FORMAT ")  Mangle after: [" PTR_FORMAT ", " PTR_FORMAT ")",
+      delta1_left.start(), delta1_left.end(), delta1_right.start(),
+      delta1_right.end());
+
+    // s2
+    gclog_or_tty->print_cr("Current region: [" PTR_FORMAT ", " PTR_FORMAT ") "
+      "New region: [" PTR_FORMAT ", " PTR_FORMAT ")",
+      s2->bottom(), s2->end(), s2MR.start(), s2MR.end());
+    gclog_or_tty->print_cr("    Mangle before: [" PTR_FORMAT ", "
+      PTR_FORMAT ")  Mangle after: [" PTR_FORMAT ", " PTR_FORMAT ")",
+      delta2_left.start(), delta2_left.end(), delta2_right.start(),
+      delta2_right.end());
+  }
+
+}
+#endif // NOT PRODUCT
 
 void PSYoungGen::resize_spaces(size_t requested_eden_size, 
 			       size_t requested_survivor_size) {
@@ -395,13 +486,15 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
   char* to_end     = (char*)to_space()->end();
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  const size_t alignment = heap->intra_generation_alignment();
-  const bool maintain_minimum = 
+  const size_t alignment = heap->intra_heap_alignment();
+  const bool maintain_minimum =
     (requested_eden_size + 2 * requested_survivor_size) <= min_gen_size();
 
+  bool eden_from_to_order = from_start < to_start;
   // Check whether from space is below to space
-  if (from_start < to_start) {
+  if (eden_from_to_order) {
     // Eden, from, to
+    eden_from_to_order = true;
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("  Eden, from, to:");
     }
@@ -438,9 +531,9 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     // extra calculations.
 
     // First calculate an optimal to-space
-    to_end   = (char*)_virtual_space->high();
-    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size, 
-				    sizeof(char));
+    to_end   = (char*)virtual_space()->high();
+    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size,
+                                    sizeof(char));
 
     // Does the optimal to-space overlap from-space?
     if (to_start < (char*)from_space()->end()) {
@@ -494,9 +587,9 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     // to space as if we were able to resize from space, even though from
     // space is not modified.
     // Giving eden priority was tried and gave poorer performance.
-    to_end   = (char*)pointer_delta(_virtual_space->high(), 
-                                    (char*)requested_survivor_size, 
-				    sizeof(char));
+    to_end   = (char*)pointer_delta(virtual_space()->high(),
+                                    (char*)requested_survivor_size,
+                                    sizeof(char));
     to_end   = MIN2(to_end, from_start);
     to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size, 
 				    sizeof(char));
@@ -563,9 +656,45 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
   size_t old_from = from_space()->capacity_in_bytes();
   size_t old_to   = to_space()->capacity_in_bytes();
 
-  eden_space()->initialize(edenMR, true);
-    to_space()->initialize(toMR  , true);
-  from_space()->initialize(fromMR, false);     // Note, not cleared!
+  if (ZapUnusedHeapArea) {
+    // NUMA is a special case because a numa space is not mangled
+    // in order to not prematurely bind its address to memory to
+    // the wrong memory (i.e., don't want the GC thread to first
+    // touch the memory).  The survivor spaces are not numa
+    // spaces and are mangled.
+    if (UseNUMA) {
+      if (eden_from_to_order) {
+        mangle_survivors(from_space(), fromMR, to_space(), toMR);
+      } else {
+        mangle_survivors(to_space(), toMR, from_space(), fromMR);
+      }
+    }
+
+    // If not mangling the spaces, do some checking to verify that
+    // the spaces are already mangled.
+    // The spaces should be correctly mangled at this point so
+    // do some checking here. Note that they are not being mangled
+    // in the calls to initialize().
+    // Must check mangling before the spaces are reshaped.  Otherwise,
+    // the bottom or end of one space may have moved into an area
+    // covered by another space and a failure of the check may
+    // not correctly indicate which space is not properly mangled.
+    HeapWord* limit = (HeapWord*) virtual_space()->high();
+    eden_space()->check_mangled_unused_area(limit);
+    from_space()->check_mangled_unused_area(limit);
+      to_space()->check_mangled_unused_area(limit);
+  }
+  // When an existing space is being initialized, it is not
+  // mangled because the space has been previously mangled.
+  eden_space()->initialize(edenMR,
+                           SpaceDecorator::Clear,
+                           SpaceDecorator::DontMangle);
+    to_space()->initialize(toMR,
+                           SpaceDecorator::Clear,
+                           SpaceDecorator::DontMangle);
+  from_space()->initialize(fromMR,
+                           SpaceDecorator::DontClear,
+                           SpaceDecorator::DontMangle);
 
   assert(from_space()->top() == old_from_top, "from top changed!");
 
@@ -674,7 +803,7 @@ void PSYoungGen::print_on(outputStream* st) const {
     st->print(" total " SIZE_FORMAT "K, used " SIZE_FORMAT "K",
                capacity_in_bytes()/K, used_in_bytes()/K);
   }
-  _virtual_space->print_space_boundaries_on(st);
+  virtual_space()->print_space_boundaries_on(st);
   st->print("  eden"); eden_space()->print_on(st);
   st->print("  from"); from_space()->print_on(st);
   st->print("  to  "); to_space()->print_on(st);
@@ -711,7 +840,7 @@ size_t PSYoungGen::available_to_min_gen() {
 size_t PSYoungGen::available_to_live() {
   size_t delta_in_survivor = 0;
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  const size_t space_alignment = heap->intra_generation_alignment();
+  const size_t space_alignment = heap->intra_heap_alignment();
   const size_t gen_alignment = heap->young_gen_alignment();
 
   MutableSpace* space_shrinking = NULL;
@@ -777,7 +906,9 @@ void PSYoungGen::reset_survivors_after_shrink() {
   // Was there a shrink of the survivor space?
   if (new_end < space_shrinking->end()) {
     MemRegion mr(space_shrinking->bottom(), new_end);
-    space_shrinking->initialize(mr, false /* clear */);
+    space_shrinking->initialize(mr,
+                                SpaceDecorator::DontClear,
+                                SpaceDecorator::Mangle);
   }
 }
 
@@ -812,3 +943,12 @@ void PSYoungGen::verify(bool allow_dirty) {
   from_space()->verify(allow_dirty);
   to_space()->verify(allow_dirty);
 }
+
+#ifndef PRODUCT
+void PSYoungGen::record_spaces_top() {
+  assert(ZapUnusedHeapArea, "Not mangling unused space");
+  eden_space()->set_top_for_allocations();
+  from_space()->set_top_for_allocations();
+  to_space()->set_top_for_allocations();
+}
+#endif

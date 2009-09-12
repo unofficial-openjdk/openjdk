@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -39,7 +39,7 @@ public class ObjectHistogram implements HeapVisitor {
     Klass klass = obj.getKlass();
     if (!map.containsKey(klass)) map.put(klass, new ObjectHistogramElement(klass));
     ((ObjectHistogramElement) map.get(klass)).updateWith(obj);
-	return false;
+        return false;
   }
 
   public void epilogue() {}
@@ -64,8 +64,17 @@ public class ObjectHistogram implements HeapVisitor {
     List list = getElements();
     ObjectHistogramElement.titleOn(tty);
     Iterator iterator = list.listIterator();
+    int num=0;
+    int totalCount=0;
+    int totalSize=0;
     while (iterator.hasNext()) {
-      ((ObjectHistogramElement) iterator.next()).printOn(tty);
-    }    
+      ObjectHistogramElement el = (ObjectHistogramElement) iterator.next();
+      num++;
+      totalCount+=el.getCount();
+      totalSize+=el.getSize();
+      tty.print(num + ":" + "\t\t");
+      el.printOn(tty);
+    }
+    tty.println("Total : " + "\t" + totalCount + "\t" + totalSize);
   }
 }

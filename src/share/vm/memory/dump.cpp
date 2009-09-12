@@ -2,7 +2,7 @@
 #pragma ident "@(#)dump.cpp	1.33 07/05/23 10:53:38 JVM"
 #endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,9 +63,9 @@ public:
     hash_offset = java_lang_String::hash_offset_in_bytes();
   }
 
-  void do_oop(oop* pobj) {
-    if (pobj != NULL) {
-      oop obj = *pobj;
+  void do_oop(oop* p) {
+    if (p != NULL) {
+      oop obj = *p;
       if (obj->klass() == SystemDictionary::string_klass()) {
 
         int hash;
@@ -82,6 +82,7 @@ public:
       }
     }
   }
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 
 
@@ -124,9 +125,8 @@ static bool mark_object(oop obj) {
 
 class MarkObjectsOopClosure : public OopClosure {
 public:
-  void do_oop(oop* pobj) {
-    mark_object(*pobj);
-  }
+  void do_oop(oop* p)       { mark_object(*p); }
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 
 
@@ -139,6 +139,7 @@ public:
       mark_object(obj);
     }
   }
+  void do_oop(narrowOop* pobj) { ShouldNotReachHere(); }
 };
 
 
@@ -557,6 +558,7 @@ public:
       }
     }
   }
+  void do_oop(narrowOop* pobj) { ShouldNotReachHere(); }
 };
 
 
@@ -646,7 +648,7 @@ public:
 class ClearSpaceClosure : public SpaceClosure {
 public:
   void do_space(Space* s) {
-    s->clear();
+    s->clear(SpaceDecorator::Mangle);
   }
 };
 
@@ -692,6 +694,8 @@ public:
     *top = obj;
     ++top;
   }
+
+  void do_oop(narrowOop* pobj) { ShouldNotReachHere(); }
 
   void do_int(int* p) {
     check_space();
@@ -817,6 +821,40 @@ static void print_contents() {
 // across the space while doing this, as that causes the vtables to be
 // patched, undoing our useful work.  Instead, iterate to make a list,
 // then use the list to do the fixing.
+//
+// Our constructed vtables:
+// Dump time:
+//  1. init_self_patching_vtbl_list: table of pointers to current virtual method addrs
+//  2. generate_vtable_methods: create jump table, appended to above vtbl_list
+//  3. PatchKlassVtables: for Klass list, patch the vtable entry to point to jump table
+//     rather than to current vtbl
+// Table layout: NOTE FIXED SIZE
+//   1. vtbl pointers
+//   2. #Klass X #virtual methods per Klass
+//   1 entry for each, in the order:
+//   Klass1:method1 entry, Klass1:method2 entry, ... Klass1:method<num_virtuals> entry
+//   Klass2:method1 entry, Klass2:method2 entry, ... Klass2:method<num_virtuals> entry
+//   ...
+//   Klass<vtbl_list_size>:method1 entry, Klass<vtbl_list_size>:method2 entry,
+//       ... Klass<vtbl_list_size>:method<num_virtuals> entry
+//  Sample entry: (Sparc):
+//   save(sp, -256, sp)
+//   ba,pt common_code
+//   mov XXX, %L0       %L0 gets: Klass index <<8 + method index (note: max method index 255)
+//
+// Restore time:
+//   1. initialize_oops: reserve space for table
+//   2. init_self_patching_vtbl_list: update pointers to NEW virtual method addrs in text
+//
+// Execution time:
+//   First virtual method call for any object of these Klass types:
+//   1. object->klass->klass_part
+//   2. vtable entry for that klass_part points to the jump table entries
+//   3. branches to common_code with %O0/klass_part, %L0: Klass index <<8 + method index
+//   4. common_code:
+//      Get address of new vtbl pointer for this Klass from updated table
+//      Update new vtbl pointer in the Klass: future virtual calls go direct
+//      Jump to method, using new vtbl pointer and method index
 
 class PatchKlassVtables: public ObjectClosure {
 private:
@@ -1198,11 +1236,13 @@ public:
     _ro_space->set_saved_mark();
     mapinfo->write_space(CompactingPermGenGen::rw, _rw_space, false);
     _rw_space->set_saved_mark();
-    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(), 
-                          md_top - _md_vs->low(), SharedMiscDataSize,
+    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(),
+                          pointer_delta(md_top, _md_vs->low(), sizeof(char)),
+                          SharedMiscDataSize,
                           false, false);
-    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(), 
-                          mc_top - _mc_vs->low(), SharedMiscCodeSize,
+    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(),
+                          pointer_delta(mc_top, _mc_vs->low(), sizeof(char)),
+                          SharedMiscCodeSize,
                           true, true);
 
     // Pass 2 - write data.
@@ -1210,11 +1250,13 @@ public:
     mapinfo->write_header();
     mapinfo->write_space(CompactingPermGenGen::ro, _ro_space, true);
     mapinfo->write_space(CompactingPermGenGen::rw, _rw_space, false);
-    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(), 
-                          md_top - _md_vs->low(), SharedMiscDataSize,
+    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(),
+                          pointer_delta(md_top, _md_vs->low(), sizeof(char)),
+                          SharedMiscDataSize,
                           false, false);
-    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(), 
-                          mc_top - _mc_vs->low(), SharedMiscCodeSize,
+    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(),
+                          pointer_delta(mc_top, _mc_vs->low(), sizeof(char)),
+                          SharedMiscCodeSize,
                           true, true);
     mapinfo->close();
 

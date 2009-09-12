@@ -2,7 +2,7 @@
 #pragma ident "@(#)taskqueue.hpp	1.33 06/08/10 17:56:52 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,6 +123,11 @@ public:
     return dirty_size(_bottom, get_top());
   }
 
+  void set_empty() {
+    _bottom = 0;
+    _age = Age();
+  }
+
   // Maximum number of elements allowed in the queue.  This is two less
   // than the actual queue size, for somewhat complicated reasons.
   juint max_elems() { return n() - 2; }
@@ -158,6 +163,9 @@ public:
   // Delete any resource associated with the queue.
   ~GenericTaskQueue();
 
+  // apply the closure to all elements in the task queue
+  void oops_do(OopClosure* f);
+
 private:
   // Element array.
   volatile E* _elems;
@@ -173,6 +181,24 @@ void GenericTaskQueue<E>::initialize() {
   _elems = NEW_C_HEAP_ARRAY(E, n());
   guarantee(_elems != NULL, "Allocation failed.");
 }
+
+template<class E>
+void GenericTaskQueue<E>::oops_do(OopClosure* f) {
+  // tty->print_cr("START OopTaskQueue::oops_do");
+  int iters = size();
+  juint index = _bottom;
+  for (int i = 0; i < iters; ++i) {
+    index = decrement_index(index);
+    // tty->print_cr("  doing entry %d," INTPTR_T " -> " INTPTR_T,
+    //            index, &_elems[index], _elems[index]);
+    E* t = (E*)&_elems[index];      // cast away volatility
+    oop* p = (oop*)t;
+    assert((*t)->is_oop_or_null(), "Not an oop or null");
+    f->do_oop(p);
+  }
+  // tty->print_cr("END OopTaskQueue::oops_do");
+}
+
 
 template<class E>
 bool GenericTaskQueue<E>::push_slow(E t, juint dirty_n_elems) {
@@ -386,6 +412,12 @@ bool GenericTaskQueueSet<E>::peek() {
   return false;
 }
 
+// When to terminate from the termination protocol.
+class TerminatorTerminator: public CHeapObj {
+public:
+  virtual bool should_exit_termination() = 0;
+};
+
 // A class to aid in the termination of a set of parallel tasks using
 // TaskQueueSet's for work stealing.
 
@@ -410,7 +442,14 @@ public:
   // else is.  If returns "true", all threads are terminated.  If returns
   // "false", available work has been observed in one of the task queues,
   // so the global task is not complete.
-  bool offer_termination();
+  bool offer_termination() {
+    return offer_termination(NULL);
+  }
+
+  // As above, but it also terminates of the should_exit_termination()
+  // method of the terminator parameter returns true. If terminator is
+  // NULL, then it is ignored.
+  bool offer_termination(TerminatorTerminator* terminator);
 
   // Reset the terminator, so that it may be reused again.
   // The caller is responsible for ensuring that this is done
@@ -493,36 +532,60 @@ typedef oop Task;
 typedef GenericTaskQueue<Task>         OopTaskQueue;
 typedef GenericTaskQueueSet<Task>      OopTaskQueueSet;
 
-typedef oop* StarTask;
+
+#define COMPRESSED_OOP_MASK  1
+
+// This is a container class for either an oop* or a narrowOop*.
+// Both are pushed onto a task queue and the consumer will test is_narrow()
+// to determine which should be processed.
+class StarTask {
+  void*  _holder;        // either union oop* or narrowOop*
+ public:
+  StarTask(narrowOop *p) { _holder = (void *)((uintptr_t)p | COMPRESSED_OOP_MASK); }
+  StarTask(oop *p)       { _holder = (void*)p; }
+  StarTask()             { _holder = NULL; }
+  operator oop*()        { return (oop*)_holder; }
+  operator narrowOop*()  {
+    return (narrowOop*)((uintptr_t)_holder & ~COMPRESSED_OOP_MASK);
+  }
+
+  // Operators to preserve const/volatile in assignments required by gcc
+  void operator=(const volatile StarTask& t) volatile { _holder = t._holder; }
+
+  bool is_narrow() const {
+    return (((uintptr_t)_holder & COMPRESSED_OOP_MASK) != 0);
+  }
+};
+
 typedef GenericTaskQueue<StarTask>     OopStarTaskQueue;
 typedef GenericTaskQueueSet<StarTask>  OopStarTaskQueueSet;
 
-typedef size_t ChunkTask;  // index for chunk
-typedef GenericTaskQueue<ChunkTask>    ChunkTaskQueue;
-typedef GenericTaskQueueSet<ChunkTask> ChunkTaskQueueSet;
+typedef size_t RegionTask;  // index for region
+typedef GenericTaskQueue<RegionTask>    RegionTaskQueue;
+typedef GenericTaskQueueSet<RegionTask> RegionTaskQueueSet;
 
-class ChunkTaskQueueWithOverflow: public CHeapObj {
+class RegionTaskQueueWithOverflow: public CHeapObj {
  protected:
-  ChunkTaskQueue              _chunk_queue;
-  GrowableArray<ChunkTask>*   _overflow_stack;
+  RegionTaskQueue              _region_queue;
+  GrowableArray<RegionTask>*   _overflow_stack;
 
  public:
-  ChunkTaskQueueWithOverflow() : _overflow_stack(NULL) {}
+  RegionTaskQueueWithOverflow() : _overflow_stack(NULL) {}
   // Initialize both stealable queue and overflow
   void initialize();
   // Save first to stealable queue and then to overflow
-  void save(ChunkTask t);
+  void save(RegionTask t);
   // Retrieve first from overflow and then from stealable queue
-  bool retrieve(ChunkTask& chunk_index);
+  bool retrieve(RegionTask& region_index);
   // Retrieve from stealable queue
-  bool retrieve_from_stealable_queue(ChunkTask& chunk_index);
+  bool retrieve_from_stealable_queue(RegionTask& region_index);
   // Retrieve from overflow
-  bool retrieve_from_overflow(ChunkTask& chunk_index);
+  bool retrieve_from_overflow(RegionTask& region_index);
   bool is_empty();
   bool stealable_is_empty();
   bool overflow_is_empty();
-  juint stealable_size() { return _chunk_queue.size(); }
-  ChunkTaskQueue* task_queue() { return &_chunk_queue; }
+  juint stealable_size() { return _region_queue.size(); }
+  RegionTaskQueue* task_queue() { return &_region_queue; }
 };
 
-#define USE_ChunkTaskQueueWithOverflow
+#define USE_RegionTaskQueueWithOverflow

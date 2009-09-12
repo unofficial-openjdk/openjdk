@@ -2,7 +2,7 @@
 #pragma ident "@(#)phase.cpp	1.59 07/05/17 16:00:26 JVM"
 #endif
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ elapsedTimer Phase::_t_output;
 #ifndef PRODUCT
 elapsedTimer Phase::_t_graphReshaping;
 elapsedTimer Phase::_t_scheduler;
-elapsedTimer Phase::_t_removeEmptyBlocks;
+elapsedTimer Phase::_t_blockOrdering;
 elapsedTimer Phase::_t_macroExpand;
 elapsedTimer Phase::_t_peephole;
 elapsedTimer Phase::_t_codeGeneration;
@@ -131,17 +131,17 @@ void Phase::print_timers() {
     tty->print_cr ("      subtotal     : %3.3f sec,  %3.2f %%", regalloc_subtotal, percent_of_regalloc);
   }
   tty->print_cr ("    macroExpand  : %3.3f sec", Phase::_t_macroExpand.seconds());
-  tty->print_cr ("    removeEmpty  : %3.3f sec", Phase::_t_removeEmptyBlocks.seconds());
+  tty->print_cr ("    blockOrdering: %3.3f sec", Phase::_t_blockOrdering.seconds());
   tty->print_cr ("    peephole     : %3.3f sec", Phase::_t_peephole.seconds());
   tty->print_cr ("    codeGen      : %3.3f sec", Phase::_t_codeGeneration.seconds());
   tty->print_cr ("    install_code : %3.3f sec", Phase::_t_registerMethod.seconds());
   tty->print_cr ("    ------------ : ----------");
   double phase_subtotal = Phase::_t_parser.seconds() + 
     (DoEscapeAnalysis ? Phase::_t_escapeAnalysis.seconds() : 0.0) +
-    Phase::_t_optimizer.seconds() + Phase::_t_graphReshaping.seconds() + 
-    Phase::_t_matcher.seconds() + Phase::_t_scheduler.seconds() + 
-    Phase::_t_registerAllocation.seconds() + Phase::_t_removeEmptyBlocks.seconds() +
-    Phase::_t_macroExpand.seconds() + Phase::_t_peephole.seconds() + 
+    Phase::_t_optimizer.seconds() + Phase::_t_graphReshaping.seconds() +
+    Phase::_t_matcher.seconds() + Phase::_t_scheduler.seconds() +
+    Phase::_t_registerAllocation.seconds() + Phase::_t_blockOrdering.seconds() +
+    Phase::_t_macroExpand.seconds() + Phase::_t_peephole.seconds() +
     Phase::_t_codeGeneration.seconds() + Phase::_t_registerMethod.seconds();
   double percent_of_method_compile = ((phase_subtotal == 0.0) ? 0.0 : phase_subtotal / Phase::_t_methodCompilation.seconds()) * 100.0;
   // counters inside Compile::CodeGen include time for adapters and stubs

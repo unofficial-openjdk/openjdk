@@ -2,7 +2,7 @@
 #pragma ident "@(#)sharedRuntime.hpp	1.158 07/10/05 19:47:48 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,6 +62,10 @@ class SharedRuntime: AllStatic {
 
 #endif // !PRODUCT
  public:
+
+  // max bytes for each dtrace string parameter
+  enum { max_dtrace_string_size = 256 };
+
   // The following arithmetic routines are used on platforms that do
   // not have machine instructions to implement their functionality.
   // Do not remove these.
@@ -97,6 +101,12 @@ class SharedRuntime: AllStatic {
   // exception handling across interpreter/compiler boundaries
   static address raw_exception_handler_for_return_address(address return_address);
   static address exception_handler_for_return_address(address return_address);
+
+#ifndef SERIALGC
+  // G1 write barriers
+  static void g1_wb_pre(oopDesc* orig, JavaThread *thread);
+  static void g1_wb_post(void* card_addr, JavaThread* thread);
+#endif // !SERIALGC
 
   // exception handling and implicit exceptions
   static address compute_compiled_exc_handler(nmethod* nm, address ret_pc, Handle& exception,
@@ -158,6 +168,9 @@ class SharedRuntime: AllStatic {
   // Helper routine for full-speed JVMTI exception throwing support
   static void throw_and_post_jvmti_exception(JavaThread *thread, Handle h_exception);
   static void throw_and_post_jvmti_exception(JavaThread *thread, symbolOop name, const char *message = NULL);
+
+  // RedefineClasses() tracing support for obsolete method entry
+  static int rc_trace_method_entry(JavaThread* thread, methodOopDesc* m);
 
   // To be used as the entry point for unresolved native methods.
   static address native_method_throw_unsatisfied_link_error_entry();
@@ -261,9 +274,6 @@ class SharedRuntime: AllStatic {
 
  public:
 
-
-  static void create_native_wrapper (JavaThread* thread, methodOop method);
-
   // Read the array of BasicTypes from a Java signature, and compute where
   // compiled Java code would like to put the results.  Values in reg_lo and
   // reg_hi refer to 4-byte quantities.  Values less than SharedInfo::stack0 are
@@ -356,6 +366,19 @@ class SharedRuntime: AllStatic {
                                           BasicType *sig_bt,
                                           VMRegPair *regs,
                                           BasicType ret_type );
+
+#ifdef HAVE_DTRACE_H
+  // Generate a dtrace wrapper for a given method.  The method takes arguments
+  // in the Java compiled code convention, marshals them to the native
+  // convention (handlizes oops, etc), transitions to native, makes the call,
+  // returns to java state (possibly blocking), unhandlizes any result and
+  // returns.
+  static nmethod *generate_dtrace_nmethod(MacroAssembler* masm,
+                                          methodHandle method);
+
+  // dtrace support to convert a Java string to utf8
+  static void get_utf(oopDesc* src, address dst);
+#endif // def HAVE_DTRACE_H
 
   // A compiled caller has just called the interpreter, but compiled code
   // exists.  Patch the caller so he no longer calls into the interpreter.
@@ -495,42 +518,55 @@ class AdapterHandlerEntry : public CHeapObj {
   address _c2i_unverified_entry;
 
  public:
+
+  // The name we give all buffer blobs
+  static const char* name;
+
   AdapterHandlerEntry(address i2c_entry, address c2i_entry, address c2i_unverified_entry):
     _i2c_entry(i2c_entry),
     _c2i_entry(c2i_entry),
     _c2i_unverified_entry(c2i_unverified_entry) {
   }
-  // The name we give all buffer blobs
-  static const char* name;
 
   address get_i2c_entry()            { return _i2c_entry; }
   address get_c2i_entry()            { return _c2i_entry; }
   address get_c2i_unverified_entry() { return _c2i_unverified_entry; }
+
   void relocate(address new_base);
 #ifndef PRODUCT
   void print();
 #endif /* PRODUCT */
 };
 
-
 class AdapterHandlerLibrary: public AllStatic {
  private:
+  static u_char                   _buffer[];  // the temporary code buffer
+  static GrowableArray<uint64_t>* _fingerprints; // the fingerprint collection
+  static GrowableArray<AdapterHandlerEntry*> * _handlers; // the corresponding handlers
   enum {
     AbstractMethodHandler = 1 // special handler for abstract methods
   };
-  static GrowableArray<uint64_t>* _fingerprints; // the fingerprint collection
-  static GrowableArray<AdapterHandlerEntry*> * _handlers; // the corresponding handlers
-  static u_char                   _buffer[];  // the temporary code buffer
   static void initialize();
-  static AdapterHandlerEntry* get_entry( int index ) { return _handlers->at(index); }
   static int get_create_adapter_index(methodHandle method);
-  static address get_i2c_entry( int index ) { return get_entry(index)->get_i2c_entry(); }
-  static address get_c2i_entry( int index ) { return get_entry(index)->get_c2i_entry(); }
-  static address get_c2i_unverified_entry( int index ) { return get_entry(index)->get_c2i_unverified_entry(); }
+  static address get_i2c_entry( int index ) {
+    return get_entry(index)->get_i2c_entry();
+  }
+  static address get_c2i_entry( int index ) {
+    return get_entry(index)->get_c2i_entry();
+  }
+  static address get_c2i_unverified_entry( int index ) {
+    return get_entry(index)->get_c2i_unverified_entry();
+  }
 
  public:
+  static AdapterHandlerEntry* get_entry( int index ) { return _handlers->at(index); }
   static nmethod* create_native_wrapper(methodHandle method);
-  static AdapterHandlerEntry* get_adapter(methodHandle method)  { return get_entry(get_create_adapter_index(method)); }
+  static AdapterHandlerEntry* get_adapter(methodHandle method)  {
+    return get_entry(get_create_adapter_index(method));
+  }
+#ifdef HAVE_DTRACE_H
+  static nmethod* create_dtrace_nmethod (methodHandle method);
+#endif // HAVE_DTRACE_H
 
 #ifndef PRODUCT
   static void print_handler(CodeBlob* b);

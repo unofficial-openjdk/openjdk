@@ -2,7 +2,7 @@
 #pragma ident "@(#)frame.cpp	1.235 07/09/25 17:07:43 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,12 +86,12 @@ void RegisterMap::print_on(outputStream* st) const {
     intptr_t* src = (intptr_t*) location(r);
     if (src != NULL) {
 
-      r->print();
-      tty->print(" [" INTPTR_FORMAT "] = ", src);
+      r->print_on(st);
+      st->print(" [" INTPTR_FORMAT "] = ", src);
       if (((uintptr_t)src & (sizeof(*src)-1)) != 0) {
-	tty->print_cr("<misaligned>");
+        st->print_cr("<misaligned>");
       } else {
-	tty->print_cr(INTPTR_FORMAT, *src);
+        st->print_cr(INTPTR_FORMAT, *src);
       }
     }
   }
@@ -1155,10 +1155,9 @@ oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {
   if(reg->is_reg()) {    
     // If it is passed in a register, it got spilled in the stub frame.  
     return (oop *)reg_map->location(reg);
-  } else {			        
-    int sp_offset_in_stack_slots = reg->reg2stack();
-    int sp_offset = sp_offset_in_stack_slots >> (LogBytesPerWord - LogBytesPerInt);
-    return (oop *)&unextended_sp()[sp_offset];
+  } else {
+    int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
+    return (oop*)(((address)unextended_sp()) + sp_offset_in_bytes);
   }
 }
 
@@ -1334,8 +1333,7 @@ void frame::zap_dead_compiled_locals(JavaThread* thread, const RegisterMap* reg_
   ResourceMark rm(thread);
   assert(_cb != NULL, "sanity check");
   if (_cb->oop_maps() != NULL) {
-    OopMapSet::all_do(this, reg_map, &_check_oop, check_derived_oop,
-		      &_check_value, &_zap_dead);
+    OopMapSet::all_do(this, reg_map, &_check_oop, check_derived_oop, &_check_value);
   }
 }
 

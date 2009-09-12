@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_LIRGenerator_sparc.cpp	1.11 07/06/18 14:25:22 JVM"
-#endif
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -70,7 +67,7 @@ LIR_Opr LIRGenerator::result_register_for(ValueType* type, bool callee) {
   case longTag:    opr = callee ? FrameMap::in_long_opr : FrameMap::out_long_opr; break;
   case floatTag:   opr = FrameMap::F0_opr;                                        break;
   case doubleTag:  opr = FrameMap::F0_double_opr;                                 break;
-    
+
   case addressTag:
   default: ShouldNotReachHere(); return LIR_OprFact::illegalOpr;
   }
@@ -182,12 +179,12 @@ LIR_Address* LIRGenerator::generate_address(LIR_Opr base, LIR_Opr index,
 
 LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_opr,
                                               BasicType type, bool needs_card_mark) {
-  int elem_size = type2aelembytes[type];
+  int elem_size = type2aelembytes(type);
   int shift = exact_log2(elem_size);
 
   LIR_Opr base_opr;
   int offset = arrayOopDesc::base_offset_in_bytes(type);
-  
+
   if (index_opr->is_constant()) {
     int i = index_opr->as_constant_ptr()->as_jint();
     int array_offset = i * elem_size;
@@ -363,11 +360,15 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
     LIR_Opr tmp1 = FrameMap::G1_opr;
     LIR_Opr tmp2 = FrameMap::G3_opr;
     LIR_Opr tmp3 = FrameMap::G5_opr;
-    
+
     CodeEmitInfo* store_check_info = new CodeEmitInfo(range_check_info);
     __ store_check(value.result(), array.result(), tmp1, tmp2, tmp3, store_check_info);
   }
 
+  if (obj_store) {
+    // Needs GC write barriers.
+    pre_barrier(LIR_OprFact::address(array_addr), false, NULL);
+  }
   __ move(value.result(), array_addr, null_check_info);
   if (obj_store) {
     // Is this precise?
@@ -654,8 +655,8 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   LIRItem val   (x->argument_at(3), this);  // replace field with val if matches cmp
 
   // Use temps to avoid kills
-  LIR_Opr t1 = FrameMap::G1_opr; 
-  LIR_Opr t2 = FrameMap::G3_opr; 
+  LIR_Opr t1 = FrameMap::G1_opr;
+  LIR_Opr t2 = FrameMap::G3_opr;
   LIR_Opr addr = new_pointer_register();
 
   // get address of field
@@ -666,7 +667,11 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
 
   __ add(obj.result(), offset.result(), addr);
 
-  if (type == objectType) 
+  if (type == objectType) {  // Write-barrier needed for Object fields.
+    pre_barrier(obj.result(), false, NULL);
+  }
+
+  if (type == objectType)
     __ cas_obj(addr, cmp.result(), val.result(), t1, t2);
   else if (type == intType)
     __ cas_int(addr, cmp.result(), val.result(), t1, t2);
@@ -675,12 +680,16 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   else {
     ShouldNotReachHere();
   }
-  
+
   // generate conditional move of boolean result
   LIR_Opr result = rlock_result(x);
   __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result);
   if (type == objectType) {  // Write-barrier needed for Object fields.
+#ifdef PRECISE_CARDMARK
+    post_barrier(addr, val.result());
+#else
     post_barrier(obj.result(), val.result());
+#endif // PRECISE_CARDMARK
   }
 }
 
@@ -716,20 +725,20 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
       address runtime_entry = NULL;
       switch (x->id()) {
       case vmIntrinsics::_dsin:
-	runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dsin);
-	break;
+        runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dsin);
+        break;
       case vmIntrinsics::_dcos:
         runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dcos);
-	break;
+        break;
       case vmIntrinsics::_dtan:
         runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dtan);
-	break;
+        break;
       case vmIntrinsics::_dlog:
         runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dlog);
-	break;
+        break;
       case vmIntrinsics::_dlog10:
         runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dlog10);
-	break;
+        break;
       default:
         ShouldNotReachHere();
       }
@@ -883,7 +892,7 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
   LIR_Opr klass_reg = FrameMap::G5_oop_opr;
   LIR_Opr len = length.result();
   BasicType elem_type = x->elt_type();
-  
+
   __ oop2reg(ciTypeArrayKlass::make(elem_type)->encoding(), klass_reg);
 
   CodeEmitInfo* info = state_for(x, x->state());
@@ -959,7 +968,8 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
     size->load_item();
     store_stack_parameter (size->result(),
                            in_ByteSize(STACK_BIAS +
-                                       (i + frame::memory_parameter_word_sp_offset) * wordSize));
+                                       frame::memory_parameter_word_sp_offset * wordSize +
+                                       i * sizeof(jint)));
   }
 
   // This instruction can be deoptimized in the slow path : use
@@ -1156,6 +1166,10 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
         addr = new LIR_Address(base_op, index_op, type);
       }
 
+      if (is_obj) {
+        pre_barrier(LIR_OprFact::address(addr), false, NULL);
+        // _bs->c1_write_barrier_pre(this, LIR_OprFact::address(addr));
+      }
       __ move(data, addr);
       if (is_obj) {
         // This address is precise
@@ -1177,5 +1191,3 @@ void LIRGenerator::get_Object_unsafe(LIR_Opr dst, LIR_Opr src, LIR_Opr offset,
     __ load(addr, dst);
   }
 }
-
-

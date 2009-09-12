@@ -2,7 +2,7 @@
 #pragma ident "@(#)constantPoolOop.hpp	1.105 07/08/29 13:42:26 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,19 +37,31 @@
 
 class SymbolHashMap;
 
-class constantPoolOopDesc : public arrayOopDesc {
+class constantPoolOopDesc : public oopDesc {
   friend class VMStructs;
   friend class BytecodeInterpreter;  // Directly extracts an oop in the pool for fast instanceof/checkcast
  private:
   typeArrayOop         _tags; // the tag array describing the constant pool's contents
   constantPoolCacheOop _cache;         // the cache holding interpreter runtime information
   klassOop             _pool_holder;   // the corresponding class
+  int                  _flags;         // a few header bits to describe contents for GC
+  int                  _length; // number of elements in the array
   // only set to non-zero if constant pool is merged by RedefineClasses
   int                  _orig_length;
 
   void set_tags(typeArrayOop tags)             { oop_store_without_check((oop*)&_tags, tags); }
   void tag_at_put(int which, jbyte t)          { tags()->byte_at_put(which, t); }
   void release_tag_at_put(int which, jbyte t)  { tags()->release_byte_at_put(which, t); }
+
+  enum FlagBit {
+    FB_has_pseudo_string = 2
+  };
+
+  int flags() const                         { return _flags; }
+  void set_flags(int f)                     { _flags = f; }
+  bool flag_at(FlagBit fb) const            { return (_flags & (1 << (int)fb)) != 0; }
+  void set_flag_at(FlagBit fb);
+  // no clear_flag_at function; they only increase
 
  private:
   intptr_t* base() const { return (intptr_t*) (((char*) this) + sizeof(constantPoolOopDesc)); }
@@ -83,6 +95,9 @@ class constantPoolOopDesc : public arrayOopDesc {
 
  public:
   typeArrayOop tags() const                 { return _tags; }
+
+  bool has_pseudo_string() const            { return flag_at(FB_has_pseudo_string); }
+  void set_pseudo_string()                  {    set_flag_at(FB_has_pseudo_string); }
 
   // Klass holding pool
   klassOop pool_holder() const              { return _pool_holder; }
@@ -274,6 +289,27 @@ class constantPoolOopDesc : public arrayOopDesc {
     return string_at_impl(h_this, which, CHECK_NULL); 
   }
 
+  // A "pseudo-string" is an non-string oop that has found is way into
+  // a String entry.
+  // Under AnonymousClasses this can happen if the user patches a live
+  // object into a CONSTANT_String entry of an anonymous class.
+  // Method oops internally created for method handles may also
+  // use pseudo-strings to link themselves to related metaobjects.
+
+  bool is_pseudo_string_at(int which);
+
+  oop pseudo_string_at(int which) {
+    assert(tag_at(which).is_string(), "Corrupted constant pool");
+    return *obj_at_addr(which);
+  }
+
+  void pseudo_string_at_put(int which, oop x) {
+    assert(AnonymousClasses, "");
+    set_pseudo_string();        // mark header
+    assert(tag_at(which).is_string() || tag_at(which).is_unresolved_string(), "Corrupted constant pool");
+    string_at_put(which, x);    // this works just fine
+  }
+
   // only called when we are sure a string entry is already resolved (via an
   // earlier string_at call.
   oop resolved_string_at(int which) {
@@ -295,6 +331,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   // UTF8 char* representation was chosen to avoid conversion of
   // java_lang_Strings at resolved entries into symbolOops
   // or vice versa.
+  // Caller is responsible for checking for pseudo-strings.
   char* string_at_noresolve(int which);
 
   jint name_and_type_at(int which) {
@@ -333,6 +370,14 @@ class constantPoolOopDesc : public arrayOopDesc {
   bool klass_name_at_matches(instanceKlassHandle k, int which);
 
   // Sizing
+  int length() const                   { return _length; }
+  void set_length(int length)          { _length = length; }
+
+  // Tells whether index is within bounds.
+  bool is_within_bounds(int index) const {
+    return 0 <= index && index < length();
+  }
+
   static int header_size()             { return sizeof(constantPoolOopDesc)/HeapWordSize; }
   static int object_size(int length)   { return align_object_size(header_size() + length); }
   int object_size()                    { return object_size(length()); }

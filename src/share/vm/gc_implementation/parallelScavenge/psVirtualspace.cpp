@@ -2,7 +2,7 @@
 #pragma ident "@(#)psVirtualspace.cpp	1.16 07/05/05 17:05:31 JVM"
 #endif
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,13 +74,8 @@ bool PSVirtualSpace::contains(void* p) const {
 
 void PSVirtualSpace::release() {
   DEBUG_ONLY(PSVirtualSpaceVerifier this_verifier(this));
-  if (reserved_low_addr() != NULL) {
-    if (special()) {
-      os::release_memory_special(reserved_low_addr(), reserved_size());
-    } else {
-      (void)os::release_memory(reserved_low_addr(), reserved_size());
-    }
-  }
+  // This may not release memory it didn't reserve.
+  // Use rs.release() to release the underlying memory instead.
   _reserved_low_addr = _reserved_high_addr = NULL;
   _committed_low_addr = _committed_high_addr = NULL;
   _special = false;

@@ -2,7 +2,7 @@
 #pragma ident "@(#)universe.hpp	1.183 07/08/09 09:12:00 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,6 +95,7 @@ class LatestMethodOopCache : public CommonMethodOopCache {
 
 
 class Universe: AllStatic {
+  // Ugh.  Universe is much too friendly.
   friend class MarkSweep;
   friend class oopDesc;
   friend class ClassLoader;
@@ -183,11 +184,14 @@ class Universe: AllStatic {
 
   // The particular choice of collected heap.
   static CollectedHeap* _collectedHeap;
+  // Base address for oop-within-java-object materialization.
+  // NULL if using wide oops.  Doubles as heap oop null value.
+  static address        _heap_base;
 
   // array of dummy objects used with +FullGCAlot
   debug_only(static objArrayOop _fullgc_alot_dummy_array;)
- // index of next entry to clear
-  debug_only(static int         _fullgc_alot_dummy_next;) 
+  // index of next entry to clear
+  debug_only(static int         _fullgc_alot_dummy_next;)
 
   // Compiler/dispatch support
   static int  _base_vtable_size;                      // Java vtbl size of klass Object (in words)
@@ -325,6 +329,10 @@ class Universe: AllStatic {
 
   // The particular choice of collected heap.
   static CollectedHeap* heap() { return _collectedHeap; }
+
+  // For UseCompressedOops
+  static address heap_base()       { return _heap_base; }
+  static address* heap_base_addr() { return &_heap_base; }
 
   // Historic gc information
   static size_t get_heap_capacity_at_last_gc()         { return _heap_capacity_at_last_gc; }

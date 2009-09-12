@@ -2,7 +2,7 @@
 #pragma ident "@(#)referencePolicy.hpp	1.11 07/05/05 17:05:54 JVM"
 #endif
 /*
- * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,11 @@
 // should be cleared.
 
 
-class ReferencePolicy : public ResourceObj {
+class ReferencePolicy : public CHeapObj {
  public:
   virtual bool should_clear_reference(oop p)       { ShouldNotReachHere(); return true; }
+  // Capture state (of-the-VM) information needed to evaluate the policy
+  virtual void setup() { /* do nothing */ }
 };
 
 class NeverClearPolicy : public ReferencePolicy {
@@ -51,6 +53,8 @@ class LRUCurrentHeapPolicy : public ReferencePolicy {
  public:
   LRUCurrentHeapPolicy();
 
+  // Capture state (of-the-VM) information needed to evaluate the policy
+  void setup();
   bool should_clear_reference(oop p);
 };
 
@@ -61,5 +65,7 @@ class LRUMaxHeapPolicy : public ReferencePolicy {
  public:
   LRUMaxHeapPolicy();
 
+  // Capture state (of-the-VM) information needed to evaluate the policy
+  void setup();
   bool should_clear_reference(oop p);
 };

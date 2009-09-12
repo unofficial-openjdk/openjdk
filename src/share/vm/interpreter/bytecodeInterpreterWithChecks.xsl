@@ -1,6 +1,6 @@
 <?xml version="1.0"?> 
 <!-- 
-     Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.
+     Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
      DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
      This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 
 <xsl:template match="processcode">
 <xsl:text>
@@ -33,7 +34,6 @@
 
 </xsl:text>
 
-<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 </xsl:template>
 
 </xsl:stylesheet>

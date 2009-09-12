@@ -2,7 +2,7 @@
 #pragma ident "@(#)matcher.hpp	1.188 07/07/19 19:08:27 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ class Matcher : public PhaseTransform {
   void ReduceOper( State *s, int newrule, Node *&mem, MachNode *mach );
 
   // If this node already matched using "rule", return the MachNode for it.
-  MachNode* find_shared_constant(Node* con, uint rule);
+  MachNode* find_shared_node(Node* n, uint rule);
 
   // Convert a dense opcode number to an expanded rule number
   const int *_reduceOp;
@@ -84,9 +84,10 @@ class Matcher : public PhaseTransform {
 
   Node_List &_proj_list;        // For Machine nodes killing many values
 
-  Node_Array _shared_constants;
+  Node_Array _shared_nodes;
 
   debug_only(Node_Array _old2new_map;)   // Map roots of ideal-trees to machine-roots
+  debug_only(Node_Array _new2old_map;)   // Maps machine nodes back to ideal
 
   // Accessors for the inherited field PhaseTransform::_nodes:
   void   grow_new_node_array(uint idx_limit) {
@@ -107,6 +108,8 @@ class Matcher : public PhaseTransform {
 #ifdef ASSERT
   // Make sure only new nodes are reachable from this node
   void verify_new_nodes_only(Node* root);
+
+  Node* _mem_node;   // Ideal memory node consumed by mach node
 #endif
 
 public:
@@ -166,7 +169,7 @@ public:
   // List of IfFalse or IfTrue Nodes that indicate a taken null test.
   // List is valid in the post-matching space.
   Node_List _null_check_tests;
-  void collect_null_checks( Node *proj );
+  void collect_null_checks( Node *proj, Node *orig_proj );
   void validate_null_checks( );
 
   Matcher( Node_List &proj_list );
@@ -324,7 +327,7 @@ public:
   virtual int      regnum_to_fpu_offset(int regnum);
 
   // Is this branch offset small enough to be addressed by a short branch?
-  bool is_short_branch_offset(int offset);
+  bool is_short_branch_offset(int rule, int offset);
 
   // Optional scaling for the parameter to the ClearArray/CopyArray node.
   static const bool init_array_count_is_in_bytes;
@@ -391,5 +394,9 @@ public:
 
 #ifdef ASSERT
   void dump_old2new_map();      // machine-independent to machine-dependent
+
+  Node* find_old_node(Node* new_node) {
+    return _new2old_map[new_node->_idx];
+  }
 #endif
 };

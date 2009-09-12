@@ -2,7 +2,7 @@
 #pragma ident "@(#)generation.hpp	1.195 07/05/17 15:55:02 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,13 +298,7 @@ class Generation: public CHeapObj {
   // 
   // The "obj_size" argument is just obj->size(), passed along so the caller can
   // avoid repeating the virtual call to retrieve it.
-  // 
-  // The "ref" argument, if non-NULL, is the address of some reference to "obj"
-  // (that is "*ref == obj"); some generations may use this information to, for
-  // example, influence placement decisions.
-  // 
-  // The default implementation ignores "ref" and calls allocate().
-  virtual oop promote(oop obj, size_t obj_size, oop* ref);
+  virtual oop promote(oop obj, size_t obj_size);
 
   // Thread "thread_num" (0 <= i < ParalleGCThreads) wants to promote
   // object "obj", whose original mark word was "m", and whose size is
@@ -384,6 +378,9 @@ class Generation: public CHeapObj {
   // Some generations may require some cleanup actions after a collection.
   // The default is to do nothing.
   virtual void gc_epilogue(bool full) {};
+
+  // Save the high water marks for the used space in a generation.
+  virtual void record_spaces_top() {};
 
   // Some generations may need to be "fixed-up" after some allocation
   // activity to make them parsable again. The default is to do nothing.
@@ -484,6 +481,10 @@ class Generation: public CHeapObj {
   // augmented list.  The default is to offer no space.
   virtual void contribute_scratch(ScratchBlock*& list, Generation* requestor,
 				  size_t max_alloc_words) {}
+
+  // Give each generation an opportunity to do clean up for any
+  // contributed scratch.
+  virtual void reset_scratch() {};
 
   // When an older generation has been collected, and perhaps resized,
   // this method will be invoked on all younger generations (from older to
@@ -608,11 +609,21 @@ class CardGeneration: public Generation {
   
  public:
 
+  // Attempt to expand the generation by "bytes".  Expand by at a
+  // minimum "expand_bytes".  Return true if some amount (not
+  // necessarily the full "bytes") was done.
+  virtual bool expand(size_t bytes, size_t expand_bytes);
+
   virtual void clear_remembered_set();
 
   virtual void invalidate_remembered_set();
 
   virtual void prepare_for_verify();
+
+  // Grow generation with specified size (returns false if unable to grow)
+  virtual bool grow_by(size_t bytes) = 0;
+  // Grow generation to reserved size.
+  virtual bool grow_to_reserved() = 0;
 };
 
 // OneContigSpaceCardGeneration models a heap of old objects contained in a single
@@ -633,14 +644,14 @@ class OneContigSpaceCardGeneration: public CardGeneration {
 			              // and after last GC.
 
   // Grow generation with specified size (returns false if unable to grow)
-  bool grow_by(size_t bytes);
+  virtual bool grow_by(size_t bytes);
   // Grow generation to reserved size.
-  bool grow_to_reserved();
+  virtual bool grow_to_reserved();
   // Shrink generation with specified size (returns false if unable to shrink)
   void shrink_by(size_t bytes);
 
   // Allocation failure
-  void expand(size_t bytes, size_t expand_bytes);
+  virtual bool expand(size_t bytes, size_t expand_bytes);
   void shrink(size_t bytes);
 
   // Accessing spaces
@@ -707,6 +718,8 @@ class OneContigSpaceCardGeneration: public CardGeneration {
   virtual void prepare_for_verify();
 
   virtual void gc_epilogue(bool full);
+
+  virtual void record_spaces_top();
 
   virtual void verify(bool allow_dirty);
   virtual void print_on(outputStream* st) const;

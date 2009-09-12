@@ -2,7 +2,7 @@
 #pragma ident "@(#)bytecodes.hpp	1.79 07/06/20 14:52:28 JVM"
 #endif
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -343,8 +343,10 @@ class Bytecodes: AllStatic {
     const char* wf = wide_format(code);
     return (wf == NULL) ? 0 : (int)strlen(wf);
   }
-  static int         special_length_at(address bcp);
-  static int         raw_special_length_at(address bcp);
+  // if 'end' is provided, it indicates the end of the code buffer which
+  // should not be read past when parsing.
+  static int         special_length_at(address bcp, address end = NULL);
+  static int         raw_special_length_at(address bcp, address end = NULL);
   static int         length_at      (address bcp)  { int l = length_for(code_at(bcp)); return l > 0 ? l : special_length_at(bcp); }
   static int         java_length_at (address bcp)  { int l = length_for(java_code_at(bcp)); return l > 0 ? l : special_length_at(bcp); }
   static bool        is_java_code   (Code code)    { return 0 <= code && code < number_of_java_codes; }

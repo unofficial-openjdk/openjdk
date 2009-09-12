@@ -2,7 +2,7 @@
 #pragma ident "@(#)psPromotionManager.cpp	1.30 07/09/25 16:47:41 JVM"
 #endif
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -185,7 +185,7 @@ PSPromotionManager::PSPromotionManager() {
     claimed_stack_depth()->initialize();
     queue_size = claimed_stack_depth()->max_elems();
     // We want the overflow stack to be permanent
-    _overflow_stack_depth = new (ResourceObj::C_HEAP) GrowableArray<oop*>(10, true);
+    _overflow_stack_depth = new (ResourceObj::C_HEAP) GrowableArray<StarTask>(10, true);
     _overflow_stack_breadth = NULL;
   } else {
     claimed_stack_breadth()->initialize();
@@ -243,6 +243,7 @@ void PSPromotionManager::reset() {
 #endif // PS_PM_STATS
 }
 
+
 void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
   assert(depth_first(), "invariant");
   assert(overflow_stack_depth() != NULL, "invariant");
@@ -257,13 +258,15 @@ void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
 #endif /* ASSERT */
 
   do {
-    oop* p;
+    StarTask p;
 
     // Drain overflow stack first, so other threads can steal from
     // claimed stack while we work.
     while(!overflow_stack_depth()->is_empty()) {
-      p = overflow_stack_depth()->pop();
-      process_popped_location_depth(p);
+      // linux compiler wants different overloaded operator= in taskqueue to
+      // assign to p that the other compilers don't like.
+      StarTask ptr = overflow_stack_depth()->pop();
+      process_popped_location_depth(ptr);
     }
 
     if (totally_drain) {
@@ -368,7 +371,7 @@ void PSPromotionManager::flush_labs() {
 //
 
 oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
-  assert(PSScavenge::should_scavenge(o), "Sanity");
+  assert(PSScavenge::should_scavenge(&o), "Sanity");
 
   oop new_obj = NULL;
   
@@ -499,26 +502,15 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
       // We lost, someone else "owns" this object
       guarantee(o->is_forwarded(), "Object must be forwarded if the cas failed.");
 
-      // Unallocate the space used. NOTE! We may have directly allocated
-      // the object. If so, we cannot deallocate it, so we have to test!
+      // Try to deallocate the space.  If it was directly allocated we cannot
+      // deallocate it, so we have to test.  If the deallocation fails,
+      // overwrite with a filler object.
       if (new_obj_is_tenured) {
         if (!_old_lab.unallocate_object(new_obj)) {
-          // The promotion lab failed to unallocate the object.
-          // We need to overwrite the object with a filler that
-          // contains no interior pointers. 
-          MemRegion mr((HeapWord*)new_obj, new_obj_size);
-          // Clean this up and move to oopFactory (see bug 4718422)
-          SharedHeap::fill_region_with_object(mr);
+          CollectedHeap::fill_with_object((HeapWord*) new_obj, new_obj_size);
         }
-      } else {
-        if (!_young_lab.unallocate_object(new_obj)) {
-          // The promotion lab failed to unallocate the object.
-          // We need to overwrite the object with a filler that
-          // contains no interior pointers. 
-          MemRegion mr((HeapWord*)new_obj, new_obj_size);
-          // Clean this up and move to oopFactory (see bug 4718422)
-          SharedHeap::fill_region_with_object(mr);
-        }
+      } else if (!_young_lab.unallocate_object(new_obj)) {
+        CollectedHeap::fill_with_object((HeapWord*) new_obj, new_obj_size);
       }
 
       // don't update this before the unallocation!
@@ -533,14 +525,28 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
   // This code must come after the CAS test, or it will print incorrect
   // information.
   if (TraceScavenge) {
-    gclog_or_tty->print_cr("{%s %s 0x%x -> 0x%x (%d)}", 
-       PSScavenge::should_scavenge(new_obj) ? "copying" : "tenuring", 
+    gclog_or_tty->print_cr("{%s %s " PTR_FORMAT " -> " PTR_FORMAT " (" SIZE_FORMAT ")}",
+       PSScavenge::should_scavenge(&new_obj) ? "copying" : "tenuring",
        new_obj->blueprint()->internal_name(), o, new_obj, new_obj->size());
-
   }
 #endif
 
   return new_obj;
+}
+
+template <class T> void PSPromotionManager::process_array_chunk_work(
+                                                 oop obj,
+                                                 int start, int end) {
+  assert(start < end, "invariant");
+  T* const base      = (T*)objArrayOop(obj)->base();
+  T* p               = base + start;
+  T* const chunk_end = base + end;
+  while (p < chunk_end) {
+    if (PSScavenge::should_scavenge(p)) {
+      claim_or_forward_depth(p);
+    }
+    ++p;
+  }
 }
 
 void PSPromotionManager::process_array_chunk(oop old) {
@@ -572,15 +578,10 @@ void PSPromotionManager::process_array_chunk(oop old) {
     arrayOop(old)->set_length(actual_length);
   }
 
-  assert(start < end, "invariant");
-  oop* const base      = objArrayOop(obj)->base();
-  oop* p               = base + start;
-  oop* const chunk_end = base + end;
-  while (p < chunk_end) {
-    if (PSScavenge::should_scavenge(*p)) {
-      claim_or_forward_depth(p);
-    }
-    ++p;
+  if (UseCompressedOops) {
+    process_array_chunk_work<narrowOop>(obj, start, end);
+  } else {
+    process_array_chunk_work<oop>(obj, start, end);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -306,6 +306,8 @@ public class HotSpotTypeDataBase extends BasicTypeDataBase {
 
       entryAddr = entryAddr.addOffsetTo(intConstantEntryArrayStride);
     } while (nameAddr != null);
+      String symbol = "heapOopSize"; // global int constant and value is initialized at runtime.
+      addIntConstant(symbol, (int)lookupInProcess(symbol).getCIntegerAt(0, 4, false));
   }
 
   private void readVMLongConstants() {

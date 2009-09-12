@@ -2,7 +2,7 @@
 #pragma ident "@(#)interpreterRuntime.hpp	1.143 07/05/05 17:05:38 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,10 @@ class InterpreterRuntime: AllStatic {
   static methodOop method(JavaThread *thread)        { return last_frame(thread).interpreter_frame_method(); }
   static address   bcp(JavaThread *thread)           { return last_frame(thread).interpreter_frame_bcp(); }
   static void      set_bcp_and_mdp(address bcp, JavaThread*thread);
-  static Bytecodes::Code code(JavaThread *thread)       { return Bytecodes::code_at(bcp(thread)); }
+  static Bytecodes::Code code(JavaThread *thread)    {
+    // pass method to avoid calling unsafe bcp_to_method (partial fix 4926272)
+    return Bytecodes::code_at(bcp(thread), method(thread));
+  }
   static bool      already_resolved(JavaThread *thread) { return cache_entry(thread)->is_resolved(code(thread)); }
   static int       one_byte_index(JavaThread *thread)   { return bcp(thread)[1]; }
   static int       two_byte_index(JavaThread *thread)   { return Bytes::get_Java_u2(bcp(thread) + 1); }

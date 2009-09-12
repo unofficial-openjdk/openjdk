@@ -2,7 +2,7 @@
 #pragma ident "@(#)klassVtable.cpp	1.146 07/07/19 12:19:09 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -875,7 +875,7 @@ static int initialize_count = 0;
 void klassItable::initialize_itable(bool checkconstraints, TRAPS) {
   // Cannot be setup doing bootstrapping, interfaces don't have
   // itables, and klass with only ones entry have empty itables
-  if (Universe::is_bootstrapping() || 
+  if (Universe::is_bootstrapping() ||
       _klass->is_interface() ||
       _klass->itable_length() == itableOffsetEntry::size()) return;
 
@@ -885,7 +885,7 @@ void klassItable::initialize_itable(bool checkconstraints, TRAPS) {
   if (num_interfaces > 0) {
     if (TraceItables) tty->print_cr("%3d: Initializing itables for %s", ++initialize_count,
                                     _klass->name()->as_C_string());
-    
+
 
     // Interate through all interfaces
     int i;
@@ -896,7 +896,7 @@ void klassItable::initialize_itable(bool checkconstraints, TRAPS) {
       initialize_itable_for_interface(ioe->offset(), interf_h, checkconstraints, CHECK);      
     } 
 
-  }  
+  }
   // Check that the last entry is empty
   itableOffsetEntry* ioe = offset_entry(size_offset_table() - 1);
   guarantee(ioe->interface_klass() == NULL && ioe->offset() == 0, "terminator entry missing");
@@ -995,6 +995,10 @@ void klassItable::adjust_method_entries(methodOop* old_methods, methodOop* new_m
     methodOop new_method = new_methods[j];
     itableMethodEntry* ime = method_entry(0);
 
+    // The itable can describe more than one interface and the same
+    // method signature can be specified by more than one interface.
+    // This means we have to do an exhaustive search to find all the
+    // old_method references.
     for (int i = 0; i < _size_method_table; i++) {
       if (ime->method() == old_method) {
         ime->initialize(new_method);
@@ -1011,7 +1015,6 @@ void klassItable::adjust_method_entries(methodOop* old_methods, methodOop* new_m
             new_method->name()->as_C_string(),
             new_method->signature()->as_C_string()));
         }
-        break;
       }
       ime++;
     }
@@ -1088,9 +1091,9 @@ int klassItable::compute_itable_size(objArrayHandle transitive_interfaces) {
   // Count no of interfaces and total number of interface methods
   CountInterfacesClosure cic;  
   visit_all_interfaces(transitive_interfaces(), &cic);
-    
+
   // There's alway an extra itable entry so we can null-terminate it.
-  int itable_size = calc_itable_size(cic.nof_interfaces() + 1, cic.nof_methods()); 
+  int itable_size = calc_itable_size(cic.nof_interfaces() + 1, cic.nof_methods());
 
   // Statistics
   update_stats(itable_size * HeapWordSize);  
@@ -1109,10 +1112,10 @@ void klassItable::setup_itable_offset_table(instanceKlassHandle klass) {
   visit_all_interfaces(klass->transitive_interfaces(), &cic);
   int nof_methods    = cic.nof_methods();
   int nof_interfaces = cic.nof_interfaces();
-  
+
   // Add one extra entry so we can null-terminate the table
   nof_interfaces++;
-  
+
   assert(compute_itable_size(objArrayHandle(klass->transitive_interfaces())) ==
          calc_itable_size(nof_interfaces, nof_methods),
          "mismatch calculation of itable size");
@@ -1121,9 +1124,9 @@ void klassItable::setup_itable_offset_table(instanceKlassHandle klass) {
   itableOffsetEntry* ioe = (itableOffsetEntry*)klass->start_of_itable();
   itableMethodEntry* ime = (itableMethodEntry*)(ioe + nof_interfaces);
   intptr_t* end               = klass->end_of_itable();
-  assert((oop*)(ime + nof_methods) <= klass->start_of_static_fields(), "wrong offset calculation (1)");
-  assert((oop*)(end) == (oop*)(ime + nof_methods),                     "wrong offset calculation (2)");
-  
+  assert((oop*)(ime + nof_methods) <= (oop*)klass->start_of_static_fields(), "wrong offset calculation (1)");
+  assert((oop*)(end) == (oop*)(ime + nof_methods),                      "wrong offset calculation (2)");
+
   // Visit all interfaces and initialize itable offset table
   SetupItableClosure sic((address)klass->as_klassOop(), ioe, ime);
   visit_all_interfaces(klass->transitive_interfaces(), &sic);

@@ -2,7 +2,7 @@
 #pragma ident "@(#)debugInfo.cpp	1.35 07/07/27 16:12:09 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,8 @@ ScopeValue* DebugInfoReadStream::read_object_value() {
   }
 #endif
   ObjectValue* result = new ObjectValue(id);
-  _obj_pool->append(result);
+  // Cache the object since an object field could reference it.
+  _obj_pool->push(result);
   result->read_object(this);
   return result;
 }
@@ -59,9 +60,9 @@ ScopeValue* DebugInfoReadStream::get_cached_object() {
   int id = read_int();
   assert(_obj_pool != NULL, "object pool does not exist");
   for (int i = _obj_pool->length() - 1; i >= 0; i--) {
-    ObjectValue* sv = (ObjectValue*) _obj_pool->at(i);
-    if (sv->id() == id) {
-      return sv;
+    ObjectValue* ov = (ObjectValue*) _obj_pool->at(i);
+    if (ov->id() == id) {
+      return ov;
     }
   }
   ShouldNotReachHere();

@@ -2,7 +2,7 @@
 #pragma ident "@(#)javaCalls.cpp	1.220 07/05/05 17:06:51 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,11 +39,6 @@ JavaCallWrapper::JavaCallWrapper(methodHandle callee_method, Handle receiver, Ja
   assert(!thread->owns_locks(), "must release all locks when leaving VM"); 
   guarantee(!thread->is_Compiler_thread(), "cannot make java calls from the compiler");
   _result   = result;
-
-  // Make sure that that the value of the  higest_lock is at least the same as the current stackpointer,
-  // since, the Java code is highly likely to use locks.
-  // Use '(address)this' to guarantee that highest_lock address is conservative and inside our thread
-  thread->update_highest_lock((address)this);
 
   // Allocate handle block for Java code. This must be done before we change thread_state to _thread_in_Java_or_stub,
   // since it can potentially block. 
@@ -312,8 +307,12 @@ void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArgument
 
   CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
 
-  // Make sure that the arguments have the right type
-  debug_only(args->verify(method, result->get_type(), thread));
+  // Verify the arguments
+
+  if (CheckJNICalls)  {
+    args->verify(method, result->get_type(), thread);
+  }
+  else debug_only(args->verify(method, result->get_type(), thread));
 
   // Ignore call if method is empty
   if (method->is_empty_method()) {
@@ -434,25 +433,27 @@ intptr_t* JavaCallArguments::parameters() {
   return TaggedStackInterpreter ? _parameters : _value;
 }
 
-//--------------------------------------------------------------------------------------
-// Non-Product code
-#ifndef PRODUCT
 
 class SignatureChekker : public SignatureIterator {
  private:
    bool *_is_oop;
    int   _pos;
    BasicType _return_type;
+   intptr_t*   _value;
+   Thread* _thread;
 
  public:
   bool _is_return;
 
-  SignatureChekker(symbolHandle signature, BasicType return_type, bool is_static, bool* is_oop) : SignatureIterator(signature) {
+  SignatureChekker(symbolHandle signature, BasicType return_type, bool is_static, bool* is_oop, intptr_t* value, Thread* thread) : SignatureIterator(signature) {
     _is_oop = is_oop;
     _is_return = false;
     _return_type = return_type;
-    _pos = 0;    
-    if (!is_static) {      
+    _pos = 0;
+    _value = value;
+    _thread = thread;
+
+    if (!is_static) {
       check_value(true); // Receiver must be an oop
     }
   }
@@ -491,7 +492,25 @@ class SignatureChekker : public SignatureIterator {
     if (_is_return) {
       check_return_type(t);
       return;
-    }    
+    }
+
+    // verify handle and the oop pointed to by handle
+    int p = _pos;
+    bool bad = false;
+    // If argument is oop
+    if (_is_oop[p]) {
+      intptr_t v = _value[p];
+      if (v != 0 ) {
+        size_t t = (size_t)v;
+        bad = (t < (size_t)os::vm_page_size() ) || !Handle::raw_resolve((oop *)v)->is_oop_or_null(true);
+        if (CheckJNICalls && bad) {
+          ReportJNIFatalError((JavaThread*)_thread, "Bad JNI oop argument");
+        }
+      }
+      // for the regular debug case.
+      assert(!bad, "Bad JNI oop argument");
+    }
+
     check_value(true);
   }
 
@@ -508,6 +527,7 @@ class SignatureChekker : public SignatureIterator {
   void do_array(int begin, int end)    { check_obj(T_OBJECT);        }
 };
 
+
 void JavaCallArguments::verify(methodHandle method, BasicType return_type,
   Thread *thread) {
   guarantee(method->size_of_parameters() == size_of_parameters(), "wrong no. of arguments pushed");
@@ -518,10 +538,9 @@ void JavaCallArguments::verify(methodHandle method, BasicType return_type,
   // Check that oop information is correct
   symbolHandle signature (thread,  method->signature());
 
-  SignatureChekker sc(signature, return_type, method->is_static(),_is_oop);
+  SignatureChekker sc(signature, return_type, method->is_static(),_is_oop, _value, thread);
   sc.iterate_parameters();
   sc.check_doing_return(true);
   sc.iterate_returntype();
 }
 
-#endif // PRODUCT

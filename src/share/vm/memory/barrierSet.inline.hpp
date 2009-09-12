@@ -2,7 +2,7 @@
 #pragma ident "@(#)barrierSet.inline.hpp	1.12 07/05/05 17:05:43 JVM"
 #endif
 /*
- * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,15 @@
 // performance-critical calls when when the barrier is the most common
 // card-table kind.
 
-void BarrierSet::write_ref_field(oop* field, oop new_val) {
+void BarrierSet::write_ref_field_pre(void* field, oop new_val) {
+  if (kind() == CardTableModRef) {
+    ((CardTableModRefBS*)this)->inline_write_ref_field_pre(field, new_val);
+  } else {
+    write_ref_field_pre_work(field, new_val);
+  }
+}
+
+void BarrierSet::write_ref_field(void* field, oop new_val) {
   if (kind() == CardTableModRef) {
     ((CardTableModRefBS*)this)->inline_write_ref_field(field, new_val);
   } else {

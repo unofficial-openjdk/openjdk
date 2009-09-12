@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)dump_x86_32.cpp	1.14 07/09/17 09:25:59 JVM"
-#endif
 /*
- * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -35,8 +32,8 @@
 // This method will be called (as any other Klass virtual method) with
 // the Klass itself as the first argument.  Example:
 //
-// 	oop obj;
-// 	int size = obj->klass()->klass_part()->oop_size(this);
+//      oop obj;
+//      int size = obj->klass()->klass_part()->oop_size(this);
 //
 // for which the virtual method call is Klass::oop_size();
 //
@@ -94,35 +91,34 @@ void CompactingPermGenGen::generate_vtable_methods(void** vtbl_list,
   // are on the stack, except that the "this" pointer is in rcx.
 #else
   // Expecting to be called with Unix conventions -- the arguments
-  // are on the stack, including the "this" pointer. 
+  // are on the stack, including the "this" pointer.
 #endif
 
   // In addition, rax was set (above) to the offset of the method in the
   // table.
 
 #ifdef WIN32
-  __ pushl(rcx);			// save "this"
+  __ push(rcx);                         // save "this"
 #endif
-  __ movl(rcx, rax);
-  __ shrl(rcx, 8);			// isolate vtable identifier.
-  __ shll(rcx, LogBytesPerWord);
+  __ mov(rcx, rax);
+  __ shrptr(rcx, 8);                    // isolate vtable identifier.
+  __ shlptr(rcx, LogBytesPerWord);
   Address index(noreg, rcx,  Address::times_1);
   ExternalAddress vtbl((address)vtbl_list);
   __ movptr(rdx, ArrayAddress(vtbl, index)); // get correct vtable address.
 #ifdef WIN32
-  __ popl(rcx);				// restore "this"
+  __ pop(rcx);                          // restore "this"
 #else
-  __ movl(rcx, Address(rsp, 4));	// fetch "this"
+  __ movptr(rcx, Address(rsp, BytesPerWord));   // fetch "this"
 #endif
-  __ movl(Address(rcx, 0), rdx);	// update vtable pointer.
+  __ movptr(Address(rcx, 0), rdx);      // update vtable pointer.
 
-  __ andl(rax, 0x00ff);			// isolate vtable method index
-  __ shll(rax, LogBytesPerWord);
-  __ addl(rax, rdx);			// address of real method pointer.
-  __ jmp(Address(rax, 0));		// get real method pointer.
+  __ andptr(rax, 0x00ff);                       // isolate vtable method index
+  __ shlptr(rax, LogBytesPerWord);
+  __ addptr(rax, rdx);                  // address of real method pointer.
+  __ jmp(Address(rax, 0));              // get real method pointer.
 
   __ flush();
 
   *mc_top = (char*)__ pc();
 }
-

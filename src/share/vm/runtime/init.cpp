@@ -2,7 +2,7 @@
 #pragma ident "@(#)init.cpp	1.124 07/08/31 14:03:12 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@
 
 // Initialization done by VM thread in vm_init_globals()
 void check_ThreadShadow();
-void check_basic_types();
 void eventlog_init();
 void mutex_init();
 void chunkpool_init();
@@ -43,7 +42,6 @@ void bytecodes_init();
 void classLoader_init();
 void codeCache_init();
 void VM_Version_init();
-void JDK_Version_init();
 void stubRoutines_init1();
 jint universe_init();  // dependent on codeCache_init and stubRoutines_init 
 void interpreter_init();  // before any methods loaded
@@ -76,7 +74,7 @@ void ostream_exit();
 
 void vm_init_globals() {
   check_ThreadShadow();
-  check_basic_types();
+  basic_types_init();
   eventlog_init();
   mutex_init();
   chunkpool_init();
@@ -92,7 +90,6 @@ jint init_globals() {
   classLoader_init();
   codeCache_init();
   VM_Version_init();
-  JDK_Version_init();
   stubRoutines_init1();
   jint status = universe_init();  // dependent on codeCache_init and stubRoutines_init 
   if (status != JNI_OK)

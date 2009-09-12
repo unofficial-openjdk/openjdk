@@ -2,7 +2,7 @@
 #pragma ident "@(#)iterator.hpp	1.38 07/05/05 17:05:52 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,15 +29,31 @@
 
 class ReferenceProcessor;
 
+// Closure provides abortability.
+
+class Closure : public StackObj {
+ protected:
+  bool _abort;
+  void set_abort() { _abort = true; }
+ public:
+  Closure() : _abort(false) {}
+  // A subtype can use this mechanism to indicate to some iterator mapping
+  // functions that the iteration should cease.
+  bool abort() { return _abort; }
+  void clear_abort() { _abort = false; }
+};
+
 // OopClosure is used for iterating through roots (oop*)
 
-class OopClosure : public StackObj {
+class OopClosure : public Closure {
  public:
   ReferenceProcessor* _ref_processor;
   OopClosure(ReferenceProcessor* rp) : _ref_processor(rp) { }
   OopClosure() : _ref_processor(NULL) { }
   virtual void do_oop(oop* o) = 0;
   virtual void do_oop_v(oop* o) { do_oop(o); }
+  virtual void do_oop(narrowOop* o) = 0;
+  virtual void do_oop_v(narrowOop* o) { do_oop(o); }
 
   // In support of post-processing of weak links of KlassKlass objects;
   // see KlassKlass::oop_oop_iterate().
@@ -55,12 +71,17 @@ class OopClosure : public StackObj {
   // Controls how prefetching is done for invocations of this closure.
   Prefetch::style prefetch_style() { // Note that this is non-virtual.
     return Prefetch::do_none;
-  } 
+  }
+
+  // True iff this closure may be safely applied more than once to an oop
+  // location without an intervening "major reset" (like the end of a GC).
+  virtual bool idempotent() { return false; }
+  virtual bool apply_to_weak_ref_discovered_field() { return false; }
 };
 
 // ObjectClosure is used for iterating through an object space
 
-class ObjectClosure : public StackObj {
+class ObjectClosure : public Closure {
  public:
   // Called for each object.
   virtual void do_object(oop obj) = 0;

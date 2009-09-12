@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,17 @@ public class FindInHeapPanel extends JPanel {
           iterated += addressSize;
           updateProgressBar();
         }
+        public void visitCompOopAddress(Address addr) {
+          if (error) return;
 
+          Address val = addr.getCompOopAddressAt(0);
+          if (AddressOps.equal(val, value)) {
+            error = reportResult(addr);
+          }
+          iterated += addressSize;
+          updateProgressBar();
+
+        }
         public void epilogue() {
           iterated = 0;
           updateProgressBar();

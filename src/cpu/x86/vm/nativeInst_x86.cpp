@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)nativeInst_x86.cpp	1.76 07/09/17 09:29:18 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -51,7 +48,7 @@ address NativeCall::destination() const {
   // on x86, nyi.
   return return_address() + displacement();
 }
- 
+
 void NativeCall::print() {
   tty->print_cr(PTR_FORMAT ": call " PTR_FORMAT,
                 instruction_address(), destination());
@@ -74,10 +71,10 @@ void NativeCall::insert(address code_pos, address entry) {
 // the jmp's with the first 4 byte of the new instruction.
 void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
   assert(Patching_lock->is_locked() ||
-         SafepointSynchronize::is_at_safepoint(), "concurrent code patching"); 
+         SafepointSynchronize::is_at_safepoint(), "concurrent code patching");
   assert (instr_addr != NULL, "illegal address for code patching");
 
-  NativeCall* n_call =  nativeCall_at (instr_addr); // checking that it is a call 
+  NativeCall* n_call =  nativeCall_at (instr_addr); // checking that it is a call
   if (os::is_MP()) {
     guarantee((intptr_t)instr_addr % BytesPerWord == 0, "must be aligned");
   }
@@ -102,14 +99,14 @@ void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
   n_call->wrote(4);
 
   // Patch bytes 0-3
-  *(jint*)instr_addr = *(jint *)code_buffer;  
+  *(jint*)instr_addr = *(jint *)code_buffer;
 
   n_call->wrote(0);
 
 #ifdef ASSERT
    // verify patching
    for ( int i = 0; i < instruction_size; i++) {
-     address ptr = (address)((intptr_t)code_buffer + i);     
+     address ptr = (address)((intptr_t)code_buffer + i);
      int a_byte = (*ptr) & 0xFF;
      assert(*((address)((intptr_t)instr_addr + i)) == a_byte, "mt safe patching failed");
    }
@@ -136,7 +133,7 @@ void NativeCall::set_destination_mt_safe(address dest) {
   // Make sure patching code is locked.  No two threads can patch at the same
   // time but one may be executing this code.
   assert(Patching_lock->is_locked() ||
-         SafepointSynchronize::is_at_safepoint(), "concurrent code patching"); 
+         SafepointSynchronize::is_at_safepoint(), "concurrent code patching");
   // Both C1 and C2 should now be generating code which aligns the patched address
   // to be within a single cache line except that C1 does not do the alignment on
   // uniprocessor systems.
@@ -149,7 +146,7 @@ void NativeCall::set_destination_mt_safe(address dest) {
     // Simple case:  The destination lies within a single cache line.
     set_destination(dest);
   } else if ((uintptr_t)instruction_address() / cache_line_size ==
-	     ((uintptr_t)instruction_address()+1) / cache_line_size) {
+             ((uintptr_t)instruction_address()+1) / cache_line_size) {
     // Tricky case:  The instruction prefix lies within a single cache line.
     intptr_t disp = dest - return_address();
 #ifdef AMD64
@@ -192,7 +189,7 @@ void NativeCall::set_destination_mt_safe(address dest) {
     *(short*)instruction_address() = *(short*)patch_disp;
     // Invalidate.  Opteron requires a flush after every write.
     wrote(0);
-    
+
     debug_only(verify());
     guarantee(destination() == dest, "patch succeeded");
   } else {
@@ -226,49 +223,150 @@ void NativeMovConstReg::print() {
 
 //-------------------------------------------------------------------
 
-#ifndef AMD64
+int NativeMovRegMem::instruction_start() const {
+  int off = 0;
+  u_char instr_0 = ubyte_at(off);
 
-void NativeMovRegMem::copy_instruction_to(address new_instruction_address) {
-  int inst_size = instruction_size;
-
-  // See if there's an instruction size prefix override.
-  if ( *(address(this))   == instruction_operandsize_prefix &&
-       *(address(this)+1) != instruction_code_xmm_code ) { // Not SSE instr
-    inst_size += 1;
+  // First check to see if we have a (prefixed or not) xor
+  if ( instr_0 >= instruction_prefix_wide_lo &&      // 0x40
+       instr_0 <= instruction_prefix_wide_hi) { // 0x4f
+    off++;
+    instr_0 = ubyte_at(off);
   }
-  if ( *(address(this)) == instruction_extended_prefix ) inst_size += 1;
 
-  for (int i = 0; i < instruction_size; i++) {
-    *(new_instruction_address + i) = *(address(this) + i);
+  if (instr_0 == instruction_code_xor) {
+    off += 2;
+    instr_0 = ubyte_at(off);
   }
+
+  // Now look for the real instruction and the many prefix/size specifiers.
+
+  if (instr_0 == instruction_operandsize_prefix ) {  // 0x66
+    off++; // Not SSE instructions
+    instr_0 = ubyte_at(off);
+  }
+
+  if ( instr_0 == instruction_code_xmm_ss_prefix ||      // 0xf3
+       instr_0 == instruction_code_xmm_sd_prefix) { // 0xf2
+    off++;
+    instr_0 = ubyte_at(off);
+  }
+
+  if ( instr_0 >= instruction_prefix_wide_lo &&      // 0x40
+       instr_0 <= instruction_prefix_wide_hi) { // 0x4f
+    off++;
+    instr_0 = ubyte_at(off);
+  }
+
+
+  if (instr_0 == instruction_extended_prefix ) {  // 0x0f
+    off++;
+  }
+
+  return off;
+}
+
+address NativeMovRegMem::instruction_address() const {
+  return addr_at(instruction_start());
+}
+
+address NativeMovRegMem::next_instruction_address() const {
+  address ret = instruction_address() + instruction_size;
+  u_char instr_0 =  *(u_char*) instruction_address();
+  switch (instr_0) {
+  case instruction_operandsize_prefix:
+
+    fatal("should have skipped instruction_operandsize_prefix");
+    break;
+
+  case instruction_extended_prefix:
+    fatal("should have skipped instruction_extended_prefix");
+    break;
+
+  case instruction_code_mem2reg_movslq: // 0x63
+  case instruction_code_mem2reg_movzxb: // 0xB6
+  case instruction_code_mem2reg_movsxb: // 0xBE
+  case instruction_code_mem2reg_movzxw: // 0xB7
+  case instruction_code_mem2reg_movsxw: // 0xBF
+  case instruction_code_reg2mem:        // 0x89 (q/l)
+  case instruction_code_mem2reg:        // 0x8B (q/l)
+  case instruction_code_reg2memb:       // 0x88
+  case instruction_code_mem2regb:       // 0x8a
+
+  case instruction_code_float_s:        // 0xd9 fld_s a
+  case instruction_code_float_d:        // 0xdd fld_d a
+
+  case instruction_code_xmm_load:       // 0x10
+  case instruction_code_xmm_store:      // 0x11
+  case instruction_code_xmm_lpd:        // 0x12
+    {
+      // If there is an SIB then instruction is longer than expected
+      u_char mod_rm = *(u_char*)(instruction_address() + 1);
+      if ((mod_rm & 7) == 0x4) {
+        ret++;
+      }
+    }
+  case instruction_code_xor:
+    fatal("should have skipped xor lead in");
+    break;
+
+  default:
+    fatal("not a NativeMovRegMem");
+  }
+  return ret;
+
+}
+
+int NativeMovRegMem::offset() const{
+  int off = data_offset + instruction_start();
+  u_char mod_rm = *(u_char*)(instruction_address() + 1);
+  // nnnn(r12|rsp) isn't coded as simple mod/rm since that is
+  // the encoding to use an SIB byte. Which will have the nnnn
+  // field off by one byte
+  if ((mod_rm & 7) == 0x4) {
+    off++;
+  }
+  return int_at(off);
+}
+
+void NativeMovRegMem::set_offset(int x) {
+  int off = data_offset + instruction_start();
+  u_char mod_rm = *(u_char*)(instruction_address() + 1);
+  // nnnn(r12|rsp) isn't coded as simple mod/rm since that is
+  // the encoding to use an SIB byte. Which will have the nnnn
+  // field off by one byte
+  if ((mod_rm & 7) == 0x4) {
+    off++;
+  }
+  set_int_at(off, x);
 }
 
 void NativeMovRegMem::verify() {
   // make sure code pattern is actually a mov [reg+offset], reg instruction
   u_char test_byte = *(u_char*)instruction_address();
-  if ( ! ( (test_byte == instruction_code_reg2memb) 
-      || (test_byte == instruction_code_mem2regb) 
-      || (test_byte == instruction_code_mem2regl) 
-      || (test_byte == instruction_code_reg2meml) 
-      || (test_byte == instruction_code_mem2reg_movzxb )
-      || (test_byte == instruction_code_mem2reg_movzxw )
-      || (test_byte == instruction_code_mem2reg_movsxb )
-      || (test_byte == instruction_code_mem2reg_movsxw )
-      || (test_byte == instruction_code_float_s) 
-      || (test_byte == instruction_code_float_d)
-      || (test_byte == instruction_code_long_volatile) ) )
-  {
-    u_char byte1 = ((u_char*)instruction_address())[1];
-    u_char byte2 = ((u_char*)instruction_address())[2];
-    if ((test_byte != instruction_code_xmm_ss_prefix &&
-         test_byte != instruction_code_xmm_sd_prefix &&
-         test_byte != instruction_operandsize_prefix) ||
-        byte1 != instruction_code_xmm_code ||
-        (byte2 != instruction_code_xmm_load && 
-         byte2 != instruction_code_xmm_lpd  && 
-         byte2 != instruction_code_xmm_store)) {
-	  fatal ("not a mov [reg+offs], reg instruction");
-    }
+  switch (test_byte) {
+    case instruction_code_reg2memb:  // 0x88 movb a, r
+    case instruction_code_reg2mem:   // 0x89 movl a, r (can be movq in 64bit)
+    case instruction_code_mem2regb:  // 0x8a movb r, a
+    case instruction_code_mem2reg:   // 0x8b movl r, a (can be movq in 64bit)
+      break;
+
+    case instruction_code_mem2reg_movslq: // 0x63 movsql r, a
+    case instruction_code_mem2reg_movzxb: // 0xb6 movzbl r, a (movzxb)
+    case instruction_code_mem2reg_movzxw: // 0xb7 movzwl r, a (movzxw)
+    case instruction_code_mem2reg_movsxb: // 0xbe movsbl r, a (movsxb)
+    case instruction_code_mem2reg_movsxw: // 0xbf  movswl r, a (movsxw)
+      break;
+
+    case instruction_code_float_s:   // 0xd9 fld_s a
+    case instruction_code_float_d:   // 0xdd fld_d a
+    case instruction_code_xmm_load:  // 0x10 movsd xmm, a
+    case instruction_code_xmm_store: // 0x11 movsd a, xmm
+    case instruction_code_xmm_lpd:   // 0x12 movlpd xmm, a
+      break;
+
+    default:
+          fatal ("not a mov [reg+offs], reg instruction");
   }
 }
 
@@ -282,7 +380,14 @@ void NativeMovRegMem::print() {
 void NativeLoadAddress::verify() {
   // make sure code pattern is actually a mov [reg+offset], reg instruction
   u_char test_byte = *(u_char*)instruction_address();
-  if ( ! (test_byte == instruction_code) ) {
+#ifdef _LP64
+  if ( (test_byte == instruction_prefix_wide ||
+        test_byte == instruction_prefix_wide_extended) ) {
+    test_byte = *(u_char*)(instruction_address() + 1);
+  }
+#endif // _LP64
+  if ( ! ((test_byte == lea_instruction_code)
+          LP64_ONLY(|| (test_byte == mov64_instruction_code) ))) {
     fatal ("not a lea reg, [reg+offs] instruction");
   }
 }
@@ -292,13 +397,11 @@ void NativeLoadAddress::print() {
   tty->print_cr("0x%x: lea [reg + %x], reg", instruction_address(), offset());
 }
 
-#endif // !AMD64
-
 //--------------------------------------------------------------------------------
 
 void NativeJump::verify() {
   if (*(u_char*)instruction_address() != instruction_code) {
-    fatal("not a jump instruction");  
+    fatal("not a jump instruction");
   }
 }
 
@@ -342,9 +445,9 @@ void NativeJump::check_verified_entry_alignment(address entry, address verified_
 // Then patches the last byte  and then atomically patches the first word (4-bytes),
 // thus inserting the desired jump
 // This code is mt-safe with the following conditions: entry point is 4 byte aligned,
-// entry point is in same cache line as unverified entry point, and the instruction being 
+// entry point is in same cache line as unverified entry point, and the instruction being
 // patched is >= 5 byte (size of patch).
-// 
+//
 // In C2 the 5+ byte sized instruction is enforced by code in MachPrologNode::emit.
 // In C1 the restriction is enforced by CodeEmitter::method_entry
 //
@@ -383,7 +486,7 @@ void NativeJump::patch_verified_entry(address entry, address verified_entry, add
   n_jump->wrote(4);
 
   // Patch bytes 0-3 (from jump instruction)
-  *(int32_t*)verified_entry = *(int32_t *)code_buffer;  
+  *(int32_t*)verified_entry = *(int32_t *)code_buffer;
   // Invalidate.  Opteron requires a flush after every write.
   n_jump->wrote(0);
 
@@ -392,7 +495,7 @@ void NativeJump::patch_verified_entry(address entry, address verified_entry, add
 void NativePopReg::insert(address code_pos, Register reg) {
   assert(reg->encoding() < 8, "no space for REX");
   assert(NativePopReg::instruction_size == sizeof(char), "right address unit for update");
-  *code_pos = (u_char)(instruction_code | reg->encoding());  
+  *code_pos = (u_char)(instruction_code | reg->encoding());
   ICache::invalidate_range(code_pos, instruction_size);
 }
 
@@ -405,7 +508,7 @@ void NativeIllegalInstruction::insert(address code_pos) {
 
 void NativeGeneralJump::verify() {
   assert(((NativeInstruction *)this)->is_jump() ||
-	 ((NativeInstruction *)this)->is_cond_jump(), "not a general jump instruction");
+         ((NativeInstruction *)this)->is_cond_jump(), "not a general jump instruction");
 }
 
 
@@ -436,7 +539,7 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
    patch[1] = 0xFE;       // jmp to self
    patch[2] = 0xEB;
    patch[3] = 0xFE;
-   
+
    // First patch dummy jmp in place
    *(int32_t*)instr_addr = *(int32_t *)patch;
     n_jump->wrote(0);
@@ -447,14 +550,14 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
     n_jump->wrote(4);
 
    // Patch bytes 0-3
-   *(jint*)instr_addr = *(jint *)code_buffer;  
+   *(jint*)instr_addr = *(jint *)code_buffer;
 
     n_jump->wrote(0);
 
 #ifdef ASSERT
    // verify patching
    for ( int i = 0; i < instruction_size; i++) {
-     address ptr = (address)((intptr_t)code_buffer + i);     
+     address ptr = (address)((intptr_t)code_buffer + i);
      int a_byte = (*ptr) & 0xFF;
      assert(*((address)((intptr_t)instr_addr + i)) == a_byte, "mt safe patching failed");
    }
@@ -464,14 +567,18 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
 
 
 
-address NativeGeneralJump::jump_destination() const {  
+address NativeGeneralJump::jump_destination() const {
   int op_code = ubyte_at(0);
   bool is_rel32off = (op_code == 0xE9 || op_code == 0x0F);
   int  offset  = (op_code == 0x0F)  ? 2 : 1;
   int  length  = offset + ((is_rel32off) ? 4 : 1);
-  
-  if (is_rel32off) 
+
+  if (is_rel32off)
     return addr_at(0) + length + int_at(offset);
   else
     return addr_at(0) + length + sbyte_at(offset);
+}
+
+bool NativeInstruction::is_dtrace_trap() {
+  return (*(int32_t*)this & 0xff) == 0xcc;
 }

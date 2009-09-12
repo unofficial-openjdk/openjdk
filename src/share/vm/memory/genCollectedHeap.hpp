@@ -2,7 +2,7 @@
 #pragma ident "@(#)genCollectedHeap.hpp	1.106 07/07/22 22:36:34 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ class GenCollectedHeap : public SharedHeap {
   friend class CMSCollector;
   friend class GenMarkSweep;
   friend class VM_GenCollectForAllocation;
+  friend class VM_GenCollectForPermanentAllocation;
   friend class VM_GenCollectFull;
   friend class VM_GenCollectFullConcurrent;
   friend class VM_GC_HeapInspection;
@@ -254,13 +255,31 @@ public:
   virtual size_t unsafe_max_tlab_alloc(Thread* thr) const;
   virtual HeapWord* allocate_new_tlab(size_t size);
 
-  // The "requestor" generation is performing some garbage collection 
+  // Can a compiler initialize a new object without store barriers?
+  // This permission only extends from the creation of a new object
+  // via a TLAB up to the first subsequent safepoint.
+  virtual bool can_elide_tlab_store_barriers() const {
+    return true;
+  }
+
+  // Can a compiler elide a store barrier when it writes
+  // a permanent oop into the heap?  Applies when the compiler
+  // is storing x to the heap, where x->is_perm() is true.
+  virtual bool can_elide_permanent_oop_store_barriers() const {
+    // CMS needs to see all, even intra-generational, ref updates.
+    return !UseConcMarkSweepGC;
+  }
+
+  // The "requestor" generation is performing some garbage collection
   // action for which it would be useful to have scratch space.  The
   // requestor promises to allocate no more than "max_alloc_words" in any
   // older generation (via promotion say.)   Any blocks of space that can
   // be provided are returned as a list of ScratchBlocks, sorted by
   // decreasing size.
   ScratchBlock* gather_scratch(Generation* requestor, size_t max_alloc_words);
+  // Allow each generation to reset any scratch space that it has
+  // contributed as it needs.
+  void release_scratch();
 
   size_t large_typearray_limit();
 
@@ -454,9 +473,8 @@ public:
   // Otherwise, try expand-and-allocate for obj in each generation starting at
   // gen; return the new location of obj if successful.  Otherwise, return NULL.
   oop handle_failed_promotion(Generation* gen,
-			      oop obj,
-			      size_t obj_size,
-			      oop* ref);
+                              oop obj,
+                              size_t obj_size);
 
 private:
   // Accessor for memory state verification support
@@ -484,6 +502,9 @@ private:
   // In support of ExplicitGCInvokesConcurrent functionality
   bool should_do_concurrent_full_gc(GCCause::Cause cause);
   void collect_mostly_concurrent(GCCause::Cause cause);
+
+  // Save the tops of the spaces in all generations
+  void record_gen_tops_before_GC() PRODUCT_RETURN;
 
 protected:
   virtual void gc_prologue(bool full);

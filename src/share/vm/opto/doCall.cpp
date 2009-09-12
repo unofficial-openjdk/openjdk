@@ -2,7 +2,7 @@
 #pragma ident "@(#)doCall.cpp	1.207 07/07/19 19:08:29 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -393,6 +393,8 @@ void Parse::do_call() {
   }
 
   if (cg->is_inline()) {
+    // Accumulate has_loops estimate
+    C->set_has_loops(C->has_loops() || call_method->has_loops());
     C->env()->notice_inlined_method(call_method);
   }
 
@@ -581,7 +583,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
   Node* ex_klass_node = NULL;
   if (has_ex_handler() && !ex_type->klass_is_exact()) {
     Node* p = basic_plus_adr( ex_node, ex_node, oopDesc::klass_offset_in_bytes());
-    ex_klass_node = _gvn.transform(new (C, 3) LoadKlassNode(NULL, immutable_memory(), p, TypeInstPtr::KLASS, TypeKlassPtr::OBJECT));
+    ex_klass_node = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeInstPtr::KLASS, TypeKlassPtr::OBJECT) );
 
     // Compute the exception klass a little more cleverly.
     // Obvious solution is to simple do a LoadKlass from the 'ex_node'.
@@ -593,7 +595,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
       ex_klass_node = new (C, ex_node->req()) PhiNode( ex_node->in(0), TypeKlassPtr::OBJECT );
       for( uint i = 1; i < ex_node->req(); i++ ) {
         Node* p = basic_plus_adr( ex_node->in(i), ex_node->in(i), oopDesc::klass_offset_in_bytes() );
-        Node* k = _gvn.transform(new (C, 3) LoadKlassNode(0, immutable_memory(), p, TypeInstPtr::KLASS, TypeKlassPtr::OBJECT));
+        Node* k = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeInstPtr::KLASS, TypeKlassPtr::OBJECT) );
         ex_klass_node->init_req( i, k );
       }
       _gvn.set_type(ex_klass_node, TypeKlassPtr::OBJECT);
@@ -796,9 +798,9 @@ ciMethod* Parse::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* k
 
     ciInstanceKlass *ikl = receiver_type->klass()->as_instance_klass();
     if (ikl->is_loaded() && ikl->is_initialized() && !ikl->is_interface() &&
-        (ikl == actual_receiver || ikl->is_subclass_of(actual_receiver))) {
-      // ikl is a same or better type than the original actual_receiver, 
-      // e.g. static receiver from bytecodes. 
+        (ikl == actual_receiver || ikl->is_subtype_of(actual_receiver))) {
+      // ikl is a same or better type than the original actual_receiver,
+      // e.g. static receiver from bytecodes.
       actual_receiver = ikl;
       // Is the actual_receiver exact?
       actual_receiver_is_exact = receiver_type->klass_is_exact();

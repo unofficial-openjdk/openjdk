@@ -2,7 +2,7 @@
 #pragma ident "@(#)loopTransform.cpp	1.116 07/06/01 11:35:03 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -682,6 +682,10 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   CountedLoopNode *post_head = old_new[main_head->_idx]->as_CountedLoop();
   post_head->set_post_loop(main_head);
 
+  // Reduce the post-loop trip count.
+  CountedLoopEndNode* post_end = old_new[main_end ->_idx]->as_CountedLoopEnd();
+  post_end->_prob = PROB_FAIR;
+
   // Build the main-loop normal exit.
   IfFalseNode *new_main_exit = new (C, 1) IfFalseNode(main_end);
   _igvn.register_new_node_with_optimizer( new_main_exit );
@@ -693,7 +697,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   // (the main-loop trip-counter exit value) because we will be changing
   // the exit value (via unrolling) so we cannot constant-fold away the zero
   // trip guard until all unrolling is done.
-  Node *zer_opaq = new (C, 2) Opaque1Node(incr);
+  Node *zer_opaq = new (C, 2) Opaque1Node(C, incr);
   Node *zer_cmp  = new (C, 3) CmpINode( zer_opaq, limit );
   Node *zer_bol  = new (C, 2) BoolNode( zer_cmp, b_test );
   register_new_node( zer_opaq, new_main_exit );
@@ -751,6 +755,9 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   pre_head->set_pre_loop(main_head);
   Node *pre_incr = old_new[incr->_idx];
 
+  // Reduce the pre-loop trip count.
+  pre_end->_prob = PROB_FAIR;
+
   // Find the pre-loop normal exit.
   Node* pre_exit = pre_end->proj_out(false);
   assert( pre_exit->Opcode() == Op_IfFalse, "" );
@@ -763,15 +770,15 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   // pre-loop, the main-loop may not execute at all.  Later in life this
   // zero-trip guard will become the minimum-trip guard when we unroll
   // the main-loop.
-  Node *min_opaq = new (C, 2) Opaque1Node(limit);
+  Node *min_opaq = new (C, 2) Opaque1Node(C, limit);
   Node *min_cmp  = new (C, 3) CmpINode( pre_incr, min_opaq );
   Node *min_bol  = new (C, 2) BoolNode( min_cmp, b_test );
   register_new_node( min_opaq, new_pre_exit );
   register_new_node( min_cmp , new_pre_exit );
   register_new_node( min_bol , new_pre_exit );
 
-  // Build the IfNode
-  IfNode *min_iff = new (C, 2) IfNode( new_pre_exit, min_bol, PROB_FAIR, COUNT_UNKNOWN );
+  // Build the IfNode (assume the main-loop is executed always).
+  IfNode *min_iff = new (C, 2) IfNode( new_pre_exit, min_bol, PROB_ALWAYS, COUNT_UNKNOWN );
   _igvn.register_new_node_with_optimizer( min_iff );
   set_idom(min_iff, new_pre_exit, dd_main_head);
   set_loop(min_iff, loop->_parent);
@@ -813,7 +820,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
 
   // Save the original loop limit in this Opaque1 node for
   // use by range check elimination.
-  Node *pre_opaq  = new (C, 3) Opaque1Node(pre_limit, limit);
+  Node *pre_opaq  = new (C, 3) Opaque1Node(C, pre_limit, limit);
 
   register_new_node( pre_limit, pre_head->in(0) );
   register_new_node( pre_opaq , pre_head->in(0) );
@@ -1015,6 +1022,8 @@ void PhaseIdealLoop::do_unroll( IdealLoopTree *loop, Node_List &old_new, bool ad
     if (!has_ctrl(old))
       set_loop(nnn, loop);
   }
+
+  loop->record_for_igvn();
 }
 
 //------------------------------do_maximally_unroll----------------------------
@@ -1513,10 +1522,12 @@ void IdealLoopTree::adjust_loop_exit_prob( PhaseIdealLoop *phase ) {
         Node *bol = iff->in(1);
         if( bol && bol->req() > 1 && bol->in(1) && 
             ((bol->in(1)->Opcode() == Op_StorePConditional ) ||
+             (bol->in(1)->Opcode() == Op_StoreIConditional ) ||
              (bol->in(1)->Opcode() == Op_StoreLConditional ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapI ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapL ) ||
-             (bol->in(1)->Opcode() == Op_CompareAndSwapP )))
+             (bol->in(1)->Opcode() == Op_CompareAndSwapP ) ||
+             (bol->in(1)->Opcode() == Op_CompareAndSwapN )))
           return;               // Allocation loops RARELY take backedge
         // Find the OTHER exit path from the IF
         Node* ex = iff->proj_out(1-test_con);
@@ -1583,10 +1594,10 @@ bool IdealLoopTree::policy_do_remove_empty_loop( PhaseIdealLoop *phase ) {
 
 //=============================================================================
 //------------------------------iteration_split_impl---------------------------
-void IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_new ) {
+bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_new ) {
   // Check and remove empty loops (spam micro-benchmarks)
-  if( policy_do_remove_empty_loop(phase) ) 
-    return;                     // Here we removed an empty loop
+  if( policy_do_remove_empty_loop(phase) )
+    return true;                     // Here we removed an empty loop
 
   bool should_peel = policy_peeling(phase); // Should we peel?
 
@@ -1596,7 +1607,8 @@ void IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
   // This removes loop-invariant tests (usually null checks).
   if( !_head->is_CountedLoop() ) { // Non-counted loop
     if (PartialPeelLoop && phase->partial_peel(this, old_new)) {
-      return;
+      // Partial peel succeeded so terminate this round of loop opts
+      return false;
     }
     if( should_peel ) {            // Should we peel?
 #ifndef PRODUCT
@@ -1606,14 +1618,14 @@ void IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
     } else if( should_unswitch ) {
       phase->do_unswitching(this, old_new);
     }
-    return;
+    return true;
   }
   CountedLoopNode *cl = _head->as_CountedLoop();
 
-  if( !cl->loopexit() ) return; // Ignore various kinds of broken loops
+  if( !cl->loopexit() ) return true; // Ignore various kinds of broken loops
 
   // Do nothing special to pre- and post- loops
-  if( cl->is_pre_loop() || cl->is_post_loop() ) return;
+  if( cl->is_pre_loop() || cl->is_post_loop() ) return true;
 
   // Compute loop trip count from profile data
   compute_profile_trip_cnt(phase);
@@ -1626,11 +1638,11 @@ void IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
       // Here we did some unrolling and peeling.  Eventually we will 
       // completely unroll this loop and it will no longer be a loop.
       phase->do_maximally_unroll(this,old_new);
-      return;
+      return true;
     }
     if (should_unswitch) {
       phase->do_unswitching(this, old_new);
-      return;
+      return true;
     }
   }
 
@@ -1691,14 +1703,16 @@ void IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
     if( should_peel )           // Might want to peel but do nothing else
       phase->do_peeling(this,old_new);
   }
+  return true;
 }
 
 
 //=============================================================================
 //------------------------------iteration_split--------------------------------
-void IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new ) {
+bool IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new ) {
   // Recursively iteration split nested loops
-  if( _child ) _child->iteration_split( phase, old_new );
+  if( _child && !_child->iteration_split( phase, old_new ))
+    return false;
 
   // Clean out prior deadwood
   DCE_loop_body();
@@ -1717,9 +1731,12 @@ void IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new )
   // Gate unrolling, RCE and peeling efforts.
   if( !_child &&                // If not an inner loop, do not split
       !_irreducible &&
+      _allow_optimizations &&
       !tail()->is_top() ) {     // Also ignore the occasional dead backedge
     if (!_has_call) {
-      iteration_split_impl( phase, old_new );
+      if (!iteration_split_impl( phase, old_new )) {
+        return false;
+      }
     } else if (policy_unswitching(phase)) {
       phase->do_unswitching(this, old_new);
     }
@@ -1728,5 +1745,7 @@ void IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new )
   // Minor offset re-organization to remove loop-fallout uses of 
   // trip counter.
   if( _head->is_CountedLoop() ) phase->reorg_offsets( this );
-  if( _next ) _next->iteration_split( phase, old_new );
+  if( _next && !_next->iteration_split( phase, old_new ))
+    return false;
+  return true;
 }

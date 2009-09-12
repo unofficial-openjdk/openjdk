@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -275,6 +275,15 @@ public class ReversePtrsAnalysis {
     
     public void visitAddress(Address addr) {
       Oop next = heap.newOop(addr.getOopHandleAt(0));
+      LivenessPathElement lp = new LivenessPathElement(null,
+                                        new NamedFieldIdentifier(baseRootDescription +
+                                                                 " @ " + addr));
+      rp.put(lp, next);
+      markAndTraverse(next);
+    }
+
+    public void visitCompOopAddress(Address addr) {
+      Oop next = heap.newOop(addr.getCompOopHandleAt(0));
       LivenessPathElement lp = new LivenessPathElement(null,
                                         new NamedFieldIdentifier(baseRootDescription +
                                                                  " @ " + addr));

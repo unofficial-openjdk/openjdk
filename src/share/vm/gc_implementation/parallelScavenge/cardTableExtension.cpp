@@ -2,7 +2,7 @@
 #pragma ident "@(#)cardTableExtension.cpp	1.35 07/09/25 16:47:41 JVM"
 #endif
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,17 +31,16 @@
 // Checks an individual oop for missing precise marks. Mark
 // may be either dirty or newgen.
 class CheckForUnmarkedOops : public OopClosure {
-  PSYoungGen* _young_gen;
+ private:
+  PSYoungGen*         _young_gen;
   CardTableExtension* _card_table;
-  HeapWord* _unmarked_addr;
-  jbyte* _unmarked_card;
+  HeapWord*           _unmarked_addr;
+  jbyte*              _unmarked_card;
 
- public:
-  CheckForUnmarkedOops( PSYoungGen* young_gen, CardTableExtension* card_table ) :
-    _young_gen(young_gen), _card_table(card_table), _unmarked_addr(NULL) { }
-
-  virtual void do_oop(oop* p) {
-    if (_young_gen->is_in_reserved(*p) &&
+ protected:
+  template <class T> void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
+    if (_young_gen->is_in_reserved(obj) &&
         !_card_table->addr_is_marked_imprecise(p)) {
       // Don't overwrite the first missing card mark
       if (_unmarked_addr == NULL) {
@@ -51,6 +50,13 @@ class CheckForUnmarkedOops : public OopClosure {
     }
   }
 
+ public:
+  CheckForUnmarkedOops(PSYoungGen* young_gen, CardTableExtension* card_table) :
+    _young_gen(young_gen), _card_table(card_table), _unmarked_addr(NULL) { }
+
+  virtual void do_oop(oop* p)       { CheckForUnmarkedOops::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { CheckForUnmarkedOops::do_oop_work(p); }
+
   bool has_unmarked_oop() {
     return _unmarked_addr != NULL;
   }
@@ -59,7 +65,8 @@ class CheckForUnmarkedOops : public OopClosure {
 // Checks all objects for the existance of some type of mark,
 // precise or imprecise, dirty or newgen.
 class CheckForUnmarkedObjects : public ObjectClosure {
-  PSYoungGen* _young_gen;
+ private:
+  PSYoungGen*         _young_gen;
   CardTableExtension* _card_table;
 
  public:
@@ -78,7 +85,7 @@ class CheckForUnmarkedObjects : public ObjectClosure {
   // we test for missing precise marks first. If any are found, we don't
   // fail unless the object head is also unmarked.
   virtual void do_object(oop obj) {
-    CheckForUnmarkedOops object_check( _young_gen, _card_table );
+    CheckForUnmarkedOops object_check(_young_gen, _card_table);
     obj->oop_iterate(&object_check);
     if (object_check.has_unmarked_oop()) {
       assert(_card_table->addr_is_marked_imprecise(obj), "Found unmarked young_gen object");
@@ -88,19 +95,25 @@ class CheckForUnmarkedObjects : public ObjectClosure {
 
 // Checks for precise marking of oops as newgen.
 class CheckForPreciseMarks : public OopClosure {
-  PSYoungGen* _young_gen;
+ private:
+  PSYoungGen*         _young_gen;
   CardTableExtension* _card_table;
+
+ protected:
+  template <class T> void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
+    if (_young_gen->is_in_reserved(obj)) {
+      assert(_card_table->addr_is_marked_precise(p), "Found unmarked precise oop");
+      _card_table->set_card_newgen(p);
+    }
+  }
 
  public:
   CheckForPreciseMarks( PSYoungGen* young_gen, CardTableExtension* card_table ) :
     _young_gen(young_gen), _card_table(card_table) { }
 
-  virtual void do_oop(oop* p) {
-    if (_young_gen->is_in_reserved(*p)) {
-      assert(_card_table->addr_is_marked_precise(p), "Found unmarked precise oop");
-      _card_table->set_card_newgen(p);
-    }
-  }
+  virtual void do_oop(oop* p)       { CheckForPreciseMarks::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { CheckForPreciseMarks::do_oop_work(p); }
 };
 
 // We get passed the space_top value to prevent us from traversing into
@@ -656,9 +669,9 @@ void CardTableExtension::resize_commit_uncommit(int changed_region,
 
     HeapWord* new_end_for_commit = 
       MIN2(cur_committed.end(), _guard_region.start());
-    MemRegion new_committed = 
-      MemRegion(new_start_aligned, new_end_for_commit);
-    if(!new_committed.is_empty()) {
+    if(new_start_aligned < new_end_for_commit) {
+      MemRegion new_committed =
+        MemRegion(new_start_aligned, new_end_for_commit);
       if (!os::commit_memory((char*)new_committed.start(),
                              new_committed.byte_size())) {
         vm_exit_out_of_memory(new_committed.byte_size(),

@@ -2,7 +2,7 @@
 #pragma ident "@(#)classFileParser.cpp	1.280 07/07/09 11:19:49 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@
 
 #define JAVA_CLASSFILE_MAGIC              0xCAFEBABE
 #define JAVA_MIN_SUPPORTED_VERSION        45
-#define JAVA_MAX_SUPPORTED_VERSION        50
+#define JAVA_MAX_SUPPORTED_VERSION        51
 #define JAVA_MAX_SUPPORTED_MINOR_VERSION  0
 
 // Used for two backward compatibility reasons:
@@ -47,7 +47,8 @@
 
 // Used for backward compatibility reasons:
 // - to check for javac bug fixes that happened after 1.5
-#define JAVA_6_VERSION                    50 
+// - also used as the max version when running in jdk6
+#define JAVA_6_VERSION                    50
 
 
 void ClassFileParser::parse_constant_pool_entries(constantPoolHandle cp, int length, TRAPS) {
@@ -170,9 +171,21 @@ void ClassFileParser::parse_constant_pool_entries(constantPoolHandle cp, int len
           // Got utf8 string, guarantee utf8_length+1 bytes, set stream position forward.
           cfs->guarantee_more(utf8_length+1, CHECK);  // utf8 string, tag/access_flags
           cfs->skip_u1_fast(utf8_length);
+
           // Before storing the symbol, make sure it's legal
           if (_need_verify) {
             verify_legal_utf8((unsigned char*)utf8_buffer, utf8_length, CHECK);
+          }
+
+          if (AnonymousClasses && has_cp_patch_at(index)) {
+            Handle patch = clear_cp_patch_at(index);
+            guarantee_property(java_lang_String::is_instance(patch()),
+                               "Illegal utf8 patch at %d in class file %s",
+                               index, CHECK);
+            char* str = java_lang_String::as_utf8_string(patch());
+            // (could use java_lang_String::as_symbol instead, but might as well batch them)
+            utf8_buffer = (u1*) str;
+            utf8_length = (int) strlen(str);
           }
 
           unsigned int hash;
@@ -247,9 +260,9 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
         int klass_ref_index = cp->klass_ref_index_at(index);
         int name_and_type_ref_index = cp->name_and_type_ref_index_at(index);
         check_property(valid_cp_range(klass_ref_index, length) &&
-                       cp->tag_at(klass_ref_index).is_klass_reference(), 
-                       "Invalid constant pool index %u in class file %s", 
-                       klass_ref_index, 
+                       is_klass_reference(cp, klass_ref_index),
+                       "Invalid constant pool index %u in class file %s",
+                       klass_ref_index,
                        CHECK_(nullHandle));
         check_property(valid_cp_range(name_and_type_ref_index, length) &&
                        cp->tag_at(name_and_type_ref_index).is_name_and_type(), 
@@ -328,16 +341,46 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
     } // end of switch
   } // end of for
 
+  if (_cp_patches != NULL) {
+    // need to treat this_class specially...
+    assert(AnonymousClasses, "");
+    int this_class_index;
+    {
+      cfs->guarantee_more(8, CHECK_(nullHandle));  // flags, this_class, super_class, infs_len
+      u1* mark = cfs->current();
+      u2 flags         = cfs->get_u2_fast();
+      this_class_index = cfs->get_u2_fast();
+      cfs->set_current(mark);  // revert to mark
+    }
+
+    for (index = 1; index < length; index++) {          // Index 0 is unused
+      if (has_cp_patch_at(index)) {
+        guarantee_property(index != this_class_index,
+                           "Illegal constant pool patch to self at %d in class file %s",
+                           index, CHECK_(nullHandle));
+        patch_constant_pool(cp, index, cp_patch_at(index), CHECK_(nullHandle));
+      }
+    }
+    // Ensure that all the patches have been used.
+    for (index = 0; index < _cp_patches->length(); index++) {
+      guarantee_property(!has_cp_patch_at(index),
+                         "Unused constant pool patch at %d in class file %s",
+                         index, CHECK_(nullHandle));
+    }
+  }
+
   if (!_need_verify) {
     return cp;
   }
 
   // second verification pass - checks the strings are of the right format.
+  // but not yet to the other entries
   for (index = 1; index < length; index++) {
     jbyte tag = cp->tag_at(index).value();
     switch (tag) {
       case JVM_CONSTANT_UnresolvedClass: {
         symbolHandle class_name(THREAD, cp->unresolved_klass_at(index));
+        // check the name, even if _cp_patches will overwrite it
         verify_legal_class_name(class_name, CHECK_(nullHandle));
         break;
       }
@@ -378,6 +421,73 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
   
   return cp;
 }
+
+
+void ClassFileParser::patch_constant_pool(constantPoolHandle cp, int index, Handle patch, TRAPS) {
+  assert(AnonymousClasses, "");
+  BasicType patch_type = T_VOID;
+  switch (cp->tag_at(index).value()) {
+
+  case JVM_CONSTANT_UnresolvedClass :
+    // Patching a class means pre-resolving it.
+    // The name in the constant pool is ignored.
+    if (patch->klass() == SystemDictionary::class_klass()) { // %%% java_lang_Class::is_instance
+      guarantee_property(!java_lang_Class::is_primitive(patch()),
+                         "Illegal class patch at %d in class file %s",
+                         index, CHECK);
+      cp->klass_at_put(index, java_lang_Class::as_klassOop(patch()));
+    } else {
+      guarantee_property(java_lang_String::is_instance(patch()),
+                         "Illegal class patch at %d in class file %s",
+                         index, CHECK);
+      symbolHandle name = java_lang_String::as_symbol(patch(), CHECK);
+      cp->unresolved_klass_at_put(index, name());
+    }
+    break;
+
+  case JVM_CONSTANT_UnresolvedString :
+    // Patching a string means pre-resolving it.
+    // The spelling in the constant pool is ignored.
+    // The constant reference may be any object whatever.
+    // If it is not a real interned string, the constant is referred
+    // to as a "pseudo-string", and must be presented to the CP
+    // explicitly, because it may require scavenging.
+    cp->pseudo_string_at_put(index, patch());
+    break;
+
+  case JVM_CONSTANT_Integer : patch_type = T_INT;    goto patch_prim;
+  case JVM_CONSTANT_Float :   patch_type = T_FLOAT;  goto patch_prim;
+  case JVM_CONSTANT_Long :    patch_type = T_LONG;   goto patch_prim;
+  case JVM_CONSTANT_Double :  patch_type = T_DOUBLE; goto patch_prim;
+  patch_prim:
+    {
+      jvalue value;
+      BasicType value_type = java_lang_boxing_object::get_value(patch(), &value);
+      guarantee_property(value_type == patch_type,
+                         "Illegal primitive patch at %d in class file %s",
+                         index, CHECK);
+      switch (value_type) {
+      case T_INT:    cp->int_at_put(index,   value.i); break;
+      case T_FLOAT:  cp->float_at_put(index, value.f); break;
+      case T_LONG:   cp->long_at_put(index,  value.j); break;
+      case T_DOUBLE: cp->double_at_put(index, value.d); break;
+      default:       assert(false, "");
+      }
+    }
+    break;
+
+  default:
+    // %%% TODO: put method handles into CONSTANT_InterfaceMethodref, etc.
+    guarantee_property(!has_cp_patch_at(index),
+                       "Illegal unexpected patch at %d in class file %s",
+                       index, CHECK);
+    return;
+  }
+
+  // On fall-through, mark the patch as used.
+  clear_cp_patch_at(index);
+}
+
 
 
 class NameSigHash: public ResourceObj {
@@ -450,25 +560,33 @@ objArrayHandle ClassFileParser::parse_interfaces(constantPoolHandle cp,
   int index;
   for (index = 0; index < length; index++) {
     u2 interface_index = cfs->get_u2(CHECK_(nullHandle));
+    KlassHandle interf;
     check_property(
-      valid_cp_range(interface_index, cp->length()) && 
-        cp->tag_at(interface_index).is_unresolved_klass(), 
-      "Interface name has bad constant pool index %u in class file %s", 
+      valid_cp_range(interface_index, cp->length()) &&
+      is_klass_reference(cp, interface_index),
+      "Interface name has bad constant pool index %u in class file %s",
       interface_index, CHECK_(nullHandle));
-    symbolHandle unresolved_klass (THREAD, cp->klass_name_at(interface_index));
+    if (cp->tag_at(interface_index).is_klass()) {
+      interf = KlassHandle(THREAD, cp->resolved_klass_at(interface_index));
+    } else {
+      symbolHandle unresolved_klass (THREAD, cp->klass_name_at(interface_index));
 
-    // Don't need to check legal name because it's checked when parsing constant pool.
-    // But need to make sure it's not an array type.
-    guarantee_property(unresolved_klass->byte_at(0) != JVM_SIGNATURE_ARRAY, 
-                       "Bad interface name in class file %s", CHECK_(nullHandle));
+      // Don't need to check legal name because it's checked when parsing constant pool.
+      // But need to make sure it's not an array type.
+      guarantee_property(unresolved_klass->byte_at(0) != JVM_SIGNATURE_ARRAY,
+                         "Bad interface name in class file %s", CHECK_(nullHandle));
 
-    vmtimer->suspend();  // do not count recursive loading twice
-    // Call resolve_super so classcircularity is checked
-    klassOop k = SystemDictionary::resolve_super_or_fail(class_name,
-                  unresolved_klass, class_loader, protection_domain, 
-                  false, CHECK_(nullHandle));
-    KlassHandle interf (THREAD, k);
-    vmtimer->resume();
+      vmtimer->suspend();  // do not count recursive loading twice
+      // Call resolve_super so classcircularity is checked
+      klassOop k = SystemDictionary::resolve_super_or_fail(class_name,
+                    unresolved_klass, class_loader, protection_domain,
+                    false, CHECK_(nullHandle));
+      interf = KlassHandle(THREAD, k);
+      vmtimer->resume();
+
+      if (LinkWellKnownClasses)  // my super type is well known to me
+        cp->klass_at_put(interface_index, interf()); // eagerly resolve
+    }
 
     if (!Klass::cast(interf())->is_interface()) {
       THROW_MSG_(vmSymbols::java_lang_IncompatibleClassChangeError(), "Implementing class", nullHandle);
@@ -878,9 +996,8 @@ typeArrayHandle ClassFileParser::parse_exception_table(u4 code_length,
       guarantee_property(handler_pc < code_length, 
                          "Illegal exception table handler in class file %s", CHECK_(nullHandle)); 
       if (catch_type_index != 0) {
-        guarantee_property(valid_cp_range(catch_type_index, cp->length()) && 
-                          (cp->tag_at(catch_type_index).is_klass() || 
-                           cp->tag_at(catch_type_index).is_unresolved_klass()),
+        guarantee_property(valid_cp_range(catch_type_index, cp->length()) &&
+                           is_klass_reference(cp, catch_type_index),
                            "Catch type in exception table has bad constant type in class file %s", CHECK_(nullHandle));
       }
     }	      
@@ -1119,8 +1236,8 @@ void ClassFileParser::parse_type_array(u2 array_length, u4 code_length, u4* u1_i
     } else if (tag == ITEM_Object) {
       u2 class_index = u2_array[i2++] = cfs->get_u2(CHECK);
       guarantee_property(valid_cp_range(class_index, cp->length()) &&
-                         cp->tag_at(class_index).is_unresolved_klass(), 
-                         "Bad class index %u in StackMap in class file %s", 
+                         is_klass_reference(cp, class_index),
+                         "Bad class index %u in StackMap in class file %s",
                          class_index, CHECK);
     } else if (tag == ITEM_Uninitialized) {
       u2 offset = u2_array[i2++] = cfs->get_u2(CHECK);
@@ -1185,8 +1302,8 @@ u2* ClassFileParser::parse_checked_exceptions(u2* checked_exceptions_length,
       checked_exception = cfs->get_u2_fast();
       check_property(
         valid_cp_range(checked_exception, cp->length()) &&
-        cp->tag_at(checked_exception).is_klass_reference(), 
-        "Exception name has bad type at constant pool %u in class file %s", 
+        is_klass_reference(cp, checked_exception),
+        "Exception name has bad type at constant pool %u in class file %s",
         checked_exception, CHECK_NULL);
     }
   }
@@ -1362,16 +1479,25 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
       // Parse additional attributes in code attribute
       cfs->guarantee_more(2, CHECK_(nullHandle));  // code_attributes_count
       u2 code_attributes_count = cfs->get_u2_fast();
-      unsigned int calculated_attribute_length = sizeof(max_stack) + 
-                                                 sizeof(max_locals) + 
-                                                 sizeof(code_length) +
-                                                 code_length + 
-                                                 sizeof(exception_table_length) +
-                                                 sizeof(code_attributes_count) +
-                                                 exception_table_length*(sizeof(u2) /* start_pc */+
-                                                                         sizeof(u2) /* end_pc */  +
-                                                                         sizeof(u2) /* handler_pc */ +
-                                                                         sizeof(u2) /* catch_type_index */);
+
+      unsigned int calculated_attribute_length = 0;
+
+      if (_major_version > 45 || (_major_version == 45 && _minor_version > 2)) {
+        calculated_attribute_length =
+            sizeof(max_stack) + sizeof(max_locals) + sizeof(code_length);
+      } else {
+        // max_stack, locals and length are smaller in pre-version 45.2 classes
+        calculated_attribute_length = sizeof(u1) + sizeof(u1) + sizeof(u2);
+      }
+      calculated_attribute_length +=
+        code_length +
+        sizeof(exception_table_length) +
+        sizeof(code_attributes_count) +
+        exception_table_length *
+            ( sizeof(u2) +   // start_pc
+              sizeof(u2) +   // end_pc
+              sizeof(u2) +   // handler_pc
+              sizeof(u2) );  // catch_type_index
 
       while (code_attributes_count--) {
         cfs->guarantee_more(6, CHECK_(nullHandle));  // code_attribute_name_index, code_attribute_length
@@ -1909,18 +2035,18 @@ u2 ClassFileParser::parse_classfile_inner_classes_attribute(constantPoolHandle c
     // Inner class index
     u2 inner_class_info_index = cfs->get_u2_fast();
     check_property(
-      inner_class_info_index == 0 || 
-        (valid_cp_range(inner_class_info_index, cp_size) && 
-        cp->tag_at(inner_class_info_index).is_klass_reference()), 
-      "inner_class_info_index %u has bad constant type in class file %s", 
+      inner_class_info_index == 0 ||
+        (valid_cp_range(inner_class_info_index, cp_size) &&
+        is_klass_reference(cp, inner_class_info_index)),
+      "inner_class_info_index %u has bad constant type in class file %s",
       inner_class_info_index, CHECK_0);
     // Outer class index
     u2 outer_class_info_index = cfs->get_u2_fast();
     check_property(
       outer_class_info_index == 0 || 
         (valid_cp_range(outer_class_info_index, cp_size) &&
-        cp->tag_at(outer_class_info_index).is_klass_reference()), 
-      "outer_class_info_index %u has bad constant type in class file %s", 
+        is_klass_reference(cp, outer_class_info_index)),
+      "outer_class_info_index %u has bad constant type in class file %s",
       outer_class_info_index, CHECK_0);
     // Inner class name
     u2 inner_name_index = cfs->get_u2_fast();
@@ -2081,7 +2207,7 @@ void ClassFileParser::parse_classfile_attributes(constantPoolHandle cp, instance
         }
         // Validate the constant pool indices and types
         if (!cp->is_within_bounds(class_index) ||
-            !cp->tag_at(class_index).is_klass_reference()) {
+            !is_klass_reference(cp, class_index)) {
           classfile_parse_error("Invalid or out-of-bounds class index in EnclosingMethod attribute in class file %s", CHECK);
         }
         if (method_index != 0 &&
@@ -2335,13 +2461,14 @@ void ClassFileParser::java_lang_Class_fix_post(int* next_nonstatic_oop_offset_pt
   // Incrementing next_nonstatic_oop_offset here advances the 
   // location where the real java fields are placed.
   const int extra = java_lang_Class::number_of_fake_oop_fields;
-  (*next_nonstatic_oop_offset_ptr) += (extra * wordSize);
+  (*next_nonstatic_oop_offset_ptr) += (extra * heapOopSize);
 }
 
 
-instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name, 
-                                                    Handle class_loader, 
-                                                    Handle protection_domain, 
+instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
+                                                    Handle class_loader,
+                                                    Handle protection_domain,
+                                                    GrowableArray<Handle>* cp_patches,
                                                     symbolHandle& parsed_name,
                                                     TRAPS) {
   // So that JVMTI can cache class file in the state before retransformable agents
@@ -2373,6 +2500,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     }
   }
 
+  _cp_patches = cp_patches;
 
   instanceKlassHandle nullHandle;
 
@@ -2503,14 +2631,22 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
                      CHECK_(nullHandle));
     } else {
       check_property(valid_cp_range(super_class_index, cp_size) &&
-                     cp->tag_at(super_class_index).is_unresolved_klass(), 
-                     "Invalid superclass index %u in class file %s", 
+                     is_klass_reference(cp, super_class_index),
+                     "Invalid superclass index %u in class file %s",
                      super_class_index,
                      CHECK_(nullHandle));
       // The class name should be legal because it is checked when parsing constant pool.
       // However, make sure it is not an array type.
+      bool is_array = false;
+      if (cp->tag_at(super_class_index).is_klass()) {
+        super_klass = instanceKlassHandle(THREAD, cp->resolved_klass_at(super_class_index));
+        if (_need_verify)
+          is_array = super_klass->oop_is_array();
+      } else if (_need_verify) {
+        is_array = (cp->unresolved_klass_at(super_class_index)->byte_at(0) == JVM_SIGNATURE_ARRAY);
+      }
       if (_need_verify) {
-        guarantee_property(cp->unresolved_klass_at(super_class_index)->byte_at(0) != JVM_SIGNATURE_ARRAY, 
+        guarantee_property(!is_array,
                           "Bad superclass name in class file %s", CHECK_(nullHandle));
       }
     }
@@ -2550,7 +2686,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     objArrayHandle methods_default_annotations(THREAD, methods_default_annotations_oop);
 
     // We check super class after class file is parsed and format is checked
-    if (super_class_index > 0) {
+    if (super_class_index > 0 && super_klass.is_null()) {
       symbolHandle sk (THREAD, cp->klass_name_at(super_class_index));
       if (access_flags.is_interface()) {
         // Before attempting to resolve the superclass, check for class format
@@ -2567,6 +2703,10 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
                                                            CHECK_(nullHandle));
       KlassHandle kh (THREAD, k);
       super_klass = instanceKlassHandle(THREAD, kh());
+      if (LinkWellKnownClasses)  // my super class is well known to me
+        cp->klass_at_put(super_class_index, super_klass()); // eagerly resolve
+    }
+    if (super_klass.not_null()) {
       if (super_klass->is_interface()) {
         ResourceMark rm(THREAD);
         Exceptions::fthrow(
@@ -2637,14 +2777,14 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     int next_nonstatic_field_offset;
 
     // Calculate the starting byte offsets
-    next_static_oop_offset      = (instanceKlass::header_size() + 
-		 		  align_object_offset(vtable_size) + 
-				  align_object_offset(itable_size)) * wordSize;
-    next_static_double_offset   = next_static_oop_offset + 
-			 	  (fac.static_oop_count * oopSize);
-    if ( fac.static_double_count && 
-	 (Universe::field_type_should_be_aligned(T_DOUBLE) || 
- 	  Universe::field_type_should_be_aligned(T_LONG)) ) {
+    next_static_oop_offset      = (instanceKlass::header_size() +
+                                  align_object_offset(vtable_size) +
+                                  align_object_offset(itable_size)) * wordSize;
+    next_static_double_offset   = next_static_oop_offset +
+                                  (fac.static_oop_count * heapOopSize);
+    if ( fac.static_double_count &&
+         (Universe::field_type_should_be_aligned(T_DOUBLE) ||
+          Universe::field_type_should_be_aligned(T_LONG)) ) {
       next_static_double_offset = align_size_up(next_static_double_offset, BytesPerLong);
     }
 
@@ -2655,11 +2795,11 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     next_static_byte_offset     = next_static_short_offset + 
 				  (fac.static_short_count * BytesPerShort);
     next_static_type_offset     = align_size_up((next_static_byte_offset +
-			          fac.static_byte_count ), wordSize );
-    static_field_size 	        = (next_static_type_offset - 
-			          next_static_oop_offset) / wordSize;
-    first_nonstatic_field_offset = (instanceOopDesc::header_size() + 
-				    nonstatic_field_size) * wordSize;
+                                  fac.static_byte_count ), wordSize );
+    static_field_size           = (next_static_type_offset -
+                                  next_static_oop_offset) / wordSize;
+    first_nonstatic_field_offset = instanceOopDesc::base_offset_in_bytes() +
+                                   nonstatic_field_size * heapOopSize;
     next_nonstatic_field_offset = first_nonstatic_field_offset;
 
     // Add fake fields for java.lang.Class instances (also see below)
@@ -2681,6 +2821,14 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     int nonstatic_byte_count   = fac.nonstatic_byte_count;
     int nonstatic_oop_count    = fac.nonstatic_oop_count;
 
+    bool super_has_nonstatic_fields =
+            (super_klass() != NULL && super_klass->has_nonstatic_fields());
+    bool has_nonstatic_fields  =  super_has_nonstatic_fields ||
+            ((nonstatic_double_count + nonstatic_word_count +
+              nonstatic_short_count + nonstatic_byte_count +
+              nonstatic_oop_count) != 0);
+
+
     // Prepare list of oops for oop maps generation.
     u2* nonstatic_oop_offsets;
     u2* nonstatic_oop_length;
@@ -2697,7 +2845,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
       java_lang_Class_fix_post(&next_nonstatic_field_offset);
       nonstatic_oop_offsets[0] = (u2)first_nonstatic_field_offset;
       int fake_oop_count       = (( next_nonstatic_field_offset -
-                                    first_nonstatic_field_offset ) / oopSize);
+                                    first_nonstatic_field_offset ) / heapOopSize);
       nonstatic_oop_length [0] = (u2)fake_oop_count;
       nonstatic_oop_map_count  = 1;
       nonstatic_oop_count     -= fake_oop_count;
@@ -2708,8 +2856,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
 
 #ifndef PRODUCT
     if( PrintCompactFieldsSavings ) {
-      next_nonstatic_double_offset = next_nonstatic_field_offset + 
-                                     (nonstatic_oop_count * oopSize);
+      next_nonstatic_double_offset = next_nonstatic_field_offset +
+                                     (nonstatic_oop_count * heapOopSize);
       if ( nonstatic_double_count > 0 ) {
         next_nonstatic_double_offset = align_size_up(next_nonstatic_double_offset, BytesPerLong); 
       }
@@ -2720,9 +2868,9 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
       next_nonstatic_byte_offset  = next_nonstatic_short_offset + 
                                     (nonstatic_short_count * BytesPerShort);
       next_nonstatic_type_offset  = align_size_up((next_nonstatic_byte_offset +
-                                    nonstatic_byte_count ), wordSize );
-      orig_nonstatic_field_size   = nonstatic_field_size + 
-        ((next_nonstatic_type_offset - first_nonstatic_field_offset)/wordSize);
+                                    nonstatic_byte_count ), heapOopSize );
+      orig_nonstatic_field_size   = nonstatic_field_size +
+      ((next_nonstatic_type_offset - first_nonstatic_field_offset)/heapOopSize);
     }
 #endif
     bool compact_fields   = CompactFields;
@@ -2743,7 +2891,15 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
          class_name() == vmSymbols::java_lang_ref_SoftReference() ||
          class_name() == vmSymbols::java_lang_StackTraceElement() ||
          class_name() == vmSymbols::java_lang_String() ||
-         class_name() == vmSymbols::java_lang_Throwable()) ) {
+         class_name() == vmSymbols::java_lang_Throwable() ||
+         class_name() == vmSymbols::java_lang_Boolean() ||
+         class_name() == vmSymbols::java_lang_Character() ||
+         class_name() == vmSymbols::java_lang_Float() ||
+         class_name() == vmSymbols::java_lang_Double() ||
+         class_name() == vmSymbols::java_lang_Byte() ||
+         class_name() == vmSymbols::java_lang_Short() ||
+         class_name() == vmSymbols::java_lang_Integer() ||
+         class_name() == vmSymbols::java_lang_Long())) {
       allocation_style = 0;     // Allocate oops first
       compact_fields   = false; // Don't compact fields
     }
@@ -2751,8 +2907,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     if( allocation_style == 0 ) {
       // Fields order: oops, longs/doubles, ints, shorts/chars, bytes
       next_nonstatic_oop_offset    = next_nonstatic_field_offset;
-      next_nonstatic_double_offset = next_nonstatic_oop_offset + 
-			 	     (nonstatic_oop_count * oopSize);
+      next_nonstatic_double_offset = next_nonstatic_oop_offset +
+                                      (nonstatic_oop_count * heapOopSize);
     } else if( allocation_style == 1 ) {
       // Fields order: longs/doubles, ints, shorts/chars, bytes, oops
       next_nonstatic_double_offset = next_nonstatic_field_offset;
@@ -2798,12 +2954,12 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
         }
         // Allocate oop field in the gap if there are no other fields for that.
         nonstatic_oop_space_offset = offset;
-        if( length >= oopSize && nonstatic_oop_count > 0 &&  
+        if( length >= heapOopSize && nonstatic_oop_count > 0 &&
             allocation_style != 0 ) { // when oop fields not first
           nonstatic_oop_count      -= 1;
           nonstatic_oop_space_count = 1; // Only one will fit
-          length -= oopSize;
-          offset += oopSize;
+          length -= heapOopSize;
+          offset += heapOopSize;
         }
       }
     }
@@ -2821,14 +2977,13 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     } else { // allocation_style == 1 
       next_nonstatic_oop_offset = next_nonstatic_byte_offset + nonstatic_byte_count;
       if( nonstatic_oop_count > 0 ) {
-        notaligned_offset = next_nonstatic_oop_offset;
-        next_nonstatic_oop_offset = align_size_up(next_nonstatic_oop_offset, oopSize);
+        next_nonstatic_oop_offset = align_size_up(next_nonstatic_oop_offset, heapOopSize);
       }
-      notaligned_offset = next_nonstatic_oop_offset + (nonstatic_oop_count * oopSize);
+      notaligned_offset = next_nonstatic_oop_offset + (nonstatic_oop_count * heapOopSize);
     }
-    next_nonstatic_type_offset = align_size_up(notaligned_offset, wordSize );
+    next_nonstatic_type_offset = align_size_up(notaligned_offset, heapOopSize );
     nonstatic_field_size = nonstatic_field_size + ((next_nonstatic_type_offset
-                                      - first_nonstatic_field_offset)/wordSize);
+                                   - first_nonstatic_field_offset)/heapOopSize);
 
     // Iterate over fields again and compute correct offsets.
     // The field allocation type was temporarily stored in the offset slot.
@@ -2840,7 +2995,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
       switch (atype) {
         case STATIC_OOP:
           real_offset = next_static_oop_offset;
-          next_static_oop_offset += oopSize;
+          next_static_oop_offset += heapOopSize;
           break;
         case STATIC_BYTE:
           real_offset = next_static_byte_offset;
@@ -2862,16 +3017,16 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
         case NONSTATIC_OOP:
           if( nonstatic_oop_space_count > 0 ) {
             real_offset = nonstatic_oop_space_offset;
-            nonstatic_oop_space_offset += oopSize;
+            nonstatic_oop_space_offset += heapOopSize;
             nonstatic_oop_space_count  -= 1;
           } else {
             real_offset = next_nonstatic_oop_offset;
-            next_nonstatic_oop_offset += oopSize;
+            next_nonstatic_oop_offset += heapOopSize;
           }
           // Update oop maps
           if( nonstatic_oop_map_count > 0 &&
-              nonstatic_oop_offsets[nonstatic_oop_map_count - 1] == 
-              (u2)(real_offset - nonstatic_oop_length[nonstatic_oop_map_count - 1] * oopSize) ) {
+              nonstatic_oop_offsets[nonstatic_oop_map_count - 1] ==
+              (u2)(real_offset - nonstatic_oop_length[nonstatic_oop_map_count - 1] * heapOopSize) ) {
             // Extend current oop map
             nonstatic_oop_length[nonstatic_oop_map_count - 1] += 1;
           } else {
@@ -2929,9 +3084,10 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     // Size of instances
     int instance_size;
 
+    next_nonstatic_type_offset = align_size_up(notaligned_offset, wordSize );
     instance_size = align_object_size(next_nonstatic_type_offset / wordSize);
 
-    assert(instance_size == align_object_size(instanceOopDesc::header_size() + nonstatic_field_size), "consistent layout helper value");
+    assert(instance_size == align_object_size(align_size_up((instanceOopDesc::base_offset_in_bytes() + nonstatic_field_size*heapOopSize), wordSize) / wordSize), "consistent layout helper value");
 
     // Size of non-static oop map blocks (in words) allocated at end of klass
     int nonstatic_oop_map_size = compute_oop_map_size(super_klass, nonstatic_oop_map_count, first_nonstatic_oop_offset);
@@ -2964,7 +3120,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     //this_klass->set_super(super_klass());  
     this_klass->set_class_loader(class_loader());    
     this_klass->set_nonstatic_field_size(nonstatic_field_size);
-    this_klass->set_static_oop_field_size(fac.static_oop_count);       
+    this_klass->set_has_nonstatic_fields(has_nonstatic_fields);
+    this_klass->set_static_oop_field_size(fac.static_oop_count);
     cp->set_pool_holder(this_klass());
     this_klass->set_constants(cp());
     this_klass->set_local_interfaces(local_interfaces());
@@ -2976,6 +3133,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
     this_klass->set_method_ordering(method_ordering());
     this_klass->set_initial_method_idnum(methods->length());
     this_klass->set_name(cp->klass_name_at(this_class_index));
+    if (LinkWellKnownClasses)  // I am well known to myself
+      cp->klass_at_put(this_class_index, this_klass()); // eagerly resolve
     this_klass->set_protection_domain(protection_domain());
     this_klass->set_fields_annotations(fields_annotations());
     this_klass->set_methods_annotations(methods_annotations());
@@ -3088,13 +3247,15 @@ instanceKlassHandle ClassFileParser::parseClassFile(symbolHandle name,
 #ifndef PRODUCT
     if( PrintCompactFieldsSavings ) {
       if( nonstatic_field_size < orig_nonstatic_field_size ) {
-        tty->print("[Saved %d of %3d words in %s]\n", 
-                 orig_nonstatic_field_size - nonstatic_field_size,
-                 orig_nonstatic_field_size, this_klass->external_name());
+        tty->print("[Saved %d of %d bytes in %s]\n",
+                 (orig_nonstatic_field_size - nonstatic_field_size)*heapOopSize,
+                 orig_nonstatic_field_size*heapOopSize,
+                 this_klass->external_name());
       } else if( nonstatic_field_size > orig_nonstatic_field_size ) {
-        tty->print("[Wasted %d over %3d words in %s]\n", 
-                 nonstatic_field_size - orig_nonstatic_field_size,
-                 orig_nonstatic_field_size, this_klass->external_name());
+        tty->print("[Wasted %d over %d bytes in %s]\n",
+                 (nonstatic_field_size - orig_nonstatic_field_size)*heapOopSize,
+                 orig_nonstatic_field_size*heapOopSize,
+                 this_klass->external_name());
       }
     }
 #endif
@@ -3122,7 +3283,7 @@ int ClassFileParser::compute_oop_map_size(instanceKlassHandle super, int nonstat
       OopMapBlock* first_map = super->start_of_nonstatic_oop_maps();
       OopMapBlock* last_map = first_map + map_size - 1;
 
-      int next_offset = last_map->offset() + (last_map->length() * oopSize);
+      int next_offset = last_map->offset() + (last_map->length() * heapOopSize);
       if (next_offset == first_nonstatic_oop_offset) {
         // There is no gap bettwen superklass's last oop field and first 
         // local oop field, merge maps.
@@ -3482,9 +3643,11 @@ bool ClassFileParser::has_illegal_visibility(jint flags) {
 }
 
 bool ClassFileParser::is_supported_version(u2 major, u2 minor) {
-  return (major >= JAVA_MIN_SUPPORTED_VERSION) && 
-         (major <= JAVA_MAX_SUPPORTED_VERSION) && 
-         ((major != JAVA_MAX_SUPPORTED_VERSION) || 
+  u2 max_version = JDK_Version::is_gte_jdk17x_version() ?
+    JAVA_MAX_SUPPORTED_VERSION : JAVA_6_VERSION;
+  return (major >= JAVA_MIN_SUPPORTED_VERSION) &&
+         (major <= max_version) &&
+         ((major != max_version) ||
           (minor <= JAVA_MAX_SUPPORTED_MINOR_VERSION));
 }
 

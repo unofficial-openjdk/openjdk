@@ -2,7 +2,7 @@
 #pragma ident "@(#)mutableNUMASpace.hpp	1.8 07/05/05 17:05:34 JVM"
 #endif
 /*
- * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,7 @@ class MutableNUMASpace : public MutableSpace {
     MutableSpace* _space;
     MemRegion _invalid_region;
     AdaptiveWeightedAverage *_alloc_rate;
+    bool _allocation_failed;
 
     struct SpaceStats {
       size_t _local_space, _remote_space, _unbiased_space, _uncommited_space;
@@ -84,7 +85,7 @@ class MutableNUMASpace : public MutableSpace {
     char* last_page_scanned()            { return _last_page_scanned; }
     void set_last_page_scanned(char* p)  { _last_page_scanned = p;    }
    public:
-    LGRPSpace(int l) : _lgrp_id(l), _last_page_scanned(NULL) {
+    LGRPSpace(int l) : _lgrp_id(l), _last_page_scanned(NULL), _allocation_failed(false) {
       _space = new MutableSpace();
       _alloc_rate = new AdaptiveWeightedAverage(NUMAChunkResizeWeight);
     }
@@ -106,8 +107,21 @@ class MutableNUMASpace : public MutableSpace {
       return *(int*)lgrp_id_value == p->lgrp_id();
     }
 
+    // Report a failed allocation.
+    void set_allocation_failed() { _allocation_failed = true;  }
+
     void sample() {
-      alloc_rate()->sample(space()->used_in_bytes());
+      // If there was a failed allocation make allocation rate equal
+      // to the size of the whole chunk. This ensures the progress of
+      // the adaptation process.
+      size_t alloc_rate_sample;
+      if (_allocation_failed) {
+        alloc_rate_sample = space()->capacity_in_bytes();
+        _allocation_failed = false;
+      } else {
+        alloc_rate_sample = space()->used_in_bytes();
+      }
+      alloc_rate()->sample(alloc_rate_sample);
     }
 
     MemRegion invalid_region() const                { return _invalid_region;      }
@@ -115,6 +129,7 @@ class MutableNUMASpace : public MutableSpace {
     int lgrp_id() const                             { return _lgrp_id;             }
     MutableSpace* space() const                     { return _space;               }
     AdaptiveWeightedAverage* alloc_rate() const     { return _alloc_rate;          }
+    void clear_alloc_rate()                         { _alloc_rate->clear();        }
     SpaceStats* space_stats()                       { return &_space_stats;        }
     void clear_space_stats()                        { _space_stats = SpaceStats(); }
 
@@ -142,8 +157,8 @@ class MutableNUMASpace : public MutableSpace {
   // Check if the NUMA topology has changed. Add and remove spaces if needed.
   // The update can be forced by setting the force parameter equal to true.
   bool update_layout(bool force);
-  // Bias region towards the first-touching lgrp.
-  void bias_region(MemRegion mr);
+  // Bias region towards the lgrp.
+  void bias_region(MemRegion mr, int lgrp_id);
   // Free pages in a given region.
   void free_region(MemRegion mr);
   // Get current chunk size.
@@ -174,17 +189,27 @@ class MutableNUMASpace : public MutableSpace {
   MutableNUMASpace();
   virtual ~MutableNUMASpace();
   // Space initialization.
-  virtual void initialize(MemRegion mr, bool clear_space);
+  virtual void initialize(MemRegion mr, bool clear_space, bool mangle_space);
   // Update space layout if necessary. Do all adaptive resizing job.
   virtual void update();
   // Update allocation rate averages.
   virtual void accumulate_statistics();
 
-  virtual void clear();
-  virtual void mangle_unused_area();
+  virtual void clear(bool mangle_space);
+  virtual void mangle_unused_area() PRODUCT_RETURN;
+  virtual void mangle_unused_area_complete() PRODUCT_RETURN;
+  virtual void mangle_region(MemRegion mr) PRODUCT_RETURN;
+  virtual void check_mangled_unused_area(HeapWord* limit) PRODUCT_RETURN;
+  virtual void check_mangled_unused_area_complete() PRODUCT_RETURN;
+  virtual void set_top_for_allocations(HeapWord* v) PRODUCT_RETURN;
+  virtual void set_top_for_allocations() PRODUCT_RETURN;
+
   virtual void ensure_parsability();
   virtual size_t used_in_words() const;
   virtual size_t free_in_words() const;
+
+  using MutableSpace::capacity_in_words;
+  virtual size_t capacity_in_words(Thread* thr) const;
   virtual size_t tlab_capacity(Thread* thr) const;
   virtual size_t unsafe_max_tlab_alloc(Thread* thr) const;
 
@@ -195,7 +220,7 @@ class MutableNUMASpace : public MutableSpace {
   // Debugging
   virtual void print_on(outputStream* st) const;
   virtual void print_short_on(outputStream* st) const;
-  virtual void verify(bool allow_dirty) const;
+  virtual void verify(bool allow_dirty);
 
   virtual void set_top(HeapWord* value);
 };

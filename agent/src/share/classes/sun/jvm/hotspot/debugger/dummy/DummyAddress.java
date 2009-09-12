@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,10 @@ class DummyAddress implements Address {
     return new DummyAddress(debugger, badLong);
   }
 
+  public Address getCompOopAddressAt(long offset) throws UnalignedAddressException, UnmappedAddressException {
+    return new DummyAddress(debugger, badLong);
+  }
+
   //
   // Java-related routines
   //
@@ -113,6 +117,10 @@ class DummyAddress implements Address {
   }
 
   public OopHandle getOopHandleAt(long offset)
+    throws UnalignedAddressException, UnmappedAddressException, NotInHeapException {
+    return new DummyOopHandle(debugger, badLong);
+  }
+  public OopHandle getCompOopHandleAt(long offset)
     throws UnalignedAddressException, UnmappedAddressException, NotInHeapException {
     return new DummyOopHandle(debugger, badLong);
   }

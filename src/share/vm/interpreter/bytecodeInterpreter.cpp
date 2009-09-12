@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)bytecodeInterpreter.cpp	1.31 07/08/29 13:42:24 JVM"
-#endif
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
@@ -40,7 +37,7 @@
  */
 #undef USELABELS
 #ifdef __GNUC__
-/* 
+/*
    ASSERT signifies debugging. It is much easier to step thru bytecodes if we
    don't use the computed goto approach.
 */
@@ -59,7 +56,7 @@
 #endif
 
 /*
- * PREFETCH_OPCCODE - Some compilers do better if you prefetch the next 
+ * PREFETCH_OPCCODE - Some compilers do better if you prefetch the next
  * opcode before going back to the top of the while loop, rather then having
  * the top of the while loop handle it. This provides a better opportunity
  * for instruction scheduling. Some compilers just do this prefetch
@@ -100,7 +97,7 @@
        Exceptions::_throw_msg(THREAD, __FILE__, __LINE__, name, msg);             \
     }                                                                             \
     RESET_LAST_JAVA_FRAME();                                                      \
-    CACHE_STATE();                                                                
+    CACHE_STATE();
 
 // Normal throw of a java error
 #define VM_JAVA_ERROR(name, msg)                                                  \
@@ -130,7 +127,7 @@
    incremented. JvmtiExport::at_single_stepping_point() may cause a
    breakpoint opcode to get inserted at the current PC to allow the
    debugger to coalesce single-step events.
-   
+
    As a result if we call at_single_stepping_point() we refetch opcode
    to get the current opcode. This will override any other prefetching
    that might have occurred.
@@ -156,7 +153,7 @@
       }                                                                          \
 }
 #else
-#define DEBUGGER_SINGLE_STEP_NOTIFY() 
+#define DEBUGGER_SINGLE_STEP_NOTIFY()
 #endif
 
 /*
@@ -315,7 +312,7 @@
 /*
  * Macros for caching and flushing the interpreter state. Some local
  * variables need to be flushed out to the frame before we do certain
- * things (like pushing frames or becomming gc safe) and some need to 
+ * things (like pushing frames or becomming gc safe) and some need to
  * be recached later (like after popping a frame). We could use one
  * macro to cache or decache everything, but this would be less then
  * optimal because we don't always need to cache or decache everything
@@ -335,8 +332,8 @@
 #define CACHE_CP()      cp = istate->constants();
 #define CACHE_LOCALS()  locals = istate->locals();
 #undef CACHE_FRAME
-#define CACHE_FRAME()   
- 
+#define CACHE_FRAME()
+
 /*
  * CHECK_NULL - Macro for throwing a NullPointerException if the object
  * passed is a null ref.
@@ -406,7 +403,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 #endif
 
   // In order to simplify some tests based on switches set at runtime
-  // we invoke the interpreter a single time after switches are enabled 
+  // we invoke the interpreter a single time after switches are enabled
   // and set simpler to to test variables rather than method calls or complex
   // boolean expressions.
 
@@ -458,7 +455,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 #endif
 
 #ifdef USELABELS
-  const static void* const opclabels_data[256] = { 
+  const static void* const opclabels_data[256] = {
 /* 0x00 */ &&opc_nop,     &&opc_aconst_null,&&opc_iconst_m1,&&opc_iconst_0,
 /* 0x04 */ &&opc_iconst_1,&&opc_iconst_2,   &&opc_iconst_3, &&opc_iconst_4,
 /* 0x08 */ &&opc_iconst_5,&&opc_lconst_0,   &&opc_lconst_1, &&opc_fconst_0,
@@ -521,16 +518,16 @@ BytecodeInterpreter::run(interpreterState istate) {
 
 /* 0xC0 */ &&opc_checkcast,   &&opc_instanceof,     &&opc_monitorenter, &&opc_monitorexit,
 /* 0xC4 */ &&opc_wide,        &&opc_multianewarray, &&opc_ifnull,       &&opc_ifnonnull,
-/* 0xC8 */ &&opc_goto_w,      &&opc_jsr_w,          &&opc_breakpoint,   &&opc_fast_igetfield,
-/* 0xCC */ &&opc_fastagetfield,&&opc_fast_aload_0,  &&opc_fast_iaccess_0, &&opc__fast_aaccess_0,
+/* 0xC8 */ &&opc_goto_w,      &&opc_jsr_w,          &&opc_breakpoint,   &&opc_default,
+/* 0xCC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
-/* 0xD0 */ &&opc_fast_linearswitch, &&opc_fast_binaryswitch, &&opc_return_register_finalizer,      &&opc_default,
+/* 0xD0 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xD4 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xD8 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xDC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
 /* 0xE0 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
-/* 0xE4 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
+/* 0xE4 */ &&opc_default,     &&opc_return_register_finalizer,        &&opc_default,      &&opc_default,
 /* 0xE8 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xEC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
@@ -556,7 +553,7 @@ BytecodeInterpreter::run(interpreterState istate) {
   /* QQQ this should be a stack method so we don't know actual direction */
   assert(istate->msg() == initialize ||
          topOfStack >= istate->stack_limit() &&
-         topOfStack < istate->stack_base(), 
+         topOfStack < istate->stack_base(),
          "Stack top out of range");
 
   switch (istate->msg()) {
@@ -663,7 +660,7 @@ BytecodeInterpreter::run(interpreterState istate) {
                     // fails we will go in to the runtime to revoke the object's bias.
                     // Note that we first construct the presumed unbiased header so we
                     // don't accidentally blow away another thread's valid bias.
-                    intptr_t unbiased = (intptr_t) mark & (markOopDesc::biased_lock_mask_in_place | 
+                    intptr_t unbiased = (intptr_t) mark & (markOopDesc::biased_lock_mask_in_place |
                                                            markOopDesc::age_mask_in_place |
                                                            markOopDesc::epoch_mask_in_place);
                     if (Atomic::cmpxchg_ptr((intptr_t)THREAD | unbiased, (intptr_t*) rcvr->mark_addr(), unbiased) != unbiased) {
@@ -728,9 +725,9 @@ BytecodeInterpreter::run(interpreterState istate) {
 #ifdef VM_JVMTI
       if (_jvmti_interp_events) {
         // Whenever JVMTI puts a thread in interp_only_mode, method
-        // entry/exit events are sent for that thread to track stack depth.  
+        // entry/exit events are sent for that thread to track stack depth.
         if (THREAD->is_interp_only_mode()) {
-          CALL_VM(InterpreterRuntime::post_method_entry(THREAD), 
+          CALL_VM(InterpreterRuntime::post_method_entry(THREAD),
                   handle_exception);
         }
       }
@@ -769,7 +766,7 @@ BytecodeInterpreter::run(interpreterState istate) {
       if (THREAD->pop_frame_pending() && !THREAD->pop_frame_in_process()) {
         goto handle_Pop_Frame;
       }
- 
+
       if (THREAD->has_pending_exception()) goto handle_exception;
       // Update the pc by the saved amount of the invoke bytecode size
       UPDATE_PC(istate->bcp_advance());
@@ -787,13 +784,13 @@ BytecodeInterpreter::run(interpreterState istate) {
       // Returned from an opcode that has completed. The stack has
       // the result all we need to do is skip across the bytecode
       // and continue (assuming there is no exception pending)
-      // 
+      //
       // compute continuation length
       //
       // Note: it is possible to deopt at a return_register_finalizer opcode
       // because this requires entering the vm to do the registering. While the
       // opcode is complete we can't advance because there are no more opcodes
-      // much like trying to deopt at a poll return. In that has we simply 
+      // much like trying to deopt at a poll return. In that has we simply
       // get out of here
       //
       if ( Bytecodes::code_at(pc, METHOD) == Bytecodes::_return_register_finalizer) {
@@ -982,12 +979,12 @@ run:
           opcode = pc[1];
           switch(opcode) {
               case Bytecodes::_aload:
-                  SET_STACK_OBJECT(LOCALS_OBJECT(reg), 0); 
+                  SET_STACK_OBJECT(LOCALS_OBJECT(reg), 0);
                   UPDATE_PC_AND_TOS_AND_CONTINUE(4, 1);
 
               case Bytecodes::_iload:
               case Bytecodes::_fload:
-                  SET_STACK_SLOT(LOCALS_SLOT(reg), 0); 
+                  SET_STACK_SLOT(LOCALS_SLOT(reg), 0);
                   UPDATE_PC_AND_TOS_AND_CONTINUE(4, 1);
 
               case Bytecodes::_lload:
@@ -1016,7 +1013,7 @@ run:
                   UPDATE_PC_AND_TOS_AND_CONTINUE(4, -2);
 
               case Bytecodes::_iinc: {
-                  int16_t offset = (int16_t)Bytes::get_Java_u2(pc+4); 
+                  int16_t offset = (int16_t)Bytes::get_Java_u2(pc+4);
                   // Be nice to see what this generates.... QQQ
                   SET_LOCALS_INT(LOCALS_INT(reg) + offset, reg);
                   UPDATE_PC_AND_CONTINUE(6);
@@ -1061,15 +1058,15 @@ run:
 
           /* stack pop, dup, and insert opcodes */
 
-         
+
       CASE(_pop):                /* Discard the top item on the stack */
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, -1);
 
-         
+
       CASE(_pop2):               /* Discard the top 2 items on the stack */
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, -2);
 
-          
+
       CASE(_dup):               /* Duplicate the top item on the stack */
           dup(topOfStack);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);
@@ -1101,7 +1098,7 @@ run:
 
           /* Perform various binary integer operations */
 
-#undef  OPC_INT_BINARY 
+#undef  OPC_INT_BINARY
 #define OPC_INT_BINARY(opcname, opname, test)                           \
       CASE(_i##opcname):                                                \
           if (test && (STACK_INT(-1) == 0)) {                           \
@@ -1141,7 +1138,7 @@ run:
       /* Perform various binary floating number operations */
       /* On some machine/platforms/compilers div zero check can be implicit */
 
-#undef  OPC_FLOAT_BINARY 
+#undef  OPC_FLOAT_BINARY
 #define OPC_FLOAT_BINARY(opcname, opname)                                  \
       CASE(_d##opcname): {                                                 \
           SET_STACK_DOUBLE(VMdouble##opname(STACK_DOUBLE(-3),              \
@@ -1162,8 +1159,8 @@ run:
      OPC_FLOAT_BINARY(div, Div);
      OPC_FLOAT_BINARY(rem, Rem);
 
-      /* Shift operations                                  
-       * Shift left int and long: ishl, lshl           
+      /* Shift operations
+       * Shift left int and long: ishl, lshl
        * Logical shift right int and long w/zero extension: iushr, lushr
        * Arithmetic shift right int and long w/sign extension: ishr, lshr
        */
@@ -1182,13 +1179,13 @@ run:
                                        -2);                             \
          UPDATE_PC_AND_TOS_AND_CONTINUE(1, -1);                         \
       }
-    
+
       OPC_SHIFT_BINARY(shl, Shl);
       OPC_SHIFT_BINARY(shr, Shr);
       OPC_SHIFT_BINARY(ushr, Ushr);
 
-     /* Increment local variable by constant */ 
-      CASE(_iinc): 
+     /* Increment local variable by constant */
+      CASE(_iinc):
       {
           // locals[pc[1]].j.i += (jbyte)(pc[2]);
           SET_LOCALS_INT(LOCALS_INT(pc[1]) + (jbyte)(pc[2]), pc[1]);
@@ -1198,22 +1195,22 @@ run:
      /* negate the value on the top of the stack */
 
       CASE(_ineg):
-         SET_STACK_INT(VMintNeg(STACK_INT(-1)), -1); 
+         SET_STACK_INT(VMintNeg(STACK_INT(-1)), -1);
          UPDATE_PC_AND_CONTINUE(1);
 
       CASE(_fneg):
-         SET_STACK_FLOAT(VMfloatNeg(STACK_FLOAT(-1)), -1); 
+         SET_STACK_FLOAT(VMfloatNeg(STACK_FLOAT(-1)), -1);
          UPDATE_PC_AND_CONTINUE(1);
 
       CASE(_lneg):
       {
-         SET_STACK_LONG(VMlongNeg(STACK_LONG(-1)), -1); 
+         SET_STACK_LONG(VMlongNeg(STACK_LONG(-1)), -1);
          UPDATE_PC_AND_CONTINUE(1);
       }
 
       CASE(_dneg):
       {
-         SET_STACK_DOUBLE(VMdoubleNeg(STACK_DOUBLE(-1)), -1); 
+         SET_STACK_DOUBLE(VMdoubleNeg(STACK_DOUBLE(-1)), -1);
          UPDATE_PC_AND_CONTINUE(1);
       }
 
@@ -1250,7 +1247,7 @@ run:
           SET_STACK_INT(r, 0);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);
       }
-      
+
       CASE(_l2f):   /* convert top of stack long to float */
       {
           jlong r = STACK_LONG(-1);
@@ -1268,7 +1265,7 @@ run:
       }
 
       CASE(_f2i):  /* Convert top of stack float to int */
-          SET_STACK_INT(SharedRuntime::f2i(STACK_FLOAT(-1)), -1); 
+          SET_STACK_INT(SharedRuntime::f2i(STACK_FLOAT(-1)), -1);
           UPDATE_PC_AND_CONTINUE(1);
 
       CASE(_f2l):  /* convert top of stack float to long */
@@ -1433,8 +1430,8 @@ run:
       CASE(_fcmpl):
       CASE(_fcmpg):
       {
-          SET_STACK_INT(VMfloatCompare(STACK_FLOAT(-2), 
-                                        STACK_FLOAT(-1), 
+          SET_STACK_INT(VMfloatCompare(STACK_FLOAT(-2),
+                                        STACK_FLOAT(-1),
                                         (opcode == Bytecodes::_fcmpl ? -1 : 1)),
                         -2);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, -1);
@@ -1446,7 +1443,7 @@ run:
           int r = VMdoubleCompare(STACK_DOUBLE(-3),
                                   STACK_DOUBLE(-1),
                                   (opcode == Bytecodes::_dcmpl ? -1 : 1));
-          MORE_STACK(-4); // Pop 
+          MORE_STACK(-4); // Pop
           SET_STACK_INT(r, 0);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);
       }
@@ -1498,7 +1495,7 @@ run:
       /* Array access byte-codes */
 
       /* Every array access byte-code starts out like this */
-//        arrayOopDesc* arrObj = (arrayOopDesc*)STACK_OBJECT(arrayOff);            
+//        arrayOopDesc* arrObj = (arrayOopDesc*)STACK_OBJECT(arrayOff);
 #define ARRAY_INTRO(arrayOff)                                                  \
       arrayOop arrObj = (arrayOop)STACK_OBJECT(arrayOff);                      \
       jint     index  = STACK_INT(arrayOff + 1);                               \
@@ -1508,7 +1505,7 @@ run:
           sprintf(message, "%d", index);                                       \
           VM_JAVA_ERROR(vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), \
                         message);                                              \
-      }                                                 
+      }
 
       /* 32-bit loads. These handle conversion from < 32-bit types */
 #define ARRAY_LOADTO32(T, T2, format, stackRes, extra)                                \
@@ -1692,13 +1689,13 @@ run:
           ConstantPoolCacheEntry* cache;
           index = Bytes::get_native_u2(pc+1);
 
-          // QQQ Need to make this as inlined as possible. Probably need to 
-          // split all the bytecode cases out so c++ compiler has a chance 
+          // QQQ Need to make this as inlined as possible. Probably need to
+          // split all the bytecode cases out so c++ compiler has a chance
           // for constant prop to fold everything possible away.
 
           cache = cp->entry_at(index);
           if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-            CALL_VM(InterpreterRuntime::resolve_get_put(THREAD, (Bytecodes::Code)opcode), 
+            CALL_VM(InterpreterRuntime::resolve_get_put(THREAD, (Bytecodes::Code)opcode),
                     handle_exception);
             cache = cp->entry_at(index);
           }
@@ -1707,7 +1704,7 @@ run:
           if (_jvmti_interp_events) {
             int *count_addr;
             oop obj;
-            // Check to see if a field modification watch has been set 
+            // Check to see if a field modification watch has been set
             // before we take the time to call into the VM.
             count_addr = (int *)JvmtiExport::get_field_access_count_addr();
             if ( *count_addr > 0 ) {
@@ -1716,8 +1713,8 @@ run:
               } else {
                 obj = (oop) STACK_OBJECT(-1);
               }
-              CALL_VM(InterpreterRuntime::post_field_access(THREAD, 
-                                          obj, 
+              CALL_VM(InterpreterRuntime::post_field_access(THREAD,
+                                          obj,
                                           cache),
                                           handle_exception);
             }
@@ -1789,7 +1786,7 @@ run:
           u2 index = Bytes::get_native_u2(pc+1);
           ConstantPoolCacheEntry* cache = cp->entry_at(index);
           if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-            CALL_VM(InterpreterRuntime::resolve_get_put(THREAD, (Bytecodes::Code)opcode), 
+            CALL_VM(InterpreterRuntime::resolve_get_put(THREAD, (Bytecodes::Code)opcode),
                     handle_exception);
             cache = cp->entry_at(index);
           }
@@ -1798,7 +1795,7 @@ run:
           if (_jvmti_interp_events) {
             int *count_addr;
             oop obj;
-            // Check to see if a field modification watch has been set 
+            // Check to see if a field modification watch has been set
             // before we take the time to call into the VM.
             count_addr = (int *)JvmtiExport::get_field_modification_count_addr();
             if ( *count_addr > 0 ) {
@@ -1814,9 +1811,9 @@ run:
               }
 
               CALL_VM(InterpreterRuntime::post_field_modification(THREAD,
-                                          obj, 
-                                          cache, 
-                                          (jvalue *)STACK_SLOT(-1)),  
+                                          obj,
+                                          cache,
+                                          (jvalue *)STACK_SLOT(-1)),
                                           handle_exception);
             }
           }
@@ -1887,7 +1884,7 @@ run:
           }
 
           UPDATE_PC_AND_TOS_AND_CONTINUE(3, count);
-        }  
+        }
 
       CASE(_new): {
         u2 index = Bytes::get_Java_u2(pc+1);
@@ -1934,6 +1931,7 @@ run:
               } else {
                 result->set_mark(markOopDesc::prototype());
               }
+              result->set_klass_gap(0);
               result->set_klass(k_entry);
               SET_STACK_OBJECT(result, 0);
               UPDATE_PC_AND_TOS_AND_CONTINUE(3, 1);
@@ -1961,7 +1959,7 @@ run:
         jint size = STACK_INT(-1);
         // stack grows down, dimensions are up!
         jint *dimarray =
-                   (jint*)&topOfStack[dims * Interpreter::stackElementWords()+ 
+                   (jint*)&topOfStack[dims * Interpreter::stackElementWords()+
                                       Interpreter::stackElementWords()-1];
         //adjust pointer to start of stack element
         CALL_VM(InterpreterRuntime::multianewarray(THREAD, dimarray),
@@ -1988,9 +1986,9 @@ run:
             // Check for compatibilty. This check must not GC!!
             // Seems way more expensive now that we must dispatch
             //
-            if (objKlassOop != klassOf && 
+            if (objKlassOop != klassOf &&
                 !objKlassOop->klass_part()->is_subtype_of(klassOf)) {
-              ResourceMark rm(THREAD);  
+              ResourceMark rm(THREAD);
               const char* objName = Klass::cast(objKlassOop)->external_name();
               const char* klassName = Klass::cast(klassOf)->external_name();
               char* message = SharedRuntime::generate_class_cast_message(
@@ -2064,7 +2062,7 @@ run:
 
           case JVM_CONSTANT_UnresolvedString:
           case JVM_CONSTANT_UnresolvedClass:
-	  case JVM_CONSTANT_UnresolvedClassInError:
+          case JVM_CONSTANT_UnresolvedClassInError:
             CALL_VM(InterpreterRuntime::ldc(THREAD, wide), handle_exception);
             SET_STACK_OBJECT(THREAD->vm_result(), 0);
             THREAD->set_vm_result(NULL);
@@ -2113,7 +2111,7 @@ run:
 
         ConstantPoolCacheEntry* cache = cp->entry_at(index);
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-          CALL_VM(InterpreterRuntime::resolve_invoke(THREAD, (Bytecodes::Code)opcode), 
+          CALL_VM(InterpreterRuntime::resolve_invoke(THREAD, (Bytecodes::Code)opcode),
                   handle_exception);
           cache = cp->entry_at(index);
         }
@@ -2155,7 +2153,7 @@ run:
         // get receiver
         int parms = cache->parameter_size();
         oop rcvr = STACK_OBJECT(-parms);
-        CHECK_NULL(rcvr); 
+        CHECK_NULL(rcvr);
         instanceKlass* int2 = (instanceKlass*) rcvr->klass()->klass_part();
         itableOffsetEntry* ki = (itableOffsetEntry*) int2->start_of_itable();
         int i;
@@ -2174,7 +2172,7 @@ run:
         if (callee == NULL) {
           VM_JAVA_ERROR(vmSymbols::java_lang_AbstractMethodError(), "");
         }
-        
+
         istate->set_callee(callee);
         istate->set_callee_entry_point(callee->from_interpreted_entry());
 #ifdef VM_JVMTI
@@ -2196,11 +2194,11 @@ run:
         // out so c++ compiler has a chance for constant prop to fold everything possible away.
 
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-          CALL_VM(InterpreterRuntime::resolve_invoke(THREAD, (Bytecodes::Code)opcode), 
+          CALL_VM(InterpreterRuntime::resolve_invoke(THREAD, (Bytecodes::Code)opcode),
                   handle_exception);
           cache = cp->entry_at(index);
         }
-     
+
         istate->set_msg(call_method);
         {
           methodOop callee;
@@ -2212,7 +2210,7 @@ run:
               int parms = cache->parameter_size();
               // this works but needs a resourcemark and seems to create a vtable on every call:
               // methodOop callee = rcvr->klass()->klass_part()->vtable()->method_at(cache->f2());
-              // 
+              //
               // this fails with an assert
               // instanceKlass* rcvrKlass = instanceKlass::cast(STACK_OBJECT(-parms)->klass());
               // but this works
@@ -2225,7 +2223,7 @@ run:
                      }
 
                  a find on rcvr->klass()->klass_part() reports:
-                 {type array char}{type array class} 
+                 {type array char}{type array class}
                   - klass: {other class}
 
                   but using instanceKlass::cast(STACK_OBJECT(-parms)->klass()) causes in assertion failure
@@ -2324,9 +2322,9 @@ run:
 
       CASE(_breakpoint): {
           Bytecodes::Code original_bytecode;
-          DECACHE_STATE();                                        
-          SET_LAST_JAVA_FRAME();                                  
-          original_bytecode = InterpreterRuntime::get_original_bytecode_at(THREAD, 
+          DECACHE_STATE();
+          SET_LAST_JAVA_FRAME();
+          original_bytecode = InterpreterRuntime::get_original_bytecode_at(THREAD,
                               METHOD, pc);
           RESET_LAST_JAVA_FRAME();
           CACHE_STATE();
@@ -2345,9 +2343,9 @@ run:
 
       } /* switch(opc) */
 
-      
+
 #ifdef USELABELS
-    check_for_exception: 
+    check_for_exception:
 #endif
     {
       if (!THREAD->has_pending_exception()) {
@@ -2367,7 +2365,7 @@ run:
 
     HandleMarkCleaner __hmc(THREAD);
     Handle except_oop(THREAD, THREAD->pending_exception());
-    // Prevent any subsequent HandleMarkCleaner in the VM 
+    // Prevent any subsequent HandleMarkCleaner in the VM
     // from freeing the except_oop handle.
     HandleMark __hm(THREAD);
 
@@ -2376,7 +2374,7 @@ run:
     intptr_t continuation_bci;
     // expression stack is emptied
     topOfStack = istate->stack_base() - Interpreter::stackElementWords();
-    CALL_VM(continuation_bci = (intptr_t)InterpreterRuntime::exception_handler_for_exception(THREAD, except_oop()), 
+    CALL_VM(continuation_bci = (intptr_t)InterpreterRuntime::exception_handler_for_exception(THREAD, except_oop()),
             handle_exception);
 
     except_oop = (oop) THREAD->vm_result();
@@ -2414,7 +2412,7 @@ run:
     THREAD->set_pending_exception(except_oop(), NULL, 0);
     goto handle_return;
   }  /* handle_exception: */
-      
+
 
 
   // Return from an interpreter invocation with the result of the interpretation
@@ -2484,7 +2482,7 @@ handle_return:
       // we are at the initial entry then we should throw an exception.
       // It is not clear the template based interpreter does this
       // correctly
-        
+
       BasicObjectLock* base = istate->monitor_base();
       BasicObjectLock* end = (BasicObjectLock*) istate->stack_base();
       bool method_unlock_needed = METHOD->is_synchronized();
@@ -2506,7 +2504,7 @@ handle_return:
               end->set_obj(lockee);
               {
                 // Prevent any HandleMarkCleaner from freeing our live handles
-                HandleMark __hm(THREAD); 
+                HandleMark __hm(THREAD);
                 CALL_VM_NOCHECK(InterpreterRuntime::monitorexit(THREAD, end));
               }
             }
@@ -2515,7 +2513,7 @@ handle_return:
           if (illegal_state_oop() == NULL && !suppress_error) {
             {
               // Prevent any HandleMarkCleaner from freeing our live handles
-              HandleMark __hm(THREAD); 
+              HandleMark __hm(THREAD);
               CALL_VM_NOCHECK(InterpreterRuntime::throw_illegal_monitor_state_exception(THREAD));
             }
             assert(THREAD->has_pending_exception(), "Lost our exception!");
@@ -2532,7 +2530,7 @@ handle_return:
           if (illegal_state_oop() == NULL && !suppress_error) {
             {
               // Prevent any HandleMarkCleaner from freeing our live handles
-              HandleMark __hm(THREAD); 
+              HandleMark __hm(THREAD);
               CALL_VM_NOCHECK(InterpreterRuntime::throw_illegal_monitor_state_exception(THREAD));
             }
             assert(THREAD->has_pending_exception(), "Lost our exception!");
@@ -2567,7 +2565,7 @@ handle_return:
                 base->set_obj(rcvr);
                 {
                   // Prevent any HandleMarkCleaner from freeing our live handles
-                  HandleMark __hm(THREAD); 
+                  HandleMark __hm(THREAD);
                   CALL_VM_NOCHECK(InterpreterRuntime::monitorexit(THREAD, base));
                 }
                 if (THREAD->has_pending_exception()) {
@@ -2608,11 +2606,11 @@ handle_return:
 #ifdef VM_JVMTI
       if (_jvmti_interp_events) {
         // Whenever JVMTI puts a thread in interp_only_mode, method
-        // entry/exit events are sent for that thread to track stack depth.  
+        // entry/exit events are sent for that thread to track stack depth.
         if ( !suppress_exit_event && THREAD->is_interp_only_mode() ) {
           {
             // Prevent any HandleMarkCleaner from freeing our live handles
-            HandleMark __hm(THREAD); 
+            HandleMark __hm(THREAD);
             CALL_VM_NOCHECK(InterpreterRuntime::post_method_exit(THREAD));
           }
         }
@@ -2628,7 +2626,7 @@ handle_return:
     if (illegal_state_oop() != NULL || original_exception() != NULL) {
       // inform the frame manager we have no result
       istate->set_msg(throwing_exception);
-      if (illegal_state_oop() != NULL) 
+      if (illegal_state_oop() != NULL)
         THREAD->set_pending_exception(illegal_state_oop(), NULL, 0);
       else
         THREAD->set_pending_exception(original_exception(), NULL, 0);
@@ -2681,8 +2679,8 @@ finish:
 // interpreter initialization. All other instances should be created by
 // the frame manager.
 BytecodeInterpreter::BytecodeInterpreter(messages msg) {
-  if (msg != initialize) ShouldNotReachHere(); 
-  _msg = msg; 
+  if (msg != initialize) ShouldNotReachHere();
+  _msg = msg;
   _self_link = this;
   _prev_link = NULL;
 }
@@ -2745,26 +2743,26 @@ void BytecodeInterpreter::set_stack_slot(intptr_t *tos, address value,
   *((address *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
-void BytecodeInterpreter::set_stack_int(intptr_t *tos, int value, 
+void BytecodeInterpreter::set_stack_int(intptr_t *tos, int value,
                                                        int offset) {
   tag_stack(tos, frame::TagValue, offset);
   *((jint *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
-void BytecodeInterpreter::set_stack_float(intptr_t *tos, jfloat value, 
+void BytecodeInterpreter::set_stack_float(intptr_t *tos, jfloat value,
                                                          int offset) {
   tag_stack(tos, frame::TagValue, offset);
   *((jfloat *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
-void BytecodeInterpreter::set_stack_object(intptr_t *tos, oop value, 
+void BytecodeInterpreter::set_stack_object(intptr_t *tos, oop value,
                                                           int offset) {
   tag_stack(tos, frame::TagReference, offset);
   *((oop *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
 // needs to be platform dep for the 32 bit platforms.
-void BytecodeInterpreter::set_stack_double(intptr_t *tos, jdouble value, 
+void BytecodeInterpreter::set_stack_double(intptr_t *tos, jdouble value,
                                                           int offset) {
   tag_stack(tos, frame::TagValue, offset);
   tag_stack(tos, frame::TagValue, offset-1);
@@ -2779,7 +2777,7 @@ void BytecodeInterpreter::set_stack_double_from_addr(intptr_t *tos,
                         ((VMJavaVal64*)addr)->d);
 }
 
-void BytecodeInterpreter::set_stack_long(intptr_t *tos, jlong value, 
+void BytecodeInterpreter::set_stack_long(intptr_t *tos, jlong value,
                                                         int offset) {
   tag_stack(tos, frame::TagValue, offset);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset+1)])->l = 0xdeedbeeb;
@@ -2787,7 +2785,7 @@ void BytecodeInterpreter::set_stack_long(intptr_t *tos, jlong value,
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset)])->l = value;
 }
 
-void BytecodeInterpreter::set_stack_long_from_addr(intptr_t *tos, 
+void BytecodeInterpreter::set_stack_long_from_addr(intptr_t *tos,
                                             address addr, int offset) {
   tag_stack(tos, frame::TagValue, offset);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset+1)])->l = 0xdeedbeeb;
@@ -3002,7 +3000,7 @@ const char* BytecodeInterpreter::C_msg(BytecodeInterpreter::messages msg) {
      default: return("BAD MSG");
   }
 }
-void 
+void
 BytecodeInterpreter::print() {
   tty->print_cr("thread: " INTPTR_FORMAT, (uintptr_t) this->_thread);
   tty->print_cr("bcp: " INTPTR_FORMAT, (uintptr_t) this->_bcp);
@@ -3041,7 +3039,7 @@ BytecodeInterpreter::print() {
 
 extern "C" {
     void PI(uintptr_t arg) {
-	((BytecodeInterpreter*)arg)->print();
+        ((BytecodeInterpreter*)arg)->print();
     }
 }
 #endif // PRODUCT

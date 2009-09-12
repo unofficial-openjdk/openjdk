@@ -2,7 +2,7 @@
 #pragma ident "@(#)ciTypeFlow.hpp	1.26 08/11/24 12:20:59 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,11 +37,13 @@ private:
   int _max_locals;
   int _max_stack;
   int _code_size;
+  bool      _has_irreducible_entry;
 
   const char* _failure_reason;
 
 public:
   class StateVector;
+  class Loop;
   class Block;
 
   // Build a type flow analyzer
@@ -58,6 +60,7 @@ public:
   int       max_stack() const  { return _max_stack; }
   int       max_cells() const  { return _max_locals + _max_stack; }
   int       code_size() const  { return _code_size; }
+  bool      has_irreducible_entry() const { return _has_irreducible_entry; }
 
   // Represents information about an "active" jsr call.  This
   // class represents a call to the routine at some entry address
@@ -128,6 +131,19 @@ public:
     void print_on(outputStream* st) const PRODUCT_RETURN;
   };
 
+  class LocalSet VALUE_OBJ_CLASS_SPEC {
+  private:
+    enum Constants { max = 63 };
+    uint64_t _bits;
+  public:
+    LocalSet() : _bits(0) {}
+    void add(uint32_t i)        { if (i < (uint32_t)max) _bits |=  (1LL << i); }
+    void add(LocalSet* ls)      { _bits |= ls->_bits; }
+    bool test(uint32_t i) const { return i < (uint32_t)max ? (_bits>>i)&1U : true; }
+    void clear()                { _bits = 0; }
+    void print_on(outputStream* st, int limit) const  PRODUCT_RETURN;
+  };
+
   // Used as a combined index for locals and temps
   enum Cell {
     Cell_0, Cell_max = INT_MAX
@@ -144,6 +160,8 @@ public:
 
     int         _trap_bci;
     int         _trap_index;
+
+    LocalSet    _def_locals;  // For entire block
 
     static ciType* type_meet_internal(ciType* t1, ciType* t2, ciTypeFlow* analyzer);
 
@@ -183,6 +201,9 @@ public:
 
     int         monitor_count() const  { return _monitor_count; }
     void    set_monitor_count(int mc)  { _monitor_count = mc; }
+
+    LocalSet* def_locals() { return &_def_locals; }
+    const LocalSet* def_locals() const { return &_def_locals; }
 
     static Cell start_cell()           { return (Cell)0; }
     static Cell next_cell(Cell c)      { return (Cell)(((int)c) + 1); }
@@ -251,6 +272,10 @@ public:
     }
     bool      is_double(ciType* type) const {
       return type->basic_type() == T_DOUBLE;
+    }
+
+    void store_to_local(int lnum) {
+      _def_locals.add((uint) lnum);
     }
 
     void      push_translate(ciType* type);
@@ -361,6 +386,7 @@ public:
 	     "must be reference type or return address");
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
+      store_to_local(index);
     }
 
     void load_local_double(int index) {
@@ -379,6 +405,8 @@ public:
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
       set_type_at(local(index+1), type2);
+      store_to_local(index);
+      store_to_local(index+1);
     }
 
     void load_local_float(int index) {
@@ -391,6 +419,7 @@ public:
       assert(is_float(type), "must be float type");
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
+      store_to_local(index);
     }
 
     void load_local_int(int index) {
@@ -403,6 +432,7 @@ public:
       assert(is_int(type), "must be int type");
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
+      store_to_local(index);
     }
 
     void load_local_long(int index) {
@@ -421,6 +451,8 @@ public:
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
       set_type_at(local(index+1), type2);
+      store_to_local(index);
+      store_to_local(index+1);
     }
 
     // Stop interpretation of this path with a trap.
@@ -453,11 +485,29 @@ public:
   };
 
   // Parameter for "find_block" calls:
-  // Describes the difference between a public and private copy.
+  // Describes the difference between a public and backedge copy.
   enum CreateOption {
     create_public_copy,
-    create_private_copy,
+    create_backedge_copy,
     no_create
+  };
+
+  // Successor iterator
+  class SuccIter : public StackObj {
+  private:
+    Block* _pred;
+    int    _index;
+    Block* _succ;
+  public:
+    SuccIter()                        : _pred(NULL), _index(-1), _succ(NULL) {}
+    SuccIter(Block* pred)             : _pred(pred), _index(-1), _succ(NULL) { next(); }
+    int    index()     { return _index; }
+    Block* pred()      { return _pred; }           // Return predecessor
+    bool   done()      { return _index < 0; }      // Finished?
+    Block* succ()      { return _succ; }           // Return current successor
+    void   next();                                 // Advance
+    void   set_succ(Block* succ);                  // Update current successor
+    bool   is_normal_ctrl() { return index() < _pred->successors()->length(); }
   };
 
   // A basic block
@@ -473,15 +523,24 @@ public:
     int                              _trap_bci;
     int                              _trap_index;
 
-    // A reasonable approximation to pre-order, provided.to the client.
+    // pre_order, assigned at first visit. Used as block ID and "visited" tag
     int                              _pre_order;
 
-    // Has this block been cloned for some special purpose?
-    bool                             _private_copy;
+    // A post-order, used to compute the reverse post order (RPO) provided to the client
+    int                              _post_order;  // used to compute rpo
+
+    // Has this block been cloned for a loop backedge?
+    bool                             _backedge_copy;
 
     // A pointer used for our internal work list
-    Block*                 _next;
-    bool                   _on_work_list;
+    Block*                           _next;
+    bool                             _on_work_list;      // on the work list
+    Block*                           _rpo_next;          // Reverse post order list
+
+    // Loop info
+    Loop*                            _loop;              // nearest loop
+    bool                             _irreducible_entry; // entry to irreducible loop
+    bool                             _exception_entry;   // entry to exception handler
 
     ciBlock*     ciblock() const     { return _ciblock; }
     StateVector* state() const     { return _state; }
@@ -507,16 +566,31 @@ public:
     int start() const         { return _ciblock->start_bci(); }
     int limit() const         { return _ciblock->limit_bci(); }
     int control() const       { return _ciblock->control_bci(); }
+    JsrSet* jsrs() const      { return _jsrs; }
 
-    bool    is_private_copy() const       { return _private_copy; }
-    void   set_private_copy(bool z);
-    int        private_copy_count() const { return outer()->private_copy_count(ciblock()->index(), _jsrs); }
+    bool    is_backedge_copy() const       { return _backedge_copy; }
+    void   set_backedge_copy(bool z);
+    int        backedge_copy_count() const { return outer()->backedge_copy_count(ciblock()->index(), _jsrs); }
 
     // access to entry state
     int     stack_size() const         { return _state->stack_size(); }
     int     monitor_count() const      { return _state->monitor_count(); }
     ciType* local_type_at(int i) const { return _state->local_type_at(i); }
     ciType* stack_type_at(int i) const { return _state->stack_type_at(i); }
+
+    // Data flow on locals
+    bool is_invariant_local(uint v) const {
+      assert(is_loop_head(), "only loop heads");
+      // Find outermost loop with same loop head
+      Loop* lp = loop();
+      while (lp->parent() != NULL) {
+        if (lp->parent()->head() != lp->head()) break;
+        lp = lp->parent();
+      }
+      return !lp->def_locals()->test(v);
+    }
+    LocalSet* def_locals() { return _state->def_locals(); }
+    const LocalSet* def_locals() const { return _state->def_locals(); }
 
     // Get the successors for this Block.
     GrowableArray<Block*>* successors(ciBytecodeStream* str,
@@ -527,13 +601,6 @@ public:
       return _successors;
     }
 
-    // Helper function for "successors" when making private copies of 
-    // loop heads for C2.
-    Block * clone_loop_head(ciTypeFlow* analyzer,
-                            int branch_bci,
-                            Block* target,
-                            JsrSet* jsrs);
-    
     // Get the exceptional successors for this Block.
     GrowableArray<Block*>* exceptions() {
       if (_exceptions == NULL) {
@@ -587,15 +654,124 @@ public:
     bool   is_on_work_list() const  { return _on_work_list; }
 
     bool   has_pre_order() const  { return _pre_order >= 0; }
-    void   set_pre_order(int po)  { assert(!has_pre_order() && po >= 0, ""); _pre_order = po; }
+    void   set_pre_order(int po)  { assert(!has_pre_order(), ""); _pre_order = po; }
     int    pre_order() const      { assert(has_pre_order(), ""); return _pre_order; }
+    void   set_next_pre_order()   { set_pre_order(outer()->inc_next_pre_order()); }
     bool   is_start() const       { return _pre_order == outer()->start_block_num(); }
 
-    // A ranking used in determining order within the work list.
-    bool   is_simpler_than(Block* other);
+    // Reverse post order
+    void   df_init();
+    bool   has_post_order() const { return _post_order >= 0; }
+    void   set_post_order(int po) { assert(!has_post_order() && po >= 0, ""); _post_order = po; }
+    void   reset_post_order(int o){ _post_order = o; }
+    int    post_order() const     { assert(has_post_order(), ""); return _post_order; }
+
+    bool   has_rpo() const        { return has_post_order() && outer()->have_block_count(); }
+    int    rpo() const            { assert(has_rpo(), ""); return outer()->block_count() - post_order() - 1; }
+    void   set_rpo_next(Block* b) { _rpo_next = b; }
+    Block* rpo_next()             { return _rpo_next; }
+
+    // Loops
+    Loop*  loop() const                  { return _loop; }
+    void   set_loop(Loop* lp)            { _loop = lp; }
+    bool   is_loop_head() const          { return _loop && _loop->head() == this; }
+    void   set_irreducible_entry(bool c) { _irreducible_entry = c; }
+    bool   is_irreducible_entry() const  { return _irreducible_entry; }
+    bool   is_visited() const            { return has_pre_order(); }
+    bool   is_post_visited() const       { return has_post_order(); }
+    bool   is_clonable_exit(Loop* lp);
+    Block* looping_succ(Loop* lp);       // Successor inside of loop
+    bool   is_single_entry_loop_head() const {
+      if (!is_loop_head()) return false;
+      for (Loop* lp = loop(); lp != NULL && lp->head() == this; lp = lp->parent())
+        if (lp->is_irreducible()) return false;
+      return true;
+    }
 
     void   print_value_on(outputStream* st) const PRODUCT_RETURN;
     void   print_on(outputStream* st) const       PRODUCT_RETURN;
+  };
+
+  // Loop
+  class Loop : public ResourceObj {
+  private:
+    Loop* _parent;
+    Loop* _sibling;  // List of siblings, null terminated
+    Loop* _child;    // Head of child list threaded thru sibling pointer
+    Block* _head;    // Head of loop
+    Block* _tail;    // Tail of loop
+    bool   _irreducible;
+    LocalSet _def_locals;
+
+  public:
+    Loop(Block* head, Block* tail) :
+      _head(head),   _tail(tail),
+      _parent(NULL), _sibling(NULL), _child(NULL),
+      _irreducible(false), _def_locals() {}
+
+    Loop* parent()  const { return _parent; }
+    Loop* sibling() const { return _sibling; }
+    Loop* child()   const { return _child; }
+    Block* head()   const { return _head; }
+    Block* tail()   const { return _tail; }
+    void set_parent(Loop* p)  { _parent = p; }
+    void set_sibling(Loop* s) { _sibling = s; }
+    void set_child(Loop* c)   { _child = c; }
+    void set_head(Block* hd)  { _head = hd; }
+    void set_tail(Block* tl)  { _tail = tl; }
+
+    int depth() const;              // nesting depth
+
+    // Returns true if lp is a nested loop or us.
+    bool contains(Loop* lp) const;
+    bool contains(Block* blk) const { return contains(blk->loop()); }
+
+    // Data flow on locals
+    LocalSet* def_locals() { return &_def_locals; }
+    const LocalSet* def_locals() const { return &_def_locals; }
+
+    // Merge the branch lp into this branch, sorting on the loop head
+    // pre_orders. Returns the new branch.
+    Loop* sorted_merge(Loop* lp);
+
+    // Mark non-single entry to loop
+    void set_irreducible(Block* entry) {
+      _irreducible = true;
+      entry->set_irreducible_entry(true);
+    }
+    bool is_irreducible() const { return _irreducible; }
+
+    bool is_root() const { return _tail->pre_order() == max_jint; }
+
+    void print(outputStream* st = tty, int indent = 0) const PRODUCT_RETURN;
+  };
+
+  // Postorder iteration over the loop tree.
+  class PostorderLoops : public StackObj {
+  private:
+    Loop* _root;
+    Loop* _current;
+  public:
+    PostorderLoops(Loop* root) : _root(root), _current(root) {
+      while (_current->child() != NULL) {
+        _current = _current->child();
+      }
+    }
+    bool done() { return _current == NULL; }  // Finished iterating?
+    void next();                            // Advance to next loop
+    Loop* current() { return _current; }      // Return current loop.
+  };
+
+  // Preorder iteration over the loop tree.
+  class PreorderLoops : public StackObj {
+  private:
+    Loop* _root;
+    Loop* _current;
+  public:
+    PreorderLoops(Loop* root) : _root(root), _current(root) {}
+    bool done() { return _current == NULL; }  // Finished iterating?
+    void next();                            // Advance to next loop
+    Loop* current() { return _current; }      // Return current loop.
   };
 
   // Standard indexes of successors, for various bytecodes.
@@ -622,6 +798,12 @@ private:
   // Tells if a given instruction is able to generate an exception edge.
   bool can_trap(ciBytecodeStream& str);
 
+  // Clone the loop heads. Returns true if any cloning occurred.
+  bool clone_loop_heads(Loop* lp, StateVector* temp_vector, JsrSet* temp_set);
+
+  // Clone lp's head and replace tail's successors with clone.
+  Block* clone_loop_head(Loop* lp, StateVector* temp_vector, JsrSet* temp_set);
+
 public:
   // Return the block beginning at bci which has a JsrSet compatible
   // with jsrs.
@@ -630,8 +812,8 @@ public:
   // block factory
   Block* get_block_for(int ciBlockIndex, JsrSet* jsrs, CreateOption option = create_public_copy);
 
-  // How many of the blocks have the private_copy bit set?
-  int private_copy_count(int ciBlockIndex, JsrSet* jsrs) const;
+  // How many of the blocks have the backedge_copy bit set?
+  int backedge_copy_count(int ciBlockIndex, JsrSet* jsrs) const;
 
   // Return an existing block containing bci which has a JsrSet compatible
   // with jsrs, or NULL if there is none.
@@ -654,10 +836,17 @@ public:
                                       return _block_map[po]; }
   Block* start_block() const        { return pre_order_at(start_block_num()); }
   int start_block_num() const       { return 0; }
+  Block* rpo_at(int rpo) const      { assert(0 <= rpo && rpo < block_count(), "out of bounds");
+                                      return _block_map[rpo]; }
+  int next_pre_order()              { return _next_pre_order; }
+  int inc_next_pre_order()          { return _next_pre_order++; }
 
 private:
   // A work list used during flow analysis.
   Block* _work_list;
+
+  // List of blocks in reverse post order
+  Block* _rpo_list;
 
   // Next Block::_pre_order.  After mapping, doubles as block_count.
   int _next_pre_order;
@@ -671,6 +860,15 @@ private:
   // Add a basic block to our work list.
   void add_to_work_list(Block* block);
 
+  // Prepend a basic block to rpo list.
+  void prepend_to_rpo_list(Block* blk) {
+    blk->set_rpo_next(_rpo_list);
+    _rpo_list = blk;
+  }
+
+  // Root of the loop tree
+  Loop* _loop_tree_root;
+
   // State used for make_jsr_record
   int _jsr_count;
   GrowableArray<JsrRecord*>* _jsr_records;
@@ -679,6 +877,9 @@ public:
   // Make a JsrRecord for a given (entry, return) pair, if such a record
   // does not already exist.
   JsrRecord* make_jsr_record(int entry_address, int return_address);
+
+  void  set_loop_tree_root(Loop* ltr) { _loop_tree_root = ltr; }
+  Loop* loop_tree_root()              { return _loop_tree_root; }
 
 private:
   // Get the initial state for start_bci:
@@ -706,6 +907,15 @@ private:
   // necessary.
   void flow_types();
 
+  // Perform the depth first type flow analysis. Helper for flow_types.
+  void df_flow_types(Block* start,
+                     bool do_flow,
+                     StateVector* temp_vector,
+                     JsrSet* temp_set);
+
+  // Incrementally build loop tree.
+  void build_loop_tree(Block* blk);
+
   // Create the block map, which indexes blocks in pre_order.
   void map_blocks();
 
@@ -714,4 +924,6 @@ public:
   void do_flow();
 
   void print_on(outputStream* st) const PRODUCT_RETURN;
+
+  void rpo_print_on(outputStream* st) const PRODUCT_RETURN;
 };

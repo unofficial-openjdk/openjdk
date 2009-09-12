@@ -2,7 +2,7 @@
 #pragma ident "@(#)klass.cpp	1.119 07/05/05 17:06:00 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -185,7 +185,7 @@ jint Klass::array_layout_helper(BasicType etype) {
   assert(etype >= T_BOOLEAN && etype <= T_OBJECT, "valid etype");
   // Note that T_ARRAY is not allowed here.
   int  hsize = arrayOopDesc::base_offset_in_bytes(etype);
-  int  esize = type2aelembytes[etype];
+  int  esize = type2aelembytes(etype);
   bool isobj = (etype == T_OBJECT);
   int  tag   =  isobj ? _lh_array_tag_obj_value : _lh_array_tag_type_value;
   int lh = array_layout_helper(tag, hsize, etype, exact_log2(esize));
@@ -481,6 +481,24 @@ void Klass::with_array_klasses_do(void f(klassOop k)) {
 
 
 const char* Klass::external_name() const {
+  if (oop_is_instance()) {
+    instanceKlass* ik = (instanceKlass*) this;
+    if (ik->is_anonymous()) {
+      assert(AnonymousClasses, "");
+      intptr_t hash = ik->java_mirror()->identity_hash();
+      char     hash_buf[40];
+      sprintf(hash_buf, "/" UINTX_FORMAT, (uintx)hash);
+      size_t   hash_len = strlen(hash_buf);
+
+      size_t result_len = name()->utf8_length();
+      char*  result     = NEW_RESOURCE_ARRAY(char, result_len + hash_len + 1);
+      name()->as_klass_external_name(result, (int) result_len + 1);
+      assert(strlen(result) == result_len, "");
+      strcpy(result + result_len, hash_buf);
+      assert(strlen(result) == result_len + hash_len, "");
+      return result;
+    }
+  }
   return name()->as_klass_external_name();
 }
 
@@ -545,11 +563,10 @@ void Klass::oop_verify_on(oop obj, outputStream* st) {
 
 void Klass::oop_verify_old_oop(oop obj, oop* p, bool allow_dirty) {
   /* $$$ I think this functionality should be handled by verification of
-
   RememberedSet::verify_old_oop(obj, p, allow_dirty, false);
-
   the card table. */
 }
+void Klass::oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty) { }
 
 #ifndef PRODUCT
 

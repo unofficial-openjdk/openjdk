@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vm_version_x86_64.cpp	1.25 07/09/20 10:42:57 JVM"
-#endif
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -63,17 +60,17 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     //
     // rcx and rdx are first and second argument registers on windows
 
-    __ pushq(rbp);
-    __ movq(rbp, c_rarg0); // cpuid_info address
-    __ pushq(rbx);
-    __ pushq(rsi);
+    __ push(rbp);
+    __ mov(rbp, c_rarg0); // cpuid_info address
+    __ push(rbx);
+    __ push(rsi);
 
     //
     // we have a chip which supports the "cpuid" instruction
     //
     __ xorl(rax, rax);
     __ cpuid();
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid0_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid0_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -88,13 +85,13 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     __ movl(rax, 4);
     __ xorl(rcx, rcx);   // L1 cache
     __ cpuid();
-    __ pushq(rax);
+    __ push(rax);
     __ andl(rax, 0x1f);  // Determine if valid cache parameters used
     __ orl(rax, rax);    // eax[4:0] == 0 indicates invalid cache
-    __ popq(rax);
+    __ pop(rax);
     __ jccb(Assembler::equal, std_cpuid1);
 
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::dcp_cpuid4_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::dcp_cpuid4_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -106,7 +103,7 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     __ bind(std_cpuid1);
     __ movl(rax, 1);
     __ cpuid();
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -125,7 +122,7 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     //
     __ movl(rax, 0x80000008);
     __ cpuid();
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid8_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid8_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -137,7 +134,7 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     __ bind(ext_cpuid5);
     __ movl(rax, 0x80000005);
     __ cpuid();
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid5_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid5_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -149,7 +146,7 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     __ bind(ext_cpuid1);
     __ movl(rax, 0x80000001);
     __ cpuid();
-    __ leaq(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid1_offset())));
+    __ lea(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid1_offset())));
     __ movl(Address(rsi, 0), rax);
     __ movl(Address(rsi, 4), rbx);
     __ movl(Address(rsi, 8), rcx);
@@ -159,9 +156,9 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     // return
     //
     __ bind(done);
-    __ popq(rsi);
-    __ popq(rbx);
-    __ popq(rbp);
+    __ pop(rsi);
+    __ pop(rbx);
+    __ pop(rbp);
     __ ret(0);
 
 #   undef __
@@ -189,8 +186,10 @@ void VM_Version::get_processor_features() {
   if (!VM_Version::supports_sse2()) {
     vm_exit_during_initialization("Unknown x64 processor: SSE2 not supported");
   }
-  if (UseSSE < 4)
-    _cpuFeatures &= ~CPU_SSE4;
+  if (UseSSE < 4) {
+    _cpuFeatures &= ~CPU_SSE4_1;
+    _cpuFeatures &= ~CPU_SSE4_2;
+  }
   if (UseSSE < 3) {
     _cpuFeatures &= ~CPU_SSE3;
     _cpuFeatures &= ~CPU_SSSE3;
@@ -207,7 +206,7 @@ void VM_Version::get_processor_features() {
   }
 
   char buf[256];
-  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                cores_per_cpu(), threads_per_core(),
                cpu_family(), _model, _stepping,
                (supports_cmov() ? ", cmov" : ""),
@@ -218,7 +217,8 @@ void VM_Version::get_processor_features() {
                (supports_sse2() ? ", sse2" : ""),
                (supports_sse3() ? ", sse3" : ""),
                (supports_ssse3()? ", ssse3": ""),
-               (supports_sse4() ? ", sse4" : ""),
+               (supports_sse4_1() ? ", sse4.1" : ""),
+               (supports_sse4_2() ? ", sse4.2" : ""),
                (supports_mmx_ext() ? ", mmxext" : ""),
                (supports_3dnow()   ? ", 3dnow"  : ""),
                (supports_3dnow2()  ? ", 3dnowext" : ""),
@@ -231,7 +231,7 @@ void VM_Version::get_processor_features() {
   // older Pentiums which do not support it.
   if( UseSSE > 4 ) UseSSE=4;
   if( UseSSE < 0 ) UseSSE=0;
-  if( !supports_sse4() ) // Drop to 3 if no SSE4 support
+  if( !supports_sse4_1() ) // Drop to 3 if no SSE4 support
     UseSSE = MIN2((intx)3,UseSSE);
   if( !supports_sse3() ) // Drop to 2 if no SSE3 support
     UseSSE = MIN2((intx)2,UseSSE);
@@ -250,7 +250,7 @@ void VM_Version::get_processor_features() {
 
   if( is_amd() ) { // AMD cpus specific settings
     if( FLAG_IS_DEFAULT(UseAddressNop) ) {
-      // Use it on all AMD cpus starting from Opteron (don't need 
+      // Use it on all AMD cpus starting from Opteron (don't need
       // a cpu check since only Opteron and new cpus support 64-bits mode).
       UseAddressNop = true;
     }
@@ -266,6 +266,20 @@ void VM_Version::get_processor_features() {
         UseXmmRegToRegMoveAll = true; // use movaps, movapd only on '10h'
       } else {
         UseXmmRegToRegMoveAll = false;
+      }
+    }
+    if( FLAG_IS_DEFAULT(UseXmmI2F) ) {
+      if( supports_sse4a() ) {
+        UseXmmI2F = true;
+      } else {
+        UseXmmI2F = false;
+      }
+    }
+    if( FLAG_IS_DEFAULT(UseXmmI2D) ) {
+      if( supports_sse4a() ) {
+        UseXmmI2D = true;
+      } else {
+        UseXmmI2D = false;
       }
     }
   }
@@ -295,7 +309,7 @@ void VM_Version::get_processor_features() {
         // For new Intel cpus do the next optimization:
         // don't align the beginning of a loop if there are enough instructions
         // left (NumberOfLoopInstrToAlign defined in c2_globals.hpp)
-        // in current fetch line (OptoLoopAlignment) or the padding 
+        // in current fetch line (OptoLoopAlignment) or the padding
         // is big (> MaxLoopPad).
         // Set MaxLoopPad to 11 for new Intel cpus to reduce number of
         // generated NOP instructions. 11 is the largest size of one
@@ -303,6 +317,14 @@ void VM_Version::get_processor_features() {
         MaxLoopPad = 11;
       }
 #endif // COMPILER2
+      if( FLAG_IS_DEFAULT(UseXMMForArrayCopy) ) {
+        UseXMMForArrayCopy = true; // use SSE2 movq on new Intel cpus
+      }
+      if( supports_sse4_2() && supports_ht() ) { // Newest Intel cpus
+        if( FLAG_IS_DEFAULT(UseUnalignedLoadStores) && UseXMMForArrayCopy ) {
+          UseUnalignedLoadStores = true; // use movdqu on newest Intel cpus
+        }
+      }
     }
   }
 
@@ -331,7 +353,7 @@ void VM_Version::get_processor_features() {
   AllocatePrefetchDistance = allocate_prefetch_distance();
   AllocatePrefetchStyle    = allocate_prefetch_style();
 
-  if( AllocatePrefetchStyle == 2 && is_intel() && 
+  if( AllocatePrefetchStyle == 2 && is_intel() &&
       cpu_family() == 6 && supports_sse3() ) { // watermark prefetching on Core
     AllocatePrefetchDistance = 384;
   }
@@ -344,7 +366,7 @@ void VM_Version::get_processor_features() {
 
 #ifndef PRODUCT
   if (PrintMiscellaneous && Verbose) {
-    tty->print_cr("Logical CPUs per package: %u",
+    tty->print_cr("Logical CPUs per core: %u",
                   logical_processors_per_package());
     tty->print_cr("UseSSE=%d",UseSSE);
     tty->print("Allocation: ");

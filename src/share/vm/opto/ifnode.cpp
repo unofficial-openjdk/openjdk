@@ -2,7 +2,7 @@
 #pragma ident "@(#)ifnode.cpp	1.63 07/10/23 13:12:51 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -608,7 +608,7 @@ const TypeInt* IfNode::filtered_int_type(PhaseGVN* gvn, Node *val, Node* if_proj
 // and has one projection leading to this if and the other projection
 // leading to a region that merges one of this ifs control
 // projections.
-//            
+//
 //                   If
 //                  / |
 //                 /  |
@@ -618,7 +618,7 @@ const TypeInt* IfNode::filtered_int_type(PhaseGVN* gvn, Node *val, Node* if_proj
 //             /  \   |
 //            /    \  |
 //           /    Region
-//  
+//
 Node* IfNode::fold_compares(PhaseGVN* phase) {
   if (!EliminateAutoBox || Opcode() != Op_If) return NULL;
 
@@ -728,6 +728,11 @@ static Node *remove_useless_bool(IfNode *iff, PhaseGVN *phase) {
   int true_path = phi->is_diamond_phi();
   if( true_path == 0 ) return NULL;
 
+  // Make sure that iff and the control of the phi are different. This
+  // should really only happen for dead control flow since it requires
+  // an illegal cycle.
+  if (phi->in(0)->in(1)->in(0) == iff) return NULL;
+
   // phi->region->if_proj->ifnode->bool->cmp
   BoolNode *bol2 = phi->in(0)->in(1)->in(0)->in(1)->as_Bool();
   
@@ -754,6 +759,7 @@ static Node *remove_useless_bool(IfNode *iff, PhaseGVN *phase) {
   }
 
   Node* new_bol = (flip ? phase->transform( bol2->negate(phase) ) : bol2);
+  assert(new_bol != iff->in(1), "must make progress");
   iff->set_req(1, new_bol);
   // Intervening diamond probably goes dead
   phase->C->set_major_progress();

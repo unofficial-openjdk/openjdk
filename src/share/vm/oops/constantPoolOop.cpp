@@ -2,7 +2,7 @@
 #pragma ident "@(#)constantPoolOop.cpp	1.104 07/05/05 17:06:01 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,20 @@
 # include "incls/_precompiled.incl"
 # include "incls/_constantPoolOop.cpp.incl"
 
-klassOop constantPoolOopDesc::klass_at_impl(constantPoolHandle this_oop, int which, TRAPS) {   
-  // A resolved constantPool entry will contain a klassOop, otherwise a symbolOop. 
+void constantPoolOopDesc::set_flag_at(FlagBit fb) {
+  const int MAX_STATE_CHANGES = 2;
+  for (int i = MAX_STATE_CHANGES + 10; i > 0; i--) {
+    int oflags = _flags;
+    int nflags = oflags | (1 << (int)fb);
+    if (Atomic::cmpxchg(nflags, &_flags, oflags) == oflags)
+      return;
+  }
+  assert(false, "failed to cmpxchg flags");
+  _flags |= (1 << (int)fb);     // better than nothing
+}
+
+klassOop constantPoolOopDesc::klass_at_impl(constantPoolHandle this_oop, int which, TRAPS) {
+  // A resolved constantPool entry will contain a klassOop, otherwise a symbolOop.
   // It is not safe to rely on the tag bit's here, since we don't have a lock, and the entry and
   // tag is not updated atomicly.  
   oop entry = *(this_oop->obj_at_addr(which));
@@ -336,8 +348,10 @@ char* constantPoolOopDesc::string_at_noresolve(int which) {
   oop entry = *(obj_at_addr(which));
   if (entry->is_symbol()) {
     return ((symbolOop)entry)->as_C_string();
-  } else {
+  } else if (java_lang_String::is_instance(entry)) {
     return java_lang_String::as_utf8_string(entry);
+  } else {
+    return (char*)"<pseudo-string>";
   }
 }
 
@@ -388,7 +402,20 @@ oop constantPoolOopDesc::string_at_impl(constantPoolHandle this_oop, int which, 
 }
 
 
-bool constantPoolOopDesc::klass_name_at_matches(instanceKlassHandle k, 
+bool constantPoolOopDesc::is_pseudo_string_at(int which) {
+  oop entry = *(obj_at_addr(which));
+  if (entry->is_symbol())
+    // Not yet resolved, but it will resolve to a string.
+    return false;
+  else if (java_lang_String::is_instance(entry))
+    return false; // actually, it might be a non-interned or non-perm string
+  else
+    // truly pseudo
+    return true;
+}
+
+
+bool constantPoolOopDesc::klass_name_at_matches(instanceKlassHandle k,
                                                 int which) {
   // Names are interned, so we can compare symbolOops directly
   symbolOop cp_name = klass_name_at(which);
@@ -938,7 +965,7 @@ static void print_cpool_bytes(jint cnt, u1 *bytes) {
       }
       case JVM_CONSTANT_Long: {
         u8 val = Bytes::get_Java_u8(bytes);
-        printf("long         %lldl", *(jlong *) &val);
+        printf("long         "INT64_FORMAT, *(jlong *) &val);
         ent_size = 8;
         idx++; // Long takes two cpool slots
         break;

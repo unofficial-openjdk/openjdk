@@ -2,7 +2,7 @@
 #pragma ident "@(#)ciMethodBlocks.hpp	1.5 07/05/05 17:05:14 JVM"
 #endif
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,8 @@ public:
   int num_blocks()  { return _num_blocks;}
   void clear_processed();
 
+  ciBlock *make_dummy_block(); // a block not associated with a bci
+
 #ifndef PRODUCT
   void dump();
 #endif
@@ -84,7 +86,7 @@ public:
     fall_through_bci = -1
   };
 
-  ciBlock(ciMethod *method, int index, ciMethodBlocks *mb, int start_bci);
+  ciBlock(ciMethod *method, int index, int start_bci);
   int start_bci() const         { return _start_bci; }
   int limit_bci() const         { return _limit_bci; }
   int control_bci() const       { return _control_bci; }
@@ -96,7 +98,6 @@ public:
   int ex_start_bci() const      { return _ex_start_bci; }
   int ex_limit_bci() const      { return _ex_limit_bci; }
   bool contains(int bci) const { return start_bci() <= bci && bci < limit_bci(); }
-
 
   // flag handling
   bool  processed() const           { return (_flags & Processed) != 0; }
@@ -113,9 +114,10 @@ public:
   void  set_does_jsr()              { _flags |= DoesJsr; }
   void  clear_does_jsr()            { _flags &= ~DoesJsr; }
   void  set_does_ret()              { _flags |= DoesRet; }
-  void  clear_does_ret()            { _flags |= DoesRet; }
+  void  clear_does_ret()            { _flags &= ~DoesRet; }
   void  set_is_ret_target()         { _flags |= RetTarget; }
   void  set_has_handler()           { _flags |= HasHandler; }
+  void  clear_exception_handler()   { _flags &= ~Handler; _ex_start_bci = -1; _ex_limit_bci = -1; }
 #ifndef PRODUCT
   ciMethod *method() const          { return _method; }
   void dump();

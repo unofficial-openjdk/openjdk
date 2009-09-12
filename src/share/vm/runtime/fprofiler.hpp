@@ -2,7 +2,7 @@
 #pragma ident "@(#)fprofiler.hpp	1.55 07/06/17 14:09:46 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -138,7 +138,7 @@ private:
   ProfilerNode** table;
 
 private:
-  void record_interpreted_tick(frame fr, TickPosition where, int* ticks);
+  void record_interpreted_tick(JavaThread* thread, frame fr, TickPosition where, int* ticks);
   void record_compiled_tick   (JavaThread* thread, frame fr, TickPosition where);
   void interpreted_update(methodOop method, TickPosition where);
   void compiled_update   (methodOop method, TickPosition where);

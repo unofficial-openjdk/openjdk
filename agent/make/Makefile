@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -241,25 +241,8 @@ DOC_DIR    = $(BUILD_DIR)/doc
 ALLFILES := $(patsubst %,$(SRC_DIR)/%,$(FILELIST))
 ALLFILES := $(shell /bin/ls $(ALLFILES))
 
-EXTRA_JAR  = ../closed/src/share/lib/maf-1_0.jar
 # tools.jar is used by the sa-jdi binding
 CLASSPATH = $(JDK_HOME)/lib/tools.jar
-
-
-
-noGui := $(shell test -r $(EXTRA_JAR); echo $$?)
-ifeq "$(noGui)" "1"
-    # the EXTRA_JAR is in the closed/ area because of open source issues.  If
-    # it doesn't exist, then delete from ALLFILES the files that depend on it.
-    # This means that that HSDB, the GUI debugger for HotSpot, won't be built
-    # in an open source build.
-    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/ui/%,,$(ALLFILES))
-    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/bugspot/%,,$(ALLFILES))
-    ALLFILES := $(patsubst $(SRC_DIR)/sun/jvm/hotspot/HSDB.java,,$(ALLFILES))
-    MSG = \"               WARNING::::    $(EXTRA_JAR) is missing; won't build the GUI part of SA\"
-else
-    CLASSPATH := $(EXTRA_JAR)$(CPS)$(CLASSPATH)
-endif
 
 CLASSPATH := $(subst \,/,$(CLASSPATH))
 
@@ -298,7 +281,7 @@ allprof: filelist
 	cp -r $(SRC_DIR)/images/*  $(OUTPUT_DIR)/
 
 .PHONY: filelist
-filelist:
+filelist: $(ALLFILES)
 	@if [ ! -f $(JDK_HOME)/lib/tools.jar ] ; then \
           echo "Missing $(JDK_HOME)/lib/tools.jar file. Use 1.6.0 or later version jdk to build SA."; \
           echo ""; \
@@ -321,8 +304,11 @@ docs:
 sizes: filelist
 	wc -l `cat filelist`
 
-cscope: filelist
-	cscope -b -i filelist -f java.out 
+cscope: $(ALLFILES)
+	rm -f java.files
+	echo $(ALLFILES) > java.files
+	cscope -b -i java.files -f java.out 
+	rm -f java.files
 
 .PHONY: sa.jar
 sa.jar:

@@ -2,7 +2,7 @@
 #pragma ident "@(#)thread.cpp	1.819 07/11/02 18:02:02 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,7 +131,6 @@ Thread::Thread() {
   debug_only(_allow_allocation_count = 0;)
   NOT_PRODUCT(_allow_safepoint_count = 0;)  
   CHECK_UNHANDLED_OOPS_ONLY(_gc_locked_out_count = 0;)
-  _highest_lock = NULL;
   _jvmti_env_iteration_count = 0;
   _vm_operation_started_count = 0;
   _vm_operation_completed_count = 0;
@@ -793,19 +792,6 @@ void Thread::check_for_valid_safepoint_state(bool potential_vm_operation) {
 }
 #endif
 
-bool Thread::lock_is_in_stack(address adr) const {
-  assert(Thread::current() == this, "lock_is_in_stack can only be called from current thread");
-  // High limit: highest_lock is set during thread execution
-  // Low  limit: address of the local variable dummy, rounded to 4K boundary.
-  // (The rounding helps finding threads in unsafe mode, even if the particular stack
-  // frame has been popped already.  Correct as long as stacks are at least 4K long and aligned.)
-  address end = os::current_stack_pointer();
-  if (_highest_lock >= adr && adr >= end) return true;
-  
-  return false;
-}
-
-
 bool Thread::is_in_stack(address adr) const {
   assert(Thread::current() == this, "is_in_stack can only be called from current thread");
   address end = os::current_stack_pointer();
@@ -821,8 +807,7 @@ bool Thread::is_in_stack(address adr) const {
 // should be revisited, and they should be removed if possible.
 
 bool Thread::is_lock_owned(address adr) const {
-  if (lock_is_in_stack(adr) ) return true;
-  return false;
+  return (_stack_base >= adr && adr >= (_stack_base - _stack_size));
 }
 
 bool Thread::set_as_starting_thread() {
@@ -1141,6 +1126,10 @@ void WatcherThread::print_on(outputStream* st) const {
 
 void JavaThread::initialize() {
   // Initialize fields
+
+  // Set the claimed par_id to -1 (ie not claiming any par_ids)
+  set_claimed_par_id(-1);
+
   set_saved_exception_pc(NULL);
   set_threadObj(NULL);  
   _anchor.clear();
@@ -1212,7 +1201,18 @@ void JavaThread::initialize() {
   pd_initialize();
 }
 
-JavaThread::JavaThread(bool is_attaching) : Thread() {
+#ifndef SERIALGC
+SATBMarkQueueSet JavaThread::_satb_mark_queue_set;
+DirtyCardQueueSet JavaThread::_dirty_card_queue_set;
+#endif // !SERIALGC
+
+JavaThread::JavaThread(bool is_attaching) :
+  Thread()
+#ifndef SERIALGC
+  , _satb_mark_queue(&_satb_mark_queue_set),
+  _dirty_card_queue(&_dirty_card_queue_set)
+#endif // !SERIALGC
+{
   initialize();
   _is_attaching = is_attaching;
 }
@@ -1258,7 +1258,13 @@ void JavaThread::block_if_vm_exited() {
 // Remove this ifdef when C1 is ported to the compiler interface.
 static void compiler_thread_entry(JavaThread* thread, TRAPS);
 
-JavaThread::JavaThread(ThreadFunction entry_point, size_t stack_sz) : Thread() {
+JavaThread::JavaThread(ThreadFunction entry_point, size_t stack_sz) :
+  Thread()
+#ifndef SERIALGC
+  , _satb_mark_queue(&_satb_mark_queue_set),
+  _dirty_card_queue(&_dirty_card_queue_set)
+#endif // !SERIALGC
+{
   if (TraceThreadEvents) {
     tty->print_cr("creating thread %p", this);
   }
@@ -1320,10 +1326,6 @@ JavaThread::~JavaThread() {
   ThreadSafepointState::destroy(this);
   if (_thread_profiler != NULL) delete _thread_profiler;
   if (_thread_stat != NULL) delete _thread_stat;
-
-  if (jvmti_thread_state() != NULL) {
-    JvmtiExport::cleanup_thread(this);
-  }
 }
 
 
@@ -1407,6 +1409,7 @@ static void ensure_join(JavaThread* thread) {
   // Ignore pending exception (ThreadDeath), since we are exiting anyway
   thread->clear_pending_exception();
 }
+
 
 // For any new cleanup additions, please check to see if they need to be applied to
 // cleanup_failed_attach_current_thread as well.
@@ -1574,37 +1577,64 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     tlab().make_parsable(true);  // retire TLAB
   }
 
-  // Remove from list of active threads list, and notify VM thread if we are the last non-daemon thread 
-  Threads::remove(this);  
+  if (jvmti_thread_state() != NULL) {
+    JvmtiExport::cleanup_thread(this);
+  }
+
+#ifndef SERIALGC
+  // We must flush G1-related buffers before removing a thread from
+  // the list of active threads.
+  if (UseG1GC) {
+    flush_barrier_queues();
+  }
+#endif
+
+  // Remove from list of active threads list, and notify VM thread if we are the last non-daemon thread
+  Threads::remove(this);
 }
+
+#ifndef SERIALGC
+// Flush G1-related queues.
+void JavaThread::flush_barrier_queues() {
+  satb_mark_queue().flush();
+  dirty_card_queue().flush();
+}
+#endif
 
 void JavaThread::cleanup_failed_attach_current_thread() {
+  if (get_thread_profiler() != NULL) {
+    get_thread_profiler()->disengage();
+    ResourceMark rm;
+    get_thread_profiler()->print(get_thread_name());
+  }
 
-     if (get_thread_profiler() != NULL) {
-       get_thread_profiler()->disengage();
-       ResourceMark rm;
-       get_thread_profiler()->print(get_thread_name());
-     }
-    
-     if (active_handles() != NULL) {
-      JNIHandleBlock* block = active_handles();
-      set_active_handles(NULL);
-      JNIHandleBlock::release_block(block);
-     }
-     
-     if (free_handle_block() != NULL) {
-       JNIHandleBlock* block = free_handle_block();
-       set_free_handle_block(NULL);
-       JNIHandleBlock::release_block(block);
-     }
-    
-     if (UseTLAB) {
-       tlab().make_parsable(true);  // retire TLAB, if any
-     }
- 
-     Threads::remove(this);
-     delete this;
+  if (active_handles() != NULL) {
+    JNIHandleBlock* block = active_handles();
+    set_active_handles(NULL);
+    JNIHandleBlock::release_block(block);
+  }
+
+  if (free_handle_block() != NULL) {
+    JNIHandleBlock* block = free_handle_block();
+    set_free_handle_block(NULL);
+    JNIHandleBlock::release_block(block);
+  }
+
+  if (UseTLAB) {
+    tlab().make_parsable(true);  // retire TLAB, if any
+  }
+
+#ifndef SERIALGC
+  if (UseG1GC) {
+    flush_barrier_queues();
+  }
+#endif
+
+  Threads::remove(this);
+  delete this;
 }
+
+
 
 
 JavaThread* JavaThread::active() {
@@ -1621,9 +1651,9 @@ JavaThread* JavaThread::active() {
   }
 }
 
-bool JavaThread::is_lock_owned(address adr) const {  
-  if (lock_is_in_stack(adr)) return true;
-    
+bool JavaThread::is_lock_owned(address adr) const {
+  if (Thread::is_lock_owned(adr)) return true;
+
   for (MonitorChunk* chunk = monitor_chunks(); chunk != NULL; chunk = chunk->next()) {
     if (chunk->contains(adr)) return true;
   }
@@ -2401,7 +2431,7 @@ void JavaThread::print_on(outputStream *st) const {
   if (thread_oop != NULL && java_lang_Thread::is_daemon(thread_oop))  st->print("daemon ");
   Thread::print_on(st);
   // print guess for valid stack memory region (assume 4K pages); helps lock debugging
-  st->print_cr("[" INTPTR_FORMAT ".." INTPTR_FORMAT "]", (intptr_t)last_Java_sp() & ~right_n_bits(12), highest_lock());
+  st->print_cr("[" INTPTR_FORMAT "]", (intptr_t)last_Java_sp() & ~right_n_bits(12));
   if (thread_oop != NULL && JDK_Version::is_gte_jdk15x_version()) {
     st->print_cr("   java.lang.Thread.State: %s", java_lang_Thread::thread_status_name(thread_oop));
   }
@@ -2581,7 +2611,8 @@ void JavaThread::prepare(jobject jni_thread, ThreadPriority prio) {
 oop JavaThread::current_park_blocker() {
   // Support for JSR-166 locks
   oop thread_oop = threadObj();
-  if (thread_oop != NULL && JDK_Version::supports_thread_park_blocker()) {
+  if (thread_oop != NULL &&
+      JDK_Version::current().supports_thread_park_blocker()) {
     return java_lang_Thread::park_blocker(thread_oop);
   }
   return NULL;
@@ -2758,12 +2789,24 @@ void Threads::threads_do(ThreadClosure* tc) {
   // For now, just manually iterate through them.
   tc->do_thread(VMThread::vm_thread());
   Universe::heap()->gc_threads_do(tc);
-  tc->do_thread(WatcherThread::watcher_thread());
+  WatcherThread *wt = WatcherThread::watcher_thread();
+  // Strictly speaking, the following NULL check isn't sufficient to make sure
+  // the data for WatcherThread is still valid upon being examined. However,
+  // considering that WatchThread terminates when the VM is on the way to
+  // exit at safepoint, the chance of the above is extremely small. The right
+  // way to prevent termination of WatcherThread would be to acquire
+  // Terminator_lock, but we can't do that without violating the lock rank
+  // checking in some cases.
+  if (wt != NULL)
+    tc->do_thread(wt);
+
   // If CompilerThreads ever become non-JavaThreads, add them here
 }
 
 jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
-  
+
+  extern void JDK_Version_init();
+
   // Check version
   if (!is_supported_jni_version(args->version)) return JNI_EVERSION;
 
@@ -2778,6 +2821,9 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   // Initialize system properties.
   Arguments::init_system_properties();
+
+  // So that JDK version can be used as a discrimintor when parsing arguments
+  JDK_Version_init();
 
   // Parse arguments
   jint parse_result = Arguments::parse(args);
@@ -2929,21 +2975,38 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     }
 
     if (AggressiveOpts) {
-      // Forcibly initialize java/util/HashMap and mutate the private
-      // static final "frontCacheEnabled" field before we start creating instances
-#ifdef ASSERT      
-      klassOop tmp_k = SystemDictionary::find(vmSymbolHandles::java_util_HashMap(), Handle(), Handle(), CHECK_0);
-      assert(tmp_k == NULL, "java/util/HashMap should not be loaded yet");
+      {
+        // Forcibly initialize java/util/HashMap and mutate the private
+        // static final "frontCacheEnabled" field before we start creating instances
+#ifdef ASSERT
+	klassOop tmp_k = SystemDictionary::find(vmSymbolHandles::java_util_HashMap(), Handle(), Handle(), CHECK_0);
+        assert(tmp_k == NULL, "java/util/HashMap should not be loaded yet");
 #endif
-      klassOop k_o = SystemDictionary::resolve_or_null(vmSymbolHandles::java_util_HashMap(), Handle(), Handle(), CHECK_0);
-      KlassHandle k = KlassHandle(THREAD, k_o);
-      guarantee(k.not_null(), "Must find java/util/HashMap");
-      instanceKlassHandle ik = instanceKlassHandle(THREAD, k());
-      ik->initialize(CHECK_0);
-      fieldDescriptor fd;
-      // Possible we might not find this field; if so, don't break
-      if (ik->find_local_field(vmSymbols::frontCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
-        k()->bool_field_put(fd.offset(), true);
+        klassOop k_o = SystemDictionary::resolve_or_null(vmSymbolHandles::java_util_HashMap(), Handle(), Handle(), CHECK_0);
+        KlassHandle k = KlassHandle(THREAD, k_o);
+        guarantee(k.not_null(), "Must find java/util/HashMap");
+        instanceKlassHandle ik = instanceKlassHandle(THREAD, k());
+        ik->initialize(CHECK_0);
+        fieldDescriptor fd;
+        // Possible we might not find this field; if so, don't break
+        if (ik->find_local_field(vmSymbols::frontCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
+          k()->bool_field_put(fd.offset(), true);
+        }
+      }
+
+      if (UseStringCache) {
+        // Forcibly initialize java/lang/StringValue and mutate the private
+        // static final "stringCacheEnabled" field before we start creating instances
+        klassOop k_o = SystemDictionary::resolve_or_null(vmSymbolHandles::java_lang_StringValue(), Handle(), Handle(), CHECK_0);
+        KlassHandle k = KlassHandle(THREAD, k_o);
+        guarantee(k.not_null(), "Must find java/lang/StringValue");
+        instanceKlassHandle ik = instanceKlassHandle(THREAD, k());
+        ik->initialize(CHECK_0);
+        fieldDescriptor fd;
+        // Possible we might not find this field; if so, don't break
+        if (ik->find_local_field(vmSymbols::stringCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
+          k()->bool_field_put(fd.offset(), true);
+        }
       }
     }
 
@@ -3037,9 +3100,14 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   
 #ifndef SERIALGC
   // Support for ConcurrentMarkSweep. This should be cleaned up
-  // and better encapsulated. XXX YSR
-  if (UseConcMarkSweepGC) {
-    ConcurrentMarkSweepThread::makeSurrogateLockerThread(THREAD);
+  // and better encapsulated. The ugly nested if test would go away
+  // once things are properly refactored. XXX YSR
+  if (UseConcMarkSweepGC || UseG1GC) {
+    if (UseConcMarkSweepGC) {
+      ConcurrentMarkSweepThread::makeSurrogateLockerThread(THREAD);
+    } else {
+      ConcurrentMarkThread::makeSurrogateLockerThread(THREAD);
+    }
     if (HAS_PENDING_EXCEPTION) {
       vm_exit_during_initialization(Handle(THREAD, PENDING_EXCEPTION));
     }
@@ -3088,7 +3156,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   if (MemProfiling)                   MemProfiler::engage();    
   StatSampler::engage();    
   if (CheckJNICalls)                  JniPeriodicChecker::engage();
-  if (CacheTimeMillis)                TimeMillisUpdateTask::engage();
 
   BiasedLocking::init();
 
@@ -3652,25 +3719,13 @@ JavaThread *Threads::owning_thread_from_monitor_owner(address owner, bool doLock
   // heavyweight monitors, then the owner is the stack address of the
   // Lock Word in the owning Java thread's stack.
   //
-  // We can't use Thread::is_lock_owned() or Thread::lock_is_in_stack() because
-  // those routines rely on the "current" stack pointer. That would be our
-  // stack pointer which is not relevant to the question. Instead we use the
-  // highest lock ever entered by the thread and find the thread that is
-  // higher than and closest to our target stack address.
-  //
-  address    least_diff = 0;
-  bool       least_diff_initialized = false;
   JavaThread* the_owner = NULL;
   {
     MutexLockerEx ml(doLock ? Threads_lock : NULL);
     ALL_JAVA_THREADS(q) {
-      address addr = q->highest_lock();
-      if (addr == NULL || addr < owner) continue;  // thread has entered no monitors or is too low
-      address diff = (address)(addr - owner);
-      if (!least_diff_initialized || diff < least_diff) {
-        least_diff_initialized = true;
-        least_diff = diff;
+      if (q->is_lock_owned(owner)) {
         the_owner = q;
+        break;
       }
     }
   }

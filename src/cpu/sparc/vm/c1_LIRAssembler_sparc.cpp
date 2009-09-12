@@ -2,7 +2,7 @@
 #pragma ident "@(#)c1_LIRAssembler_sparc.cpp	1.206 07/08/03 09:19:23 JVM"
 #endif
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2040,7 +2040,7 @@ void LIR_Assembler::logic_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
 
 
 int LIR_Assembler::shift_amount(BasicType t) {
-  int elem_size = type2aelembytes[t];
+  int elem_size = type2aelembytes(t);
   switch (elem_size) {
     case 1 : return 0;
     case 2 : return 1;
@@ -2096,7 +2096,11 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
   // the known type isn't loaded since the code sanity checks
   // in debug mode and the type isn't required when we know the exact type
   // also check that the type is an array type.
-  if (op->expected_type() == NULL) {
+  // We also, for now, always call the stub if the barrier set requires a
+  // write_ref_pre barrier (which the stub does, but none of the optimized
+  // cases currently does).
+  if (op->expected_type() == NULL ||
+      Universe::heap()->barrier_set()->has_write_ref_pre_barrier()) {
     __ mov(src,     O0);
     __ mov(src_pos, O1);
     __ mov(dst,     O2);
@@ -2363,7 +2367,7 @@ void LIR_Assembler::emit_alloc_array(LIR_OpAllocArray* op) {
                       op->tmp2()->as_register(),
                       op->tmp3()->as_register(),
                       arrayOopDesc::header_size(op->type()),
-                      type2aelembytes[op->type()],
+                      type2aelembytes(op->type()),
                       op->klass()->as_register(),
                       *op->stub()->entry());
   }

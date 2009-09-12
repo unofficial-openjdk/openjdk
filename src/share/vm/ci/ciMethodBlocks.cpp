@@ -2,7 +2,7 @@
 #pragma ident "@(#)ciMethodBlocks.cpp	1.6 07/09/28 10:23:22 JVM"
 #endif
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ bool ciMethodBlocks::is_block_start(int bci) {
 // first half.  Returns the range beginning at bci.
 ciBlock *ciMethodBlocks::split_block_at(int bci) {
   ciBlock *former_block = block_containing(bci);
-  ciBlock *new_block = new(_arena) ciBlock(_method, _num_blocks++, this, former_block->start_bci());
+  ciBlock *new_block = new(_arena) ciBlock(_method, _num_blocks++, former_block->start_bci());
   _blocks->append(new_block);
   assert(former_block != NULL, "must not be NULL");
   new_block->set_limit_bci(bci);
@@ -70,6 +70,14 @@ ciBlock *ciMethodBlocks::split_block_at(int bci) {
       break;
     }
   }
+  // Move an exception handler information if needed.
+  if (former_block->is_handler()) {
+    int ex_start = former_block->ex_start_bci();
+    int ex_end = former_block->ex_limit_bci();
+    new_block->set_exception_range(ex_start, ex_end);
+    // Clear information in former_block.
+    former_block->clear_exception_handler();
+  }
   return former_block;
 }
 
@@ -78,7 +86,7 @@ ciBlock *ciMethodBlocks::make_block_at(int bci) {
   if (cb == NULL ) {
     // This is our first time visiting this bytecode.  Create
     // a fresh block and assign it this starting point.
-    ciBlock *nb = new(_arena) ciBlock(_method, _num_blocks++, this, bci);
+    ciBlock *nb = new(_arena) ciBlock(_method, _num_blocks++, bci);
     _blocks->append(nb);
      _bci_to_block[bci] = nb;
     return nb;
@@ -93,6 +101,11 @@ ciBlock *ciMethodBlocks::make_block_at(int bci) {
   }
 }
 
+ciBlock *ciMethodBlocks::make_dummy_block() {
+  ciBlock *dum = new(_arena) ciBlock(_method, -1, 0);
+  return dum;
+}
+
 void ciMethodBlocks::do_analysis() {
   ciBytecodeStream s(_method);
   ciBlock *cur_block = block_containing(0);
@@ -105,7 +118,7 @@ void ciMethodBlocks::do_analysis() {
     // one and end the old one.
     assert(cur_block != NULL, "must always have a current block");
     ciBlock *new_block = block_containing(bci);
-    if (new_block == NULL) {
+    if (new_block == NULL || new_block == cur_block) {
       // We have not marked this bci as the start of a new block.
       // Keep interpreting the current_range.
       _bci_to_block[bci] = cur_block;
@@ -248,7 +261,7 @@ ciMethodBlocks::ciMethodBlocks(Arena *arena, ciMethod *meth): _method(meth),
   Copy::zero_to_words((HeapWord*) _bci_to_block, b2bsize / sizeof(HeapWord));
 
   // create initial block covering the entire method
-  ciBlock *b = new(arena) ciBlock(_method, _num_blocks++, this, 0);
+  ciBlock *b = new(arena) ciBlock(_method, _num_blocks++, 0);
   _blocks->append(b);
   _bci_to_block[0] = b;
 
@@ -257,14 +270,39 @@ ciMethodBlocks::ciMethodBlocks(Arena *arena, ciMethod *meth): _method(meth),
     for(ciExceptionHandlerStream str(meth); !str.is_done(); str.next()) {
       ciExceptionHandler* handler = str.handler();
       ciBlock *eb = make_block_at(handler->handler_bci());
-      eb->set_handler();
+      //
+      // Several exception handlers can have the same handler_bci:
+      //
+      //  try {
+      //    if (a.foo(b) < 0) {
+      //      return a.error();
+      //    }
+      //    return CoderResult.UNDERFLOW;
+      //  } finally {
+      //      a.position(b);
+      //  }
+      //
+      //  The try block above is divided into 2 exception blocks
+      //  separated by 'areturn' bci.
+      //
       int ex_start = handler->start();
       int ex_end = handler->limit();
-      eb->set_exception_range(ex_start, ex_end);
       // ensure a block at the start of exception range and start of following code
       (void) make_block_at(ex_start);
       if (ex_end < _code_size)
         (void) make_block_at(ex_end);
+
+      if (eb->is_handler()) {
+        // Extend old handler exception range to cover additional range.
+        int old_ex_start = eb->ex_start_bci();
+        int old_ex_end   = eb->ex_limit_bci();
+        if (ex_start > old_ex_start)
+          ex_start = old_ex_start;
+        if (ex_end < old_ex_end)
+          ex_end = old_ex_end;
+        eb->clear_exception_handler(); // Reset exception information
+      }
+      eb->set_exception_range(ex_start, ex_end);
     }
   }
 
@@ -305,7 +343,7 @@ void ciMethodBlocks::dump() {
 #endif
 
 
-ciBlock::ciBlock(ciMethod *method, int index, ciMethodBlocks *mb, int start_bci) :
+ciBlock::ciBlock(ciMethod *method, int index, int start_bci) :
 #ifndef PRODUCT
                          _method(method),
 #endif
@@ -315,9 +353,10 @@ ciBlock::ciBlock(ciMethod *method, int index, ciMethodBlocks *mb, int start_bci)
 
 void ciBlock::set_exception_range(int start_bci, int limit_bci)  {
    assert(limit_bci >= start_bci, "valid range");
-   assert(is_handler(), "must be handler");
+   assert(!is_handler() && _ex_start_bci == -1 && _ex_limit_bci == -1, "must not be handler");
    _ex_start_bci = start_bci;
    _ex_limit_bci = limit_bci;
+   set_handler();
 }
 
 #ifndef PRODUCT

@@ -2,7 +2,7 @@
 #pragma ident "@(#)output_h.cpp	1.180 07/09/28 10:23:25 JVM"
 #endif
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -206,6 +206,10 @@ static void declareConstStorage(FILE *fp, FormDict &globals, OperandForm *oper) 
       if (i > 0) fprintf(fp,", ");
       fprintf(fp,"  const TypePtr *_c%d;\n", i);
     }
+    else if (!strcmp(type, "ConN")) {
+      if (i > 0) fprintf(fp,", ");
+      fprintf(fp,"  const TypeNarrowOop *_c%d;\n", i);
+    }
     else if (!strcmp(type, "ConL")) {
       if (i > 0) fprintf(fp,", ");
       fprintf(fp,"  jlong          _c%d;\n", i);
@@ -235,6 +239,10 @@ static void declareConstStorage(FILE *fp, FormDict &globals, OperandForm *oper) 
         i++;
       }
       else if (!strcmp(comp->base_type(globals), "ConP")) {
+        fprintf(fp,"  const TypePtr *_c%d;\n", i);
+        i++;
+      }
+      else if (!strcmp(comp->base_type(globals), "ConN")) {
         fprintf(fp,"  const TypePtr *_c%d;\n", i);
         i++;
       }
@@ -283,6 +291,7 @@ static void defineConstructor(FILE *fp, const char *name, uint num_consts,
       fprintf(fp,is_ideal_bool ? "BoolTest::mask c%d" : "int32 c%d", i);
       break;        
     }
+    case Form::idealN : { fprintf(fp,"const TypeNarrowOop *c%d", i); break; }
     case Form::idealP : { fprintf(fp,"const TypePtr *c%d", i); break; }
     case Form::idealL : { fprintf(fp,"jlong c%d", i);   break;        }
     case Form::idealF : { fprintf(fp,"jfloat c%d", i);  break;        }
@@ -304,6 +313,11 @@ static void defineConstructor(FILE *fp, const char *name, uint num_consts,
 	if (i > 0) fprintf(fp,", ");
 	fprintf(fp,"const TypePtr *c%d", i);
 	i++;
+      }
+      else if (!strcmp(comp->base_type(globals), "ConN")) {
+        if (i > 0) fprintf(fp,", ");
+        fprintf(fp,"const TypePtr *c%d", i);
+        i++;
       }
       else if (!strcmp(comp->base_type(globals), "ConL")) {
 	if (i > 0) fprintf(fp,", ");
@@ -344,22 +358,28 @@ static void defineConstructor(FILE *fp, const char *name, uint num_consts,
 // ---------------------------------------------------------------------------
 
 // Generate the format rule for condition codes
-static void defineCCodeDump(FILE *fp, int i) {
-  fprintf(fp, "         if( _c%d == BoolTest::eq ) st->print(\"eq\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::ne ) st->print(\"ne\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::le ) st->print(\"le\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::ge ) st->print(\"ge\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::lt ) st->print(\"lt\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::gt ) st->print(\"gt\");\n",i);
+static void defineCCodeDump(OperandForm* oper, FILE *fp, int i) {
+  assert(oper != NULL, "what");
+  CondInterface* cond = oper->_interface->is_CondInterface();
+  fprintf(fp, "         if( _c%d == BoolTest::eq ) st->print(\"%s\");\n",i,cond->_equal_format);
+  fprintf(fp, "    else if( _c%d == BoolTest::ne ) st->print(\"%s\");\n",i,cond->_not_equal_format);
+  fprintf(fp, "    else if( _c%d == BoolTest::le ) st->print(\"%s\");\n",i,cond->_less_equal_format);
+  fprintf(fp, "    else if( _c%d == BoolTest::ge ) st->print(\"%s\");\n",i,cond->_greater_equal_format);
+  fprintf(fp, "    else if( _c%d == BoolTest::lt ) st->print(\"%s\");\n",i,cond->_less_format);
+  fprintf(fp, "    else if( _c%d == BoolTest::gt ) st->print(\"%s\");\n",i,cond->_greater_format);
 }
 
 // Output code that dumps constant values, increment "i" if type is constant
-static uint dump_spec_constant(FILE *fp, const char *ideal_type, uint i) {
+static uint dump_spec_constant(FILE *fp, const char *ideal_type, uint i, OperandForm* oper) {
   if (!strcmp(ideal_type, "ConI")) {
     fprintf(fp,"   st->print(\"#%%d\", _c%d);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "ConP")) {
+    fprintf(fp,"    _c%d->dump_on(st);\n", i);
+    ++i;
+  }
+  else if (!strcmp(ideal_type, "ConN")) {
     fprintf(fp,"    _c%d->dump_on(st);\n", i);
     ++i;
   }
@@ -376,7 +396,7 @@ static uint dump_spec_constant(FILE *fp, const char *ideal_type, uint i) {
     ++i;
   }
   else if (!strcmp(ideal_type, "Bool")) {
-    defineCCodeDump(fp,i);
+    defineCCodeDump(oper, fp,i);
     ++i;
   }
 
@@ -420,8 +440,13 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
           // Replacement variable
           const char *rep_var = oper._format->_rep_vars.iter();
           // Check that it is a local name, and an operand
-          OperandForm *op      = oper._localNames[rep_var]->is_operand();
-          assert( op, "replacement variable was not found in local names");
+          const Form* form = oper._localNames[rep_var];
+          if (form == NULL) {
+            globalAD->syntax_err(oper._linenum,
+                                 "\'%s\' not found in format for %s\n", rep_var, oper._ident);
+            assert(form, "replacement variable was not found in local names");
+          }
+          OperandForm *op      = form->is_operand();
           // Get index if register or constant
           if ( op->_matrule && op->_matrule->is_base_register(globals) ) {
             idx  = oper.register_position( globals, rep_var);
@@ -456,7 +481,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   }
   // ALWAYS! Provide a special case output for condition codes.
   if( oper.is_ideal_bool() ) {
-    defineCCodeDump(fp,0);
+    defineCCodeDump(&oper, fp,0);
   }
   fprintf(fp,"}\n");
 
@@ -486,9 +511,14 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
         } else {
           // Replacement variable
           const char *rep_var = oper._format->_rep_vars.iter();
-	  // Check that it is a local name, and an operand
-          OperandForm *op      = oper._localNames[rep_var]->is_operand();
-          assert( op, "replacement variable was not found in local names");
+         // Check that it is a local name, and an operand
+          const Form* form = oper._localNames[rep_var];
+          if (form == NULL) {
+            globalAD->syntax_err(oper._linenum,
+                                 "\'%s\' not found in format for %s\n", rep_var, oper._ident);
+            assert(form, "replacement variable was not found in local names");
+          }
+          OperandForm *op      = form->is_operand();
           // Get index if register or constant
           if ( op->_matrule && op->_matrule->is_base_register(globals) ) {
             idx  = oper.register_position( globals, rep_var);
@@ -524,7 +554,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   }
   // ALWAYS! Provide a special case output for condition codes.
   if( oper.is_ideal_bool() ) {
-    defineCCodeDump(fp,0);
+    defineCCodeDump(&oper, fp,0);
   }
   fprintf(fp, "}\n");
   fprintf(fp, "#endif\n");
@@ -558,10 +588,53 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
     while( (string = inst._format->_strings.iter()) != NULL ) {
       fprintf(fp,"    ");
       // Check if this is a standard string or a replacement variable
-      if( string != NameList::_signal )  // Normal string.  Pass through.
+      if( string == NameList::_signal ) { // Replacement variable
+        const char* rep_var =  inst._format->_rep_vars.iter();
+        inst.rep_var_format( fp, rep_var);
+      } else if( string == NameList::_signal3 ) { // Replacement variable in raw text
+        const char* rep_var =  inst._format->_rep_vars.iter();
+        const Form *form   = inst._localNames[rep_var];
+        if (form == NULL) {
+          fprintf(stderr, "unknown replacement variable in format statement: '%s'\n", rep_var);
+          assert(false, "ShouldNotReachHere()");
+        }
+        OpClassForm *opc   = form->is_opclass();
+        assert( opc, "replacement variable was not found in local names");
+        // Lookup the index position of the replacement variable
+        int idx  = inst.operand_position_format(rep_var);
+        if ( idx == -1 ) {
+          assert( strcmp(opc->_ident,"label")==0, "Unimplemented");
+          assert( false, "ShouldNotReachHere()");
+        }
+
+        if (inst.is_noninput_operand(idx)) {
+          assert( false, "ShouldNotReachHere()");
+        } else {
+          // Output the format call for this operand
+          fprintf(fp,"opnd_array(%d)",idx);
+        }
+        rep_var =  inst._format->_rep_vars.iter();
+        inst._format->_strings.iter();
+        if ( strcmp(rep_var,"$constant") == 0 && opc->is_operand()) {
+          Form::DataType constant_type = form->is_operand()->is_base_constant(globals);
+          if ( constant_type == Form::idealD ) {
+            fprintf(fp,"->constantD()");
+          } else if ( constant_type == Form::idealF ) {
+            fprintf(fp,"->constantF()");
+          } else if ( constant_type == Form::idealL ) {
+            fprintf(fp,"->constantL()");
+          } else {
+            fprintf(fp,"->constant()");
+          }
+        } else if ( strcmp(rep_var,"$cmpcode") == 0) {
+            fprintf(fp,"->ccode()");
+        } else {
+          assert( false, "ShouldNotReachHere()");
+        }
+      } else if( string == NameList::_signal2 ) // Raw program text
+        fputs(inst._format->_strings.iter(), fp);
+      else
         fprintf(fp,"st->print(\"%s\");\n", string);
-      else			// Replacement variable
-	inst.rep_var_format( fp, inst._format->_rep_vars.iter() );
     } // Done with all format strings
   } // Done generating the user-defined portion of the format
 
@@ -1166,7 +1239,7 @@ void ArchDesc::declareClasses(FILE *fp) {
       if( type != NULL ) {
         Form::DataType data_type = oper->is_base_constant(_globalNames);
         // Check if we are an ideal pointer type
-        if( data_type == Form::idealP ) {
+        if( data_type == Form::idealP || data_type == Form::idealN ) {
           // Return the ideal type we already have: <TypePtr *>
           fprintf(fp," return _c0;");
         } else {
@@ -1294,6 +1367,16 @@ void ArchDesc::declareClasses(FILE *fp) {
           fprintf(fp,   " return _c0->isa_oop_ptr();");
           fprintf(fp, " }\n");
         }
+        else if (!strcmp(oper->ideal_type(_globalNames), "ConN")) {
+          // Access the locally stored constant
+          fprintf(fp,"  virtual intptr_t       constant() const {");
+          fprintf(fp,   " return _c0->make_oopptr()->get_con();");
+          fprintf(fp, " }\n");
+          // Generate query to determine if this pointer is an oop
+          fprintf(fp,"  virtual bool           constant_is_oop() const {");
+          fprintf(fp,   " return _c0->make_oopptr()->isa_oop_ptr();");
+          fprintf(fp, " }\n");
+        }
         else if (!strcmp(oper->ideal_type(_globalNames), "ConL")) {
           fprintf(fp,"  virtual intptr_t       constant() const {");
           // We don't support addressing modes with > 4Gig offsets.
@@ -1369,7 +1452,7 @@ void ArchDesc::declareClasses(FILE *fp) {
       oper->_components.reset();
       if ((comp = oper->_components.iter()) == NULL) {
         assert(num_consts == 1, "Bad component list detected.\n");
-        i = dump_spec_constant( fp, type, i );
+        i = dump_spec_constant( fp, type, i, oper );
         // Check that type actually matched
         assert( i != 0, "Non-constant operand lacks component list.");
       } // end if NULL
@@ -1379,7 +1462,7 @@ void ArchDesc::declareClasses(FILE *fp) {
         oper->_components.reset();
         while((comp = oper->_components.iter()) != NULL) {
           type = comp->base_type(_globalNames);
-          i = dump_spec_constant( fp, type, i );
+          i = dump_spec_constant( fp, type, i, NULL );
         }
       }
       // finish line (3)
@@ -1751,6 +1834,7 @@ void ArchDesc::declareClasses(FILE *fp) {
         fprintf(fp,"    return  TypeInt::make(opnd_array(1)->constant());\n");
         break;
       case Form::idealP:
+      case Form::idealN:
         fprintf(fp,"    return  opnd_array(1)->type();\n",result);
         break;
       case Form::idealD:
@@ -1810,6 +1894,19 @@ void ArchDesc::declareClasses(FILE *fp) {
       }
       // Special hack for ideal CMoveP; ideal type depends on inputs
       fprintf(fp,"  const Type            *bottom_type() const { const Type *t = in(oper_input_base()+%d)->bottom_type(); return (req() <= oper_input_base()+%d) ? t : t->meet(in(oper_input_base()+%d)->bottom_type()); } // CMoveP\n",
+        offset, offset+1, offset+1);
+    }
+    else if( instr->_matrule && instr->_matrule->_rChild && !strcmp(instr->_matrule->_rChild->_opType,"CMoveN") ) {
+      int offset = 1;
+      // Special special hack to see if the Cmp? has been incorporated in the conditional move
+      MatchNode *rl = instr->_matrule->_rChild->_lChild;
+      if( rl && !strcmp(rl->_opType, "Binary") ) {
+          MatchNode *rlr = rl->_rChild;
+          if (rlr && strncmp(rlr->_opType, "Cmp", 3) == 0)
+            offset = 2;
+      }
+      // Special hack for ideal CMoveN; ideal type depends on inputs
+      fprintf(fp,"  const Type            *bottom_type() const { const Type *t = in(oper_input_base()+%d)->bottom_type(); return (req() <= oper_input_base()+%d) ? t : t->meet(in(oper_input_base()+%d)->bottom_type()); } // CMoveN\n",
         offset, offset+1, offset+1);
     }
     else if( instr->needs_base_oop_edge(_globalNames) ) {

@@ -2,7 +2,7 @@
 #pragma ident "@(#)space.cpp	1.217 07/05/29 09:44:13 JVM"
 #endif
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,9 @@
 
 # include "incls/_precompiled.incl"
 # include "incls/_space.cpp.incl"
+
+void SpaceMemRegionOopsIterClosure::do_oop(oop* p)       { SpaceMemRegionOopsIterClosure::do_oop_work(p); }
+void SpaceMemRegionOopsIterClosure::do_oop(narrowOop* p) { SpaceMemRegionOopsIterClosure::do_oop_work(p); }
 
 HeapWord* DirtyCardToOopClosure::get_actual_top(HeapWord* top,
 						HeapWord* top_obj) {
@@ -105,9 +108,9 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
          "Only ones we deal with for now.");
   
   assert(_precision != CardTableModRefBS::ObjHeadPreciseArray ||
-	 _last_bottom == NULL ||
-	 top <= _last_bottom,
-	 "Not decreasing");
+         _cl->idempotent() || _last_bottom == NULL ||
+         top <= _last_bottom,
+         "Not decreasing");
   NOT_PRODUCT(_last_bottom = mr.start());
   
   bottom_obj = _sp->block_start(bottom);
@@ -144,17 +147,20 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
     walk_mem_region(mr, bottom_obj, top);
   }
 
-  _min_done = bottom;
+  // An idempotent closure might be applied in any order, so we don't
+  // record a _min_done for it.
+  if (!_cl->idempotent()) {
+    _min_done = bottom;
+  } else {
+    assert(_min_done == _last_explicit_min_done,
+           "Don't update _min_done for idempotent cl");
+  }
 }
 
 DirtyCardToOopClosure* Space::new_dcto_cl(OopClosure* cl,
 					  CardTableModRefBS::PrecisionStyle precision,
 					  HeapWord* boundary) {
   return new DirtyCardToOopClosure(this, cl, precision, boundary);
-}
-
-void FilteringClosure::do_oop(oop* p) {
-  do_oop_nv(p);
 }
 
 HeapWord* ContiguousSpaceDCTOC::get_actual_top(HeapWord* top,
@@ -236,34 +242,49 @@ ContiguousSpace::new_dcto_cl(OopClosure* cl,
   return new ContiguousSpaceDCTOC(this, cl, precision, boundary);
 }
 
-void Space::initialize(MemRegion mr, bool clear_space) {
+void Space::initialize(MemRegion mr,
+                       bool clear_space,
+                       bool mangle_space) {
   HeapWord* bottom = mr.start();
   HeapWord* end    = mr.end();
   assert(Universe::on_page_boundary(bottom) && Universe::on_page_boundary(end),
          "invalid space boundaries");
   set_bottom(bottom);
   set_end(end);
-  if (clear_space) clear();
+  if (clear_space) clear(mangle_space);
 }
 
-void Space::clear() {
-  if (ZapUnusedHeapArea) mangle_unused_area();
+void Space::clear(bool mangle_space) {
+  if (ZapUnusedHeapArea && mangle_space) {
+    mangle_unused_area();
+  }
 }
 
-void ContiguousSpace::initialize(MemRegion mr, bool clear_space)
+ContiguousSpace::ContiguousSpace(): CompactibleSpace(), _top(NULL),
+    _concurrent_iteration_safe_limit(NULL) {
+  _mangler = new GenSpaceMangler(this);
+}
+
+ContiguousSpace::~ContiguousSpace() {
+  delete _mangler;
+}
+
+void ContiguousSpace::initialize(MemRegion mr,
+                                 bool clear_space,
+                                 bool mangle_space)
 {
-  CompactibleSpace::initialize(mr, clear_space);
-  _concurrent_iteration_safe_limit = top();
+  CompactibleSpace::initialize(mr, clear_space, mangle_space);
+  set_concurrent_iteration_safe_limit(top());
 }
 
-void ContiguousSpace::clear() {
+void ContiguousSpace::clear(bool mangle_space) {
   set_top(bottom());
   set_saved_mark();
-  Space::clear();
+  CompactibleSpace::clear(mangle_space);
 }
 
 bool Space::is_in(const void* p) const {
-  HeapWord* b = block_start(p);
+  HeapWord* b = block_start_const(p);
   return b != NULL && block_is_obj(b);
 }
 
@@ -275,8 +296,8 @@ bool ContiguousSpace::is_free_block(const HeapWord* p) const {
   return p >= _top;
 }
 
-void OffsetTableContigSpace::clear() {
-  ContiguousSpace::clear();
+void OffsetTableContigSpace::clear(bool mangle_space) {
+  ContiguousSpace::clear(mangle_space);
   _offsets.initialize_threshold();
 }
 
@@ -292,19 +313,53 @@ void OffsetTableContigSpace::set_end(HeapWord* new_end) {
   Space::set_end(new_end);
 }
 
+#ifndef PRODUCT
+
+void ContiguousSpace::set_top_for_allocations(HeapWord* v) {
+  mangler()->set_top_for_allocations(v);
+}
+void ContiguousSpace::set_top_for_allocations() {
+  mangler()->set_top_for_allocations(top());
+}
+void ContiguousSpace::check_mangled_unused_area(HeapWord* limit) {
+  mangler()->check_mangled_unused_area(limit);
+}
+
+void ContiguousSpace::check_mangled_unused_area_complete() {
+  mangler()->check_mangled_unused_area_complete();
+}
+
+// Mangled only the unused space that has not previously
+// been mangled and that has not been allocated since being
+// mangled.
 void ContiguousSpace::mangle_unused_area() {
-  // to-space is used for storing marks during mark-sweep
-  mangle_region(MemRegion(top(), end()));
+  mangler()->mangle_unused_area();
 }
-
+void ContiguousSpace::mangle_unused_area_complete() {
+  mangler()->mangle_unused_area_complete();
+}
 void ContiguousSpace::mangle_region(MemRegion mr) {
-  debug_only(Copy::fill_to_words(mr.start(), mr.word_size(), badHeapWord));
+  // Although this method uses SpaceMangler::mangle_region() which
+  // is not specific to a space, the when the ContiguousSpace version
+  // is called, it is always with regard to a space and this
+  // bounds checking is appropriate.
+  MemRegion space_mr(bottom(), end());
+  assert(space_mr.contains(mr), "Mangling outside space");
+  SpaceMangler::mangle_region(mr);
+}
+#endif  // NOT_PRODUCT
+
+void CompactibleSpace::initialize(MemRegion mr,
+                                  bool clear_space,
+                                  bool mangle_space) {
+  Space::initialize(mr, clear_space, mangle_space);
+  set_compaction_top(bottom());
+  _next_compaction_space = NULL;
 }
 
-void CompactibleSpace::initialize(MemRegion mr, bool clear_space) {
-  Space::initialize(mr, clear_space);
+void CompactibleSpace::clear(bool mangle_space) {
+  Space::clear(mangle_space);
   _compaction_top = bottom();
-  _next_compaction_space = NULL;
 }
 
 HeapWord* CompactibleSpace::forward(oop q, size_t size, 
@@ -340,7 +395,7 @@ HeapWord* CompactibleSpace::forward(oop q, size_t size,
     assert(q->forwardee() == NULL, "should be forwarded to NULL");
   }
 
-  debug_only(MarkSweep::register_live_oop(q, size));
+  VALIDATE_MARK_SWEEP_ONLY(MarkSweep::register_live_oop(q, size));
   compact_top += size;
 
   // we need to update the offset table so that the beginnings of objects can be
@@ -357,19 +412,9 @@ bool CompactibleSpace::insert_deadspace(size_t& allowed_deadspace_words,
 					HeapWord* q, size_t deadlength) {
   if (allowed_deadspace_words >= deadlength) {
     allowed_deadspace_words -= deadlength;
-    oop(q)->set_mark(markOopDesc::prototype()->set_marked());
-    const size_t min_int_array_size = typeArrayOopDesc::header_size(T_INT);
-    if (deadlength >= min_int_array_size) {
-      oop(q)->set_klass(Universe::intArrayKlassObj());
-      typeArrayOop(q)->set_length((int)((deadlength - min_int_array_size)
-                                            * (HeapWordSize/sizeof(jint))));
-    } else {
-      assert((int) deadlength == instanceOopDesc::header_size(),
-	     "size for smallest fake dead object doesn't match");
-      oop(q)->set_klass(SystemDictionary::object_klass());
-    }
-    assert((int) deadlength == oop(q)->size(),
-	   "make sure size for fake dead object match");
+    CollectedHeap::fill_with_object(q, deadlength);
+    oop(q)->set_mark(oop(q)->mark()->set_marked());
+    assert((int) deadlength == oop(q)->size(), "bad filler object size");
     // Recall that we required "q == compaction_top".
     return true;
   } else {
@@ -408,15 +453,15 @@ void Space::adjust_pointers() {
   while (q < t) {
     if (oop(q)->is_gc_marked()) {
       // q is alive
-	
-      debug_only(MarkSweep::track_interior_pointers(oop(q)));
+
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::track_interior_pointers(oop(q)));
       // point all the oops to the new location
       size_t size = oop(q)->adjust_pointers();
-      debug_only(MarkSweep::check_interior_pointers());
-      
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::check_interior_pointers());
+
       debug_only(prev_q = q);
-      debug_only(MarkSweep::validate_live_oop(oop(q), size));
-	
+      VALIDATE_MARK_SWEEP_ONLY(MarkSweep::validate_live_oop(oop(q), size));
+
       q += size;
     } else {
       // q is not a live object.  But we're not in a compactible space,
@@ -481,9 +526,9 @@ void ContiguousSpace::verify(bool allow_dirty) const {
   }
   guarantee(p == top(), "end of last object must match end of space");
   if (top() != end()) {
-    guarantee(top() == block_start(end()-1) &&
-              top() == block_start(top()), 
-	      "top should be start of unallocated block, if it exists");
+    guarantee(top() == block_start_const(end()-1) &&
+              top() == block_start_const(top()),
+              "top should be start of unallocated block, if it exists");
   }
 }
 
@@ -714,7 +759,7 @@ ALL_SINCE_SAVE_MARKS_CLOSURES(ContigSpace_OOP_SINCE_SAVE_MARKS_DEFN)
 #undef ContigSpace_OOP_SINCE_SAVE_MARKS_DEFN
 
 // Very general, slow implementation.
-HeapWord* ContiguousSpace::block_start(const void* p) const {
+HeapWord* ContiguousSpace::block_start_const(const void* p) const {
   assert(MemRegion(bottom(), end()).contains(p), "p not in space");
   if (p >= top()) {
     return top();
@@ -819,12 +864,13 @@ void ContiguousSpace::allocate_temporary_filler(int factor) {
            "size for smallest fake object doesn't match");
     instanceOop obj = (instanceOop) allocate(size);
     obj->set_mark(markOopDesc::prototype());
+    obj->set_klass_gap(0);
     obj->set_klass(SystemDictionary::object_klass());
   }
 }
 
-void EdenSpace::clear() {
-  ContiguousSpace::clear();
+void EdenSpace::clear(bool mangle_space) {
+  ContiguousSpace::clear(mangle_space);
   set_soft_end(end());
 }
 
@@ -881,16 +927,19 @@ OffsetTableContigSpace::OffsetTableContigSpace(BlockOffsetSharedArray* sharedOff
   _par_alloc_lock(Mutex::leaf, "OffsetTableContigSpace par alloc lock", true)
 {
   _offsets.set_contig_space(this);
-  initialize(mr, true);
+  initialize(mr, SpaceDecorator::Clear, SpaceDecorator::Mangle);
 }
 
 
 class VerifyOldOopClosure : public OopClosure {
  public:
-  oop the_obj;
-  bool allow_dirty;
+  oop  _the_obj;
+  bool _allow_dirty;
   void do_oop(oop* p) {
-    the_obj->verify_old_oop(p, allow_dirty);
+    _the_obj->verify_old_oop(p, _allow_dirty);
+  }
+  void do_oop(narrowOop* p) {
+    _the_obj->verify_old_oop(p, _allow_dirty);
   }
 };
 
@@ -900,8 +949,8 @@ class VerifyOldOopClosure : public OopClosure {
 void OffsetTableContigSpace::verify(bool allow_dirty) const {
   HeapWord* p = bottom();
   HeapWord* prev_p = NULL;
-  VerifyOldOopClosure blk; 	// Does this do anything?
-  blk.allow_dirty = allow_dirty;
+  VerifyOldOopClosure blk;      // Does this do anything?
+  blk._allow_dirty = allow_dirty;
   int objs = 0;
   int blocks = 0;
 
@@ -914,7 +963,8 @@ void OffsetTableContigSpace::verify(bool allow_dirty) const {
     // For a sampling of objects in the space, find it using the
     // block offset table.
     if (blocks == BLOCK_SAMPLE_INTERVAL) {
-      guarantee(p == block_start(p + (size/2)), "check offset computation");
+      guarantee(p == block_start_const(p + (size/2)),
+                "check offset computation");
       blocks = 0;
     } else {
       blocks++;
@@ -922,7 +972,7 @@ void OffsetTableContigSpace::verify(bool allow_dirty) const {
 
     if (objs == OBJ_SAMPLE_INTERVAL) {
       oop(p)->verify();
-      blk.the_obj = oop(p);
+      blk._the_obj = oop(p);
       oop(p)->oop_iterate(&blk);
       objs = 0;
     } else {
@@ -940,11 +990,11 @@ void OffsetTableContigSpace::serialize_block_offset_array_offsets(
 }
 
 
-int TenuredSpace::allowed_dead_ratio() const {
+size_t TenuredSpace::allowed_dead_ratio() const {
   return MarkSweepDeadRatio;
 }
 
 
-int ContigPermSpace::allowed_dead_ratio() const {
+size_t ContigPermSpace::allowed_dead_ratio() const {
   return PermMarkSweepDeadRatio;
 }

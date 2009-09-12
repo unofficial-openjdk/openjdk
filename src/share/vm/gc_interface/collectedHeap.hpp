@@ -2,7 +2,7 @@
 #pragma ident "@(#)collectedHeap.hpp	1.58 07/09/07 10:56:50 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,13 +50,15 @@ class CollectedHeap : public CHeapObj {
   static int       _fire_out_of_memory_count;
 #endif
 
+  // Used for filler objects (static, but initialized in ctor).
+  static size_t _filler_array_max_size;
+
  protected:
   MemRegion _reserved;
   BarrierSet* _barrier_set;
   bool _is_gc_active;
   unsigned int _total_collections;          // ... started
   unsigned int _total_full_collections;     // ... started
-  size_t _max_heap_capacity;
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_count;)
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_gc_number;)
 
@@ -123,6 +125,21 @@ class CollectedHeap : public CHeapObj {
   // Clears an allocated object.
   inline static void init_obj(HeapWord* obj, size_t size);
 
+  // Filler object utilities.
+  static inline size_t filler_array_hdr_size();
+  static inline size_t filler_array_min_size();
+  static inline size_t filler_array_max_size();
+
+  DEBUG_ONLY(static void fill_args_check(HeapWord* start, size_t words);)
+  DEBUG_ONLY(static void zap_filler_array(HeapWord* start, size_t words);)
+
+  // Fill with a single array; caller must ensure filler_array_min_size() <=
+  // words <= filler_array_max_size().
+  static inline void fill_with_array(HeapWord* start, size_t words);
+
+  // Fill with a single object (either an int array or a java.lang.Object).
+  static inline void fill_with_object_impl(HeapWord* start, size_t words);
+
   // Verification functions
   virtual void check_for_bad_heap_word_value(HeapWord* addr, size_t size)
     PRODUCT_RETURN;
@@ -152,10 +169,7 @@ class CollectedHeap : public CHeapObj {
   virtual void post_initialize() = 0;
 
   MemRegion reserved_region() const { return _reserved; }
-
-  // Return the number of bytes currently reserved, committed, and used,
-  // respectively, for holding objects.
-  size_t reserved_obj_bytes() const { return _reserved.byte_size(); }
+  address base() const { return (address)reserved_region().start(); }
 
   // Future cleanup here. The following functions should specify bytes or
   // heapwords as part of their signature.
@@ -301,6 +315,27 @@ class CollectedHeap : public CHeapObj {
   // The boundary between a "large" and "small" array of primitives, in words.
   virtual size_t large_typearray_limit() = 0;
 
+  // Utilities for turning raw memory into filler objects.
+  //
+  // min_fill_size() is the smallest region that can be filled.
+  // fill_with_objects() can fill arbitrary-sized regions of the heap using
+  // multiple objects.  fill_with_object() is for regions known to be smaller
+  // than the largest array of integers; it uses a single object to fill the
+  // region and has slightly less overhead.
+  static size_t min_fill_size() {
+    return size_t(align_object_size(oopDesc::header_size()));
+  }
+
+  static void fill_with_objects(HeapWord* start, size_t words);
+
+  static void fill_with_object(HeapWord* start, size_t words);
+  static void fill_with_object(MemRegion region) {
+    fill_with_object(region.start(), region.word_size());
+  }
+  static void fill_with_object(HeapWord* start, HeapWord* end) {
+    fill_with_object(start, pointer_delta(end, start));
+  }
+
   // Some heaps may offer a contiguous region for shared non-blocking
   // allocation, via inlined code (by exporting the address of the top and
   // end fields defining the extent of the contiguous allocation region.)
@@ -371,10 +406,8 @@ class CollectedHeap : public CHeapObj {
   // Can a compiler initialize a new object without store barriers?
   // This permission only extends from the creation of a new object
   // via a TLAB up to the first subsequent safepoint.
-  virtual bool can_elide_tlab_store_barriers() const {
-    guarantee(kind() < CollectedHeap::G1CollectedHeap, "else change or refactor this");
-    return true;
-  }
+  virtual bool can_elide_tlab_store_barriers() const = 0;
+
   // If a compiler is eliding store barriers for TLAB-allocated objects,
   // there is probably a corresponding slow path which can produce
   // an object allocated anywhere.  The compiler's runtime support
@@ -386,12 +419,10 @@ class CollectedHeap : public CHeapObj {
   // Can a compiler elide a store barrier when it writes
   // a permanent oop into the heap?  Applies when the compiler
   // is storing x to the heap, where x->is_perm() is true.
-  virtual bool can_elide_permanent_oop_store_barriers() const;
-  
+  virtual bool can_elide_permanent_oop_store_barriers() const = 0;
+
   // Does this heap support heap inspection (+PrintClassHistogram?)
-  virtual bool supports_heap_inspection() const {
-    return false;   // Until RFE 5023697 is implemented
-  }
+  virtual bool supports_heap_inspection() const = 0;
 
   // Perform a collection of the heap; intended for use in implementing
   // "System.gc".  This probably implies as full a collection as the

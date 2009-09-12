@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,13 +34,6 @@ public interface MachineDescription extends Serializable {
   /** Returns the size of an address in bytes. Currently needed to be
       able to traverse arrays of pointers or oops. */
   public long getAddressSize();
-
-  /** Returns the size of an address in bytes. Currently needed to be
-      able to traverse arrays of pointers or oops. (FIXME: since we're
-      already reading the Java primitive types' sizes from the remote
-      VM, it would be nice to remove this routine, using a similar
-      mechanism to how the TypeDataBase deals with primitive types.) */
-  public long getOopSize();
 
   /** Returns the maximum value of the C integer type with the given
       size in bytes and signedness. Throws IllegalArgumentException if

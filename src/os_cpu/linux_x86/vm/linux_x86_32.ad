@@ -1,5 +1,5 @@
 //
-// Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//  
+//
 //
 
 // X86 Linux Architecture Description File
@@ -55,32 +55,32 @@ encode %{
 
   enc_class linux_tlsencode (eRegP dst) %{
     Register dstReg = as_Register($dst$$reg);
-    MacroAssembler* masm = new MacroAssembler(&cbuf);    
+    MacroAssembler* masm = new MacroAssembler(&cbuf);
       masm->get_thread(dstReg);
   %}
 
   enc_class linux_breakpoint  %{
-    MacroAssembler* masm = new MacroAssembler(&cbuf);    
+    MacroAssembler* masm = new MacroAssembler(&cbuf);
     masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
   %}
 
   enc_class call_epilog %{
-    if( VerifyStackAtCalls ) { 
+    if( VerifyStackAtCalls ) {
       // Check that stack depth is unchanged: find majik cookie on stack
       int framesize = ra_->reg2offset_unchecked(OptoReg::add(ra_->_matcher._old_SP,-3*VMRegImpl::slots_per_word));
       if(framesize >= 128) {
-	emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
-	emit_d8(cbuf,0xBC);
-	emit_d8(cbuf,0x24);
-	emit_d32(cbuf,framesize); // Find majik cookie from ESP
-	emit_d32(cbuf, 0xbadb100d);
+        emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
+        emit_d8(cbuf,0xBC);
+        emit_d8(cbuf,0x24);
+        emit_d32(cbuf,framesize); // Find majik cookie from ESP
+        emit_d32(cbuf, 0xbadb100d);
       }
       else {
-	emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
-	emit_d8(cbuf,0x7C);
-	emit_d8(cbuf,0x24);
-	emit_d8(cbuf,framesize); // Find majik cookie from ESP
-	emit_d32(cbuf, 0xbadb100d);
+        emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
+        emit_d8(cbuf,0x7C);
+        emit_d8(cbuf,0x24);
+        emit_d8(cbuf,framesize); // Find majik cookie from ESP
+        emit_d32(cbuf, 0xbadb100d);
       }
       // jmp EQ around INT3
       // QQQ TODO
@@ -103,16 +103,16 @@ encode %{
 // This name is KNOWN by the ADLC and cannot be changed.
 // The ADLC forces a 'TypeRawPtr::BOTTOM' output type
 // for this guy.
-instruct tlsLoadP(eAXRegP dst, eFlagsReg cr) %{
+instruct tlsLoadP(eRegP dst, eFlagsReg cr) %{
   match(Set dst (ThreadLocal));
   effect(DEF dst, KILL cr);
 
-  format %{ "MOV    EAX, Thread::current()" %}
+  format %{ "MOV    $dst, Thread::current()" %}
   ins_encode( linux_tlsencode(dst) );
   ins_pipe( ialu_reg_fat );
 %}
 
-instruct TLS(eAXRegP dst) %{
+instruct TLS(eRegP dst) %{
   match(Set dst (ThreadLocal));
 
   expand %{

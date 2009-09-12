@@ -2,7 +2,7 @@
 #pragma ident "@(#)callGenerator.cpp	1.49 07/08/07 15:24:21 JVM"
 #endif
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -465,6 +465,12 @@ JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
       if (!kit.stopped())
         slow_map = kit.stop();
     }
+  }
+
+  if (kit.stopped()) {
+    // Instance exactly does not matches the desired type.
+    kit.set_jvms(slow_jvms);
+    return kit.transfer_exceptions_into_jvms();
   }
 
   // fall through if the instance exactly matches the desired type

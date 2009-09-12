@@ -1,8 +1,5 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)interpreter_x86_32.cpp	1.378 07/09/17 09:26:02 JVM"
-#endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -41,7 +38,7 @@ address AbstractInterpreterGenerator::generate_slow_signature_handler() {
   // rcx: temporary
   // rdi: pointer to locals
   // rsp: end of copied parameters area
-  __ movl(rcx, rsp);
+  __ mov(rcx, rsp);
   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::slow_signature_handler), rbx, rdi, rcx);
   __ ret(0);
   return entry;
@@ -78,8 +75,8 @@ address InterpreterGenerator::generate_empty_entry(void) {
   // Code: _return
   // _return
   // return w/o popping parameters
-  __ popl(rax);
-  __ movl(rsp, rsi);
+  __ pop(rax);
+  __ mov(rsp, rsi);
   __ jmp(rax);
 
   __ bind(slow_path);
@@ -127,7 +124,7 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
   //    }
   // Universe::is_jdk12x_version() always returns false since
   // the JDK version is not yet determined when this method is called.
-  // This method is called during interpreter_init() whereas 
+  // This method is called during interpreter_init() whereas
   // JDK version is only determined when universe2_init() is called.
 
   // Note: For JDK 1.3 StrictMath exists and Math.sin/cos/sqrt are
@@ -138,7 +135,7 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
     __ pushl(Address(rsp, 3*wordSize));  // push hi (and note rsp -= wordSize)
     __ pushl(Address(rsp, 2*wordSize));  // push lo
     __ fld_d(Address(rsp, 0));           // get double in ST0
-    __ addl(rsp, 2*wordSize);
+    __ addptr(rsp, 2*wordSize);
   } else {
     __ fld_d(Address(rsp, 1*wordSize));
   }
@@ -152,7 +149,7 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
     case Interpreter::java_lang_math_tan :
         __ trigfunc('t');
         break;
-    case Interpreter::java_lang_math_sqrt: 
+    case Interpreter::java_lang_math_sqrt:
         __ fsqrt();
         break;
     case Interpreter::java_lang_math_abs:
@@ -170,24 +167,24 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
         __ push_fTOS();
         __ pop_fTOS();
         break;
-    default                              : 
+    default                              :
         ShouldNotReachHere();
   }
 
   // return double result in xmm0 for interpreter and compilers.
   if (UseSSE >= 2) {
-    __ subl(rsp, 2*wordSize);
+    __ subptr(rsp, 2*wordSize);
     __ fstp_d(Address(rsp, 0));
     __ movdbl(xmm0, Address(rsp, 0));
-    __ addl(rsp, 2*wordSize);
+    __ addptr(rsp, 2*wordSize);
   }
 
   // done, result in FPU ST(0) or XMM0
-  __ popl(rdi);                              // get return address
-  __ movl(rsp, rsi);                         // set sp to sender sp
+  __ pop(rdi);                               // get return address
+  __ mov(rsp, rsi);                          // set sp to sender sp
   __ jmp(rdi);
 
-  return entry_point;    
+  return entry_point;
 }
 
 
@@ -205,10 +202,10 @@ address InterpreterGenerator::generate_abstract_entry(void) {
 
   // abstract method entry
   // remove return address. Not really needed, since exception handling throws away expression stack
-  __ popl(rbx);             
+  __ pop(rbx);
 
   // adjust stack to what a normal return would do
-  __ movl(rsp, rsi);
+  __ mov(rsp, rsi);
   // throw exception
   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::throw_AbstractMethodError));
   // the call_VM checks for exception, so we should never return here.
@@ -225,7 +222,7 @@ int AbstractInterpreter::size_activation(methodOop method,
                                          int callee_param_count,
                                          int callee_locals,
                                          bool is_top_frame) {
-  return layout_activation(method, 
+  return layout_activation(method,
                            tempcount,
                            popframe_extra_args,
                            moncount,
@@ -251,5 +248,3 @@ void Deoptimization::unwind_callee_save_values(frame* f, vframeArray* vframe_arr
 
   assert(f->is_interpreted_frame(), "must be interpreted");
 }
-
-

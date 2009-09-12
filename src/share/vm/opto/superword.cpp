@@ -2,7 +2,7 @@
 #pragma ident "@(#)superword.cpp	1.8 08/03/26 10:13:00 JVM"
 #endif
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,11 @@ void SuperWord::transform_loop(IdealLoopTree* lpt) {
   // Check for no control flow in body (other than exit)
   Node *cl_exit = cl->loopexit();
   if (cl_exit->in(0) != lpt->_head) return;
+
+  // Make sure the are no extra control users of the loop backedge
+  if (cl->back_control()->outcnt() != 1) {
+    return;
+  }
 
   // Check for pre-loop ending with CountedLoopEnd(Bool(Cmp(x,Opaque1(limit))))
   CountedLoopEndNode* pre_end = get_pre_loop_end(cl);
@@ -162,7 +167,8 @@ void SuperWord::find_adjacent_refs() {
   Node_List memops;
   for (int i = 0; i < _block.length(); i++) {
     Node* n = _block.at(i);
-    if (n->is_Mem() && in_bb(n)) {
+    if (n->is_Mem() && in_bb(n) &&
+        is_java_primitive(n->as_Mem()->memory_type())) {
       int align = memory_alignment(n->as_Mem(), 0);
       if (align != bottom_align) {
         memops.push(n);
@@ -573,7 +579,7 @@ void SuperWord::set_alignment(Node* s1, Node* s2, int align) {
 int SuperWord::data_size(Node* s) {
   const Type* t = velt_type(s);
   BasicType  bt = t->array_element_basic_type();
-  int bsize = type2aelembytes[bt];
+  int bsize = type2aelembytes(bt);
   assert(bsize != 0, "valid size");
   return bsize;
 }
@@ -1193,8 +1199,10 @@ void SuperWord::construct_bb() {
     Node *n = lp()->fast_out(i);
     if (in_bb(n) && (n->is_Phi() && n->bottom_type() == Type::MEMORY)) {
       Node* n_tail  = n->in(LoopNode::LoopBackControl);
-      _mem_slice_head.push(n);
-      _mem_slice_tail.push(n_tail);
+      if (n_tail != n->in(LoopNode::EntryControl)) {
+        _mem_slice_head.push(n);
+        _mem_slice_tail.push(n_tail);
+      }
     }
   }
 
@@ -1421,8 +1429,9 @@ int SuperWord::memory_alignment(MemNode* s, int iv_adjust_in_bytes) {
 //---------------------------container_type---------------------------
 // Smallest type containing range of values
 const Type* SuperWord::container_type(const Type* t) {
-  if (t->isa_aryptr()) {
-    t = t->is_aryptr()->elem();
+  const Type* tp = t->make_ptr();
+  if (tp && tp->isa_aryptr()) {
+    t = tp->is_aryptr()->elem();
   }
   if (t->basic_type() == T_INT) {
     if (t->higher_equal(TypeInt::BOOL))  return TypeInt::BOOL;
@@ -1605,7 +1614,7 @@ void SuperWord::align_initial_loop_index(MemNode* align_to_ref) {
   //     (e - lim) % V == 0
   //   Solving for lim:
   //     (e - lim0 + N) % V == 0
-  //     N = [V - (e - lim0) % V] % V
+  //     N = (V - (e - lim0)) % V
   //     lim = lim0 - (V - (e - lim0)) % V
 
   int stride   = iv_stride();

@@ -1875,6 +1875,9 @@ void JvmtiExport::post_dynamic_code_generated_while_holding_locks(const char* na
 {
   // register the stub with the current dynamic code event collector
   JvmtiThreadState* state = JvmtiThreadState::state_for(JavaThread::current());
+  // state can only be NULL if the current thread is exiting which
+  // should not happen since we're trying to post an event
+  guarantee(state != NULL, "attempt to register stub via an exiting thread");
   JvmtiDynamicCodeEventCollector* collector = state->get_dynamic_code_event_collector();
   guarantee(collector != NULL, "attempt to register stub without event collector");
   collector->register_stub(name, code_begin, code_end);
@@ -2256,8 +2259,11 @@ void JvmtiExport::cms_ref_processing_epilogue() {
 void JvmtiEventCollector::setup_jvmti_thread_state() {
   // set this event collector to be the current one.
   JvmtiThreadState* state = JvmtiThreadState::state_for(JavaThread::current());
-  if (is_vm_object_alloc_event()) { 
-    _prev = state->get_vm_object_alloc_event_collector(); 
+  // state can only be NULL if the current thread is exiting which
+  // should not happen since we're trying to configure for event collection
+  guarantee(state != NULL, "exiting thread called setup_jvmti_thread_state");
+  if (is_vm_object_alloc_event()) {
+    _prev = state->get_vm_object_alloc_event_collector();
     state->set_vm_object_alloc_event_collector((JvmtiVMObjectAllocEventCollector *)this);
   } else if (is_dynamic_code_event()) {
     _prev = state->get_dynamic_code_event_collector(); 
@@ -2436,18 +2442,7 @@ JvmtiGCMarker::JvmtiGCMarker(bool full) : _full(full), _invocation_count(0) {
   // so we record the number of collections so that it can be checked in
   // the destructor.
   if (!_full) {
-    if (Universe::heap()->kind() == CollectedHeap::GenCollectedHeap) {
-      GenCollectedHeap* gch = GenCollectedHeap::heap();
-      assert(gch->n_gens() == 2, "configuration not recognized");
-      _invocation_count = (unsigned int)gch->get_gen(1)->stat_record()->invocations;
-    } else {
-#ifndef SERIALGC
-      assert(Universe::heap()->kind() == CollectedHeap::ParallelScavengeHeap, "checking");
-      _invocation_count = PSMarkSweep::total_invocations();
-#else  // SERIALGC
-      fatal("SerialGC only supported in this configuration.");
-#endif // SERIALGC
-    }
+    _invocation_count = Universe::heap()->total_full_collections();
   }
 
   // Do clean up tasks that need to be done at a safepoint
@@ -2469,20 +2464,7 @@ JvmtiGCMarker::~JvmtiGCMarker() {
   // generation but could have ended up doing a "full" GC - check the
   // GC count to see.
   if (!_full) {
-    if (Universe::heap()->kind() == CollectedHeap::GenCollectedHeap) {
-      GenCollectedHeap* gch = GenCollectedHeap::heap();
-      if (_invocation_count != (unsigned int)gch->get_gen(1)->stat_record()->invocations) {
-        _full = true;      
-      }
-    } else {
-#ifndef SERIALGC
-      if (_invocation_count != PSMarkSweep::total_invocations()) {
-        _full = true;
-      }
-#else  // SERIALGC
-      fatal("SerialGC only supported in this configuration.");
-#endif // SERIALGC
-    }
+    _full = (_invocation_count != Universe::heap()->total_full_collections());
   }
 
   // Full collection probably means the perm generation has been GC'ed

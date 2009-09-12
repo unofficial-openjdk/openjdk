@@ -2,7 +2,7 @@
 #pragma ident "@(#)library_call.cpp	1.167 07/07/25 17:43:16 JVM"
 #endif
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,6 +166,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_native_newArray();
   bool inline_native_getLength();
   bool inline_array_copyOf(bool is_copyOfRange);
+  bool inline_array_equals();
   bool inline_native_clone(bool is_virtual);
   bool inline_native_Reflection_getCallerClass();
   bool inline_native_AtomicLong_get();
@@ -262,6 +263,7 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     switch (id) {
     case vmIntrinsics::_indexOf:
     case vmIntrinsics::_compareTo:
+    case vmIntrinsics::_equalsC:
       break;  // InlineNatives does not control String.compareTo
     default:
       return NULL;
@@ -274,6 +276,9 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     break;
   case vmIntrinsics::_indexOf:
     if (!SpecialStringIndexOf)  return NULL;
+    break;
+  case vmIntrinsics::_equalsC:
+    if (!SpecialArraysEquals)  return NULL;
     break;
   case vmIntrinsics::_arraycopy:
     if (!InlineArrayCopy)  return NULL;
@@ -589,6 +594,8 @@ bool LibraryCallKit::try_to_inline() {
     return inline_array_copyOf(false);
   case vmIntrinsics::_copyOfRange:
     return inline_array_copyOf(true);
+  case vmIntrinsics::_equalsC:
+    return inline_array_equals();
   case vmIntrinsics::_clone:
     return inline_native_clone(intrinsic()->is_virtual());
 
@@ -816,6 +823,24 @@ bool LibraryCallKit::inline_string_compareTo() {
   return true;
 }
 
+//------------------------------inline_array_equals----------------------------
+bool LibraryCallKit::inline_array_equals() {
+
+  if (!Matcher::has_match_rule(Op_AryEq)) return false;
+
+  _sp += 2;
+  Node *argument2 = pop();
+  Node *argument1 = pop();
+
+  Node* equals =
+    _gvn.transform(new (C, 3) AryEqNode(control(),
+                                        argument1,
+                                        argument2)
+                   );
+  push(equals);
+  return true;
+}
+
 // Java version of String.indexOf(constant string)
 // class StringDecl {
 //   StringDecl(char[] ca) {
@@ -899,7 +924,7 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   Node* sourcea       = basic_plus_adr(string_object, string_object, value_offset);
   Node* source        = make_load(no_ctrl, sourcea, source_type, T_OBJECT, string_type->add_offset(value_offset));
 
-  Node* target = _gvn.transform(ConPNode::make(C, target_array));
+  Node* target = _gvn.transform( makecon(TypeOopPtr::make_from_constant(target_array)) );
   jint target_length = target_array->length();
   const TypeAry* target_array_type = TypeAry::make(TypeInt::CHAR, TypeInt::make(0, target_length, Type::WidenMin));
   const TypeAryPtr* target_type = TypeAryPtr::make(TypePtr::BotPTR, target_array_type, target_array->klass(), true, Type::OffsetBot);
@@ -1850,7 +1875,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
 
     // See if it is a narrow oop array.
     if (adr_type->isa_aryptr()) {
-      if (adr_type->offset() >= objArrayOopDesc::header_size() * wordSize) {
+      if (adr_type->offset() >= objArrayOopDesc::base_offset_in_bytes(type)) {
         const TypeOopPtr *elem_type = adr_type->is_aryptr()->elem()->isa_oopptr();
         if (elem_type != NULL) {
           sharpened_klass = elem_type->klass();
@@ -2100,7 +2125,7 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
   int type_words = type2size[type];
 
   // Cannot inline wide CAS on machines that don't support it natively
-  if (type2aelembytes[type] > BytesPerInt && !VM_Version::supports_cx8())
+  if (type2aelembytes(type) > BytesPerInt && !VM_Version::supports_cx8())
     return false;
 
   C->set_has_unsafe_access(true);  // Mark eventual nmethod as "unsafe".
@@ -2167,10 +2192,20 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
     cas = _gvn.transform(new (C, 5) CompareAndSwapLNode(control(), mem, adr, newval, oldval));
     break;
   case T_OBJECT:
-    // reference stores need a store barrier.
+     // reference stores need a store barrier.
     // (They don't if CAS fails, but it isn't worth checking.)
     pre_barrier(control(), base, adr, alias_idx, newval, value_type, T_OBJECT);
-    cas = _gvn.transform(new (C, 5) CompareAndSwapPNode(control(), mem, adr, newval, oldval));
+#ifdef _LP64
+    if (adr->bottom_type()->is_ptr_to_narrowoop()) {
+      Node *newval_enc = _gvn.transform(new (C, 2) EncodePNode(newval, newval->bottom_type()->make_narrowoop()));
+      Node *oldval_enc = _gvn.transform(new (C, 2) EncodePNode(oldval, oldval->bottom_type()->make_narrowoop()));
+      cas = _gvn.transform(new (C, 5) CompareAndSwapNNode(control(), mem, adr,
+                                                          newval_enc, oldval_enc));
+    } else
+#endif
+    {
+      cas = _gvn.transform(new (C, 5) CompareAndSwapPNode(control(), mem, adr, newval, oldval));
+    }
     post_barrier(control(), cas, base, adr, alias_idx, newval, T_OBJECT, true);
     break;
   default:
@@ -2448,7 +2483,7 @@ Node* LibraryCallKit::load_klass_from_mirror_common(Node* mirror,
   if (region == NULL)  never_see_null = true;
   Node* p = basic_plus_adr(mirror, offset);
   const TypeKlassPtr*  kls_type = TypeKlassPtr::OBJECT_OR_NULL;
-  Node* kls = _gvn.transform(new (C, 3) LoadKlassNode(0, immutable_memory(), p, TypeRawPtr::BOTTOM, kls_type));
+  Node* kls = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeRawPtr::BOTTOM, kls_type) );
   _sp += nargs; // any deopt will start just before call to enclosing method
   Node* null_ctl = top();
   kls = null_check_oop(kls, &null_ctl, never_see_null);
@@ -2628,7 +2663,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
       phi->add_req(makecon(TypeInstPtr::make(env()->Object_klass()->java_mirror())));
     // If we fall through, it's a plain class.  Get its _super.
     p = basic_plus_adr(kls, Klass::super_offset_in_bytes() + sizeof(oopDesc));
-    kls = _gvn.transform(new (C, 3) LoadKlassNode(0, immutable_memory(), p, TypeRawPtr::BOTTOM, TypeKlassPtr::OBJECT_OR_NULL));
+    kls = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeRawPtr::BOTTOM, TypeKlassPtr::OBJECT_OR_NULL) );
     null_ctl = top();
     kls = null_check_oop(kls, &null_ctl);
     if (null_ctl != top()) {
@@ -2714,7 +2749,7 @@ bool LibraryCallKit::inline_native_subtype_check() {
     args[which_arg] = _gvn.transform(arg);
 
     Node* p = basic_plus_adr(arg, class_klass_offset);
-    Node* kls = new (C, 3) LoadKlassNode(0, immutable_memory(), p, adr_type, kls_type);
+    Node* kls = LoadKlassNode::make(_gvn, immutable_memory(), p, adr_type, kls_type);
     klasses[which_arg] = _gvn.transform(kls);
   }
 
@@ -2832,6 +2867,8 @@ bool LibraryCallKit::inline_native_newArray() {
   _sp += nargs;  // set original stack for use by uncommon_trap
   mirror = do_null_check(mirror, T_OBJECT);
   _sp -= nargs;
+  // If mirror or obj is dead, only null-path is taken.
+  if (stopped())  return true;
 
   enum { _normal_path = 1, _slow_path = 2, PATH_LIMIT };
   RegionNode* result_reg = new(C, PATH_LIMIT) RegionNode(PATH_LIMIT);
@@ -3451,11 +3488,32 @@ bool LibraryCallKit::inline_native_AtomicLong_attemptUpdate() {
   const TypePtr *adr_type = _gvn.type(adr)->is_ptr();
   int alias_idx = C->get_alias_index(adr_type);
 
-  Node *result = _gvn.transform(new (C, 5) StoreLConditionalNode(control(), memory(alias_idx), adr, newVal, oldVal));
-  Node *store_proj = _gvn.transform( new (C, 1) SCMemProjNode(result));
+  Node *cas = _gvn.transform(new (C, 5) StoreLConditionalNode(control(), memory(alias_idx), adr, newVal, oldVal));
+  Node *store_proj = _gvn.transform( new (C, 1) SCMemProjNode(cas));
   set_memory(store_proj, alias_idx);
+  Node *bol = _gvn.transform( new (C, 2) BoolNode( cas, BoolTest::eq ) );
 
-  push(result);
+  Node *result;
+  // CMove node is not used to be able fold a possible check code
+  // after attemptUpdate() call. This code could be transformed
+  // into CMove node by loop optimizations.
+  {
+    RegionNode *r = new (C, 3) RegionNode(3);
+    result = new (C, 3) PhiNode(r, TypeInt::BOOL);
+
+    Node *iff = create_and_xform_if(control(), bol, PROB_FAIR, COUNT_UNKNOWN);
+    Node *iftrue = opt_iff(r, iff);
+    r->init_req(1, iftrue);
+    result->init_req(1, intcon(1));
+    result->init_req(2, intcon(0));
+
+    set_control(_gvn.transform(r));
+    record_for_igvn(r);
+
+    C->set_has_split_ifs(true); // Has chance for split-if optimization
+  }
+
+  push(_gvn.transform(result));
   return true;
 }
 
@@ -3821,16 +3879,22 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
   if (!stopped()) {
     // Copy the fastest available way.
     // (No need for PreserveJVMState, since we're using it all up now.)
+    // TODO: generate fields/elements copies for small objects instead.
     Node* src  = obj;
     Node* dest = raw_obj;
-    Node* end  = dest;
     Node* size = _gvn.transform(alloc_siz);
 
     // Exclude the header.
-    int base_off = sizeof(oopDesc);
+    int base_off = instanceOopDesc::base_offset_in_bytes();
+    if (UseCompressedOops) {
+      assert(base_off % BytesPerLong != 0, "base with compressed oops");
+      // With compressed oops base_offset_in_bytes is 12 which creates
+      // the gap since countx is rounded by 8 bytes below.
+      // Copy klass and the gap.
+      base_off = instanceOopDesc::klass_offset_in_bytes();
+    }
     src  = basic_plus_adr(src,  base_off);
     dest = basic_plus_adr(dest, base_off);
-    end  = basic_plus_adr(end,  size);
 
     // Compute the length also, if needed:
     Node* countx = size;
@@ -3978,7 +4042,7 @@ address LibraryCallKit::basictype2arraycopy(BasicType t,
     // both indices are constants
     int s_offs = src_offset_inttype->get_con();
     int d_offs = dest_offset_inttype->get_con();
-    int element_size = type2aelembytes[t];
+    int element_size = type2aelembytes(t);
     aligned = ((arrayOopDesc::base_offset_in_bytes(t) + s_offs * element_size) % HeapWordSize == 0) &&
               ((arrayOopDesc::base_offset_in_bytes(t) + d_offs * element_size) % HeapWordSize == 0);
     if (s_offs >= d_offs)  disjoint = true;
@@ -4173,6 +4237,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
       && !_gvn.eqv_uncast(src, dest)
       && ((alloc = tightly_coupled_allocation(dest, slow_region))
           != NULL)
+      && _gvn.find_int_con(alloc->in(AllocateNode::ALength), 1) > 0
       && alloc->maybe_set_complete(&_gvn)) {
     // "You break it, you buy it."
     InitializeNode* init = alloc->initialization();
@@ -4373,7 +4438,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
       // (At this point we can assume disjoint_bases, since types differ.)
       int ek_offset = objArrayKlass::element_klass_offset_in_bytes() + sizeof(oopDesc);
       Node* p1 = basic_plus_adr(dest_klass, ek_offset);
-      Node* n1 = new (C, 3) LoadKlassNode(0, immutable_memory(), p1, TypeRawPtr::BOTTOM);
+      Node* n1 = LoadKlassNode::make(_gvn, immutable_memory(), p1, TypeRawPtr::BOTTOM);
       Node* dest_elem_klass = _gvn.transform(n1);
       Node* cv = generate_checkcast_arraycopy(adr_type,
                                               dest_elem_klass,
@@ -4391,8 +4456,8 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     // Let's see if we need card marks:
     if (alloc != NULL && use_ReduceInitialCardMarks()) {
       // If we do not need card marks, copy using the jint or jlong stub.
-      copy_type = LP64_ONLY(T_LONG) NOT_LP64(T_INT);
-      assert(type2aelembytes[basic_elem_type] == type2aelembytes[copy_type],
+      copy_type = LP64_ONLY(UseCompressedOops ? T_INT : T_LONG) NOT_LP64(T_INT);
+      assert(type2aelembytes(basic_elem_type) == type2aelembytes(copy_type),
              "sizes agree");
     }
   }
@@ -4662,7 +4727,7 @@ LibraryCallKit::generate_clear_array(const TypePtr* adr_type,
   Node* mem = memory(adr_type); // memory slice to operate on
 
   // scaling and rounding of indexes:
-  int scale = exact_log2(type2aelembytes[basic_elem_type]);
+  int scale = exact_log2(type2aelembytes(basic_elem_type));
   int abase = arrayOopDesc::base_offset_in_bytes(basic_elem_type);
   int clear_low = (-1 << scale) & (BytesPerInt  - 1);
   int bump_bit  = (-1 << scale) & BytesPerInt;
@@ -4717,23 +4782,25 @@ LibraryCallKit::generate_clear_array(const TypePtr* adr_type,
       int to_clear = (bump_bit | clear_low);
       // Align up mod 8, then store a jint zero unconditionally
       // just before the mod-8 boundary.
-      // This would only fail if the first array element were immediately
-      // after the length field, and were also at an even offset mod 8.
-      assert(((abase + bump_bit) & ~to_clear) - BytesPerInt
-             >= arrayOopDesc::length_offset_in_bytes() + BytesPerInt,
-             "store must not trash length field");
-      
-      // Bump 'start' up to (or past) the next jint boundary:
-      start = _gvn.transform( new(C,3) AddXNode(start, MakeConX(bump_bit)) );
+      if (((abase + bump_bit) & ~to_clear) - bump_bit
+          < arrayOopDesc::length_offset_in_bytes() + BytesPerInt) {
+        bump_bit = 0;
+        assert((abase & to_clear) == 0, "array base must be long-aligned");
+      } else {
+        // Bump 'start' up to (or past) the next jint boundary:
+        start = _gvn.transform( new(C,3) AddXNode(start, MakeConX(bump_bit)) );
+        assert((abase & clear_low) == 0, "array base must be int-aligned");
+      }
       // Round bumped 'start' down to jlong boundary in body of array.
       start = _gvn.transform( new(C,3) AndXNode(start, MakeConX(~to_clear)) );
-      // Store a zero to the immediately preceding jint:
-      Node* x1 = _gvn.transform( new(C,3) AddXNode(start, MakeConX(-BytesPerInt)) );
-      Node* p1 = basic_plus_adr(dest, x1);
-      mem = StoreNode::make(C, control(), mem, p1, adr_type, intcon(0), T_INT);
-      mem = _gvn.transform(mem);
+      if (bump_bit != 0) {
+        // Store a zero to the immediately preceding jint:
+        Node* x1 = _gvn.transform( new(C,3) AddXNode(start, MakeConX(-bump_bit)) );
+        Node* p1 = basic_plus_adr(dest, x1);
+        mem = StoreNode::make(_gvn, control(), mem, p1, adr_type, intcon(0), T_INT);
+        mem = _gvn.transform(mem);
+      }
     }
-
     Node* end = dest_size; // pre-rounded
     mem = ClearArrayNode::clear_memory(control(), mem, dest,
                                        start, end, &_gvn);
@@ -4756,7 +4823,7 @@ LibraryCallKit::generate_block_arraycopy(const TypePtr* adr_type,
                                          Node* dest, Node* dest_offset,
                                          Node* dest_size) {
   // See if there is an advantage from block transfer.
-  int scale = exact_log2(type2aelembytes[basic_elem_type]);
+  int scale = exact_log2(type2aelembytes(basic_elem_type));
   if (scale >= LogBytesPerLong)
     return false;               // it is already a block transfer
 

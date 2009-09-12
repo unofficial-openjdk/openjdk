@@ -2,7 +2,7 @@
 #pragma ident "@(#)gcUtil.hpp	1.19 07/05/05 17:05:32 JVM"
 #endif
 /*
- * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,12 @@ class AdaptiveWeightedAverage : public CHeapObj {
     _average(0.0), _sample_count(0), _weight(weight), _last_sample(0.0) {
   }
 
+  void clear() {
+    _average = 0;
+    _sample_count = 0;
+    _last_sample = 0;
+  }
+
   // Accessors
   float    average() const       { return _average;       }
   unsigned weight()  const       { return _weight;        }
@@ -117,6 +123,12 @@ class AdaptivePaddedAverage : public AdaptiveWeightedAverage {
   float padded_average() const         { return _padded_avg; }
   float deviation()      const         { return _deviation;  }
   unsigned padding()     const         { return _padding;    }
+
+  void clear() {
+    AdaptiveWeightedAverage::clear();
+    _padded_avg = 0;
+    _deviation = 0;
+  }
 
   // Override
   void  sample(float new_sample);

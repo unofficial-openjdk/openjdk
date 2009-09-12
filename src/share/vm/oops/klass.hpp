@@ -2,7 +2,7 @@
 #pragma ident "@(#)klass.hpp	1.142 07/05/29 09:44:17 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,14 +137,14 @@ class Klass_vtbl {
   // Every subclass on which vtbl_value is called must include this macro.
   // Delay the installation of the klassKlass pointer until after the
   // the vtable for a new klass has been installed (after the call to new()).
-#define DEFINE_ALLOCATE_PERMANENT(thisKlass) \
+#define DEFINE_ALLOCATE_PERMANENT(thisKlass)                                  \
   void* allocate_permanent(KlassHandle& klass_klass, int size, TRAPS) const { \
-    void* result = new(klass_klass, size, THREAD) thisKlass(); \
-    if (HAS_PENDING_EXCEPTION) return NULL;                    \
-    klassOop new_klass = ((Klass*) result)->as_klassOop();	\
-    OrderAccess::storestore();	\
-    post_new_init_klass(klass_klass, new_klass, size);	\
-    return result;	\
+    void* result = new(klass_klass, size, THREAD) thisKlass();                \
+    if (HAS_PENDING_EXCEPTION) return NULL;                                   \
+    klassOop new_klass = ((Klass*) result)->as_klassOop();                    \
+    OrderAccess::storestore();                                                \
+    post_new_init_klass(klass_klass, new_klass, size);                        \
+    return result;                                                            \
   }
 
   bool null_vtbl() { return *(intptr_t*)this == 0; }
@@ -697,6 +697,14 @@ class Klass : public Klass_vtbl {
     return oop_oop_iterate(obj, blk);
   }
 
+#ifndef SERIALGC
+  // In case we don't have a specialized backward scanner use forward
+  // iteration.
+  virtual int oop_oop_iterate_backwards_v(oop obj, OopClosure* blk) {
+    return oop_oop_iterate_v(obj, blk);
+  }
+#endif // !SERIALGC
+
   // Iterates "blk" over all the oops in "obj" (of type "this") within "mr".
   // (I don't see why the _m should be required, but without it the Solaris
   // C++ gives warning messages about overridings of the "oop_oop_iterate"
@@ -725,7 +733,19 @@ class Klass : public Klass_vtbl {
   }
 
   SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_1(Klass_OOP_OOP_ITERATE_DECL)
-  SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_3(Klass_OOP_OOP_ITERATE_DECL)
+  SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_2(Klass_OOP_OOP_ITERATE_DECL)
+
+#ifndef SERIALGC
+#define Klass_OOP_OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix)      \
+  virtual int oop_oop_iterate_backwards##nv_suffix(oop obj,                  \
+                                                   OopClosureType* blk) {    \
+    /* Default implementation reverts to general version. */                 \
+    return oop_oop_iterate_backwards_v(obj, blk);                            \
+  }
+
+  SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_1(Klass_OOP_OOP_ITERATE_BACKWARDS_DECL)
+  SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_2(Klass_OOP_OOP_ITERATE_BACKWARDS_DECL)
+#endif // !SERIALGC
 
   virtual void array_klasses_do(void f(klassOop k)) {}
   virtual void with_array_klasses_do(void f(klassOop k));
@@ -760,6 +780,7 @@ class Klass : public Klass_vtbl {
   virtual const char* internal_name() const = 0;
   virtual void oop_verify_on(oop obj, outputStream* st);
   virtual void oop_verify_old_oop(oop obj, oop* p, bool allow_dirty);
+  virtual void oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty);
   // tells whether obj is partially constructed (gc during class loading)
   virtual bool oop_partially_loaded(oop obj) const { return false; }
   virtual void oop_set_partially_loaded(oop obj) {};

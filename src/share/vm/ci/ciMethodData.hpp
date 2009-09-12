@@ -2,7 +2,7 @@
 #pragma ident "@(#)ciMethodData.hpp	1.28 07/09/28 10:23:22 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ class ciRetData;
 class ciBranchData;
 class ciArrayData;
 class ciMultiBranchData;
+class ciArgInfoData;
 
 typedef ProfileData ciProfileData;
 
@@ -124,6 +125,11 @@ public:
   ciMultiBranchData(DataLayout* layout) : MultiBranchData(layout) {};
 };
 
+class ciArgInfoData : public ArgInfoData {
+public:
+  ciArgInfoData(DataLayout* layout) : ArgInfoData(layout) {};
+};
+
 // ciMethodData
 //
 // This class represents a methodDataOop in the HotSpot virtual
@@ -166,9 +172,9 @@ private:
   ciMethodData();
 
   // Accessors
-  int data_size() { return _data_size; }
-  int extra_data_size() { return _extra_data_size; }
-  intptr_t * data() { return _data; }
+  int data_size() const { return _data_size; }
+  int extra_data_size() const { return _extra_data_size; }
+  intptr_t * data() const { return _data; }
 
   methodDataOop get_methodDataOop() const {
     if (handle() == NULL) return NULL;
@@ -181,7 +187,7 @@ private:
 
   void print_impl(outputStream* st);
 
-  DataLayout* data_layout_at(int data_index) {
+  DataLayout* data_layout_at(int data_index) const {
     assert(data_index % sizeof(intptr_t) == 0, "unaligned");
     return (DataLayout*) (((address)_data) + data_index);
   }
@@ -209,6 +215,8 @@ private:
 
   // What is the index of the first data entry?
   int first_di() { return 0; }
+
+  ciArgInfoData *arg_info() const;
 
 public:
   bool is_method_data()  { return true; }
@@ -273,10 +281,12 @@ public:
   void set_arg_local(int i);
   void set_arg_stack(int i);
   void set_arg_returned(int i);
+  void set_arg_modified(int arg, uint val);
 
   bool is_arg_local(int i) const;
   bool is_arg_stack(int i) const;
   bool is_arg_returned(int i) const;
+  uint arg_modified(int arg) const;
 
   // Code generation helper
   ByteSize offset_of_slot(ciProfileData* data, ByteSize slot_offset_in_data);
