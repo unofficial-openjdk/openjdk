@@ -170,7 +170,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
                 if (defaultConfig != null) {
                     configs = new GraphicsConfiguration[1];
                     configs[0] = defaultConfig;
-                    return configs;
+                    return configs.clone();
                 }
             }
 
@@ -202,7 +202,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             configs = new GraphicsConfiguration[v.size()];
             v.copyInto(configs);
         }
-        return configs;
+        return configs.clone();
     }
 
     /**

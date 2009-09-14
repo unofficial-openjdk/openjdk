@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,8 +56,7 @@ import javax.swing.plaf.basic.DragRecognitionSupport.BeforeDrag;
  */
 public class BasicListUI extends ListUI
 {
-    private static final StringBuilder BASELINE_COMPONENT_KEY =
-        new StringBuilder("List.baselineComponent");
+    private static final Object BASELINE_COMPONENT_KEY = new Object(); // List.baselineComponent
 
     protected JList list = null;
     protected CellRendererPane rendererPane;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,16 +33,11 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.beans.*;
 
-import java.util.Locale;
 import java.util.Vector;
-import java.util.Hashtable;
 import javax.accessibility.*;
 import javax.swing.plaf.PopupMenuUI;
-import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.event.*;
-
-import java.applet.Applet;
 
 /**
  * An implementation of a popup menu -- a small window that pops up
@@ -91,8 +86,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
     /**
      * Key used in AppContext to determine if light way popups are the default.
      */
-    private static final Object defaultLWPopupEnabledKey =
-        new StringBuffer("JPopupMenu.defaultLWPopupEnabledKey");
+    private static final Object defaultLWPopupEnabledKey = new Object(); // JPopupMenu.defaultLWPopupEnabledKey
 
     /** Bug#4425878-Property javax.swing.adjustPopupLocationToFit introduced */
     static boolean popupPostionFixDisabled = false;

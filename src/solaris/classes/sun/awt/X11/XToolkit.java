@@ -560,7 +560,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
                 }
 
                 if (eventLog.isLoggable(Level.FINER)) {
-                    eventLog.log(Level.FINER, "{0}", ev);
+                    eventLog.log(Level.FINER, "{0}", String.valueOf(ev));
                 }
 
                 // Check if input method consumes the event
@@ -1686,8 +1686,10 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             if (timeoutTaskLog.isLoggable(Level.FINER)) {
                 timeoutTaskLog.log(Level.FINER, "XToolkit.schedule(): current time={0}" +
                                    ";  interval={1}" +
-                                   ";  task being added={2}" + ";  tasks before addition={3}", new Object[] {
-                                   Long.valueOf(System.currentTimeMillis()), Long.valueOf(interval), task, timeoutTasks});
+                                   ";  task being added={2}" + ";  tasks before addition={3}",
+                                   new Object[] { Long.valueOf(System.currentTimeMillis()),
+                                                  Long.valueOf(interval), String.valueOf(task),
+                                                  String.valueOf(timeoutTasks)});
             }
 
             if (timeoutTasks == null) {
@@ -1732,7 +1734,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     private static void callTimeoutTasks() {
         if (timeoutTaskLog.isLoggable(Level.FINER)) {
             timeoutTaskLog.log(Level.FINER, "XToolkit.callTimeoutTasks(): current time={0}" +
-                               ";  tasks={1}",  new Object[] {Long.valueOf(System.currentTimeMillis()), timeoutTasks});
+                               ";  tasks={1}",  new Object[] {Long.valueOf(System.currentTimeMillis()),
+                                                              String.valueOf(timeoutTasks)});
         }
 
         if (timeoutTasks == null || timeoutTasks.isEmpty()) {
@@ -1750,7 +1753,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 
                 if (timeoutTaskLog.isLoggable(Level.FINER)) {
                     timeoutTaskLog.log(Level.FINER, "XToolkit.callTimeoutTasks(): current time={0}" +
-                                       ";  about to run task={1}", new Object[] {Long.valueOf(currentTime), task});
+                                       ";  about to run task={1}",
+                                       new Object[] {Long.valueOf(currentTime), String.valueOf(task)});
                 }
 
                 try {

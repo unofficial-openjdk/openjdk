@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,8 +73,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     /**
      * AppContext key to get the current SynthStyleFactory.
      */
-    private static final Object STYLE_FACTORY_KEY =
-                  new StringBuffer("com.sun.java.swing.plaf.gtk.StyleCache");
+    private static final Object STYLE_FACTORY_KEY = new Object(); // com.sun.java.swing.plaf.gtk.StyleCache
 
     /**
      * The last SynthStyleFactory that was asked for from AppContext

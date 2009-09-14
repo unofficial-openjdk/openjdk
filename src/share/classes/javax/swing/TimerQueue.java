@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ package javax.swing;
 
 
 
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import sun.awt.AppContext;
@@ -46,10 +45,7 @@ import sun.awt.AppContext;
  */
 class TimerQueue implements Runnable
 {
-    private static final Object sharedInstanceKey =
-        new StringBuffer("TimerQueue.sharedInstanceKey");
-    private static final Object expiredTimersKey =
-        new StringBuffer("TimerQueue.expiredTimersKey");
+    private static final Object sharedInstanceKey = new Object(); // TimerQueue.sharedInstanceKey
 
     private final DelayQueue<DelayedTimer> queue;
     volatile boolean running;

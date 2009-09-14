@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,7 @@ public class MenuSelectionManager {
     private static final boolean VERBOSE = false; // show reuse hits/misses
     private static final boolean DEBUG =   false;  // show bad params, misc.
 
-    private static final StringBuilder MENU_SELECTION_MANAGER_KEY =
-                       new StringBuilder("javax.swing.MenuSelectionManager");
+    private static final Object MENU_SELECTION_MANAGER_KEY = new Object(); // javax.swing.MenuSelectionManager
 
     /**
      * Returns the default menu selection manager.
