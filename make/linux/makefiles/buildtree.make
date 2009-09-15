@@ -346,12 +346,6 @@ test_gamma:  $(BUILDTREE_MAKE) $(GAMMADIR)/make/test/Queens.java
 	) > $@
 	$(QUIETLY) chmod +x $@
 
-include $(GAMMADIR)/make/linux/makefiles/rules.make
-
-Queens.class: $(GAMMADIR)/build/test/Queens.java
-	$(RM) -f $@
-	$(REMOTE) $(COMPILE.JAVAC) -d . $<
-
 FORCE:
 
 .PHONY:  all FORCE
