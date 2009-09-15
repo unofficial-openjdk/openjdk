@@ -581,7 +581,7 @@ public class Parser {
 //where
         boolean isZero(String s) {
             char[] cs = s.toCharArray();
-            int base = ((Character.toLowerCase(s.charAt(1)) == 'x') ? 16 : 10);
+            int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16 : 10);
             int i = ((base==16) ? 2 : 0);
             while (i < cs.length && (cs[i] == '0' || cs[i] == '.')) i++;
             return !(i < cs.length && (Character.digit(cs[i], base) > 0));
