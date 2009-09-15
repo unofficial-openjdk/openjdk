@@ -2,7 +2,7 @@
 #pragma ident "@(#)genCollectedHeap.cpp	1.190 07/06/15 16:44:02 JVM"
 #endif
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -459,6 +459,12 @@ void GenCollectedHeap::do_collection(bool  full,
     int max_level_collected = starting_level;
     for (int i = starting_level; i <= max_level; i++) {
       if (_gens[i]->should_collect(full, size, is_tlab)) {
+        if (i == n_gens() - 1) {  // a major collection is to happen
+          if (!complete) {
+            // The full_collections increment was missed above.
+            increment_total_full_collections();
+          }
+        }
         // Timer for individual generations. Last argument is false: no CR
         TraceTime t1(_gens[i]->short_name(), PrintGCDetails, false, gclog_or_tty);
         TraceCollectorStats tcs(_gens[i]->counters());
