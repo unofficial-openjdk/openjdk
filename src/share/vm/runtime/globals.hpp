@@ -2,7 +2,7 @@
 #pragma ident "@(#)globals.hpp	1.975 08/08/28 22:07:15 JVM"
 #endif
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1055,6 +1055,9 @@ class CommandLineFlags {
                                                                             \
   product(ccstr, TraceJVMTI, NULL,                                          \
           "Trace flags for JVMTI functions and events")                     \
+                                                                            \
+  product(bool, ForceFullGCJVMTIEpilogues, false,                           \
+          "Force 'Full GC' was done semantics for JVMTI GC epilogues")      \
                                                                             \
   /* This option can change an EMCP method into an obsolete method. */      \
   /* This can affect tests that except specific methods to be EMCP. */      \
