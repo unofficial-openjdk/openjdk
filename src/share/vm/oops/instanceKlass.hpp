@@ -217,6 +217,7 @@ class instanceKlass: public Klass {
   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
   bool            _rewritten;            // methods rewritten.
   bool            _has_nonstatic_fields; // for sizing with UseCompressedOops
+  bool            _should_verify_class;  // allow caching of preverification
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
   ClassState      _init_state;           // state of class
@@ -361,6 +362,10 @@ class instanceKlass: public Klass {
   bool is_reentrant_initialization(Thread *thread)  { return thread == _init_thread; }
   int  get_init_state()                    { return _init_state; } // Useful for debugging
   bool is_rewritten() const                { return _rewritten; }
+
+  // defineClass specified verification
+  bool should_verify_class() const         { return _should_verify_class; }
+  void set_should_verify_class(bool value) { _should_verify_class = value; }
 
   // marking
   bool is_marked_dependent() const         { return _is_marked_dependent; }
