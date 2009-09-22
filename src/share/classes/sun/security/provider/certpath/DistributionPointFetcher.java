@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -307,6 +307,16 @@ class DistributionPointFetcher {
             crlImpl.getIssuingDistributionPointExtension();
         X500Name certIssuer = (X500Name) certImpl.getIssuerDN();
         X500Name crlIssuer = (X500Name) crlImpl.getIssuerDN();
+
+        // check the crl signature algorithm
+        try {
+            AlgorithmChecker.check(crl);
+        } catch (CertPathValidatorException cpve) {
+            if (debug != null) {
+                debug.println("CRL signature algorithm check failed: " + cpve);
+            }
+            return false;
+        }
 
         // if crlIssuer is set, verify that it matches the issuer of the
         // CRL and the CRL contains an IDP extension with the indirectCRL

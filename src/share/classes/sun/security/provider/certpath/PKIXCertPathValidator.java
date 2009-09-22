@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -268,6 +268,7 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
         int certPathLen = certList.size();
 
         basicChecker = new BasicChecker(anchor, testDate, sigProvider, false);
+        AlgorithmChecker algorithmChecker= AlgorithmChecker.getInstance();
         KeyChecker keyChecker = new KeyChecker(certPathLen,
             pkixParam.getTargetCertConstraints());
         ConstraintsChecker constraintsChecker =
@@ -282,6 +283,7 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
                               rootNode);
 
         // add standard checkers that we will be using
+        certPathCheckers.add(algorithmChecker);
         certPathCheckers.add(keyChecker);
         certPathCheckers.add(constraintsChecker);
         certPathCheckers.add(policyChecker);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import sun.security.util.DerValue;
 import sun.security.util.DerInputStream;
 import sun.security.util.DerOutputStream;
 import sun.security.util.ObjectIdentifier;
+
+import sun.security.provider.certpath.AlgorithmChecker;
 
 /**
  * A simple validator implementation. It is based on code from the JSSE
@@ -133,6 +135,13 @@ public final class SimpleValidator extends Validator {
             X509Certificate issuerCert = chain[i + 1];
             X509Certificate cert = chain[i];
 
+            // check certificate algorithm
+            try {
+                AlgorithmChecker.check(cert);
+            } catch (CertPathValidatorException cpve) {
+                throw new ValidatorException
+                        (ValidatorException.T_ALGORITHM_DISABLED, cert, cpve);
+            }
 
             // no validity check for code signing certs
             if ((variant.equals(VAR_CODE_SIGNING) == false)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,6 +222,10 @@ class OCSPResponse {
                 new DerInputStream(derIn.getOctetString());
 
             DerValue[]  seqTmp = basicOCSPResponse.getSequence(2);
+            if (seqTmp.length < 3) {
+                throw new IOException("Unexpected BasicOCSPResponse value");
+            }
+
             DerValue responseData = seqTmp[0];
 
             // Need the DER encoded ResponseData to verify the signature later
@@ -304,6 +308,9 @@ class OCSPResponse {
             // signatureAlgorithmId
             sigAlgId = AlgorithmId.parse(seqTmp[1]);
 
+            // check that the signature algorithm is not disabled.
+            AlgorithmChecker.check(sigAlgId);
+
             // signature
             byte[] signature = seqTmp[2].getBitString();
             X509CertImpl[] x509Certs = null;
@@ -336,6 +343,9 @@ class OCSPResponse {
                 // which was set locally.
                 } else if (cert.getIssuerDN().equals(
                     responderCert.getSubjectDN())) {
+
+                    // check the certificate algorithm
+                    AlgorithmChecker.check(cert);
 
                     // Check for the OCSPSigning key purpose
                     List<String> keyPurposes = cert.getExtendedKeyUsage();
