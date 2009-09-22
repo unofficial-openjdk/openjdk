@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -38,7 +38,7 @@ public interface DebugVC50TypeLeafIndices {
 
   //
   // Leaf indices for type records that can be referenced from symbols:
-  // 
+  //
 
   public static final int LF_MODIFIER   = 0x1001;
   public static final int LF_POINTER    = 0x1002;

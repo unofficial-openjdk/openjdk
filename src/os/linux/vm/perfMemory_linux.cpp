@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perfMemory_linux.cpp	1.31 07/09/13 11:29:50 JVM"
+#pragma ident "@(#)perfMemory_linux.cpp 1.31 07/09/13 11:29:50 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -85,9 +85,9 @@ static void delete_standard_memory(char* addr, size_t size) {
 //
 static void save_memory_to_file(char* addr, size_t size) {
 
- const char* destfile = PerfMemory::get_perfdata_file_path(); 
- assert(destfile[0] != '\0', "invalid PerfData file path"); 
- 
+ const char* destfile = PerfMemory::get_perfdata_file_path();
+ assert(destfile[0] != '\0', "invalid PerfData file path");
+
   int result;
 
   RESTARTABLE(::open(destfile, O_CREAT|O_WRONLY|O_TRUNC, S_IREAD|S_IWRITE),
@@ -95,7 +95,7 @@ static void save_memory_to_file(char* addr, size_t size) {
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
       warning("Could not create Perfdata save file: %s: %s\n",
-	      destfile, strerror(errno));
+              destfile, strerror(errno));
     }
   } else {
     int fd = result;
@@ -453,7 +453,7 @@ static void remove_file(const char* path) {
   if (PrintMiscellaneous && Verbose && result == OS_ERR) {
     if (errno != ENOENT) {
       warning("Could not unlink shared memory backing"
-	      " store file %s : %s\n", path, strerror(errno));
+              " store file %s : %s\n", path, strerror(errno));
     }
   }
 }
@@ -584,7 +584,7 @@ static bool make_user_tmp_dir(const char* dirname) {
       //
       if (PrintMiscellaneous && Verbose) {
         warning("could not create directory %s: %s\n",
-		dirname, strerror(errno));
+                dirname, strerror(errno));
       }
       return false;
     }
@@ -620,7 +620,7 @@ static int create_sharedmem_resources(const char* dirname, const char* filename,
   // save the file descriptor
   int fd = result;
 
-  // set the file size 
+  // set the file size
   RESTARTABLE(::ftruncate(fd, (off_t)size), result);
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
@@ -756,7 +756,7 @@ static void delete_shared_memory(char* addr, size_t size) {
 
   if (backing_store_file_name != NULL) {
     remove_file(backing_store_file_name);
-    // Don't.. Free heap memory could deadlock os::abort() if it is called 
+    // Don't.. Free heap memory could deadlock os::abort() if it is called
     // from signal handler. OS will reclaim the heap memory.
     // FREE_C_HEAP_ARRAY(char, backing_store_file_name);
     backing_store_file_name = NULL;
@@ -890,7 +890,7 @@ static void mmap_attach_shared(const char* user, int vmid, PerfMemory::PerfMemor
 
   if (PerfTraceMemOps) {
     tty->print("mapped " SIZE_FORMAT " bytes for vmid %d at "
-	       INTPTR_FORMAT "\n", size, vmid, (void*)mapAddress);
+               INTPTR_FORMAT "\n", size, vmid, (void*)mapAddress);
   }
 }
 
@@ -940,7 +940,7 @@ void PerfMemory::delete_memory_region() {
 
   // If user specifies PerfDataSaveFile, it will save the performance data
   // to the specified file name no matter whether PerfDataSaveToFile is specified
-  // or not. In other word, -XX:PerfDataSaveFile=.. overrides flag 
+  // or not. In other word, -XX:PerfDataSaveFile=.. overrides flag
   // -XX:+PerfDataSaveToFile.
   if (PerfDataSaveToFile || PerfDataSaveFile != NULL) {
     save_memory_to_file(start(), capacity());
@@ -976,7 +976,7 @@ void PerfMemory::attach(const char* user, int vmid, PerfMemoryMode mode, char** 
      *sizep = capacity();
      return;
   }
-  
+
   mmap_attach_shared(user, vmid, mode, addrp, sizep, CHECK);
 }
 
@@ -1012,4 +1012,3 @@ void PerfMemory::detach(char* addr, size_t bytes, TRAPS) {
 char* PerfMemory::backing_store_filename() {
   return backing_store_file_name;
 }
-

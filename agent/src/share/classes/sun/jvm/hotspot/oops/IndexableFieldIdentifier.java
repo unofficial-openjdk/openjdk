@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -38,7 +38,7 @@ public class IndexableFieldIdentifier extends FieldIdentifier {
 
   private int index;
 
-  public int getIndex() { return index; } 
+  public int getIndex() { return index; }
 
   public String getName() { return Integer.toString(getIndex()); }
 
@@ -50,7 +50,7 @@ public class IndexableFieldIdentifier extends FieldIdentifier {
     if (obj == null) {
       return false;
     }
-    
+
     if (!(obj instanceof IndexableFieldIdentifier)) {
       return false;
     }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -38,7 +38,7 @@ import sun.jvm.hotspot.types.*;
 
 public abstract class OneContigSpaceCardGeneration extends CardGeneration {
   private static AddressField theSpaceField;
-  
+
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {
@@ -49,14 +49,14 @@ public abstract class OneContigSpaceCardGeneration extends CardGeneration {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("OneContigSpaceCardGeneration");
-    
+
     theSpaceField = type.getAddressField("_the_space");
   }
 
   public OneContigSpaceCardGeneration(Address addr) {
     super(addr);
   }
-  
+
   public ContiguousSpace theSpace() {
     return (ContiguousSpace) VMObjectFactory.newObject(ContiguousSpace.class, theSpaceField.getValue(addr));
   }

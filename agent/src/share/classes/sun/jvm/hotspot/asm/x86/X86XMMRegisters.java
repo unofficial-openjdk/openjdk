@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -62,7 +62,7 @@ public class X86XMMRegisters {
    public static int getNumberOfRegisters() {
       return NUM_XMM_REGISTERS;
    }
-   
+
    //Return the register name
    public static String getRegisterName(int regNum) {
       if (Assert.ASSERTS_ENABLED) {

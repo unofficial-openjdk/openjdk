@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmStructs_solaris_sparc.hpp	1.22 07/05/05 17:04:54 JVM"
+#pragma ident "@(#)vmStructs_solaris_sparc.hpp  1.22 07/05/05 17:04:54 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // These are the OS and CPU-specific fields, types and integer

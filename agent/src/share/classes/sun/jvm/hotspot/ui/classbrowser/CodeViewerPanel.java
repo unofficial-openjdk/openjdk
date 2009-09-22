@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.classbrowser;
@@ -40,7 +40,7 @@ public class CodeViewerPanel extends JPanel {
     protected HistoryComboBox address;
     protected HTMLGenerator  htmlGen;
     protected JScrollPane    scrollPane;
-    
+
     public CodeViewerPanel() {
         htmlGen = new HTMLGenerator();
         contentEditor = new SAEditorPane();

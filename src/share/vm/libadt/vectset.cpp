@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vectset.cpp	1.25 07/05/05 17:05:41 JVM"
+#pragma ident "@(#)vectset.cpp  1.25 07/05/05 17:05:41 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Vector Sets - An Abstract Data Type
@@ -67,9 +67,9 @@ VectorSet::VectorSet(Arena *arena) : Set(arena) {
 }
 
 //------------------------------Construct--------------------------------------
-Set &VectorSet_Construct(Arena *arena) 
-{ 
-  return *(new VectorSet(arena)); 
+Set &VectorSet_Construct(Arena *arena)
+{
+  return *(new VectorSet(arena));
 }
 
 //------------------------------operator=--------------------------------------
@@ -93,7 +93,7 @@ void VectorSet::slamin(const VectorSet& s)
 
 //------------------------------grow-------------------------------------------
 // Expand the existing set to a bigger size
-void VectorSet::grow( uint newsize ) 
+void VectorSet::grow( uint newsize )
 {
   newsize = (newsize+31) >> 5;  // Convert to longwords
   uint x = size;
@@ -153,14 +153,14 @@ Set &VectorSet::operator &= (const Set &set)
 VectorSet &VectorSet::operator |= (const VectorSet &s)
 {
   // This many words must be unioned
-  register uint cnt = ((size<s.size)?size:s.size); 
+  register uint cnt = ((size<s.size)?size:s.size);
   register uint32 *u1 = data;   // Pointer to the destination data
   register uint32 *u2 = s.data; // Pointer to the source data
   for( uint i=0; i<cnt; i++)    // Copy and OR the two sets
     *u1++ |= *u2++;
   if( size < s.size ) {         // Is set 2 larger than set 1?
     // Extend result by larger set
-    grow(s.size*sizeof(uint32)*8); 
+    grow(s.size*sizeof(uint32)*8);
     memcpy(&data[cnt], u2, (s.size - cnt)*sizeof(uint32));
   }
   return *this;                 // Return result set
@@ -178,7 +178,7 @@ Set &VectorSet::operator |= (const Set &set)
 VectorSet &VectorSet::operator -= (const VectorSet &s)
 {
   // This many words must be unioned
-  register uint cnt = ((size<s.size)?size:s.size); 
+  register uint cnt = ((size<s.size)?size:s.size);
   register uint32 *u1 = data;   // Pointer to the destination data
   register uint32 *u2 = s.data; // Pointer to the source data
   for( uint i=0; i<cnt; i++ )   // For data in set
@@ -199,17 +199,17 @@ Set &VectorSet::operator -= (const Set &set)
 //        X1 --  A is a subset of B
 //        0X --  B is not a subset of A
 //        1X --  B is a subset of A
-int VectorSet::compare (const VectorSet &s) const 
+int VectorSet::compare (const VectorSet &s) const
 {
   register uint32 *u1 = data;   // Pointer to the destination data
   register uint32 *u2 = s.data; // Pointer to the source data
   register uint32 AnotB = 0, BnotA = 0;
   // This many words must be unioned
-  register uint cnt = ((size<s.size)?size:s.size); 
+  register uint cnt = ((size<s.size)?size:s.size);
 
   // Get bits for both sets
-  uint i;			// Exit value of loop
-  for( i=0; i<cnt; i++ ) {	// For data in BOTH sets
+  uint i;                       // Exit value of loop
+  for( i=0; i<cnt; i++ ) {      // For data in BOTH sets
     register uint32 A = *u1++;  // Data from one guy
     register uint32 B = *u2++;  // Data from other guy
     AnotB |= (A & ~B);          // Compute bits in A not B
@@ -249,12 +249,12 @@ int VectorSet::disjoint(const Set &set) const
 {
   // The cast is a virtual function that checks that "set" is a VectorSet.
   const VectorSet &s = *(set.asVectorSet());
-  
+
   // NOTE: The intersection is never any larger than the smallest set.
-  register uint small = ((size<s.size)?size:s.size); 
+  register uint small = ((size<s.size)?size:s.size);
   register uint32 *u1 = data;   // Pointer to the destination data
   register uint32 *u2 = s.data; // Pointer to the source data
-  for( uint i=0; i<small; i++)	// For data in set
+  for( uint i=0; i<small; i++)  // For data in set
     if( *u1++ & *u2++ )         // If any elements in common
       return 0;                 // Then not disjoint
   return 1;                     // Else disjoint
@@ -303,12 +303,12 @@ int VectorSet::operator[](uint elem) const
 // Get any element from the set.
 uint VectorSet::getelem(void) const
 {
-  uint i;			// Exit value of loop
+  uint i;                       // Exit value of loop
   for( i=0; i<size; i++ )
     if( data[i] )
       break;
   uint32 word = data[i];
-  int j;			// Exit value of loop
+  int j;                        // Exit value of loop
   for( j= -1; word; j++, word>>=1 );
   return (i<<5)+j;
 }
@@ -317,9 +317,9 @@ uint VectorSet::getelem(void) const
 // Clear a set
 void VectorSet::Clear(void)
 {
-  if( size > 100 ) {		// Reclaim storage only if huge
+  if( size > 100 ) {            // Reclaim storage only if huge
     FREE_RESOURCE_ARRAY(uint32,data,size);
-    size = 2;			// Small initial size
+    size = 2;                   // Small initial size
     data = NEW_RESOURCE_ARRAY(uint32,size);
   }
   memset( data, 0, size*sizeof(uint32) );
@@ -329,7 +329,7 @@ void VectorSet::Clear(void)
 // Return number of elements in a Set
 uint VectorSet::Size(void) const
 {
-  uint sum = 0;                 // Cumulative size so far. 
+  uint sum = 0;                 // Cumulative size so far.
   uint8 *currByte = (uint8*)data;
   for( uint32 i = 0; i < (size<<2); i++) // While have bytes to process
     sum += bitsInByte[*currByte++];      // Add bits in current byte to size.
@@ -391,5 +391,3 @@ uint VSetI_::next(void)
   } while( i<s->size );
   return max_juint;             // No element, iterated them all
 }
-
-

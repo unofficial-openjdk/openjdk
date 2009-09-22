@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.tree;
@@ -37,7 +37,7 @@ public interface SimpleTreeNode {
 
   /** TreeTable support: get name of the node */
   public String getName();
- 
+
   /** TreeTable support: get value of the node */
   public String getValue();
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cmsLockVerifier.cpp	1.14 07/05/05 17:05:44 JVM"
+#pragma ident "@(#)cmsLockVerifier.cpp  1.14 07/05/05 17:05:44 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -48,7 +48,7 @@ void CMSLockVerifier::assert_locked(const Mutex* lock, const Mutex* p_lock) {
       // This test might have to change in the future, if there can be
       // multiple peer CMS threads.  But for now, if we're testing the CMS
       assert(myThread == ConcurrentMarkSweepThread::cmst(),
-	     "In CMS, CMS thread is the only Conc GC thread.");
+             "In CMS, CMS thread is the only Conc GC thread.");
       assert(ConcurrentMarkSweepThread::cms_thread_has_cms_token(),
              "CMS thread should have CMS token");
     } else if (myThread->is_VM_thread()) {
@@ -61,7 +61,7 @@ void CMSLockVerifier::assert_locked(const Mutex* lock, const Mutex* p_lock) {
       assert(myThread->is_GC_task_thread(), "Unexpected thread type");
     }
     return;
-  } 
+  }
 
   if (ParallelGCThreads == 0) {
     assert_lock_strong(lock);
@@ -96,4 +96,3 @@ void CMSLockVerifier::assert_locked(const Mutex* lock, const Mutex* p_lock) {
   }
 }
 #endif
-

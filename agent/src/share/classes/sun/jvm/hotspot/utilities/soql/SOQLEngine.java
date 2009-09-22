@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -51,7 +51,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
            [ where &lt;java script boolean expression&gt; ]
          ]
    */
-   public synchronized void executeQuery(String query, ObjectVisitor visitor) 
+   public synchronized void executeQuery(String query, ObjectVisitor visitor)
                                                  throws SOQLException {
       debugPrint("query : " + query);
       StringTokenizer st = new StringTokenizer(query);
@@ -66,8 +66,8 @@ public class SOQLEngine extends JSJavaScriptEngine {
 
       int selectStart = query.indexOf("select");
       int fromStart = query.indexOf("from");
-     
-      String selectExpr = null; 
+
+      String selectExpr = null;
       String className = null;
       boolean isInstanceOf = false;
       String whereExpr = null;
@@ -91,7 +91,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
          } else {
             throw new SOQLException("query syntax error: class name must follow 'from'");
          }
-    
+
          if (st.hasMoreTokens()) {
             identifier = st.nextToken();
             if (identifier.equals("where")) {
@@ -108,7 +108,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
          } else {
             throw new SOQLException("query syntax error: identifier should follow class name");
          }
-      } else { // no from clause 
+      } else { // no from clause
          selectExpr = query.substring(selectStart + "select".length(), query.length());
       }
 
@@ -151,14 +151,14 @@ public class SOQLEngine extends JSJavaScriptEngine {
       }
 
       beginQuery();
-      // compile select expression and where condition 
+      // compile select expression and where condition
       evalString(selectCode, "", 1);
       evalString(whereCode,  "", 1);
 
       // iterate thru heap, if needed
       if (q.className != null) {
          try {
-	    iterateOops(kls, visitor, q.isInstanceOf);
+            iterateOops(kls, visitor, q.isInstanceOf);
          } finally {
             endQuery();
          }
@@ -178,7 +178,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
       Object[] args = new Object[] { jsObj };
       boolean b = true;
 
-      try {  
+      try {
          if (filterExists) {
             Object res = call("filter", args);
             if (res instanceof Boolean) {
@@ -198,7 +198,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
          throw new RuntimeException(e);
       }
    }
- 
+
    private void iterateOops(final InstanceKlass ik, final ObjectVisitor visitor,
                             boolean includeSubtypes) {
       ObjectHeap oh = VM.getVM().getObjectHeap();
@@ -244,7 +244,7 @@ public class SOQLEngine extends JSJavaScriptEngine {
    protected void quit() {
       // do nothing
    }
-  
+
    private static void debugPrint(String msg) {
       if (debug) System.out.println(msg);
    }
@@ -255,8 +255,8 @@ public class SOQLEngine extends JSJavaScriptEngine {
    }
 
    protected SOQLEngine() {
-       super(debug);  
-       start();     
+       super(debug);
+       start();
    }
 
    private ObjectReader objReader;

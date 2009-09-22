@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger;
@@ -54,10 +54,10 @@ public class DebuggerUtilities {
 
   public void checkAlignment(long address, long alignment) {
     if (address % alignment != 0) {
-      throw new UnalignedAddressException("Trying to read at address: " + 
-					   addressValueToString(address) +
-					   " with alignment: " + alignment,
-					  address);
+      throw new UnalignedAddressException("Trying to read at address: " +
+                                           addressValueToString(address) +
+                                           " with alignment: " + alignment,
+                                          address);
     }
   }
 
@@ -88,7 +88,7 @@ public class DebuggerUtilities {
 
   public boolean dataToJBoolean(byte[] data, long jbooleanSize) {
     checkDataContents(data, jbooleanSize);
-    
+
     return (data[0] != 0);
   }
 
@@ -110,13 +110,13 @@ public class DebuggerUtilities {
 
   public double dataToJDouble(byte[] data, long jdoubleSize) {
     long longBits = dataToJLong(data, jdoubleSize);
-    
+
     return Double.longBitsToDouble(longBits);
   }
-  
+
   public float dataToJFloat(byte[] data, long jfloatSize) {
     int intBits = dataToJInt(data, jfloatSize);
-    
+
     return Float.intBitsToFloat(intBits);
   }
 
@@ -214,7 +214,7 @@ public class DebuggerUtilities {
   public byte[] jdoubleToData(double value) {
     return jlongToData(Double.doubleToLongBits(value));
   }
-  
+
   public byte[] jfloatToData(float value) {
     return jintToData(Float.floatToIntBits(value));
   }
@@ -230,7 +230,7 @@ public class DebuggerUtilities {
     }
     return res;
   }
-  
+
   public byte[] jlongToData(long value) {
     byte[] res = new byte[8];
     for (int i = 0; i < 8; i++) {

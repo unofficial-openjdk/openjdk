@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)symbolOop.hpp	1.40 07/05/05 17:06:07 JVM"
+#pragma ident "@(#)symbolOop.hpp        1.40 07/05/05 17:06:07 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A symbolOop is a canonicalized string.
@@ -33,10 +33,10 @@ class symbolOopDesc : public oopDesc {
   friend class VMStructs;
  private:
   unsigned short _length; // number of UTF8 characters in the symbol
-  jbyte _body[1];  
+  jbyte _body[1];
 
   enum {
-    // max_symbol_length is constrained by type of _length 
+    // max_symbol_length is constrained by type of _length
     max_symbol_length = (1 << 16) -1
   };
  public:
@@ -45,7 +45,7 @@ class symbolOopDesc : public oopDesc {
   jbyte* base() { return &_body[0]; }
 
 
-  // Returns the largest size symbol we can safely hold. 
+  // Returns the largest size symbol we can safely hold.
   static int max_length() {
     return max_symbol_length;
   }
@@ -94,7 +94,7 @@ class symbolOopDesc : public oopDesc {
     return as_C_string_flexible_buffer(t, buf, size);
   }
 
-  jchar* as_unicode(int& length) const;  
+  jchar* as_unicode(int& length) const;
 
   // Treating this symbol as a class name, returns the Java name for the class.
   // String is allocated in resource area if buffer is not provided.
@@ -119,4 +119,3 @@ int symbolOopDesc::fast_compare(symbolOop other) const {
  return (((uintptr_t)this < (uintptr_t)other) ? -1
    : ((uintptr_t)this == (uintptr_t) other) ? 0 : 1);
 }
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)gSpaceCounters.hpp	1.14 07/05/05 17:05:33 JVM"
+#pragma ident "@(#)gSpaceCounters.hpp   1.14 07/05/05 17:05:33 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A GSpaceCounter is a holder class for performance counters
@@ -50,7 +50,7 @@ class GSpaceCounters: public CHeapObj {
   ~GSpaceCounters() {
     if (_name_space != NULL) FREE_C_HEAP_ARRAY(char, _name_space);
   }
-  
+
   inline void update_capacity() {
     _capacity->set_value(_gen->capacity());
   }
@@ -75,7 +75,7 @@ class GSpaceCounters: public CHeapObj {
 
   debug_only(
     // for security reasons, we do not allow arbitrary reads from
-    // the counters as they may live in shared memory. 
+    // the counters as they may live in shared memory.
     jlong used() {
       return _used->get_value();
     }
@@ -103,4 +103,3 @@ class GenerationUsedHelper : public PerfLongSampleHelper {
       return _gen->used();
     }
 };
-

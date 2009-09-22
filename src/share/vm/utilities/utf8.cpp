@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)utf8.cpp	1.30 07/05/05 17:07:07 JVM"
+#pragma ident "@(#)utf8.cpp     1.30 07/05/05 17:07:07 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,18 +22,18 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_utf8.cpp.incl"
 
-// Assume the utf8 string is in legal form and has been 
+// Assume the utf8 string is in legal form and has been
 // checked in the class file parser/format checker.
 char* UTF8::next(const char* str, jchar* value) {
   unsigned const char *ptr = (const unsigned char *)str;
   unsigned char ch, ch2, ch3;
-  int length = -1;		/* bad length */
+  int length = -1;              /* bad length */
   jchar result;
   switch ((ch = ptr[0]) >> 4) {
     default:
@@ -45,7 +45,7 @@ char* UTF8::next(const char* str, jchar* value) {
     /* Shouldn't happen. */
     break;
 
-  case 0xC: case 0xD:	
+  case 0xC: case 0xD:
     /* 110xxxxx  10xxxxxx */
     if (((ch2 = ptr[1]) & 0xC0) == 0x80) {
       unsigned char high_five = ch & 0x1F;
@@ -53,7 +53,7 @@ char* UTF8::next(const char* str, jchar* value) {
       result = (high_five << 6) + low_six;
       length = 2;
       break;
-    } 
+    }
     break;
 
   case 0xE:
@@ -65,13 +65,13 @@ char* UTF8::next(const char* str, jchar* value) {
         unsigned char low_six = ch3 & 0x3f;
         result = (((high_four << 6) + mid_six) << 6) + low_six;
         length = 3;
-      } 
+      }
     }
     break;
   } /* end of switch */
 
   if (length <= 0) {
-    *value = ptr[0];	/* default bad result; */
+    *value = ptr[0];    /* default bad result; */
     return (char*)(ptr + 1); // make progress somehow
   }
 
@@ -84,7 +84,7 @@ char* UTF8::next(const char* str, jchar* value) {
 
 char* UTF8::next_character(const char* str, jint* value) {
   unsigned const char *ptr = (const unsigned char *)str;
-  /* See if it's legal supplementary character: 
+  /* See if it's legal supplementary character:
      11101101 1010xxxx 10xxxxxx 11101101 1011xxxx 10xxxxxx */
   if (is_supplementary_character(ptr)) {
     *value = get_supplementary_character(ptr);
@@ -96,8 +96,8 @@ char* UTF8::next_character(const char* str, jint* value) {
   return next_ch;
 }
 
-// Count bytes of the form 10xxxxxx and deduct this count 
-// from the total byte count.  The utf8 string must be in 
+// Count bytes of the form 10xxxxxx and deduct this count
+// from the total byte count.  The utf8 string must be in
 // legal form which has been verified in the format checker.
 int UTF8::unicode_length(const char* str, int len) {
   int num_chars = len;
@@ -109,9 +109,9 @@ int UTF8::unicode_length(const char* str, int len) {
   return num_chars;
 }
 
-// Count bytes of the utf8 string except those in form 
+// Count bytes of the utf8 string except those in form
 // 10xxxxxx which only appear in multibyte characters.
-// The utf8 string must be in legal form and has been 
+// The utf8 string must be in legal form and has been
 // verified in the format checker.
 int UTF8::unicode_length(const char* str) {
   int num_chars = 0;
@@ -130,12 +130,12 @@ static u_char* utf8_write(u_char* base, jchar ch) {
     return base + 1;
   }
 
-  if (ch <= 0x7FF) { 
+  if (ch <= 0x7FF) {
     /* 11 bits or less. */
     unsigned char high_five = ch >> 6;
     unsigned char low_six = ch & 0x3F;
     base[0] = high_five | 0xC0; /* 110xxxxx */
-    base[1] = low_six | 0x80;	/* 10xxxxxx */
+    base[1] = low_six | 0x80;   /* 10xxxxxx */
     return base + 2;
   }
   /* possibly full 16 bits. */
@@ -168,7 +168,7 @@ void UTF8::convert_to_unicode(const char* utf8_str, jchar* unicode_str, int unic
 // Returns NULL if 'c' it not found. This only works as long
 // as 'c' is an ASCII character
 jbyte* UTF8::strrchr(jbyte* base, int length, jbyte c) {
-  assert(length >= 0, "sanity check");    
+  assert(length >= 0, "sanity check");
   assert(c >= 0, "does not work for non-ASCII characters");
   // Skip backwards in string until 'c' is found or end is reached
   while(--length >= 0 && base[length] != c);
@@ -178,10 +178,10 @@ jbyte* UTF8::strrchr(jbyte* base, int length, jbyte c) {
 bool UTF8::equal(jbyte* base1, int length1, jbyte* base2, int length2) {
   // Length must be the same
   if (length1 != length2) return false;
-  for (int i = 0; i < length1; i++) {  
+  for (int i = 0; i < length1; i++) {
     if (base1[i] != base2[i]) return false;
-  } 
-  return true;  
+  }
+  return true;
 }
 
 bool UTF8::is_supplementary_character(const unsigned char* str) {
@@ -190,7 +190,7 @@ bool UTF8::is_supplementary_character(const unsigned char* str) {
 }
 
 jint UTF8::get_supplementary_character(const unsigned char* str) {
-  return 0x10000 + ((str[1] & 0x0f) << 16) + ((str[2] & 0x3f) << 10) 
+  return 0x10000 + ((str[1] & 0x0f) << 16) + ((str[2] & 0x3f) << 10)
                  + ((str[4] & 0x0f) << 6)  + (str[5] & 0x3f);
 }
 
@@ -245,6 +245,3 @@ void UNICODE::convert_to_utf8(const jchar* base, int length, char* utf8_buffer) 
   }
   *utf8_buffer = '\0';
 }
-
-
-

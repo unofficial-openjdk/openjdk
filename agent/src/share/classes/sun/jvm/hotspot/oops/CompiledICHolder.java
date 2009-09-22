@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -52,12 +52,12 @@ public class CompiledICHolder extends Oop {
 
   public boolean isCompiledICHolder()  { return true; }
 
-  private static long headerSize; 
+  private static long headerSize;
 
   // Fields
   private static OopField holderMethod;
   private static OopField holderKlass;
-  
+
   // Accessors for declared fields
   public Method getHolderMethod() { return (Method) holderMethod.getValue(this); }
   public Klass  getHolderKlass()  { return (Klass)  holderKlass.getValue(this); }

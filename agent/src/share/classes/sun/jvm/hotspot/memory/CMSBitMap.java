@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -84,8 +84,8 @@ public class CMSBitMap extends VMObject {
     bitMap.set_map(vs.low());
     return bitMap;
   }
-    
-  public Address getNextMarkedWordAddress(Address addr) { 
+
+  public Address getNextMarkedWordAddress(Address addr) {
     Address endWord = bmStartWord().addOffsetTo(bmWordSize());
     int nextOffset = bm().getNextOneOffset(heapWordToOffset(addr), heapWordToOffset(endWord) );
     Address nextAddr = offsetToHeapWord(nextOffset);
@@ -94,10 +94,10 @@ public class CMSBitMap extends VMObject {
 
   int heapWordToOffset(Address addr) {
     int temp = (int)addr.minus(bmStartWord()) / (int) VM.getVM().getAddressSize();
-    int ret_val = temp >> shifter(); 
-    return ret_val; 
+    int ret_val = temp >> shifter();
+    return ret_val;
   }
- 
+
   Address offsetToHeapWord(int offset) {
     int temp = offset << shifter();
     return bmStartWord().addOffsetTo(temp*VM.getVM().getAddressSize());

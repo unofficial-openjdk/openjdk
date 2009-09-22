@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)timer.hpp	1.36 07/05/05 17:06:59 JVM"
+#pragma ident "@(#)timer.hpp    1.36 07/05/05 17:06:59 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Timers for simple measurement.
@@ -87,14 +87,14 @@ class TraceTime: public StackObj {
  public:
   // Constuctors
   TraceTime(const char* title,
-	    bool doit = true,
-	    bool print_cr = true,
-	    outputStream *logfile = NULL);
+            bool doit = true,
+            bool print_cr = true,
+            outputStream *logfile = NULL);
   TraceTime(const char* title,
-	    elapsedTimer* accumulator,
-	    bool doit = true,
+            elapsedTimer* accumulator,
+            bool doit = true,
             bool verbose = false,
-	    outputStream *logfile = NULL );
+            outputStream *logfile = NULL );
   ~TraceTime();
 
   // Accessors
@@ -108,17 +108,17 @@ class TraceTime: public StackObj {
 
 class TraceCPUTime: public StackObj {
  private:
-  bool _active;			// true if times will be measured and printed
-  bool _print_cr;		// if true print carriage return at end
-  double _starting_user_time;	// user time at start of measurement
+  bool _active;                 // true if times will be measured and printed
+  bool _print_cr;               // if true print carriage return at end
+  double _starting_user_time;   // user time at start of measurement
   double _starting_system_time; // system time at start of measurement
-  double _starting_real_time;	// real time at start of measurement
-  outputStream* _logfile;	// output is printed to this stream
-  bool _error;			// true if an error occurred, turns off output
+  double _starting_real_time;   // real time at start of measurement
+  outputStream* _logfile;       // output is printed to this stream
+  bool _error;                  // true if an error occurred, turns off output
 
  public:
-  TraceCPUTime(bool doit = true, 
-	       bool print_cr = true, 
-	       outputStream *logfile = NULL);
+  TraceCPUTime(bool doit = true,
+               bool print_cr = true,
+               outputStream *logfile = NULL);
   ~TraceCPUTime();
 };

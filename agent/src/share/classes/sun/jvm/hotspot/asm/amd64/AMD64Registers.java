@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.amd64;
@@ -45,9 +45,9 @@ public class AMD64Registers {
    public static final AMD64Register R13;
    public static final AMD64Register R14;
    public static final AMD64Register R15;
- 
+
    private static final AMD64Register[] registers;
- 
+
    static {
       RAX = new AMD64Register(0, "rax");
       RCX = new AMD64Register(1, "rcx");

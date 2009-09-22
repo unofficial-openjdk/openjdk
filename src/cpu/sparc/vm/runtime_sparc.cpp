@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)runtime_sparc.cpp	1.134 07/05/05 17:04:31 JVM"
+#pragma ident "@(#)runtime_sparc.cpp    1.134 07/05/05 17:04:31 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -37,7 +37,7 @@ ExceptionBlob      *OptoRuntime::_exception_blob;
 // creates exception blob at the end
 // Using exception blob, this code is jumped from a compiled method.
 // (see emit_exception_handler in sparc.ad file)
-// 
+//
 // Given an exception pc at a call we call into the runtime for the
 // handler in this method. This handler might merely restore state
 // (i.e. callee save registers) unwind the frame and jump to the
@@ -45,7 +45,7 @@ ExceptionBlob      *OptoRuntime::_exception_blob;
 // for the nmethod.
 //
 // This code is entered with a jmp.
-// 
+//
 // Arguments:
 //   O0: exception oop
 //   O1: exception pc
@@ -54,7 +54,7 @@ ExceptionBlob      *OptoRuntime::_exception_blob;
 //   O0: exception oop
 //   O1: exception pc in caller or ???
 //   destination: exception handler of caller
-// 
+//
 // Note: the exception pc MUST be at a call (precise debug information)
 //
 void OptoRuntime::generate_exception_blob() {
@@ -81,12 +81,12 @@ void OptoRuntime::generate_exception_blob() {
   __ st_ptr(Oissuing_pc, Address(G2_thread, 0, in_bytes(JavaThread::exception_pc_offset())));
 
   // This call does all the hard work. It checks if an exception catch
-  // exists in the method.  
+  // exists in the method.
   // If so, it returns the handler address.
   // If the nmethod has been deoptimized and it had a handler the handler
   // address is the deopt blob unpack_with_exception entry.
   //
-  // If no handler exists it prepares for stack-unwinding, restoring the callee-save 
+  // If no handler exists it prepares for stack-unwinding, restoring the callee-save
   // registers of the frame being removed.
   //
   __ save_frame(0);
@@ -96,7 +96,7 @@ void OptoRuntime::generate_exception_blob() {
   __ save_thread(L7_thread_cache);
 
   // This call can block at exit and nmethod can be deoptimized at that
-  // point. If the nmethod had a catch point we would jump to the 
+  // point. If the nmethod had a catch point we would jump to the
   // now deoptimized catch point and fall thru the vanilla deopt
   // path and lose the exception
   // Sure would be simpler if this call didn't block!
@@ -143,5 +143,3 @@ void OptoRuntime::generate_exception_blob() {
 
   _exception_blob = ExceptionBlob::create(&buffer, oop_maps, framesize_in_words);
 }
-
-

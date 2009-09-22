@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime.amd64;
@@ -93,7 +93,7 @@ public class AMD64Frame extends Frame {
   // an additional field beyond sp and pc:
   Address raw_fp; // frame pointer
   private Address raw_unextendedSP;
-  
+
   private AMD64Frame() {
   }
 
@@ -299,7 +299,7 @@ public class AMD64Frame extends Frame {
     AMD64JavaCallWrapper jcw = (AMD64JavaCallWrapper) getEntryFrameCallWrapper();
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(!entryFrameIsFirst(), "next Java fp must be non zero");
-      Assert.that(jcw.getLastJavaSP().greaterThan(getSP()), "must be above this frame on stack");  
+      Assert.that(jcw.getLastJavaSP().greaterThan(getSP()), "must be above this frame on stack");
     }
     AMD64Frame fr;
     if (jcw.getLastJavaPC() != null) {
@@ -335,7 +335,7 @@ public class AMD64Frame extends Frame {
       Assert.that(map != null, "map must be set");
     }
 
-    // frame owned by optimizing compiler 
+    // frame owned by optimizing compiler
     Address        sender_sp = null;
 
 
@@ -363,7 +363,7 @@ public class AMD64Frame extends Frame {
     Address saved_fp = null;
     if (VM.getVM().isClientCompiler()) {
       saved_fp = getFP().getAddressAt(0);
-    } else if (VM.getVM().isServerCompiler() && 
+    } else if (VM.getVM().isServerCompiler() &&
                (VM.getVM().getInterpreter().contains(sender_pc) ||
                VM.getVM().getStubRoutines().returnsToCallStub(sender_pc))) {
       // C2 prologue saves EBP in the usual place.
@@ -392,7 +392,7 @@ public class AMD64Frame extends Frame {
   //inline void      frame::set_link(intptr_t* addr)  { *(intptr_t **)addr_at(link_offset) = addr; }
 
   public Address getUnextendedSP() { return raw_unextendedSP; }
-  
+
   // Return address:
   public Address getSenderPCAddr() { return addressOfStackSlot(RETURN_ADDR_OFFSET); }
   public Address getSenderPC()     { return getSenderPCAddr().getAddressAt(0);      }
@@ -408,7 +408,7 @@ public class AMD64Frame extends Frame {
     if (VM.getVM().isCore() || VM.getVM().isClientCompiler()) {
       throw new RuntimeException("Should not reach here");
     }
-    
+
     return oopMapRegToLocation(reg, regMap);
   }
 
@@ -453,12 +453,12 @@ public class AMD64Frame extends Frame {
   public Address addressOfInterpreterFrameTOS() {
     return getSP();
   }
-  
+
   /** Expression stack from top down */
   public Address addressOfInterpreterFrameTOSAt(int slot) {
     return addressOfInterpreterFrameTOS().addOffsetTo(slot * VM.getVM().getAddressSize());
   }
-  
+
   public Address getInterpreterFrameSenderSP() {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(isInterpretedFrame(), "interpreted frame expected");
@@ -494,7 +494,7 @@ public class AMD64Frame extends Frame {
   public Address addressOfInterpreterFrameCPCache() {
     return addressOfStackSlot(INTERPRETER_FRAME_CACHE_OFFSET);
   }
-  
+
   // Entry frames
   public JavaCallWrapper getEntryFrameCallWrapper() {
     return new AMD64JavaCallWrapper(addressOfStackSlot(ENTRY_FRAME_CALL_WRAPPER_OFFSET).getAddressAt(0));

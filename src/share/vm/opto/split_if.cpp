@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)split_if.cpp	1.68 07/05/05 17:06:29 JVM"
+#pragma ident "@(#)split_if.cpp 1.68 07/05/05 17:06:29 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -30,7 +30,7 @@
 
 
 //------------------------------split_thru_region------------------------------
-// Split Node 'n' through merge point.  
+// Split Node 'n' through merge point.
 Node *PhaseIdealLoop::split_thru_region( Node *n, Node *region ) {
   uint wins = 0;
   assert( n->is_CFG(), "" );
@@ -43,7 +43,7 @@ Node *PhaseIdealLoop::split_thru_region( Node *n, Node *region ) {
     if( in0->in(0) == region ) x->set_req( 0, in0->in(i) );
     for( uint j = 1; j < n->req(); j++ ) {
       Node *in = n->in(j);
-      if( get_ctrl(in) == region ) 
+      if( get_ctrl(in) == region )
         x->set_req( j, in->in(i) );
     }
     _igvn.register_new_node_with_optimizer(x);
@@ -51,7 +51,7 @@ Node *PhaseIdealLoop::split_thru_region( Node *n, Node *region ) {
     set_idom(x, x->in(0), dom_depth(x->in(0))+1);
     r->init_req(i, x);
   }
-  
+
   // Record region
   r->set_req(0,region);         // Not a TRUE RegionNode
   _igvn.register_new_node_with_optimizer(r);
@@ -68,7 +68,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
     assert( n->in(0) != blk1, "Lousy candidate for split-if" );
     return false;
   }
-  if( get_ctrl(n) != blk1 && get_ctrl(n) != blk2 ) 
+  if( get_ctrl(n) != blk1 && get_ctrl(n) != blk2 )
     return false;               // Not block local
   if( n->is_Phi() ) return false; // Local PHIs are expected
 
@@ -76,7 +76,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
   for (uint i = 1; i < n->req(); i++) {
     if( split_up( n->in(i), blk1, blk2 ) ) {
       // Got split recursively and self went dead?
-      if (n->outcnt() == 0) 
+      if (n->outcnt() == 0)
         _igvn.remove_dead_node(n);
       return true;
     }
@@ -102,7 +102,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
           (cmov = bol->unique_out()->as_CMove()) &&
           (get_ctrl(cmov) == blk1 ||
            get_ctrl(cmov) == blk2) ) ) {
-      
+
       // Must clone down
 #ifndef PRODUCT
       if( PrintOpto && VerifyLoopOptimizations ) {
@@ -128,7 +128,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
             tty->print("Cloning down: ");
             bol->dump();
           }
-#endif  
+#endif
           for (DUIterator_Last jmin, j = bol->last_outs(jmin); j >= jmin; --j) {
             // Uses are either IfNodes or CMoves
             Node* iff = bol->last_out(j);
@@ -156,7 +156,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
         _igvn._worklist.push(bol);
       }
       _igvn.remove_dead_node( n );
-      
+
       return true;
     }
   }
@@ -169,7 +169,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
   if( n->is_Store() && n->in(MemNode::Memory)->in(0) == n->in(0) ) {
     // Get store's memory slice
     int alias_idx = C->get_alias_index(_igvn.type(n->in(MemNode::Address))->is_ptr());
-   
+
     // Get memory-phi anti-dep loads will be using
     Node *memphi = n->in(MemNode::Memory);
     assert( memphi->is_Phi(), "" );
@@ -182,7 +182,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
     }
   }
 
-  // Found some other Node; must clone it up    
+  // Found some other Node; must clone it up
 #ifndef PRODUCT
   if( PrintOpto && VerifyLoopOptimizations ) {
     tty->print("Cloning up: ");
@@ -194,7 +194,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
   Node *phi = PhiNode::make_blank(blk1, n);
   for( uint j = 1; j < blk1->req(); j++ ) {
     Node *x = n->clone();
-    if( n->in(0) && n->in(0) == blk1 ) 
+    if( n->in(0) && n->in(0) == blk1 )
       x->set_req( 0, blk1->in(j) );
     for( uint i = 1; i < n->req(); i++ ) {
       Node *m = n->in(i);
@@ -243,7 +243,7 @@ struct small_cache : public Dict {
 
 // We must be at the merge point which post-dominates 'new_false' and
 // 'new_true'.  Figure out which edges into the RegionNode eventually lead up
-// to false and which to true.  Put in a PhiNode to merge values; plug in 
+// to false and which to true.  Put in a PhiNode to merge values; plug in
 // the appropriate false-arm or true-arm values.  If some path leads to the
 // original IF, then insert a Phi recursively.
 Node *PhaseIdealLoop::spinup( Node *iff_dom, Node *new_false, Node *new_true, Node *use_blk, Node *def, small_cache *cache ) {
@@ -277,7 +277,7 @@ Node *PhaseIdealLoop::spinup( Node *iff_dom, Node *new_false, Node *new_true, No
     } else {
       assert( def->is_Phi(), "" );
       assert( prior_n->is_Region(), "must be a post-dominating merge point" );
-  
+
       // Need a Phi here
       phi_post = PhiNode::make_blank(prior_n, def);
       // Search for both true and false on all paths till find one.
@@ -316,7 +316,7 @@ Node *PhaseIdealLoop::spinup( Node *iff_dom, Node *new_false, Node *new_true, No
 // along the corresponding path.
 Node *PhaseIdealLoop::find_use_block( Node *use, Node *def, Node *old_false, Node *new_false, Node *old_true, Node *new_true ) {
   // CFG uses are their own block
-  if( use->is_CFG() ) 
+  if( use->is_CFG() )
     return use;
 
   if( use->is_Phi() ) {         // Phi uses in prior block
@@ -324,12 +324,12 @@ Node *PhaseIdealLoop::find_use_block( Node *use, Node *def, Node *old_false, Nod
     // Each will be handled as a seperate iteration of
     // the "while( phi->outcnt() )" loop.
     uint j;
-    for( j = 1; j < use->req(); j++ ) 
-      if( use->in(j) == def ) 
+    for( j = 1; j < use->req(); j++ )
+      if( use->in(j) == def )
         break;
     assert( j < use->req(), "def should be among use's inputs" );
     return use->in(0)->in(j);
-  } 
+  }
   // Normal (non-phi) use
   Node *use_blk = get_ctrl(use);
   // Some uses are directly attached to the old (and going away)
@@ -342,7 +342,7 @@ Node *PhaseIdealLoop::find_use_block( Node *use, Node *def, Node *old_false, Nod
     use_blk = new_true;
     set_ctrl(use, new_true);
   }
-  
+
   if (use_blk == NULL) {        // He's dead, Jim
     _igvn.hash_delete(use);
     _igvn.subsume_node(use, C->top());
@@ -371,11 +371,11 @@ void PhaseIdealLoop::handle_use( Node *use, Node *def, small_cache *cache, Node 
   // Walk up the dominator tree until I hit either the old IfFalse, the old
   // IfTrue or the old If.  Insert Phis where needed.
   Node *new_def = spinup( region_dom, new_false, new_true, use_blk, def, cache );
-  
+
   // Found where this USE goes.  Re-point him.
   uint i;
   for( i = 0; i < use->req(); i++ )
-    if( use->in(i) == def ) 
+    if( use->in(i) == def )
       break;
   assert( i < use->req(), "def should be among use's inputs" );
   _igvn.hash_delete(use);
@@ -388,7 +388,7 @@ void PhaseIdealLoop::handle_use( Node *use, Node *def, small_cache *cache, Node 
 // Split thru the Region.
 void PhaseIdealLoop::do_split_if( Node *iff ) {
 #ifndef PRODUCT
-  if( PrintOpto && VerifyLoopOptimizations ) 
+  if( PrintOpto && VerifyLoopOptimizations )
     tty->print_cr("Split-if");
 #endif
   C->set_major_progress();
@@ -396,7 +396,7 @@ void PhaseIdealLoop::do_split_if( Node *iff ) {
   Node *region_dom = idom(region);
 
   // We are going to clone this test (and the control flow with it) up through
-  // the incoming merge point.  We need to empty the current basic block. 
+  // the incoming merge point.  We need to empty the current basic block.
   // Clone any instructions which must be in this block up through the merge
   // point.
   DUIterator i, j;
@@ -503,7 +503,7 @@ void PhaseIdealLoop::do_split_if( Node *iff ) {
     if( phi->is_Phi() ) {
       // Need a per-def cache.  Phi represents a def, so make a cache
       small_cache phi_cache;
-      
+
       // Inspect all Phi uses to make the Phi go dead
       for (DUIterator_Last lmin, l = phi->last_outs(lmin); l >= lmin; --l) {
         Node* use = phi->last_out(l);
@@ -514,7 +514,7 @@ void PhaseIdealLoop::do_split_if( Node *iff ) {
         // 2-element cache to handle multiple uses from the same block.
         handle_use( use, phi, &phi_cache, region_dom, new_false, new_true, old_false, old_true );
       } // End of while phi has uses
-      
+
       // Because handle_use might relocate region->_out,
       // we must refresh the iterator.
       k = region->last_outs(kmin);
@@ -529,7 +529,7 @@ void PhaseIdealLoop::do_split_if( Node *iff ) {
 
   } // End of while merge point has phis
 
-  // Any leftover bits in the splitting block must not have depended on local 
+  // Any leftover bits in the splitting block must not have depended on local
   // Phi inputs (these have already been split-up).  Hence it's safe to hoist
   // these guys to the dominating point.
   lazy_replace( region, region_dom );
@@ -537,4 +537,3 @@ void PhaseIdealLoop::do_split_if( Node *iff ) {
   if( VerifyLoopOptimizations ) verify();
 #endif
 }
-

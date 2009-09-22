@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)debugInfo.hpp	1.35 07/07/27 16:10:59 JVM"
+#pragma ident "@(#)debugInfo.hpp        1.35 07/07/27 16:10:59 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Classes used for serializing debugging information.
-// These abstractions are introducted to provide symmetric 
+// These abstractions are introducted to provide symmetric
 // read and write operations.
 
 // ScopeValue        describes the value of a variable/expression in a scope
@@ -118,7 +118,7 @@ class ObjectValue: public ScopeValue {
   void print_on(outputStream* st) const;
   void print_fields_on(outputStream* st) const;
 };
-  
+
 
 // A ConstantIntValue describes a constant int; i.e., the corresponding logical entity
 // is either a source constant or its computation has been constant-folded.
@@ -252,9 +252,9 @@ class DebugInfoReadStream : public CompressedReadStream {
 
   } ;
 
-  oop read_oop() { 
-    return code()->oop_at(read_int()); 
-  } 
+  oop read_oop() {
+    return code()->oop_at(read_int());
+  }
   ScopeValue* read_object_value();
   ScopeValue* get_cached_object();
   // BCI encoding is mostly unsigned, but -1 is a distinguished value
@@ -273,4 +273,3 @@ class DebugInfoWriteStream : public CompressedWriteStream {
   void write_handle(jobject h);
   void write_bci(int bci) { write_int(bci - InvocationEntryBci); }
 };
-

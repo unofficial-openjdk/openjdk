@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.ia64;
@@ -295,23 +295,23 @@ public class IA64Registers {
      AR_BSP = new IA64Register(128);
 
         registers = (new IA64Register[] {
-	    GR0, GR1, GR2, GR3, GR4, GR5, GR6, GR7, GR8, GR9,
-	    GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19,
-	    GR20, GR21, GR22, GR23, GR24, GR25, GR26, GR27, GR28, GR29,
-	    GR30, GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39,
-	    GR40, GR41, GR42, GR43, GR44, GR45, GR46, GR47, GR48, GR49,
-	    GR50, GR51, GR52, GR53, GR54, GR55, GR56, GR57, GR58, GR59,
-	    GR60, GR61, GR62, GR63, GR64, GR65, GR66, GR67, GR68, GR69,
-	    GR70, GR71, GR72, GR73, GR74, GR75, GR76, GR77, GR78, GR79,
-	    GR80, GR81, GR82, GR83, GR84, GR85, GR86, GR87, GR88, GR89,
-	    GR90, GR91, GR92, GR93, GR94, GR95, GR96, GR97, GR98, GR99,
-	    GR100, GR101, GR102, GR103, GR104, GR105, GR106, GR107, GR108, GR109,
-	    GR110, GR111, GR112, GR113, GR114, GR115, GR116, GR117, GR118, GR119,
-	    GR120, GR121, GR122, GR123, GR124, GR125, GR126, GR127, AR_BSP
+            GR0, GR1, GR2, GR3, GR4, GR5, GR6, GR7, GR8, GR9,
+            GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19,
+            GR20, GR21, GR22, GR23, GR24, GR25, GR26, GR27, GR28, GR29,
+            GR30, GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39,
+            GR40, GR41, GR42, GR43, GR44, GR45, GR46, GR47, GR48, GR49,
+            GR50, GR51, GR52, GR53, GR54, GR55, GR56, GR57, GR58, GR59,
+            GR60, GR61, GR62, GR63, GR64, GR65, GR66, GR67, GR68, GR69,
+            GR70, GR71, GR72, GR73, GR74, GR75, GR76, GR77, GR78, GR79,
+            GR80, GR81, GR82, GR83, GR84, GR85, GR86, GR87, GR88, GR89,
+            GR90, GR91, GR92, GR93, GR94, GR95, GR96, GR97, GR98, GR99,
+            GR100, GR101, GR102, GR103, GR104, GR105, GR106, GR107, GR108, GR109,
+            GR110, GR111, GR112, GR113, GR114, GR115, GR116, GR117, GR118, GR119,
+            GR120, GR121, GR122, GR123, GR124, GR125, GR126, GR127, AR_BSP
         });
 
   }
- 
+
   public static final IA64Register FP = AR_BSP;
   public static final IA64Register SP = GR12;
 

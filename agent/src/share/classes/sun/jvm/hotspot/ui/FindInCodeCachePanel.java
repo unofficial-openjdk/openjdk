@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -55,7 +55,7 @@ public class FindInCodeCachePanel extends SAPanel {
     Address base;
     StringBuffer result;
     boolean searching;
-    
+
     public void prologue(Address start, Address end) {
       searching = true;
       base = start;
@@ -64,12 +64,12 @@ public class FindInCodeCachePanel extends SAPanel {
       result = new StringBuffer();
       clearResultWindow();
     }
-    
+
     public void visit(CodeBlob blob) {
       Address begin = blob.headerBegin();
       Address end = begin.addOffsetTo(blob.getSize());
       long addressSize = VM.getVM().getAddressSize();
-      
+
       boolean found = false;
       while (!found && begin.lessThan(end)) {
         Address val = begin.getAddressAt(0);
@@ -92,7 +92,7 @@ public class FindInCodeCachePanel extends SAPanel {
       searching = false;
       result = null;
     }
-        
+
     private void search() {
       // Parse text
       Address val = null;
@@ -112,7 +112,7 @@ public class FindInCodeCachePanel extends SAPanel {
         value = val;
         contentEditor.setText("");
         findButton.setEnabled(false);
-            
+
         System.out.println("Searching " + value);
         java.lang.Thread t = new java.lang.Thread(new Runnable() {
             public void run() {
@@ -181,7 +181,7 @@ public class FindInCodeCachePanel extends SAPanel {
           }
         }
       };
-    
+
     contentEditor.addHyperlinkListener(hyperListener);
 
     JScrollPane scroller = new JScrollPane(contentEditor);

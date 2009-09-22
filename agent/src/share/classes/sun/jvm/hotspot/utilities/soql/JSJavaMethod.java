@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -68,7 +68,7 @@ public class JSJavaMethod extends JSJavaObject {
       case FIELD_HOLDER:
          return getMethodHolder();
       case FIELD_IS_PRIVATE:
-	 return Boolean.valueOf(method.isPrivate());
+         return Boolean.valueOf(method.isPrivate());
       case FIELD_IS_PUBLIC:
          return Boolean.valueOf(method.isPublic());
       case FIELD_IS_PROTECTED:
@@ -93,7 +93,7 @@ public class JSJavaMethod extends JSJavaObject {
          return Boolean.valueOf(method.isObsolete());
       case FIELD_UNDEFINED:
       default:
-	 return super.get(name);
+         return super.get(name);
       }
    }
 
@@ -116,9 +116,9 @@ public class JSJavaMethod extends JSJavaObject {
 
    public void put(String name, Object value) {
        if (getFieldID(name) != FIELD_UNDEFINED) {
-	   return;
+           return;
        } else {
-	   super.put(name, value);
+           super.put(name, value);
        }
    }
 
@@ -163,4 +163,3 @@ public class JSJavaMethod extends JSJavaObject {
       addField("isObsolete", FIELD_IS_OBSOLETE);
    }
 }
-

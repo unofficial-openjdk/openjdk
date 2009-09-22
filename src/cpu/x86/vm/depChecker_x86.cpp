@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)depChecker_x86.cpp	1.10 07/09/17 09:58:28 JVM"
+#pragma ident "@(#)depChecker_x86.cpp   1.10 07/09/17 09:58:28 JVM"
 #endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"

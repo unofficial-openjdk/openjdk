@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)atomic_windows_x86.inline.hpp	1.22 07/09/19 11:49:22 JVM"
+#pragma ident "@(#)atomic_windows_x86.inline.hpp        1.22 07/09/19 11:49:22 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The following alternative implementations are needed because
@@ -217,7 +217,7 @@ inline jint     Atomic::cmpxchg    (jint     exchange_value, volatile jint*     
     mov ecx, exchange_value
     mov eax, compare_value
     LOCK_IF_MP(mp)
-    cmpxchg dword ptr [edx], ecx   
+    cmpxchg dword ptr [edx], ecx
   }
 }
 

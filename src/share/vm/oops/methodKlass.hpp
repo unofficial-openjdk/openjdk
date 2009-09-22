@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)methodKlass.hpp	1.49 07/05/29 09:44:23 JVM"
+#pragma ident "@(#)methodKlass.hpp      1.49 07/05/29 09:44:23 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // a methodKlass is the klass of a methodOop
@@ -48,7 +48,7 @@ class methodKlass : public Klass {
   // Casting from klassOop
   static methodKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_method(), "cast to methodKlass");
-    return (methodKlass*) k->klass_part(); 
+    return (methodKlass*) k->klass_part();
   }
 
   // Sizing
@@ -85,4 +85,3 @@ class methodKlass : public Klass {
   bool oop_partially_loaded(oop obj) const;
   void oop_set_partially_loaded(oop obj);
 };
-

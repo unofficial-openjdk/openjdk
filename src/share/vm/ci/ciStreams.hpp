@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciStreams.hpp	1.36 07/05/05 17:05:14 JVM"
+#pragma ident "@(#)ciStreams.hpp        1.36 07/05/05 17:05:14 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciBytecodeStream
@@ -35,7 +35,7 @@
 class ciBytecodeStream : StackObj {
 private:
  // Handling for the weird bytecodes
-  Bytecodes::Code wide();	// Handle wide bytecode
+  Bytecodes::Code wide();       // Handle wide bytecode
   Bytecodes::Code table(Bytecodes::Code); // Handle complicated inline table
 
   static Bytecodes::Code check_java(Bytecodes::Code c) {
@@ -45,17 +45,17 @@ private:
 
   ciMethod* _method;           // the method
   ciInstanceKlass* _holder;
-  address _bc_start;	       	// Start of current bytecode for table
-  address _was_wide;		// Address past last wide bytecode
-  jint* _table_base;		// Aligned start of last table or switch 
+  address _bc_start;            // Start of current bytecode for table
+  address _was_wide;            // Address past last wide bytecode
+  jint* _table_base;            // Aligned start of last table or switch
 
-  address _start;		   // Start of bytecodes
-  address _end;			   // Past end of bytecodes
-  address _pc;			   // Current PC
+  address _start;                  // Start of bytecodes
+  address _end;                    // Past end of bytecodes
+  address _pc;                     // Current PC
   Bytecodes::Code _bc;             // Current bytecode
 
-  void reset( address base, unsigned int size ) { 
-    _bc_start =_was_wide = 0; 
+  void reset( address base, unsigned int size ) {
+    _bc_start =_was_wide = 0;
     _start = _pc = base; _end = base + size; }
 
 public:
@@ -93,20 +93,20 @@ public:
   void set_max_bci( int max ) {
     _end = _start + max;
   }
- 
+
   address cur_bcp()             { return _bc_start; }  // Returns bcp to current instruction
   int next_bci() const          { return _pc -_start; }
   int cur_bci() const           { return _bc_start - _start; }
 
   Bytecodes::Code cur_bc() const{ return check_java(_bc); }
   Bytecodes::Code next_bc()     { return Bytecodes::java_code((Bytecodes::Code)* _pc); }
-  
+
   // Return current ByteCode and increment PC to next bytecode, skipping all
   // intermediate constants.  Returns EOBC at end.
   // Expected usage:
   //     while( (bc = iter.next()) != EOBC() ) { ... }
   Bytecodes::Code next() {
-    _bc_start = _pc;		            // Capture start of bc
+    _bc_start = _pc;                        // Capture start of bc
     if( _pc >= _end ) return EOBC();        // End-Of-Bytecodes
 
     // Fetch Java bytecode
@@ -115,11 +115,11 @@ public:
     int csize = Bytecodes::length_for(_bc); // Expected size
 
     if( _bc == Bytecodes::_wide ) {
-      _bc=wide();	                    // Handle wide bytecode
+      _bc=wide();                           // Handle wide bytecode
     } else if( csize == 0 ) {
       _bc=table(_bc);                       // Handle inline tables
     } else {
-      _pc += csize;		            // Bump PC past bytecode
+      _pc += csize;                         // Bump PC past bytecode
     }
     return check_java(_bc);
   }
@@ -129,18 +129,18 @@ public:
   // Get a byte index following this bytecode.
   // If prefixed with a wide bytecode, get a wide index.
   int get_index() const {
-    return (_pc == _was_wide)	// was widened?
-      ? Bytes::get_Java_u2(_bc_start+2)	// yes, return wide index
-      : _bc_start[1];		// no, return narrow index
+    return (_pc == _was_wide)   // was widened?
+      ? Bytes::get_Java_u2(_bc_start+2) // yes, return wide index
+      : _bc_start[1];           // no, return narrow index
   }
 
   // Set a byte index following this bytecode.
   // If prefixed with a wide bytecode, get a wide index.
   void put_index(int idx) {
-      if (_pc == _was_wide)	// was widened?
-         Bytes::put_Java_u2(_bc_start+2,idx);	// yes, set wide index
+      if (_pc == _was_wide)     // was widened?
+         Bytes::put_Java_u2(_bc_start+2,idx);   // yes, set wide index
       else
-         _bc_start[1]=idx;		// no, set narrow index
+         _bc_start[1]=idx;              // no, set narrow index
   }
 
   // Get 2-byte index (getfield/putstatic/etc)
@@ -187,8 +187,8 @@ public:
     return _bc_start-_start + (int)Bytes::get_Java_u4(_pc-4);
   }
 
-  // For a lookup or switch table, return target destination 
-  int get_int_table( int index ) const { 
+  // For a lookup or switch table, return target destination
+  int get_int_table( int index ) const {
     return Bytes::get_Java_u4((address)&_table_base[index]); }
 
   // For tableswitch - get length of offset part
@@ -323,7 +323,7 @@ public:
 
   // Count the number of handlers this stream will produce from now on.
   // Include the current handler, and the final rethrow handler.
-  // The remaining count will be zero iff is_done() is true, 
+  // The remaining count will be zero iff is_done() is true,
   int count_remaining();
 
   bool is_done() {
@@ -370,7 +370,3 @@ public:
     return _method->_exception_handlers[_pos];
   }
 };
-
-
-
-

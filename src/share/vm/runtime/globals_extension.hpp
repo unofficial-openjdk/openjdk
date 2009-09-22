@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globals_extension.hpp	1.17 07/05/17 16:05:46 JVM"
+#pragma ident "@(#)globals_extension.hpp        1.17 07/05/17 16:05:46 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Construct enum of Flag_<cmdline-arg> constants.
@@ -37,9 +37,9 @@
 #define RUNTIME_MANAGEABLE_FLAG_MEMBER(type, name, value, doc) FLAG_MEMBER(name),
 #define RUNTIME_PRODUCT_RW_FLAG_MEMBER(type, name, value, doc) FLAG_MEMBER(name),
 #ifdef PRODUCT
-  #define RUNTIME_DEVELOP_FLAG_MEMBER(type, name, value, doc)  /* flag is constant */ 
-  #define RUNTIME_PD_DEVELOP_FLAG_MEMBER(type, name, doc)      /* flag is constant */ 
-  #define RUNTIME_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc) 
+  #define RUNTIME_DEVELOP_FLAG_MEMBER(type, name, value, doc)  /* flag is constant */
+  #define RUNTIME_PD_DEVELOP_FLAG_MEMBER(type, name, doc)      /* flag is constant */
+  #define RUNTIME_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc)
 #else
   #define RUNTIME_DEVELOP_FLAG_MEMBER(type, name, value, doc)  FLAG_MEMBER(name),
   #define RUNTIME_PD_DEVELOP_FLAG_MEMBER(type, name, doc)      FLAG_MEMBER(name),
@@ -54,9 +54,9 @@
 #define C1_PRODUCT_FLAG_MEMBER(type, name, value, doc)         FLAG_MEMBER(name),
 #define C1_PD_PRODUCT_FLAG_MEMBER(type, name, doc)             FLAG_MEMBER(name),
 #ifdef PRODUCT
-  #define C1_DEVELOP_FLAG_MEMBER(type, name, value, doc)       /* flag is constant */ 
-  #define C1_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           /* flag is constant */ 
-  #define C1_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc) 
+  #define C1_DEVELOP_FLAG_MEMBER(type, name, value, doc)       /* flag is constant */
+  #define C1_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           /* flag is constant */
+  #define C1_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc)
 #else
   #define C1_DEVELOP_FLAG_MEMBER(type, name, value, doc)       FLAG_MEMBER(name),
   #define C1_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           FLAG_MEMBER(name),
@@ -68,9 +68,9 @@
 #define C2_PD_PRODUCT_FLAG_MEMBER(type, name, doc)             FLAG_MEMBER(name),
 #define C2_DIAGNOSTIC_FLAG_MEMBER(type, name, value, doc)      FLAG_MEMBER(name),
 #ifdef PRODUCT
-  #define C2_DEVELOP_FLAG_MEMBER(type, name, value, doc)       /* flag is constant */ 
-  #define C2_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           /* flag is constant */ 
-  #define C2_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc) 
+  #define C2_DEVELOP_FLAG_MEMBER(type, name, value, doc)       /* flag is constant */
+  #define C2_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           /* flag is constant */
+  #define C2_NOTPRODUCT_FLAG_MEMBER(type, name, value, doc)
 #else
   #define C2_DEVELOP_FLAG_MEMBER(type, name, value, doc)       FLAG_MEMBER(name),
   #define C2_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           FLAG_MEMBER(name),
@@ -103,9 +103,9 @@ typedef enum {
 #define RUNTIME_MANAGEABLE_FLAG_MEMBER_WITH_TYPE(type, name, value, doc) FLAG_MEMBER_WITH_TYPE(name,type),
 #define RUNTIME_PRODUCT_RW_FLAG_MEMBER_WITH_TYPE(type, name, value, doc) FLAG_MEMBER_WITH_TYPE(name,type),
 #ifdef PRODUCT
-  #define RUNTIME_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)     /* flag is constant */ 
-  #define RUNTIME_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)         /* flag is constant */ 
-  #define RUNTIME_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc) 
+  #define RUNTIME_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)     /* flag is constant */
+  #define RUNTIME_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)         /* flag is constant */
+  #define RUNTIME_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)
 #else
   #define RUNTIME_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)     FLAG_MEMBER_WITH_TYPE(name,type),
   #define RUNTIME_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)         FLAG_MEMBER_WITH_TYPE(name,type),
@@ -115,9 +115,9 @@ typedef enum {
 #define C1_PRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)         FLAG_MEMBER_WITH_TYPE(name,type),
 #define C1_PD_PRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, doc)             FLAG_MEMBER_WITH_TYPE(name,type),
 #ifdef PRODUCT
-  #define C1_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       /* flag is constant */ 
-  #define C1_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           /* flag is constant */ 
-  #define C1_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc) 
+  #define C1_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       /* flag is constant */
+  #define C1_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           /* flag is constant */
+  #define C1_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)
 #else
   #define C1_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       FLAG_MEMBER_WITH_TYPE(name,type),
   #define C1_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           FLAG_MEMBER_WITH_TYPE(name,type),
@@ -134,9 +134,9 @@ typedef enum {
 #define C2_PD_PRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, doc)             FLAG_MEMBER_WITH_TYPE(name,type),
 #define C2_DIAGNOSTIC_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)      FLAG_MEMBER_WITH_TYPE(name,type),
 #ifdef PRODUCT
-  #define C2_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       /* flag is constant */ 
-  #define C2_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           /* flag is constant */ 
-  #define C2_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc) 
+  #define C2_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       /* flag is constant */
+  #define C2_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           /* flag is constant */
+  #define C2_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)
 #else
   #define C2_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       FLAG_MEMBER_WITH_TYPE(name,type),
   #define C2_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           FLAG_MEMBER_WITH_TYPE(name,type),

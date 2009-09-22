@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -67,10 +67,10 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       InstanceKlass ik = getInstanceKlass();
       switch (fieldID) {
       case FIELD_SOURCE_FILE: {
-	 Symbol sourceFile = ik.getSourceFileName();
-	 return (sourceFile != null)? sourceFile.asString() : "<unknown>";
+         Symbol sourceFile = ik.getSourceFileName();
+         return (sourceFile != null)? sourceFile.asString() : "<unknown>";
       }
-      case FIELD_INTERFACES: 
+      case FIELD_INTERFACES:
          return getInterfaces();
       case FIELD_FIELDS:
          return factory.newJSList(ik.getImmediateFields());
@@ -83,7 +83,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       case FIELD_IS_PROTECTED:
          return Boolean.valueOf(getAccessFlags().isProtected());
       case FIELD_IS_PACKAGE_PRIVATE: {
-	 AccessFlags acc = getAccessFlags();
+         AccessFlags acc = getAccessFlags();
          return Boolean.valueOf(!acc.isPrivate() && !acc.isPublic() && !acc.isProtected());
       }
       case FIELD_IS_STATIC:
@@ -101,7 +101,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       case FIELD_CLASS_LOADER:
          return factory.newJSJavaObject(ik.getClassLoader());
       case FIELD_PROTECTION_DOMAIN:
-	 return factory.newJSJavaObject(ik.getProtectionDomain());
+         return factory.newJSJavaObject(ik.getProtectionDomain());
       case FIELD_SIGNERS:
          return factory.newJSJavaObject(ik.getSigners());
       case FIELD_STATICS:
@@ -114,9 +114,9 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
 
    public boolean hasMetaClassField(String name) {
       if (getFieldID(name) != FIELD_UNDEFINED) {
-	  return true;
+          return true;
       } else {
-	  return super.hasMetaClassField(name);
+          return super.hasMetaClassField(name);
       }
    }
 
@@ -135,8 +135,8 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       System.arraycopy(superFields, 0, res, 0, superFields.length);
       int i = superFields.length;
       for (Iterator itr = k.iterator(); itr.hasNext();) {
-	  res[i] = (String) itr.next();
-	  i++;
+          res[i] = (String) itr.next();
+          i++;
       }
       return res;
    }
@@ -146,7 +146,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       if (fld != null) {
          return getFieldValue(fld, name, instance);
       } else {
-         throw new NoSuchFieldException(name + " is not field of " 
+         throw new NoSuchFieldException(name + " is not field of "
                 + getInstanceKlass().getName().asString().replace('/', '.'));
       }
    }
@@ -156,7 +156,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       if (fld != null) {
          return getFieldValue(fld, name, getInstanceKlass());
       } else {
-         throw new NoSuchFieldException(name + " is not field of " 
+         throw new NoSuchFieldException(name + " is not field of "
                 + getInstanceKlass().getName().asString().replace('/', '.'));
       }
    }
@@ -168,14 +168,14 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
             List tmp = current.getImmediateFields();
             for (Iterator itr = tmp.iterator(); itr.hasNext();) {
                Field fld = (Field) itr.next();
-	       if (!fld.isStatic()) {
+               if (!fld.isStatic()) {
                   String name = fld.getID().getName();
                   if (instanceFields.get(name) == null) {
                      instanceFields.put(name, fld);
                   }
-	       }
+               }
             }
-            current = (InstanceKlass) current.getSuper();   
+            current = (InstanceKlass) current.getSuper();
          }
 
          Set s = instanceFields.keySet();
@@ -202,7 +202,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
             if (fld.isStatic()) {
                staticFields.put(fld.getID().getName(), fld);
             }
-	 }
+         }
 
          Set s = staticFields.keySet();
          staticFieldNames = new String[s.size()];
@@ -257,11 +257,11 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       }
       return accFlags;
    }
- 
+
    private Object getFieldValue(Field fld, String name, Oop oop) {
        FieldType fd = fld.getFieldType();
        if (fd.isObject() || fd.isArray()) {
-	 return factory.newJSJavaObject(((OopField)fld).getValue(oop));
+         return factory.newJSJavaObject(((OopField)fld).getValue(oop));
        } else if (fd.isByte()) {
           return new Byte(((ByteField)fld).getValue(oop));
        } else if (fd.isChar()) {
@@ -288,10 +288,10 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
 
    private Field findInstanceField(String name) {
       Field fld = (Field) instanceFields.get(name);
-      if (fld != null) { 
+      if (fld != null) {
          return fld;
       } else {
-	 InstanceKlass current = getInstanceKlass();
+         InstanceKlass current = getInstanceKlass();
          while (current != null) {
             List tmp = current.getImmediateFields();
             for (Iterator itr = tmp.iterator(); itr.hasNext();) {
@@ -299,10 +299,10 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
                if (fld.getID().getName().equals(name) && !fld.isStatic()) {
                    instanceFields.put(name, fld);
                    return fld;
-	       }
+               }
             }
-	    // lookup in super class.
-	    current = (InstanceKlass) current.getSuper();
+            // lookup in super class.
+            current = (InstanceKlass) current.getSuper();
          }
       }
       // no match
@@ -311,12 +311,12 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
 
    private Field findStaticField(String name) {
       Field fld = (Field) staticFields.get(name);
-      if (fld != null) { 
+      if (fld != null) {
          return fld;
       } else {
-	 // static fields are searched only in current. 
-	 // Direct/indirect super classes and interfaces 
-	 // are not included in search.
+         // static fields are searched only in current.
+         // Direct/indirect super classes and interfaces
+         // are not included in search.
          InstanceKlass current = getInstanceKlass();
          List tmp = current.getImmediateFields();
          for (Iterator itr = tmp.iterator(); itr.hasNext();) {
@@ -324,10 +324,10 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
             if (fld.getID().getName().equals(name) && fld.isStatic()) {
                staticFields.put(name, fld);
                return fld;
-	    }
-	 }
-	 // no match
-	 return null;
+            }
+         }
+         // no match
+         return null;
       }
    }
 
@@ -336,8 +336,8 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       List intfs = ik.getDirectImplementedInterfaces();
       List res = new ArrayList(0);
       for (Iterator itr = intfs.iterator(); itr.hasNext();) {
-	  Klass k = (Klass) itr.next();
-	  res.add(k.getJavaMirror());
+          Klass k = (Klass) itr.next();
+          res.add(k.getJavaMirror());
       }
       return factory.newJSList(res);
    }
@@ -347,7 +347,7 @@ public class JSJavaInstanceKlass extends JSJavaKlass {
       Map map = new HashMap();
       for (int i=0; i < names.length; i++) {
          try {
-	    map.put(names[i], getStaticFieldValue(names[i]));
+            map.put(names[i], getStaticFieldValue(names[i]));
          } catch (NoSuchFieldException exp) {}
       }
       return factory.newJSMap(map);

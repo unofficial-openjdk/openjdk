@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)blockOffsetTable.inline.hpp	1.20 07/05/05 17:05:43 JVM"
+#pragma ident "@(#)blockOffsetTable.inline.hpp  1.20 07/05/05 17:05:43 JVM"
 #endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //////////////////////////////////////////////////////////////////////////
@@ -42,8 +42,8 @@ inline HeapWord* BlockOffsetTable::block_start(const void* addr) const {
 inline size_t BlockOffsetSharedArray::index_for(const void* p) const {
   char* pc = (char*)p;
   assert(pc >= (char*)_reserved.start() &&
-	 pc <  (char*)_reserved.end(),
-	 "p not in range.");
+         pc <  (char*)_reserved.end(),
+         "p not in range.");
   size_t delta = pointer_delta(pc, _reserved.start(), sizeof(char));
   size_t result = delta >> LogN;
   assert(result < _vs.committed_size(), "bad index from address");
@@ -57,7 +57,7 @@ inline HeapWord* BlockOffsetSharedArray::address_for_index(size_t index) const {
          "bad address from index");
   return result;
 }
-    
+
 
 //////////////////////////////////////////////////////////////////////////
 // BlockOffsetArrayNonContigSpace inlines

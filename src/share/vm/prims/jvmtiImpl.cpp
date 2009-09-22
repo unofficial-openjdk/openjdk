@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiImpl.cpp	1.64 07/07/16 14:37:37 JVM"
+#pragma ident "@(#)jvmtiImpl.cpp        1.64 07/07/16 14:37:37 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -69,7 +69,7 @@ JvmtiAgentThread::start_function_wrapper(JavaThread *thread, TRAPS) {
     // of the thread is given in JavaThread::thread_main().
     assert(thread->is_Java_thread(), "debugger thread should be a Java Thread");
     assert(thread == JavaThread::current(), "sanity check");
-  
+
     JvmtiAgentThread *dthread = (JvmtiAgentThread *)thread;
     dthread->call_start_function();
 }
@@ -124,7 +124,7 @@ bool GrowableCache::equals(void* v, GrowableElement *e2) {
 
 GrowableCache::GrowableCache() {
   _this_obj       = NULL;
-  _listener_fun   = NULL;    
+  _listener_fun   = NULL;
   _elements       = NULL;
   _cache          = NULL;
 }
@@ -137,14 +137,14 @@ GrowableCache::~GrowableCache() {
 
 void GrowableCache::initialize(void *this_obj, void listener_fun(void *, address*) ) {
   _this_obj       = this_obj;
-  _listener_fun   = listener_fun;    
+  _listener_fun   = listener_fun;
   _elements       = new (ResourceObj::C_HEAP) GrowableArray<GrowableElement*>(5,true);
   recache();
 }
 
 // number of elements in the collection
-int GrowableCache::length() { 
-  return _elements->length(); 
+int GrowableCache::length() {
+  return _elements->length();
 }
 
 // get the value of the index element in the collection
@@ -153,7 +153,7 @@ GrowableElement* GrowableCache::at(int index) {
   assert(e != NULL, "e != NULL");
   return e;
 }
- 
+
 int GrowableCache::find(GrowableElement* e) {
   return _elements->find(e, GrowableCache::equals);
 }
@@ -260,7 +260,7 @@ JvmtiBreakpoint::JvmtiBreakpoint() {
 JvmtiBreakpoint::JvmtiBreakpoint(methodOop m_method, jlocation location) {
   _method        = m_method;
   assert(_method != NULL, "_method != NULL");
-  _bci           = (int) location;  
+  _bci           = (int) location;
 #ifdef CHECK_UNHANDLED_OOPS
   // Could be allocated with new and wouldn't be on the unhandled oop list.
   Thread *thread = Thread::current();
@@ -269,7 +269,7 @@ JvmtiBreakpoint::JvmtiBreakpoint(methodOop m_method, jlocation location) {
   }
 #endif // CHECK_UNHANDLED_OOPS
 
-  assert(_bci >= 0, "_bci >= 0"); 
+  assert(_bci >= 0, "_bci >= 0");
 }
 
 void JvmtiBreakpoint::copy(JvmtiBreakpoint& bp) {
@@ -307,7 +307,7 @@ void JvmtiBreakpoint::each_method_version_do(method_action meth_act) {
   symbolOop m_name = _method->name();
   symbolOop m_signature = _method->signature();
 
-  { 
+  {
     ResourceMark rm(thread);
     // PreviousVersionInfo objects returned via PreviousVersionWalker
     // contain a GrowableArray of handles. We have to clean up the
@@ -404,7 +404,7 @@ void VM_ChangeBreakpoints::oops_do(OopClosure* f) {
 }
 
 //
-// class JvmtiBreakpoints 
+// class JvmtiBreakpoints
 //
 // a JVMTI internal collection of JvmtiBreakpoint
 //
@@ -415,13 +415,13 @@ JvmtiBreakpoints::JvmtiBreakpoints(void listener_fun(void *,address *)) {
 
 JvmtiBreakpoints:: ~JvmtiBreakpoints() {}
 
-void  JvmtiBreakpoints::oops_do(OopClosure* f) {  
+void  JvmtiBreakpoints::oops_do(OopClosure* f) {
   _bps.oops_do(f);
-} 
+}
 
-void  JvmtiBreakpoints::gc_epilogue() {  
+void  JvmtiBreakpoints::gc_epilogue() {
   _bps.gc_epilogue();
-} 
+}
 
 void  JvmtiBreakpoints::print() {
 #ifndef PRODUCT
@@ -442,7 +442,7 @@ void JvmtiBreakpoints::set_at_safepoint(JvmtiBreakpoint& bp) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
 
   int i = _bps.find(bp);
-  if (i == -1) { 
+  if (i == -1) {
     _bps.append(bp);
     bp.set();
   }
@@ -467,7 +467,7 @@ void JvmtiBreakpoints::clearall_at_safepoint() {
   }
   _bps.clear();
 }
- 
+
 int JvmtiBreakpoints::length() { return _bps.length(); }
 
 int JvmtiBreakpoints::set(JvmtiBreakpoint& bp) {
@@ -522,7 +522,7 @@ void JvmtiBreakpoints::clearall() {
 
 //
 // class JvmtiCurrentBreakpoints
-// 
+//
 
 JvmtiBreakpoints *JvmtiCurrentBreakpoints::_jvmti_breakpoints  = NULL;
 address *         JvmtiCurrentBreakpoints::_breakpoint_list    = NULL;
@@ -535,7 +535,7 @@ JvmtiBreakpoints& JvmtiCurrentBreakpoints::get_jvmti_breakpoints() {
   return (*_jvmti_breakpoints);
 }
 
-void  JvmtiCurrentBreakpoints::listener_fun(void *this_obj, address *cache) { 
+void  JvmtiCurrentBreakpoints::listener_fun(void *this_obj, address *cache) {
   JvmtiBreakpoints *this_jvmti = (JvmtiBreakpoints *) this_obj;
   assert(this_jvmti != NULL, "this_jvmti != NULL");
 
@@ -546,13 +546,13 @@ void  JvmtiCurrentBreakpoints::listener_fun(void *this_obj, address *cache) {
 }
 
 
-void JvmtiCurrentBreakpoints::oops_do(OopClosure* f) { 
+void JvmtiCurrentBreakpoints::oops_do(OopClosure* f) {
   if (_jvmti_breakpoints != NULL) {
     _jvmti_breakpoints->oops_do(f);
   }
 }
 
-void JvmtiCurrentBreakpoints::gc_epilogue() { 
+void JvmtiCurrentBreakpoints::gc_epilogue() {
   if (_jvmti_breakpoints != NULL) {
     _jvmti_breakpoints->gc_epilogue();
   }
@@ -574,7 +574,7 @@ VM_GetOrSetLocal::VM_GetOrSetLocal(JavaThread* thread, jint depth, int index, Ba
   , _set(false)
   , _jvf(NULL)
   , _result(JVMTI_ERROR_NONE)
-{  
+{
 }
 
 // Constructor for object or non-object setter
@@ -662,7 +662,7 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
     }
   }
   // Compare secondary supers
-  objArrayOop sec_supers = klass->secondary_supers(); 
+  objArrayOop sec_supers = klass->secondary_supers();
   for (idx = 0; idx < sec_supers->length(); idx++) {
     if (Klass::cast((klassOop) sec_supers->obj_at(idx))->name() == ty_sym()) {
       return true;
@@ -675,7 +675,7 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
 //   JVMTI_ERROR_INVALID_SLOT
 //   JVMTI_ERROR_TYPE_MISMATCH
 // Returns: 'true' - everything is Ok, 'false' - error code
-  
+
 bool VM_GetOrSetLocal::check_slot_type(javaVFrame* jvf) {
   methodOop method_oop = jvf->method();
   if (!method_oop->has_localvariable_table()) {
@@ -691,7 +691,7 @@ bool VM_GetOrSetLocal::check_slot_type(javaVFrame* jvf) {
   jint num_entries = method_oop->localvariable_table_length();
   if (num_entries == 0) {
     _result = JVMTI_ERROR_INVALID_SLOT;
-    return false;	// There are no slots
+    return false;       // There are no slots
   }
   int signature_idx = -1;
   int vf_bci = jvf->bci();
@@ -709,7 +709,7 @@ bool VM_GetOrSetLocal::check_slot_type(javaVFrame* jvf) {
   }
   if (signature_idx == -1) {
     _result = JVMTI_ERROR_INVALID_SLOT;
-    return false;	// Incorrect slot index
+    return false;       // Incorrect slot index
   }
   symbolOop   sign_sym  = method_oop->constants()->symbol_at(signature_idx);
   const char* signature = (const char *) sign_sym->as_utf8();
@@ -725,7 +725,7 @@ bool VM_GetOrSetLocal::check_slot_type(javaVFrame* jvf) {
   case T_ARRAY:
     slot_type = T_OBJECT;
     break;
-  };    
+  };
   if (_type != slot_type) {
     _result = JVMTI_ERROR_TYPE_MISMATCH;
     return false;
@@ -754,7 +754,7 @@ static bool can_be_deoptimized(vframe* vf) {
   return (vf->is_compiled_frame() && vf->fr().can_be_deoptimized());
 }
 
-bool VM_GetOrSetLocal::doit_prologue() { 
+bool VM_GetOrSetLocal::doit_prologue() {
   _jvf = get_java_vframe();
   NULL_CHECK(_jvf, false);
 
@@ -850,7 +850,7 @@ bool VM_GetOrSetLocal::allow_nested_vm_operations() const {
 // class JvmtiSuspendControl - see comments in jvmtiImpl.hpp
 //
 
-bool JvmtiSuspendControl::suspend(JavaThread *java_thread) {  
+bool JvmtiSuspendControl::suspend(JavaThread *java_thread) {
   // external suspend should have caught suspending a thread twice
 
   // Immediate suspension required for JPDA back-end so JVMTI agent threads do
@@ -877,17 +877,17 @@ bool JvmtiSuspendControl::suspend(JavaThread *java_thread) {
   return true;
 }
 
-bool JvmtiSuspendControl::resume(JavaThread *java_thread) {  
+bool JvmtiSuspendControl::resume(JavaThread *java_thread) {
   // external suspend should have caught resuming a thread twice
   assert(java_thread->is_being_ext_suspended(), "thread should be suspended");
 
   // resume thread
   {
     // must always grab Threads_lock, see JVM_SuspendThread
-    MutexLocker ml(Threads_lock);  
-    java_thread->java_resume(); 
+    MutexLocker ml(Threads_lock);
+    java_thread->java_resume();
   }
- 
+
   return true;
 }
 
@@ -911,5 +911,5 @@ void JvmtiSuspendControl::print() {
     tty->print(") ");
   }
   tty->print_cr("]");
-#endif  
+#endif
 }

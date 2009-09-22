@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
 
 import com.sun.jdi.*;
 
-public abstract class PrimitiveValueImpl extends ValueImpl 
+public abstract class PrimitiveValueImpl extends ValueImpl
                                          implements PrimitiveValue {
 
     PrimitiveValueImpl(VirtualMachine aVm) {
@@ -43,7 +43,7 @@ public abstract class PrimitiveValueImpl extends ValueImpl
     abstract public double doubleValue();
 
     /*
-     * The checked versions of the value accessors throw 
+     * The checked versions of the value accessors throw
      * InvalidTypeException if the required conversion is
      * narrowing and would result in the loss of information
      * (either magnitude or precision).
@@ -85,7 +85,7 @@ public abstract class PrimitiveValueImpl extends ValueImpl
     final double checkedDoubleValue() throws InvalidTypeException {
         /*
          * Can't overflow by converting to double, so this method
-         * is never overridden 
+         * is never overridden
          */
         return doubleValue();
     }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)bytecode.cpp	1.69 07/05/05 17:05:36 JVM"
+#pragma ident "@(#)bytecode.cpp 1.69 07/05/05 17:05:36 JVM"
 #endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -102,20 +102,20 @@ BasicType Bytecode_invoke::result_type(Thread *thread) const {
   symbolHandle sh(thread, signature());
   ResultTypeFinder rts(sh);
   rts.iterate();
-  return rts.type();    
+  return rts.type();
 }
 
 
-methodHandle Bytecode_invoke::static_target(TRAPS) {  
-  methodHandle m;  
+methodHandle Bytecode_invoke::static_target(TRAPS) {
+  methodHandle m;
   KlassHandle resolved_klass;
   constantPoolHandle constants(THREAD, _method->constants());
-  
-  if (adjusted_invoke_code() != Bytecodes::_invokeinterface) {        
-    LinkResolver::resolve_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));    
-  } else {    
+
+  if (adjusted_invoke_code() != Bytecodes::_invokeinterface) {
+    LinkResolver::resolve_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));
+  } else {
     LinkResolver::resolve_interface_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));
-  }   
+  }
   return m;
 }
 
@@ -135,7 +135,7 @@ void Bytecode_static::verify() const {
 
 BasicType Bytecode_static::result_type(methodOop method) const {
   int index = java_hwrd_at(1);
-  constantPoolOop constants = method->constants(); 
+  constantPoolOop constants = method->constants();
   symbolOop field_type = constants->signature_ref_at(index);
   BasicType basic_type = FieldType::basic_type(field_type);
   return basic_type;
@@ -176,13 +176,13 @@ int Bytecode_loadconstant::index() const {
 
 void Bytecode_lookupswitch::verify() const {
   switch (Bytecodes::java_code(code())) {
-    case Bytecodes::_lookupswitch:      
+    case Bytecodes::_lookupswitch:
       { int i = number_of_pairs() - 1;
         while (i-- > 0) {
           assert(pair_at(i)->match() < pair_at(i+1)->match(), "unsorted table entries");
         }
       }
-      break;            
+      break;
     default:
       fatal("not a lookupswitch bytecode");
   }
@@ -206,4 +206,3 @@ void Bytecode_tableswitch::verify() const {
 }
 
 #endif
-

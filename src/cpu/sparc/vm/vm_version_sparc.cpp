@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vm_version_sparc.cpp	1.56 07/07/02 18:40:59 JVM"
+#pragma ident "@(#)vm_version_sparc.cpp 1.56 07/07/02 18:40:59 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -39,7 +39,7 @@ bool VM_Version::is_niagara1_plus() {
 
 void VM_Version::initialize() {
   _features = determine_features();
-  PrefetchCopyIntervalInBytes = prefetch_copy_interval_in_bytes(); 
+  PrefetchCopyIntervalInBytes = prefetch_copy_interval_in_bytes();
   PrefetchScanIntervalInBytes = prefetch_scan_interval_in_bytes();
   PrefetchFieldsAhead         = prefetch_fields_ahead();
 
@@ -108,7 +108,7 @@ void VM_Version::initialize() {
   _features_str = strdup(strlen(buf) > 2 ? buf + 2 : buf);
 
 #ifndef PRODUCT
-  if (PrintMiscellaneous && Verbose) { 
+  if (PrintMiscellaneous && Verbose) {
     tty->print("Allocation: ");
     if (AllocatePrefetchStyle <= 0) {
       tty->print_cr("no prefetching");
@@ -140,7 +140,7 @@ int VM_Version::determine_features() {
   if (UseV8InstrsOnly) {
     NOT_PRODUCT(if (PrintMiscellaneous && Verbose) tty->print_cr("Version is Forced-V8");)
     return generic_v8_m;
-  } 
+  }
 
   int features = platform_features(unknown_m); // platform_features() is os_arch specific
 

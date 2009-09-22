@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)templateInterpreterGenerator.hpp	1.1 07/08/07 10:57:15 JVM"
+#pragma ident "@(#)templateInterpreterGenerator.hpp     1.1 07/08/07 10:57:15 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file contains the platform-independant parts
@@ -61,7 +61,7 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
 
   // entry point generator
 //   address generate_method_entry(AbstractInterpreter::MethodKind kind);
-  
+
   // Instruction generation
   void generate_and_dispatch (Template* t, TosState tos_out = ilgl);
   void set_vtos_entry_points (Template* t, address& bep, address& cep, address& sep, address& aep, address& iep, address& lep, address& fep, address& dep, address& vep);
@@ -75,7 +75,7 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
 
   // Helpers for generate_and_dispatch
   address generate_trace_code(TosState state)   PRODUCT_RETURN0;
-  void count_bytecode()                         PRODUCT_RETURN;  
+  void count_bytecode()                         PRODUCT_RETURN;
   void histogram_bytecode(Template* t)          PRODUCT_RETURN;
   void histogram_bytecode_pair(Template* t)     PRODUCT_RETURN;
   void trace_bytecode(Template* t)              PRODUCT_RETURN;

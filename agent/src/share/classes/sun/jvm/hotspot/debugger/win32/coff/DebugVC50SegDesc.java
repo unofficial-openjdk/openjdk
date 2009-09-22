@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -44,7 +44,7 @@ public interface DebugVC50SegDesc {
 
       <p>
       <table>
-      <tr> <td> fAbs <td> fSel <td> ovl <td> Operation 
+      <tr> <td> fAbs <td> fSel <td> ovl <td> Operation
       <tr> <td> 0    <td> 0    <td> 0   <td> Frame is added to PSP + 0x10 if not a .com file
       <tr> <td> 0    <td> 0    <td> 0   <td> Frame is added to PSP if it is a .com file
       <tr> <td> 0    <td> 0    <td> != 0 <td> Frame is added to current overlay base

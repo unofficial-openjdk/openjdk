@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)virtualspace.cpp	1.63 07/10/04 10:49:29 JVM"
+#pragma ident "@(#)virtualspace.cpp     1.63 07/10/04 10:49:29 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -44,10 +44,10 @@ ReservedSpace::ReservedSpace(size_t size, size_t alignment,
 
 char *
 ReservedSpace::align_reserved_region(char* addr, const size_t len,
-				     const size_t prefix_size,
-				     const size_t prefix_align,
-				     const size_t suffix_size,
-				     const size_t suffix_align)
+                                     const size_t prefix_size,
+                                     const size_t prefix_align,
+                                     const size_t suffix_size,
+                                     const size_t suffix_align)
 {
   assert(addr != NULL, "sanity");
   const size_t required_size = prefix_size + suffix_size;
@@ -75,10 +75,10 @@ ReservedSpace::align_reserved_region(char* addr, const size_t len,
 }
 
 char* ReservedSpace::reserve_and_align(const size_t reserve_size,
-				       const size_t prefix_size,
-				       const size_t prefix_align,
-				       const size_t suffix_size,
-				       const size_t suffix_align)
+                                       const size_t prefix_size,
+                                       const size_t prefix_align,
+                                       const size_t suffix_size,
+                                       const size_t suffix_align)
 {
   assert(reserve_size > prefix_size + suffix_size, "should not be here");
 
@@ -86,8 +86,8 @@ char* ReservedSpace::reserve_and_align(const size_t reserve_size,
   if (raw_addr == NULL) return NULL;
 
   char* result = align_reserved_region(raw_addr, reserve_size, prefix_size,
-				       prefix_align, suffix_size,
-				       suffix_align);
+                                       prefix_align, suffix_size,
+                                       suffix_align);
   if (result == NULL && !os::release_memory(raw_addr, reserve_size)) {
     fatal("os::release_memory failed");
   }
@@ -98,10 +98,10 @@ char* ReservedSpace::reserve_and_align(const size_t reserve_size,
     const size_t res = size_t(result);
     assert(res >= raw, "alignment decreased start addr");
     assert(res + prefix_size + suffix_size <= raw + reserve_size,
-	   "alignment increased end addr");
+           "alignment increased end addr");
     assert((res & prefix_align - 1) == 0, "bad alignment of prefix");
     assert((res + prefix_size & suffix_align - 1) == 0,
-	   "bad alignment of suffix");
+           "bad alignment of suffix");
   }
 #endif
 
@@ -157,7 +157,7 @@ ReservedSpace::ReservedSpace(const size_t prefix_size,
   const size_t ofs = size_t(addr) + adjusted_prefix_size & suffix_align - 1;
   if (ofs != 0) {
     // Wrong alignment.  Release, allocate more space and do manual alignment.
-    // 
+    //
     // On most operating systems, another allocation with a somewhat larger size
     // will return an address "close to" that of the previous allocation.  The
     // result is often the same address (if the kernel hands out virtual
@@ -192,7 +192,7 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
   assert((alignment & granularity - 1) == 0,
          "alignment not aligned to os::vm_allocation_granularity()");
   assert(alignment == 0 || is_power_of_2((intptr_t)alignment),
-	 "not a power of 2");
+         "not a power of 2");
 
   _base = NULL;
   _size = 0;
@@ -203,24 +203,24 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
     return;
   }
 
-  // If OS doesn't support demand paging for large page memory, we need 
+  // If OS doesn't support demand paging for large page memory, we need
   // to use reserve_memory_special() to reserve and pin the entire region.
   bool special = large && !os::can_commit_large_page_memory();
   char* base = NULL;
 
   if (special) {
     // It's not hard to implement reserve_memory_special() such that it can
-    // allocate at fixed address, but there seems no use of this feature 
+    // allocate at fixed address, but there seems no use of this feature
     // for now, so it's not implemented.
     assert(requested_address == NULL, "not implemented");
 
     base = os::reserve_memory_special(size);
-    
+
     if (base != NULL) {
       // Check alignment constraints
       if (alignment > 0) {
-        assert((uintptr_t) base % alignment == 0, 
-               "Large pages returned a non-aligned address"); 
+        assert((uintptr_t) base % alignment == 0,
+               "Large pages returned a non-aligned address");
       }
       _special = true;
     } else {
@@ -230,7 +230,7 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
 
   if (base == NULL) {
     // Optimistically assume that the OSes returns an aligned base pointer.
-    // When reserving a large address range, most OSes seem to align to at 
+    // When reserving a large address range, most OSes seem to align to at
     // least 64K.
 
     // If the memory was requested at a particular address, use
@@ -277,14 +277,14 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
          noaccess_prefix == _alignment, "noaccess prefix wrong");
 
   assert(markOopDesc::encode_pointer_as_mark(_base)->decode_pointer() == _base,
-	 "area must be distinguisable from marks for mark-sweep");
+         "area must be distinguisable from marks for mark-sweep");
   assert(markOopDesc::encode_pointer_as_mark(&_base[size])->decode_pointer() == &_base[size],
-	 "area must be distinguisable from marks for mark-sweep");
+         "area must be distinguisable from marks for mark-sweep");
 }
 
 
-ReservedSpace::ReservedSpace(char* base, size_t size, size_t alignment, 
-			     bool special) {
+ReservedSpace::ReservedSpace(char* base, size_t size, size_t alignment,
+                             bool special) {
   assert((size % os::vm_allocation_granularity()) == 0,
          "size not allocation aligned");
   _base = base;
@@ -310,7 +310,7 @@ ReservedSpace
 ReservedSpace::last_part(size_t partition_size, size_t alignment) {
   assert(partition_size <= size(), "partition failed");
   ReservedSpace result(base() + partition_size, size() - partition_size,
-		       alignment, special());
+                       alignment, special());
   return result;
 }
 
@@ -422,17 +422,17 @@ bool VirtualSpace::initialize(ReservedSpace rs, size_t committed_size) {
   _high = low();
 
   _special = rs.special();
-  
+
   // When a VirtualSpace begins life at a large size, make all future expansion
   // and shrinking occur aligned to a granularity of large pages.  This avoids
   // fragmentation of physical addresses that inhibits the use of large pages
-  // by the OS virtual memory system.  Empirically,  we see that with a 4MB 
-  // page size, the only spaces that get handled this way are codecache and 
-  // the heap itself, both of which provide a substantial performance 
+  // by the OS virtual memory system.  Empirically,  we see that with a 4MB
+  // page size, the only spaces that get handled this way are codecache and
+  // the heap itself, both of which provide a substantial performance
   // boost in many benchmarks when covered by large pages.
   //
-  // No attempt is made to force large page alignment at the very top and 
-  // bottom of the space if they are not aligned so already. 
+  // No attempt is made to force large page alignment at the very top and
+  // bottom of the space if they are not aligned so already.
   _lower_alignment  = os::vm_page_size();
   _middle_alignment = os::page_size_for_region(rs.size(), rs.size(), 1);
   _upper_alignment  = os::vm_page_size();
@@ -457,7 +457,7 @@ bool VirtualSpace::initialize(ReservedSpace rs, size_t committed_size) {
 }
 
 
-VirtualSpace::~VirtualSpace() { 
+VirtualSpace::~VirtualSpace() {
   release();
 }
 
@@ -482,7 +482,7 @@ void VirtualSpace::release() {
 }
 
 
-size_t VirtualSpace::committed_size() const { 
+size_t VirtualSpace::committed_size() const {
   return pointer_delta(high(), low(), sizeof(char));
 }
 
@@ -501,12 +501,12 @@ bool VirtualSpace::contains(const void* p) const {
   return low() <= (const char*) p && (const char*) p < high();
 }
 
-/* 
+/*
    First we need to determine if a particular virtual space is using large
    pages.  This is done at the initialize function and only virtual spaces
    that are larger than LargePageSizeInBytes use large pages.  Once we
    have determined this, all expand_by and shrink_by calls must grow and
-   shrink by large page size chunks.  If a particular request 
+   shrink by large page size chunks.  If a particular request
    is within the current large page, the call to commit and uncommit memory
    can be ignored.  In the case that the low and high boundaries of this
    space is not large page aligned, the pages leading to the first large
@@ -524,25 +524,25 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
 
   char* previous_high = high();
   char* unaligned_new_high = high() + bytes;
-  assert(unaligned_new_high <= high_boundary(), 
+  assert(unaligned_new_high <= high_boundary(),
          "cannot expand by more than upper boundary");
 
   // Calculate where the new high for each of the regions should be.  If
   // the low_boundary() and high_boundary() are LargePageSizeInBytes aligned
-  // then the unaligned lower and upper new highs would be the 
+  // then the unaligned lower and upper new highs would be the
   // lower_high() and upper_high() respectively.
-  char* unaligned_lower_new_high = 
+  char* unaligned_lower_new_high =
     MIN2(unaligned_new_high, lower_high_boundary());
-  char* unaligned_middle_new_high = 
+  char* unaligned_middle_new_high =
     MIN2(unaligned_new_high, middle_high_boundary());
-  char* unaligned_upper_new_high = 
+  char* unaligned_upper_new_high =
     MIN2(unaligned_new_high, upper_high_boundary());
 
-  // Align the new highs based on the regions alignment.  lower and upper 
+  // Align the new highs based on the regions alignment.  lower and upper
   // alignment will always be default page size.  middle alignment will be
   // LargePageSizeInBytes if the actual size of the virtual space is in
   // fact larger than LargePageSizeInBytes.
-  char* aligned_lower_new_high = 
+  char* aligned_lower_new_high =
     (char*) round_to((intptr_t) unaligned_lower_new_high, lower_alignment());
   char* aligned_middle_new_high =
     (char*) round_to((intptr_t) unaligned_middle_new_high, middle_alignment());
@@ -552,8 +552,8 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
   // Determine which regions need to grow in this expand_by call.
   // If you are growing in the lower region, high() must be in that
   // region so calcuate the size based on high().  For the middle and
-  // upper regions, determine the starting point of growth based on the 
-  // location of high().  By getting the MAX of the region's low address 
+  // upper regions, determine the starting point of growth based on the
+  // location of high().  By getting the MAX of the region's low address
   // (or the prevoius region's high address) and high(), we can tell if it
   // is an intra or inter region growth.
   size_t lower_needs = 0;
@@ -573,21 +573,21 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
   }
 
   // Check contiguity.
-  assert(low_boundary() <= lower_high() && 
+  assert(low_boundary() <= lower_high() &&
          lower_high() <= lower_high_boundary(),
-	 "high address must be contained within the region");
-  assert(lower_high_boundary() <= middle_high() && 
-	 middle_high() <= middle_high_boundary(),
-	 "high address must be contained within the region");
+         "high address must be contained within the region");
+  assert(lower_high_boundary() <= middle_high() &&
+         middle_high() <= middle_high_boundary(),
+         "high address must be contained within the region");
   assert(middle_high_boundary() <= upper_high() &&
-	 upper_high() <= upper_high_boundary(), 
-	 "high address must be contained within the region");
+         upper_high() <= upper_high_boundary(),
+         "high address must be contained within the region");
 
   // Commit regions
   if (lower_needs > 0) {
     assert(low_boundary() <= lower_high() &&
-	   lower_high() + lower_needs <= lower_high_boundary(), 
-	   "must not expand beyond region");
+           lower_high() + lower_needs <= lower_high_boundary(),
+           "must not expand beyond region");
     if (!os::commit_memory(lower_high(), lower_needs)) {
       debug_only(warning("os::commit_memory failed"));
       return false;
@@ -597,18 +597,18 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
   }
   if (middle_needs > 0) {
     assert(lower_high_boundary() <= middle_high() &&
-	   middle_high() + middle_needs <= middle_high_boundary(), 
-	   "must not expand beyond region");
+           middle_high() + middle_needs <= middle_high_boundary(),
+           "must not expand beyond region");
     if (!os::commit_memory(middle_high(), middle_needs, middle_alignment())) {
       debug_only(warning("os::commit_memory failed"));
       return false;
-    } 
+    }
     _middle_high += middle_needs;
   }
   if (upper_needs > 0) {
     assert(middle_high_boundary() <= upper_high() &&
-	   upper_high() + upper_needs <= upper_high_boundary(), 
-	   "must not expand beyond region");
+           upper_high() + upper_needs <= upper_high_boundary(),
+           "must not expand beyond region");
     if (!os::commit_memory(upper_high(), upper_needs)) {
       debug_only(warning("os::commit_memory failed"));
       return false;
@@ -620,8 +620,8 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
   if (pre_touch || AlwaysPreTouch) {
     int vm_ps = os::vm_page_size();
     for (char* curr = previous_high;
- 	 curr < unaligned_new_high;
- 	 curr += vm_ps) {
+         curr < unaligned_new_high;
+         curr += vm_ps) {
       // Note the use of a write here; originally we tried just a read, but
       // since the value read was unused, the optimizer removed the read.
       // If we ever have a concurrent touchahead thread, we'll want to use
@@ -632,7 +632,7 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
       *curr = 0;
     }
   }
-  
+
   _high += bytes;
   return true;
 }
@@ -641,7 +641,7 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
 // Continue to decrement the high() pointer until it reaches a page boundary
 // in which case that particular page can now be uncommitted.
 void VirtualSpace::shrink_by(size_t size) {
-  if (committed_size() < size) 
+  if (committed_size() < size)
     fatal("Cannot shrink virtual space to negative size");
 
   if (special()) {
@@ -654,65 +654,65 @@ void VirtualSpace::shrink_by(size_t size) {
   assert(unaligned_new_high >= low_boundary(), "cannot shrink past lower boundary");
 
   // Calculate new unaligned address
-  char* unaligned_upper_new_high = 
+  char* unaligned_upper_new_high =
     MAX2(unaligned_new_high, middle_high_boundary());
-  char* unaligned_middle_new_high = 
+  char* unaligned_middle_new_high =
     MAX2(unaligned_new_high, lower_high_boundary());
-  char* unaligned_lower_new_high = 
+  char* unaligned_lower_new_high =
     MAX2(unaligned_new_high, low_boundary());
 
   // Align address to region's alignment
-  char* aligned_upper_new_high = 
+  char* aligned_upper_new_high =
     (char*) round_to((intptr_t) unaligned_upper_new_high, upper_alignment());
-  char* aligned_middle_new_high = 
+  char* aligned_middle_new_high =
     (char*) round_to((intptr_t) unaligned_middle_new_high, middle_alignment());
-  char* aligned_lower_new_high = 
+  char* aligned_lower_new_high =
     (char*) round_to((intptr_t) unaligned_lower_new_high, lower_alignment());
-  
+
   // Determine which regions need to shrink
   size_t upper_needs = 0;
   if (aligned_upper_new_high < upper_high()) {
-    upper_needs = 
+    upper_needs =
       pointer_delta(upper_high(), aligned_upper_new_high, sizeof(char));
   }
   size_t middle_needs = 0;
   if (aligned_middle_new_high < middle_high()) {
-    middle_needs = 
+    middle_needs =
       pointer_delta(middle_high(), aligned_middle_new_high, sizeof(char));
   }
   size_t lower_needs = 0;
   if (aligned_lower_new_high < lower_high()) {
-    lower_needs = 
+    lower_needs =
       pointer_delta(lower_high(), aligned_lower_new_high, sizeof(char));
   }
-  
+
   // Check contiguity.
   assert(middle_high_boundary() <= upper_high() &&
-	 upper_high() <= upper_high_boundary(), 
-	 "high address must be contained within the region");
-  assert(lower_high_boundary() <= middle_high() && 
-	 middle_high() <= middle_high_boundary(),
-	 "high address must be contained within the region");
-  assert(low_boundary() <= lower_high() && 
-	 lower_high() <= lower_high_boundary(),
-	 "high address must be contained within the region");
+         upper_high() <= upper_high_boundary(),
+         "high address must be contained within the region");
+  assert(lower_high_boundary() <= middle_high() &&
+         middle_high() <= middle_high_boundary(),
+         "high address must be contained within the region");
+  assert(low_boundary() <= lower_high() &&
+         lower_high() <= lower_high_boundary(),
+         "high address must be contained within the region");
 
   // Uncommit
   if (upper_needs > 0) {
     assert(middle_high_boundary() <= aligned_upper_new_high &&
-	   aligned_upper_new_high + upper_needs <= upper_high_boundary(), 
-	   "must not shrink beyond region");
+           aligned_upper_new_high + upper_needs <= upper_high_boundary(),
+           "must not shrink beyond region");
     if (!os::uncommit_memory(aligned_upper_new_high, upper_needs)) {
       debug_only(warning("os::uncommit_memory failed"));
       return;
     } else {
       _upper_high -= upper_needs;
     }
-  } 
+  }
   if (middle_needs > 0) {
     assert(lower_high_boundary() <= aligned_middle_new_high &&
-	   aligned_middle_new_high + middle_needs <= middle_high_boundary(), 
-	   "must not shrink beyond region");
+           aligned_middle_new_high + middle_needs <= middle_high_boundary(),
+           "must not shrink beyond region");
     if (!os::uncommit_memory(aligned_middle_new_high, middle_needs)) {
       debug_only(warning("os::uncommit_memory failed"));
       return;
@@ -722,8 +722,8 @@ void VirtualSpace::shrink_by(size_t size) {
   }
   if (lower_needs > 0) {
     assert(low_boundary() <= aligned_lower_new_high &&
-	   aligned_lower_new_high + lower_needs <= lower_high_boundary(), 
-	   "must not shrink beyond region");
+           aligned_lower_new_high + lower_needs <= lower_high_boundary(),
+           "must not shrink beyond region");
     if (!os::uncommit_memory(aligned_lower_new_high, lower_needs)) {
       debug_only(warning("os::uncommit_memory failed"));
       return;
@@ -731,17 +731,17 @@ void VirtualSpace::shrink_by(size_t size) {
       _lower_high -= lower_needs;
     }
   }
-  
+
   _high -= size;
 }
 
 #ifndef PRODUCT
 void VirtualSpace::check_for_contiguity() {
   // Check contiguity.
-  assert(low_boundary() <= lower_high() && 
+  assert(low_boundary() <= lower_high() &&
          lower_high() <= lower_high_boundary(),
          "high address must be contained within the region");
-  assert(lower_high_boundary() <= middle_high() && 
+  assert(lower_high_boundary() <= middle_high() &&
          middle_high() <= middle_high_boundary(),
          "high address must be contained within the region");
   assert(middle_high_boundary() <= upper_high() &&
@@ -753,7 +753,7 @@ void VirtualSpace::check_for_contiguity() {
   assert(high() <= upper_high(), "upper high");
 }
 
-void VirtualSpace::print() {  
+void VirtualSpace::print() {
   tty->print   ("Virtual space:");
   if (special()) tty->print(" (pinned in memory)");
   tty->cr();
@@ -764,4 +764,3 @@ void VirtualSpace::print() {
 }
 
 #endif
-

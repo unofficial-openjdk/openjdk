@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -40,10 +40,10 @@ public class InterpretedVFrame extends JavaVFrame {
     Method m = getMethod();
 
     int length = (int) m.getMaxLocals();
-    
+
     if (m.isNative()) {
       // If the method is native, getMaxLocals is not telling the truth.
-      // maxlocals then equals the size of parameters 
+      // maxlocals then equals the size of parameters
       length = (int) m.getSizeOfParameters();
     }
 
@@ -75,24 +75,24 @@ public class InterpretedVFrame extends JavaVFrame {
 
   public StackValueCollection getExpressions() {
     int length = getFrame().getInterpreterFrameExpressionStackSize();
-    
+
     if (getMethod().isNative()) {
       // If the method is native, there is no expression stack
       length = 0;
     }
-    
+
     int nofLocals = (int) getMethod().getMaxLocals();
     StackValueCollection result = new StackValueCollection(length);
-    
+
     // Get oopmap describing oops and int for current bci
     OopMapCacheEntry oopMask = getMethod().getMaskFor(getBCI());
-    
+
     for(int i = 0; i < length; i++) {
       // Find stack location
-      Address addr = addressOfExpressionStackAt(i);           
+      Address addr = addressOfExpressionStackAt(i);
 
       // Depending on oop/int put it in the right package
-      StackValue sv;    
+      StackValue sv;
       if (oopMask.isOop(i + nofLocals)) {
         // oop value
         sv = new StackValue(addr.getOopHandleAt(0));
@@ -100,7 +100,7 @@ public class InterpretedVFrame extends JavaVFrame {
         // integer
         // Fetch a signed integer the size of a stack slot
         sv = new StackValue(addr.getCIntegerAt(0, VM.getVM().getAddressSize(), false));
-      }    
+      }
       result.add(sv);
     }
 

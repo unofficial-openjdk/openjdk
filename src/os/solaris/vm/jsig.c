@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jsig.c	1.15 07/05/05 17:04:40 JVM"
+#pragma ident "@(#)jsig.c       1.15 07/05/05 17:04:40 JVM"
 #endif
 /*
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /* CopyrightVersion 1.2 */
@@ -47,7 +47,7 @@
 #define false 0
 
 static struct sigaction *sact = (struct sigaction *)NULL; /* saved signal handlers */
-static sigset_t jvmsigs; 
+static sigset_t jvmsigs;
 
 /* used to synchronize the installation of signal handlers */
 static mutex_t mutex = DEFAULTMUTEX;
@@ -75,7 +75,7 @@ static void allocate_sact() {
     memset(sact, 0, (maxsignum+1) * (size_t)sizeof(struct sigaction));
   }
 
-  if (sact == NULL) { 
+  if (sact == NULL) {
     printf("%s\n", "libjsig.so unable to allocate memory");
     exit(0);
   }
@@ -137,7 +137,7 @@ static sa_handler_t set_signal(int sig, sa_handler_t disp, bool is_sigset) {
   bool sigblocked;
 
   signal_lock();
-  if (sact == NULL) { 
+  if (sact == NULL) {
     allocate_sact();
   }
 
@@ -157,7 +157,7 @@ static sa_handler_t set_signal(int sig, sa_handler_t disp, bool is_sigset) {
 
     signal_unlock();
     return oldhandler;
-  } else if (jvm_signal_installing) { 
+  } else if (jvm_signal_installing) {
     /* jvm is installing its signal handlers. Install the new
      * handlers and save the old ones. jvm uses sigaction().
      * Leave the piece here just in case. */
@@ -220,7 +220,7 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact) {
 
     signal_unlock();
     return 0;
-  } else if (jvm_signal_installing) { 
+  } else if (jvm_signal_installing) {
     /* jvm is installing its signal handlers. Install the new
      * handlers and save the old ones. */
     res = call_os_sigaction(sig, act, &oldAct);

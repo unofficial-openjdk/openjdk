@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -35,7 +35,7 @@ public class LazyType extends BasicType {
   public LazyType(Object key) {
     this(key, 0);
   }
-  
+
   private LazyType(Object key, int cvAttributes) {
     super(null, 0, cvAttributes);
     if (Assert.ASSERTS_ENABLED) {

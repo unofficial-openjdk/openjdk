@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public class FloatField extends Field {
   }
 
   public FloatField(sun.jvm.hotspot.types.JFloatField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
   }
 
   public FloatField(InstanceKlass holder, int fieldArrayIndex) {
@@ -45,4 +45,3 @@ public class FloatField extends Field {
     // Fix this: setJFloatAt is missing in Address
   }
 }
-

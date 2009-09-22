@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger;
@@ -142,7 +142,7 @@ public class InputLexer {
     long b2 = ((long) readByte()) & 0xFF;
     long b3 = ((long) readByte()) & 0xFF;
     long b4 = ((long) readByte()) & 0xFF;
-    
+
     return ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
   }
 

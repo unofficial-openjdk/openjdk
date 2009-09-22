@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -91,7 +91,7 @@ public class Thread extends VMObject {
   public boolean hasAsyncException() {
     return (suspendFlags() & HAS_ASYNC_EXCEPTION) != 0;
   }
-  
+
   public ThreadLocalAllocBuffer tlab() {
     return new ThreadLocalAllocBuffer(addr.addOffsetTo(tlabFieldOffset));
   }
@@ -107,7 +107,7 @@ public class Thread extends VMObject {
   public boolean   isVMThread()                { return false; }
   public boolean   isJavaThread()              { return false; }
   public boolean   isCompilerThread()          { return false; }
-  public boolean   isHiddenFromExternalView()  { return false; } 
+  public boolean   isHiddenFromExternalView()  { return false; }
   public boolean   isJvmtiAgentThread()        { return false; }
   public boolean   isWatcherThread()           { return false; }
   public boolean   isConcurrentMarkSweepThread() { return false; }

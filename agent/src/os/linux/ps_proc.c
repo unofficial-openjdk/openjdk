@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ps_proc.c	1.17 07/05/05 17:02:02 JVM"
+#pragma ident "@(#)ps_proc.c    1.17 07/05/05 17:02:02 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include <stdio.h>
@@ -38,7 +38,7 @@
 
 #ifndef __WALL
 #define __WALL          0x40000000  // Copied from /usr/include/linux/wait.h
-#endif 
+#endif
 
 // This file has the libproc implementation specific to live process
 // For core files, refer to ps_core.c
@@ -53,7 +53,7 @@ static inline uintptr_t align(uintptr_t ptr, size_t size) {
 
 // read "size" bytes of data from "addr" within the target process.
 // unlike the standard ptrace() function, process_read_data() can handle
-// unaligned address - alignment check, if required, should be done 
+// unaligned address - alignment check, if required, should be done
 // before calling process_read_data.
 
 static bool process_read_data(struct ps_prochandle* ph, uintptr_t addr, char *buf, size_t size) {
@@ -71,8 +71,8 @@ static bool process_read_data(struct ps_prochandle* ph, uintptr_t addr, char *bu
       return false;
     }
     for (; aligned_addr != addr; aligned_addr++, ptr++);
-    for (; ((intptr_t)aligned_addr % sizeof(long)) && aligned_addr < end_addr; 
-        aligned_addr++) 
+    for (; ((intptr_t)aligned_addr % sizeof(long)) && aligned_addr < end_addr;
+        aligned_addr++)
        *(buf++) = *(ptr++);
   }
 
@@ -82,7 +82,7 @@ static bool process_read_data(struct ps_prochandle* ph, uintptr_t addr, char *bu
   for (i = 0; i < words; i++) {
     errno = 0;
     rslt = ptrace(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
-    if (errno) { 
+    if (errno) {
       print_debug("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx\n", size, addr);
       return false;
     }
@@ -99,14 +99,14 @@ static bool process_read_data(struct ps_prochandle* ph, uintptr_t addr, char *bu
       print_debug("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx\n", size, addr);
       return false;
     }
-    for (; aligned_addr != end_addr; aligned_addr++) 
+    for (; aligned_addr != end_addr; aligned_addr++)
        *(buf++) = *(ptr++);
   }
   return true;
 }
 
 // null implementation for write
-static bool process_write_data(struct ps_prochandle* ph, 
+static bool process_write_data(struct ps_prochandle* ph,
                              uintptr_t addr, const char *buf , size_t size) {
   return false;
 }
@@ -143,7 +143,7 @@ static bool process_get_lwp_regs(struct ps_prochandle* ph, pid_t pid, struct use
 #else
  print_debug("ptrace(PTRACE_GETREGS, ...) not supported\n");
  return false;
-#endif 
+#endif
 
 }
 
@@ -156,40 +156,40 @@ static bool ptrace_attach(pid_t pid) {
     int ret;
     int status;
     do {
-      // Wait for debuggee to stop. 
+      // Wait for debuggee to stop.
       ret = waitpid(pid, &status, 0);
       if (ret == -1 && errno == ECHILD) {
         // try cloned process.
         ret = waitpid(pid, &status, __WALL);
       }
       if (ret >= 0) {
-	if (WIFSTOPPED(status)) {
-	  // Debuggee stopped.
-	  return true;
+        if (WIFSTOPPED(status)) {
+          // Debuggee stopped.
+          return true;
         } else {
-    	  print_debug("waitpid(): Child process exited/terminated (status = 0x%x)\n", status);
-	  return false;
-	}
+          print_debug("waitpid(): Child process exited/terminated (status = 0x%x)\n", status);
+          return false;
+        }
       } else {
-	switch (errno) {
-	  case EINTR: 
+        switch (errno) {
+          case EINTR:
             continue;
-	    break;
-	  case ECHILD:
-    	    print_debug("waitpid() failed. Child process pid (%d) does not exist \n", pid);
-	    break;
-	  case EINVAL:
-    	    print_debug("waitpid() failed. Invalid options argument.\n");
-	    break;
-	  default:
-    	    print_debug("waitpid() failed. Unexpected error %d\n",errno);
+            break;
+          case ECHILD:
+            print_debug("waitpid() failed. Child process pid (%d) does not exist \n", pid);
+            break;
+          case EINVAL:
+            print_debug("waitpid() failed. Invalid options argument.\n");
+            break;
+          default:
+            print_debug("waitpid() failed. Unexpected error %d\n",errno);
         }
         return false;
-      } 
+      }
     } while(true);
-  } 
-} 
-  
+  }
+}
+
 // -------------------------------------------------------
 // functions for obtaining library information
 // -------------------------------------------------------
@@ -205,18 +205,18 @@ static int split_n_str(char * str, int n, char ** ptrs, char delim, char new_del
    int i;
    for(i = 0; i < n; i++) ptrs[i] = NULL;
    if (str == NULL || n < 1 ) return 0;
-   
+
    i = 0;
 
    // skipping leading blanks
    while(*str&&*str==delim) str++;
-   
+
    while(*str&&i<n){
      ptrs[i++] = str;
      while(*str&&*str!=delim) str++;
      while(*str&&*str==delim) *(str++) = new_delim;
    }
-   
+
    return i;
 }
 
@@ -277,7 +277,7 @@ static bool ptrace_detach(pid_t pid) {
     return false;
   } else {
     return true;
-  } 
+  }
 }
 
 // detach all pids of a ps_prochandle
@@ -325,7 +325,7 @@ struct ps_prochandle* Pgrab(pid_t pid) {
   // as the symbols in the pthread library will be used to figure out
   // the list of threads within the same process.
   read_lib_info(ph);
- 
+
   // read thread info
   read_thread_info(ph, add_new_thread);
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -59,7 +59,7 @@ public class CellTypeState {
   private static final int ref_slot_bit        = Bits.nthBit(24);
   // 0 if it is a "line" reference.
   private static final int ref_data_mask       = Bits.rightNBits(24);
-  
+
   // These values are used to initialize commonly used CellTypeState
   // constants.
   private static final int bottom_value        = 0;
@@ -109,7 +109,7 @@ public class CellTypeState {
       Assert.that(slot_num >= 0 && slot_num < ref_data_mask, "slot out of range");
     }
     return makeAny(ref_bit | not_bottom_info_bit | ref_not_lock_bit | ref_slot_bit |
-                   (slot_num & ref_data_mask)); 
+                   (slot_num & ref_data_mask));
   }
 
   public static CellTypeState makeLineRef(int bci) {
@@ -185,7 +185,7 @@ public class CellTypeState {
   public boolean equalKind(CellTypeState a) {
     return (_state & bits_mask) == (a._state & bits_mask);
   }
-  
+
   public char toChar() {
     if (canBeReference()) {
       if (canBeValue() || canBeAddress())
@@ -201,7 +201,7 @@ public class CellTypeState {
     else
       return '@';
   }
-  
+
   // Set
   public void set(CellTypeState cts) {
     _state = cts._state;

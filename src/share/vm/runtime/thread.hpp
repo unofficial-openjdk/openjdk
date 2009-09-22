@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)thread.hpp	1.456 07/09/28 10:22:58 JVM"
+#pragma ident "@(#)thread.hpp   1.456 07/09/28 10:22:58 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ThreadSafepointState;
@@ -32,7 +32,7 @@ class JvmtiThreadState;
 class JvmtiGetLoadedClassesClosure;
 class ThreadStatistics;
 class ConcurrentLocksDump;
-class ParkEvent ; 
+class ParkEvent ;
 
 class ciEnv;
 class CompileThread;
@@ -90,8 +90,8 @@ class Thread: public ThreadShadow {
   // suspend requests. The higher level APIs reject suspend requests
   // for already suspended threads.
   //
-  // The external_suspend 
-  // flag is checked by has_special_runtime_exit_condition() and java thread 
+  // The external_suspend
+  // flag is checked by has_special_runtime_exit_condition() and java thread
   // will self-suspend when handle_special_runtime_exit_condition() is
   // called. Most uses of the _thread_blocked state in JavaThreads are
   // considered the same as being externally suspended; if the blocking
@@ -102,7 +102,7 @@ class Thread: public ThreadShadow {
   //
   // In general, java_suspend() does not wait for an external suspend
   // request to complete. When it returns, the only guarantee is that
-  // the _external_suspend field is true. 
+  // the _external_suspend field is true.
   //
   // wait_for_ext_suspend_completion() is used to wait for an external
   // suspend request to complete. External suspend requests are usually
@@ -122,12 +122,12 @@ class Thread: public ThreadShadow {
   // that a single check indicates whether any special action is needed
   // eg. for async exceptions.
   // -------------------------------------------------------------------
-  // Notes: 
+  // Notes:
   // 1. The suspend/resume logic no longer uses ThreadState in OSThread
-  // but we still update its value to keep other part of the system (mainly 
-  // JVMTI) happy. ThreadState is legacy code (see notes in 
+  // but we still update its value to keep other part of the system (mainly
+  // JVMTI) happy. ThreadState is legacy code (see notes in
   // osThread.hpp).
-  // 
+  //
   // 2. It would be more natural if set_external_suspend() is private and
   // part of java_suspend(), but that probably would affect the suspend/query
   // performance. Need more investigation on this.
@@ -173,7 +173,7 @@ class Thread: public ThreadShadow {
   // Point to the last handle mark
   HandleMark* _last_handle_mark;
 
-  // The parity of the last strong_roots iteration in which this thread was 
+  // The parity of the last strong_roots iteration in which this thread was
   // claimed as a task.
   jint _oops_do_parity;
 
@@ -183,7 +183,7 @@ class Thread: public ThreadShadow {
   private:
 
   // debug support for checking if code does allow safepoints or not
-  // GC points in the VM can happen because of allocation, invoking a VM operation, or blocking on 
+  // GC points in the VM can happen because of allocation, invoking a VM operation, or blocking on
   // mutex, or blocking on an object synchronizer (Java locking).
   // If !allow_safepoint(), then an assertion failure will happen in any of the above cases
   // If !allow_allocation(), then an assertion failure will happen during allocation
@@ -192,7 +192,7 @@ class Thread: public ThreadShadow {
   // The two classes No_Safepoint_Verifier and No_Allocation_Verifier are used to set these counters.
   //
   NOT_PRODUCT(int _allow_safepoint_count;)       // If 0, thread allow a safepoint to happen
-  debug_only (int _allow_allocation_count;)      // If 0, the thread is allowed to allocate oops.  
+  debug_only (int _allow_allocation_count;)      // If 0, the thread is allowed to allocate oops.
 
   // Record when GC is locked out via the GC_locker mechanism
   CHECK_UNHANDLED_OOPS_ONLY(int _gc_locked_out_count;)
@@ -215,16 +215,16 @@ class Thread: public ThreadShadow {
   // ObjectMonitor on which this thread called Object.wait()
   ObjectMonitor* _current_waiting_monitor;
 
-  // Private thread-local objectmonitor list - a simple cache organized as a SLL.  
+  // Private thread-local objectmonitor list - a simple cache organized as a SLL.
  public:
-  ObjectMonitor * omFreeList ; 
+  ObjectMonitor * omFreeList ;
   int omFreeCount ;                             // length of omFreeList
   int omFreeProvision ;                         // reload chunk size
-  
- public: 
+
+ public:
   enum {
     is_definitely_current_thread = true
-  };    
+  };
 
   // Constructor
   Thread();
@@ -241,8 +241,8 @@ class Thread: public ThreadShadow {
   virtual bool is_Java_thread()     const            { return false; }
   // Remove this ifdef when C1 is ported to the compiler interface.
   virtual bool is_Compiler_thread() const            { return false; }
-  virtual bool is_hidden_from_external_view() const  { return false; }  
-  virtual bool is_jvmti_agent_thread() const 	     { return false; }
+  virtual bool is_hidden_from_external_view() const  { return false; }
+  virtual bool is_jvmti_agent_thread() const         { return false; }
   // True iff the thread can perform GC operations at a safepoint.
   // Generally will be true only of VM thread and parallel GC WorkGang
   // threads.
@@ -253,28 +253,28 @@ class Thread: public ThreadShadow {
   virtual char* name() const { return (char*)"Unknown thread"; }
 
   // Returns the current thread
-  static inline Thread* current();  
+  static inline Thread* current();
 
   // Common thread operations
   static void set_priority(Thread* thread, ThreadPriority priority);
   static ThreadPriority get_priority(const Thread* const thread);
   static void start(Thread* thread);
   static void interrupt(Thread* thr);
-  static bool is_interrupted(Thread* thr, bool clear_interrupted);  
+  static bool is_interrupted(Thread* thr, bool clear_interrupted);
 
   Monitor* SR_lock() const                       { return _SR_lock; }
 
   bool has_async_exception() const { return (_suspend_flags & _has_async_exception) != 0; }
 
-  void set_suspend_flag(SuspendFlags f) { 
+  void set_suspend_flag(SuspendFlags f) {
     assert(sizeof(jint) == sizeof(_suspend_flags), "size mismatch");
     uint32_t flags;
     do {
       flags = _suspend_flags;
     }
-    while (Atomic::cmpxchg((jint)(flags | f), 
-			   (volatile jint*)&_suspend_flags, 
-			   (jint)flags) != (jint)flags);
+    while (Atomic::cmpxchg((jint)(flags | f),
+                           (volatile jint*)&_suspend_flags,
+                           (jint)flags) != (jint)flags);
   }
   void clear_suspend_flag(SuspendFlags f) {
     assert(sizeof(jint) == sizeof(_suspend_flags), "size mismatch");
@@ -282,9 +282,9 @@ class Thread: public ThreadShadow {
     do {
       flags = _suspend_flags;
     }
-    while (Atomic::cmpxchg((jint)(flags & ~f), 
-			   (volatile jint*)&_suspend_flags, 
-			   (jint)flags) != (jint)flags);
+    while (Atomic::cmpxchg((jint)(flags & ~f),
+                           (volatile jint*)&_suspend_flags,
+                           (jint)flags) != (jint)flags);
   }
 
   void set_has_async_exception() {
@@ -369,7 +369,7 @@ class Thread: public ThreadShadow {
 
   // GC support
   // Apply "f->do_oop" to all root oops in "this".
-  void oops_do(OopClosure* f);  
+  void oops_do(OopClosure* f);
 
   // Handles the parallel case for the method below.
 private:
@@ -380,9 +380,9 @@ public:
   // "collection_parity", and returns "true".  If "is_par" is true,
   // uses an atomic instruction to set the current threads parity to
   // "collection_parity", if it is not already.  Returns "true" iff the
-  // calling thread does the update, this indicates that the calling thread 
+  // calling thread does the update, this indicates that the calling thread
   // has claimed the thread's stack as a root groop in the current
-  // collection. 
+  // collection.
   bool claim_oops_do(bool is_par, int collection_parity) {
     if (!is_par) {
       _oops_do_parity = collection_parity;
@@ -409,7 +409,7 @@ public:
 
  protected:
   // OS data associated with the thread
-  OSThread* _osthread;  // Platform-specific thread information 
+  OSThread* _osthread;  // Platform-specific thread information
 
   // Thread local resource area for temporary allocation within the VM
   ResourceArea* _resource_area;
@@ -417,7 +417,7 @@ public:
   // Thread local handle area for allocation of handles within the VM
   HandleArea* _handle_area;
 
-  // Support for stack overflow handling, get_thread, etc.  
+  // Support for stack overflow handling, get_thread, etc.
   address          _stack_base;
   size_t           _stack_size;
   uintptr_t        _self_raw_id;      // used by get_thread (mutable)
@@ -426,7 +426,7 @@ public:
  public:
   // Stack overflow support
   address stack_base() const           { assert(_stack_base != NULL,"Sanity check"); return _stack_base; }
-  
+
   void    set_stack_base(address base) { _stack_base = base; }
   size_t  stack_size() const           { return _stack_size; }
   void    set_stack_size(size_t size)  { _stack_size = size; }
@@ -451,11 +451,11 @@ public:
   friend class Mutex;
   friend class Monitor;
 
- public:  
+ public:
   void print_owned_locks_on(outputStream* st) const;
-  void print_owned_locks() const		 { print_owned_locks_on(tty);	 }
-  Monitor * owned_locks() const			 { return _owned_locks;          }
-  bool owns_locks() const                        { return owned_locks() != NULL; }  
+  void print_owned_locks() const                 { print_owned_locks_on(tty);    }
+  Monitor * owned_locks() const                  { return _owned_locks;          }
+  bool owns_locks() const                        { return owned_locks() != NULL; }
   bool owns_locks_but_compiled_lock() const;
 
   // Deadlock detection
@@ -467,7 +467,7 @@ public:
  private:
   volatile int _jvmti_env_iteration_count;
 
- public:  
+ public:
   void entering_jvmti_env_iteration()            { ++_jvmti_env_iteration_count; }
   void leaving_jvmti_env_iteration()             { --_jvmti_env_iteration_count; }
   bool is_inside_jvmti_env_iteration()           { return _jvmti_env_iteration_count > 0; }
@@ -479,7 +479,7 @@ public:
 
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
-  static ByteSize omFreeList_offset()            { return byte_offset_of(Thread, omFreeList); } 
+  static ByteSize omFreeList_offset()            { return byte_offset_of(Thread, omFreeList); }
 
 #define TLAB_FIELD_OFFSET(name) \
   static ByteSize tlab_##name##_offset()            { return byte_offset_of(Thread, _tlab) + ThreadLocalAllocBuffer::name##_offset(); }
@@ -497,8 +497,8 @@ public:
 #undef TLAB_FIELD_OFFSET
 
  public:
-  volatile intptr_t _Stalled ; 
-  volatile int _TypeTag ; 
+  volatile intptr_t _Stalled ;
+  volatile int _TypeTag ;
   ParkEvent * _ParkEvent ;                     // for synchronized()
   ParkEvent * _SleepEvent ;                    // for Thread.sleep
   ParkEvent * _MutexEvent ;                    // for native internal Mutex/Monitor
@@ -508,9 +508,9 @@ public:
   volatile int _OnTrap ;                       // Resume-at IP delta
   jint _hashStateW ;                           // Marsaglia Shift-XOR thread-local RNG
   jint _hashStateX ;                           // thread-specific hashCode generator state
-  jint _hashStateY ; 
-  jint _hashStateZ ; 
-  void * _schedctl ; 
+  jint _hashStateY ;
+  jint _hashStateZ ;
+  void * _schedctl ;
 
   intptr_t _ScratchA, _ScratchB ;              // Scratch locations for fast-path sync code
   static ByteSize ScratchA_offset()            { return byte_offset_of(Thread, _ScratchA ); }
@@ -519,13 +519,13 @@ public:
   volatile jint rng [4] ;                      // RNG for spin loop
 
   // Low-level leaf-lock primitives used to implement synchronization
-  // and native monitor-mutex infrastructure.  
+  // and native monitor-mutex infrastructure.
   // Not for general synchronization use.
-  static void SpinAcquire (volatile int * Lock, const char * Name) ; 
-  static void SpinRelease (volatile int * Lock) ; 
-  static void muxAcquire  (volatile intptr_t * Lock, const char * Name) ; 
-  static void muxAcquireW (volatile intptr_t * Lock, ParkEvent * ev) ; 
-  static void muxRelease  (volatile intptr_t * Lock) ; 
+  static void SpinAcquire (volatile int * Lock, const char * Name) ;
+  static void SpinRelease (volatile int * Lock) ;
+  static void muxAcquire  (volatile intptr_t * Lock, const char * Name) ;
+  static void muxAcquireW (volatile intptr_t * Lock, ParkEvent * ev) ;
+  static void muxRelease  (volatile intptr_t * Lock) ;
 
 };
 
@@ -537,12 +537,12 @@ public:
 
 inline Thread* Thread::current() {
 #ifdef ASSERT
-// This function is very high traffic. Define PARANOID to enable expensive 
+// This function is very high traffic. Define PARANOID to enable expensive
 // asserts.
 #ifdef PARANOID
   // Signal handler should call ThreadLocalStorage::get_thread_slow()
   Thread* t = ThreadLocalStorage::get_thread_slow();
-  assert(t != NULL && !t->is_inside_signal_handler(), 
+  assert(t != NULL && !t->is_inside_signal_handler(),
          "Don't use Thread::current() inside signal handler");
 #endif
 #endif
@@ -587,7 +587,7 @@ class WatcherThread: public Thread {
  private:
   static WatcherThread* _watcher_thread;
 
-  static bool _should_terminate;  
+  static bool _should_terminate;
  public:
   enum SomeConstants {
     delay_interval = 10                          // interrupt delay in milliseconds
@@ -617,9 +617,9 @@ class CompilerThread;
 
 typedef void (*ThreadFunction)(JavaThread*, TRAPS);
 
-class JavaThread: public Thread {  
+class JavaThread: public Thread {
   friend class VMStructs;
- private:  
+ private:
   JavaThread*    _next;                          // The next thread in the Threads list
   oop            _threadObj;                     // The Java level thread object
 
@@ -646,18 +646,18 @@ class JavaThread: public Thread {
 #endif
 
   JavaFrameAnchor _anchor;                       // Encapsulation of current java frame and it state
- 
+
   ThreadFunction _entry_point;
 
   JNIEnv        _jni_environment;
-  
+
   // Deopt support
   DeoptResourceMark*  _deopt_mark;               // Holds special ResourceMark for deoptimization
 
   intptr_t*      _must_deopt_id;                 // id of frame that needs to be deopted once we
                                                  // transition out of native
 
-  vframeArray*  _vframe_array_head;              // Holds the heap of the active vframeArrays  
+  vframeArray*  _vframe_array_head;              // Holds the heap of the active vframeArrays
   vframeArray*  _vframe_array_last;              // Holds last vFrameArray we popped
   // Because deoptimization is lazy we must save jvmti requests to set locals
   // in compiled frames until we deoptimize and we have an interpreter frame.
@@ -674,12 +674,12 @@ class JavaThread: public Thread {
   // code in i2c adapters and handle_wrong_method.
 
   methodOop     _callee_target;
-  
-  // Oop results of VM runtime calls  
+
+  // Oop results of VM runtime calls
   oop           _vm_result;                      // Used to pass back an oop result into Java code, GC-preserved
   oop           _vm_result_2;                    // Used to pass back an oop result into Java code, GC-preserved
 
-  MonitorChunk* _monitor_chunks;                 // Contains the off stack monitors 
+  MonitorChunk* _monitor_chunks;                 // Contains the off stack monitors
                                                  // allocated during deoptimization
                                                  // and by JNI_MonitorEnter/Exit
 
@@ -721,7 +721,7 @@ class JavaThread: public Thread {
                                                  // handlers thread is in
   volatile bool         _doing_unsafe_access;    // Thread may fault due to unsafe access
   bool                  _do_not_unlock_if_synchronized; // Do not unlock the receiver of a synchronized method (since it was
-						 // never locked) when throwing an exception. Used by interpreter only.
+                                                 // never locked) when throwing an exception. Used by interpreter only.
 
   //  Flag to mark a JNI thread in the process of attaching - See CR 6404306
   //  This flag is never set true other than at construction, and in that case
@@ -731,9 +731,9 @@ class JavaThread: public Thread {
  public:
   // State of the stack guard pages for this thread.
   enum StackGuardState {
-    stack_guard_unused,		// not needed
+    stack_guard_unused,         // not needed
     stack_guard_yellow_disabled,// disabled (temporarily) after stack overflow
-    stack_guard_enabled		// enabled
+    stack_guard_enabled         // enabled
   };
 
  private:
@@ -795,7 +795,7 @@ class JavaThread: public Thread {
  public:
   // Constructor
   JavaThread(bool is_attaching = false); // for main thread and JNI attached threads
-  JavaThread(ThreadFunction entry_point, size_t stack_size = 0); 
+  JavaThread(ThreadFunction entry_point, size_t stack_size = 0);
   ~JavaThread();
 
 #ifdef ASSERT
@@ -833,7 +833,7 @@ class JavaThread: public Thread {
   // Thread chain operations
   JavaThread* next() const                       { return _next; }
   void set_next(JavaThread* p)                   { _next = p; }
-  
+
   // Thread oop. threadObj() can be NULL for initial JavaThread
   // (or for threads attached via JNI)
   oop threadObj() const                          { return _threadObj; }
@@ -848,8 +848,8 @@ class JavaThread: public Thread {
 
   void set_saved_exception_pc(address pc)        { _saved_exception_pc = pc; }
   address saved_exception_pc()                   { return _saved_exception_pc; }
-  
-    
+
+
   ThreadFunction entry_point() const             { return _entry_point; }
 
   // Allocates a new Java level thread object for this thread. thread_name may be NULL.
@@ -859,7 +859,7 @@ class JavaThread: public Thread {
 
   JavaFrameAnchor* frame_anchor(void)                { return &_anchor; }
 
-  // last_Java_sp 
+  // last_Java_sp
   bool has_last_Java_frame() const                   { return _anchor.has_last_Java_frame(); }
   intptr_t* last_Java_sp() const                     { return _anchor.last_Java_sp(); }
 
@@ -887,11 +887,11 @@ class JavaThread: public Thread {
 
   bool doing_unsafe_access()                     { return _doing_unsafe_access; }
   void set_doing_unsafe_access(bool val)         { _doing_unsafe_access = val; }
-    
+
   bool do_not_unlock_if_synchronized()             { return _do_not_unlock_if_synchronized; }
   void set_do_not_unlock_if_synchronized(bool val) { _do_not_unlock_if_synchronized = val; }
 
-  
+
   // Suspend/resume support for JavaThread
 
  private:
@@ -900,7 +900,7 @@ class JavaThread: public Thread {
 
  public:
   void java_suspend();
-  void java_resume();  
+  void java_resume();
   int  java_suspend_self();
 
   void check_and_wait_while_suspended() {
@@ -928,7 +928,7 @@ class JavaThread: public Thread {
     // SR_lock to allow the thread to reach a stable thread state if
     // it is currently in a transient thread state.
     return is_ext_suspend_completed(false /*!called_by_wait */,
-				    SuspendRetryDelay, bits);
+                                    SuspendRetryDelay, bits);
   }
 
   // We cannot allow wait_for_ext_suspend_completion() to run forever or
@@ -946,17 +946,17 @@ class JavaThread: public Thread {
   void clear_deopt_suspend()      { clear_suspend_flag(_deopt_suspend); }
   bool is_deopt_suspend()         { return (_suspend_flags & _deopt_suspend) != 0; }
 
-  bool is_external_suspend() const { 
-    return (_suspend_flags & _external_suspend) != 0; 
+  bool is_external_suspend() const {
+    return (_suspend_flags & _external_suspend) != 0;
   }
   // Whenever a thread transitions from native to vm/java it must suspend
   // if external|deopt suspend is present.
-  bool is_suspend_after_native() const { 
+  bool is_suspend_after_native() const {
     return (_suspend_flags & (_external_suspend | _deopt_suspend) ) != 0;
   }
 
   // external suspend request is completed
-  bool is_ext_suspended() const { 
+  bool is_ext_suspended() const {
     return (_suspend_flags & _ext_suspended) != 0;
   }
 
@@ -1013,7 +1013,7 @@ class JavaThread: public Thread {
     return x;
   }
 
-  // Are any async conditions present? 
+  // Are any async conditions present?
   bool has_async_condition() { return (_special_runtime_exit_condition != _no_async_condition); }
 
   void check_and_handle_async_exceptions(bool check_unsafe_error = true);
@@ -1031,7 +1031,7 @@ class JavaThread: public Thread {
     // _external_suspend field change either not made yet or not visible
     // yet. However, this is okay because the request is asynchronous and
     // we will see the new flag value the next time through. It's also
-    // possible that the external suspend request is dropped after 
+    // possible that the external suspend request is dropped after
     // we have checked is_external_suspend(), we will recheck its value
     // under SR_lock in java_suspend_self().
     return (_special_runtime_exit_condition != _no_async_condition) ||
@@ -1045,9 +1045,9 @@ class JavaThread: public Thread {
     _special_runtime_exit_condition = _async_exception;
     set_has_async_exception();
   }
-  
+
   // Fast-locking support
-  bool is_lock_owned(address adr) const;  
+  bool is_lock_owned(address adr) const;
 
   // Accessors for vframe array top
   // The linked list of vframe arrays are sorted on sp. This means when we
@@ -1088,7 +1088,7 @@ class JavaThread: public Thread {
   int      exception_stack_size() const          { return _exception_stack_size; }
   address  exception_pc() const                  { return _exception_pc; }
   address  exception_handler_pc() const          { return _exception_handler_pc; }
-  
+
   void set_exception_oop(oop o)                  { _exception_oop = o; }
   void set_exception_pc(address a)               { _exception_pc = a; }
   void set_exception_handler_pc(address a)       { _exception_handler_pc = a; }
@@ -1159,7 +1159,7 @@ class JavaThread: public Thread {
   static ByteSize callee_target_offset()         { return byte_offset_of(JavaThread, _callee_target       ); }
   static ByteSize vm_result_offset()             { return byte_offset_of(JavaThread, _vm_result           ); }
   static ByteSize vm_result_2_offset()           { return byte_offset_of(JavaThread, _vm_result_2         ); }
-  static ByteSize thread_state_offset()          { return byte_offset_of(JavaThread, _thread_state        ); }  
+  static ByteSize thread_state_offset()          { return byte_offset_of(JavaThread, _thread_state        ); }
   static ByteSize saved_exception_pc_offset()    { return byte_offset_of(JavaThread, _saved_exception_pc  ); }
   static ByteSize osthread_offset()              { return byte_offset_of(JavaThread, _osthread            ); }
   static ByteSize exception_oop_offset()         { return byte_offset_of(JavaThread, _exception_oop       ); }
@@ -1198,16 +1198,16 @@ class JavaThread: public Thread {
                           _jni_active_critical++; }
   void exit_critical()  { assert(Thread::current() == this,
                                  "this must be current thread");
-                          _jni_active_critical--; 
+                          _jni_active_critical--;
                           assert(_jni_active_critical >= 0,
                                  "JNI critical nesting problem?"); }
 
   // For deadlock detection
   int depth_first_number() { return _depth_first_number; }
   void set_depth_first_number(int dfn) { _depth_first_number = dfn; }
-  
+
  private:
-  void set_monitor_chunks(MonitorChunk* monitor_chunks) { _monitor_chunks = monitor_chunks; } 
+  void set_monitor_chunks(MonitorChunk* monitor_chunks) { _monitor_chunks = monitor_chunks; }
 
  public:
   MonitorChunk* monitor_chunks() const           { return _monitor_chunks; }
@@ -1226,10 +1226,10 @@ class JavaThread: public Thread {
   void set_entry_point(ThreadFunction entry_point) { _entry_point = entry_point; }
 
  public:
-     
-  // Frame iteration; calls the function f for all frames on the stack 
+
+  // Frame iteration; calls the function f for all frames on the stack
   void frames_do(void f(frame*, const RegisterMap*));
-  
+
   // Memory operations
   void oops_do(OopClosure* f);
 
@@ -1245,8 +1245,8 @@ class JavaThread: public Thread {
   void print_on(outputStream* st) const;
   void print() const { print_on(tty); }
   void print_value();
-  void print_thread_state_on(outputStream* ) const	PRODUCT_RETURN;
-  void print_thread_state() const			PRODUCT_RETURN;
+  void print_thread_state_on(outputStream* ) const      PRODUCT_RETURN;
+  void print_thread_state() const                       PRODUCT_RETURN;
   void print_on_error(outputStream* st, char* buf, int buflen) const;
   void verify();
   const char* get_thread_name() const;
@@ -1258,15 +1258,15 @@ public:
   const char* get_parent_name() const;
 
   // Accessing frames
-  frame last_frame() { 
+  frame last_frame() {
     _anchor.make_walkable(this);
     return pd_last_frame();
   }
   javaVFrame* last_java_vframe(RegisterMap* reg_map);
 
-  // Returns method at 'depth' java or native frames down the stack  
+  // Returns method at 'depth' java or native frames down the stack
   // Used for security checks
-  klassOop security_get_caller_class(int depth);  
+  klassOop security_get_caller_class(int depth);
 
   // Print stack trace in external format
   void print_stack_on(outputStream* st);
@@ -1323,16 +1323,16 @@ public:
  private:
   // PRIVILEGED STACK
   PrivilegedElement*  _privileged_stack_top;
-  GrowableArray<oop>* _array_for_gc; 
+  GrowableArray<oop>* _array_for_gc;
  public:
-    
+
   // Returns the privileged_stack information.
   PrivilegedElement* privileged_stack_top() const       { return _privileged_stack_top; }
   void set_privileged_stack_top(PrivilegedElement *e)   { _privileged_stack_top = e; }
   void register_array_for_gc(GrowableArray<oop>* array) { _array_for_gc = array; }
 
  public:
-  // Thread local information maintained by JVMTI. 
+  // Thread local information maintained by JVMTI.
   void set_jvmti_thread_state(JvmtiThreadState *value)                           { _jvmti_thread_state = value; }
   // A JvmtiThreadState is lazily allocated. This jvmti_thread_state()
   // getter is used to get this JavaThread's JvmtiThreadState if it has
@@ -1415,17 +1415,17 @@ public:
  public:
   ThreadStatistics* get_thread_stat() const    { return _thread_stat; }
 
-  // Return a blocker object for which this thread is blocked parking. 
+  // Return a blocker object for which this thread is blocked parking.
   oop current_park_blocker();
 
  private:
   static size_t _stack_size_at_create;
- 
+
  public:
-  static inline size_t stack_size_at_create(void) { 
-    return _stack_size_at_create; 
+  static inline size_t stack_size_at_create(void) {
+    return _stack_size_at_create;
   }
-  static inline void set_stack_size_at_create(size_t value) { 
+  static inline void set_stack_size_at_create(size_t value) {
     _stack_size_at_create = value;
   }
 
@@ -1548,11 +1548,11 @@ class CompilerThread : public JavaThread {
   CompilerThread(CompileQueue* queue, CompilerCounters* counters);
 
   bool is_Compiler_thread() const                { return true; }
-  // Hide this compiler thread from external view.  
-  bool is_hidden_from_external_view() const	 { return true; }
+  // Hide this compiler thread from external view.
+  bool is_hidden_from_external_view() const      { return true; }
 
-  CompileQueue* queue()                          { return _queue; }        
-  CompilerCounters* counters()                   { return _counters; }        
+  CompileQueue* queue()                          { return _queue; }
+  CompilerCounters* counters()                   { return _counters; }
 
   // Get/set the thread's compilation environment.
   ciEnv*        env()                            { return _env; }
@@ -1603,7 +1603,7 @@ class Threads: AllStatic {
   static bool includes(JavaThread* p);
   static JavaThread* first()                     { return _thread_list; }
   static void threads_do(ThreadClosure* tc);
-  
+
   // Initializes the vm and creates the vm thread
   static jint create_vm(JavaVMInitArgs* args, bool* canTryAgain);
   static void convert_vm_init_libraries_to_agents();
@@ -1624,7 +1624,7 @@ class Threads: AllStatic {
   // This version may only be called by sequential code.
   static void oops_do(OopClosure* f);
   // This version may be called by sequential or parallel code.
-  static void possibly_parallel_oops_do(OopClosure* f);  
+  static void possibly_parallel_oops_do(OopClosure* f);
   // This creates a list of GCTasks, one per thread.
   static void create_thread_roots_tasks(GCTaskQueue* q);
   // This creates a list of GCTasks, one per thread, for marking objects.
@@ -1696,101 +1696,99 @@ public:
 };
 
 // ParkEvents are type-stable and immortal.
-// 
-// Lifecycle: Once a ParkEvent is associated with a thread that ParkEvent remains 
+//
+// Lifecycle: Once a ParkEvent is associated with a thread that ParkEvent remains
 // associated with the thread for the thread's entire lifetime - the relationship is
-// stable. A thread will be associated at most one ParkEvent.  When the thread 
-// expires, the ParkEvent moves to the EventFreeList.  New threads attempt to allocate from 
-// the EventFreeList before creating a new Event.  Type-stability frees us from 
+// stable. A thread will be associated at most one ParkEvent.  When the thread
+// expires, the ParkEvent moves to the EventFreeList.  New threads attempt to allocate from
+// the EventFreeList before creating a new Event.  Type-stability frees us from
 // worrying about stale Event or Thread references in the objectMonitor subsystem.
-// (A reference to ParkEvent is always valid, even though the event may no longer be associated 
-// with the desired or expected thread.  A key aspect of this design is that the callers of 
+// (A reference to ParkEvent is always valid, even though the event may no longer be associated
+// with the desired or expected thread.  A key aspect of this design is that the callers of
 // park, unpark, etc must tolerate stale references and spurious wakeups).
 //
 // Only the "associated" thread can block (park) on the ParkEvent, although
 // any other thread can unpark a reachable parkevent.  Park() is allowed to
 // return spuriously.  In fact park-unpark a really just an optimization to
 // avoid unbounded spinning and surrender the CPU to be a polite system citizen.
-// A degenerate albeit "impolite" park-unpark implementation could simply return. 
-// See http://blogs.sun.com/dave for more details.  
+// A degenerate albeit "impolite" park-unpark implementation could simply return.
+// See http://blogs.sun.com/dave for more details.
 //
 // Eventually I'd like to eliminate Events and ObjectWaiters, both of which serve as
 // thread proxies, and simply make the THREAD structure type-stable and persistent.
-// Currently, we unpark events associated with threads, but ideally we'd just 
-// unpark threads. 
+// Currently, we unpark events associated with threads, but ideally we'd just
+// unpark threads.
 //
 // The base-class, PlatformEvent, is platform-specific while the ParkEvent is
 // platform-independent.  PlatformEvent provides park(), unpark(), etc., and
 // is abstract -- that is, a PlatformEvent should never be instantiated except
-// as part of a ParkEvent.  
-// Equivalently we could have defined a platform-independent base-class that 
-// exported Allocate(), Release(), etc.  The platform-specific class would extend 
-// that base-class, adding park(), unpark(), etc.  
-// 
+// as part of a ParkEvent.
+// Equivalently we could have defined a platform-independent base-class that
+// exported Allocate(), Release(), etc.  The platform-specific class would extend
+// that base-class, adding park(), unpark(), etc.
+//
 // A word of caution: The JVM uses 2 very similar constructs:
 // 1. ParkEvent are used for Java-level "monitor" synchronization.
-// 2. Parkers are used by JSR166-JUC park-unpark. 
+// 2. Parkers are used by JSR166-JUC park-unpark.
 //
 // We'll want to eventually merge these redundant facilities and use ParkEvent.
 
 
-class ParkEvent : public os::PlatformEvent { 
+class ParkEvent : public os::PlatformEvent {
   private:
-    ParkEvent * FreeNext ; 
+    ParkEvent * FreeNext ;
 
     // Current association
-    Thread * AssociatedWith ; 
+    Thread * AssociatedWith ;
     intptr_t RawThreadIdentity ;        // LWPID etc
     volatile int Incarnation ;
 
     // diagnostic : keep track of last thread to wake this thread.
     // this is useful for construction of dependency graphs.
-    void * LastWaker ; 
+    void * LastWaker ;
 
   public:
     // MCS-CLH list linkage and Native Mutex/Monitor
-    ParkEvent * volatile ListNext ; 
-    ParkEvent * volatile ListPrev ; 
-    volatile intptr_t OnList ; 
-    volatile int TState ; 
+    ParkEvent * volatile ListNext ;
+    ParkEvent * volatile ListPrev ;
+    volatile intptr_t OnList ;
+    volatile int TState ;
     volatile int Notified ;             // for native monitor construct
     volatile int IsWaiting ;            // Enqueued on WaitSet
 
 
   private:
-    static ParkEvent * volatile FreeList ; 
-    static volatile int ListLock ; 
+    static ParkEvent * volatile FreeList ;
+    static volatile int ListLock ;
 
     // It's prudent to mark the dtor as "private"
     // ensuring that it's not visible outside the package.
     // Unfortunately gcc warns about such usage, so
     // we revert to the less desirable "protected" visibility.
-    // The other compilers accept private dtors.  
+    // The other compilers accept private dtors.
 
   protected:        // Ensure dtor is never invoked
     ~ParkEvent() { guarantee (0, "invariant") ; }
 
-    ParkEvent() : PlatformEvent() { 
-       AssociatedWith = NULL ; 
-       FreeNext       = NULL ; 
-       ListNext       = NULL ; 
-       ListPrev       = NULL ; 
-       OnList         = 0 ; 
-       TState         = 0 ; 
+    ParkEvent() : PlatformEvent() {
+       AssociatedWith = NULL ;
+       FreeNext       = NULL ;
+       ListNext       = NULL ;
+       ListPrev       = NULL ;
+       OnList         = 0 ;
+       TState         = 0 ;
        Notified       = 0 ;
-       IsWaiting      = 0 ;  
+       IsWaiting      = 0 ;
     }
 
     // We use placement-new to force ParkEvent instances to be
     // aligned on 256-byte address boundaries.  This ensures that the least
-    // significant byte of a ParkEvent address is always 0.  
+    // significant byte of a ParkEvent address is always 0.
 
-    void * operator new (size_t sz) ; 
-    void operator delete (void * a) ; 
+    void * operator new (size_t sz) ;
+    void operator delete (void * a) ;
 
   public:
-    static ParkEvent * Allocate (Thread * t) ; 
-    static void Release (ParkEvent * e) ; 
-} ; 
-
-
+    static ParkEvent * Allocate (Thread * t) ;
+    static void Release (ParkEvent * e) ;
+} ;

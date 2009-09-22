@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)deoptimization.hpp	1.92 07/07/27 16:21:04 JVM"
+#pragma ident "@(#)deoptimization.hpp   1.92 07/07/27 16:21:04 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ProfileData;
@@ -87,7 +87,7 @@ class Deoptimization : AllStatic {
   // Checks all compiled methods. Invalid methods are deleted and
   // corresponding activations are deoptimized.
   static int deoptimize_dependents();
-  
+
   // Deoptimizes a frame lazily. nmethod gets patched deopt happens on return to the frame
   static void deoptimize(JavaThread* thread, frame fr, RegisterMap *reg_map);
 
@@ -114,8 +114,8 @@ class Deoptimization : AllStatic {
 
   public:
   static vframeArray* create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk);
- 
-  // Interface used for unpacking deoptimized frames 
+
+  // Interface used for unpacking deoptimized frames
 
   // UnrollBlock is returned by fetch_unroll_info() to the deoptimization handler (blob).
   // This is only a CheapObj to ease debugging after a deopt failure
@@ -123,7 +123,7 @@ class Deoptimization : AllStatic {
    private:
     int       _size_of_deoptimized_frame; // Size, in bytes, of current deoptimized frame
     int       _caller_adjustment;         // Adjustment, in bytes, to caller's SP by initial interpreted frame
-    int       _number_of_frames;          // Number frames to unroll 
+    int       _number_of_frames;          // Number frames to unroll
     int       _total_frame_sizes;         // Total of number*sizes frames
     intptr_t* _frame_sizes;               // Array of frame sizes, in bytes, for unrolling the stack
     address*  _frame_pcs;                 // Array of frame pc's, in bytes, for unrolling the stack
@@ -133,10 +133,10 @@ class Deoptimization : AllStatic {
     // (which is tight on registers, especially on x86). They really ought
     // to be PD variables but that involves moving this class into its own
     // file to use the pd include mechanism. Maybe in a later cleanup ...
-    intptr_t  _counter_temp;	          // SHOULD BE PD VARIABLE (x86 frame count temp)
-    intptr_t  _initial_fp;		  // SHOULD BE PD VARIABLE (x86/c2 initial ebp)
-    intptr_t  _unpack_kind;		  // SHOULD BE PD VARIABLE (x86 unpack kind)
-    intptr_t  _sender_sp_temp;		  // SHOULD BE PD VARIABLE (x86 sender_sp)
+    intptr_t  _counter_temp;              // SHOULD BE PD VARIABLE (x86 frame count temp)
+    intptr_t  _initial_fp;                // SHOULD BE PD VARIABLE (x86/c2 initial ebp)
+    intptr_t  _unpack_kind;               // SHOULD BE PD VARIABLE (x86 unpack kind)
+    intptr_t  _sender_sp_temp;            // SHOULD BE PD VARIABLE (x86 sender_sp)
    public:
     // Constructor
     UnrollBlock(int  size_of_deoptimized_frame,
@@ -154,7 +154,7 @@ class Deoptimization : AllStatic {
     intptr_t* frame_sizes()  const { return _frame_sizes; }
     int number_of_frames()  const { return _number_of_frames; }
     address*  frame_pcs()   const { return _frame_pcs ; }
-   
+
     // Returns the total size of frames
     int size_of_frames() const;
 
@@ -165,20 +165,20 @@ class Deoptimization : AllStatic {
     static int frame_sizes_offset_in_bytes()               { return offset_of(UnrollBlock, _frame_sizes);               }
     static int total_frame_sizes_offset_in_bytes()         { return offset_of(UnrollBlock, _total_frame_sizes);         }
     static int frame_pcs_offset_in_bytes()                 { return offset_of(UnrollBlock, _frame_pcs);                 }
-    static int register_block_offset_in_bytes()            { return offset_of(UnrollBlock, _register_block);            }  
-    static int return_type_offset_in_bytes()               { return offset_of(UnrollBlock, _return_type);               }  
-    static int counter_temp_offset_in_bytes()              { return offset_of(UnrollBlock, _counter_temp);              }  
-    static int initial_fp_offset_in_bytes()                { return offset_of(UnrollBlock, _initial_fp);                }  
-    static int unpack_kind_offset_in_bytes()               { return offset_of(UnrollBlock, _unpack_kind);               }  
-    static int sender_sp_temp_offset_in_bytes()            { return offset_of(UnrollBlock, _sender_sp_temp);            }  
+    static int register_block_offset_in_bytes()            { return offset_of(UnrollBlock, _register_block);            }
+    static int return_type_offset_in_bytes()               { return offset_of(UnrollBlock, _return_type);               }
+    static int counter_temp_offset_in_bytes()              { return offset_of(UnrollBlock, _counter_temp);              }
+    static int initial_fp_offset_in_bytes()                { return offset_of(UnrollBlock, _initial_fp);                }
+    static int unpack_kind_offset_in_bytes()               { return offset_of(UnrollBlock, _unpack_kind);               }
+    static int sender_sp_temp_offset_in_bytes()            { return offset_of(UnrollBlock, _sender_sp_temp);            }
 
     BasicType return_type() const { return _return_type; }
     void print();
   };
 
-  //** Returns an UnrollBlock continuing information 
-  // how to make room for the resulting interpreter frames. 
-  // Called by assembly stub after execution has returned to 
+  //** Returns an UnrollBlock continuing information
+  // how to make room for the resulting interpreter frames.
+  // Called by assembly stub after execution has returned to
   // deoptimized frame.
   // @argument thread.     Thread where stub_frame resides.
   // @see OptoRuntime::deoptimization_fetch_unroll_info_C
@@ -343,7 +343,7 @@ class Deoptimization : AllStatic {
 };
 
 class DeoptimizationMarker : StackObj {  // for profiling
-  static bool _is_active;  
+  static bool _is_active;
 public:
   DeoptimizationMarker()  { _is_active = true; }
   ~DeoptimizationMarker() { _is_active = false; }

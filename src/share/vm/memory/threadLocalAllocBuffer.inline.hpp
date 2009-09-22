@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)threadLocalAllocBuffer.inline.hpp	1.29 07/05/05 17:05:56 JVM"
+#pragma ident "@(#)threadLocalAllocBuffer.inline.hpp    1.29 07/05/05 17:05:56 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline HeapWord* ThreadLocalAllocBuffer::allocate(size_t size) {
@@ -30,12 +30,12 @@ inline HeapWord* ThreadLocalAllocBuffer::allocate(size_t size) {
   HeapWord* obj = top();
   if (pointer_delta(end(), obj) >= size) {
     // successful thread-local allocation
-    
+
     DEBUG_ONLY(Copy::fill_to_words(obj, size, badHeapWordVal));
     // This addition is safe because we know that top is
     // at least size below end, so the add can't wrap.
     set_top(obj + size);
-    
+
     invariants();
     return obj;
   }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -30,7 +30,7 @@ public class SPARCLogicInstruction extends SPARCFormat3AInstruction
     implements LogicInstruction {
     final private int operation;
 
-    public SPARCLogicInstruction(String name, int opcode, int operation, SPARCRegister rs1, 
+    public SPARCLogicInstruction(String name, int opcode, int operation, SPARCRegister rs1,
                                  ImmediateOrRegister operand2, SPARCRegister rd) {
         super(name, opcode, rs1, operand2, rd);
         this.operation = operation;

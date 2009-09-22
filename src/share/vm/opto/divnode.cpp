@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)divnode.cpp	1.88 07/05/05 17:06:13 JVM"
+#pragma ident "@(#)divnode.cpp  1.88 07/05/05 17:06:13 JVM"
 #endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -450,7 +450,7 @@ const Type *DivINode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // Divide the two numbers.  We approximate.
@@ -467,7 +467,7 @@ const Type *DivINode::Value( PhaseTransform *phase ) const {
       hi = i1->_hi/d;
     } else {
       if( d == -1 && i1->_lo == min_jint ) {
-        // 'min_jint/-1' throws arithmetic exception during compilation 
+        // 'min_jint/-1' throws arithmetic exception during compilation
         lo = min_jint;
         // do not support holes, 'hi' must go to either min_jint or max_jint:
         // [min_jint, -10]/[-1,-1] ==> [min_jint] UNION [10,max_jint]
@@ -478,7 +478,7 @@ const Type *DivINode::Value( PhaseTransform *phase ) const {
       }
     }
     return TypeInt::make(lo, hi, widen);
-  }  
+  }
 
   // If the dividend is a constant
   if( i1->is_con() ) {
@@ -549,7 +549,7 @@ const Type *DivLNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // Divide the two numbers.  We approximate.
@@ -566,7 +566,7 @@ const Type *DivLNode::Value( PhaseTransform *phase ) const {
       hi = i1->_hi/d;
     } else {
       if( d == CONST64(-1) && i1->_lo == min_jlong ) {
-        // 'min_jlong/-1' throws arithmetic exception during compilation 
+        // 'min_jlong/-1' throws arithmetic exception during compilation
         lo = min_jlong;
         // do not support holes, 'hi' must go to either min_jlong or max_jlong:
         // [min_jlong, -10]/[-1,-1] ==> [min_jlong] UNION [10,max_jlong]
@@ -577,7 +577,7 @@ const Type *DivLNode::Value( PhaseTransform *phase ) const {
       }
     }
     return TypeLong::make(lo, hi, widen);
-  }  
+  }
 
   // If the dividend is a constant
   if( i1->is_con() ) {
@@ -612,7 +612,7 @@ const Type *DivFNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // x/x == 1, we ignore 0/0.
@@ -626,7 +626,7 @@ const Type *DivFNode::Value( PhaseTransform *phase ) const {
     return t1;
 
   // If divisor is a constant and not zero, divide them numbers
-  if( t1->base() == Type::FloatCon && 
+  if( t1->base() == Type::FloatCon &&
       t2->base() == Type::FloatCon &&
       t2->getf() != 0.0 ) // could be negative zero
     return TypeF::make( t1->getf()/t2->getf() );
@@ -700,7 +700,7 @@ const Type *DivDNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // x/x == 1, we ignore 0/0.
@@ -820,7 +820,7 @@ Node *ModINode::Ideal(PhaseGVN *phase, bool can_reshape) {
     if( trip_count <= 5 && ConditionalMoveLimit != 0 ) {
       Node *x = in(1);            // Value being mod'd
       Node *divisor = in(2);      // Also is mask
-      
+
       hook->init_req(0, x);       // Add a use to x to prevent him from dying
       // Generate code to reduce X rapidly to nearly 2^k-1.
       for( int i = 0; i < trip_count; i++ ) {
@@ -843,7 +843,7 @@ Node *ModINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       // since Ideal is expected to return a modified 'this' or a new node.
       Node *cmov2= new (phase->C, 4) CMoveINode(bol2, x, sub, TypeInt::INT);
       // cmov2 is now the mod
-      
+
       // Now remove the bogus extra edges used to keep things alive
       if (can_reshape) {
         phase->is_IterGVN()->remove_dead_node(hook);
@@ -921,14 +921,14 @@ const Type *ModINode::Value( PhaseTransform *phase ) const {
 
   // We always generate the dynamic check for 0.
   // 0 MOD X is 0
-  if( t1 == TypeInt::ZERO ) return TypeInt::ZERO; 
+  if( t1 == TypeInt::ZERO ) return TypeInt::ZERO;
   // X MOD X is 0
   if( phase->eqv( in(1), in(2) ) ) return TypeInt::ZERO;
 
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   const TypeInt *i1 = t1->is_int();
@@ -941,10 +941,10 @@ const Type *ModINode::Value( PhaseTransform *phase ) const {
   }
   // Mod by zero?  Throw exception at runtime!
   if( !i2->get_con() ) return TypeInt::POS;
-  
+
   // We must be modulo'ing 2 float constants.
   // Check for min_jint % '-1', result is defined to be '0'.
-  if( i1->get_con() == min_jint && i2->get_con() == -1 ) 
+  if( i1->get_con() == min_jint && i2->get_con() == -1 )
     return TypeInt::ZERO;
 
   return TypeInt::make( i1->get_con() % i2->get_con() );
@@ -1094,14 +1094,14 @@ const Type *ModLNode::Value( PhaseTransform *phase ) const {
 
   // We always generate the dynamic check for 0.
   // 0 MOD X is 0
-  if( t1 == TypeLong::ZERO ) return TypeLong::ZERO; 
+  if( t1 == TypeLong::ZERO ) return TypeLong::ZERO;
   // X MOD X is 0
   if( phase->eqv( in(1), in(2) ) ) return TypeLong::ZERO;
 
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   const TypeLong *i1 = t1->is_long();
@@ -1114,10 +1114,10 @@ const Type *ModLNode::Value( PhaseTransform *phase ) const {
   }
   // Mod by zero?  Throw exception at runtime!
   if( !i2->get_con() ) return TypeLong::POS;
-  
+
   // We must be modulo'ing 2 float constants.
   // Check for min_jint % '-1', result is defined to be '0'.
-  if( i1->get_con() == min_jlong && i2->get_con() == -1 ) 
+  if( i1->get_con() == min_jlong && i2->get_con() == -1 )
     return TypeLong::ZERO;
 
   return TypeLong::make( i1->get_con() % i2->get_con() );
@@ -1136,7 +1136,7 @@ const Type *ModFNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // If either number is not a constant, we know nothing.
@@ -1156,7 +1156,7 @@ const Type *ModFNode::Value( PhaseTransform *phase ) const {
   // If an operand is infinity or the divisor is +/- zero, punt.
   if (!g_isfinite(f1) || !g_isfinite(f2) || x2 == 0 || x2 == min_jint)
     return Type::FLOAT;
-  
+
   // We must be modulo'ing 2 float constants.
   // Make sure that the sign of the fmod is equal to the sign of the dividend
   jint xr = jint_cast(fmod(f1, f2));
@@ -1180,7 +1180,7 @@ const Type *ModDNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return bot;
 
   // If either number is not a constant, we know nothing.
@@ -1200,7 +1200,7 @@ const Type *ModDNode::Value( PhaseTransform *phase ) const {
   // If an operand is infinity or the divisor is +/- zero, punt.
   if (!g_isfinite(f1) || !g_isfinite(f2) || x2 == 0 || x2 == min_jlong)
     return Type::DOUBLE;
-  
+
   // We must be modulo'ing 2 double constants.
   // Make sure that the sign of the fmod is equal to the sign of the dividend
   jlong xr = jlong_cast(fmod(f1, f2));
@@ -1224,7 +1224,7 @@ DivModINode* DivModINode::make(Compile* C, Node* div_or_mod) {
   Node* n = div_or_mod;
   assert(n->Opcode() == Op_DivI || n->Opcode() == Op_ModI,
          "only div or mod input pattern accepted");
-  
+
   DivModINode* divmod = new (C, 3) DivModINode(n->in(0), n->in(1), n->in(2));
   Node*        dproj  = new (C, 1) ProjNode(divmod, DivModNode::div_proj_num);
   Node*        mproj  = new (C, 1) ProjNode(divmod, DivModNode::mod_proj_num);
@@ -1236,7 +1236,7 @@ DivModLNode* DivModLNode::make(Compile* C, Node* div_or_mod) {
   Node* n = div_or_mod;
   assert(n->Opcode() == Op_DivL || n->Opcode() == Op_ModL,
          "only div or mod input pattern accepted");
-  
+
   DivModLNode* divmod = new (C, 3) DivModLNode(n->in(0), n->in(1), n->in(2));
   Node*        dproj  = new (C, 1) ProjNode(divmod, DivModNode::div_proj_num);
   Node*        mproj  = new (C, 1) ProjNode(divmod, DivModNode::mod_proj_num);

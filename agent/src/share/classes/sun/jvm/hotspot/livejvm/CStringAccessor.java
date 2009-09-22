@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.livejvm;
@@ -30,7 +30,7 @@ import sun.jvm.hotspot.debugger.*;
 class CStringAccessor {
   private Address addr;
   private int bufLen;
-  
+
   CStringAccessor(Address addr, int bufLen) {
     this.addr = addr;
     this.bufLen = bufLen;
@@ -51,7 +51,7 @@ class CStringAccessor {
       throw new DebuggerException("Unable to use US-ASCII encoding");
     }
   }
-  
+
   void setValue(String value) throws DebuggerException {
     try {
       byte[] data = value.getBytes("US-ASCII");

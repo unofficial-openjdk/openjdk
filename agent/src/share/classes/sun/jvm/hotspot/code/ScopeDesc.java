@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.code;
@@ -86,7 +86,7 @@ public class ScopeDesc {
     if (isTop()) {
       return null;
     }
-    
+
     return new ScopeDesc(code, senderDecodeOffset);
   }
 
@@ -108,7 +108,7 @@ public class ScopeDesc {
     if (!(arg instanceof ScopeDesc)) {
       return false;
     }
-    
+
     ScopeDesc sd = (ScopeDesc) arg;
 
     return (sd.method.equals(method) && (sd.bci == bci));
@@ -123,7 +123,7 @@ public class ScopeDesc {
     method.printValueOn(tty);
     tty.println(" @bci " + bci);
   }
-  
+
   // FIXME: add more accessors
 
   //--------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ public class ScopeDesc {
     }
     return res;
   }
-  
+
   /** Returns a List&lt;MonitorValue&gt; or null if no values were present */
   private List decodeMonitorValues(int decodeOffset) {
     if (decodeOffset == DebugInformationRecorder.SERIALIZED_NULL) {

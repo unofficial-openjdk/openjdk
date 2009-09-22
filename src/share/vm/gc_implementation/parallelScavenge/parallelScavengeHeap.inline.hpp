@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parallelScavengeHeap.inline.hpp	1.5 07/05/05 17:05:28 JVM"
+#pragma ident "@(#)parallelScavengeHeap.inline.hpp      1.5 07/05/05 17:05:28 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline size_t ParallelScavengeHeap::total_invocations()

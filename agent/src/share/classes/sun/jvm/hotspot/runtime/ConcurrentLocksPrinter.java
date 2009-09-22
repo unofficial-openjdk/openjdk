@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -37,7 +37,7 @@ public class ConcurrentLocksPrinter {
     }
 
     public void print(JavaThread jthread, PrintStream tty) {
-        List locks = (List) locksMap.get(jthread);    
+        List locks = (List) locksMap.get(jthread);
         tty.println("Locked ownable synchronizers:");
         if (locks == null || locks.isEmpty()) {
             tty.println("    - None");
@@ -72,7 +72,7 @@ public class ConcurrentLocksPrinter {
                         JavaThread thread = getOwnerThread(oop);
                         if (thread != null) {
                             List locks = (List) locksMap.get(thread);
-                            if (locks == null) { 
+                            if (locks == null) {
                                 locks = new LinkedList();
                                 locksMap.put(thread, locks);
                             }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)memRegion.hpp	1.27 07/05/05 17:05:53 JVM"
+#pragma ident "@(#)memRegion.hpp        1.27 07/05/05 17:05:53 JVM"
 #endif
 /*
  * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A very simple data structure representing a contigous region
@@ -46,13 +46,13 @@ public:
     _start(start), _word_size(pointer_delta(end, start)) {
     assert(end >= start, "incorrect constructor arguments");
   }
-  
+
   MemRegion(const MemRegion& mr): _start(mr._start), _word_size(mr._word_size) {}
-    
+
   MemRegion intersection(const MemRegion mr2) const;
   // regions must overlap or be adjacent
   MemRegion _union(const MemRegion mr2) const;
-  // minus will fail a guarantee if mr2 is interior to this, 
+  // minus will fail a guarantee if mr2 is interior to this,
   // since there's no way to return 2 disjoint regions.
   MemRegion minus(const MemRegion mr2) const;
 
@@ -96,13 +96,13 @@ public:
 class MemRegionClosureRO: public MemRegionClosure {
 public:
   void* operator new(size_t size, ResourceObj::allocation_type type) {
-	return ResourceObj::operator new(size, type);
+        return ResourceObj::operator new(size, type);
   }
   void* operator new(size_t size, Arena *arena) {
-	return ResourceObj::operator new(size, arena);
+        return ResourceObj::operator new(size, arena);
   }
   void* operator new(size_t size) {
-	return ResourceObj::operator new(size);
+        return ResourceObj::operator new(size);
   }
 
   void  operator delete(void* p) {} // nothing to do

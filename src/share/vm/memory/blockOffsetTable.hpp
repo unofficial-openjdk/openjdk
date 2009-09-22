@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)blockOffsetTable.hpp	1.57 07/05/05 17:05:43 JVM"
+#pragma ident "@(#)blockOffsetTable.hpp 1.57 07/05/05 17:05:43 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The CollectedHeap type requires subtypes to implement a method
@@ -35,7 +35,7 @@
 //   - BlockOffsetArray (abstract)
 //     - BlockOffsetArrayNonContigSpace
 //     - BlockOffsetArrayContigSpace
-//      
+//
 
 class ContiguousSpace;
 class SerializeOopClosure;
@@ -49,8 +49,8 @@ protected:
   // These members describe the region covered by the table.
 
   // The space this table is covering.
-  HeapWord* _bottom;	// == reserved.start
-  HeapWord* _end;	// End of currently allocated region.
+  HeapWord* _bottom;    // == reserved.start
+  HeapWord* _end;       // End of currently allocated region.
 
 public:
   // Initialize the table to cover the given space.
@@ -119,7 +119,7 @@ class BlockOffsetSharedArray: public CHeapObj {
   // Array for keeping offsets for retrieving object start fast given an
   // address.
   VirtualSpace _vs;
-  u_char* _offset_array;	  // byte array keeping backwards offsets
+  u_char* _offset_array;          // byte array keeping backwards offsets
 
  protected:
   // Bounds checking accessors:
@@ -157,24 +157,24 @@ class BlockOffsetSharedArray: public CHeapObj {
     assert(index < _vs.committed_size(), "index out of range");
     assert(high >= low, "addresses out of order");
     assert(pointer_delta(high, low) <= N_words, "offset too large");
-    assert(_offset_array[index] == pointer_delta(high, low), 
+    assert(_offset_array[index] == pointer_delta(high, low),
            "Wrong offset");
   }
 
   bool is_card_boundary(HeapWord* p) const;
 
-  // Return the number of slots needed for an offset array 
+  // Return the number of slots needed for an offset array
   // that covers mem_region_words words.
-  // We always add an extra slot because if an object 
-  // ends on a card boundary we put a 0 in the next 
-  // offset array slot, so we want that slot always 
+  // We always add an extra slot because if an object
+  // ends on a card boundary we put a 0 in the next
+  // offset array slot, so we want that slot always
   // to be reserved.
- 
+
   size_t compute_size(size_t mem_region_words) {
     size_t number_of_slots = (mem_region_words / N_words) + 1;
     return ReservedSpace::allocation_align_size_up(number_of_slots);
   }
-  
+
 public:
   // Initialize the table to cover from "base" to (at least)
   // "base + init_word_size".  In the future, the table may be expanded
@@ -198,7 +198,7 @@ public:
   // Return the appropriate index into "_offset_array" for "p".
   size_t index_for(const void* p) const;
 
-  // Return the address indicating the start of the region corresponding to 
+  // Return the address indicating the start of the region corresponding to
   // "index" in "_offset_array".
   HeapWord* address_for_index(size_t index) const;
 
@@ -387,7 +387,7 @@ class BlockOffsetArrayNonContigSpace: public BlockOffsetArray {
   }
 
   // The following methods are useful and optimized for a
-  // non-contiguous space. 
+  // non-contiguous space.
 
   // Given a block [blk_start, blk_start + full_blk_size), and
   // a left_blk_size < full_blk_size, adjust the BOT to show two
@@ -413,10 +413,10 @@ class BlockOffsetArrayNonContigSpace: public BlockOffsetArray {
   // verified in the non-product VM) that the BOT is correct for
   // the given block.
   void allocated(HeapWord* blk_start, HeapWord* blk_end) {
-    // Verify that the BOT shows [blk, blk + blk_size) to be one block. 
-    verify_single_block(blk_start, blk_end); 
+    // Verify that the BOT shows [blk, blk + blk_size) to be one block.
+    verify_single_block(blk_start, blk_end);
     if (BlockOffsetArrayUseUnallocatedBlock) {
-      _unallocated_block = MAX2(_unallocated_block, blk_end); 
+      _unallocated_block = MAX2(_unallocated_block, blk_end);
     }
   }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)mutableNUMASpace.cpp	1.8 07/05/05 17:05:35 JVM"
+#pragma ident "@(#)mutableNUMASpace.cpp 1.8 07/05/05 17:05:35 JVM"
 #endif
 
 /*
@@ -23,7 +23,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -476,7 +476,7 @@ void MutableNUMASpace::select_tails(MemRegion new_region, MemRegion intersection
         }
       }
     }
-    *top_region = MemRegion(intersection.end(), new_region.end()); 
+    *top_region = MemRegion(intersection.end(), new_region.end());
   } else {
     *top_region = MemRegion();
   }
@@ -562,10 +562,10 @@ void MutableNUMASpace::initialize(MemRegion mr,
   if (!old_region.equals(region())) {
     new_region = MemRegion(rounded_bottom, rounded_end);
     MemRegion intersection = new_region.intersection(old_region);
-    if (intersection.start() == NULL || 
-        intersection.end() == NULL   || 
-	prev_page_size > page_size()) { // If the page size got smaller we have to change 
-	                                // the page size preference for the whole space. 
+    if (intersection.start() == NULL ||
+        intersection.end() == NULL   ||
+        prev_page_size > page_size()) { // If the page size got smaller we have to change
+                                        // the page size preference for the whole space.
       intersection = MemRegion(new_region.start(), new_region.start());
     }
     select_tails(new_region, intersection, &bottom_region, &top_region);
@@ -675,7 +675,7 @@ void MutableNUMASpace::initialize(MemRegion mr,
   }
 }
 
-// Set the top of the whole space. 
+// Set the top of the whole space.
 // Mark the the holes in chunks below the top() as invalid.
 void MutableNUMASpace::set_top(HeapWord* value) {
   bool found_top = false;

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_Optimizer.cpp	1.72 08/11/07 15:47:10 JVM"
+#pragma ident "@(#)c1_Optimizer.cpp     1.72 08/11/07 15:47:10 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -59,7 +59,7 @@ class CE_Eliminator: public BlockClosure {
     for (int i = 0; i < e; i++) {
       BlockBegin* xhandler = sux->exception_handler_at(i);
       block->add_exception_handler(xhandler);
-      
+
       assert(xhandler->is_predecessor(sux), "missing predecessor");
       if (sux->number_of_preds() == 0) {
         // sux is disconnected from graph so disconnect from exception handlers
@@ -120,7 +120,7 @@ class CE_Eliminator: public BlockClosure {
     Value sux_phi = sux_state->stack_at(if_->state()->stack_size());
     if (sux_phi == NULL || sux_phi->as_Phi() == NULL || sux_phi->as_Phi()->block() != sux) return;
     if (sux_phi->type()->size() != sux_state->stack_size() - if_->state()->stack_size()) return;
-  
+
     // get the values that were pushed in the true- and false-branch
     Value t_value = t_goto->state()->stack_at(if_->state()->stack_size());
     Value f_value = f_goto->state()->stack_at(if_->state()->stack_size());
@@ -500,7 +500,7 @@ class NullCheckEliminator {
     _visitable_instructions = new ValueSet();
     _visitor.set_eliminator(this);
   }
-  
+
   Optimizer*  opt()                               { return _opt; }
   IR*         ir ()                               { return opt()->ir(); }
 
@@ -1025,7 +1025,7 @@ void Optimizer::eliminate_null_checks() {
                   ir()->method()->name()->as_utf8(),
                   ir()->method()->signature()->as_symbol()->as_utf8());
   }
-  
+
   // Apply to graph
   nce.iterate(ir()->start());
 
@@ -1061,7 +1061,7 @@ void Optimizer::eliminate_null_checks() {
     }
   }
 
- 
+
   if (PrintNullCheckElimination) {
     tty->print_cr("Done with null check elimination for method %s::%s%s",
                   ir()->method()->holder()->name()->as_utf8(),

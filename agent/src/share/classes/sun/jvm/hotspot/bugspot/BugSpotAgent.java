@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -67,43 +67,43 @@ import sun.jvm.hotspot.utilities.*;
  * has turned into a mess; needs rethinking. </P> */
 
 public class BugSpotAgent {
-    
+
     private JVMDebugger debugger;
     private MachineDescription machDesc;
     private TypeDataBase db;
-    
+
     private String os;
     private String cpu;
     private String fileSep;
-    
+
     // The system can work in several ways:
     //  - Attaching to local process
     //  - Attaching to local core file
     //  - Connecting to remote debug server
     //  - Starting debug server for process
     //  - Starting debug server for core file
-    
+
     // These are options for the "client" side of things
     private static final int PROCESS_MODE   = 0;
     private static final int CORE_FILE_MODE = 1;
     private static final int REMOTE_MODE    = 2;
     private int startupMode;
-    
+
     // This indicates whether we are really starting a server or not
     private boolean isServer;
-    
+
     // All possible required information for connecting
     private int pid;
     private String executableName;
     private String coreFileName;
     private String debugServerID;
-    
+
     // All needed information for server side
     private String serverID;
-    
+
     // Indicates whether we are attached to a HotSpot JVM or not
     private boolean javaMode;
-    
+
     // Indicates whether we have process control over a live HotSpot JVM
     // or not; non-null if so.
     private ServiceabilityAgentJVMDIModule jvmdi;
@@ -111,28 +111,28 @@ public class BugSpotAgent {
     // is forbidden. Too many invariants are broken while the target is
     // stopped at a C breakpoint to risk making JVMDI calls.
     private boolean javaInteractionDisabled;
-    
+
     private String[] jvmLibNames;
     private String[] saLibNames;
-    
+
     // FIXME: make these configurable, i.e., via a dotfile; also
     // consider searching within the JDK from which this Java executable
     // comes to find them
     private static final String defaultDbxPathPrefix                = "/net/jano.eng/export/disk05/hotspot/sa";
     private static final String defaultDbxSvcAgentDSOPathPrefix     = "/net/jano.eng/export/disk05/hotspot/sa";
-    
+
     private static final boolean DEBUG;
     static {
         DEBUG = System.getProperty("sun.jvm.hotspot.bugspot.BugSpotAgent.DEBUG")
         != null;
     }
-    
+
     static void debugPrintln(String str) {
         if (DEBUG) {
             System.err.println(str);
         }
     }
-    
+
     static void showUsage() {
         System.out.println("    You can also pass these -D options to java to specify where to find dbx and the \n" +
         "    Serviceability Agent plugin for dbx:");
@@ -152,7 +152,7 @@ public class BugSpotAgent {
         "                   <os>/<arch>/bin/lib/libsvc_agent_dbx.so\n" +
         "             The default is " + defaultDbxSvcAgentDSOPathPrefix);
     }
-    
+
     public BugSpotAgent() {
         // for non-server add shutdown hook to clean-up debugger in case
         // of forced exit. For remote server, shutdown hook is added by
@@ -168,51 +168,51 @@ public class BugSpotAgent {
             }
         }));
     }
-    
+
     //--------------------------------------------------------------------------------
     // Accessors (once the system is set up)
     //
-    
+
     public synchronized Debugger getDebugger() {
         return debugger;
     }
-    
+
     public synchronized CDebugger getCDebugger() {
         return getDebugger().getCDebugger();
     }
-    
+
     public synchronized ProcessControl getProcessControl() {
         return getCDebugger().getProcessControl();
     }
-    
+
     public synchronized TypeDataBase getTypeDataBase() {
         return db;
     }
-    
+
     /** Indicates whether the target process is suspended
       completely. Equivalent to getProcessControl().isSuspended(). */
     public synchronized boolean isSuspended() throws DebuggerException {
         return getProcessControl().isSuspended();
     }
-    
+
     /** Suspends the target process completely. Equivalent to
       getProcessControl().suspend(). */
     public synchronized void suspend() throws DebuggerException {
         getProcessControl().suspend();
     }
-    
+
     /** Resumes the target process completely. Equivalent to
       getProcessControl().suspend(). */
     public synchronized void resume() throws DebuggerException {
         getProcessControl().resume();
     }
-    
+
     /** Indicates whether we are attached to a Java HotSpot virtual
       machine */
     public synchronized boolean isJavaMode() {
         return javaMode;
     }
-    
+
     /** Temporarily disables interaction with the target process via
       JVMDI. This is done while the target process is stopped at a C
       breakpoint. Can be called even if the JVMDI agent has not been
@@ -220,7 +220,7 @@ public class BugSpotAgent {
     public synchronized void disableJavaInteraction() {
         javaInteractionDisabled = true;
     }
-    
+
     /** Re-enables interaction with the target process via JVMDI. This
       is done while the target process is continued past a C
       braekpoint. Can be called even if the JVMDI agent has not been
@@ -228,18 +228,18 @@ public class BugSpotAgent {
     public synchronized void enableJavaInteraction() {
         javaInteractionDisabled = false;
     }
-    
+
     /** Indicates whether Java interaction has been disabled */
     public synchronized boolean isJavaInteractionDisabled() {
         return javaInteractionDisabled;
     }
-    
+
     /** Indicates whether we can talk to the Serviceability Agent's
       JVMDI module to be able to set breakpoints */
     public synchronized boolean canInteractWithJava() {
         return (jvmdi != null) && !javaInteractionDisabled;
     }
-    
+
     /** Suspends all Java threads in the target process. Can only be
       called if we are attached to a HotSpot JVM and can connect to
       the SA's JVMDI module. Must not be called when the target
@@ -253,7 +253,7 @@ public class BugSpotAgent {
         }
         jvmdi.suspend();
     }
-    
+
     /** Resumes all Java threads in the target process. Can only be
       called if we are attached to a HotSpot JVM and can connect to
       the SA's JVMDI module. Must not be called when the target
@@ -267,13 +267,13 @@ public class BugSpotAgent {
         }
         jvmdi.resume();
     }
-    
+
     /** Indicates whether the target process has been suspended at the
       Java language level via the SA's JVMDI module */
     public synchronized boolean isJavaSuspended() throws DebuggerException {
         return jvmdi.isSuspended();
     }
-    
+
     /** Toggle a Java breakpoint at the given location. */
     public synchronized ServiceabilityAgentJVMDIModule.BreakpointToggleResult
     toggleJavaBreakpoint(String srcFileName,
@@ -284,7 +284,7 @@ public class BugSpotAgent {
         }
         return jvmdi.toggleBreakpoint(srcFileName, pkgName, lineNo);
     }
-    
+
     /** Access to JVMDI module's eventPending */
     public synchronized boolean javaEventPending() throws DebuggerException {
         if (!canInteractWithJava()) {
@@ -292,7 +292,7 @@ public class BugSpotAgent {
         }
         return jvmdi.eventPending();
     }
-    
+
     /** Access to JVMDI module's eventPoll */
     public synchronized Event javaEventPoll() throws DebuggerException {
         if (!canInteractWithJava()) {
@@ -300,7 +300,7 @@ public class BugSpotAgent {
         }
         return jvmdi.eventPoll();
     }
-    
+
     /** Access to JVMDI module's eventContinue */
     public synchronized void javaEventContinue() throws DebuggerException {
         if (!canInteractWithJava()) {
@@ -308,18 +308,18 @@ public class BugSpotAgent {
         }
         jvmdi.eventContinue();
     }
-    
-    
+
+
     // FIXME: add other accessors. For example, suspension and
     // resumption should be done through this interface, as well as
     // interaction with the live Java process such as breakpoint setting.
     // Probably should not expose the ServiceabilityAgentJVMDIModule
     // from this interface.
-    
+
     //--------------------------------------------------------------------------------
     // Client-side operations
     //
-    
+
     /** This attaches to a process running on the local machine. */
     public synchronized void attach(int processID)
     throws DebuggerException {
@@ -331,7 +331,7 @@ public class BugSpotAgent {
         isServer = false;
         go();
     }
-    
+
     /** This opens a core file on the local machine */
     public synchronized void attach(String executableName, String coreFileName)
     throws DebuggerException {
@@ -347,7 +347,7 @@ public class BugSpotAgent {
         isServer = false;
         go();
     }
-    
+
     /** This attaches to a "debug server" on a remote machine; this
       remote server has already attached to a process or opened a
       core file and is waiting for RMI calls on the Debugger object to
@@ -360,13 +360,13 @@ public class BugSpotAgent {
         if (remoteServerID == null) {
             throw new DebuggerException("Debug server id must be specified");
         }
-        
+
         debugServerID = remoteServerID;
         startupMode = REMOTE_MODE;
         isServer = false;
         go();
     }
-    
+
     /** This should only be called by the user on the client machine,
       not the server machine */
     public synchronized boolean detach() throws DebuggerException {
@@ -375,11 +375,11 @@ public class BugSpotAgent {
         }
         return detachInternal();
     }
-    
+
     //--------------------------------------------------------------------------------
     // Server-side operations
     //
-    
+
     /** This attaches to a process running on the local machine and
       starts a debug server, allowing remote machines to connect and
       examine this process. uniqueID is used to uniquely identify the
@@ -395,7 +395,7 @@ public class BugSpotAgent {
         serverID = uniqueID;
         go();
     }
-    
+
     /** This attaches to a process running on the local machine and
       starts a debug server, allowing remote machines to connect and
       examine this process. */
@@ -403,7 +403,7 @@ public class BugSpotAgent {
     throws DebuggerException {
         startServer(processID, null);
     }
-    
+
     /** This opens a core file on the local machine and starts a debug
       server, allowing remote machines to connect and examine this
       core file. uniqueID is used to uniquely identify the
@@ -424,7 +424,7 @@ public class BugSpotAgent {
         serverID = uniqueID;
         go();
     }
-    
+
     /** This opens a core file on the local machine and starts a debug
       server, allowing remote machines to connect and examine this
       core file.*/
@@ -432,7 +432,7 @@ public class BugSpotAgent {
     throws DebuggerException {
         startServer(executableName, coreFileName, null);
     }
-    
+
     /** This may only be called on the server side after startServer()
       has been called */
     public synchronized boolean shutdownServer() throws DebuggerException {
@@ -441,12 +441,12 @@ public class BugSpotAgent {
         }
         return detachInternal();
     }
-    
-    
+
+
     //--------------------------------------------------------------------------------
     // Internals only below this point
     //
-    
+
     private boolean detachInternal() {
         if (debugger == null) {
             return false;
@@ -479,7 +479,7 @@ public class BugSpotAgent {
         if (dbg != null) {
             retval = dbg.detach();
         }
-        
+
         debugger = null;
         machDesc = null;
         db = null;
@@ -488,19 +488,19 @@ public class BugSpotAgent {
         }
         return retval;
     }
-    
+
     private void go() {
         setupDebugger();
         javaMode = setupVM();
     }
-    
+
     private void setupDebugger() {
         if (startupMode != REMOTE_MODE) {
             //
             // Local mode (client attaching to local process or setting up
             // server, but not client attaching to server)
             //
-            
+
             try {
                 os  = PlatformInfo.getOS();
                 cpu = PlatformInfo.getCPU();
@@ -509,7 +509,7 @@ public class BugSpotAgent {
                 throw new DebuggerException(e);
             }
             fileSep = System.getProperty("file.separator");
-            
+
             if (os.equals("solaris")) {
                 setupDebuggerSolaris();
             } else if (os.equals("win32")) {
@@ -534,29 +534,29 @@ public class BugSpotAgent {
             //
             // Remote mode (client attaching to server)
             //
-            
+
             // Create and install a security manager
-            
+
             // FIXME: currently commented out because we were having
             // security problems since we're "in the sun.* hierarchy" here.
             // Perhaps a permissive policy file would work around this. In
             // the long run, will probably have to move into com.sun.*.
-            
+
             //    if (System.getSecurityManager() == null) {
             //      System.setSecurityManager(new RMISecurityManager());
             //    }
-            
+
             connectRemoteDebugger();
         }
     }
-    
+
     private boolean setupVM() {
         // We need to instantiate a HotSpotTypeDataBase on both the client
         // and server machine. On the server it is only currently used to
         // configure the Java primitive type sizes (which we should
         // consider making constant). On the client it is used to
         // configure the VM.
-        
+
         try {
             if (os.equals("solaris")) {
                 db = new HotSpotTypeDataBase(machDesc, new HotSpotSolarisVtblAccess(debugger, jvmLibNames),
@@ -575,7 +575,7 @@ public class BugSpotAgent {
             e.printStackTrace();
             return false;
         }
-        
+
         if (startupMode != REMOTE_MODE) {
             // Configure the debugger with the primitive type sizes just obtained from the VM
             debugger.configureJavaPrimitiveTypeSizes(db.getJBooleanType().getSize(),
@@ -587,13 +587,13 @@ public class BugSpotAgent {
             db.getJLongType().getSize(),
             db.getJShortType().getSize());
         }
-        
+
         if (!isServer) {
             // Do not initialize the VM on the server (unnecessary, since it's
             // instantiated on the client)
             VM.initialize(db, debugger);
         }
-        
+
         try {
             jvmdi = new ServiceabilityAgentJVMDIModule(debugger, saLibNames);
             if (jvmdi.canAttach()) {
@@ -613,18 +613,18 @@ public class BugSpotAgent {
             e.printStackTrace();
             jvmdi = null;
         }
-        
+
         return true;
     }
-    
+
     //--------------------------------------------------------------------------------
     // OS-specific debugger setup/connect routines
     //
-    
+
     //
     // Solaris
     //
-    
+
     private void setupDebuggerSolaris() {
         setupJVMLibNamesSolaris();
         String prop = System.getProperty("sun.jvm.hotspot.debugger.useProcDebugger");
@@ -632,7 +632,7 @@ public class BugSpotAgent {
             ProcDebuggerLocal dbg = new ProcDebuggerLocal(null, true);
             debugger = dbg;
             attachDebugger();
-            
+
             // Set up CPU-dependent stuff
             if (cpu.equals("x86")) {
                 machDesc = new MachineDescriptionIntelX86();
@@ -641,7 +641,7 @@ public class BugSpotAgent {
                 if (addressSize == -1) {
                     throw new DebuggerException("Error occurred while trying to determine the remote process's address size");
                 }
-                
+
                 if (addressSize == 32) {
                     machDesc = new MachineDescriptionSPARC32Bit();
                 } else if (addressSize == 64) {
@@ -654,7 +654,7 @@ public class BugSpotAgent {
             } else {
                 throw new DebuggerException("Solaris only supported on sparc/sparcv9/x86/amd64");
             }
-            
+
             dbg.setMachineDescription(machDesc);
             return;
         } else {
@@ -663,7 +663,7 @@ public class BugSpotAgent {
             String dbxSvcAgentDSOPathName;
             String dbxSvcAgentDSOPathPrefix;
             String[] dbxSvcAgentDSOPathNames = null;
-            
+
             // use path names/prefixes specified on command
             dbxPathName = System.getProperty("dbxPathName");
             if (dbxPathName == null) {
@@ -673,7 +673,7 @@ public class BugSpotAgent {
                 }
                 dbxPathName = dbxPathPrefix + fileSep + os + fileSep + cpu + fileSep + "bin" + fileSep + "dbx";
             }
-            
+
             dbxSvcAgentDSOPathName = System.getProperty("dbxSvcAgentDSOPathName");
             if (dbxSvcAgentDSOPathName != null) {
                 dbxSvcAgentDSOPathNames = new String[] { dbxSvcAgentDSOPathName } ;
@@ -702,9 +702,9 @@ public class BugSpotAgent {
             // mode; it's taken care of on the client side
             DbxDebuggerLocal dbg = new DbxDebuggerLocal(null, dbxPathName, dbxSvcAgentDSOPathNames, !isServer);
             debugger = dbg;
-            
+
             attachDebugger();
-            
+
             // Set up CPU-dependent stuff
             if (cpu.equals("x86")) {
                 machDesc = new MachineDescriptionIntelX86();
@@ -713,7 +713,7 @@ public class BugSpotAgent {
                 if (addressSize == -1) {
                     throw new DebuggerException("Error occurred while trying to determine the remote process's address size. It's possible that the Serviceability Agent's dbx module failed to initialize. Examine the standard output and standard error streams from the dbx process for more information.");
                 }
-                
+
                 if (addressSize == 32) {
                     machDesc = new MachineDescriptionSPARC32Bit();
                 } else if (addressSize == 64) {
@@ -722,11 +722,11 @@ public class BugSpotAgent {
                     throw new DebuggerException("Address size " + addressSize + " is not supported on SPARC");
                 }
             }
-            
+
             dbg.setMachineDescription(machDesc);
         }
     }
-    
+
     private void connectRemoteDebugger() throws DebuggerException {
         RemoteDebugger remote =
         (RemoteDebugger) RMIHelper.lookup(debugServerID);
@@ -742,22 +742,22 @@ public class BugSpotAgent {
         } else {
             throw new RuntimeException("Unknown OS type");
         }
-        
+
         cpu = debugger.getCPU();
     }
-    
+
     private void setupJVMLibNamesSolaris() {
         jvmLibNames = new String[] { "libjvm.so", "libjvm_g.so", "gamma_g" };
         saLibNames = new String[] { "libsa.so", "libsa_g.so" };
     }
-    
+
     //
     // Win32
     //
-    
+
     private void setupDebuggerWin32() {
         setupJVMLibNamesWin32();
-        
+
         if (cpu.equals("x86")) {
             machDesc = new MachineDescriptionIntelX86();
         } else if (cpu.equals("amd64")) {
@@ -767,32 +767,32 @@ public class BugSpotAgent {
         } else {
             throw new DebuggerException("Win32 supported under x86, amd64 and ia64 only");
         }
-        
+
         // Note we do not use a cache for the local debugger in server
         // mode; it will be taken care of on the client side (once remote
         // debugging is implemented).
-        
+
         if (System.getProperty("sun.jvm.hotspot.debugger.useWindbgDebugger") != null) {
             debugger = new WindbgDebuggerLocal(machDesc, !isServer);
         } else {
             debugger = new Win32DebuggerLocal(machDesc, !isServer);
         }
-        
+
         attachDebugger();
     }
-    
+
     private void setupJVMLibNamesWin32() {
         jvmLibNames = new String[] { "jvm.dll", "jvm_g.dll" };
         saLibNames = new String[] { "sa.dll", "sa_g.dll" };
     }
-    
+
     //
     // Linux
     //
-    
+
     private void setupDebuggerLinux() {
         setupJVMLibNamesLinux();
-        
+
         if (cpu.equals("x86")) {
             machDesc = new MachineDescriptionIntelX86();
         } else if (cpu.equals("ia64")) {
@@ -803,25 +803,25 @@ public class BugSpotAgent {
             if (LinuxDebuggerLocal.getAddressSize()==8) {
                machDesc = new MachineDescriptionSPARC64Bit();
             } else {
-	       machDesc = new MachineDescriptionSPARC32Bit();
+               machDesc = new MachineDescriptionSPARC32Bit();
             }
         } else {
             throw new DebuggerException("Linux only supported on x86/ia64/amd64/sparc/sparc64");
         }
-        
+
         // Note we do not use a cache for the local debugger in server
         // mode; it will be taken care of on the client side (once remote
         // debugging is implemented).
-        
+
         debugger = new LinuxDebuggerLocal(machDesc, !isServer);
         attachDebugger();
     }
-    
+
     private void setupJVMLibNamesLinux() {
         // same as solaris
         setupJVMLibNamesSolaris();
     }
-    
+
     /** Convenience routine which should be called by per-platform
       debugger setup. Should not be called when startupMode is
       REMOTE_MODE. */

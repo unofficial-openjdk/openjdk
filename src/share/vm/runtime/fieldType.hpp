@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)fieldType.hpp	1.28 07/05/05 17:06:47 JVM"
+#pragma ident "@(#)fieldType.hpp        1.28 07/05/05 17:06:47 JVM"
 #endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Note: FieldType should be based on the SignatureIterator (or vice versa).
@@ -31,13 +31,13 @@
 // A FieldType is used to determine the type of a field from a signature string.
 
 class FieldType: public AllStatic {
- private:  
+ private:
   static void skip_optional_size(symbolOop signature, int* index);
   static bool is_valid_array_signature(symbolOop signature);
  public:
- 
+
   // Return basic type
-  static BasicType basic_type(symbolOop signature);  
+  static BasicType basic_type(symbolOop signature);
 
   // Testing
   static bool is_array(symbolOop signature) { return signature->utf8_length() > 1 && signature->byte_at(0) == '[' && is_valid_array_signature(signature); }
@@ -50,7 +50,6 @@ class FieldType: public AllStatic {
              (signature->byte_at(sig_length - 1) == ';'));
   }
 
-  // Parse field and extract array information. Works for T_ARRAY only.  
+  // Parse field and extract array information. Works for T_ARRAY only.
   static BasicType get_array_info(symbolOop signature, jint* dimension, symbolOop *object_key, TRAPS);
 };
-

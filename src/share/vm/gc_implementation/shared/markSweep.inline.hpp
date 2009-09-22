@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)markSweep.inline.hpp	1.17 07/05/29 09:44:12 JVM"
+#pragma ident "@(#)markSweep.inline.hpp 1.17 07/05/29 09:44:12 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void MarkSweep::mark_object(oop obj) {

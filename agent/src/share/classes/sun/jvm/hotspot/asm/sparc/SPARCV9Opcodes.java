@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -53,7 +53,7 @@ public interface SPARCV9Opcodes extends SPARCOpcodes {
     public static final int IMPDEP1 = CPop1;
     public static final int IMPDEP2 = CPop2;
 
-    // various rcond values - used in BPr, MOVr and FMOVr 
+    // various rcond values - used in BPr, MOVr and FMOVr
 
     // reserved register condition
     public static final int BRANCH_RCOND_RESERVED1 = 0; // 000
@@ -179,12 +179,12 @@ public interface SPARCV9Opcodes extends SPARCOpcodes {
 
     public static final int LDUW   = LD;
     public static final int LDUWA  = LDA;
-    
+
     public static final int LDXFSR = LDFSR;
 
     public static final int LDFA   = LDC;
-    public static final int LDQF   = (2 << 4) | 2;   
-    public static final int LDQFA  = (3 << 4) | 2;   
+    public static final int LDQF   = (2 << 4) | 2;
+    public static final int LDQFA  = (3 << 4) | 2;
     public static final int LDDFA  = LDDC;
 
     public static final int STW    = ST;
@@ -304,7 +304,7 @@ public interface SPARCV9Opcodes extends SPARCOpcodes {
     public static final int FMOVd = 0x2;
     public static final int FMOVq = 0x3;
     public static final int FNEGd = 0x6;
-    public static final int FNEGq = 0x7; 
+    public static final int FNEGq = 0x7;
     public static final int FABSd = 0xA;
     public static final int FABSq = 0xB;
     public static final int FsTOx = (0x8 << 4) | 0x1;
@@ -325,7 +325,7 @@ public interface SPARCV9Opcodes extends SPARCOpcodes {
     public static final int FMOVs_fcc3 = 1 | (0xC << 4);
     public static final int FMOVs_icc  = 1 | (0x10 << 4);
     public static final int FMOVs_xcc  = 1 | (0x18 << 4);
-    
+
     public static final int FMOVd_fcc0 = 2;
     public static final int FMOVd_fcc1 = 2 | (0x4 << 4);
     public static final int FMOVd_fcc2 = 2 | (0x8 << 4);

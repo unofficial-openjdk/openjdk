@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.linux.sparc;
@@ -34,8 +34,8 @@ final public class LinuxSPARCCFrame extends BasicCFrame {
    // package/class internals only
 
    public LinuxSPARCCFrame(LinuxDebugger dbg, Address sp, Address pc, int address_size) {
-      super(dbg.getCDebugger()); 
-      this.sp = sp;  
+      super(dbg.getCDebugger());
+      this.sp = sp;
       this.pc = pc;
       this.dbg = dbg;
       this.address_size=address_size;
@@ -50,7 +50,7 @@ final public class LinuxSPARCCFrame extends BasicCFrame {
    }
 
    public Address pc() {
-      return	 pc;
+      return     pc;
    }
 
    public Address localVariableBase() {
@@ -72,10 +72,10 @@ final public class LinuxSPARCCFrame extends BasicCFrame {
       }
       return new LinuxSPARCCFrame(dbg, nextSP, nextPC,address_size);
    }
-   
-   public static int SPARC_STACK_BIAS;  
-   private static int address_size;  
+
+   public static int SPARC_STACK_BIAS;
+   private static int address_size;
    private Address pc;
-   private Address sp; 
+   private Address sp;
    private LinuxDebugger dbg;
 }

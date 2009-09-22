@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psGCAdaptivePolicyCounters.hpp	1.21 07/05/05 17:05:29 JVM"
+#pragma ident "@(#)psGCAdaptivePolicyCounters.hpp       1.21 07/05/05 17:05:29 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // PSGCAdaptivePolicyCounters is a holder class for performance counters
@@ -63,7 +63,7 @@ class PSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   PerfVariable* _full_follows_scavenge;
 
   // Use this time stamp if the gc time stamp is not available.
-  TimeStamp	_counter_time_stamp;
+  TimeStamp     _counter_time_stamp;
 
  protected:
   PSAdaptiveSizePolicy* ps_size_policy() {
@@ -71,8 +71,8 @@ class PSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   }
 
  public:
-  PSGCAdaptivePolicyCounters(const char* name, int collectors, int generations, 
-			     PSAdaptiveSizePolicy* size_policy);
+  PSGCAdaptivePolicyCounters(const char* name, int collectors, int generations,
+                             PSAdaptiveSizePolicy* size_policy);
   inline void update_old_capacity(size_t size_in_bytes) {
     _old_capacity->set_value(size_in_bytes);
   }
@@ -191,7 +191,7 @@ class PSGCAdaptivePolicyCounters : public GCAdaptivePolicyCounters {
   // that are updated via input parameters.
   void update_counters();
 
-  virtual GCPolicyCounters::Name kind() const { 
-    return GCPolicyCounters::PSGCAdaptivePolicyCountersKind; 
+  virtual GCPolicyCounters::Name kind() const {
+    return GCPolicyCounters::PSGCAdaptivePolicyCountersKind;
   }
 };

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -50,7 +50,7 @@ public class GenCollectedHeap extends SharedHeap {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("GenCollectedHeap");
-    
+
     nGensField = type.getCIntegerField("_n_gens");
     gensOffset = type.getField("_gens").getOffset();
     genSpecsField = type.getAddressField("_gen_specs");
@@ -71,11 +71,11 @@ public class GenCollectedHeap extends SharedHeap {
       Assert.that((i >= 0) && (i < nGens()), "Index " + i +
                   " out of range (should be between 0 and " + nGens() + ")");
     }
-    
+
     if ((i < 0) || (i >= nGens())) {
       return null;
     }
-    
+
     Address genAddr = addr.getAddressAt(gensOffset +
                                         (i * VM.getVM().getAddressSize()));
     return genFactory.newObject(addr.getAddressAt(gensOffset +
@@ -115,11 +115,11 @@ public class GenCollectedHeap extends SharedHeap {
       Assert.that((level >= 0) && (level < nGens()), "Index " + level +
                   " out of range (should be between 0 and " + nGens() + ")");
     }
-    
+
     if ((level < 0) || (level >= nGens())) {
       return null;
     }
-    
+
     Address ptrList = genSpecsField.getValue(addr);
     if (ptrList == null) {
       return null;

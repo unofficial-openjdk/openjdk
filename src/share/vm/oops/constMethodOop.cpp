@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)constMethodOop.cpp	1.11 07/05/05 17:06:00 JVM"
+#pragma ident "@(#)constMethodOop.cpp   1.11 07/05/05 17:06:00 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -98,7 +98,7 @@ void constMethodOopDesc::set_inlined_tables_length(
     _flags |= _has_checked_exceptions;
     *(checked_exceptions_length_addr()) = checked_exceptions_len;
   }
-  if (localvariable_table_len > 0) {    
+  if (localvariable_table_len > 0) {
     _flags |= _has_localvariable_table;
     *(localvariable_table_length_addr()) = localvariable_table_len;
   }

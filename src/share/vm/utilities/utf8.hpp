@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)utf8.hpp	1.22 07/05/05 17:07:11 JVM"
+#pragma ident "@(#)utf8.hpp     1.22 07/05/05 17:07:11 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Low-level interface for UTF8 strings
@@ -36,13 +36,13 @@ class UTF8 : AllStatic {
   static int unicode_length(const char* uft8_str, int len);
 
   // converts a uft8 string to a unicode string
-  static void convert_to_unicode(const char* utf8_str, jchar* unicode_buffer, int unicode_length); 
+  static void convert_to_unicode(const char* utf8_str, jchar* unicode_buffer, int unicode_length);
 
   // decodes the current utf8 character, stores the result in value,
   // and returns the end of the current uft8 chararacter.
   static char* next(const char* str, jchar* value);
 
-  // decodes the current utf8 character, gets the supplementary character instead of 
+  // decodes the current utf8 character, gets the supplementary character instead of
   // the surrogate pair when seeing a supplementary character in string,
   // stores the result in value, and returns the end of the current uft8 chararacter.
   static char* next_character(const char* str, jint* value);
@@ -74,6 +74,6 @@ class UNICODE : AllStatic {
 
   // converts a unicode string to a utf8 string; result is allocated
   // in resource area unless a buffer is provided.
-  static char* as_utf8(jchar* base, int length);  
+  static char* as_utf8(jchar* base, int length);
   static char* as_utf8(jchar* base, int length, char* buf, int buflen);
 };

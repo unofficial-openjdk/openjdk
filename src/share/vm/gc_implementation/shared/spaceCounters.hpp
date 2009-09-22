@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)spaceCounters.hpp	1.11 07/05/05 17:05:35 JVM"
+#pragma ident "@(#)spaceCounters.hpp    1.11 07/05/05 17:05:35 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A SpaceCounter is a holder class for performance counters
@@ -50,7 +50,7 @@ class SpaceCounters: public CHeapObj {
   ~SpaceCounters() {
     if (_name_space != NULL) FREE_C_HEAP_ARRAY(char, _name_space);
   }
-  
+
   inline void update_capacity() {
     _capacity->set_value(_object_space->capacity_in_bytes());
   }

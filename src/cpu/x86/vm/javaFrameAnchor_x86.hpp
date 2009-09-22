@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)javaFrameAnchor_x86.hpp	1.19 07/08/29 13:42:14 JVM"
+#pragma ident "@(#)javaFrameAnchor_x86.hpp      1.19 07/08/29 13:42:14 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 private:
@@ -31,7 +31,7 @@ private:
   intptr_t* volatile        _last_Java_fp;           // pointer is volatile not what it points to
 
 public:
-  // Each arch must define reset, save, restore 
+  // Each arch must define reset, save, restore
   // These are used by objects that only care about:
   //  1 - initializing a new state (thread creation, javaCalls)
   //  2 - saving a current state (javaCalls)
@@ -46,7 +46,7 @@ public:
   }
 
   void copy(JavaFrameAnchor* src) {
-    // In order to make sure the transition state is valid for "this" 
+    // In order to make sure the transition state is valid for "this"
     // We must clear _last_Java_sp before copying the rest of the new data
     //
     // Hack Alert: Temporary bugfix for 4717480/4721647
@@ -69,7 +69,7 @@ public:
 
   intptr_t* last_Java_sp(void) const             { return _last_Java_sp; }
 
-private: 
+private:
 
   static ByteSize last_Java_fp_offset()          { return byte_offset_of(JavaFrameAnchor, _last_Java_fp); }
 
@@ -80,6 +80,3 @@ public:
   intptr_t*   last_Java_fp(void)                     { return _last_Java_fp; }
   // Assert (last_Java_sp == NULL || fp == NULL)
   void set_last_Java_fp(intptr_t* fp)                { _last_Java_fp = fp; }
-
-
-

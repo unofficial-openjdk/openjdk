@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)locknode.cpp	1.49 07/05/17 15:59:05 JVM"
+#pragma ident "@(#)locknode.cpp 1.49 07/05/17 15:59:05 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -33,7 +33,7 @@ const RegMask &BoxLockNode::in_RegMask(uint i) const {
   return _inmask;
 }
 
-const RegMask &BoxLockNode::out_RegMask() const { 
+const RegMask &BoxLockNode::out_RegMask() const {
   return *Matcher::idealreg2regmask[Op_RegP];
 }
 
@@ -59,7 +59,7 @@ uint BoxLockNode::cmp( const Node &n ) const {
 }
 
 OptoReg::Name BoxLockNode::stack_slot(Node* box_node) {
-  // Chase down the BoxNode 
+  // Chase down the BoxNode
   while (!box_node->is_BoxLock()) {
     //    if (box_node->is_SpillCopy()) {
     //      Node *m = box_node->in(1);
@@ -105,14 +105,14 @@ void FastLockNode::create_lock_counter(JVMState* state) {
 //------------------------------do_monitor_enter-------------------------------
 void Parse::do_monitor_enter() {
   kill_dead_locals();
- 
+
   // Null check; get casted pointer.
   Node *obj = do_null_check(peek(), T_OBJECT);
   // Check for locking null object
   if (stopped()) return;
 
   // the monitor object is not part of debug info expression stack
-  pop(); 
+  pop();
 
   // Insert a FastLockNode which takes as arguments the current thread pointer,
   // the obj pointer & the address of the stack slot pair used for the lock.
@@ -128,7 +128,4 @@ void Parse::do_monitor_exit() {
   // the matching Lock for this Unlock.  Hence we know there is no need
   // for a null check on Unlock.
   shared_unlock(map()->peek_monitor_box(), map()->peek_monitor_obj());
-} 
-
-
-
+}

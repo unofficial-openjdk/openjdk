@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)Buffer.cpp	1.10 07/05/05 17:02:05 JVM"
+#pragma ident "@(#)Buffer.cpp   1.10 07/05/05 17:02:05 JVM"
 #endif
 /*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "Buffer.hpp"
@@ -63,7 +63,7 @@ Buffer::incrFillPos(int amt) {
   fill += amt;
   return true;
 }
-  
+
 int
 Buffer::readByte() {
   if (drain < fill) {

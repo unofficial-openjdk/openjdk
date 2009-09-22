@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -44,7 +44,7 @@ public class ProtectionDomainEntry extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("ProtectionDomainEntry");
-    
+
     nextField = type.getAddressField("_next");
     protectionDomainField = type.getOopField("_protection_domain");
   }
@@ -56,7 +56,7 @@ public class ProtectionDomainEntry extends VMObject {
   public ProtectionDomainEntry next() {
     return (ProtectionDomainEntry) VMObjectFactory.newObject(ProtectionDomainEntry.class, addr);
   }
-  
+
   public Oop protectionDomain() {
     return VM.getVM().getObjectHeap().newOop(protectionDomainField.getValue(addr));
   }

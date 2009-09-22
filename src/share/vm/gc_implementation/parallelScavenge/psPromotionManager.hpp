@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psPromotionManager.hpp	1.20 07/09/25 16:47:42 JVM"
+#pragma ident "@(#)psPromotionManager.hpp       1.20 07/09/25 16:47:42 JVM"
 #endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -162,7 +162,7 @@ class PSPromotionManager : public CHeapObj {
       ++_overflow_pushes;
       uint stack_length = (uint) overflow_stack_depth()->length();
       if (stack_length > _max_overflow_length) {
-	_max_overflow_length = stack_length;
+        _max_overflow_length = stack_length;
       }
 #endif // PS_PM_STATS
     }
@@ -181,7 +181,7 @@ class PSPromotionManager : public CHeapObj {
       ++_overflow_pushes;
       uint stack_length = (uint) overflow_stack_breadth()->length();
       if (stack_length > _max_overflow_length) {
-	_max_overflow_length = stack_length;
+        _max_overflow_length = stack_length;
       }
 #endif // PS_PM_STATS
     }

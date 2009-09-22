@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psScavenge.inline.hpp	1.18 07/05/05 17:05:29 JVM"
+#pragma ident "@(#)psScavenge.inline.hpp        1.18 07/05/05 17:05:29 JVM"
 #endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void PSScavenge::save_to_space_top_before_gc() {

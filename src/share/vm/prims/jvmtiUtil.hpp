@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiUtil.hpp	1.1 07/07/16 15:03:50 JVM"
+#pragma ident "@(#)jvmtiUtil.hpp        1.1 07/07/16 15:03:50 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 ///////////////////////////////////////////////////////////////
@@ -87,4 +87,3 @@ class SafeResourceMark : public ResourceMark {
   SafeResourceMark() : ResourceMark(safe_resource_area()) {}
 
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciKlassKlass.hpp	1.13 07/05/05 17:05:14 JVM"
+#pragma ident "@(#)ciKlassKlass.hpp     1.13 07/05/05 17:05:14 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciKlassKlass
@@ -42,7 +42,7 @@ protected:
     : ciKlass(h_k, name) {}
 
   klassKlass* get_klassKlass() { return (klassKlass*)get_Klass(); }
-  
+
   const char* type_string() { return "ciKlassKlass"; }
 
 public:
@@ -52,4 +52,3 @@ public:
   // Return the distinguished ciKlassKlass instance.
   static ciKlassKlass* make();
 };
-

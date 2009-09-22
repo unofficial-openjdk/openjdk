@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)type.hpp	1.159 07/10/23 13:12:48 JVM"
+#pragma ident "@(#)type.hpp     1.159 07/10/23 13:12:48 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -35,7 +35,7 @@
 // Basic types include RSD's (lower bound, upper bound, stride for integers),
 // float & double precision constants, sets of data-labels and code-labels.
 // The complete lattice is described below.  Subtypes have no relationship to
-// up or down in the lattice; that is entirely determined by the behavior of 
+// up or down in the lattice; that is entirely determined by the behavior of
 // the MEET/JOIN functions.
 
 class Dict;
@@ -145,10 +145,10 @@ public:
     compile->set_type_hwm(temp);
     return temp;
   }
-  inline void operator delete( void* ptr ) {    
+  inline void operator delete( void* ptr ) {
     Compile* compile = Compile::current();
     compile->type_arena()->Afree(ptr,compile->type_last_size());
-  }  
+  }
 
   // Initialize the type system for a particular compilation.
   static void Initialize(Compile* compile);
@@ -183,9 +183,9 @@ public:
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
 
-  // JOIN operation; higher in lattice.  Done by finding the dual of the 
+  // JOIN operation; higher in lattice.  Done by finding the dual of the
   // meet of the dual of the 2 inputs.
-  const Type *join( const Type *t ) const { 
+  const Type *join( const Type *t ) const {
     return dual()->meet(t->dual())->dual(); }
 
   // Modified version of JOIN adapted to the needs Node::Value.
@@ -242,7 +242,7 @@ public:
 
   // Are you a pointer type or not?
   bool isa_oop_ptr() const;
-  
+
   // TRUE if type is a singleton
   virtual bool singleton(void) const;
 
@@ -257,7 +257,7 @@ public:
   static const Type *mreg2type[];
 
   // Printing, statistics
-  static const char * const msg[lastype]; // Printable strings  
+  static const char * const msg[lastype]; // Printable strings
 #ifndef PRODUCT
   void         dump_on(outputStream *st) const;
   void         dump() const {
@@ -279,7 +279,7 @@ public:
   BasicType array_element_basic_type() const;
 
   // Create standard type for a ciType:
-  static const Type* get_const_type(ciType* type); 
+  static const Type* get_const_type(ciType* type);
 
   // Create standard zero value:
   static const Type* get_zero_type(BasicType type) {
@@ -302,7 +302,7 @@ public:
   static const Type *CONTROL;
   static const Type *DOUBLE;
   static const Type *FLOAT;
-  static const Type *HALF;  
+  static const Type *HALF;
   static const Type *MEMORY;
   static const Type *MULTI;
   static const Type *RETURN_ADDRESS;
@@ -376,7 +376,7 @@ public:
 };
 
 //------------------------------TypeInt----------------------------------------
-// Class of integer ranges, the set of integers between a lower bound and an 
+// Class of integer ranges, the set of integers between a lower bound and an
 // upper bound, inclusive.
 class TypeInt : public Type {
   TypeInt( jint lo, jint hi, int w );
@@ -431,7 +431,7 @@ public:
 
 
 //------------------------------TypeLong---------------------------------------
-// Class of long integer ranges, the set of integers between a lower bound and 
+// Class of long integer ranges, the set of integers between a lower bound and
 // an upper bound, inclusive.
 class TypeLong : public Type {
   TypeLong( jlong lo, jlong hi, int w );
@@ -569,7 +569,7 @@ protected:
   static const PTR ptr_meet[lastPTR][lastPTR];
   static const PTR ptr_dual[lastPTR];
   static const char * const ptr_msg[lastPTR];
-  
+
 public:
   const int _offset;            // Offset into oop, with TOP & BOT
   const PTR _ptr;               // Pointer equivalence class
@@ -705,7 +705,7 @@ public:
   static const TypeOopPtr* make(PTR ptr, int offset);
 
   ciObject* const_oop()    const { return _const_oop; }
-  virtual ciKlass* klass() const { return _klass;     } 
+  virtual ciKlass* klass() const { return _klass;     }
   bool klass_is_exact()    const { return _klass_is_exact; }
 
   // Returns true if this pointer points at memory which contains a
@@ -973,11 +973,11 @@ class TypeFunc : public Type {
   virtual bool empty(void) const;        // TRUE if type is vacuous
 public:
   // Constants are shared among ADLC and VM
-  enum { Control    = AdlcVMDeps::Control, 
-         I_O        = AdlcVMDeps::I_O, 
-         Memory     = AdlcVMDeps::Memory, 
-         FramePtr   = AdlcVMDeps::FramePtr, 
-         ReturnAdr  = AdlcVMDeps::ReturnAdr, 
+  enum { Control    = AdlcVMDeps::Control,
+         I_O        = AdlcVMDeps::I_O,
+         Memory     = AdlcVMDeps::Memory,
+         FramePtr   = AdlcVMDeps::FramePtr,
+         ReturnAdr  = AdlcVMDeps::ReturnAdr,
          Parms      = AdlcVMDeps::Parms
   };
 
@@ -1018,75 +1018,75 @@ inline float Type::getf() const {
   return ((TypeF*)this)->_f;
 }
 
-inline double Type::getd() const { 
-  assert( _base == DoubleCon, "Not a DoubleCon" ); 
-  return ((TypeD*)this)->_d; 
+inline double Type::getd() const {
+  assert( _base == DoubleCon, "Not a DoubleCon" );
+  return ((TypeD*)this)->_d;
 }
 
-inline const TypeF *Type::is_float_constant() const { 
-  assert( _base == FloatCon, "Not a Float" ); 
-  return (TypeF*)this; 
+inline const TypeF *Type::is_float_constant() const {
+  assert( _base == FloatCon, "Not a Float" );
+  return (TypeF*)this;
 }
 
 inline const TypeF *Type::isa_float_constant() const {
   return ( _base == FloatCon ? (TypeF*)this : NULL);
 }
 
-inline const TypeD *Type::is_double_constant() const { 
-  assert( _base == DoubleCon, "Not a Double" ); 
-  return (TypeD*)this; 
+inline const TypeD *Type::is_double_constant() const {
+  assert( _base == DoubleCon, "Not a Double" );
+  return (TypeD*)this;
 }
 
 inline const TypeD *Type::isa_double_constant() const {
   return ( _base == DoubleCon ? (TypeD*)this : NULL);
 }
 
-inline const TypeInt *Type::is_int() const { 
-  assert( _base == Int, "Not an Int" ); 
-  return (TypeInt*)this; 
+inline const TypeInt *Type::is_int() const {
+  assert( _base == Int, "Not an Int" );
+  return (TypeInt*)this;
 }
 
-inline const TypeInt *Type::isa_int() const { 
-  return ( _base == Int ? (TypeInt*)this : NULL); 
+inline const TypeInt *Type::isa_int() const {
+  return ( _base == Int ? (TypeInt*)this : NULL);
 }
 
-inline const TypeLong *Type::is_long() const { 
-  assert( _base == Long, "Not a Long" ); 
-  return (TypeLong*)this; 
+inline const TypeLong *Type::is_long() const {
+  assert( _base == Long, "Not a Long" );
+  return (TypeLong*)this;
 }
 
-inline const TypeLong *Type::isa_long() const { 
+inline const TypeLong *Type::isa_long() const {
   return ( _base == Long ? (TypeLong*)this : NULL);
 }
 
-inline const TypeTuple *Type::is_tuple() const { 
-  assert( _base == Tuple, "Not a Tuple" ); 
-  return (TypeTuple*)this; 
+inline const TypeTuple *Type::is_tuple() const {
+  assert( _base == Tuple, "Not a Tuple" );
+  return (TypeTuple*)this;
 }
 
-inline const TypeAry *Type::is_ary() const { 
-  assert( _base == Array , "Not an Array" ); 
-  return (TypeAry*)this; 
+inline const TypeAry *Type::is_ary() const {
+  assert( _base == Array , "Not an Array" );
+  return (TypeAry*)this;
 }
 
-inline const TypePtr *Type::is_ptr() const { 
+inline const TypePtr *Type::is_ptr() const {
   // AnyPtr is the first Ptr and KlassPtr the last, with no non-ptrs between.
   assert(_base >= AnyPtr && _base <= KlassPtr, "Not a pointer");
-  return (TypePtr*)this; 
+  return (TypePtr*)this;
 }
 
-inline const TypePtr *Type::isa_ptr() const { 
+inline const TypePtr *Type::isa_ptr() const {
   // AnyPtr is the first Ptr and KlassPtr the last, with no non-ptrs between.
   return (_base >= AnyPtr && _base <= KlassPtr) ? (TypePtr*)this : NULL;
 }
 
-inline const TypeOopPtr *Type::is_oopptr() const { 
+inline const TypeOopPtr *Type::is_oopptr() const {
   // OopPtr is the first and KlassPtr the last, with no non-oops between.
   assert(_base >= OopPtr && _base <= KlassPtr, "Not a Java pointer" ) ;
   return (TypeOopPtr*)this;
 }
 
-inline const TypeOopPtr *Type::isa_oopptr() const { 
+inline const TypeOopPtr *Type::isa_oopptr() const {
   // OopPtr is the first and KlassPtr the last, with no non-oops between.
   return (_base >= OopPtr && _base <= KlassPtr) ? (TypeOopPtr*)this : NULL;
 }
@@ -1100,22 +1100,22 @@ inline const TypeRawPtr *Type::is_rawptr() const {
   return (TypeRawPtr*)this;
 }
 
-inline const TypeInstPtr *Type::isa_instptr() const { 
+inline const TypeInstPtr *Type::isa_instptr() const {
   return (_base == InstPtr) ? (TypeInstPtr*)this : NULL;
 }
 
-inline const TypeInstPtr *Type::is_instptr() const { 
-  assert( _base == InstPtr, "Not an object pointer" ); 
-  return (TypeInstPtr*)this; 
+inline const TypeInstPtr *Type::is_instptr() const {
+  assert( _base == InstPtr, "Not an object pointer" );
+  return (TypeInstPtr*)this;
 }
 
-inline const TypeAryPtr *Type::isa_aryptr() const { 
+inline const TypeAryPtr *Type::isa_aryptr() const {
   return (_base == AryPtr) ? (TypeAryPtr*)this : NULL;
 }
 
-inline const TypeAryPtr *Type::is_aryptr() const { 
-  assert( _base == AryPtr, "Not an array pointer" ); 
-  return (TypeAryPtr*)this; 
+inline const TypeAryPtr *Type::is_aryptr() const {
+  assert( _base == AryPtr, "Not an array pointer" );
+  return (TypeAryPtr*)this;
 }
 
 inline const TypeNarrowOop *Type::is_narrowoop() const {
@@ -1171,7 +1171,7 @@ inline bool Type::is_floatingpoint() const {
 #define Type_X       Type::Long
 #define TypeX_X      TypeLong::LONG
 #define TypeX_ZERO   TypeLong::ZERO
-// For 'ideal_reg' machine registers 
+// For 'ideal_reg' machine registers
 #define Op_RegX      Op_RegL
 // For phase->intcon variants
 #define MakeConX     longcon
@@ -1245,4 +1245,3 @@ inline bool Type::is_floatingpoint() const {
 #define ConvX2L(x)   ConvI2L(x)
 
 #endif
-

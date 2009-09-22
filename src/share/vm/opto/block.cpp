@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)block.cpp	1.172 07/09/28 10:23:15 JVM"
+#pragma ident "@(#)block.cpp    1.172 07/09/28 10:23:15 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Optimization - Graph Style
@@ -36,7 +36,7 @@ void Block_Array::grow( uint i ) {
   assert(i >= Max(), "must be an overflow");
   debug_only(_limit = i+1);
   if( i < _size )  return;
-  if( !_size ) { 
+  if( !_size ) {
     _size = 1;
     _blocks = (Block**)_arena->Amalloc( _size * sizeof(Block*) );
     _blocks[0] = NULL;
@@ -90,7 +90,7 @@ uint Block::compute_loop_alignment() {
     // but only because my "divide by 4" heuristic surely gets nearly
     // all possible gain (a "do not align at all" heuristic has a
     // chance of getting a really tiny gain).
-    if( h->is_CountedLoop() && (h->as_CountedLoop()->is_pre_loop() || 
+    if( h->is_CountedLoop() && (h->as_CountedLoop()->is_pre_loop() ||
                                 h->as_CountedLoop()->is_post_loop()) )
       return (OptoLoopAlignment > 4) ? (OptoLoopAlignment>>2) : 1;
     // Loops with low backedge frequency should not be aligned.
@@ -148,17 +148,17 @@ void Block::find_remove( const Node *n ) {
 // Return empty status of a block.  Empty blocks contain only the head, other
 // ideal nodes, and an optional trailing goto.
 int Block::is_Empty() const {
-  
+
   // Root or start block is not considered empty
   if (head()->is_Root() || head()->is_Start()) {
-    return not_empty; 
+    return not_empty;
   }
 
   int success_result = completely_empty;
   int end_idx = _nodes.size()-1;
 
   // Check for ending goto
-  if ((end_idx > 0) && (_nodes[end_idx]->is_Goto())) { 
+  if ((end_idx > 0) && (_nodes[end_idx]->is_Goto())) {
     success_result = empty_with_goto;
     end_idx--;
   }
@@ -166,12 +166,12 @@ int Block::is_Empty() const {
   // Unreachable blocks are considered empty
   if (num_preds() <= 1) {
     return success_result;
-  } 
+  }
 
-  // Ideal nodes are allowable in empty blocks: skip them  Only MachNodes 
+  // Ideal nodes are allowable in empty blocks: skip them  Only MachNodes
   // turn directly into code, because only MachNodes have non-trivial
   // emit() functions.
-  while ((end_idx > 0) && !_nodes[end_idx]->is_Mach()) { 
+  while ((end_idx > 0) && !_nodes[end_idx]->is_Mach()) {
     end_idx--;
   }
 
@@ -184,8 +184,8 @@ int Block::is_Empty() const {
 }
 
 //------------------------------has_uncommon_code------------------------------
-// Return true if the block's code implies that it is not likely to be 
-// executed infrequently.  Check to see if the block ends in a Halt or 
+// Return true if the block's code implies that it is not likely to be
+// executed infrequently.  Check to see if the block ends in a Halt or
 // a low probability call.
 bool Block::has_uncommon_code() const {
   Node* en = end();
@@ -210,7 +210,7 @@ bool Block::has_uncommon_code() const {
 }
 
 //------------------------------is_uncommon------------------------------------
-// True if block is low enough frequency or guarded by a test which 
+// True if block is low enough frequency or guarded by a test which
 // mostly does not go here.
 bool Block::is_uncommon( Block_Array &bbs ) const {
   // Initial blocks must never be moved, so are never uncommon.
@@ -231,13 +231,13 @@ bool Block::is_uncommon( Block_Array &bbs ) const {
   for( uint i=1; i<num_preds(); i++ ) {
     Block* guard = bbs[pred(i)->_idx];
     // Check to see if this block follows its guard 1 time out of 10000
-    // or less. 
+    // or less.
     //
     // See list of magnitude-4 unlikely probabilities in cfgnode.hpp which
-    // we intend to be "uncommon", such as slow-path TLE allocation, 
+    // we intend to be "uncommon", such as slow-path TLE allocation,
     // predicted call failure, and uncommon trap triggers.
     //
-    // Use an epsilon value of 5% to allow for variability in frequency 
+    // Use an epsilon value of 5% to allow for variability in frequency
     // predictions and floating point calculations. The net effect is
     // that guard_factor is set to 9500.
     //
@@ -257,7 +257,7 @@ bool Block::is_uncommon( Block_Array &bbs ) const {
       (uncommon_preds == (num_preds()-1) ||
       // it is uncommon for all frequent preds.
        uncommon_for_freq_preds == freq_preds) ) {
-    return true; 
+    return true;
   }
   return false;
 }
@@ -269,7 +269,7 @@ void Block::dump_bidx(const Block* orig) const {
   else tty->print("N%d", head()->_idx);
 
   if (Verbose && orig != this) {
-    // Dump the original block's idx 
+    // Dump the original block's idx
     tty->print(" (");
     orig->dump_bidx(orig);
     tty->print(")");
@@ -288,7 +288,7 @@ void Block::dump_pred(const Block_Array *bbs, Block* orig) const {
   }
 }
 
-void Block::dump_head( const Block_Array *bbs ) const { 
+void Block::dump_head( const Block_Array *bbs ) const {
   // Print the basic block
   dump_bidx(this);
   tty->print(": #\t");
@@ -306,12 +306,12 @@ void Block::dump_head( const Block_Array *bbs ) const {
         Block *p = (*bbs)[s->_idx];
         p->dump_pred(bbs, p);
       } else {
-        while (!s->is_block_start()) 
+        while (!s->is_block_start())
           s = s->in(0);
         tty->print("N%d ", s->_idx );
       }
     }
-  } else 
+  } else
     tty->print("BLOCK HEAD IS JUNK  ");
 
   // Print loop, if any
@@ -347,16 +347,16 @@ void Block::dump( const Block_Array *bbs ) const {
   uint cnt = _nodes.size();
   for( uint i=0; i<cnt; i++ )
     _nodes[i]->dump();
-  tty->print("\n");  
+  tty->print("\n");
 }
 #endif
 
 //=============================================================================
 //------------------------------PhaseCFG---------------------------------------
-PhaseCFG::PhaseCFG( Arena *a, RootNode *r, Matcher &m ) : 
-  Phase(CFG), 
-  _bbs(a), 
-  _root(r) 
+PhaseCFG::PhaseCFG( Arena *a, RootNode *r, Matcher &m ) :
+  Phase(CFG),
+  _bbs(a),
+  _root(r)
 #ifndef PRODUCT
   , _trace_opto_pipelining(TraceOptoPipelining || C->method_has_option("TraceOptoPipelining"))
 #endif
@@ -395,7 +395,7 @@ uint PhaseCFG::build_cfg() {
     // 'np' is _root (see above) or RegionNode, StartNode: we push on stack
     // only nodes which point to the start of basic block (see below).
     Node *np = nstack.node();
-    // idx > 0, except for the first node (_root) pushed on stack 
+    // idx > 0, except for the first node (_root) pushed on stack
     // at the beginning when idx == 0.
     // We will use the condition (idx == 0) later to end the build.
     uint idx = nstack.index();
@@ -439,7 +439,7 @@ uint PhaseCFG::build_cfg() {
       for (int i = (cnt - 1); i > 0; i-- ) { // For all predecessors
         Node *prevproj = p->in(i);  // Get prior input
         assert( !prevproj->is_Con(), "dead input not removed" );
-        // Check to see if p->in(i) is a "control-dependent" CFG edge - 
+        // Check to see if p->in(i) is a "control-dependent" CFG edge -
         // i.e., it splits at the source (via an IF or SWITCH) and merges
         // at the destination (via a many-input Region).
         // This breaks critical edges.  The RegionNode to start the block
@@ -565,13 +565,13 @@ void PhaseCFG::convert_NeverBranch_to_Goto(Block *b) {
   b->_num_succs = 1;
   // remap successor's predecessors if necessary
   uint j;
-  for( j = 1; j < succ->num_preds(); j++) 
-    if( succ->pred(j)->in(0) == bp ) 
+  for( j = 1; j < succ->num_preds(); j++)
+    if( succ->pred(j)->in(0) == bp )
       succ->head()->set_req(j, gto);
   // Kill alternate exit path
   Block *dead = b->_succs[1-idx];
-  for( j = 1; j < dead->num_preds(); j++) 
-    if( dead->pred(j)->in(0) == bp ) 
+  for( j = 1; j < dead->num_preds(); j++)
+    if( dead->pred(j)->in(0) == bp )
       break;
   // Scan through block, yanking dead path from
   // all regions and phis.
@@ -591,9 +591,9 @@ bool PhaseCFG::move_to_next(Block* bx, uint b_index) {
   if ((bx_index <= b_index) && (_blocks[bx_index] == bx)) {
     return false;
   }
- 
+
   // Find the current index of block bx on the block list
-  bx_index = b_index + 1; 
+  bx_index = b_index + 1;
   while( bx_index < _num_blocks && _blocks[bx_index] != bx ) bx_index++;
   assert(_blocks[bx_index] == bx, "block not found");
 
@@ -664,7 +664,7 @@ void PhaseCFG::remove_empty() {
     // to give a fake exit path to infinite loops.  At this late stage they
     // need to turn into Goto's so that when you enter the infinite loop you
     // indeed hang.
-    if( b->_nodes[b->end_idx()]->Opcode() == Op_NeverBranch ) 
+    if( b->_nodes[b->end_idx()]->Opcode() == Op_NeverBranch )
       convert_NeverBranch_to_Goto(b);
 
     // Look for uncommon blocks and move to end.
@@ -707,11 +707,11 @@ void PhaseCFG::fixup_flow() {
 
     // Connector blocks need no further processing.
     if (b->is_connector()) {
-      assert((i+1) == _num_blocks || _blocks[i+1]->is_connector(), 
+      assert((i+1) == _num_blocks || _blocks[i+1]->is_connector(),
              "All connector blocks should sink to the end");
       continue;
     }
-    assert(b->is_Empty() != Block::completely_empty, 
+    assert(b->is_Empty() != Block::completely_empty,
            "Empty blocks should be connectors");
 
     Block *bnext = (i < _num_blocks-1) ? _blocks[i+1] : NULL;
@@ -767,10 +767,10 @@ void PhaseCFG::fixup_flow() {
 
       Block *bs1 = b->non_connector_successor(1);
 
-      // Check for neither successor block following the current 
-      // block ending in a conditional. If so, move one of the 
+      // Check for neither successor block following the current
+      // block ending in a conditional. If so, move one of the
       // successors after the current one, provided that the
-      // successor was previously unscheduled, but moveable 
+      // successor was previously unscheduled, but moveable
       // (i.e., all paths to it involve a branch).
       if( !C->do_freq_based_layout() && bnext != bs0 && bnext != bs1 ) {
         // Choose the more common successor based on the probability
@@ -784,7 +784,7 @@ void PhaseCFG::fixup_flow() {
         if( proj0->Opcode() == Op_IfTrue ) {
           p = 1.0 - p;
         }
-        
+
         // Prefer successor #1 if p > 0.5
         if (p > PROB_FAIR) {
           bx = bs1;
@@ -802,11 +802,11 @@ void PhaseCFG::fixup_flow() {
       // Check for conditional branching the wrong way.  Negate
       // conditional, if needed, so it falls into the following block
       // and branches to the not-following block.
-      
+
       // Check for the next block being in succs[0].  We are going to branch
-      // to succs[0], so we want the fall-thru case as the next block in 
+      // to succs[0], so we want the fall-thru case as the next block in
       // succs[1].
-      if (bnext == bs0) {      
+      if (bnext == bs0) {
         // Fall-thru case in succs[0], so flip targets in succs map
         Block *tbs0 = b->_succs[0];
         Block *tbs1 = b->_succs[1];
@@ -831,7 +831,7 @@ void PhaseCFG::fixup_flow() {
 
       b->_nodes.pop();          // Remove IfFalse & IfTrue projections
       b->_nodes.pop();
-      
+
     } else {
       // Multi-exit block, e.g. a switch statement
       // But we don't need to do anything here
@@ -899,7 +899,7 @@ void PhaseCFG::verify( ) const {
       for( uint k = 0; k < n->req(); k++ ) {
         Node *use = n->in(k);
         if( use && use != n ) {
-          assert( _bbs[use->_idx] || use->is_Con(), 
+          assert( _bbs[use->_idx] || use->is_Con(),
                   "must have block; constants for debug info ok" );
         }
       }
@@ -929,7 +929,7 @@ UnionFind::UnionFind( uint max ) : _cnt(max), _max(max), _indices(NEW_RESOURCE_A
 void UnionFind::extend( uint from_idx, uint to_idx ) {
   _nesting.check();
   if( from_idx >= _max ) {
-    uint size = 16; 
+    uint size = 16;
     while( size <= from_idx ) size <<=1;
     _indices = REALLOC_RESOURCE_ARRAY( uint, _indices, _max, size );
     _max = size;
@@ -950,7 +950,7 @@ void UnionFind::reset( uint max ) {
 // Straight out of Tarjan's union-find algorithm
 uint UnionFind::Find_compress( uint idx ) {
   uint cur  = idx;
-  uint next = lookup(cur); 
+  uint next = lookup(cur);
   while( next != cur ) {        // Scan chain of equivalences
     assert( next < cur, "always union smaller" );
     cur = next;                 // until find a fixed-point
@@ -970,10 +970,10 @@ uint UnionFind::Find_compress( uint idx ) {
 // Like Find above, but no path compress, so bad asymptotic behavior
 uint UnionFind::Find_const( uint idx ) const {
   if( idx == 0 ) return idx;    // Ignore the zero idx
-  // Off the end?  This can happen during debugging dumps 
+  // Off the end?  This can happen during debugging dumps
   // when data structures have not finished being updated.
   if( idx >= _max ) return idx;
-  uint next = lookup(idx); 
+  uint next = lookup(idx);
   while( next != idx ) {        // Scan chain of equivalences
     idx = next;                 // until find a fixed-point
     next = lookup(idx);

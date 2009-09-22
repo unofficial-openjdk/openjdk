@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.tools;
@@ -42,11 +42,10 @@ public class FlagDumper extends Tool {
          }
       }
    }
-   
+
    public static void main(String[] args) {
       FlagDumper fd = new FlagDumper();
       fd.start(args);
       fd.stop();
    }
 }
-

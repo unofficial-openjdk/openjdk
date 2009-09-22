@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.windbg;
@@ -67,7 +67,7 @@ class WindbgCDebugInfoBuilder
     this.base = base;
     file = COFFFileParser.getParser().parse(dllName);
     vc50 = getDebugVC50(file);
-    
+
     if (vc50 == null) return null;
 
     segMap = getSegMap();
@@ -78,7 +78,7 @@ class WindbgCDebugInfoBuilder
 
     db = new BasicCDebugInfoDataBase();
     db.beginConstruction();
-    
+
     // Get global types and add them to the database
     DebugVC50SSGlobalTypes types = getGlobalTypes();
     for (iter = types.getTypeIterator(); !iter.done(); iter.next()) {
@@ -193,7 +193,7 @@ class WindbgCDebugInfoBuilder
               case LF_PAD4:  case LF_PAD5:  case LF_PAD6:  case LF_PAD7:
               case LF_PAD8:  case LF_PAD9:  case LF_PAD10: case LF_PAD11:
               case LF_PAD12: case LF_PAD13: case LF_PAD14: case LF_PAD15: break;
-              default: System.err.println("WARNING: unexpected leaf index " + 
+              default: System.err.println("WARNING: unexpected leaf index " +
                                           fieldIter.typeStringLeaf() +
                                           " in field list for type " + iter.getTypeIndex());
               }
@@ -263,7 +263,7 @@ class WindbgCDebugInfoBuilder
               case LF_PAD8:  case LF_PAD9:  case LF_PAD10: case LF_PAD11:
               case LF_PAD12: case LF_PAD13: case LF_PAD14: case LF_PAD15: break;
 
-              default: System.err.println("WARNING: unexpected leaf index " + 
+              default: System.err.println("WARNING: unexpected leaf index " +
                                           fieldIter.typeStringLeaf() +
                                           " in field list for union of type " + iter.getTypeIndex());
               }
@@ -312,7 +312,7 @@ class WindbgCDebugInfoBuilder
             case LF_PAD8:  case LF_PAD9:  case LF_PAD10: case LF_PAD11:
             case LF_PAD12: case LF_PAD13: case LF_PAD14: case LF_PAD15: break;
 
-            default: System.err.println("WARNING: unexpected leaf index " + 
+            default: System.err.println("WARNING: unexpected leaf index " +
                                         fieldIter.typeStringLeaf() +
                                         " in field list for enum of type " + iter.getTypeIndex());
             }
@@ -367,9 +367,9 @@ class WindbgCDebugInfoBuilder
         case LF_ENDPRECOMP: break;
         case LF_OEM: break;
         case LF_TYPESERVER: break;
-        
+
         // Type records referenced from other type records
-          
+
         case LF_SKIP: break;
         case LF_ARGLIST: skipTypeRecord(); break;
         case LF_DEFARG: System.err.println("FIXME: handle default arguments (dereference the type)"); break;
@@ -389,7 +389,7 @@ class WindbgCDebugInfoBuilder
         case LF_DIMVARU:
         case LF_DIMVARLU: break;
         case LF_REFSYM: break;
-          
+
         case LF_PAD0:  case LF_PAD1:  case LF_PAD2:  case LF_PAD3:
         case LF_PAD4:  case LF_PAD5:  case LF_PAD6:  case LF_PAD7:
         case LF_PAD8:  case LF_PAD9:  case LF_PAD10: case LF_PAD11:
@@ -430,7 +430,7 @@ class WindbgCDebugInfoBuilder
         symIter = syms.getSymbolIterator();
         process = true;
       }
-      
+
       if (ssType == SST_ALIGN_SYM) {
         DebugVC50SSAlignSym syms = (DebugVC50SSAlignSym) ss;
         symIter = syms.getSymbolIterator();
@@ -477,7 +477,7 @@ class WindbgCDebugInfoBuilder
                                              symIter.getBPRelOffset());
             addLocalToCurBlock(sym);
             break;
-          }        
+          }
           case S_LDATA32:
           case S_GDATA32: {
             // FIXME: must handle these separately from global data (have
@@ -502,7 +502,7 @@ class WindbgCDebugInfoBuilder
                                                         symIter.getLGProcName(),
                                                         getTypeByIndex(symIter.getLGProcType()),
                                                         (symIter.getType() == S_LPROC32));
-        
+
             // FIXME: have to handle local procedures differently (have
             // notion of modules and only add those procedures to the
             // module they are defined in)
@@ -533,7 +533,7 @@ class WindbgCDebugInfoBuilder
           case S_PROCREF: break;
           case S_DATAREF: break;
           case S_ALIGN: break;
-          default: 
+          default:
             // These two unknown symbol types show up very frequently.
             // Symbol type 0 appears to always be a no-op symbol of
             // length 2 (i.e., length just covers the symbol type.)
@@ -673,7 +673,7 @@ class WindbgCDebugInfoBuilder
     // to physical segments. It seems it would make more sense if the
     // SegDescs contained a physical segment number in addition to the
     // offset within the physical segment of the logical one.
-    
+
     // Get the section header corresponding to this segment
     SectionHeader section = file.getHeader().getSectionHeader(seg);
 
@@ -765,7 +765,7 @@ class WindbgCDebugInfoBuilder
         // Fold all pointer types together since we only support
         // flat-mode addressing anyway
         Type targetType = getTypeByIndex(intIndex & (~RESERVED_MODE_MASK));
-        
+
         type = new BasicPointerType(POINTER_SIZE, targetType);
       }
       if (Assert.ASSERTS_ENABLED) {

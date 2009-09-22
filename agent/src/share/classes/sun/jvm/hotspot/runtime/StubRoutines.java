@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -44,7 +44,7 @@ public class StubRoutines {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("StubRoutines");
-    
+
     callStubReturnAddressField = type.getAddressField("_call_stub_return_address");
     // Only some platforms have specif return from compiled to call_stub
     try {
@@ -53,7 +53,7 @@ public class StubRoutines {
       callStubCompiledReturnAddressField = null;
     }
   }
-  
+
   public StubRoutines() {
   }
 

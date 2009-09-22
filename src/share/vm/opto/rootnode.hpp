@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)rootnode.hpp	1.48 07/05/05 17:06:28 JVM"
+#pragma ident "@(#)rootnode.hpp 1.48 07/05/05 17:06:28 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //------------------------------RootNode---------------------------------------
@@ -63,4 +63,3 @@ public:
   virtual uint ideal_reg() const { return NotAMachineReg; }
   virtual uint match_edge(uint idx) const { return 0; }
 };
-

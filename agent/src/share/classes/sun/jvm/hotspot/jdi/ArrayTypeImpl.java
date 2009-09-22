@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -45,7 +45,7 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
 
     public ArrayReference newInstance(int length) {
         vm.throwNotReadOnlyException("ArrayType.newInstance(int)");
-	return null;
+        return null;
     }
 
     public String componentSignature() {
@@ -58,21 +58,21 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
     }
 
     public ClassLoaderReference classLoader() {
-	if (ref() instanceof TypeArrayKlass) {
-	    // primitive array klasses are loaded by bootstrap loader
-	    return null; 
-	} else {
-	    Klass bottomKlass = ((ObjArrayKlass)ref()).getBottomKlass();
-	    if (bottomKlass instanceof TypeArrayKlass) {
-		// multidimensional primitive array klasses are loaded by bootstrap loader
-	        return null;
-	    } else {
-		// class loader of any other obj array klass is same as the loader
-		// that loaded the bottom InstanceKlass
-		Instance xx = (Instance)(((InstanceKlass) bottomKlass).getClassLoader());
-		return vm.classLoaderMirror(xx);
-	    }
-	}
+        if (ref() instanceof TypeArrayKlass) {
+            // primitive array klasses are loaded by bootstrap loader
+            return null;
+        } else {
+            Klass bottomKlass = ((ObjArrayKlass)ref()).getBottomKlass();
+            if (bottomKlass instanceof TypeArrayKlass) {
+                // multidimensional primitive array klasses are loaded by bootstrap loader
+                return null;
+            } else {
+                // class loader of any other obj array klass is same as the loader
+                // that loaded the bottom InstanceKlass
+                Instance xx = (Instance)(((InstanceKlass) bottomKlass).getClassLoader());
+                return vm.classLoaderMirror(xx);
+            }
+        }
     }
 
     void addVisibleMethods(Map methodMap) {
@@ -81,32 +81,32 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
 
     List getAllMethods() {
         // arrays don't have methods
-	// JLS says arrays have methods of java.lang.Object. But
-	// JVMDI-JDI returns zero size list. We do the same here
-	// for consistency.
-        return new ArrayList(0); 
+        // JLS says arrays have methods of java.lang.Object. But
+        // JVMDI-JDI returns zero size list. We do the same here
+        // for consistency.
+        return new ArrayList(0);
     }
 
     /*
-     * Find the type object, if any, of a component type of this array. 
+     * Find the type object, if any, of a component type of this array.
      * The component type does not have to be immediate; e.g. this method
      * can be used to find the component Foo of Foo[][].
      */
     public Type componentType() throws ClassNotLoadedException {
         ArrayKlass k = (ArrayKlass) ref();
-	if (k instanceof ObjArrayKlass) {
-	    Klass elementKlass = ((ObjArrayKlass)k).getElementKlass();
-	    if (elementKlass == null) {
-		throw new ClassNotLoadedException(componentSignature());
-	    } else {
-		return vm.referenceType(elementKlass);
-	    }
+        if (k instanceof ObjArrayKlass) {
+            Klass elementKlass = ((ObjArrayKlass)k).getElementKlass();
+            if (elementKlass == null) {
+                throw new ClassNotLoadedException(componentSignature());
+            } else {
+                return vm.referenceType(elementKlass);
+            }
         } else {
             // It's a primitive type
             return vm.primitiveTypeMirror(signature().charAt(1));
         }
     }
-    
+
     static boolean isComponentAssignable(Type destination, Type source) {
         if (source instanceof PrimitiveType) {
             // Assignment of primitive arrays requires identical
@@ -116,7 +116,7 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
            if (destination instanceof PrimitiveType) {
                 return false;
             }
-             
+
             ReferenceTypeImpl refSource = (ReferenceTypeImpl)source;
             ReferenceTypeImpl refDestination = (ReferenceTypeImpl)destination;
             // Assignment of object arrays requires availability
@@ -124,10 +124,10 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
             return refSource.isAssignableTo(refDestination);
         }
     }
- 
-    
+
+
     /*
-    * Return true if an instance of the  given reference type 
+    * Return true if an instance of the  given reference type
     * can be assigned to a variable of this type
     */
     boolean isAssignableTo(ReferenceType destType) {
@@ -136,30 +136,30 @@ public class ArrayTypeImpl extends ReferenceTypeImpl implements ArrayType {
                 Type destComponentType = ((ArrayType)destType).componentType();
                 return isComponentAssignable(destComponentType, componentType());
             } catch (ClassNotLoadedException e) {
-                // One or both component types has not yet been 
+                // One or both component types has not yet been
                 // loaded => can't assign
                 return false;
             }
         } else {
-	    Symbol typeName = ((ReferenceTypeImpl)destType).typeNameAsSymbol();
-	    if (destType instanceof InterfaceType) {
-		// Every array type implements java.io.Serializable and
-		// java.lang.Cloneable. fixme in JVMDI-JDI, includes only
-		// Cloneable but not Serializable.
-		return typeName.equals(vm.javaLangCloneable()) ||
-		       typeName.equals(vm.javaIoSerializable());
-	    } else {
-		// Only valid ClassType assignee is Object
-		return typeName.equals(vm.javaLangObject());
-	    }
-	}
+            Symbol typeName = ((ReferenceTypeImpl)destType).typeNameAsSymbol();
+            if (destType instanceof InterfaceType) {
+                // Every array type implements java.io.Serializable and
+                // java.lang.Cloneable. fixme in JVMDI-JDI, includes only
+                // Cloneable but not Serializable.
+                return typeName.equals(vm.javaLangCloneable()) ||
+                       typeName.equals(vm.javaIoSerializable());
+            } else {
+                // Only valid ClassType assignee is Object
+                return typeName.equals(vm.javaLangObject());
+            }
+        }
     }
 
     List inheritedTypes() {
-	// arrays are derived from java.lang.Object and
-	// B[] is derived from A[] if B is derived from A.
-	// But JVMDI-JDI returns zero sized list and we do the
-	// same for consistency.
+        // arrays are derived from java.lang.Object and
+        // B[] is derived from A[] if B is derived from A.
+        // But JVMDI-JDI returns zero sized list and we do the
+        // same for consistency.
         return new ArrayList(0);
     }
 

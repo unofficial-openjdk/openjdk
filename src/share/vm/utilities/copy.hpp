@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)copy.hpp	1.15 07/05/17 16:07:14 JVM"
+#pragma ident "@(#)copy.hpp     1.15 07/05/17 16:07:14 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Assembly code for platforms that need it.
@@ -301,7 +301,7 @@ class Copy : AllStatic {
   }
 
   static void assert_params_ok(HeapWord* to, intptr_t log_align) {
-#ifdef ASSERT 
+#ifdef ASSERT
     if (mask_bits((uintptr_t)to, right_n_bits(log_align)) != 0)
       basic_fatal("not word aligned");
 #endif

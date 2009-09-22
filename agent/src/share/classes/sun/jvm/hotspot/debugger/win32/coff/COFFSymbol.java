@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -118,7 +118,7 @@ public interface COFFSymbol {
   /** This should only be called if {@link #isWeakExternal} returns
       true. */
   public AuxWeakExternalRecord getAuxWeakExternalRecord();
-  
+
   /** Indicates whether this symbol has storage class FILE and is
       therefore followed by a {@link
       sun.jvm.hotspot.debugger.win32.coff.AuxFileRecord}. */

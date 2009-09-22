@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -37,9 +37,9 @@ import sun.jvm.hotspot.runtime.*;
     provided. </P>
 
     <P> Invariant: bottom() and end() are on page_size boundaries and: </P>
-    
+
     <P> bottom() <= top() <= end() </P>
-    
+
     <P> top() is inclusive and end() is exclusive. </P> */
 
 public abstract class Space extends VMObject {
@@ -56,7 +56,7 @@ public abstract class Space extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("Space");
-    
+
     bottomField = type.getAddressField("_bottom");
     endField    = type.getAddressField("_end");
   }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -52,7 +52,7 @@ public class BasicHashtable extends VMObject {
   private static AddressField  bucketsField;
   private static long bucketSize;
 
-  // Accessors 
+  // Accessors
   protected int tableSize() {
     return (int) tableSizeField.getValue(addr);
   }

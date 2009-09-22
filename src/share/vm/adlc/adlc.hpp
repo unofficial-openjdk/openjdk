@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)adlc.hpp	1.28 07/05/05 17:04:59 JVM"
+#pragma ident "@(#)adlc.hpp     1.28 07/05/05 17:04:59 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -76,7 +76,7 @@ typedef unsigned int uintptr_t;
   #include <inttypes.h>
 #endif // LINUX
 
-// Macros 
+// Macros
 #define uint32 unsigned int
 #define uint   unsigned int
 
@@ -86,7 +86,7 @@ typedef unsigned int uintptr_t;
 #define max(a, b)   (((a)>(b)) ? (a) : (b))
 
 // VM components
-#include "opcodes.hpp" 
+#include "opcodes.hpp"
 
 // ADLC components
 #include "arena.hpp"

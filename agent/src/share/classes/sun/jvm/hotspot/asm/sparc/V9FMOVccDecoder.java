@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -60,7 +60,7 @@ class V9FMOVccDecoder extends V9CMoveDecoder implements /* imports */ RTLDataTyp
             int conditionCode = getMoveConditionCode(instruction);
             SPARCRegister rs = RegisterDecoder.decode(dataType, rs1Num);
             String name = getFMoveCCName(conditionCode, conditionFlag, dataType);
-            instr = v9factory.newV9FMOVccInstruction(name,opf, conditionCode, conditionFlag, 
+            instr = v9factory.newV9FMOVccInstruction(name,opf, conditionCode, conditionFlag,
                                (SPARCFloatRegister)rs, (SPARCFloatRegister)rd);
         }
 

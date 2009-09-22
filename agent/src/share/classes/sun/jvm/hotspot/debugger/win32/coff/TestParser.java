@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -31,7 +31,7 @@ public class TestParser {
       System.err.println("File name may be an .exe, .dll or .obj");
       System.exit(1);
     }
-    
+
     try {
       COFFFile file = COFFFileParser.getParser().parse(args[0]);
       if (file.isImage()) {

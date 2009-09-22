@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)dependencies.cpp	1.18 08/02/29 12:46:18 JVM"
+#pragma ident "@(#)dependencies.cpp     1.18 08/02/29 12:46:18 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -110,7 +110,7 @@ void Dependencies::assert_has_no_finalizable_subclasses(ciKlass* ctxk) {
 
 // Helper function.  If we are adding a new dep. under ctxk2,
 // try to find an old dep. under a broader* ctxk1.  If there is
-// 
+//
 bool Dependencies::maybe_merge_ctxk(GrowableArray<ciObject*>* deps,
                                     int ctxk_i, ciKlass* ctxk2) {
   ciKlass* ctxk1 = deps->at(ctxk_i)->as_klass();
@@ -283,7 +283,7 @@ void Dependencies::encode_content_bytes() {
 
   // cast is safe, no deps can overflow INT_MAX
   CompressedWriteStream bytes((int)estimate_size_in_bytes());
-  
+
   for (int deptv = (int)FIRST_TYPE; deptv < (int)TYPE_LIMIT; deptv++) {
     DepType dept = (DepType)deptv;
     GrowableArray<ciObject*>* deps = _deps[dept];
@@ -538,7 +538,7 @@ void Dependencies::DepStream::print_dependency(klassOop witness, bool verbose) {
     }
   }
 }
-  
+
 
 /// Dependency stream support (decodes dependencies from an nmethod):
 
@@ -1433,7 +1433,7 @@ klassOop Dependencies::DepStream::check_dependency_impl(DepChange* changes) {
     witness = check_has_no_finalizable_subclasses(context_type(),
                                                   changes);
     break;
-	  default:
+          default:
     witness = NULL;
     ShouldNotReachHere();
     break;

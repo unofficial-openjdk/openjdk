@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -34,8 +34,8 @@ public class MonitorInfoImpl extends MirrorImpl {
     /* Once false, monitorInfo should not be used.
      * access synchronized on (vm.state())
      */
-    private boolean isValid = true;  
-    
+    private boolean isValid = true;
+
     ObjectReference monitor;
     ThreadReference thread;
     int  stack_depth;
@@ -58,7 +58,7 @@ public class MonitorInfoImpl extends MirrorImpl {
         validateMonitorInfo();
         return monitor;
     }
-        
+
     public int stackDepth() {
         validateMonitorInfo();
         return stack_depth;

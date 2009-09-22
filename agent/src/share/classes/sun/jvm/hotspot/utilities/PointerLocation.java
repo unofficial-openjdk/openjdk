@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -118,7 +118,7 @@ public class PointerLocation {
   public JavaThread getTLABThread() {
     return tlabThread;
   }
-  
+
   /** Only valid if isInTLAB() returns true */
   public ThreadLocalAllocBuffer getTLAB() {
     return tlab;
@@ -182,7 +182,7 @@ public class PointerLocation {
   }
 
   public boolean isUnknown() {
-    return (!(isInHeap() || isInInterpreter() || isInCodeCache() || 
+    return (!(isInHeap() || isInInterpreter() || isInCodeCache() ||
               isInStrongGlobalJNIHandleBlock() || isInWeakGlobalJNIHandleBlock() || isInLocalJNIHandleBlock()));
   }
 

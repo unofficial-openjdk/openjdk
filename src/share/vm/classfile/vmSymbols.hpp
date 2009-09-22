@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmSymbols.hpp	1.166 07/11/01 16:55:02 JVM"
+#pragma ident "@(#)vmSymbols.hpp        1.166 07/11/01 16:55:02 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// The classes vmSymbols and vmSymbolHandles are a name spaces for fast lookup of 
+// The classes vmSymbols and vmSymbolHandles are a name spaces for fast lookup of
 // symbols commonly used in the VM. The first class return a symbolOop, while the
 // second class returns a SymbolHandle. The underlying data structure is shared
 // between the two classes.
@@ -423,8 +423,8 @@
   template(serializeAgentPropertiesToByteArray_name,   "serializeAgentPropertiesToByteArray")                     \
   template(classRedefinedCount_name,                   "classRedefinedCount")                                     \
   /*end*/
- 
-                
+
+
 
 // Here are all the intrinsics known to the runtime and the CI.
 // Each intrinsic consists of a public enum name (like _hashCode),

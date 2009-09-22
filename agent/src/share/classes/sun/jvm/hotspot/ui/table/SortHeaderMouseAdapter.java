@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.table;
@@ -38,33 +38,31 @@ import com.sun.java.swing.ui.CommonUI;
  * for mouse clicks on a column and sorts that column.
  */
 public class SortHeaderMouseAdapter extends MouseAdapter {
-	
+
     private SortableTableModel model;
     private JTable table;
-	
+
     public SortHeaderMouseAdapter(JTable table, SortableTableModel model) {
-	this.model = model;
-	this.table = table;
+        this.model = model;
+        this.table = table;
     }
-	
+
     public void mouseClicked(MouseEvent evt) {
-	// XXX Benchmark sort performance
-	//long start = System.currentTimeMillis();
-	CommonUI.setWaitCursor(SwingUtilities.getRoot(table));
+        // XXX Benchmark sort performance
+        //long start = System.currentTimeMillis();
+        CommonUI.setWaitCursor(SwingUtilities.getRoot(table));
 
-	TableColumnModel columnModel = table.getColumnModel();
-	int viewColumn = columnModel.getColumnIndexAtX(evt.getX()); 
-	int column = table.convertColumnIndexToModel(viewColumn); 
-	if (evt.getClickCount() == 1 && column != -1) {
-	    // Reverse the sorting direction.
-	    model.sortByColumn(column, !model.isAscending()); 
-	}
+        TableColumnModel columnModel = table.getColumnModel();
+        int viewColumn = columnModel.getColumnIndexAtX(evt.getX());
+        int column = table.convertColumnIndexToModel(viewColumn);
+        if (evt.getClickCount() == 1 && column != -1) {
+            // Reverse the sorting direction.
+            model.sortByColumn(column, !model.isAscending());
+        }
 
-	// XXX Benchmark performance
-	//	System.out.println("Sort time: " + 
-	//	   (System.currentTimeMillis() - start));
-	CommonUI.setDefaultCursor(SwingUtilities.getRoot(table));
+        // XXX Benchmark performance
+        //      System.out.println("Sort time: " +
+        //         (System.currentTimeMillis() - start));
+        CommonUI.setDefaultCursor(SwingUtilities.getRoot(table));
     }
-}	    
-	    
-
+}

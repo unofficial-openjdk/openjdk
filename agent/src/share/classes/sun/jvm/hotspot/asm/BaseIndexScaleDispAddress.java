@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm;
@@ -68,7 +68,7 @@ public abstract class BaseIndexScaleDispAddress extends IndirectAddress {
    public long     getDisplacement() {
       return disp;
    }
-  
+
    // is the index auto decremented or incremented?
    public boolean  isAutoIncrement() {
       return isAutoIncr;

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -41,7 +41,7 @@ public class BasicFloatType extends BasicType implements FloatType {
   public void iterateObject(Address a, ObjectVisitor v, FieldIdentifier f) {
     v.doFloat(f, a.getJFloatAt(0));
   }
-  
+
   protected Type createCVVariant(int cvAttributes) {
     return new BasicFloatType(getName(), getSize(), cvAttributes);
   }

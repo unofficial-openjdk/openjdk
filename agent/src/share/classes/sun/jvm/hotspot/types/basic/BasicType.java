@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.types.basic;
@@ -82,11 +82,11 @@ public class BasicType implements Type {
     }
 
     BasicType arg = (BasicType) obj;
-    
+
     if (!name.equals(arg.name)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -121,7 +121,7 @@ public class BasicType implements Type {
   public long getSize() {
     return size;
   }
-  
+
   /** Overridden by BasicCIntegerType */
   public boolean isCIntegerType() {
     return false;
@@ -129,8 +129,8 @@ public class BasicType implements Type {
 
   public boolean isCStringType() {
     if (isPointerType()) {
-      Type target = ((PointerType)this).getTargetType(); 
-      return target.isCIntegerType() && 
+      Type target = ((PointerType)this).getTargetType();
+      return target.isCIntegerType() &&
              target.getName().equals("const char");
     } else {
       return false;
@@ -172,7 +172,7 @@ public class BasicType implements Type {
         return field;
       }
     }
-    
+
     if (searchSuperclassFields) {
       if (superclass != null) {
         field = superclass.getField(fieldName, searchSuperclassFields, false);

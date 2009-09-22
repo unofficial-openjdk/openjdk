@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)chaitin.hpp	1.161 08/03/26 10:13:00 JVM"
+#pragma ident "@(#)chaitin.hpp  1.161 08/03/26 10:13:00 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class LoopTree;
@@ -61,7 +61,7 @@ public:
 private:
   uint _reg;                    // Chosen register; undefined if mask is plural
 public:
-  // Return chosen register for this LRG.  Error if the LRG is not bound to 
+  // Return chosen register for this LRG.  Error if the LRG is not bound to
   // a single register.
   OptoReg::Name reg() const { return OptoReg::Name(_reg); }
   void set_reg( OptoReg::Name r ) { _reg = r; }
@@ -87,7 +87,7 @@ public:
   int compute_mask_size() const { return _mask.is_AllStack() ? 65535 : _mask.Size(); }
   void set_mask_size( int size ) {
     assert((size == 65535) || (size == (int)_mask.Size()), "");
-    _mask_size = size; 
+    _mask_size = size;
     debug_only(_msize_valid=1;)
     debug_only( if( _num_regs == 2 && !_fat_proj ) _mask.VerifyPairs(); )
   }
@@ -123,7 +123,7 @@ public:
   void set_reg_pressure(int i)  { _reg_pressure = i; }
   int      reg_pressure() const { return _reg_pressure; }
 
-  // How much 'wiggle room' does this live range have?  
+  // How much 'wiggle room' does this live range have?
   // How many color choices can it make (scaled by _num_regs)?
   int degrees_of_freedom() const { return mask_size() - _num_regs; }
   // Bound LRGs have ZERO degrees of freedom.  We also count
@@ -149,7 +149,7 @@ public:
     // registers and has NO interferences.
     // If _fat_proj is clear, live range requires num_regs() to be a power of
     // 2, and it requires registers to form an aligned, adjacent set.
-         _fat_proj:1,           // 
+         _fat_proj:1,           //
          _was_lo:1,             // Was lo-degree prior to coalesce
          _msize_valid:1,        // _mask_size cache valid
          _degree_valid:1,       // _degree cache valid
@@ -217,9 +217,9 @@ public:
   uint _maxlrg;
 
   Arena *_arena;
-  
+
   // Keep track of inserted and deleted Nodes
-  VectorSet *_yanked;           
+  VectorSet *_yanked;
 
   PhaseIFG( Arena *arena );
   void init( uint maxlrg );
@@ -227,7 +227,7 @@ public:
   // Add edge between a and b.  Returns true if actually addded.
   int add_edge( uint a, uint b );
 
-  // Add edge between a and everything in the vector 
+  // Add edge between a and everything in the vector
   void add_vector( uint a, IndexSet *vec );
 
   // Test for edge existance
@@ -242,7 +242,7 @@ public:
   void Union( uint a, uint b );
   // Test for edge in Squared-up matrix
   int test_edge_sq( uint a, uint b ) const;
-  // Yank a Node and all connected edges from the IFG.  Be prepared to 
+  // Yank a Node and all connected edges from the IFG.  Be prepared to
   // re-insert the yanked Node in reverse order of yanking.  Return a
   // list of neighbors (edges) yanked.
   IndexSet *remove_node( uint a );
@@ -287,7 +287,7 @@ class PhaseChaitin : public PhaseRegAlloc {
 
   int _trip_cnt;
   int _alternate;
-  
+
   uint _maxlrg;                 // Max live range number
   LRG &lrgs(uint idx) const { return _ifg->lrgs(idx); }
   PhaseLive *_live;             // Liveness, used in the interference graph
@@ -306,7 +306,7 @@ class PhaseChaitin : public PhaseRegAlloc {
   // Remove the need for the Union-Find mapping
   void compress_uf_map_for_nodes( );
 
-  // Combine the Live Range Indices for these 2 Nodes into a single live 
+  // Combine the Live Range Indices for these 2 Nodes into a single live
   // range.  Future requests for any Node in either live range will
   // return the live range index for the combined live range.
   void Union( const Node *src, const Node *dst );
@@ -386,7 +386,7 @@ private:
   }
 
   // Add edge between reg and everything in the vector.
-  // Same as _ifg->add_vector(reg,live) EXCEPT use the RegMask 
+  // Same as _ifg->add_vector(reg,live) EXCEPT use the RegMask
   // information to trim the set of interferences.  Return the
   // count of edges added.
   void interfere_with_live( uint reg, IndexSet *live );

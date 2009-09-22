@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm;
@@ -28,7 +28,7 @@ import sun.jvm.hotspot.utilities.Assert;
 
 /*
  * Operand is used as RTL argument. An Operand is either
- * a Number or a Register or an Address.  
+ * a Number or a Register or an Address.
 */
 
 public abstract class Operand {

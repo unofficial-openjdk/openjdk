@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compiledICHolderOop.hpp	1.20 07/05/05 17:05:59 JVM"
+#pragma ident "@(#)compiledICHolderOop.hpp      1.20 07/05/05 17:05:59 JVM"
 #endif
 /*
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A compiledICHolderOop is a helper object for the inline cache implementation.
@@ -45,7 +45,7 @@ class compiledICHolderOopDesc : public oopDesc {
 
   void set_holder_method(methodOop m) { oop_store_without_check((oop*)&_holder_method, (oop)m); }
   void set_holder_klass(klassOop k)   { oop_store_without_check((oop*)&_holder_klass, (oop)k); }
-  
+
   static int header_size()            { return sizeof(compiledICHolderOopDesc)/HeapWordSize; }
   static int object_size()            { return align_object_size(header_size()); }
 

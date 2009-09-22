@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)rootnode.cpp	1.77 07/05/05 17:06:28 JVM"
+#pragma ident "@(#)rootnode.cpp 1.77 07/05/05 17:06:28 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -56,9 +56,9 @@ Node *RootNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 }
 
 //=============================================================================
-HaltNode::HaltNode( Node *ctrl, Node *frameptr ) : Node(TypeFunc::Parms) { 
+HaltNode::HaltNode( Node *ctrl, Node *frameptr ) : Node(TypeFunc::Parms) {
   Node* top = Compile::current()->top();
-  init_req(TypeFunc::Control,  ctrl        ); 
+  init_req(TypeFunc::Control,  ctrl        );
   init_req(TypeFunc::I_O,      top);
   init_req(TypeFunc::Memory,   top);
   init_req(TypeFunc::FramePtr, frameptr    );
@@ -73,14 +73,12 @@ Node *HaltNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 }
 
 //------------------------------Value------------------------------------------
-const Type *HaltNode::Value( PhaseTransform *phase ) const { 
+const Type *HaltNode::Value( PhaseTransform *phase ) const {
   return ( phase->type(in(TypeFunc::Control)) == Type::TOP)
     ? Type::TOP
     : Type::BOTTOM;
 }
 
-const RegMask &HaltNode::out_RegMask() const { 
+const RegMask &HaltNode::out_RegMask() const {
   return RegMask::Empty;
 }
-
-

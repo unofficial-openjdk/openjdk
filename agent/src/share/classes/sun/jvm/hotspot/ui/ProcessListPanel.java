@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -47,7 +47,7 @@ public class ProcessListPanel extends JPanel {
       the panel. */
   public ProcessListPanel(Debugger dbg) {
     super();
-    
+
     this.dbg = dbg;
 
     update();
@@ -91,8 +91,8 @@ public class ProcessListPanel extends JPanel {
     // Provide sorting in similar fashion to Task Manager
     header.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
-          int viewColumn = table.getColumnModel().getColumnIndexAtX(e.getX()); 
-          int column = table.convertColumnIndexToModel(viewColumn); 
+          int viewColumn = table.getColumnModel().getColumnIndexAtX(e.getX());
+          int column = table.convertColumnIndexToModel(viewColumn);
           if (column != -1) {
             boolean newSortByName = (column == 0);
             if (newSortByName == sortByName) {
@@ -119,7 +119,7 @@ public class ProcessListPanel extends JPanel {
           }
         }
       });
-    
+
     JScrollPane scrollPane = new JScrollPane(table);
     add(scrollPane, BorderLayout.CENTER);
 

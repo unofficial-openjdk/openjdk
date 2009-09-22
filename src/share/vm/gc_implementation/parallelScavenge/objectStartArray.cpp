@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)objectStartArray.cpp	1.20 07/05/05 17:05:28 JVM"
+#pragma ident "@(#)objectStartArray.cpp 1.20 07/05/05 17:05:28 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -40,10 +40,10 @@ void ObjectStartArray::initialize(MemRegion reserved_region) {
   size_t bytes_to_reserve = reserved_region.word_size() / block_size_in_words;
   assert(bytes_to_reserve > 0, "Sanity");
 
-  bytes_to_reserve = 
+  bytes_to_reserve =
     align_size_up(bytes_to_reserve, os::vm_allocation_granularity());
 
-  // Do not use large-pages for the backing store. The one large page region 
+  // Do not use large-pages for the backing store. The one large page region
   // will be used for the heap proper.
   ReservedSpace backing_store(bytes_to_reserve);
   if (!backing_store.is_reserved()) {
@@ -81,7 +81,7 @@ void ObjectStartArray::set_covered_region(MemRegion mr) {
   size_t requested_blocks_size_in_bytes = mr.word_size() / block_size_in_words;
 
   // Only commit memory in page sized chunks
-  requested_blocks_size_in_bytes = 
+  requested_blocks_size_in_bytes =
     align_size_up(requested_blocks_size_in_bytes, os::vm_page_size());
 
   _covered_region = mr;
@@ -117,8 +117,8 @@ void ObjectStartArray::reset() {
 }
 
 
-bool ObjectStartArray::object_starts_in_range(HeapWord* start_addr, 
-					      HeapWord* end_addr) const {
+bool ObjectStartArray::object_starts_in_range(HeapWord* start_addr,
+                                              HeapWord* end_addr) const {
   assert(start_addr <= end_addr, "range is wrong");
   if (start_addr > end_addr) {
     return false;

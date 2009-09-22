@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import sun.jvm.hotspot.tools.*;
@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.jar.*;
 
 /**
-This is a sanity checking tool for Serviceability Agent. To use this class, 
+This is a sanity checking tool for Serviceability Agent. To use this class,
 refer to sasanity.sh script in the current directory.
 */
 
@@ -55,7 +55,7 @@ public class SASanityChecker extends Tool {
         saJarPath = st.nextToken();
         if (saJarPath.endsWith(saJarName)) {
            break;
-        } 
+        }
      }
 
      if (saJarPath == null) {

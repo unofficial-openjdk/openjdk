@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -34,7 +34,7 @@ public class Bytes {
   public Bytes(MachineDescription machDesc) {
     swap = !machDesc.isBigEndian();
   }
-  
+
   /** Should only swap if the hardware's underlying byte order is
       different from Java's */
   public short swapShort(short x) {
@@ -49,7 +49,7 @@ public class Bytes {
   public int swapInt(int x) {
     if (!swap)
       return x;
-    
+
     return (swapShort((short) x) << 16) | (swapShort((short) (x >> 16)) & 0xFFFF);
   }
 

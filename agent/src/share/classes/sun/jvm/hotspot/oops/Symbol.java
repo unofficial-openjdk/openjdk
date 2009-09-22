@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -65,7 +65,7 @@ public class Symbol extends Oop {
 
   // Fields
   private static CIntField length;
-  
+
   // Accessors for declared fields
   public long   getLength() { return          length.getValue(this); }
 
@@ -100,7 +100,7 @@ public class Symbol extends Oop {
       return readModifiedUTF8(asByteArray());
     } catch(IOException e) {
       return null;
-    } 
+    }
   }
 
   public boolean startsWith(String str) {

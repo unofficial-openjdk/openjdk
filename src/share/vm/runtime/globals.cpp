@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)globals.cpp	1.50 07/09/13 20:51:49 JVM"
+#pragma ident "@(#)globals.cpp  1.50 07/09/13 20:51:49 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -138,12 +138,12 @@ void Flag::print_as_flag(outputStream* st) {
 #define RUNTIME_PRODUCT_RW_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{product rw}", DEFAULT },
 
 #ifdef PRODUCT
-  #define RUNTIME_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */ 
-  #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */ 
-  #define RUNTIME_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) 
+  #define RUNTIME_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */
+  #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */
+  #define RUNTIME_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc)
 #else
   #define RUNTIME_DEVELOP_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "", DEFAULT },
-  #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{pd}", DEFAULT }, 
+  #define RUNTIME_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{pd}", DEFAULT },
   #define RUNTIME_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{notproduct}", DEFAULT },
 #endif
 
@@ -156,12 +156,12 @@ void Flag::print_as_flag(outputStream* st) {
 #define C1_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C1 product}", DEFAULT },
 #define C1_PD_PRODUCT_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C1 pd product}", DEFAULT },
 #ifdef PRODUCT
-  #define C1_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */ 
-  #define C1_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */ 
-  #define C1_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) 
+  #define C1_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */
+  #define C1_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */
+  #define C1_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc)
 #else
   #define C1_DEVELOP_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C1}", DEFAULT },
-  #define C1_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C1 pd}", DEFAULT }, 
+  #define C1_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C1 pd}", DEFAULT },
   #define C1_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C1 notproduct}", DEFAULT },
 #endif
 
@@ -170,12 +170,12 @@ void Flag::print_as_flag(outputStream* st) {
 #define C2_PD_PRODUCT_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C2 pd product}", DEFAULT },
 #define C2_DIAGNOSTIC_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C2 diagnostic}", DEFAULT },
 #ifdef PRODUCT
-  #define C2_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */ 
-  #define C2_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */ 
-  #define C2_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) 
+  #define C2_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */
+  #define C2_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     /* flag is constant */
+  #define C2_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc)
 #else
   #define C2_DEVELOP_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C2}", DEFAULT },
-  #define C2_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C2 pd}", DEFAULT }, 
+  #define C2_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, "{C2 pd}", DEFAULT },
   #define C2_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, "{C2 notproduct}", DEFAULT },
 #endif
 
@@ -252,7 +252,7 @@ bool CommandLineFlags::wasSetOnCmdline(const char* name, bool* value) {
 bool CommandLineFlags::boolAt(char* name, size_t len, bool* value) {
   Flag* result = Flag::find_flag(name, len);
   if (result == NULL) return false;
-  if (!result->is_bool()) return false;   
+  if (!result->is_bool()) return false;
   *value = result->get_bool();
   return true;
 }
@@ -260,9 +260,9 @@ bool CommandLineFlags::boolAt(char* name, size_t len, bool* value) {
 bool CommandLineFlags::boolAtPut(char* name, size_t len, bool* value, FlagValueOrigin origin) {
   Flag* result = Flag::find_flag(name, len);
   if (result == NULL) return false;
-  if (!result->is_bool()) return false;   
+  if (!result->is_bool()) return false;
   bool old_value = result->get_bool();
-  result->set_bool(*value); 
+  result->set_bool(*value);
   *value = old_value;
   result->origin = origin;
   return true;
@@ -271,14 +271,14 @@ bool CommandLineFlags::boolAtPut(char* name, size_t len, bool* value, FlagValueO
 void CommandLineFlagsEx::boolAtPut(CommandLineFlagWithType flag, bool value, FlagValueOrigin origin) {
   Flag* faddr = address_of_flag(flag);
   guarantee(faddr != NULL && faddr->is_bool(), "wrong flag type");
-  faddr->set_bool(value); 
+  faddr->set_bool(value);
   faddr->origin = origin;
 }
 
 bool CommandLineFlags::intxAt(char* name, size_t len, intx* value) {
   Flag* result = Flag::find_flag(name, len);
   if (result == NULL) return false;
-  if (!result->is_intx()) return false;   
+  if (!result->is_intx()) return false;
   *value = result->get_intx();
   return true;
 }
@@ -286,9 +286,9 @@ bool CommandLineFlags::intxAt(char* name, size_t len, intx* value) {
 bool CommandLineFlags::intxAtPut(char* name, size_t len, intx* value, FlagValueOrigin origin) {
   Flag* result = Flag::find_flag(name, len);
   if (result == NULL) return false;
-  if (!result->is_intx()) return false;   
+  if (!result->is_intx()) return false;
   intx old_value = result->get_intx();
-  result->set_intx(*value); 
+  result->set_intx(*value);
   *value = old_value;
   result->origin = origin;
   return true;
@@ -297,7 +297,7 @@ bool CommandLineFlags::intxAtPut(char* name, size_t len, intx* value, FlagValueO
 void CommandLineFlagsEx::intxAtPut(CommandLineFlagWithType flag, intx value, FlagValueOrigin origin) {
   Flag* faddr = address_of_flag(flag);
   guarantee(faddr != NULL && faddr->is_intx(), "wrong flag type");
-  faddr->set_intx(value); 
+  faddr->set_intx(value);
   faddr->origin = origin;
 }
 
@@ -467,4 +467,3 @@ void CommandLineFlags::printFlags() {
 }
 
 #endif
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)phase.hpp	1.53 07/05/17 16:00:29 JVM"
+#pragma ident "@(#)phase.hpp    1.53 07/05/17 16:00:29 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class Compile;
@@ -30,7 +30,7 @@ class Compile;
 //------------------------------Phase------------------------------------------
 // Most optimizations are done in Phases.  Creating a phase does any long
 // running analysis required, and caches the analysis in internal data
-// structures.  Later the analysis is queried using transform() calls to 
+// structures.  Later the analysis is queried using transform() calls to
 // guide transforming the program.  When the Phase is deleted, so is any
 // cached analysis info.  This basic Phase class mostly contains timing and
 // memory management code.
@@ -87,11 +87,11 @@ protected:
   static elapsedTimer _t_temporaryTimer1;
   static elapsedTimer _t_temporaryTimer2;
 
-// Subtimers for _t_optimizer 
+// Subtimers for _t_optimizer
   static elapsedTimer   _t_iterGVN;
   static elapsedTimer   _t_iterGVN2;
 
-// Subtimers for _t_registerAllocation 
+// Subtimers for _t_registerAllocation
   static elapsedTimer   _t_ctorChaitin;
   static elapsedTimer   _t_buildIFGphysical;
   static elapsedTimer   _t_computeLive;
@@ -99,7 +99,7 @@ protected:
   static elapsedTimer   _t_postAllocCopyRemoval;
   static elapsedTimer   _t_fixupSpills;
 
-// Subtimers for _t_output 
+// Subtimers for _t_output
   static elapsedTimer   _t_instrSched;
   static elapsedTimer   _t_buildOopMaps;
 #endif
@@ -110,4 +110,3 @@ public:
   static void print_timers();
 #endif
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)reg_split.cpp	1.81 07/05/05 17:06:27 JVM"
+#pragma ident "@(#)reg_split.cpp        1.81 07/05/05 17:06:27 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -97,7 +97,7 @@ Node *PhaseChaitin::get_spillcopy_wide( Node *def, Node *use, uint uidx ) {
 void PhaseChaitin::insert_proj( Block *b, uint i, Node *spill, uint maxlrg ) {
   // Skip intervening ProjNodes.  Do not insert between a ProjNode and
   // its definer.
-  while( i < b->_nodes.size() && 
+  while( i < b->_nodes.size() &&
          (b->_nodes[i]->is_Proj() ||
           b->_nodes[i]->is_Phi() ) )
     i++;
@@ -142,7 +142,7 @@ uint PhaseChaitin::split_DEF( Node *def, Block *b, int loc, uint maxlrg, Node **
   // If we are spilling the memory op for an implicit null check, at the
   // null check location (ie - null check is in HRP block) we need to do
   // the null-check first, then spill-down in the following block.
-  // (The implicit_null_check function ensures the use is also dominated 
+  // (The implicit_null_check function ensures the use is also dominated
   // by the branch-not-taken block.)
   Node *be = b->end();
   if( be->is_MachNullCheck() && be->in(1) == def && def == b->_nodes[loc] ) {
@@ -184,14 +184,14 @@ uint PhaseChaitin::split_USE( Node *def, Block *b, Node *use, uint useidx, uint 
   JVMState* jvms = use->jvms();
   uint debug_start = jvms ? jvms->debug_start() : 999999;
   uint debug_end   = jvms ? jvms->debug_end()   : 999999;
-  
+
   //-------------------------------------------
   // Check for use of debug info
   if (useidx >= debug_start && useidx < debug_end) {
     // Actually it's perfectly legal for constant debug info to appear
     // just unlikely.  In this case the optimizer left a ConI of a 4
     // as both inputs to a Phi with only a debug use.  It's a single-def
-    // live range of a rematerializable value.  The live range spills, 
+    // live range of a rematerializable value.  The live range spills,
     // rematerializes and now the ConI directly feeds into the debug info.
     // assert(!def->is_Con(), "constant debug info already constructed directly");
 
@@ -210,7 +210,7 @@ uint PhaseChaitin::split_USE( Node *def, Block *b, Node *use, uint useidx, uint 
         // DEF is UP, so must copy it DOWN and hook in USE
         // Insert SpillCopy before the USE, which uses DEF as its input,
         // and defs a new live range, which is used by this node.
-        Node *spill = get_spillcopy_wide(def,use,useidx); 
+        Node *spill = get_spillcopy_wide(def,use,useidx);
         // did we fail to split?
         if (!spill) {
           // Bail
@@ -275,7 +275,7 @@ uint PhaseChaitin::split_USE( Node *def, Block *b, Node *use, uint useidx, uint 
 }
 
 //------------------------------split_Rematerialize----------------------------
-// Clone a local copy of the def.  
+// Clone a local copy of the def.
 Node *PhaseChaitin::split_Rematerialize( Node *def, Block *b, uint insidx, uint &maxlrg, GrowableArray<uint> splits, int slidx, uint *lrg2reach, Node **Reachblock, bool walkThru ) {
   // The input live ranges will be stretched to the site of the new
   // instruction.  They might be stretched past a def and will thus
@@ -307,7 +307,7 @@ Node *PhaseChaitin::split_Rematerialize( Node *def, Block *b, uint insidx, uint 
     return 0;
   }
 
-  // See if any inputs are currently being spilled, and take the 
+  // See if any inputs are currently being spilled, and take the
   // latest copy of spilled inputs.
   if( spill->req() > 1 ) {
     for( uint i = 1; i < spill->req(); i++ ) {
@@ -379,7 +379,7 @@ bool PhaseChaitin::is_high_pressure( Block *b, LRG *lrg, uint insidx ) {
   // got "freed up" and that num_regs will become INT_PRESSURE.
   int bound_pres = lrg->_is_float ? FLOATPRESSURE : INTPRESSURE;
   // Effective register pressure limit.
-  int lrg_pres = (lrg->get_invalid_mask_size() > lrg->num_regs()) 
+  int lrg_pres = (lrg->get_invalid_mask_size() > lrg->num_regs())
     ? (lrg->get_invalid_mask_size() >> (lrg->num_regs()-1)) : bound_pres;
   // High pressure if block pressure requires more register freedom
   // than live range has.
@@ -399,7 +399,7 @@ bool PhaseChaitin::prompt_use( Block *b, uint lidx ) {
     if( n->is_Phi() ) continue;
     for( uint j = 1; j < n->req(); j++ )
       if( Find_id(n->in(j)) == lidx )
-        return true;          // Found 1st use!  
+        return true;          // Found 1st use!
     if( n->out_RegMask().is_NotEmpty() ) return false;
   }
   return false;
@@ -440,7 +440,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
   phis = new Node_List();
   // Gather info on which LRG's are spilling, and build maps
   for( bidx = 1; bidx < _maxlrg; bidx++ ) {
-    if( lrgs(bidx).alive() && lrgs(bidx).reg() >= LRG::SPILL_REG ) { 
+    if( lrgs(bidx).alive() && lrgs(bidx).reg() >= LRG::SPILL_REG ) {
       assert(!lrgs(bidx).mask().is_AllStack(),"AllStack should color");
       lrg2reach[bidx] = spill_cnt;
       spill_cnt++;
@@ -450,7 +450,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
       splits.append(0);
 #endif
 #ifndef PRODUCT
-      if( PrintOpto && WizardMode && lrgs(bidx)._was_spilled1 ) 
+      if( PrintOpto && WizardMode && lrgs(bidx)._was_spilled1 )
         tty->print_cr("Warning, 2nd spill of L%d",bidx);
 #endif
     }
@@ -484,7 +484,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
   }
 
   // Initialize to array of empty vectorsets
-  for( slidx = 0; slidx < spill_cnt; slidx++ ) 
+  for( slidx = 0; slidx < spill_cnt; slidx++ )
     UP_entry[slidx] = new VectorSet(Thread::current()->resource_area());
 
   //----------PASS 1----------
@@ -627,7 +627,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
           UPblock[slidx] = false;
         // If we are not split up/down and all inputs are down, then we
         // are down
-        if( !needs_split && !u3 ) 
+        if( !needs_split && !u3 )
           UPblock[slidx] = false;
       }  // end if phi is needed
 
@@ -715,12 +715,12 @@ uint PhaseChaitin::Split( uint maxlrg ) {
         }
         continue;
       }
-      assert( insidx > b->_ihrp_index || 
+      assert( insidx > b->_ihrp_index ||
               (b->_reg_pressure < (uint)INTPRESSURE) ||
               b->_ihrp_index > 4000000 ||
               b->_ihrp_index >= b->end_idx() ||
               !b->_nodes[b->_ihrp_index]->is_Proj(), "" );
-      assert( insidx > b->_fhrp_index || 
+      assert( insidx > b->_fhrp_index ||
               (b->_freg_pressure < (uint)FLOATPRESSURE) ||
               b->_fhrp_index > 4000000 ||
               b->_fhrp_index >= b->end_idx() ||
@@ -739,7 +739,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
           if( UPblock[slidx] ) {
             // set location to insert spills at
             // SPLIT DOWN HERE - NO CISC SPILL
-            if( is_high_pressure( b, &lrgs(lidx), insidx ) && 
+            if( is_high_pressure( b, &lrgs(lidx), insidx ) &&
                 !n1->rematerialize() ) {
               // If there is already a valid stack definition available, use it
               if( debug_defs[slidx] != NULL ) {
@@ -816,8 +816,8 @@ uint PhaseChaitin::Split( uint maxlrg ) {
         uint old_last = cnt - 1;
         for( inpidx = 1; inpidx < cnt; inpidx++ ) {
           // Derived/base pairs may be added to our inputs during this loop.
-          // If inpidx > old_last, then one of these new inputs is being 
-          // handled. Skip the derived part of the pair, but process 
+          // If inpidx > old_last, then one of these new inputs is being
+          // handled. Skip the derived part of the pair, but process
           // the base like any other input.
           if( inpidx > old_last && ((inpidx - oopoff) & 1) == DERIVED ) {
             continue;  // skip derived_debug added below
@@ -846,7 +846,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
               }
               continue;
             }
- 
+
             // Rematerializable?  Then clone def at use site instead
             // of store/load
             if( def->rematerialize() ) {
@@ -857,12 +857,12 @@ uint PhaseChaitin::Split( uint maxlrg ) {
             }
 
             MachNode *mach = n->is_Mach() ? n->as_Mach() : NULL;
-            // Base pointers and oopmap references do not care where they live. 
-            if ((inpidx >= oopoff) || 
+            // Base pointers and oopmap references do not care where they live.
+            if ((inpidx >= oopoff) ||
                 (mach && mach->ideal_Opcode() == Op_AddP && inpidx == AddPNode::Base)) {
               if (def->rematerialize() && lrgs(useidx)._was_spilled2) {
-                // This def has been rematerialized a couple of times without 
-                // progress. It doesn't care if it lives UP or DOWN, so 
+                // This def has been rematerialized a couple of times without
+                // progress. It doesn't care if it lives UP or DOWN, so
                 // spill it down now.
                 maxlrg = split_USE(def,b,n,inpidx,maxlrg,false,false,splits,slidx);
                 // If it wasn't split bail
@@ -884,7 +884,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
                 Node *derived_debug = debug_defs[slidx];
                 if( ((inpidx - oopoff) & 1) == DERIVED && // derived vs base?
                     mach && mach->ideal_Opcode() != Op_Halt &&
-                    derived_debug != NULL && 
+                    derived_debug != NULL &&
                     derived_debug != def ) { // Actual 2nd value appears
                   // We have already set 'def' as a derived value.
                   // Also set debug_defs[slidx] as a derived value.
@@ -894,9 +894,9 @@ uint PhaseChaitin::Split( uint maxlrg ) {
                       break;      // Found an instance of debug derived
                   if( k == cnt ) {// No instance of debug_defs[slidx]
                     // Add a derived/base pair to cover the debug info.
-                    // We have to process the added base later since it is not 
+                    // We have to process the added base later since it is not
                     // handled yet at this point but skip derived part.
-                    assert(((n->req() - oopoff) & 1) == DERIVED, 
+                    assert(((n->req() - oopoff) & 1) == DERIVED,
                            "must match skip condition above");
                     n->add_req( derived_debug );   // this will be skipped above
                     n->add_req( n->in(inpidx+1) ); // this will be processed
@@ -936,11 +936,11 @@ uint PhaseChaitin::Split( uint maxlrg ) {
             bool uup = umask.is_UP();
 
             // Need special logic to handle bound USES. Insert a split at this
-            // bound use if we can't rematerialize the def, or if we need the 
+            // bound use if we can't rematerialize the def, or if we need the
             // split to form a misaligned pair.
-            if( !umask.is_AllStack() && 
-                (int)umask.Size() <= lrgs(useidx).num_regs() && 
-                (!def->rematerialize() || 
+            if( !umask.is_AllStack() &&
+                (int)umask.Size() <= lrgs(useidx).num_regs() &&
+                (!def->rematerialize() ||
                  umask.is_misaligned_Pair())) {
               // These need a Split regardless of overlap or pressure
               // SPLIT - NO DEF - NO CISC SPILL
@@ -1083,7 +1083,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
         if( !n->rematerialize() &&
             (((dmask.is_bound1() || dmask.is_bound2() || dmask.is_misaligned_Pair()) &&
              (deflrg._direct_conflict || deflrg._must_spill)) ||
-             // Check for LRG being up in a register and we are inside a high 
+             // Check for LRG being up in a register and we are inside a high
              // pressure area.  Spill it down immediately.
              (defup && is_high_pressure(b,&deflrg,insidx))) ) {
           assert( !n->rematerialize(), "" );
@@ -1218,8 +1218,8 @@ uint PhaseChaitin::Split( uint maxlrg ) {
     // goes in.
 
     // Walk the predecessor blocks and assign the reaching def to the Phi.
-    // Split Phi nodes by placing USE side splits wherever the reaching 
-    // DEF has the wrong UP/DOWN value.  
+    // Split Phi nodes by placing USE side splits wherever the reaching
+    // DEF has the wrong UP/DOWN value.
     for( uint i = 1; i < b->num_preds(); i++ ) {
       // Get predecessor block pre-order number
       Block *pred = _cfg._bbs[b->pred(i)->_idx];
@@ -1228,7 +1228,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
       Node *def = Reaches[pidx][slidx];
       assert( def, "must have reaching def" );
       // If input up/down sense and reg-pressure DISagree
-      if( def->rematerialize() ) { 
+      if( def->rematerialize() ) {
         def = split_Rematerialize( def, pred, pred->end_idx(), maxlrg, splits, slidx, lrg2reach, Reachblock, false );
         if( !def ) return 0;    // Bail out
       }
@@ -1279,7 +1279,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
       uint lr2 = Find(n1->in(twoidx));
       if( lr1 < lr2 )
         Union(n1, n1->in(twoidx));
-      else if( lr1 > lr2 ) 
+      else if( lr1 > lr2 )
         Union(n1->in(twoidx), n1);
     }  // End if two address
   }  // End for all defs

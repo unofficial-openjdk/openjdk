@@ -19,11 +19,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)unwind_windows_x86.hpp	1.6 07/09/17 09:09:52 JVM"
+#pragma ident "@(#)unwind_windows_x86.hpp       1.6 07/09/17 09:09:52 JVM"
 #endif
 
 #ifdef AMD64
@@ -47,7 +47,7 @@ typedef struct _UNWIND_INFO_EH_ONLY {
        OPTIONAL ULONG ExceptionHandler;
        OPTIONAL ULONG FunctionEntry;
     };
-    OPTIONAL ULONG ExceptionData[1]; 
+    OPTIONAL ULONG ExceptionData[1];
 } UNWIND_INFO_EH_ONLY, *PUNWIND_INFO_EH_ONLY;
 
 

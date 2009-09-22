@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -55,13 +55,13 @@ public class SADebugServerAttachingConnector extends ConnectorImpl implements At
                    public String name() {
                        return "RMI";
                    }
-	         };
+                 };
     }
 
     private VirtualMachine createVirtualMachine(Class vmImplClass,
-						String debugServerName) 
-	throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-	java.lang.reflect.Method connectByServerMethod =
+                                                String debugServerName)
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        java.lang.reflect.Method connectByServerMethod =
                             vmImplClass.getMethod(
                                    "createVirtualMachineForServer",
                                    new Class[] {
@@ -71,7 +71,7 @@ public class SADebugServerAttachingConnector extends ConnectorImpl implements At
                                    });
         return (VirtualMachine) connectByServerMethod.invoke(null,
                                    new Object[] {
-                                       Bootstrap.virtualMachineManager(), 
+                                       Bootstrap.virtualMachineManager(),
                                        debugServerName,
                                        new Integer(0)
                                    });
@@ -86,24 +86,24 @@ public class SADebugServerAttachingConnector extends ConnectorImpl implements At
         }
         VirtualMachine myVM;
         try {
-	    try {
-		Class vmImplClass = loadVirtualMachineImplClass();
-		myVM = createVirtualMachine(vmImplClass, debugServerName);
-	    } catch (InvocationTargetException ite) {
-		Class vmImplClass = handleVMVersionMismatch(ite);
-		if (vmImplClass != null) {
-		    return createVirtualMachine(vmImplClass, debugServerName);
-		} else {
-		    throw ite;
-		}
-	    }
+            try {
+                Class vmImplClass = loadVirtualMachineImplClass();
+                myVM = createVirtualMachine(vmImplClass, debugServerName);
+            } catch (InvocationTargetException ite) {
+                Class vmImplClass = handleVMVersionMismatch(ite);
+                if (vmImplClass != null) {
+                    return createVirtualMachine(vmImplClass, debugServerName);
+                } else {
+                    throw ite;
+                }
+            }
         } catch (Exception ee) {
             if (DEBUG) {
                 System.out.println("VirtualMachineImpl() got an exception:");
                 ee.printStackTrace();
                 System.out.println("debug server name = " + debugServerName);
             }
-            throw (IOException) new IOException().initCause(ee); 
+            throw (IOException) new IOException().initCause(ee);
         }
         setVMDisposeObserver(myVM);
         return myVM;
@@ -121,4 +121,3 @@ public class SADebugServerAttachingConnector extends ConnectorImpl implements At
         return transport;
     }
 }
-

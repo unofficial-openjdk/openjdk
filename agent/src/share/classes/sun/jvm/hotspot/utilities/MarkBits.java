@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -58,7 +58,7 @@ public class MarkBits {
       System.err.println("MarkBits: WARNING: null object, ignoring");
       return false;
     }
-    
+
     OopHandle handle = obj.getHandle();
     // FIXME: will have trouble with larger heap sizes
     long idx = handle.minus(start) / VM.getVM().getOopSize();

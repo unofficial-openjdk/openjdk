@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.sparc;
 import sun.jvm.hotspot.asm.*;
 import sun.jvm.hotspot.utilities.Assert;
 
-abstract class V9CMoveDecoder extends InstructionDecoder 
+abstract class V9CMoveDecoder extends InstructionDecoder
                    implements V9InstructionDecoder {
     static private final String iccConditionNames[] = {
         "n", "e", "le", "l", "leu", "cs", "neg", "vs",
@@ -41,7 +41,7 @@ abstract class V9CMoveDecoder extends InstructionDecoder
 
     static String getConditionName(int conditionCode, int conditionFlag) {
         return (conditionFlag == icc || conditionFlag == xcc) ?
-                       iccConditionNames[conditionCode] 
+                       iccConditionNames[conditionCode]
                      : fccConditionNames[conditionCode];
     }
 

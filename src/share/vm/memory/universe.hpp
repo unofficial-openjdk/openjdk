@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)universe.hpp	1.183 07/08/09 09:12:00 JVM"
+#pragma ident "@(#)universe.hpp 1.183 07/08/09 09:12:00 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Universe is a name space holding known system classes and objects in the VM.
-// 
+//
 // Loaded classes are accessible through the SystemDictionary.
-// 
+//
 // The object heap is allocated and accessed through Universe, and various allocation
 // support is provided. Allocation by the interpreter and compiled code is done inline
 // and bails out to Scavenge::invoke_and_allocate.
@@ -120,7 +120,7 @@ class Universe: AllStatic {
   static klassOop _singleArrayKlassObj;
   static klassOop _doubleArrayKlassObj;
   static klassOop _typeArrayKlassObjs[T_VOID+1];
-  
+
   static klassOop _objectArrayKlassObj;
 
   static klassOop _symbolKlassObj;
@@ -205,7 +205,7 @@ class Universe: AllStatic {
 
   // generate an out of memory error; if possible using an error with preallocated backtrace;
   // otherwise return the given default error.
-  static oop	    gen_out_of_memory_error(oop default_err);
+  static oop        gen_out_of_memory_error(oop default_err);
 
   // Historic gc information
   static size_t _heap_capacity_at_last_gc;
@@ -230,7 +230,7 @@ class Universe: AllStatic {
   // Debugging
   static int _verify_count;                           // number of verifies done
   // True during call to verify().  Should only be set/cleared in verify().
-  static bool _verify_in_progress;		      
+  static bool _verify_in_progress;
 
   static void compute_verify_oop_data();
 
@@ -248,7 +248,7 @@ class Universe: AllStatic {
   static klassOop objectArrayKlassObj() {
     return _objectArrayKlassObj;
   }
-  
+
   static klassOop typeArrayKlassObj(BasicType t) {
     assert((uint)t < T_VOID+1, "range check");
     assert(_typeArrayKlassObjs[t] != NULL, "domain check");
@@ -297,9 +297,9 @@ class Universe: AllStatic {
   static typeArrayOop the_empty_byte_array()          { return _the_empty_byte_array;          }
   static typeArrayOop the_empty_short_array()         { return _the_empty_short_array;         }
   static typeArrayOop the_empty_int_array()           { return _the_empty_int_array;           }
-  static objArrayOop  the_empty_system_obj_array ()   { return _the_empty_system_obj_array;    }  
-  static objArrayOop  the_empty_class_klass_array ()  { return _the_empty_class_klass_array;   }  
-  static objArrayOop  the_array_interfaces_array()    { return _the_array_interfaces_array;    }  
+  static objArrayOop  the_empty_system_obj_array ()   { return _the_empty_system_obj_array;    }
+  static objArrayOop  the_empty_class_klass_array ()  { return _the_empty_class_klass_array;   }
+  static objArrayOop  the_array_interfaces_array()    { return _the_array_interfaces_array;    }
   static methodOop    finalizer_register_method()     { return _finalizer_register_cache->get_methodOop(); }
   static methodOop    loader_addClass_method()        { return _loader_addClass_cache->get_methodOop(); }
   static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }
@@ -309,12 +309,12 @@ class Universe: AllStatic {
   static oop          vm_exception()                  { return _vm_exception; }
   static oop          emptySymbol()                   { return _emptySymbol; }
 
-  // OutOfMemoryError support. Returns an error with the required message. The returned error 
+  // OutOfMemoryError support. Returns an error with the required message. The returned error
   // may or may not have a backtrace. If error has a backtrace then the stack trace is already
   // filled in.
-  static oop out_of_memory_error_java_heap()	      { return gen_out_of_memory_error(_out_of_memory_error_java_heap);  }
-  static oop out_of_memory_error_perm_gen()	      { return gen_out_of_memory_error(_out_of_memory_error_perm_gen);   }
-  static oop out_of_memory_error_array_size()	      { return gen_out_of_memory_error(_out_of_memory_error_array_size); }
+  static oop out_of_memory_error_java_heap()          { return gen_out_of_memory_error(_out_of_memory_error_java_heap);  }
+  static oop out_of_memory_error_perm_gen()           { return gen_out_of_memory_error(_out_of_memory_error_perm_gen);   }
+  static oop out_of_memory_error_array_size()         { return gen_out_of_memory_error(_out_of_memory_error_array_size); }
   static oop out_of_memory_error_gc_overhead_limit()  { return gen_out_of_memory_error(_out_of_memory_error_gc_overhead_limit);  }
 
   // Accessors needed for fast allocation
@@ -362,7 +362,7 @@ class Universe: AllStatic {
   // Apply "f" to all klasses for basic types (classes not present in
   // SystemDictionary).
   static void basic_type_classes_do(void f(klassOop));
-  
+
   // Apply "f" to all system klasses (classes not present in SystemDictionary).
   static void system_classes_do(void f(klassOop));
 

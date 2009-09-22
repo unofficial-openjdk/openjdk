@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -29,7 +29,7 @@ import java.io.*;
 // A FieldIdentifier describes a field in an Oop with a name
 public class FieldIdentifier {
 
-  public String getName() { return ""; } 
+  public String getName() { return ""; }
 
   public void printOn(PrintStream tty) {
     tty.print(" - " + getName() + ":\t");

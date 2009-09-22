@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciObject.cpp	1.29 07/09/28 10:23:21 JVM"
+#pragma ident "@(#)ciObject.cpp 1.29 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -180,7 +180,7 @@ jobject ciObject::encoding() {
   assert(has_encoding(), "oop must be NULL or perm");
   return handle();
 }
-  
+
 // ------------------------------------------------------------------
 // ciObject::has_encoding
 bool ciObject::has_encoding() {
@@ -216,4 +216,3 @@ void ciObject::print_oop(outputStream* st) {
     GUARDED_VM_ENTRY(get_oop()->print_on(st);)
   }
 }
-

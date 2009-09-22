@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)templateInterpreterGenerator_sparc.hpp	1.1 07/08/07 10:21:42 JVM"
+#pragma ident "@(#)templateInterpreterGenerator_sparc.hpp       1.1 07/08/07 10:21:42 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
   protected:

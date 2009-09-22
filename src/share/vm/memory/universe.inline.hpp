@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)universe.inline.hpp	1.47 07/05/05 17:05:57 JVM"
+#pragma ident "@(#)universe.inline.hpp  1.47 07/05/05 17:05:57 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Check whether an element of a typeArrayOop with the given type must be
@@ -38,6 +38,3 @@ inline bool Universe::element_type_should_be_aligned(BasicType type) {
 inline bool Universe::field_type_should_be_aligned(BasicType type) {
   return type == T_DOUBLE || type == T_LONG;
 }
-
-
-

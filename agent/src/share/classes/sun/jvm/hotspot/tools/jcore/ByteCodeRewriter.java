@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.tools.jcore;
@@ -81,7 +81,7 @@ public class ByteCodeRewriter
 
             if (Assert.ASSERTS_ENABLED) {
                 int code_from_buffer = 0xFF & code[bci];
-                Assert.that(code_from_buffer == hotspotcode 
+                Assert.that(code_from_buffer == hotspotcode
                           || code_from_buffer == Bytecodes._breakpoint,
                           "Unexpected bytecode found in method bytecode buffer!");
             }
@@ -115,9 +115,9 @@ public class ByteCodeRewriter
             short cpoolIndex = 0;
             switch (bytecode) {
                 // bytecodes with ConstantPoolCache index
-                case Bytecodes._getstatic: 
-                case Bytecodes._putstatic: 
-                case Bytecodes._getfield: 
+                case Bytecodes._getstatic:
+                case Bytecodes._putstatic:
+                case Bytecodes._getfield:
                 case Bytecodes._putfield:
                 case Bytecodes._invokevirtual:
                 case Bytecodes._invokespecial:
@@ -127,11 +127,11 @@ public class ByteCodeRewriter
                     writeShort(code, bci + 1, cpoolIndex);
                     break;
                 }
-            } 
+            }
 
             len = Bytecodes.lengthFor(bytecode);
             if (len <= 0) len = Bytecodes.lengthAt(method, bci);
- 
+
             if (DEBUG) {
                 String operand = "";
                 switch (len) {
@@ -139,7 +139,7 @@ public class ByteCodeRewriter
                         operand += code[bci + 1];
                         break;
                    case 3:
-                        operand += (cpoolIndex != 0)? cpoolIndex : 
+                        operand += (cpoolIndex != 0)? cpoolIndex :
                                             method.getBytecodeShortArg(bci + 1);
                         break;
                    case 5:

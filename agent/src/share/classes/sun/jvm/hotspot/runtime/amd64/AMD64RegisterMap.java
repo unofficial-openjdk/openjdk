@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime.amd64;
@@ -43,7 +43,7 @@ public class AMD64RegisterMap extends RegisterMap {
     AMD64RegisterMap retval = new AMD64RegisterMap(this);
     return retval;
   }
-  
+
   // no PD state to clear or copy:
   protected void clearPD() {}
   protected void initializePD() {}

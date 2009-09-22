@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)objArrayKlassKlass.hpp	1.48 07/05/29 09:44:24 JVM"
+#pragma ident "@(#)objArrayKlassKlass.hpp       1.48 07/05/29 09:44:24 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The objArrayKlassKlass is klass for all objArrayKlass'
@@ -45,7 +45,7 @@ class objArrayKlassKlass : public arrayKlassKlass {
   // Casting from klassOop
   static objArrayKlassKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_klass(), "cast to objArrayKlassKlass");
-    return (objArrayKlassKlass*) k->klass_part(); 
+    return (objArrayKlassKlass*) k->klass_part();
   }
 
   // Sizing
@@ -69,7 +69,7 @@ class objArrayKlassKlass : public arrayKlassKlass {
 
 #ifndef PRODUCT
  public:
-  // Printing 
+  // Printing
   void oop_print_on(oop obj, outputStream* st);
   void oop_print_value_on(oop obj, outputStream* st);
 #endif
@@ -80,4 +80,3 @@ class objArrayKlassKlass : public arrayKlassKlass {
   void oop_verify_on(oop obj, outputStream* st);
 
 };
-

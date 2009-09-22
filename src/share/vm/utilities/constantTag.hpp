@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)constantTag.hpp	1.28 07/05/05 17:07:08 JVM"
+#pragma ident "@(#)constantTag.hpp      1.28 07/05/05 17:07:08 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // constant tags in Java .class files
@@ -32,14 +32,14 @@ enum {
   // See jvm.h for shared JVM_CONSTANT_XXX tags
   // NOTE: replicated in SA in vm/agent/sun/jvm/hotspot/utilities/ConstantTag.java
   // Hotspot specific tags
-  JVM_CONSTANT_Invalid             	= 0,    // For bad value initialization
-  JVM_CONSTANT_InternalMin		= 100,	// First implementation tag (aside from bad value of course)
-  JVM_CONSTANT_UnresolvedClass     	= 100,  // Temporary tag until actual use
-  JVM_CONSTANT_ClassIndex          	= 101,  // Temporary tag while constructing constant pool
-  JVM_CONSTANT_UnresolvedString    	= 102,  // Temporary tag until actual use
-  JVM_CONSTANT_StringIndex         	= 103,  // Temporary tag while constructing constant pool
-  JVM_CONSTANT_UnresolvedClassInError	= 104,	// Error tag due to resolution error
-  JVM_CONSTANT_InternalMax		= 104	// Last implementation tag
+  JVM_CONSTANT_Invalid                  = 0,    // For bad value initialization
+  JVM_CONSTANT_InternalMin              = 100,  // First implementation tag (aside from bad value of course)
+  JVM_CONSTANT_UnresolvedClass          = 100,  // Temporary tag until actual use
+  JVM_CONSTANT_ClassIndex               = 101,  // Temporary tag while constructing constant pool
+  JVM_CONSTANT_UnresolvedString         = 102,  // Temporary tag until actual use
+  JVM_CONSTANT_StringIndex              = 103,  // Temporary tag while constructing constant pool
+  JVM_CONSTANT_UnresolvedClassInError   = 104,  // Error tag due to resolution error
+  JVM_CONSTANT_InternalMax              = 104   // Last implementation tag
 };
 
 
@@ -65,8 +65,8 @@ class constantTag VALUE_OBJ_CLASS_SPEC {
     return _tag == JVM_CONSTANT_UnresolvedClass || _tag == JVM_CONSTANT_UnresolvedClassInError;
   }
 
-  bool is_unresolved_klass_in_error() const { 
-    return _tag == JVM_CONSTANT_UnresolvedClassInError; 
+  bool is_unresolved_klass_in_error() const {
+    return _tag == JVM_CONSTANT_UnresolvedClassInError;
   }
 
   bool is_klass_index() const       { return _tag == JVM_CONSTANT_ClassIndex; }
@@ -78,14 +78,13 @@ class constantTag VALUE_OBJ_CLASS_SPEC {
   bool is_field_or_method() const   { return is_field() || is_method() || is_interface_method(); }
   bool is_symbol() const            { return is_utf8(); }
 
-  constantTag(jbyte tag) { 
-    assert((tag >= 0 && tag <= JVM_CONSTANT_NameAndType) || 
+  constantTag(jbyte tag) {
+    assert((tag >= 0 && tag <= JVM_CONSTANT_NameAndType) ||
            (tag >= JVM_CONSTANT_InternalMin && tag <= JVM_CONSTANT_InternalMax), "Invalid constant tag");
-    _tag = tag; 
+    _tag = tag;
   }
 
   jbyte value()                      { return _tag; }
-    
+
   void print_on(outputStream* st) const PRODUCT_RETURN;
 };
-

@@ -1,28 +1,28 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parOopClosures.inline.hpp	1.1 07/05/16 10:51:44 JVM"
+#pragma ident "@(#)parOopClosures.inline.hpp    1.1 07/05/16 10:51:44 JVM"
 #endif
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *   
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *   
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *   
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 template <class T> inline void ParScanWeakRefClosure::do_oop_work(T* p) {
@@ -31,7 +31,7 @@ template <class T> inline void ParScanWeakRefClosure::do_oop_work(T* p) {
   // weak references are sometimes scanned twice; must check
   // that to-space doesn't already contain this object
   if ((HeapWord*)obj < _boundary && !_g->to()->is_in_reserved(obj)) {
-    // we need to ensure that it is copied (see comment in 
+    // we need to ensure that it is copied (see comment in
     // ParScanClosure::do_oop_work).
     klassOop objK = obj->klass();
     markOop m = obj->mark();
@@ -75,7 +75,7 @@ inline void ParScanClosure::do_oop_work(T* p,
     if ((HeapWord*)obj < _boundary) {
       assert(!_g->to()->is_in_reserved(obj), "Scanning field twice?");
       // OK, we need to ensure that it is copied.
-      // We read the klass and mark in this order, so that we can reliably 
+      // We read the klass and mark in this order, so that we can reliably
       // get the size of the object: if the mark we read is not a
       // forwarding pointer, then the klass is valid: the klass is only
       // overwritten with an overflow next pointer after the object is
@@ -98,8 +98,8 @@ inline void ParScanClosure::do_oop_work(T* p,
         }
       }
       if (gc_barrier) {
-	// Now call parent closure
-	par_do_barrier(p);
+        // Now call parent closure
+        par_do_barrier(p);
       }
     }
   }

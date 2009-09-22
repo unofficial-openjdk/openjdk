@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)frame.inline.hpp	1.23 07/05/05 17:06:47 JVM"
+#pragma ident "@(#)frame.inline.hpp     1.23 07/05/05 17:06:47 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file holds platform-independant bodies of inline functions for frames.
@@ -39,8 +39,8 @@
 
 inline bool frame::is_bci(intptr_t bcx) {
 #ifdef _LP64
-  return ((uintptr_t) bcx) <= ((uintptr_t) max_method_code_size) ; 
-#else	
+  return ((uintptr_t) bcx) <= ((uintptr_t) max_method_code_size) ;
+#else
   return 0 <= bcx && bcx <= max_method_code_size;
 #endif
 }
@@ -50,7 +50,7 @@ inline bool frame::is_entry_frame() const {
 }
 
 inline bool frame::is_first_frame() const {
-  return is_entry_frame() && entry_frame_is_first(); 
+  return is_entry_frame() && entry_frame_is_first();
 }
 
 // here are the platform-dependent bodies:

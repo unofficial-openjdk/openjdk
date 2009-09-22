@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)markSweep.hpp	1.67 07/05/17 15:52:55 JVM"
+#pragma ident "@(#)markSweep.hpp        1.67 07/05/17 15:52:55 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ReferenceProcessor;
@@ -112,17 +112,17 @@ class MarkSweep : AllStatic {
   //
  protected:
   // Traversal stack used during phase1
-  static GrowableArray<oop>*             _marking_stack;   
+  static GrowableArray<oop>*             _marking_stack;
   // Stack for live klasses to revisit at end of marking phase
-  static GrowableArray<Klass*>*          _revisit_klass_stack;   
+  static GrowableArray<Klass*>*          _revisit_klass_stack;
 
   // Space for storing/restoring mark word
   static GrowableArray<markOop>*         _preserved_mark_stack;
   static GrowableArray<oop>*             _preserved_oop_stack;
-  static size_t			         _preserved_count;
-  static size_t			         _preserved_count_max;
+  static size_t                          _preserved_count;
+  static size_t                          _preserved_count_max;
   static PreservedMark*                  _preserved_marks;
-  
+
   // Reference processing (used in ...follow_contents)
   static ReferenceProcessor*             _ref_processor;
 

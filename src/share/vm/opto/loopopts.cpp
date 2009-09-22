@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)loopopts.cpp	1.222 08/11/24 12:23:09 JVM"
+#pragma ident "@(#)loopopts.cpp 1.222 08/11/24 12:23:09 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -744,7 +744,7 @@ void PhaseIdealLoop::split_if_with_blocks_post( Node *n ) {
           get_ctrl(iff->in(3)) == n_ctrl )
         return;                 // Inputs not yet split-up
       if ( get_loop(n_ctrl) != get_loop(get_ctrl(iff)) ) {
-	return;                 // Loop-invar test gates loop-varying CMOVE
+        return;                 // Loop-invar test gates loop-varying CMOVE
       }
     } else {
       return;  // some other kind of node, such as an Allocate
@@ -2713,4 +2713,3 @@ void PhaseIdealLoop::reorg_offsets( IdealLoopTree *loop ) {
   }
 
 }
-

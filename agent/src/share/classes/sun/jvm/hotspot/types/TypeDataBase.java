@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.types;
@@ -122,11 +122,11 @@ public interface TypeDataBase {
 
   /** Returns an Iterator over the Types in the database. */
   public Iterator getTypes();
- 
+
   /** Returns an Iterator over the String names of the integer
       constants in the database. */
   public Iterator getIntConstants();
- 
+
   /** Returns an Iterator over the String names of the long constants
       in the database. */
   public Iterator getLongConstants();

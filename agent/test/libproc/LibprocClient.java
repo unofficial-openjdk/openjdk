@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import sun.jvm.hotspot.oops.*;
@@ -37,7 +37,7 @@ import sun.jvm.hotspot.utilities.*;
    "LibprocTest.java".
 */
 
-public class LibprocClient extends Tool { 
+public class LibprocClient extends Tool {
 
    public void run() {
       // try to get VM version and check
@@ -58,15 +58,15 @@ public class LibprocClient extends Tool {
              }
 
              // special testing for "known" threads. For now, only "main" thread.
-             if (name.equals("main")) { 
-                checkMainThread(cur); 
+             if (name.equals("main")) {
+                checkMainThread(cur);
                 mainTested = true;
              }
          }
       }
       Assert.that(mainTested, "main thread missing");
    }
-   
+
    public static void main(String[] args) {
       try {
          LibprocClient lc = new LibprocClient();
@@ -114,7 +114,7 @@ public class LibprocClient extends Tool {
                               };
       // this will throw RuntimeException for any invalid item in signature.
       itr.iterate();
-   } 
+   }
 
    private void checkBCI(Method m, int bci) {
       if (! m.isNative()) {
@@ -131,7 +131,7 @@ public class LibprocClient extends Tool {
       Klass klass = method.getMethodHolder();
       Assert.that(klass != null, "expecting non-null instance klass");
    }
-         
+
    private void checkFrame(JavaVFrame vf) {
       Method method = vf.getMethod();
       Assert.that(method != null, "expecting a non-null method here");
@@ -152,7 +152,7 @@ public class LibprocClient extends Tool {
    private void checkMainThread(JavaThread thread) {
       checkFrames(thread, mainThreadMethods);
    }
-    
+
    private void checkFrames(JavaThread thread, String[] expectedMethodNames) {
       int i = 0;
       for (JavaVFrame vf = getLastJavaVFrame(thread); vf != null; vf = vf.javaSender(), i++) {
@@ -160,5 +160,5 @@ public class LibprocClient extends Tool {
          Assert.that(m.externalNameAndSignature().equals(expectedMethodNames[i]),
                      "expected frame missing");
       }
-   } 
+   }
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)register_definitions_sparc.cpp	1.13 07/08/29 13:42:18 JVM"
+#pragma ident "@(#)register_definitions_sparc.cpp       1.13 07/08/29 13:42:18 JVM"
 #endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // make sure the defines don't screw up the declarations later on in this file
@@ -41,7 +41,7 @@ REGISTER_DEFINITION(Register, G4);
 REGISTER_DEFINITION(Register, G5);
 REGISTER_DEFINITION(Register, G6);
 REGISTER_DEFINITION(Register, G7);
-                                                                          
+
 REGISTER_DEFINITION(Register, O0);
 REGISTER_DEFINITION(Register, O1);
 REGISTER_DEFINITION(Register, O2);
@@ -50,7 +50,7 @@ REGISTER_DEFINITION(Register, O4);
 REGISTER_DEFINITION(Register, O5);
 REGISTER_DEFINITION(Register, O6);
 REGISTER_DEFINITION(Register, O7);
-                                                                          
+
 REGISTER_DEFINITION(Register, L0);
 REGISTER_DEFINITION(Register, L1);
 REGISTER_DEFINITION(Register, L2);
@@ -59,7 +59,7 @@ REGISTER_DEFINITION(Register, L4);
 REGISTER_DEFINITION(Register, L5);
 REGISTER_DEFINITION(Register, L6);
 REGISTER_DEFINITION(Register, L7);
-                                                                          
+
 REGISTER_DEFINITION(Register, I0);
 REGISTER_DEFINITION(Register, I1);
 REGISTER_DEFINITION(Register, I2);
@@ -68,7 +68,7 @@ REGISTER_DEFINITION(Register, I4);
 REGISTER_DEFINITION(Register, I5);
 REGISTER_DEFINITION(Register, I6);
 REGISTER_DEFINITION(Register, I7);
-                                                                          
+
 REGISTER_DEFINITION(Register, FP);
 REGISTER_DEFINITION(Register, SP);
 

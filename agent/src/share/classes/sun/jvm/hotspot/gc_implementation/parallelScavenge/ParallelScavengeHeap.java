@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.gc_implementation.parallelScavenge;
@@ -77,7 +77,7 @@ public class ParallelScavengeHeap extends CollectedHeap {
    public long used() {
       return youngGen().used() + oldGen().used();
    }
-   
+
    public boolean isIn(Address a) {
       if (youngGen().isIn(a)) {
          return true;
@@ -106,4 +106,3 @@ public class ParallelScavengeHeap extends CollectedHeap {
       tty.print(" ] ");
    }
 }
-

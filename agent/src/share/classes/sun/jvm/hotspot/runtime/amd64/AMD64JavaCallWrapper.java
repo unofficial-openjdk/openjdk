@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime.amd64;
@@ -42,7 +42,7 @@ public class AMD64JavaCallWrapper extends JavaCallWrapper {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JavaFrameAnchor");
-    
+
     lastJavaFPField  = type.getAddressField("_last_Java_fp");
   }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compressedStream.hpp	1.27 07/05/05 17:05:20 JVM"
+#pragma ident "@(#)compressedStream.hpp 1.27 07/05/05 17:05:20 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Simple interface for filing out and filing in basic types
@@ -67,7 +67,7 @@ class CompressedReadStream : public CompressedStream {
   jint     read_int_mb(jint b0);  // UNSIGNED5 coding, 2-5 byte cases
 
  public:
-  CompressedReadStream(u_char* buffer, int position = 0) 
+  CompressedReadStream(u_char* buffer, int position = 0)
   : CompressedStream(buffer, position) {}
 
   jboolean read_bool()                 { return (jboolean) read();      }
@@ -93,7 +93,7 @@ class CompressedWriteStream : public CompressedStream {
   void store(u_char b) {
     _buffer[_position++] = b;
   }
-  void write(u_char b) { 
+  void write(u_char b) {
     if (full()) grow();
     store(b);
   }
@@ -106,7 +106,7 @@ class CompressedWriteStream : public CompressedStream {
 
  public:
   CompressedWriteStream(int initial_size);
-  CompressedWriteStream(u_char* buffer, int initial_size, int position = 0) 
+  CompressedWriteStream(u_char* buffer, int initial_size, int position = 0)
   : CompressedStream(buffer, position) { _size = initial_size; }
 
   void write_bool(jboolean value)      { write(value);      }

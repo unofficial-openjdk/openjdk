@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globalDefinitions_visCPP.hpp	1.68 07/05/05 17:07:10 JVM"
+#pragma ident "@(#)globalDefinitions_visCPP.hpp 1.68 07/05/05 17:07:10 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file holds compiler-dependent includes,
@@ -40,7 +40,7 @@
 # include <time.h>
 # include <fcntl.h>
 // Need this on windows to get the math constants (e.g., M_PI).
-#define	_USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
 # include <math.h>
 
 // 4810578: varargs unsafe on 32-bit integer/64-bit pointer architectures
@@ -75,8 +75,8 @@
 #define NULL_WORD NULL
 
 // Compiler-specific primitive types
-typedef	unsigned __int8  uint8_t;
-typedef	unsigned __int16 uint16_t;
+typedef unsigned __int8  uint8_t;
+typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 
@@ -85,7 +85,7 @@ typedef unsigned __int64 uintptr_t;
 #else
 typedef unsigned int uintptr_t;
 #endif
-typedef	signed   __int8  int8_t;
+typedef signed   __int8  int8_t;
 typedef signed   __int16 int16_t;
 typedef signed   __int32 int32_t;
 typedef signed   __int64 int64_t;
@@ -101,7 +101,7 @@ typedef signed   int ssize_t;
 // Additional Java basic types
 
 typedef unsigned char    jubyte;
-typedef	unsigned short   jushort;
+typedef unsigned short   jushort;
 typedef unsigned int     juint;
 typedef unsigned __int64 julong;
 
@@ -185,7 +185,7 @@ inline int vsnprintf(char* buf, size_t count, const char* fmt, va_list argptr) {
 #pragma warning( disable : 4291 ) // no matching operator delete found; memory will not be freed if initialization thows an exception
 
 // Portability macros
-#define PRAGMA_INTERFACE      
+#define PRAGMA_INTERFACE
 #define PRAGMA_IMPLEMENTATION
 #define PRAGMA_IMPLEMENTATION_(arg)
 #define VALUE_OBJ_CLASS_SPEC    : public _ValueObj

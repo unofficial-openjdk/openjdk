@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)graphKit.cpp	1.132 07/10/04 14:36:00 JVM"
+#pragma ident "@(#)graphKit.cpp 1.132 07/10/04 14:36:00 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -538,14 +538,14 @@ void GraphKit::builtin_throw(Deoptimization::DeoptReason reason, Node* arg) {
       Node*              ex_node = _gvn.transform( ConNode::make(C, ex_con) );
 
       // Clear the detail message of the preallocated exception object.
-      // Weblogic sometimes mutates the detail message of exceptions 
+      // Weblogic sometimes mutates the detail message of exceptions
       // using reflection.
       int offset = java_lang_Throwable::get_detailMessage_offset();
       const TypePtr* adr_typ = ex_con->add_offset(offset);
-      
+
       Node *adr = basic_plus_adr(ex_node, ex_node, offset);
       Node *store = store_oop_to_object(control(), ex_node, adr, adr_typ, null(), ex_con, T_OBJECT);
-        
+
       add_exception_state(make_exception_state(ex_node));
       return;
     }
@@ -633,7 +633,7 @@ BuildCutout::~BuildCutout() {
 
 SafePointNode* GraphKit::clone_map() {
   if (map() == NULL)  return NULL;
-  
+
   // Clone the memory edge first
   Node* mem = MergeMemNode::make(C, map()->memory());
   gvn().set_type_bottom(mem);
@@ -690,7 +690,7 @@ void GraphKit::kill_dead_locals() {
   // should help register allocation time and cut down on the size
   // of the deoptimization information.
   MethodLivenessResult live_locals = method()->liveness_at_bci(bci());
-  
+
   int len = (int)live_locals.size();
   assert(len <= jvms()->loc_size(), "too many live locals");
   for (int local = 0; local < len; local++) {
@@ -1068,10 +1068,10 @@ Node* GraphKit::load_array_length(Node* array) {
 }
 
 //------------------------------do_null_check----------------------------------
-// Helper function to do a NULL pointer check.  Returned value is 
+// Helper function to do a NULL pointer check.  Returned value is
 // the incoming address with NULL casted away.  You are allowed to use the
 // not-null value only if you are control dependent on the test.
-extern int explicit_null_checks_inserted, 
+extern int explicit_null_checks_inserted,
            explicit_null_checks_elided;
 Node* GraphKit::null_check_common(Node* value, BasicType type,
                                   // optional arguments for variations:
@@ -1124,7 +1124,7 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
         // See if the type is contained in NULL_PTR.
         // If so, then the value is already null.
         if (t->higher_equal(TypePtr::NULL_PTR)) {
-          explicit_null_checks_elided++;  
+          explicit_null_checks_elided++;
           return value;           // Elided null assert quickly!
         }
       } else {
@@ -1133,17 +1133,17 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
         // type.  In other words, "value" was not-null.
         if (t->meet(TypePtr::NULL_PTR) != t) {
           // same as: if (!TypePtr::NULL_PTR->higher_equal(t)) ...
-          explicit_null_checks_elided++;  
+          explicit_null_checks_elided++;
           return value;           // Elided null check quickly!
         }
       }
       chk = new (C, 3) CmpPNode( value, null() );
-      break;    
+      break;
     }
 
     default      : ShouldNotReachHere();
   }
-  assert(chk != NULL, "sanity check"); 
+  assert(chk != NULL, "sanity check");
   chk = _gvn.transform(chk);
 
   BoolTest::mask btest = assert_null ? BoolTest::eq : BoolTest::ne;
@@ -1172,7 +1172,7 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
         set_control(cfg);
         Node *res = cast_not_null(value);
         set_control(oldcontrol);
-        explicit_null_checks_elided++;  
+        explicit_null_checks_elided++;
         return res;
       }
       cfg = IfNode::up_one_dom(cfg, /*linear_only=*/ true);
@@ -1254,7 +1254,7 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
       replace_in_map(value, cast);
     value = cast;
   }
-      
+
   return value;
 }
 
@@ -1311,7 +1311,7 @@ Node* GraphKit::reset_memory() {
   Node* mem = map()->memory();
   // do not use this node for any more parsing!
   debug_only( map()->set_memory((Node*)NULL) );
-  return _gvn.transform( mem ); 
+  return _gvn.transform( mem );
 }
 
 //------------------------------set_all_memory---------------------------------
@@ -1369,7 +1369,7 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
   set_memory(st, adr_idx);
   // Back-to-back stores can only remove intermediate store with DU info
   // so push on worklist for optimizer.
-  if (mem->req() > MemNode::Address && adr == mem->in(MemNode::Address))  
+  if (mem->req() > MemNode::Address && adr == mem->in(MemNode::Address))
     record_for_igvn(st);
 
   return st;
@@ -1392,13 +1392,13 @@ void GraphKit::pre_barrier(Node* ctl,
 
     case BarrierSet::CardTableModRef:
     case BarrierSet::CardTableExtension:
-    case BarrierSet::ModRef: 
+    case BarrierSet::ModRef:
       break;
 
     case BarrierSet::Other:
-    default      : 
+    default      :
       ShouldNotReachHere();
-      
+
   }
 }
 
@@ -1423,13 +1423,13 @@ void GraphKit::post_barrier(Node* ctl,
       write_barrier_post(store, obj, adr, val, use_precise);
       break;
 
-    case BarrierSet::ModRef: 
+    case BarrierSet::ModRef:
       break;
 
     case BarrierSet::Other:
-    default      : 
+    default      :
       ShouldNotReachHere();
-      
+
   }
 }
 
@@ -1493,7 +1493,7 @@ Node* GraphKit::array_element_address(Node* ary, Node* idx, BasicType elembt,
   }
 
   // must be correct type for alignment purposes
-  Node* base  = basic_plus_adr(ary, header); 
+  Node* base  = basic_plus_adr(ary, header);
 #ifdef _LP64
   // The scaled index operand to AddP must be a clean 64-bit value.
   // Java allows a 32-bit int to be incremented to a negative
@@ -1640,7 +1640,7 @@ void GraphKit::set_predefined_output_for_runtime_call(Node* call,
     // This is not a "slow path" call; all memory comes from the call.
     set_all_memory_call(call);
   }
-} 
+}
 
 //------------------------------increment_counter------------------------------
 // for statistics: increment a VM counter by 1
@@ -1661,7 +1661,7 @@ void GraphKit::increment_counter(Node* counter_addr) {
 //------------------------------uncommon_trap----------------------------------
 // Bail out to the interpreter in mid-method.  Implemented by calling the
 // uncommon_trap blob.  This helper function inserts a runtime call with the
-// right debug info.  
+// right debug info.
 void GraphKit::uncommon_trap(int trap_request,
                              ciKlass* klass, const char* comment,
                              bool must_throw,
@@ -1694,8 +1694,8 @@ void GraphKit::uncommon_trap(int trap_request,
   case Deoptimization::Action_reinterpret:
     // Temporary fix for 6529811 to allow virtual calls to be sure they
     // get the chance to go from mono->bi->mega
-    if (!keep_exact_action && 
-        Deoptimization::trap_request_index(trap_request) < 0 && 
+    if (!keep_exact_action &&
+        Deoptimization::trap_request_index(trap_request) < 0 &&
         too_many_recompiles(reason)) {
       // This BCI is causing too many recompilations.
       action = Deoptimization::Action_none;
@@ -1790,7 +1790,7 @@ Node* GraphKit::just_allocated_object(Node* current_control) {
 
 
 //------------------------------store_barrier----------------------------------
-// Insert a write-barrier store.  This is to let generational GC work; we have 
+// Insert a write-barrier store.  This is to let generational GC work; we have
 // to flag all oop-stores before the next GC point.
 void GraphKit::write_barrier_post(Node* oop_store, Node* obj, Node* adr,
                                   Node* val, bool use_precise) {
@@ -1872,9 +1872,9 @@ void GraphKit::cms_card_mark(Node* ctl, Node* adr, Node* val, Node *oop_store) {
   Node *store = _gvn.transform( new (C, 5) StoreCMNode(ctl, mem, adr, type, val, oop_store) );
   set_memory(store, adr_idx);
 
-  // For CMS, back-to-back card-marks can only remove the first one 
+  // For CMS, back-to-back card-marks can only remove the first one
   // and this requires DU info.  Push on worklist for optimizer.
-  if (mem->req() > MemNode::Address && adr == mem->in(MemNode::Address))  
+  if (mem->req() > MemNode::Address && adr == mem->in(MemNode::Address))
     record_for_igvn(store);
 }
 
@@ -1896,7 +1896,7 @@ void GraphKit::round_double_arguments(ciMethod* dest_method) {
 }
 
 void GraphKit::round_double_result(ciMethod* dest_method) {
-  // A non-strict method may return a double value which has an extended 
+  // A non-strict method may return a double value which has an extended
   // exponent, but this must not be visible in a caller which is 'strict'
   // If a strict caller invokes a non-strict callee, round a double result
 
@@ -1913,7 +1913,7 @@ void GraphKit::round_double_result(ciMethod* dest_method) {
 
 // rounding for strict float precision conformance
 Node* GraphKit::precision_rounding(Node* n) {
-  return UseStrictFP && _method->flags().is_strict() 
+  return UseStrictFP && _method->flags().is_strict()
     && UseSSE == 0 && Matcher::strict_fp_requires_explicit_rounding
     ? _gvn.transform( new (C, 2) RoundFloatNode(0, n) )
     : n;
@@ -1921,7 +1921,7 @@ Node* GraphKit::precision_rounding(Node* n) {
 
 // rounding for strict double precision conformance
 Node* GraphKit::dprecision_rounding(Node *n) {
-  return UseStrictFP && _method->flags().is_strict() 
+  return UseStrictFP && _method->flags().is_strict()
     && UseSSE <= 1 && Matcher::strict_fp_requires_explicit_rounding
     ? _gvn.transform( new (C, 2) RoundDoubleNode(0, n) )
     : n;
@@ -1946,7 +1946,7 @@ Node* GraphKit::dstore_rounding(Node* n) {
 //                   If
 //                  /  \
 //              True    False-<2>
-//              / |        
+//              / |
 //             /  cast_not_null
 //           Load  |    |   ^
 //        [fast_test]   |   |
@@ -1956,7 +1956,7 @@ Node* GraphKit::dstore_rounding(Node* n) {
 //        |         \\  |
 //   [slow_call]     \[fast_result]
 //    Ctl   Val       \      \
-//     |               \      \ 
+//     |               \      \
 //    Catch       <1>   \      \
 //   /    \        ^     \      \
 //  Ex    No_Ex    |      \      \
@@ -1967,7 +1967,7 @@ Node* GraphKit::dstore_rounding(Node* n) {
 //              --------Region     Phi
 //
 //=============================================================================
-// Code is structured as a series of driver functions all called 'do_XXX' that 
+// Code is structured as a series of driver functions all called 'do_XXX' that
 // call a set of helper functions.  Helper functions first, then drivers.
 
 //------------------------------null_check_oop---------------------------------
@@ -2005,7 +2005,7 @@ Node* GraphKit::opt_iff(Node* region, Node* iff) {
 
   // Fast path taken; set region slot 2
   Node *fast_taken = _gvn.transform( new (C, 1) IfFalseNode(opt_iff) );
-  region->init_req(2,fast_taken); // Capture fast-control 
+  region->init_req(2,fast_taken); // Capture fast-control
 
   // Fast path not-taken, i.e. slow path
   Node *slow_taken = _gvn.transform( new (C, 1) IfTrueNode(opt_iff) );
@@ -2158,9 +2158,9 @@ void GraphKit::make_slow_call_ex(Node* call, ciInstanceKlass* ex_klass, bool sep
     }
   }
 
-  // Get the no-exception control from the CatchNode. 
+  // Get the no-exception control from the CatchNode.
   set_control(norm);
-}  
+}
 
 
 //-------------------------------gen_subtype_check-----------------------------
@@ -2259,7 +2259,7 @@ Node* GraphKit::gen_subtype_check(Node* subklass, Node* superklass) {
   // return those results immediately.
   if (!might_be_cache) {
     Node* not_subtype_ctrl = control();
-    set_control(iftrue1); // We need exactly the 1 test above 
+    set_control(iftrue1); // We need exactly the 1 test above
     return not_subtype_ctrl;
   }
 
@@ -2393,7 +2393,7 @@ Node* GraphKit::type_check_receiver(Node* receiver, ciKlass* klass,
 Node* GraphKit::gen_instanceof( Node *subobj, Node* superklass ) {
   C->set_has_split_ifs(true); // Has chance for split-if optimization
   assert( !stopped(), "dead parse path should be checked in callers" );
-  assert(!TypePtr::NULL_PTR->higher_equal(_gvn.type(superklass)->is_klassptr()), 
+  assert(!TypePtr::NULL_PTR->higher_equal(_gvn.type(superklass)->is_klassptr()),
          "must check for not-null not-dead klass in callers");
 
   // Make the merge point
@@ -2581,7 +2581,7 @@ Node* GraphKit::gen_checkcast(Node *obj, Node* superklass,
   Node* res = _gvn.transform(phi);
 
   // Note I do NOT always 'replace_in_map(obj,result)' here.
-  //  if( tk->klass()->can_be_primary_super()  ) 
+  //  if( tk->klass()->can_be_primary_super()  )
     // This means that if I successfully store an Object into an array-of-String
     // I 'forget' that the Object is really now known to be a String.  I have to
     // do this because we don't have true union types for interfaces - if I store
@@ -2618,7 +2618,7 @@ Node* GraphKit::insert_mem_bar(int opcode, Node* precedent) {
   set_all_memory_call(membar);
   return membar;
 }
-  
+
 //-------------------------insert_mem_bar_volatile----------------------------
 // Memory barrier to avoid floating things around
 // The membar serves as a pinch point between both control and memory(alias_idx).
@@ -2651,7 +2651,7 @@ Node* GraphKit::insert_mem_bar_volatile(int opcode, int alias_idx, Node* precede
   }
   return membar;
 }
-  
+
 //------------------------------shared_lock------------------------------------
 // Emit locking code.
 FastLockNode* GraphKit::shared_lock(Node* obj) {
@@ -2818,7 +2818,7 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
   // we create a separate i_o projection for the normal control path
   set_i_o(_gvn.transform( new (C, 1) ProjNode(allocx, TypeFunc::I_O, false) ) );
   Node* rawoop = _gvn.transform( new (C, 1) ProjNode(allocx, TypeFunc::Parms) );
- 
+
   // put in an initialization barrier
   InitializeNode* init = insert_mem_bar_volatile(Op_Initialize, rawidx,
                                                  rawoop)->as_Initialize();
@@ -2851,13 +2851,13 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
       }
     }
   }
- 
+
   // Cast raw oop to the real thing...
   Node* javaoop = new (C, 2) CheckCastPPNode(control(), rawoop, oop_type);
   javaoop = _gvn.transform(javaoop);
   C->set_recent_alloc(control(), javaoop);
   assert(just_allocated_object(control()) == javaoop, "just allocated");
- 
+
 #ifdef ASSERT
   { // Verify that the AllocateNode::Ideal_allocation recognizers work:
     assert(AllocateNode::Ideal_allocation(rawoop, &_gvn) == alloc,
@@ -2874,7 +2874,7 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
     }
   }
 #endif //ASSERT
- 
+
   return javaoop;
 }
 

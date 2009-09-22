@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)oop.cpp	1.99 07/05/29 09:44:21 JVM"
+#pragma ident "@(#)oop.cpp      1.99 07/05/29 09:44:21 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -82,13 +82,13 @@ void oopDesc::print_value()   { print_value_on(tty);   }
 
 void oopDesc::print_address() { print_address_on(tty); }
 
-char* oopDesc::print_string() { 
+char* oopDesc::print_string() {
   stringStream* st = new stringStream();
   print_on(st);
   return st->as_string();
 }
 
-char* oopDesc::print_value_string() { 
+char* oopDesc::print_value_string() {
   stringStream* st = new stringStream();
   print_value_on(st);
   return st->as_string();
@@ -103,8 +103,8 @@ void oopDesc::verify_on(outputStream* st) {
 }
 
 
-void oopDesc::verify() { 
-  verify_on(tty); 
+void oopDesc::verify() {
+  verify_on(tty);
 }
 
 
@@ -128,7 +128,7 @@ void oopDesc::set_partially_loaded() {
 
 
 intptr_t oopDesc::slow_identity_hash() {
-  // slow case; we have to acquire the micro lock in order to locate the header  
+  // slow case; we have to acquire the micro lock in order to locate the header
   ResetNoHandleMark rnm; // Might be called from LEAF/QUICK ENTRY
   HandleMark hm;
   Handle object((oop)this);

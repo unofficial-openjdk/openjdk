@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_CFGPrinter.cpp	1.8 07/05/05 17:05:04 JVM"
+#pragma ident "@(#)c1_CFGPrinter.cpp    1.8 07/05/05 17:05:04 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -103,7 +103,7 @@ void CFGPrinter::print_intervals(IntervalList* intervals, const char* name) {
 
 
 
-CFGPrinterOutput::CFGPrinterOutput() 
+CFGPrinterOutput::CFGPrinterOutput()
  : _output(new(ResourceObj::C_HEAP) fileStream("output.cfg"))
 {
 }
@@ -120,7 +120,7 @@ void CFGPrinterOutput::dec_indent() {
   output()->dec();
 }
 
-void CFGPrinterOutput::print(const char* format, ...) { 
+void CFGPrinterOutput::print(const char* format, ...) {
   output()->indent();
 
   va_list ap;
@@ -270,7 +270,7 @@ void CFGPrinterOutput::print_LIR(BlockBegin* block) {
 
 void CFGPrinterOutput::print_block(BlockBegin* block) {
   print_begin("block");
-  
+
   print("name \"B%d\"", block->block_id());
 
   print("from_bci %d", block->bci());

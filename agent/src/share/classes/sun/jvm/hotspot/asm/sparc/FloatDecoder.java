@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.sparc;
 import sun.jvm.hotspot.asm.*;
 
 abstract class FloatDecoder extends InstructionDecoder {
-    final int    opf; 
+    final int    opf;
     final String name;
     final int    numSources; // 1 or 2;
     final int    src1Type;   // RTLDT_FL_SINGLE, _DOUBLE, _QUAD
@@ -57,9 +57,9 @@ abstract class FloatDecoder extends InstructionDecoder {
                                SPARCInstructionFactory factory);
 
     Instruction decode(int instruction, SPARCInstructionFactory factory) {
-        int rs1Num = getSourceRegister1(instruction); 
-        int rs2Num = getSourceRegister2(instruction); 
-        int rdNum = getDestinationRegister(instruction); 
+        int rs1Num = getSourceRegister1(instruction);
+        int rs2Num = getSourceRegister2(instruction);
+        int rdNum = getDestinationRegister(instruction);
 
         SPARCRegister rs1 = null;
         if (numSources == 2) {
@@ -78,4 +78,3 @@ abstract class FloatDecoder extends InstructionDecoder {
         return decodeFloatInstruction(instruction, rs1, rs2, rd, factory);
     }
 }
-

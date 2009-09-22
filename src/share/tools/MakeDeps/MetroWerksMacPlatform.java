@@ -19,52 +19,52 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import java.io.*;
 
 public class MetroWerksMacPlatform extends Platform {
     public void setupFileTemplates() {
-	inclFileTemplate = new FileName(this,
-	    ":incls:", "_", "",                  ".incl", "", ""
-	);
+        inclFileTemplate = new FileName(this,
+            ":incls:", "_", "",                  ".incl", "", ""
+        );
         giFileTemplate = new FileName(this,
-	    "",        "",  "precompiledHeader", ".pch",  "", ""
-	);
+            "",        "",  "precompiledHeader", ".pch",  "", ""
+        );
         gdFileTemplate = dummyFileTemplate;
     }
 
     private static String[] suffixes = { ".cpp", ".c", ".s" };
 
     public String[] outerSuffixes() {
-	return suffixes;
+        return suffixes;
     }
 
     public boolean includeGIInEachIncl() {
-	return true;
+        return true;
     }
 
     public int defaultGrandIncludeThreshold() {
-	return 150;
+        return 150;
     }
 
     public void writeGIPragma(PrintWriter out) {
-	out.println("#pragma precompile_target \"" +
-		    giFileTemplate.preStemAltSuff() +
-		    "\"");
-	out.println();
+        out.println("#pragma precompile_target \"" +
+                    giFileTemplate.preStemAltSuff() +
+                    "\"");
+        out.println();
     }
-    
+
     public String objFileSuffix() {
-	throw new RuntimeException("Unimplemented in original makeDeps");
+        throw new RuntimeException("Unimplemented in original makeDeps");
     }
 
     public String asmFileSuffix() {
-	throw new RuntimeException("Unimplemented in original makeDeps");
+        throw new RuntimeException("Unimplemented in original makeDeps");
     }
 
     public String dependentPrefix() {
-	throw new RuntimeException("Unimplemented in original makeDeps");
+        throw new RuntimeException("Unimplemented in original makeDeps");
     }
 }

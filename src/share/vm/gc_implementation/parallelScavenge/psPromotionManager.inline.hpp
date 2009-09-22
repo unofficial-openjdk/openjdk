@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psPromotionManager.inline.hpp	1.19 07/09/25 16:47:42 JVM"
+#pragma ident "@(#)psPromotionManager.inline.hpp        1.19 07/09/25 16:47:42 JVM"
 #endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline PSPromotionManager* PSPromotionManager::manager_array(int index) {
@@ -39,7 +39,7 @@ inline void PSPromotionManager::claim_or_forward_internal_depth(T* p) {
       o = o->forwardee();
       // Card mark
       if (PSScavenge::is_obj_in_young((HeapWord*) o)) {
-	PSScavenge::card_table()->inline_write_ref_field_gc(p, o);
+        PSScavenge::card_table()->inline_write_ref_field_gc(p, o);
       }
       oopDesc::encode_store_heap_oop_not_null(p, o);
     } else {

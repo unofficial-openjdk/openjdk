@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)gcTaskManager.hpp	1.29 07/06/29 04:08:20 JVM"
+#pragma ident "@(#)gcTaskManager.hpp    1.29 07/06/29 04:08:20 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
-// The GCTaskManager is a queue of GCTasks, and accessors 
-// to allow the queue to be accessed from many threads.  
+// The GCTaskManager is a queue of GCTasks, and accessors
+// to allow the queue to be accessed from many threads.
 //
 
 // Forward declarations of types defined in this file.
@@ -60,7 +60,7 @@ public:
     enum kind {
       unknown_task,
       ordinary_task,
-      barrier_task, 
+      barrier_task,
       noop_task
     };
     static const char* to_string(kind value);
@@ -69,7 +69,7 @@ private:
   // Instance state.
   const Kind::kind _kind;               // For runtime type checking.
   const uint       _affinity;           // Which worker should run task.
-  GCTask*          _newer;              // Tasks are on doubly-linked ... 
+  GCTask*          _newer;              // Tasks are on doubly-linked ...
   GCTask*          _older;              // ... lists.
 public:
   virtual char* name() { return (char *)"task"; }
@@ -116,9 +116,9 @@ protected:
   GCTask(uint affinity);
   //     A GCTask of a particular kind, with and affinity.
   GCTask(Kind::kind kind, uint affinity);
-  // We want a virtual destructor because virtual methods, 
-  // but since ResourceObj's don't have their destructors 
-  // called, we don't have one at all.  Instead we have 
+  // We want a virtual destructor because virtual methods,
+  // but since ResourceObj's don't have their destructors
+  // called, we don't have one at all.  Instead we have
   // this method, which gets called by subclasses to clean up.
   virtual void destruct();
   // Methods.
@@ -126,7 +126,7 @@ protected:
 };
 
 // A doubly-linked list of GCTasks.
-// The list is not synchronized, because sometimes we want to 
+// The list is not synchronized, because sometimes we want to
 // build up a list and then make it available to other threads.
 // See also: SynchronizedGCTaskQueue.
 class GCTaskQueue : public ResourceObj {
@@ -167,7 +167,7 @@ public:
 protected:
   // Constructor. Clients use factory, but there might be subclasses.
   GCTaskQueue(bool on_c_heap);
-  // Destructor-like method. 
+  // Destructor-like method.
   // Because ResourceMark doesn't call destructors.
   // This method cleans up like one.
   virtual void destruct();
@@ -265,7 +265,7 @@ protected:
   ~SynchronizedGCTaskQueue();
 };
 
-// This is an abstract base class for getting notifications 
+// This is an abstract base class for getting notifications
 // when a GCTaskManager is done.
 class NotifyDoneClosure : public CHeapObj {
 public:
@@ -281,7 +281,7 @@ protected:
     // Nothing to do.
   }
 };
-  
+
 class GCTaskManager : public CHeapObj {
  friend class ParCompactionManager;
  friend class PSParallelCompact;
@@ -355,7 +355,7 @@ public:
 
   //     Execute the task queue and wait for the completion.
   void execute_and_wait(GCTaskQueue* list);
-  
+
   void print_task_time_stamps();
   void print_threads_on(outputStream* st);
   void threads_do(ThreadClosure* tc);
@@ -458,11 +458,11 @@ protected:
   void initialize();
 };
 
-// 
+//
 // Some exemplary GCTasks.
-// 
+//
 
-// A noop task that does nothing, 
+// A noop task that does nothing,
 // except take us around the GCTaskThread loop.
 class NoopGCTask : public GCTask {
 private:
@@ -491,7 +491,7 @@ protected:
   }
 };
 
-// A BarrierGCTask blocks other tasks from starting, 
+// A BarrierGCTask blocks other tasks from starting,
 // and waits until it is the only task running.
 class BarrierGCTask : public GCTask {
 public:
@@ -520,7 +520,7 @@ protected:
   void do_it_internal(GCTaskManager* manager, uint which);
 };
 
-// A ReleasingBarrierGCTask is a BarrierGCTask 
+// A ReleasingBarrierGCTask is a BarrierGCTask
 // that tells all the tasks to release their resource areas.
 class ReleasingBarrierGCTask : public BarrierGCTask {
 public:
@@ -544,9 +544,9 @@ protected:
   }
   // Destructor-like method.
   void destruct();
-}; 
+};
 
-// A NotifyingBarrierGCTask is a BarrierGCTask 
+// A NotifyingBarrierGCTask is a BarrierGCTask
 // that calls a notification method when it is the only task running.
 class NotifyingBarrierGCTask : public BarrierGCTask {
 private:
@@ -578,8 +578,8 @@ protected:
   NotifyDoneClosure* notify_done_closure() const { return _ndc; }
 };
 
-// A WaitForBarrierGCTask is a BarrierGCTask 
-// with a method you can call to wait until 
+// A WaitForBarrierGCTask is a BarrierGCTask
+// with a method you can call to wait until
 // the BarrierGCTask is done.
 // This may cover many of the uses of NotifyingBarrierGCTasks.
 class WaitForBarrierGCTask : public BarrierGCTask {

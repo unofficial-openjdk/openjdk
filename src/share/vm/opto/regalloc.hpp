@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)regalloc.hpp	1.23 07/05/05 17:06:28 JVM"
+#pragma ident "@(#)regalloc.hpp 1.23 07/05/05 17:06:28 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class Node;
@@ -114,7 +114,7 @@ public:
     assert( !OptoReg::is_valid(second) || second == first+1, "" );
     assert(OptoReg::is_reg(first), "out of range");
     return Matcher::_regEncode[first];
-  }  
+  }
 
   // Platform dependent hook for actions prior to allocation
   void  pd_preallocate_hook();

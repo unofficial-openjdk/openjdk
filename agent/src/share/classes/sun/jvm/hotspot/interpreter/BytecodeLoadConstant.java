@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -46,7 +46,7 @@ public class BytecodeLoadConstant extends BytecodeWithCPIndex {
 
   public boolean isValid() {
     int jcode = javaCode();
-    boolean codeOk = jcode == Bytecodes._ldc || jcode == Bytecodes._ldc_w || 
+    boolean codeOk = jcode == Bytecodes._ldc || jcode == Bytecodes._ldc_w ||
            jcode == Bytecodes._ldc2_w;
     if (! codeOk) return false;
 
@@ -70,7 +70,7 @@ public class BytecodeLoadConstant extends BytecodeWithCPIndex {
 
     ConstantTag ctag = method().getConstants().getTagAt(index());
     return ctag.isKlass() || ctag.isUnresolvedKlass();
-  } 
+  }
 
   // return Symbol (if unresolved) or Klass (if resolved)
   public Oop getKlass() {

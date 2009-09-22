@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)freeBlockDictionary.hpp	1.32 07/05/05 17:05:47 JVM"
+#pragma ident "@(#)freeBlockDictionary.hpp      1.32 07/05/05 17:05:47 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A FreeBlockDictionary is an abstract superclass that will allow
@@ -52,8 +52,8 @@ class FreeBlockDictionary: public CHeapObj {
   virtual size_t     minSize()        const = 0;
   // Reset the dictionary to the initial conditions for a single
   // block.
-  virtual void	     reset(HeapWord* addr, size_t size) = 0;
-  virtual void	     reset() = 0;
+  virtual void       reset(HeapWord* addr, size_t size) = 0;
+  virtual void       reset() = 0;
 
   virtual void       dictCensusUpdate(size_t size, bool split, bool birth) = 0;
   virtual bool       coalDictOverPopulated(size_t size) = 0;
@@ -81,7 +81,7 @@ class FreeBlockDictionary: public CHeapObj {
     gclog_or_tty->print("No statistics available");
   }
 
-  virtual void 	     printDictCensus() const = 0;
+  virtual void       printDictCensus() const = 0;
 
   virtual void       verify()         const = 0;
 

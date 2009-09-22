@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parseHelper.cpp	1.197 07/08/14 16:13:24 JVM"
+#pragma ident "@(#)parseHelper.cpp      1.197 07/08/14 16:13:24 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -33,7 +33,7 @@
 void GraphKit::make_dtrace_method_entry_exit(ciMethod* method, bool is_entry) {
   const TypeFunc *call_type    = OptoRuntime::dtrace_method_entry_exit_Type();
   address         call_address = is_entry ? CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_entry) :
-                                            CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit); 
+                                            CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit);
   const char     *call_name    = is_entry ? "dtrace_method_entry" : "dtrace_method_exit";
 
   // Get base of thread-local storage area
@@ -48,7 +48,7 @@ void GraphKit::make_dtrace_method_entry_exit(ciMethod* method, bool is_entry) {
   // For some reason, this call reads only raw memory.
   const TypePtr* raw_adr_type = TypeRawPtr::BOTTOM;
   make_runtime_call(RC_LEAF | RC_NARROW_MEM,
-                    call_type, call_address, 
+                    call_type, call_address,
                     call_name, raw_adr_type,
                     thread, method_node);
 }
@@ -175,7 +175,7 @@ void Parse::array_store_check() {
     }
     if (stopped()) {          // MUST uncommon-trap?
       set_control(ctrl);      // Then Don't Do It, just fall into the normal checking
-    } else {                  // Cast array klass to exactness: 
+    } else {                  // Cast array klass to exactness:
       // Use the exact constant value we know it is.
       replace_in_map(array_klass,con);
       CompileLog* log = C->log();
@@ -231,7 +231,7 @@ void Parse::do_new() {
 // Debug dump of the mapping from address types to MergeMemNode indices.
 void Parse::dump_map_adr_mem() const {
   tty->print_cr("--- Mapping from address types to memory Nodes ---");
-  MergeMemNode *mem = map() == NULL ? NULL : (map()->memory()->is_MergeMem() ? 
+  MergeMemNode *mem = map() == NULL ? NULL : (map()->memory()->is_MergeMem() ?
                                       map()->memory()->as_MergeMem() : NULL);
   for (uint i = 0; i < (uint)C->num_alias_types(); i++) {
     C->alias_type(i)->print_on(tty);
@@ -257,9 +257,9 @@ void Parse::dump_map_adr_mem() const {
 void Parse::test_counter_against_threshold(Node* cnt, int limit) {
   // Test the counter against the limit and uncommon trap if greater.
 
-  // This code is largely copied from the range check code in 
+  // This code is largely copied from the range check code in
   // array_addressing()
-  
+
   // Test invocation count vs threshold
   Node *threshold = makecon(TypeInt::make(limit));
   Node *chk   = _gvn.transform( new (C, 3) CmpUNode( cnt, threshold) );
@@ -292,25 +292,25 @@ void Parse::increment_and_test_invocation_counter(int limit) {
   store_to_memory( NULL, adr_node, incr, T_INT, adr_type );
 }
 
-//----------------------------method_data_addressing--------------------------- 
-Node* Parse::method_data_addressing(ciMethodData* md, ciProfileData* data, ByteSize counter_offset, Node* idx, uint stride) { 
+//----------------------------method_data_addressing---------------------------
+Node* Parse::method_data_addressing(ciMethodData* md, ciProfileData* data, ByteSize counter_offset, Node* idx, uint stride) {
   // Get offset within methodDataOop of the data array
   ByteSize data_offset = methodDataOopDesc::data_offset();
-  
+
   // Get cell offset of the ProfileData within data array
   int cell_offset = md->dp_to_di(data->dp());
 
   // Add in counter_offset, the # of bytes into the ProfileData of counter or flag
   int offset = in_bytes(data_offset) + cell_offset + in_bytes(counter_offset);
 
-  const TypePtr* adr_type = TypeOopPtr::make_from_constant(md); 
-  Node* mdo = makecon(adr_type); 
-  Node* ptr = basic_plus_adr(mdo, mdo, offset); 
- 
-  if (stride != 0) { 
-    Node* str = _gvn.MakeConX(stride); 
-    Node* scale = _gvn.transform( new (C, 3) MulXNode( idx, str ) ); 
-    ptr   = _gvn.transform( new (C, 4) AddPNode( mdo, ptr, scale ) ); 
+  const TypePtr* adr_type = TypeOopPtr::make_from_constant(md);
+  Node* mdo = makecon(adr_type);
+  Node* ptr = basic_plus_adr(mdo, mdo, offset);
+
+  if (stride != 0) {
+    Node* str = _gvn.MakeConX(stride);
+    Node* scale = _gvn.transform( new (C, 3) MulXNode( idx, str ) );
+    ptr   = _gvn.transform( new (C, 4) AddPNode( mdo, ptr, scale ) );
   }
 
   return ptr;
@@ -350,7 +350,7 @@ void Parse::set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_const
 void Parse::profile_taken_branch(int target_bci, bool force_update) {
   // This is a potential osr_site if we have a backedge.
   int cur_bci = bci();
-  bool osr_site = 
+  bool osr_site =
     (target_bci <= cur_bci) && count_invocations() && UseOnStackReplacement;
 
   // If we are going to OSR, restart at the target bytecode.
@@ -366,7 +366,7 @@ void Parse::profile_taken_branch(int target_bci, bool force_update) {
     assert(data->is_JumpData(), "need JumpData for taken branch");
     increment_md_counter_at(md, data, JumpData::taken_offset());
   }
-    
+
   // In the new tiered system this is all we need to do. In the old
   // (c2 based) tiered sytem we must do the code below.
 #ifndef TIERED
@@ -374,7 +374,7 @@ void Parse::profile_taken_branch(int target_bci, bool force_update) {
     ciMethodData* md = method()->method_data();
     if (osr_site) {
       ciProfileData* data = md->bci_to_data(cur_bci);
-      int limit = (CompileThreshold 
+      int limit = (CompileThreshold
                    * (OnStackReplacePercentage - InterpreterProfilePercentage)) / 100;
       test_for_osr_md_counter_at(md, data, JumpData::taken_offset(), limit);
     }
@@ -409,14 +409,14 @@ void Parse::profile_not_taken_branch(bool force_update) {
 void Parse::profile_call(Node* receiver) {
   if (!method_data_update()) return;
 
-  profile_generic_call(); 
- 
+  profile_generic_call();
+
   switch (bc()) {
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:
     profile_receiver_type(receiver);
     break;
-  case Bytecodes::_invokestatic:  
+  case Bytecodes::_invokestatic:
   case Bytecodes::_invokespecial:
     break;
   default: fatal("unexpected call bytecode");
@@ -521,5 +521,3 @@ void Parse::profile_switch_case(int table_index) {
     increment_md_counter_at(md, data, MultiBranchData::default_count_offset());
   }
 }
-
-

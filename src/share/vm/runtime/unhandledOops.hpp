@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)unhandledOops.hpp	1.7 07/05/05 17:07:01 JVM"
+#pragma ident "@(#)unhandledOops.hpp    1.7 07/05/05 17:07:01 JVM"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 #ifdef CHECK_UNHANDLED_OOPS
 
@@ -56,7 +56,7 @@ class UnhandledOopEntry {
  public:
   oop* oop_ptr() { return _oop_ptr; }
   UnhandledOopEntry() : _oop_ptr(NULL), _ok_for_gc(false), _pc(NULL) {}
-  UnhandledOopEntry(oop* op, address pc) : 
+  UnhandledOopEntry(oop* op, address pc) :
                         _oop_ptr(op),   _ok_for_gc(false), _pc(pc) {}
 };
 

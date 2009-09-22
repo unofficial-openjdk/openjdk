@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)methodDataKlass.cpp	1.36 07/05/29 09:44:22 JVM"
+#pragma ident "@(#)methodDataKlass.cpp  1.36 07/05/29 09:44:22 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -30,12 +30,12 @@
 
 klassOop methodDataKlass::create_klass(TRAPS) {
   methodDataKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
   KlassHandle k = base_create_klass(h_this_klass, header_size(),
-				    o.vtbl_value(), CHECK_NULL);
+                                    o.vtbl_value(), CHECK_NULL);
   // Make sure size calculation is right
   assert(k()->size() == align_object_size(header_size()),
-	 "wrong size for object");
+         "wrong size for object");
   return k();
 }
 
@@ -74,8 +74,8 @@ void methodDataKlass::oop_follow_contents(oop obj) {
   obj->follow_header();
   MarkSweep::mark_and_push(m->adr_method());
   ResourceMark rm;
-  for (ProfileData* data = m->first_data(); 
-       m->is_valid(data); 
+  for (ProfileData* data = m->first_data();
+       m->is_valid(data);
        data = m->next_data(data)) {
     data->follow_contents();
   }
@@ -83,15 +83,15 @@ void methodDataKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void methodDataKlass::oop_follow_contents(ParCompactionManager* cm,
-					  oop obj) {
+                                          oop obj) {
   assert (obj->is_methodData(), "object must be method data");
   methodDataOop m = methodDataOop(obj);
 
   obj->follow_header(cm);
   PSParallelCompact::mark_and_push(cm, m->adr_method());
   ResourceMark rm;
-  for (ProfileData* data = m->first_data(); 
-       m->is_valid(data); 
+  for (ProfileData* data = m->first_data();
+       m->is_valid(data);
        data = m->next_data(data)) {
     data->follow_contents(cm);
   }
@@ -109,7 +109,7 @@ int methodDataKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   obj->oop_iterate_header(blk);
   blk->do_oop(m->adr_method());
   ResourceMark rm;
-  for (ProfileData* data = m->first_data(); 
+  for (ProfileData* data = m->first_data();
        m->is_valid(data);
        data = m->next_data(data)) {
     data->oop_iterate(blk);
@@ -130,7 +130,7 @@ int methodDataKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
     blk->do_oop(m->adr_method());
   }
   ResourceMark rm;
-  for (ProfileData* data = m->first_data(); 
+  for (ProfileData* data = m->first_data();
        m->is_valid(data);
        data = m->next_data(data)) {
     data->oop_iterate_m(blk, mr);
@@ -159,14 +159,14 @@ int methodDataKlass::oop_adjust_pointers(oop obj) {
 #ifndef SERIALGC
 void methodDataKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
   assert (obj->is_methodData(), "object must be method data");
-  methodDataOop m = methodDataOop(obj);  
+  methodDataOop m = methodDataOop(obj);
   // This should never point into the young gen.
   assert(!PSScavenge::should_scavenge(m->adr_method()), "Sanity");
 }
 
 void methodDataKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   assert (obj->is_methodData(), "object must be method data");
-  methodDataOop m = methodDataOop(obj);  
+  methodDataOop m = methodDataOop(obj);
   // This should never point into the young gen.
   assert(!PSScavenge::should_scavenge(m->adr_method()), "Sanity");
 }
@@ -187,7 +187,7 @@ int methodDataKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 methodDataKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-				     HeapWord* beg_addr, HeapWord* end_addr) {
+                                     HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_methodData(), "should be method data");
 
   oop* p;
@@ -239,4 +239,3 @@ void methodDataKlass::oop_verify_on(oop obj, outputStream* st) {
   guarantee(m->is_perm(), "should be in permspace");
   m->verify_data_on(st);
 }
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)multnode.hpp	1.47 07/09/28 10:23:05 JVM"
+#pragma ident "@(#)multnode.hpp 1.47 07/09/28 10:23:05 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class Matcher;
@@ -71,7 +71,7 @@ public:
   }
   const uint _con;              // The field in the tuple we are projecting
   const bool _is_io_use;        // Used to distinguish between the projections
-                                // used on the control and io paths from a macro node 
+                                // used on the control and io paths from a macro node
   virtual int Opcode() const;
   virtual bool      is_CFG() const;
   virtual bool depends_only_on_test() const { return false; }
@@ -85,4 +85,3 @@ public:
   virtual void dump_spec(outputStream *st) const;
 #endif
 };
-

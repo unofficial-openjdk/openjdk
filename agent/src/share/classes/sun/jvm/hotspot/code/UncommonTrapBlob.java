@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.code;
@@ -49,7 +49,7 @@ public class UncommonTrapBlob extends SingletonBlob {
   public UncommonTrapBlob(Address addr) {
     super(addr);
   }
-  
+
   public boolean isUncommonTrapStub() {
     return true;
   }

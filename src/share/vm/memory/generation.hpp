@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)generation.hpp	1.195 07/05/17 15:55:02 JVM"
+#pragma ident "@(#)generation.hpp       1.195 07/05/17 15:55:02 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A Generation models a heap area for similarly-aged objects.
@@ -72,7 +72,7 @@ struct ScratchBlock {
   ScratchBlock* next;
   size_t num_words;
   HeapWord scratch_space[1];  // Actually, of size "num_words-2" (assuming
-			      // first two fields are word-sized.)
+                              // first two fields are word-sized.)
 };
 
 
@@ -90,7 +90,7 @@ class Generation: public CHeapObj {
   // other generations.
   MemRegion _reserved;
 
-  // Memory area reserved for generation 
+  // Memory area reserved for generation
   VirtualSpace _virtual_space;
 
   // Level in the generation hierarchy.
@@ -137,7 +137,7 @@ class Generation: public CHeapObj {
     LogOfGenGrain = 16,
     GenGrain = 1 << LogOfGenGrain
   };
-  
+
   // allocate and initialize ("weak") refs processing support
   virtual void ref_processor_init();
   void set_ref_processor(ReferenceProcessor* rp) {
@@ -175,10 +175,10 @@ class Generation: public CHeapObj {
   virtual size_t max_contiguous_available() const;
 
   // Returns true if promotions of the specified amount can
-  // be attempted safely (without a vm failure). 
+  // be attempted safely (without a vm failure).
   // Promotion of the full amount is not guaranteed but
-  // can be attempted.  
-  //   younger_handles_promotion_failure 
+  // can be attempted.
+  //   younger_handles_promotion_failure
   // is true if the younger generation handles a promotion
   // failure.
   virtual bool promotion_attempt_is_safe(size_t promotion_in_bytes,
@@ -258,7 +258,7 @@ class Generation: public CHeapObj {
   // the next older gen.  The return value is a new limit, or NULL if none.  The
   // caller must do the necessary locking.
   virtual HeapWord* allocation_limit_reached(Space* space, HeapWord* top,
-					     size_t word_size) {
+                                             size_t word_size) {
     return NULL;
   }
 
@@ -290,12 +290,12 @@ class Generation: public CHeapObj {
     guarantee(false, "Generation doesn't support thread local allocation buffers");
     return 0;
   }
-  
+
   // "obj" is the address of an object in a younger generation.  Allocate space
   // for "obj" in the current (or some higher) generation, and copy "obj" into
   // the newly allocated space, if possible, returning the result (or NULL if
   // the allocation failed).
-  // 
+  //
   // The "obj_size" argument is just obj->size(), passed along so the caller can
   // avoid repeating the virtual call to retrieve it.
   virtual oop promote(oop obj, size_t obj_size);
@@ -308,12 +308,12 @@ class Generation: public CHeapObj {
   // also taking care to copy the klass pointer *last*.  Returns the new
   // object if successful, or else NULL.
   virtual oop par_promote(int thread_num,
-			  oop obj, markOop m, size_t word_sz);
+                          oop obj, markOop m, size_t word_sz);
 
   // Undo, if possible, the most recent par_promote_alloc allocation by
   // "thread_num" ("obj", of "word_sz").
   virtual void par_promote_alloc_undo(int thread_num,
-				      HeapWord* obj, size_t word_sz);
+                                      HeapWord* obj, size_t word_sz);
 
   // Informs the current generation that all par_promote_alloc's in the
   // collection have been completed; any supporting data structures can be
@@ -322,7 +322,7 @@ class Generation: public CHeapObj {
 
   // Informs the current generation that all oop_since_save_marks_iterates
   // performed by "thread_num" in the current collection, if any, have been
-  // completed; any supporting data structures can be reset.  Default is to 
+  // completed; any supporting data structures can be reset.  Default is to
   // do nothing.
   virtual void par_oop_since_save_marks_iterate_done(int thread_num) {}
 
@@ -338,7 +338,7 @@ class Generation: public CHeapObj {
   virtual bool performs_in_place_marking() const { return true; }
 
   // Returns "true" iff collect() should subsequently be called on this
-  // this generation. See comment below. 
+  // this generation. See comment below.
   // This is a generic implementation which can be overridden.
   //
   // Note: in the current (1.4) implementation, when genCollectedHeap's
@@ -355,12 +355,12 @@ class Generation: public CHeapObj {
 
   // Perform a garbage collection.
   // If full is true attempt a full garbage collection of this generation.
-  // Otherwise, attempting to (at least) free enough space to support an 
+  // Otherwise, attempting to (at least) free enough space to support an
   // allocation of the given "word_size".
   virtual void collect(bool   full,
                        bool   clear_all_soft_refs,
                        size_t word_size,
-		       bool   is_tlab) = 0;
+                       bool   is_tlab) = 0;
 
   // Perform a heap collection, attempting to create (at least) enough
   // space to support an allocation of the given "word_size".  If
@@ -368,8 +368,8 @@ class Generation: public CHeapObj {
   // "oop" (initializing the allocated block). If the allocation is
   // still unsuccessful, return "NULL".
   virtual HeapWord* expand_and_allocate(size_t word_size,
-					bool is_tlab,
-					bool parallel = false) = 0;
+                                        bool is_tlab,
+                                        bool parallel = false) = 0;
 
   // Some generations may require some cleanup or preparation actions before
   // allowing a collection.  The default is to do nothing.
@@ -407,7 +407,7 @@ class Generation: public CHeapObj {
   // the level of the collection that has most recently
   // occurred.  This allows the generation to decide what
   // statistics are valid to collect.  For example, the
-  // generation can decide to gather the amount of promoted data 
+  // generation can decide to gather the amount of promoted data
   // if the collection of the younger generations has completed.
   GCStats* gc_stats() const { return _gc_stats; }
   virtual void update_gc_stats(int current_level, bool full) {}
@@ -462,15 +462,15 @@ class Generation: public CHeapObj {
   // implemention of the _nv versions call the virtual version.
   // Note that the _nv suffix is not really semantically necessary,
   // but it avoids some not-so-useful warnings on Solaris.)
-#define Generation_SINCE_SAVE_MARKS_DECL(OopClosureType, nv_suffix)		\
-  virtual void oop_since_save_marks_iterate##nv_suffix(OopClosureType* cl) {	\
-    oop_since_save_marks_iterate_v((OopsInGenClosure*)cl);			\
+#define Generation_SINCE_SAVE_MARKS_DECL(OopClosureType, nv_suffix)             \
+  virtual void oop_since_save_marks_iterate##nv_suffix(OopClosureType* cl) {    \
+    oop_since_save_marks_iterate_v((OopsInGenClosure*)cl);                      \
   }
   SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES(Generation_SINCE_SAVE_MARKS_DECL)
 
 #undef Generation_SINCE_SAVE_MARKS_DECL
 
-  // The "requestor" generation is performing some garbage collection 
+  // The "requestor" generation is performing some garbage collection
   // action for which it would be useful to have scratch space.  If
   // the target is not the requestor, no gc actions will be required
   // of the target.  The requestor promises to allocate no more than
@@ -480,7 +480,7 @@ class Generation: public CHeapObj {
   // it to "list", leaving "list" pointing to the head of the
   // augmented list.  The default is to offer no space.
   virtual void contribute_scratch(ScratchBlock*& list, Generation* requestor,
-				  size_t max_alloc_words) {}
+                                  size_t max_alloc_words) {}
 
   // Give each generation an opportunity to do clean up for any
   // contributed scratch.
@@ -547,7 +547,7 @@ class Generation: public CHeapObj {
   // Returns the address of the start of the "block" that contains the
   // address "addr".  We say "blocks" instead of "object" since some heaps
   // may not pack objects densely; a chunk may either be an object or a
-  // non-object. 
+  // non-object.
   virtual HeapWord* block_start(const void* addr) const;
 
   // Requires "addr" to be the start of a chunk, and returns its size.
@@ -605,8 +605,8 @@ class CardGeneration: public Generation {
   BlockOffsetSharedArray* _bts;
 
   CardGeneration(ReservedSpace rs, size_t initial_byte_size, int level,
-		 GenRemSet* remset);
-  
+                 GenRemSet* remset);
+
  public:
 
   // Attempt to expand the generation by "bytes".  Expand by at a
@@ -634,14 +634,14 @@ class CardGeneration: public Generation {
 class OneContigSpaceCardGeneration: public CardGeneration {
   friend class VMStructs;
   // Abstractly, this is a subtype that gets access to protected fields.
-  friend class CompactingPermGen;  
+  friend class CompactingPermGen;
   friend class VM_PopulateDumpSharedSpace;
 
  protected:
   size_t     _min_heap_delta_bytes;   // Minimum amount to expand.
   ContiguousSpace*  _the_space;       // actual space holding objects
   WaterMark  _last_gc;                // watermark between objects allocated before
-			              // and after last GC.
+                                      // and after last GC.
 
   // Grow generation with specified size (returns false if unable to grow)
   virtual bool grow_by(size_t bytes);
@@ -659,9 +659,9 @@ class OneContigSpaceCardGeneration: public CardGeneration {
 
  public:
   OneContigSpaceCardGeneration(ReservedSpace rs, size_t initial_byte_size,
-			       size_t min_heap_delta_bytes,
-			       int level, GenRemSet* remset,
-			       ContiguousSpace* space) :
+                               size_t min_heap_delta_bytes,
+                               int level, GenRemSet* remset,
+                               ContiguousSpace* space) :
     CardGeneration(rs, initial_byte_size, level, remset),
     _the_space(space), _min_heap_delta_bytes(min_heap_delta_bytes)
   {}
@@ -694,7 +694,7 @@ class OneContigSpaceCardGeneration: public CardGeneration {
   inline WaterMark top_mark();
   inline WaterMark bottom_mark();
 
-#define OneContig_SINCE_SAVE_MARKS_DECL(OopClosureType, nv_suffix)	\
+#define OneContig_SINCE_SAVE_MARKS_DECL(OopClosureType, nv_suffix)      \
   void oop_since_save_marks_iterate##nv_suffix(OopClosureType* cl);
   OneContig_SINCE_SAVE_MARKS_DECL(OopsInGenClosure,_v)
   SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES(OneContig_SINCE_SAVE_MARKS_DECL)
@@ -706,14 +706,14 @@ class OneContigSpaceCardGeneration: public CardGeneration {
   inline size_t block_size(const HeapWord* addr) const;
 
   inline bool block_is_obj(const HeapWord* addr) const;
-  
+
   virtual void collect(bool full,
                        bool clear_all_soft_refs,
-                       size_t size, 
+                       size_t size,
                        bool is_tlab);
   HeapWord* expand_and_allocate(size_t size,
-				bool is_tlab,
-				bool parallel = false);
+                                bool is_tlab,
+                                bool parallel = false);
 
   virtual void prepare_for_verify();
 

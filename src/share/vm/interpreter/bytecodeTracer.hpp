@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeTracer.hpp	1.25 07/09/28 10:23:17 JVM"
+#pragma ident "@(#)bytecodeTracer.hpp   1.25 07/09/28 10:23:17 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The BytecodeTracer is a helper class used by the interpreter for run-time
@@ -42,8 +42,8 @@ class BytecodeTracer: AllStatic {
 
  public:
   static BytecodeClosure* std_closure();                        // a printing closure
-  static BytecodeClosure* closure()				                      { return _closure; }
-  static void             set_closure(BytecodeClosure* closure)	{ _closure = closure; }
+  static BytecodeClosure* closure()                                                   { return _closure; }
+  static void             set_closure(BytecodeClosure* closure) { _closure = closure; }
 
   static void             trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2, outputStream* st = tty);
   static void             trace(methodHandle method, address bcp, outputStream* st = tty);

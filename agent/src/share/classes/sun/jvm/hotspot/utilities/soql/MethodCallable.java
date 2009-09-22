@@ -1,5 +1,5 @@
 /*
- * @(#)MethodCallable.java	1.3 07/05/05 17:03:46
+ * @(#)MethodCallable.java      1.3 07/05/05 17:03:46
  *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -30,7 +30,7 @@ import javax.script.ScriptException;
 
 /**
  * An implementation of Callable interface that
- * invokes an instance or static Java method when 
+ * invokes an instance or static Java method when
  * called.
  */
 public class MethodCallable implements Callable {
@@ -38,7 +38,7 @@ public class MethodCallable implements Callable {
   private Method method;
   private boolean wrapArgs;
 
-  // "wrapArgs" tells whether the underlying java Method 
+  // "wrapArgs" tells whether the underlying java Method
   // accepts one Object[] argument or it wants usual way of
   // passing arguments. The former method is used when you
   // want to implement a Callable that is variadic.
@@ -47,7 +47,7 @@ public class MethodCallable implements Callable {
     this.target = target;
     this.wrapArgs = wrapArgs;
   }
-  
+
   public MethodCallable(Object target, Method method) {
     this(target, method, true);
   }

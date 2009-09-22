@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)gcTaskThread.hpp	1.18 07/05/05 17:05:27 JVM"
+#pragma ident "@(#)gcTaskThread.hpp     1.18 07/05/05 17:05:27 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Forward declarations of classes defined here.
@@ -37,7 +37,7 @@ private:
   // Instance state.
   GCTaskManager* _manager;              // Manager for worker.
   const uint     _processor_id;         // Which processor the worker is on.
-  
+
   GCTaskTimeStamp* _time_stamps;
   uint _time_stamp_index;
 
@@ -65,7 +65,7 @@ private:
 
   void print_task_time_stamps();
   void print_on(outputStream* st) const;
-  void print() const				    { print_on(tty); }
+  void print() const                                { print_on(tty); }
 
 protected:
   // Constructor.  Clients use factory, but there could be subclasses.

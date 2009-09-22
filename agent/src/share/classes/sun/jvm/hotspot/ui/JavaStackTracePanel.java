@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -40,7 +40,7 @@ public class JavaStackTracePanel extends JPanel {
     private HTMLGenerator htmlGen = new HTMLGenerator();
 
     public JavaStackTracePanel() {
-	initUI();
+        initUI();
     }
 
     private void initUI() {
@@ -75,11 +75,11 @@ public class JavaStackTracePanel extends JPanel {
     }
 
     public void setJavaThread(final JavaThread thread) {
-	setStackTraceText(htmlGen.genHTMLForJavaStackTrace(thread));
+        setStackTraceText(htmlGen.genHTMLForJavaStackTrace(thread));
     }
 
     private void setStackTraceText(String text) {
-	stackTraceEditor.setText(text);
+        stackTraceEditor.setText(text);
     }
 
     private void setContentText(String text) {

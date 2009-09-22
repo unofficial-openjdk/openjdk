@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oopFactory.hpp	1.61 07/05/05 17:05:53 JVM"
+#pragma ident "@(#)oopFactory.hpp       1.61 07/05/05 17:05:53 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // oopFactory is a class used for creating new objects.
@@ -52,7 +52,7 @@ class oopFactory: AllStatic {
   static typeArrayOop    new_permanent_byteArray (int length, TRAPS);  // used for class file structures
   static typeArrayOop    new_permanent_shortArray(int length, TRAPS);  // used for class file structures
   static typeArrayOop    new_permanent_intArray  (int length, TRAPS);  // used for class file structures
-  
+
   static typeArrayOop    new_typeArray(BasicType type, int length, TRAPS);
 
   // Symbols
@@ -88,7 +88,7 @@ class oopFactory: AllStatic {
   static constantPoolCacheOop new_constantPoolCache(int length, TRAPS);
 
   // Instance classes
-  static klassOop        new_instanceKlass(int vtable_len, int itable_len, int static_field_size, 
+  static klassOop        new_instanceKlass(int vtable_len, int itable_len, int static_field_size,
                                            int nonstatic_oop_map_size, ReferenceType rt, TRAPS);
 
   // Methods

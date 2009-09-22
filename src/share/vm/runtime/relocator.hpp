@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)relocator.hpp	1.27 07/05/05 17:06:54 JVM"
+#pragma ident "@(#)relocator.hpp        1.27 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This code has been converted from the 1.1E java virtual machine
@@ -38,10 +38,10 @@ class RelocatorListener : public StackObj {
 };
 
 
-class Relocator : public ResourceObj {  
+class Relocator : public ResourceObj {
  public:
   Relocator(methodHandle method, RelocatorListener* listener);
-  methodHandle insert_space_at(int bci, int space, u_char inst_buffer[], TRAPS);  
+  methodHandle insert_space_at(int bci, int space, u_char inst_buffer[], TRAPS);
 
   // Callbacks from ChangeItem's
   bool handle_code_changes();
@@ -49,7 +49,7 @@ class Relocator : public ResourceObj {
   void push_jump_widen  (int bci, int delta, int new_delta);    // pushes jumps
   bool handle_jump_widen  (int bci, int delta);     // handles jumps
   bool handle_switch_pad  (int bci, int old_pad, bool is_lookup_switch); // handles table and lookup switches
-  
+
  private:
   unsigned char* _code_array;
   int            _code_array_length;
@@ -78,12 +78,12 @@ class Relocator : public ResourceObj {
 
   methodHandle method() const               { return _method; }
   void set_method(methodHandle method)      { _method = method; }
-  
+
   // This will return a raw bytecode, which is possibly rewritten.
   Bytecodes::Code code_at(int bci) const          { return (Bytecodes::Code) code_array()[bci]; }
   void code_at_put(int bci, Bytecodes::Code code) { code_array()[bci] = (char) code; }
-  
-  // get and set signed integers in the code_array 
+
+  // get and set signed integers in the code_array
   inline int   int_at(int bci) const               { return Bytes::get_Java_u4(&code_array()[bci]); }
   inline void  int_at_put(int bci, int value)      { Bytes::put_Java_u4(&code_array()[bci], value); }
 
@@ -94,29 +94,28 @@ class Relocator : public ResourceObj {
   // get the address of in the code_array
   inline char* addr_at(int bci) const             { return (char*) &code_array()[bci]; }
 
-  int  instruction_length_at(int bci)             { return Bytecodes::length_at(code_array() + bci); }  
-  
+  int  instruction_length_at(int bci)             { return Bytecodes::length_at(code_array() + bci); }
+
   // Helper methods
   int  align(int n) const                          { return (n+3) & ~3; }
-  int  code_slop_pct() const                       { return 25; }  
+  int  code_slop_pct() const                       { return 25; }
   bool is_opcode_lookupswitch(Bytecodes::Code bc);
 
   // basic relocation methods
-  bool relocate_code         (int bci, int ilen, int delta);  
+  bool relocate_code         (int bci, int ilen, int delta);
   void change_jumps          (int break_bci, int delta);
-  void change_jump           (int bci, int offset, bool is_short, int break_bci, int delta);  
-  void adjust_exception_table(int bci, int delta);  
+  void change_jump           (int bci, int offset, bool is_short, int break_bci, int delta);
+  void adjust_exception_table(int bci, int delta);
   void adjust_line_no_table  (int bci, int delta);
   void adjust_local_var_table(int bci, int delta);
   int  get_orig_switch_pad   (int bci, bool is_lookup_switch);
-  int  rc_instr_len          (int bci);  
+  int  rc_instr_len          (int bci);
   bool expand_code_array     (int delta);
 
   // Callback support
   RelocatorListener *_listener;
   void notify(int bci, int delta, int new_code_length) {
     if (_listener != NULL)
-      _listener->relocated(bci, delta, new_code_length); 
+      _listener->relocated(bci, delta, new_code_length);
   }
 };
-

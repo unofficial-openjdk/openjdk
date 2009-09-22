@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)pcDesc.hpp	1.37 07/05/24 14:38:34 JVM"
+#pragma ident "@(#)pcDesc.hpp   1.37 07/05/24 14:38:34 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // PcDescs map a physical PC (given as offset from start of nmethod) to
@@ -62,4 +62,3 @@ class PcDesc VALUE_OBJ_CLASS_SPEC {
   void print(nmethod* code);
   bool verify(nmethod* code);
 };
-

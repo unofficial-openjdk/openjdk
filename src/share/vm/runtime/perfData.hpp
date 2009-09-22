@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)perfData.hpp	1.24 07/05/05 17:06:54 JVM"
+#pragma ident "@(#)perfData.hpp 1.24 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /* jvmstat global and subsystem counter name space - enumeration value
@@ -94,12 +94,12 @@ enum CounterNS {
  *         - PerfLongVariant (Abstract)
  *             - PerfLongVariable    (alias: PerfVariable)
  *             - PerfLongCounter     (alias: PerfCounter)
- *    
+ *
  *     - PerfByteArray (Abstract)
  *         - PerfString (Abstract)
  *             - PerfStringVariable
  *             - PerfStringConstant
- * 
+ *
  *
  * As seen in the class hierarchy, the initially supported types are:
  *
@@ -111,7 +111,7 @@ enum CounterNS {
  *
  * A PerfData subtype is not required to provide an implementation for
  * each variability classification. For example, the String type provides
- * Variable and Constant variablility classifications in the PerfStringVariable 
+ * Variable and Constant variablility classifications in the PerfStringVariable
  * and PerfStringConstant classes, but does not provide a counter type.
  *
  * Performance data are also described by a unit of measure. Units allow
@@ -141,7 +141,7 @@ enum CounterNS {
  *    sun.*           - unstable, unsupported interface
  *
  * In the above context, unstable is a measure of the interface support
- * level, not the implementation stability level. 
+ * level, not the implementation stability level.
  *
  * Currently, instances of PerfData subtypes are considered to have
  * a life time equal to that of the VM and are managed by the
@@ -167,7 +167,7 @@ enum CounterNS {
  *   foo_counter->inc();
  *
  * Creating a performance counter that holds a variably change long
- * data value with untis specified in U_Bytes in the "com.sun.ci 
+ * data value with untis specified in U_Bytes in the "com.sun.ci
  * name space.
  *
  *   PerfLongVariable* bar_varible;
@@ -225,8 +225,8 @@ enum CounterNS {
  * For additional uses of PerfData subtypes, see the utility classes
  * PerfTraceTime and PerfTraceTimedEvent below.
  *
- * Always-on non-sampled counters can be created independent of 
- * the UsePerfData flag. Counters will be created on the c-heap 
+ * Always-on non-sampled counters can be created independent of
+ * the UsePerfData flag. Counters will be created on the c-heap
  * if UsePerfData is false.
  *
  * Until further noice, all PerfData objects should be created and
@@ -285,7 +285,7 @@ class PerfData : public CHeapObj {
     PerfData(CounterNS ns, const char* name, Units u, Variability v);
     ~PerfData();
 
-    // create the entry for the PerfData item in the PerfData memory region. 
+    // create the entry for the PerfData item in the PerfData memory region.
     // this region is maintained separately from the PerfData objects to
     // facilitate its use by external processes.
     void create_entry(BasicType dtype, size_t dsize, size_t dlen = 0);
@@ -486,7 +486,7 @@ typedef PerfLongVariable PerfVariable;
 /*
  * The PerfByteArray provides a PerfData subtype that allows the creation
  * of a contiguous region of the PerfData memory region for storing a vector
- * of bytes. This class is currently intended to be a base class for 
+ * of bytes. This class is currently intended to be a base class for
  * the PerfString class, and cannot be instantiated directly.
  */
 class PerfByteArray : public PerfData {
@@ -589,7 +589,7 @@ class PerfStringVariable : public PerfString {
 class PerfDataList : public CHeapObj {
 
   private:
-  
+
     // GrowableArray implementation
     typedef GrowableArray<PerfData*> PerfDataArray;
 

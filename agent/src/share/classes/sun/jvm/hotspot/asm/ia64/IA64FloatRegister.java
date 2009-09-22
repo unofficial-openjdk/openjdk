@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.ia64;
@@ -42,7 +42,7 @@ public class IA64FloatRegister extends IA64Register {
     public static final int QUAD_PRECISION = 3;
 
     public int getNumber(int width) {
-	return number;
+        return number;
     }
 
     private static final int nofRegisters = 128;

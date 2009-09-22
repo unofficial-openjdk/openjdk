@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /*
@@ -113,11 +113,11 @@ extern char **environ;
  *      entries, but actual strings can be more efficient (with many compilers).
  */
 #ifdef __linux__
-static const char *system_dir	= "/usr/java";
-static const char *user_dir	= "/java";
+static const char *system_dir   = "/usr/java";
+static const char *user_dir     = "/java";
 #else /* Solaris */
-static const char *system_dir	= "/usr/jdk";
-static const char *user_dir	= "/jdk";
+static const char *system_dir   = "/usr/jdk";
+static const char *user_dir     = "/jdk";
 #endif
 
 #endif  /* ifndef GAMMA */
@@ -151,9 +151,9 @@ static const char *user_dir	= "/jdk";
  * (removes -client, -server, etc.)            |
  *                                            \|/
  *                                            CreateExecutionEnvironment
- *                                            (removes -d32 and -d64, 
+ *                                            (removes -d32 and -d64,
  *                                             determines desired data model,
- *                                             sets up LD_LIBRARY_PATH, 
+ *                                             sets up LD_LIBRARY_PATH,
  *                                             and exec's)
  *                                             |
  *  --------------------------------------------
@@ -166,8 +166,8 @@ static const char *user_dir	= "/jdk";
  * (removes -client, -server, etc.)            |
  *  |                                         \|/
  *  |                                          CreateExecutionEnvironment
- *  |                                          (verifies desired data model 
- *  |                                           is running and acceptable 
+ *  |                                          (verifies desired data model
+ *  |                                           is running and acceptable
  *  |                                           LD_LIBRARY_PATH;
  *  |                                           no-op in child)
  *  |
@@ -181,15 +181,15 @@ static const char *user_dir	= "/jdk";
  * ParseArguments
  * (ignores -d32 and -d64,
  *  processes version options,
- *  creates argument list for vm, 
+ *  creates argument list for vm,
  *  etc.)
- * 
+ *
  */
 
 static char *SetExecname(char **argv);
 static char * GetExecname();
 static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
-			   char *jvmpath, jint jvmpathsize, char * arch);
+                           char *jvmpath, jint jvmpathsize, char * arch);
 static jboolean GetJREPath(char *path, jint pathsize, char * arch, jboolean speculative);
 
 const char *
@@ -198,7 +198,7 @@ GetArch()
     static char *arch = NULL;
     static char buf[12];
     if (arch) {
-	return arch;
+        return arch;
     }
 
 #ifdef ARCH
@@ -212,12 +212,12 @@ GetArch()
 
 void
 CreateExecutionEnvironment(int *_argcp,
-			   char ***_argvp,
-			   char jrepath[],
-			   jint so_jrepath,
-			   char jvmpath[],
-			   jint so_jvmpath,
-			   char **original_argv) {
+                           char ***_argvp,
+                           char jrepath[],
+                           jint so_jrepath,
+                           char jvmpath[],
+                           jint so_jvmpath,
+                           char **original_argv) {
   /*
    * First, determine if we are running the desired data model.  If we
    * are running the desired data model, all the error messages
@@ -239,39 +239,39 @@ CreateExecutionEnvironment(int *_argcp,
     /* Set the LD_LIBRARY_PATH environment variable, check data model
        flags, and exec process, if needed */
     {
-      char *arch	= (char *)GetArch(); /* like sparc or sparcv9 */
-      char * jvmtype 	= NULL;
-      int argc		= *_argcp;
-      char **argv	= original_argv;
+      char *arch        = (char *)GetArch(); /* like sparc or sparcv9 */
+      char * jvmtype    = NULL;
+      int argc          = *_argcp;
+      char **argv       = original_argv;
 
-      char *runpath	= NULL; /* existing effective LD_LIBRARY_PATH
-				   setting */
+      char *runpath     = NULL; /* existing effective LD_LIBRARY_PATH
+                                   setting */
 
-      int running	=	/* What data model is being ILP32 =>
-				   32 bit vm; LP64 => 64 bit vm */
-#ifdef _LP64 
-	64;
+      int running       =       /* What data model is being ILP32 =>
+                                   32 bit vm; LP64 => 64 bit vm */
+#ifdef _LP64
+        64;
 #else
       32;
 #endif
 
-      int wanted	= running;	/* What data mode is being
-					   asked for? Current model is
-					   fine unless another model
-					   is asked for */
+      int wanted        = running;      /* What data mode is being
+                                           asked for? Current model is
+                                           fine unless another model
+                                           is asked for */
 
-      char* new_runpath	= NULL; /* desired new LD_LIBRARY_PATH string */
-      char* newpath	= NULL; /* path on new LD_LIBRARY_PATH */
-      char* lastslash	= NULL;
+      char* new_runpath = NULL; /* desired new LD_LIBRARY_PATH string */
+      char* newpath     = NULL; /* path on new LD_LIBRARY_PATH */
+      char* lastslash   = NULL;
 
-      char** newenvp	= NULL; /* current environment */
+      char** newenvp    = NULL; /* current environment */
 
-      char** newargv	= NULL;
-      int    newargc	= 0;
+      char** newargv    = NULL;
+      int    newargc    = 0;
 #ifdef __sun
-      char*  dmpath	= NULL;  /* data model specific LD_LIBRARY_PATH,
-				    Solaris only */
-#endif    
+      char*  dmpath     = NULL;  /* data model specific LD_LIBRARY_PATH,
+                                    Solaris only */
+#endif
 
       /*
        * Starting in 1.5, all unix platforms accept the -d32 and -d64
@@ -281,118 +281,118 @@ CreateExecutionEnvironment(int *_argcp,
        */
 
       { /* open new scope to declare local variables */
-	int i;
+        int i;
 
-	newargv = (char **)MemAlloc((argc+1) * sizeof(*newargv));
-	newargv[newargc++] = argv[0];
+        newargv = (char **)MemAlloc((argc+1) * sizeof(*newargv));
+        newargv[newargc++] = argv[0];
 
-	/* scan for data model arguments and remove from argument list;
-	   last occurrence determines desired data model */
-	for (i=1; i < argc; i++) {
+        /* scan for data model arguments and remove from argument list;
+           last occurrence determines desired data model */
+        for (i=1; i < argc; i++) {
 
-	  if (strcmp(argv[i], "-J-d64") == 0 || strcmp(argv[i], "-d64") == 0) {
-	    wanted = 64;
-	    continue;
-	  }
-	  if (strcmp(argv[i], "-J-d32") == 0 || strcmp(argv[i], "-d32") == 0) {
-	    wanted = 32;
-	    continue;
-	  }
-	  newargv[newargc++] = argv[i];
+          if (strcmp(argv[i], "-J-d64") == 0 || strcmp(argv[i], "-d64") == 0) {
+            wanted = 64;
+            continue;
+          }
+          if (strcmp(argv[i], "-J-d32") == 0 || strcmp(argv[i], "-d32") == 0) {
+            wanted = 32;
+            continue;
+          }
+          newargv[newargc++] = argv[i];
 
 #ifdef JAVA_ARGS
-	  if (argv[i][0] != '-')
-	    continue;
+          if (argv[i][0] != '-')
+            continue;
 #else
-	  if (strcmp(argv[i], "-classpath") == 0 || strcmp(argv[i], "-cp") == 0) {
-	    i++;
-	    if (i >= argc) break;
-	    newargv[newargc++] = argv[i];
-	    continue;
-	  }
-	  if (argv[i][0] != '-') { i++; break; }
+          if (strcmp(argv[i], "-classpath") == 0 || strcmp(argv[i], "-cp") == 0) {
+            i++;
+            if (i >= argc) break;
+            newargv[newargc++] = argv[i];
+            continue;
+          }
+          if (argv[i][0] != '-') { i++; break; }
 #endif
-	}
+        }
 
-	/* copy rest of args [i .. argc) */
-	while (i < argc) {
-	  newargv[newargc++] = argv[i++];
-	}
-	newargv[newargc] = NULL;
+        /* copy rest of args [i .. argc) */
+        while (i < argc) {
+          newargv[newargc++] = argv[i++];
+        }
+        newargv[newargc] = NULL;
 
-	/* 
-	 * newargv has all proper arguments here
-	 */
-    
-	argc = newargc;
-	argv = newargv;
+        /*
+         * newargv has all proper arguments here
+         */
+
+        argc = newargc;
+        argv = newargv;
       }
 
       /* If the data model is not changing, it is an error if the
-	 jvmpath does not exist */
+         jvmpath does not exist */
       if (wanted == running) {
-	/* Find out where the JRE is that we will be using. */
-	if (!GetJREPath(jrepath, so_jrepath, arch, JNI_FALSE) ) {
-	  fprintf(stderr, "Error: could not find Java 2 Runtime Environment.\n");
-	  exit(2);
-	}
+        /* Find out where the JRE is that we will be using. */
+        if (!GetJREPath(jrepath, so_jrepath, arch, JNI_FALSE) ) {
+          fprintf(stderr, "Error: could not find Java 2 Runtime Environment.\n");
+          exit(2);
+        }
 
-	/* Find the specified JVM type */
-	if (ReadKnownVMs(jrepath, arch, JNI_FALSE) < 1) {
-	  fprintf(stderr, "Error: no known VMs. (check for corrupt jvm.cfg file)\n");
-	  exit(1);
-	}
+        /* Find the specified JVM type */
+        if (ReadKnownVMs(jrepath, arch, JNI_FALSE) < 1) {
+          fprintf(stderr, "Error: no known VMs. (check for corrupt jvm.cfg file)\n");
+          exit(1);
+        }
 
-	jvmpath[0] = '\0';
-	jvmtype = CheckJvmType(_argcp, _argvp, JNI_FALSE);
+        jvmpath[0] = '\0';
+        jvmtype = CheckJvmType(_argcp, _argvp, JNI_FALSE);
 
-	if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch )) {
-	  fprintf(stderr, "Error: no `%s' JVM at `%s'.\n", jvmtype, jvmpath);
-	  exit(4);
-	}
+        if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch )) {
+          fprintf(stderr, "Error: no `%s' JVM at `%s'.\n", jvmtype, jvmpath);
+          exit(4);
+        }
       } else {  /* do the same speculatively or exit */
 #ifdef DUAL_MODE
-	if (running != wanted) {
-	  /* Find out where the JRE is that we will be using. */
-	  if (!GetJREPath(jrepath, so_jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH), JNI_TRUE)) {
-	    goto EndDataModelSpeculate;
-	  }
+        if (running != wanted) {
+          /* Find out where the JRE is that we will be using. */
+          if (!GetJREPath(jrepath, so_jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH), JNI_TRUE)) {
+            goto EndDataModelSpeculate;
+          }
 
-	  /*
-	   * Read in jvm.cfg for target data model and process vm
-	   * selection options.
-	   */
-	  if (ReadKnownVMs(jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH), JNI_TRUE) < 1) {
-	    goto EndDataModelSpeculate;
-	  }
-	  jvmpath[0] = '\0';
-	  jvmtype = CheckJvmType(_argcp, _argvp, JNI_TRUE);
-	  /* exec child can do error checking on the existence of the path */
-	  jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, 
-				     ((wanted==64)?BIG_ARCH:SMALL_ARCH));
+          /*
+           * Read in jvm.cfg for target data model and process vm
+           * selection options.
+           */
+          if (ReadKnownVMs(jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH), JNI_TRUE) < 1) {
+            goto EndDataModelSpeculate;
+          }
+          jvmpath[0] = '\0';
+          jvmtype = CheckJvmType(_argcp, _argvp, JNI_TRUE);
+          /* exec child can do error checking on the existence of the path */
+          jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath,
+                                     ((wanted==64)?BIG_ARCH:SMALL_ARCH));
 
-	}
+        }
       EndDataModelSpeculate: /* give up and let other code report error message */
-	;
+        ;
 #else
-	fprintf(stderr, "Running a %d-bit JVM is not supported on this platform.\n", wanted);
-	exit(1);
+        fprintf(stderr, "Running a %d-bit JVM is not supported on this platform.\n", wanted);
+        exit(1);
 #endif
       }
 
       /*
        * We will set the LD_LIBRARY_PATH as follows:
        *
-       *     o		$JVMPATH (directory portion only)
-       *     o		$JRE/lib/$ARCH
-       *     o		$JRE/../lib/$ARCH
+       *     o          $JVMPATH (directory portion only)
+       *     o          $JRE/lib/$ARCH
+       *     o          $JRE/../lib/$ARCH
        *
        * followed by the user's previous effective LD_LIBRARY_PATH, if
        * any.
        */
 
 #ifdef __sun
-      /* 
+      /*
        * Starting in Solaris 7, ld.so.1 supports three LD_LIBRARY_PATH
        * variables:
        *
@@ -417,39 +417,39 @@ CreateExecutionEnvironment(int *_argcp,
 
       switch(wanted) {
       case 0:
-	if(running == 32) {
-	  dmpath = getenv("LD_LIBRARY_PATH_32");
-	  wanted = 32;
-	}
-	else {
-	  dmpath = getenv("LD_LIBRARY_PATH_64");
-	  wanted = 64;
-	}
-	break;
+        if(running == 32) {
+          dmpath = getenv("LD_LIBRARY_PATH_32");
+          wanted = 32;
+        }
+        else {
+          dmpath = getenv("LD_LIBRARY_PATH_64");
+          wanted = 64;
+        }
+        break;
 
       case 32:
-	dmpath = getenv("LD_LIBRARY_PATH_32");
-	break;
+        dmpath = getenv("LD_LIBRARY_PATH_32");
+        break;
 
       case 64:
-	dmpath = getenv("LD_LIBRARY_PATH_64");
-	break;
-      
+        dmpath = getenv("LD_LIBRARY_PATH_64");
+        break;
+
       default:
-	fprintf(stderr, "Improper value at line %d.", __LINE__);
-	exit(1); /* unknown value in wanted */
-	break;
+        fprintf(stderr, "Improper value at line %d.", __LINE__);
+        exit(1); /* unknown value in wanted */
+        break;
       }
-    
-      /* 
+
+      /*
        * If dmpath is NULL, the relevant data model specific variable is
        * not set and normal LD_LIBRARY_PATH should be used.
        */
       if( dmpath == NULL) {
-	runpath = getenv("LD_LIBRARY_PATH");
+        runpath = getenv("LD_LIBRARY_PATH");
       }
       else {
-	runpath = dmpath;
+        runpath = dmpath;
       }
 #else
       /*
@@ -473,16 +473,16 @@ CreateExecutionEnvironment(int *_argcp,
        * be found must be handled through other mechanisms.
        */
       if((getgid() != getegid()) || (getuid() != geteuid()) ) {
-	return;
+        return;
       }
-#endif    
+#endif
 
       /* runpath contains current effective LD_LIBRARY_PATH setting */
 
       jvmpath = strdup(jvmpath);
-      new_runpath = MemAlloc( ((runpath!=NULL)?strlen(runpath):0) + 
-			      2*strlen(jrepath) + 2*strlen(arch) +
-			      strlen(jvmpath) + 52);
+      new_runpath = MemAlloc( ((runpath!=NULL)?strlen(runpath):0) +
+                              2*strlen(jrepath) + 2*strlen(arch) +
+                              strlen(jvmpath) + 52);
       newpath = new_runpath + strlen("LD_LIBRARY_PATH=");
 
 
@@ -490,63 +490,63 @@ CreateExecutionEnvironment(int *_argcp,
        * Create desired LD_LIBRARY_PATH value for target data model.
        */
       {
-	/* remove the name of the .so from the JVM path */
-	lastslash = strrchr(jvmpath, '/');
-	if (lastslash)
-	  *lastslash = '\0';
+        /* remove the name of the .so from the JVM path */
+        lastslash = strrchr(jvmpath, '/');
+        if (lastslash)
+          *lastslash = '\0';
 
 
-	/* jvmpath, ((running != wanted)?((wanted==64)?"/"BIG_ARCH:"/.."):""), */
+        /* jvmpath, ((running != wanted)?((wanted==64)?"/"BIG_ARCH:"/.."):""), */
 
-	sprintf(new_runpath, "LD_LIBRARY_PATH="
-		"%s:"
-		"%s/lib/%s:"
-		"%s/../lib/%s",
-		jvmpath,
+        sprintf(new_runpath, "LD_LIBRARY_PATH="
+                "%s:"
+                "%s/lib/%s:"
+                "%s/../lib/%s",
+                jvmpath,
 #ifdef DUAL_MODE
-		jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH),
-		jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH)
+                jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH),
+                jrepath, ((wanted==64)?BIG_ARCH:SMALL_ARCH)
 #else
-		jrepath, arch,
-		jrepath, arch
+                jrepath, arch,
+                jrepath, arch
 #endif
-		);
+                );
 
 
-	/* 
-	 * Check to make sure that the prefix of the current path is the 
-	 * desired environment variable setting.
-	 */
-	if (runpath != NULL && 
-	    strncmp(newpath, runpath, strlen(newpath))==0 &&
-	    (runpath[strlen(newpath)] == 0 || runpath[strlen(newpath)] == ':') &&
-	    (running == wanted) /* data model does not have to be changed */
+        /*
+         * Check to make sure that the prefix of the current path is the
+         * desired environment variable setting.
+         */
+        if (runpath != NULL &&
+            strncmp(newpath, runpath, strlen(newpath))==0 &&
+            (runpath[strlen(newpath)] == 0 || runpath[strlen(newpath)] == ':') &&
+            (running == wanted) /* data model does not have to be changed */
 #ifdef __sun
-	    && (dmpath == NULL)    /* data model specific variables not set  */
+            && (dmpath == NULL)    /* data model specific variables not set  */
 #endif
-	    ) {
+            ) {
 
-	  return;
+          return;
 
-	}
+        }
       }
-    
-      /* 
+
+      /*
        * Place the desired environment setting onto the prefix of
        * LD_LIBRARY_PATH.  Note that this prevents any possible infinite
        * loop of execv() because we test for the prefix, above.
        */
       if (runpath != 0) {
-	strcat(new_runpath, ":");
-	strcat(new_runpath, runpath);
-      }
-    
-      if( putenv(new_runpath) != 0) {
-	exit(1); /* problem allocating memory; LD_LIBRARY_PATH not set
-		    properly */
+        strcat(new_runpath, ":");
+        strcat(new_runpath, runpath);
       }
 
-      /* 
+      if( putenv(new_runpath) != 0) {
+        exit(1); /* problem allocating memory; LD_LIBRARY_PATH not set
+                    properly */
+      }
+
+      /*
        * Unix systems document that they look at LD_LIBRARY_PATH only
        * once at startup, so we have to re-exec the current executable
        * to get the changed environment variable to have an effect.
@@ -559,63 +559,63 @@ CreateExecutionEnvironment(int *_argcp,
        */
 
       if( dmpath != NULL)
-	(void)UnsetEnv((wanted==32)?"LD_LIBRARY_PATH_32":"LD_LIBRARY_PATH_64");
+        (void)UnsetEnv((wanted==32)?"LD_LIBRARY_PATH_32":"LD_LIBRARY_PATH_64");
 #endif
 
       newenvp = environ;
 
       {
-	char *newexec = execname;
+        char *newexec = execname;
 #ifdef DUAL_MODE
-	/* 
-	 * If the data model is being changed, the path to the
-	 * executable must be updated accordingly; the executable name
-	 * and directory the executable resides in are separate.  In the
-	 * case of 32 => 64, the new bits are assumed to reside in, e.g.
-	 * "olddir/BIGARCH/execname"; in the case of 64 => 32,
-	 * the bits are assumed to be in "olddir/../execname".  For example,
-	 *
-	 * olddir/sparcv9/execname
-	 * olddir/amd64/execname
-	 *
-	 * for Solaris SPARC and Linux amd64, respectively.
-	 */
+        /*
+         * If the data model is being changed, the path to the
+         * executable must be updated accordingly; the executable name
+         * and directory the executable resides in are separate.  In the
+         * case of 32 => 64, the new bits are assumed to reside in, e.g.
+         * "olddir/BIGARCH/execname"; in the case of 64 => 32,
+         * the bits are assumed to be in "olddir/../execname".  For example,
+         *
+         * olddir/sparcv9/execname
+         * olddir/amd64/execname
+         *
+         * for Solaris SPARC and Linux amd64, respectively.
+         */
 
-	if (running != wanted) {
-	  char *oldexec = strcpy(MemAlloc(strlen(execname) + 1), execname);
-	  char *olddir = oldexec;
-	  char *oldbase = strrchr(oldexec, '/');
+        if (running != wanted) {
+          char *oldexec = strcpy(MemAlloc(strlen(execname) + 1), execname);
+          char *olddir = oldexec;
+          char *oldbase = strrchr(oldexec, '/');
 
-	
-	  newexec = MemAlloc(strlen(execname) + 20);
-	  *oldbase++ = 0;
-	  sprintf(newexec, "%s/%s/%s", olddir, 
-		  ((wanted==64) ? BIG_ARCH : ".."), oldbase);
-	  argv[0] = newexec;
-	} 
+
+          newexec = MemAlloc(strlen(execname) + 20);
+          *oldbase++ = 0;
+          sprintf(newexec, "%s/%s/%s", olddir,
+                  ((wanted==64) ? BIG_ARCH : ".."), oldbase);
+          argv[0] = newexec;
+        }
 #endif
 
-	execve(newexec, argv, newenvp);
-	perror("execve()");
+        execve(newexec, argv, newenvp);
+        perror("execve()");
 
-	fprintf(stderr, "Error trying to exec %s.\n", newexec);
-	fprintf(stderr, "Check if file exists and permissions are set correctly.\n");
+        fprintf(stderr, "Error trying to exec %s.\n", newexec);
+        fprintf(stderr, "Check if file exists and permissions are set correctly.\n");
 
 #ifdef DUAL_MODE
-	if (running != wanted) {
-	  fprintf(stderr, "Failed to start a %d-bit JVM process from a %d-bit JVM.\n",
-		  wanted, running);
+        if (running != wanted) {
+          fprintf(stderr, "Failed to start a %d-bit JVM process from a %d-bit JVM.\n",
+                  wanted, running);
 #  ifdef __sun
 
 #    ifdef __sparc
-	  fprintf(stderr, "Verify all necessary J2SE components have been installed.\n" );
-	  fprintf(stderr,
-		  "(Solaris SPARC 64-bit components must be installed after 32-bit components.)\n" );
-#    else 
-	  fprintf(stderr, "Either 64-bit processes are not supported by this platform\n");
-	  fprintf(stderr, "or the 64-bit components have not been installed.\n");
+          fprintf(stderr, "Verify all necessary J2SE components have been installed.\n" );
+          fprintf(stderr,
+                  "(Solaris SPARC 64-bit components must be installed after 32-bit components.)\n" );
+#    else
+          fprintf(stderr, "Either 64-bit processes are not supported by this platform\n");
+          fprintf(stderr, "or the 64-bit components have not been installed.\n");
 #    endif
-	}
+        }
 #  endif
 #endif
 
@@ -654,15 +654,15 @@ CreateExecutionEnvironment(int *_argcp,
  */
 static jboolean
 GetJVMPath(const char *jrepath, const char *jvmtype,
-	   char *jvmpath, jint jvmpathsize, char * arch)
+           char *jvmpath, jint jvmpathsize, char * arch)
 {
     struct stat s;
-    
+
 #ifndef GAMMA
     if (strchr(jvmtype, '/')) {
-	sprintf(jvmpath, "%s/" JVM_DLL, jvmtype);
+        sprintf(jvmpath, "%s/" JVM_DLL, jvmtype);
     } else {
-	sprintf(jvmpath, "%s/lib/%s/%s/" JVM_DLL, jrepath, arch, jvmtype);
+        sprintf(jvmpath, "%s/lib/%s/%s/" JVM_DLL, jrepath, arch, jvmtype);
     }
 #else
     /* For gamma launcher, JVM is either built-in or in the same directory. */
@@ -686,13 +686,13 @@ GetJVMPath(const char *jrepath, const char *jvmtype,
       printf("Does `%s' exist ... ", jvmpath);
 
     if (stat(jvmpath, &s) == 0) {
-	if (_launcher_debug) 
-	  printf("yes.\n");
-	return JNI_TRUE;
+        if (_launcher_debug)
+          printf("yes.\n");
+        return JNI_TRUE;
     } else {
-	if (_launcher_debug)
-	  printf("no.\n");
-	return JNI_FALSE;
+        if (_launcher_debug)
+          printf("no.\n");
+        return JNI_FALSE;
     }
 }
 
@@ -705,21 +705,21 @@ GetJREPath(char *path, jint pathsize, char * arch, jboolean speculative)
     char libjava[MAXPATHLEN];
 
     if (GetApplicationHome(path, pathsize)) {
-	/* Is JRE co-located with the application? */
-	sprintf(libjava, "%s/lib/%s/" JAVA_DLL, path, arch);
-	if (access(libjava, F_OK) == 0) {
-	    goto found;
-	}
+        /* Is JRE co-located with the application? */
+        sprintf(libjava, "%s/lib/%s/" JAVA_DLL, path, arch);
+        if (access(libjava, F_OK) == 0) {
+            goto found;
+        }
 
-	/* Does the app ship a private JRE in <apphome>/jre directory? */
-	sprintf(libjava, "%s/jre/lib/%s/" JAVA_DLL, path, arch);
-	if (access(libjava, F_OK) == 0) {
-	    strcat(path, "/jre");
-	    goto found;
-	}
+        /* Does the app ship a private JRE in <apphome>/jre directory? */
+        sprintf(libjava, "%s/jre/lib/%s/" JAVA_DLL, path, arch);
+        if (access(libjava, F_OK) == 0) {
+            strcat(path, "/jre");
+            goto found;
+        }
     }
 
-    if (!speculative) 
+    if (!speculative)
       fprintf(stderr, "Error: could not find " JAVA_DLL "\n");
     return JNI_FALSE;
 
@@ -742,7 +742,7 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
     void *libjvm;
 
     if (_launcher_debug) {
-	printf("JVM path is %s\n", jvmpath);
+        printf("JVM path is %s\n", jvmpath);
     }
 
     libjvm = dlopen(jvmpath, RTLD_NOW + RTLD_GLOBAL);
@@ -752,18 +752,18 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
       Elf32_Ehdr elf_head;
       int count;
       int location;
-      
+
       fp = fopen(jvmpath, "r");
       if(fp == NULL)
-	goto error;
-    
+        goto error;
+
       /* read in elf header */
       count = fread((void*)(&elf_head), sizeof(Elf32_Ehdr), 1, fp);
       fclose(fp);
       if(count < 1)
-	goto error;
+        goto error;
 
-      /* 
+      /*
        * Check for running a server vm (compiled with -xarch=v8plus)
        * on a stock v8 processor.  In this case, the machine type in
        * the elf header would not be included the architecture list
@@ -773,23 +773,23 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
        * model.
        */
       if(elf_head.e_machine == EM_SPARC32PLUS) {
-	char buf[257];  /* recommended buffer size from sysinfo man
-			   page */
-	long length;
-	char* location;
-	
-	length = sysinfo(SI_ISALIST, buf, 257);
-	if(length > 0) {
-	  location = strstr(buf, "sparcv8plus ");
-	  if(location == NULL) {
-	    fprintf(stderr, "SPARC V8 processor detected; Server compiler requires V9 or better.\n");
-	    fprintf(stderr, "Use Client compiler on V8 processors.\n");
-	    fprintf(stderr, "Could not create the Java virtual machine.\n");
-	    return JNI_FALSE;
-	  }
-	}
+        char buf[257];  /* recommended buffer size from sysinfo man
+                           page */
+        long length;
+        char* location;
+
+        length = sysinfo(SI_ISALIST, buf, 257);
+        if(length > 0) {
+          location = strstr(buf, "sparcv8plus ");
+          if(location == NULL) {
+            fprintf(stderr, "SPARC V8 processor detected; Server compiler requires V9 or better.\n");
+            fprintf(stderr, "Use Client compiler on V8 processors.\n");
+            fprintf(stderr, "Could not create the Java virtual machine.\n");
+            return JNI_FALSE;
+          }
+        }
       }
-#endif 
+#endif
       fprintf(stderr, "dl failure on line %d", __LINE__);
       goto error;
     }
@@ -797,10 +797,10 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
     ifn->CreateJavaVM = (CreateJavaVM_t)
       dlsym(libjvm, "JNI_CreateJavaVM");
     if (ifn->CreateJavaVM == NULL)
-	goto error;
+        goto error;
 
     ifn->GetDefaultJavaVMInitArgs = (GetDefaultJavaVMInitArgs_t)
-	dlsym(libjvm, "JNI_GetDefaultJavaVMInitArgs");
+        dlsym(libjvm, "JNI_GetDefaultJavaVMInitArgs");
     if (ifn->GetDefaultJavaVMInitArgs == NULL)
       goto error;
 
@@ -820,7 +820,7 @@ GetXUsagePath(char *buf, jint bufsize)
 {
     static const char Xusage_txt[] = "/Xusage.txt";
     Dl_info dlinfo;
-   
+
     /* we use RTLD_NOW because of problems with ld.so.1 and green threads */
     dladdr(dlsym(dlopen(JVM_DLL, RTLD_NOW), "JNI_CreateJavaVM"), &dlinfo);
     strncpy(buf, (char *)dlinfo.dli_fname, bufsize - sizeof(Xusage_txt));
@@ -839,18 +839,18 @@ GetApplicationHome(char *buf, jint bufsize)
 #ifdef __linux__
     char *execname = GetExecname();
     if (execname) {
-	strncpy(buf, execname, bufsize-1);
-	buf[bufsize-1] = '\0';
+        strncpy(buf, execname, bufsize-1);
+        buf[bufsize-1] = '\0';
     } else {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 #else
     Dl_info dlinfo;
 
     dladdr((void *)GetApplicationHome, &dlinfo);
     if (realpath(dlinfo.dli_fname, buf) == NULL) {
-	fprintf(stderr, "Error: realpath(`%s') failed.\n", dlinfo.dli_fname);
-	return JNI_FALSE;
+        fprintf(stderr, "Error: realpath(`%s') failed.\n", dlinfo.dli_fname);
+        return JNI_FALSE;
     }
 #endif
 
@@ -866,21 +866,21 @@ GetApplicationHome(char *buf, jint bufsize)
     }
 #else
     if (strrchr(buf, '/') == 0) {
-	buf[0] = '\0';
-	return JNI_FALSE;
+        buf[0] = '\0';
+        return JNI_FALSE;
     }
-    *(strrchr(buf, '/')) = '\0';	/* executable file      */
+    *(strrchr(buf, '/')) = '\0';        /* executable file      */
     if (strlen(buf) < 4 || strrchr(buf, '/') == 0) {
-	buf[0] = '\0';
-	return JNI_FALSE;
+        buf[0] = '\0';
+        return JNI_FALSE;
     }
-    if (strcmp("/bin", buf + strlen(buf) - 4) != 0) 
-	*(strrchr(buf, '/')) = '\0';	/* sparcv9 or amd64     */
+    if (strcmp("/bin", buf + strlen(buf) - 4) != 0)
+        *(strrchr(buf, '/')) = '\0';    /* sparcv9 or amd64     */
     if (strlen(buf) < 4 || strcmp("/bin", buf + strlen(buf) - 4) != 0) {
-	buf[0] = '\0';
-	return JNI_FALSE;
+        buf[0] = '\0';
+        return JNI_FALSE;
     }
-    *(strrchr(buf, '/')) = '\0';	/* bin                  */
+    *(strrchr(buf, '/')) = '\0';        /* bin                  */
 #endif /* GAMMA */
 
     return JNI_TRUE;
@@ -912,8 +912,8 @@ Resolve(char *indir, char *cmd)
     sprintf(name, "%s%c%s", indir, FILE_SEPARATOR, cmd);
     if (!ProgramExists(name)) return 0;
     real = MemAlloc(PATH_MAX + 2);
-    if (!realpath(name, real)) 
-	strcpy(real, name);
+    if (!realpath(name, real))
+        strcpy(real, name);
     return real;
 }
 
@@ -931,14 +931,14 @@ FindExecName(char *program)
     char *result = NULL;
 
     /* absolute path? */
-    if (*program == FILE_SEPARATOR || 
-	(FILE_SEPARATOR=='\\' && strrchr(program, ':')))
-	return Resolve("", program+1);
+    if (*program == FILE_SEPARATOR ||
+        (FILE_SEPARATOR=='\\' && strrchr(program, ':')))
+        return Resolve("", program+1);
 
     /* relative path? */
     if (strrchr(program, FILE_SEPARATOR) != 0) {
-	char buf[PATH_MAX+2];
-	return Resolve(getcwd(cwdbuf, sizeof(cwdbuf)), program);
+        char buf[PATH_MAX+2];
+        return Resolve(getcwd(cwdbuf, sizeof(cwdbuf)), program);
     }
 
     /* from search path? */
@@ -948,19 +948,19 @@ FindExecName(char *program)
     strcpy(tmp_path, path);
 
     for (f=tmp_path; *f && result==0; ) {
-	char *s = f;
-	while (*f && (*f != PATH_SEPARATOR)) ++f;
-	if (*f) *f++ = 0;
-	if (*s == FILE_SEPARATOR)
-	    result = Resolve(s, program);
-	else {
-	    /* relative path element */
-	    char dir[2*PATH_MAX];
-	    sprintf(dir, "%s%c%s", getcwd(cwdbuf, sizeof(cwdbuf)), 
-		    FILE_SEPARATOR, s);
-	    result = Resolve(dir, program);
-	}
-	if (result != 0) break;
+        char *s = f;
+        while (*f && (*f != PATH_SEPARATOR)) ++f;
+        if (*f) *f++ = 0;
+        if (*s == FILE_SEPARATOR)
+            result = Resolve(s, program);
+        else {
+            /* relative path element */
+            char dir[2*PATH_MAX];
+            sprintf(dir, "%s%c%s", getcwd(cwdbuf, sizeof(cwdbuf)),
+                    FILE_SEPARATOR, s);
+            result = Resolve(dir, program);
+        }
+        if (result != 0) break;
     }
 
     free(tmp_path);
@@ -989,37 +989,37 @@ SetExecname(char **argv)
 {
     char* exec_path = NULL;
 
-    if (execname != NULL)	/* Already determined */
-	return (execname);
-   
+    if (execname != NULL)       /* Already determined */
+        return (execname);
+
 #if defined(__sun)
     {
         Dl_info dlinfo;
         if (dladdr((void*)&SetExecname, &dlinfo)) {
-	    char *resolved = (char*)MemAlloc(PATH_MAX+1);
-   	    if (resolved != NULL) {
-		exec_path = realpath(dlinfo.dli_fname, resolved);
-		if (exec_path == NULL) {
-		    free(resolved);
-		}
-	    }
+            char *resolved = (char*)MemAlloc(PATH_MAX+1);
+            if (resolved != NULL) {
+                exec_path = realpath(dlinfo.dli_fname, resolved);
+                if (exec_path == NULL) {
+                    free(resolved);
+                }
+            }
         }
     }
 #elif defined(__linux__)
     {
-	const char* self = "/proc/self/exe";
+        const char* self = "/proc/self/exe";
         char buf[PATH_MAX+1];
         int len = readlink(self, buf, PATH_MAX);
         if (len >= 0) {
-	    buf[len] = '\0';		/* readlink doesn't nul terminate */
-	    exec_path = strdup(buf);
-	}
+            buf[len] = '\0';            /* readlink doesn't nul terminate */
+            exec_path = strdup(buf);
+        }
     }
 #else /* !__sun && !__linux */
     {
         /* Not implemented */
     }
-#endif 
+#endif
 
     if (exec_path == NULL) {
         exec_path = FindExecName(argv[0]);
@@ -1066,13 +1066,13 @@ void  ReportExceptionDescription(JNIEnv * env) {
 jboolean RemovableMachineDependentOption(char * option) {
   /*
    * Unconditionally remove both -d32 and -d64 options since only
-   * the last such options has an effect; e.g. 
+   * the last such options has an effect; e.g.
    * java -d32 -d64 -d32 -version
-   * is equivalent to 
+   * is equivalent to
    * java -d32 -version
    */
 
-  if( (strcmp(option, "-d32")  == 0 ) || 
+  if( (strcmp(option, "-d32")  == 0 ) ||
       (strcmp(option, "-d64")  == 0 ))
     return JNI_TRUE;
   else
@@ -1081,15 +1081,15 @@ jboolean RemovableMachineDependentOption(char * option) {
 
 void PrintMachineDependentOptions() {
       fprintf(stdout,
-	"    -d32          use a 32-bit data model if available\n"
-	"\n"
-	"    -d64          use a 64-bit data model if available\n");
+        "    -d32          use a 32-bit data model if available\n"
+        "\n"
+        "    -d64          use a 64-bit data model if available\n");
       return;
 }
 
 #ifndef GAMMA  /* gamma launcher does not have ergonomics */
 
-/* 
+/*
  * The following methods (down to ServerClassMachine()) answer
  * the question about whether a machine is a "server-class"
  * machine.  A server-class machine is loosely defined as one
@@ -1099,7 +1099,7 @@ void PrintMachineDependentOptions() {
  * The definition of memory is also somewhat fuzzy, since x86
  * machines seem not to report all the memory in their DIMMs, we
  * think because of memory mapping of graphics cards, etc.
- * 
+ *
  * This code is somewhat more confused with #ifdef's than we'd
  * like because this file is used by both Solaris and Linux
  * platforms, and so needs to be parameterized for SPARC and
@@ -1118,7 +1118,7 @@ physical_memory(void) {
   const uint64_t page_size = (uint64_t) sysconf(_SC_PAGESIZE);
   const uint64_t result    = pages * page_size;
 # define UINT64_FORMAT "%" PRIu64
-    
+
   if (_launcher_debug) {
     printf("pages: " UINT64_FORMAT
            "  page_size: " UINT64_FORMAT
@@ -1133,7 +1133,7 @@ physical_memory(void) {
 /* Methods for solaris-sparc: these are easy. */
 
 /* Ask the OS how many processors there are. */
-unsigned long 
+unsigned long
 physical_processors(void) {
   const unsigned long sys_processors = sysconf(_SC_NPROCESSORS_CONF);
 
@@ -1175,7 +1175,7 @@ solaris_sparc_ServerClassMachine(void) {
  * There's a corresponding version of linux-i586
  * because the compilers are different.
  */
-void 
+void
 get_cpuid(uint32_t arg,
           uint32_t* eaxp,
           uint32_t* ebxp,
@@ -1227,7 +1227,7 @@ get_cpuid(uint32_t arg,
  * There's a corresponding version of solaris-i586
  * because the compilers are different.
  */
-void 
+void
 get_cpuid(uint32_t arg,
           uint32_t* eaxp,
           uint32_t* ebxp,
@@ -1235,12 +1235,12 @@ get_cpuid(uint32_t arg,
           uint32_t* edxp) {
 #ifdef _LP64
   __asm__ volatile (/* Instructions */
-                    "	movl	%4, %%eax  \n"
-                    "	cpuid              \n"
-                    "	movl    %%eax, (%0)\n"
-                    "	movl    %%ebx, (%1)\n"
-                    "	movl    %%ecx, (%2)\n"
-                    "	movl    %%edx, (%3)\n"
+                    "   movl    %4, %%eax  \n"
+                    "   cpuid              \n"
+                    "   movl    %%eax, (%0)\n"
+                    "   movl    %%ebx, (%1)\n"
+                    "   movl    %%ecx, (%2)\n"
+                    "   movl    %%edx, (%3)\n"
                     : /* Outputs */
                     : /* Inputs */
                     "r" (eaxp),
@@ -1260,12 +1260,12 @@ get_cpuid(uint32_t arg,
                         /* ebx is callee-save, so push it */
                         /* even though it's in the clobbers section */
                     "   pushl   %%ebx      \n"
-                    "	movl	%4, %%eax  \n"
-                    "	cpuid              \n"
-                    "	movl    %%eax, %0  \n"
-                    "	movl    %%ebx, %1  \n"
-                    "	movl    %%ecx, %2  \n"
-                    "	movl    %%edx, %3  \n"
+                    "   movl    %4, %%eax  \n"
+                    "   cpuid              \n"
+                    "   movl    %%eax, %0  \n"
+                    "   movl    %%ebx, %1  \n"
+                    "   movl    %%ecx, %2  \n"
+                    "   movl    %%edx, %3  \n"
                         /* restore ebx */
                     "   popl    %%ebx      \n"
 
@@ -1289,7 +1289,7 @@ get_cpuid(uint32_t arg,
 #endif /* __linux__ && i586 */
 
 #ifdef i586
-/* 
+/*
  * Routines shared by solaris-i586 and linux-i586.
  */
 
@@ -1326,17 +1326,17 @@ hyperthreading_support(void) {
   get_cpuid(0, &dummy, &vendor_id[0], &vendor_id[2], &vendor_id[1]);
   if (_launcher_debug) {
     printf("vendor: %c %c %c %c %c %c %c %c %c %c %c %c \n",
-           ((vendor_id[0] >>  0) & 0xff), 
-           ((vendor_id[0] >>  8) & 0xff), 
-           ((vendor_id[0] >> 16) & 0xff), 
-           ((vendor_id[0] >> 24) & 0xff), 
-           ((vendor_id[1] >>  0) & 0xff), 
-           ((vendor_id[1] >>  8) & 0xff), 
-           ((vendor_id[1] >> 16) & 0xff), 
-           ((vendor_id[1] >> 24) & 0xff), 
-           ((vendor_id[2] >>  0) & 0xff), 
-           ((vendor_id[2] >>  8) & 0xff), 
-           ((vendor_id[2] >> 16) & 0xff), 
+           ((vendor_id[0] >>  0) & 0xff),
+           ((vendor_id[0] >>  8) & 0xff),
+           ((vendor_id[0] >> 16) & 0xff),
+           ((vendor_id[0] >> 24) & 0xff),
+           ((vendor_id[1] >>  0) & 0xff),
+           ((vendor_id[1] >>  8) & 0xff),
+           ((vendor_id[1] >> 16) & 0xff),
+           ((vendor_id[1] >> 24) & 0xff),
+           ((vendor_id[2] >>  0) & 0xff),
+           ((vendor_id[2] >>  8) & 0xff),
+           ((vendor_id[2] >> 16) & 0xff),
            ((vendor_id[2] >> 24) & 0xff));
   }
   get_cpuid(1, &value_of_eax, &dummy, &dummy, &value_of_edx);
@@ -1346,17 +1346,17 @@ hyperthreading_support(void) {
   }
   if ((((value_of_eax >> FAMILY_ID_SHIFT) & FAMILY_ID_MASK) == PENTIUM4_FAMILY_ID) ||
       (((value_of_eax >> EXT_FAMILY_ID_SHIFT) & EXT_FAMILY_ID_MASK) != 0)) {
-    if ((((vendor_id[0] >>  0) & 0xff) == 'G') && 
-        (((vendor_id[0] >>  8) & 0xff) == 'e') && 
-        (((vendor_id[0] >> 16) & 0xff) == 'n') && 
-        (((vendor_id[0] >> 24) & 0xff) == 'u') && 
-        (((vendor_id[1] >>  0) & 0xff) == 'i') && 
-        (((vendor_id[1] >>  8) & 0xff) == 'n') && 
-        (((vendor_id[1] >> 16) & 0xff) == 'e') && 
-        (((vendor_id[1] >> 24) & 0xff) == 'I') && 
-        (((vendor_id[2] >>  0) & 0xff) == 'n') && 
-        (((vendor_id[2] >>  8) & 0xff) == 't') && 
-        (((vendor_id[2] >> 16) & 0xff) == 'e') && 
+    if ((((vendor_id[0] >>  0) & 0xff) == 'G') &&
+        (((vendor_id[0] >>  8) & 0xff) == 'e') &&
+        (((vendor_id[0] >> 16) & 0xff) == 'n') &&
+        (((vendor_id[0] >> 24) & 0xff) == 'u') &&
+        (((vendor_id[1] >>  0) & 0xff) == 'i') &&
+        (((vendor_id[1] >>  8) & 0xff) == 'n') &&
+        (((vendor_id[1] >> 16) & 0xff) == 'e') &&
+        (((vendor_id[1] >> 24) & 0xff) == 'I') &&
+        (((vendor_id[2] >>  0) & 0xff) == 'n') &&
+        (((vendor_id[2] >>  8) & 0xff) == 't') &&
+        (((vendor_id[2] >> 16) & 0xff) == 'e') &&
         (((vendor_id[2] >> 24) & 0xff) == 'l')) {
       if (((value_of_edx >> HT_BIT_SHIFT) & HT_BIT_MASK) == HT_BIT_MASK) {
         if (_launcher_debug) {
@@ -1388,14 +1388,14 @@ hyperthreading_support(void) {
 unsigned int
 logical_processors_per_package(void) {
   /*
-   * After CPUID with EAX==1, register EBX bits 23 through 16 
+   * After CPUID with EAX==1, register EBX bits 23 through 16
    * indicate the number of logical processors per package
    */
 # define NUM_LOGICAL_SHIFT 16
 # define NUM_LOGICAL_MASK 0xff
   unsigned int result                        = 1U;
   const HyperThreadingSupport hyperthreading = hyperthreading_support();
-  
+
   if (hyperthreading == hts_supported) {
     uint32_t value_of_ebx = 0U;
     uint32_t dummy        = 0U;
@@ -1410,7 +1410,7 @@ logical_processors_per_package(void) {
 }
 
 /* Compute the number of physical processors, not logical processors */
-unsigned long 
+unsigned long
 physical_processors(void) {
   const long sys_processors = sysconf(_SC_NPROCESSORS_CONF);
   unsigned long result      = sys_processors;
@@ -1522,15 +1522,15 @@ ServerClassMachine(void) {
 #ifndef GAMMA /* gamma launcher does not choose JDK/JRE/JVM */
 
 /*
- *	Since using the file system as a registry is a bit risky, perform
- *	additional sanity checks on the identified directory to validate
- *	it as a valid jre/sdk.
+ *      Since using the file system as a registry is a bit risky, perform
+ *      additional sanity checks on the identified directory to validate
+ *      it as a valid jre/sdk.
  *
- *	Return 0 if the tests fail; otherwise return non-zero (true).
+ *      Return 0 if the tests fail; otherwise return non-zero (true).
  *
- *	Note that checking for anything more than the existence of an
- *	executable object at bin/java relative to the path being checked
- *	will break the regression tests.
+ *      Note that checking for anything more than the existence of an
+ *      executable object at bin/java relative to the path being checked
+ *      will break the regression tests.
  */
 static int
 CheckSanity(char *path, char *dir)
@@ -1538,110 +1538,110 @@ CheckSanity(char *path, char *dir)
     char    buffer[PATH_MAX];
 
     if (strlen(path) + strlen(dir) + 11 > PATH_MAX)
-	return (0);	/* Silently reject "impossibly" long paths */
+        return (0);     /* Silently reject "impossibly" long paths */
 
     (void)strcat(strcat(strcat(strcpy(buffer, path), "/"), dir), "/bin/java");
     return ((access(buffer, X_OK) == 0) ? 1 : 0);
 }
 
 /*
- *	Determine if there is an acceptable JRE in the directory dirname.
- *	Upon locating the "best" one, return a fully qualified path to
- *	it. "Best" is defined as the most advanced JRE meeting the
- *	constraints contained in the manifest_info. If no JRE in this
- *	directory meets the constraints, return NULL.
+ *      Determine if there is an acceptable JRE in the directory dirname.
+ *      Upon locating the "best" one, return a fully qualified path to
+ *      it. "Best" is defined as the most advanced JRE meeting the
+ *      constraints contained in the manifest_info. If no JRE in this
+ *      directory meets the constraints, return NULL.
  *
- *	Note that we don't check for errors in reading the directory
- *	(which would be done by checking errno).  This is because it
- *	doesn't matter if we get an error reading the directory, or
- *	we just don't find anything interesting in the directory.  We
- *	just return NULL in either case.
+ *      Note that we don't check for errors in reading the directory
+ *      (which would be done by checking errno).  This is because it
+ *      doesn't matter if we get an error reading the directory, or
+ *      we just don't find anything interesting in the directory.  We
+ *      just return NULL in either case.
  *
- *	The historical names of j2sdk and j2re were changed to jdk and
- *	jre respecively as part of the 1.5 rebranding effort.  Since the
- *	former names are legacy on Linux, they must be recognized for
- *	all time.  Fortunately, this is a minor cost.
+ *      The historical names of j2sdk and j2re were changed to jdk and
+ *      jre respecively as part of the 1.5 rebranding effort.  Since the
+ *      former names are legacy on Linux, they must be recognized for
+ *      all time.  Fortunately, this is a minor cost.
  */
 static char
 *ProcessDir(manifest_info *info, char *dirname)
 {
-    DIR	    *dirp;
+    DIR     *dirp;
     struct dirent *dp;
     char    *best = NULL;
     int     offset;
-    int	    best_offset = 0;
+    int     best_offset = 0;
     char    *ret_str = NULL;
     char    buffer[PATH_MAX];
 
     if ((dirp = opendir(dirname)) == NULL)
-	return (NULL);
+        return (NULL);
 
     do {
-	if ((dp = readdir(dirp)) != NULL) {
-	    offset = 0;
-	    if ((strncmp(dp->d_name, "jre", 3) == 0) ||
-	        (strncmp(dp->d_name, "jdk", 3) == 0))
-		offset = 3;
-	    else if (strncmp(dp->d_name, "j2re", 4) == 0)
-		offset = 4;
-	    else if (strncmp(dp->d_name, "j2sdk", 5) == 0)
-		offset = 5;
-	    if (offset > 0) {
-	    	if ((acceptable_release(dp->d_name + offset,
-		    info->jre_version)) && CheckSanity(dirname, dp->d_name))
-	    	    if ((best == NULL) || (exact_version_id(
-		      dp->d_name + offset, best + best_offset) > 0)) {
-			if (best != NULL)
-			    free(best);
-			best = strdup(dp->d_name);
-			best_offset = offset;
-		    }
-	    }
-	}
+        if ((dp = readdir(dirp)) != NULL) {
+            offset = 0;
+            if ((strncmp(dp->d_name, "jre", 3) == 0) ||
+                (strncmp(dp->d_name, "jdk", 3) == 0))
+                offset = 3;
+            else if (strncmp(dp->d_name, "j2re", 4) == 0)
+                offset = 4;
+            else if (strncmp(dp->d_name, "j2sdk", 5) == 0)
+                offset = 5;
+            if (offset > 0) {
+                if ((acceptable_release(dp->d_name + offset,
+                    info->jre_version)) && CheckSanity(dirname, dp->d_name))
+                    if ((best == NULL) || (exact_version_id(
+                      dp->d_name + offset, best + best_offset) > 0)) {
+                        if (best != NULL)
+                            free(best);
+                        best = strdup(dp->d_name);
+                        best_offset = offset;
+                    }
+            }
+        }
     } while (dp != NULL);
     (void) closedir(dirp);
     if (best == NULL)
-	return (NULL);
+        return (NULL);
     else {
-	ret_str = MemAlloc(strlen(dirname) + strlen(best) + 2);
-	ret_str = strcat(strcat(strcpy(ret_str, dirname), "/"), best);
-	free(best);
-	return (ret_str);
+        ret_str = MemAlloc(strlen(dirname) + strlen(best) + 2);
+        ret_str = strcat(strcat(strcpy(ret_str, dirname), "/"), best);
+        free(best);
+        return (ret_str);
     }
 }
 
 /*
- *	This is the global entry point. It examines the host for the optimal
- *	JRE to be used by scanning a set of directories.  The set of directories
- *	is platform dependent and can be overridden by the environment
- *	variable JAVA_VERSION_PATH.
+ *      This is the global entry point. It examines the host for the optimal
+ *      JRE to be used by scanning a set of directories.  The set of directories
+ *      is platform dependent and can be overridden by the environment
+ *      variable JAVA_VERSION_PATH.
  *
- *	This routine itself simply determines the set of appropriate
- *	directories before passing control onto ProcessDir().
+ *      This routine itself simply determines the set of appropriate
+ *      directories before passing control onto ProcessDir().
  */
 char*
 LocateJRE(manifest_info* info)
 {
-    char	*path;
-    char	*home;
-    char	*target = NULL;
-    char	*dp;
-    char	*cp;
+    char        *path;
+    char        *home;
+    char        *target = NULL;
+    char        *dp;
+    char        *cp;
 
     /*
      * Start by getting JAVA_VERSION_PATH
      */
     if (info->jre_restrict_search)
-	path = strdup(system_dir);
+        path = strdup(system_dir);
     else if ((path = getenv("JAVA_VERSION_PATH")) != NULL)
-	path = strdup(path);
+        path = strdup(path);
     else
-	if ((home = getenv("HOME")) != NULL) {
-	    path = (char *)MemAlloc(strlen(home) + 13);
-	    path = strcat(strcat(strcat(strcpy(path, home),
-	        user_dir), ":"), system_dir);
-	} else
-	    path = strdup(system_dir);
+        if ((home = getenv("HOME")) != NULL) {
+            path = (char *)MemAlloc(strlen(home) + 13);
+            path = strcat(strcat(strcat(strcpy(path, home),
+                user_dir), ":"), system_dir);
+        } else
+            path = strdup(system_dir);
 
     /*
      * Step through each directory on the path. Terminate the scan with
@@ -1649,14 +1649,14 @@ LocateJRE(manifest_info* info)
      */
     cp = dp = path;
     while (dp != NULL) {
-	cp = strchr(dp, (int)':');
-	if (cp != NULL)
-	    *cp = (char)NULL;
-	if ((target = ProcessDir(info, dp)) != NULL)
-	    break;
-	dp = cp;
-	if (dp != NULL)
-	    dp++;
+        cp = strchr(dp, (int)':');
+        if (cp != NULL)
+            *cp = (char)NULL;
+        if ((target = ProcessDir(info, dp)) != NULL)
+            break;
+        dp = cp;
+        if (dp != NULL)
+            dp++;
     }
     free(path);
     return (target);
@@ -1682,8 +1682,8 @@ ExecJRE(char *jre, char **argv)
      * Resolve the real path to the directory containing the selected JRE.
      */
     if (realpath(jre, wanted) == NULL) {
-	fprintf(stderr, "Unable to resolve %s\n", jre);
-	exit(1);
+        fprintf(stderr, "Unable to resolve %s\n", jre);
+        exit(1);
     }
 
     /*
@@ -1691,8 +1691,8 @@ ExecJRE(char *jre, char **argv)
      */
     execname = SetExecname(argv);
     if (execname == NULL) {
-	fprintf(stderr, "Unable to resolve current executable\n");
-	exit(1);
+        fprintf(stderr, "Unable to resolve current executable\n");
+        exit(1);
     }
 
     /*
@@ -1701,7 +1701,7 @@ ExecJRE(char *jre, char **argv)
      * If so, just return.
      */
     if (strncmp(wanted, execname, strlen(wanted)) == 0)
-	return;			/* I am the droid you were looking for */
+        return;                 /* I am the droid you were looking for */
 
     /*
      * If this isn't the selected version, exec the selected version.
@@ -1725,8 +1725,8 @@ ExecJRE(char *jre, char **argv)
      * can be so deadly.
      */
     if (strlen(wanted) + strlen(progname) + 6 > PATH_MAX) {
-	fprintf(stderr, "Path length exceeds maximum length (PATH_MAX)\n");
-	exit(1);
+        fprintf(stderr, "Path length exceeds maximum length (PATH_MAX)\n");
+        exit(1);
     }
 
     /*
@@ -1735,11 +1735,11 @@ ExecJRE(char *jre, char **argv)
     (void)strcat(strcat(wanted, "/bin/"), progname);
     argv[0] = progname;
     if (_launcher_debug) {
-	int i;
-	printf("execv(\"%s\"", wanted);
-	for (i = 0; argv[i] != NULL; i++)
-	    printf(", \"%s\"", argv[i]);
-	printf(")\n");
+        int i;
+        printf("execv(\"%s\"", wanted);
+        for (i = 0; argv[i] != NULL; i++)
+            printf(", \"%s\"", argv[i]);
+        printf(")\n");
     }
     execv(wanted, argv);
     fprintf(stderr, "Exec of %s failed\n", wanted);
@@ -1775,13 +1775,13 @@ ExecJRE(char *jre, char **argv)
 static int
 match_noeq(const char *s1, const char *s2)
 {
-	while (*s1 == *s2++) {
-		if (*s1++ == '=')
-			return (1);
-	}
-	if (*s1 == '=' && s2[-1] == '\0')
-		return (1);
-	return (0);
+        while (*s1 == *s2++) {
+                if (*s1++ == '=')
+                        return (1);
+        }
+        if (*s1 == '=' && s2[-1] == '\0')
+                return (1);
+        return (0);
 }
 
 /*
@@ -1794,27 +1794,27 @@ match_noeq(const char *s1, const char *s2)
 static int
 borrowed_unsetenv(const char *name)
 {
-	long	idx;		/* index into environ */
+        long    idx;            /* index into environ */
 
-	if (name == NULL || *name == '\0' ||
-	    strchr(name, '=') != NULL) {
-		return (-1);
-	}
+        if (name == NULL || *name == '\0' ||
+            strchr(name, '=') != NULL) {
+                return (-1);
+        }
 
-	for (idx = 0; environ[idx] != NULL; idx++) {
-		if (match_noeq(environ[idx], name))
-			break;
-	}
-	if (environ[idx] == NULL) {
-		/* name not found but still a success */
-		return (0);
-	}
-	/* squeeze up one entry */
-	do {
-		environ[idx] = environ[idx+1];
-	} while (environ[++idx] != NULL);
+        for (idx = 0; environ[idx] != NULL; idx++) {
+                if (match_noeq(environ[idx], name))
+                        break;
+        }
+        if (environ[idx] == NULL) {
+                /* name not found but still a success */
+                return (0);
+        }
+        /* squeeze up one entry */
+        do {
+                environ[idx] = environ[idx+1];
+        } while (environ[++idx] != NULL);
 
-	return (0);
+        return (0);
 }
 /* --- End of "borrowed" code --- */
 
@@ -1845,4 +1845,3 @@ FindBootStrapClass(JNIEnv *env, const char* classname)
    }
    return findBootClass(env, classname, JNI_FALSE);
 }
-

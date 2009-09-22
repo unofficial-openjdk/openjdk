@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cpCacheKlass.hpp	1.33 07/05/29 09:44:19 JVM"
+#pragma ident "@(#)cpCacheKlass.hpp     1.33 07/05/29 09:44:19 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class constantPoolCacheKlass: public Klass {
@@ -35,13 +35,13 @@ class constantPoolCacheKlass: public Klass {
 
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(constantPoolCacheKlass);
-  constantPoolCacheOop allocate(int length, TRAPS); 
+  constantPoolCacheOop allocate(int length, TRAPS);
   static klassOop create_klass(TRAPS);
 
   // Casting from klassOop
   static constantPoolCacheKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_constantPoolCache(), "cast to constantPoolCacheKlass");
-    return (constantPoolCacheKlass*)k->klass_part(); 
+    return (constantPoolCacheKlass*)k->klass_part();
   }
 
   // Sizing
@@ -74,4 +74,3 @@ class constantPoolCacheKlass: public Klass {
   const char* internal_name() const;
   void oop_verify_on(oop obj, outputStream* st);
 };
-

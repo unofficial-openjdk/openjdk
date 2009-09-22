@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)instanceRefKlass.cpp	1.90 07/05/29 09:44:20 JVM"
+#pragma ident "@(#)instanceRefKlass.cpp 1.90 07/05/29 09:44:20 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -50,7 +50,7 @@ static void specialized_oop_follow_contents(instanceRefKlass* ref, oop obj) {
       )
       return;
     } else {
-      // treat referent as normal oop      
+      // treat referent as normal oop
       debug_only(
         if(TraceReferenceGC && PrintGCDetails) {
           gclog_or_tty->print_cr("       Non NULL normal " INTPTR_FORMAT, obj);
@@ -103,7 +103,7 @@ static void specialized_oop_follow_contents(instanceRefKlass* ref,
       )
       return;
     } else {
-      // treat referent as normal oop      
+      // treat referent as normal oop
       debug_only(
         if(TraceReferenceGC && PrintGCDetails) {
           gclog_or_tty->print_cr("       Non NULL normal " INTPTR_FORMAT, obj);
@@ -376,7 +376,7 @@ specialized_oop_update_pointers(ParCompactionManager* cm, oop obj,
 
 int
 instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-				      HeapWord* beg_addr, HeapWord* end_addr) {
+                                      HeapWord* beg_addr, HeapWord* end_addr) {
   instanceKlass::oop_update_pointers(cm, obj, beg_addr, end_addr);
   if (UseCompressedOops) {
     specialized_oop_update_pointers<narrowOop>(cm, obj, beg_addr, end_addr);
@@ -389,7 +389,7 @@ instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 
 void instanceRefKlass::update_nonstatic_oop_maps(klassOop k) {
   // Clear the nonstatic oop-map entries corresponding to referent
-  // and nextPending field.  They are treated specially by the 
+  // and nextPending field.  They are treated specially by the
   // garbage collector.
   // The discovered field is used only by the garbage collector
   // and is also treated specially.
@@ -435,7 +435,7 @@ void instanceRefKlass::oop_verify_on(oop obj, outputStream* st) {
   GenCollectedHeap* gch = NULL;
   if (Universe::heap()->kind() == CollectedHeap::GenCollectedHeap)
     gch = GenCollectedHeap::heap();
-  
+
   if (referent != NULL) {
     guarantee(referent->is_oop(), "referent field heap failed");
     if (gch != NULL && !gch->is_in_youngest(obj)) {
@@ -454,7 +454,7 @@ void instanceRefKlass::oop_verify_on(oop obj, outputStream* st) {
   // Verify next field
   oop next = java_lang_ref_Reference::next(obj);
   if (next != NULL) {
-    guarantee(next->is_oop(), "next field verify failed");    
+    guarantee(next->is_oop(), "next field verify failed");
     guarantee(next->is_instanceRef(), "next field verify failed");
     if (gch != NULL && !gch->is_in_youngest(obj)) {
       // We do a specific remembered set check here since the next field is

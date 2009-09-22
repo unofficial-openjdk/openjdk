@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -58,7 +58,7 @@ public class VMReg {
   public VMReg(int i) {
     value = i;
   }
-  
+
   public int getValue() {
     return value;
   }
@@ -77,7 +77,7 @@ public class VMReg {
 
     return ((VMReg) arg).value == value;
   }
-  
+
   public boolean lessThan(VMReg arg)            { return value < arg.value;  }
   public boolean lessThanOrEqual(VMReg arg)     { return value <= arg.value; }
   public boolean greaterThan(VMReg arg)         { return value > arg.value;  }

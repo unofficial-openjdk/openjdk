@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.proc.x86;
@@ -50,11 +50,11 @@ public class ProcX86Thread implements ThreadProxy {
   public ThreadContext getContext() throws IllegalThreadStateException {
     ProcX86ThreadContext context = new ProcX86ThreadContext(debugger);
     long[] regs = debugger.getThreadIntegerRegisterSet(id);
-    /* 
+    /*
        _NGREG in reg.h is defined to be 19. Because we have included
        debug registers X86ThreadContext.NPRGREG is 25.
     */
- 
+
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(regs.length <= X86ThreadContext.NPRGREG, "size of register set is greater than " + X86ThreadContext.NPRGREG);
     }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiEnvBase.hpp	1.69 07/08/11 03:57:00 JVM"
+#pragma ident "@(#)jvmtiEnvBase.hpp     1.69 07/08/11 03:57:00 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _JAVA_JVMTIENVBASE_H_
@@ -45,7 +45,7 @@ class JvmtiTagMap;
 // allowed in jvmti.
 
 class JvmtiEnvBase : public CHeapObj {
-    
+
  private:
 
   static JvmtiEnvBase*     _head_environment;  // head of environment list
@@ -54,7 +54,7 @@ class JvmtiEnvBase : public CHeapObj {
   static jvmtiPhase        _phase;
   static volatile int      _dying_thread_env_iteration_count;
 
- public:  
+ public:
 
   enum {
     JDK15_JVMTI_VERSION = JVMTI_VERSION_1_0 +  33,  /* version: 1.0.33  */
@@ -63,14 +63,14 @@ class JvmtiEnvBase : public CHeapObj {
 
   static jvmtiPhase  get_phase()                    { return _phase; }
   static void  set_phase(jvmtiPhase phase)          { _phase = phase; }
-  static bool is_vm_live()                          { return _phase == JVMTI_PHASE_LIVE; } 
+  static bool is_vm_live()                          { return _phase == JVMTI_PHASE_LIVE; }
 
   static void entering_dying_thread_env_iteration() { ++_dying_thread_env_iteration_count; }
   static void leaving_dying_thread_env_iteration()  { --_dying_thread_env_iteration_count; }
   static bool is_inside_dying_thread_env_iteration(){ return _dying_thread_env_iteration_count > 0; }
 
  private:
-    
+
   enum {
       JVMTI_MAGIC    = 0x71EE,
       DISPOSED_MAGIC = 0xDEFC,
@@ -92,7 +92,7 @@ class JvmtiEnvBase : public CHeapObj {
   static volatile bool _needs_clean_up;
   char** _native_method_prefixes;
   int    _native_method_prefix_count;
-        
+
  protected:
   JvmtiEnvBase();
   ~JvmtiEnvBase();
@@ -120,7 +120,7 @@ class JvmtiEnvBase : public CHeapObj {
   JvmtiEnv* next_environment()                     { return (JvmtiEnv*)_next; }
   void set_next_environment(JvmtiEnvBase* env)     { _next = env; }
   static JvmtiEnv* head_environment()              { return (JvmtiEnv*)_head_environment; }
- 
+
  public:
 
   bool is_valid()                                  { return _magic == JVMTI_MAGIC; }
@@ -128,7 +128,7 @@ class JvmtiEnvBase : public CHeapObj {
   bool is_retransformable()                        { return _is_retransformable; }
 
   static ByteSize jvmti_external_offset() {
-    return byte_offset_of(JvmtiEnvBase, _jvmti_external); 
+    return byte_offset_of(JvmtiEnvBase, _jvmti_external);
   };
 
   static JvmtiEnv* JvmtiEnv_from_jvmti_env(jvmtiEnv *env) {
@@ -150,8 +150,8 @@ class JvmtiEnvBase : public CHeapObj {
 
   static void check_for_periodic_clean_up();
 
-  JvmtiEnvEventEnable *env_event_enable() { 
-    return &_env_event_enable; 
+  JvmtiEnvEventEnable *env_event_enable() {
+    return &_env_event_enable;
   }
 
   jvmtiError allocate(jlong size, unsigned char** mem_ptr) {
@@ -161,7 +161,7 @@ class JvmtiEnvBase : public CHeapObj {
     if (size == 0) {
       *mem_ptr = NULL;
     } else {
-      *mem_ptr = (unsigned char *)os::malloc((size_t)size); 
+      *mem_ptr = (unsigned char *)os::malloc((size_t)size);
       if (*mem_ptr == NULL) {
         return JVMTI_ERROR_OUT_OF_MEMORY;
       }
@@ -177,26 +177,26 @@ class JvmtiEnvBase : public CHeapObj {
   }
 
 
-  // Memory functions 
+  // Memory functions
   unsigned char* jvmtiMalloc(jlong size);  // don't use this - call allocate
 
   // method to create a local handle
   jobject jni_reference(Handle hndl) {
-    return JNIHandles::make_local(hndl());  
+    return JNIHandles::make_local(hndl());
   }
 
   // method to create a local handle.
   // This function allows caller to specify which
   // threads local handle table to use.
   jobject jni_reference(JavaThread *thread, Handle hndl) {
-    return JNIHandles::make_local(thread, hndl());  
+    return JNIHandles::make_local(thread, hndl());
   }
 
   // method to destroy a local handle
   void destroy_jni_reference(jobject jobj) {
-    JNIHandles::destroy_local(jobj);  
+    JNIHandles::destroy_local(jobj);
   }
-    
+
   // method to destroy a local handle.
   // This function allows caller to specify which
   // threads local handle table to use although currently it is
@@ -204,14 +204,14 @@ class JvmtiEnvBase : public CHeapObj {
   void destroy_jni_reference(JavaThread *thread, jobject jobj) {
     destroy_jni_reference(jobj);
   }
-    
+
   jvmtiEnv* jvmti_external() { return &_jvmti_external; };
 
 // Event Dispatch
 
   bool has_callback(jvmtiEvent event_type) {
-    assert(event_type >= JVMTI_MIN_EVENT_TYPE_VAL && 
-	   event_type <= JVMTI_MAX_EVENT_TYPE_VAL, "checking");
+    assert(event_type >= JVMTI_MIN_EVENT_TYPE_VAL &&
+           event_type <= JVMTI_MAX_EVENT_TYPE_VAL, "checking");
     return ((void**)&_event_callbacks)[event_type-JVMTI_MIN_EVENT_TYPE_VAL] != NULL;
   }
 
@@ -234,8 +234,8 @@ class JvmtiEnvBase : public CHeapObj {
 
   // return true if event is enabled globally or for any thread
   // True only if there is a callback for it.
-  bool is_enabled(jvmtiEvent event_type) { 
-    return _env_event_enable.is_enabled(event_type); 
+  bool is_enabled(jvmtiEvent event_type) {
+    return _env_event_enable.is_enabled(event_type);
   }
 
 // Random Utilities
@@ -252,12 +252,12 @@ class JvmtiEnvBase : public CHeapObj {
 
   // convert to a jni jclass from a non-null klassOop
   jclass get_jni_class_non_null(klassOop k);
-    
+
   void update_klass_field_access_flag(fieldDescriptor *fd);
 
   jint count_locked_objects(JavaThread *java_thread, Handle hobj);
-  jvmtiError get_locked_objects_in_frame(JavaThread *calling_thread, 
-				   JavaThread* java_thread,
+  jvmtiError get_locked_objects_in_frame(JavaThread *calling_thread,
+                                   JavaThread* java_thread,
                                    javaVFrame *jvf,
                                    GrowableArray<jvmtiMonitorStackDepthInfo*>* owned_monitors_list,
                                    jint depth);
@@ -274,14 +274,14 @@ class JvmtiEnvBase : public CHeapObj {
 
   // JVMTI API helper functions which are called at safepoint or thread is suspended.
   jvmtiError get_frame_count(JvmtiThreadState *state, jint *count_ptr);
-  jvmtiError get_frame_location(JavaThread* java_thread, jint depth, 
+  jvmtiError get_frame_location(JavaThread* java_thread, jint depth,
                                               jmethodID* method_ptr, jlocation* location_ptr);
   jvmtiError get_object_monitor_usage(JavaThread *calling_thread,
                                                     jobject object, jvmtiMonitorUsage* info_ptr);
-  jvmtiError get_stack_trace(JavaThread *java_thread, 
+  jvmtiError get_stack_trace(JavaThread *java_thread,
                                            jint stack_depth, jint max_count,
                                            jvmtiFrameInfo* frame_buffer, jint* count_ptr);
-  jvmtiError get_current_contended_monitor(JavaThread *calling_thread, 
+  jvmtiError get_current_contended_monitor(JavaThread *calling_thread,
                                                          JavaThread *java_thread,
                                                          jobject *monitor_ptr);
   jvmtiError get_owned_monitors(JavaThread *calling_thread, JavaThread* java_thread,
@@ -299,7 +299,7 @@ class JvmtiEnvIterator : public StackObj {
  private:
   bool _entry_was_marked;
  public:
-  JvmtiEnvIterator() { 
+  JvmtiEnvIterator() {
     if (Threads::number_of_threads() == 0) {
       _entry_was_marked = false; // we are single-threaded, no need
     } else {
@@ -307,16 +307,16 @@ class JvmtiEnvIterator : public StackObj {
       _entry_was_marked = true;
     }
   }
-  ~JvmtiEnvIterator() { 
+  ~JvmtiEnvIterator() {
     if (_entry_was_marked) {
-      Thread::current()->leaving_jvmti_env_iteration(); 
+      Thread::current()->leaving_jvmti_env_iteration();
     }
   }
   JvmtiEnv* first()                 { return JvmtiEnvBase::head_environment(); }
   JvmtiEnv* next(JvmtiEnvBase* env) { return env->next_environment(); }
 };
 
-    
+
 // VM operation to get monitor information with stack depth.
 class VM_GetOwnedMonitorInfo : public VM_Operation {
 private:
@@ -404,7 +404,7 @@ private:
   jvmtiError _result;
 
 public:
-  VM_GetStackTrace(JvmtiEnv *env, JavaThread *java_thread, 
+  VM_GetStackTrace(JvmtiEnv *env, JavaThread *java_thread,
                    jint start_depth, jint max_count,
                    jvmtiFrameInfo* frame_buffer, jint* count_ptr) {
     _env = env;
@@ -468,7 +468,7 @@ private:
 
 public:
   VM_GetAllStackTraces(JvmtiEnv *env, JavaThread *calling_thread,
-                       jint max_frame_count) 
+                       jint max_frame_count)
       : VM_GetMultipleStackTraces(env, max_frame_count) {
     _calling_thread = calling_thread;
   }
@@ -484,7 +484,7 @@ private:
   const jthread* _thread_list;
 
 public:
-  VM_GetThreadListStackTraces(JvmtiEnv *env, jint thread_count, const jthread* thread_list, jint max_frame_count) 
+  VM_GetThreadListStackTraces(JvmtiEnv *env, jint thread_count, const jthread* thread_list, jint max_frame_count)
       : VM_GetMultipleStackTraces(env, max_frame_count) {
     _thread_count = thread_count;
     _thread_list = thread_list;
@@ -526,7 +526,7 @@ private:
   jvmtiError _result;
 
 public:
-  VM_GetFrameLocation(JvmtiEnv *env, JavaThread* java_thread, jint depth, 
+  VM_GetFrameLocation(JvmtiEnv *env, JavaThread* java_thread, jint depth,
                       jmethodID* method_ptr, jlocation* location_ptr) {
     _env = env;
     _java_thread = java_thread;
@@ -548,7 +548,7 @@ public:
 // ResourceTracker works a little like a ResourceMark. All allocates
 // using the resource tracker are recorded. If an allocate using the
 // resource tracker fails the destructor will free any resources
-// that were allocated using the tracker. 
+// that were allocated using the tracker.
 // The motive for this class is to avoid messy error recovery code
 // in situations where multiple allocations are done in sequence. If
 // the second or subsequent allocation fails it avoids any code to
@@ -562,7 +562,7 @@ public:
 class ResourceTracker : public StackObj {
  private:
   JvmtiEnv* _env;
-  GrowableArray<unsigned char*> *_allocations;	
+  GrowableArray<unsigned char*> *_allocations;
   bool _failed;
  public:
   ResourceTracker(JvmtiEnv* env);
@@ -592,7 +592,7 @@ class JvmtiMonitorClosure: public MonitorClosure {
     _error = JVMTI_ERROR_NONE;
     _env = env;
   }
-  void do_monitor(ObjectMonitor* mon); 
+  void do_monitor(ObjectMonitor* mon);
   jvmtiError error() { return _error;}
 };
 

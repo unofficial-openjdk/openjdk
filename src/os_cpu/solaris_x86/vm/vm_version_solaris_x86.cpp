@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vm_version_solaris_x86.cpp	1.7 07/09/17 10:00:20 JVM"
+#pragma ident "@(#)vm_version_solaris_x86.cpp   1.7 07/09/17 10:00:20 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"

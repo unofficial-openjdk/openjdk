@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -45,7 +45,7 @@ public class GenerationSpec extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("GenerationSpec");
-    
+
     nameField       = type.getCIntegerField("_name");
     initSizeField = type.getCIntegerField("_init_size");
     maxSizeField  = type.getCIntegerField("_max_size");

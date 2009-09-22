@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)LinuxDebuggerLocal.c	1.24 07/05/23 10:52:11 JVM"
+#pragma ident "@(#)LinuxDebuggerLocal.c 1.24 07/05/23 10:52:11 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include <jni.h>
@@ -89,13 +89,13 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLocal_in
   CHECK_EXCEPTION;
 
   // methods we use
-  createClosestSymbol_ID = (*env)->GetMethodID(env, cls, "createClosestSymbol", 
+  createClosestSymbol_ID = (*env)->GetMethodID(env, cls, "createClosestSymbol",
                     "(Ljava/lang/String;J)Lsun/jvm/hotspot/debugger/cdbg/ClosestSymbol;");
   CHECK_EXCEPTION;
   createLoadObject_ID = (*env)->GetMethodID(env, cls, "createLoadObject",
                     "(Ljava/lang/String;JJ)Lsun/jvm/hotspot/debugger/cdbg/LoadObject;");
   CHECK_EXCEPTION;
-  getThreadForThreadId_ID = (*env)->GetMethodID(env, cls, "getThreadForThreadId", 
+  getThreadForThreadId_ID = (*env)->GetMethodID(env, cls, "getThreadForThreadId",
                                                      "(J)Lsun/jvm/hotspot/debugger/ThreadProxy;");
   CHECK_EXCEPTION;
   // java.util.List method we call
@@ -110,10 +110,10 @@ JNIEXPORT jint JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLocal_ge
 {
 #ifdef _LP64
  return 8;
-#else  
+#else
  return 4;
 #endif
-      
+
 }
 
 
@@ -128,7 +128,7 @@ static void fillThreadsAndLoadObjects(JNIEnv* env, jobject this_obj, struct ps_p
     lwpid_t lwpid;
 
     lwpid = get_lwp_id(ph, i);
-    thread = (*env)->CallObjectMethod(env, this_obj, getThreadForThreadId_ID, 
+    thread = (*env)->CallObjectMethod(env, this_obj, getThreadForThreadId_ID,
                                       (jlong)lwpid);
     CHECK_EXCEPTION;
     threadList = (*env)->GetObjectField(env, this_obj, threadList_ID);
@@ -136,11 +136,11 @@ static void fillThreadsAndLoadObjects(JNIEnv* env, jobject this_obj, struct ps_p
     (*env)->CallBooleanMethod(env, threadList, listAdd_ID, thread);
     CHECK_EXCEPTION;
   }
-  
+
   // add load objects
   n = get_num_libs(ph);
   for (i = 0; i < n; i++) {
-     uintptr_t base; 
+     uintptr_t base;
      const char* name;
      jobject loadObject;
      jobject loadObjectList;
@@ -184,7 +184,7 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLocal_at
   const char *coreName_cstr;
   jboolean isCopy;
   struct ps_prochandle* ph;
-  
+
   execName_cstr = (*env)->GetStringUTFChars(env, execName, &isCopy);
   CHECK_EXCEPTION;
   coreName_cstr = (*env)->GetStringUTFChars(env, coreName, &isCopy);
@@ -229,7 +229,7 @@ JNIEXPORT jlong JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLocal_l
   objectName_cstr = NULL;
   if (objectName != NULL) {
     objectName_cstr = (*env)->GetStringUTFChars(env, objectName, &isCopy);
-    CHECK_EXCEPTION_(0); 
+    CHECK_EXCEPTION_(0);
   }
   symbolName_cstr = (*env)->GetStringUTFChars(env, symbolName, &isCopy);
   CHECK_EXCEPTION_(0);
@@ -256,7 +256,7 @@ JNIEXPORT jobject JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLocal
   struct ps_prochandle* ph = get_proc_handle(env, this_obj);
   sym = symbol_for_pc(ph, (uintptr_t) addr, &offset);
   if (sym == NULL) return 0;
-  return (*env)->CallObjectMethod(env, this_obj, createClosestSymbol_ID, 
+  return (*env)->CallObjectMethod(env, this_obj, createClosestSymbol_ID,
                           (*env)->NewStringUTF(env, sym), (jlong)offset);
 }
 
@@ -306,10 +306,10 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLo
 #endif
 #ifdef amd64
 #define NPRGREG sun_jvm_hotspot_debugger_amd64_AMD64ThreadContext_NPRGREG
-#endif 
+#endif
 #if defined(sparc) || defined(sparcv9)
 #define NPRGREG sun_jvm_hotspot_debugger_sparc_SPARCThreadContext_NPRGREG
-#endif 
+#endif
 
   array = (*env)->NewLongArray(env, NPRGREG);
   CHECK_EXCEPTION_(0);
@@ -319,7 +319,7 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLo
 
 #ifdef i386
 #define REG_INDEX(reg) sun_jvm_hotspot_debugger_x86_X86ThreadContext_##reg
-  
+
   regs[REG_INDEX(GS)]  = (uintptr_t) gregs.xgs;
   regs[REG_INDEX(FS)]  = (uintptr_t) gregs.xfs;
   regs[REG_INDEX(ES)]  = (uintptr_t) gregs.xes;
@@ -413,4 +413,3 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_linux_LinuxDebuggerLo
   (*env)->ReleaseLongArrayElements(env, array, regs, JNI_COMMIT);
   return array;
 }
-

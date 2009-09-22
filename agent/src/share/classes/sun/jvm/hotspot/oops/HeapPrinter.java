@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -37,8 +37,8 @@ public class HeapPrinter implements HeapVisitor {
   public void prologue(long size) {}
 
   public boolean doObj(Oop obj) {
-	  obj.iterate(oopPrinter, true);
-	  return false;
+          obj.iterate(oopPrinter, true);
+          return false;
   }
 
   public void epilogue() {}

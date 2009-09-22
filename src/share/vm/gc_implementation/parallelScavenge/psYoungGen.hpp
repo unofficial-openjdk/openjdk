@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psYoungGen.hpp	1.48 07/05/05 17:05:31 JVM"
+#pragma ident "@(#)psYoungGen.hpp       1.48 07/05/05 17:05:31 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class PSMarkSweepDecorator;
@@ -58,7 +58,7 @@ class PSYoungGen : public CHeapObj {
   SpaceCounters*            _from_counters;
   SpaceCounters*            _to_counters;
 
-  // Initialize the space boundaries 
+  // Initialize the space boundaries
   void compute_initial_space_boundaries();
 
   // Space boundary helper
@@ -72,7 +72,7 @@ class PSYoungGen : public CHeapObj {
 
   // Return number of bytes that the generation can change.
   // These should not be used by PSYoungGen
-  virtual size_t available_for_expansion(); 
+  virtual size_t available_for_expansion();
   virtual size_t available_for_contraction();
 
   // Given a desired shrinkage in the size of the young generation,
@@ -87,7 +87,7 @@ class PSYoungGen : public CHeapObj {
 
  public:
   // Initialize the generation.
-  PSYoungGen(size_t        initial_byte_size, 
+  PSYoungGen(size_t        initial_byte_size,
              size_t        minimum_byte_size,
              size_t        maximum_byte_size);
   void initialize_work();
@@ -177,7 +177,7 @@ class PSYoungGen : public CHeapObj {
   void print_on(outputStream* st) const;
   void print_used_change(size_t prev_used) const;
   virtual const char* name() const { return "PSYoungGen"; }
- 
+
   void verify(bool allow_dirty);
 
   // Space boundary invariant checker

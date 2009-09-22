@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oopRecorder.hpp	1.22 07/05/05 17:05:21 JVM"
+#pragma ident "@(#)oopRecorder.hpp      1.22 07/05/05 17:05:21 JVM"
 #endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Recording and retrieval of oop relocations in compiled code.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)pcTasks.hpp	1.19 07/05/05 17:05:26 JVM"
+#pragma ident "@(#)pcTasks.hpp  1.19 07/05/05 17:05:26 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
 // Tasks for parallel compaction of the old generation
-// 
+//
 // Tasks are created and enqueued on a task queue. The
 // tasks for parallel old collector for marking objects
-// are MarkFromRootsTask and ThreadRootsMarkingTask.  
+// are MarkFromRootsTask and ThreadRootsMarkingTask.
 //
 // MarkFromRootsTask's are created
 // with a root group (e.g., jni_handles) and when the do_it()
@@ -122,10 +122,10 @@ public:
     : _rp_task(rp_task),
       _work_id(work_id)
   { }
-  
+
 private:
   virtual char* name() { return (char *)"Process referents by policy in parallel"; }
-  
+
   virtual void do_it(GCTaskManager* manager, uint which);
 };
 
@@ -160,7 +160,7 @@ public:
 // RefProcTaskExecutor
 //
 // Task executor is an interface for the reference processor to run
-// tasks using GCTaskManager. 
+// tasks using GCTaskManager.
 //
 
 class RefProcTaskExecutor: public AbstractRefProcTaskExecutor {
@@ -241,7 +241,7 @@ class UpdateDensePrefixTask : public GCTask {
 // guarantees about which task will be picked up by which thread.  For example,
 // if thread A gets all the preloaded regions, thread A may not get a draining
 // task (they may all be done by other threads).
-// 
+//
 
 class DrainStacksCompactionTask : public GCTask {
  public:

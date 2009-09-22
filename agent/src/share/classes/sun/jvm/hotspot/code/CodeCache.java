@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.code;
@@ -47,7 +47,7 @@ public class CodeCache {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("CodeCache");
-    
+
     heapField = type.getAddressField("_heap");
 
     virtualConstructor = new VirtualConstructor(db);
@@ -62,7 +62,7 @@ public class CodeCache {
       virtualConstructor.addMapping("UncommonTrapBlob", UncommonTrapBlob.class);
     }
   }
-  
+
   public CodeCache() {
     heap = (CodeHeap) VMObjectFactory.newObject(CodeHeap.class, heapField.getValue());
   }
@@ -82,9 +82,9 @@ public class CodeCache {
     // We could potientially look up non_entrant methods
     // NOTE: this is effectively a "guarantee", and is slightly different from the one in the VM
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that(!(result.isZombie() || result.isLockedByVM()), "unsafe access to zombie method");    
+      Assert.that(!(result.isZombie() || result.isLockedByVM()), "unsafe access to zombie method");
     }
-    return result;  
+    return result;
   }
 
   public CodeBlob findBlobUnsafe(Address start) {
@@ -118,7 +118,7 @@ public class CodeCache {
       Assert.that(result.blobContains(start) || result.blobContains(start.addOffsetTo(8)),
                                                                     "found wrong CodeBlob");
     }
-    return result;  
+    return result;
   }
 
   public NMethod findNMethod(Address start) {

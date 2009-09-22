@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -48,7 +48,7 @@ public class SystemDictionaryHelper {
    // side-effect!. caches the instance klass array.
    public static synchronized InstanceKlass[] getAllInstanceKlasses() {
       if (klasses != null) {
-         return klasses; 
+         return klasses;
       }
 
       final Vector tmp = new Vector();
@@ -63,7 +63,7 @@ public class SystemDictionaryHelper {
                      });
 
       Object[] tmpArray = tmp.toArray();
-      klasses = new InstanceKlass[tmpArray.length];  
+      klasses = new InstanceKlass[tmpArray.length];
       System.arraycopy(tmpArray, 0, klasses, 0, tmpArray.length);
       Arrays.sort(klasses, new Comparator() {
                           public int compare(Object o1, Object o2) {
@@ -91,7 +91,7 @@ public class SystemDictionaryHelper {
       }
 
       Object[] tmpArray = tmp.toArray();
-      InstanceKlass[] searchResult = new InstanceKlass[tmpArray.length];  
+      InstanceKlass[] searchResult = new InstanceKlass[tmpArray.length];
       System.arraycopy(tmpArray, 0, searchResult, 0, tmpArray.length);
       return searchResult;
    }
@@ -131,10 +131,10 @@ public class SystemDictionaryHelper {
              low = mid + 1;
          } else if (cmp > 0) {
              high = mid - 1;
-         } else { // match found 
+         } else { // match found
              return tmpKlasses[mid];
          }
-      } 
+      }
       // no match ..
       return null;
    }

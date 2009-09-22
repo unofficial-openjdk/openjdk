@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compiledICHolderKlass.hpp	1.32 07/05/29 09:44:18 JVM"
+#pragma ident "@(#)compiledICHolderKlass.hpp    1.32 07/05/29 09:44:18 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class CMSIsAliveClosure;
@@ -49,7 +49,7 @@ class compiledICHolderKlass : public Klass {
   // Casting from klassOop
   static compiledICHolderKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_compiledICHolder(), "cast to compiledICHolderKlass");
-    return (compiledICHolderKlass*) k->klass_part(); 
+    return (compiledICHolderKlass*) k->klass_part();
   }
 
   // Sizing
@@ -84,4 +84,3 @@ class compiledICHolderKlass : public Klass {
   void oop_verify_on(oop obj, outputStream* st);
 
 };
-

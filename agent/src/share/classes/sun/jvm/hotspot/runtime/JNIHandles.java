@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -43,16 +43,16 @@ public class JNIHandles {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JNIHandles");
-    
+
     globalHandlesField = type.getAddressField("_global_handles");
     weakGlobalHandlesField = type.getAddressField("_weak_global_handles");
     deletedHandleField = type.getOopField("_deleted_handle");
-    
+
   }
 
   public JNIHandles() {
   }
-  
+
   public JNIHandleBlock globalHandles() {
     Address handleAddr  = globalHandlesField.getValue();
     if (handleAddr == null) {

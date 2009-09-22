@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -30,9 +30,9 @@ import sun.jvm.hotspot.debugger.*;
 public class CIntField extends Field {
 
   public CIntField(sun.jvm.hotspot.types.CIntegerField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
     size       = vmField.getSize();
-    isUnsigned = ((sun.jvm.hotspot.types.CIntegerType) vmField.getType()).isUnsigned(); 
+    isUnsigned = ((sun.jvm.hotspot.types.CIntegerType) vmField.getType()).isUnsigned();
   }
 
   private long size;
@@ -45,4 +45,3 @@ public class CIntField extends Field {
     // Fix this: set* missing in Address
   }
 }
-

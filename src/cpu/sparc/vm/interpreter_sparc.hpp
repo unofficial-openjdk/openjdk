@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)interpreter_sparc.hpp	1.34 07/08/29 13:42:18 JVM"
+#pragma ident "@(#)interpreter_sparc.hpp        1.34 07/08/29 13:42:18 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
  public:
@@ -30,11 +30,11 @@
   // Support for Tagged Stacks
 
   // Stack index relative to tos (which points at value)
-  static int expr_index_at(int i)     { 
-    return stackElementWords() * i; 
+  static int expr_index_at(int i)     {
+    return stackElementWords() * i;
   }
 
-  static int expr_tag_index_at(int i) { 
+  static int expr_tag_index_at(int i) {
     assert(TaggedStackInterpreter, "should not call this");
     // tag is one word above java stack element
     return stackElementWords() * i + 1;
@@ -57,5 +57,3 @@
     assert(TaggedStackInterpreter, "should not call this");
     return stackElementWords() * i + (tag_offset_in_bytes()/wordSize);
   }
-
-

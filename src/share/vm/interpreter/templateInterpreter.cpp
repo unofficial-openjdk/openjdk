@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)templateInterpreter.cpp	1.1 07/08/29 13:42:26 JVM"
+#pragma ident "@(#)templateInterpreter.cpp      1.1 07/08/29 13:42:26 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -35,7 +35,7 @@
 void TemplateInterpreter::initialize() {
   if (_code != NULL) return;
   // assertions
-  assert((int)Bytecodes::number_of_codes <= (int)DispatchTable::length, 
+  assert((int)Bytecodes::number_of_codes <= (int)DispatchTable::length,
          "dispatch table too small");
 
   AbstractInterpreter::initialize();
@@ -44,7 +44,7 @@ void TemplateInterpreter::initialize() {
 
   // generate interpreter
   { ResourceMark rm;
-    TraceTime timer("Interpreter generation", TraceStartupTime);    
+    TraceTime timer("Interpreter generation", TraceStartupTime);
     int code_size = InterpreterCodeSize;
     NOT_PRODUCT(code_size *= 4;)  // debug uses extra interpreter code space
     _code = new StubQueue(new InterpreterCodeletInterface, code_size, NULL,
@@ -293,7 +293,7 @@ void TemplateInterpreterGenerator::generate_all() {
     for (int i = 0; i < Interpreter::number_of_result_handlers; i++) {
       BasicType type = types[i];
       if (!is_generated[Interpreter::BasicType_as_index(type)]++) {
-	Interpreter::_native_abi_to_tosca[Interpreter::BasicType_as_index(type)] = generate_result_handler_for(type);
+        Interpreter::_native_abi_to_tosca[Interpreter::BasicType_as_index(type)] = generate_result_handler_for(type);
       }
     }
   }
@@ -322,10 +322,10 @@ void TemplateInterpreterGenerator::generate_all() {
   { CodeletMark cm(_masm, "safepoint entry points");
     Interpreter::_safept_entry =
       EntryPoint(
-	generate_safept_entry_for(btos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
-	generate_safept_entry_for(ctos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
-	generate_safept_entry_for(stos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
-	generate_safept_entry_for(atos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(btos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(ctos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(stos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(atos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(itos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(ltos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(ftos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
@@ -355,7 +355,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_entry_table[Interpreter::kind] = generate_method_entry(Interpreter::kind);  \
   }
 
-  // all non-native method kinds  
+  // all non-native method kinds
   method_entry(zerolocals)
   method_entry(zerolocals_synchronized)
   method_entry(empty)
@@ -491,12 +491,12 @@ void TemplateInterpreterGenerator::generate_and_dispatch(Template* t, TosState t
   __ verify_FPU(1, t->tos_in());
 #endif // !PRODUCT
   int step;
-  if (!t->does_dispatch()) { 
+  if (!t->does_dispatch()) {
     step = t->is_wide() ? Bytecodes::wide_length_for(t->bytecode()) : Bytecodes::length_for(t->bytecode());
     if (tos_out == ilgl) tos_out = t->tos_out();
     // compute bytecode size
-    assert(step > 0, "just checkin'");    
-    // setup stuff for dispatching next bytecode 
+    assert(step > 0, "just checkin'");
+    // setup stuff for dispatching next bytecode
     if (ProfileInterpreter && VerifyDataPointer
         && methodDataOopDesc::bytecode_has_profile(t->bytecode())) {
       __ verify_method_data_pointer();
@@ -560,7 +560,7 @@ void TemplateInterpreter::notice_safepoints() {
 // switch from the dispatch table which notices safepoints back to the
 // normal dispatch table.  So that we can notice single stepping points,
 // keep the safepoint dispatch table if we are single stepping in JVMTI.
-// Note that the should_post_single_step test is exactly as fast as the 
+// Note that the should_post_single_step test is exactly as fast as the
 // JvmtiExport::_enabled test and covers both cases.
 void TemplateInterpreter::ignore_safepoints() {
   if (_notice_safepoints) {

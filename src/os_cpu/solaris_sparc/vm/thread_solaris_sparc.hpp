@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)thread_solaris_sparc.hpp	1.76 07/05/05 17:04:54 JVM"
+#pragma ident "@(#)thread_solaris_sparc.hpp     1.76 07/05/05 17:04:54 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 private:
 
@@ -61,13 +61,13 @@ private:
 
 public:
 
-  static int o_reg_temps_offset_in_bytes() { return offset_of(JavaThread, _o_reg_temps); } 
+  static int o_reg_temps_offset_in_bytes() { return offset_of(JavaThread, _o_reg_temps); }
 
 #ifndef _LP64
   address o_reg_temps(int i) { return (address)&_o_reg_temps[i]; }
 #endif
 
-  static int saved_exception_npc_offset_in_bytes() { return offset_of(JavaThread,_saved_exception_npc); } 
+  static int saved_exception_npc_offset_in_bytes() { return offset_of(JavaThread,_saved_exception_npc); }
 
   address  saved_exception_npc()             { return _saved_exception_npc; }
   void set_saved_exception_npc(address a)    { _saved_exception_npc = a; }
@@ -77,12 +77,12 @@ public:
 
   intptr_t* base_of_stack_pointer() { return _base_of_stack_pointer; }
 
-  void set_base_of_stack_pointer(intptr_t* base_sp) { 
-    _base_of_stack_pointer = base_sp; 
+  void set_base_of_stack_pointer(intptr_t* base_sp) {
+    _base_of_stack_pointer = base_sp;
   }
 
-  void record_base_of_stack_pointer() { 
-    intptr_t *sp = (intptr_t *)(((intptr_t)StubRoutines::Sparc::flush_callers_register_windows_func()()));  
+  void record_base_of_stack_pointer() {
+    intptr_t *sp = (intptr_t *)(((intptr_t)StubRoutines::Sparc::flush_callers_register_windows_func()()));
     intptr_t *ysp;
     while((ysp = (intptr_t*)sp[FP->sp_offset_in_saved_window()]) != NULL) {
       sp = (intptr_t *)((intptr_t)ysp + STACK_BIAS);
@@ -98,4 +98,3 @@ public:
   static bool register_stack_overflow() { return false; }
   static void enable_register_stack_guard() {}
   static void disable_register_stack_guard() {}
-

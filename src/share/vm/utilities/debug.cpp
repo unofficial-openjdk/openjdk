@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)debug.cpp	1.183 07/07/02 11:45:25 JVM"
+#pragma ident "@(#)debug.cpp    1.183 07/07/02 11:45:25 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -182,7 +182,7 @@ void report_fatal(const char* file_name, int line_no, const char* message) {
   err.report_and_die();
 }
 
-void report_fatal_vararg(const char* file_name, int line_no, const char* format, ...) {  
+void report_fatal_vararg(const char* file_name, int line_no, const char* format, ...) {
   char buffer[256];
   va_list ap;
   va_start(ap, format);
@@ -198,15 +198,15 @@ static jint _exiting_out_of_mem = 0;
 // Just passing the flow to VMError to handle error
 void report_vm_out_of_memory(const char* file_name, int line_no, size_t size, const char* message) {
   if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  
-  // We try to gather additional information for the first out of memory  
-  // error only; gathering additional data might cause an allocation and a  
-  // recursive out_of_memory condition. 
-   
+
+  // We try to gather additional information for the first out of memory
+  // error only; gathering additional data might cause an allocation and a
+  // recursive out_of_memory condition.
+
   const jint exiting = 1;
   // If we succeed in changing the value, we're the first one in.
   bool first_time_here = Atomic::xchg(exiting, &_exiting_out_of_mem) != exiting;
-   
+
   if (first_time_here) {
     Thread* thread = ThreadLocalStorage::get_thread_slow();
     VMError(thread, size, message, file_name, line_no).report_and_die();
@@ -216,7 +216,7 @@ void report_vm_out_of_memory(const char* file_name, int line_no, size_t size, co
   vm_abort(true);
 }
 
-void report_vm_out_of_memory_vararg(const char* file_name, int line_no, size_t size, const char* format, ...) {  
+void report_vm_out_of_memory_vararg(const char* file_name, int line_no, size_t size, const char* format, ...) {
   char buffer[256];
   va_list ap;
   va_start(ap, format);
@@ -255,7 +255,7 @@ void report_untested(const char* file_name, int line_no, const char* msg) {
 void report_java_out_of_memory(const char* message) {
   static jint out_of_memory_reported = 0;
 
-  // A number of threads may attempt to report OutOfMemoryError at around the 
+  // A number of threads may attempt to report OutOfMemoryError at around the
   // same time. To avoid dumping the heap or executing the data collection
   // commands multiple times we just do it once when the first threads reports
   // the error.
@@ -315,9 +315,9 @@ class Command : public StackObj {
 
 int Command::level = 0;
 
-extern "C" void blob(CodeBlob* cb) {  
+extern "C" void blob(CodeBlob* cb) {
   Command c("blob");
-  cb->print();  
+  cb->print();
 }
 
 
@@ -413,7 +413,7 @@ extern "C" void ps() { // print stack
     // If the last_Java_fp is set we are in C land and
     // can call the standard stack_trace function.
     p->trace_stack();
-  } else {    
+  } else {
     frame f = os::current_frame();
     RegisterMap reg_map(p);
     f = f.sender(&reg_map);
@@ -463,7 +463,7 @@ extern "C" void pss() { // print all stacks
 }
 
 
-extern "C" void debug() {		// to set things up for compiler debugging
+extern "C" void debug() {               // to set things up for compiler debugging
   Command c("debug");
   WizardMode = true;
   PrintVMMessages = PrintCompilation = true;
@@ -472,7 +472,7 @@ extern "C" void debug() {		// to set things up for compiler debugging
 }
 
 
-extern "C" void ndebug() {		// undo debug()
+extern "C" void ndebug() {              // undo debug()
   Command c("ndebug");
   PrintCompilation = false;
   PrintInlining = PrintAssembly = false;
@@ -513,16 +513,16 @@ extern "C" void pnl(intptr_t old_heap_addr) {
 }
 
 
-extern "C" methodOop findm(intptr_t pc) { 
+extern "C" methodOop findm(intptr_t pc) {
   Command c("findm");
   nmethod* nm = CodeCache::find_nmethod((address)pc);
-  return (nm == NULL) ? (methodOop)NULL : nm->method(); 
+  return (nm == NULL) ? (methodOop)NULL : nm->method();
 }
 
 
 extern "C" nmethod* findnm(intptr_t addr) {
   Command c("findnm");
-  return  CodeCache::find_nmethod((address)addr);  
+  return  CodeCache::find_nmethod((address)addr);
 }
 
 static address same_page(address x, address y) {
@@ -545,24 +545,24 @@ static void find(intptr_t x, bool print_pc) {
     if (b->is_buffer_blob()) {
       // the interpreter is generated into a buffer blob
       InterpreterCodelet* i = Interpreter::codelet_containing(addr);
-      if (i != NULL) { 
-        i->print(); 
-        return; 
+      if (i != NULL) {
+        i->print();
+        return;
       }
       if (Interpreter::contains(addr)) {
         tty->print_cr(INTPTR_FORMAT " is pointing into interpreter code (not bytecode specific)", addr);
         return;
       }
-      // 
+      //
       if (AdapterHandlerLibrary::contains(b)) {
         AdapterHandlerLibrary::print_handler(b);
       }
       // the stubroutines are generated into a buffer blob
       StubCodeDesc* d = StubCodeDesc::desc_for(addr);
-      if (d != NULL) { 
-        d->print(); 
+      if (d != NULL) {
+        d->print();
         if (print_pc) tty->cr();
-        return; 
+        return;
       }
       if (StubRoutines::contains(addr)) {
         tty->print_cr(INTPTR_FORMAT " is pointing to an (unnamed) stub routine", addr);
@@ -582,10 +582,10 @@ static void find(intptr_t x, bool print_pc) {
     if (print_pc && b->is_nmethod()) {
       ResourceMark rm;
       tty->print("%#p: Compiled ", addr);
-      ((nmethod*)b)->method()->print_value_on(tty); 
+      ((nmethod*)b)->method()->print_value_on(tty);
       tty->print("  = (CodeBlob*)" INTPTR_FORMAT, b);
       tty->cr();
-      return; 
+      return;
     }
     if ( b->is_nmethod()) {
       if (b->is_zombie()) {
@@ -594,8 +594,8 @@ static void find(intptr_t x, bool print_pc) {
         tty->print_cr(INTPTR_FORMAT " is non-entrant nmethod", b);
       }
     }
-    b->print(); 
-    return; 
+    b->print();
+    return;
   }
 
   if (Universe::heap()->is_in(addr)) {
@@ -610,19 +610,19 @@ static void find(intptr_t x, bool print_pc) {
       print = true;
     }
     if (print) {
-      oop(p)->print(); 
+      oop(p)->print();
       if (p != (HeapWord*)x && oop(p)->is_constMethod() &&
-	  constMethodOop(p)->contains(addr)) {
-	Thread *thread = Thread::current();
-	HandleMark hm(thread);
-	methodHandle mh (thread, constMethodOop(p)->method());
-	if (!mh->is_native()) {
-	  tty->print_cr("bci_from(%p) = %d; print_codes():",
-			addr, mh->bci_from(address(x)));
-	  mh->print_codes();
-	}
+          constMethodOop(p)->contains(addr)) {
+        Thread *thread = Thread::current();
+        HandleMark hm(thread);
+        methodHandle mh (thread, constMethodOop(p)->method());
+        if (!mh->is_native()) {
+          tty->print_cr("bci_from(%p) = %d; print_codes():",
+                        addr, mh->bci_from(address(x)));
+          mh->print_codes();
+        }
       }
-      return; 
+      return;
     }
   } else if (Universe::heap()->is_in_reserved(addr)) {
     tty->print_cr(INTPTR_FORMAT " is an unallocated location in the heap", addr);
@@ -654,7 +654,7 @@ static void find(intptr_t x, bool print_pc) {
        return;
     }
   }
-  
+
   // Try an OS specific find
   if (os::find(addr)) {
     return;
@@ -725,7 +725,7 @@ class FindClassObjectClosure: public ObjectClosure {
         if (k->name() != NULL) {
           ResourceMark rm;
           const char* ext = k->external_name();
-          if ( strcmp(_target, ext) == 0 ) { 
+          if ( strcmp(_target, ext) == 0 ) {
             tty->print_cr("Found " INTPTR_FORMAT, obj);
             obj->print();
           }
@@ -734,7 +734,7 @@ class FindClassObjectClosure: public ObjectClosure {
     }
 };
 
-// 
+//
 extern "C" void findclass(const char name[]) {
   Command c("findclass");
   if (name != NULL) {
@@ -774,7 +774,7 @@ extern "C" void findpc(intptr_t x) {
 void pp(intptr_t p)          { pp((void*)p); }
 void pp(oop p)               { pp((void*)p); }
 
-void help() { 
+void help() {
   Command c("help");
   tty->print_cr("basic");
   tty->print_cr("  pp(void* p)   - try to make sense of p");
@@ -784,7 +784,7 @@ void help() {
   tty->print_cr("  pm(int pc)    - print methodOop given compiled PC");
   tty->print_cr("  findm(intptr_t pc) - finds methodOop");
   tty->print_cr("  find(intptr_t x)   - finds & prints nmethod/stub/bytecode/oop based on pointer into it");
- 
+
   tty->print_cr("misc.");
   tty->print_cr("  flush()       - flushes the log file");
   tty->print_cr("  events()      - dump last 50 events");
@@ -838,7 +838,7 @@ struct CommandParser CommandList[] = {
   (char *)"thread", CMDID_THREADS, "Dump Info on all Threads",
   (char *)0, CMDID_ILLEGAL
 };
-   
+
 
 // get_debug_command()
 //
@@ -879,30 +879,30 @@ void get_debug_command()
           switch ( CommandList[i].code ) {
               case CMDID_PS:
                 ps();
-		break;
+                break;
               case CMDID_PSS:
                 pss();
-		break;
+                break;
               case CMDID_PSF:
                 psf();
-		break;
+                break;
               case CMDID_FINDM:
                 tty->print("Please enter the hex addr to pass to findm: ");
                 scanf("%I64X", &addr);
                 m = (methodOop)findm(addr);
                 tty->print("findm(0x%I64X) returned 0x%I64X\n", addr, m);
-		break;
+                break;
               case CMDID_FINDNM:
                 tty->print("Please enter the hex addr to pass to findnm: ");
                 scanf("%I64X", &addr);
                 nm = (nmethod*)findnm(addr);
                 tty->print("findnm(0x%I64X) returned 0x%I64X\n", addr, nm);
-		break;
+                break;
               case CMDID_PP:
                 tty->print("Please enter the hex addr to pass to pp: ");
                 scanf("%I64X", &addr);
                 pp((void*)addr);
-		break;
+                break;
               case CMDID_EXIT:
                 exit(0);
               case CMDID_HELP:
@@ -913,35 +913,34 @@ void get_debug_command()
                   tty->print_cr("  %s --  %s\n", CommandList[j].name,
                                                  CommandList[j].description );
                 }
-		break;
+                break;
               case CMDID_QUIT:
                 return;
-		break;
+                break;
               case CMDID_BPT:
                 BREAKPOINT;
-		break;
+                break;
               case CMDID_VERIFY:
                 verify();;
-		break;
+                break;
               case CMDID_THREADS:
                 threads();;
-		break;
+                break;
               case CMDID_HSFIND:
                 tty->print("Please enter the hex addr to pass to hsfind: ");
                 scanf("%I64X", &addr);
                 tty->print("Calling hsfind(0x%I64X)\n", addr);
                 hsfind(addr);
-		break;
+                break;
               default:
               case CMDID_ILLEGAL:
-		break;
+                break;
           }
         }
-      } 
+      }
     }
   }
 }
 #endif
 
 #endif // PRODUCT
-

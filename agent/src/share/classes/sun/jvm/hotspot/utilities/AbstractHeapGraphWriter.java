@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -42,85 +42,85 @@ import sun.jvm.hotspot.runtime.*;
 public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
     // the function iterates heap and calls Oop type specific writers
     protected void write() throws IOException {
-	SymbolTable symTbl = VM.getVM().getSymbolTable();
-	javaLangClass = symTbl.probe("java/lang/Class");
-	javaLangString = symTbl.probe("java/lang/String");
-	javaLangThread = symTbl.probe("java/lang/Thread");
-	ObjectHeap heap = VM.getVM().getObjectHeap();
-	try {
-	    heap.iterate(new DefaultHeapVisitor() {
-		    public void prologue(long usedSize) {
-			try {
-			    writeHeapHeader();
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+        SymbolTable symTbl = VM.getVM().getSymbolTable();
+        javaLangClass = symTbl.probe("java/lang/Class");
+        javaLangString = symTbl.probe("java/lang/String");
+        javaLangThread = symTbl.probe("java/lang/Thread");
+        ObjectHeap heap = VM.getVM().getObjectHeap();
+        try {
+            heap.iterate(new DefaultHeapVisitor() {
+                    public void prologue(long usedSize) {
+                        try {
+                            writeHeapHeader();
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public boolean doObj(Oop oop) {
-			try {
-			    if (oop instanceof TypeArray) {
-				writePrimitiveArray((TypeArray)oop);
-			    } else if (oop instanceof ObjArray) {
-				Klass klass = oop.getKlass();
-				ObjArrayKlass oak = (ObjArrayKlass) klass;
-				Klass bottomType = oak.getBottomKlass();
-				if (bottomType instanceof InstanceKlass ||
-				    bottomType instanceof TypeArrayKlass) {
-				    writeObjectArray((ObjArray)oop);
-				} else {
-				    writeInternalObject(oop);
-				}
-			    } else if (oop instanceof Instance) {
-				Instance instance = (Instance) oop;
-				Klass klass = instance.getKlass();
-				Symbol name = klass.getName();
-				if (name.equals(javaLangString)) {
-				    writeString(instance);
-				} else if (name.equals(javaLangClass)) {
-				    writeClass(instance);
-				} else if (name.equals(javaLangThread)) {
-				    writeThread(instance);	
-				} else {
-				    klass = klass.getSuper();
-				    while (klass != null) {
-					name = klass.getName();
-					if (name.equals(javaLangThread)) {
-					    writeThread(instance);
-					    return false;
-					}
-					klass = klass.getSuper();
-				    }
-				    writeInstance(instance);
-				}
-			    } else {
-				// not-a-Java-visible oop
-				writeInternalObject(oop);
-			    }
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-			return false;
-		    }
-		    
-		    public void epilogue() {
-			try {
-			    writeHeapFooter();
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
-		}); 
+                    public boolean doObj(Oop oop) {
+                        try {
+                            if (oop instanceof TypeArray) {
+                                writePrimitiveArray((TypeArray)oop);
+                            } else if (oop instanceof ObjArray) {
+                                Klass klass = oop.getKlass();
+                                ObjArrayKlass oak = (ObjArrayKlass) klass;
+                                Klass bottomType = oak.getBottomKlass();
+                                if (bottomType instanceof InstanceKlass ||
+                                    bottomType instanceof TypeArrayKlass) {
+                                    writeObjectArray((ObjArray)oop);
+                                } else {
+                                    writeInternalObject(oop);
+                                }
+                            } else if (oop instanceof Instance) {
+                                Instance instance = (Instance) oop;
+                                Klass klass = instance.getKlass();
+                                Symbol name = klass.getName();
+                                if (name.equals(javaLangString)) {
+                                    writeString(instance);
+                                } else if (name.equals(javaLangClass)) {
+                                    writeClass(instance);
+                                } else if (name.equals(javaLangThread)) {
+                                    writeThread(instance);
+                                } else {
+                                    klass = klass.getSuper();
+                                    while (klass != null) {
+                                        name = klass.getName();
+                                        if (name.equals(javaLangThread)) {
+                                            writeThread(instance);
+                                            return false;
+                                        }
+                                        klass = klass.getSuper();
+                                    }
+                                    writeInstance(instance);
+                                }
+                            } else {
+                                // not-a-Java-visible oop
+                                writeInternalObject(oop);
+                            }
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                        return false;
+                    }
 
-                // write JavaThreads 
+                    public void epilogue() {
+                        try {
+                            writeHeapFooter();
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
+                });
+
+                // write JavaThreads
                 writeJavaThreads();
 
                 // write JNI global handles
                 writeGlobalJNIHandles();
- 
-	} catch (RuntimeException re) {
-	    handleRuntimeException(re);
-	}
+
+        } catch (RuntimeException re) {
+            handleRuntimeException(re);
+        }
     }
 
     protected void writeJavaThreads() throws IOException {
@@ -137,7 +137,7 @@ public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
         }
     }
 
-    protected void writeJavaThread(JavaThread jt, int index) 
+    protected void writeJavaThread(JavaThread jt, int index)
                             throws IOException {
     }
 
@@ -147,7 +147,7 @@ public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
         if (blk != null) {
             try {
                 blk.oopsDo(new AddressVisitor() {
-            		  public void visitAddress(Address handleAddr) {
+                          public void visitAddress(Address handleAddr) {
                               try {
                                   if (handleAddr != null) {
                                       writeGlobalJNIHandle(handleAddr);
@@ -173,39 +173,39 @@ public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
     }
 
     // write non-Java-visible (hotspot internal) object
-    protected void writeInternalObject(Oop oop) throws IOException {        
+    protected void writeInternalObject(Oop oop) throws IOException {
     }
 
     // write Java primitive array
     protected void writePrimitiveArray(TypeArray array) throws IOException {
-	writeObject(array);
+        writeObject(array);
     }
 
     // write Java object array
     protected void writeObjectArray(ObjArray array) throws IOException {
-	writeObject(array);
+        writeObject(array);
     }
 
     protected void writeInstance(Instance instance) throws IOException {
-	writeObject(instance);
+        writeObject(instance);
     }
 
     protected void writeString(Instance instance) throws IOException {
-	writeInstance(instance);
+        writeInstance(instance);
     }
 
     protected void writeClass(Instance instance) throws IOException {
-	writeInstance(instance);
+        writeInstance(instance);
     }
 
     protected void writeThread(Instance instance) throws IOException {
-	writeInstance(instance);
+        writeInstance(instance);
     }
 
     protected void writeObject(Oop oop) throws IOException {
-	writeObjectHeader(oop);
-	writeObjectFields(oop);
-	writeObjectFooter(oop);
+        writeObjectHeader(oop);
+        writeObjectFields(oop);
+        writeObjectFooter(oop);
     }
 
     protected void writeObjectHeader(Oop oop) throws IOException {
@@ -213,131 +213,131 @@ public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
 
     // write instance fields of given object
     protected void writeObjectFields(final Oop oop) throws IOException {
-	try {
-	    oop.iterate(new DefaultOopVisitor() {		
-		    public void doOop(OopField field, boolean isVMField) {
-			try {
-			    Oop ref = field.getValue(oop);
-			    if (ref instanceof TypeArray ||
-				ref instanceof ObjArray  ||
-				ref instanceof Instance) {
-				writeReferenceField(oop, field);
-			    } else {
-				writeInternalReferenceField(oop, field);
-			    }
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+        try {
+            oop.iterate(new DefaultOopVisitor() {
+                    public void doOop(OopField field, boolean isVMField) {
+                        try {
+                            Oop ref = field.getValue(oop);
+                            if (ref instanceof TypeArray ||
+                                ref instanceof ObjArray  ||
+                                ref instanceof Instance) {
+                                writeReferenceField(oop, field);
+                            } else {
+                                writeInternalReferenceField(oop, field);
+                            }
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doByte(ByteField field, boolean isVMField) {   
-			try {
-			    writeByteField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doByte(ByteField field, boolean isVMField) {
+                        try {
+                            writeByteField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doChar(CharField field, boolean isVMField) {
-			try {
-			    writeCharField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
-		    
-		    public void doBoolean(BooleanField field, boolean vField) {
-			try {
-			    writeBooleanField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doChar(CharField field, boolean isVMField) {
+                        try {
+                            writeCharField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doShort(ShortField field, boolean isVMField) {
-			try {
-			    writeShortField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doBoolean(BooleanField field, boolean vField) {
+                        try {
+                            writeBooleanField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doInt(IntField field, boolean isVMField) {
-			try {
-			    writeIntField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doShort(ShortField field, boolean isVMField) {
+                        try {
+                            writeShortField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doLong(LongField field, boolean isVMField) {
-			try {
-			    writeLongField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doInt(IntField field, boolean isVMField) {
+                        try {
+                            writeIntField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doFloat(FloatField field, boolean isVMField) {
-			try {
-			    writeFloatField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
+                    public void doLong(LongField field, boolean isVMField) {
+                        try {
+                            writeLongField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
 
-		    public void doDouble(DoubleField field, boolean vField) {
-			try {
-			    writeDoubleField(oop, field);
-			} catch (IOException exp) {
-			    throw new RuntimeException(exp);
-			}
-		    }
-		}, false);
-	} catch (RuntimeException re) {
-	    handleRuntimeException(re);
-	}
+                    public void doFloat(FloatField field, boolean isVMField) {
+                        try {
+                            writeFloatField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
+
+                    public void doDouble(DoubleField field, boolean vField) {
+                        try {
+                            writeDoubleField(oop, field);
+                        } catch (IOException exp) {
+                            throw new RuntimeException(exp);
+                        }
+                    }
+                }, false);
+        } catch (RuntimeException re) {
+            handleRuntimeException(re);
+        }
     }
 
     // object field writers
-    protected void writeInternalReferenceField(Oop oop, OopField field) 
-	throws IOException {
+    protected void writeInternalReferenceField(Oop oop, OopField field)
+        throws IOException {
     }
 
     protected void writeReferenceField(Oop oop, OopField field)
-	throws IOException {
+        throws IOException {
     }
 
-    protected void writeByteField(Oop oop, ByteField field) 
-	throws IOException {
+    protected void writeByteField(Oop oop, ByteField field)
+        throws IOException {
     }
 
-    protected void writeCharField(Oop oop, CharField field) 
-	throws IOException {
+    protected void writeCharField(Oop oop, CharField field)
+        throws IOException {
     }
 
-    protected void writeBooleanField(Oop oop, BooleanField field) 
-	throws IOException {
+    protected void writeBooleanField(Oop oop, BooleanField field)
+        throws IOException {
     }
 
-    protected void writeShortField(Oop oop, ShortField field) 
-	throws IOException {
+    protected void writeShortField(Oop oop, ShortField field)
+        throws IOException {
     }
 
-    protected void writeIntField(Oop oop, IntField field) 
-	throws IOException {
+    protected void writeIntField(Oop oop, IntField field)
+        throws IOException {
     }
 
-    protected void writeLongField(Oop oop, LongField field) 
-	throws IOException {
+    protected void writeLongField(Oop oop, LongField field)
+        throws IOException {
     }
 
-    protected void writeFloatField(Oop oop, FloatField field) 
-	throws IOException {
+    protected void writeFloatField(Oop oop, FloatField field)
+        throws IOException {
     }
 
-    protected void writeDoubleField(Oop oop, DoubleField field) 
-	throws IOException {
+    protected void writeDoubleField(Oop oop, DoubleField field)
+        throws IOException {
     }
 
     protected void writeObjectFooter(Oop oop) throws IOException {
@@ -345,22 +345,22 @@ public abstract class AbstractHeapGraphWriter implements HeapGraphWriter {
 
     protected void writeHeapFooter() throws IOException {
     }
-      
+
     // HeapVisitor, OopVisitor methods can't throw any non-runtime
     // exception. But, derived class write methods (which are called
     // from visitor callbacks) may throw IOException. Hence, we throw
     // RuntimeException with origianal IOException as cause from the
     // visitor methods. This method gets back the original IOException
     // (if any) and re-throws the same.
-    protected void handleRuntimeException(RuntimeException re) 
-	throws IOException {
-	Throwable cause = re.getCause();
-	if (cause != null && cause instanceof IOException) {
-	    throw (IOException) cause;
-	} else {
-	    // some other RuntimeException, just re-throw
-	    throw re;
-	}
+    protected void handleRuntimeException(RuntimeException re)
+        throws IOException {
+        Throwable cause = re.getCause();
+        if (cause != null && cause instanceof IOException) {
+            throw (IOException) cause;
+        } else {
+            // some other RuntimeException, just re-throw
+            throw re;
+        }
     }
 
     // whether a given oop is Java visible or hotspot internal?

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_InstructionPrinter.hpp	1.65 07/05/05 17:05:07 JVM"
+#pragma ident "@(#)c1_InstructionPrinter.hpp    1.65 07/05/05 17:05:07 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef PRODUCT
@@ -43,7 +43,7 @@ class InstructionPrinter: public InstructionVisitor {
 
  public:
   InstructionPrinter(bool print_phis = true, outputStream* output = tty)
-    : _print_phis(print_phis) 
+    : _print_phis(print_phis)
     , _output(output)
   {}
 

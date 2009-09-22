@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -66,7 +66,7 @@ public class BreakpointInfo extends VMObject {
   public BreakpointInfo getNext() {
     return (BreakpointInfo) VMObjectFactory.newObject(BreakpointInfo.class, nextField.getValue(addr));
   }
-  
+
   public boolean match(Method m, int bci) {
     return (bci == getBCI() && match(m));
   }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)domgraph.cpp	1.76 07/07/11 15:38:57 JVM"
+#pragma ident "@(#)domgraph.cpp 1.76 07/07/11 15:38:57 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -38,13 +38,13 @@ struct Tarjan {
   Block *_block;                // Basic block for this info
 
   uint _semi;                   // Semi-dominators
-  uint _size;                   // Used for faster LINK and EVAL 
+  uint _size;                   // Used for faster LINK and EVAL
   Tarjan *_parent;              // Parent in DFS
   Tarjan *_label;               // Used for LINK and EVAL
-  Tarjan *_ancestor;            // Used for LINK and EVAL 
-  Tarjan *_child;               // Used for faster LINK and EVAL 
+  Tarjan *_ancestor;            // Used for LINK and EVAL
+  Tarjan *_child;               // Used for faster LINK and EVAL
   Tarjan *_dom;                 // Parent in dominator tree (immediate dom)
-  Tarjan *_bucket;              // Set of vertices with given semidominator 
+  Tarjan *_bucket;              // Set of vertices with given semidominator
 
   Tarjan *_dom_child;           // Child in dominator tree
   Tarjan *_dom_next;            // Next in dominator tree
@@ -57,21 +57,21 @@ struct Tarjan {
   void setdepth( uint size );
 
 };
-         
+
 //------------------------------Dominator--------------------------------------
-// Compute the dominator tree of the CFG.  The CFG must already have been 
+// Compute the dominator tree of the CFG.  The CFG must already have been
 // constructed.  This is the Lengauer & Tarjan O(E-alpha(E,V)) algorithm.
 void PhaseCFG::Dominators( ) {
   // Pre-grow the blocks array, prior to the ResourceMark kicking in
   _blocks.map(_num_blocks,0);
 
   ResourceMark rm;
-  // Setup mappings from my Graph to Tarjan's stuff and back 
+  // Setup mappings from my Graph to Tarjan's stuff and back
   // Note: Tarjan uses 1-based arrays
   Tarjan *tarjan = NEW_RESOURCE_ARRAY(Tarjan,_num_blocks+1);
 
-  // Tarjan's algorithm, almost verbatim: 
-  // Step 1: 
+  // Tarjan's algorithm, almost verbatim:
+  // Step 1:
   _rpo_ctr = _num_blocks;
   uint dfsnum = DFS( tarjan );
   if( dfsnum-1 != _num_blocks ) {// Check for unreachable loops!
@@ -96,12 +96,12 @@ void PhaseCFG::Dominators( ) {
   // Tarjan is using 1-based arrays, so these are some initialize flags
   tarjan[0]._size = tarjan[0]._semi = 0;
   tarjan[0]._label = &tarjan[0];
-  
-  uint i;
-  for( i=_num_blocks; i>=2; i-- ) { // For all vertices in DFS order 
-    Tarjan *w = &tarjan[i];     // Get vertex from DFS 
 
-    // Step 2: 
+  uint i;
+  for( i=_num_blocks; i>=2; i-- ) { // For all vertices in DFS order
+    Tarjan *w = &tarjan[i];     // Get vertex from DFS
+
+    // Step 2:
     Node *whead = w->_block->head();
     for( uint j=1; j < whead->req(); j++ ) {
       Block *b = _bbs[whead->in(j)->_idx];
@@ -109,7 +109,7 @@ void PhaseCFG::Dominators( ) {
       Tarjan *u = vx->EVAL();
       if( u->_semi < w->_semi )
         w->_semi = u->_semi;
-    } 
+    }
 
     // w is added to a bucket here, and only here.
     // Thus w is in at most one bucket and the sum of all bucket sizes is O(n).
@@ -120,14 +120,14 @@ void PhaseCFG::Dominators( ) {
 
     w->_parent->LINK( w, &tarjan[0] );
 
-    // Step 3: 
+    // Step 3:
     for( Tarjan *vx = w->_parent->_bucket; vx; vx = vx->_bucket ) {
       Tarjan *u = vx->EVAL();
       vx->_dom = (u->_semi < vx->_semi) ? u : w->_parent;
     }
   }
 
-  // Step 4: 
+  // Step 4:
   for( i=2; i <= _num_blocks; i++ ) {
     Tarjan *w = &tarjan[i];
     if( w->_dom != &tarjan[w->_semi] )
@@ -136,13 +136,13 @@ void PhaseCFG::Dominators( ) {
   }
   // No immediate dominator for the root
   Tarjan *w = &tarjan[_broot->_pre_order];
-  w->_dom = NULL;       
+  w->_dom = NULL;
   w->_dom_next = w->_dom_child = NULL;  // Initialize for building tree later
 
-  // Convert the dominator tree array into my kind of graph 
+  // Convert the dominator tree array into my kind of graph
   for( i=1; i<=_num_blocks;i++){// For all Tarjan vertices
     Tarjan *t = &tarjan[i];     // Handy access
-    Tarjan *tdom = t->_dom;     // Handy access to immediate dominator 
+    Tarjan *tdom = t->_dom;     // Handy access to immediate dominator
     if( tdom )  {               // Root has no immediate dominator
       t->_block->_idom = tdom->_block; // Set immediate dominator
       t->_dom_next = tdom->_dom_child; // Make me a sibling of parent's child
@@ -177,9 +177,9 @@ class Block_Stack {
       Tarjan *t = &_tarjan[pre_order]; // Fast local access
       b->_pre_order = pre_order;    // Flag as visited
       t->_block = b;                // Save actual block
-      t->_semi = pre_order;         // Block to DFS map 
-      t->_label = t;                // DFS to vertex map 
-      t->_ancestor = NULL;          // Fast LINK & EVAL setup 
+      t->_semi = pre_order;         // Block to DFS map
+      t->_label = t;                // DFS to vertex map
+      t->_ancestor = NULL;          // Fast LINK & EVAL setup
       t->_child = &_tarjan[0];      // Sentenial
       t->_size = 1;
       t->_bucket = NULL;
@@ -200,11 +200,11 @@ class Block_Stack {
     Block* pop() { Block* b = _stack_top->block; _stack_top--; return b; }
     bool is_nonempty() { return (_stack_top >= _stack); }
     bool last_successor() { return (_stack_top->index == _stack_top->freq_idx); }
-    Block* next_successor()  { 
-      int i = _stack_top->index; 
+    Block* next_successor()  {
+      int i = _stack_top->index;
       i++;
       if (i == _stack_top->freq_idx) i++;
-      if (i >= (int)(_stack_top->block->_num_succs)) { 
+      if (i >= (int)(_stack_top->block->_num_succs)) {
         i = _stack_top->freq_idx;   // process most frequent successor last
       }
       _stack_top->index = i;
@@ -230,7 +230,7 @@ uint Block_Stack::most_frequent_successor( Block *b ) {
     break;
   }
   case Op_Catch:                // Split frequency amongst children
-    for( freq_idx = 0; freq_idx < b->_num_succs; freq_idx++ ) 
+    for( freq_idx = 0; freq_idx < b->_num_succs; freq_idx++ )
       if( b->_nodes[eidx+1+freq_idx]->as_CatchProj()->_con == CatchProjNode::fall_through_index )
         break;
     // Handle case of no fall-thru (e.g., check-cast MUST throw an exception)
@@ -250,15 +250,15 @@ uint Block_Stack::most_frequent_successor( Block *b ) {
   case Op_Halt:
   case Op_Rethrow:
     break;
-  default: 
+  default:
     ShouldNotReachHere();
   }
   return freq_idx;
 }
 
 //------------------------------DFS--------------------------------------------
-// Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup      
-// 'semi' as vertex to DFS mapping.  Set 'parent' to DFS parent.             
+// Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup
+// 'semi' as vertex to DFS mapping.  Set 'parent' to DFS parent.
 uint PhaseCFG::DFS( Tarjan *tarjan ) {
   Block *b = _broot;
   uint pre_order = 1;
@@ -266,16 +266,16 @@ uint PhaseCFG::DFS( Tarjan *tarjan ) {
   Block_Stack bstack(tarjan, _num_blocks+1);
 
   // Push on stack the state for the first block
-  bstack.push(pre_order, b); 
+  bstack.push(pre_order, b);
   ++pre_order;
 
   while (bstack.is_nonempty()) {
-    if (!bstack.last_successor()) { 
+    if (!bstack.last_successor()) {
       // Walk over all successors in pre-order (DFS).
       Block *s = bstack.next_successor();
       if (s->_pre_order == 0) { // Check for no-pre-order, not-visited
         // Push on stack the state of successor
-        bstack.push(pre_order, s); 
+        bstack.push(pre_order, s);
         ++pre_order;
       }
     }
@@ -352,7 +352,7 @@ void Tarjan::setdepth( uint stack_size ) {
         Tarjan *dom_child = t->_dom_child;
         t = t->_dom_next;    // next tarjan
         if (dom_child != NULL) {
-          *top = dom_child;  // save child on stack 
+          *top = dom_child;  // save child on stack
           ++top;
         }
       } while (t != NULL);
@@ -367,21 +367,21 @@ struct NTarjan {
   Node *_control;               // Control node associated with this info
 
   uint _semi;                   // Semi-dominators
-  uint _size;                   // Used for faster LINK and EVAL 
+  uint _size;                   // Used for faster LINK and EVAL
   NTarjan *_parent;             // Parent in DFS
   NTarjan *_label;              // Used for LINK and EVAL
-  NTarjan *_ancestor;           // Used for LINK and EVAL 
-  NTarjan *_child;              // Used for faster LINK and EVAL 
+  NTarjan *_ancestor;           // Used for LINK and EVAL
+  NTarjan *_child;              // Used for faster LINK and EVAL
   NTarjan *_dom;                // Parent in dominator tree (immediate dom)
-  NTarjan *_bucket;             // Set of vertices with given semidominator 
+  NTarjan *_bucket;             // Set of vertices with given semidominator
 
   NTarjan *_dom_child;          // Child in dominator tree
   NTarjan *_dom_next;           // Next in dominator tree
 
-  // Perform DFS search.  
-  // Setup 'vertex' as DFS to vertex mapping.  
-  // Setup 'semi' as vertex to DFS mapping.  
-  // Set 'parent' to DFS parent.             
+  // Perform DFS search.
+  // Setup 'vertex' as DFS to vertex mapping.
+  // Setup 'semi' as vertex to DFS mapping.
+  // Set 'parent' to DFS parent.
   static int DFS( NTarjan *ntarjan, VectorSet &visited, PhaseIdealLoop *pil, uint *dfsorder );
   void setdepth( uint size, uint *dom_depth );
 
@@ -401,19 +401,19 @@ struct NTarjan {
 // Lengauer & Tarjan O(E-alpha(E,V)) algorithm.
 void PhaseIdealLoop::Dominators( ) {
   ResourceMark rm;
-  // Setup mappings from my Graph to Tarjan's stuff and back 
+  // Setup mappings from my Graph to Tarjan's stuff and back
   // Note: Tarjan uses 1-based arrays
   NTarjan *ntarjan = NEW_RESOURCE_ARRAY(NTarjan,C->unique()+1);
   // Initialize _control field for fast reference
   int i;
-  for( i= C->unique()-1; i>=0; i-- ) 
+  for( i= C->unique()-1; i>=0; i-- )
     ntarjan[i]._control = NULL;
- 
+
   // Store the DFS order for the main loop
   uint *dfsorder = NEW_RESOURCE_ARRAY(uint,C->unique()+1);
   memset(dfsorder, max_uint, (C->unique()+1) * sizeof(uint));
 
-  // Tarjan's algorithm, almost verbatim: 
+  // Tarjan's algorithm, almost verbatim:
   // Step 1:
   VectorSet visited(Thread::current()->resource_area());
   int dfsnum = NTarjan::DFS( ntarjan, visited, this, dfsorder);
@@ -421,12 +421,12 @@ void PhaseIdealLoop::Dominators( ) {
   // Tarjan is using 1-based arrays, so these are some initialize flags
   ntarjan[0]._size = ntarjan[0]._semi = 0;
   ntarjan[0]._label = &ntarjan[0];
-  
+
   for( i = dfsnum-1; i>1; i-- ) {        // For all nodes in reverse DFS order
-    NTarjan *w = &ntarjan[i];            // Get Node from DFS 
+    NTarjan *w = &ntarjan[i];            // Get Node from DFS
     assert(w->_control != NULL,"bad DFS walk");
 
-    // Step 2: 
+    // Step 2:
     Node *whead = w->_control;
     for( uint j=0; j < whead->req(); j++ ) { // For each predecessor
       if( whead->in(j) == NULL || !whead->in(j)->is_CFG() )
@@ -437,7 +437,7 @@ void PhaseIdealLoop::Dominators( ) {
       NTarjan *u = vx->EVAL();
       if( u->_semi < w->_semi )
         w->_semi = u->_semi;
-    } 
+    }
 
     // w is added to a bucket here, and only here.
     // Thus w is in at most one bucket and the sum of all bucket sizes is O(n).
@@ -447,7 +447,7 @@ void PhaseIdealLoop::Dominators( ) {
 
     w->_parent->LINK( w, &ntarjan[0] );
 
-    // Step 3: 
+    // Step 3:
     for( NTarjan *vx = w->_parent->_bucket; vx; vx = vx->_bucket ) {
       NTarjan *u = vx->EVAL();
       vx->_dom = (u->_semi < vx->_semi) ? u : w->_parent;
@@ -461,7 +461,7 @@ void PhaseIdealLoop::Dominators( ) {
       for( uint i = 1; i < whead->req(); i++ ) {
         if (!has_node(whead->in(i))) {
           // Kill dead input path
-          assert( !visited.test(whead->in(i)->_idx), 
+          assert( !visited.test(whead->in(i)->_idx),
                   "input with no loop must be dead" );
           _igvn.hash_delete(whead);
           whead->del_req(i);
@@ -480,7 +480,7 @@ void PhaseIdealLoop::Dominators( ) {
     } // End if if whead is a Region
   } // End of for all Nodes in reverse DFS order
 
-  // Step 4: 
+  // Step 4:
   for( i=2; i < dfsnum; i++ ) { // DFS order
     NTarjan *w = &ntarjan[i];
     assert(w->_control != NULL,"Bad DFS walk");
@@ -494,11 +494,11 @@ void PhaseIdealLoop::Dominators( ) {
   w->_parent = NULL;
   w->_dom_next = w->_dom_child = NULL;  // Initialize for building tree later
 
-  // Convert the dominator tree array into my kind of graph 
+  // Convert the dominator tree array into my kind of graph
   for( i=1; i<dfsnum; i++ ) {          // For all Tarjan vertices
     NTarjan *t = &ntarjan[i];          // Handy access
     assert(t->_control != NULL,"Bad DFS walk");
-    NTarjan *tdom = t->_dom;           // Handy access to immediate dominator 
+    NTarjan *tdom = t->_dom;           // Handy access to immediate dominator
     if( tdom )  {                      // Root has no immediate dominator
       _idom[t->_control->_idx] = tdom->_control; // Set immediate dominator
       t->_dom_next = tdom->_dom_child; // Make me a sibling of parent's child
@@ -520,8 +520,8 @@ void PhaseIdealLoop::Dominators( ) {
 }
 
 //------------------------------DFS--------------------------------------------
-// Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup      
-// 'semi' as vertex to DFS mapping.  Set 'parent' to DFS parent.             
+// Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup
+// 'semi' as vertex to DFS mapping.  Set 'parent' to DFS parent.
 int NTarjan::DFS( NTarjan *ntarjan, VectorSet &visited, PhaseIdealLoop *pil, uint *dfsorder) {
   // Allocate stack of size C->unique()/8 to avoid frequent realloc
   GrowableArray <Node *> dfstack(pil->C->unique() >> 3);
@@ -539,9 +539,9 @@ int NTarjan::DFS( NTarjan *ntarjan, VectorSet &visited, PhaseIdealLoop *pil, uin
       // Use parent's cached dfsnum to identify "Parent in DFS"
       w->_parent = &ntarjan[dfsorder[b->_idx]];
       dfsorder[b->_idx] = dfsnum;      // Save DFS order info
-      w->_semi = dfsnum;               // Node to DFS map 
-      w->_label = w;                   // DFS to vertex map 
-      w->_ancestor = NULL;             // Fast LINK & EVAL setup 
+      w->_semi = dfsnum;               // Node to DFS map
+      w->_label = w;                   // DFS to vertex map
+      w->_ancestor = NULL;             // Fast LINK & EVAL setup
       w->_child = &ntarjan[0];         // Sentinal
       w->_size = 1;
       w->_bucket = NULL;
@@ -549,7 +549,7 @@ int NTarjan::DFS( NTarjan *ntarjan, VectorSet &visited, PhaseIdealLoop *pil, uin
       // Need DEF-USE info for this pass
       for ( int i = b->outcnt(); i-- > 0; ) { // Put on stack backwards
         Node* s = b->raw_out(i);       // Get a use
-        // CFG nodes only and not dead stuff 
+        // CFG nodes only and not dead stuff
         if( s->is_CFG() && pil->has_node(s) && !visited.test(s->_idx) ) {
           dfsorder[s->_idx] = dfsnum;  // Cache parent's dfsnum for a later use
           dfstack.push(s);
@@ -665,4 +665,3 @@ void NTarjan::dump(int offset) const {
 
 }
 #endif
-

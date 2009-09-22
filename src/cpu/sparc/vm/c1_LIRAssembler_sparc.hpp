@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_LIRAssembler_sparc.hpp	1.35 07/06/18 14:25:22 JVM"
+#pragma ident "@(#)c1_LIRAssembler_sparc.hpp    1.35 07/06/18 14:25:22 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
  private:
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // 
+  //
   // Sparc load/store emission
   //
   // The sparc ld/st instructions cannot accomodate displacements > 13 bits long.
@@ -36,7 +36,7 @@
   // by allowing 32 bit displacements:
   //
   //    When disp <= 13 bits long, a single load or store instruction is emitted with (disp + [d]).
-  //    When disp >  13 bits long, code is emitted to set the displacement into the O7 register, 
+  //    When disp >  13 bits long, code is emitted to set the displacement into the O7 register,
   //       and then a load or store is emitted with ([O7] + [d]).
   //
 
@@ -71,7 +71,7 @@
   void monitorexit(LIR_Opr obj_opr, LIR_Opr lock_opr, Register hdr, int monitor_no);
 
   int shift_amount(BasicType t);
-  
+
   static bool is_single_instruction(LIR_Op* op);
 
  public:
@@ -86,4 +86,3 @@ enum {
 #endif // _LP64
          exception_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4),
          deopt_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4) };
-

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.linux.x86;
@@ -32,8 +32,8 @@ import sun.jvm.hotspot.debugger.cdbg.basic.*;
 final public class LinuxX86CFrame extends BasicCFrame {
    // package/class internals only
    public LinuxX86CFrame(LinuxDebugger dbg, Address ebp, Address pc) {
-      super(dbg.getCDebugger()); 
-      this.ebp = ebp;  
+      super(dbg.getCDebugger());
+      this.ebp = ebp;
       this.pc = pc;
       this.dbg = dbg;
    }
@@ -67,9 +67,9 @@ final public class LinuxX86CFrame extends BasicCFrame {
       }
       return new LinuxX86CFrame(dbg, nextEBP, nextPC);
    }
-   
-   private static final int ADDRESS_SIZE = 4;  
+
+   private static final int ADDRESS_SIZE = 4;
    private Address pc;
-   private Address ebp; 
+   private Address ebp;
    private LinuxDebugger dbg;
 }

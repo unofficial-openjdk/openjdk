@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)formsopt.cpp	1.53 07/05/05 17:05:01 JVM"
+#pragma ident "@(#)formsopt.cpp 1.53 07/05/05 17:05:01 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // FORMS.CPP - Definitions for ADL Parser Forms Classes
@@ -33,9 +33,9 @@ int RegisterForm::_reg_ctr = 0;
 
 //------------------------------RegisterForm-----------------------------------
 // Constructor
-RegisterForm::RegisterForm() 
-  : _regDef(cmpstr,hashstr, Form::arena), 
-    _regClass(cmpstr,hashstr, Form::arena), 
+RegisterForm::RegisterForm()
+  : _regDef(cmpstr,hashstr, Form::arena),
+    _regClass(cmpstr,hashstr, Form::arena),
     _allocClass(cmpstr,hashstr, Form::arena) {
 }
 RegisterForm::~RegisterForm() {
@@ -145,7 +145,7 @@ bool   RegisterForm::verify() {
             "ERROR: More than one register has been assigned register-number 0.\n"
             "Probably because a register has not been entered into an allocation class.\n");
   }
-    
+
   return  valid;
 }
 
@@ -178,14 +178,14 @@ void RegisterForm::output(FILE *fp) {          // Write info to output files
     ((AllocClass*)_allocClass[name])->output(fp);
   }
   fprintf(fp,"-------------------- end  RegisterForm --------------------\n");
-} 
+}
 
 //------------------------------RegDef-----------------------------------------
 // Constructor
 RegDef::RegDef(char *regname, char *callconv, char *c_conv, char * idealtype, char * encode, char * concrete)
-  : _regname(regname), _callconv(callconv), _c_conv(c_conv), 
-    _idealtype(idealtype), 
-    _register_encode(encode), 
+  : _regname(regname), _callconv(callconv), _c_conv(c_conv),
+    _idealtype(idealtype),
+    _register_encode(encode),
     _concrete(concrete),
     _register_num(0) {
 
@@ -234,7 +234,7 @@ void RegClass::addReg(RegDef *regDef) {
 // Number of registers in class
 uint RegClass::size() const {
   return _regDef.Size();
-} 
+}
 
 const RegDef *RegClass::get_RegDef(const char *rd_name) const {
   return  (const RegDef*)_regDef[rd_name];
@@ -330,7 +330,7 @@ void AllocClass::output(FILE *fp) {       // Write info to output files
 
 //==============================Frame Handling=================================
 //------------------------------FrameForm--------------------------------------
-FrameForm::FrameForm() { 
+FrameForm::FrameForm() {
   _frame_pointer = NULL;
   _c_frame_pointer = NULL;
   _alignment = NULL;
@@ -353,7 +353,7 @@ void FrameForm::dump() {
 }
 
 void FrameForm::output(FILE *fp) {           // Write info to output files
-  fprintf(fp,"\nFrame:\n"); 
+  fprintf(fp,"\nFrame:\n");
 }
 
 //==============================Scheduling=====================================
@@ -591,8 +591,8 @@ PeepMatch::~PeepMatch() {
 
 
 // Insert info into the match-rule
-void  PeepMatch::add_instruction(int parent, int position, const char *name, 
-				 int input) {
+void  PeepMatch::add_instruction(int parent, int position, const char *name,
+                                 int input) {
   if( position > _max_position ) _max_position = position;
 
   _parent.addName((char *)parent);
@@ -640,7 +640,7 @@ void PeepMatch::output(FILE *fp) {        // Write info to output files
 }
 
 //------------------------------PeepConstraint---------------------------------
-PeepConstraint::PeepConstraint(intptr_t  left_inst,  char *left_op, char *relation, 
+PeepConstraint::PeepConstraint(intptr_t  left_inst,  char *left_op, char *relation,
                                intptr_t  right_inst, char *right_op)
   : _left_inst(left_inst), _left_op(left_op), _relation(relation),
     _right_inst(right_inst), _right_op(right_op), _next(NULL) {}
@@ -725,4 +725,3 @@ void PeepReplace::dump() {
 void PeepReplace::output(FILE *fp) {      // Write info to output files
   fprintf(fp,"PeepReplace:\n");
 }
-

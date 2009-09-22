@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)verificationType.cpp	1.16 07/05/05 17:07:01 JVM"
+#pragma ident "@(#)verificationType.cpp 1.16 07/05/05 17:07:01 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -54,19 +54,19 @@ bool VerificationType::is_reference_assignable_from(
   } else if (is_object()) {
     // We need check the class hierarchy to check assignability
     if (name() == vmSymbols::java_lang_Object()) {
-      // any object or array is assignable to java.lang.Object 
+      // any object or array is assignable to java.lang.Object
       return true;
     }
     klassOop this_class = SystemDictionary::resolve_or_fail(
-        name_handle(), Handle(THREAD, context->class_loader()), 
+        name_handle(), Handle(THREAD, context->class_loader()),
         Handle(THREAD, context->protection_domain()), true, CHECK_false);
     if (this_class->klass_part()->is_interface()) {
-      // We treat interfaces as java.lang.Object, including 
+      // We treat interfaces as java.lang.Object, including
       // java.lang.Cloneable and java.io.Serializable
       return true;
     } else if (from.is_object()) {
       klassOop from_class = SystemDictionary::resolve_or_fail(
-          from.name_handle(), Handle(THREAD, context->class_loader()), 
+          from.name_handle(), Handle(THREAD, context->class_loader()),
           Handle(THREAD, context->protection_domain()), true, CHECK_false);
       return instanceKlass::cast(from_class)->is_subclass_of(this_class);
     }
@@ -90,14 +90,14 @@ VerificationType VerificationType::get_component(TRAPS) const {
     case 'J': return VerificationType(Long);
     case 'F': return VerificationType(Float);
     case 'D': return VerificationType(Double);
-    case '[': 
+    case '[':
       component = SymbolTable::lookup(
-        name(), 1, name()->utf8_length(), 
+        name(), 1, name()->utf8_length(),
         CHECK_(VerificationType::bogus_type()));
       return VerificationType::reference_type(component);
-    case 'L': 
+    case 'L':
       component = SymbolTable::lookup(
-        name(), 2, name()->utf8_length() - 1, 
+        name(), 2, name()->utf8_length() - 1,
         CHECK_(VerificationType::bogus_type()));
       return VerificationType::reference_type(component);
     default:
@@ -127,9 +127,9 @@ void VerificationType::print_on(outputStream* st) const {
     case Null:             st->print(" null "); break;
     default:
       if (is_uninitialized_this()) {
-        st->print(" uninitializedThis "); 
+        st->print(" uninitializedThis ");
       } else if (is_uninitialized()) {
-        st->print(" uninitialized %d ", bci()); 
+        st->print(" uninitialized %d ", bci());
       } else {
         st->print(" class %s ", name()->as_klass_external_name());
       }

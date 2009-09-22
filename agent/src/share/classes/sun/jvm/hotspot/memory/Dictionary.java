@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -61,7 +61,7 @@ public class Dictionary extends TwoOopHashtable {
     ObjectHeap heap = VM.getVM().getObjectHeap();
     int tblSize = tableSize();
     for (int index = 0; index < tblSize; index++) {
-      for (DictionaryEntry probe = (DictionaryEntry) bucket(index); probe != null; 
+      for (DictionaryEntry probe = (DictionaryEntry) bucket(index); probe != null;
                                              probe = (DictionaryEntry) probe.next()) {
         Oop k = probe.klass();
         if (k.isKlass() &&
@@ -76,7 +76,7 @@ public class Dictionary extends TwoOopHashtable {
   public void classesDo(SystemDictionary.ClassAndLoaderVisitor v) {
     int tblSize = tableSize();
     for (int index = 0; index < tblSize; index++) {
-      for (DictionaryEntry probe = (DictionaryEntry) bucket(index); probe != null; 
+      for (DictionaryEntry probe = (DictionaryEntry) bucket(index); probe != null;
                                              probe = (DictionaryEntry) probe.next()) {
         Oop k = probe.klass();
         if (k.isKlass()) {
@@ -106,4 +106,3 @@ public class Dictionary extends TwoOopHashtable {
     return null;
   }
 }
-

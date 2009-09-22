@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)postaloc.cpp	1.84 08/03/26 10:13:00 JVM"
+#pragma ident "@(#)postaloc.cpp 1.84 08/03/26 10:13:00 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -54,7 +54,7 @@ bool PhaseChaitin::may_be_copy_of_callee( Node *def ) const {
   const int limit = 60;
   int i;
   for( i=0; i < limit; i++ ) {
-    if( def->is_Proj() && def->in(0)->is_Start() && 
+    if( def->is_Proj() && def->in(0)->is_Start() &&
         _matcher.is_save_on_entry(lrgs(n2lidx(def)).reg()) )
       return true;              // Direct use of callee-save proj
     if( def->is_Copy() )        // Copies carry value through
@@ -63,7 +63,7 @@ bool PhaseChaitin::may_be_copy_of_callee( Node *def ) const {
       def = def->in(1);
     else
       break;
-    guarantee(def != NULL, "must not resurrect dead copy"); 
+    guarantee(def != NULL, "must not resurrect dead copy");
   }
   // If we reached the end and didn't find a callee save proj
   // then this may be a callee save proj so we return true
@@ -111,7 +111,7 @@ int PhaseChaitin::use_prior_register( Node *n, uint idx, Node *def, Block *curre
 
   // Not every pair of physical registers are assignment compatible,
   // e.g. on sparc floating point registers are not assignable to integer
-  // registers.  
+  // registers.
   const LRG &def_lrg = lrgs(n2lidx(def));
   OptoReg::Name def_reg = def_lrg.reg();
   const RegMask &use_mask = n->in_RegMask(idx);
@@ -157,7 +157,7 @@ Node *PhaseChaitin::skip_copies( Node *c ) {
   int idx = c->is_Copy();
   uint is_oop = lrgs(n2lidx(c))._is_oop;
   while (idx != 0) {
-    guarantee(c->in(idx) != NULL, "must not resurrect dead copy"); 
+    guarantee(c->in(idx) != NULL, "must not resurrect dead copy");
     if (lrgs(n2lidx(c->in(idx)))._is_oop != is_oop)
       break;  // casting copy, not the same value
     c = c->in(idx);
@@ -179,7 +179,7 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
   int idx;
   while( (idx=x->is_Copy()) != 0 ) {
     Node *copy = x->in(idx);
-    guarantee(copy != NULL, "must not resurrect dead copy"); 
+    guarantee(copy != NULL, "must not resurrect dead copy");
     if( lrgs(n2lidx(copy)).reg() != nk_reg ) break;
     blk_adjust += use_prior_register(n,k,copy,current_block,value,regnd);
     if( n->in(k) != copy ) break; // Failed for some cutout?
@@ -187,10 +187,10 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
   }
 
   // Phis and 2-address instructions cannot change registers so easily - their
-  // outputs must match their input.  
+  // outputs must match their input.
   if( !can_change_regs )
     return blk_adjust;          // Only check stupid copies!
-    
+
   // Loop backedges won't have a value-mapping yet
   if( &value == NULL ) return blk_adjust;
 
@@ -205,7 +205,7 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
   bool single = is_single_register(val->ideal_reg());
   uint val_idx = n2lidx(val);
   OptoReg::Name val_reg = lrgs(val_idx).reg();
-  
+
   // See if it happens to already be in the correct register!
   // (either Phi's direct register, or the common case of the name
   // never-clobbered original-def register)
@@ -221,7 +221,7 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
   // using a register to using the stack unless we know we can remove a
   // copy-load.  Otherwise we might end up making a pile of Intel cisc-spill
   // ops reading from memory instead of just loading once and using the
-  // register. 
+  // register.
 
   // Also handle duplicate copies here.
   const Type *t = val->is_Con() ? val->bottom_type() : NULL;
@@ -276,7 +276,7 @@ bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Node* n,
                                               OptoReg::Name nreg, OptoReg::Name nreg2) {
   if (value[nreg] != val && val->is_Con() &&
       value[nreg] != NULL && value[nreg]->is_Con() &&
-      (nreg2 == OptoReg::Bad || value[nreg] == value[nreg2]) && 
+      (nreg2 == OptoReg::Bad || value[nreg] == value[nreg2]) &&
       value[nreg]->bottom_type() == val->bottom_type() &&
       value[nreg]->as_Mach()->rule() == val->as_Mach()->rule()) {
     // This code assumes that two MachNodes representing constants
@@ -308,10 +308,10 @@ bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Node* n,
 
 
 //------------------------------post_allocate_copy_removal---------------------
-// Post-Allocation peephole copy removal.  We do this in 1 pass over the 
-// basic blocks.  We maintain a mapping of registers to Nodes (an  array of 
-// Nodes indexed by machine register or stack slot number).  NULL means that a 
-// register is not mapped to any Node.  We can (want to have!) have several 
+// Post-Allocation peephole copy removal.  We do this in 1 pass over the
+// basic blocks.  We maintain a mapping of registers to Nodes (an  array of
+// Nodes indexed by machine register or stack slot number).  NULL means that a
+// register is not mapped to any Node.  We can (want to have!) have several
 // registers map to the same Node.  We walk forward over the instructions
 // updating the mapping as we go.  At merge points we force a NULL if we have
 // to merge 2 different Nodes into the same register.  Phi functions will give
@@ -319,9 +319,9 @@ bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Node* n,
 // arranged in some RPO, we will visit all parent blocks before visiting any
 // successor blocks (except at loops).
 //
-// If we find a Copy we look to see if the Copy's source register is a stack 
-// slot and that value has already been loaded into some machine register; if 
-// so we use machine register directly.  This turns a Load into a reg-reg 
+// If we find a Copy we look to see if the Copy's source register is a stack
+// slot and that value has already been loaded into some machine register; if
+// so we use machine register directly.  This turns a Load into a reg-reg
 // Move.  We also look for reloads of identical constants.
 //
 // When we see a use from a reg-reg Copy, we will attempt to use the copy's
@@ -475,13 +475,13 @@ void PhaseChaitin::post_allocate_copy_removal() {
     for( j = phi_dex; j < b->_nodes.size(); j++ ) {
       Node *n = b->_nodes[j];
 
-      if( n->outcnt() == 0 &&   // Dead? 
-          n != C->top() &&      // (ignore TOP, it has no du info) 
-          !n->is_Proj() ) {     // fat-proj kills 
-        j -= yank_if_dead(n,b,&value,&regnd); 
-        continue; 
-      } 
-      
+      if( n->outcnt() == 0 &&   // Dead?
+          n != C->top() &&      // (ignore TOP, it has no du info)
+          !n->is_Proj() ) {     // fat-proj kills
+        j -= yank_if_dead(n,b,&value,&regnd);
+        continue;
+      }
+
       // Improve reaching-def info.  Occasionally post-alloc's liveness gives
       // up (at loop backedges, because we aren't doing a full flow pass).
       // The presence of a live use essentially asserts that the use's def is
@@ -492,7 +492,7 @@ void PhaseChaitin::post_allocate_copy_removal() {
         Node *def = n->in(k);   // n->in(k) is a USE; def is the DEF for this USE
         guarantee(def != NULL, "no disconnected nodes at this point");
         uint useidx = n2lidx(def); // useidx is the live range index for this USE
-        
+
         if( useidx ) {
           OptoReg::Name ureg = lrgs(useidx).reg();
           if( !value[ureg] ) {
@@ -518,9 +518,9 @@ void PhaseChaitin::post_allocate_copy_removal() {
       }
 
       const uint two_adr = n->is_Mach() ? n->as_Mach()->two_adr() : 0;
-      
+
       // Remove copies along input edges
-      for( k = 1; k < n->req(); k++ ) 
+      for( k = 1; k < n->req(); k++ )
         j -= elide_copy( n, k, b, value, regnd, two_adr!=k );
 
       // Unallocated Nodes define no registers
@@ -532,7 +532,7 @@ void PhaseChaitin::post_allocate_copy_removal() {
       // Skip through all copies to the _value_ being defined.
       // Do not change from int to pointer
       Node *val = skip_copies(n);
-      
+
       uint n_ideal_reg = n->ideal_reg();
       if( is_single_register(n_ideal_reg) ) {
         // If Node 'n' does not change the value mapped by the register,
@@ -582,7 +582,7 @@ void PhaseChaitin::post_allocate_copy_removal() {
           j -= yank_if_dead(n,b,&value,&regnd);
         }
       }
-      
+
       // Fat projections kill many registers
       if( n_ideal_reg == MachProjNode::fat_proj ) {
         RegMask rm = n->out_RegMask();
@@ -600,5 +600,3 @@ void PhaseChaitin::post_allocate_copy_removal() {
 
   } // End for all blocks
 }
-
-

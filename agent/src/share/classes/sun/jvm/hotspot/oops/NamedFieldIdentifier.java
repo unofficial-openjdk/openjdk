@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -35,7 +35,7 @@ public class NamedFieldIdentifier extends FieldIdentifier {
 
   private String name;
 
-  public String getName() { return name; } 
+  public String getName() { return name; }
 
   public void printOn(PrintStream tty) {
     tty.print(" - " + getName() + ":\t");
@@ -45,7 +45,7 @@ public class NamedFieldIdentifier extends FieldIdentifier {
     if (obj == null) {
       return false;
     }
-    
+
     if (!(obj instanceof NamedFieldIdentifier)) {
       return false;
     }

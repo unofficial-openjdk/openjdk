@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)atomic_linux_x86.inline.hpp	1.31 07/09/17 09:21:23 JVM"
+#pragma ident "@(#)atomic_linux_x86.inline.hpp  1.31 07/09/17 09:21:23 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Implementation of class atomic
@@ -47,9 +47,9 @@ inline jint     Atomic::add    (jint     add_value, volatile jint*     dest) {
   jint addend = add_value;
   int mp = os::is_MP();
   __asm__ volatile (  LOCK_IF_MP(%3) "xaddl %0,(%2)"
-		    : "=r" (addend)
-		    : "0" (addend), "r" (dest), "r" (mp)
-		    : "cc", "memory");
+                    : "=r" (addend)
+                    : "0" (addend), "r" (dest), "r" (mp)
+                    : "cc", "memory");
   return addend + add_value;
 }
 
@@ -75,9 +75,9 @@ inline void Atomic::dec_ptr(volatile void*     dest) {
 
 inline jint     Atomic::xchg    (jint     exchange_value, volatile jint*     dest) {
   __asm__ volatile (  "xchgl (%2),%0"
-		    : "=r" (exchange_value)
-		    : "0" (exchange_value), "r" (dest)
-		    : "memory");
+                    : "=r" (exchange_value)
+                    : "0" (exchange_value), "r" (dest)
+                    : "memory");
   return exchange_value;
 }
 
@@ -121,17 +121,17 @@ inline void*    Atomic::add_ptr(intptr_t add_value, volatile void*     dest) {
 inline void Atomic::inc_ptr(volatile intptr_t* dest) {
   bool mp = os::is_MP();
   __asm__ __volatile__ (LOCK_IF_MP(%1) "addq $1,(%0)"
-			:
-			: "r" (dest), "r" (mp)
-			: "cc", "memory");
+                        :
+                        : "r" (dest), "r" (mp)
+                        : "cc", "memory");
 }
 
 inline void Atomic::dec_ptr(volatile intptr_t* dest) {
   bool mp = os::is_MP();
   __asm__ __volatile__ (LOCK_IF_MP(%1) "subq $1,(%0)"
-			:
-			: "r" (dest), "r" (mp)
-			: "cc", "memory");
+                        :
+                        : "r" (dest), "r" (mp)
+                        : "cc", "memory");
 }
 
 inline intptr_t Atomic::xchg_ptr(intptr_t exchange_value, volatile intptr_t* dest) {

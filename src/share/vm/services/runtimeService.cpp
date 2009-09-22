@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)runtimeService.cpp	1.18 07/07/13 14:31:26 JVM"
+#pragma ident "@(#)runtimeService.cpp   1.18 07/07/13 14:31:26 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -42,7 +42,7 @@ PerfCounter*  RuntimeService::_interrupted_before_count = NULL;
 PerfCounter*  RuntimeService::_interrupted_during_count = NULL;
 
 void RuntimeService::init() {
-  // Make sure the VM version is initialized 
+  // Make sure the VM version is initialized
   Abstract_VM_Version::initialize();
 
   if (UsePerfData) {
@@ -51,43 +51,43 @@ void RuntimeService::init() {
     _sync_time_ticks =
               PerfDataManager::create_counter(SUN_RT, "safepointSyncTime",
                                               PerfData::U_Ticks, CHECK);
-    
+
     _total_safepoints =
               PerfDataManager::create_counter(SUN_RT, "safepoints",
                                               PerfData::U_Events, CHECK);
-    
+
     _safepoint_time_ticks =
               PerfDataManager::create_counter(SUN_RT, "safepointTime",
                                               PerfData::U_Ticks, CHECK);
-    
+
     _application_time_ticks =
               PerfDataManager::create_counter(SUN_RT, "applicationTime",
                                               PerfData::U_Ticks, CHECK);
 
 
     // create performance counters for jvm_version and its capabilities
-    PerfDataManager::create_constant(SUN_RT, "jvmVersion", PerfData::U_None, 
+    PerfDataManager::create_constant(SUN_RT, "jvmVersion", PerfData::U_None,
                                      (jlong) Abstract_VM_Version::jvm_version(), CHECK);
 
     // I/O interruption related counters
 
     // thread signaling via os::interrupt()
 
-    _thread_interrupt_signaled_count = 
-    		PerfDataManager::create_counter(SUN_RT, 
-		 "threadInterruptSignaled", PerfData::U_Events, CHECK);
+    _thread_interrupt_signaled_count =
+                PerfDataManager::create_counter(SUN_RT,
+                 "threadInterruptSignaled", PerfData::U_Events, CHECK);
 
     // OS_INTRPT via "check before" in _INTERRUPTIBLE
 
     _interrupted_before_count =
-    		PerfDataManager::create_counter(SUN_RT, "interruptedBeforeIO",
-						PerfData::U_Events, CHECK);
+                PerfDataManager::create_counter(SUN_RT, "interruptedBeforeIO",
+                                                PerfData::U_Events, CHECK);
 
     // OS_INTRPT via "check during" in _INTERRUPTIBLE
 
     _interrupted_during_count =
-    		PerfDataManager::create_counter(SUN_RT, "interruptedDuringIO",
-						PerfData::U_Events, CHECK);
+                PerfDataManager::create_counter(SUN_RT, "interruptedDuringIO",
+                                                PerfData::U_Events, CHECK);
 
     // The capabilities counter is a binary representation of the VM capabilities in string.
     // This string respresentation simplifies the implementation of the client side
@@ -142,21 +142,21 @@ void RuntimeService::record_application_start() {
 // the application time counter at VM exit.
 
 jlong RuntimeService::safepoint_sync_time_ms() {
-  return UsePerfData ? 
+  return UsePerfData ?
     Management::ticks_to_ms(_sync_time_ticks->get_value()) : -1;
 }
 
 jlong RuntimeService::safepoint_count() {
-  return UsePerfData ? 
+  return UsePerfData ?
     _total_safepoints->get_value() : -1;
 }
 jlong RuntimeService::safepoint_time_ms() {
-  return UsePerfData ? 
+  return UsePerfData ?
     Management::ticks_to_ms(_safepoint_time_ticks->get_value()) : -1;
 }
 
 jlong RuntimeService::application_time_ms() {
-  return UsePerfData ? 
+  return UsePerfData ?
     Management::ticks_to_ms(_application_time_ticks->get_value()) : -1;
 }
 

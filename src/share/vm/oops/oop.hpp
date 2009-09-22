@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oop.hpp	1.118 07/08/31 18:42:30 JVM"
+#pragma ident "@(#)oop.hpp      1.118 07/08/31 18:42:30 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // oopDesc is the top baseclass for objects classes.  The {name}Desc classes describe
@@ -260,7 +260,7 @@ class oopDesc {
   void release_double_field_put(int offset, jdouble contents);
 
   // printing functions for VM debugging
-  void print_on(outputStream* st) const;         // First level print 
+  void print_on(outputStream* st) const;         // First level print
   void print_value_on(outputStream* st) const;   // Second level print.
   void print_address_on(outputStream* st) const; // Address printing
 
@@ -307,15 +307,15 @@ class oopDesc {
   void copy_contents(PSPromotionManager* pm);
   void push_contents(PSPromotionManager* pm);
 
-  // Parallel Old 
+  // Parallel Old
   void update_contents(ParCompactionManager* cm);
   void update_contents(ParCompactionManager* cm,
-		       HeapWord* begin_limit,
-		       HeapWord* end_limit);
+                       HeapWord* begin_limit,
+                       HeapWord* end_limit);
   void update_contents(ParCompactionManager* cm,
-		       klassOop old_klass,
-		       HeapWord* begin_limit,
-	               HeapWord* end_limit);
+                       klassOop old_klass,
+                       HeapWord* begin_limit,
+                       HeapWord* end_limit);
 
   void follow_contents(ParCompactionManager* cm);
   void follow_header(ParCompactionManager* cm);

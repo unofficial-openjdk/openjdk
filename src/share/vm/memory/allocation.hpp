@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)allocation.hpp	1.77 07/05/05 17:05:42 JVM"
+#pragma ident "@(#)allocation.hpp       1.77 07/05/05 17:05:42 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #define ARENA_ALIGN_M1 (((size_t)(ARENA_AMALLOC_ALIGNMENT)) - 1)
@@ -49,10 +49,10 @@
 //
 // The printable subclasses are used for debugging and define virtual
 // member functions for printing. Classes that avoid allocating the
-// vtbl entries in the objects should therefore not be the printable 
+// vtbl entries in the objects should therefore not be the printable
 // subclasses.
 //
-// The following macros and function should be used to allocate memory 
+// The following macros and function should be used to allocate memory
 // directly in the resource area or in the C-heap:
 //
 //   NEW_RESOURCE_ARRAY(type,size)
@@ -73,17 +73,17 @@
 // a word overhead for empty super classes.
 
 #ifdef PRODUCT
-#define ALLOCATION_SUPER_CLASS_SPEC 
+#define ALLOCATION_SUPER_CLASS_SPEC
 #else
 #define ALLOCATION_SUPER_CLASS_SPEC : public AllocatedObj
 class AllocatedObj {
- public:  
+ public:
   // Printing support
   void print() const;
   void print_value() const;
 
   virtual void print_on(outputStream* st) const;
-  virtual void print_value_on(outputStream* st) const;  
+  virtual void print_value_on(outputStream* st) const;
 };
 #endif
 
@@ -147,12 +147,12 @@ class Chunk: public CHeapObj {
   void  operator delete(void* p);
   Chunk(size_t length);
 
-  enum { 
+  enum {
     // default sizes; make them slightly smaller than 2**k to guard against
     // buddy-system style malloc implementations
 #ifdef _LP64
     slack      = 40,            // [RGV] Not sure if this is right, but make it
-				//       a multiple of 8.
+                                //       a multiple of 8.
 #else
     slack      = 20,            // suspected sizeof(Chunk) + internal malloc headers
 #endif
@@ -161,7 +161,7 @@ class Chunk: public CHeapObj {
     medium_size= 10*K  - slack, // Size of medium-sized chunk
     size       = 32*K  - slack, // Default size of an Arena chunk (following the first)
     non_pool_size = init_size + 32 // An initial size which is not one of above
-  };    
+  };
 
   void chop();                  // Chop this chunk
   void next_chop();             // Chop next chunk
@@ -205,30 +205,30 @@ protected:
   char* hwm() const             { return _hwm; }
 
   // Fast allocate in the arena.  Common case is: pointer test + increment.
-  void* Amalloc(size_t x) { 
+  void* Amalloc(size_t x) {
     assert(is_power_of_2(ARENA_AMALLOC_ALIGNMENT) , "should be a power of 2");
     x = ARENA_ALIGN(x);
     debug_only(if (UseMallocOnly) return malloc(x);)
     NOT_PRODUCT(_bytes_allocated += x);
     if (_hwm + x > _max) {
-      return grow(x); 
+      return grow(x);
     } else {
-      char *old = _hwm; 
-      _hwm += x; 
-      return old; 
+      char *old = _hwm;
+      _hwm += x;
+      return old;
     }
   }
   // Further assume size is padded out to words
-  void *Amalloc_4(size_t x) { 
+  void *Amalloc_4(size_t x) {
     assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
     debug_only(if (UseMallocOnly) return malloc(x);)
     NOT_PRODUCT(_bytes_allocated += x);
     if (_hwm + x > _max) {
       return grow(x);
     } else {
-      char *old = _hwm; 
-      _hwm += x; 
-      return old; 
+      char *old = _hwm;
+      _hwm += x;
+      return old;
     }
   }
 
@@ -246,22 +246,22 @@ protected:
     if (_hwm + x > _max) {
       return grow(x); // grow() returns a result aligned >= 8 bytes.
     } else {
-      char *old = _hwm; 
-      _hwm += x; 
+      char *old = _hwm;
+      _hwm += x;
 #if defined(SPARC) && !defined(_LP64)
       old += delta; // align to 8-bytes
 #endif
-      return old; 
+      return old;
     }
   }
 
   // Fast delete in area.  Common case is: NOP (except for storage reclaimed)
-  void Afree(void *ptr, size_t size) { 
+  void Afree(void *ptr, size_t size) {
 #ifdef ASSERT
     if (ZapResourceArea) memset(ptr, badResourceValue, size); // zap freed memory
     if (UseMallocOnly) return;
 #endif
-    if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;  
+    if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;
   }
 
   void *Arealloc( void *old_ptr, size_t old_size, size_t new_size );
@@ -275,7 +275,7 @@ protected:
   // Total of all chunks in use (not thread-safe)
   size_t used() const;
 
-  // Total # of bytes used  
+  // Total # of bytes used
   size_t size_in_bytes() const         NOT_PRODUCT({  return _size_in_bytes; }) PRODUCT_RETURN0;
   void set_size_in_bytes(size_t size)  NOT_PRODUCT({ _size_in_bytes = size;  }) PRODUCT_RETURN;
   static void free_malloced_objects(Chunk* chunk, char* hwm, char* max, char* hwm2)  PRODUCT_RETURN;
@@ -287,9 +287,9 @@ private:
     _first = _chunk = NULL;
     _hwm = _max = NULL;
   }
-}; 
+};
 
-// One of the following macros must be used when allocating 
+// One of the following macros must be used when allocating
 // an array or object from an arena
 #define NEW_ARENA_ARRAY(arena, type, size)\
   (type*) arena->Amalloc((size) * sizeof(type))
@@ -393,11 +393,11 @@ class AllocStats : StackObj {
   size_t start_malloc_bytes, start_res_bytes;
  public:
   AllocStats();
-  
+
   int    num_mallocs();    // since creation of receiver
-  size_t alloc_bytes(); 
-  size_t resource_bytes(); 
-  int    num_frees(); 
+  size_t alloc_bytes();
+  size_t resource_bytes();
+  int    num_frees();
   void   print();
 };
 #endif
@@ -416,4 +416,3 @@ public:
   ReallocMark()   PRODUCT_RETURN;
   void check()    PRODUCT_RETURN;
 };
-

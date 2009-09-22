@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiClassFileReconstituter.hpp	1.15 07/05/05 17:06:36 JVM"
+#pragma ident "@(#)jvmtiClassFileReconstituter.hpp      1.15 07/05/05 17:06:36 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
@@ -75,7 +75,7 @@ class JvmtiConstantPoolReconstituter : public StackObj {
     }
   }
 
-  
+
   void       set_error(jvmtiError err)    { _err = err; }
   jvmtiError get_error()                  { return _err; }
 

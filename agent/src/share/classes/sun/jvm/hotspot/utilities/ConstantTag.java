@@ -19,30 +19,30 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
 
 public class ConstantTag {
   // These replicated from the VM to save space
-  private static int JVM_CONSTANT_Utf8               	  = 1;
-  private static int JVM_CONSTANT_Unicode            	  = 2; // unused
-  private static int JVM_CONSTANT_Integer            	  = 3;
-  private static int JVM_CONSTANT_Float              	  = 4;
-  private static int JVM_CONSTANT_Long               	  = 5;
-  private static int JVM_CONSTANT_Double             	  = 6;
-  private static int JVM_CONSTANT_Class              	  = 7;
-  private static int JVM_CONSTANT_String             	  = 8;
-  private static int JVM_CONSTANT_Fieldref           	  = 9;
-  private static int JVM_CONSTANT_Methodref          	  = 10;
-  private static int JVM_CONSTANT_InterfaceMethodref 	  = 11;
-  private static int JVM_CONSTANT_NameAndType        	  = 12;
-  private static int JVM_CONSTANT_Invalid            	  = 0;   // For bad value initialization
-  private static int JVM_CONSTANT_UnresolvedClass    	  = 100; // Temporary tag until actual use
-  private static int JVM_CONSTANT_ClassIndex         	  = 101; // Temporary tag while constructing constant pool
-  private static int JVM_CONSTANT_UnresolvedString   	  = 102; // Temporary tag until actual use
-  private static int JVM_CONSTANT_StringIndex        	  = 103; // Temporary tag while constructing constant pool
+  private static int JVM_CONSTANT_Utf8                    = 1;
+  private static int JVM_CONSTANT_Unicode                 = 2; // unused
+  private static int JVM_CONSTANT_Integer                 = 3;
+  private static int JVM_CONSTANT_Float                   = 4;
+  private static int JVM_CONSTANT_Long                    = 5;
+  private static int JVM_CONSTANT_Double                  = 6;
+  private static int JVM_CONSTANT_Class                   = 7;
+  private static int JVM_CONSTANT_String                  = 8;
+  private static int JVM_CONSTANT_Fieldref                = 9;
+  private static int JVM_CONSTANT_Methodref               = 10;
+  private static int JVM_CONSTANT_InterfaceMethodref      = 11;
+  private static int JVM_CONSTANT_NameAndType             = 12;
+  private static int JVM_CONSTANT_Invalid                 = 0;   // For bad value initialization
+  private static int JVM_CONSTANT_UnresolvedClass         = 100; // Temporary tag until actual use
+  private static int JVM_CONSTANT_ClassIndex              = 101; // Temporary tag while constructing constant pool
+  private static int JVM_CONSTANT_UnresolvedString        = 102; // Temporary tag until actual use
+  private static int JVM_CONSTANT_StringIndex             = 103; // Temporary tag while constructing constant pool
   private static int JVM_CONSTANT_UnresolvedClassInError  = 104; // Resolution failed
 
   private byte tag;
@@ -65,7 +65,7 @@ public class ConstantTag {
 
   public boolean isInvalid()          { return tag == JVM_CONSTANT_Invalid; }
 
-  public boolean isUnresolvedKlass()  { 
+  public boolean isUnresolvedKlass()  {
     return tag == JVM_CONSTANT_UnresolvedClass || tag == JVM_CONSTANT_UnresolvedClassInError;
   }
   public boolean isUnresolveKlassInError()  { return tag == JVM_CONSTANT_UnresolvedClassInError; }

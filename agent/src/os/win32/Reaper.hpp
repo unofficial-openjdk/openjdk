@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)Reaper.hpp	1.11 07/05/05 17:02:06 JVM"
+#pragma ident "@(#)Reaper.hpp   1.11 07/05/05 17:02:06 JVM"
 #endif
 /*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _REAPER_
@@ -48,7 +48,7 @@ public:
 
   // Start the reaper thread.
   bool start();
-  
+
   // Stop the reaper thread. This is called automatically in the
   // reaper's destructor. It is not thread safe and should be called
   // by at most one thread at a time.

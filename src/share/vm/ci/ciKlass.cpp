@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciKlass.cpp	1.31 07/09/28 10:23:23 JVM"
+#pragma ident "@(#)ciKlass.cpp  1.31 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -190,7 +190,7 @@ ciKlass::least_common_ancestor(ciKlass* that) {
 ciKlass* ciKlass::find_klass(ciSymbol* klass_name) {
   assert(is_loaded(), "cannot find_klass through an unloaded klass");
   return CURRENT_ENV->get_klass_by_name(this,
-					klass_name, false);
+                                        klass_name, false);
 }
 
 // ------------------------------------------------------------------
@@ -236,4 +236,3 @@ void ciKlass::print_impl(outputStream* st) {
 void ciKlass::print_name_on(outputStream* st) {
   name()->print_symbol_on(st);
 }
-

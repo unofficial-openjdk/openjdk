@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiEnvThreadState.hpp	1.17 07/05/05 17:06:37 JVM"
+#pragma ident "@(#)jvmtiEnvThreadState.hpp      1.17 07/05/05 17:06:37 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 #ifndef _JAVA_JVMTIENVTHREADSTATE_H_
 #define _JAVA_JVMTIENVTHREADSTATE_H_
@@ -41,7 +41,7 @@
 // operator.  I'm trying to to rewrite everything.
 
 class JvmtiFramePop VALUE_OBJ_CLASS_SPEC {
- private:  
+ private:
   // Frame number counting from BOTTOM (oldest) frame;
   // bottom frame == #0
   int _frame_number;
@@ -69,7 +69,7 @@ class JvmtiFramePop VALUE_OBJ_CLASS_SPEC {
 //
 
 class JvmtiFramePops : public CHeapObj {
- private: 
+ private:
   GrowableArray<int>* _pops;
 
   // should only be used by JvmtiEventControllerPrivate
@@ -79,7 +79,7 @@ class JvmtiFramePops : public CHeapObj {
   void set(JvmtiFramePop& fp);
   void clear(JvmtiFramePop& fp);
   int clear_to(JvmtiFramePop& fp);
-  
+
  public:
   JvmtiFramePops();
   ~JvmtiFramePops();
@@ -107,17 +107,17 @@ private:
   JvmtiEnvThreadState *_next;
   jmethodID         _current_method_id;
   int               _current_bci;
-  bool		    _breakpoint_posted;
-  bool		    _single_stepping_posted;
+  bool              _breakpoint_posted;
+  bool              _single_stepping_posted;
   JvmtiEnvThreadEventEnable _event_enable;
   void              *_agent_thread_local_storage_data; // per env and per thread agent allocated data.
-    
+
   // Class used to store pending framepops.
   // lazily initialized by get_frame_pops();
   JvmtiFramePops *_frame_pops;
 
-  inline void set_current_location(jmethodID method_id, int bci) { 
-    _current_method_id = method_id; 
+  inline void set_current_location(jmethodID method_id, int bci) {
+    _current_method_id = method_id;
     _current_bci  = bci;
   }
 
@@ -136,9 +136,9 @@ public:
   JvmtiEnvThreadEventEnable *event_enable() { return &_event_enable; }
   void *get_agent_thread_local_storage_data() { return _agent_thread_local_storage_data; }
   void set_agent_thread_local_storage_data (void *data) { _agent_thread_local_storage_data = data; }
-            
 
-  // If the thread is in the given method at the given 
+
+  // If the thread is in the given method at the given
   // location just return.  Otherwise, reset the current location
   // and reset _breakpoint_posted and _single_stepping_posted.
   // _breakpoint_posted and _single_stepping_posted are only cleared
@@ -154,7 +154,7 @@ public:
     _single_stepping_posted = true;
   }
   inline bool breakpoint_posted() { return _breakpoint_posted; }
-  inline bool single_stepping_posted() { 
+  inline bool single_stepping_posted() {
     return _single_stepping_posted;
   }
 
@@ -162,7 +162,7 @@ public:
   inline JvmtiEnv *get_env() { return _env; }
 
   // lazily initialize _frame_pops
-  JvmtiFramePops* get_frame_pops();  
+  JvmtiFramePops* get_frame_pops();
 
   bool has_frame_pops();
 
@@ -176,4 +176,3 @@ public:
 };
 
 #endif   /* _JAVA_JVMTIENVTHREADSTATE_H_ */
-

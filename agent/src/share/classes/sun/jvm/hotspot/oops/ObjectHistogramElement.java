@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -97,7 +97,7 @@ public class ObjectHistogramElement {
             buf.append(bottom.getName().asString().replace('/', '.'));
           } else {
             throw new RuntimeException("should not reach here");
-          } 
+          }
           for (int i=0; i < dim; i++) {
             buf.append("[]");
           }

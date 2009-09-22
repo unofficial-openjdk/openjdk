@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciField.hpp	1.23 07/09/28 10:23:24 JVM"
+#pragma ident "@(#)ciField.hpp  1.23 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciField
@@ -85,7 +85,7 @@ public:
   //
   //   A java compiler is permitted to compile the access to
   //   field f as:
-  //   
+  //
   //     getfield B.f
   //
   //   In that case the declared holder of f would be B and

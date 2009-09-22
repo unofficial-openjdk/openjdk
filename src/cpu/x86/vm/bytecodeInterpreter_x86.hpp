@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeInterpreter_x86.hpp	1.10 07/08/29 13:42:12 JVM"
+#pragma ident "@(#)bytecodeInterpreter_x86.hpp  1.10 07/08/29 13:42:12 JVM"
 #endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Platform specific for C++ based Interpreter
@@ -42,8 +42,8 @@ private:
     address   _extra_junk5;               /* temp to save on recompiles */
     address   _extra_junk6;               /* temp to save on recompiles */
 public:
-							 // we have an interpreter frame...
-inline intptr_t* sender_sp() { 
+                                                         // we have an interpreter frame...
+inline intptr_t* sender_sp() {
   return _sender_sp;
 }
 
@@ -54,7 +54,7 @@ inline intptr_t* sender_sp() {
 //
 #define SET_LAST_JAVA_FRAME()
 
-#define RESET_LAST_JAVA_FRAME()  
+#define RESET_LAST_JAVA_FRAME()
 
 /*
  * Macros for accessing the stack.
@@ -106,10 +106,8 @@ inline intptr_t* sender_sp() {
 #define SET_LOCALS_FLOAT(value, offset)   (*((jfloat *)&locals[-(offset)]) = (value))
 #define SET_LOCALS_OBJECT(value, offset)  (*((oop *)&locals[-(offset)]) = (value))
 #define SET_LOCALS_DOUBLE(value, offset)  (((VMJavaVal64*)&locals[-((offset)+1)])->d = (value))
-#define SET_LOCALS_LONG(value, offset)	  (((VMJavaVal64*)&locals[-((offset)+1)])->l = (value))
+#define SET_LOCALS_LONG(value, offset)    (((VMJavaVal64*)&locals[-((offset)+1)])->l = (value))
 #define SET_LOCALS_DOUBLE_FROM_ADDR(addr, offset) (((VMJavaVal64*)&locals[-((offset)+1)])->d = \
                                                   ((VMJavaVal64*)(addr))->d)
 #define SET_LOCALS_LONG_FROM_ADDR(addr, offset) (((VMJavaVal64*)&locals[-((offset)+1)])->l = \
                                                 ((VMJavaVal64*)(addr))->l)
-
-

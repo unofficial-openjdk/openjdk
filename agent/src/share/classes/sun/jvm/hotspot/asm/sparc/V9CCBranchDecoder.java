@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -36,10 +36,9 @@ abstract class V9CCBranchDecoder extends V9BranchDecoder {
         int conditionCode = getConditionCode(instruction);
         boolean annuled = getAnnuledBit(instruction);
         String name = getConditionName(conditionCode, annuled);
-        // signed word aligned 19 bit 
+        // signed word aligned 19 bit
         PCRelativeAddress addr = new PCRelativeAddress(extractSignedIntFromNBits(instruction, 19) << 2);
         return v9factory.newV9BranchInstruction(name, addr, annuled, conditionCode,
                                               predictTaken, conditionFlag);
     }
 }
-

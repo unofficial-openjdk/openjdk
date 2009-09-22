@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psGCAdaptivePolicyCounters.cpp	1.23 07/05/05 17:05:31 JVM"
+#pragma ident "@(#)psGCAdaptivePolicyCounters.cpp       1.23 07/05/05 17:05:31 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -31,13 +31,13 @@
 
 
 PSGCAdaptivePolicyCounters::PSGCAdaptivePolicyCounters(const char* name_arg,
-                       		      int collectors, 
-				      int generations,
-                       		      PSAdaptiveSizePolicy* size_policy_arg)
-	: GCAdaptivePolicyCounters(name_arg, 
-				   collectors, 
-				   generations, 
-				   size_policy_arg) {
+                                      int collectors,
+                                      int generations,
+                                      PSAdaptiveSizePolicy* size_policy_arg)
+        : GCAdaptivePolicyCounters(name_arg,
+                                   collectors,
+                                   generations,
+                                   size_policy_arg) {
   if (UsePerfData) {
     EXCEPTION_MARK;
     ResourceMark rm;
@@ -61,37 +61,37 @@ PSGCAdaptivePolicyCounters::PSGCAdaptivePolicyCounters(const char* name_arg,
       PerfData::U_Bytes, (jlong) 0, CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgPromotedAvg");
-    _avg_promoted_avg_counter = 
+    _avg_promoted_avg_counter =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         ps_size_policy()->calculated_promo_size_in_bytes(), CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgPromotedDev");
-    _avg_promoted_dev_counter = 
+    _avg_promoted_dev_counter =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         (jlong) 0 , CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgPromotedPaddedAvg");
-    _avg_promoted_padded_avg_counter = 
+    _avg_promoted_padded_avg_counter =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         ps_size_policy()->calculated_promo_size_in_bytes(), CHECK);
 
     cname = PerfDataManager::counter_name(name_space(),
       "avgPretenuredPaddedAvg");
-    _avg_pretenured_padded_avg = 
+    _avg_pretenured_padded_avg =
       PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Bytes,
         (jlong) 0, CHECK);
 
 
-    cname = PerfDataManager::counter_name(name_space(), 
+    cname = PerfDataManager::counter_name(name_space(),
       "changeYoungGenForMajPauses");
-    _change_young_gen_for_maj_pauses_counter = 
-      PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Events, 
+    _change_young_gen_for_maj_pauses_counter =
+      PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Events,
         (jlong)0, CHECK);
 
-    cname = PerfDataManager::counter_name(name_space(), 
+    cname = PerfDataManager::counter_name(name_space(),
       "changeOldGenForMinPauses");
-    _change_old_gen_for_min_pauses = 
-      PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Events, 
+    _change_old_gen_for_min_pauses =
+      PerfDataManager::create_variable(SUN_GC, cname, PerfData::U_Events,
         (jlong)0, CHECK);
 
 
@@ -200,4 +200,3 @@ void PSGCAdaptivePolicyCounters::update_counters() {
     update_counters_from_policy();
   }
 }
-

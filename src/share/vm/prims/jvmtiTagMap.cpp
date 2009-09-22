@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiTagMap.cpp	1.85 07/06/27 00:30:05 JVM"
+#pragma ident "@(#)jvmtiTagMap.cpp      1.85 07/06/27 00:30:05 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_jvmtiTagMap.cpp.incl"
 
-// JvmtiTagHashmapEntry 
+// JvmtiTagHashmapEntry
 //
 // Each entry encapsulates a JNI weak reference to the tagged object
 // and the tag value. In addition an entry includes a next pointer which
@@ -38,49 +38,49 @@ class JvmtiTagHashmapEntry : public CHeapObj {
  private:
   friend class JvmtiTagMap;
 
-  jweak _object;			// JNI weak ref to tagged object  
-  jlong _tag;				// the tag
-  JvmtiTagHashmapEntry* _next;		// next on the list
+  jweak _object;                        // JNI weak ref to tagged object
+  jlong _tag;                           // the tag
+  JvmtiTagHashmapEntry* _next;          // next on the list
 
   inline void init(jweak object, jlong tag) {
-    _object = object;    
+    _object = object;
     _tag = tag;
     _next = NULL;
   }
 
   // constructor
-  JvmtiTagHashmapEntry(jweak object, jlong tag)		{ init(object, tag); }
+  JvmtiTagHashmapEntry(jweak object, jlong tag)         { init(object, tag); }
 
- public:  
+ public:
 
   // accessor methods
-  inline jweak object() const				{ return _object; }
-  inline jlong tag() const				{ return _tag; }
+  inline jweak object() const                           { return _object; }
+  inline jlong tag() const                              { return _tag; }
 
-  inline void set_tag(jlong tag) { 
+  inline void set_tag(jlong tag) {
     assert(tag != 0, "can't be zero");
     _tag = tag;
   }
 
-  inline JvmtiTagHashmapEntry* next() const		{ return _next; }
-  inline void set_next(JvmtiTagHashmapEntry* next)	{ _next = next; }
+  inline JvmtiTagHashmapEntry* next() const             { return _next; }
+  inline void set_next(JvmtiTagHashmapEntry* next)      { _next = next; }
 };
 
 
 // JvmtiTagHashmap
-// 
+//
 // A hashmap is essentially a table of pointers to entries. Entries
-// are hashed to a location, or position in the table, and then 
+// are hashed to a location, or position in the table, and then
 // chained from that location. The "key" for hashing is address of
 // the object, or oop. The "value" is the JNI weak reference to the
-// object and the tag value. Keys are not stored with the entry. 
+// object and the tag value. Keys are not stored with the entry.
 // Instead the weak reference is resolved to obtain the key.
 //
 // A hashmap maintains a count of the number entries in the hashmap
 // and resizes if the number of entries exceeds a given threshold.
-// The threshold is specified as a percentage of the size - for 
+// The threshold is specified as a percentage of the size - for
 // example a threshold of 0.75 will trigger the hashmap to resize
-// if the number of entries is >75% of table size. 
+// if the number of entries is >75% of table size.
 //
 // A hashmap provides functions for adding, removing, and finding
 // entries. It also provides a function to iterate over all entries
@@ -90,26 +90,26 @@ class JvmtiTagHashmap : public CHeapObj {
  private:
   friend class JvmtiTagMap;
 
-  enum {	    
+  enum {
     small_trace_threshold  = 10000,                  // threshold for tracing
     medium_trace_threshold = 100000,
     large_trace_threshold  = 1000000,
     initial_trace_threshold = small_trace_threshold
   };
 
-  static int _sizes[];			// array of possible hashmap sizes
-  int _size;				// actual size of the table
-  int _size_index;			// index into size table
+  static int _sizes[];                  // array of possible hashmap sizes
+  int _size;                            // actual size of the table
+  int _size_index;                      // index into size table
 
-  int _entry_count;			// number of entries in the hashmap
+  int _entry_count;                     // number of entries in the hashmap
 
-  float _load_factor;			// load factor as a % of the size
-  int _resize_threshold;		// computed threshold to trigger resizing.
+  float _load_factor;                   // load factor as a % of the size
+  int _resize_threshold;                // computed threshold to trigger resizing.
   bool _resizing_enabled;               // indicates if hashmap can resize
 
   int _trace_threshold;                 // threshold for trace messages
 
-  JvmtiTagHashmapEntry** _table;	// the table of entries.
+  JvmtiTagHashmapEntry** _table;        // the table of entries.
 
   // private accessors
   int resize_threshold() const                  { return _resize_threshold; }
@@ -185,19 +185,19 @@ class JvmtiTagHashmap : public CHeapObj {
     for (i=0; i<_size; i++) {
       JvmtiTagHashmapEntry* entry = _table[i];
       while (entry != NULL) {
-	JvmtiTagHashmapEntry* next = entry->next();
-	oop key = JNIHandles::resolve(entry->object());	
-	assert(key != NULL, "jni weak reference cleared!!");
-	unsigned int h = hash(key, new_size);
-	JvmtiTagHashmapEntry* anchor = new_table[h];
-	if (anchor == NULL) {
-	  new_table[h] = entry;
-	  entry->set_next(NULL);
-	} else {
-	  entry->set_next(anchor);
-	  new_table[h] = entry;
-	}	
-	entry = next;
+        JvmtiTagHashmapEntry* next = entry->next();
+        oop key = JNIHandles::resolve(entry->object());
+        assert(key != NULL, "jni weak reference cleared!!");
+        unsigned int h = hash(key, new_size);
+        JvmtiTagHashmapEntry* anchor = new_table[h];
+        if (anchor == NULL) {
+          new_table[h] = entry;
+          entry->set_next(NULL);
+        } else {
+          entry->set_next(anchor);
+          new_table[h] = entry;
+        }
+        entry = next;
       }
     }
 
@@ -213,7 +213,7 @@ class JvmtiTagHashmap : public CHeapObj {
 
 
   // internal remove function - remove an entry at a given position in the
-  // table. 
+  // table.
   inline void remove(JvmtiTagHashmapEntry* prev, int pos, JvmtiTagHashmapEntry* entry) {
     assert(pos >= 0 && pos < _size, "out of range");
     if (prev == NULL) {
@@ -241,15 +241,15 @@ class JvmtiTagHashmap : public CHeapObj {
     int i=0;
     while (_sizes[i] < size) {
       if (_sizes[i] < 0) {
-	assert(i > 0, "sanity check");
-	i--;
-	break;
+        assert(i > 0, "sanity check");
+        i--;
+        break;
       }
       i++;
     }
 
     // if a load factor is specified then use it, otherwise use default
-    if (load_factor > 0.01f) {	  
+    if (load_factor > 0.01f) {
       init(i, load_factor);
     } else {
       init(i);
@@ -270,8 +270,8 @@ class JvmtiTagHashmap : public CHeapObj {
   }
 
   // accessors
-  int size() const				{ return _size; }   
-  JvmtiTagHashmapEntry** table() const		{ return _table; }
+  int size() const                              { return _size; }
+  JvmtiTagHashmapEntry** table() const          { return _table; }
   int entry_count() const                       { return _entry_count; }
 
   // find an entry in the hashmap, returns NULL if not found.
@@ -279,18 +279,18 @@ class JvmtiTagHashmap : public CHeapObj {
     unsigned int h = hash(key);
     JvmtiTagHashmapEntry* entry = _table[h];
     while (entry != NULL) {
-      oop orig_key = JNIHandles::resolve(entry->object());	
+      oop orig_key = JNIHandles::resolve(entry->object());
       assert(orig_key != NULL, "jni weak reference cleared!!");
       if (key == orig_key) {
-	break;
-      } 
+        break;
+      }
       entry = entry->next();
     }
     return entry;
   }
 
 
-  // add a new entry to hashmap 
+  // add a new entry to hashmap
   inline void add(oop key, JvmtiTagHashmapEntry* entry) {
     assert(key != NULL, "checking");
     assert(find(key) == NULL, "duplicate detected");
@@ -321,13 +321,13 @@ class JvmtiTagHashmap : public CHeapObj {
   inline JvmtiTagHashmapEntry* remove(oop key) {
     unsigned int h = hash(key);
     JvmtiTagHashmapEntry* entry = _table[h];
-    JvmtiTagHashmapEntry* prev = NULL; 
+    JvmtiTagHashmapEntry* prev = NULL;
     while (entry != NULL) {
-      oop orig_key = JNIHandles::resolve(entry->object());	
+      oop orig_key = JNIHandles::resolve(entry->object());
       assert(orig_key != NULL, "jni weak reference cleared!!");
       if (key == orig_key) {
-	break;
-      } 
+        break;
+      }
       prev = entry;
       entry = entry->next();
     }
@@ -337,14 +337,14 @@ class JvmtiTagHashmap : public CHeapObj {
     return entry;
   }
 
-  // iterate over all entries in the hashmap 
+  // iterate over all entries in the hashmap
   void entry_iterate(JvmtiTagHashmapEntryClosure* closure);
 };
 
 // possible hashmap sizes - odd primes that roughly double in size.
 // To avoid excessive resizing the odd primes from 4801-76831 and
 // 76831-307261 have been removed. The list must be terminated by -1.
-int JvmtiTagHashmap::_sizes[] =  { 4801, 76831, 307261, 614563, 1228891, 
+int JvmtiTagHashmap::_sizes[] =  { 4801, 76831, 307261, 614563, 1228891,
     2457733, 4915219, 9830479, 19660831, 39321619, 78643219, -1 };
 
 
@@ -355,7 +355,7 @@ class JvmtiTagHashmapEntryClosure {
 };
 
 
-// iterate over all entries in the hashmap 
+// iterate over all entries in the hashmap
 void JvmtiTagHashmap::entry_iterate(JvmtiTagHashmapEntryClosure* closure) {
   for (int i=0; i<_size; i++) {
     JvmtiTagHashmapEntry* entry = _table[i];
@@ -365,7 +365,7 @@ void JvmtiTagHashmap::entry_iterate(JvmtiTagHashmapEntryClosure* closure) {
       // necessary because do_entry may remove the entry from the
       // hashmap.
       JvmtiTagHashmapEntry* next = entry->next();
-      closure->do_entry(entry);		
+      closure->do_entry(entry);
       entry = next;
      }
   }
@@ -379,7 +379,7 @@ void JvmtiTagHashmap::print_memory_usage() {
   // table + entries in KB
   int hashmap_usage = (size()*sizeof(JvmtiTagHashmapEntry*) +
     entry_count()*sizeof(JvmtiTagHashmapEntry))/K;
-  
+
   int weak_globals_usage = (int)(JNIHandles::weak_global_handle_memory_usage()/K);
   tty->print_cr(", %d entries (%d KB) <JNI weak globals: %d KB>]",
     entry_count(), hashmap_usage, weak_globals_usage);
@@ -462,7 +462,7 @@ JvmtiTagMap::JvmtiTagMap(JvmtiEnv* env) :
   }
 
   // get the memory region used by the young generation
-  get_young_generation(); 
+  get_young_generation();
 
   // finally add us to the environment
   ((JvmtiEnvBase *)env)->set_tag_map(this);
@@ -472,7 +472,7 @@ JvmtiTagMap::JvmtiTagMap(JvmtiEnv* env) :
 // destroy a JvmtiTagMap
 JvmtiTagMap::~JvmtiTagMap() {
 
-  // no lock acquired as we assume the enclosing environment is 
+  // no lock acquired as we assume the enclosing environment is
   // also being destroryed.
   ((JvmtiEnvBase *)_env)->set_tag_map(NULL);
 
@@ -483,11 +483,11 @@ JvmtiTagMap::~JvmtiTagMap() {
     for (int j=0; j<hashmap->size(); j++) {
       JvmtiTagHashmapEntry *entry = table[j];
       while (entry != NULL) {
-	JvmtiTagHashmapEntry* next = entry->next();
-	jweak ref = entry->object();
+        JvmtiTagHashmapEntry* next = entry->next();
+        jweak ref = entry->object();
         JNIHandles::destroy_weak_global(ref);
-	delete entry;
-	entry = next;
+        delete entry;
+        entry = next;
       }
     }
 
@@ -553,7 +553,7 @@ JvmtiTagMap* JvmtiTagMap::tag_map_for(JvmtiEnv* env) {
 
 // iterate over all entries in the tag map.
 void JvmtiTagMap::entry_iterate(JvmtiTagHashmapEntryClosure* closure) {
-  for (int i=0; i<n_hashmaps; i++) {      
+  for (int i=0; i<n_hashmaps; i++) {
     JvmtiTagHashmap* hashmap = _hashmap[i];
     hashmap->entry_iterate(closure);
   }
@@ -576,16 +576,16 @@ static inline jlong tag_for(JvmtiTagMap* tag_map, oop o) {
     return 0;
   } else {
     return entry->tag();
-  }  
+  }
 }
 
-// If the object is a java.lang.Class then return the klassOop, 
+// If the object is a java.lang.Class then return the klassOop,
 // otherwise return the original object
 static inline oop klassOop_if_java_lang_Class(oop o) {
   if (o->klass() == SystemDictionary::class_klass()) {
     if (!java_lang_Class::is_primitive(o)) {
       o = (oop)java_lang_Class::as_klassOop(o);
-      assert(o != NULL, "class for non-primitive mirror must exist");      
+      assert(o != NULL, "class for non-primitive mirror must exist");
     }
   }
   return o;
@@ -593,18 +593,18 @@ static inline oop klassOop_if_java_lang_Class(oop o) {
 
 // A CallbackWrapper is a support class for querying and tagging an object
 // around a callback to a profiler. The constructor does pre-callback
-// work to get the tag value, klass tag value, ... and the destructor 
+// work to get the tag value, klass tag value, ... and the destructor
 // does the post-callback work of tagging or untagging the object.
 //
 // {
-//   CallbackWrapper wrapper(tag_map, o); 
+//   CallbackWrapper wrapper(tag_map, o);
 //
 //   (*callback)(wrapper.klass_tag(), wrapper.obj_size(), wrapper.obj_tag_p(), ...)
 //
-// } // wrapper goes out of scope here which results in the destructor 
+// } // wrapper goes out of scope here which results in the destructor
 //      checking to see if the object has been tagged, untagged, or the
-//	tag value has changed.
-//	
+//      tag value has changed.
+//
 class CallbackWrapper : public StackObj {
  private:
   JvmtiTagMap* _tag_map;
@@ -614,21 +614,21 @@ class CallbackWrapper : public StackObj {
   jlong _obj_size;
   jlong _obj_tag;
   klassOop _klass;         // the object's class
-  jlong _klass_tag;  
+  jlong _klass_tag;
 
  protected:
-  JvmtiTagMap* tag_map() const	    { return _tag_map; }
+  JvmtiTagMap* tag_map() const      { return _tag_map; }
 
   // invoked post-callback to tag, untag, or update the tag of an object
-  void inline post_callback_tag_update(oop o, JvmtiTagHashmap* hashmap, 
+  void inline post_callback_tag_update(oop o, JvmtiTagHashmap* hashmap,
                                        JvmtiTagHashmapEntry* entry, jlong obj_tag);
  public:
-  CallbackWrapper(JvmtiTagMap* tag_map, oop o) {  
-    assert(Thread::current()->is_VM_thread() || tag_map->is_locked(), 
-	   "MT unsafe or must be VM thread");
-   
+  CallbackWrapper(JvmtiTagMap* tag_map, oop o) {
+    assert(Thread::current()->is_VM_thread() || tag_map->is_locked(),
+           "MT unsafe or must be VM thread");
+
     // for Classes the klassOop is tagged
-    _o = klassOop_if_java_lang_Class(o);  
+    _o = klassOop_if_java_lang_Class(o);
 
     // object size
     _obj_size = _o->size() * wordSize;
@@ -638,8 +638,8 @@ class CallbackWrapper : public StackObj {
     _hashmap = tag_map->hashmap_for(_o);
     _entry = _hashmap->find(_o);
 
-    // get object tag 
-    _obj_tag = (_entry == NULL) ? 0 : _entry->tag();   
+    // get object tag
+    _obj_tag = (_entry == NULL) ? 0 : _entry->tag();
 
     // get the class and the class's tag value
     if (_o == o) {
@@ -656,45 +656,45 @@ class CallbackWrapper : public StackObj {
     post_callback_tag_update(_o, _hashmap, _entry, _obj_tag);
   }
 
-  inline jlong* obj_tag_p()			{ return &_obj_tag; } 
-  inline jlong obj_size() const			{ return _obj_size; }
+  inline jlong* obj_tag_p()                     { return &_obj_tag; }
+  inline jlong obj_size() const                 { return _obj_size; }
   inline jlong obj_tag() const                  { return _obj_tag; }
   inline klassOop klass() const                 { return _klass; }
-  inline jlong klass_tag() const		{ return _klass_tag; } 
+  inline jlong klass_tag() const                { return _klass_tag; }
 };
 
 
 
 // callback post-callback to tag, untag, or update the tag of an object
-void inline CallbackWrapper::post_callback_tag_update(oop o, 
-                                                      JvmtiTagHashmap* hashmap, 
-                                                      JvmtiTagHashmapEntry* entry, 
+void inline CallbackWrapper::post_callback_tag_update(oop o,
+                                                      JvmtiTagHashmap* hashmap,
+                                                      JvmtiTagHashmapEntry* entry,
                                                       jlong obj_tag) {
-  if (entry == NULL) { 
-    if (obj_tag != 0) {	
+  if (entry == NULL) {
+    if (obj_tag != 0) {
       // callback has tagged the object
       assert(Thread::current()->is_VM_thread(), "must be VMThread");
       HandleMark hm;
-      Handle h(o);      
-      jweak ref = JNIHandles::make_weak_global(h);	
+      Handle h(o);
+      jweak ref = JNIHandles::make_weak_global(h);
       entry = tag_map()->create_entry(ref, obj_tag);
       hashmap->add(o, entry);
     }
   } else {
     // object was previously tagged - the callback may have untagged
     // the object or changed the tag value
-    if (obj_tag == 0) {		
+    if (obj_tag == 0) {
       jweak ref = entry->object();
-	
+
       JvmtiTagHashmapEntry* entry_removed = hashmap->remove(o);
-      assert(entry_removed == entry, "checking");   
+      assert(entry_removed == entry, "checking");
       tag_map()->destroy_entry(entry);
-	
-      JNIHandles::destroy_weak_global(ref);	
+
+      JNIHandles::destroy_weak_global(ref);
     } else {
       if (obj_tag != entry->tag()) {
-	 entry->set_tag(obj_tag);	
-      }     
+         entry->set_tag(obj_tag);
+      }
     }
   }
 }
@@ -705,13 +705,13 @@ void inline CallbackWrapper::post_callback_tag_update(oop o,
 // {
 //   TwoOopCallbackWrapper wrapper(tag_map, referrer, o);
 //
-//   (*callback)(wrapper.klass_tag(), 
-//               wrapper.obj_size(), 
+//   (*callback)(wrapper.klass_tag(),
+//               wrapper.obj_size(),
 //               wrapper.obj_tag_p()
 //               wrapper.referrer_tag_p(), ...)
 //
-// } // wrapper goes out of scope here which results in the destructor 
-//      checking to see if the referrer object has been tagged, untagged, 
+// } // wrapper goes out of scope here which results in the destructor
+//      checking to see if the referrer object has been tagged, untagged,
 //      or the tag value has changed.
 //
 class TwoOopCallbackWrapper : public CallbackWrapper {
@@ -724,30 +724,30 @@ class TwoOopCallbackWrapper : public CallbackWrapper {
   jlong _referrer_klass_tag;
   jlong* _referrer_tag_p;
 
-  bool is_reference_to_self() const		{ return _is_reference_to_self; }
+  bool is_reference_to_self() const             { return _is_reference_to_self; }
 
  public:
-  TwoOopCallbackWrapper(JvmtiTagMap* tag_map, oop referrer, oop o) : 
-    CallbackWrapper(tag_map, o) 
+  TwoOopCallbackWrapper(JvmtiTagMap* tag_map, oop referrer, oop o) :
+    CallbackWrapper(tag_map, o)
   {
     // self reference needs to be handled in a special way
-    _is_reference_to_self = (referrer == o);       
+    _is_reference_to_self = (referrer == o);
 
-    if (_is_reference_to_self) {  
+    if (_is_reference_to_self) {
       _referrer_klass_tag = klass_tag();
       _referrer_tag_p = obj_tag_p();
     } else {
       // for Classes the klassOop is tagged
-      _referrer = klassOop_if_java_lang_Class(referrer);  
+      _referrer = klassOop_if_java_lang_Class(referrer);
       // record the context
       _referrer_hashmap = tag_map->hashmap_for(_referrer);
       _referrer_entry = _referrer_hashmap->find(_referrer);
 
-      // get object tag 
+      // get object tag
       _referrer_obj_tag = (_referrer_entry == NULL) ? 0 : _referrer_entry->tag();
       _referrer_tag_p = &_referrer_obj_tag;
 
-      // get referrer class tag.  
+      // get referrer class tag.
       klassOop k = (_referrer == referrer) ?  // Check if referrer is a class...
           _referrer->klass()                  // No, just get its class
          : SystemDictionary::class_klass();   // Yes, its class is Class
@@ -755,33 +755,33 @@ class TwoOopCallbackWrapper : public CallbackWrapper {
     }
   }
 
-  ~TwoOopCallbackWrapper() {    
+  ~TwoOopCallbackWrapper() {
     if (!is_reference_to_self()){
-      post_callback_tag_update(_referrer, 
-	                       _referrer_hashmap, 
-			       _referrer_entry, 
-			       _referrer_obj_tag);
+      post_callback_tag_update(_referrer,
+                               _referrer_hashmap,
+                               _referrer_entry,
+                               _referrer_obj_tag);
     }
   }
 
   // address of referrer tag
   // (for a self reference this will return the same thing as obj_tag_p())
-  inline jlong* referrer_tag_p()	{ return _referrer_tag_p; }
+  inline jlong* referrer_tag_p()        { return _referrer_tag_p; }
 
   // referrer's class tag
-  inline jlong referrer_klass_tag()	{ return _referrer_klass_tag; }
+  inline jlong referrer_klass_tag()     { return _referrer_klass_tag; }
 };
 
 // tag an object
 //
-// This function is performance critical. If many threads attempt to tag objects 
-// around the same time then it's possible that the Mutex associated with the 
+// This function is performance critical. If many threads attempt to tag objects
+// around the same time then it's possible that the Mutex associated with the
 // tag map will be a hot lock. Eliminating this lock will not eliminate the issue
 // because creating a JNI weak reference requires acquiring a global lock also.
 void JvmtiTagMap::set_tag(jobject object, jlong tag) {
   MutexLocker ml(lock());
 
-  // resolve the object 
+  // resolve the object
   oop o = JNIHandles::resolve_non_null(object);
 
   // for Classes we tag the klassOop
@@ -795,29 +795,29 @@ void JvmtiTagMap::set_tag(jobject object, jlong tag) {
   if (entry == NULL) {
     if (tag != 0) {
       HandleMark hm;
-      Handle h(o);      
-      jweak ref = JNIHandles::make_weak_global(h);	
+      Handle h(o);
+      jweak ref = JNIHandles::make_weak_global(h);
 
       // the object may have moved because make_weak_global may
-      // have blocked - thus it is necessary resolve the handle 
+      // have blocked - thus it is necessary resolve the handle
       // and re-hash the object.
       o = h();
       entry = create_entry(ref, tag);
-      hashmap_for(o)->add(o, entry);  
+      hashmap_for(o)->add(o, entry);
     } else {
       // no-op
     }
   } else {
     // if the object is already tagged then we either update
     // the tag (if a new tag value has been provided)
-    // or remove the object if the new tag value is 0. 
+    // or remove the object if the new tag value is 0.
     // Removing the object requires that we also delete the JNI
     // weak ref to the object.
     if (tag == 0) {
       jweak ref = entry->object();
       hashmap->remove(o);
       destroy_entry(entry);
-      JNIHandles::destroy_weak_global(ref);           
+      JNIHandles::destroy_weak_global(ref);
     } else {
       entry->set_tag(tag);
     }
@@ -826,9 +826,9 @@ void JvmtiTagMap::set_tag(jobject object, jlong tag) {
 
 // get the tag for an object
 jlong JvmtiTagMap::get_tag(jobject object) {
-  MutexLocker ml(lock()); 
+  MutexLocker ml(lock());
 
-  // resolve the object 
+  // resolve the object
   oop o = JNIHandles::resolve_non_null(object);
 
   // for Classes get the tag from the klassOop
@@ -847,7 +847,7 @@ class ClassFieldDescriptor: public CHeapObj {
   char _field_type;
  public:
   ClassFieldDescriptor(int index, char type, int offset) :
-    _field_index(index), _field_type(type), _field_offset(offset) { 
+    _field_index(index), _field_type(type), _field_offset(offset) {
   }
   int field_index()  const  { return _field_index; }
   char field_type()  const  { return _field_type; }
@@ -867,14 +867,14 @@ class ClassFieldMap: public CHeapObj {
   ClassFieldMap();
 
   // add a field
-  void add(int index, char type, int offset);   
+  void add(int index, char type, int offset);
 
   // returns the field count for the given class
   static int compute_field_count(instanceKlassHandle ikh);
 
  public:
-  ~ClassFieldMap(); 
- 
+  ~ClassFieldMap();
+
   // access
   int field_count()                     { return _fields->length(); }
   ClassFieldDescriptor* field_at(int i) { return _fields->at(i); }
@@ -901,7 +901,7 @@ void ClassFieldMap::add(int index, char type, int offset) {
 }
 
 // Returns a heap allocated ClassFieldMap to describe the static fields
-// of the given class. 
+// of the given class.
 //
 ClassFieldMap* ClassFieldMap::create_map_of_static_fields(klassOop k) {
   HandleMark hm;
@@ -909,16 +909,16 @@ ClassFieldMap* ClassFieldMap::create_map_of_static_fields(klassOop k) {
 
   // create the field map
   ClassFieldMap* field_map = new ClassFieldMap();
-  
+
   FilteredFieldStream f(ikh, false, false);
   int max_field_index = f.field_count()-1;
-  
+
   int index = 0;
   for (FilteredFieldStream fld(ikh, true, true); !fld.eos(); fld.next(), index++) {
     // ignore instance fields
     if (!fld.access_flags().is_static()) {
       continue;
-    }    
+    }
     field_map->add(max_field_index - index, fld.signature()->byte_at(0), fld.offset());
   }
   return field_map;
@@ -934,9 +934,9 @@ ClassFieldMap* ClassFieldMap::create_map_of_instance_fields(oop obj) {
 
   // create the field map
   ClassFieldMap* field_map = new ClassFieldMap();
-  
+
   FilteredFieldStream f(ikh, false, false);
-  
+
   int max_field_index = f.field_count()-1;
 
   int index = 0;
@@ -944,7 +944,7 @@ ClassFieldMap* ClassFieldMap::create_map_of_instance_fields(oop obj) {
     // ignore static fields
     if (fld.access_flags().is_static()) {
       continue;
-    }    
+    }
     field_map->add(max_field_index - index, fld.signature()->byte_at(0), fld.offset());
   }
 
@@ -967,7 +967,7 @@ class JvmtiCachedClassFieldMap : public CHeapObj {
 
   JvmtiCachedClassFieldMap(ClassFieldMap* field_map);
   ~JvmtiCachedClassFieldMap();
- 
+
   static GrowableArray<instanceKlass*>* _class_list;
   static void add_to_class_list(instanceKlass* ik);
 
@@ -987,12 +987,12 @@ class JvmtiCachedClassFieldMap : public CHeapObj {
 GrowableArray<instanceKlass*>* JvmtiCachedClassFieldMap::_class_list;
 
 JvmtiCachedClassFieldMap::JvmtiCachedClassFieldMap(ClassFieldMap* field_map) {
-  _field_map = field_map;  
+  _field_map = field_map;
 }
 
 JvmtiCachedClassFieldMap::~JvmtiCachedClassFieldMap() {
   if (_field_map != NULL) {
-    delete _field_map; 
+    delete _field_map;
   }
 }
 
@@ -1001,7 +1001,7 @@ JvmtiCachedClassFieldMap::~JvmtiCachedClassFieldMap() {
 class ClassFieldMapCacheMark : public StackObj {
  private:
    static bool _is_active;
- public:  
+ public:
    ClassFieldMapCacheMark() {
      assert(Thread::current()->is_VM_thread(), "must be VMThread");
      assert(JvmtiCachedClassFieldMap::cached_field_map_count() == 0, "cache not empty");
@@ -1026,7 +1026,7 @@ void JvmtiCachedClassFieldMap::add_to_class_list(instanceKlass* ik) {
   _class_list->push(ik);
 }
 
-// returns the instance field map for the given object 
+// returns the instance field map for the given object
 // (returns field map cached by the instanceKlass if possible)
 ClassFieldMap* JvmtiCachedClassFieldMap::get_map_of_instance_fields(oop obj) {
   assert(Thread::current()->is_VM_thread(), "must be VMThread");
@@ -1041,7 +1041,7 @@ ClassFieldMap* JvmtiCachedClassFieldMap::get_map_of_instance_fields(oop obj) {
     assert(cached_map->field_map() != NULL, "missing field list");
     return cached_map->field_map();
   } else {
-    ClassFieldMap* field_map = ClassFieldMap::create_map_of_instance_fields(obj);  
+    ClassFieldMap* field_map = ClassFieldMap::create_map_of_instance_fields(obj);
     cached_map = new JvmtiCachedClassFieldMap(field_map);
     ik->set_jvmti_cached_class_field_map(cached_map);
     add_to_class_list(ik);
@@ -1053,7 +1053,7 @@ ClassFieldMap* JvmtiCachedClassFieldMap::get_map_of_instance_fields(oop obj) {
 void JvmtiCachedClassFieldMap::clear_cache() {
   assert(Thread::current()->is_VM_thread(), "must be VMThread");
   if (_class_list != NULL) {
-    for (int i = 0; i < _class_list->length(); i++) {   
+    for (int i = 0; i < _class_list->length(); i++) {
       instanceKlass* ik = _class_list->at(i);
       JvmtiCachedClassFieldMap* cached_map = ik->jvmti_cached_class_field_map();
       assert(cached_map != NULL, "should not be NULL");
@@ -1071,9 +1071,9 @@ int JvmtiCachedClassFieldMap::cached_field_map_count() {
 }
 
 // helper function to indicate if an object is filtered by its tag or class tag
-static inline bool is_filtered_by_heap_filter(jlong obj_tag, 
-					      jlong klass_tag, 
-					      int heap_filter) {
+static inline bool is_filtered_by_heap_filter(jlong obj_tag,
+                                              jlong klass_tag,
+                                              int heap_filter) {
   // apply the heap filter
   if (obj_tag != 0) {
     // filter out tagged objects
@@ -1125,13 +1125,13 @@ static inline void copy_to_jvalue(jvalue *v, address addr, jvmtiPrimitiveType va
 // helper function to invoke string primitive value callback
 // returns visit control flags
 static jint invoke_string_value_callback(jvmtiStringPrimitiveValueCallback cb,
-					 CallbackWrapper* wrapper,
-					 oop str,
-					 void* user_data)
+                                         CallbackWrapper* wrapper,
+                                         oop str,
+                                         void* user_data)
 {
   assert(str->klass() == SystemDictionary::string_klass(), "not a string");
-  
-  // get the string value and length 
+
+  // get the string value and length
   // (string value may be offset from the base)
   int s_len = java_lang_String::length(str);
   typeArrayOop s_value = java_lang_String::value(str);
@@ -1144,33 +1144,33 @@ static jint invoke_string_value_callback(jvmtiStringPrimitiveValueCallback cb,
   }
 
   // invoke the callback
-  return (*cb)(wrapper->klass_tag(), 
+  return (*cb)(wrapper->klass_tag(),
                wrapper->obj_size(),
-	       wrapper->obj_tag_p(),
-	       value,
-	       (jint)s_len,
-	       user_data);
+               wrapper->obj_tag_p(),
+               value,
+               (jint)s_len,
+               user_data);
 }
 
 // helper function to invoke string primitive value callback
 // returns visit control flags
 static jint invoke_array_primitive_value_callback(jvmtiArrayPrimitiveValueCallback cb,
-					          CallbackWrapper* wrapper,
-					          oop obj,
-					          void* user_data)
+                                                  CallbackWrapper* wrapper,
+                                                  oop obj,
+                                                  void* user_data)
 {
   assert(obj->is_typeArray(), "not a primitive array");
 
   // get base address of first element
-  typeArrayOop array = typeArrayOop(obj); 
+  typeArrayOop array = typeArrayOop(obj);
   BasicType type = typeArrayKlass::cast(array->klass())->element_type();
   void* elements = array->base(type);
 
   // jvmtiPrimitiveType is defined so this mapping is always correct
   jvmtiPrimitiveType elem_type = (jvmtiPrimitiveType)type2char(type);
- 
-  return (*cb)(wrapper->klass_tag(), 
-               wrapper->obj_size(), 
+
+  return (*cb)(wrapper->klass_tag(),
+               wrapper->obj_size(),
                wrapper->obj_tag_p(),
                (jint)array->length(),
                elem_type,
@@ -1182,23 +1182,23 @@ static jint invoke_array_primitive_value_callback(jvmtiArrayPrimitiveValueCallba
 // of a given class
 static jint invoke_primitive_field_callback_for_static_fields
   (CallbackWrapper* wrapper,
-   oop obj, 
+   oop obj,
    jvmtiPrimitiveFieldCallback cb,
-   void* user_data) 
+   void* user_data)
 {
   // for static fields only the index will be set
   static jvmtiHeapReferenceInfo reference_info = { 0 };
 
   assert(obj->klass() == SystemDictionary::class_klass(), "not a class");
   if (java_lang_Class::is_primitive(obj)) {
-    return 0; 
+    return 0;
   }
   klassOop k = java_lang_Class::as_klassOop(obj);
   Klass* klass = k->klass_part();
 
   // ignore classes for object and type arrays
-  if (!klass->oop_is_instance()) {   
-    return 0;      
+  if (!klass->oop_is_instance()) {
+    return 0;
   }
 
   // ignore classes which aren't linked yet
@@ -1211,7 +1211,7 @@ static jint invoke_primitive_field_callback_for_static_fields
   ClassFieldMap* field_map = ClassFieldMap::create_map_of_static_fields(k);
 
   // invoke the callback for each static primitive field
-  for (int i=0; i<field_map->field_count(); i++) {   
+  for (int i=0; i<field_map->field_count(); i++) {
     ClassFieldDescriptor* field = field_map->field_at(i);
 
     // ignore non-primitive fields
@@ -1232,13 +1232,13 @@ static jint invoke_primitive_field_callback_for_static_fields
     reference_info.field.index = field->field_index();
 
     // invoke the callback
-    jint res = (*cb)(JVMTI_HEAP_REFERENCE_STATIC_FIELD, 
-	             &reference_info,
-                     wrapper->klass_tag(), 
-		     wrapper->obj_tag_p(),
-                     value, 
-		     value_type, 
-		     user_data);                                            
+    jint res = (*cb)(JVMTI_HEAP_REFERENCE_STATIC_FIELD,
+                     &reference_info,
+                     wrapper->klass_tag(),
+                     wrapper->obj_tag_p(),
+                     value,
+                     value_type,
+                     user_data);
     if (res & JVMTI_VISIT_ABORT) {
       delete field_map;
       return res;
@@ -1260,11 +1260,11 @@ static jint invoke_primitive_field_callback_for_instance_fields(
   // for instance fields only the index will be set
   static jvmtiHeapReferenceInfo reference_info = { 0 };
 
-  // get the map of the instance fields 
+  // get the map of the instance fields
   ClassFieldMap* fields = JvmtiCachedClassFieldMap::get_map_of_instance_fields(obj);
 
   // invoke the callback for each instance primitive field
-  for (int i=0; i<fields->field_count(); i++) {   
+  for (int i=0; i<fields->field_count(); i++) {
     ClassFieldDescriptor* field = fields->field_at(i);
 
     // ignore non-primitive fields
@@ -1285,13 +1285,13 @@ static jint invoke_primitive_field_callback_for_instance_fields(
     reference_info.field.index = field->field_index();
 
     // invoke the callback
-    jint res = (*cb)(JVMTI_HEAP_REFERENCE_FIELD, 
-	             &reference_info,
-                     wrapper->klass_tag(), 
-		     wrapper->obj_tag_p(),
-                     value, 
-		     value_type, 
-		     user_data);                                            
+    jint res = (*cb)(JVMTI_HEAP_REFERENCE_FIELD,
+                     &reference_info,
+                     wrapper->klass_tag(),
+                     wrapper->obj_tag_p(),
+                     value,
+                     value_type,
+                     user_data);
     if (res & JVMTI_VISIT_ABORT) {
       return res;
     }
@@ -1309,14 +1309,14 @@ class VM_HeapIterateOperation: public VM_Operation {
   VM_HeapIterateOperation(ObjectClosure* blk) { _blk = blk; }
 
   VMOp_Type type() const { return VMOp_HeapIterateOperation; }
-  void doit() {        
-    // allows class files maps to be cached during iteration    
+  void doit() {
+    // allows class files maps to be cached during iteration
     ClassFieldMapCacheMark cm;
 
     // make sure that heap is parsable (fills TLABs with filler objects)
     Universe::heap()->ensure_parsability(false);  // no need to retire TLABs
 
-    // Verify heap before iteration - if the heap gets corrupted then 
+    // Verify heap before iteration - if the heap gets corrupted then
     // JVMTI's IterateOverHeap will crash.
     if (VerifyBeforeIteration) {
       Universe::verify();
@@ -1337,7 +1337,7 @@ class VM_HeapIterateOperation: public VM_Operation {
 };
 
 
-// An ObjectClosure used to support the deprecated IterateOverHeap and 
+// An ObjectClosure used to support the deprecated IterateOverHeap and
 // IterateOverInstancesOfClass functions
 class IterateOverHeapObjectClosure: public ObjectClosure {
  private:
@@ -1351,7 +1351,7 @@ class IterateOverHeapObjectClosure: public ObjectClosure {
   JvmtiTagMap* tag_map() const                    { return _tag_map; }
   jvmtiHeapObjectFilter object_filter() const     { return _object_filter; }
   jvmtiHeapObjectCallback object_callback() const { return _heap_object_callback; }
-  KlassHandle klass() const		          { return _klass; }
+  KlassHandle klass() const                       { return _klass; }
   const void* user_data() const                   { return _user_data; }
 
   // indicates if iteration has been aborted
@@ -1360,20 +1360,20 @@ class IterateOverHeapObjectClosure: public ObjectClosure {
   void set_iteration_aborted(bool aborted)        { _iteration_aborted = aborted; }
 
  public:
-  IterateOverHeapObjectClosure(JvmtiTagMap* tag_map, 
-                               KlassHandle klass, 
-			       jvmtiHeapObjectFilter object_filter, 
+  IterateOverHeapObjectClosure(JvmtiTagMap* tag_map,
+                               KlassHandle klass,
+                               jvmtiHeapObjectFilter object_filter,
                                jvmtiHeapObjectCallback heap_object_callback,
-			       const void* user_data) :
+                               const void* user_data) :
     _tag_map(tag_map),
     _klass(klass),
     _object_filter(object_filter),
     _heap_object_callback(heap_object_callback),
     _user_data(user_data),
-    _iteration_aborted(false) 
-  { 
+    _iteration_aborted(false)
+  {
   }
-    
+
   void do_object(oop o);
 };
 
@@ -1381,14 +1381,14 @@ class IterateOverHeapObjectClosure: public ObjectClosure {
 void IterateOverHeapObjectClosure::do_object(oop o) {
   // check if iteration has been halted
   if (is_iteration_aborted()) return;
-  
+
   // ignore any objects that aren't visible to profiler
-  if (!ServiceUtil::visible_oop(o)) return; 
-    
+  if (!ServiceUtil::visible_oop(o)) return;
+
   // instanceof check when filtering by klass
-  if (!klass().is_null() && !o->is_a(klass()())) { 
-    return;     
-  } 
+  if (!klass().is_null() && !o->is_a(klass()())) {
+    return;
+  }
   // prepare for the calllback
   CallbackWrapper wrapper(tag_map(), o);
 
@@ -1396,15 +1396,15 @@ void IterateOverHeapObjectClosure::do_object(oop o) {
   // then don't invoke the callback. Similiarly, if the object is untagged
   // and we're only interested in tagged objects we skip the callback.
   if (wrapper.obj_tag() != 0) {
-    if (object_filter() == JVMTI_HEAP_OBJECT_UNTAGGED) return; 
-  } else {   
+    if (object_filter() == JVMTI_HEAP_OBJECT_UNTAGGED) return;
+  } else {
     if (object_filter() == JVMTI_HEAP_OBJECT_TAGGED) return;
   }
 
   // invoke the agent's callback
-  jvmtiIterationControl control = (*object_callback())(wrapper.klass_tag(), 
-	                                               wrapper.obj_size(), 
-                                                       wrapper.obj_tag_p(), 
+  jvmtiIterationControl control = (*object_callback())(wrapper.klass_tag(),
+                                                       wrapper.obj_size(),
+                                                       wrapper.obj_tag_p(),
                                                        (void*)user_data());
   if (control == JVMTI_ITERATION_ABORT) {
     set_iteration_aborted(true);
@@ -1413,7 +1413,7 @@ void IterateOverHeapObjectClosure::do_object(oop o) {
 
 // An ObjectClosure used to support the IterateThroughHeap function
 class IterateThroughHeapObjectClosure: public ObjectClosure {
- private:  
+ private:
   JvmtiTagMap* _tag_map;
   KlassHandle _klass;
   int _heap_filter;
@@ -1424,12 +1424,12 @@ class IterateThroughHeapObjectClosure: public ObjectClosure {
   JvmtiTagMap* tag_map() const                     { return _tag_map; }
   int heap_filter() const                          { return _heap_filter; }
   const jvmtiHeapCallbacks* callbacks() const      { return _callbacks; }
-  KlassHandle klass() const		           { return _klass; }
+  KlassHandle klass() const                        { return _klass; }
   const void* user_data() const                    { return _user_data; }
 
   // indicates if the iteration has been aborted
   bool _iteration_aborted;
-  bool is_iteration_aborted() const                { return _iteration_aborted; }  
+  bool is_iteration_aborted() const                { return _iteration_aborted; }
 
   // used to check the visit control flags. If the abort flag is set
   // then we set the iteration aborted flag so that the iteration completes
@@ -1443,17 +1443,17 @@ class IterateThroughHeapObjectClosure: public ObjectClosure {
   }
 
  public:
-  IterateThroughHeapObjectClosure(JvmtiTagMap* tag_map, 
-                                  KlassHandle klass, 
-			          int heap_filter,
+  IterateThroughHeapObjectClosure(JvmtiTagMap* tag_map,
+                                  KlassHandle klass,
+                                  int heap_filter,
                                   const jvmtiHeapCallbacks* heap_callbacks,
-				  const void* user_data) :
+                                  const void* user_data) :
     _tag_map(tag_map),
     _klass(klass),
     _heap_filter(heap_filter),
     _callbacks(heap_callbacks),
     _user_data(user_data),
-    _iteration_aborted(false) 
+    _iteration_aborted(false)
   {
   }
 
@@ -1466,8 +1466,8 @@ void IterateThroughHeapObjectClosure::do_object(oop obj) {
   if (is_iteration_aborted()) return;
 
   // ignore any objects that aren't visible to profiler
-  if (!ServiceUtil::visible_oop(obj)) return; 
-    
+  if (!ServiceUtil::visible_oop(obj)) return;
+
   // apply class filter
   if (is_filtered_by_klass_filter(obj, klass())) return;
 
@@ -1482,15 +1482,15 @@ void IterateThroughHeapObjectClosure::do_object(oop obj) {
   // for arrays we need the length, otherwise -1
   bool is_array = obj->is_array();
   int len = is_array ? arrayOop(obj)->length() : -1;
-  
+
   // invoke the object callback (if callback is provided)
   if (callbacks()->heap_iteration_callback != NULL) {
     jvmtiHeapIterationCallback cb = callbacks()->heap_iteration_callback;
-    jint res = (*cb)(wrapper.klass_tag(), 
-	             wrapper.obj_size(), 
-                     wrapper.obj_tag_p(), 
-	             (jint)len, 
-		     (void*)user_data());
+    jint res = (*cb)(wrapper.klass_tag(),
+                     wrapper.obj_size(),
+                     wrapper.obj_tag_p(),
+                     (jint)len,
+                     (void*)user_data());
     if (check_flags_for_abort(res)) return;
   }
 
@@ -1499,76 +1499,76 @@ void IterateThroughHeapObjectClosure::do_object(oop obj) {
     jint res;
     jvmtiPrimitiveFieldCallback cb = callbacks()->primitive_field_callback;
     if (obj->klass() == SystemDictionary::class_klass()) {
-      res = invoke_primitive_field_callback_for_static_fields(&wrapper, 
-	                                                            obj, 
-								    cb, 
-								    (void*)user_data());
+      res = invoke_primitive_field_callback_for_static_fields(&wrapper,
+                                                                    obj,
+                                                                    cb,
+                                                                    (void*)user_data());
     } else {
-      res = invoke_primitive_field_callback_for_instance_fields(&wrapper, 
-	                                                              obj, 
-								      cb, 
-								      (void*)user_data());
+      res = invoke_primitive_field_callback_for_instance_fields(&wrapper,
+                                                                      obj,
+                                                                      cb,
+                                                                      (void*)user_data());
     }
     if (check_flags_for_abort(res)) return;
   }
-     
+
   // string callback
   if (!is_array &&
       callbacks()->string_primitive_value_callback != NULL &&
-      obj->klass() == SystemDictionary::string_klass()) {  
+      obj->klass() == SystemDictionary::string_klass()) {
     jint res = invoke_string_value_callback(
-	        callbacks()->string_primitive_value_callback,
-	        &wrapper,
-		obj,
-		(void*)user_data() );	       
+                callbacks()->string_primitive_value_callback,
+                &wrapper,
+                obj,
+                (void*)user_data() );
     if (check_flags_for_abort(res)) return;
-  }   
+  }
 
   // array callback
-  if (is_array && 
+  if (is_array &&
       callbacks()->array_primitive_value_callback != NULL &&
-      obj->is_typeArray()) { 
+      obj->is_typeArray()) {
     jint res = invoke_array_primitive_value_callback(
-	       callbacks()->array_primitive_value_callback,
-	       &wrapper,
-	       obj,
-	       (void*)user_data() );
+               callbacks()->array_primitive_value_callback,
+               &wrapper,
+               obj,
+               (void*)user_data() );
     if (check_flags_for_abort(res)) return;
-  }  
+  }
 };
 
 
 // Deprecated function to iterate over all objects in the heap
 void JvmtiTagMap::iterate_over_heap(jvmtiHeapObjectFilter object_filter,
-				    KlassHandle klass, 				     
-				    jvmtiHeapObjectCallback heap_object_callback, 
-                                    const void* user_data) 
+                                    KlassHandle klass,
+                                    jvmtiHeapObjectCallback heap_object_callback,
+                                    const void* user_data)
 {
   MutexLocker ml(Heap_lock);
-  IterateOverHeapObjectClosure blk(this, 
-                                   klass, 
-				   object_filter, 
-                                   heap_object_callback, 
-				   user_data);
+  IterateOverHeapObjectClosure blk(this,
+                                   klass,
+                                   object_filter,
+                                   heap_object_callback,
+                                   user_data);
   VM_HeapIterateOperation op(&blk);
-  VMThread::execute(&op);  
+  VMThread::execute(&op);
 }
 
 
 // Iterates over all objects in the heap
-void JvmtiTagMap::iterate_through_heap(jint heap_filter, 
-				       KlassHandle klass, 
-                                       const jvmtiHeapCallbacks* callbacks, 
-                                       const void* user_data) 
-{   
-  MutexLocker ml(Heap_lock); 
-  IterateThroughHeapObjectClosure blk(this, 
-                                      klass, 
-				      heap_filter, 
-				      callbacks, 
-				      user_data);
+void JvmtiTagMap::iterate_through_heap(jint heap_filter,
+                                       KlassHandle klass,
+                                       const jvmtiHeapCallbacks* callbacks,
+                                       const void* user_data)
+{
+  MutexLocker ml(Heap_lock);
+  IterateThroughHeapObjectClosure blk(this,
+                                      klass,
+                                      heap_filter,
+                                      callbacks,
+                                      user_data);
   VM_HeapIterateOperation op(&blk);
-  VMThread::execute(&op); 
+  VMThread::execute(&op);
 }
 
 // support class for get_objects_with_tags
@@ -1601,20 +1601,20 @@ class TagObjectCollector : public JvmtiTagHashmapEntryClosure {
   // and record the reference and tag value.
   //
   void do_entry(JvmtiTagHashmapEntry* entry) {
-    for (int i=0; i<_tag_count; i++) {      
+    for (int i=0; i<_tag_count; i++) {
       if (_tags[i] == entry->tag()) {
-	oop o = JNIHandles::resolve(entry->object());
-	assert(o != NULL && o != JNIHandles::deleted_handle(), "sanity check");
+        oop o = JNIHandles::resolve(entry->object());
+        assert(o != NULL && o != JNIHandles::deleted_handle(), "sanity check");
 
-	// the mirror is tagged
-	if (o->is_klass()) {
-	  klassOop k = (klassOop)o;
-	  o = Klass::cast(k)->java_mirror();
-	}
+        // the mirror is tagged
+        if (o->is_klass()) {
+          klassOop k = (klassOop)o;
+          o = Klass::cast(k)->java_mirror();
+        }
 
-	jobject ref = JNIHandles::make_local(JavaThread::current(), o);
-	_object_results->append(ref);
-	_tag_results->append((uint64_t)entry->tag());
+        jobject ref = JNIHandles::make_local(JavaThread::current(), o);
+        _object_results->append(ref);
+        _tag_results->append((uint64_t)entry->tag());
       }
     }
   }
@@ -1624,7 +1624,7 @@ class TagObjectCollector : public JvmtiTagHashmapEntryClosure {
   jvmtiError result(jint* count_ptr, jobject** object_result_ptr, jlong** tag_result_ptr) {
     jvmtiError error;
     int count = _object_results->length();
-    assert(count >= 0, "sanity check");    
+    assert(count >= 0, "sanity check");
 
     // if object_result_ptr is not NULL then allocate the result and copy
     // in the object references.
@@ -1642,14 +1642,14 @@ class TagObjectCollector : public JvmtiTagHashmapEntryClosure {
     // in the tag values.
     if (tag_result_ptr != NULL) {
       error = _env->Allocate(count * sizeof(jlong), (unsigned char**)tag_result_ptr);
-      if (error != JVMTI_ERROR_NONE) {	
-	if (object_result_ptr != NULL) {
+      if (error != JVMTI_ERROR_NONE) {
+        if (object_result_ptr != NULL) {
           _env->Deallocate((unsigned char*)object_result_ptr);
-	}
+        }
         return error;
       }
       for (int i=0; i<count; i++) {
-	(*tag_result_ptr)[i] = (jlong)_tag_results->at(i);
+        (*tag_result_ptr)[i] = (jlong)_tag_results->at(i);
       }
     }
 
@@ -1659,20 +1659,20 @@ class TagObjectCollector : public JvmtiTagHashmapEntryClosure {
 };
 
 // return the list of objects with the specified tags
-jvmtiError JvmtiTagMap::get_objects_with_tags(const jlong* tags, 
+jvmtiError JvmtiTagMap::get_objects_with_tags(const jlong* tags,
   jint count, jint* count_ptr, jobject** object_result_ptr, jlong** tag_result_ptr) {
 
-  TagObjectCollector collector(env(), tags, count); 
-  {    
+  TagObjectCollector collector(env(), tags, count);
+  {
     // iterate over all tagged objects
     MutexLocker ml(lock());
-    entry_iterate(&collector);    
+    entry_iterate(&collector);
   }
   return collector.result(count_ptr, object_result_ptr, tag_result_ptr);
 }
 
 
-// ObjectMarker is used to support the marking objects when walking the 
+// ObjectMarker is used to support the marking objects when walking the
 // heap.
 //
 // This implementation uses the existing mark bits in an object for
@@ -1685,20 +1685,20 @@ jvmtiError JvmtiTagMap::get_objects_with_tags(const jlong* tags,
 //
 // Future work: This implementation currently uses growable arrays to save
 // the oop and header of interesting objects. As an optimization we could
-// use the same technique as the GC and make use of the unused area 
+// use the same technique as the GC and make use of the unused area
 // between top() and end().
 //
 
 // An ObjectClosure used to restore the mark bits of an object
 class RestoreMarksClosure : public ObjectClosure {
- public:  
-  void do_object(oop o) {   
+ public:
+  void do_object(oop o) {
     if (o != NULL) {
       markOop mark = o->mark();
       if (mark->is_marked()) {
         o->init_mark();
       }
-    }    
+    }
   }
 };
 
@@ -1706,15 +1706,15 @@ class RestoreMarksClosure : public ObjectClosure {
 class ObjectMarker : AllStatic {
  private:
   // saved headers
-  static GrowableArray<oop>* _saved_oop_stack;	    
+  static GrowableArray<oop>* _saved_oop_stack;
   static GrowableArray<markOop>* _saved_mark_stack;
 
  public:
-  static void init();			    // initialize
-  static void done();	                    // clean-up
+  static void init();                       // initialize
+  static void done();                       // clean-up
 
-  static inline void mark(oop o);	    // mark an object
-  static inline bool visited(oop o);	    // check if object has been visited
+  static inline void mark(oop o);           // mark an object
+  static inline bool visited(oop o);        // check if object has been visited
 };
 
 GrowableArray<oop>* ObjectMarker::_saved_oop_stack = NULL;
@@ -1724,7 +1724,7 @@ GrowableArray<markOop>* ObjectMarker::_saved_mark_stack = NULL;
 void ObjectMarker::init() {
   assert(Thread::current()->is_VM_thread(), "must be VMThread");
 
-  // prepare heap for iteration 
+  // prepare heap for iteration
   Universe::heap()->ensure_parsability(false);  // no need to retire TLABs
 
   // create stacks for interesting headers
@@ -1741,7 +1741,7 @@ void ObjectMarker::done() {
   // iterate over all objects and restore the mark bits to
   // their initial value
   RestoreMarksClosure blk;
-  Universe::heap()->object_iterate(&blk);  
+  Universe::heap()->object_iterate(&blk);
 
   // When sharing is enabled we need to restore the headers of the objects
   // in the readwrite space too.
@@ -1749,13 +1749,13 @@ void ObjectMarker::done() {
     GenCollectedHeap* gch = GenCollectedHeap::heap();
     CompactingPermGenGen* gen = (CompactingPermGenGen*)gch->perm_gen();
     gen->rw_space()->object_iterate(&blk);
-  } 
+  }
 
   // now restore the interesting headers
-  for (int i = 0; i < _saved_oop_stack->length(); i++) {   
+  for (int i = 0; i < _saved_oop_stack->length(); i++) {
     oop o = _saved_oop_stack->at(i);
     markOop mark = _saved_mark_stack->at(i);
-    o->set_mark(mark);      
+    o->set_mark(mark);
   }
 
   if (UseBiasedLocking) {
@@ -1767,7 +1767,7 @@ void ObjectMarker::done() {
   delete _saved_mark_stack;
 }
 
-// mark an object 
+// mark an object
 inline void ObjectMarker::mark(oop o) {
   assert(Universe::heap()->is_in(o), "sanity check");
   assert(!o->mark()->is_marked(), "should only mark an object once");
@@ -1775,9 +1775,9 @@ inline void ObjectMarker::mark(oop o) {
   // object's mark word
   markOop mark = o->mark();
 
-  if (mark->must_be_preserved(o)) {                
+  if (mark->must_be_preserved(o)) {
     _saved_mark_stack->push(mark);
-    _saved_oop_stack->push(o);      
+    _saved_oop_stack->push(o);
   }
 
   // mark the object
@@ -1786,7 +1786,7 @@ inline void ObjectMarker::mark(oop o) {
 
 // return true if object is marked
 inline bool ObjectMarker::visited(oop o) {
-  return o->mark()->is_marked();  
+  return o->mark()->is_marked();
 }
 
 // Stack allocated class to help ensure that ObjectMarker is used
@@ -1805,7 +1805,7 @@ class ObjectMarkerController : public StackObj {
 
 // helper to map a jvmtiHeapReferenceKind to an old style jvmtiHeapRootKind
 // (not performance critical as only used for roots)
-static jvmtiHeapRootKind toJvmtiHeapRootKind(jvmtiHeapReferenceKind kind) { 
+static jvmtiHeapRootKind toJvmtiHeapRootKind(jvmtiHeapReferenceKind kind) {
   switch (kind) {
     case JVMTI_HEAP_REFERENCE_JNI_GLOBAL:   return JVMTI_HEAP_ROOT_JNI_GLOBAL;
     case JVMTI_HEAP_REFERENCE_SYSTEM_CLASS: return JVMTI_HEAP_ROOT_SYSTEM_CLASS;
@@ -1819,14 +1819,14 @@ static jvmtiHeapRootKind toJvmtiHeapRootKind(jvmtiHeapReferenceKind kind) {
 }
 
 // Base class for all heap walk contexts. The base class maintains a flag
-// to indicate if the context is valid or not. 
+// to indicate if the context is valid or not.
 class HeapWalkContext VALUE_OBJ_CLASS_SPEC {
  private:
   bool _valid;
  public:
   HeapWalkContext(bool valid)                   { _valid = valid; }
   void invalidate()                             { _valid = false; }
-  bool is_valid() const				{ return _valid; }
+  bool is_valid() const                         { return _valid; }
 };
 
 // A basic heap walk context for the deprecated heap walking functions.
@@ -1838,16 +1838,16 @@ class BasicHeapWalkContext: public HeapWalkContext {
   jvmtiStackReferenceCallback _stack_ref_callback;
   jvmtiObjectReferenceCallback _object_ref_callback;
 
-  // used for caching 
+  // used for caching
   oop _last_referrer;
   jlong _last_referrer_tag;
 
  public:
-  BasicHeapWalkContext() : HeapWalkContext(false) { } 
+  BasicHeapWalkContext() : HeapWalkContext(false) { }
 
   BasicHeapWalkContext(jvmtiHeapRootCallback heap_root_callback,
                        jvmtiStackReferenceCallback stack_ref_callback,
-		       jvmtiObjectReferenceCallback object_ref_callback) :
+                       jvmtiObjectReferenceCallback object_ref_callback) :
     HeapWalkContext(true),
     _heap_root_callback(heap_root_callback),
     _stack_ref_callback(stack_ref_callback),
@@ -1855,9 +1855,9 @@ class BasicHeapWalkContext: public HeapWalkContext {
     _last_referrer(NULL),
     _last_referrer_tag(0) {
   }
- 
+
   // accessors
-  jvmtiHeapRootCallback heap_root_callback() const         { return _heap_root_callback; }  
+  jvmtiHeapRootCallback heap_root_callback() const         { return _heap_root_callback; }
   jvmtiStackReferenceCallback stack_ref_callback() const   { return _stack_ref_callback; }
   jvmtiObjectReferenceCallback object_ref_callback() const { return _object_ref_callback;  }
 
@@ -1878,9 +1878,9 @@ class AdvancedHeapWalkContext: public HeapWalkContext {
  public:
   AdvancedHeapWalkContext() : HeapWalkContext(false) { }
 
-  AdvancedHeapWalkContext(jint heap_filter, 
-                           KlassHandle klass_filter, 
-			   const jvmtiHeapCallbacks* heap_callbacks) :
+  AdvancedHeapWalkContext(jint heap_filter,
+                           KlassHandle klass_filter,
+                           const jvmtiHeapCallbacks* heap_callbacks) :
     HeapWalkContext(true),
     _heap_filter(heap_filter),
     _klass_filter(klass_filter),
@@ -1922,14 +1922,14 @@ class CallbackInvoker : AllStatic {
   static BasicHeapWalkContext _basic_context;
   static BasicHeapWalkContext* basic_context() {
     assert(_basic_context.is_valid(), "invalid");
-    return &_basic_context; 
+    return &_basic_context;
   }
 
   // context for advanced style heap walk
   static AdvancedHeapWalkContext _advanced_context;
-  static AdvancedHeapWalkContext* advanced_context() { 
+  static AdvancedHeapWalkContext* advanced_context() {
     assert(_advanced_context.is_valid(), "invalid");
-    return &_advanced_context; 
+    return &_advanced_context;
   }
 
   // context needed for all heap walks
@@ -1953,42 +1953,42 @@ class CallbackInvoker : AllStatic {
   static inline bool invoke_basic_heap_root_callback
     (jvmtiHeapRootKind root_kind, oop obj);
   static inline bool invoke_basic_stack_ref_callback
-    (jvmtiHeapRootKind root_kind, jlong thread_tag, jint depth, jmethodID method, 
+    (jvmtiHeapRootKind root_kind, jlong thread_tag, jint depth, jmethodID method,
      int slot, oop obj);
   static inline bool invoke_basic_object_reference_callback
-    (jvmtiObjectReferenceKind ref_kind, oop referrer, oop referree, jint index); 
+    (jvmtiObjectReferenceKind ref_kind, oop referrer, oop referree, jint index);
 
   // invoke advanced style callbacks
   static inline bool invoke_advanced_heap_root_callback
     (jvmtiHeapReferenceKind ref_kind, oop obj);
   static inline bool invoke_advanced_stack_ref_callback
-    (jvmtiHeapReferenceKind ref_kind, jlong thread_tag, jlong tid, int depth, 
+    (jvmtiHeapReferenceKind ref_kind, jlong thread_tag, jlong tid, int depth,
      jmethodID method, jlocation bci, jint slot, oop obj);
   static inline bool invoke_advanced_object_reference_callback
-    (jvmtiHeapReferenceKind ref_kind, oop referrer, oop referree, jint index); 
+    (jvmtiHeapReferenceKind ref_kind, oop referrer, oop referree, jint index);
 
   // used to report the value of primitive fields
   static inline bool report_primitive_field
     (jvmtiHeapReferenceKind ref_kind, oop obj, jint index, address addr, char type);
 
- public:     
+ public:
   // initialize for basic mode
   static void initialize_for_basic_heap_walk(JvmtiTagMap* tag_map,
-                                             GrowableArray<oop>* visit_stack, 
+                                             GrowableArray<oop>* visit_stack,
                                              const void* user_data,
                                              BasicHeapWalkContext context);
 
   // initialize for advanced mode
   static void initialize_for_advanced_heap_walk(JvmtiTagMap* tag_map,
-                                                GrowableArray<oop>* visit_stack, 
+                                                GrowableArray<oop>* visit_stack,
                                                 const void* user_data,
-						AdvancedHeapWalkContext context);
+                                                AdvancedHeapWalkContext context);
 
    // functions to report roots
   static inline bool report_simple_root(jvmtiHeapReferenceKind kind, oop o);
-  static inline bool report_jni_local_root(jlong thread_tag, jlong tid, jint depth, 
+  static inline bool report_jni_local_root(jlong thread_tag, jlong tid, jint depth,
     jmethodID m, oop o);
-  static inline bool report_stack_ref_root(jlong thread_tag, jlong tid, jint depth, 
+  static inline bool report_stack_ref_root(jlong thread_tag, jlong tid, jint depth,
     jmethodID method, jlocation bci, jint slot, oop o);
 
   // functions to report references
@@ -2018,27 +2018,27 @@ GrowableArray<oop>* CallbackInvoker::_visit_stack;
 
 // initialize for basic heap walk (IterateOverReachableObjects et al)
 void CallbackInvoker::initialize_for_basic_heap_walk(JvmtiTagMap* tag_map,
-                                                     GrowableArray<oop>* visit_stack, 
+                                                     GrowableArray<oop>* visit_stack,
                                                      const void* user_data,
-						     BasicHeapWalkContext context) {
+                                                     BasicHeapWalkContext context) {
   _tag_map = tag_map;
   _visit_stack = visit_stack;
   _user_data = user_data;
   _basic_context = context;
-  _advanced_context.invalidate();	// will trigger assertion if used
+  _advanced_context.invalidate();       // will trigger assertion if used
   _heap_walk_type = basic;
 }
 
 // initialize for advanced heap walk (FollowReferences)
 void CallbackInvoker::initialize_for_advanced_heap_walk(JvmtiTagMap* tag_map,
-                                                        GrowableArray<oop>* visit_stack, 
+                                                        GrowableArray<oop>* visit_stack,
                                                         const void* user_data,
-						        AdvancedHeapWalkContext context) {
+                                                        AdvancedHeapWalkContext context) {
   _tag_map = tag_map;
   _visit_stack = visit_stack;
   _user_data = user_data;
   _advanced_context = context;
-  _basic_context.invalidate();	    // will trigger assertion if used
+  _basic_context.invalidate();      // will trigger assertion if used
   _heap_walk_type = advanced;
 }
 
@@ -2053,27 +2053,27 @@ inline bool CallbackInvoker::invoke_basic_heap_root_callback(jvmtiHeapRootKind r
     return check_for_visit(obj);
   }
 
-  CallbackWrapper wrapper(tag_map(), obj);  
-  jvmtiIterationControl control = (*cb)(root_kind, 
-                                        wrapper.klass_tag(), 
-                                        wrapper.obj_size(), 
+  CallbackWrapper wrapper(tag_map(), obj);
+  jvmtiIterationControl control = (*cb)(root_kind,
+                                        wrapper.klass_tag(),
+                                        wrapper.obj_size(),
                                         wrapper.obj_tag_p(),
                                         (void*)user_data());
   // push root to visit stack when following references
-  if (control == JVMTI_ITERATION_CONTINUE && 
+  if (control == JVMTI_ITERATION_CONTINUE &&
       basic_context()->object_ref_callback() != NULL) {
     visit_stack()->push(obj);
   }
   return control != JVMTI_ITERATION_ABORT;
 }
 
-// invoke basic style stack ref callback 
-inline bool CallbackInvoker::invoke_basic_stack_ref_callback(jvmtiHeapRootKind root_kind, 
-                                                             jlong thread_tag, 
-							     jint depth,
-					                     jmethodID method,
-                                                             jint slot, 
-							     oop obj) {
+// invoke basic style stack ref callback
+inline bool CallbackInvoker::invoke_basic_stack_ref_callback(jvmtiHeapRootKind root_kind,
+                                                             jlong thread_tag,
+                                                             jint depth,
+                                                             jmethodID method,
+                                                             jint slot,
+                                                             oop obj) {
   assert(ServiceUtil::visible_oop(obj), "checking");
 
   // if we stack refs should be reported
@@ -2082,18 +2082,18 @@ inline bool CallbackInvoker::invoke_basic_stack_ref_callback(jvmtiHeapRootKind r
     return check_for_visit(obj);
   }
 
-  CallbackWrapper wrapper(tag_map(), obj);  
-  jvmtiIterationControl control = (*cb)(root_kind, 
-                                        wrapper.klass_tag(), 
-                                        wrapper.obj_size(), 
-                                        wrapper.obj_tag_p(), 
-                                        thread_tag,                                              
-                                        depth, 
-                                        method, 
+  CallbackWrapper wrapper(tag_map(), obj);
+  jvmtiIterationControl control = (*cb)(root_kind,
+                                        wrapper.klass_tag(),
+                                        wrapper.obj_size(),
+                                        wrapper.obj_tag_p(),
+                                        thread_tag,
+                                        depth,
+                                        method,
                                         slot,
                                         (void*)user_data());
   // push root to visit stack when following references
-  if (control == JVMTI_ITERATION_CONTINUE && 
+  if (control == JVMTI_ITERATION_CONTINUE &&
       basic_context()->object_ref_callback() != NULL) {
     visit_stack()->push(obj);
   }
@@ -2102,9 +2102,9 @@ inline bool CallbackInvoker::invoke_basic_stack_ref_callback(jvmtiHeapRootKind r
 
 // invoke basic style object reference callback
 inline bool CallbackInvoker::invoke_basic_object_reference_callback(jvmtiObjectReferenceKind ref_kind,
-					                            oop referrer, 
-								    oop referree, 
-								    jint index) {
+                                                                    oop referrer,
+                                                                    oop referree,
+                                                                    jint index) {
 
   assert(ServiceUtil::visible_oop(referrer), "checking");
   assert(ServiceUtil::visible_oop(referree), "checking");
@@ -2118,16 +2118,16 @@ inline bool CallbackInvoker::invoke_basic_object_reference_callback(jvmtiObjectR
     referrer_tag = context->last_referrer_tag();
   } else {
     referrer_tag = tag_for(tag_map(), klassOop_if_java_lang_Class(referrer));
-  } 
+  }
 
-  // do the callback  
+  // do the callback
   CallbackWrapper wrapper(tag_map(), referree);
   jvmtiObjectReferenceCallback cb = context->object_ref_callback();
-  jvmtiIterationControl control = (*cb)(ref_kind, 
-                                        wrapper.klass_tag(), 
-					wrapper.obj_size(), 
-                                        wrapper.obj_tag_p(), 
-					referrer_tag, 
+  jvmtiIterationControl control = (*cb)(ref_kind,
+                                        wrapper.klass_tag(),
+                                        wrapper.obj_size(),
+                                        wrapper.obj_tag_p(),
+                                        referrer_tag,
                                         index,
                                         (void*)user_data());
 
@@ -2141,15 +2141,15 @@ inline bool CallbackInvoker::invoke_basic_object_reference_callback(jvmtiObjectR
   }
 
   if (control == JVMTI_ITERATION_CONTINUE) {
-    return check_for_visit(referree);    
+    return check_for_visit(referree);
   } else {
     return control != JVMTI_ITERATION_ABORT;
   }
-}							     
+}
 
 // invoke advanced style heap root callback
-inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferenceKind ref_kind, 
-								oop obj) {
+inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferenceKind ref_kind,
+                                                                oop obj) {
   assert(ServiceUtil::visible_oop(obj), "checking");
 
   AdvancedHeapWalkContext* context = advanced_context();
@@ -2159,7 +2159,7 @@ inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferen
   if (cb == NULL) {
     return check_for_visit(obj);
   }
-    
+
   // apply class filter
   if (is_filtered_by_klass_filter(obj, context->klass_filter())) {
     return check_for_visit(obj);
@@ -2167,11 +2167,11 @@ inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferen
 
   // setup the callback wrapper
   CallbackWrapper wrapper(tag_map(), obj);
-  
+
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return check_for_visit(obj);
   }
 
@@ -2179,12 +2179,12 @@ inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferen
   jint len = (jint)(obj->is_array() ? arrayOop(obj)->length() : -1);
 
   // invoke the callback
-  jint res  = (*cb)(ref_kind, 
-                    NULL, // referrer info 
-                    wrapper.klass_tag(), 
+  jint res  = (*cb)(ref_kind,
+                    NULL, // referrer info
+                    wrapper.klass_tag(),
                     0,    // referrer_class_tag is 0 for heap root
-                    wrapper.obj_size(), 
-                    wrapper.obj_tag_p(), 
+                    wrapper.obj_size(),
+                    wrapper.obj_tag_p(),
                     NULL, // referrer_tag_p
                     len,
                     (void*)user_data());
@@ -2198,13 +2198,13 @@ inline bool CallbackInvoker::invoke_advanced_heap_root_callback(jvmtiHeapReferen
 }
 
 // report a reference from a thread stack to an object
-inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferenceKind ref_kind, 
-                                                                jlong thread_tag, 
+inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferenceKind ref_kind,
+                                                                jlong thread_tag,
                                                                 jlong tid,
-					                        int depth, 
-                                                                jmethodID method, 
+                                                                int depth,
+                                                                jmethodID method,
                                                                 jlocation bci,
-                                                                jint slot, 
+                                                                jint slot,
                                                                 oop obj) {
   assert(ServiceUtil::visible_oop(obj), "checking");
 
@@ -2215,7 +2215,7 @@ inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferen
   if (cb == NULL) {
     return check_for_visit(obj);
   }
-    
+
   // apply class filter
   if (is_filtered_by_klass_filter(obj, context->klass_filter())) {
     return check_for_visit(obj);
@@ -2223,11 +2223,11 @@ inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferen
 
   // setup the callback wrapper
   CallbackWrapper wrapper(tag_map(), obj);
-  
+
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return check_for_visit(obj);
   }
 
@@ -2274,9 +2274,9 @@ inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferen
 
 // invoke the object reference callback to report a reference
 inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeapReferenceKind ref_kind,
-					                               oop referrer, 
-								       oop obj, 
-								       jint index) 
+                                                                       oop referrer,
+                                                                       oop obj,
+                                                                       jint index)
 {
   // field index is only valid field in reference_info
   static jvmtiHeapReferenceInfo reference_info = { 0 };
@@ -2299,11 +2299,11 @@ inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeap
 
   // setup the callback wrapper
   TwoOopCallbackWrapper wrapper(tag_map(), referrer, obj);
-  
+
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return check_for_visit(obj);
   }
 
@@ -2314,7 +2314,7 @@ inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeap
   jint len = (jint)(obj->is_array() ? arrayOop(obj)->length() : -1);
 
   // invoke the callback
-  int res = (*cb)(ref_kind, 
+  int res = (*cb)(ref_kind,
                   (REF_INFO_MASK & (1 << ref_kind)) ? &reference_info : NULL,
                   wrapper.klass_tag(),
                   wrapper.referrer_klass_tag(),
@@ -2333,9 +2333,9 @@ inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeap
   return true;
 }
 
-// report a "simple root" 
+// report a "simple root"
 inline bool CallbackInvoker::report_simple_root(jvmtiHeapReferenceKind kind, oop obj) {
-  assert(kind != JVMTI_HEAP_REFERENCE_STACK_LOCAL && 
+  assert(kind != JVMTI_HEAP_REFERENCE_STACK_LOCAL &&
          kind != JVMTI_HEAP_REFERENCE_JNI_LOCAL, "not a simple root");
   assert(ServiceUtil::visible_oop(obj), "checking");
 
@@ -2355,7 +2355,7 @@ inline bool CallbackInvoker::report_primitive_array_values(oop obj) {
   assert(obj->is_typeArray(), "not a primitive array");
 
   AdvancedHeapWalkContext* context = advanced_context();
-  assert(context->array_primitive_value_callback() != NULL, "no callback");  
+  assert(context->array_primitive_value_callback() != NULL, "no callback");
 
   // apply class filter
   if (is_filtered_by_klass_filter(obj, context->klass_filter())) {
@@ -2365,17 +2365,17 @@ inline bool CallbackInvoker::report_primitive_array_values(oop obj) {
   CallbackWrapper wrapper(tag_map(), obj);
 
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return true;
   }
 
-  // invoke the callback				 
+  // invoke the callback
   int res = invoke_array_primitive_value_callback(context->array_primitive_value_callback(),
                                                   &wrapper,
-						  obj,
-						  (void*)user_data());
+                                                  obj,
+                                                  (void*)user_data());
   return (!(res & JVMTI_VISIT_ABORT));
 }
 
@@ -2384,7 +2384,7 @@ inline bool CallbackInvoker::report_string_value(oop str) {
   assert(str->klass() == SystemDictionary::string_klass(), "not a string");
 
   AdvancedHeapWalkContext* context = advanced_context();
-  assert(context->string_primitive_value_callback() != NULL, "no callback");  
+  assert(context->string_primitive_value_callback() != NULL, "no callback");
 
   // apply class filter
   if (is_filtered_by_klass_filter(str, context->klass_filter())) {
@@ -2394,32 +2394,32 @@ inline bool CallbackInvoker::report_string_value(oop str) {
   CallbackWrapper wrapper(tag_map(), str);
 
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return true;
   }
 
   // invoke the callback
   int res = invoke_string_value_callback(context->string_primitive_value_callback(),
                                          &wrapper,
-					 str,
-					 (void*)user_data());
+                                         str,
+                                         (void*)user_data());
   return (!(res & JVMTI_VISIT_ABORT));
 }
 
 // invoke the primitive field callback
-inline bool CallbackInvoker::report_primitive_field(jvmtiHeapReferenceKind ref_kind, 
+inline bool CallbackInvoker::report_primitive_field(jvmtiHeapReferenceKind ref_kind,
                                                     oop obj,
                                                     jint index,
                                                     address addr,
-                                                    char type) 
+                                                    char type)
 {
   // for primitive fields only the index will be set
   static jvmtiHeapReferenceInfo reference_info = { 0 };
 
   AdvancedHeapWalkContext* context = advanced_context();
-  assert(context->primitive_field_callback() != NULL, "no callback");  
+  assert(context->primitive_field_callback() != NULL, "no callback");
 
   // apply class filter
   if (is_filtered_by_klass_filter(obj, context->klass_filter())) {
@@ -2429,9 +2429,9 @@ inline bool CallbackInvoker::report_primitive_field(jvmtiHeapReferenceKind ref_k
   CallbackWrapper wrapper(tag_map(), obj);
 
   // apply tag filter
-  if (is_filtered_by_heap_filter(wrapper.obj_tag(), 
-                                 wrapper.klass_tag(), 
-				 context->heap_filter())) {
+  if (is_filtered_by_heap_filter(wrapper.obj_tag(),
+                                 wrapper.klass_tag(),
+                                 context->heap_filter())) {
     return true;
   }
 
@@ -2441,90 +2441,90 @@ inline bool CallbackInvoker::report_primitive_field(jvmtiHeapReferenceKind ref_k
   // map the type
   jvmtiPrimitiveType value_type = (jvmtiPrimitiveType)type;
 
-  // setup the jvalue  
+  // setup the jvalue
   jvalue value;
   copy_to_jvalue(&value, addr, value_type);
 
   jvmtiPrimitiveFieldCallback cb = context->primitive_field_callback();
-  int res = (*cb)(ref_kind, 
+  int res = (*cb)(ref_kind,
                   &reference_info,
                   wrapper.klass_tag(),
                   wrapper.obj_tag_p(),
                   value,
                   value_type,
                   (void*)user_data());
-  return (!(res & JVMTI_VISIT_ABORT)); 
+  return (!(res & JVMTI_VISIT_ABORT));
 }
 
 
 // instance field
-inline bool CallbackInvoker::report_primitive_instance_field(oop obj, 
-							     jint index, 
-							     address value, 
+inline bool CallbackInvoker::report_primitive_instance_field(oop obj,
+                                                             jint index,
+                                                             address value,
                                                              char type) {
-  return report_primitive_field(JVMTI_HEAP_REFERENCE_FIELD, 
-                                obj, 
-				index, 
-				value, 
-				type);
+  return report_primitive_field(JVMTI_HEAP_REFERENCE_FIELD,
+                                obj,
+                                index,
+                                value,
+                                type);
 }
 
 // static field
-inline bool CallbackInvoker::report_primitive_static_field(oop obj, 
-							   jint index, 
-							   address value, 
+inline bool CallbackInvoker::report_primitive_static_field(oop obj,
+                                                           jint index,
+                                                           address value,
                                                            char type) {
-  return report_primitive_field(JVMTI_HEAP_REFERENCE_STATIC_FIELD, 
-                                obj, 
-				index, 
-				value, 
-				type);
+  return report_primitive_field(JVMTI_HEAP_REFERENCE_STATIC_FIELD,
+                                obj,
+                                index,
+                                value,
+                                type);
 }
 
 // report a JNI local (root object) to the profiler
 inline bool CallbackInvoker::report_jni_local_root(jlong thread_tag, jlong tid, jint depth, jmethodID m, oop obj) {
   if (is_basic_heap_walk()) {
-    return invoke_basic_stack_ref_callback(JVMTI_HEAP_ROOT_JNI_LOCAL, 
-	                                   thread_tag,
-			                   depth, 
-					   m, 
-					   -1, 
-					   obj);
+    return invoke_basic_stack_ref_callback(JVMTI_HEAP_ROOT_JNI_LOCAL,
+                                           thread_tag,
+                                           depth,
+                                           m,
+                                           -1,
+                                           obj);
   } else {
-    return invoke_advanced_stack_ref_callback(JVMTI_HEAP_REFERENCE_JNI_LOCAL, 
-	                                      thread_tag, tid,
-			                      depth, 
-					      m, 
-					      (jlocation)-1, 
-					      -1,
-					      obj);
+    return invoke_advanced_stack_ref_callback(JVMTI_HEAP_REFERENCE_JNI_LOCAL,
+                                              thread_tag, tid,
+                                              depth,
+                                              m,
+                                              (jlocation)-1,
+                                              -1,
+                                              obj);
   }
 }
 
 
-// report a local (stack reference, root object) 
-inline bool CallbackInvoker::report_stack_ref_root(jlong thread_tag, 
-						   jlong tid, 
-						   jint depth, 
-				                   jmethodID method, 
-						   jlocation bci, 
-						   jint slot, 
-						   oop obj) {
+// report a local (stack reference, root object)
+inline bool CallbackInvoker::report_stack_ref_root(jlong thread_tag,
+                                                   jlong tid,
+                                                   jint depth,
+                                                   jmethodID method,
+                                                   jlocation bci,
+                                                   jint slot,
+                                                   oop obj) {
   if (is_basic_heap_walk()) {
-    return invoke_basic_stack_ref_callback(JVMTI_HEAP_ROOT_STACK_LOCAL, 
-                                           thread_tag, 
+    return invoke_basic_stack_ref_callback(JVMTI_HEAP_ROOT_STACK_LOCAL,
+                                           thread_tag,
                                            depth,
-			                   method, 
-					   slot,
-					   obj);
-  } else { 
-    return invoke_advanced_stack_ref_callback(JVMTI_HEAP_REFERENCE_STACK_LOCAL, 
+                                           method,
+                                           slot,
+                                           obj);
+  } else {
+    return invoke_advanced_stack_ref_callback(JVMTI_HEAP_REFERENCE_STACK_LOCAL,
                                               thread_tag,
                                               tid,
-                                              depth,			                
+                                              depth,
                                               method,
                                               bci,
-                                              slot, 
+                                              slot,
                                               obj);
   }
 }
@@ -2622,7 +2622,7 @@ inline bool CallbackInvoker::report_constant_pool_reference(oop referrer, oop re
 
 // A supporting closure used to process simple roots
 class SimpleRootsClosure : public OopClosure {
- private:  
+ private:
   jvmtiHeapReferenceKind _kind;
   bool _continue;
 
@@ -2638,7 +2638,7 @@ class SimpleRootsClosure : public OopClosure {
     return !_continue;
   }
 
-  void do_oop(oop* obj_p) {   
+  void do_oop(oop* obj_p) {
     // iteration has terminated
     if (stopped()) {
       return;
@@ -2648,11 +2648,11 @@ class SimpleRootsClosure : public OopClosure {
     oop o = *obj_p;
     if (o == NULL || o == JNIHandles::deleted_handle()) {
       return;
-    }     
+    }
 
     jvmtiHeapReferenceKind kind = root_kind();
 
-    // many roots are Klasses so we use the java mirror 
+    // many roots are Klasses so we use the java mirror
     if (o->is_klass()) {
       klassOop k = (klassOop)o;
       o = Klass::cast(k)->java_mirror();
@@ -2662,7 +2662,7 @@ class SimpleRootsClosure : public OopClosure {
       // class loader as a root. We want this root to be reported as
       // a root kind of "OTHER" rather than "SYSTEM_CLASS".
       if (o->is_instance() && root_kind() == JVMTI_HEAP_REFERENCE_SYSTEM_CLASS) {
-	kind = JVMTI_HEAP_REFERENCE_OTHER;
+        kind = JVMTI_HEAP_REFERENCE_OTHER;
       }
     }
 
@@ -2671,18 +2671,18 @@ class SimpleRootsClosure : public OopClosure {
     // here.
     if (!ServiceUtil::visible_oop(o)) {
       return;
-    }     
- 
+    }
+
     // invoke the callback
     _continue = CallbackInvoker::report_simple_root(kind, o);
-   
+
   }
   virtual void do_oop(narrowOop* obj_p) { ShouldNotReachHere(); }
 };
 
 // A supporting closure used to process JNI locals
 class JNILocalRootsClosure : public OopClosure {
- private:  
+ private:
   jlong _thread_tag;
   jlong _tid;
   jint _depth;
@@ -2701,7 +2701,7 @@ class JNILocalRootsClosure : public OopClosure {
     return !_continue;
   }
 
-  void do_oop(oop* obj_p) {  
+  void do_oop(oop* obj_p) {
     // iteration has terminated
     if (stopped()) {
       return;
@@ -2713,11 +2713,11 @@ class JNILocalRootsClosure : public OopClosure {
       return;
     }
 
-    if (!ServiceUtil::visible_oop(o)) {    
+    if (!ServiceUtil::visible_oop(o)) {
       return;
-    }       
+    }
 
-    // invoke the callback    
+    // invoke the callback
     _continue = CallbackInvoker::report_jni_local_root(_thread_tag, _tid, _depth, _method, o);
   }
   virtual void do_oop(narrowOop* obj_p) { ShouldNotReachHere(); }
@@ -2744,13 +2744,13 @@ class VM_HeapWalkOperation: public VM_Operation {
     initial_visit_stack_size = 4000
   };
 
-  bool _is_advanced_heap_walk;	                    // indicates FollowReferences
+  bool _is_advanced_heap_walk;                      // indicates FollowReferences
   JvmtiTagMap* _tag_map;
   Handle _initial_object;
-  GrowableArray<oop>* _visit_stack;		    // the visit stack
+  GrowableArray<oop>* _visit_stack;                 // the visit stack
 
-  bool _collecting_heap_roots;			    // are we collecting roots
-  bool _following_object_refs;			    // are we following object references
+  bool _collecting_heap_roots;                      // are we collecting roots
+  bool _following_object_refs;                      // are we following object references
 
   bool _reporting_primitive_fields;                 // optional reporting
   bool _reporting_primitive_array_values;
@@ -2783,32 +2783,32 @@ class VM_HeapWalkOperation: public VM_Operation {
   inline bool collect_simple_roots();
   inline bool collect_stack_roots();
   inline bool collect_stack_roots(JavaThread* java_thread, JNILocalRootsClosure* blk);
- 
+
   // visit an object
   inline bool visit(oop o);
 
- public:        
-  VM_HeapWalkOperation(JvmtiTagMap* tag_map, 
-                       Handle initial_object, 
-		       BasicHeapWalkContext callbacks, 
-		       const void* user_data);
+ public:
+  VM_HeapWalkOperation(JvmtiTagMap* tag_map,
+                       Handle initial_object,
+                       BasicHeapWalkContext callbacks,
+                       const void* user_data);
 
-  VM_HeapWalkOperation(JvmtiTagMap* tag_map, 
-                       Handle initial_object, 
-		       AdvancedHeapWalkContext callbacks, 
-		       const void* user_data);
+  VM_HeapWalkOperation(JvmtiTagMap* tag_map,
+                       Handle initial_object,
+                       AdvancedHeapWalkContext callbacks,
+                       const void* user_data);
 
   ~VM_HeapWalkOperation();
 
   VMOp_Type type() const { return VMOp_HeapWalkOperation; }
-  void doit(); 
+  void doit();
 };
 
 
-VM_HeapWalkOperation::VM_HeapWalkOperation(JvmtiTagMap* tag_map, 
-					   Handle initial_object,
-					   BasicHeapWalkContext callbacks, 
-					   const void* user_data) {
+VM_HeapWalkOperation::VM_HeapWalkOperation(JvmtiTagMap* tag_map,
+                                           Handle initial_object,
+                                           BasicHeapWalkContext callbacks,
+                                           const void* user_data) {
   _is_advanced_heap_walk = false;
   _tag_map = tag_map;
   _initial_object = initial_object;
@@ -2822,10 +2822,10 @@ VM_HeapWalkOperation::VM_HeapWalkOperation(JvmtiTagMap* tag_map,
   CallbackInvoker::initialize_for_basic_heap_walk(tag_map, _visit_stack, user_data, callbacks);
 }
 
-VM_HeapWalkOperation::VM_HeapWalkOperation(JvmtiTagMap* tag_map, 
-					   Handle initial_object,
-					   AdvancedHeapWalkContext callbacks, 
-					   const void* user_data) {
+VM_HeapWalkOperation::VM_HeapWalkOperation(JvmtiTagMap* tag_map,
+                                           Handle initial_object,
+                                           AdvancedHeapWalkContext callbacks,
+                                           const void* user_data) {
   _is_advanced_heap_walk = true;
   _tag_map = tag_map;
   _initial_object = initial_object;
@@ -2842,7 +2842,7 @@ VM_HeapWalkOperation::~VM_HeapWalkOperation() {
   if (_following_object_refs) {
     assert(_visit_stack != NULL, "checking");
     delete _visit_stack;
-    _visit_stack = NULL;   
+    _visit_stack = NULL;
   }
 }
 
@@ -2854,7 +2854,7 @@ inline bool VM_HeapWalkOperation::iterate_over_array(oop o) {
     // filtered out
     return true;
   }
-  
+
   // array reference to its class
   oop mirror = objArrayKlass::cast(array->klass())->java_mirror();
   if (!CallbackInvoker::report_class_reference(o, mirror)) {
@@ -2866,7 +2866,7 @@ inline bool VM_HeapWalkOperation::iterate_over_array(oop o) {
   for (int index=0; index<array->length(); index++) {
     oop elem = array->obj_at(index);
     if (elem == NULL) {
-      continue;	
+      continue;
     }
 
     // report the array reference o[index] = elem
@@ -2885,7 +2885,7 @@ inline bool VM_HeapWalkOperation::iterate_over_type_array(oop o) {
     return false;
   }
 
-  // report the array contents if required  
+  // report the array contents if required
   if (is_reporting_primitive_array_values()) {
     if (!CallbackInvoker::report_primitive_array_values(o)) {
       return false;
@@ -2901,7 +2901,7 @@ static inline bool verify_static_oop(instanceKlass* ik,
   address start = (address)ik->start_of_static_fields();
   address end = start + (ik->static_oop_field_size() * heapOopSize);
   assert(end >= start, "sanity check");
-  
+
   if (obj_p >= start && obj_p < end) {
     return true;
   } else {
@@ -2915,7 +2915,7 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
   int i;
   Klass* klass = klassOop(k)->klass_part();
 
-  if (klass->oop_is_instance()) {         
+  if (klass->oop_is_instance()) {
     instanceKlass* ik = instanceKlass::cast(k);
 
     // ignore the class if it's has been initialized yet
@@ -2925,7 +2925,7 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
 
     // get the java mirror
     oop mirror = klass->java_mirror();
-      
+
     // super (only if something more interesting than java.lang.Object)
     klassOop java_super = ik->java_super();
     if (java_super != NULL && java_super != SystemDictionary::object_klass()) {
@@ -2934,12 +2934,12 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
         return false;
       }
     }
- 
-    // class loader	  
+
+    // class loader
     oop cl = ik->class_loader();
     if (cl != NULL) {
       if (!CallbackInvoker::report_class_loader_reference(mirror, cl)) {
-	return false;
+        return false;
       }
     }
 
@@ -2964,18 +2964,18 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
       const constantPoolOop pool = ik->constants();
       for (int i = 1; i < pool->length(); i++) {
         constantTag tag = pool->tag_at(i).value();
-	if (tag.is_string() || tag.is_klass()) {
-	  oop entry;
-	  if (tag.is_string()) {
-	    entry = pool->resolved_string_at(i);
-	    assert(java_lang_String::is_instance(entry), "must be string");
-	  } else {
-	    entry = Klass::cast(pool->resolved_klass_at(i))->java_mirror();
-	  }
-	  if (!CallbackInvoker::report_constant_pool_reference(mirror, entry, (jint)i)) {
-	    return false;
-	  }
-        }   
+        if (tag.is_string() || tag.is_klass()) {
+          oop entry;
+          if (tag.is_string()) {
+            entry = pool->resolved_string_at(i);
+            assert(java_lang_String::is_instance(entry), "must be string");
+          } else {
+            entry = Klass::cast(pool->resolved_klass_at(i))->java_mirror();
+          }
+          if (!CallbackInvoker::report_constant_pool_reference(mirror, entry, (jint)i)) {
+            return false;
+          }
+        }
       }
     }
 
@@ -3008,7 +3008,7 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
             delete field_map;
             return false;
           }
-        }	  	 
+        }
       }
     }
     delete field_map;
@@ -3020,10 +3020,10 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
 }
 
 // an object references a class and its instance fields
-// (static fields are ignored here as we report these as 
+// (static fields are ignored here as we report these as
 // references from the class).
 inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
-  // reference to the class 
+  // reference to the class
   if (!CallbackInvoker::report_class_reference(o, Klass::cast(o->klass())->java_mirror())) {
     return false;
   }
@@ -3036,15 +3036,15 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
     if (!is_primitive_field_type(type)) {
       oop fld_o = o->obj_field(field->field_offset());
       if (fld_o != NULL) {
- 	// reflection code may have a reference to a klassOop.
-	// - see sun.reflect.UnsafeStaticFieldAccessorImpl and sun.misc.Unsafe
-	if (fld_o->is_klass()) {
-	  klassOop k = (klassOop)fld_o;
-	  fld_o = Klass::cast(k)->java_mirror();
+        // reflection code may have a reference to a klassOop.
+        // - see sun.reflect.UnsafeStaticFieldAccessorImpl and sun.misc.Unsafe
+        if (fld_o->is_klass()) {
+          klassOop k = (klassOop)fld_o;
+          fld_o = Klass::cast(k)->java_mirror();
         }
-	int slot = field->field_index();
+        int slot = field->field_index();
         if (!CallbackInvoker::report_field_reference(o, fld_o, slot)) {
-          return false;      
+          return false;
         }
       }
     } else {
@@ -3052,20 +3052,20 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
         // primitive instance field
         address addr = (address)o + field->field_offset();
         int slot = field->field_index();
-        if (!CallbackInvoker::report_primitive_instance_field(o, slot, addr, type)) {                       
+        if (!CallbackInvoker::report_primitive_instance_field(o, slot, addr, type)) {
           return false;
         }
       }
     }
   }
 
-  // if the object is a java.lang.String 
+  // if the object is a java.lang.String
   if (is_reporting_string_values() &&
       o->klass() == SystemDictionary::string_klass()) {
     if (!CallbackInvoker::report_string_value(o)) {
       return false;
     }
-  } 
+  }
   return true;
 }
 
@@ -3078,11 +3078,11 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
 // processed later
 //
 inline bool VM_HeapWalkOperation::collect_simple_roots() {
-  SimpleRootsClosure blk;  
-      
+  SimpleRootsClosure blk;
+
   // JNI globals
   blk.set_kind(JVMTI_HEAP_REFERENCE_JNI_GLOBAL);
-  JNIHandles::oops_do(&blk);  
+  JNIHandles::oops_do(&blk);
   if (blk.stopped()) {
     return false;
   }
@@ -3105,9 +3105,9 @@ inline bool VM_HeapWalkOperation::collect_simple_roots() {
   for (JavaThread* thread = Threads::first(); thread != NULL ; thread = thread->next()) {
     oop threadObj = thread->threadObj();
     if (threadObj != NULL && !thread->is_exiting() && !thread->is_hidden_from_external_view()) {
-      bool cont = CallbackInvoker::report_simple_root(JVMTI_HEAP_REFERENCE_THREAD, threadObj);     
+      bool cont = CallbackInvoker::report_simple_root(JVMTI_HEAP_REFERENCE_THREAD, threadObj);
       if (!cont) {
-	return false;
+        return false;
       }
     }
   }
@@ -3122,12 +3122,12 @@ inline bool VM_HeapWalkOperation::collect_simple_roots() {
 
 // Walk the stack of a given thread and find all references (locals
 // and JNI calls) and report these as stack references
-inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread, 
-						      JNILocalRootsClosure* blk) 
+inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread,
+                                                      JNILocalRootsClosure* blk)
 {
   oop threadObj = java_thread->threadObj();
   assert(threadObj != NULL, "sanity check");
-  
+
   // only need to get the thread's tag once per thread
   jlong thread_tag = tag_for(_tag_map, threadObj);
 
@@ -3138,48 +3138,48 @@ inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread,
   if (java_thread->has_last_Java_frame()) {
 
     // vframes are resource allocated
-    Thread* current_thread = Thread::current(); 
+    Thread* current_thread = Thread::current();
     ResourceMark rm(current_thread);
     HandleMark hm(current_thread);
 
-    RegisterMap reg_map(java_thread);   
+    RegisterMap reg_map(java_thread);
     frame f = java_thread->last_frame();
     vframe* vf = vframe::new_vframe(&f, &reg_map, java_thread);
 
-    bool is_top_frame = true; 
+    bool is_top_frame = true;
     int depth = 0;
     frame* last_entry_frame = NULL;
-   
+
     while (vf != NULL) {
       if (vf->is_java_frame()) {
 
-	// java frame (interpreted, compiled, ...)
-	javaVFrame *jvf = javaVFrame::cast(vf);
+        // java frame (interpreted, compiled, ...)
+        javaVFrame *jvf = javaVFrame::cast(vf);
 
         // the jmethodID
-	jmethodID method = jvf->method()->jmethod_id();        
+        jmethodID method = jvf->method()->jmethod_id();
 
-	if (!(jvf->method()->is_native())) {    
-          jlocation bci = (jlocation)jvf->bci();     	
-	  StackValueCollection* locals = jvf->locals();
-	  for (int slot=0; slot<locals->size(); slot++) {
-	    if (locals->at(slot)->type() == T_OBJECT) {
-	      oop o = locals->obj_at(slot)();
-	      if (o == NULL) {
-	        continue;
-	      }	    
+        if (!(jvf->method()->is_native())) {
+          jlocation bci = (jlocation)jvf->bci();
+          StackValueCollection* locals = jvf->locals();
+          for (int slot=0; slot<locals->size(); slot++) {
+            if (locals->at(slot)->type() == T_OBJECT) {
+              oop o = locals->obj_at(slot)();
+              if (o == NULL) {
+                continue;
+              }
 
-	      // stack reference	    
-	      if (!CallbackInvoker::report_stack_ref_root(thread_tag, tid, depth, method, 
-						   bci, slot, o)) {
-	        return false;
-	      }
-	    }
-	  }
-	} else {
+              // stack reference
+              if (!CallbackInvoker::report_stack_ref_root(thread_tag, tid, depth, method,
+                                                   bci, slot, o)) {
+                return false;
+              }
+            }
+          }
+        } else {
           blk->set_context(thread_tag, tid, depth, method);
           if (is_top_frame) {
-            // JNI locals for the top frame.            
+            // JNI locals for the top frame.
             java_thread->active_handles()->oops_do(blk);
           } else {
             if (last_entry_frame != NULL) {
@@ -3192,18 +3192,18 @@ inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread,
         last_entry_frame = NULL;
         depth++;
       } else {
-	// externalVFrame - for an entry frame then we report the JNI locals
+        // externalVFrame - for an entry frame then we report the JNI locals
         // when we find the corresponding javaVFrame
-	frame* fr = vf->frame_pointer();
+        frame* fr = vf->frame_pointer();
         assert(fr != NULL, "sanity check");
         if (fr->is_entry_frame()) {
-	  last_entry_frame = fr;
-	}
+          last_entry_frame = fr;
+        }
       }
 
       vf = vf->sender();
       is_top_frame = false;
-    }  
+    }
   } else {
     // no last java frame but there may be JNI locals
     blk->set_context(thread_tag, tid, 0, (jmethodID)NULL);
@@ -3221,19 +3221,19 @@ inline bool VM_HeapWalkOperation::collect_stack_roots() {
     oop threadObj = thread->threadObj();
     if (threadObj != NULL && !thread->is_exiting() && !thread->is_hidden_from_external_view()) {
       if (!collect_stack_roots(thread, &blk)) {
-	return false;
+        return false;
       }
     }
   }
   return true;
 }
 
-// visit an object 
+// visit an object
 // first mark the object as visited
 // second get all the outbound references from this object (in other words, all
 // the objects referenced by this object).
 //
-bool VM_HeapWalkOperation::visit(oop o) { 
+bool VM_HeapWalkOperation::visit(oop o) {
   // mark object as visited
   assert(!ObjectMarker::visited(o), "can't visit same object more than once");
   ObjectMarker::mark(o);
@@ -3243,7 +3243,7 @@ bool VM_HeapWalkOperation::visit(oop o) {
     if (o->klass() == SystemDictionary::class_klass()) {
       o = klassOop_if_java_lang_Class(o);
       if (o->is_klass()) {
-	// a java.lang.Class	
+        // a java.lang.Class
         return iterate_over_class(klassOop(o));
       }
     } else {
@@ -3252,14 +3252,14 @@ bool VM_HeapWalkOperation::visit(oop o) {
   }
 
   // object array
-  if (o->is_objArray()) {  
+  if (o->is_objArray()) {
     return iterate_over_array(o);
   }
 
   // type array
   if (o->is_typeArray()) {
     return iterate_over_type_array(o);
-  }  
+  }
 
   return true;
 }
@@ -3273,7 +3273,7 @@ void VM_HeapWalkOperation::doit() {
 
   // the heap walk starts with an initial object or the heap roots
   if (initial_object().is_null()) {
-    if (!collect_simple_roots()) return;  
+    if (!collect_simple_roots()) return;
     if (!collect_stack_roots()) return;
   } else {
     visit_stack()->push(initial_object()());
@@ -3288,43 +3288,43 @@ void VM_HeapWalkOperation::doit() {
       oop o = visit_stack()->pop();
       if (!ObjectMarker::visited(o)) {
         if (!visit(o)) {
-	  break;
-	}
+          break;
+        }
       }
     }
-  } 
+  }
 }
 
 // iterate over all objects that are reachable from a set of roots
-void JvmtiTagMap::iterate_over_reachable_objects(jvmtiHeapRootCallback heap_root_callback, 
+void JvmtiTagMap::iterate_over_reachable_objects(jvmtiHeapRootCallback heap_root_callback,
                                                  jvmtiStackReferenceCallback stack_ref_callback,
-                                                 jvmtiObjectReferenceCallback object_ref_callback, 
-						 const void* user_data) {
+                                                 jvmtiObjectReferenceCallback object_ref_callback,
+                                                 const void* user_data) {
   MutexLocker ml(Heap_lock);
   BasicHeapWalkContext context(heap_root_callback, stack_ref_callback, object_ref_callback);
   VM_HeapWalkOperation op(this, Handle(), context, user_data);
-  VMThread::execute(&op); 
+  VMThread::execute(&op);
 }
 
 // iterate over all objects that are reachable from a given object
-void JvmtiTagMap::iterate_over_objects_reachable_from_object(jobject object, 
+void JvmtiTagMap::iterate_over_objects_reachable_from_object(jobject object,
                                                              jvmtiObjectReferenceCallback object_ref_callback,
-							     const void* user_data) {
+                                                             const void* user_data) {
   oop obj = JNIHandles::resolve(object);
   Handle initial_object(Thread::current(), obj);
 
   MutexLocker ml(Heap_lock);
   BasicHeapWalkContext context(NULL, NULL, object_ref_callback);
   VM_HeapWalkOperation op(this, initial_object, context, user_data);
-  VMThread::execute(&op); 
+  VMThread::execute(&op);
 }
 
 // follow references from an initial object or the GC roots
-void JvmtiTagMap::follow_references(jint heap_filter, 
-				    KlassHandle klass, 
-				    jobject object, 
-                                    const jvmtiHeapCallbacks* callbacks, 
-				    const void* user_data) 
+void JvmtiTagMap::follow_references(jint heap_filter,
+                                    KlassHandle klass,
+                                    jobject object,
+                                    const jvmtiHeapCallbacks* callbacks,
+                                    const void* user_data)
 {
   oop obj = JNIHandles::resolve(object);
   Handle initial_object(Thread::current(), obj);
@@ -3332,48 +3332,48 @@ void JvmtiTagMap::follow_references(jint heap_filter,
   MutexLocker ml(Heap_lock);
   AdvancedHeapWalkContext context(heap_filter, klass, callbacks);
   VM_HeapWalkOperation op(this, initial_object, context, user_data);
-  VMThread::execute(&op); 
+  VMThread::execute(&op);
 }
 
 
-// called post-GC 
+// called post-GC
 // - for each JVMTI environment with an object tag map, call its rehash
 // function to re-sync with the new object locations.
-void JvmtiTagMap::gc_epilogue(bool full) { 
+void JvmtiTagMap::gc_epilogue(bool full) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at a safepoint");
   if (JvmtiEnv::environments_might_exist()) {
     // re-obtain the memory region for the young generation (might
     // changed due to adaptive resizing policy)
-    get_young_generation();  
-     
-    JvmtiEnvIterator it; 
+    get_young_generation();
+
+    JvmtiEnvIterator it;
     for (JvmtiEnvBase* env = it.first(); env != NULL; env = it.next(env)) {
-      JvmtiTagMap* tag_map = env->tag_map();      
+      JvmtiTagMap* tag_map = env->tag_map();
       if (tag_map != NULL && !tag_map->is_empty()) {
         TraceTime t(full ? "JVMTI Full Rehash " : "JVMTI Rehash ", TraceJVMTIObjectTagging);
-	if (full) {
+        if (full) {
           tag_map->rehash(0, n_hashmaps);
-	} else {
-	  tag_map->rehash(0, 0);	// tag map for young gen only
-	}
+        } else {
+          tag_map->rehash(0, 0);        // tag map for young gen only
+        }
       }
     }
   }
 }
 
 // CMS has completed referencing processing so we may have JNI weak refs
-// to objects in the CMS generation that have been GC'ed. 
+// to objects in the CMS generation that have been GC'ed.
 void JvmtiTagMap::cms_ref_processing_epilogue() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at a safepoint");
   assert(UseConcMarkSweepGC, "should only be used with CMS");
   if (JvmtiEnv::environments_might_exist()) {
-    JvmtiEnvIterator it; 
+    JvmtiEnvIterator it;
     for (JvmtiEnvBase* env = it.first(); env != NULL; env = it.next(env)) {
       JvmtiTagMap* tag_map = ((JvmtiEnvBase *)env)->tag_map();
       if (tag_map != NULL && !tag_map->is_empty()) {
         TraceTime t("JVMTI Rehash (CMS) ", TraceJVMTIObjectTagging);
         tag_map->rehash(1, n_hashmaps);    // assume CMS not used in young gen
-      } 
+      }
     }
   }
 }
@@ -3389,8 +3389,8 @@ void JvmtiTagMap::cms_ref_processing_epilogue() {
 //
 // 3. If the weak reference resolves to an object then we re-hash the object
 //    to see if it has moved or has been promoted (from the young to the old
-//    generation for example). 
-//   
+//    generation for example).
+//
 void JvmtiTagMap::rehash(int start, int end) {
 
   // does this environment have the OBJECT_FREE event enabled
@@ -3399,7 +3399,7 @@ void JvmtiTagMap::rehash(int start, int end) {
   // counters used for trace message
   int freed = 0;
   int moved = 0;
-  int promoted = 0;  
+  int promoted = 0;
 
   // we assume there are two hashmaps - one for the young generation
   // and the other for all other spaces.
@@ -3440,79 +3440,79 @@ void JvmtiTagMap::rehash(int start, int end) {
         JvmtiTagHashmapEntry* next = entry->next();
 
         jweak ref = entry->object();
-        oop oop = JNIHandles::resolve(ref);	
+        oop oop = JNIHandles::resolve(ref);
 
         // has object been GC'ed
         if (oop == NULL) {
-	  // grab the tag 
-	  jlong tag = entry->tag();
-	  guarantee(tag != 0, "checking");
+          // grab the tag
+          jlong tag = entry->tag();
+          guarantee(tag != 0, "checking");
 
-	  // remove GC'ed entry from hashmap and return the
-	  // entry to the free list
-	  hashmap->remove(prev, pos, entry);
-	  destroy_entry(entry);
+          // remove GC'ed entry from hashmap and return the
+          // entry to the free list
+          hashmap->remove(prev, pos, entry);
+          destroy_entry(entry);
 
-	  // destroy the weak ref
+          // destroy the weak ref
           JNIHandles::destroy_weak_global(ref);
 
-	  // post the event to the profiler
+          // post the event to the profiler
           if (post_object_free) {
             JvmtiExport::post_object_free(env(), tag);
-	  }      
+          }
 
-	  freed++;
-	  entry = next;
-	  continue;
-	}
+          freed++;
+          entry = next;
+          continue;
+        }
 
-	// if this is the young hashmap then the object is either promoted
-	// or moved.
-	// if this is the other hashmap then the object is moved.
+        // if this is the young hashmap then the object is either promoted
+        // or moved.
+        // if this is the other hashmap then the object is moved.
 
-	bool same_gen;
-	if (i == 0) {
-	  assert(hashmap == young_hashmap, "checking");
-	  same_gen = is_in_young(oop);
-	} else {
-	  same_gen = true;
-	}
-  
+        bool same_gen;
+        if (i == 0) {
+          assert(hashmap == young_hashmap, "checking");
+          same_gen = is_in_young(oop);
+        } else {
+          same_gen = true;
+        }
 
-	if (same_gen) {     
-	  // if the object has moved then re-hash it and move its
-	  // entry to its new location.
-	  unsigned int new_pos = JvmtiTagHashmap::hash(oop, size);
-	  if (new_pos != (unsigned int)pos) {
-	    if (prev == NULL) {
-	      table[pos] = next;
-	    } else {
-	      prev->set_next(next);
-	    }
-	    entry->set_next(table[new_pos]);
-	    table[new_pos] = entry;
-	    moved++; 
-	  } else {
-	    // object didn't move
-	    prev = entry;
-	  }
-	} else {	    
-	  // object has been promoted so remove the entry from the
-	  // young hashmap
-	  assert(hashmap == young_hashmap, "checking");
-	  hashmap->remove(prev, pos, entry);
-	  
-	  // move the entry to the promoted list 
-	  entry->set_next(promoted_entries);
-	  promoted_entries = entry;	  	 
-	}     
 
-	entry = next;
+        if (same_gen) {
+          // if the object has moved then re-hash it and move its
+          // entry to its new location.
+          unsigned int new_pos = JvmtiTagHashmap::hash(oop, size);
+          if (new_pos != (unsigned int)pos) {
+            if (prev == NULL) {
+              table[pos] = next;
+            } else {
+              prev->set_next(next);
+            }
+            entry->set_next(table[new_pos]);
+            table[new_pos] = entry;
+            moved++;
+          } else {
+            // object didn't move
+            prev = entry;
+          }
+        } else {
+          // object has been promoted so remove the entry from the
+          // young hashmap
+          assert(hashmap == young_hashmap, "checking");
+          hashmap->remove(prev, pos, entry);
+
+          // move the entry to the promoted list
+          entry->set_next(promoted_entries);
+          promoted_entries = entry;
+        }
+
+        entry = next;
       }
     }
-  }  
+  }
 
-  
+
   // add the entries, corresponding to the promoted objects, to the
   // other hashmap.
   JvmtiTagHashmapEntry* entry = promoted_entries;
@@ -3534,8 +3534,8 @@ void JvmtiTagMap::rehash(int start, int end) {
       post_total += _hashmap[i]->_entry_count;
     }
     int pre_total = post_total + freed;
-   
-    tty->print("(%d->%d, %d freed, %d promoted, %d total moves)", 
-	pre_total, post_total, freed, promoted, total_moves);     
+
+    tty->print("(%d->%d, %d freed, %d promoted, %d total moves)",
+        pre_total, post_total, freed, promoted, total_moves);
   }
 }

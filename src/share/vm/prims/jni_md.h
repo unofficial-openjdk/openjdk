@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jni_md.h	1.25 07/05/05 17:06:34 JVM"
+#pragma ident "@(#)jni_md.h     1.25 07/05/05 17:06:34 JVM"
 #endif
 /*
  * Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.

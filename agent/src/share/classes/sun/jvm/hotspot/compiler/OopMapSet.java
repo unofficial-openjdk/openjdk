@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.compiler;
@@ -60,7 +60,7 @@ public class OopMapSet extends VMObject {
       if (VM.getVM().isClientCompiler()) {
         Assert.that(false, "should not reach here");
       } else if (VM.getVM().isServerCompiler() &&
-		 VM.getVM().useDerivedPointerTable()) {
+                 VM.getVM().useDerivedPointerTable()) {
         Assert.that(false, "FIXME: add derived pointer table");
       }
     }
@@ -133,7 +133,7 @@ public class OopMapSet extends VMObject {
         break;
       }
     }
-  
+
     if (!debugging) {
       if (Assert.ASSERTS_ENABLED) {
         Assert.that(i < len, "oopmap not found for pcOffset = " + pcOffset + "; len = " + len);
@@ -183,7 +183,7 @@ public class OopMapSet extends VMObject {
     // handle derived pointers first (otherwise base pointer may be
     // changed before derived pointer offset has been collected)
     OopMapValue omv;
-    {    
+    {
       for (OopMapStream oms = new OopMapStream(map, OopMapValue.OopTypes.DERIVED_OOP_VALUE); !oms.isDone(); oms.next()) {
         if (VM.getVM().isClientCompiler()) {
           Assert.that(false, "should not reach here");
@@ -195,7 +195,7 @@ public class OopMapSet extends VMObject {
           Address derivedLoc = loc;
           visitor.visitDerivedOopLocation(baseLoc, derivedLoc);
         }
-      }   
+      }
     }
 
     // We want narow oop, value and oop oop_types
@@ -229,7 +229,7 @@ public class OopMapSet extends VMObject {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(!VM.getVM().isCore(), "non-core builds only");
     }
-    
+
     if (!VM.getVM().isDebugging()) {
       if (Assert.ASSERTS_ENABLED) {
         OopMapSet maps = cb.getOopMaps();
@@ -245,7 +245,7 @@ public class OopMapSet extends VMObject {
       }
     }
 
-    // Check if caller must update oop argument  
+    // Check if caller must update oop argument
     regMap.setIncludeArgumentOops(cb.callerMustGCArguments(regMap.getThread()));
 
     int nofCallee = 0;
@@ -270,12 +270,12 @@ public class OopMapSet extends VMObject {
       locs[nofCallee] = fr.oopMapRegToLocation(omv.getReg(), regMap);
       nofCallee++;
     }
-    
+
     // Check that runtime stubs save all callee-saved registers
     // After adapter frames were deleted C2 doesn't use callee save registers at present
     if (Assert.ASSERTS_ENABLED) {
       if (VM.getVM().isServerCompiler()) {
-        Assert.that(!cb.isRuntimeStub() || 
+        Assert.that(!cb.isRuntimeStub() ||
                     (nofCallee >= SAVED_ON_ENTRY_REG_COUNT || nofCallee >= C_SAVED_ON_ENTRY_REG_COUNT),
                     "must save all");
       }

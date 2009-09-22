@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -70,7 +70,7 @@ public class CStringUtilities {
     for (i = 0; i < data.size(); ++i) {
       bytes[(int) i] = ((Byte) data.get((int) i)).byteValue();
     }
-    // FIXME: When we switch to use JDK 6 to build SA, 
+    // FIXME: When we switch to use JDK 6 to build SA,
     // we can change the following to just return:
     // return new String(bytes, Charset.defaultCharset());
     try {

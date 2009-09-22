@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)events.hpp	1.22 07/05/05 17:07:09 JVM"
+#pragma ident "@(#)events.hpp   1.22 07/05/05 17:07:09 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Events and EventMark provide interfaces to log events taking place in the vm.
@@ -30,7 +30,7 @@
 // often provides crucial information about events leading up to the crash.
 //
 // All arguments past the format string must be passed as an intptr_t.
-// 
+//
 // To log a single event use:
 //    Events::log("New nmethod has been created " INTPTR_FORMAT, nm);
 //
@@ -44,7 +44,7 @@
 //   Max 3 arguments are saved for each logged event.
 //
 
-class Events : AllStatic {  
+class Events : AllStatic {
  public:
   // Logs an event, format as printf
   static void log(const char* format, ...) PRODUCT_RETURN;
@@ -65,4 +65,3 @@ class EventMark : public StackObj {
 };
 
 int print_all_events(outputStream *st);
-

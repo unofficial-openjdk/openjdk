@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime.ia64;
@@ -44,7 +44,7 @@ public class cInterpreter extends VMObject {
   private static AddressField localsField;
   private static AddressField constantsField;
   private static AddressField methodField;
-  private static AddressField stackField;       // i.e. tos 
+  private static AddressField stackField;       // i.e. tos
   private static AddressField stackBaseField;   // ultimate bottom of stack
   private static AddressField stackLimitField;  // ultimate top of stack
   private static AddressField monitorBaseField;

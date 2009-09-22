@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)atomic_solaris_sparc.inline.hpp	1.22 07/05/05 17:04:53 JVM"
+#pragma ident "@(#)atomic_solaris_sparc.inline.hpp      1.22 07/05/05 17:04:53 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Implementation of class atomic
@@ -70,7 +70,7 @@ inline jint     Atomic::add    (jint     add_value, volatile jint*     dest) {
 
 inline intptr_t Atomic::add_ptr(intptr_t add_value, volatile intptr_t* dest) {
   intptr_t rv;
-#ifdef _LP64  
+#ifdef _LP64
   __asm__ volatile(
     "1: \n\t"
     " ldx    [%2], %%o2\n\t"
@@ -105,7 +105,7 @@ inline void*    Atomic::add_ptr(intptr_t add_value, volatile void*     dest) {
 }
 
 
-inline jint     Atomic::xchg    (jint     exchange_value, volatile jint*     dest) {  
+inline jint     Atomic::xchg    (jint     exchange_value, volatile jint*     dest) {
   intptr_t rv = exchange_value;
   __asm__ volatile(
     " swap   [%2],%1\n\t"
@@ -117,7 +117,7 @@ inline jint     Atomic::xchg    (jint     exchange_value, volatile jint*     des
 
 inline intptr_t Atomic::xchg_ptr(intptr_t exchange_value, volatile intptr_t* dest) {
   intptr_t rv = exchange_value;
-#ifdef _LP64  
+#ifdef _LP64
   __asm__ volatile(
     "1:\n\t"
     " mov    %1, %%o3\n\t"
@@ -137,7 +137,7 @@ inline intptr_t Atomic::xchg_ptr(intptr_t exchange_value, volatile intptr_t* des
     : "0" (exchange_value) /* we use same register as for return value */, "r" (dest)
     : "memory");
 #endif // _LP64
-  return rv;  
+  return rv;
 }
 
 inline void*    Atomic::xchg_ptr(void*    exchange_value, volatile void*     dest) {
@@ -155,7 +155,7 @@ inline jint     Atomic::cmpxchg    (jint     exchange_value, volatile jint*     
   return rv;
 }
 
-inline jlong    Atomic::cmpxchg    (jlong    exchange_value, volatile jlong*    dest, jlong    compare_value) {  
+inline jlong    Atomic::cmpxchg    (jlong    exchange_value, volatile jlong*    dest, jlong    compare_value) {
 #ifdef _LP64
   jlong rv;
   __asm__ volatile(
@@ -343,4 +343,3 @@ inline void*    Atomic::cmpxchg_ptr(void*    exchange_value, volatile void*     
 #endif // _LP64 || COMPILER2
 
 #endif // _GNU_SOURCE
-

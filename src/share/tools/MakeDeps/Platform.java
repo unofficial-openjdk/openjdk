@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /** Defines what must be specified for each platform. This class must
@@ -30,33 +30,33 @@ import java.io.*;
 public abstract class Platform {
     /** file name templates capture naming conventions */
     protected FileName dummyFileTemplate =
-	new FileName(this, "", "", "", "", "", "");
+        new FileName(this, "", "", "", "", "", "");
 
     // The next three must be instantiated in subclasses' constructors
 
     /** An incl file is produced per .c file and contains all the
-	includes it needs */
+        includes it needs */
     protected FileName inclFileTemplate;
 
     /** A GI (grand-include) file has any file used more than N times
-	for precompiled headers */
+        for precompiled headers */
     protected FileName giFileTemplate;
 
     /** A GD (grand-dependencies) file that tells Unix make all the
-	.o's needed for linking and the include dependencies */
+        .o's needed for linking and the include dependencies */
     protected FileName gdFileTemplate;
 
     // Accessors
     public FileName getInclFileTemplate() {
-	return inclFileTemplate;
+        return inclFileTemplate;
     }
 
     public FileName getGIFileTemplate() {
-	return giFileTemplate;
+        return giFileTemplate;
     }
 
     public FileName getGDFileTemplate() {
-	return gdFileTemplate;
+        return gdFileTemplate;
     }
 
     // an incl file is the file included by each.c file that includes
@@ -67,37 +67,37 @@ public abstract class Platform {
 
     /** empty file name -> no grand include file */
     public boolean haveGrandInclude() {
-	return (giFileTemplate.nameOfList().length() > 0);
+        return (giFileTemplate.nameOfList().length() > 0);
     }
 
     public boolean writeDeps() {
-	return (gdFileTemplate.nameOfList().length() > 0);
+        return (gdFileTemplate.nameOfList().length() > 0);
     }
 
     /** <p> A gi file is the grand-include file. It includes in one
-	file any file that is included more than a certain number of
-	times. </p>
+        file any file that is included more than a certain number of
+        times. </p>
 
-	<p> It is used for precompiled header files. </p>
+        <p> It is used for precompiled header files. </p>
 
-	<p> It has a source name, that is the file that this program
-	generates, and a compiled name; that is the file that is
-	included by other files. </p>
+        <p> It has a source name, that is the file that this program
+        generates, and a compiled name; that is the file that is
+        included by other files. </p>
 
-	<p> Some platforms have this program actually explictly
-	include the preprocessed gi file-- see includeGIInEachIncl().
-	</p>
+        <p> Some platforms have this program actually explictly
+        include the preprocessed gi file-- see includeGIInEachIncl().
+        </p>
 
-	<p> Also, some platforms need a pragma in the GI file. </p> */
+        <p> Also, some platforms need a pragma in the GI file. </p> */
     public boolean includeGIInEachIncl() {
-	return false;
+        return false;
     }
 
     /** For some platforms, e.g. Solaris, include the grand-include
-	dependencies in the makefile. For others, e.g. Windows, do
-	not. */
+        dependencies in the makefile. For others, e.g. Windows, do
+        not. */
     public boolean includeGIDependencies() {
-	return false;
+        return false;
     }
 
     /** Should C/C++ source file be dependent on a file included
@@ -105,27 +105,27 @@ public abstract class Platform {
     public boolean writeDependenciesOnHFilesFromGI() {
         return false;
     }
-    
+
     /** Default implementation does nothing */
     public void writeGIPragma(PrintWriter out) {
     }
 
     /** A line with a filename and the noGrandInclude string means
-	that this file cannot use the precompiled header. */
+        that this file cannot use the precompiled header. */
     public String noGrandInclude() {
-	return "no_precompiled_headers";
+        return "no_precompiled_headers";
     }
 
     /** A line with a filename and the
-	generatePlatformDependentInclude means that an include file
-	for the header file must be generated. This file generated include
-	file is directly included by the non-platform dependent include file
-	(e.g os.hpp includes _os_pd.hpp.incl. So while we notice files that
-	are directly dependent on non-platform dependent files from the database
-	we must infer the dependence on platform specific files to generate correct
-	dependences on the platform specific files. */
+        generatePlatformDependentInclude means that an include file
+        for the header file must be generated. This file generated include
+        file is directly included by the non-platform dependent include file
+        (e.g os.hpp includes _os_pd.hpp.incl. So while we notice files that
+        are directly dependent on non-platform dependent files from the database
+        we must infer the dependence on platform specific files to generate correct
+        dependences on the platform specific files. */
     public String generatePlatformDependentInclude() {
-	return "generate_platform_dependent_include";
+        return "generate_platform_dependent_include";
     }
 
     /** Prefix and suffix strings for emitting Makefile rules */
@@ -137,49 +137,49 @@ public abstract class Platform {
 
     /** Abort means an internal error */
     public void abort() {
-	throw new RuntimeException("Internal error");
+        throw new RuntimeException("Internal error");
     }
 
     /** fatalError is used by clients to stop the system */
     public void fatalError(String msg) {
-	System.err.println(msg);
-	System.exit(1);
+        System.err.println(msg);
+        System.exit(1);
     }
 
     /** Default implementation performs case-sensitive comparison */
     public boolean fileNameStringEquality(String s1, String s2) {
-	return s1.equals(s2);
+        return s1.equals(s2);
     }
 
     public void fileNamePortabilityCheck(String name) {
-	if (Character.isUpperCase(name.charAt(0))) {
-	    fatalError("Error: for the sake of portability we have chosen\n" +
-		       "to avoid files starting with an uppercase letter.\n" +
-		       "Please rename " + name + ".");
-	}
+        if (Character.isUpperCase(name.charAt(0))) {
+            fatalError("Error: for the sake of portability we have chosen\n" +
+                       "to avoid files starting with an uppercase letter.\n" +
+                       "Please rename " + name + ".");
+        }
     }
 
     public void fileNamePortabilityCheck(String name, String matchingName) {
-	if (!name.equals(matchingName)) {
-	    fatalError("Error: file " + name + " also appears as " +
-		       matchingName + ".  Case must be consistent for " +
-		       "portability.");
-	}
+        if (!name.equals(matchingName)) {
+            fatalError("Error: file " + name + " also appears as " +
+                       matchingName + ".  Case must be consistent for " +
+                       "portability.");
+        }
     }
 
     /** max is 31 on mac, so warn */
     public int fileNameLengthLimit() {
-	return 45;
+        return 45;
     }
 
     public int defaultGrandIncludeThreshold() {
-	return 30;
+        return 30;
     }
 
     /** Not very general, but this is a way to get platform-specific
         files to be written. Default implementation does nothing. */
     public void writePlatformSpecificFiles(Database previousDB,
-					   Database currentDB, String[] args)
-	throws IllegalArgumentException, IOException {
+                                           Database currentDB, String[] args)
+        throws IllegalArgumentException, IOException {
     }
 }

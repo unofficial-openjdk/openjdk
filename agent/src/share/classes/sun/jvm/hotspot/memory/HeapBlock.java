@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -89,7 +89,7 @@ public class HeapBlock extends VMObject {
       return (headerUsedField.getValue(addr) == 0);
     }
   }
-  
+
   private Header getHeader() {
     return (Header) VMObjectFactory.newObject(HeapBlock.Header.class, addr.addOffsetTo(headerField.getOffset()));
   }

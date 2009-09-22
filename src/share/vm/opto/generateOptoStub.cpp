@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)generateOptoStub.cpp	1.101 07/05/05 17:06:17 JVM"
+#pragma ident "@(#)generateOptoStub.cpp 1.101 07/05/05 17:06:17 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -50,7 +50,7 @@ void GraphKit::gen_stub(address C_function,
   assert(SynchronizationEntryBCI == InvocationEntryBci, "");
   JVMState* jvms = new (C) JVMState(0);
   jvms->set_bci(InvocationEntryBci);
-  jvms->set_monoff(max_map); 
+  jvms->set_monoff(max_map);
   jvms->set_endoff(max_map);
   {
     SafePointNode *map = new (C, max_map) SafePointNode( max_map, jvms );
@@ -61,7 +61,7 @@ void GraphKit::gen_stub(address C_function,
 
   // Make up the parameters
   uint i;
-  for( i = 0; i < parm_cnt; i++ ) 
+  for( i = 0; i < parm_cnt; i++ )
     map()->init_req(i, _gvn.transform(new (C, 1) ParmNode(start, i)));
   for( ; i<map()->req(); i++ )
     map()->init_req(i, top());      // For nicer debugging
@@ -74,15 +74,15 @@ void GraphKit::gen_stub(address C_function,
 
   const int NoAlias = Compile::AliasIdxBot;
 
-  Node* adr_last_Java_pc = basic_plus_adr(top(), 
-					    thread, 
-					    in_bytes(JavaThread::frame_anchor_offset()) +
-					    in_bytes(JavaFrameAnchor::last_Java_pc_offset()));
+  Node* adr_last_Java_pc = basic_plus_adr(top(),
+                                            thread,
+                                            in_bytes(JavaThread::frame_anchor_offset()) +
+                                            in_bytes(JavaFrameAnchor::last_Java_pc_offset()));
 #if defined(SPARC) || defined(IA64)
-  Node* adr_flags = basic_plus_adr(top(), 
-				   thread, 
-				   in_bytes(JavaThread::frame_anchor_offset()) +
-				   in_bytes(JavaFrameAnchor::flags_offset()));
+  Node* adr_flags = basic_plus_adr(top(),
+                                   thread,
+                                   in_bytes(JavaThread::frame_anchor_offset()) +
+                                   in_bytes(JavaFrameAnchor::flags_offset()));
 #endif /* defined(SPARC) || defined(IA64) */
 
 
@@ -115,7 +115,7 @@ void GraphKit::gen_stub(address C_function,
   // Also pass in the caller's PC, if asked for.
   if( return_pc )
     fields[cnt++] = TypeRawPtr::BOTTOM; // Return PC
-  
+
   const TypeTuple* domain = TypeTuple::make(cnt,fields);
   // The C routine we are about to call cannot return an oop; it can block on
   // exit and a GC will trash the oop while it sits in C-land.  Instead, we
@@ -140,7 +140,7 @@ void GraphKit::gen_stub(address C_function,
 
   } else if( jrange->cnt() >= TypeFunc::Parms+1 ) { // Else copy other types
     rfields[TypeFunc::Parms] = jrange->field_at(TypeFunc::Parms);
-    if( jrange->cnt() == TypeFunc::Parms+2 ) 
+    if( jrange->cnt() == TypeFunc::Parms+2 )
       rfields[TypeFunc::Parms+1] = jrange->field_at(TypeFunc::Parms+1);
   }
   const TypeTuple* range = TypeTuple::make(jrange->cnt(),rfields);
@@ -158,7 +158,7 @@ void GraphKit::gen_stub(address C_function,
   call->set_jvms( new (C) JVMState(0) );
   call->jvms()->set_bci(0);
   call->jvms()->set_offsets(cnt);
-  
+
   // Set fixed predefined input arguments
   cnt = 0;
   for( i=0; i<TypeFunc::Parms; i++ )
@@ -292,4 +292,3 @@ void GraphKit::gen_stub(address C_function,
   }
   root()->add_req(_gvn.transform(ret));
 }
-

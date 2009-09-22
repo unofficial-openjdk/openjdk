@@ -19,13 +19,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
 
 class SOQLQuery {
-   SOQLQuery(String selectExpr, boolean isInstanceOf, 
+   SOQLQuery(String selectExpr, boolean isInstanceOf,
              String className, String identifier, String whereExpr) {
       this.selectExpr = selectExpr;
       this.isInstanceOf = isInstanceOf;

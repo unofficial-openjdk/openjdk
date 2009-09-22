@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)node.hpp	1.224 07/09/28 10:33:17 JVM"
+#pragma ident "@(#)node.hpp     1.224 07/09/28 10:33:17 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -124,7 +124,7 @@ class IfTrueNode;
 class IfFalseNode;
 typedef void (*NFunc)(Node&,void*);
 extern "C" {
-  typedef int (*C_sort_func_t)(const void *, const void *); 
+  typedef int (*C_sort_func_t)(const void *, const void *);
 }
 
 // The type of all node counts and indexes.
@@ -188,9 +188,9 @@ public:
   // from.  This should allow fast access to node creation & deletion.  This
   // field is a local cache of a value defined in some "program fragment" for
   // which these Nodes are just a part of.
-  
+
   // New Operator that takes a Compile pointer, this will eventually
-  // be the "new" New operator. 
+  // be the "new" New operator.
   inline void* operator new( size_t x, Compile* C) {
     Node* n = (Node*)C->node_arena()->Amalloc_D(x);
 #ifdef ASSERT
@@ -201,8 +201,8 @@ public:
   }
 
   // New Operator that takes a Compile pointer, this will eventually
-  // be the "new" New operator. 
-  inline void* operator new( size_t x, Compile* C, int y) { 
+  // be the "new" New operator.
+  inline void* operator new( size_t x, Compile* C, int y) {
     Node* n = (Node*)C->node_arena()->Amalloc_D(x + y*sizeof(void*));
     n->_in = (Node**)(((char*)n) + x);
 #ifdef ASSERT
@@ -210,7 +210,7 @@ public:
 #endif
     n->_out = (Node**)C;
     return (void*)n;
-  }  
+  }
 
   // Delete is a NOP
   void operator delete( void *ptr ) {}
@@ -222,7 +222,7 @@ public:
   Node( uint required );
 
   // Create a new Node with given input edges.
-  // This version requires use of the "edge-count" new.  
+  // This version requires use of the "edge-count" new.
   // E.g.  new (C,3) FooNode( C, NULL, left, right );
   Node( Node *n0 );
   Node( Node *n0, Node *n1 );
@@ -353,9 +353,9 @@ protected:
   // Return the unique out edge.
   Node* unique_out() const { assert(_outcnt==1,"not unique"); return _out[0]; }
   // Delete out edge at position 'i' by moving last out edge to position 'i'
-  void  raw_del_out(uint i) { 
-    assert(i < _outcnt,"oob"); 
-    assert(_outcnt > 0,"oob"); 
+  void  raw_del_out(uint i) {
+    assert(i < _outcnt,"oob");
+    assert(_outcnt > 0,"oob");
     #if OPTO_DU_ITERATOR_ASSERT
     // Record that a change happened here.
     debug_only(_last_del = _out[i]; ++_del_tick);
@@ -368,7 +368,7 @@ protected:
 #ifdef ASSERT
   bool is_dead() const;
 #define is_not_dead(n) ((n) == NULL || !VerifyIterativeGVN || !((n)->is_dead()))
-#endif 
+#endif
 
   // Set a required input edge, also updates corresponding output edge
   void add_req( Node *n ); // Append a NEW required input
@@ -387,7 +387,7 @@ protected:
   }
   // Light version of set_req() to init inputs after node creation.
   void init_req( uint i, Node *n ) {
-    assert( i == 0 && this == n || 
+    assert( i == 0 && this == n ||
             is_not_dead(n), "can not use dead node");
     assert( i < _cnt, "oob");
     assert( !VerifyHashTableKeys || _hash_lock == 0,
@@ -457,7 +457,7 @@ public:
   void rm_prec( uint i );
   void set_prec( uint i, Node *n ) {
     assert( is_not_dead(n), "can not use dead node");
-    assert( i >= _cnt, "not a precedence edge"); 
+    assert( i >= _cnt, "not a precedence edge");
     if (_in[i] != NULL) _in[i]->del_out((Node *)this);
     _in[i] = n;
     if (n != NULL) n->add_out((Node *)this);
@@ -487,7 +487,7 @@ public:
 
   // Generate class id for some ideal nodes to avoid virtual query
   // methods is_<Node>().
-  // Class id is the set of bits corresponded to the node class and all its 
+  // Class id is the set of bits corresponded to the node class and all its
   // super classes so that queries for super classes are also valid.
   // Subclasses of the same super class have different assigned bit
   // (the third parameter in the macro DEFINE_CLASS_ID).
@@ -500,7 +500,7 @@ public:
   //
   //  Class_MachCall=30, ClassMask_MachCall=31
   // 12               8               4               0
-  //  0   0   0   0   0   0   0   0   1   1   1   1   0 
+  //  0   0   0   0   0   0   0   0   1   1   1   1   0
   //                                  |   |   |   |
   //                                  |   |   |   Bit_Mach=2
   //                                  |   |   Bit_MachReturn=4
@@ -509,7 +509,7 @@ public:
   //
   //  Class_CountedLoop=56, ClassMask_CountedLoop=63
   // 12               8               4               0
-  //  0   0   0   0   0   0   0   1   1   1   0   0   0 
+  //  0   0   0   0   0   0   0   1   1   1   0   0   0
   //                              |   |   |
   //                              |   |   Bit_Region=8
   //                              |   Bit_Loop=16
@@ -518,7 +518,7 @@ public:
   #define DEFINE_CLASS_ID(cl, supcl, subn) \
   Bit_##cl = (Class_##supcl == 0) ? 1 << subn : (Bit_##supcl) << (1 + subn) , \
   Class_##cl = Class_##supcl + Bit_##cl , \
-  ClassMask_##cl = ((Bit_##cl << 1) - 1) , 
+  ClassMask_##cl = ((Bit_##cl << 1) - 1) ,
 
   // This enum is used only for C2 ideal and mach nodes with is_<node>() methods
   // so that it's values fits into 16 bits.
@@ -653,14 +653,14 @@ public:
 
   // Return a dense integer opcode number
   virtual int Opcode() const;
-  
+
   // Virtual inherited Node size
   virtual uint size_of() const;
 
   // Other interesting Node properties
 
   // Special case: is_Call() returns true for both CallNode and MachCallNode.
-  bool is_Call() const { 
+  bool is_Call() const {
     return (_flags & Flag_is_Call) != 0;
   }
 
@@ -748,7 +748,7 @@ public:
   #undef DEFINE_CLASS_QUERY
 
   // duplicate of is_MachSpillCopy()
-  bool is_SpillCopy () const { 
+  bool is_SpillCopy () const {
     return ((_class_id & ClassMask_MachSpillCopy) == Class_MachSpillCopy);
   }
 
@@ -781,7 +781,7 @@ public:
   // Nodes, next block selector Nodes (block enders), and next block
   // projections.  These calls need to work on their machine equivalents.  The
   // Ideal beginning Nodes are RootNode, RegionNode and StartNode.
-  bool is_block_start() const { 
+  bool is_block_start() const {
     if ( is_Region() )
       return this == (const Node*)in(0);
     else
@@ -815,14 +815,14 @@ public:
   virtual const class TypePtr *adr_type() const { return NULL; }
 
   // Return an existing node which computes the same function as this node.
-  // The optimistic combined algorithm requires this to return a Node which 
+  // The optimistic combined algorithm requires this to return a Node which
   // is a small number of steps away (e.g., one of my inputs).
   virtual Node *Identity( PhaseTransform *phase );
 
   // Return the set of values this Node can take on at runtime.
   virtual const Type *Value( PhaseTransform *phase ) const;
 
-  // Return a node which is more "ideal" than the current node.  
+  // Return a node which is more "ideal" than the current node.
   // The invariants on this call are subtle.  If in doubt, read the
   // treatise in node.cpp above the default implemention AND TEST WITH
   // +VerifyIterativeGVN!
@@ -904,7 +904,7 @@ public:
   // Print as assembly
   virtual void format( PhaseRegAlloc *, outputStream* st = tty ) const;
   // Emit bytes starting at parameter 'ptr'
-  // Bump 'ptr' by the number of output bytes 
+  // Bump 'ptr' by the number of output bytes
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
   // Size of instruction in bytes
   virtual uint size(PhaseRegAlloc *ra_) const;
@@ -1256,7 +1256,7 @@ Node* Node::last_out(DUIterator_Last& i) const {
 //-----------------------------------------------------------------------------
 // Map dense integer indices to Nodes.  Uses classic doubling-array trick.
 // Abstractly provides an infinite array of Node*'s, initialized to NULL.
-// Note that the constructor just zeros things, and since I use Arena 
+// Note that the constructor just zeros things, and since I use Arena
 // allocation I do not need a destructor to reclaim storage.
 class Node_Array : public ResourceObj {
 protected:
@@ -1316,8 +1316,8 @@ public:
   bool member( Node *n ) { return _in_worklist.test(n->_idx) != 0; }
   VectorSet &member_set(){ return _in_worklist; }
 
-  void push( Node *b ) { 
-    if( !_in_worklist.test_set(b->_idx) ) 
+  void push( Node *b ) {
+    if( !_in_worklist.test_set(b->_idx) )
       Node_List::push(b);
   }
   Node *pop() {
@@ -1367,15 +1367,15 @@ protected:
   Arena *_a;         // Arena to allocate in
   void grow();
 public:
-  Node_Stack(int size) { 
+  Node_Stack(int size) {
     size_t max = (size > OptoNodeListSize) ? size : OptoNodeListSize;
     _a = Thread::current()->resource_area();
     _inodes = NEW_ARENA_ARRAY( _a, INode, max );
     _inode_max = _inodes + max;
     _inode_top = _inodes - 1; // stack is empty
   }
-  
-  Node_Stack(Arena *a, int size) : _a(a) { 
+
+  Node_Stack(Arena *a, int size) : _a(a) {
     size_t max = (size > OptoNodeListSize) ? size : OptoNodeListSize;
     _inodes = NEW_ARENA_ARRAY( _a, INode, max );
     _inode_max = _inodes + max;
@@ -1434,7 +1434,7 @@ public:
 
   JVMState* jvms()            { return _jvms; }
   void  set_jvms(JVMState* x) {        _jvms = x; }
-  
+
   // True if there is nothing here.
   bool is_clear() {
     return (_jvms == NULL);
@@ -1523,4 +1523,3 @@ public:
   virtual void dump_spec(outputStream *st) const;
 #endif
 };
-

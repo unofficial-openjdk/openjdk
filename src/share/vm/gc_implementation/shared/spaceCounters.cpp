@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)spaceCounters.cpp	1.10 07/05/05 17:05:35 JVM"
+#pragma ident "@(#)spaceCounters.cpp    1.10 07/05/05 17:05:35 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -31,7 +31,7 @@
 SpaceCounters::SpaceCounters(const char* name, int ordinal, size_t max_size,
                              MutableSpace* m, GenerationCounters* gc) :
    _object_space(m) {
-   
+
   if (UsePerfData) {
     EXCEPTION_MARK;
     ResourceMark rm;

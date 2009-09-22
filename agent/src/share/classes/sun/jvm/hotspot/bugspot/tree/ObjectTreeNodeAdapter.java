@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.bugspot.tree;
@@ -96,7 +96,7 @@ public class ObjectTreeNodeAdapter extends FieldTreeNodeAdapter {
     public int getNumFields() {
       return numFields;
     }
-    
+
     public void doBit(FieldIdentifier f, long val)                   { ++numFields; }
     public void doInt(FieldIdentifier f, long val)                   { ++numFields; }
     public void doEnum(FieldIdentifier f, long val, String enumName) { ++numFields; }
@@ -113,7 +113,7 @@ public class ObjectTreeNodeAdapter extends FieldTreeNodeAdapter {
     private int index;
     private int curField;
     private SimpleTreeNode child;
-    
+
     public Fetcher(int index) {
       this.index = index;
     }
@@ -121,7 +121,7 @@ public class ObjectTreeNodeAdapter extends FieldTreeNodeAdapter {
     public SimpleTreeNode getChild() {
       return child;
     }
-    
+
     public void doBit(FieldIdentifier f, long val) {
       if (curField == index) {
         child = new LongTreeNodeAdapter(val, f, getTreeTableMode());
@@ -210,7 +210,7 @@ public class ObjectTreeNodeAdapter extends FieldTreeNodeAdapter {
     public void doPointer(FieldIdentifier f, Address val) { if (f.equals(id)) { index = curField; } ++curField; }
     public void doArray(FieldIdentifier f, Address val)   { if (f.equals(id)) { index = curField; } ++curField; }
     public void doRef(FieldIdentifier f, Address val)     { if (f.equals(id)) { index = curField; } ++curField; }
-    public void doCompound(FieldIdentifier f, 
+    public void doCompound(FieldIdentifier f,
                            Address val)                   { if (f.equals(id)) { index = curField; } ++curField; }
   }
 }

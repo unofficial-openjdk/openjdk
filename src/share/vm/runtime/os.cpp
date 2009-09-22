@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os.cpp	1.185 07/10/04 10:49:22 JVM"
+#pragma ident "@(#)os.cpp       1.185 07/10/04 10:49:22 JVM"
 #endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -47,12 +47,12 @@ int os::num_frees = 0;              // # of calls to free
 // Fill in buffer with current local time as an ISO-8601 string.
 // E.g., yyyy-mm-ddThh:mm:ss-zzzz.
 // Returns buffer, or NULL if it failed.
-// This would mostly be a call to 
+// This would mostly be a call to
 //     strftime(...., "%Y-%m-%d" "T" "%H:%M:%S" "%z", ....)
 // except that on Windows the %z behaves badly, so we do it ourselves.
-// Also, people wanted milliseconds on there, 
+// Also, people wanted milliseconds on there,
 // and strftime doesn't do milliseconds.
-char* os::iso8601_time(char* buffer, size_t buffer_length) {  
+char* os::iso8601_time(char* buffer, size_t buffer_length) {
   // Output will be of the form "YYYY-MM-DDThh:mm:ss.mmm+zzzz\0"
   //                                      1         2
   //                             12345678901234567890123456789
@@ -84,8 +84,8 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
   }
 
   const time_t zone = timezone;
-  
-  // If daylight savings time is in effect, 
+
+  // If daylight savings time is in effect,
   // we are 1 hour East of our time zone
   const time_t seconds_per_minute = 60;
   const time_t minutes_per_hour = 60;
@@ -111,7 +111,7 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
   const time_t zone_hours = (abs_local_to_UTC / seconds_per_hour);
   const time_t zone_min =
     ((abs_local_to_UTC % seconds_per_hour) / seconds_per_minute);
-  
+
   // Print an ISO 8601 date and time stamp into the buffer
   const int year = 1900 + time_struct.tm_year;
   const int month = 1 + time_struct.tm_mon;
@@ -139,7 +139,7 @@ OSReturn os::set_priority(Thread* thread, ThreadPriority p) {
          Thread::current() == thread  ||
          Threads_lock->owned_by_self()
          || thread->is_Compiler_thread()
-	)) {
+        )) {
     assert(false, "possibility of dangling Thread pointer");
   }
 #endif
@@ -178,7 +178,7 @@ OSReturn os::get_priority(const Thread* const thread, ThreadPriority& priority) 
 
 
 static void signal_thread_entry(JavaThread* thread, TRAPS) {
-  os::set_priority(thread, NearMaxPriority);  
+  os::set_priority(thread, NearMaxPriority);
   while (true) {
     int sig;
     {
@@ -196,12 +196,12 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
       case SIGBREAK: {
         // Check if the signal is a trigger to start the Attach Listener - in that
         // case don't print stack traces.
-	if (!DisableAttachMechanism && AttachListener::is_init_trigger()) {
-	  continue;
-  	}
+        if (!DisableAttachMechanism && AttachListener::is_init_trigger()) {
+          continue;
+        }
         // Print stack traces
-	// Any SIGBREAK operations added here should make sure to flush
-	// the output stream (e.g. tty->flush()) after output.  See 4803766.
+        // Any SIGBREAK operations added here should make sure to flush
+        // the output stream (e.g. tty->flush()) after output.  See 4803766.
         // Each module also prints an extra carriage return after its output.
         VM_PrintThreads op;
         VMThread::execute(&op);
@@ -219,7 +219,7 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
         }
         break;
       }
-      default: {       
+      default: {
         // Dispatch the signal to java
         HandleMark hm(THREAD);
         klassOop k = SystemDictionary::resolve_or_null(vmSymbolHandles::sun_misc_Signal(), THREAD);
@@ -230,31 +230,31 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
           args.push_int(sig);
           JavaCalls::call_static(
             &result,
-            klass, 
-            vmSymbolHandles::dispatch_name(), 
+            klass,
+            vmSymbolHandles::dispatch_name(),
             vmSymbolHandles::int_void_signature(),
             &args,
             THREAD
           );
         }
-	if (HAS_PENDING_EXCEPTION) {
-	  // tty is initialized early so we don't expect it to be null, but
-	  // if it is we can't risk doing an initialization that might
-	  // trigger additional out-of-memory conditions
-	  if (tty != NULL) {
-	    char klass_name[256];
-	    char tmp_sig_name[16];
-	    const char* sig_name = "UNKNOWN";
-	    instanceKlass::cast(PENDING_EXCEPTION->klass())->
-	      name()->as_klass_external_name(klass_name, 256);
-	    if (os::exception_name(sig, tmp_sig_name, 16) != NULL)
-	      sig_name = tmp_sig_name;
-	    warning("Exception %s occurred dispatching signal %s to handler"
-		    "- the VM may need to be forcibly terminated",  
-		    klass_name, sig_name );
-	  }
-	  CLEAR_PENDING_EXCEPTION;
-	}
+        if (HAS_PENDING_EXCEPTION) {
+          // tty is initialized early so we don't expect it to be null, but
+          // if it is we can't risk doing an initialization that might
+          // trigger additional out-of-memory conditions
+          if (tty != NULL) {
+            char klass_name[256];
+            char tmp_sig_name[16];
+            const char* sig_name = "UNKNOWN";
+            instanceKlass::cast(PENDING_EXCEPTION->klass())->
+              name()->as_klass_external_name(klass_name, 256);
+            if (os::exception_name(sig, tmp_sig_name, 16) != NULL)
+              sig_name = tmp_sig_name;
+            warning("Exception %s occurred dispatching signal %s to handler"
+                    "- the VM may need to be forcibly terminated",
+                    klass_name, sig_name );
+          }
+          CLEAR_PENDING_EXCEPTION;
+        }
       }
     }
   }
@@ -270,33 +270,33 @@ void os::signal_init() {
     instanceHandle thread_oop = klass->allocate_instance_handle(CHECK);
 
     const char thread_name[] = "Signal Dispatcher";
-    Handle string = java_lang_String::create_from_str(thread_name, CHECK);    
+    Handle string = java_lang_String::create_from_str(thread_name, CHECK);
 
     // Initialize thread_oop to put it into the system threadGroup
     Handle thread_group (THREAD, Universe::system_thread_group());
     JavaValue result(T_VOID);
-    JavaCalls::call_special(&result, thread_oop, 
-                           klass, 
-                           vmSymbolHandles::object_initializer_name(), 
-                           vmSymbolHandles::threadgroup_string_void_signature(), 
-                           thread_group, 
-                           string, 
-                           CHECK);  
-    
+    JavaCalls::call_special(&result, thread_oop,
+                           klass,
+                           vmSymbolHandles::object_initializer_name(),
+                           vmSymbolHandles::threadgroup_string_void_signature(),
+                           thread_group,
+                           string,
+                           CHECK);
+
     KlassHandle group(THREAD, SystemDictionary::threadGroup_klass());
     JavaCalls::call_special(&result,
                             thread_group,
                             group,
                             vmSymbolHandles::add_method_name(),
                             vmSymbolHandles::thread_void_signature(),
-			    thread_oop,		// ARG 1
+                            thread_oop,         // ARG 1
                             CHECK);
 
     os::signal_init_pd();
 
     { MutexLocker mu(Threads_lock);
       JavaThread* signal_thread = new JavaThread(&signal_thread_entry);
-                                                                                                                              
+
       // At this point it may be possible that no osthread was created for the
       // JavaThread due to lack of memory. We would have to throw an exception
       // in that case. However, since this must work and we do not allow
@@ -309,7 +309,7 @@ void os::signal_init() {
       java_lang_Thread::set_thread(thread_oop(), signal_thread);
       java_lang_Thread::set_priority(thread_oop(), NearMaxPriority);
       java_lang_Thread::set_daemon(thread_oop());
-         
+
       signal_thread->set_threadObj(thread_oop());
       Threads::add(signal_thread);
       Thread::start(signal_thread);
@@ -396,13 +396,13 @@ char *os::strdup(const char *str) {
 // MallocCushion: size of extra cushion allocated around objects with +UseMallocOnly
 // NB: cannot be debug variable, because these aren't set from the command line until
 // *after* the first few allocs already happened
-#define MallocCushion            16 
+#define MallocCushion            16
 #else
 #define space_before             0
 #define space_after              0
 #define size_addr_from_base(p)   should not use w/o ASSERT
 #define size_addr_from_obj(p)    should not use w/o ASSERT
-#define MallocCushion            0 
+#define MallocCushion            0
 #endif
 #define paranoid                 0  /* only set to 1 if you suspect checking code has bug */
 
@@ -415,7 +415,7 @@ inline size_t get_size(void* obj) {
 }
 
 u_char* find_cushion_backwards(u_char* start) {
-  u_char* p = start; 
+  u_char* p = start;
   while (p[ 0] != badResourceValue || p[-1] != badResourceValue ||
          p[-2] != badResourceValue || p[-3] != badResourceValue) p--;
   // ok, we have four consecutive marker bytes; find start
@@ -425,7 +425,7 @@ u_char* find_cushion_backwards(u_char* start) {
 }
 
 u_char* find_cushion_forwards(u_char* start) {
-  u_char* p = start; 
+  u_char* p = start;
   while (p[0] != badResourceValue || p[1] != badResourceValue ||
          p[2] != badResourceValue || p[3] != badResourceValue) p++;
   // ok, we have four consecutive marker bytes; find end of cushion
@@ -451,7 +451,7 @@ void print_neighbor_blocks(void* ptr) {
     // search one more backwards
     start_of_prev_block = find_cushion_backwards(start_of_prev_block);
     size = *size_addr_from_base(start_of_prev_block);
-    obj = start_of_prev_block + space_before;  
+    obj = start_of_prev_block + space_before;
   }
 
   if (start_of_prev_block + space_before + size + space_after == start_of_this_block) {
@@ -465,9 +465,9 @@ void print_neighbor_blocks(void* ptr) {
   start_of_next_block = find_cushion_forwards(start_of_next_block);
   u_char* next_obj = start_of_next_block + space_before;
   ptrdiff_t next_size = *size_addr_from_base(start_of_next_block);
-  if (start_of_next_block[0] == badResourceValue && 
-      start_of_next_block[1] == badResourceValue && 
-      start_of_next_block[2] == badResourceValue && 
+  if (start_of_next_block[0] == badResourceValue &&
+      start_of_next_block[1] == badResourceValue &&
+      start_of_next_block[2] == badResourceValue &&
       start_of_next_block[3] == badResourceValue) {
     tty->print_cr("### next object: %p (%ld bytes)", next_obj, next_size);
   } else {
@@ -483,7 +483,7 @@ void report_heap_error(void* memblock, void* bad, const char* where) {
   fatal("memory stomping error");
 }
 
-void verify_block(void* memblock) {  
+void verify_block(void* memblock) {
   size_t size = get_size(memblock);
   if (MallocCushion) {
     u_char* ptr = (u_char*)memblock - space_before;
@@ -588,14 +588,14 @@ void  os::free(void *memblock) {
     u_char* ptr = (u_char*)memblock - space_before;
     for (u_char* p = ptr; p < ptr + MallocCushion; p++) {
       guarantee(*p == badResourceValue,
-		"Thing freed should be malloc result.");
+                "Thing freed should be malloc result.");
       *p = (u_char)freeBlockPad;
     }
     size_t size = get_size(memblock);
     u_char* end = ptr + space_before + size;
     for (u_char* q = end; q < end + MallocCushion; q++) {
       guarantee(*q == badResourceValue,
-		"Thing freed should be malloc result.");
+                "Thing freed should be malloc result.");
       *q = (u_char)freeBlockPad;
     }
   }
@@ -614,8 +614,8 @@ long os::random() {
    * see
    * (1) "Random Number Generators: Good Ones Are Hard to Find",
    *      S.K. Park and K.W. Miller, Communications of the ACM 31:10 (Oct 1988),
-   * (2) "Two Fast Implementations of the 'Minimal Standard' Random 
-   *     Number Generator", David G. Carta, Comm. ACM 33, 1 (Jan 1990), pp. 87-88. 
+   * (2) "Two Fast Implementations of the 'Minimal Standard' Random
+   *     Number Generator", David G. Carta, Comm. ACM 33, 1 (Jan 1990), pp. 87-88.
   */
   const long a = 16807;
   const unsigned long m = 2147483647;
@@ -744,8 +744,8 @@ bool os::is_first_C_frame(frame* fr) {
 #ifdef IA64
   // In order to walk native frames on Itanium, we need to access the unwind
   // table, which is inside ELF. We don't want to parse ELF after fatal error,
-  // so return true for IA64. If we need to support C stack walking on IA64, 
-  // this function needs to be moved to CPU specific files, as fp() on IA64 
+  // so return true for IA64. If we need to support C stack walking on IA64,
+  // this function needs to be moved to CPU specific files, as fp() on IA64
   // is register stack, which grows towards higher memory address.
   return true;
 #endif
@@ -773,7 +773,7 @@ bool os::is_first_C_frame(frame* fr) {
 
   // stack grows downwards; if old_fp is below current fp or if the stack
   // frame is too large, either the stack is corrupted or fp is not saved
-  // on stack (i.e. on x86, ebp may be used as general register). The stack 
+  // on stack (i.e. on x86, ebp may be used as general register). The stack
   // is not walkable beyond current frame.
   if (old_fp < ufp) return true;
   if (old_fp - ufp > 64 * K) return true;
@@ -790,13 +790,13 @@ extern "C" void test_random() {
 
   tty->print_cr("seed %ld for %ld repeats...", seed, reps);
   os::init_random(seed);
-  long num; 
+  long num;
   for (int k = 0; k < reps; k++) {
     num = os::random();
     double u = (double)num / m;
     assert(u >= 0.0 && u <= 1.0, "bad random number!");
 
-    // calculate mean and variance of the random sequence 
+    // calculate mean and variance of the random sequence
     mean += u;
     variance += (u*u);
   }
@@ -823,40 +823,40 @@ char* os::format_boot_path(const char* format_string,
                            char fileSep,
                            char pathSep) {
     assert((fileSep == '/' && pathSep == ':') ||
-	   (fileSep == '\\' && pathSep == ';'), "unexpected seperator chars");
-  
+           (fileSep == '\\' && pathSep == ';'), "unexpected seperator chars");
+
     // Scan the format string to determine the length of the actual
     // boot classpath, and handle platform dependencies as well.
     int formatted_path_len = 0;
     const char* p;
     for (p = format_string; *p != 0; ++p) {
-	if (*p == '%') formatted_path_len += home_len - 1;
-	++formatted_path_len;
+        if (*p == '%') formatted_path_len += home_len - 1;
+        ++formatted_path_len;
     }
 
     char* formatted_path = NEW_C_HEAP_ARRAY(char, formatted_path_len + 1);
     if (formatted_path == NULL) {
-	return NULL;
+        return NULL;
     }
 
     // Create boot classpath from format, substituting separator chars and
     // java home directory.
     char* q = formatted_path;
     for (p = format_string; *p != 0; ++p) {
-	switch (*p) {
-	case '%':
-	    strcpy(q, home);
-	    q += home_len;
-	    break;
-	case '/':
-	    *q++ = fileSep;
-	    break;
-	case ':':
-	    *q++ = pathSep;
-	    break;
-	default:
-	    *q++ = *p;
-	}
+        switch (*p) {
+        case '%':
+            strcpy(q, home);
+            q += home_len;
+            break;
+        case '/':
+            *q++ = fileSep;
+            break;
+        case ':':
+            *q++ = pathSep;
+            break;
+        default:
+            *q++ = *p;
+        }
     }
     *q = '\0';
 
@@ -881,13 +881,13 @@ bool os::set_boot_path(char fileSep, char pathSep) {
     // aligned with install/install/make/common/Pack.gmk. Note: boot class
     // path class JARs, are stripped for StackMapTable to reduce download size.
     static const char classpath_format[] =
-	"%/lib/resources.jar:"
-	"%/lib/rt.jar:"
-	"%/lib/sunrsasign.jar:"
-	"%/lib/jsse.jar:"
-	"%/lib/jce.jar:"
+        "%/lib/resources.jar:"
+        "%/lib/rt.jar:"
+        "%/lib/sunrsasign.jar:"
+        "%/lib/jsse.jar:"
+        "%/lib/jce.jar:"
         "%/lib/charsets.jar:"
-	"%/classes";
+        "%/classes";
     char* sysclasspath = format_boot_path(classpath_format, home, home_len, fileSep, pathSep);
     if (sysclasspath == NULL) return false;
     Arguments::set_sysclasspath(sysclasspath);
@@ -949,9 +949,9 @@ char** os::split_path(const char* path, int* n) {
   return opath;
 }
 
-void os::set_memory_serialize_page(address page) { 
+void os::set_memory_serialize_page(address page) {
   int count = log2_intptr(sizeof(class JavaThread)) - log2_intptr(64);
-  _mem_serialize_page = (volatile int32_t *)page; 
+  _mem_serialize_page = (volatile int32_t *)page;
   // We initialize the serialization page shift count here
   // We assume a cache line size of 64 bytes
   assert(SerializePageShiftCount == count,
@@ -962,7 +962,7 @@ void os::set_memory_serialize_page(address page) {
 static volatile intptr_t SerializePageLock = 0;
 
 // This method is called from signal handler when SIGSEGV occurs while the current
-// thread tries to store to the "read-only" memory serialize page during state 
+// thread tries to store to the "read-only" memory serialize page during state
 // transition.
 void os::block_on_serialize_page_trap() {
   if (TraceSafepoint) {
@@ -1006,7 +1006,7 @@ bool os::stack_shadow_pages_available(Thread *thread, methodHandle method) {
   // respectively.
   const int framesize_in_bytes =
     Interpreter::size_top_interpreter_activation(method()) * wordSize;
-  int reserved_area = ((StackShadowPages + StackRedPages + StackYellowPages) 
+  int reserved_area = ((StackShadowPages + StackRedPages + StackYellowPages)
                       * vm_page_size()) + framesize_in_bytes;
   // The very lower end of the stack
   address stack_limit = thread->stack_base() - thread->stack_size();
@@ -1014,7 +1014,7 @@ bool os::stack_shadow_pages_available(Thread *thread, methodHandle method) {
 }
 
 size_t os::page_size_for_region(size_t region_min_size, size_t region_max_size,
-				uint min_pages)
+                                uint min_pages)
 {
   assert(min_pages > 0, "sanity");
   if (UseLargePages) {
@@ -1024,13 +1024,13 @@ size_t os::page_size_for_region(size_t region_min_size, size_t region_max_size,
       const size_t sz = _page_sizes[i];
       const size_t mask = sz - 1;
       if ((region_min_size & mask) == 0 && (region_max_size & mask) == 0) {
-	// The largest page size with no fragmentation.
-	return sz;
+        // The largest page size with no fragmentation.
+        return sz;
       }
 
       if (sz <= max_page_size) {
-	// The largest page size that satisfies the min_pages requirement.
-	return sz;
+        // The largest page size that satisfies the min_pages requirement.
+        return sz;
       }
     }
   }
@@ -1040,30 +1040,30 @@ size_t os::page_size_for_region(size_t region_min_size, size_t region_max_size,
 
 #ifndef PRODUCT
 void os::trace_page_sizes(const char* str, const size_t region_min_size,
-			  const size_t region_max_size, const size_t page_size,
-			  const char* base, const size_t size)
+                          const size_t region_max_size, const size_t page_size,
+                          const char* base, const size_t size)
 {
   if (TracePageSizes) {
     tty->print_cr("%s:  min=" SIZE_FORMAT " max=" SIZE_FORMAT
-		  " pg_sz=" SIZE_FORMAT " base=" PTR_FORMAT
-		  " size=" SIZE_FORMAT,
-		  str, region_min_size, region_max_size,
-		  page_size, base, size);
+                  " pg_sz=" SIZE_FORMAT " base=" PTR_FORMAT
+                  " size=" SIZE_FORMAT,
+                  str, region_min_size, region_max_size,
+                  page_size, base, size);
   }
 }
-#endif	// #ifndef PRODUCT
+#endif  // #ifndef PRODUCT
 
 // This is the working definition of a server class machine:
-// >= 2 physical CPU's and >=2GB of memory, with some fuzz 
+// >= 2 physical CPU's and >=2GB of memory, with some fuzz
 // because the graphics memory (?) sometimes masks physical memory.
-// If you want to change the definition of a server class machine 
-// on some OS or platform, e.g., >=4GB on Windohs platforms, 
-// then you'll have to parameterize this method based on that state, 
-// as was done for logical processors here, or replicate and 
-// specialize this method for each platform.  (Or fix os to have 
+// If you want to change the definition of a server class machine
+// on some OS or platform, e.g., >=4GB on Windohs platforms,
+// then you'll have to parameterize this method based on that state,
+// as was done for logical processors here, or replicate and
+// specialize this method for each platform.  (Or fix os to have
 // some inheritance structure and use subclassing.  Sigh.)
-// If you want some platform to always or never behave as a server 
-// class machine, change the setting of AlwaysActAsServerClassMachine 
+// If you want some platform to always or never behave as a server
+// class machine, change the setting of AlwaysActAsServerClassMachine
 // and NeverActAsServerClassMachine in globals*.hpp.
 bool os::is_server_class_machine() {
   // First check for the early returns
@@ -1078,12 +1078,12 @@ bool os::is_server_class_machine() {
   const unsigned int    server_processors = 2;
   const julong server_memory     = 2UL * G;
   // We seem not to get our full complement of memory.
-  //     We allow some part (1/8?) of the memory to be "missing", 
+  //     We allow some part (1/8?) of the memory to be "missing",
   //     based on the sizes of DIMMs, and maybe graphics cards.
   const julong missing_memory   = 256UL * M;
 
   /* Is this a server class machine? */
-  if ((os::active_processor_count() >= (int)server_processors) && 
+  if ((os::active_processor_count() >= (int)server_processors) &&
       (os::physical_memory() >= (server_memory - missing_memory))) {
     const unsigned int logical_processors =
       VM_Version::logical_processors_per_package();

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_ValueStack.cpp	1.65 07/05/05 17:05:09 JVM"
+#pragma ident "@(#)c1_ValueStack.cpp    1.65 07/05/05 17:05:09 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -286,4 +286,3 @@ void ValueStack::verify() {
   Unimplemented();
 }
 #endif // PRODUCT
-

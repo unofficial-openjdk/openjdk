@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -230,7 +230,7 @@ public class CommandProcessor {
         } else {
             out.print("\"");
             out.print(s);
-            out.print("\""); 
+            out.print("\"");
         }
     }
 
@@ -256,7 +256,7 @@ public class CommandProcessor {
         out.print(type.getSize());
         out.println();
     }
-       
+
     void dumpFields(Type type) {
         Iterator i = type.getFields();
         while (i.hasNext()) {
@@ -390,7 +390,7 @@ public class CommandProcessor {
                     out.print(fill(start, formatWidth));
                     out.print(": ");
                     int width = line - formatWidth - 2;
-                   
+
                     boolean needsPrintln = true;
                     while (start != null && start.lessThan(end)) {
                         Address val = start.getAddressAt(0);
@@ -472,7 +472,7 @@ public class CommandProcessor {
                              public int compare(Object o1, Object o2) {
                                  return o1.toString().compareTo(o2.toString());
                              }
-                          }); 
+                          });
                     for (int i = 0; i < keys.length; i++) {
                         out.print("  ");
                         out.println(((Command)commands.get(keys[i])).usage);
@@ -502,10 +502,10 @@ public class CommandProcessor {
                     Address a = VM.getVM().getDebugger().parseAddress(t.nextToken());
                     SimpleTreeNode node = null;
                     if (VM.getVM().getUniverse().heap().isInReserved(a)) {
-                        OopHandle handle = a.addOffsetToAsOopHandle(0); 
-                        Oop oop = VM.getVM().getObjectHeap().newOop(handle); 
+                        OopHandle handle = a.addOffsetToAsOopHandle(0);
+                        Oop oop = VM.getVM().getObjectHeap().newOop(handle);
                         node = new OopTreeNodeAdapter(oop, null);
-                        
+
                         out.println("instance of " + node.getValue() + " @ " + a +
                                     " (size = " + oop.getObjectSize() + ")");
                     } else if (VM.getVM().getCodeCache().contains(a)) {
@@ -560,7 +560,7 @@ public class CommandProcessor {
                     Type type = agent.getTypeDataBase().lookupType(t.nextToken());
                     Address a = VM.getVM().getDebugger().parseAddress(t.nextToken());
                     CTypeTreeNodeAdapter node = new CTypeTreeNodeAdapter(a, type, null);
-                   
+
                     out.println("pointer to " + type + " @ " + a +
                                 " (size = " + type.getSize() + ")");
                     printNode(node);
@@ -661,19 +661,19 @@ public class CommandProcessor {
                     }
                     while (base != null && base.lessThan(end)) {
                         long step = stride;
-                        OopHandle handle = base.addOffsetToAsOopHandle(0); 
-                        if (RobustOopDeterminator.oopLooksValid(handle)) { 
-                            try { 
-                                Oop oop = VM.getVM().getObjectHeap().newOop(handle); 
+                        OopHandle handle = base.addOffsetToAsOopHandle(0);
+                        if (RobustOopDeterminator.oopLooksValid(handle)) {
+                            try {
+                                Oop oop = VM.getVM().getObjectHeap().newOop(handle);
                                 if (klass == null || oop.getKlass().isSubtypeOf(klass))
                                     out.println(handle.toString() + " " + oop.getKlass().getName().asString());
                                 step = oop.getObjectSize();
-                            } catch (UnknownOopException ex) { 
+                            } catch (UnknownOopException ex) {
                                 // ok
-                            } catch (RuntimeException ex) { 
-                                ex.printStackTrace(); 
-                            } 
-                        } 
+                            } catch (RuntimeException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
                         base = base.addOffsetTo(step);
                     }
                 }
@@ -700,7 +700,7 @@ public class CommandProcessor {
 
                     // The field's Type must already be in the database -- no exceptions
                     Type fieldType = agent.getTypeDataBase().lookupType(t.nextToken());
-                 
+
                     boolean isStatic = Boolean.valueOf(t.nextToken()).booleanValue();
                     long offset = Long.parseLong(t.nextToken());
                     Address staticAddress = parseAddress(t.nextToken());
@@ -767,7 +767,7 @@ public class CommandProcessor {
                     boolean isInteger = Boolean.valueOf(t.nextToken()).booleanValue();
                     boolean isUnsigned = Boolean.valueOf(t.nextToken()).booleanValue();
                     long size = Long.parseLong(t.nextToken());
-                     
+
                     BasicType type = null;
                     try {
                         type = (BasicType)agent.getTypeDataBase().lookupType(typeName);
@@ -843,7 +843,7 @@ public class CommandProcessor {
                 } finally {
                     in = savedInput;
                 }
-               
+
             }
         },
         new Command("search", "search [ heap | codecache | threads ] value", false) {
@@ -878,7 +878,7 @@ public class CommandProcessor {
                         RawHeapVisitor iterator = new RawHeapVisitor() {
                                 public void prologue(long used) {
                                 }
-        
+
                                 public void visitAddress(Address addr) {
                                     Address val = addr.getAddressAt(0);
                                     if (AddressOps.equal(val, value)) {
@@ -1071,11 +1071,11 @@ public class CommandProcessor {
                             return err;
                         }
                    };
-        try { 
-            jsengine.defineFunction(this, 
+        try {
+            jsengine.defineFunction(this,
                      this.getClass().getMethod("registerCommand",
-                                new Class[] { 
-                                     String.class, String.class, String.class 
+                                new Class[] {
+                                     String.class, String.class, String.class
                                 }));
         } catch (NoSuchMethodException exp) {
             // should not happen, see below...!!
@@ -1119,7 +1119,7 @@ public class CommandProcessor {
             postAttach();
         }
     }
-   
+
 
     public void run(boolean prompt) {
         // Process interactive commands.
@@ -1134,7 +1134,7 @@ public class CommandProcessor {
                 if (prompt) err.println("Input stream closed.");
                 return;
             }
-    
+
             executeCommand(ln);
         }
     }

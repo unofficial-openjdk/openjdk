@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -54,7 +54,7 @@ public class SymbolTable extends sun.jvm.hotspot.utilities.Hashtable {
   // Accessors
   public static SymbolTable getTheTable() {
     Address tmp = theTableField.getValue();
-    return (SymbolTable) VMObjectFactory.newObject(SymbolTable.class, tmp); 
+    return (SymbolTable) VMObjectFactory.newObject(SymbolTable.class, tmp);
   }
 
   public static int getSymbolTableSize() {
@@ -64,7 +64,7 @@ public class SymbolTable extends sun.jvm.hotspot.utilities.Hashtable {
   public SymbolTable(Address addr) {
     super(addr);
   }
-    
+
   /** Clone of VM's "temporary" probe routine, as the SA currently
       does not support mutation so lookup() would have no effect
       anyway. Returns null if the given string is not in the symbol

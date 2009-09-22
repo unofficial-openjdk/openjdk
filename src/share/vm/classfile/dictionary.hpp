@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)dictionary.hpp	1.15 07/05/05 17:05:47 JVM"
+#pragma ident "@(#)dictionary.hpp       1.15 07/05/05 17:05:47 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class DictionaryEntry;
@@ -59,7 +59,7 @@ private:
 public:
   Dictionary(int table_size);
   Dictionary(int table_size, HashtableBucket* t, int number_of_entries);
-  
+
   DictionaryEntry* new_entry(unsigned int hash, klassOop klass, oop loader);
 
   DictionaryEntry* new_entry();
@@ -114,7 +114,7 @@ public:
   void restore(SerializeOopClosure* soc);
   void reorder_dictionary();
 
-  
+
 #ifndef PRODUCT
   void print();
 #endif
@@ -220,4 +220,3 @@ class DictionaryEntry : public HashtableEntry {
     tty->print_cr("pd set = #%d", count);
   }
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)serverLists.hpp	1.12 07/05/05 17:02:07 JVM"
+#pragma ident "@(#)serverLists.hpp      1.12 07/05/05 17:02:07 JVM"
 #endif
 /*
  * Copyright 2000-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _SERVER_LISTS_
@@ -87,7 +87,7 @@ public:
       via this child process. Set this to NULL to indicate that the
       child process is ready to accept another attachment. */
   void setClient(ClientInfo* clientInfo);
-  
+
   ClientInfo* getClient();
 
   /** This is NOT automatically called in the destructor */

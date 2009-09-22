@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)library_call.cpp	1.167 07/07/25 17:43:16 JVM"
+#pragma ident "@(#)library_call.cpp     1.167 07/07/25 17:43:16 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -687,7 +687,7 @@ Node* LibraryCallKit::generate_guard(Node* test, RegionNode* region, float true_
 
   if (region != NULL)
     region->add_req(if_slow);
-  
+
   Node* if_fast = _gvn.transform( new (C, 1) IfFalseNode(iff) );
   set_control(if_fast);
 
@@ -793,7 +793,7 @@ bool LibraryCallKit::inline_string_compareTo() {
   _sp += 2;
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
-  
+
   // Null check on self without removing any arguments.  The argument
   // null check technically happens in the wrong place, which can lead to
   // invalid stack traces when string compare is inlined into a method
@@ -805,19 +805,19 @@ bool LibraryCallKit::inline_string_compareTo() {
   if (stopped()) {
     return true;
   }
-  
+
   ciInstanceKlass* klass = env()->String_klass();
   const TypeInstPtr* string_type =
     TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
-  
+
   Node* compare =
     _gvn.transform(new (C, 7) StrCompNode(
-                        control(), 
+                        control(),
                         memory(TypeAryPtr::CHARS),
                         memory(string_type->add_offset(value_offset)),
                         memory(string_type->add_offset(count_offset)),
                         memory(string_type->add_offset(offset_offset)),
-                        receiver, 
+                        receiver,
                         argument));
   push(compare);
   return true;
@@ -1109,8 +1109,8 @@ bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
     // static const unsigned char neg_pi_2_bits_x[] = {0x35,0xc2,0x68,0x21,0xa2,0xda,0x0f,0xc9,0xff,0xbf,0x00,0x00,0x00,0x00,0x00,0x00};
     // Cutoff value for using this argument reduction technique
     //static const double    pi_2_minus_epsilon =  1.564660403643354;
-    //static const double neg_pi_2_plus_epsilon = -1.564660403643354;  
-    
+    //static const double neg_pi_2_plus_epsilon = -1.564660403643354;
+
     // Pseudocode for sin:
     // if (x <= Math.PI / 4.0) {
     //   if (x >= -Math.PI / 4.0) return  fsin(x);
@@ -1119,7 +1119,7 @@ bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
     //   if (x <=  Math.PI / 2.0) return  fcos(x - Math.PI / 2.0);
     // }
     // return StrictMath.sin(x);
-    
+
     // Pseudocode for cos:
     // if (x <= Math.PI / 4.0) {
     //   if (x >= -Math.PI / 4.0) return  fcos(x);
@@ -1128,12 +1128,12 @@ bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
     //   if (x <=  Math.PI / 2.0) return -fsin(x - Math.PI / 2.0);
     // }
     // return StrictMath.cos(x);
-    
+
     // Actually, sticking in an 80-bit Intel value into C2 will be tough; it
     // requires a special machine instruction to load it.  Instead we'll try
     // the 'easy' case.  If we really need the extra range +/- PI/2 we'll
     // probably do the math inside the SIN encoding.
-    
+
     // Make the merge point
     RegionNode *r = new (C, 3) RegionNode(3);
     Node *phi = new (C, 3) PhiNode(r,Type::DOUBLE);
@@ -1149,7 +1149,7 @@ bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
     // Branch either way
     IfNode *iff = create_and_xform_if(control(),bol, PROB_STATIC_FREQUENT, COUNT_UNKNOWN);
     set_control(opt_iff(r,iff));
-    
+
     // Set fast path result
     phi->init_req(2,trig);
 
@@ -1172,7 +1172,7 @@ bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
                                "Tan", NULL, arg, top());
       break;
     }
-    assert(control()->in(0) == call, ""); 
+    assert(control()->in(0) == call, "");
     Node* slow_result = _gvn.transform(new (C, 1) ProjNode(call,TypeFunc::Parms));
     r->init_req(1,control());
     phi->init_req(1,slow_result);
@@ -1230,7 +1230,7 @@ bool LibraryCallKit::inline_exp(vmIntrinsics::ID id) {
   Node* cmpisnan = _gvn.transform(new (C, 3) CmpDNode(result,result));
   // Build the boolean node
   Node* bolisnum = _gvn.transform( new (C, 2) BoolNode(cmpisnan, BoolTest::eq) );
-  
+
   { BuildCutout unless(this, bolisnum, PROB_STATIC_FREQUENT);
     // End the current control-flow path
     push_pair(x);
@@ -1239,16 +1239,16 @@ bool LibraryCallKit::inline_exp(vmIntrinsics::ID id) {
     uncommon_trap(Deoptimization::Reason_intrinsic,
                   Deoptimization::Action_make_not_entrant);
   }
-  
+
   C->set_has_split_ifs(true); // Has chance for split-if optimization
-  
+
   push_pair(result);
-  
+
   return true;
 }
 
 //------------------------------inline_pow-------------------------------------
-// Inline power instructions, if possible.  
+// Inline power instructions, if possible.
 bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
   assert(id == vmIntrinsics::_dpow, "Not pow");
 
@@ -1258,7 +1258,7 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
 
   // Do not intrinsify on older platforms which lack cmove.
   if (ConditionalMoveLimit == 0)  return false;
-  
+
   // Pseudocode for pow
   // if (x <= 0.0) {
   //   if ((double)((int)y)==y) { // if y is int
@@ -1275,12 +1275,12 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
   // return result;
 
   _sp += arg_size();        // restore stack pointer
-  Node* y = pop_math_arg();  
-  Node* x = pop_math_arg();  
+  Node* y = pop_math_arg();
+  Node* x = pop_math_arg();
 
   Node *fast_result = _gvn.transform( new (C, 3) PowDNode(0, x, y) );
 
-  // Short form: if not top-level (i.e., Math.pow but inlining Math.pow 
+  // Short form: if not top-level (i.e., Math.pow but inlining Math.pow
   // inside of something) then skip the fancy tests and just check for
   // NaN result.
   Node *result = NULL;
@@ -1292,7 +1292,7 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
     // There are four possible paths to region node and phi node
     RegionNode *r = new (C, 4) RegionNode(4);
     Node *phi = new (C, 4) PhiNode(r, Type::DOUBLE);
-    
+
     // Build the first if node: if (x <= 0.0)
     // Node for 0 constant
     Node *zeronode = makecon(TypeD::ZERO);
@@ -1300,22 +1300,22 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
     Node *cmp = _gvn.transform(new (C, 3) CmpDNode(x, zeronode));
     // Check: If (x<=0) then go complex path
     Node *bol1 = _gvn.transform( new (C, 2) BoolNode( cmp, BoolTest::le ) );
-    // Branch either way 
+    // Branch either way
     IfNode *if1 = create_and_xform_if(control(),bol1, PROB_STATIC_INFREQUENT, COUNT_UNKNOWN);
     Node *opt_test = _gvn.transform(if1);
     //assert( opt_test->is_If(), "Expect an IfNode");
     IfNode *opt_if1 = (IfNode*)opt_test;
     // Fast path taken; set region slot 3
     Node *fast_taken = _gvn.transform( new (C, 1) IfFalseNode(opt_if1) );
-    r->init_req(3,fast_taken); // Capture fast-control 
-    
+    r->init_req(3,fast_taken); // Capture fast-control
+
     // Fast path not-taken, i.e. slow path
     Node *complex_path = _gvn.transform( new (C, 1) IfTrueNode(opt_if1) );
-    
+
     // Set fast path result
     Node *fast_result = _gvn.transform( new (C, 3) PowDNode(0, y, x) );
     phi->init_req(3, fast_result);
-    
+
     // Complex path
     // Build the second if node (if y is int)
     // Node for (int)y
@@ -1325,12 +1325,12 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
     // Check (double)((int) y) : y
     Node *cmpinty= _gvn.transform(new (C, 3) CmpDNode(doubleinty, y));
     // Check if (y isn't int) then go to slow path
-    
+
     Node *bol2 = _gvn.transform( new (C, 2) BoolNode( cmpinty, BoolTest::ne ) );
     // Branch eith way
     IfNode *if2 = create_and_xform_if(complex_path,bol2, PROB_STATIC_INFREQUENT, COUNT_UNKNOWN);
     Node *slow_path = opt_iff(r,if2); // Set region path 2
-    
+
     // Calculate DPow(abs(x), y)*(1 & (int)y)
     // Node for constant 1
     Node *conone = intcon(1);
@@ -1350,15 +1350,15 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
     Node *negabsxpowy = _gvn.transform(new (C, 2) NegDNode (absxpowy));
     // (1&(int)y)==1?-DPow(abs(x), y):DPow(abs(x), y)
     Node *signresult = _gvn.transform( CMoveNode::make(C, NULL, bol3, absxpowy, negabsxpowy, Type::DOUBLE));
-    // Set complex path fast result 
+    // Set complex path fast result
     phi->init_req(2, signresult);
-    
+
     static const jlong nan_bits = CONST64(0x7ff8000000000000);
     Node *slow_result = makecon(TypeD::make(*(double*)&nan_bits)); // return NaN
     r->init_req(1,slow_path);
     phi->init_req(1,slow_result);
-    
-    // Post merge      
+
+    // Post merge
     set_control(_gvn.transform(r));
     record_for_igvn(r);
     result=_gvn.transform(phi);
@@ -1375,7 +1375,7 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
     // End the current control-flow path
     push_pair(x);
     push_pair(y);
-    // Math.pow intrinsic returned a NaN, which requires StrictMath.pow 
+    // Math.pow intrinsic returned a NaN, which requires StrictMath.pow
     // to handle.  Recompile without intrinsifying Math.pow.
     uncommon_trap(Deoptimization::Reason_intrinsic,
                   Deoptimization::Action_make_not_entrant);
@@ -1384,12 +1384,12 @@ bool LibraryCallKit::inline_pow(vmIntrinsics::ID id) {
   C->set_has_split_ifs(true); // Has chance for split-if optimization
 
   push_pair(result);
-  
+
   return true;
 }
 
 //------------------------------inline_trans-------------------------------------
-// Inline transcendental instructions, if possible.  The Intel hardware gets 
+// Inline transcendental instructions, if possible.  The Intel hardware gets
 // these right, no funny corner cases missed.
 bool LibraryCallKit::inline_trans(vmIntrinsics::ID id) {
   _sp += arg_size();        // restore stack pointer
@@ -1418,7 +1418,7 @@ bool LibraryCallKit::runtime_math(const TypeFunc* call_type, address funcAddr, c
   Node* a = NULL;
   Node* b = NULL;
 
-  assert(call_type == OptoRuntime::Math_DD_D_Type() || call_type == OptoRuntime::Math_D_D_Type(), 
+  assert(call_type == OptoRuntime::Math_DD_D_Type() || call_type == OptoRuntime::Math_D_D_Type(),
          "must be (DD)D or (D)D type");
 
   // Inputs
@@ -1441,19 +1441,19 @@ bool LibraryCallKit::runtime_math(const TypeFunc* call_type, address funcAddr, c
   push_pair(value);
   return true;
 }
-  
+
 //------------------------------inline_math_native-----------------------------
 bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
   switch (id) {
     // These intrinsics are not properly supported on all hardware
   case vmIntrinsics::_dcos: return Matcher::has_match_rule(Op_CosD) ? inline_trig(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dcos), "COS");
-  case vmIntrinsics::_dsin: return Matcher::has_match_rule(Op_SinD) ? inline_trig(id) : 
+  case vmIntrinsics::_dsin: return Matcher::has_match_rule(Op_SinD) ? inline_trig(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dsin), "SIN");
   case vmIntrinsics::_dtan: return Matcher::has_match_rule(Op_TanD) ? inline_trig(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dtan), "TAN");
 
-  case vmIntrinsics::_dlog:   return Matcher::has_match_rule(Op_LogD) ? inline_trans(id) : 
+  case vmIntrinsics::_dlog:   return Matcher::has_match_rule(Op_LogD) ? inline_trans(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dlog), "LOG");
   case vmIntrinsics::_dlog10: return Matcher::has_match_rule(Op_Log10D) ? inline_trans(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dlog10), "LOG10");
@@ -1467,7 +1467,7 @@ bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
     // implementation returns a NaN on overflow. See bug: 6304089
     // Once the ad implementations are fixed, change the code below
     // to match the intrinsics above
-    
+
   case vmIntrinsics::_dexp:  return
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dexp), "EXP");
   case vmIntrinsics::_dpow:  return
@@ -1734,7 +1734,7 @@ bool LibraryCallKit::inline_reverseBytes(vmIntrinsics::ID id) {
     break;
   default:
     ;
-  } 
+  }
   return true;
 }
 
@@ -1803,7 +1803,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
 
 
   if (is_store) {
-    // Get the value being stored.  (Pop it first; it was pushed last.) 
+    // Get the value being stored.  (Pop it first; it was pushed last.)
     switch (type) {
     case T_DOUBLE:
     case T_LONG:
@@ -1998,7 +1998,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
   }
 
   if (is_volatile) {
-    if (!is_store) 
+    if (!is_store)
       insert_mem_bar(Op_MemBarAcquire);
     else
       insert_mem_bar(Op_MemBarVolatile);
@@ -2103,7 +2103,7 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
   // them, but even I was confused by it!) As much code/comments as
   // possible are retained from inline_unsafe_access though to make
   // the correspondances clearer. - dl
-  
+
   if (callee()->is_static())  return false;  // caller must have the capability!
 
 #ifndef PRODUCT
@@ -2129,7 +2129,7 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
     return false;
 
   C->set_has_unsafe_access(true);  // Mark eventual nmethod as "unsafe".
-    
+
   // Argument words:  "this" plus oop plus offset plus oldvalue plus newvalue;
   int nargs = 1 + 1 + 2  + type_words + type_words;
 
@@ -2140,7 +2140,7 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
   Node* oldval   = (type_words == 1) ? pop() : pop_pair();
   Node *offset   = pop_pair();
   Node *base     = pop();
-  Node *receiver = pop(); 
+  Node *receiver = pop();
   assert(saved_sp == _sp, "must have correct argument count");
 
   //  Null check receiver.
@@ -2176,7 +2176,7 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
   insert_mem_bar(Op_MemBarRelease);
   insert_mem_bar(Op_MemBarCPUOrder);
 
-  // 4984716: MemBars must be inserted before this 
+  // 4984716: MemBars must be inserted before this
   //          memory node in order to avoid a false
   //          dependency which will confuse the scheduler.
   Node *mem = memory(alias_idx);
@@ -2231,7 +2231,7 @@ bool LibraryCallKit::inline_unsafe_ordered_store(BasicType type) {
   // This is another variant of inline_unsafe_access, differing in
   // that it always issues store-store ("release") barrier and ensures
   // store-atomicity (which only matters for "long").
-  
+
   if (callee()->is_static())  return false;  // caller must have the capability!
 
 #ifndef PRODUCT
@@ -2253,7 +2253,7 @@ bool LibraryCallKit::inline_unsafe_ordered_store(BasicType type) {
   int type_words = type2size[type];
 
   C->set_has_unsafe_access(true);  // Mark eventual nmethod as "unsafe".
-    
+
   // Argument words:  "this" plus oop plus offset plus value;
   int nargs = 1 + 1 + 2 + type_words;
 
@@ -2263,7 +2263,7 @@ bool LibraryCallKit::inline_unsafe_ordered_store(BasicType type) {
   Node* val      = (type_words == 1) ? pop() : pop_pair();
   Node *offset   = pop_pair();
   Node *base     = pop();
-  Node *receiver = pop(); 
+  Node *receiver = pop();
   assert(saved_sp == _sp, "must have correct argument count");
 
   //  Null check receiver.
@@ -2351,7 +2351,7 @@ bool LibraryCallKit::inline_native_time_funcs(bool isNano) {
 bool LibraryCallKit::inline_native_currentThread() {
   Node* junk = NULL;
   push(generate_current_thread(junk));
-  return true; 
+  return true;
 }
 
 //------------------------inline_native_isInterrupted------------------
@@ -3016,7 +3016,7 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
   // Bail out if length is negative.
   // ...Not needed, since the new_array will throw the right exception.
   //generate_negative_guard(length, bailout, &length);
- 
+
   if (bailout->req() > 1) {
     PreserveJVMState pjvms(this);
     set_control( _gvn.transform(bailout) );
@@ -3106,7 +3106,7 @@ LibraryCallKit::generate_method_call(vmIntrinsics::ID method_id, bool is_virtual
     null_check_receiver(method);
     int vtable_index = methodOopDesc::invalid_vtable_index;
     if (UseInlineCaches) {
-      // Suppress the vtable call 
+      // Suppress the vtable call
     } else {
       // hashCode and clone are not a miranda methods,
       // so the vtable index is fixed.
@@ -3294,7 +3294,7 @@ bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
   Node* caller_depth_node = pop();
 
   assert(saved_sp == _sp, "must have correct argument count");
-  
+
   // The depth value must be a constant in order for the runtime call
   // to be eliminated.
   const TypeInt* caller_depth_type = _gvn.type(caller_depth_node)->isa_int();
@@ -3548,7 +3548,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     Node *cmpisnan = _gvn.transform( new (C, 3) CmpDNode(value, value));
     // Build the boolean node
     Node *bolisnan = _gvn.transform( new (C, 2) BoolNode( cmpisnan, BoolTest::ne ) );
-    
+
     // Branch either way.
     // NaN case is less traveled, which makes all the difference.
     IfNode *ifisnan = create_and_xform_if(control(), bolisnan, PROB_STATIC_FREQUENT, COUNT_UNKNOWN);
@@ -3556,7 +3556,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     assert( opt_isnan->is_If(), "Expect an IfNode");
     IfNode *opt_ifisnan = (IfNode*)opt_isnan;
     Node *iftrue = _gvn.transform( new (C, 1) IfTrueNode(opt_ifisnan) );
-    
+
     set_control(iftrue);
 
     static const jlong nan_bits = CONST64(0x7ff8000000000000);
@@ -3567,11 +3567,11 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     // Else fall through
     Node *iffalse = _gvn.transform( new (C, 1) IfFalseNode(opt_ifisnan) );
     set_control(iffalse);
-    
+
     phi->init_req(2, _gvn.transform( new (C, 2) MoveD2LNode(value)));
     r->init_req(2, iffalse);
-    
-    // Post merge      
+
+    // Post merge
     set_control(_gvn.transform(r));
     record_for_igvn(r);
 
@@ -3580,7 +3580,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     push_pair(result);
 
     C->set_has_split_ifs(true); // Has chance for split-if optimization
-    
+
     break;
   }
 
@@ -3594,7 +3594,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     Node *cmpisnan = _gvn.transform( new (C, 3) CmpFNode(value, value));
     // Build the boolean node
     Node *bolisnan = _gvn.transform( new (C, 2) BoolNode( cmpisnan, BoolTest::ne ) );
-    
+
     // Branch either way.
     // NaN case is less traveled, which makes all the difference.
     IfNode *ifisnan = create_and_xform_if(control(), bolisnan, PROB_STATIC_FREQUENT, COUNT_UNKNOWN);
@@ -3602,7 +3602,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     assert( opt_isnan->is_If(), "Expect an IfNode");
     IfNode *opt_ifisnan = (IfNode*)opt_isnan;
     Node *iftrue = _gvn.transform( new (C, 1) IfTrueNode(opt_ifisnan) );
-    
+
     set_control(iftrue);
 
     static const jint nan_bits = 0x7fc00000;
@@ -3613,11 +3613,11 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     // Else fall through
     Node *iffalse = _gvn.transform( new (C, 1) IfFalseNode(opt_ifisnan) );
     set_control(iffalse);
-    
+
     phi->init_req(2, _gvn.transform( new (C, 2) MoveF2INode(value)));
     r->init_req(2, iffalse);
-    
-    // Post merge      
+
+    // Post merge
     set_control(_gvn.transform(r));
     record_for_igvn(r);
 
@@ -3626,7 +3626,7 @@ bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
     push(result);
 
     C->set_has_split_ifs(true); // Has chance for split-if optimization
-    
+
     break;
   }
 
@@ -3907,7 +3907,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
     bool disjoint_bases = true;
     generate_unchecked_arraycopy(raw_adr_type, T_LONG, disjoint_bases,
                                  src, NULL, dest, NULL, countx);
-    
+
     // Now that the object is properly initialized, type it as an oop.
     // Use a secondary InitializeNode memory barrier.
     InitializeNode* init = insert_mem_bar_volatile(Op_Initialize, raw_adr_idx,
@@ -4117,7 +4117,7 @@ bool LibraryCallKit::inline_arraycopy() {
   // We will make a fast path for this call to arraycopy.
 
   // We have the following tests left to perform:
-  // 
+  //
   // (3) src and dest must not be null.
   // (4) src_offset must not be negative.
   // (5) dest_offset must not be negative.
@@ -4596,15 +4596,15 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     _gvn.hash_find_insert(original_dest);  // put back into GVN table
   }
 
-  // The memory edges above are precise in order to model effects around 
+  // The memory edges above are precise in order to model effects around
   // array copyies accurately to allow value numbering of field loads around
-  // arraycopy.  Such field loads, both before and after, are common in Java 
+  // arraycopy.  Such field loads, both before and after, are common in Java
   // collections and similar classes involving header/array data structures.
   //
-  // But with low number of register or when some registers are used or killed 
+  // But with low number of register or when some registers are used or killed
   // by arraycopy calls it causes registers spilling on stack. See 6544710.
-  // The next memory barrier is added to avoid it. If the arraycopy can be 
-  // optimized away (which it can, sometimes) then we can manually remove 
+  // The next memory barrier is added to avoid it. If the arraycopy can be
+  // optimized away (which it can, sometimes) then we can manually remove
   // the membar also.
   if (InsertMemBarAfterArraycopy)
     insert_mem_bar(Op_MemBarCPUOrder);
@@ -4901,7 +4901,7 @@ LibraryCallKit::generate_checkcast_arraycopy(const TypePtr* adr_type,
                                              Node* src,  Node* src_offset,
                                              Node* dest, Node* dest_offset,
                                              Node* copy_length,
-                                             int nargs) { 
+                                             int nargs) {
   if (stopped())  return NULL;
 
   address copyfunc_addr = StubRoutines::checkcast_arraycopy();
@@ -4939,7 +4939,7 @@ LibraryCallKit::generate_checkcast_arraycopy(const TypePtr* adr_type,
 
 // Helper function; generates code for cases requiring runtime checks.
 Node*
-LibraryCallKit::generate_generic_arraycopy(const TypePtr* adr_type, 
+LibraryCallKit::generate_generic_arraycopy(const TypePtr* adr_type,
                                            Node* src,  Node* src_offset,
                                            Node* dest, Node* dest_offset,
                                            Node* copy_length,
@@ -4989,4 +4989,3 @@ LibraryCallKit::generate_unchecked_arraycopy(const TypePtr* adr_type,
                     copyfunc_addr, copyfunc_name, adr_type,
                     src_start, dest_start, copy_length XTOP);
 }
-

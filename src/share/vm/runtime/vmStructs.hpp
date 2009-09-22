@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmStructs.hpp	1.13 07/05/05 17:07:02 JVM"
+#pragma ident "@(#)vmStructs.hpp        1.13 07/05/05 17:07:02 JVM"
 #endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This table encapsulates the debugging information required by the

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)collectedHeap.inline.hpp	1.50 07/09/07 10:56:50 JVM"
+#pragma ident "@(#)collectedHeap.inline.hpp     1.50 07/09/07 10:56:50 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Inline allocation implementations.
@@ -35,7 +35,7 @@ void CollectedHeap::post_allocation_setup_common(KlassHandle klass,
 }
 
 void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
-						           HeapWord* objPtr,
+                                                           HeapWord* objPtr,
                                                            size_t size) {
   oop obj = (oop)objPtr;
 
@@ -50,7 +50,7 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 
 void CollectedHeap::post_allocation_install_obj_klass(KlassHandle klass,
                                                    oop obj,
-						   int size) {
+                                                   int size) {
   // These asserts are kind of complicated because of klassKlass
   // and the beginning of the world.
   assert(klass() != NULL || !Universe::is_fully_initialized(), "NULL klass");
@@ -108,7 +108,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, 
   // Clear unhandled oops for memory allocation.  Memory allocation might
   // not take out a lock if from tlab, so clear here.
   CHECK_UNHANDLED_OOPS_ONLY(THREAD->clear_unhandled_oops();)
-  
+
   if (HAS_PENDING_EXCEPTION) {
     NOT_PRODUCT(guarantee(false, "Should not allocate with exception pending"));
     return NULL;  // caller does a CHECK_0 too
@@ -144,7 +144,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, 
 
     if (JvmtiExport::should_post_resource_exhausted()) {
       JvmtiExport::post_resource_exhausted(
-        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR | JVMTI_RESOURCE_EXHAUSTED_JAVA_HEAP, 
+        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR | JVMTI_RESOURCE_EXHAUSTED_JAVA_HEAP,
         "Java heap space");
     }
 
@@ -199,7 +199,7 @@ HeapWord* CollectedHeap::common_permanent_mem_allocate_noinit(size_t size, TRAPS
 
   if (JvmtiExport::should_post_resource_exhausted()) {
     JvmtiExport::post_resource_exhausted(
-        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR, 
+        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR,
         "PermGen space");
   }
 
@@ -238,7 +238,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   HeapWord* obj = common_mem_allocate_init(size, false, CHECK_NULL);
   post_allocation_setup_obj(klass, obj, size);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;  
+  return (oop)obj;
 }
 
 oop CollectedHeap::array_allocate(KlassHandle klass,
@@ -251,7 +251,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   HeapWord* obj = common_mem_allocate_init(size, false, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;  
+  return (oop)obj;
 }
 
 oop CollectedHeap::large_typearray_allocate(KlassHandle klass,
@@ -264,27 +264,27 @@ oop CollectedHeap::large_typearray_allocate(KlassHandle klass,
   HeapWord* obj = common_mem_allocate_init(size, true, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;  
+  return (oop)obj;
 }
 
 oop CollectedHeap::permanent_obj_allocate(KlassHandle klass, int size, TRAPS) {
   oop obj = permanent_obj_allocate_no_klass_install(klass, size, CHECK_NULL);
   post_allocation_install_obj_klass(klass, obj, size);
-  NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value((HeapWord*) obj, 
-							      size));
-  return obj;  
+  NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value((HeapWord*) obj,
+                                                              size));
+  return obj;
 }
 
 oop CollectedHeap::permanent_obj_allocate_no_klass_install(KlassHandle klass,
-							   int size, 
-							   TRAPS) {
+                                                           int size,
+                                                           TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
   HeapWord* obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   post_allocation_setup_no_klass_install(klass, obj, size);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;  
+  return (oop)obj;
 }
 
 oop CollectedHeap::permanent_array_allocate(KlassHandle klass,
@@ -297,7 +297,7 @@ oop CollectedHeap::permanent_array_allocate(KlassHandle klass,
   HeapWord* obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;  
+  return (oop)obj;
 }
 
 // Returns "TRUE" if "p" is a method oop in the
@@ -337,7 +337,7 @@ inline bool CollectedHeap::is_valid_method(oop p) const {
 }
 
 
-#ifndef	PRODUCT
+#ifndef PRODUCT
 
 inline bool
 CollectedHeap::promotion_should_fail(volatile size_t* count) {
@@ -348,8 +348,8 @@ CollectedHeap::promotion_should_fail(volatile size_t* count) {
     if (elapsed_gcs >= PromotionFailureALotInterval) {
       // Test for unsigned arithmetic wrap-around.
       if (++*count >= PromotionFailureALotCount) {
-	*count = 0;
-	return true;
+        *count = 0;
+        return true;
       }
     }
   }
@@ -370,4 +370,4 @@ inline void CollectedHeap::reset_promotion_should_fail(volatile size_t* count) {
 inline void CollectedHeap::reset_promotion_should_fail() {
   reset_promotion_should_fail(&_promotion_failure_alot_count);
 }
-#endif	// #ifndef PRODUCT
+#endif  // #ifndef PRODUCT

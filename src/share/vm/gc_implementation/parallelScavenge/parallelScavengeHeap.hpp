@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parallelScavengeHeap.hpp	1.62 07/10/04 10:49:30 JVM"
+#pragma ident "@(#)parallelScavengeHeap.hpp     1.62 07/10/04 10:49:30 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class AdjoiningGenerations;
@@ -141,10 +141,10 @@ class ParallelScavengeHeap : public CollectedHeap {
   // and caused a NULL to be returned.  If a NULL is not returned,
   // "gc_time_limit_was_exceeded" has an undefined meaning.
 
-  HeapWord* mem_allocate(size_t size, 
-			 bool is_noref, 
-			 bool is_tlab,
-			 bool* gc_overhead_limit_was_exceeded);
+  HeapWord* mem_allocate(size_t size,
+                         bool is_noref,
+                         bool is_tlab,
+                         bool* gc_overhead_limit_was_exceeded);
   HeapWord* failed_mem_allocate(size_t size, bool is_tlab);
 
   HeapWord* permanent_mem_allocate(size_t size);
@@ -161,7 +161,7 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   // These also should be called by the vm thread at a safepoint (e.g., from a
   // VM operation).
-  // 
+  //
   // The first collects the young generation only, unless the scavenge fails; it
   // will then attempt a full gc.  The second collects the entire heap; if
   // maximum_compaction is true, it will compact everything and clear all soft

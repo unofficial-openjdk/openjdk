@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -66,7 +66,7 @@ public class OopPrinter implements OopVisitor {
 
   public void doChar(CharField field, boolean isVMField) {
     printField(field);
-    char c = field.getValue(getObj()); 
+    char c = field.getValue(getObj());
     // Fix me: not yet complete
     if (Character.isLetterOrDigit(c)) tty.println(c);
     else tty.println((int)c);

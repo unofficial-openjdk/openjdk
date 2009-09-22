@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_FpuStackSim_x86.hpp	1.7 07/05/05 17:04:12 JVM"
+#pragma ident "@(#)c1_FpuStackSim_x86.hpp       1.7 07/05/05 17:04:12 JVM"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,22 +22,22 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //  Simulates the FPU stack and maintains mapping [fpu-register -> stack offset]
-//  FPU registers are described as numbers from 0..nof_fpu_regs-1 
+//  FPU registers are described as numbers from 0..nof_fpu_regs-1
 
 class Compilation;
 
 class FpuStackSim VALUE_OBJ_CLASS_SPEC {
  private:
   Compilation* _compilation;
-  int          _stack_size; 
+  int          _stack_size;
   int          _regs[FrameMap::nof_fpu_regs];
 
   int tos_index() const                        { return _stack_size - 1; }
-  
+
   int regs_at(int i) const;
   void set_regs_at(int i, int val);
   void dec_stack_size();

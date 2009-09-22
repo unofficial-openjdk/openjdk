@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -34,7 +34,7 @@ public class DumpExports {
     if (args.length != 1) {
       usage();
     }
-    
+
     String filename = args[0];
     COFFFile file   = COFFFileParser.getParser().parse(filename);
     ExportDirectoryTable exports =

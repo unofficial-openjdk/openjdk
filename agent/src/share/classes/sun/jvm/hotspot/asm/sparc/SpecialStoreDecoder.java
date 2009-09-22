@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -31,10 +31,9 @@ class SpecialStoreDecoder extends SpecialLoadStoreDecoder {
         super(op3, name, specialRegNum);
     }
 
-    Instruction decodeSpecialLoadStoreInstruction(int cregNum, 
+    Instruction decodeSpecialLoadStoreInstruction(int cregNum,
                                     SPARCRegisterIndirectAddress addr,
                                     SPARCInstructionFactory factory) {
         return factory.newSpecialStoreInstruction(name, specialRegNum, cregNum, addr);
     }
 }
-

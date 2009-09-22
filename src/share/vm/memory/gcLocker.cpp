@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)gcLocker.cpp	1.52 07/05/17 15:54:45 JVM"
+#pragma ident "@(#)gcLocker.cpp 1.52 07/05/17 15:54:45 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -132,7 +132,7 @@ Pause_No_GC_Verifier::~Pause_No_GC_Verifier() {
 }
 
 
-// JRT_LEAF rules: 
+// JRT_LEAF rules:
 // A JRT_LEAF method may not interfere with safepointing by
 //   1) acquiring or blocking on a Mutex or JavaLock - checked
 //   2) allocating heap memory - checked

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)generationSpec.hpp	1.17 07/05/05 17:05:50 JVM"
+#pragma ident "@(#)generationSpec.hpp   1.17 07/05/05 17:05:50 JVM"
 #endif
 /*
  * Copyright 2001-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The specification of a generation.  This class also encapsulates

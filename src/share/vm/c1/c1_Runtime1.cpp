@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_Runtime1.cpp	1.245 08/11/07 15:47:09 JVM"
+#pragma ident "@(#)c1_Runtime1.cpp      1.245 08/11/07 15:47:09 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -143,7 +143,7 @@ void Runtime1::setup_code_buffer(CodeBuffer* code, int call_stub_estimate) {
                                         locs_buffer_size / sizeof(relocInfo));
   code->initialize_consts_size(desired_max_constant_size());
   // Call stubs + deopt/exception handler
-  code->initialize_stubs_size((call_stub_estimate * LIR_Assembler::call_stub_size) + 
+  code->initialize_stubs_size((call_stub_estimate * LIR_Assembler::call_stub_size) +
                               LIR_Assembler::exception_handler_size +
                               LIR_Assembler::deopt_handler_size);
 }
@@ -195,12 +195,12 @@ void Runtime1::generate_blob_for(StubID id) {
   // make sure all code is in code buffer
   sasm->flush();
   // create blob - distinguish a few special cases
-  CodeBlob* blob = RuntimeStub::new_runtime_stub(name_for(id), 
-						 &code,
-						 CodeOffsets::frame_never_safe,
-						 sasm->frame_size(),
-						 oop_maps,
-						 sasm->must_gc_arguments());
+  CodeBlob* blob = RuntimeStub::new_runtime_stub(name_for(id),
+                                                 &code,
+                                                 CodeOffsets::frame_never_safe,
+                                                 sasm->frame_size(),
+                                                 oop_maps,
+                                                 sasm->must_gc_arguments());
   // install blob
   assert(blob != NULL, "blob must exist");
   _blobs[id] = blob;
@@ -280,7 +280,7 @@ const char* Runtime1::name_for_address(address entry) {
   FUNCTION_CASE(entry, SharedRuntime::dtrace_method_exit);
   FUNCTION_CASE(entry, trace_block_entry);
 
-#undef FUNCTION_CASE    
+#undef FUNCTION_CASE
 
   return "<unknown function>";
 }
@@ -451,7 +451,7 @@ JRT_ENTRY_NO_ASYNC(static address, exception_handler_for_pc_helper(JavaThread* t
 
     RegisterMap reg_map(thread);
     frame stub_frame = thread->last_frame();
-    frame caller_frame = stub_frame.sender(&reg_map); 
+    frame caller_frame = stub_frame.sender(&reg_map);
 
     // We don't really want to deoptimize the nmethod itself since we
     // can actually continue in the exception handler ourselves but I
@@ -688,7 +688,7 @@ static klassOop resolve_field_return_klass(methodHandle caller, int bci, TRAPS) 
 // patch_stub: call Runtime1::patch_code (through a runtime stub)
 //             jmp patch_site
 //
-// 
+//
 // A normal patch is done by rewriting the patch body, usually a move,
 // and then copying it into place over top of the jmp instruction
 // being careful to flush caches and doing it in an MP-safe way.  The
@@ -1018,7 +1018,7 @@ JRT_END
 //
 int Runtime1::move_klass_patching(JavaThread* thread) {
 //
-// NOTE: we are still in Java 
+// NOTE: we are still in Java
 //
   Thread* THREAD = thread;
   debug_only(NoHandleMark nhm;)
@@ -1047,7 +1047,7 @@ int Runtime1::move_klass_patching(JavaThread* thread) {
 
 int Runtime1::access_field_patching(JavaThread* thread) {
 //
-// NOTE: we are still in Java 
+// NOTE: we are still in Java
 //
   Thread* THREAD = thread;
   debug_only(NoHandleMark nhm;)

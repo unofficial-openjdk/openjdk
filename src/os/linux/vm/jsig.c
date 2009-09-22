@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jsig.c	1.12 07/05/05 17:04:34 JVM"
+#pragma ident "@(#)jsig.c       1.12 07/05/05 17:04:34 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /* CopyrightVersion 1.2 */
@@ -119,7 +119,7 @@ static sa_handler_t set_signal(int sig, sa_handler_t disp, bool is_sigset) {
 
     signal_unlock();
     return oldhandler;
-  } else if (jvm_signal_installing) { 
+  } else if (jvm_signal_installing) {
     /* jvm is installing its signal handlers. Install the new
      * handlers and save the old ones. jvm uses sigaction().
      * Leave the piece here just in case. */
@@ -181,7 +181,7 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact) {
 
     signal_unlock();
     return 0;
-  } else if (jvm_signal_installing) { 
+  } else if (jvm_signal_installing) {
     /* jvm is installing its signal handlers. Install the new
      * handlers and save the old ones. */
     res = call_os_sigaction(sig, act, &oldAct);

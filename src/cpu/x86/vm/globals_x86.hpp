@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globals_x86.hpp	1.47 07/09/17 09:34:42 JVM"
+#pragma ident "@(#)globals_x86.hpp      1.47 07/09/17 09:34:42 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -38,21 +38,21 @@ define_pd_global(bool, ImplicitNullChecks,          true);  // Generate code for
 define_pd_global(bool, UncommonNullCast,            true);  // Uncommon-trap NULLs past to check cast
 
 // See 4827828 for this change. There is no globals_core_i486.hpp. I can't
-// assign a different value for C2 without touching a number of files. Use 
+// assign a different value for C2 without touching a number of files. Use
 // #ifdef to minimize the change as it's late in Mantis. -- FIXME.
 // c1 doesn't have this problem because the fix to 4858033 assures us
 // the the vep is aligned at CodeEntryAlignment whereas c2 only aligns
 // the uep and the vep doesn't get real alignment but just slops on by
 // only assured that the entry instruction meets the 5 byte size requirement.
 #ifdef COMPILER2
-define_pd_global(intx,  CodeEntryAlignment,       32); 
+define_pd_global(intx,  CodeEntryAlignment,       32);
 #else
-define_pd_global(intx,  CodeEntryAlignment,       16); 
+define_pd_global(intx,  CodeEntryAlignment,       16);
 #endif // COMPILER2
 
 define_pd_global(bool, NeedsDeoptSuspend,           false); // only register window machines need this
 
-define_pd_global(uintx, TLABSize,                 0); 
+define_pd_global(uintx, TLABSize,                 0);
 #ifdef AMD64
 define_pd_global(uintx, NewSize, ScaleForWordSize(2048 * K));
 // Very large C++ stack frames using solaris-amd64 optimized builds
@@ -63,7 +63,7 @@ define_pd_global(uintx, NewSize,                  1024 * K);
 define_pd_global(intx, StackShadowPages, 3 DEBUG_ONLY(+1));
 #endif // AMD64
 define_pd_global(intx,  InlineFrequencyCount,     100);
-define_pd_global(intx,  PreInflateSpin,		  10);
+define_pd_global(intx,  PreInflateSpin,           10);
 
 define_pd_global(intx, StackYellowPages, 2);
 define_pd_global(intx, StackRedPages, 1);

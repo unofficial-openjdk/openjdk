@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciInstance.hpp	1.15 07/09/28 10:23:24 JVM"
+#pragma ident "@(#)ciInstance.hpp       1.15 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciInstance
@@ -62,4 +62,3 @@ public:
   // Constant value of a field at the specified offset.
   ciConstant field_value_by_offset(int field_offset);
 };
-

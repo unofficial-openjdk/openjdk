@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciUtilities.hpp	1.20 07/05/05 17:05:18 JVM"
+#pragma ident "@(#)ciUtilities.hpp      1.20 07/05/05 17:05:18 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// The following routines and definitions are used internally in the 
+// The following routines and definitions are used internally in the
 // compiler interface.
 
 
@@ -107,4 +107,3 @@ inline const char* bool_to_str(bool b) {
 
 const char* basictype_to_str(BasicType t);
 const char  basictype_to_char(BasicType t);
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)superword.hpp	1.7 07/08/03 14:17:20 JVM"
+#pragma ident "@(#)superword.hpp        1.7 07/08/03 14:17:20 JVM"
 #endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -37,11 +37,11 @@
 //   Samuel Larsen and Saman Amarasighe
 //   MIT Laboratory for Computer Science
 // date
-//   May 2000           
+//   May 2000
 // published in
 //   ACM SIGPLAN Notices
-//   Proceedings of ACM PLDI '00,  Volume 35 Issue 5 
-// 
+//   Proceedings of ACM PLDI '00,  Volume 35 Issue 5
+//
 // Definition 3.1 A Pack is an n-tuple, <s1, ...,sn>, where
 // s1,...,sn are independent isomorphic statements in a basic
 // block.
@@ -205,9 +205,9 @@ class SuperWord : public ResourceObj {
   enum consts { top_align = -1, bottom_align = -666 };
 
   GrowableArray<Node_List*> _packset;    // Packs for the current block
-   
-  GrowableArray<int> _bb_idx;            // Map from Node _idx to index within block 
-     
+
+  GrowableArray<int> _bb_idx;            // Map from Node _idx to index within block
+
   GrowableArray<Node*> _block;           // Nodes in current block
   GrowableArray<Node*> _data_entry;      // Nodes with all inputs from outside
   GrowableArray<Node*> _mem_slice_head;  // Memory slice head nodes
@@ -246,10 +246,10 @@ class SuperWord : public ResourceObj {
 
   // Accessors
   Arena* arena()                   { return _arena; }
-      				   
+
   Node* bb()                       { return _bb; }
   void  set_bb(Node* bb)           { _bb = bb; }
-      				   
+
   void set_lpt(IdealLoopTree* lpt) { _lpt = lpt; }
 
   LoopNode* lp()                   { return _lp; }

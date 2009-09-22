@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciTypeFlow.hpp	1.26 08/11/24 12:20:59 JVM"
+#pragma ident "@(#)ciTypeFlow.hpp       1.26 08/11/24 12:20:59 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
@@ -113,7 +113,7 @@ public:
 
   public:
     JsrSet(Arena* arena, int default_len = 4);
-    
+
     // Copy this JsrSet.
     void copy_into(JsrSet* jsrs);
 
@@ -122,8 +122,8 @@ public:
 
     // Apply the effect of a single bytecode to the JsrSet.
     void apply_control(ciTypeFlow* analyzer,
-		       ciBytecodeStream* str,
-		       StateVector* state);
+                       ciBytecodeStream* str,
+                       StateVector* state);
 
     // What is the cardinality of this set?
     int size() const { return _set->length(); }
@@ -250,7 +250,7 @@ public:
     void      pop() {
       debug_only(set_type_at_tos(bottom_type()));
       _stack_size--;
-    } 
+    }
     ciType*   pop_value() {
       ciType* t = type_at_tos();
       pop();
@@ -326,7 +326,7 @@ public:
     }
     void      pop_array() {
       assert(type_at_tos() == null_type() ||
-	     type_at_tos()->is_array_klass(), "must be array type");
+             type_at_tos()->is_array_klass(), "must be array type");
       pop();
     }
     // pop_objArray and pop_typeArray narrow the tos to ciObjArrayKlass
@@ -348,7 +348,7 @@ public:
       push(null_type());
     }
     void      do_null_assert(ciKlass* unloaded_klass);
-    
+
     // Helper convenience routines.
     void do_aaload(ciBytecodeStream* str);
     void do_checkcast(ciBytecodeStream* str);
@@ -365,7 +365,7 @@ public:
     void do_ret(ciBytecodeStream* str);
 
     void overwrite_local_double_long(int index) {
-      // Invalidate the previous local if it contains first half of 
+      // Invalidate the previous local if it contains first half of
       // a double or long value since it's seconf half is being overwritten.
       int prev_index = index - 1;
       if (prev_index >= 0 &&
@@ -383,7 +383,7 @@ public:
     void store_local_object(int index) {
       ciType* type = pop_value();
       assert(is_reference(type) || type->is_return_address(),
-	     "must be reference type or return address");
+             "must be reference type or return address");
       overwrite_local_double_long(index);
       set_type_at(local(index), type);
       store_to_local(index);
@@ -594,8 +594,8 @@ public:
 
     // Get the successors for this Block.
     GrowableArray<Block*>* successors(ciBytecodeStream* str,
-				      StateVector* state,
-				      JsrSet* jsrs);
+                                      StateVector* state,
+                                      JsrSet* jsrs);
     GrowableArray<Block*>* successors() {
       assert(_successors != NULL, "must be filled in");
       return _successors;
@@ -604,7 +604,7 @@ public:
     // Get the exceptional successors for this Block.
     GrowableArray<Block*>* exceptions() {
       if (_exceptions == NULL) {
-	compute_exceptions();
+        compute_exceptions();
       }
       return _exceptions;
     }
@@ -613,7 +613,7 @@ public:
     // exceptional successors for this Block.
     GrowableArray<ciInstanceKlass*>* exc_klasses() {
       if (_exc_klasses == NULL) {
-	compute_exceptions();
+        compute_exceptions();
       }
       return _exc_klasses;
     }
@@ -888,20 +888,20 @@ private:
   // Merge the current state into all exceptional successors at the
   // current point in the code.
   void flow_exceptions(GrowableArray<Block*>* exceptions,
-		       GrowableArray<ciInstanceKlass*>* exc_klasses,
-		       StateVector* state);
+                       GrowableArray<ciInstanceKlass*>* exc_klasses,
+                       StateVector* state);
 
   // Merge the current state into all successors at the current point
   // in the code.
   void flow_successors(GrowableArray<Block*>* successors,
-		       StateVector* state);
+                       StateVector* state);
 
   // Interpret the effects of the bytecodes on the incoming state
   // vector of a basic block.  Push the changed state to succeeding
   // basic blocks.
   void flow_block(Block* block,
-		  StateVector* scratch_state,
-		  JsrSet* scratch_jsrs);
+                  StateVector* scratch_state,
+                  JsrSet* scratch_jsrs);
 
   // Perform the type flow analysis, creating and cloning Blocks as
   // necessary.

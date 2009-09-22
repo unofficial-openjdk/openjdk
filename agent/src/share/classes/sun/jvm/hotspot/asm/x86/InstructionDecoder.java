@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -111,8 +111,8 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
    static int readByte(byte[] bytesArray, int index) {
       int ret = 0;
       if (index < bytesArray.length) {
-     	 ret = (int)bytesArray[index];
-      	 ret = ret & 0xff;
+         ret = (int)bytesArray[index];
+         ret = ret & 0xff;
       }
       return ret;
    }
@@ -144,7 +144,7 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
 
       //Fetch the mod/reg/rm byte only if it is present.
       if( isModRMPresent(addrMode1) || isModRMPresent(addrMode2) || isModRMPresent(addrMode3) ) {
-      
+
          int ModRM = readByte(bytesArray, byteIndex);
          byteIndex++;
          mod = (ModRM >> 6) & 3;
@@ -168,26 +168,26 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
       int index = 0;
       for(index=0; index<oldName.length(); index++) {
          switch (oldName.charAt(index)) {
-            case 'C':		/* For jcxz/jecxz */
-	       if (addrSize)
-	          newName.setCharAt(index, 'e');
+            case 'C':           /* For jcxz/jecxz */
+               if (addrSize)
+                  newName.setCharAt(index, 'e');
                index++;
-	       break;
-	    case 'N':
-	       if ((prefixes & PREFIX_FWAIT) == 0)
-	          newName.setCharAt(index, 'n');
+               break;
+            case 'N':
+               if ((prefixes & PREFIX_FWAIT) == 0)
+                  newName.setCharAt(index, 'n');
                index++;
-	       break;
-	    case 'S':
-	    /* operand size flag */
-	       if (operandSize == true)
+               break;
+            case 'S':
+            /* operand size flag */
+               if (operandSize == true)
                   newName.setCharAt(index, 'l');
-	       else
-	          newName.setCharAt(index, 'w');
+               else
+                  newName.setCharAt(index, 'w');
                index++;
-	       break;
+               break;
             default:
-	       break;
+               break;
          }
       }
       return newName.toString();
@@ -204,40 +204,40 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
          case ADDR_W:   //SSE: ModR/M byte specifies either 128 bit XMM register or memory
          case ADDR_Q:   //SSE: ModR/M byte specifies either 128 bit MMX register or memory
             X86SegmentRegister segReg = getSegmentRegisterFromPrefix(prefixes);
-            
+
             if (mod == 3) {    //Register operand, no SIB follows
                if (addrMode == ADDR_E) {
                   switch (operandType) {
                      case b_mode:
                         op = X86Registers.getRegister8(rm);
                         break;
-	             case w_mode:
-	                op = X86Registers.getRegister16(rm);
+                     case w_mode:
+                        op = X86Registers.getRegister16(rm);
                         break;
                      case v_mode:
-	                if (operandSize == true) //Operand size prefix is present
-	                   op = X86Registers.getRegister32(rm);
-	                else
+                        if (operandSize == true) //Operand size prefix is present
+                           op = X86Registers.getRegister32(rm);
+                        else
                            op = X86Registers.getRegister16(rm);
-	                break;
+                        break;
                      case p_mode:
                         X86Register reg;
                         if (operandSize == true) //Operand size prefix is present
-	                   reg = X86Registers.getRegister32(rm);
-	                else
+                           reg = X86Registers.getRegister32(rm);
+                        else
                            reg = X86Registers.getRegister16(rm);
 
                         op = new X86RegisterIndirectAddress(segReg, reg, null, 0);
                         break;
                      default:
-	                break;
-	          }
-	       } else if (addrMode == ADDR_W) {
-	          op = X86XMMRegisters.getRegister(rm);
-	       } else if (addrMode == ADDR_Q) {
-	          op = X86MMXRegisters.getRegister(rm);
+                        break;
+                  }
+               } else if (addrMode == ADDR_W) {
+                  op = X86XMMRegisters.getRegister(rm);
+               } else if (addrMode == ADDR_Q) {
+                  op = X86MMXRegisters.getRegister(rm);
                }
-               
+
             } else {   //mod != 3
                //SIB follows for (rm==4), SIB gives scale, index and base in this case
                //disp32 is present for (mod==0 && rm==5) || (mod==2)
@@ -332,16 +332,16 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
                   byteIndex += 2;
                   break;
                case v_mode:
-	          if (operandSize == true) { //Operand size prefix is present
-	             op = new Immediate(new Integer(readInt32(bytesArray, byteIndex)));
+                  if (operandSize == true) { //Operand size prefix is present
+                     op = new Immediate(new Integer(readInt32(bytesArray, byteIndex)));
                      byteIndex += 4;
                   } else {
                      op = new Immediate(new Integer(readInt16(bytesArray, byteIndex)));
                      byteIndex += 2;
                   }
-	          break;
+                  break;
                default:
-	          break;
+                  break;
             }
             break;
          case ADDR_REG: //registers
@@ -397,7 +397,7 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
             switch (operandType) {
                case p_mode:
                   if (addrSize == true) {
-	             offset = readInt32(bytesArray, byteIndex);
+                     offset = readInt32(bytesArray, byteIndex);
                      byteIndex += 4;
                      segment = readInt16(bytesArray, byteIndex);
                      byteIndex += 2;
@@ -410,15 +410,15 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
                   op = new X86DirectAddress(segment, offset); //with offset
                   break;
                case v_mode:
-	          if (addrSize == true) {
-	             offset = readInt32(bytesArray, byteIndex);
+                  if (addrSize == true) {
+                     offset = readInt32(bytesArray, byteIndex);
                      byteIndex += 4;
                   } else {
                      offset = readInt16(bytesArray, byteIndex);
                      byteIndex += 2;
                   }
                   op = new X86DirectAddress(offset); //with offset
-	          break;
+                  break;
                default:
                   break;
             }
@@ -500,9 +500,9 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
                  break;
              case v_mode:
                 if (operandSize == true)
-	           op = X86Registers.getRegister32(mod);
+                   op = X86Registers.getRegister32(mod);
                 else
-	           op = X86Registers.getRegister16(mod);
+                   op = X86Registers.getRegister16(mod);
                    break;
              default:
                 break;
@@ -520,14 +520,14 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
             break;
 
          //SSE: reg field of ModR/M byte selects a 128-bit XMM register
-         case ADDR_V:    
+         case ADDR_V:
             op = X86XMMRegisters.getRegister(regOrOpcode);
-            break; 
+            break;
 
          //SSE: reg field of ModR/M byte selects a 64-bit MMX register
-         case ADDR_P:    
+         case ADDR_P:
             op = X86MMXRegisters.getRegister(regOrOpcode);
-            break;                     
+            break;
       }
       return op;
    }
@@ -552,4 +552,3 @@ public class InstructionDecoder implements /* imports */ X86Opcodes , RTLDataTyp
    }
 
 }
-

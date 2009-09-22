@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -32,7 +32,7 @@ import sun.jvm.hotspot.types.*;
 
 public class Interpreter {
   private static AddressField codeField;
-  
+
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {
@@ -43,7 +43,7 @@ public class Interpreter {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("AbstractInterpreter");
-    
+
     codeField     = type.getAddressField("_code");
   }
 

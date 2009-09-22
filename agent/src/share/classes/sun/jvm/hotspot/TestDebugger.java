@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -99,14 +99,14 @@ public class TestDebugger {
       for (int i = 0; i < helloWorldLen; ++i) {
         data[i] = (byte) addr.getCIntegerAt(i, 1, false);
       }
-      
+
       // Convert to characters
       char[] chars = new char[data.length];
       for (int i = 0; i < data.length; ++i) {
         chars[i] = (char) data[i];
       }
       String helloWorldStr = new String(chars);
-    
+
       System.out.println("Successfully read string \"" + helloWorldStr + "\" from target process\n");
 
       // Test all Java data types (see helloWorld.cpp)

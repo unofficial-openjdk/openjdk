@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmCMSOperations.hpp	1.13 07/05/29 09:44:13 JVM"
+#pragma ident "@(#)vmCMSOperations.hpp  1.13 07/05/29 09:44:13 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The VM_CMS_Operation is slightly different from
@@ -39,14 +39,14 @@
 //
 //      VM_CMS_Initial_Mark
 //      VM_CMS_Final_Mark
-//     
+//
 
 // Forward decl.
 class CMSCollector;
 
 class VM_CMS_Operation: public VM_Operation {
  protected:
-  CMSCollector*  _collector;		     // associated collector
+  CMSCollector*  _collector;                 // associated collector
   bool           _prologue_succeeded;     // whether doit_prologue succeeded
 
   bool lost_race() const;
@@ -60,7 +60,7 @@ class VM_CMS_Operation: public VM_Operation {
     _collector(collector),
     _prologue_succeeded(false) {}
   ~VM_CMS_Operation() {}
-  
+
   // The legal collector state for executing this CMS op.
   virtual const CMSCollector::CollectorState legal_state() const = 0;
 

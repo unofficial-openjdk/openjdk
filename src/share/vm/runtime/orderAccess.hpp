@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)orderAccess.hpp	1.11 07/05/05 17:06:52 JVM"
+#pragma ident "@(#)orderAccess.hpp      1.11 07/05/05 17:06:52 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //                Memory Access Ordering Model
@@ -103,7 +103,7 @@
 // ---------------------------------------------------------------------
 // fence         membar #LoadStore |   mf               lock addl 0,(sp)
 //                      #StoreStore |
-//		        #LoadLoad |
+//                      #LoadLoad |
 //                      #StoreLoad
 //
 // release       membar #LoadStore |   st.rel [sp]=r0   movl $0,<dummy>
@@ -116,7 +116,7 @@
 //
 // release_store membar #LoadStore |   st.rel           <store>
 //                      #StoreStore
-//		 st
+//               st
 //
 // store_fence   st                    st               lock xchg
 //               fence                 mf
@@ -128,7 +128,7 @@
 // Using only release_store and load_acquire, we can implement the
 // following ordered sequences.
 //
-// 1. load, load   == load_acquire,  load 
+// 1. load, load   == load_acquire,  load
 //                 or load_acquire,  load_acquire
 // 2. load, store  == load,          release_store
 //                 or load_acquire,  store

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)prefetch_solaris_sparc.inline.hpp	1.10 07/05/05 17:04:54 JVM"
+#pragma ident "@(#)prefetch_solaris_sparc.inline.hpp    1.10 07/05/05 17:04:54 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #if defined(COMPILER2) || defined(_LP64)

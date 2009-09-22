@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-public class SPARCV9PopcInstruction extends SPARCFormat3AInstruction 
+public class SPARCV9PopcInstruction extends SPARCFormat3AInstruction
                   implements SPARCV9Instruction {
     public SPARCV9PopcInstruction(ImmediateOrRegister source, SPARCRegister rd) {
         super("popc", POPC, null, source, rd);

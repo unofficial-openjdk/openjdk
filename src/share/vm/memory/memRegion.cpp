@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)memRegion.cpp	1.23 07/05/05 17:05:52 JVM"
+#pragma ident "@(#)memRegion.cpp        1.23 07/05/05 17:05:52 JVM"
 #endif
 /*
  * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A very simple data structure representing a contigous word-aligned
@@ -49,7 +49,7 @@ MemRegion MemRegion::_union(const MemRegion mr2) const {
 
   // Otherwise, regions must overlap or be adjacent
   assert(((start() <= mr2.start()) && (end() >= mr2.start())) ||
-         ((mr2.start() <= start()) && (mr2.end() >= start())), 
+         ((mr2.start() <= start()) && (mr2.end() >= start())),
              "non-adjacent or overlapping regions");
   MemRegion res;
   HeapWord* res_start = MIN2(start(), mr2.start());
@@ -68,9 +68,9 @@ MemRegion MemRegion::minus(const MemRegion mr2) const {
   //                        |overlap ending|
   //                                   |strictly above|
   //              |completely overlapping|
-  // We can't deal with an interior case because it would 
+  // We can't deal with an interior case because it would
   // produce two disjoint regions as a result.
-  // We aren't trying to be optimal in the number of tests below, 
+  // We aren't trying to be optimal in the number of tests below,
   // but the order is important to distinguish the strictly cases
   // from the overlapping cases.
   if (mr2.end() <= start()) {

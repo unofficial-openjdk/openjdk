@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm;
@@ -40,7 +40,7 @@ public abstract class Register extends ImmediateOrRegister {
   public Register(int number) {
     this.number = number;
   }
-  
+
   /** Must be overridden by subclass to indicate number of available
       registers on this platform */
   public abstract int getNumberOfRegisters();
@@ -61,7 +61,7 @@ public abstract class Register extends ImmediateOrRegister {
     if (!getClass().equals(x.getClass())) {
       return false;
     }
-    
+
     Register reg = (Register) x;
 
     return (reg.getNumber() == getNumber());

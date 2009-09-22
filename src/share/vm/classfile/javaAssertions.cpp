@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)javaAssertions.cpp	1.14 07/05/05 17:06:50 JVM"
+#pragma ident "@(#)javaAssertions.cpp   1.14 07/05/05 17:06:50 JVM"
 #endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,16 +22,16 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_javaAssertions.cpp.incl"
 
-bool				JavaAssertions::_userDefault = false;
-bool				JavaAssertions::_sysDefault = false;
-JavaAssertions::OptionList*	JavaAssertions::_classes = 0;
-JavaAssertions::OptionList*	JavaAssertions::_packages = 0;
+bool                            JavaAssertions::_userDefault = false;
+bool                            JavaAssertions::_sysDefault = false;
+JavaAssertions::OptionList*     JavaAssertions::_classes = 0;
+JavaAssertions::OptionList*     JavaAssertions::_packages = 0;
 
 JavaAssertions::OptionList::OptionList(const char* name, bool enabled,
   OptionList* next) {
@@ -163,7 +163,7 @@ JavaAssertions::match_package(const char* classname) {
     assert(len == 0 || classname[len] == '/', "not a package name");
     for (OptionList* p = _packages; p != 0; p = p->next()) {
       if (strncmp(p->name(), classname, len) == 0 && p->name()[len] == '\0') {
-	return p;
+        return p;
       }
     }
 

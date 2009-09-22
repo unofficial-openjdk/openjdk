@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)markSweep.cpp	1.196 07/05/05 17:05:35 JVM"
+#pragma ident "@(#)markSweep.cpp        1.196 07/05/05 17:05:35 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -33,8 +33,8 @@ GrowableArray<Klass*>*  MarkSweep::_revisit_klass_stack = NULL;
 
 GrowableArray<oop>*     MarkSweep::_preserved_oop_stack = NULL;
 GrowableArray<markOop>* MarkSweep::_preserved_mark_stack= NULL;
-size_t			MarkSweep::_preserved_count = 0;
-size_t			MarkSweep::_preserved_count_max = 0;
+size_t                  MarkSweep::_preserved_count = 0;
+size_t                  MarkSweep::_preserved_count_max = 0;
 PreservedMark*          MarkSweep::_preserved_marks = NULL;
 ReferenceProcessor*     MarkSweep::_ref_processor   = NULL;
 
@@ -121,8 +121,8 @@ void MarkSweep::AdjustPointerClosure::do_oop(narrowOop* p) { adjust_pointer(p, _
 
 void MarkSweep::adjust_marks() {
   assert(_preserved_oop_stack == NULL ||
-	 _preserved_oop_stack->length() == _preserved_mark_stack->length(),
-	 "inconsistent preserved oop stacks");
+         _preserved_oop_stack->length() == _preserved_mark_stack->length(),
+         "inconsistent preserved oop stacks");
 
   // adjust the oops we saved earlier
   for (size_t i = 0; i < _preserved_count; i++) {
@@ -140,11 +140,11 @@ void MarkSweep::adjust_marks() {
 
 void MarkSweep::restore_marks() {
   assert(_preserved_oop_stack == NULL ||
-	 _preserved_oop_stack->length() == _preserved_mark_stack->length(),
-	 "inconsistent preserved oop stacks");
+         _preserved_oop_stack->length() == _preserved_mark_stack->length(),
+         "inconsistent preserved oop stacks");
   if (PrintGC && Verbose) {
     gclog_or_tty->print_cr("Restoring %d marks", _preserved_count +
-		  (_preserved_oop_stack ? _preserved_oop_stack->length() : 0));
+                  (_preserved_oop_stack ? _preserved_oop_stack->length() : 0));
   }
 
   // restore the marks we saved earlier
@@ -157,7 +157,7 @@ void MarkSweep::restore_marks() {
     for (int i = 0; i < _preserved_oop_stack->length(); i++) {
       oop obj       = _preserved_oop_stack->at(i);
       markOop mark  = _preserved_mark_stack->at(i);
-      obj->set_mark(mark);      
+      obj->set_mark(mark);
     }
   }
 }
@@ -182,7 +182,7 @@ void MarkSweep::track_adjusted_pointer(void* p, bool isroot) {
         assert(last != p, "should be different");
         _root_refs_stack->at_put(index, last);
       } else {
-	_root_refs_stack->remove(p);
+        _root_refs_stack->remove(p);
       }
     }
   }
@@ -203,7 +203,7 @@ void MarkSweep::track_interior_pointers(oop obj) {
   if (ValidateMarkSweep) {
     _adjusted_pointers->clear();
     _pointer_tracking = true;
-    
+
     AdjusterTracker checker;
     obj->oop_iterate(&checker);
   }
@@ -241,9 +241,9 @@ void MarkSweep::validate_live_oop(oop p, size_t size) {
 }
 
 void MarkSweep::live_oop_moved_to(HeapWord* q, size_t size,
-				  HeapWord* compaction_top) {
+                                  HeapWord* compaction_top) {
   assert(oop(q)->forwardee() == NULL || oop(q)->forwardee() == oop(compaction_top),
-	 "should be moved to forwarded location");
+         "should be moved to forwarded location");
   if (ValidateMarkSweep) {
     MarkSweep::validate_live_oop(oop(q), size);
     _live_oops_moved_to->push(oop(compaction_top));
@@ -318,4 +318,3 @@ void MarkSweep::trace(const char* msg) {
 }
 
 #endif
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oop.psgc.inline.hpp	1.17 07/05/05 17:06:07 JVM"
+#pragma ident "@(#)oop.psgc.inline.hpp  1.17 07/05/05 17:06:07 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ParallelScavengeHeap methods
@@ -44,4 +44,3 @@ inline void oopDesc::push_contents(PSPromotionManager* pm) {
   }
   // Else skip it.  The typeArrayKlass in the header never needs scavenging.
 }
-

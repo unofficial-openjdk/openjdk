@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psPermGen.cpp	1.28 07/05/05 17:05:30 JVM"
+#pragma ident "@(#)psPermGen.cpp        1.28 07/05/05 17:05:30 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,20 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_psPermGen.cpp.incl"
 
-PSPermGen::PSPermGen(ReservedSpace rs, size_t alignment, 
-		     size_t initial_size, size_t min_size, size_t max_size,
+PSPermGen::PSPermGen(ReservedSpace rs, size_t alignment,
+                     size_t initial_size, size_t min_size, size_t max_size,
                      const char* gen_name, int level) :
   PSOldGen(rs, alignment, initial_size, min_size, max_size, gen_name, level),
   _last_used(0)
 {
   assert(object_mark_sweep() != NULL, "Sanity");
-  
+
   object_mark_sweep()->set_allowed_dead_ratio(PermMarkSweepDeadRatio);
   _avg_size = new AdaptivePaddedAverage(AdaptivePermSizeWeight,
                                         PermGenPadding);
@@ -55,7 +55,7 @@ HeapWord* PSPermGen::allocate_permanent(size_t size) {
 void PSPermGen::compute_new_size(size_t used_before_collection) {
   // Update our padded average of objects allocated in perm
   // gen between collections.
-  assert(used_before_collection >= _last_used, 
+  assert(used_before_collection >= _last_used,
                                 "negative allocation amount since last GC?");
 
   const size_t alloc_since_last_gc = used_before_collection - _last_used;
@@ -67,7 +67,7 @@ void PSPermGen::compute_new_size(size_t used_before_collection) {
 
   // We have different alignment constraints than the rest of the heap.
   const size_t alignment = MAX2(MinPermHeapExpansion,
-				virtual_space()->alignment());
+                                virtual_space()->alignment());
 
   // Compute the desired size:
   //  The free space is the newly computed padded average,
@@ -92,13 +92,13 @@ void PSPermGen::compute_new_size(size_t used_before_collection) {
     MutexLocker x(ExpandHeap_lock);
     if (desired_size > size_before) {
       const size_t change_bytes = desired_size - size_before;
-      const size_t aligned_change_bytes = 
-	align_size_up(change_bytes, alignment);
+      const size_t aligned_change_bytes =
+        align_size_up(change_bytes, alignment);
       expand_by(aligned_change_bytes);
     } else {
       // Shrinking
-      const size_t change_bytes = 
-	size_before - desired_size;
+      const size_t change_bytes =
+        size_before - desired_size;
       const size_t aligned_change_bytes = align_size_down(change_bytes, alignment);
       shrink(aligned_change_bytes);
     }

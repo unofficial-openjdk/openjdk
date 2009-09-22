@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -113,7 +113,7 @@ public class BytecodeStream {
   public boolean isWide()             { return _is_wide; }
   public boolean isActiveBreakpoint() { return Bytecodes.isActiveBreakpointAt(_method, _bci); }
   public boolean isLastBytecode()     { return _next_bci >= _end_bci; }
-  
+
   // State changes
   public void    setNextBCI(int bci)  {
     if (Assert.ASSERTS_ENABLED) {

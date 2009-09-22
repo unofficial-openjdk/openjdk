@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)loaderConstraints.cpp	1.19 07/05/17 15:50:23 JVM"
+#pragma ident "@(#)loaderConstraints.cpp        1.19 07/05/17 15:50:23 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -64,7 +64,7 @@ void LoaderConstraintTable::oops_do(OopClosure* f) {
 }
 
 // We must keep the symbolOop used in the name alive.  We'll use the
-// loaders to decide if a particular entry can be purged. 
+// loaders to decide if a particular entry can be purged.
 void LoaderConstraintTable::always_strong_classes_do(OopClosure* blk) {
   // We must keep the symbolOop used in the name alive.
   for (int cindex = 0; cindex < table_size(); cindex++) {
@@ -116,29 +116,29 @@ void LoaderConstraintTable::purge_loader_constraints(BoolObjectClosure* is_alive
       // Remove klass that is no longer alive
       if (klass != NULL && !is_alive->do_object_b(klass)) {
         probe->set_klass(NULL);
-	if (TraceLoaderConstraints) {
-	  ResourceMark rm;
-	  tty->print_cr("[Purging class object from constraint for name %s,"
-		     " loader list:", 
-		     probe->name()->as_C_string());
-  	  for (int i = 0; i < probe->num_loaders(); i++) {
-	    tty->print_cr("[   [%d]: %s", i, 
-			  SystemDictionary::loader_name(probe->loader(i)));
-	  }
-	}
+        if (TraceLoaderConstraints) {
+          ResourceMark rm;
+          tty->print_cr("[Purging class object from constraint for name %s,"
+                     " loader list:",
+                     probe->name()->as_C_string());
+          for (int i = 0; i < probe->num_loaders(); i++) {
+            tty->print_cr("[   [%d]: %s", i,
+                          SystemDictionary::loader_name(probe->loader(i)));
+          }
+        }
       }
       // Remove entries no longer alive from loader array
-      int n = 0; 
+      int n = 0;
       while (n < probe->num_loaders()) {
         if (probe->loader(n) != NULL) {
           if (!is_alive->do_object_b(probe->loader(n))) {
-	    if (TraceLoaderConstraints) {
-	      ResourceMark rm;
+            if (TraceLoaderConstraints) {
+              ResourceMark rm;
               tty->print_cr("[Purging loader %s from constraint for name %s",
-			    SystemDictionary::loader_name(probe->loader(n)),
-			    probe->name()->as_C_string()
-			    );
-	    }
+                            SystemDictionary::loader_name(probe->loader(n)),
+                            probe->name()->as_C_string()
+                            );
+            }
 
             // Compact array
             int num = probe->num_loaders() - 1;
@@ -146,14 +146,14 @@ void LoaderConstraintTable::purge_loader_constraints(BoolObjectClosure* is_alive
             probe->set_loader(n, probe->loader(num));
             probe->set_loader(num, NULL);
 
-	    if (TraceLoaderConstraints) {
-	      ResourceMark rm;
+            if (TraceLoaderConstraints) {
+              ResourceMark rm;
               tty->print_cr("[New loader list:");
-	      for (int i = 0; i < probe->num_loaders(); i++) {
-                tty->print_cr("[   [%d]: %s", i, 
-			      SystemDictionary::loader_name(probe->loader(i)));
-	      }
-	    }
+              for (int i = 0; i < probe->num_loaders(); i++) {
+                tty->print_cr("[   [%d]: %s", i,
+                              SystemDictionary::loader_name(probe->loader(i)));
+              }
+            }
 
             continue;  // current element replaced, so restart without
                        // incrementing n
@@ -163,11 +163,11 @@ void LoaderConstraintTable::purge_loader_constraints(BoolObjectClosure* is_alive
       }
       // Check whether entry should be purged
       if (probe->num_loaders() < 2) {
-	    if (TraceLoaderConstraints) {
-	      ResourceMark rm;
-	      tty->print("[Purging complete constraint for name %s\n", 
-			 probe->name()->as_C_string());
-	    }
+            if (TraceLoaderConstraints) {
+              ResourceMark rm;
+              tty->print("[Purging complete constraint for name %s\n",
+                         probe->name()->as_C_string());
+            }
 
         // Purge entry
         *p = probe->next();
@@ -201,98 +201,98 @@ bool LoaderConstraintTable::add_entry(symbolHandle class_name,
     failure_code = 1;
   } else {
     klassOop klass = klass1 != NULL ? klass1 : klass2;
-      
+
     LoaderConstraintEntry** pp1 = find_loader_constraint(class_name,
-							 class_loader1);
+                                                         class_loader1);
     if (*pp1 != NULL && (*pp1)->klass() != NULL) {
       if (klass != NULL) {
-	if (klass != (*pp1)->klass()) {
-	  failure_code = 2;
-	}
+        if (klass != (*pp1)->klass()) {
+          failure_code = 2;
+        }
       } else {
-	klass = (*pp1)->klass();
+        klass = (*pp1)->klass();
       }
     }
-    
+
     LoaderConstraintEntry** pp2 = find_loader_constraint(class_name,
-							 class_loader2);
+                                                         class_loader2);
     if (*pp2 != NULL && (*pp2)->klass() != NULL) {
       if (klass != NULL) {
-	if (klass != (*pp2)->klass()) {
-	  failure_code = 3;
-	}
+        if (klass != (*pp2)->klass()) {
+          failure_code = 3;
+        }
       } else {
-	klass = (*pp2)->klass();
+        klass = (*pp2)->klass();
       }
     }
 
     if (failure_code == 0) {
       if (*pp1 == NULL && *pp2 == NULL) {
-	unsigned int hash = compute_hash(class_name);
-	int index = hash_to_index(hash);
-	LoaderConstraintEntry* p;
-	p = new_entry(hash, class_name(), klass, 2, 2);
-	p->set_loaders(NEW_C_HEAP_ARRAY(oop, 2));
-	p->set_loader(0, class_loader1());
-	p->set_loader(1, class_loader2());
-	p->set_klass(klass);
-	p->set_next(bucket(index));
-	set_entry(index, p);
-	if (TraceLoaderConstraints) {
-	  ResourceMark rm;
-	  tty->print("[Adding new constraint for name: %s, loader[0]: %s,"
-		     " loader[1]: %s ]\n",
-		     class_name()->as_C_string(), 
-		     SystemDictionary::loader_name(class_loader1()),
-		     SystemDictionary::loader_name(class_loader2())
-		     );
-	}
+        unsigned int hash = compute_hash(class_name);
+        int index = hash_to_index(hash);
+        LoaderConstraintEntry* p;
+        p = new_entry(hash, class_name(), klass, 2, 2);
+        p->set_loaders(NEW_C_HEAP_ARRAY(oop, 2));
+        p->set_loader(0, class_loader1());
+        p->set_loader(1, class_loader2());
+        p->set_klass(klass);
+        p->set_next(bucket(index));
+        set_entry(index, p);
+        if (TraceLoaderConstraints) {
+          ResourceMark rm;
+          tty->print("[Adding new constraint for name: %s, loader[0]: %s,"
+                     " loader[1]: %s ]\n",
+                     class_name()->as_C_string(),
+                     SystemDictionary::loader_name(class_loader1()),
+                     SystemDictionary::loader_name(class_loader2())
+                     );
+        }
       } else if (*pp1 == *pp2) {
-	/* constraint already imposed */
-	if ((*pp1)->klass() == NULL) {
-	  (*pp1)->set_klass(klass);
-	  if (TraceLoaderConstraints) {
-	    ResourceMark rm;
-	    tty->print("[Setting class object in existing constraint for"
-		       " name: %s and loader %s ]\n",
-		       class_name()->as_C_string(),
-		       SystemDictionary::loader_name(class_loader1())
-		       );
-	  }
-	} else {
-	  assert((*pp1)->klass() == klass, "loader constraints corrupted");
-	}
+        /* constraint already imposed */
+        if ((*pp1)->klass() == NULL) {
+          (*pp1)->set_klass(klass);
+          if (TraceLoaderConstraints) {
+            ResourceMark rm;
+            tty->print("[Setting class object in existing constraint for"
+                       " name: %s and loader %s ]\n",
+                       class_name()->as_C_string(),
+                       SystemDictionary::loader_name(class_loader1())
+                       );
+          }
+        } else {
+          assert((*pp1)->klass() == klass, "loader constraints corrupted");
+        }
       } else if (*pp1 == NULL) {
-	extend_loader_constraint(*pp2, class_loader1, klass);
+        extend_loader_constraint(*pp2, class_loader1, klass);
       } else if (*pp2 == NULL) {
-	extend_loader_constraint(*pp1, class_loader2, klass);
+        extend_loader_constraint(*pp1, class_loader2, klass);
       } else {
-	merge_loader_constraints(pp1, pp2, klass);
+        merge_loader_constraints(pp1, pp2, klass);
       }
     }
   }
-  
+
   if (failure_code != 0 && TraceLoaderConstraints) {
     ResourceMark rm;
     const char* reason = "";
     switch(failure_code) {
     case 1: reason = "the class objects presented by loader[0] and loader[1]"
-	      " are different"; break;
+              " are different"; break;
     case 2: reason = "the class object presented by loader[0] does not match"
-	      " the stored class object in the constraint"; break;
+              " the stored class object in the constraint"; break;
     case 3: reason = "the class object presented by loader[1] does not match"
-	      " the stored class object in the constraint"; break;
+              " the stored class object in the constraint"; break;
     default: reason = "unknown reason code";
     }
     tty->print("[Failed to add constraint for name: %s, loader[0]: %s,"
-	       " loader[1]: %s, Reason: %s ]\n",
-	       class_name()->as_C_string(),
-	       SystemDictionary::loader_name(class_loader1()),
-	       SystemDictionary::loader_name(class_loader2()),
-	       reason
-	       );
+               " loader[1]: %s, Reason: %s ]\n",
+               class_name()->as_C_string(),
+               SystemDictionary::loader_name(class_loader1()),
+               SystemDictionary::loader_name(class_loader2()),
+               reason
+               );
   }
-  
+
   return failure_code == 0;
 }
 
@@ -307,20 +307,20 @@ bool LoaderConstraintTable::check_or_update(instanceKlassHandle k,
     if (TraceLoaderConstraints) {
       ResourceMark rm;
       tty->print("[Constraint check failed for name %s, loader %s: "
-		 "the presented class object differs from that stored ]\n",
-		 name()->as_C_string(), 
-		 SystemDictionary::loader_name(loader()));
+                 "the presented class object differs from that stored ]\n",
+                 name()->as_C_string(),
+                 SystemDictionary::loader_name(loader()));
     }
     return false;
   } else {
     if (p && p->klass() == NULL) {
       p->set_klass(k());
       if (TraceLoaderConstraints) {
-	ResourceMark rm;
-	tty->print("[Updating constraint for name %s, loader %s, "
-		   "by setting class object ]\n",
-		   name()->as_C_string(), 
-		   SystemDictionary::loader_name(loader()));
+        ResourceMark rm;
+        tty->print("[Updating constraint for name %s, loader %s, "
+                   "by setting class object ]\n",
+                   name()->as_C_string(),
+                   SystemDictionary::loader_name(loader()));
       }
     }
     return true;
@@ -376,7 +376,7 @@ void LoaderConstraintTable::ensure_loader_constraint_capacity(
         p->set_loaders(new_loaders);
     }
 }
- 
+
 
 void LoaderConstraintTable::extend_loader_constraint(LoaderConstraintEntry* p,
                                                      Handle loader,
@@ -388,11 +388,11 @@ void LoaderConstraintTable::extend_loader_constraint(LoaderConstraintEntry* p,
   if (TraceLoaderConstraints) {
     ResourceMark rm;
     tty->print("[Extending constraint for name %s by adding loader[%d]: %s %s",
-	       p->name()->as_C_string(),
-	       num,
+               p->name()->as_C_string(),
+               num,
                SystemDictionary::loader_name(loader()),
-	       (p->klass() == NULL ? " and setting class object ]\n" : " ]\n")
-	       );
+               (p->klass() == NULL ? " and setting class object ]\n" : " ]\n")
+               );
   }
   if (p->klass() == NULL) {
     p->set_klass(klass);
@@ -406,16 +406,16 @@ void LoaderConstraintTable::merge_loader_constraints(
                                                    LoaderConstraintEntry** pp1,
                                                    LoaderConstraintEntry** pp2,
                                                    klassOop klass) {
-  // make sure *pp1 has higher capacity 
+  // make sure *pp1 has higher capacity
   if ((*pp1)->max_loaders() < (*pp2)->max_loaders()) {
     LoaderConstraintEntry** tmp = pp2;
     pp2 = pp1;
     pp1 = tmp;
   }
-  
+
   LoaderConstraintEntry* p1 = *pp1;
   LoaderConstraintEntry* p2 = *pp2;
-  
+
   ensure_loader_constraint_capacity(p1, p2->num_loaders());
 
   for (int i = 0; i < p2->num_loaders(); i++) {
@@ -426,19 +426,19 @@ void LoaderConstraintTable::merge_loader_constraints(
 
   if (TraceLoaderConstraints) {
     ResourceMark rm;
-    tty->print_cr("[Merged constraints for name %s, new loader list:", 
-		  p1->name()->as_C_string()
-		  );
-  
+    tty->print_cr("[Merged constraints for name %s, new loader list:",
+                  p1->name()->as_C_string()
+                  );
+
     for (int i = 0; i < p1->num_loaders(); i++) {
-      tty->print_cr("[   [%d]: %s", i, 
-		    SystemDictionary::loader_name(p1->loader(i)));
+      tty->print_cr("[   [%d]: %s", i,
+                    SystemDictionary::loader_name(p1->loader(i)));
     }
     if (p1->klass() == NULL) {
       tty->print_cr("[... and setting class object]");
     }
   }
-  
+
   // p1->klass() will hold NULL if klass, p2->klass(), and old
   // p1->klass() are all NULL.  In addition, all three must have
   // matching non-NULL values, otherwise either the constraints would
@@ -468,7 +468,7 @@ void LoaderConstraintTable::verify(Dictionary* dictionary) {
                                 probe = probe->next()) {
       guarantee(probe->name()->is_symbol(), "should be symbol");
       if (probe->klass() != NULL) {
-        instanceKlass* ik = instanceKlass::cast(probe->klass()); 
+        instanceKlass* ik = instanceKlass::cast(probe->klass());
         guarantee(ik->name() == probe->name(), "name should match");
         symbolHandle name (thread, ik->name());
         Handle loader(thread, ik->class_loader());

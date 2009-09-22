@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -31,7 +31,7 @@ import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 
 // A KlassKlass serves as the fix point of the klass chain.
-// The klass of KlassKlass is itself. 
+// The klass of KlassKlass is itself.
 
 public class KlassKlass extends Klass {
   static {

@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-public abstract class SPARCV9PrivilegedRegisterInstruction extends SPARCInstruction 
+public abstract class SPARCV9PrivilegedRegisterInstruction extends SPARCInstruction
                           implements SPARCV9Instruction, /* imports */ SPARCV9PrivilegedRegisters {
     protected static final String regNames[] = {
         "%tpc", "%tnpc", "%tstate", "%tt", "%tick", "%tba", "%pstate", "%tl",
@@ -34,7 +34,7 @@ public abstract class SPARCV9PrivilegedRegisterInstruction extends SPARCInstruct
     };
 
     protected static String getPrivilegedRegisterName(int regNum) {
-        if ((regNum > 15 && regNum < 31) || regNum > 31) 
+        if ((regNum > 15 && regNum < 31) || regNum > 31)
             return null;
         return (regNum == 31)? "%ver" : regNames[regNum];
     }

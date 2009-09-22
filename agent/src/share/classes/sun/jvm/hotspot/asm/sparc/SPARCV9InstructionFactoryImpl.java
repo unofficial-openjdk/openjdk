@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -64,7 +64,7 @@ public class SPARCV9InstructionFactoryImpl extends SPARCInstructionFactoryImpl
                                conditionRegister, predictTaken);
     }
 
-    public SPARCInstruction newV9CasInstruction(String name, SPARCRegisterIndirectAddress addr, 
+    public SPARCInstruction newV9CasInstruction(String name, SPARCRegisterIndirectAddress addr,
                                               SPARCRegister rs2, SPARCRegister rd, int dataType) {
         return new SPARCV9CasInstruction(name, addr, rs2, rd, dataType);
     }
@@ -72,7 +72,7 @@ public class SPARCV9InstructionFactoryImpl extends SPARCInstructionFactoryImpl
     public SPARCInstruction newV9PrefetchInstruction(String name, SPARCRegisterIndirectAddress addr,
                                int prefetchFcn) {
         return new SPARCV9PrefetchInstruction(name, addr, prefetchFcn);
-    }   
+    }
 
     public SPARCInstruction newV9FlushwInstruction() {
         return new SPARCV9FlushwInstruction();
@@ -107,15 +107,15 @@ public class SPARCV9InstructionFactoryImpl extends SPARCInstructionFactoryImpl
 
     public SPARCInstruction newV9RetryInstruction() {
         return new SPARCV9RetryInstruction();
-    } 
+    }
 
     public SPARCInstruction newV9SavedInstruction() {
         return new SPARCV9SavedInstruction();
     }
- 
+
     public SPARCInstruction newV9RestoredInstruction() {
         return new SPARCV9RestoredInstruction();
-    } 
+    }
 
     public SPARCInstruction newV9MembarInstruction(int mmask, int cmask) {
         return new SPARCV9MembarInstruction(mmask, cmask);

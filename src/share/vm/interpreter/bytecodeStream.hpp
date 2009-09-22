@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeStream.hpp	1.54 07/06/20 14:52:27 JVM"
+#pragma ident "@(#)bytecodeStream.hpp   1.54 07/06/20 14:52:27 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A BytecodeStream is used for fast iteration over the bytecodes
-// of a methodOop. 
+// of a methodOop.
 //
 // Usage:
 //
@@ -74,7 +74,7 @@ class RawBytecodeStream: StackObj {
   void set_start   (int beg_bci) {
     set_interval(beg_bci, _method->code_size());
   }
-  
+
   // Iteration
   // Use raw_next() rather than next() for faster method reference
   Bytecodes::Code raw_next() {
@@ -123,9 +123,9 @@ class RawBytecodeStream: StackObj {
   // Bytecode-specific attributes
   int             dest() const                   { return bci() + (short)Bytes::get_Java_u2(bcp() + 1); }
   int             dest_w() const                 { return bci() + (int  )Bytes::get_Java_u4(bcp() + 1); }
-  
+
   // Unsigned indices, widening
-  int             get_index() const              { return (is_wide()) ? Bytes::get_Java_u2(bcp() + 2) : bcp()[1]; }  
+  int             get_index() const              { return (is_wide()) ? Bytes::get_Java_u2(bcp() + 2) : bcp()[1]; }
   int             get_index_big() const          { return (int)Bytes::get_Java_u2(bcp() + 1);  }
 };
 
@@ -136,7 +136,7 @@ class BytecodeStream: public RawBytecodeStream {
  public:
   // Construction
   BytecodeStream(methodHandle method) : RawBytecodeStream(method) { }
-  
+
   // Iteration
   Bytecodes::Code next() {
     Bytecodes::Code code;
@@ -153,7 +153,7 @@ class BytecodeStream: public RawBytecodeStream {
       //
       // note that we cannot advance before having the
       // tty bytecode otherwise the stepping is wrong!
-      // (carefull: length_for(...) must be used first!) 
+      // (carefull: length_for(...) must be used first!)
       int l = Bytecodes::length_for(code);
       if (l == 0) l = Bytecodes::length_at(bcp);
       _next_bci  += l;
@@ -173,5 +173,3 @@ class BytecodeStream: public RawBytecodeStream {
 
   bool            is_active_breakpoint() const   { return Bytecodes::is_active_breakpoint_at(bcp()); }
 };
-
-

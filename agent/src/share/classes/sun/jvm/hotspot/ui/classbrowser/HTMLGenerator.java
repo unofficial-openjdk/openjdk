@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.classbrowser;
@@ -113,7 +113,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
             if (html) { append("<"); append(s); append(">"); }
         }
         void endTag(String s) {
-            if (html) { 
+            if (html) {
                append("</"); append(s); append(">");
             } else {
                if (s.equals("table") || s.equals("tr")) {
@@ -139,11 +139,11 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
         void genEmptyHTML() {
             if (html) append("<html></html>");
         }
-        
+
         void genHTMLPrologue() {
             if (html) append("<html><body>");
         }
-        
+
         void genHTMLPrologue(String title) {
             if (html) {
                 append("<html><head><title>");
@@ -167,7 +167,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
    private boolean genHTML = true;
 
    public HTMLGenerator() {
-       this(true); 
+       this(true);
    }
 
    public HTMLGenerator(boolean html) {
@@ -261,10 +261,10 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       } else if (acc.isPrivate()) {
          buf.append("private ");
       }
-        
+
       if (acc.isStatic()) {
          buf.append("static ");
-      } 
+      }
 
       if (acc.isAbstract() ) {
          buf.append("abstract ");
@@ -275,7 +275,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       if (acc.isStrict()) {
          buf.append("strict ");
       }
- 
+
       // javac generated flags
       if (acc.isEnum()) {
          buf.append("[enum] ");
@@ -517,7 +517,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
             case JVM_CONSTANT_UnresolvedString:
                buf.cell("JVM_CONSTANT_UnresolvedString");
-               buf.cell("\"" + 
+               buf.cell("\"" +
                  escapeHTMLSpecialChars(cpool.getSymbolAt(index).asString()) +
                  "\"");
                break;
@@ -531,7 +531,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
             case JVM_CONSTANT_String:
                buf.cell("JVM_CONSTANT_String");
-               buf.cell("\"" + 
+               buf.cell("\"" +
                  escapeHTMLSpecialChars(OopUtilities.stringOopToString(cpool.getObjAt(index))) + "\"");
                break;
 
@@ -634,7 +634,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                   buf.li(((Symbol)obj).asString().replace('/', '.'));
                } else {
                   buf.li(genKlassLink((InstanceKlass)obj));
-               } 
+               }
             }
             buf.endTag("ul");
          }
@@ -643,7 +643,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
            buf.genHTMLEpilogue();
            return buf.toString();
          }
- 
+
          buf.h3("Bytecode");
          BytecodeDisassembler disasm = createBytecodeDisassembler(method);
          final boolean hasLineNumbers = method.hasLineNumberTable();
@@ -667,7 +667,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                              if (hasLineNumbers) {
                                 int lineNumber = method.getLineNumberFromBCI(curBci);
                                 buf.cell(Integer.toString(lineNumber) + spaces);
-                             } 
+                             }
                              buf.cell(Integer.toString(curBci) + spaces);
 
                              buf.beginTag("td");
@@ -691,7 +691,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                                    buf.link(genKlassHref(klass), genKlassTitle(klass));
                                 } else {
                                    buf.append(instrStr);
-                                }   
+                                }
                              } else if (instr instanceof BytecodeGetPut) {
                                 BytecodeGetPut getPut = (BytecodeGetPut) instr;
                                 sun.jvm.hotspot.oops.Field f = getPut.getField();
@@ -700,7 +700,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                                    InstanceKlass klass = f.getFieldHolder();
                                    buf.append(" of ");
                                    buf.link(genKlassHref(klass), genKlassTitle(klass));
-                                } 
+                                }
                              } else if (instr instanceof BytecodeLoadConstant) {
                                 BytecodeLoadConstant ldc = (BytecodeLoadConstant) instr;
                                 if (ldc.isKlassConstant()) {
@@ -759,7 +759,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                } else {
                   buf.cell(genKlassLink((InstanceKlass)obj));
                }
-               buf.endTag("tr"); 
+               buf.endTag("tr");
             }
 
             buf.endTable();
@@ -815,7 +815,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          return "Unknown location in the CodeCache: " + pc;
       }
 
-      // did not find nmethod. 
+      // did not find nmethod.
       // try methodOop, klassOop and constantPoolOop.
       try {
          Oop obj = getOopAtAddress(pc);
@@ -851,7 +851,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          return genHTMLErrorMessage(exp);
       }
    }
-   
+
    protected String genHTMLForRawDisassembly(sun.jvm.hotspot.debugger.Address startPc,
                                              String prevPCs) {
       try {
@@ -860,7 +860,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          return genHTMLErrorMessage(exp);
       }
    }
-   
+
    protected String genPCHref(long targetPc) {
       return genBaseHref() + "pc=0x" + Long.toHexString(targetPc);
    }
@@ -921,18 +921,18 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
           }
           buf.br();
       }
-         
+
       public void epilogue() {
       }
    };
 
-   protected String genHTMLForRawDisassembly(sun.jvm.hotspot.debugger.Address addr, 
+   protected String genHTMLForRawDisassembly(sun.jvm.hotspot.debugger.Address addr,
                                              String prevPCs,
                                              byte[] code) {
       try {
          long startPc = addressToLong(addr);
          Disassembler disasm = createDisassembler(startPc, code);
-         final Formatter buf = new Formatter(genHTML); 
+         final Formatter buf = new Formatter(genHTML);
          buf.genHTMLPrologue("Disassembly @0x" + Long.toHexString(startPc));
 
          if (prevPCs != null && genHTML) {
@@ -966,18 +966,18 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       } catch (Exception exp) {
          return genHTMLErrorMessage(exp);
       }
-   }  
+   }
 
    protected String genSafepointInfo(NMethod nm, PCDesc pcDesc) {
       ScopeDesc sd = nm.getScopeDescAt(pcDesc.getRealPC(nm));
       Formatter buf = new Formatter(genHTML);
       Formatter tabs = new Formatter(genHTML);
- 
+
       buf.beginTag("pre");
       genScope(buf, tabs, sd);
       buf.endTag("pre");
       buf.append(genOopMapInfo(nm, pcDesc));
-      
+
       return buf.toString();
    }
 
@@ -987,41 +987,41 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
         }
 
         genScope(buf, tabs, sd.sender());
-        
+
         buf.append(tabs);
         Method m = sd.getMethod();
         buf.append(genMethodAndKlassLink(m));
         int bci = sd.getBCI();
         buf.append(" @ bci = ");
         buf.append(Integer.toString(bci));
-        
+
         int line = m.getLineNumberFromBCI(bci);
         if (line != -1) {
             buf.append(", line = ");
             buf.append(Integer.toString(line));
         }
-        
+
         List locals = sd.getLocals();
         if (locals != null) {
             buf.br();
             buf.append(tabs);
             buf.append(genHTMLForLocals(sd, locals));
         }
-        
+
         List expressions = sd.getExpressions();
         if (expressions != null) {
             buf.br();
             buf.append(tabs);
             buf.append(genHTMLForExpressions(sd, expressions));
         }
-        
+
         List monitors = sd.getMonitors();
         if (monitors != null) {
             buf.br();
             buf.append(tabs);
             buf.append(genHTMLForMonitors(sd, monitors));
         }
-        
+
         tabs.append(tab);
         buf.br();
     }
@@ -1033,7 +1033,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       final class OopMapValueIterator {
          final Formatter iterate(OopMapStream oms, String type, boolean printContentReg) {
             Formatter tmpBuf = new Formatter(genHTML);
-            boolean found = false; 
+            boolean found = false;
             tmpBuf.beginTag("tr");
             tmpBuf.beginTag("td");
             tmpBuf.append(type);
@@ -1082,7 +1082,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
       oms = new OopMapStream(map, OopMapValue.OopTypes.CALLEE_SAVED_VALUE);
       buf.append(omvIterator.iterate(oms, "Callee saved:",  true));
-    
+
       oms = new OopMapStream(map, OopMapValue.OopTypes.DERIVED_OOP_VALUE);
       buf.append(omvIterator.iterate(oms, "Derived oop:", true));
 
@@ -1222,7 +1222,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          buf.append(scopeValueAsString(sv));
          buf.append(") ");
       }
-      
+
       return buf.toString();
    }
 
@@ -1236,7 +1236,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
    protected String genHTMLForMonitors(ScopeDesc sd, List monitors) {
       int length = monitors.size();
-      Formatter buf = new Formatter(genHTML); 
+      Formatter buf = new Formatter(genHTML);
       buf.append("monitors ");
       for (int i = 0; i < length; i++) {
          MonitorValue mv = (MonitorValue) monitors.get(i);
@@ -1244,7 +1244,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
             continue;
          }
          buf.append("(owner = ");
-         ScopeValue owner = mv.owner(); 
+         ScopeValue owner = mv.owner();
          if (owner != null) {
             buf.append(scopeValueAsString(owner));
          } else {
@@ -1263,7 +1263,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       return buf.toString();
    }
 
-   public String genHTML(final NMethod nmethod) { 
+   public String genHTML(final NMethod nmethod) {
       try {
          final Formatter buf = new Formatter(genHTML);
          buf.genHTMLPrologue(genNMethodTitle(nmethod));
@@ -1283,7 +1283,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          final long entryPoint = addressToLong(nmethod.getEntryPoint());
          final Map safepoints = nmethod.getSafepoints();
 
-         final SymbolFinder symFinder = createSymbolFinder(); 
+         final SymbolFinder symFinder = createSymbolFinder();
          final Disassembler disasm = createDisassembler(startPc, code);
          class NMethodVisitor implements InstructionVisitor {
             boolean prevWasCall;
@@ -1298,7 +1298,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                   sun.jvm.hotspot.asm.Address addr = call.getBranchDestination();
                   href = genPCHref(currentPc, addr);
                }
-                             
+
                if (currentPc == verifiedEntryPoint) {
                    buf.bold("Verified Entry Point"); buf.br();
                }
@@ -1307,7 +1307,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                }
 
                PCDesc pcDesc = (PCDesc) safepoints.get(longToAddress(currentPc));
- 
+
                boolean isSafepoint = (pcDesc != null);
                if (isSafepoint && prevWasCall) {
                   buf.append(genSafepointInfo(nmethod, pcDesc));
@@ -1356,7 +1356,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       }
    }
 
-  public String genHTML(final CodeBlob blob) { 
+  public String genHTML(final CodeBlob blob) {
       try {
          final Formatter buf = new Formatter(genHTML);
          buf.genHTMLPrologue(genCodeBlobTitle(blob));
@@ -1370,7 +1370,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          for (int i=0; i < code.length; i++)
             code[i] = codeBegin.getJByteAt(i);
 
-         final SymbolFinder symFinder = createSymbolFinder(); 
+         final SymbolFinder symFinder = createSymbolFinder();
          final Disassembler disasm = createDisassembler(startPc, code);
          class CodeBlobVisitor implements InstructionVisitor {
             OopMapSet maps;
@@ -1394,7 +1394,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                   sun.jvm.hotspot.asm.Address addr = call.getBranchDestination();
                   href = genPCHref(currentPc, addr);
                }
-                             
+
                buf.append("0x");
                buf.append(Long.toHexString(currentPc));
                buf.append(':');
@@ -1406,7 +1406,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                    buf.append(instr.asString(currentPc, symFinder));
                }
                buf.br();
-               
+
                // See whether we have an oop map at this PC
                if (curMap != null) {
                  long curOffset = currentPc - startPc;
@@ -1505,8 +1505,8 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       byte[] stubCode = readBuffer(codelet.codeBegin(), range);
       Disassembler disasm = createDisassembler(stubStartPc, stubCode);
       disasm.decode(new RawCodeVisitor(buf));
-    
- 
+
+
       Stub next = stubq.getNext(codelet);
       if (next != null) {
          if (genHTML) {
@@ -1523,7 +1523,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
    }
 
    protected String genDumpKlassesTitle(InstanceKlass[] klasses) {
-      return (klasses.length == 1) ? "Create .class for this class" 
+      return (klasses.length == 1) ? "Create .class for this class"
                                    : "Create .class for all classes";
    }
 
@@ -1568,7 +1568,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          buf.cell(genKlassLink(ik));
          buf.endTag("tr");
       }
-        
+
       buf.endTable();
       return buf.toString();
    }
@@ -1648,7 +1648,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       // javac generated flags
       if (acc.isSynthetic()) {
          buf.append("[synthetic] ");
-      } 
+      }
       return buf.toString();
    }
 
@@ -1728,7 +1728,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          while (subklass != null) {
             if (subklass instanceof InstanceKlass) {
                buf.li(genKlassLink((InstanceKlass)subklass));
-            } 
+            }
             subklass = subklass.getNextSiblingKlass();
          }
          buf.endList();
@@ -1746,7 +1746,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       buf.br();
       StringBuffer tabs = new StringBuffer(tab);
       InstanceKlass superKlass = klass;
-      while ( (superKlass = (InstanceKlass) superKlass.getSuper()) != null ) { 
+      while ( (superKlass = (InstanceKlass) superKlass.getSuper()) != null ) {
          buf.append(tabs);
          buf.append(genKlassLink(superKlass));
          tabs.append(tab);
@@ -1880,7 +1880,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
       buf.append(thread.getThreadName());
       return buf.toString();
    }
-       
+
    public String genHTMLForJavaStackTrace(JavaThread thread) {
       Formatter buf = new Formatter(genHTML);
       buf.genHTMLPrologue(genJavaStackTraceTitle(thread));
@@ -1933,7 +1933,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          if (Assert.ASSERTS_ENABLED) {
             Assert.that(obj instanceof InstanceKlass, "class= href with improper InstanceKlass!");
          }
-         return genHTML((InstanceKlass) obj); 
+         return genHTML((InstanceKlass) obj);
       } else if (href.startsWith("method=")) {
          href = href.substring(href.indexOf('=') + 1);
          Oop obj = getOopAtAddress(href);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_linux.inline.hpp	1.31 07/06/29 04:01:54 JVM"
+#pragma ident "@(#)os_linux.inline.hpp  1.31 07/06/29 04:01:54 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void* os::thread_local_storage_at(int index) {

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)abstractInterpreter.hpp	1.1 07/08/29 13:42:23 JVM"
+#pragma ident "@(#)abstractInterpreter.hpp      1.1 07/08/29 13:42:23 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file contains the platform-independant parts
@@ -37,8 +37,8 @@
 // templateTable*                bytecodeInterpreter*   actual interpretation of bytecodes
 //
 // templateInterpreter*          cppInterpreter*        generation of assembly code that creates
-//                                                      and manages interpreter runtime frames. 
-//                                                      Also code for populating interpreter 
+//                                                      and manages interpreter runtime frames.
+//                                                      Also code for populating interpreter
 //                                                      frames created during deoptimization.
 //
 // For both template and c++ interpreter. There are common files for aspects of the interpreter
@@ -56,7 +56,7 @@ class AbstractInterpreter: AllStatic {
   friend class Interpreter;
   friend class CppInterpreterGenerator;
  public:
-  enum MethodKind {        
+  enum MethodKind {
     zerolocals,                                                 // method needs locals initialization
     zerolocals_synchronized,                                    // method needs locals initialization & is synchronized
     native,                                                     // native method
@@ -77,11 +77,11 @@ class AbstractInterpreter: AllStatic {
 
   enum SomeConstants {
     number_of_result_handlers = 10                              // number of result handlers for native calls
-  };    
+  };
 
  protected:
   static StubQueue* _code;                                      // the interpreter code (codelets)
-  
+
   static bool       _notice_safepoints;                         // true if safepoints are activated
 
   static address    _native_entry_begin;                        // Region for native entry code
@@ -95,7 +95,7 @@ class AbstractInterpreter: AllStatic {
   static address    _rethrow_exception_entry;                   // rethrows an activation in previous frame
 
 
-  
+
   friend class      AbstractInterpreterGenerator;
   friend class              InterpreterGenerator;
   friend class      InterpreterMacroAssembler;
@@ -127,29 +127,29 @@ class AbstractInterpreter: AllStatic {
 
   // Deoptimization support
   static address    continuation_for(methodOop method,
-				     address bcp,
-				     int callee_parameters,
-				     bool is_top_frame,
-				     bool& use_next_mdp);
+                                     address bcp,
+                                     int callee_parameters,
+                                     bool is_top_frame,
+                                     bool& use_next_mdp);
 
   // share implementation of size_activation and layout_activation:
   static int        size_activation(methodOop method,
-				    int temps,
+                                    int temps,
                                     int popframe_args,
-				    int monitors,
-				    int callee_params,
-				    int callee_locals,
-				    bool is_top_frame);
+                                    int monitors,
+                                    int callee_params,
+                                    int callee_locals,
+                                    bool is_top_frame);
 
   static int       layout_activation(methodOop method,
-				      int temps,
+                                      int temps,
                                       int popframe_args,
-				      int monitors,
-				      int callee_params,
-				      int callee_locals,
-				      frame* caller,
-				      frame* interpreter_frame,
-				      bool is_top_frame);
+                                      int monitors,
+                                      int callee_params,
+                                      int callee_locals,
+                                      frame* caller,
+                                      frame* interpreter_frame,
+                                      bool is_top_frame);
 
   // Runtime support
   static bool       is_not_reached(                       methodHandle method, int bci);
@@ -168,13 +168,13 @@ class AbstractInterpreter: AllStatic {
   // Support for Tagged Stacks
   //
   // Tags are stored on the Java Expression stack above the value:
-  // 
-  //  tag   
+  //
+  //  tag
   //  value
   //
   // For double values:
   //
-  //  tag2  
+  //  tag2
   //  high word
   //  tag1
   //  low word
@@ -191,7 +191,7 @@ class AbstractInterpreter: AllStatic {
     return TaggedStackInterpreter ?
       frame::interpreter_frame_expression_stack_direction() * wordSize : 0;
   }
-  static int  tag_offset_in_bytes()    { 
+  static int  tag_offset_in_bytes()    {
     assert(TaggedStackInterpreter, "should not call this");
     return 0;
   }
@@ -217,7 +217,7 @@ class AbstractInterpreter: AllStatic {
   }
   static int  local_tag_offset_in_bytes(int n) {
     assert(TaggedStackInterpreter, "should not call this");
-    return ((frame::interpreter_frame_expression_stack_direction() * n) * 
+    return ((frame::interpreter_frame_expression_stack_direction() * n) *
             stackElementSize()) + tag_offset_in_bytes();
   }
 
@@ -238,7 +238,7 @@ class AbstractInterpreterGenerator: public StackObj {
 
   // entry point generator
   address generate_method_entry(AbstractInterpreter::MethodKind kind);
-  
+
   void bang_stack_shadow_pages(bool native_call);
 
   void generate_all();
@@ -246,4 +246,3 @@ class AbstractInterpreterGenerator: public StackObj {
  public:
   AbstractInterpreterGenerator(StubQueue* _code);
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)dependencies.hpp	1.12 07/09/01 18:01:02 JVM"
+#pragma ident "@(#)dependencies.hpp     1.12 07/09/01 18:01:02 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //** Dependencies represent assertions (approximate invariants) within
@@ -347,7 +347,7 @@ class Dependencies: public ResourceObj {
   }
   void log_dependency(DepType dept,
                       ciObject* x0,
-                      ciObject* x1 = NULL, 
+                      ciObject* x1 = NULL,
                       ciObject* x2 = NULL) {
     if (log() == NULL)  return;
     ciObject* args[max_arg_count];

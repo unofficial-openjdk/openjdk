@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -38,6 +38,5 @@ class V9CasDecoder extends V9AlternateSpaceDecoder {
         SPARCV9InstructionFactory v9factory = (SPARCV9InstructionFactory) factory;
         SPARCRegister rs2 = SPARCRegisters.getRegister(getSourceRegister2(instruction));
         return v9factory.newV9CasInstruction(name, addr, rs2, rd, dataType);
-    } 
+    }
 }
-

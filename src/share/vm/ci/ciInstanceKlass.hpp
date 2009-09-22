@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciInstanceKlass.hpp	1.36 07/09/28 10:23:23 JVM"
+#pragma ident "@(#)ciInstanceKlass.hpp  1.36 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciInstanceKlass
@@ -202,4 +202,3 @@ public:
   bool is_instance_klass() { return true; }
   bool is_java_klass()     { return true; }
 };
-

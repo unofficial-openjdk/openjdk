@@ -1,5 +1,5 @@
 /*
- * @(#)ScriptObject.java	1.3 07/05/05 17:03:46
+ * @(#)ScriptObject.java        1.3 07/05/05 17:03:46
  *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -54,18 +54,18 @@ public interface ScriptObject {
   public Object get(String name);
 
   /**
-   * Get the value of the "indexed" property. 
+   * Get the value of the "indexed" property.
    * Returns UNDEFINED if the property does not exist.
    */
   public Object get(int index);
 
   /**
-   * Set the value of the named property. 
+   * Set the value of the named property.
    */
   public void put(String name, Object value);
 
   /**
-   * Set the value of the indexed property. 
+   * Set the value of the indexed property.
    */
   public void put(int index, Object value);
 

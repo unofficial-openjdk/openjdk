@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)dump_sparc.cpp	1.12 07/05/05 17:04:28 JVM"
+#pragma ident "@(#)dump_sparc.cpp       1.12 07/05/05 17:04:28 JVM"
 #endif
 /*
  * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -35,8 +35,8 @@
 // This method will be called (as any other Klass virtual method) with
 // the Klass itself as the first argument.  Example:
 //
-// 	oop obj;
-// 	int size = obj->klass()->klass_part()->oop_size(this);
+//      oop obj;
+//      int size = obj->klass()->klass_part()->oop_size(this);
 //
 // for which the virtual method call is Klass::oop_size();
 //
@@ -98,20 +98,20 @@ void CompactingPermGenGen::generate_vtable_methods(void** vtbl_list,
 
   // Look up the correct vtable pointer.
 
-  __ set((intptr_t)vtbl_list, L2);	// L2 = address of new vtable list.
-  __ srl(L0, 8, L3);			// Isolate L3 = vtable identifier.
+  __ set((intptr_t)vtbl_list, L2);      // L2 = address of new vtable list.
+  __ srl(L0, 8, L3);                    // Isolate L3 = vtable identifier.
   __ sll(L3, LogBytesPerWord, L3);
-  __ ld_ptr(L2, L3, L3);		// L3 = new (correct) vtable pointer.
-  __ st_ptr(L3, Address(I0, 0));	// Save correct vtable ptr in entry.
+  __ ld_ptr(L2, L3, L3);                // L3 = new (correct) vtable pointer.
+  __ st_ptr(L3, Address(I0, 0));        // Save correct vtable ptr in entry.
 
   // Restore registers and jump to the correct method;
 
-  __ and3(L0, 255, L4);			// Isolate L3 = method offset;.
+  __ and3(L0, 255, L4);                 // Isolate L3 = method offset;.
   __ sll(L4, LogBytesPerWord, L4);
-  __ ld_ptr(L3, L4, L4);		// Get address of correct virtual method
+  __ ld_ptr(L3, L4, L4);                // Get address of correct virtual method
   Address method(L4, 0);
   __ jmpl(method, G0);                  // Jump to correct method.
-  __ delayed()->restore();		// Restore registers.
+  __ delayed()->restore();              // Restore registers.
 
   __ flush();
   *mc_top = (char*)__ pc();

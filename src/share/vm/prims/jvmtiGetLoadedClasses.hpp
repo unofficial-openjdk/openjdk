@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiGetLoadedClasses.hpp	1.8 07/05/05 17:06:38 JVM"
+#pragma ident "@(#)jvmtiGetLoadedClasses.hpp    1.8 07/05/05 17:06:38 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class JvmtiGetLoadedClasses : AllStatic {
 public:
   static jvmtiError getLoadedClasses(JvmtiEnv *env, jint* classCountPtr, jclass** classesPtr);
-  static jvmtiError getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLoader, 
+  static jvmtiError getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLoader,
                                           jint* classCountPtr, jclass** classesPtr);
 };

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import java.io.*;
@@ -27,476 +27,476 @@ import java.util.*;
 
 public class WinGammaPlatformVC7 extends WinGammaPlatform {
 
-    public void writeProjectFile(String projectFileName, String projectName, 
-				 Vector allConfigs) throws IOException {
-	System.out.println();
-	System.out.println("    Writing .vcproj file...");
-	// If we got this far without an error, we're safe to actually
-	// write the .vcproj file
-	printWriter = new PrintWriter(new FileWriter(projectFileName));
-	
-	printWriter.println("<?xml version=\"1.0\" encoding=\"windows-1251\"?>");
-	startTag(
-	    "VisualStudioProject", 
-	    new String[] {
-		"ProjectType", "Visual C++",
-		"Version", "7.10",
-		"Name", projectName,
-		"ProjectGUID", "{8822CB5C-1C41-41C2-8493-9F6E1994338B}",
-		"SccProjectName", "",
-		"SccLocalPath", ""
-	    }
-	    );
-	
-	startTag("Platforms", null);
-	tag("Platform", new String[] {"Name", Util.os});
-	endTag("Platforms");	
-	
-	startTag("Configurations", null);
-    
-	for (Iterator i = allConfigs.iterator(); i.hasNext(); ) {	    
-	    writeConfiguration((BuildConfig)i.next());  
-	}
+    public void writeProjectFile(String projectFileName, String projectName,
+                                 Vector allConfigs) throws IOException {
+        System.out.println();
+        System.out.println("    Writing .vcproj file...");
+        // If we got this far without an error, we're safe to actually
+        // write the .vcproj file
+        printWriter = new PrintWriter(new FileWriter(projectFileName));
 
-	endTag("Configurations");
+        printWriter.println("<?xml version=\"1.0\" encoding=\"windows-1251\"?>");
+        startTag(
+            "VisualStudioProject",
+            new String[] {
+                "ProjectType", "Visual C++",
+                "Version", "7.10",
+                "Name", projectName,
+                "ProjectGUID", "{8822CB5C-1C41-41C2-8493-9F6E1994338B}",
+                "SccProjectName", "",
+                "SccLocalPath", ""
+            }
+            );
 
-	tag("References", null);       	
+        startTag("Platforms", null);
+        tag("Platform", new String[] {"Name", Util.os});
+        endTag("Platforms");
 
-	writeFiles(allConfigs);	
-	
-	tag("Globals", null);
-	
-	endTag("VisualStudioProject");
-	printWriter.close();
+        startTag("Configurations", null);
 
-	System.out.println("    Done.");
+        for (Iterator i = allConfigs.iterator(); i.hasNext(); ) {
+            writeConfiguration((BuildConfig)i.next());
+        }
+
+        endTag("Configurations");
+
+        tag("References", null);
+
+        writeFiles(allConfigs);
+
+        tag("Globals", null);
+
+        endTag("VisualStudioProject");
+        printWriter.close();
+
+        System.out.println("    Done.");
     }
 
 
     abstract class NameFilter {
-	protected String fname;
+        protected String fname;
 
-	abstract boolean match(FileInfo fi);
+        abstract boolean match(FileInfo fi);
 
-	String  filterString() { return ""; }
-	String name() { return this.fname;}
+        String  filterString() { return ""; }
+        String name() { return this.fname;}
     }
 
     class DirectoryFilter extends NameFilter {
-	String dir;
-	int baseLen, dirLen;
+        String dir;
+        int baseLen, dirLen;
 
-	DirectoryFilter(String dir, String sbase) {
-	    this.dir = dir;
-	    this.baseLen = sbase.length();
-	    this.dirLen = dir.length();
-	    this.fname = dir;
-	}
+        DirectoryFilter(String dir, String sbase) {
+            this.dir = dir;
+            this.baseLen = sbase.length();
+            this.dirLen = dir.length();
+            this.fname = dir;
+        }
 
-	DirectoryFilter(String fname, String dir, String sbase) {
-	    this.dir = dir;
-	    this.baseLen = sbase.length();
-	    this.dirLen = dir.length();
-	    this.fname = fname;
-	}
-	
+        DirectoryFilter(String fname, String dir, String sbase) {
+            this.dir = dir;
+            this.baseLen = sbase.length();
+            this.dirLen = dir.length();
+            this.fname = fname;
+        }
 
-	boolean match(FileInfo fi) {
-	    return fi.full.regionMatches(true, baseLen, dir, 0, dirLen);
-	}
+
+        boolean match(FileInfo fi) {
+            return fi.full.regionMatches(true, baseLen, dir, 0, dirLen);
+        }
     }
 
     class TypeFilter extends NameFilter {
-	String[] exts;
+        String[] exts;
 
-	TypeFilter(String fname, String[] exts) {
-	    this.fname = fname;
-	    this.exts = exts;
-	}
+        TypeFilter(String fname, String[] exts) {
+            this.fname = fname;
+            this.exts = exts;
+        }
 
-	boolean match(FileInfo fi) {
-	    for (int i=0; i<exts.length; i++) {
-		if (fi.full.endsWith(exts[i])) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
+        boolean match(FileInfo fi) {
+            for (int i=0; i<exts.length; i++) {
+                if (fi.full.endsWith(exts[i])) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-	String  filterString() {
-	    return Util.join(";", exts);
-	}
-    } 
+        String  filterString() {
+            return Util.join(";", exts);
+        }
+    }
 
     class TerminatorFilter extends NameFilter {
-	TerminatorFilter(String fname) {
-	    this.fname = fname;
-	    
-	}
-	boolean match(FileInfo fi) {
-	    return true;
-	}
-	
+        TerminatorFilter(String fname) {
+            this.fname = fname;
+
+        }
+        boolean match(FileInfo fi) {
+            return true;
+        }
+
     }
 
     class SpecificNameFilter extends NameFilter {
-	String pats[];
+        String pats[];
 
-	SpecificNameFilter(String fname, String[] pats) {
-	    this.fname = fname;
-	    this.pats = pats;
-	}
+        SpecificNameFilter(String fname, String[] pats) {
+            this.fname = fname;
+            this.pats = pats;
+        }
 
-	boolean match(FileInfo fi) {
-	    for (int i=0; i<pats.length; i++) {
-		if (fi.attr.shortName.matches(pats[i])) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
-	
+        boolean match(FileInfo fi) {
+            for (int i=0; i<pats.length; i++) {
+                if (fi.attr.shortName.matches(pats[i])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
 
     class ContainerFilter extends NameFilter {
-	Vector children;
-	
-	ContainerFilter(String fname) {
-	    this.fname = fname;
-	    children = new Vector();
-	    
-	}
-	boolean match(FileInfo fi) {	 
-	    return false;
-	}
-	
-	Iterator babies() { return children.iterator(); }
+        Vector children;
 
-	void add(NameFilter f) {
-	    children.add(f);
-	}
+        ContainerFilter(String fname) {
+            this.fname = fname;
+            children = new Vector();
+
+        }
+        boolean match(FileInfo fi) {
+            return false;
+        }
+
+        Iterator babies() { return children.iterator(); }
+
+        void add(NameFilter f) {
+            children.add(f);
+        }
     }
 
-    
-    void writeCustomToolConfig(Vector configs, String[] customToolAttrs) {	
-	for (Iterator i = configs.iterator(); i.hasNext(); ) {
-	    startTag("FileConfiguration",
-		     new String[] {
-			 "Name",  (String)i.next()
-		     }
-		     );
-	    tag("Tool", customToolAttrs);
 
-	    endTag("FileConfiguration");
-	}
+    void writeCustomToolConfig(Vector configs, String[] customToolAttrs) {
+        for (Iterator i = configs.iterator(); i.hasNext(); ) {
+            startTag("FileConfiguration",
+                     new String[] {
+                         "Name",  (String)i.next()
+                     }
+                     );
+            tag("Tool", customToolAttrs);
+
+            endTag("FileConfiguration");
+        }
     }
 
     // here we define filters, which define layout of what can be seen in 'Solution View' of MSVC
     // Basically there are two types of entities - container filters and real filters
     //   - container filter just provides a container to group together real filters
-    //   - real filter can select elements from the set according to some rule, put it into XML 
-    //     and remove from the list 
+    //   - real filter can select elements from the set according to some rule, put it into XML
+    //     and remove from the list
     Vector makeFilters(TreeSet files) {
-	Vector rv = new Vector();
-	String sbase = Util.normalize(BuildConfig.getFieldString(null, "SourceBase")+"/src/");
+        Vector rv = new Vector();
+        String sbase = Util.normalize(BuildConfig.getFieldString(null, "SourceBase")+"/src/");
 
-	ContainerFilter rt = new ContainerFilter("Runtime");	
-	rt.add(new DirectoryFilter("share/vm/prims", sbase));
-	rt.add(new DirectoryFilter("share/vm/runtime", sbase));
-	rt.add(new DirectoryFilter("share/vm/oops", sbase));
-	rv.add(rt);
+        ContainerFilter rt = new ContainerFilter("Runtime");
+        rt.add(new DirectoryFilter("share/vm/prims", sbase));
+        rt.add(new DirectoryFilter("share/vm/runtime", sbase));
+        rt.add(new DirectoryFilter("share/vm/oops", sbase));
+        rv.add(rt);
 
-	ContainerFilter gc = new ContainerFilter("GC");
-	gc.add(new DirectoryFilter("share/vm/memory", sbase));
-	gc.add(new DirectoryFilter("share/vm/gc_interface", sbase));
+        ContainerFilter gc = new ContainerFilter("GC");
+        gc.add(new DirectoryFilter("share/vm/memory", sbase));
+        gc.add(new DirectoryFilter("share/vm/gc_interface", sbase));
 
-	ContainerFilter gc_impl = new ContainerFilter("Implementations");
-	gc_impl.add(new DirectoryFilter("CMS", 
-					"share/vm/gc_implementation/concurrentMarkSweep", 
-					sbase));
-	gc_impl.add(new DirectoryFilter("Parallel Scavenge", 
-					"share/vm/gc_implementation/parallelScavenge", 
-					sbase));
-	gc_impl.add(new DirectoryFilter("Shared",
-					"share/vm/gc_implementation/shared", 
-					sbase));		
-	// for all leftovers
-	gc_impl.add(new DirectoryFilter("Misc",
-					"share/vm/gc_implementation", 
-					sbase));
-	
-	gc.add(gc_impl);
-	rv.add(gc);
-	
-	rv.add(new DirectoryFilter("C1", "share/vm/c1", sbase));
-	
-	ContainerFilter c2 = new ContainerFilter("C2");
-	//c2.add(new DirectoryFilter("share/vm/adlc", sbase));
-	c2.add(new DirectoryFilter("share/vm/opto", sbase));
-	c2.add(new SpecificNameFilter("Generated", new String[] {"^ad_.+", "^dfa_.+", "^adGlobals.+"}));
-	rv.add(c2);
-	
-	ContainerFilter comp = new ContainerFilter("Compiler Common");
-	comp.add(new DirectoryFilter("share/vm/asm", sbase));
-	comp.add(new DirectoryFilter("share/vm/ci", sbase));
-	comp.add(new DirectoryFilter("share/vm/code", sbase));
-	comp.add(new DirectoryFilter("share/vm/compiler", sbase));
-	rv.add(comp);
-	
-	rv.add(new DirectoryFilter("Interpreter", 
-				   "share/vm/interpreter", 
-				   sbase));
+        ContainerFilter gc_impl = new ContainerFilter("Implementations");
+        gc_impl.add(new DirectoryFilter("CMS",
+                                        "share/vm/gc_implementation/concurrentMarkSweep",
+                                        sbase));
+        gc_impl.add(new DirectoryFilter("Parallel Scavenge",
+                                        "share/vm/gc_implementation/parallelScavenge",
+                                        sbase));
+        gc_impl.add(new DirectoryFilter("Shared",
+                                        "share/vm/gc_implementation/shared",
+                                        sbase));
+        // for all leftovers
+        gc_impl.add(new DirectoryFilter("Misc",
+                                        "share/vm/gc_implementation",
+                                        sbase));
 
-	ContainerFilter misc = new ContainerFilter("Misc");
-	//misc.add(new DirectoryFilter("share/vm/launch", sbase));
-	misc.add(new DirectoryFilter("share/vm/libadt", sbase));	
-	misc.add(new DirectoryFilter("share/vm/services", sbase));
-	misc.add(new DirectoryFilter("share/vm/utilities", sbase));
-	rv.add(misc);
+        gc.add(gc_impl);
+        rv.add(gc);
 
-	rv.add(new DirectoryFilter("os_cpu", sbase));
+        rv.add(new DirectoryFilter("C1", "share/vm/c1", sbase));
 
-	rv.add(new DirectoryFilter("cpu", sbase));
+        ContainerFilter c2 = new ContainerFilter("C2");
+        //c2.add(new DirectoryFilter("share/vm/adlc", sbase));
+        c2.add(new DirectoryFilter("share/vm/opto", sbase));
+        c2.add(new SpecificNameFilter("Generated", new String[] {"^ad_.+", "^dfa_.+", "^adGlobals.+"}));
+        rv.add(c2);
 
-	rv.add(new DirectoryFilter("os", sbase));
+        ContainerFilter comp = new ContainerFilter("Compiler Common");
+        comp.add(new DirectoryFilter("share/vm/asm", sbase));
+        comp.add(new DirectoryFilter("share/vm/ci", sbase));
+        comp.add(new DirectoryFilter("share/vm/code", sbase));
+        comp.add(new DirectoryFilter("share/vm/compiler", sbase));
+        rv.add(comp);
 
-	rv.add(new SpecificNameFilter("JVMTI Generated", new String[] {"^jvmti.+"}));
+        rv.add(new DirectoryFilter("Interpreter",
+                                   "share/vm/interpreter",
+                                   sbase));
 
-	rv.add(new SpecificNameFilter("C++ Interpreter Generated", new String[] {"^bytecodeInterpreterWithChecks.+"}));
-	
-	rv.add(new SpecificNameFilter("Include DBs", new String[] {"^includeDB_.+"}));
+        ContainerFilter misc = new ContainerFilter("Misc");
+        //misc.add(new DirectoryFilter("share/vm/launch", sbase));
+        misc.add(new DirectoryFilter("share/vm/libadt", sbase));
+        misc.add(new DirectoryFilter("share/vm/services", sbase));
+        misc.add(new DirectoryFilter("share/vm/utilities", sbase));
+        rv.add(misc);
 
-	// this one is to catch files not caught by other filters
-	//rv.add(new TypeFilter("Header Files", new String[] {"h", "hpp", "hxx", "hm", "inl", "fi", "fd"}));
-	rv.add(new TerminatorFilter("Source Files"));
+        rv.add(new DirectoryFilter("os_cpu", sbase));
 
-	return rv;
+        rv.add(new DirectoryFilter("cpu", sbase));
+
+        rv.add(new DirectoryFilter("os", sbase));
+
+        rv.add(new SpecificNameFilter("JVMTI Generated", new String[] {"^jvmti.+"}));
+
+        rv.add(new SpecificNameFilter("C++ Interpreter Generated", new String[] {"^bytecodeInterpreterWithChecks.+"}));
+
+        rv.add(new SpecificNameFilter("Include DBs", new String[] {"^includeDB_.+"}));
+
+        // this one is to catch files not caught by other filters
+        //rv.add(new TypeFilter("Header Files", new String[] {"h", "hpp", "hxx", "hm", "inl", "fi", "fd"}));
+        rv.add(new TerminatorFilter("Source Files"));
+
+        return rv;
     }
 
-    void writeFiles(Vector allConfigs) {	
+    void writeFiles(Vector allConfigs) {
 
-	Hashtable allFiles = computeAttributedFiles(allConfigs); 
+        Hashtable allFiles = computeAttributedFiles(allConfigs);
 
-	Vector allConfigNames = new Vector();
-	for (Iterator i = allConfigs.iterator(); i.hasNext(); ) {
-	    allConfigNames.add(((BuildConfig)i.next()).get("Name"));
-	}
+        Vector allConfigNames = new Vector();
+        for (Iterator i = allConfigs.iterator(); i.hasNext(); ) {
+            allConfigNames.add(((BuildConfig)i.next()).get("Name"));
+        }
 
-	TreeSet sortedFiles = sortFiles(allFiles);
+        TreeSet sortedFiles = sortFiles(allFiles);
 
-	startTag("Files", null);
-	
-	for (Iterator i = makeFilters(sortedFiles).iterator(); i.hasNext(); ) {
-	    doWriteFiles(sortedFiles, allConfigNames, (NameFilter)i.next());
-	}
+        startTag("Files", null);
+
+        for (Iterator i = makeFilters(sortedFiles).iterator(); i.hasNext(); ) {
+            doWriteFiles(sortedFiles, allConfigNames, (NameFilter)i.next());
+        }
 
 
-	startTag("Filter",
-		 new String[] {
-		     "Name", "Resource Files",
+        startTag("Filter",
+                 new String[] {
+                     "Name", "Resource Files",
                      "Filter", "ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe"
-		 }
-		 );
-	endTag("Filter");	
+                 }
+                 );
+        endTag("Filter");
 
-	endTag("Files");
+        endTag("Files");
     }
-   
+
     void doWriteFiles(TreeSet allFiles, Vector allConfigNames, NameFilter filter) {
-	startTag("Filter",
-		 new String[] {
-		     "Name",   filter.name(),
+        startTag("Filter",
+                 new String[] {
+                     "Name",   filter.name(),
                      "Filter", filter.filterString()
-		 }
-		 );
+                 }
+                 );
 
-	if (filter instanceof ContainerFilter) {
+        if (filter instanceof ContainerFilter) {
 
-	    Iterator i = ((ContainerFilter)filter).babies();
-	    while (i.hasNext()) {
-		doWriteFiles(allFiles, allConfigNames, (NameFilter)i.next());
-	    }
+            Iterator i = ((ContainerFilter)filter).babies();
+            while (i.hasNext()) {
+                doWriteFiles(allFiles, allConfigNames, (NameFilter)i.next());
+            }
 
-	} else {
+        } else {
 
-	    Iterator i = allFiles.iterator();
-	    while (i.hasNext()) {
-		FileInfo fi = (FileInfo)i.next();
-		
-		if (!filter.match(fi)) {
-		    continue;
-		}
-		
-		startTag("File",
-			 new String[] {
-			     "RelativePath", fi.full.replace('/', '\\')
-			 }
-			 );
-		
-		FileAttribute a = fi.attr; 
-		if (a.pchRoot) {
-		    writeCustomToolConfig(allConfigNames,
-					  new String[] {
-					      "Name", "VCCLCompilerTool",
-					      "UsePrecompiledHeader", "1"
-					  }); 
-		}
-		
-		if (a.noPch) {
-		    writeCustomToolConfig(allConfigNames,
-					  new String[] {
-					      "Name", "VCCLCompilerTool",
-					      "UsePrecompiledHeader", "0"
-					  }); 
-		}
-		
-		if (a.configs != null) {
-		    for (Iterator j=allConfigNames.iterator(); j.hasNext();) {
-			String cfg = (String)j.next();
-			if (!a.configs.contains(cfg)) {
-			    startTag("FileConfiguration",
-				     new String[] { 
-					 "Name", cfg,
-					 "ExcludedFromBuild", "TRUE" 
-				     });
-			    tag("Tool", new String[] {"Name", "VCCLCompilerTool"});
-			    endTag("FileConfiguration");
-			
-			}
-		    }
-		}
-		
-		endTag("File");
-	    
-		// we not gonna look at this file anymore
-		i.remove();
-	    }
-	}
+            Iterator i = allFiles.iterator();
+            while (i.hasNext()) {
+                FileInfo fi = (FileInfo)i.next();
 
-	endTag("Filter");
+                if (!filter.match(fi)) {
+                    continue;
+                }
+
+                startTag("File",
+                         new String[] {
+                             "RelativePath", fi.full.replace('/', '\\')
+                         }
+                         );
+
+                FileAttribute a = fi.attr;
+                if (a.pchRoot) {
+                    writeCustomToolConfig(allConfigNames,
+                                          new String[] {
+                                              "Name", "VCCLCompilerTool",
+                                              "UsePrecompiledHeader", "1"
+                                          });
+                }
+
+                if (a.noPch) {
+                    writeCustomToolConfig(allConfigNames,
+                                          new String[] {
+                                              "Name", "VCCLCompilerTool",
+                                              "UsePrecompiledHeader", "0"
+                                          });
+                }
+
+                if (a.configs != null) {
+                    for (Iterator j=allConfigNames.iterator(); j.hasNext();) {
+                        String cfg = (String)j.next();
+                        if (!a.configs.contains(cfg)) {
+                            startTag("FileConfiguration",
+                                     new String[] {
+                                         "Name", cfg,
+                                         "ExcludedFromBuild", "TRUE"
+                                     });
+                            tag("Tool", new String[] {"Name", "VCCLCompilerTool"});
+                            endTag("FileConfiguration");
+
+                        }
+                    }
+                }
+
+                endTag("File");
+
+                // we not gonna look at this file anymore
+                i.remove();
+            }
+        }
+
+        endTag("Filter");
     }
 
-    
+
     void writeConfiguration(BuildConfig cfg) {
-	startTag("Configuration", 
-		 new String[] {
-		     "Name", cfg.get("Name"),
-		     "OutputDirectory",  cfg.get("OutputDir"),
-		     "IntermediateDirectory",  cfg.get("OutputDir"),
-		     "ConfigurationType", "2",
-		     "UseOfMFC", "0",
-		     "ATLMinimizesCRunTimeLibraryUsage", "FALSE"
-		 }
-		 );
+        startTag("Configuration",
+                 new String[] {
+                     "Name", cfg.get("Name"),
+                     "OutputDirectory",  cfg.get("OutputDir"),
+                     "IntermediateDirectory",  cfg.get("OutputDir"),
+                     "ConfigurationType", "2",
+                     "UseOfMFC", "0",
+                     "ATLMinimizesCRunTimeLibraryUsage", "FALSE"
+                 }
+                 );
 
 
 
-	tagV("Tool", cfg.getV("CompilerFlags"));
+        tagV("Tool", cfg.getV("CompilerFlags"));
 
-	tag("Tool", 
-	    new String[] {
-		"Name", "VCCustomBuildTool"
-	    }
-	    );
-	
-	tagV("Tool", cfg.getV("LinkerFlags"));
+        tag("Tool",
+            new String[] {
+                "Name", "VCCustomBuildTool"
+            }
+            );
 
-	tag("Tool", 
-	    new String[] {
-		"Name", "VCPostBuildEventTool"
-	    }
-	    );
+        tagV("Tool", cfg.getV("LinkerFlags"));
 
-	tag("Tool",
-	    new String[] {
-		"Name", "VCPreBuildEventTool"
-	    }
-	    );
+        tag("Tool",
+            new String[] {
+                "Name", "VCPostBuildEventTool"
+            }
+            );
 
-	tag("Tool",
-	    new String[] {
-		"Name", "VCPreLinkEventTool",
-		"Description", BuildConfig.getFieldString(null, "PrelinkDescription"),
-		"CommandLine", cfg.expandFormat(BuildConfig.getFieldString(null, "PrelinkCommand").replace('\t', '\n'))
-	    }
-	    );
+        tag("Tool",
+            new String[] {
+                "Name", "VCPreBuildEventTool"
+            }
+            );
 
-	tag("Tool",
-	    new String[] {
-		"Name", "VCResourceCompilerTool",
-		// XXX???
-		"PreprocessorDefinitions", "NDEBUG",
-		"Culture", "1033"
-	    }
-	    );
-	tag("Tool", 
-	    new String[] {
+        tag("Tool",
+            new String[] {
+                "Name", "VCPreLinkEventTool",
+                "Description", BuildConfig.getFieldString(null, "PrelinkDescription"),
+                "CommandLine", cfg.expandFormat(BuildConfig.getFieldString(null, "PrelinkCommand").replace('\t', '\n'))
+            }
+            );
+
+        tag("Tool",
+            new String[] {
+                "Name", "VCResourceCompilerTool",
+                // XXX???
+                "PreprocessorDefinitions", "NDEBUG",
+                "Culture", "1033"
+            }
+            );
+        tag("Tool",
+            new String[] {
               "Name", "VCWebServiceProxyGeneratorTool"
-	    }
-	    );
+            }
+            );
 
-	tag ("Tool",
-	     new String[] {
+        tag ("Tool",
+             new String[] {
               "Name", "VCXMLDataGeneratorTool"
-	     }
-	     );
-	
-	tag("Tool",
-	    new String[] {
+             }
+             );
+
+        tag("Tool",
+            new String[] {
               "Name", "VCWebDeploymentTool"
-	    }
-	    );
-	tag("Tool",
-	     new String[] {
-	    "Name", "VCManagedWrapperGeneratorTool"
-	     }
-	    );
-	tag("Tool",
-	    new String[] {
+            }
+            );
+        tag("Tool",
+             new String[] {
+            "Name", "VCManagedWrapperGeneratorTool"
+             }
+            );
+        tag("Tool",
+            new String[] {
               "Name", "VCAuxiliaryManagedWrapperGeneratorTool"
-	    }
-	    );
+            }
+            );
 
-	tag("Tool",
-	    new String[] {
-		"Name", "VCMIDLTool",
-		"PreprocessorDefinitions", "NDEBUG",
-		"MkTypLibCompatible", "TRUE",
-		"SuppressStartupBanner", "TRUE",
-		"TargetEnvironment", "1",		
-		"TypeLibraryName", cfg.get("OutputDir") + Util.sep + "vm.tlb",
-		"HeaderFileName", ""
-	    }
-	    );
+        tag("Tool",
+            new String[] {
+                "Name", "VCMIDLTool",
+                "PreprocessorDefinitions", "NDEBUG",
+                "MkTypLibCompatible", "TRUE",
+                "SuppressStartupBanner", "TRUE",
+                "TargetEnvironment", "1",
+                "TypeLibraryName", cfg.get("OutputDir") + Util.sep + "vm.tlb",
+                "HeaderFileName", ""
+            }
+            );
 
-	endTag("Configuration");
+        endTag("Configuration");
     }
-    
+
     int indent;
 
-    private void startTagPrim(String name, 
-			      String[] attrs, 
-			      boolean close) {
-	doIndent();
-        printWriter.print("<"+name);	
-	indent++;
-	
+    private void startTagPrim(String name,
+                              String[] attrs,
+                              boolean close) {
+        doIndent();
+        printWriter.print("<"+name);
+        indent++;
+
         if (attrs != null) {
-	    printWriter.println();
-            for (int i=0; i<attrs.length; i+=2) {	
-		doIndent();
+            printWriter.println();
+            for (int i=0; i<attrs.length; i+=2) {
+                doIndent();
                 printWriter.println(" " + attrs[i]+"=\""+attrs[i+1]+"\"");
             }
         }
-        
-	if (close) {
-	    indent--;
-	    //doIndent();
-	    printWriter.println("/>");
-	} else {
-	    //doIndent();
-	    printWriter.println(">");
-	}
+
+        if (close) {
+            indent--;
+            //doIndent();
+            printWriter.println("/>");
+        } else {
+            //doIndent();
+            printWriter.println(">");
+        }
     }
 
     void startTag(String name, String[] attrs) {
@@ -504,16 +504,16 @@ public class WinGammaPlatformVC7 extends WinGammaPlatform {
     }
 
     void startTagV(String name, Vector attrs) {
-	String s[] = new String [attrs.size()];
-	 for (int i=0; i<attrs.size(); i++) {
-	     s[i] = (String)attrs.elementAt(i);
-	 }
+        String s[] = new String [attrs.size()];
+         for (int i=0; i<attrs.size(); i++) {
+             s[i] = (String)attrs.elementAt(i);
+         }
         startTagPrim(name, s, false);
     }
-    
+
     void endTag(String name) {
-	indent--;
-	doIndent();
+        indent--;
+        doIndent();
         printWriter.println("</"+name+">");
     }
 
@@ -522,126 +522,126 @@ public class WinGammaPlatformVC7 extends WinGammaPlatform {
     }
 
      void tagV(String name, Vector attrs) {
-	 String s[] = new String [attrs.size()];
-	 for (int i=0; i<attrs.size(); i++) {
-	     s[i] = (String)attrs.elementAt(i);
-	 }
-	 startTagPrim(name, s, true);
+         String s[] = new String [attrs.size()];
+         for (int i=0; i<attrs.size(); i++) {
+             s[i] = (String)attrs.elementAt(i);
+         }
+         startTagPrim(name, s, true);
     }
 
 
     void doIndent() {
-	for (int i=0; i<indent; i++) {
-	    printWriter.print("    ");
-	}
+        for (int i=0; i<indent; i++) {
+            printWriter.print("    ");
+        }
     }
 
     protected String getProjectExt() {
-	return ".vcproj";
+        return ".vcproj";
     }
 }
 
-class CompilerInterfaceVC7 extends CompilerInterface {   
+class CompilerInterfaceVC7 extends CompilerInterface {
     Vector getBaseCompilerFlags(Vector defines, Vector includes, String outDir) {
-	Vector rv = new Vector();
+        Vector rv = new Vector();
 
-	// advanced M$ IDE (2003) can only recognize name if it's first or 
-	// second attribute in the tag - go guess
-	addAttr(rv, "Name", "VCCLCompilerTool");     	
-	addAttr(rv, "AdditionalIncludeDirectories", Util.join(",", includes));
-	addAttr(rv, "PreprocessorDefinitions", Util.join(";", defines).replace("\"","&quot;"));
+        // advanced M$ IDE (2003) can only recognize name if it's first or
+        // second attribute in the tag - go guess
+        addAttr(rv, "Name", "VCCLCompilerTool");
+        addAttr(rv, "AdditionalIncludeDirectories", Util.join(",", includes));
+        addAttr(rv, "PreprocessorDefinitions", Util.join(";", defines).replace("\"","&quot;"));
         addAttr(rv, "UsePrecompiledHeader", "3");
-	addAttr(rv, "PrecompiledHeaderThrough", "incls"+Util.sep+"_precompiled.incl");
-	addAttr(rv, "PrecompiledHeaderFile", outDir+Util.sep+"vm.pch");
-	addAttr(rv, "AssemblerListingLocation", outDir);
-	addAttr(rv, "ObjectFile", outDir+Util.sep);
-	addAttr(rv, "ProgramDataBaseFileName", outDir+Util.sep+"vm.pdb");
-	addAttr(rv, "SuppressStartupBanner", "TRUE");
-	addAttr(rv, "CompileAs", "0");
-	addAttr(rv, "WarningLevel", "3");
-	addAttr(rv, "WarnAsError", "TRUE");
-	addAttr(rv, "BufferSecurityCheck", "FALSE");
-	addAttr(rv, "ExceptionHandling", "FALSE");
+        addAttr(rv, "PrecompiledHeaderThrough", "incls"+Util.sep+"_precompiled.incl");
+        addAttr(rv, "PrecompiledHeaderFile", outDir+Util.sep+"vm.pch");
+        addAttr(rv, "AssemblerListingLocation", outDir);
+        addAttr(rv, "ObjectFile", outDir+Util.sep);
+        addAttr(rv, "ProgramDataBaseFileName", outDir+Util.sep+"vm.pdb");
+        addAttr(rv, "SuppressStartupBanner", "TRUE");
+        addAttr(rv, "CompileAs", "0");
+        addAttr(rv, "WarningLevel", "3");
+        addAttr(rv, "WarnAsError", "TRUE");
+        addAttr(rv, "BufferSecurityCheck", "FALSE");
+        addAttr(rv, "ExceptionHandling", "FALSE");
 
-	return rv;
+        return rv;
     }
 
     Vector getBaseLinkerFlags(String outDir, String outDll) {
-	Vector rv = new Vector();
+        Vector rv = new Vector();
 
-	addAttr(rv, "Name", "VCLinkerTool");
-	addAttr(rv, "AdditionalOptions", 
-		"/export:JNI_GetDefaultJavaVMInitArgs " +
-		"/export:JNI_CreateJavaVM " + 
-		"/export:JNI_GetCreatedJavaVMs "+
-		"/export:jio_snprintf /export:jio_printf "+
-		"/export:jio_fprintf /export:jio_vfprintf "+
-		"/export:jio_vsnprintf ");
-	addAttr(rv, "AdditionalDependencies", "Wsock32.lib winmm.lib");
-	addAttr(rv, "OutputFile", outDll);
+        addAttr(rv, "Name", "VCLinkerTool");
+        addAttr(rv, "AdditionalOptions",
+                "/export:JNI_GetDefaultJavaVMInitArgs " +
+                "/export:JNI_CreateJavaVM " +
+                "/export:JNI_GetCreatedJavaVMs "+
+                "/export:jio_snprintf /export:jio_printf "+
+                "/export:jio_fprintf /export:jio_vfprintf "+
+                "/export:jio_vsnprintf ");
+        addAttr(rv, "AdditionalDependencies", "Wsock32.lib winmm.lib");
+        addAttr(rv, "OutputFile", outDll);
         addAttr(rv, "LinkIncremental", "1");
-	addAttr(rv, "SuppressStartupBanner", "TRUE");
-	addAttr(rv, "ModuleDefinitionFile", outDir+Util.sep+"vm.def");
-	addAttr(rv, "ProgramDatabaseFile", outDir+Util.sep+"vm.pdb");
-	addAttr(rv, "SubSystem", "2");
-	addAttr(rv, "BaseAddress", "0x8000000");
-	addAttr(rv, "ImportLibrary", outDir+Util.sep+"jvm.lib");
-	addAttr(rv, "TargetMachine", "1");
+        addAttr(rv, "SuppressStartupBanner", "TRUE");
+        addAttr(rv, "ModuleDefinitionFile", outDir+Util.sep+"vm.def");
+        addAttr(rv, "ProgramDatabaseFile", outDir+Util.sep+"vm.pdb");
+        addAttr(rv, "SubSystem", "2");
+        addAttr(rv, "BaseAddress", "0x8000000");
+        addAttr(rv, "ImportLibrary", outDir+Util.sep+"jvm.lib");
+        addAttr(rv, "TargetMachine", "1");
 
-	return rv;
+        return rv;
     }
-    
+
     Vector getDebugCompilerFlags(String opt) {
-	Vector rv = new Vector();
+        Vector rv = new Vector();
 
-	addAttr(rv, "Optimization", opt);
-	addAttr(rv, "OptimizeForProcessor", "1");
-	addAttr(rv, "DebugInformationFormat", "3");
-	addAttr(rv, "RuntimeLibrary", "2");
-	addAttr(rv, "BrowseInformation", "1");
-	addAttr(rv, "BrowseInformationFile", "$(IntDir)" + Util.sep);
+        addAttr(rv, "Optimization", opt);
+        addAttr(rv, "OptimizeForProcessor", "1");
+        addAttr(rv, "DebugInformationFormat", "3");
+        addAttr(rv, "RuntimeLibrary", "2");
+        addAttr(rv, "BrowseInformation", "1");
+        addAttr(rv, "BrowseInformationFile", "$(IntDir)" + Util.sep);
 
-	return rv;
+        return rv;
     }
 
     Vector getDebugLinkerFlags() {
-	Vector rv = new Vector();
-	
-	addAttr(rv, "GenerateDebugInformation", "TRUE");
-	
-	return rv;
+        Vector rv = new Vector();
+
+        addAttr(rv, "GenerateDebugInformation", "TRUE");
+
+        return rv;
     }
 
     Vector getProductCompilerFlags() {
-	Vector rv = new Vector();
-	
-	addAttr(rv, "Optimization", "2");
-	addAttr(rv, "InlineFunctionExpansion", "1");
-	addAttr(rv, "StringPooling", "TRUE");
-	addAttr(rv, "RuntimeLibrary", "2");
-	addAttr(rv, "EnableFunctionLevelLinking", "TRUE");
-	
-	return rv;
+        Vector rv = new Vector();
+
+        addAttr(rv, "Optimization", "2");
+        addAttr(rv, "InlineFunctionExpansion", "1");
+        addAttr(rv, "StringPooling", "TRUE");
+        addAttr(rv, "RuntimeLibrary", "2");
+        addAttr(rv, "EnableFunctionLevelLinking", "TRUE");
+
+        return rv;
     }
 
     Vector getProductLinkerFlags() {
-	Vector rv = new Vector();
+        Vector rv = new Vector();
 
-	addAttr(rv, "OptimizeReferences", "2");
-	addAttr(rv, "EnableCOMDATFolding", "2");
+        addAttr(rv, "OptimizeReferences", "2");
+        addAttr(rv, "EnableCOMDATFolding", "2");
 
-	return rv;
+        return rv;
     }
 
     String getOptFlag() {
-	return "2";
+        return "2";
     }
 
     String getNoOptFlag() {
-	return "0";
+        return "0";
     }
 
     String makeCfgName(String flavourBuild) {
-	return  flavourBuild + "|" + Util.os;
+        return  flavourBuild + "|" + Util.os;
     }
 }

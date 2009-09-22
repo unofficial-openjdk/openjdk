@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)prefetch_windows_x86.inline.hpp	1.8 07/05/05 17:04:57 JVM"
+#pragma ident "@(#)prefetch_windows_x86.inline.hpp      1.8 07/05/05 17:04:57 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void Prefetch::read (void *loc, intx interval) {}

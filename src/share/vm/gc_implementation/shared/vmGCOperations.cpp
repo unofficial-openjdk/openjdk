@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmGCOperations.cpp	1.21 07/05/29 09:44:12 JVM"
+#pragma ident "@(#)vmGCOperations.cpp   1.21 07/05/29 09:44:12 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 # include "incls/_precompiled.incl"
 # include "incls/_vmGCOperations.cpp.incl"
@@ -56,8 +56,8 @@ void VM_GC_Operation::release_and_notify_pending_list_lock() {
 // resulting in multiple gc requests.  We only want to do one of them.
 // In case a GC locker is active and the need for a GC is already signalled,
 // we want to skip this GC attempt altogether, without doing a futile
-// safepoint operation. 
-bool VM_GC_Operation::skip_operation() const { 
+// safepoint operation.
+bool VM_GC_Operation::skip_operation() const {
   bool skip = (_gc_count_before != Universe::heap()->total_collections());
   if (_full && skip) {
     skip = (_full_gc_count_before != Universe::heap()->total_full_collections());
@@ -141,7 +141,7 @@ void VM_GenCollectForAllocation::doit() {
     set_gc_locked();
   }
   notify_gc_end();
-} 			
+}
 
 void VM_GenCollectFull::doit() {
   JvmtiGCFullMarker jgcm;

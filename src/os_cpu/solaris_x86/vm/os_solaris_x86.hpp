@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_solaris_x86.hpp	1.23 07/09/17 09:15:46 JVM"
+#pragma ident "@(#)os_solaris_x86.hpp   1.23 07/09/17 09:15:46 JVM"
 #endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
   //
@@ -52,4 +52,3 @@
   // Used to register dynamic code cache area with the OS
   // Note: Currently only used in 64 bit Windows implementations
   static bool register_code_area(char *low, char *high) { return true; }
-

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public class CharField extends Field {
   }
 
   public CharField(sun.jvm.hotspot.types.JCharField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
   }
 
   public CharField(InstanceKlass holder, int fieldArrayIndex) {
@@ -45,4 +45,3 @@ public class CharField extends Field {
     // Fix this: setJCharAt is missing in Address
   }
 }
-

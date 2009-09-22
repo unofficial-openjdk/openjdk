@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeHistogram.hpp	1.28 07/08/29 13:42:23 JVM"
+#pragma ident "@(#)bytecodeHistogram.hpp        1.28 07/08/29 13:42:23 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // BytecodeCounter counts the number of bytecodes executed

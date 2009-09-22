@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)rframe.hpp	1.23 07/05/05 17:06:49 JVM"
+#pragma ident "@(#)rframe.hpp   1.23 07/05/05 17:06:49 JVM"
 #endif
 /*
  * Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // rframes ("recompiler frames") decorate stack frames with some extra information
-// needed by the recompiler.  The recompiler views the stack (at the time of recompilation) 
+// needed by the recompiler.  The recompiler views the stack (at the time of recompilation)
 // as a list of rframes.
 
 class RFrame : public ResourceObj {
@@ -96,7 +96,7 @@ class InterpretedRFrame : public RFrame {    // interpreter frame
  protected:
   javaVFrame* _vf;                           // may be NULL (for most recent frame)
   methodHandle   _method;
- 
+
   InterpretedRFrame(frame fr, JavaThread* thread, RFrame*const  callee);
   void init();
   friend class RFrame;
@@ -112,11 +112,9 @@ class InterpretedRFrame : public RFrame {    // interpreter frame
 
 // treat deoptimized frames as interpreted
 class DeoptimizedRFrame : public InterpretedRFrame {
- protected: 
+ protected:
   DeoptimizedRFrame(frame fr, JavaThread* thread, RFrame*const  callee);
   friend class RFrame;
  public:
   void print();
 };
-
-

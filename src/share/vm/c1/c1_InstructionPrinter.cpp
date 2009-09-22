@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_InstructionPrinter.cpp	1.126 07/06/18 14:25:24 JVM"
+#pragma ident "@(#)c1_InstructionPrinter.cpp    1.126 07/06/18 14:25:24 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -147,7 +147,7 @@ void InstructionPrinter::print_object(Value obj) {
     if (!klass->is_loaded()) {
       output()->print("<unloaded> ");
     }
-    output()->print("class "); 
+    output()->print("class ");
     print_klass(klass);
   } else {
     output()->print("???");
@@ -851,4 +851,3 @@ void InstructionPrinter::do_ProfileCounter(ProfileCounter* x) {
 
 
 #endif // PRODUCT
-

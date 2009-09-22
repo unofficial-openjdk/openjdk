@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vtableStubs.cpp	1.55 07/05/05 17:05:22 JVM"
+#pragma ident "@(#)vtableStubs.cpp      1.55 07/05/05 17:05:22 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -60,7 +60,7 @@ void* VtableStub::operator new(size_t size, int code_size) {
       JvmtiExport::post_dynamic_code_generated_while_holding_locks("vtable stub", _chunk, _chunk_end);
     }
     align_chunk();
-  } 
+  }
   assert(_chunk + real_size <= _chunk_end, "bad allocation");
   void* res = _chunk;
   _chunk += real_size;
@@ -71,7 +71,7 @@ void* VtableStub::operator new(size_t size, int code_size) {
 
 void VtableStub::print() {
   tty->print("vtable stub (index = %d, receiver_location = %d, code = [" INTPTR_FORMAT ", " INTPTR_FORMAT "[)",
-	     index(), receiver_location(), code_begin(), code_end());
+             index(), receiver_location(), code_begin(), code_end());
 }
 
 
@@ -101,7 +101,7 @@ void VtableStubs::initialize() {
 
 address VtableStubs::create_stub(bool is_vtable_stub, int vtable_index, methodOop method) {
   assert(vtable_index >= 0, "must be positive");
-  
+
   VtableStub* s = ShareVtableStubs ? lookup(is_vtable_stub, vtable_index) : NULL;
   if (s == NULL) {
     if (is_vtable_stub) {
@@ -124,7 +124,7 @@ address VtableStubs::create_stub(bool is_vtable_stub, int vtable_index, methodOo
 
 inline uint VtableStubs::hash(bool is_vtable_stub, int vtable_index){
   // Assumption: receiver_location < 4 in most cases.
-  int hash = ((vtable_index << 2) ^ VtableStub::receiver_location()->value()) + vtable_index;  
+  int hash = ((vtable_index << 2) ^ VtableStub::receiver_location()->value()) + vtable_index;
   return (is_vtable_stub ? ~hash : hash)  & mask;
 }
 
@@ -178,8 +178,8 @@ VtableStub* VtableStubs::stub_containing(address pc) {
   return NULL;
 }
 
-void vtableStubs_init() { 
-  VtableStubs::initialize(); 
+void vtableStubs_init() {
+  VtableStubs::initialize();
 }
 
 
@@ -198,8 +198,3 @@ extern "C" void bad_compiled_vtable_index(JavaThread* thread, oop receiver, int 
 }
 
 #endif // Product
-
-
-
-
-

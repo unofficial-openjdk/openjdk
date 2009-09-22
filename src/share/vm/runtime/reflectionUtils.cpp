@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)reflectionUtils.cpp	1.15 07/05/05 17:06:54 JVM"
+#pragma ident "@(#)reflectionUtils.cpp  1.15 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_reflectionUtils.cpp.incl"
 
 KlassStream::KlassStream(instanceKlassHandle klass, bool local_only, bool classes_only) {
-  _klass = klass;  
+  _klass = klass;
   if (classes_only) {
     _interfaces = Universe::the_empty_system_obj_array();
   } else {
@@ -46,7 +46,7 @@ bool KlassStream::eos() {
   if (!_klass->is_interface() && _klass->super() != NULL) {
     // go up superclass chain (not for interfaces)
     _klass = _klass->super();
-  } else { 
+  } else {
     if (_interface_index > 0) {
       _klass = klassOop(_interfaces->obj_at(--_interface_index));
     } else {
@@ -69,8 +69,8 @@ void FilteredFieldsMap::initialize() {
   _filtered_fields->append(new FilteredField(SystemDictionary::throwable_klass(), offset));
   // The latest version of vm may be used with old jdk.
   if (JDK_Version::is_gte_jdk16x_version()) {
-    // The following class fields do not exist in 
-    // previous version of jdk. 
+    // The following class fields do not exist in
+    // previous version of jdk.
     offset = sun_reflect_ConstantPool::cp_oop_offset();
     _filtered_fields->append(new FilteredField(SystemDictionary::reflect_constant_pool_klass(), offset));
     offset = sun_reflect_UnsafeStaticFieldAccessorImpl::base_offset();

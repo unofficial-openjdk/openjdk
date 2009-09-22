@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.sparc;
@@ -98,12 +98,12 @@ public abstract class SPARCThreadContext implements ThreadContext {
     "L4",    "L5",    "L6",    "L7",
     "I0",    "I1",    "I2",    "I3",
     "I4",    "I5",    "I6/FP", "I7",
-    "CCR/PSR", "PC",  "nPC",   "Y",     
+    "CCR/PSR", "PC",  "nPC",   "Y",
     "ASI/WIM", "FPRS/TBR"
   };
 
   private long[] data;
-  
+
   public SPARCThreadContext() {
     data = new long[NPRGREG];
   }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_Runtime1_sparc.cpp	1.149 07/05/17 15:48:01 JVM"
+#pragma ident "@(#)c1_Runtime1_sparc.cpp        1.149 07/05/17 15:48:01 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -150,7 +150,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers) {
     if (r == G1 || r == G3 || r == G4 || r == G5) {
       int sp_offset = cpu_reg_save_offsets[i];
       oop_map->set_callee_saved(VMRegImpl::stack2reg(sp_offset),
-				r->as_VMReg());
+                                r->as_VMReg());
     }
   }
 
@@ -362,7 +362,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         // places.  Perform an exception lookup in the caller and
         // dispatch to the handler if found.  Otherwise unwind and
         // dispatch to the callers exception handler.
-        
+
         oop_maps = new OopMapSet();
         OopMap* oop_map = generate_oop_map(sasm, true);
 
@@ -371,7 +371,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ ld_ptr(Oexception, 0, G0);
         __ st_ptr(G0, G2_thread, in_bytes(JavaThread::pending_exception_offset()));
         __ add(I7, frame::pc_return_offset, Oissuing_pc);
-  
+
         generate_handle_exception(sasm, oop_maps, oop_map);
         __ should_not_reach_here();
       }
@@ -392,7 +392,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           assert(id == fast_new_instance_init_check_id, "bad StubID");
           __ set_info("fast new_instance init check", dont_gc_arguments);
         }
-        
+
         if ((id == fast_new_instance_id || id == fast_new_instance_init_check_id) &&
             UseTLAB && FastTLABRefill) {
           Label slow_path;
@@ -400,7 +400,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           Register G3_t1 = G3;
           Register G4_t2 = G4;
           assert_different_registers(G5_klass, G1_obj_size, G3_t1, G4_t2);
-        
+
           // Push a frame since we may do dtrace notification for the
           // allocation which requires calling out and we don't want
           // to stomp the real return address.
@@ -461,7 +461,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // pop this frame so generate_stub_call can push it's own
           __ restore();
         }
-        
+
         oop_maps = generate_stub_call(sasm, I0, CAST_FROM_FN_PTR(address, new_instance), G5_klass);
         // I0->O0: new instance
       }
@@ -532,7 +532,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // refilling the TLAB or allocating directly from eden.
           Label retry_tlab, try_eden;
           __ tlab_refill(retry_tlab, try_eden, slow_path); // preserves G4_length and G5_klass
-          
+
           __ bind(retry_tlab);
 
           // get the allocation size: (length << (layout_helper & 0x1F)) + header_size
@@ -599,7 +599,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
       break;
 
     case register_finalizer_id:
-      { 
+      {
         __ set_info("register_finalizer", dont_gc_arguments);
 
         // load the klass and check the has finalizer flag
@@ -680,7 +680,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ add(I7, frame::pc_return_offset, Oissuing_pc->after_save());
 
         __ call_VM_leaf(L7_thread_cache, CAST_FROM_FN_PTR(address, SharedRuntime::exception_handler_for_return_address),
-                        Oissuing_pc->after_save()); 
+                        Oissuing_pc->after_save());
         __ verify_not_null_oop(Oexception->after_save());
         __ jmp(O0, 0);
         __ delayed()->restore();
@@ -718,38 +718,38 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         //      super: G1, argument, not changed
         //      raddr: O7, blown by call
         Label loop, miss;
-        
-        __ save_frame(0);		// Blow no registers!
-        
+
+        __ save_frame(0);               // Blow no registers!
+
         __ ld_ptr( G3, sizeof(oopDesc) + Klass::secondary_supers_offset_in_bytes(), L3 );
         __ lduw(L3,arrayOopDesc::length_offset_in_bytes(),L0); // length in l0
         __ add(L3,arrayOopDesc::base_offset_in_bytes(T_OBJECT),L1); // ptr into array
-        __ clr(L4);			// Index
+        __ clr(L4);                     // Index
         // Load a little early; will load 1 off the end of the array.
         // Ok for now; revisit if we have other uses of this routine.
-        __ ld_ptr(L1,0,L2);		// Will load a little early
-        
+        __ ld_ptr(L1,0,L2);             // Will load a little early
+
         // The scan loop
         __ bind(loop);
-        __ add(L1,wordSize,L1);	// Bump by OOP size
-        __ cmp(L4,L0); 
+        __ add(L1,wordSize,L1); // Bump by OOP size
+        __ cmp(L4,L0);
         __ br(Assembler::equal,false,Assembler::pn,miss);
-        __ delayed()->inc(L4);	// Bump index
-        __ subcc(L2,G1,L3);		// Check for match; zero in L3 for a hit
+        __ delayed()->inc(L4);  // Bump index
+        __ subcc(L2,G1,L3);             // Check for match; zero in L3 for a hit
         __ brx( Assembler::notEqual, false, Assembler::pt, loop );
         __ delayed()->ld_ptr(L1,0,L2); // Will load a little early
-        
+
         // Got a hit; report success; set cache
         __ st_ptr( G1, G3, sizeof(oopDesc) + Klass::secondary_super_cache_offset_in_bytes() );
-        
+
         __ mov(1, G3);
-        __ ret();			// Result in G5 is ok; flags set
-        __ delayed()->restore();	// free copy or add can go here
+        __ ret();                       // Result in G5 is ok; flags set
+        __ delayed()->restore();        // free copy or add can go here
 
         __ bind(miss);
         __ mov(0, G3);
-        __ ret();			// Result in G5 is ok; flags set
-        __ delayed()->restore();	// free copy or add can go here
+        __ ret();                       // Result in G5 is ok; flags set
+        __ delayed()->restore();        // free copy or add can go here
       }
 
     case monitorenter_nofpu_id:
@@ -761,13 +761,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         int save_fpu_registers = (id == monitorenter_id);
         // make a frame and preserve the caller's caller-save registers
         OopMap* oop_map = save_live_registers(sasm, save_fpu_registers);
-        
+
         int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorenter), G4, G5);
-        
+
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, oop_map);
         restore_live_registers(sasm, save_fpu_registers);
-        
+
         __ ret();
         __ delayed()->restore();
       }
@@ -784,13 +784,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         int save_fpu_registers = (id == monitorexit_id);
         // make a frame and preserve the caller's caller-save registers
         OopMap* oop_map = save_live_registers(sasm, save_fpu_registers);
-        
+
         int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorexit), G4);
-        
+
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, oop_map);
         restore_live_registers(sasm, save_fpu_registers);
-        
+
         __ ret();
         __ delayed()->restore();
 
@@ -1043,7 +1043,7 @@ void Runtime1::generate_handle_exception(StubAssembler* sasm, OopMapSet* oop_map
   __ st_ptr(G0, G2_thread, in_bytes(JavaThread::exception_oop_offset()));
 
   __ restore();
-  
+
   Address exc(G4, Runtime1::entry_for(Runtime1::unwind_exception_id));
   __ jump_to(exc, 0);
   __ delayed()->nop();
@@ -1056,4 +1056,3 @@ void Runtime1::generate_handle_exception(StubAssembler* sasm, OopMapSet* oop_map
 #undef __
 
 #define __ masm->
-

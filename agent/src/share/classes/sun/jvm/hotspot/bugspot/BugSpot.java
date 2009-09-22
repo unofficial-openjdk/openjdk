@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -74,7 +74,7 @@ public class BugSpot extends JPanel {
       the BugSpot component to its parent. */
   public void build() {
     setLayout(new BorderLayout());
-    
+
     menuBar = new JMenuBar();
 
     attachMenuItems = new java.util.ArrayList();
@@ -121,7 +121,7 @@ public class BugSpot extends JPanel {
                           'D', 0);
     menu.add(item);
     detachMenuItems.add(item);
-    
+
     // Disable detach menu items at first
     setMenuItemsEnabled(detachMenuItems, false);
 
@@ -302,7 +302,7 @@ public class BugSpot extends JPanel {
     threadsDialog.getContentPane().setLayout(new BorderLayout());
     threadsDialog.setClosable(true);
     threadsDialog.setResizable(true);
-    
+
     ThreadListPanel threads = new ThreadListPanel(getCDebugger(), getAgent().isJavaMode());
     threads.addListener(new ThreadListPanel.Listener() {
         public void setFocus(ThreadProxy thread, JavaThread jthread) {
@@ -329,7 +329,7 @@ public class BugSpot extends JPanel {
     memoryDialog.getContentPane().setLayout(new BorderLayout());
     memoryDialog.setClosable(true);
     memoryDialog.setResizable(true);
-    
+
     memoryDialog.getContentPane().add(new MemoryViewer(getDebugger(),
                                                        (getDebugger().getMachineDescription().getAddressSize() == 8)),
                                       BorderLayout.CENTER);
@@ -377,12 +377,12 @@ public class BugSpot extends JPanel {
   private RegisterPanel   registerPanel;
   // Used for mixed-language stack traces
   private Map             threadToJavaThreadMap;
-  
+
   private JMenu debugMenu;
 
   // MDI mode only: desktop pane
   private JDesktopPane desktop;
-  
+
   // Attach/detach state
   private boolean attached;
 
@@ -426,22 +426,22 @@ public class BugSpot extends JPanel {
     public boolean succeeded() {
       return success;
     }
-    
+
     public boolean set() {
       return set;
     }
-    
+
     /** Line at which the breakpoint was actually set; only valid if
         succeeded() returns true */
     public int getLine() {
       return lineNo;
     }
-    
+
     public String getWhy() {
       return why;
     }
   }
-  
+
 
   // Editors for source code. File name-to-Editor mapping.
   private Map editors;
@@ -531,7 +531,7 @@ public class BugSpot extends JPanel {
       stackFrame.setSize(400, 200);
       GraphicsUtilities.moveToInContainer(stackFrame.getComponent(), 0.0f, 1.0f, 0, 20);
       stackFrame.show();
-      
+
       // Create register panel
       registerPanel = new RegisterPanel();
       registerPanel.setFont(fixedWidthFont);
@@ -941,7 +941,7 @@ public class BugSpot extends JPanel {
     private SourceCodePanel code;
     private boolean         shown;
     private Object          userData;
-    
+
     public DefaultEditor(DefaultEditorFactory fact, String filename, final EditorCommands comm) {
       this.filename = filename;
       this.factory = fact;

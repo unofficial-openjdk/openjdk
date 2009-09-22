@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)reflection.hpp	1.46 07/05/05 17:06:54 JVM"
+#pragma ident "@(#)reflection.hpp       1.46 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Class Reflection contains utility methods needed for implementing the
-// reflection api. 
+// reflection api.
 //
 // Used by functions in the JVM interface.
 //
@@ -41,7 +41,7 @@ class Reflection: public AllStatic {
  private:
   // Access checking
   static bool reflect_check_access(klassOop field_class, AccessFlags acc, klassOop target_class, bool is_method_invoke, TRAPS);
-  
+
   // Conversion
   static klassOop basic_type_mirror_to_arrayklass(oop basic_type_mirror, TRAPS);
   static oop      basic_type_arrayklass_to_mirror(klassOop basic_type_arrayklass, TRAPS);
@@ -83,11 +83,11 @@ class Reflection: public AllStatic {
   // Verification
   static bool     verify_class_access(klassOop current_class, klassOop new_class, bool classloader_only);
 
-  static bool     verify_field_access(klassOop current_class, 
+  static bool     verify_field_access(klassOop current_class,
                                       klassOop resolved_class,
-                                      klassOop field_class, 
-                                      AccessFlags access, 
-                                      bool classloader_only, 
+                                      klassOop field_class,
+                                      AccessFlags access,
+                                      bool classloader_only,
                                       bool protected_restriction = false);
   static bool     is_same_class_package(klassOop class1, klassOop class2);
 
@@ -104,7 +104,7 @@ class Reflection: public AllStatic {
   // Create a java.lang.reflect.Method object based on a method
   static oop new_method(methodHandle method, bool intern_name, bool for_constant_pool_access, TRAPS);
   // Create a java.lang.reflect.Constructor object based on a method
-  static oop new_constructor(methodHandle method, TRAPS);  
+  static oop new_constructor(methodHandle method, TRAPS);
   // Create a java.lang.reflect.Field object based on a field descriptor
   static oop new_field(fieldDescriptor* fd, bool intern_name, TRAPS);
 
@@ -124,7 +124,7 @@ private:
   // Method call (shared by invoke_method and invoke_constructor)
   static oop  invoke(instanceKlassHandle klass, methodHandle method, Handle receiver, bool override, objArrayHandle ptypes, BasicType rtype, objArrayHandle args, bool is_method_invoke, TRAPS);
 
-  // Narrowing of basic types. Used to create correct jvalues for 
+  // Narrowing of basic types. Used to create correct jvalues for
   // boolean, byte, char and short return return values from interpreter
   // which are returned as ints. Throws IllegalArgumentException.
   static void narrow(jvalue* value, BasicType narrow_type, TRAPS);
@@ -134,13 +134,13 @@ private:
 
   static bool match_parameter_types(methodHandle method, objArrayHandle types, int parameter_count, TRAPS);
   // Creating new java.lang.reflect.xxx wrappers
-  static oop new_field(FieldStream* st, TRAPS);  
+  static oop new_field(FieldStream* st, TRAPS);
 
 public:
   // Field lookup and verification.
   static bool      resolve_field(Handle field_mirror, Handle& receiver, fieldDescriptor* fd, bool check_final, TRAPS);
 
-  // Reflective field access. Returns type code. Throws IllegalArgumentException. 
+  // Reflective field access. Returns type code. Throws IllegalArgumentException.
   static BasicType field_get(jvalue* value, fieldDescriptor* fd, Handle receiver);
   static void      field_set(jvalue* value, fieldDescriptor* fd, Handle receiver, BasicType value_type, TRAPS);
 
@@ -163,4 +163,3 @@ public:
 #endif /* SUPPORT_OLD_REFLECTION */
 
 };
-

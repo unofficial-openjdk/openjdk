@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)constantPoolKlass.hpp	1.51 07/05/29 09:44:18 JVM"
+#pragma ident "@(#)constantPoolKlass.hpp        1.51 07/05/29 09:44:18 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A constantPoolKlass is the klass of a constantPoolOop
@@ -37,13 +37,13 @@ class constantPoolKlass : public Klass {
 
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(constantPoolKlass);
-  constantPoolOop allocate(int length, TRAPS); 
+  constantPoolOop allocate(int length, TRAPS);
   static klassOop create_klass(TRAPS);
 
   // Casting from klassOop
   static constantPoolKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_constantPool(), "cast to constantPoolKlass");
-    return (constantPoolKlass*) k->klass_part(); 
+    return (constantPoolKlass*) k->klass_part();
   }
 
   // Sizing
@@ -84,4 +84,3 @@ class constantPoolKlass : public Klass {
   static void preload_and_initialize_all_classes(oop constant_pool, TRAPS);
 #endif
 };
-

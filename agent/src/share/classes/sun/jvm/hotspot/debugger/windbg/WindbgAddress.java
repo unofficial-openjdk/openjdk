@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.windbg;
@@ -314,7 +314,7 @@ class WindbgAddress implements Address {
     WindbgAddress p2 = (WindbgAddress) p1.addOffsetTo(10);
     WindbgAddress n1 = (WindbgAddress) p2.addOffsetTo(10);
     WindbgAddress n2 = (WindbgAddress) n1.addOffsetTo(10);
-    
+
     // lessThan positive tests
     check(p1.lessThan(p2), "lessThan 1");
     check(p1.lessThan(n1), "lessThan 2");
@@ -377,13 +377,13 @@ class WindbgAddress implements Address {
     check(!p1.greaterThan(n1), "greaterThan 14");
     check(!p2.greaterThan(n1), "greaterThan 15");
     check(!p1.greaterThan(p2), "greaterThan 16");
-    
+
     // greaterThanOrEqual positive tests
     check(p1.greaterThanOrEqual(p1), "greaterThanOrEqual 1");
     check(p2.greaterThanOrEqual(p2), "greaterThanOrEqual 2");
     check(n1.greaterThanOrEqual(n1), "greaterThanOrEqual 3");
     check(n2.greaterThanOrEqual(n2), "greaterThanOrEqual 4");
-    
+
     check(n2.greaterThanOrEqual(p1), "greaterThanOrEqual 5");
     check(n2.greaterThanOrEqual(p2), "greaterThanOrEqual 6");
     check(n2.greaterThanOrEqual(n1), "greaterThanOrEqual 7");

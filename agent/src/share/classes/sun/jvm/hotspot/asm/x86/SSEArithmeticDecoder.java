@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -33,7 +33,7 @@ public class SSEArithmeticDecoder extends SSEInstructionDecoder {
       super(name, addrMode1, operandType1);
       this.rtlOperation = rtlOperation;
    }
-   
+
    public SSEArithmeticDecoder(String name, int addrMode1, int operandType1, int addrMode2, int operandType2, int rtlOperation) {
       super(name, addrMode1, operandType1, addrMode2, operandType2);
       this.rtlOperation = rtlOperation;
@@ -46,4 +46,3 @@ public class SSEArithmeticDecoder extends SSEInstructionDecoder {
       return factory.newArithmeticInstruction(name, rtlOperation, op1, op2, size, prefixes);
    }
 }
-

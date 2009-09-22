@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)compactingPermGenGen.cpp	1.22 08/11/24 12:22:45 JVM"
+#pragma ident "@(#)compactingPermGenGen.cpp     1.22 08/11/24 12:22:45 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -258,7 +258,7 @@ CompactingPermGenGen::CompactingPermGenGen(ReservedSpace rs,
           (!mapinfo->map_space(mc, mc_rs, NULL))      ||
           // check the alignment constraints
           (ch == NULL || ch->kind() != CollectedHeap::GenCollectedHeap ||
-           image_alignment != 
+           image_alignment !=
            ((GenCollectedHeap*)ch)->gen_policy()->max_alignment())) {
         // Base addresses didn't match; skip sharing, but continue
         shared_rs.release();
@@ -385,7 +385,7 @@ void CompactingPermGenGen::print_on(outputStream* st) const {
 
 // References from the perm gen to the younger generation objects may
 // occur in static fields in Java classes or in constant pool references
-// to String objects. 
+// to String objects.
 
 void CompactingPermGenGen::younger_refs_iterate(OopsInGenClosure* blk) {
   OneContigSpaceCardGeneration::younger_refs_iterate(blk);

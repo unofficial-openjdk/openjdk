@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)classes.cpp	1.31 07/05/05 17:06:12 JVM"
+#pragma ident "@(#)classes.cpp  1.31 07/05/05 17:06:12 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -35,4 +35,3 @@ int Node::Opcode() const { return Op_Node; }
 #define macro(x) int x##Node::Opcode() const { return Op_##x; }
 #include "classes.hpp"
 #undef macro
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)osThread_solaris.cpp	1.59 07/06/29 04:03:46 JVM"
+#pragma ident "@(#)osThread_solaris.cpp 1.59 07/06/29 04:03:46 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // do not include  precompiled  header file
@@ -87,7 +87,7 @@ static intptr_t compare_and_exchange_current_callback (
 // used in signal handler
 static intptr_t exchange_current_callback(intptr_t callback, intptr_t *addr, Mutex *sync) {
   if (VM_Version::supports_compare_and_exchange()) {
-    return Atomic::xchg_ptr(callback, addr);  
+    return Atomic::xchg_ptr(callback, addr);
   } else {
     MutexLockerEx ml(sync, Mutex::_no_safepoint_check_flag);
     intptr_t cb = *addr;
@@ -161,10 +161,10 @@ void OSThread::do_interrupt_callbacks_at_interrupt(InterruptArguments *args) {
 }
 
 // Called by the requesting thread to send a signal to target thread and
-// execute "this" callback from the signal handler. 
+// execute "this" callback from the signal handler.
 int OSThread::Sync_Interrupt_Callback::interrupt(Thread * target, int timeout) {
   // Let signals to the vm_thread go even if the Threads_lock is not acquired
-  assert(Threads_lock->owned_by_self() || (target == VMThread::vm_thread()), 
+  assert(Threads_lock->owned_by_self() || (target == VMThread::vm_thread()),
          "must have threads lock to call this");
 
   OSThread * osthread = target->osthread();
@@ -207,7 +207,7 @@ void OSThread::Sync_Interrupt_Callback::leave_callback() {
     _is_done = true;
     _sync->notify_all();
   } else {
-    // Current thread is interrupted while it is holding the _sync lock, trying 
+    // Current thread is interrupted while it is holding the _sync lock, trying
     // to grab it again will deadlock. The requester will timeout anyway,
     // so just return.
     _is_done = true;
@@ -221,7 +221,7 @@ void OSThread::handle_spinlock_contention(int tries) {
 
   if (tries > 10) {
     os::yield_all(tries); // Yield to threads of any priority
-  } else if (tries > 5) {  
-    os::yield();          // Yield to threads of same or higher priority      
+  } else if (tries > 5) {
+    os::yield();          // Yield to threads of same or higher priority
   }
 }

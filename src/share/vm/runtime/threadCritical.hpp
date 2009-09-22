@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)threadCritical.hpp	1.13 07/05/05 17:07:00 JVM"
+#pragma ident "@(#)threadCritical.hpp   1.13 07/05/05 17:07:00 JVM"
 #endif
 /*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ThreadCritical is used to protect short non-blocking critical sections.
@@ -54,5 +54,3 @@ class ThreadCritical : public StackObj {
   ThreadCritical();
   ~ThreadCritical();
 };
-
-

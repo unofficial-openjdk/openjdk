@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciSymbol.cpp	1.23 07/09/28 10:23:21 JVM"
+#pragma ident "@(#)ciSymbol.cpp 1.23 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -109,4 +109,3 @@ ciSymbol* ciSymbol::make_impl(const char* s) {
 ciSymbol* ciSymbol::make(const char* s) {
   GUARDED_VM_ENTRY(return make_impl(s);)
 }
-

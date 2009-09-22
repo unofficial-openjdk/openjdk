@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)libjvm_db.h	1.14 07/05/05 17:04:38 JVM"
+#pragma ident "@(#)libjvm_db.h  1.14 07/05/05 17:04:38 JVM"
 #endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include <proc_service.h>
@@ -33,11 +33,11 @@ extern "C" {
 
 typedef struct jvm_agent jvm_agent_t;
 
-#define	JVM_DB_VERSION	1
+#define JVM_DB_VERSION  1
 
 jvm_agent_t *Jagent_create(struct ps_prochandle *P, int vers);
 
-/* 
+/*
  * Called from Jframe_iter() for each java frame.  If it returns 0, then
  * Jframe_iter() proceeds to the next frame.  Otherwise, the return value is
  * immediately returned to the caller of Jframe_iter().

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciSymbolKlass.hpp	1.13 07/05/05 17:05:17 JVM"
+#pragma ident "@(#)ciSymbolKlass.hpp    1.13 07/05/05 17:05:17 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciSymbolKlass
@@ -43,7 +43,7 @@ protected:
   }
 
   symbolKlass* get_symbolKlass() { return (symbolKlass*)get_Klass(); }
-  
+
   const char* type_string() { return "ciSymbolKlass"; }
 
 public:
@@ -53,4 +53,3 @@ public:
   // Return the distinguished ciSymbolKlass instance.
   static ciSymbolKlass* make();
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)locknode.hpp	1.40 07/09/28 10:23:10 JVM"
+#pragma ident "@(#)locknode.hpp 1.40 07/09/28 10:23:10 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //------------------------------BoxLockNode------------------------------------
@@ -103,4 +103,3 @@ public:
   const Type *sub(const Type *t1, const Type *t2) const { return TypeInt::CC;}
 
 };
-

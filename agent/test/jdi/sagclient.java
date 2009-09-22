@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import com.sun.jdi.*;
@@ -36,7 +36,7 @@ public class sagclient {
     static AttachingConnector myDbgSvrConn;
     static VirtualMachine vm;
     static VirtualMachineManager vmmgr;
-    
+
     public static void println(String msg) {
         System.out.println("jj: " + msg);
     }
@@ -80,13 +80,13 @@ public class sagclient {
                 System.out.println( "pid: " + pid);
                 vm = attachPID(pid);
             } catch (NumberFormatException e) {
-		System.out.println("trying remote server ..");
-                debugServer = args[0]; 
+                System.out.println("trying remote server ..");
+                debugServer = args[0];
                 System.out.println( "remote server: " + debugServer);
                 vm = attachDebugServer(debugServer);
             }
             break;
-            
+
         case (2):
             execPath = args[0];
             coreFilename = args[1];
@@ -95,8 +95,8 @@ public class sagclient {
             vm = attachCore(coreFilename, execPath);
             break;
         }
-       
-        
+
+
         if (vm != null) {
             System.out.println("sagclient: attached ok!");
             sagdoit mine = new sagdoit(vm);

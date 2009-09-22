@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -88,7 +88,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
                     if (clazz.isPrepared() && clazz.interfaces().contains(this)) {
                         implementors.add(clazz);
                     }
-                } 
+                }
             }
             implementors = Collections.unmodifiableList(implementors);
             implementorsCache = new SoftReference(implementors);
@@ -98,7 +98,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
 
     void addVisibleMethods(Map methodMap) {
         /*
-         * Add methods from 
+         * Add methods from
          * parent types first, so that the methods in this class will
          * overwrite them in the hash table
          */
@@ -114,7 +114,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
     List getAllMethods() {
         ArrayList list = new ArrayList(methods());
         /*
-         * It's more efficient if don't do this 
+         * It's more efficient if don't do this
          * recursively.
          */
         List interfaces = allSuperinterfaces();
@@ -135,7 +135,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
 
     void addSuperinterfaces(List list) {
         /*
-         * This code is a little strange because it 
+         * This code is a little strange because it
          * builds the list with a more suitable order than the
          * depth-first approach a normal recursive solution would
          * take. Instead, all direct superinterfaces precede all
@@ -143,7 +143,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
          */
 
         /*
-         * Get a list of direct superinterfaces that's not already in the 
+         * Get a list of direct superinterfaces that's not already in the
          * list being built.
          */
         List immediate = new ArrayList(superinterfaces());
@@ -194,8 +194,8 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
         return superinterfaces();
     }
 
-    public boolean isInitialized() { 
-        return isPrepared(); 
+    public boolean isInitialized() {
+        return isPrepared();
     }
 
     public String toString() {

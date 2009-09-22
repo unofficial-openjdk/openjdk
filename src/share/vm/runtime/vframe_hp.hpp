@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vframe_hp.hpp	1.54 07/05/05 17:07:01 JVM"
+#pragma ident "@(#)vframe_hp.hpp        1.54 07/05/05 17:07:01 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class compiledVFrame: public javaVFrame {
@@ -48,7 +48,7 @@ class compiledVFrame: public javaVFrame {
   }
 
  public:
-  // Constructors  
+  // Constructors
   compiledVFrame(const frame* fr, const RegisterMap* reg_map, JavaThread* thread, nmethod* nm);
 
   // Update a local in a compiled frame. Update happens when deopt occurs

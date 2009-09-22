@@ -238,4 +238,3 @@ public:
   //  bool idempotent() { return true; }
   bool apply_to_weak_ref_discovered_field() { return true; }
 };
-

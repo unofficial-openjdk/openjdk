@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)shell_imp.h	1.10 07/05/05 17:02:03 JVM"
+#pragma ident "@(#)shell_imp.h  1.10 07/05/05 17:02:03 JVM"
 #endif
 /*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef SHELL_IMP_H
@@ -34,7 +34,7 @@ extern "C" {
 
 #include <stdio.h>
 
-/* 
+/*
  CCR info
 
  Vesrion history:
@@ -44,14 +44,14 @@ extern "C" {
  Release information for automatic CCR updates:
 
  BEGIN RELEASE NOTES: (signifies what gets put into CCR release notes)
-        1.1       
-		  - Entry points for va_list style msgs; new shell_imp_vmsg()
-		    and shell_imp_verrmsg()
-		  - shell_imp_env_checker() is now shell_imp_var_checker().
-		    Also the var_checker callback gets passed interp.
-	1.2	  - interposition framework (used by jdbx)
-		  - access to input FILE pointer.
-		  
+        1.1
+                  - Entry points for va_list style msgs; new shell_imp_vmsg()
+                    and shell_imp_verrmsg()
+                  - shell_imp_env_checker() is now shell_imp_var_checker().
+                    Also the var_checker callback gets passed interp.
+        1.2       - interposition framework (used by jdbx)
+                  - access to input FILE pointer.
+
  END RELEASE NOTES: (signifies what gets put into CCR release notes)
 
 Following is used as a CCR version number:
@@ -69,38 +69,38 @@ typedef void *shell_imp_interp_t;
 typedef void *shell_imp_command_t;
 typedef int shell_imp_fun_t(shell_imp_interp_t, int, char **, void *);
 
-int 
+int
 shell_imp_init(
-    int,   		/* major version number */
-    int,   		/* minor version number */
-    shell_imp_interp_t, /* interpreter */ 
-    int,		/* argc */
-    char *[]		/* argv */
+    int,                /* major version number */
+    int,                /* minor version number */
+    shell_imp_interp_t, /* interpreter */
+    int,                /* argc */
+    char *[]            /* argv */
 );
 
 int
 shell_imp_fini(shell_imp_interp_t);
 
 shell_imp_command_t
-shell_imp_define_command(char *, 	/* command name e.g. "tnf" */
+shell_imp_define_command(char *,        /* command name e.g. "tnf" */
                     shell_imp_fun_t *,  /* callback function */
-                    int,       		/* SHELL_IMP_FLAG_* bit vector */
-                    void *,  		/* client_data Passed as last arg to 
-					/* callback function */
-                    char *		/* help message, e.g. */
+                    int,                /* SHELL_IMP_FLAG_* bit vector */
+                    void *,             /* client_data Passed as last arg to
+                                        /* callback function */
+                    char *              /* help message, e.g. */
                                         /* "enable the specified tnf probes" */
             );
 
-int 
+int
 shell_imp_undefine_command(shell_imp_command_t);
 
-int 
+int
 shell_imp_var_checker(shell_imp_interp_t,
-                      const char *,	    /* var name */ 
-		      int (*)(shell_imp_interp_t, const char*) /* env checker */
-		     );
+                      const char *,         /* var name */
+                      int (*)(shell_imp_interp_t, const char*) /* env checker */
+                     );
 
-int 
+int
 shell_imp_execute(shell_imp_interp_t, const char *);
 
 const char *
@@ -126,36 +126,36 @@ shell_imp_verrmsg(shell_imp_interp_t, const char *, va_list);
 
 struct shell_imp_interposition_info_t {
     shell_imp_fun_t *
-		new_func;
-    void *	new_client_data;
+                new_func;
+    void *      new_client_data;
     shell_imp_fun_t *
-		original_func;
-    void *	original_client_data;
-    int 	original_flags;
+                original_func;
+    void *      original_client_data;
+    int         original_flags;
 };
 
-typedef int shell_imp_dispatcher_t(shell_imp_interp_t, int, char **, 
+typedef int shell_imp_dispatcher_t(shell_imp_interp_t, int, char **,
                                    shell_imp_interposition_info_t *);
 
 shell_imp_command_t
-shell_imp_interpose(char *name, 
-		    shell_imp_fun_t *new_func,
-		    int    flags,
-		    void *client_data,
-		    char * description,
-		    shell_imp_dispatcher_t *);
+shell_imp_interpose(char *name,
+                    shell_imp_fun_t *new_func,
+                    int    flags,
+                    void *client_data,
+                    char * description,
+                    shell_imp_dispatcher_t *);
 
 int shell_imp_uninterpose(shell_imp_command_t);
 
 int
 shell_imp_dispatch_interposition(shell_imp_interp_t,
-			         shell_imp_interposition_info_t *,
-				 int argc, char *argv[]);
+                                 shell_imp_interposition_info_t *,
+                                 int argc, char *argv[]);
 
 int
 shell_imp_dispatch_original(shell_imp_interp_t,
-			         shell_imp_interposition_info_t *,
-				 int argc, char *argv[]);
+                                 shell_imp_interposition_info_t *,
+                                 int argc, char *argv[]);
 
 FILE *
 shell_imp_cur_input(shell_imp_interp_t);

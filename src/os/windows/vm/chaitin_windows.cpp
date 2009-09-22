@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)chaitin_windows.cpp	1.25 07/09/17 09:59:35 JVM"
+#pragma ident "@(#)chaitin_windows.cpp  1.25 07/09/17 09:59:35 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -36,9 +36,9 @@ void PhaseRegAlloc::pd_preallocate_hook() {
   if (ImplicitNullChecks && !os::win32::is_nt()) {
     for (uint block_num=1; block_num<_cfg._num_blocks; block_num++) {
       Block *block = _cfg._blocks[block_num];
-      
+
       Node *block_end = block->end();
-      if (block_end->is_MachNullCheck() && 
+      if (block_end->is_MachNullCheck() &&
           block_end->as_Mach()->ideal_Opcode() != Op_Con) {
         // The last instruction in the block is an implicit null check.
         // Fix its input so that it does not load into the frame pointer.

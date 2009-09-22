@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -81,7 +81,7 @@ public interface DebugVC50TypeIterator {
 
       @throw NoSuchElementException if the iterator is already done
       and typeStringNext() is called. */
-  public void typeStringNext() throws NoSuchElementException; 
+  public void typeStringNext() throws NoSuchElementException;
 
   /** Return the leaf index (see {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50TypeLeafIndices})
@@ -142,7 +142,7 @@ public interface DebugVC50TypeIterator {
       memory. See the PTR_FORMAT enum in {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50TypeEnums}. */
   public short getPointerToMemberFormat();
-  
+
   ////////////////////////
   // LF_ARRAY accessors //
   ////////////////////////
@@ -193,7 +193,7 @@ public interface DebugVC50TypeIterator {
 
   /** Numeric leaf specifying size in bytes of the structure. */
   public int getClassSize() throws DebugVC50WrongNumericTypeException;
-  
+
   /** Length-prefixed name of this type. */
   public String getClassName();
 
@@ -228,7 +228,7 @@ public interface DebugVC50TypeIterator {
 
   /** Property bit field. */
   public short getEnumProperty();
-  
+
   /** Index of underlying type of enum. */
   public int getEnumType();
 
@@ -252,7 +252,7 @@ public interface DebugVC50TypeIterator {
       in {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50TypeEnums}. */
   public byte getProcedureCallingConvention();
-  
+
   /** Number of parameters. */
   public short getProcedureNumberOfParameters();
 
@@ -281,7 +281,7 @@ public interface DebugVC50TypeIterator {
       in {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50TypeEnums}. */
   public byte getMFunctionCallingConvention();
-  
+
   /** Number of parameters. This count does not include the
       <b>this</b> parameter. */
   public short getMFunctionNumberOfParameters();
@@ -313,7 +313,7 @@ public interface DebugVC50TypeIterator {
   // point. The underlying type of the pointer is a VTShape type
   // record. This record describes how to interpret the memory at the
   // location pointed to by the virtual function table pointer.
-  
+
   /** Number of descriptors. */
   public short getVTShapeCount();
 
@@ -353,7 +353,7 @@ public interface DebugVC50TypeIterator {
 
   /** Underlying type of the array. */
   public int getDimArrayType();
-  
+
   /** Index of the type record containing the dimension information. */
   public int getDimArrayDimInfo();
 
@@ -363,7 +363,7 @@ public interface DebugVC50TypeIterator {
   //////////////////////////
   // LF_VFTPATH accessors //
   //////////////////////////
-  
+
   /** Count of number of bases in the path to the virtual function
       table. */
   public int getVFTPathCount();
@@ -400,7 +400,7 @@ public interface DebugVC50TypeIterator {
       count, skipping all intermediate indices. This is the next valid
       index. */
   public int getSkipIndex();
-  
+
   //////////////////////////
   // LF_ARGLIST accessors //
   //////////////////////////
@@ -432,7 +432,7 @@ public interface DebugVC50TypeIterator {
   // are used to enforce proper alignment. Both of these leaves, and
   // their lengths, are understood by this iterator, and LF_INDEX
   // leaves have an accessor for reaching the target type record.
-  // 
+  //
 
   //////////////////////////
   // LF_DERIVED accessors //
@@ -446,7 +446,7 @@ public interface DebugVC50TypeIterator {
 
   /** Fetch <i>i</i>th derived type (0..getDerivedCount() - 1). */
   public int getDerivedType(int i);
-  
+
   ///////////////////////////
   // LF_BITFIELD accessors //
   ///////////////////////////
@@ -551,7 +551,7 @@ public interface DebugVC50TypeIterator {
   /** Offset of subobject that represents the base class within the
       structure. */
   public int getBClassOffset() throws DebugVC50WrongNumericTypeException;
-  
+
   //////////////////////////
   // LF_VBCLASS accessors //
   //////////////////////////
@@ -585,7 +585,7 @@ public interface DebugVC50TypeIterator {
   public int getVBClassVBOff() throws DebugVC50WrongNumericTypeException;
 
   ///////////////////////////
-  // LF_IVBCLASS accessors //  
+  // LF_IVBCLASS accessors //
   ///////////////////////////
 
   // This leaf specifies indirectly inherited virtual base class. If a
@@ -638,7 +638,7 @@ public interface DebugVC50TypeIterator {
 
   /** Length prefixed name of friend function. */
   public String getFriendFcnName();
-  
+
   ////////////////////////
   // LF_INDEX accessors //
   ////////////////////////
@@ -662,7 +662,7 @@ public interface DebugVC50TypeIterator {
 
   /** Numeric leaf specifying the offset of field in the structure. */
   public int getMemberOffset() throws DebugVC50WrongNumericTypeException;
-  
+
   /** Length-prefixed name of the member field. */
   public String getMemberName();
 
@@ -684,7 +684,7 @@ public interface DebugVC50TypeIterator {
 
   /** Length-prefixed name of the member field. */
   public String getStaticName();
-  
+
   /////////////////////////
   // LF_METHOD accessors //
   /////////////////////////
@@ -714,7 +714,7 @@ public interface DebugVC50TypeIterator {
 
   /** Length-prefixed name of type. */
   public String getNestedName();
-  
+
   ///////////////////////////
   // LF_VFUNCTAB accessors //
   ///////////////////////////
@@ -802,7 +802,7 @@ public interface DebugVC50TypeIterator {
 
   /** Type index of base class that introduced the member. */
   public int getMemberModifyType();
-  
+
   /** Length-prefixed name of member. */
   public String getMemberModifyName();
 
@@ -814,7 +814,7 @@ public interface DebugVC50TypeIterator {
       leaves) of the numeric leaf at the given offset, in bytes, from
       the start of the current leaf. */
   public short getNumericTypeAt(int byteOffset);
-  
+
   /** The size in bytes of the numeric leaf at the given offset, in
       bytes, from the start of the current leaf.
 
@@ -822,7 +822,7 @@ public interface DebugVC50TypeIterator {
       leaf at the specified byte offset. */
   public int getNumericLengthAt(int byteOffset)
     throws DebugVC50WrongNumericTypeException;
-  
+
   /** Fetch the value of the integer numeric leaf at the given offset,
       in bytes, from the start of the current leaf.
 
@@ -860,7 +860,7 @@ public interface DebugVC50TypeIterator {
   /** Fetch the raw bytes, including LF_ prefix (if any), of the
       numeric leaf at the given offset, in bytes, from the start of
       the current leaf.
-      
+
       @throw DebugVC50WrongNumericTypeException if there is no numeric
       leaf at the specified byte offset. */
   public byte[] getNumericDataAt(int byteOffset)

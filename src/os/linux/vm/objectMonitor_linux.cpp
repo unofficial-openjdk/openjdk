@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)objectMonitor_linux.cpp	1.69 07/05/05 17:04:36 JVM"
+#pragma ident "@(#)objectMonitor_linux.cpp      1.69 07/05/05 17:04:36 JVM"
 #endif
 
 /*
@@ -23,6 +23,5 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
-

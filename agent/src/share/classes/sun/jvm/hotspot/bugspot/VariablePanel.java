@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -61,7 +61,7 @@ public class VariablePanel extends JPanel {
     treeTable.setDragEnabled(true);
     JScrollPane sp = new JScrollPane(treeTable);
     sp.getViewport().setBackground(Color.white);
-        
+
     setLayout(new BorderLayout());
     add(sp, BorderLayout.CENTER);
   }
@@ -212,7 +212,7 @@ public class VariablePanel extends JPanel {
     public CCollector() {
       children = new ArrayList();
     }
-    
+
     public int getNumChildren() {
       return children.size();
     }

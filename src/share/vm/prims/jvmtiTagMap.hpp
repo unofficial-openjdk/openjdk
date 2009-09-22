@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiTagMap.hpp	1.25 07/05/05 17:06:40 JVM"
+#pragma ident "@(#)jvmtiTagMap.hpp      1.25 07/05/05 17:06:40 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// JvmtiTagMap 
+// JvmtiTagMap
 
 #ifndef _JAVA_JVMTI_TAG_MAP_H_
 #define _JAVA_JVMTI_TAG_MAP_H_
@@ -38,8 +38,8 @@ class JvmtiTagHashmapEntryClosure;
 class JvmtiTagMap :  public CHeapObj {
  private:
 
-  enum{	    
-    n_hashmaps = 2,				    // encapsulates 2 hashmaps
+  enum{
+    n_hashmaps = 2,                                 // encapsulates 2 hashmaps
     max_free_entries = 4096                         // maximum number of free entries per env
   };
 
@@ -47,19 +47,19 @@ class JvmtiTagMap :  public CHeapObj {
   static MemRegion _young_gen;
   static void get_young_generation();
 
-  JvmtiEnv*		_env;			    // the jvmti environment
-  Mutex			_lock;			    // lock for this tag map
-  JvmtiTagHashmap*	_hashmap[n_hashmaps];	    // the hashmaps 
+  JvmtiEnv*             _env;                       // the jvmti environment
+  Mutex                 _lock;                      // lock for this tag map
+  JvmtiTagHashmap*      _hashmap[n_hashmaps];       // the hashmaps
 
-  JvmtiTagHashmapEntry* _free_entries;		    // free list for this environment
+  JvmtiTagHashmapEntry* _free_entries;              // free list for this environment
   int _free_entries_count;                          // number of entries on the free list
 
   // create a tag map
-  JvmtiTagMap(JvmtiEnv* env);				  
+  JvmtiTagMap(JvmtiEnv* env);
 
   // accessors
-  inline Mutex* lock()			    { return &_lock; }
-  inline JvmtiEnv* env() const		    { return _env; }
+  inline Mutex* lock()                      { return &_lock; }
+  inline JvmtiEnv* env() const              { return _env; }
 
   // rehash tags maps for generation start to end
   void rehash(int start, int end);
@@ -69,11 +69,11 @@ class JvmtiTagMap :  public CHeapObj {
 
   // iterate over all entries in this tag map
   void entry_iterate(JvmtiTagHashmapEntryClosure* closure);
- 
+
  public:
 
   // indicates if this tag map is locked
-  bool is_locked()			    { return lock()->is_locked(); }  
+  bool is_locked()                          { return lock()->is_locked(); }
 
   // return the appropriate hashmap for a given object
   JvmtiTagHashmap* hashmap_for(oop o);
@@ -97,36 +97,36 @@ class JvmtiTagMap :  public CHeapObj {
 
   // deprecated heap iteration functions
   void iterate_over_heap(jvmtiHeapObjectFilter object_filter,
-                         KlassHandle klass,                          
-			 jvmtiHeapObjectCallback heap_object_callback, 
-                         const void* user_data); 
+                         KlassHandle klass,
+                         jvmtiHeapObjectCallback heap_object_callback,
+                         const void* user_data);
 
-  void iterate_over_reachable_objects(jvmtiHeapRootCallback heap_root_callback, 
-				      jvmtiStackReferenceCallback stack_ref_callback, 
-				      jvmtiObjectReferenceCallback object_ref_callback, 
+  void iterate_over_reachable_objects(jvmtiHeapRootCallback heap_root_callback,
+                                      jvmtiStackReferenceCallback stack_ref_callback,
+                                      jvmtiObjectReferenceCallback object_ref_callback,
                                       const void* user_data);
 
-  void iterate_over_objects_reachable_from_object(jobject object, 
-						  jvmtiObjectReferenceCallback object_reference_callback,
+  void iterate_over_objects_reachable_from_object(jobject object,
+                                                  jvmtiObjectReferenceCallback object_reference_callback,
                                                   const void* user_data);
 
 
   // advanced (JVMTI 1.1) heap iteration functions
-  void iterate_through_heap(jint heap_filter, 
-                            KlassHandle klass, 
-			    const jvmtiHeapCallbacks* callbacks, 
+  void iterate_through_heap(jint heap_filter,
+                            KlassHandle klass,
+                            const jvmtiHeapCallbacks* callbacks,
                             const void* user_data);
 
-  void follow_references(jint heap_filter, 
-                         KlassHandle klass, 
-			 jobject initial_object, 
-                         const jvmtiHeapCallbacks* callbacks, 
-			 const void* user_data);
+  void follow_references(jint heap_filter,
+                         KlassHandle klass,
+                         jobject initial_object,
+                         const jvmtiHeapCallbacks* callbacks,
+                         const void* user_data);
 
   // get tagged objects
-  jvmtiError get_objects_with_tags(const jlong* tags, jint count, 
-				   jint* count_ptr, jobject** object_result_ptr, 
-				   jlong** tag_result_ptr);
+  jvmtiError get_objects_with_tags(const jlong* tags, jint count,
+                                   jint* count_ptr, jobject** object_result_ptr,
+                                   jlong** tag_result_ptr);
 
   // call post-GC to rehash the tag maps.
   static void gc_epilogue(bool full);
@@ -136,4 +136,3 @@ class JvmtiTagMap :  public CHeapObj {
 };
 
 #endif   /* _JAVA_JVMTI_TAG_MAP_H_ */
-

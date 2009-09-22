@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)threadLS_solaris_x86.hpp	1.24 07/09/17 09:14:45 JVM"
+#pragma ident "@(#)threadLS_solaris_x86.hpp     1.24 07/09/17 09:14:45 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Processor dependent parts of ThreadLocalStorage
@@ -46,17 +46,17 @@ public:
 #endif // AMD64
   };
 
-  enum pd_tlsAccessMode { 
-     pd_tlsAccessUndefined	= -1,
-     pd_tlsAccessSlow		= 0,
-     pd_tlsAccessIndirect	= 1,
-     pd_tlsAccessDirect		= 2
+  enum pd_tlsAccessMode {
+     pd_tlsAccessUndefined      = -1,
+     pd_tlsAccessSlow           = 0,
+     pd_tlsAccessIndirect       = 1,
+     pd_tlsAccessDirect         = 2
   } ;
 
-  static void set_thread_in_slot (Thread *) ; 
+  static void set_thread_in_slot (Thread *) ;
 
-  static pd_tlsAccessMode pd_getTlsAccessMode () ; 
-  static ptrdiff_t pd_getTlsOffset () ; 
+  static pd_tlsAccessMode pd_getTlsAccessMode () ;
+  static ptrdiff_t pd_getTlsOffset () ;
 
   static uintptr_t pd_raw_thread_id() {
 #ifdef _GNU_SOURCE
@@ -65,7 +65,7 @@ public:
     __asm__ __volatile__ ("movq %%fs:0, %0" : "=r"(rv));
     return rv;
 #else
-    return gs_thread(); 
+    return gs_thread();
 #endif // AMD64
 #else  //_GNU_SOURCE
     return _raw_thread_id();
@@ -81,4 +81,3 @@ public:
 
   // Java Thread
   static inline Thread* thread();
-

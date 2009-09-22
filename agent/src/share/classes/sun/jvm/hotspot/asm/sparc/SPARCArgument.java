@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -38,10 +38,10 @@ public class SPARCArgument {
   private boolean isIn;
 
   // FIXME: add 64-bit stuff here (support for FP registers)
-  
+
   /** Only 6 registers may contain integer parameters */
   public static final int NUM_REGISTER_PARAMETERS = 6;
-  
+
   public SPARCArgument(int number, boolean isIn) {
     this.number = number;
     this.isIn   = isIn;
@@ -78,8 +78,8 @@ public class SPARCArgument {
   //      into the 6-word area "into which callee may store register arguments"
   //      (This is a different place than the corresponding register-save area location.)  */
   //  public SPARCAddress addressInFrame() const {
-  //    return SPARCAddress( is_in()   ? Address::extra_in_argument 
-  //		  	      : Address::extra_out_argument,
-  //	            _number );
+  //    return SPARCAddress( is_in()   ? Address::extra_in_argument
+  //                          : Address::extra_out_argument,
+  //                _number );
   //  }
 }

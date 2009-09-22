@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)generationSpec.cpp	1.29 07/05/29 09:44:15 JVM"
+#pragma ident "@(#)generationSpec.cpp   1.29 07/05/29 09:44:15 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,36 +22,36 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_generationSpec.cpp.incl"
 
 Generation* GenerationSpec::init(ReservedSpace rs, int level,
-				 GenRemSet* remset) {
+                                 GenRemSet* remset) {
   switch (name()) {
     case Generation::DefNew:
       return new DefNewGeneration(rs, init_size(), level);
 
     case Generation::MarkSweepCompact:
       return new TenuredGeneration(rs, init_size(), level, remset);
-    
+
 #ifndef SERIALGC
     case Generation::ParNew:
       return new ParNewGeneration(rs, init_size(), level);
 
     case Generation::ASParNew:
-      return new ASParNewGeneration(rs, 
-				    init_size(), 
-				    init_size() /* min size */,
-				    level);
+      return new ASParNewGeneration(rs,
+                                    init_size(),
+                                    init_size() /* min size */,
+                                    level);
 
     case Generation::ConcurrentMarkSweep: {
       assert(UseConcMarkSweepGC, "UseConcMarkSweepGC should be set");
       CardTableRS* ctrs = remset->as_CardTableRS();
       if (ctrs == NULL) {
-	vm_exit_during_initialization("Rem set incompatibility.");
+        vm_exit_during_initialization("Rem set incompatibility.");
       }
       // Otherwise
       // The constructor creates the CMSCollector if needed,
@@ -71,7 +71,7 @@ Generation* GenerationSpec::init(ReservedSpace rs, int level,
       assert(UseConcMarkSweepGC, "UseConcMarkSweepGC should be set");
       CardTableRS* ctrs = remset->as_CardTableRS();
       if (ctrs == NULL) {
-	vm_exit_during_initialization("Rem set incompatibility.");
+        vm_exit_during_initialization("Rem set incompatibility.");
       }
       // Otherwise
       // The constructor creates the CMSCollector if needed,
@@ -153,12 +153,12 @@ PermGen* PermanentGenerationSpec::init(ReservedSpace rs,
   switch (name()) {
     case PermGen::MarkSweepCompact:
       return new CompactingPermGen(perm_rs, shared_rs, init_size, remset, this);
-      
+
 #ifndef SERIALGC
     case PermGen::MarkSweep:
       guarantee(false, "NYI");
       return NULL;
-      
+
     case PermGen::ConcurrentMarkSweep: {
       assert(UseConcMarkSweepGC, "UseConcMarkSweepGC should be set");
       CardTableRS* ctrs = remset->as_CardTableRS();

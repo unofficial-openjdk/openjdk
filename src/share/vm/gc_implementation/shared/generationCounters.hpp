@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)generationCounters.hpp	1.14 07/05/05 17:05:34 JVM"
+#pragma ident "@(#)generationCounters.hpp       1.14 07/05/05 17:05:34 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A GenerationCounter is a holder class for performance counters

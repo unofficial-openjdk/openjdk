@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -75,7 +75,7 @@ public class RBTree {
 
     x.setColor(RBColor.RED);
     boolean shouldPropagate = x.update();
-    
+
     if (DEBUGGING && REALLY_VERBOSE) {
       System.err.println("RBTree.insertNode");
     }
@@ -375,7 +375,7 @@ public class RBTree {
           leftRotate(xParent);
           w = xParent.getRight();
         }
-        if (((w.getLeft()  == null) || (w.getLeft().getColor()  == RBColor.BLACK)) && 
+        if (((w.getLeft()  == null) || (w.getLeft().getColor()  == RBColor.BLACK)) &&
             ((w.getRight() == null) || (w.getRight().getColor() == RBColor.BLACK))) {
           // Case 2
           w.setColor(RBColor.RED);
@@ -419,7 +419,7 @@ public class RBTree {
           rightRotate(xParent);
           w = xParent.getLeft();
         }
-        if (((w.getRight() == null) || (w.getRight().getColor() == RBColor.BLACK)) && 
+        if (((w.getRight() == null) || (w.getRight().getColor() == RBColor.BLACK)) &&
             ((w.getLeft()  == null) || (w.getLeft().getColor()  == RBColor.BLACK))) {
           // Case 2
           w.setColor(RBColor.RED);
@@ -592,7 +592,7 @@ public class RBTree {
         if (height >= depth) {
           throw new RuntimeException("bug in java.util.Random");
         }
-      }      
+      }
       // Walk that far back up (FIXME: off by one?)
       while (height > 0) {
         xParent = xParent.getParent();

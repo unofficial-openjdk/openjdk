@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)space.inline.hpp	1.17 07/05/05 17:05:54 JVM"
+#pragma ident "@(#)space.inline.hpp     1.17 07/05/05 17:05:54 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline HeapWord* Space::block_start(const void* p) {
@@ -64,7 +64,7 @@ OffsetTableContigSpace::block_start_const(const void* p) const {
 
 inline HeapWord* ContiguousSpace::concurrent_iteration_safe_limit()
 {
-  assert(_concurrent_iteration_safe_limit <= top(), 
+  assert(_concurrent_iteration_safe_limit <= top(),
          "_concurrent_iteration_safe_limit update missed");
   return _concurrent_iteration_safe_limit;
 }

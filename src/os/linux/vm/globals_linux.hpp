@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)globals_linux.hpp	1.12 07/05/05 17:04:35 JVM"
+#pragma ident "@(#)globals_linux.hpp    1.12 07/05/05 17:04:35 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -30,7 +30,7 @@
 //
 #define RUNTIME_OS_FLAGS(develop, develop_pd, product, product_pd, diagnostic, notproduct) \
   product(bool, UseOprofile, false,                                 \
-	"enable support for Oprofile profiler")                     \
+        "enable support for Oprofile profiler")                     \
                                                                     \
   product(bool, UseLinuxPosixThreadCPUClocks, false,                \
           "enable fast Linux Posix clocks where available")         \

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciStreams.cpp	1.30 07/05/05 17:05:16 JVM"
+#pragma ident "@(#)ciStreams.cpp        1.30 07/05/05 17:05:16 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -90,12 +90,12 @@ int ciExceptionHandlerStream::count_remaining() {
 Bytecodes::Code ciBytecodeStream::wide()
 {
   // Get following bytecode; do not return wide
-  Bytecodes::Code bc = (Bytecodes::Code)_pc[1];	
-  _pc += 2;			// Skip both bytecodes
-  _pc += 2;			// Skip index always
-  if( bc == Bytecodes::_iinc ) 
-    _pc += 2;			// Skip optional constant
-  _was_wide = _pc;		// Flag last wide bytecode found
+  Bytecodes::Code bc = (Bytecodes::Code)_pc[1];
+  _pc += 2;                     // Skip both bytecodes
+  _pc += 2;                     // Skip index always
+  if( bc == Bytecodes::_iinc )
+    _pc += 2;                   // Skip optional constant
+  _was_wide = _pc;              // Flag last wide bytecode found
   return bc;
 }
 
@@ -104,27 +104,27 @@ Bytecodes::Code ciBytecodeStream::wide()
 //
 // Special handling for switch ops
 Bytecodes::Code ciBytecodeStream::table( Bytecodes::Code bc ) {
-  switch( bc ) {		// Check for special bytecode handling
-    
+  switch( bc ) {                // Check for special bytecode handling
+
   case Bytecodes::_lookupswitch:
-    _pc++;			// Skip wide bytecode
-    _pc += (_start-_pc)&3;	// Word align
-    _table_base = (jint*)_pc;	// Capture for later usage
-				// table_base[0] is default far_dest
+    _pc++;                      // Skip wide bytecode
+    _pc += (_start-_pc)&3;      // Word align
+    _table_base = (jint*)_pc;   // Capture for later usage
+                                // table_base[0] is default far_dest
     // Table has 2 lead elements (default, length), then pairs of u4 values.
     // So load table length, and compute address at end of table
     _pc = (address)&_table_base[2+ 2*Bytes::get_Java_u4((address)&_table_base[1])];
     break;
 
-  case Bytecodes::_tableswitch: { 
-    _pc++;			// Skip wide bytecode
-    _pc += (_start-_pc)&3;	// Word align
-    _table_base = (jint*)_pc;	// Capture for later usage
-				// table_base[0] is default far_dest
+  case Bytecodes::_tableswitch: {
+    _pc++;                      // Skip wide bytecode
+    _pc += (_start-_pc)&3;      // Word align
+    _table_base = (jint*)_pc;   // Capture for later usage
+                                // table_base[0] is default far_dest
     int lo = Bytes::get_Java_u4((address)&_table_base[1]);// Low bound
     int hi = Bytes::get_Java_u4((address)&_table_base[2]);// High bound
-    int len = hi - lo + 1;	// Dense table size
-    _pc = (address)&_table_base[3+len];	// Skip past table
+    int len = hi - lo + 1;      // Dense table size
+    _pc = (address)&_table_base[3+len]; // Skip past table
     break;
   }
 
@@ -137,8 +137,8 @@ Bytecodes::Code ciBytecodeStream::table( Bytecodes::Code bc ) {
 // ------------------------------------------------------------------
 // ciBytecodeStream::reset_to_bci
 void ciBytecodeStream::reset_to_bci( int bci ) {
-  _bc_start=_was_wide=0; 
-  _pc = _start+bci; 
+  _bc_start=_was_wide=0;
+  _pc = _start+bci;
 }
 
 // ------------------------------------------------------------------
@@ -162,7 +162,7 @@ void ciBytecodeStream::force_bci(int bci) {
 // ------------------------------------------------------------------
 // ciBytecodeStream::get_klass_index
 //
-// If this bytecodes references a klass, return the index of the 
+// If this bytecodes references a klass, return the index of the
 // referenced klass.
 int ciBytecodeStream::get_klass_index() const {
   switch(cur_bc()) {
@@ -314,7 +314,7 @@ int ciBytecodeStream::get_method_index() {
   default:
     ShouldNotReachHere();
     return 0;
-  }  
+  }
 }
 
 // ------------------------------------------------------------------
@@ -368,5 +368,3 @@ int ciBytecodeStream::get_method_signature_index() {
   int name_and_type_index = cpool->name_and_type_ref_index_at(method_index);
   return cpool->signature_ref_index_at(name_and_type_index);
 }
-
-

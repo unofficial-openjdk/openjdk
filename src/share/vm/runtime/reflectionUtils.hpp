@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)reflectionUtils.hpp	1.16 07/05/05 17:06:54 JVM"
+#pragma ident "@(#)reflectionUtils.hpp  1.16 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A KlassStream is an abstract stream for streaming over self, superclasses
@@ -100,7 +100,7 @@ class FieldStream : public KlassStream {
  private:
   int length() const                { return fields()->length(); }
   constantPoolOop constants() const { return _klass->constants(); }
- protected:   
+ protected:
   typeArrayOop fields() const       { return _klass->fields(); }
  public:
   FieldStream(instanceKlassHandle klass, bool local_only, bool classes_only)
@@ -112,7 +112,7 @@ class FieldStream : public KlassStream {
   void next() { _index -= instanceKlass::next_offset; }
 
   // Accessors for current field
-  AccessFlags access_flags() const { 
+  AccessFlags access_flags() const {
     AccessFlags flags;
     flags.set_flags(fields()->ushort_at(index() + instanceKlass::access_flags_offset));
     return flags;
@@ -125,7 +125,7 @@ class FieldStream : public KlassStream {
     int signature_index = fields()->ushort_at(index() +
                                        instanceKlass::signature_index_offset);
     return constants()->symbol_at(signature_index);
-  }  
+  }
   // missing: initval()
   int offset() const {
     return _klass->offset_from_fields( index() );
@@ -136,7 +136,7 @@ class FilteredField {
  private:
   klassOop _klass;
   int      _field_offset;
-  
+
  public:
   FilteredField(klassOop klass, int field_offset) {
     _klass = klass;
@@ -154,7 +154,7 @@ class FilteredFieldsMap : AllStatic {
   static void initialize();
   static bool is_filtered_field(klassOop klass, int field_offset) {
     for (int i=0; i < _filtered_fields->length(); i++) {
-      if (klass == _filtered_fields->at(i)->klass() && 
+      if (klass == _filtered_fields->at(i)->klass() &&
         field_offset == _filtered_fields->at(i)->field_offset()) {
         return true;
       }
@@ -196,7 +196,7 @@ class FilteredFieldStream : public FieldStream {
  private:
   int  _filtered_fields_count;
   bool has_filtered_field() { return (_filtered_fields_count > 0); }
-    
+
  public:
   FilteredFieldStream(instanceKlassHandle klass, bool local_only, bool classes_only)
     : FieldStream(klass, local_only, classes_only) {

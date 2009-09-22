@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_LIRAssembler_sparc.cpp	1.206 07/08/03 09:19:23 JVM"
+#pragma ident "@(#)c1_LIRAssembler_sparc.cpp    1.206 07/08/03 09:19:23 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -1126,7 +1126,7 @@ void LIR_Assembler::const2stack(LIR_Opr src, LIR_Opr dest) {
 
 void LIR_Assembler::const2mem(LIR_Opr src, LIR_Opr dest, BasicType type, CodeEmitInfo* info ) {
   LIR_Const* c = src->as_constant_ptr();
-  LIR_Address* addr	= dest->as_address_ptr();
+  LIR_Address* addr     = dest->as_address_ptr();
   Register base = addr->base()->as_pointer_register();
 
   if (info != NULL) {
@@ -1678,8 +1678,8 @@ void LIR_Assembler::comp_op(LIR_Condition condition, LIR_Opr opr1, LIR_Opr opr2,
       if (opr2->is_address()) {
         LIR_Address * addr = opr2->as_address_ptr();
         BasicType type = addr->type();
-	if ( type == T_OBJECT ) __ ld_ptr(as_Address(addr), O7);
-   	else 			__ ld(as_Address(addr), O7);
+        if ( type == T_OBJECT ) __ ld_ptr(as_Address(addr), O7);
+        else                    __ ld(as_Address(addr), O7);
         __ cmp(opr1->as_register(), O7);
       } else {
         __ cmp(opr1->as_register(), opr2->as_register());
@@ -1715,7 +1715,7 @@ void LIR_Assembler::comp_op(LIR_Condition condition, LIR_Opr opr1, LIR_Opr opr2,
     BasicType type = addr->type();
     assert (opr2->is_constant(), "Checking");
     if ( type == T_OBJECT ) __ ld_ptr(as_Address(addr), O7);
-    else 		    __ ld(as_Address(addr), O7);
+    else                    __ ld(as_Address(addr), O7);
     __ cmp(O7, opr2->as_constant_ptr()->as_jint());
   } else {
     ShouldNotReachHere();
@@ -2806,7 +2806,7 @@ void LIR_Assembler::emit_profile_call(LIR_OpProfileCall* op) {
     __ set(mdo_offset_bias, O7);
     __ add(mdo, O7, mdo);
   }
-      
+
   Address counter_addr(mdo, 0, md->byte_offset_of_slot(data, CounterData::count_offset()) - mdo_offset_bias);
   __ lduw(counter_addr, tmp1);
   __ add(tmp1, DataLayout::counter_increment, tmp1);
@@ -3183,7 +3183,7 @@ void LIR_Assembler::peephole(LIR_List* lir) {
         LIR_Op* prev = inst->at(i - 1);
         if (LIRFillDelaySlots && prev && prev->code() == lir_move && prev->info() == NULL &&
             (op->code() != lir_virtual_call ||
-             !prev->result_opr()->is_single_cpu() || 
+             !prev->result_opr()->is_single_cpu() ||
              prev->result_opr()->as_register() != O0) &&
             LIR_Assembler::is_single_instruction(prev)) {
           // Only moves without info can be put into the delay slot.
@@ -3215,4 +3215,3 @@ void LIR_Assembler::peephole(LIR_List* lir) {
 
 
 #undef __
-

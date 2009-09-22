@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)resolutionErrors.cpp	1.6 07/05/05 17:05:54 JVM"
+#pragma ident "@(#)resolutionErrors.cpp 1.6 07/05/05 17:05:54 JVM"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_resolutionErrors.cpp.incl"
 
 // add new entry to the table
-void ResolutionErrorTable::add_entry(int index, unsigned int hash, 
-				     constantPoolHandle pool, int cp_index, symbolHandle error)
+void ResolutionErrorTable::add_entry(int index, unsigned int hash,
+                                     constantPoolHandle pool, int cp_index, symbolHandle error)
 {
   assert_locked_or_safepoint(SystemDictionary_lock);
   assert(!pool.is_null() && !error.is_null(), "adding NULL obj");
@@ -40,8 +40,8 @@ void ResolutionErrorTable::add_entry(int index, unsigned int hash,
 }
 
 // find entry in the table
-ResolutionErrorEntry* ResolutionErrorTable::find_entry(int index, unsigned int hash, 
-						       constantPoolHandle pool, int cp_index)
+ResolutionErrorEntry* ResolutionErrorTable::find_entry(int index, unsigned int hash,
+                                                       constantPoolHandle pool, int cp_index)
 {
   assert_locked_or_safepoint(SystemDictionary_lock);
 
@@ -56,13 +56,13 @@ ResolutionErrorEntry* ResolutionErrorTable::find_entry(int index, unsigned int h
 }
 
 // create new error entry
-ResolutionErrorEntry* ResolutionErrorTable::new_entry(int hash, constantPoolOop pool, 
-						      int cp_index, symbolOop error)
-{   
+ResolutionErrorEntry* ResolutionErrorTable::new_entry(int hash, constantPoolOop pool,
+                                                      int cp_index, symbolOop error)
+{
   ResolutionErrorEntry* entry = (ResolutionErrorEntry*)Hashtable::new_entry(hash, pool);
   entry->set_cp_index(cp_index);
   entry->set_error(error);
-  
+
   return entry;
 }
 
@@ -74,8 +74,8 @@ ResolutionErrorTable::ResolutionErrorTable(int table_size)
 // GC support
 void ResolutionErrorTable::oops_do(OopClosure* f) {
   for (int i = 0; i < table_size(); i++) {
-    for (ResolutionErrorEntry* probe = bucket(i); 
-                           probe != NULL; 
+    for (ResolutionErrorEntry* probe = bucket(i);
+                           probe != NULL;
                            probe = probe->next()) {
       assert(probe->pool() != (constantPoolOop)NULL, "resolution error table is corrupt");
       assert(probe->error() != (symbolOop)NULL, "resolution error table is corrupt");
@@ -94,12 +94,12 @@ void ResolutionErrorEntry::oops_do(OopClosure* blk) {
 // decide when the entry can be purged.
 void ResolutionErrorTable::always_strong_classes_do(OopClosure* blk) {
   for (int i = 0; i < table_size(); i++) {
-    for (ResolutionErrorEntry* probe = bucket(i); 
-                           probe != NULL; 
+    for (ResolutionErrorEntry* probe = bucket(i);
+                           probe != NULL;
                            probe = probe->next()) {
       assert(probe->error() != (symbolOop)NULL, "resolution error table is corrupt");
       blk->do_oop((oop*)probe->error_addr());
-    }	
+    }
   }
 }
 
@@ -112,13 +112,11 @@ void ResolutionErrorTable::purge_resolution_errors(BoolObjectClosure* is_alive) 
       assert(entry->pool() != (constantPoolOop)NULL, "resolution error table is corrupt");
       constantPoolOop pool = entry->pool();
       if (is_alive->do_object_b(pool)) {
-	p = entry->next_addr();
+        p = entry->next_addr();
       } else {
-	*p = entry->next();
-	free_entry(entry);
+        *p = entry->next();
+        free_entry(entry);
       }
     }
   }
 }
-
-

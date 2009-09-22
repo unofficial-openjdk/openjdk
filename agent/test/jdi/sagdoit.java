@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import com.sun.jdi.*;
@@ -27,7 +27,7 @@ import java.util.*;
 
 
 // This just contains a bunch of methods that call various JDI methods.
-// It is called from the sagtest.java jtreg test to get this info for the standard 
+// It is called from the sagtest.java jtreg test to get this info for the standard
 // JDI and from the sagclient.java test to get this info for the SA JDI.
 
 class comparator implements Comparator {
@@ -68,7 +68,7 @@ public class sagdoit {
         //System.out.println("NOTE: dumping of class info is disabled in sagdoit.java");
         //System.out.println("      just to keep the output small while working on objects");
         doClasses();  //fixme jj: uncomment this to see all class info
-        
+
     }
     public void doThreadGroups() {
         doThreadGroupList(myVm.topLevelThreadGroups());
@@ -117,7 +117,7 @@ public class sagdoit {
             doOneThread(aThread);
         }
     }
-    
+
     public void doOneThread(ThreadReference xx) {
         pp("Thread: " + xx.name());
         indent(4);
@@ -131,7 +131,7 @@ public class sagdoit {
 
         pp("threadGroup()       = " + xx.threadGroup());
         indent(-4);
-        
+
         indent(4);
         try {
             List allFrames = xx.frames();
@@ -150,7 +150,7 @@ public class sagdoit {
     }
 
     public void doOneFrame(StackFrame frame) {
-        
+
         List localVars = null;
         try {
             localVars = frame.visibleVariables();
@@ -161,7 +161,7 @@ public class sagdoit {
         indent(4);
         for (Iterator it = localVars.iterator(); it.hasNext();) {
             LocalVariable lv = (LocalVariable) it.next();
-            pp("lv name = " + lv.name() + 
+            pp("lv name = " + lv.name() +
                ", type =  " + lv.typeName() +
                ", sig =   " + lv.signature() +
                ", gsig =  " + lv.genericSignature() +
@@ -202,7 +202,7 @@ public class sagdoit {
 
 
 
-        
+
         String className = xx.getClass().getName();
         pp("subclass           = " + className);
 
@@ -219,7 +219,7 @@ public class sagdoit {
          } catch (ClassNotFoundException ee) {
          }
 
-        
+
          if (referenceType.isInstance(xx)) {
              pp("ReferenceType fields");
              ReferenceType rr = (ReferenceType)xx;
@@ -265,14 +265,14 @@ public class sagdoit {
       pp("fieldByName(String fieldName) = " + xx.fieldByName("fieldName"));
       pp("methods() = " + xx.methods());
 
-      
+
        List meths = xx.methods();
        Iterator iter = meths.iterator();
        while (iter.hasNext()) {
            Method mm = (Method)iter.next();
            pp("  name/sig:" + mm.name() + "/" + mm.signature());
        }
-      
+
       pp(" visibleMethods() = " + xx.visibleMethods());
 
       //if (1 == 1) return;

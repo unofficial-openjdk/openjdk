@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -45,7 +45,7 @@ public interface DebugVC50X86RegisterEnums {
   public static final int BP = 14;
   public static final int SI = 15;
   public static final int DI = 16;
-  
+
   /** 32-bit registers */
   public static final int EAX = 17;
   public static final int ECX = 18;
@@ -55,7 +55,7 @@ public interface DebugVC50X86RegisterEnums {
   public static final int EBP = 22;
   public static final int ESI = 23;
   public static final int EDI = 24;
-  
+
   /** Segment registers */
   public static final int ES = 25;
   public static final int CS = 26;

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -34,7 +34,7 @@ public class BytecodeWithKlass extends BytecodeWithCPIndex {
 
   protected Klass getKlass() {
     return method().getConstants().getKlassRefAt(index());
-  } 
+  }
 
   public Symbol getClassName() {
     Oop obj = method().getConstants().getObjAt(index());

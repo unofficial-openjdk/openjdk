@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -47,7 +47,7 @@ import sun.jvm.hotspot.ui.action.*;
 import com.sun.java.swing.ui.*;
 import com.sun.java.swing.action.*;
 
-/** 
+/**
  * This base class encapsulates many of the events that are fired from
  * the various panels in this directory so they can easily be plugged
  * in to different containing frameworks (HSDB, BugSpot).
@@ -60,18 +60,18 @@ public class SAPanel extends JPanel {
     }
 
     public void addPanelListener(SAListener listener) {
-	listeners.add(listener);
+        listeners.add(listener);
     }
 
     public void removePanelListener(SAListener listener) {
-	listeners.remove(listener);
+        listeners.remove(listener);
     }
 
     public void showThreadOopInspector(JavaThread t) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showThreadOopInspector(t);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showThreadOopInspector(t);
+        }
     }
 
     public void showInspector(Oop oop) {
@@ -79,38 +79,38 @@ public class SAPanel extends JPanel {
     }
 
     public void showInspector(SimpleTreeNode node) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showInspector(node);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showInspector(node);
+        }
     }
 
     public void showThreadStackMemory(JavaThread t) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showThreadStackMemory(t);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showThreadStackMemory(t);
+        }
     }
 
     public void showJavaStackTrace(JavaThread t) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showJavaStackTrace(t);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showJavaStackTrace(t);
+        }
     }
 
     public void showThreadInfo(JavaThread t) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showThreadInfo(t);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showThreadInfo(t);
+        }
     }
 
     public void showCodeViewer(Address address) {
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    SAListener listener = (SAListener) iter.next();
-	    listener.showCodeViewer(address);
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            SAListener listener = (SAListener) iter.next();
+            listener.showCodeViewer(address);
+        }
     }
 
 

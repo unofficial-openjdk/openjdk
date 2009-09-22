@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeInterpreter.hpp	1.24 07/08/29 13:42:24 JVM"
+#pragma ident "@(#)bytecodeInterpreter.hpp      1.24 07/08/29 13:42:24 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifdef CC_INTERP
@@ -87,9 +87,9 @@ public:
          call_method,               // request for new frame from interpreter, manager responds with method_entry
          return_from_method,        // request from interpreter to unwind, manager responds with method_continue
          more_monitors,             // need a new monitor
-	 throwing_exception,        // unwind stack and rethrow
-	 popping_frame,             // unwind call and retry call
-	 do_osr                     // request this invocation be OSR's
+         throwing_exception,        // unwind stack and rethrow
+         popping_frame,             // unwind call and retry call
+         do_osr                     // request this invocation be OSR's
     };
 
 private:
@@ -118,15 +118,15 @@ public:
 // Deoptimization support
 //
 static void layout_interpreterState(interpreterState to_fill,
-				    frame* caller,
-				    frame* interpreter_frame,
-				    methodOop method,
-				    intptr_t* locals,
-				    intptr_t* stack,
-				    intptr_t* stack_base,
-				    intptr_t* monitor_base,
-				    intptr_t* frame_bottom,
-				    bool top_frame);
+                                    frame* caller,
+                                    frame* interpreter_frame,
+                                    methodOop method,
+                                    intptr_t* locals,
+                                    intptr_t* stack,
+                                    intptr_t* stack_base,
+                                    intptr_t* monitor_base,
+                                    intptr_t* frame_bottom,
+                                    bool top_frame);
 
 /*
  * Generic 32-bit wide "Java slot" definition. This type occurs
@@ -409,7 +409,7 @@ static int32_t VMdoubleCompare(jdouble op1, jdouble op2, int32_t direction);
 /*
  * Copy two typeless 32-bit words from one location to another.
  * This is semantically equivalent to:
- * 
+ *
  * to[0] = from[0];
  * to[1] = from[1];
  *
@@ -423,7 +423,7 @@ static void VMmemCopy64(uint32_t to[2], const uint32_t from[2]);
 // Arithmetic operations
 
 /*
- * Java arithmetic methods. 
+ * Java arithmetic methods.
  * The functions below follow the semantics of the
  * iadd, isub, imul, idiv, irem, iand, ior, ixor,
  * and ineg bytecodes, respectively.
@@ -499,7 +499,7 @@ static void swap(intptr_t *tos);      /* swap top two elements */
 
 // umm don't like this method modifies its object
 
-// The Interpreter used when 
+// The Interpreter used when
 static void run(interpreterState istate);
 // The interpreter used if JVMTI needs interpreter events
 static void runWithChecks(interpreterState istate);
@@ -567,7 +567,7 @@ static const char* C_msg(BytecodeInterpreter::messages msg);
 void print();
 #endif // PRODUCT
 
-    // Platform fields/methods 
+    // Platform fields/methods
 # include "incls/_bytecodeInterpreter_pd.hpp.incl"
 
 }; // BytecodeInterpreter

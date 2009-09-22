@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -32,7 +32,7 @@ abstract class FPopDecoder extends InstructionDecoder {
     Instruction decode(int instruction, SPARCInstructionFactory factory) {
         int opf = getOpf(instruction);
         InstructionDecoder decoder = getOpfDecoder(opf);
-        return (decoder == null) ? factory.newIllegalInstruction(instruction) 
+        return (decoder == null) ? factory.newIllegalInstruction(instruction)
                                  : decoder.decode(instruction, factory);
     }
 }

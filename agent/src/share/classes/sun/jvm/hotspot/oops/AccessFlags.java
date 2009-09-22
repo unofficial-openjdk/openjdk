@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -60,9 +60,9 @@ public class AccessFlags implements /* imports */ ClassConstants {
   // methodOop flags
   public boolean isMonitorMatching   () { return (flags & JVM_ACC_MONITOR_MATCH          ) != 0; }
   public boolean hasMonitorBytecodes () { return (flags & JVM_ACC_HAS_MONITOR_BYTECODES  ) != 0; }
-  public boolean hasLoops            () { return (flags & JVM_ACC_HAS_LOOPS              ) != 0; }  
-  public boolean loopsFlagInit       () { return (flags & JVM_ACC_LOOPS_FLAG_INIT        ) != 0; }  
-  public boolean queuedForCompilation() { return (flags & JVM_ACC_QUEUED                 ) != 0; }  
+  public boolean hasLoops            () { return (flags & JVM_ACC_HAS_LOOPS              ) != 0; }
+  public boolean loopsFlagInit       () { return (flags & JVM_ACC_LOOPS_FLAG_INIT        ) != 0; }
+  public boolean queuedForCompilation() { return (flags & JVM_ACC_QUEUED                 ) != 0; }
   public boolean isNotOsrCompilable  () { return (flags & JVM_ACC_NOT_OSR_COMPILABLE     ) != 0; }
   public boolean hasLineNumberTable  () { return (flags & JVM_ACC_HAS_LINE_NUMBER_TABLE  ) != 0; }
   public boolean hasCheckedExceptions() { return (flags & JVM_ACC_HAS_CHECKED_EXCEPTIONS ) != 0; }
@@ -94,7 +94,7 @@ public class AccessFlags implements /* imports */ ClassConstants {
     if (isBridge      ()) tty.print("bridge "      );
     if (isTransient   ()) tty.print("transient "   );
     if (isVarArgs     ()) tty.print("varargs "     );
-    if (isNative      ()) tty.print("native "      );	
+    if (isNative      ()) tty.print("native "      );
     if (isEnum        ()) tty.print("enum "        );
     if (isInterface   ()) tty.print("interface "   );
     if (isAbstract    ()) tty.print("abstract "    );

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perfData.cpp	1.22 07/05/05 17:06:52 JVM"
+#pragma ident "@(#)perfData.cpp 1.22 07/05/05 17:06:52 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_perfData.cpp.incl"
 
-PerfDataList*	PerfDataManager::_all = NULL;
-PerfDataList*	PerfDataManager::_sampled = NULL;
-PerfDataList*	PerfDataManager::_constants = NULL;
+PerfDataList*   PerfDataManager::_all = NULL;
+PerfDataList*   PerfDataManager::_sampled = NULL;
+PerfDataList*   PerfDataManager::_constants = NULL;
 
 /*
  * The jvmstat global and subsysem jvmstat counter name spaces. The top
@@ -161,20 +161,20 @@ void PerfData::create_entry(BasicType dtype, size_t dsize, size_t vlen) {
 
   if (PerfTraceDataCreation) {
     tty->print("name = %s, dtype = %d, variability = %d,"
-	       " units = %d, dsize = %d, vlen = %d,"
-	       " pad_length = %d, size = %d, on_c_heap = %s,"
-	       " address = " INTPTR_FORMAT ","
-	       " data address = " INTPTR_FORMAT "\n",
-	       cname, dtype, variability(),
-	       units(), dsize, vlen,
-	       pad_length, size, is_on_c_heap() ? "TRUE":"FALSE",
-	       psmp, valuep);
+               " units = %d, dsize = %d, vlen = %d,"
+               " pad_length = %d, size = %d, on_c_heap = %s,"
+               " address = " INTPTR_FORMAT ","
+               " data address = " INTPTR_FORMAT "\n",
+               cname, dtype, variability(),
+               units(), dsize, vlen,
+               pad_length, size, is_on_c_heap() ? "TRUE":"FALSE",
+               psmp, valuep);
   }
 
   // record the start of the entry and the location of the data field.
   _pdep = pdep;
   _valuep = valuep;
-  
+
   // mark the PerfData memory region as having been updated.
   PerfMemory::mark_updated();
 }
@@ -305,7 +305,7 @@ void PerfDataManager::add_item(PerfData* p, bool sampled) {
     _constants->append(p);
     return;
   }
-    
+
   if (sampled) {
     if (_sampled == NULL) {
       _sampled = new PerfDataList(25);
@@ -378,7 +378,7 @@ PerfStringConstant* PerfDataManager::create_string_constant(CounterNS ns,
   PerfStringConstant* p = new PerfStringConstant(ns, name, s);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -396,7 +396,7 @@ PerfLongConstant* PerfDataManager::create_long_constant(CounterNS ns,
   PerfLongConstant* p = new PerfLongConstant(ns, name, u, val);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -419,7 +419,7 @@ PerfStringVariable* PerfDataManager::create_string_variable(CounterNS ns,
   PerfStringVariable* p = new PerfStringVariable(ns, name, max_length, s);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -437,7 +437,7 @@ PerfLongVariable* PerfDataManager::create_long_variable(CounterNS ns,
   PerfLongVariable* p = new PerfLongVariable(ns, name, u, ival);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -458,7 +458,7 @@ PerfLongVariable* PerfDataManager::create_long_variable(CounterNS ns,
   PerfLongVariable* p = new PerfLongVariable(ns, name, u, sp);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -480,7 +480,7 @@ PerfLongVariable* PerfDataManager::create_long_variable(CounterNS ns,
   PerfLongVariable* p = new PerfLongVariable(ns, name, u, sh);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -498,7 +498,7 @@ PerfLongCounter* PerfDataManager::create_long_counter(CounterNS ns,
   PerfLongCounter* p = new PerfLongCounter(ns, name, u, ival);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -519,7 +519,7 @@ PerfLongCounter* PerfDataManager::create_long_counter(CounterNS ns,
   PerfLongCounter* p = new PerfLongCounter(ns, name, u, sp);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -541,7 +541,7 @@ PerfLongCounter* PerfDataManager::create_long_counter(CounterNS ns,
   PerfLongCounter* p = new PerfLongCounter(ns, name, u, sh);
 
   if (!p->is_valid()) {
-    // allocation of native resources failed. 
+    // allocation of native resources failed.
     delete p;
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -571,7 +571,7 @@ PerfDataList::~PerfDataList() {
 
 bool PerfDataList::by_name(void* name, PerfData* pd) {
 
-  if (pd == NULL) 
+  if (pd == NULL)
     return false;
 
   return strcmp((const char*)name, pd->name()) == 0;

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)thread_linux_x86.hpp	1.20 07/05/05 17:04:49 JVM"
+#pragma ident "@(#)thread_linux_x86.hpp 1.20 07/05/05 17:04:49 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
  private:
@@ -48,7 +48,7 @@
   void set_base_of_stack_pointer(intptr_t* base_sp) {
   }
 
-  static ByteSize last_Java_fp_offset()          { 
+  static ByteSize last_Java_fp_offset()          {
     return byte_offset_of(JavaThread, _anchor) + JavaFrameAnchor::last_Java_fp_offset();
   }
 
@@ -66,4 +66,3 @@
   static bool register_stack_overflow() { return false; }
   static void enable_register_stack_guard() {}
   static void disable_register_stack_guard() {}
-

@@ -19,42 +19,42 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 public class UnixPlatform extends Platform {
     public void setupFileTemplates() {
-	inclFileTemplate = new FileName(this,
-	    "incls/", "_", "",             ".incl", "", ""
-	);
-	giFileTemplate = new FileName(this,
-	    "incls/", "",  "_precompiled", ".incl", "", ""
-	);
-	gdFileTemplate = new FileName(this,
-	    "",       "",  "Dependencies", "",      "", ""
-	);
+        inclFileTemplate = new FileName(this,
+            "incls/", "_", "",             ".incl", "", ""
+        );
+        giFileTemplate = new FileName(this,
+            "incls/", "",  "_precompiled", ".incl", "", ""
+        );
+        gdFileTemplate = new FileName(this,
+            "",       "",  "Dependencies", "",      "", ""
+        );
     }
-    
+
     private static String[] suffixes = { ".cpp", ".c", ".s" };
 
     public String[] outerSuffixes() {
-	return suffixes;
+        return suffixes;
     }
 
     public String objFileSuffix() {
-	return ".o";
+        return ".o";
     }
 
     public String asmFileSuffix() {
-	return ".i";
+        return ".i";
     }
 
     public String dependentPrefix() {
-	return "";
+        return "";
     }
 
     /** Do not change this; unless you fix things so precompiled
-	header files get translated into make dependencies. - Ungar */
+        header files get translated into make dependencies. - Ungar */
     public int defaultGrandIncludeThreshold() {
        if (System.getProperty("USE_PRECOMPILED_HEADER") != null)
           return 30;
@@ -65,9 +65,9 @@ public class UnixPlatform extends Platform {
     /** For Unix make, include the dependencies for precompiled header
         files. */
     public boolean includeGIDependencies() {
-	return false;
+        return false;
     }
-  
+
     /** Should C/C++ source file be dependent on a file included
         into the grand-include file.
         On Unix with precompiled headers we don't want each file to be

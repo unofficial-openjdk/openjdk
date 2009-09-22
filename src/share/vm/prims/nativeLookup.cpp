@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)nativeLookup.cpp	1.82 07/05/05 17:06:42 JVM"
+#pragma ident "@(#)nativeLookup.cpp     1.82 07/05/05 17:06:42 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -133,21 +133,21 @@ address NativeLookup::lookup_style(methodHandle method, char* pure_name, const c
       in_base_library = true;
       return entry;
     }
-  }  
+  }
 
   // Otherwise call static method findNative in ClassLoader
   KlassHandle   klass (THREAD, SystemDictionary::classloader_klass());
   Handle name_arg = java_lang_String::create_from_str(jni_name, CHECK_NULL);
 
   JavaValue result(T_LONG);
-  JavaCalls::call_static(&result, 
-                         klass,                        
-                         vmSymbolHandles::findNative_name(), 
+  JavaCalls::call_static(&result,
+                         klass,
+                         vmSymbolHandles::findNative_name(),
                          vmSymbolHandles::classloader_string_long_signature(),
-                         // Arguments    
-                         loader, 
+                         // Arguments
+                         loader,
                          name_arg,
-                         CHECK_NULL);  
+                         CHECK_NULL);
   entry = (address) (intptr_t) result.get_jlong();
 
   if (entry == NULL) {
@@ -175,9 +175,9 @@ address NativeLookup::lookup_entry(methodHandle method, bool& in_base_library, T
 
   // Compute argument size
   int args_size = 1                             // JNIEnv
-                + (method->is_static() ? 1 : 0) // class for static methods 
-                + method->size_of_parameters(); // actual parameters  
-  
+                + (method->is_static() ? 1 : 0) // class for static methods
+                + method->size_of_parameters(); // actual parameters
+
 
   // 1) Try JNI short style
   entry = lookup_style(method, pure_name, "",        args_size, true,  in_base_library, CHECK_NULL);
@@ -226,7 +226,7 @@ address NativeLookup::lookup_entry_prefixed(methodHandle method, bool& in_base_l
     symbolHandle wrapper_symbol(THREAD, SymbolTable::probe(wrapper_name, wrapper_name_len));
     if (!wrapper_symbol.is_null()) {
       KlassHandle kh(method->method_holder());
-      methodOop wrapper_method = Klass::cast(kh())->lookup_method(wrapper_symbol(), 
+      methodOop wrapper_method = Klass::cast(kh())->lookup_method(wrapper_symbol(),
                                                                   method->signature());
       if (wrapper_method != NULL && !wrapper_method->is_native()) {
         // we found a wrapper method, use its native entry
@@ -245,14 +245,14 @@ address NativeLookup::lookup_base(methodHandle method, bool& in_base_library, TR
   entry = lookup_entry(method, in_base_library, THREAD);
   if (entry != NULL) return entry;
 
-  // standard native method resolution has failed.  Check if there are any 
+  // standard native method resolution has failed.  Check if there are any
   // JVM TI prefixes which have been applied to the native method name.
   entry = lookup_entry_prefixed(method, in_base_library, THREAD);
   if (entry != NULL) return entry;
-    
+
   // Native function not found, throw UnsatisfiedLinkError
-  THROW_MSG_0(vmSymbols::java_lang_UnsatisfiedLinkError(), 
-              method->name_and_sig_as_C_string()); 
+  THROW_MSG_0(vmSymbols::java_lang_UnsatisfiedLinkError(),
+              method->name_and_sig_as_C_string());
 }
 
 
@@ -264,8 +264,8 @@ address NativeLookup::lookup(methodHandle method, bool& in_base_library, TRAPS) 
     // -verbose:jni printing
     if (PrintJNIResolving) {
       ResourceMark rm(THREAD);
-      tty->print_cr("[Dynamic-linking native method %s.%s ... JNI]", 
-        Klass::cast(method->method_holder())->external_name(), 
+      tty->print_cr("[Dynamic-linking native method %s.%s ... JNI]",
+        Klass::cast(method->method_holder())->external_name(),
         method->name()->as_C_string());
     }
   }

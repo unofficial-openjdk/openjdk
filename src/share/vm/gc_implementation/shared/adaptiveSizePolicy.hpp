@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)adaptiveSizePolicy.hpp	1.15 07/05/05 17:05:32 JVM"
+#pragma ident "@(#)adaptiveSizePolicy.hpp       1.15 07/05/05 17:05:32 JVM"
 #endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This class keeps statistical information and computes the
@@ -250,8 +250,8 @@ class AdaptiveSizePolicy : public CHeapObj {
 
   // Return the mutator cost using the decayed
   // GC cost.
-  double adjusted_mutator_cost() const { 
-    double result = 1.0 - decaying_gc_cost(); 
+  double adjusted_mutator_cost() const {
+    double result = 1.0 - decaying_gc_cost();
     assert(result >= 0.0, "adjusted mutator cost calculation is incorrect");
     return result;
   }
@@ -323,28 +323,28 @@ class AdaptiveSizePolicy : public CHeapObj {
 
  public:
   AdaptiveSizePolicy(size_t init_eden_size,
-		     size_t init_promo_size,
-		     size_t init_survivor_size,
-		     double gc_pause_goal_sec,
-		     uint gc_cost_ratio);
+                     size_t init_promo_size,
+                     size_t init_survivor_size,
+                     double gc_pause_goal_sec,
+                     uint gc_cost_ratio);
 
-  bool is_gc_cms_adaptive_size_policy() { 
-    return kind() == _gc_cms_adaptive_size_policy; 
+  bool is_gc_cms_adaptive_size_policy() {
+    return kind() == _gc_cms_adaptive_size_policy;
   }
-  bool is_gc_ps_adaptive_size_policy() { 
-    return kind() == _gc_ps_adaptive_size_policy; 
+  bool is_gc_ps_adaptive_size_policy() {
+    return kind() == _gc_ps_adaptive_size_policy;
   }
 
   AdaptivePaddedAverage*   avg_minor_pause() const { return _avg_minor_pause; }
-  AdaptiveWeightedAverage* avg_minor_interval() const { 
-    return _avg_minor_interval; 
+  AdaptiveWeightedAverage* avg_minor_interval() const {
+    return _avg_minor_interval;
   }
-  AdaptiveWeightedAverage* avg_minor_gc_cost() const { 
-    return _avg_minor_gc_cost; 
+  AdaptiveWeightedAverage* avg_minor_gc_cost() const {
+    return _avg_minor_gc_cost;
   }
 
-  AdaptiveWeightedAverage* avg_major_gc_cost() const { 
-    return _avg_major_gc_cost; 
+  AdaptiveWeightedAverage* avg_major_gc_cost() const {
+    return _avg_major_gc_cost;
   }
 
   AdaptiveWeightedAverage* avg_young_live() const { return _avg_young_live; }
@@ -441,13 +441,13 @@ class AdaptiveSizePolicy : public CHeapObj {
 
   // Printing support
   virtual bool print_adaptive_size_policy_on(outputStream* st) const;
-  bool print_adaptive_size_policy_on(outputStream* st, int 
-				  tenuring_threshold) const;
+  bool print_adaptive_size_policy_on(outputStream* st, int
+                                  tenuring_threshold) const;
 };
 
 // Class that can be used to print information about the
-// adaptive size policy at intervals specified by 
-// AdaptiveSizePolicyOutputInterval.  Only print information 
+// adaptive size policy at intervals specified by
+// AdaptiveSizePolicyOutputInterval.  Only print information
 // if an adaptive size policy is in use.
 class AdaptiveSizePolicyOutput : StackObj {
   AdaptiveSizePolicy* _size_policy;
@@ -457,11 +457,11 @@ class AdaptiveSizePolicyOutput : StackObj {
     // interval test should be ignored.  An interval is of zero is
     // a special value that indicates that the interval test should
     // always fail (never do the print based on the interval test).
-    return PrintGCDetails && 
-	   UseAdaptiveSizePolicy &&
-	   (UseParallelGC || UseConcMarkSweepGC) &&
+    return PrintGCDetails &&
+           UseAdaptiveSizePolicy &&
+           (UseParallelGC || UseConcMarkSweepGC) &&
            (AdaptiveSizePolicyOutputInterval > 0) &&
-	   ((count == 0) ||
+           ((count == 0) ||
              ((count % AdaptiveSizePolicyOutputInterval) == 0));
   }
  public:
@@ -476,16 +476,16 @@ class AdaptiveSizePolicyOutput : StackObj {
       _size_policy = NULL;
       _do_print = false;
     }
-  } 
-  AdaptiveSizePolicyOutput(AdaptiveSizePolicy* size_policy, 
-			   uint count) :
+  }
+  AdaptiveSizePolicyOutput(AdaptiveSizePolicy* size_policy,
+                           uint count) :
     _size_policy(size_policy) {
     if (UseAdaptiveSizePolicy && (AdaptiveSizePolicyOutputInterval > 0)) {
       _do_print = print_test(count);
     } else {
       _do_print = false;
     }
-  } 
+  }
   ~AdaptiveSizePolicyOutput() {
     if (_do_print) {
       assert(UseAdaptiveSizePolicy, "Should not be in use");

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -32,10 +32,10 @@ import sun.jvm.hotspot.oops.ObjArray;
 
 public class JSJavaObjArray extends JSJavaArray {
     public JSJavaObjArray(ObjArray array, JSJavaFactory fac) {
-	super(array, fac);
+        super(array, fac);
     }
 
     public final ObjArray getObjArray() {
-	return (ObjArray) getArray();
+        return (ObjArray) getArray();
     }
-} 
+}

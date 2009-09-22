@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -32,7 +32,7 @@ import java.util.Comparator;
 public class Interval {
   private Object lowEndpoint;
   private Object highEndpoint;
-  
+
   /** It is required that the low endpoint be less than or equal to
       the high endpoint according to the Comparator which will be
       passed into the overlaps() routines. */

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oopsHierarchy.hpp	1.31 07/05/17 15:57:10 JVM"
+#pragma ident "@(#)oopsHierarchy.hpp    1.31 07/05/17 15:57:10 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // OBJECT hierarchy
@@ -68,7 +68,7 @@ typedef class   compiledICHolderOopDesc*    compiledICHolderOop;
 // instead, which generates less code anyway.
 
 class Thread;
-typedef class   markOopDesc*		    markOop;
+typedef class   markOopDesc*                markOop;
 class PromotedObject;
 
 
@@ -81,7 +81,7 @@ class oop {
   // friend class markOop;
 public:
   void set_obj(const void* p)         {
-    raw_set_obj(p); 
+    raw_set_obj(p);
     if (CheckUnhandledOops) register_oop();
   }
   void raw_set_obj(const void* p)     { _o = (oopDesc*)p; }

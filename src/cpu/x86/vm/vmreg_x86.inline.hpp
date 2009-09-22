@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmreg_x86.inline.hpp	1.7 07/07/02 16:50:39 JVM"
+#pragma ident "@(#)vmreg_x86.inline.hpp 1.7 07/07/02 16:50:39 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline VMReg RegisterImpl::as_VMReg() {
@@ -85,4 +85,3 @@ inline   bool VMRegImpl::is_concrete() {
 #endif // AMD64
   return is_even(value());
 }
-

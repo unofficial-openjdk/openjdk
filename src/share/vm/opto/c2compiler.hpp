@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c2compiler.hpp	1.28 07/05/05 17:06:11 JVM"
+#pragma ident "@(#)c2compiler.hpp       1.28 07/05/05 17:06:11 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class C2Compiler : public AbstractCompiler {
@@ -43,14 +43,14 @@ public:
   // Customization
   bool needs_adapters         () { return true; }
   bool needs_stubs            () { return true; }
-  
+
   void initialize();
 
   // Compilation entry point for methods
   void compile_method(ciEnv* env,
                       ciMethod* target,
                       int entry_bci);
-  
+
   // sentinel value used to trigger backtracking in compile_method().
   static const char* retry_no_subsuming_loads();
   static const char* retry_no_escape_analysis();
@@ -58,10 +58,3 @@ public:
   // Print compilation timers and statistics
   void print_timers();
 };
-
-
-
-
-
-
-

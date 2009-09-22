@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_share_solaris.hpp	1.27 07/05/05 17:04:41 JVM"
+#pragma ident "@(#)os_share_solaris.hpp 1.27 07/05/05 17:04:41 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Defines the interfaces to Solaris operating systems that vary across platforms
@@ -40,7 +40,7 @@ class GetThreadPC_Callback : public OSThread::Sync_Interrupt_Callback {
 
  public:
 
-  GetThreadPC_Callback(Monitor *sync) : 
+  GetThreadPC_Callback(Monitor *sync) :
     OSThread::Sync_Interrupt_Callback(sync) { }
   ExtendedPC addr() const { return _addr; }
 
@@ -63,9 +63,8 @@ void continue_with_dump(void);
 // For Sun Studio compiler implementation is in  file
 // src/os_cpu/solaris_sparc/vm/solaris_sparc.il
 // For gcc implementation is in  file
-// src/os_cpu/solaris_sparc/vm/os_solaris_sparc.cpp 
+// src/os_cpu/solaris_sparc/vm/os_solaris_sparc.cpp
 extern "C" void _mark_fpu_nosave() ;
 #endif
 
 #define PROCFILE_LENGTH 128
-

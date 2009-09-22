@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)fprofiler.hpp	1.55 07/06/17 14:09:46 JVM"
+#pragma ident "@(#)fprofiler.hpp        1.55 07/06/17 14:09:46 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // a simple flat profiler for Java
@@ -47,7 +47,7 @@ enum TickPosition {
 // and destructed as we exit the region.  While we are in the region
 // ticks are allotted to the region.
 class ThreadProfilerMark: public StackObj {
-public: 
+public:
   // For now, the only thread-specific region is the class loader.
   enum Region { noRegion, classLoaderRegion, extraRegion, maxRegion };
 
@@ -101,7 +101,7 @@ public:
     _compiled = 0;
     _native = 0;
     _compiling = 0;
-  } 
+  }
   static void print_header(outputStream* st);
   void print_data(outputStream* st);
 };
@@ -153,7 +153,7 @@ private:
 
   void record_tick_for_running_frame(JavaThread* thread, frame fr);
   void record_tick_for_calling_frame(JavaThread* thread, frame fr);
-  
+
   void initialize();
 
   static int  entry(int value);
@@ -161,7 +161,7 @@ private:
 
 private:
   friend class FlatProfiler;
-  void record_tick(JavaThread* thread); 
+  void record_tick(JavaThread* thread);
   bool engaged;
   // so we can do percentages for this thread, and quick checks for activity
   int thread_ticks;
@@ -265,14 +265,14 @@ public:
   static int     received_ticks;      // ticks that were received by task
   static int    delivered_ticks;      // ticks that were delivered by task
   static int non_method_ticks() {
-    return 
-      ( received_gc_ticks 
+    return
+      ( received_gc_ticks
       + vm_operation_ticks
-      + deopt_ticks 
+      + deopt_ticks
       + threads_lock_ticks
       + blocked_ticks
-      + compiler_ticks 
-      + interpreter_ticks 
+      + compiler_ticks
+      + interpreter_ticks
       + unknown_ticks );
   }
   static elapsedTimer timer;
@@ -288,7 +288,7 @@ public:
   static int     all_comp_ticks;      // ticks in compiled code (+ native)
   static bool full_profile_flag;      // collecting full profile?
 
-  // to accumulate thread-specific data 
+  // to accumulate thread-specific data
   // if we aren't profiling individual threads.
   static ThreadProfiler* thread_profiler;
   static ThreadProfiler* vm_thread_profiler;
@@ -312,4 +312,3 @@ public:
   static IntervalData* interval_data;
 #endif // FPROF_KERNEL
 };
-

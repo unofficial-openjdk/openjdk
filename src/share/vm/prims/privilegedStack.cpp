@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)privilegedStack.cpp	1.31 07/05/05 17:06:42 JVM"
+#pragma ident "@(#)privilegedStack.cpp  1.31 07/05/05 17:06:42 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -37,7 +37,7 @@ void PrivilegedElement::initialize(vframeStream* vfst, oop context, PrivilegedEl
   THREAD->allow_unhandled_oop(&_klass);
   THREAD->allow_unhandled_oop(&_privileged_context);
 #endif // CHECK_UNHANDLED_OOPS
-  _frame_id             = vfst->frame_id();  
+  _frame_id             = vfst->frame_id();
   _next                 = next;
   assert(_privileged_context == NULL || _privileged_context->is_oop(), "must be an oop");
   assert(protection_domain() == NULL || protection_domain()->is_oop(), "must be an oop");
@@ -45,11 +45,11 @@ void PrivilegedElement::initialize(vframeStream* vfst, oop context, PrivilegedEl
 
 void PrivilegedElement::oops_do(OopClosure* f) {
   PrivilegedElement *cur = this;
-  do {    
+  do {
     f->do_oop((oop*) &cur->_klass);
     f->do_oop((oop*) &cur->_privileged_context);
     cur = cur->_next;
-  } while(cur != NULL);    
+  } while(cur != NULL);
 }
 
 //-------------------------------------------------------------------------------
@@ -77,4 +77,3 @@ bool PrivilegedElement::contains(address addr) {
 }
 
 #endif
-

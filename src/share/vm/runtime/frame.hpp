@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)frame.hpp	1.164 07/08/29 13:42:28 JVM"
+#pragma ident "@(#)frame.hpp    1.164 07/08/29 13:42:28 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 typedef class BytecodeInterpreter* interpreterState;
@@ -101,7 +101,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool is_interpreted_frame()    const;
   bool is_java_frame()           const;
   bool is_entry_frame()          const;             // Java frame called from C?
-  bool is_native_frame()         const;  
+  bool is_native_frame()         const;
   bool is_runtime_frame()        const;
   bool is_compiled_frame()       const;
   bool is_safepoint_blob_frame() const;
@@ -133,7 +133,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // returns the sender, but skips conversion frames
   frame real_sender(RegisterMap* map) const;
 
-  // returns the the sending Java frame, skipping any intermediate C frames 
+  // returns the the sending Java frame, skipping any intermediate C frames
   // NB: receiver must not be first frame
   frame java_sender() const;
 
@@ -142,7 +142,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   frame sender_for_compiled_frame(RegisterMap* map) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
-  frame sender_for_native_frame(RegisterMap* map) const;  
+  frame sender_for_native_frame(RegisterMap* map) const;
 
   // All frames:
 
@@ -156,10 +156,10 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // accessors for locals
   oop obj_at(int offset) const                   { return *obj_at_addr(offset);  }
   void obj_at_put(int offset, oop value)         { *obj_at_addr(offset) = value; }
-  
+
   jint int_at(int offset) const                  { return *int_at_addr(offset);  }
   void int_at_put(int offset, jint value)        { *int_at_addr(offset) = value; }
-                                                
+
   oop*      obj_at_addr(int offset) const        { return (oop*)     addr_at(offset); }
 
   oop*      adjusted_obj_at_addr(methodOop method, int index) { return obj_at_addr(adjust_offset(method, index)); }
@@ -185,7 +185,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // returns the stack pointer of the calling frame
   intptr_t* sender_sp() const;
 
-  
+
   // Interpreter frames:
 
  private:
@@ -248,7 +248,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   BasicLock* compiled_synchronized_native_monitor      (nmethod* nm = NULL);
   oop        compiled_synchronized_native_monitor_owner(nmethod* nm = NULL);
 
-  // Find receiver for an invoke when arguments are just pushed on stack (i.e., callee stack-frame is 
+  // Find receiver for an invoke when arguments are just pushed on stack (i.e., callee stack-frame is
   // not setup)
   oop interpreter_callee_receiver(symbolHandle signature)     { return *interpreter_callee_receiver_addr(signature); }
 
@@ -262,10 +262,10 @@ class frame VALUE_OBJ_CLASS_SPEC {
   static  jint  interpreter_frame_expression_stack_direction();
 
   // The _at version returns a pointer because the address is used for GC.
-  intptr_t* interpreter_frame_expression_stack_at(jint offset) const;  
-  Tag       interpreter_frame_expression_stack_tag(jint offset) const;  
-  void      interpreter_frame_set_expression_stack_tag(jint offset, Tag tag) const;  
- 
+  intptr_t* interpreter_frame_expression_stack_at(jint offset) const;
+  Tag       interpreter_frame_expression_stack_tag(jint offset) const;
+  void      interpreter_frame_set_expression_stack_tag(jint offset, Tag tag) const;
+
   // top of expression stack
   intptr_t* interpreter_frame_tos_at(jint offset) const;
   intptr_t* interpreter_frame_tos_address() const;
@@ -307,9 +307,9 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // If the method return type is T_OBJECT or T_ARRAY populates oop_result
   // For other (non-T_VOID) the appropriate field in the jvalue is populated
   // with the result value.
-  // Should only be called when at method exit when the method is not 
+  // Should only be called when at method exit when the method is not
   // exiting due to an exception.
-  BasicType interpreter_frame_result(oop* oop_result, jvalue* value_result); 
+  BasicType interpreter_frame_result(oop* oop_result, jvalue* value_result);
 
  public:
   // Method & constant pool cache
@@ -381,18 +381,18 @@ class frame VALUE_OBJ_CLASS_SPEC {
   void oops_interpreted_locals_do(OopClosure *f,
                                  int max_locals,
                                  InterpreterOopMap *mask);
-  void oops_interpreted_expressions_do(OopClosure *f, symbolHandle signature, 
+  void oops_interpreted_expressions_do(OopClosure *f, symbolHandle signature,
                                  bool is_static, int max_stack, int max_locals,
                                  InterpreterOopMap *mask);
   void oops_interpreted_arguments_do(symbolHandle signature, bool is_static, OopClosure* f);
 
   // Iteration of oops
   void oops_do_internal(OopClosure* f, RegisterMap* map, bool use_interpreter_oop_map_cache);
-  void oops_entry_do(OopClosure* f, const RegisterMap* map);  
-  void oops_code_blob_do(OopClosure* f, const RegisterMap* map);    
-  int adjust_offset(methodOop method, int index); // helper for above fn  
+  void oops_entry_do(OopClosure* f, const RegisterMap* map);
+  void oops_code_blob_do(OopClosure* f, const RegisterMap* map);
+  int adjust_offset(methodOop method, int index); // helper for above fn
   // Iteration of nmethods
-  void nmethods_code_blob_do();    
+  void nmethods_code_blob_do();
  public:
   // Memory management
   void oops_do(OopClosure* f, RegisterMap* map) { oops_do_internal(f, map, true); }
@@ -455,7 +455,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
 // a safepoint, all registers are saved, not only the callee-saved ones.
 //
 // Use:
-//   
+//
 //   for(StackFrameStream fst(thread); !fst.is_done(); fst.next()) {
 //     ...
 //   }
@@ -464,7 +464,7 @@ class StackFrameStream : public StackObj {
  private:
   frame       _fr;
   RegisterMap _reg_map;
-  bool        _is_done;  
+  bool        _is_done;
  public:
    StackFrameStream(JavaThread *thread, bool update = true);
 
@@ -476,4 +476,3 @@ class StackFrameStream : public StackObj {
   frame *current()                { return &_fr; }
   RegisterMap* register_map()     { return &_reg_map; }
 };
-

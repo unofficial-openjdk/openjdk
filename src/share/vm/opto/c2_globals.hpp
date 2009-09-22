@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c2_globals.hpp	1.96 07/10/23 13:12:52 JVM"
+#pragma ident "@(#)c2_globals.hpp       1.96 07/10/23 13:12:52 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -145,8 +145,8 @@
           "of rounds of unroll,optimize,..")                                \
                                                                             \
   develop(intx, UnrollLimitForProfileCheck, 1,                              \
-	  "Don't use profile_trip_cnt() to restrict unrolling until "       \
-	  "unrolling would push the number of unrolled iterations above "   \
+          "Don't use profile_trip_cnt() to restrict unrolling until "       \
+          "unrolling would push the number of unrolled iterations above "   \
           "UnrollLimitForProfileCheck. A higher value allows more "         \
           "unrolling. Zero acts as a very large value." )                   \
                                                                             \
@@ -414,4 +414,3 @@
           "Allow back branches to be fall throughs in the block layour")    \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
-

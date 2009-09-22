@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -36,7 +36,7 @@ public abstract class JavaVFrame extends VFrame {
   public abstract StackValueCollection getLocals();
   public abstract StackValueCollection getExpressions();
   public abstract List   getMonitors();    // List<MonitorInfo>
-  
+
   /** Test operation */
   public boolean isJavaFrame() { return true; }
 
@@ -46,15 +46,15 @@ public abstract class JavaVFrame extends VFrame {
   }
 
   /** Get monitor (if any) that this JavaVFrame is trying to enter */
-  // FIXME: not yet implemented 
+  // FIXME: not yet implemented
   //  public Address getPendingMonitor(int frameCount);
 
   /** Printing used during stack dumps */
-  // FIXME: not yet implemented 
+  // FIXME: not yet implemented
   //  void print_lock_info(int frame_count);
 
   /** Printing operations */
-  
+
   //
   // FIXME: implement visitor pattern for traversing vframe contents?
   //
@@ -83,14 +83,14 @@ public abstract class JavaVFrame extends VFrame {
     //    for (int index = 0; index < list.size(); index++) {
     //      MonitorInfo monitor = (MonitorInfo) list.get(index);
     //      tty.print("\t  obj\t");
-    //      monitor.getOwner().printValueOn(tty); 
+    //      monitor.getOwner().printValueOn(tty);
     //      tty.println();
     //      tty.print("\t  ");
     //      monitor.lock().printOn(tty);
-    //      tty.println(); 
+    //      tty.println();
     //    }
   }
-  
+
   public void printActivation(int index) {
     printActivationOn(System.out, index);
   }
@@ -100,7 +100,7 @@ public abstract class JavaVFrame extends VFrame {
     tty.print(index + " - ");
     printValueOn(tty);
     tty.println();
-    
+
     if (VM.getVM().wizardMode()) {
       printOn(tty);
       tty.println();
@@ -113,23 +113,23 @@ public abstract class JavaVFrame extends VFrame {
 
   public boolean equals(Object o) {
       if (o == null || !(o instanceof JavaVFrame)) {
-	  return false;
+          return false;
       }
 
       JavaVFrame other = (JavaVFrame) o;
 
       // Check static part
       if (!getMethod().equals(other.getMethod())) {
-	  return false;
+          return false;
       }
 
       if (getBCI() != other.getBCI()) {
-	  return false;
+          return false;
       }
 
       // dynamic part - we just compare the frame pointer
       if (! getFrame().getFP().equals(other.getFrame().getFP())) {
-	  return false;
+          return false;
       }
       return true;
   }
@@ -177,7 +177,7 @@ public abstract class JavaVFrame extends VFrame {
         return false;
       }
     }
-    
+
     return true;
   }
 

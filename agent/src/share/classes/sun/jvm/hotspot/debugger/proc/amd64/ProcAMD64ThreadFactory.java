@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.proc.amd64;
@@ -29,15 +29,15 @@ import sun.jvm.hotspot.debugger.proc.*;
 
 public class ProcAMD64ThreadFactory implements ProcThreadFactory {
     private ProcDebugger debugger;
-    
+
     public ProcAMD64ThreadFactory(ProcDebugger debugger) {
         this.debugger = debugger;
     }
-    
+
     public ThreadProxy createThreadWrapper(Address threadIdentifierAddr) {
         return new ProcAMD64Thread(debugger, threadIdentifierAddr);
     }
-    
+
     public ThreadProxy createThreadWrapper(long id) {
         return new ProcAMD64Thread(debugger, id);
     }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.tools.jcore;
@@ -41,8 +41,8 @@ public class NameFilter implements ClassFilter
     }
 
     public boolean canInclude(InstanceKlass kls) {
-        String klassName = kls.getName().asString().replace('/', '.'); 
+        String klassName = kls.getName().asString().replace('/', '.');
         Matcher m = includePattern.matcher(klassName);
-        return m.matches();  
+        return m.matches();
     }
 }

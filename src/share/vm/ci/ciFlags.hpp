@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciFlags.hpp	1.15 07/09/28 10:23:24 JVM"
+#pragma ident "@(#)ciFlags.hpp  1.15 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciFlags
@@ -53,8 +53,8 @@ public:
   bool is_native      () const         { return (_flags & JVM_ACC_NATIVE      ) != 0; }
   bool is_interface   () const         { return (_flags & JVM_ACC_INTERFACE   ) != 0; }
   bool is_abstract    () const         { return (_flags & JVM_ACC_ABSTRACT    ) != 0; }
-  bool is_strict      () const         { return (_flags & JVM_ACC_STRICT      ) != 0; }  
-  
+  bool is_strict      () const         { return (_flags & JVM_ACC_STRICT      ) != 0; }
+
   // Conversion
   jint   as_int()                      { return _flags; }
 

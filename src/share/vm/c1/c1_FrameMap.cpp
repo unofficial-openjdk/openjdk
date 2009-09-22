@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_FrameMap.cpp	1.38 07/06/18 14:25:23 JVM"
+#pragma ident "@(#)c1_FrameMap.cpp      1.38 07/06/18 14:25:23 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -191,7 +191,7 @@ bool FrameMap::finalize_frame(int nof_slots) {
   _num_spills = nof_slots;
   assert(_framesize == -1, "should only be calculated once");
   _framesize =  round_to(in_bytes(sp_offset_for_monitor_base(0)) +
-                         _num_monitors * sizeof(BasicObjectLock) + 
+                         _num_monitors * sizeof(BasicObjectLock) +
                          sizeof(intptr_t) +                        // offset of deopt orig pc
                          frame_pad_in_bytes,
                          StackAlignmentInBytes) / 4;

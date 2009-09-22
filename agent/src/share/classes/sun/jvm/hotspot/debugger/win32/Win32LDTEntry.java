@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32;
@@ -80,7 +80,7 @@ class Win32LDTEntry implements Serializable {
   // FIXME: verify mask and shift are correct
   /** High bits (16-19) of the address of the last byte of the segment */
   public int getLimitHi() { return (flags2 & 0x0F); }
-  
+
   // FIXME: verify mask is correct
   /** <P> Size of segment. If the segment is a data segment, this
       member contains 1 if the segment is larger than 64 kilobytes (K)

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm;
@@ -43,7 +43,7 @@ public abstract class AbstractInstruction implements Instruction {
    public boolean isArithmetic() {
       return false;
    }
-   
+
    public boolean isLogical() {
       return false;
    }

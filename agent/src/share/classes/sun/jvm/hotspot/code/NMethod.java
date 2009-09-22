@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.code;
@@ -66,7 +66,7 @@ public class NMethod extends CodeBlob {
   /** NMethod Flushing lock (if non-zero, then the nmethod is not removed) */
   private static JIntField     lockCountField;
 
-  /** not_entrant method removal. Each mark_sweep pass will update 
+  /** not_entrant method removal. Each mark_sweep pass will update
       this mark to current sweep invocation count if it is seen on the
       stack.  An not_entrant method can be removed when there is no
       more activations, i.e., when the _stack_traversal_mark is less than
@@ -180,7 +180,7 @@ public class NMethod extends CodeBlob {
   /** Entry points */
   public Address getEntryPoint()         { return entryPointField.getValue(addr);         }
   public Address getVerifiedEntryPoint() { return verifiedEntryPointField.getValue(addr); }
-  
+
   // FIXME: add interpreter_entry_point()
   // FIXME: add lazy_interpreter_entry_point() for C2
 
@@ -218,18 +218,18 @@ public class NMethod extends CodeBlob {
     }
     return getEntryBCI();
   }
-  
+
   public NMethod getLink() {
     return (NMethod) VMObjectFactory.newObject(NMethod.class, linkField.getValue(addr));
   }
-  
+
   /** Tells whether frames described by this nmethod can be
       deoptimized. Note: native wrappers cannot be deoptimized. */
   public boolean canBeDeoptimized() { return isJavaMethod(); }
-  
+
   // FIXME: add inline cache support
   // FIXME: add flush()
-  
+
   public boolean isLockedByVM() { return lockCountField.getValue(addr) > 0; }
 
   // FIXME: add mark_as_seen_on_stack
@@ -240,7 +240,7 @@ public class NMethod extends CodeBlob {
   //  void follow_root_or_mark_for_unloading(oop* root, bool unloading_occurred, bool& marked_for_unloading);
   //  void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, void f(oop*));
   //  void adjust_pointers();
-  
+
   /** Finds a PCDesc with real-pc equal to "pc" */
   public PCDesc getPCDescAt(Address pc) {
     // FIXME: consider adding cache like the one down in the VM
@@ -297,7 +297,7 @@ public class NMethod extends CodeBlob {
   public Map/*<Address, PcDesc>*/ getSafepoints() {
     Map safepoints = new HashMap(); // Map<Address, PcDesc>
     sun.jvm.hotspot.debugger.Address p = null;
-    for (p = scopesPCsBegin(); p.lessThan(scopesPCsEnd()); 
+    for (p = scopesPCsBegin(); p.lessThan(scopesPCsEnd());
          p = p.addOffsetTo(pcDescSize)) {
        PCDesc pcDesc = new PCDesc(p);
        sun.jvm.hotspot.debugger.Address pc = pcDesc.getRealPC(this);
@@ -310,7 +310,7 @@ public class NMethod extends CodeBlob {
   // FIXME: add embeddedOopAt()
   // FIXME: add isDependentOn()
   // FIXME: add isPatchableAt()
-  
+
   /** Support for code generation. Only here for proof-of-concept. */
   public static int getEntryPointOffset()            { return (int) entryPointField.getOffset();            }
   public static int getVerifiedEntryPointOffset()    { return (int) verifiedEntryPointField.getOffset();    }
@@ -326,13 +326,13 @@ public class NMethod extends CodeBlob {
   public String toString() {
     Method method = getMethod();
     return "NMethod for " +
-            method.getMethodHolder().getName().asString() + "." + 
+            method.getMethodHolder().getName().asString() + "." +
             method.getName().asString() + method.getSignature().asString() + "==>n" +
-	    super.toString();
+            super.toString();
   }
 
   public String flagsToString() {
-    // FIXME need access to flags... 
+    // FIXME need access to flags...
     return "";
   }
 

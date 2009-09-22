@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciCallProfile.hpp	1.17 07/05/05 17:05:12 JVM"
+#pragma ident "@(#)ciCallProfile.hpp    1.17 07/05/05 17:05:12 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciCallProfile
@@ -59,11 +59,11 @@ public:
   int       morphism()          { return _morphism; }
 
   int       count()             { return _count; }
-  int       receiver_count(int i)  { 
+  int       receiver_count(int i)  {
     assert(i < _limit, "out of Call Profile MorphismLimit");
     return _receiver_count[i];
   }
-  float     receiver_prob(int i)  { 
+  float     receiver_prob(int i)  {
     assert(i < _limit, "out of Call Profile MorphismLimit");
     return (float)_receiver_count[i]/(float)_count;
   }

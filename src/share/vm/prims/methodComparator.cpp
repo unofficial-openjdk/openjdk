@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)methodComparator.cpp	1.15 07/05/05 17:06:41 JVM"
+#pragma ident "@(#)methodComparator.cpp 1.15 07/05/05 17:06:41 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -66,16 +66,16 @@ bool MethodComparator::methods_EMCP(methodOop old_method, methodOop new_method) 
   return true;
 }
 
-  
+
 bool MethodComparator::methods_switchable(methodOop old_method, methodOop new_method,
-					  BciMap &bci_map) {
+                                          BciMap &bci_map) {
   if (old_method->code_size() > new_method->code_size())
     // Something has definitely been deleted in the new method, compared to the old one.
     return false;
 
   if (! check_stack_and_locals_size(old_method, new_method))
     return false;
-  
+
   _old_cp = old_method->constants();
   _new_cp = new_method->constants();
   BytecodeStream s_old(old_method);
@@ -87,7 +87,7 @@ bool MethodComparator::methods_switchable(methodOop old_method, methodOop new_me
   GrowableArray<int> fwd_jmps(16);
   _fwd_jmps = &fwd_jmps;
   Bytecodes::Code c_old, c_new;
-  
+
   while ((c_old = s_old.next()) >= 0) {
     if ((c_new = s_new.next()) < 0)
       return false;
@@ -96,14 +96,14 @@ bool MethodComparator::methods_switchable(methodOop old_method, methodOop new_me
       int new_st_bci = s_new.bci();
       bool found_match = false;
       do {
-	c_new = s_new.next();
-	if (c_new == c_old && args_same(c_old, c_new)) {
-	  found_match = true;
-	  break;
-	}
+        c_new = s_new.next();
+        if (c_new == c_old && args_same(c_old, c_new)) {
+          found_match = true;
+          break;
+        }
       } while (c_new >= 0);
       if (! found_match)
-	return false;
+        return false;
       int new_end_bci = s_new.bci();
       bci_map.store_fragment_location(old_bci, new_st_bci, new_end_bci);
     }
@@ -113,9 +113,9 @@ bool MethodComparator::methods_switchable(methodOop old_method, methodOop new_me
   for (int i = 0; i < fwd_jmps.length() / 2; i++) {
     if (! bci_map.old_and_new_locations_same(fwd_jmps.at(i*2), fwd_jmps.at(i*2+1))) {
       RC_TRACE(0x00800000,
-	("Fwd jump miss: old dest = %d, calc new dest = %d, act new dest = %d",
+        ("Fwd jump miss: old dest = %d, calc new dest = %d, act new dest = %d",
         fwd_jmps.at(i*2), bci_map.new_bci_for_old(fwd_jmps.at(i*2)),
-	fwd_jmps.at(i*2+1)));
+        fwd_jmps.at(i*2+1)));
       return false;
     }
   }
@@ -133,16 +133,16 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
   case Bytecodes::_multianewarray : // fall through
   case Bytecodes::_checkcast      : // fall through
   case Bytecodes::_instanceof     : {
-    u2 cpi_old = _s_old->get_index_big();	
+    u2 cpi_old = _s_old->get_index_big();
     u2 cpi_new = _s_new->get_index_big();
     if ((_old_cp->klass_at_noresolve(cpi_old) != _new_cp->klass_at_noresolve(cpi_new)))
-	return false;
+        return false;
     if (c_old == Bytecodes::_multianewarray &&
-	*(jbyte*)(_s_old->bcp() + 3) != *(jbyte*)(_s_new->bcp() + 3))
+        *(jbyte*)(_s_old->bcp() + 3) != *(jbyte*)(_s_new->bcp() + 3))
       return false;
     break;
   }
-    
+
   case Bytecodes::_getstatic       : // fall through
   case Bytecodes::_putstatic       : // fall through
   case Bytecodes::_getfield        : // fall through
@@ -157,24 +157,24 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
     // are the same. Indices which are really into constantpool cache (rather than constant
     // pool itself) are accepted by the constantpool query routines below.
     if ((_old_cp->klass_ref_at_noresolve(cpci_old) != _new_cp->klass_ref_at_noresolve(cpci_new)) ||
-	(_old_cp->name_ref_at(cpci_old) != _new_cp->name_ref_at(cpci_new)) ||
-	(_old_cp->signature_ref_at(cpci_old) != _new_cp->signature_ref_at(cpci_new)))
+        (_old_cp->name_ref_at(cpci_old) != _new_cp->name_ref_at(cpci_new)) ||
+        (_old_cp->signature_ref_at(cpci_old) != _new_cp->signature_ref_at(cpci_new)))
       return false;
     break;
   }
-  
+
   case Bytecodes::_ldc   : // fall through
   case Bytecodes::_ldc_w : {
     u2 cpi_old, cpi_new;
     if (c_old == Bytecodes::_ldc) {
-      cpi_old = _s_old->bcp()[1];	
+      cpi_old = _s_old->bcp()[1];
       cpi_new = _s_new->bcp()[1];
     } else {
       cpi_old = _s_old->get_index_big();
       cpi_new = _s_new->get_index_big();
     }
     constantTag tag_old = _old_cp->tag_at(cpi_old);
-    constantTag tag_new = _new_cp->tag_at(cpi_new);	
+    constantTag tag_new = _new_cp->tag_at(cpi_new);
     if (tag_old.is_int() || tag_old.is_float()) {
       if (tag_old.value() != tag_new.value())
         return false;
@@ -185,7 +185,7 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
         if (_old_cp->float_at(cpi_old) != _new_cp->float_at(cpi_new))
           return false;
       }
-    } else if (tag_old.is_string() || tag_old.is_unresolved_string()) {  
+    } else if (tag_old.is_string() || tag_old.is_unresolved_string()) {
       if (! (tag_new.is_unresolved_string() || tag_new.is_string()))
         return false;
       if (strcmp(_old_cp->string_at_noresolve(cpi_old),
@@ -197,37 +197,37 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       if (_old_cp->klass_at_noresolve(cpi_old) !=
           _new_cp->klass_at_noresolve(cpi_new))
         return false;
-    }    
+    }
     break;
   }
-  
+
   case Bytecodes::_ldc2_w : {
-    u2 cpi_old = _s_old->get_index_big();	
+    u2 cpi_old = _s_old->get_index_big();
     u2 cpi_new = _s_new->get_index_big();
     constantTag tag_old = _old_cp->tag_at(cpi_old);
-    constantTag tag_new = _new_cp->tag_at(cpi_new);	
+    constantTag tag_new = _new_cp->tag_at(cpi_new);
     if (tag_old.value() != tag_new.value())
       return false;
     if (tag_old.is_long()) {
       if (_old_cp->long_at(cpi_old) != _new_cp->long_at(cpi_new))
-	return false;
+        return false;
     } else {
       if (_old_cp->double_at(cpi_old) != _new_cp->double_at(cpi_new))
-	return false;
+        return false;
     }
     break;
   }
-  
+
   case Bytecodes::_bipush :
     if (_s_old->bcp()[1] != _s_new->bcp()[1])
       return false;
     break;
-      
+
   case Bytecodes::_sipush    :
     if (_s_old->get_index_big() != _s_new->get_index_big())
       return false;
     break;
-    
+
   case Bytecodes::_aload  : // fall through
   case Bytecodes::_astore : // fall through
   case Bytecodes::_dload  : // fall through
@@ -244,7 +244,7 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
     if (_s_old->get_index() != _s_new->get_index())
       return false;
     break;
-    
+
   case Bytecodes::_goto      : // fall through
   case Bytecodes::_if_acmpeq : // fall through
   case Bytecodes::_if_acmpne : // fall through
@@ -269,33 +269,33 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       int old_dest = _s_old->bci() + old_ofs;
       int new_dest = _s_new->bci() + new_ofs;
       if (old_ofs < 0 && new_ofs < 0) {
-	if (! _bci_map->old_and_new_locations_same(old_dest, new_dest))
-	  return false;
+        if (! _bci_map->old_and_new_locations_same(old_dest, new_dest))
+          return false;
       } else if (old_ofs > 0 && new_ofs > 0) {
-	_fwd_jmps->append(old_dest);
-	_fwd_jmps->append(new_dest);
+        _fwd_jmps->append(old_dest);
+        _fwd_jmps->append(new_dest);
       } else {
-	return false;
+        return false;
       }
     } else {
       if (old_ofs != new_ofs)
-	return false;
+        return false;
     }
     break;
   }
-  
+
   case Bytecodes::_iinc :
     if (_s_old->is_wide() != _s_new->is_wide())
       return false;
     if (! _s_old->is_wide()) {
       if (_s_old->get_index_big() != _s_new->get_index_big())
-	return false;
+        return false;
     } else {
       if (Bytes::get_Java_u4(_s_old->bcp() + 1) != Bytes::get_Java_u4(_s_new->bcp() + 1))
-	return false;
+        return false;
     }
     break;
-      
+
   case Bytecodes::_goto_w : // fall through
   case Bytecodes::_jsr_w  : {
     int old_ofs = (int) Bytes::get_Java_u4(_s_old->bcp() + 1);
@@ -304,21 +304,21 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       int old_dest = _s_old->bci() + old_ofs;
       int new_dest = _s_new->bci() + new_ofs;
       if (old_ofs < 0 && new_ofs < 0) {
-	if (! _bci_map->old_and_new_locations_same(old_dest, new_dest))
-	  return false;
+        if (! _bci_map->old_and_new_locations_same(old_dest, new_dest))
+          return false;
       } else if (old_ofs > 0 && new_ofs > 0) {
-	_fwd_jmps->append(old_dest);
-	_fwd_jmps->append(new_dest);
+        _fwd_jmps->append(old_dest);
+        _fwd_jmps->append(new_dest);
       } else {
-	return false;
+        return false;
       }
     } else {
       if (old_ofs != new_ofs)
-	return false;
+        return false;
     }
     break;
   }
-  
+
   case Bytecodes::_lookupswitch : // fall through
   case Bytecodes::_tableswitch  : {
     if (_switchable_test) {
@@ -329,43 +329,43 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       _fwd_jmps->append(_s_old->bci() + default_old);
       _fwd_jmps->append(_s_new->bci() + default_new);
       if (c_old == Bytecodes::_lookupswitch) {
-	int npairs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + jintSize);
-	int npairs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + jintSize);
-	if (npairs_old != npairs_new)
-	  return false;
-	for (int i = 0; i < npairs_old; i++) {
-	  int match_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (2+2*i)*jintSize);
-	  int match_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (2+2*i)*jintSize);
-	  if (match_old != match_new)
-	    return false;
-	  int ofs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (2+2*i+1)*jintSize);
-	  int ofs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (2+2*i+1)*jintSize);
-	  _fwd_jmps->append(_s_old->bci() + ofs_old);
-	  _fwd_jmps->append(_s_new->bci() + ofs_new);
-	}
+        int npairs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + jintSize);
+        int npairs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + jintSize);
+        if (npairs_old != npairs_new)
+          return false;
+        for (int i = 0; i < npairs_old; i++) {
+          int match_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (2+2*i)*jintSize);
+          int match_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (2+2*i)*jintSize);
+          if (match_old != match_new)
+            return false;
+          int ofs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (2+2*i+1)*jintSize);
+          int ofs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (2+2*i+1)*jintSize);
+          _fwd_jmps->append(_s_old->bci() + ofs_old);
+          _fwd_jmps->append(_s_new->bci() + ofs_new);
+        }
       } else if (c_old == Bytecodes::_tableswitch) {
-	int lo_old = (int) Bytes::get_Java_u4(aligned_bcp_old + jintSize);
-	int lo_new = (int) Bytes::get_Java_u4(aligned_bcp_new + jintSize);
-	if (lo_old != lo_new)
-	  return false;
-	int hi_old = (int) Bytes::get_Java_u4(aligned_bcp_old + 2*jintSize);
-	int hi_new = (int) Bytes::get_Java_u4(aligned_bcp_new + 2*jintSize);
-	if (hi_old != hi_new)
-	  return false;
-	for (int i = 0; i < hi_old - lo_old + 1; i++) {
-	  int ofs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (3+i)*jintSize);
-	  int ofs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (3+i)*jintSize);
-	  _fwd_jmps->append(_s_old->bci() + ofs_old);
-	  _fwd_jmps->append(_s_new->bci() + ofs_new);
-	}
+        int lo_old = (int) Bytes::get_Java_u4(aligned_bcp_old + jintSize);
+        int lo_new = (int) Bytes::get_Java_u4(aligned_bcp_new + jintSize);
+        if (lo_old != lo_new)
+          return false;
+        int hi_old = (int) Bytes::get_Java_u4(aligned_bcp_old + 2*jintSize);
+        int hi_new = (int) Bytes::get_Java_u4(aligned_bcp_new + 2*jintSize);
+        if (hi_old != hi_new)
+          return false;
+        for (int i = 0; i < hi_old - lo_old + 1; i++) {
+          int ofs_old = (int) Bytes::get_Java_u4(aligned_bcp_old + (3+i)*jintSize);
+          int ofs_new = (int) Bytes::get_Java_u4(aligned_bcp_new + (3+i)*jintSize);
+          _fwd_jmps->append(_s_old->bci() + ofs_old);
+          _fwd_jmps->append(_s_new->bci() + ofs_new);
+        }
       }
     } else { // !_switchable_test, can use fast rough compare
       int len_old = _s_old->next_bcp() - _s_old->bcp();
       int len_new = _s_new->next_bcp() - _s_new->bcp();
       if (len_old != len_new)
-	return false;
+        return false;
       if (memcmp(_s_old->bcp(), _s_new->bcp(), len_old) != 0)
-	return false;
+        return false;
     }
     break;
   }

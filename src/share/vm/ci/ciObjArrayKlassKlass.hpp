@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciObjArrayKlassKlass.hpp	1.12 07/05/05 17:05:16 JVM"
+#pragma ident "@(#)ciObjArrayKlassKlass.hpp     1.12 07/05/05 17:05:16 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // ciObjArrayKlassKlass
@@ -41,7 +41,7 @@ private:
   objArrayKlassKlass* get_objArrayKlassKlass() {
     return (objArrayKlassKlass*)get_Klass();
   }
-  
+
   const char* type_string() { return "ciObjArrayKlassKlass"; }
 
 public:
@@ -51,4 +51,3 @@ public:
   // Return the distinguished ciObjArrayKlassKlass instance.
   static ciObjArrayKlassKlass* make();
 };
-

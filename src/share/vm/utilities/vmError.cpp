@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmError.cpp	1.34 07/09/13 20:51:49 JVM"
+#pragma ident "@(#)vmError.cpp  1.34 07/09/13 20:51:49 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -31,11 +31,11 @@
 // List of environment variables that should be reported in error log file.
 const char *env_list[] = {
   // All platforms
-  "JAVA_HOME", "JRE_HOME", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH", 
+  "JAVA_HOME", "JRE_HOME", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH",
   "JAVA_COMPILER", "PATH", "USERNAME",
 
   // Env variables that are defined on Solaris/Linux
-  "LD_LIBRARY_PATH", "LD_PRELOAD", "SHELL", "DISPLAY", 
+  "LD_LIBRARY_PATH", "LD_PRELOAD", "SHELL", "DISPLAY",
   "HOSTTYPE", "OSTYPE", "ARCH", "MACHTYPE",
 
   // defined on Linux
@@ -51,7 +51,7 @@ const char *env_list[] = {
 //
 // The default behavior of fatal error handler is to print a brief message
 // to standard out (defaultStream::output_fd()), then save detailed information
-// into an error report file (hs_err_pid<pid>.log) and abort VM. If multiple 
+// into an error report file (hs_err_pid<pid>.log) and abort VM. If multiple
 // threads are having troubles at the same time, only one error is reported.
 // The thread that is reporting error will abort VM when it is done, all other
 // threads are blocked forever inside report_and_die().
@@ -71,7 +71,7 @@ VMError::VMError(Thread* thread, int sig, address pc, void* siginfo, void* conte
     _message = "";
     _filename = NULL;
     _lineno = 0;
-    
+
     _size = 0;
 }
 
@@ -90,7 +90,7 @@ VMError::VMError(Thread* thread, const char* message, const char* filename, int 
     _pc = NULL;
     _siginfo = NULL;
     _context = NULL;
-    
+
     _size = 0;
 }
 
@@ -101,15 +101,15 @@ VMError::VMError(Thread* thread, size_t size, const char* message, const char* f
     _filename = filename;
     _lineno = lineno;
     _message = message;
-    
+
     _verbose = false;
     _current_step = 0;
     _current_step_info = NULL;
-   
+
     _pc = NULL;
     _siginfo = NULL;
     _context = NULL;
-    
+
     _size = size;
 }
 
@@ -129,7 +129,7 @@ VMError::VMError(const char* message) {
     _pc = NULL;
     _siginfo = NULL;
     _context = NULL;
-    
+
     _size = 0;
 }
 
@@ -191,7 +191,7 @@ char* VMError::error_string(char* buf, int buflen) {
 
   if (signame) {
     jio_snprintf(buf, buflen,
-                 "%s (0x%x) at pc=" PTR_FORMAT ", pid=%d, tid=" UINTX_FORMAT, 
+                 "%s (0x%x) at pc=" PTR_FORMAT ", pid=%d, tid=" UINTX_FORMAT,
                  signame, _id, _pc,
                  os::current_process_id(), os::current_thread_id());
   } else {
@@ -202,7 +202,7 @@ char* VMError::error_string(char* buf, int buflen) {
 
       jio_snprintf(buf, buflen,
         "Internal Error at %s:%d, pid=%d, tid=" UINTX_FORMAT " \nError: %s",
-        p ? p + 1 : _filename, _lineno, 
+        p ? p + 1 : _filename, _lineno,
         os::current_process_id(), os::current_thread_id(),
         _message ? _message : "");
     } else {
@@ -217,30 +217,30 @@ char* VMError::error_string(char* buf, int buflen) {
 
 
 // This is the main function to report a fatal error. Only one thread can
-// call this function, so we don't need to worry about MT-safety. But it's 
-// possible that the error handler itself may crash or die on an internal 
-// error, for example, when the stack/heap is badly damaged. We must be 
+// call this function, so we don't need to worry about MT-safety. But it's
+// possible that the error handler itself may crash or die on an internal
+// error, for example, when the stack/heap is badly damaged. We must be
 // able to handle recursive errors that happen inside error handler.
-// 
+//
 // Error reporting is done in several steps. If a crash or internal error
-// occurred when reporting an error, the nested signal/exception handler 
-// can skip steps that are already (or partially) done. Error reporting will 
-// continue from the next step. This allows us to retrieve and print 
+// occurred when reporting an error, the nested signal/exception handler
+// can skip steps that are already (or partially) done. Error reporting will
+// continue from the next step. This allows us to retrieve and print
 // information that may be unsafe to get after a fatal error. If it happens,
 // you may find nested report_and_die() frames when you look at the stack
 // in a debugger.
 //
 // In general, a hang in error handler is much worse than a crash or internal
-// error, as it's harder to recover from a hang. Deadlock can happen if we 
-// try to grab a lock that is already owned by current thread, or if the 
-// owner is blocked forever (e.g. in os::infinite_sleep()). If possible, the 
-// error handler and all the functions it called should avoid grabbing any 
+// error, as it's harder to recover from a hang. Deadlock can happen if we
+// try to grab a lock that is already owned by current thread, or if the
+// owner is blocked forever (e.g. in os::infinite_sleep()). If possible, the
+// error handler and all the functions it called should avoid grabbing any
 // lock. An important thing to notice is that memory allocation needs a lock.
 //
-// We should avoid using large stack allocated buffers. Many errors happen 
-// when stack space is already low. Making things even worse is that there 
+// We should avoid using large stack allocated buffers. Many errors happen
+// when stack space is already low. Making things even worse is that there
 // could be nested report_and_die() calls on stack (see above). Only one
-// thread can report error, so large buffers are statically allocated in data 
+// thread can report error, so large buffers are statically allocated in data
 // segment.
 
 void VMError::report(outputStream* st) {
@@ -358,7 +358,7 @@ void VMError::report(outputStream* st) {
      }
 
   STEP(65, "(printing bug submit message)")
-    
+
      if (_verbose) print_bug_submit_message(st, _thread);
 
   STEP(70, "(printing thread)" )
@@ -403,7 +403,7 @@ void VMError::report(outputStream* st) {
 
      if (_verbose) {
        st->print("Stack: ");
- 
+
        address stack_top;
        size_t stack_size;
 
@@ -423,7 +423,7 @@ void VMError::report(outputStream* st) {
 
        if (fr.sp()) {
          st->print(",  sp=" PTR_FORMAT, fr.sp());
-         st->print(",  free space=%dk", 
+         st->print(",  free space=%dk",
                      ((intptr_t)fr.sp() - (intptr_t)stack_bottom) >> 10);
        }
 
@@ -448,7 +448,7 @@ void VMError::report(outputStream* st) {
              if (os::is_first_C_frame(&fr)) break;
              fr = os::get_sender_for_C_frame(&fr);
           }
-                                                                                
+
           if (count > StackPrintLimit) {
              st->print_cr("...<more frames>...");
           }
@@ -640,7 +640,7 @@ void VMError::report_and_die() {
   // An error could happen before tty is initialized or after it has been
   // destroyed. Here we use a very simple unbuffered fdStream for printing.
   // Only out.print_raw() and out.print_raw_cr() should be used, as other
-  // printing methods need to allocate large buffer on stack. To format a 
+  // printing methods need to allocate large buffer on stack. To format a
   // string, use jio_snprintf() with a static buffer or use staticBufferStream.
   static fdStream out(defaultStream::output_fd());
 
@@ -667,7 +667,7 @@ void VMError::report_and_die() {
     if (ShowMessageBoxOnError) {
       show_message_box(buffer, sizeof(buffer));
 
-      // User has asked JVM to abort. Reset ShowMessageBoxOnError so the 
+      // User has asked JVM to abort. Reset ShowMessageBoxOnError so the
       // WatcherThread can kill JVM if the error handler hangs.
       ShowMessageBoxOnError = false;
     }
@@ -733,7 +733,7 @@ void VMError::report_and_die() {
       int fd = -1;
 
       if (ErrorFile != NULL) {
-        bool copy_ok = 
+        bool copy_ok =
           Arguments::copy_expand_pid(ErrorFile, strlen(ErrorFile), buffer, sizeof(buffer));
         if (copy_ok) {
           fd = open(buffer, O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -745,7 +745,7 @@ void VMError::report_and_die() {
         size_t len = strlen(cwd);
         // either user didn't specify, or the user's location failed,
         // so use the default name in the current directory
-        jio_snprintf(&buffer[len], sizeof(buffer)-len, "%shs_err_pid%u.log", 
+        jio_snprintf(&buffer[len], sizeof(buffer)-len, "%shs_err_pid%u.log",
                      os::file_separator(), os::current_process_id());
         fd = open(buffer, O_WRONLY | O_CREAT | O_TRUNC, 0666);
       }
@@ -804,7 +804,7 @@ void VMError::report_and_die() {
 #endif
       out.print_raw   ("\"");
       out.print_raw   (cmd);
-      out.print_raw_cr("\" ..."); 
+      out.print_raw_cr("\" ...");
 
       os::fork_and_exec(cmd);
     }
@@ -855,7 +855,7 @@ void VM_ReportJavaOutOfMemory::doit() {
   tty->print_cr("# java.lang.OutOfMemoryError: %s", _err->message());
   tty->print_cr("# -XX:OnOutOfMemoryError=\"%s\"", OnOutOfMemoryError);
 
-  // make heap parsability 
+  // make heap parsability
   Universe::heap()->ensure_parsability(false);  // no need to retire TLABs
 
   char* cmd;
@@ -863,9 +863,9 @@ void VM_ReportJavaOutOfMemory::doit() {
   while ((cmd = next_OnError_command(buffer, sizeof(buffer), &ptr)) != NULL){
     tty->print("#   Executing ");
 #if defined(LINUX)
-    tty->print	("/bin/sh -c ");
+    tty->print  ("/bin/sh -c ");
 #elif defined(SOLARIS)
-    tty->print	("/usr/bin/sh -c ");
+    tty->print  ("/usr/bin/sh -c ");
 #endif
     tty->print_cr("\"%s\"...", cmd);
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -34,7 +34,7 @@ import sun.jvm.hotspot.runtime.VM;
 import com.sun.jdi.*;
 import java.util.*;
 
-public class ClassLoaderReferenceImpl 
+public class ClassLoaderReferenceImpl
     extends ObjectReferenceImpl
     implements ClassLoaderReference
 {
@@ -44,7 +44,7 @@ public class ClassLoaderReferenceImpl
      private List definedClassesCache;
 
      ClassLoaderReferenceImpl(VirtualMachine aVm, Instance oRef) {
-	 super(aVm, oRef);
+         super(aVm, oRef);
      }
 
      protected String description() {
@@ -52,70 +52,70 @@ public class ClassLoaderReferenceImpl
      }
 
      public List definedClasses() {
-	 if (definedClassesCache == null) {
-	     definedClassesCache = new ArrayList();
-	     Iterator iter = vm.allClasses().iterator();
-	     while (iter.hasNext()) {
-		 ReferenceType type = (ReferenceType)iter.next();
-		 if (equals(type.classLoader())) {  /* thanks OTI */
-		     definedClassesCache.add(type);
-		 }
-	     }
-	 }
-	 return definedClassesCache;
+         if (definedClassesCache == null) {
+             definedClassesCache = new ArrayList();
+             Iterator iter = vm.allClasses().iterator();
+             while (iter.hasNext()) {
+                 ReferenceType type = (ReferenceType)iter.next();
+                 if (equals(type.classLoader())) {  /* thanks OTI */
+                     definedClassesCache.add(type);
+                 }
+             }
+         }
+         return definedClassesCache;
      }
 
      private SystemDictionary getSystemDictionary() {
-	 return vm.saSystemDictionary();
+         return vm.saSystemDictionary();
      }
 
      private Universe getUniverse() {
-	 return vm.saUniverse();
+         return vm.saUniverse();
      }
 
      public List visibleClasses() {
-	 if (visibleClassesCache != null) 
-	    return visibleClassesCache;
+         if (visibleClassesCache != null)
+            return visibleClassesCache;
 
-	 visibleClassesCache = new ArrayList();
+         visibleClassesCache = new ArrayList();
 
-	 // refer to getClassLoaderClasses in jvmtiGetLoadedClasses.cpp
-	 //  a. SystemDictionary::classes_do doesn't include arrays of primitive types (any dimensions) 
-	 SystemDictionary sysDict = getSystemDictionary();
-	 sysDict.classesDo(
-	     		   new SystemDictionary.ClassAndLoaderVisitor() {
-			      	public void visit(Klass k, Oop loader) {
-			       	    if (ref().equals(loader)) {
-			       		for (Klass l = k; l != null; l = l.arrayKlassOrNull()) {
-			       		    visibleClassesCache.add(vm.referenceType(l));
-			       		}
-			       	    }
-			       	}	 
-      			   }
-			   );
-	
-	 // b. multi dimensional arrays of primitive types
-	 sysDict.primArrayClassesDo(
-	      			    new SystemDictionary.ClassAndLoaderVisitor() {
-				       	 public void visit(Klass k, Oop loader) {
-				       	     if (ref().equals(loader)) {
-				       		 visibleClassesCache.add(vm.referenceType(k));
-				       	     }
-				       	 }
-			             }
-			      	     );
+         // refer to getClassLoaderClasses in jvmtiGetLoadedClasses.cpp
+         //  a. SystemDictionary::classes_do doesn't include arrays of primitive types (any dimensions)
+         SystemDictionary sysDict = getSystemDictionary();
+         sysDict.classesDo(
+                           new SystemDictionary.ClassAndLoaderVisitor() {
+                                public void visit(Klass k, Oop loader) {
+                                    if (ref().equals(loader)) {
+                                        for (Klass l = k; l != null; l = l.arrayKlassOrNull()) {
+                                            visibleClassesCache.add(vm.referenceType(l));
+                                        }
+                                    }
+                                }
+                           }
+                           );
+
+         // b. multi dimensional arrays of primitive types
+         sysDict.primArrayClassesDo(
+                                    new SystemDictionary.ClassAndLoaderVisitor() {
+                                         public void visit(Klass k, Oop loader) {
+                                             if (ref().equals(loader)) {
+                                                 visibleClassesCache.add(vm.referenceType(k));
+                                             }
+                                         }
+                                     }
+                                     );
 
          // c. single dimensional primitive array klasses from Universe
-	 // these are not added to SystemDictionary
-	 getUniverse().basicTypeClassesDo(
-	       		    new SystemDictionary.ClassVisitor() {
-	       			public void visit(Klass k) {
-	       			    visibleClassesCache.add(vm.referenceType(k));
-	       			}
-	       		    }
-	       		    );
+         // these are not added to SystemDictionary
+         getUniverse().basicTypeClassesDo(
+                            new SystemDictionary.ClassVisitor() {
+                                public void visit(Klass k) {
+                                    visibleClassesCache.add(vm.referenceType(k));
+                                }
+                            }
+                            );
 
-	 return visibleClassesCache;
+         return visibleClassesCache;
      }
 
      Type findType(String signature) throws ClassNotLoadedException {
@@ -125,11 +125,10 @@ public class ClassLoaderReferenceImpl
              ReferenceType type = (ReferenceType)iter.next();
              if (type.signature().equals(signature)) {
                  return type;
-             } 
+             }
          }
          JNITypeParser parser = new JNITypeParser(signature);
          throw new ClassNotLoadedException(parser.typeName(),
                                           "Class " + parser.typeName() + " not loaded");
      }
 }
-   

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)accessFlags.hpp	1.68 07/05/05 17:07:07 JVM"
+#pragma ident "@(#)accessFlags.hpp      1.68 07/05/05 17:07:07 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // AccessFlags is an abstraction over Java access flags.
@@ -38,8 +38,8 @@ enum {
 
   // methodOop flags
   JVM_ACC_MONITOR_MATCH           = 0x10000000,     // True if we know that monitorenter/monitorexit bytecodes match
-  JVM_ACC_HAS_MONITOR_BYTECODES   = 0x20000000,     // Method contains monitorenter/monitorexit bytecodes  
-  JVM_ACC_HAS_LOOPS               = 0x40000000,     // Method has loops    
+  JVM_ACC_HAS_MONITOR_BYTECODES   = 0x20000000,     // Method contains monitorenter/monitorexit bytecodes
+  JVM_ACC_HAS_LOOPS               = 0x40000000,     // Method has loops
   JVM_ACC_LOOPS_FLAG_INIT         = (int)0x80000000,// The loop flag has been initialized
   JVM_ACC_QUEUED                  = 0x01000000,     // Queued for compilation
   JVM_ACC_NOT_TIER1_COMPILABLE    = 0x04000000,
@@ -53,7 +53,7 @@ enum {
 
   // klassOop flags
   JVM_ACC_HAS_MIRANDA_METHODS     = 0x10000000,     // True if this class has miranda methods in it's vtable
-  JVM_ACC_HAS_VANILLA_CONSTRUCTOR = 0x20000000,     // True if klass has a vanilla default constructor 
+  JVM_ACC_HAS_VANILLA_CONSTRUCTOR = 0x20000000,     // True if klass has a vanilla default constructor
   JVM_ACC_HAS_FINALIZER           = 0x40000000,     // True if klass has a non-empty finalize() method
   JVM_ACC_IS_CLONEABLE            = (int)0x80000000,// True if klass supports the Clonable interface
   JVM_ACC_HAS_FINAL_METHOD        = 0x01000000,     // True if klass has final method
@@ -97,17 +97,17 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   bool is_native      () const         { return (_flags & JVM_ACC_NATIVE      ) != 0; }
   bool is_interface   () const         { return (_flags & JVM_ACC_INTERFACE   ) != 0; }
   bool is_abstract    () const         { return (_flags & JVM_ACC_ABSTRACT    ) != 0; }
-  bool is_strict      () const         { return (_flags & JVM_ACC_STRICT      ) != 0; }  
-  
+  bool is_strict      () const         { return (_flags & JVM_ACC_STRICT      ) != 0; }
+
   // Attribute flags
   bool is_synthetic   () const         { return (_flags & JVM_ACC_SYNTHETIC   ) != 0; }
 
   // methodOop flags
   bool is_monitor_matching     () const { return (_flags & JVM_ACC_MONITOR_MATCH          ) != 0; }
   bool has_monitor_bytecodes   () const { return (_flags & JVM_ACC_HAS_MONITOR_BYTECODES  ) != 0; }
-  bool has_loops               () const { return (_flags & JVM_ACC_HAS_LOOPS              ) != 0; }  
-  bool loops_flag_init         () const { return (_flags & JVM_ACC_LOOPS_FLAG_INIT        ) != 0; }  
-  bool queued_for_compilation  () const { return (_flags & JVM_ACC_QUEUED                 ) != 0; }  
+  bool has_loops               () const { return (_flags & JVM_ACC_HAS_LOOPS              ) != 0; }
+  bool loops_flag_init         () const { return (_flags & JVM_ACC_LOOPS_FLAG_INIT        ) != 0; }
+  bool queued_for_compilation  () const { return (_flags & JVM_ACC_QUEUED                 ) != 0; }
   bool is_not_tier1_compilable  () const { return (_flags & JVM_ACC_NOT_TIER1_COMPILABLE  ) != 0; }
   bool is_not_osr_compilable   () const { return (_flags & JVM_ACC_NOT_OSR_COMPILABLE     ) != 0; }
   bool has_linenumber_table    () const { return (_flags & JVM_ACC_HAS_LINE_NUMBER_TABLE  ) != 0; }
@@ -125,8 +125,8 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   bool is_cloneable            () const { return (_flags & JVM_ACC_IS_CLONEABLE           ) != 0; }
   // klassOop and methodOop flags
   bool has_localvariable_table () const { return (_flags & JVM_ACC_HAS_LOCAL_VARIABLE_TABLE) != 0; }
-  void set_has_localvariable_table()	{ atomic_set_bits(JVM_ACC_HAS_LOCAL_VARIABLE_TABLE); }
-  void clear_has_localvariable_table()	{ atomic_clear_bits(JVM_ACC_HAS_LOCAL_VARIABLE_TABLE); }
+  void set_has_localvariable_table()    { atomic_set_bits(JVM_ACC_HAS_LOCAL_VARIABLE_TABLE); }
+  void clear_has_localvariable_table()  { atomic_clear_bits(JVM_ACC_HAS_LOCAL_VARIABLE_TABLE); }
 
   // field flags
   bool is_field_access_watched() const  { return (_flags & JVM_ACC_FIELD_ACCESS_WATCHED) != 0; }
@@ -141,8 +141,8 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   void set_field_flags(jint flags)      { _flags = (flags & JVM_ACC_FIELD_FLAGS); }
   void set_flags(jint flags)            { _flags = (flags & JVM_ACC_WRITTEN_FLAGS); }
 
-  void set_queued_for_compilation()    { atomic_set_bits(JVM_ACC_QUEUED); }   
-  void clear_queued_for_compilation()  { atomic_clear_bits(JVM_ACC_QUEUED); }   
+  void set_queued_for_compilation()    { atomic_set_bits(JVM_ACC_QUEUED); }
+  void clear_queued_for_compilation()  { atomic_clear_bits(JVM_ACC_QUEUED); }
 
   // Atomic update of flags
   void atomic_set_bits(jint bits);
@@ -152,7 +152,7 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   friend class methodOopDesc;
   friend class Klass;
   friend class ClassFileParser;
-  // the functions below should only be called on the _access_flags inst var directly, 
+  // the functions below should only be called on the _access_flags inst var directly,
   // otherwise they are just changing a copy of the flags
 
   // attribute flags
@@ -160,9 +160,9 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
 
   // methodOop flags
   void set_monitor_matching()          { atomic_set_bits(JVM_ACC_MONITOR_MATCH);           }
-  void set_has_monitor_bytecodes()     { atomic_set_bits(JVM_ACC_HAS_MONITOR_BYTECODES);   } 
-  void set_has_loops()                 { atomic_set_bits(JVM_ACC_HAS_LOOPS);               }   
-  void set_loops_flag_init()           { atomic_set_bits(JVM_ACC_LOOPS_FLAG_INIT);         }   
+  void set_has_monitor_bytecodes()     { atomic_set_bits(JVM_ACC_HAS_MONITOR_BYTECODES);   }
+  void set_has_loops()                 { atomic_set_bits(JVM_ACC_HAS_LOOPS);               }
+  void set_loops_flag_init()           { atomic_set_bits(JVM_ACC_LOOPS_FLAG_INIT);         }
   void set_not_tier1_compilable()      { atomic_set_bits(JVM_ACC_NOT_TIER1_COMPILABLE);    }
   void set_not_osr_compilable()        { atomic_set_bits(JVM_ACC_NOT_OSR_COMPILABLE);      }
   void set_has_linenumber_table()      { atomic_set_bits(JVM_ACC_HAS_LINE_NUMBER_TABLE);   }
@@ -173,11 +173,11 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   void set_is_prefixed_native()        { atomic_set_bits(JVM_ACC_IS_PREFIXED_NATIVE);      }
 
   // klassOop flags
-  void set_has_vanilla_constructor()   { atomic_set_bits(JVM_ACC_HAS_VANILLA_CONSTRUCTOR); }   
-  void set_has_finalizer()             { atomic_set_bits(JVM_ACC_HAS_FINALIZER);           }   
-  void set_has_final_method()          { atomic_set_bits(JVM_ACC_HAS_FINAL_METHOD);        }   
-  void set_is_cloneable()              { atomic_set_bits(JVM_ACC_IS_CLONEABLE);            } 
-  void set_has_miranda_methods()       { atomic_set_bits(JVM_ACC_HAS_MIRANDA_METHODS);     }  
+  void set_has_vanilla_constructor()   { atomic_set_bits(JVM_ACC_HAS_VANILLA_CONSTRUCTOR); }
+  void set_has_finalizer()             { atomic_set_bits(JVM_ACC_HAS_FINALIZER);           }
+  void set_has_final_method()          { atomic_set_bits(JVM_ACC_HAS_FINAL_METHOD);        }
+  void set_is_cloneable()              { atomic_set_bits(JVM_ACC_IS_CLONEABLE);            }
+  void set_has_miranda_methods()       { atomic_set_bits(JVM_ACC_HAS_MIRANDA_METHODS);     }
 
  public:
   // field flags

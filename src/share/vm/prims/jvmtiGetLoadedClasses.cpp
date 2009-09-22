@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiGetLoadedClasses.cpp	1.13 07/05/05 17:06:38 JVM"
+#pragma ident "@(#)jvmtiGetLoadedClasses.cpp    1.13 07/05/05 17:06:38 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 
@@ -32,9 +32,9 @@
 
 // The closure for GetLoadedClasses and GetClassLoaderClasses
 class JvmtiGetLoadedClassesClosure : public StackObj {
-  // Since the SystemDictionary::classes_do callback 
-  // doesn't pass a closureData pointer, 
-  // we use a thread-local slot to hold a pointer to 
+  // Since the SystemDictionary::classes_do callback
+  // doesn't pass a closureData pointer,
+  // we use a thread-local slot to hold a pointer to
   // a stack allocated instance of this structure.
  private:
   jobject _initiatingLoader;
@@ -208,7 +208,7 @@ class JvmtiGetLoadedClassesClosure : public StackObj {
         oop mirror = Klass::cast(k)->java_mirror();
         that->set_element(that->get_index(), mirror);
         that->set_index(that->get_index() + 1);
-      }        
+      }
     }
   }
 
@@ -252,8 +252,8 @@ class JvmtiGetLoadedClassesClosure : public StackObj {
 
 jvmtiError
 JvmtiGetLoadedClasses::getLoadedClasses(JvmtiEnv *env, jint* classCountPtr, jclass** classesPtr) {
-  // Since SystemDictionary::classes_do only takes a function pointer 
-  // and doesn't call back with a closure data pointer, 
+  // Since SystemDictionary::classes_do only takes a function pointer
+  // and doesn't call back with a closure data pointer,
   // we can only pass static methods.
 
   JvmtiGetLoadedClassesClosure closure;
@@ -262,7 +262,7 @@ JvmtiGetLoadedClasses::getLoadedClasses(JvmtiEnv *env, jint* classCountPtr, jcla
     // array classes aren't created, and SystemDictionary_lock to ensure that
     // classes aren't added to the system dictionary,
     MutexLocker ma(MultiArray_lock);
-    MutexLocker sd(SystemDictionary_lock);    
+    MutexLocker sd(SystemDictionary_lock);
 
     // First, count the classes
     SystemDictionary::classes_do(&JvmtiGetLoadedClassesClosure::increment);
@@ -276,7 +276,7 @@ JvmtiGetLoadedClasses::getLoadedClasses(JvmtiEnv *env, jint* classCountPtr, jcla
   }
   // Post results
   jclass* result_list;
-  jvmtiError err = env->Allocate(closure.get_count() * sizeof(jclass), 
+  jvmtiError err = env->Allocate(closure.get_count() * sizeof(jclass),
                                  (unsigned char**)&result_list);
   if (err != JVMTI_ERROR_NONE) {
     return err;
@@ -284,14 +284,14 @@ JvmtiGetLoadedClasses::getLoadedClasses(JvmtiEnv *env, jint* classCountPtr, jcla
   closure.extract(env, result_list);
   *classCountPtr = closure.get_count();
   *classesPtr = result_list;
-  return JVMTI_ERROR_NONE;    
-} 
+  return JVMTI_ERROR_NONE;
+}
 
 jvmtiError
-JvmtiGetLoadedClasses::getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLoader, 
+JvmtiGetLoadedClasses::getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLoader,
                                              jint* classCountPtr, jclass** classesPtr) {
-  // Since SystemDictionary::classes_do only takes a function pointer 
-  // and doesn't call back with a closure data pointer, 
+  // Since SystemDictionary::classes_do only takes a function pointer
+  // and doesn't call back with a closure data pointer,
   // we can only pass static methods.
   JvmtiGetLoadedClassesClosure closure(initiatingLoader);
   {
@@ -316,7 +316,7 @@ JvmtiGetLoadedClasses::getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLo
   }
   // Post results
   jclass* result_list;
-  jvmtiError err = env->Allocate(closure.get_count() * sizeof(jclass), 
+  jvmtiError err = env->Allocate(closure.get_count() * sizeof(jclass),
                                  (unsigned char**)&result_list);
   if (err != JVMTI_ERROR_NONE) {
     return err;
@@ -324,5 +324,5 @@ JvmtiGetLoadedClasses::getClassLoaderClasses(JvmtiEnv *env, jobject initiatingLo
   closure.extract(env, result_list);
   *classCountPtr = closure.get_count();
   *classesPtr = result_list;
-  return JVMTI_ERROR_NONE;    
+  return JVMTI_ERROR_NONE;
 }

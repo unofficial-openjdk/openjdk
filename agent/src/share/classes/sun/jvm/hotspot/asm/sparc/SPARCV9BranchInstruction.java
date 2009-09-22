@@ -19,19 +19,19 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-public class SPARCV9BranchInstruction extends SPARCBranchInstruction 
+public class SPARCV9BranchInstruction extends SPARCBranchInstruction
                     implements SPARCV9Instruction {
     final private boolean predictTaken;
     final private int conditionFlag; // icc, xcc or fccn - condition bits selected
-     
-    public SPARCV9BranchInstruction(String name, PCRelativeAddress addr, 
+
+    public SPARCV9BranchInstruction(String name, PCRelativeAddress addr,
               boolean isAnnuled, int conditionCode, boolean predictTaken, int conditionFlag) {
         super((name += (predictTaken)? ",pt" : ",pn"), addr, isAnnuled, conditionCode);
         this.predictTaken = predictTaken;

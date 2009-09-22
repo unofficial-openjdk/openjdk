@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)escape.hpp	1.9 07/05/17 15:58:25 JVM"
+#pragma ident "@(#)escape.hpp   1.9 07/05/17 15:58:25 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -276,7 +276,7 @@ private:
   // of adr_i whose offset matches "offset"
   void add_deferred_edge_to_fields(uint from_i, uint adr, int offs);
 
-  
+
   // Remove outgoing deferred edges from the node referenced by "ni".
   // Any outgoing edges from the target of the deferred edge are copied
   // to "ni".
@@ -348,4 +348,3 @@ public:
   void dump();
 #endif
 };
-

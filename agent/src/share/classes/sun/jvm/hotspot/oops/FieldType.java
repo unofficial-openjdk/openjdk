@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -48,11 +48,11 @@ public class FieldType {
        case 'Z':
        case 'L':
        case '[':
-	   break;   // Ok. signature char known
+           break;   // Ok. signature char known
        default:
          Assert.that(false, "Unknown char in field signature \"" + signature.asString() + "\": " + this.first);
        }
-    }                                                                
+    }
   }
 
   public boolean isOop()     { return isObject() || isArray(); }
@@ -95,7 +95,7 @@ public class FieldType {
     int elementType = BasicType.charToType((char) signature.getByteAt(index));
     return new ArrayInfo(dim, elementType);
   }
-  
+
   private int skipOptionalSize(Symbol sig, int index) {
     byte c = sig.getByteAt(index);
     while (c >= '0' && c <= '9') {

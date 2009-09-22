@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -44,7 +44,7 @@ public class SPARCV9ReadInstruction extends SPARCV9SpecialRegisterInstruction {
     }
 
     public int getAncillaryRegister() {
-        if (Assert.ASSERTS_ENABLED) 
+        if (Assert.ASSERTS_ENABLED)
             Assert.that(specialReg == ASR, "not an ancillary register");
         return asrRegNum;
     }

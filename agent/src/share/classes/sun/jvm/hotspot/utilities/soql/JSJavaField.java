@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -46,7 +46,7 @@ public class JSJavaField extends DefaultScriptObject {
    public JSJavaField(Field f, JSJavaFactory fac) {
       this.field = f;
       this.factory = fac;
-   }   
+   }
 
    public Object get(String name) {
       int fieldID = getFieldID(name);
@@ -56,28 +56,28 @@ public class JSJavaField extends DefaultScriptObject {
       case FIELD_SIGNATURE:
          return field.getSignature().asString();
       case FIELD_HOLDER:
-         return getFieldHolder();         
+         return getFieldHolder();
       case FIELD_IS_PRIVATE:
-	 return Boolean.valueOf(field.isPrivate());
+         return Boolean.valueOf(field.isPrivate());
       case FIELD_IS_PUBLIC:
          return Boolean.valueOf(field.isPublic());
       case FIELD_IS_PROTECTED:
-	 return Boolean.valueOf(field.isProtected());
+         return Boolean.valueOf(field.isProtected());
       case FIELD_IS_PACKAGE_PRIVATE:
-	 return Boolean.valueOf(field.isPackagePrivate());
+         return Boolean.valueOf(field.isPackagePrivate());
       case FIELD_IS_STATIC:
-	 return Boolean.valueOf(field.isStatic());
+         return Boolean.valueOf(field.isStatic());
       case FIELD_IS_FINAL:
          return Boolean.valueOf(field.isFinal());
       case FIELD_IS_VOLATILE:
-	 return Boolean.valueOf(field.isVolatile());
+         return Boolean.valueOf(field.isVolatile());
       case FIELD_IS_TRANSIENT:
-	 return Boolean.valueOf(field.isTransient());
+         return Boolean.valueOf(field.isTransient());
       case FIELD_IS_SYNTHETIC:
-	 return Boolean.valueOf(field.isSynthetic());
+         return Boolean.valueOf(field.isSynthetic());
       case FIELD_UNDEFINED:
       default:
-	  return super.get(name);
+          return super.get(name);
       }
    }
 
@@ -92,15 +92,15 @@ public class JSJavaField extends DefaultScriptObject {
 
    public boolean has(String name) {
       if (getFieldID(name) != FIELD_UNDEFINED) {
-	  return true;
+          return true;
       } else {
-	  return super.has(name);
+          return super.has(name);
       }
    }
 
    public void put(String name, Object value) {
        if (getFieldID(name) == FIELD_UNDEFINED) {
-	   super.put(name, value);
+           super.put(name, value);
        }
    }
 
@@ -119,7 +119,7 @@ public class JSJavaField extends DefaultScriptObject {
 
    public String toString() {
       StringBuffer buf = new StringBuffer();
-      buf.append("Field ");   
+      buf.append("Field ");
       buf.append(field.getFieldHolder().getName().asString().replace('/', '.'));
       buf.append('.');
       buf.append(field.getID().getName());

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)evmCompat.cpp	1.12 07/05/05 17:06:31 JVM"
+#pragma ident "@(#)evmCompat.cpp        1.12 07/05/05 17:06:31 JVM"
 #endif
 /*
  * Copyright 1999-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file contains definitions for functions that exist

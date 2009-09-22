@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cmsAdaptiveSizePolicy.cpp	1.19 07/05/05 17:05:24 JVM"
+#pragma ident "@(#)cmsAdaptiveSizePolicy.cpp    1.19 07/05/05 17:05:24 JVM"
 #endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 #include "incls/_precompiled.incl"
 #include "incls/_cmsAdaptiveSizePolicy.cpp.incl"
@@ -34,16 +34,16 @@ elapsedTimer CMSAdaptiveSizePolicy::_STW_timer;
 #define CLOCK_GRANULARITY_TOO_LARGE
 
 CMSAdaptiveSizePolicy::CMSAdaptiveSizePolicy(size_t init_eden_size,
-					     size_t init_promo_size,
-					     size_t init_survivor_size,
-					     double max_gc_minor_pause_sec,
-					     double max_gc_pause_sec,
-					     uint gc_cost_ratio) :
-  AdaptiveSizePolicy(init_eden_size, 
-		     init_promo_size,
-		     init_survivor_size, 
-		     max_gc_pause_sec,
-		     gc_cost_ratio) {
+                                             size_t init_promo_size,
+                                             size_t init_survivor_size,
+                                             double max_gc_minor_pause_sec,
+                                             double max_gc_pause_sec,
+                                             uint gc_cost_ratio) :
+  AdaptiveSizePolicy(init_eden_size,
+                     init_promo_size,
+                     init_survivor_size,
+                     max_gc_pause_sec,
+                     gc_cost_ratio) {
 
   clear_internal_time_intervals();
 
@@ -51,37 +51,37 @@ CMSAdaptiveSizePolicy::CMSAdaptiveSizePolicy(size_t init_eden_size,
 
   if (CMSConcurrentMTEnabled && (ParallelCMSThreads > 1)) {
     assert(_processor_count > 0, "Processor count is suspect");
-    _concurrent_processor_count = MIN2((uint) ParallelCMSThreads, 
-				       (uint) _processor_count);
+    _concurrent_processor_count = MIN2((uint) ParallelCMSThreads,
+                                       (uint) _processor_count);
   } else {
     _concurrent_processor_count = 1;
   }
 
-  _avg_concurrent_time 	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_concurrent_time  = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
   _avg_concurrent_interval = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
   _avg_concurrent_gc_cost = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
 
-  _avg_initial_pause 	= new AdaptivePaddedAverage(AdaptiveTimeWeight, 
-						    PausePadding);
-  _avg_remark_pause 	= new AdaptivePaddedAverage(AdaptiveTimeWeight,
+  _avg_initial_pause    = new AdaptivePaddedAverage(AdaptiveTimeWeight,
+                                                    PausePadding);
+  _avg_remark_pause     = new AdaptivePaddedAverage(AdaptiveTimeWeight,
                                                     PausePadding);
 
-  _avg_cms_STW_time 	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_cms_STW_gc_cost 	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_cms_STW_time     = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_cms_STW_gc_cost  = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
 
-  _avg_cms_free 	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_cms_free         = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
   _avg_cms_free_at_sweep = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_cms_promo 	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_cms_promo        = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
 
   // Mark-sweep-compact
-  _avg_msc_pause	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_msc_interval	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_msc_gc_cost	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_msc_pause        = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_msc_interval     = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_msc_gc_cost      = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
 
   // Mark-sweep
-  _avg_ms_pause	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_ms_interval	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
-  _avg_ms_gc_cost	= new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_ms_pause = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_ms_interval      = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
+  _avg_ms_gc_cost       = new AdaptiveWeightedAverage(AdaptiveTimeWeight);
 
   // Variables that estimate pause times as a function of generation
   // size.
@@ -114,18 +114,18 @@ double CMSAdaptiveSizePolicy::concurrent_processor_fraction() {
 }
 
 double CMSAdaptiveSizePolicy::concurrent_collection_cost(
-						  double interval_in_seconds) {
+                                                  double interval_in_seconds) {
   //  When the precleaning and sweeping phases use multiple
-  // threads, change one_processor_fraction to 
+  // threads, change one_processor_fraction to
   // concurrent_processor_fraction().
   double one_processor_fraction = 1.0 / ((double) processor_count());
-  double concurrent_cost = 
-    collection_cost(_latest_cms_concurrent_marking_time_secs, 
-	        interval_in_seconds) * concurrent_processor_fraction() +
+  double concurrent_cost =
+    collection_cost(_latest_cms_concurrent_marking_time_secs,
+                interval_in_seconds) * concurrent_processor_fraction() +
     collection_cost(_latest_cms_concurrent_precleaning_time_secs,
-		interval_in_seconds) * one_processor_fraction +
+                interval_in_seconds) * one_processor_fraction +
     collection_cost(_latest_cms_concurrent_sweeping_time_secs,
-		interval_in_seconds) * one_processor_fraction;
+                interval_in_seconds) * one_processor_fraction;
   if (PrintAdaptiveSizePolicy && Verbose) {
     gclog_or_tty->print_cr(
       "\nCMSAdaptiveSizePolicy::scaled_concurrent_collection_cost(%f) "
@@ -136,11 +136,11 @@ double CMSAdaptiveSizePolicy::concurrent_collection_cost(
       "concurrent_cost %f ",
       interval_in_seconds,
       collection_cost(_latest_cms_concurrent_marking_time_secs,
-	interval_in_seconds),
+        interval_in_seconds),
       collection_cost(_latest_cms_concurrent_precleaning_time_secs,
-	interval_in_seconds),
+        interval_in_seconds),
       collection_cost(_latest_cms_concurrent_sweeping_time_secs,
-	interval_in_seconds),
+        interval_in_seconds),
       concurrent_processor_fraction(),
       concurrent_cost);
   }
@@ -148,7 +148,7 @@ double CMSAdaptiveSizePolicy::concurrent_collection_cost(
 }
 
 double CMSAdaptiveSizePolicy::concurrent_collection_time() {
-  double latest_cms_sum_concurrent_phases_time_secs = 
+  double latest_cms_sum_concurrent_phases_time_secs =
     _latest_cms_concurrent_marking_time_secs +
     _latest_cms_concurrent_precleaning_time_secs +
     _latest_cms_concurrent_sweeping_time_secs;
@@ -157,10 +157,10 @@ double CMSAdaptiveSizePolicy::concurrent_collection_time() {
 
 double CMSAdaptiveSizePolicy::scaled_concurrent_collection_time() {
   //  When the precleaning and sweeping phases use multiple
-  // threads, change one_processor_fraction to 
+  // threads, change one_processor_fraction to
   // concurrent_processor_fraction().
   double one_processor_fraction = 1.0 / ((double) processor_count());
-  double latest_cms_sum_concurrent_phases_time_secs = 
+  double latest_cms_sum_concurrent_phases_time_secs =
     _latest_cms_concurrent_marking_time_secs * concurrent_processor_fraction() +
     _latest_cms_concurrent_precleaning_time_secs * one_processor_fraction +
     _latest_cms_concurrent_sweeping_time_secs * one_processor_fraction ;
@@ -187,14 +187,14 @@ void CMSAdaptiveSizePolicy::update_minor_pause_old_estimator(
   // that is available for promotions in the CMS generation
   // and use that to update _minor_pause_old_estimator
 
-  // Don't implement this until it is needed. A warning is 
+  // Don't implement this until it is needed. A warning is
   // printed if _minor_pause_old_estimator is used.
-}  
+}
 
 void CMSAdaptiveSizePolicy::concurrent_marking_begin() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": concurrent_marking_begin ");
   }
   //  Update the interval time
@@ -210,7 +210,7 @@ void CMSAdaptiveSizePolicy::concurrent_marking_begin() {
 
 void CMSAdaptiveSizePolicy::concurrent_marking_end() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr("CMSAdaptiveSizePolicy::concurrent_marking_end()");
   }
 
@@ -226,7 +226,7 @@ void CMSAdaptiveSizePolicy::concurrent_marking_end() {
 
 void CMSAdaptiveSizePolicy::concurrent_precleaning_begin() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::concurrent_precleaning_begin()");
   }
@@ -237,7 +237,7 @@ void CMSAdaptiveSizePolicy::concurrent_precleaning_begin() {
 
 void CMSAdaptiveSizePolicy::concurrent_precleaning_end() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr("CMSAdaptiveSizePolicy::concurrent_precleaning_end()");
   }
 
@@ -254,7 +254,7 @@ void CMSAdaptiveSizePolicy::concurrent_precleaning_end() {
 
 void CMSAdaptiveSizePolicy::concurrent_sweeping_begin() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::concurrent_sweeping_begin()");
   }
@@ -265,7 +265,7 @@ void CMSAdaptiveSizePolicy::concurrent_sweeping_begin() {
 
 void CMSAdaptiveSizePolicy::concurrent_sweeping_end() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr("CMSAdaptiveSizePolicy::concurrent_sweeping_end()");
   }
 
@@ -281,10 +281,10 @@ void CMSAdaptiveSizePolicy::concurrent_sweeping_end() {
 
 void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
                                                   size_t cur_eden,
-						  size_t cur_promo) {
+                                                  size_t cur_promo) {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": concurrent_phases_end ");
   }
 
@@ -295,7 +295,7 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
       UseAdaptiveSizePolicyWithSystemGC) {
 
     avg_cms_free()->sample(cur_promo);
-    double latest_cms_sum_concurrent_phases_time_secs = 
+    double latest_cms_sum_concurrent_phases_time_secs =
       concurrent_collection_time();
 
     _avg_concurrent_time->sample(latest_cms_sum_concurrent_phases_time_secs);
@@ -304,7 +304,7 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
 
     // Total interval for collection.  May not be valid.  Tests
     // below determine whether to use this.
-    // 
+    //
   if (PrintAdaptiveSizePolicy && Verbose) {
     gclog_or_tty->print_cr("\nCMSAdaptiveSizePolicy::concurrent_phases_end \n"
       "_latest_cms_reset_end_to_initial_mark_start_secs %f \n"
@@ -315,14 +315,14 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
       "_latest_cms_concurrent_sweeping_time_secs %f \n"
       "latest_cms_sum_concurrent_phases_time_secs %f \n"
       "_latest_cms_collection_end_to_collection_start_secs %f \n"
-      "concurrent_processor_fraction %f", 
-      _latest_cms_reset_end_to_initial_mark_start_secs, 
-      _latest_cms_initial_mark_start_to_end_time_secs, 
-      _latest_cms_remark_start_to_end_time_secs, 
-      _latest_cms_concurrent_marking_time_secs, 
-      _latest_cms_concurrent_precleaning_time_secs, 
-      _latest_cms_concurrent_sweeping_time_secs, 
-      latest_cms_sum_concurrent_phases_time_secs, 
+      "concurrent_processor_fraction %f",
+      _latest_cms_reset_end_to_initial_mark_start_secs,
+      _latest_cms_initial_mark_start_to_end_time_secs,
+      _latest_cms_remark_start_to_end_time_secs,
+      _latest_cms_concurrent_marking_time_secs,
+      _latest_cms_concurrent_precleaning_time_secs,
+      _latest_cms_concurrent_sweeping_time_secs,
+      latest_cms_sum_concurrent_phases_time_secs,
       _latest_cms_collection_end_to_collection_start_secs,
       concurrent_processor_fraction());
   }
@@ -343,7 +343,7 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
       "Bad initial mark pause");
     assert(_latest_cms_remark_start_to_end_time_secs >= 0.0,
       "Bad remark pause");
-    double STW_time_in_seconds = 
+    double STW_time_in_seconds =
       _latest_cms_initial_mark_start_to_end_time_secs +
       _latest_cms_remark_start_to_end_time_secs;
     double STW_collection_cost = 0.0;
@@ -361,7 +361,7 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
         (double) interval_in_seconds * MILLIUNITS);
     }
 
-    double concurrent_cost = 0.0; 
+    double concurrent_cost = 0.0;
     if (latest_cms_sum_concurrent_phases_time_secs > 0.0) {
       concurrent_cost = concurrent_collection_cost(interval_in_seconds);
 
@@ -370,14 +370,14 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
 
       if (PrintAdaptiveSizePolicy && Verbose) {
         gclog_or_tty->print("cmsAdaptiveSizePolicy::concurrent_phases_end: "
-          "concurrent gc cost: %f  average: %f", 
-	  concurrent_cost,
+          "concurrent gc cost: %f  average: %f",
+          concurrent_cost,
           _avg_concurrent_gc_cost->average());
         gclog_or_tty->print_cr("  concurrent time: %f (ms) cms period %f (ms)"
-	  " processor fraction: %f",
+          " processor fraction: %f",
           latest_cms_sum_concurrent_phases_time_secs * MILLIUNITS,
           interval_in_seconds * MILLIUNITS,
-	  concurrent_processor_fraction());
+          concurrent_processor_fraction());
       }
     }
     double total_collection_cost = STW_collection_cost + concurrent_cost;
@@ -409,7 +409,7 @@ void CMSAdaptiveSizePolicy::concurrent_phases_end(GCCause::Cause gc_cause,
   set_first_after_collection();
 
   // The concurrent phases keeps track of it's own mutator interval
-  // with this timer.  This allows the stop-the-world phase to 
+  // with this timer.  This allows the stop-the-world phase to
   // be included in the mutator time so that the stop-the-world time
   // is not double counted.  Reset and start it.
   _concurrent_timer.reset();
@@ -441,7 +441,7 @@ void CMSAdaptiveSizePolicy::checkpoint_roots_initial_end(
 
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print(
-	"cmsAdaptiveSizePolicy::checkpoint_roots_initial_end: "
+        "cmsAdaptiveSizePolicy::checkpoint_roots_initial_end: "
         "initial pause: %f ", _latest_cms_initial_mark_start_to_end_time_secs);
     }
   }
@@ -493,8 +493,8 @@ void CMSAdaptiveSizePolicy::checkpoint_roots_final_end(
 
 void CMSAdaptiveSizePolicy::msc_collection_begin() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": msc_collection_begin ");
   }
   _STW_timer.stop();
@@ -511,57 +511,57 @@ void CMSAdaptiveSizePolicy::msc_collection_begin() {
 
 void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": msc_collection_end ");
   }
   _STW_timer.stop();
   if (gc_cause != GCCause::_java_lang_system_gc ||
-	UseAdaptiveSizePolicyWithSystemGC) {
+        UseAdaptiveSizePolicyWithSystemGC) {
     double msc_pause_in_seconds = _STW_timer.seconds();
     if ((_latest_cms_msc_end_to_msc_start_time_secs > 0.0) &&
         (msc_pause_in_seconds > 0.0)) {
       avg_msc_pause()->sample(msc_pause_in_seconds);
       double mutator_time_in_seconds = 0.0;
       if (_latest_cms_collection_end_to_collection_start_secs == 0.0) {
-	// This assertion may fail because of time stamp gradularity.
-	// Comment it out and investiage it at a later time.  The large
-	// time stamp granularity occurs on some older linux systems.
-#ifndef CLOCK_GRANULARITY_TOO_LARGE 
-	assert((_latest_cms_concurrent_marking_time_secs == 0.0) &&
-	       (_latest_cms_concurrent_precleaning_time_secs == 0.0) &&
-	       (_latest_cms_concurrent_sweeping_time_secs == 0.0),
-	  "There should not be any concurrent time");
+        // This assertion may fail because of time stamp gradularity.
+        // Comment it out and investiage it at a later time.  The large
+        // time stamp granularity occurs on some older linux systems.
+#ifndef CLOCK_GRANULARITY_TOO_LARGE
+        assert((_latest_cms_concurrent_marking_time_secs == 0.0) &&
+               (_latest_cms_concurrent_precleaning_time_secs == 0.0) &&
+               (_latest_cms_concurrent_sweeping_time_secs == 0.0),
+          "There should not be any concurrent time");
 #endif
-	// A concurrent collection did not start.  Mutator time
-	// between collections comes from the STW MSC timer.
-	mutator_time_in_seconds = _latest_cms_msc_end_to_msc_start_time_secs;
+        // A concurrent collection did not start.  Mutator time
+        // between collections comes from the STW MSC timer.
+        mutator_time_in_seconds = _latest_cms_msc_end_to_msc_start_time_secs;
       } else {
-	// The concurrent collection did start so count the mutator
-	// time to the start of the concurrent collection.  In this
-	// case the _latest_cms_msc_end_to_msc_start_time_secs measures
-	// the time between the initial mark or remark and the
-	// start of the MSC.  That has no real meaning.
-	mutator_time_in_seconds = _latest_cms_collection_end_to_collection_start_secs;
+        // The concurrent collection did start so count the mutator
+        // time to the start of the concurrent collection.  In this
+        // case the _latest_cms_msc_end_to_msc_start_time_secs measures
+        // the time between the initial mark or remark and the
+        // start of the MSC.  That has no real meaning.
+        mutator_time_in_seconds = _latest_cms_collection_end_to_collection_start_secs;
       }
 
-      double latest_cms_sum_concurrent_phases_time_secs = 
-	concurrent_collection_time();
+      double latest_cms_sum_concurrent_phases_time_secs =
+        concurrent_collection_time();
       double interval_in_seconds =
-	mutator_time_in_seconds +
-	_latest_cms_initial_mark_start_to_end_time_secs + 
-	_latest_cms_remark_start_to_end_time_secs +
-	latest_cms_sum_concurrent_phases_time_secs +
+        mutator_time_in_seconds +
+        _latest_cms_initial_mark_start_to_end_time_secs +
+        _latest_cms_remark_start_to_end_time_secs +
+        latest_cms_sum_concurrent_phases_time_secs +
         msc_pause_in_seconds;
 
       if (PrintAdaptiveSizePolicy && Verbose) {
         gclog_or_tty->print_cr("  interval_in_seconds %f \n"
-          "	mutator_time_in_seconds %f \n"
-          "	_latest_cms_initial_mark_start_to_end_time_secs %f\n"
-          "	_latest_cms_remark_start_to_end_time_secs %f\n"
-          "	latest_cms_sum_concurrent_phases_time_secs %f\n"
-          "	msc_pause_in_seconds %f\n",
-          interval_in_seconds, 
+          "     mutator_time_in_seconds %f \n"
+          "     _latest_cms_initial_mark_start_to_end_time_secs %f\n"
+          "     _latest_cms_remark_start_to_end_time_secs %f\n"
+          "     latest_cms_sum_concurrent_phases_time_secs %f\n"
+          "     msc_pause_in_seconds %f\n",
+          interval_in_seconds,
           mutator_time_in_seconds,
           _latest_cms_initial_mark_start_to_end_time_secs,
           _latest_cms_remark_start_to_end_time_secs,
@@ -576,8 +576,8 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
       // Initial mark and remark, also wasted.
       double STW_time_in_seconds = _latest_cms_initial_mark_start_to_end_time_secs +
         _latest_cms_remark_start_to_end_time_secs;
-      double STW_collection_cost = 
-	collection_cost(STW_time_in_seconds, interval_in_seconds) +
+      double STW_collection_cost =
+        collection_cost(STW_time_in_seconds, interval_in_seconds) +
         concurrent_cost;
 
       if (PrintAdaptiveSizePolicy && Verbose) {
@@ -589,7 +589,7 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
           "latest_cms_sum_concurrent_phases_time_secs %f\n",
           _latest_cms_collection_end_to_collection_start_secs,
           _latest_cms_msc_end_to_msc_start_time_secs,
-          _latest_cms_initial_mark_start_to_end_time_secs, 
+          _latest_cms_initial_mark_start_to_end_time_secs,
           _latest_cms_remark_start_to_end_time_secs,
           latest_cms_sum_concurrent_phases_time_secs);
 
@@ -603,7 +603,7 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
       }
 
       double cost = concurrent_cost + STW_collection_cost +
-	collection_cost(msc_pause_in_seconds, interval_in_seconds);
+        collection_cost(msc_pause_in_seconds, interval_in_seconds);
 
       _avg_msc_gc_cost->sample(cost);
 
@@ -616,7 +616,7 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
         gclog_or_tty->print("cmsAdaptiveSizePolicy::msc_collection_end: "
           "MSC gc cost: %f  average: %f", cost,
           _avg_msc_gc_cost->average());
-  
+
         double msc_pause_in_ms = msc_pause_in_seconds * MILLIUNITS;
         gclog_or_tty->print_cr("  MSC pause: %f (ms) MSC period %f (ms)",
           msc_pause_in_ms, (double) interval_in_seconds * MILLIUNITS);
@@ -630,7 +630,7 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
   set_first_after_collection();
 
   // The concurrent phases keeps track of it's own mutator interval
-  // with this timer.  This allows the stop-the-world phase to 
+  // with this timer.  This allows the stop-the-world phase to
   // be included in the mutator time so that the stop-the-world time
   // is not double counted.  Reset and start it.
   _concurrent_timer.stop();
@@ -643,8 +643,8 @@ void CMSAdaptiveSizePolicy::msc_collection_end(GCCause::Cause gc_cause) {
 
 void CMSAdaptiveSizePolicy::ms_collection_begin() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": ms_collection_begin ");
   }
   _STW_timer.stop();
@@ -661,8 +661,8 @@ void CMSAdaptiveSizePolicy::ms_collection_begin() {
 
 void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print(" "); 
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->print(" ");
+    gclog_or_tty->stamp();
     gclog_or_tty->print(": ms_collection_end ");
   }
   _STW_timer.stop();
@@ -671,10 +671,10 @@ void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
     // The MS collection is a foreground collection that does all
     // the parts of a mostly concurrent collection.
     //
-    // For this collection include the cost of the 
+    // For this collection include the cost of the
     //  initial mark
     //  remark
-    //  all concurrent time (scaled down by the 
+    //  all concurrent time (scaled down by the
     //    concurrent_processor_fraction).  Some
     //    may be zero if the baton was passed before
     //    it was reached.
@@ -684,7 +684,7 @@ void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
     //  STW after baton was passed (STW_in_foreground_in_seconds)
     double STW_in_foreground_in_seconds = _STW_timer.seconds();
 
-    double latest_cms_sum_concurrent_phases_time_secs = 
+    double latest_cms_sum_concurrent_phases_time_secs =
       concurrent_collection_time();
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("\nCMSAdaptiveSizePolicy::ms_collecton_end "
@@ -693,12 +693,12 @@ void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
         "_latest_cms_remark_start_to_end_time_secs %f "
         "latest_cms_sum_concurrent_phases_time_secs %f "
         "_latest_cms_ms_marking_start_to_end_time_secs %f "
-        "_latest_cms_ms_end_to_ms_start %f", 
-        STW_in_foreground_in_seconds, 
-        _latest_cms_initial_mark_start_to_end_time_secs, 
-        _latest_cms_remark_start_to_end_time_secs, 
-        latest_cms_sum_concurrent_phases_time_secs, 
-        _latest_cms_ms_marking_start_to_end_time_secs, 
+        "_latest_cms_ms_end_to_ms_start %f",
+        STW_in_foreground_in_seconds,
+        _latest_cms_initial_mark_start_to_end_time_secs,
+        _latest_cms_remark_start_to_end_time_secs,
+        latest_cms_sum_concurrent_phases_time_secs,
+        _latest_cms_ms_marking_start_to_end_time_secs,
         _latest_cms_ms_end_to_ms_start);
     }
 
@@ -706,30 +706,30 @@ void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
       _latest_cms_remark_start_to_end_time_secs;
 #ifndef CLOCK_GRANULARITY_TOO_LARGE
     assert(_latest_cms_ms_marking_start_to_end_time_secs == 0.0 ||
-	   latest_cms_sum_concurrent_phases_time_secs == 0.0,
-	   "marking done twice?");
+           latest_cms_sum_concurrent_phases_time_secs == 0.0,
+           "marking done twice?");
 #endif
     double ms_time_in_seconds = STW_marking_in_seconds +
-      STW_in_foreground_in_seconds + 
+      STW_in_foreground_in_seconds +
       _latest_cms_ms_marking_start_to_end_time_secs +
       scaled_concurrent_collection_time();
     avg_ms_pause()->sample(ms_time_in_seconds);
     // Use the STW costs from the initial mark and remark plus
-    // the cost of the concurrent phase to calculate a 
+    // the cost of the concurrent phase to calculate a
     // collection cost.
     double cost = 0.0;
     if ((_latest_cms_ms_end_to_ms_start > 0.0) &&
         (ms_time_in_seconds > 0.0)) {
       double interval_in_seconds =
         _latest_cms_ms_end_to_ms_start + ms_time_in_seconds;
-      
+
       if (PrintAdaptiveSizePolicy && Verbose) {
         gclog_or_tty->print_cr("\n ms_time_in_seconds  %f  "
-	  "latest_cms_sum_concurrent_phases_time_secs %f  "
-	  "interval_in_seconds %f",
-          ms_time_in_seconds, 
-	  latest_cms_sum_concurrent_phases_time_secs, 
-	  interval_in_seconds);
+          "latest_cms_sum_concurrent_phases_time_secs %f  "
+          "interval_in_seconds %f",
+          ms_time_in_seconds,
+          latest_cms_sum_concurrent_phases_time_secs,
+          interval_in_seconds);
       }
 
       cost = collection_cost(ms_time_in_seconds, interval_in_seconds);
@@ -752,14 +752,14 @@ void CMSAdaptiveSizePolicy::ms_collection_end(GCCause::Cause gc_cause) {
     }
   }
 
-  // Consider putting this code (here to end) into a 
+  // Consider putting this code (here to end) into a
   // method for convenience.
   clear_internal_time_intervals();
 
   set_first_after_collection();
 
   // The concurrent phases keeps track of it's own mutator interval
-  // with this timer.  This allows the stop-the-world phase to 
+  // with this timer.  This allows the stop-the-world phase to
   // be included in the mutator time so that the stop-the-world time
   // is not double counted.  Reset and start it.
   _concurrent_timer.stop();
@@ -792,7 +792,7 @@ void CMSAdaptiveSizePolicy::clear_generation_free_space_flags() {
 
 void CMSAdaptiveSizePolicy::concurrent_phases_resume() {
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->stamp(); 
+    gclog_or_tty->stamp();
     gclog_or_tty->print_cr("CMSAdaptiveSizePolicy::concurrent_phases_resume()");
   }
   _concurrent_timer.start();
@@ -836,7 +836,7 @@ void CMSAdaptiveSizePolicy::ms_collection_marking_end(
     _latest_cms_ms_marking_start_to_end_time_secs = _STW_timer.seconds();
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("CMSAdaptiveSizePolicy::"
-	"msc_collection_marking_end: mutator time %f",
+        "msc_collection_marking_end: mutator time %f",
         _latest_cms_ms_marking_start_to_end_time_secs);
     }
   }
@@ -852,8 +852,8 @@ double CMSAdaptiveSizePolicy::gc_cost() const {
 }
 
 // Cost of collection (unit-less)
-double CMSAdaptiveSizePolicy::collection_cost(double pause_in_seconds, 
-					      double interval_in_seconds) {
+double CMSAdaptiveSizePolicy::collection_cost(double pause_in_seconds,
+                                              double interval_in_seconds) {
   // Cost of collection (unit-less)
   double cost = 0.0;
   if ((interval_in_seconds > 0.0) &&
@@ -867,7 +867,7 @@ double CMSAdaptiveSizePolicy::collection_cost(double pause_in_seconds,
 size_t CMSAdaptiveSizePolicy::adjust_eden_for_pause_time(size_t cur_eden) {
   size_t change = 0;
   size_t desired_eden = cur_eden;
-  
+
   // reduce eden size
   change = eden_decrement_aligned_down(cur_eden);
   desired_eden = cur_eden - change;
@@ -915,7 +915,7 @@ size_t CMSAdaptiveSizePolicy::adjust_eden_for_throughput(size_t cur_eden) {
 
 size_t CMSAdaptiveSizePolicy::adjust_eden_for_footprint(size_t cur_eden) {
 
-  set_decrease_for_footprint(decrease_young_gen_for_footprint_true); 
+  set_decrease_for_footprint(decrease_young_gen_for_footprint_true);
 
   size_t change = eden_decrement(cur_eden);
   size_t desired_eden_size = cur_eden - change;
@@ -986,9 +986,9 @@ void CMSAdaptiveSizePolicy::compute_young_generation_free_space(size_t cur_eden,
     // the generation be shrunk?
     if (get_and_clear_first_after_collection() &&
         ((avg_remark_pause()->padded_average() > gc_pause_goal_sec() &&
-	  remark_pause_young_estimator()->decrement_will_decrease()) ||
+          remark_pause_young_estimator()->decrement_will_decrease()) ||
          (avg_initial_pause()->padded_average() > gc_pause_goal_sec() &&
-	  initial_pause_young_estimator()->decrement_will_decrease()))) {
+          initial_pause_young_estimator()->decrement_will_decrease()))) {
 
        set_change_young_gen_for_maj_pauses(
          decrease_young_gen_for_maj_pauses_true);
@@ -1000,10 +1000,10 @@ void CMSAdaptiveSizePolicy::compute_young_generation_free_space(size_t cur_eden,
     }
     // If not the first young gen collection after a cms collection,
     // don't do anything.  In this case an adjustment has already
-    // been made and the results of the adjustment has not yet been 
+    // been made and the results of the adjustment has not yet been
     // measured.
-  } else if ((minor_gc_cost() >= 0.0) && 
-	     (adjusted_mutator_cost() < _throughput_goal)) {
+  } else if ((minor_gc_cost() >= 0.0) &&
+             (adjusted_mutator_cost() < _throughput_goal)) {
     desired_eden_size = adjust_eden_for_throughput(desired_eden_size);
   } else {
     desired_eden_size = adjust_eden_for_footprint(desired_eden_size);
@@ -1013,15 +1013,15 @@ void CMSAdaptiveSizePolicy::compute_young_generation_free_space(size_t cur_eden,
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::compute_young_generation_free_space limits:"
       " desired_eden_size: " SIZE_FORMAT
-      " old_eden_size: " SIZE_FORMAT, 
+      " old_eden_size: " SIZE_FORMAT,
       desired_eden_size, cur_eden);
   }
 
   set_eden_size(desired_eden_size);
 }
 
-size_t CMSAdaptiveSizePolicy::adjust_promo_for_pause_time(size_t cur_promo) { 
-  size_t change = 0; 
+size_t CMSAdaptiveSizePolicy::adjust_promo_for_pause_time(size_t cur_promo) {
+  size_t change = 0;
   size_t desired_promo = cur_promo;
   // Move this test up to caller like the adjust_eden_for_pause_time()
   // call.
@@ -1040,7 +1040,7 @@ size_t CMSAdaptiveSizePolicy::adjust_promo_for_pause_time(size_t cur_promo) {
     change = promo_decrement_aligned_down(cur_promo);
     desired_promo = cur_promo - change;
   }
-  
+
   if ((change != 0) &&PrintAdaptiveSizePolicy && Verbose) {
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::adjust_promo_for_pause_time "
@@ -1054,12 +1054,12 @@ size_t CMSAdaptiveSizePolicy::adjust_promo_for_pause_time(size_t cur_promo) {
   return desired_promo;
 }
 
-// Try to share this with PS.  
+// Try to share this with PS.
 size_t CMSAdaptiveSizePolicy::scale_by_gen_gc_cost(size_t base_change,
-						  double gen_gc_cost) {
+                                                  double gen_gc_cost) {
 
   // Calculate the change to use for the tenured gen.
-  size_t scaled_change = 0; 
+  size_t scaled_change = 0;
   // Can the increment to the generation be scaled?
   if (gc_cost() >= 0.0 && gen_gc_cost >= 0.0) {
     double scale_by_ratio = gen_gc_cost / gc_cost();
@@ -1068,7 +1068,7 @@ size_t CMSAdaptiveSizePolicy::scale_by_gen_gc_cost(size_t base_change,
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr(
         "Scaled tenured increment: " SIZE_FORMAT " by %f down to "
-	  SIZE_FORMAT,
+          SIZE_FORMAT,
         base_change, scale_by_ratio, scaled_change);
     }
   } else if (gen_gc_cost >= 0.0) {
@@ -1116,9 +1116,9 @@ size_t CMSAdaptiveSizePolicy::adjust_promo_for_throughput(size_t cur_promo) {
 }
 
 size_t CMSAdaptiveSizePolicy::adjust_promo_for_footprint(size_t cur_promo,
-							 size_t cur_eden) {
+                                                         size_t cur_eden) {
 
-  set_decrease_for_footprint(decrease_young_gen_for_footprint_true); 
+  set_decrease_for_footprint(decrease_young_gen_for_footprint_true);
 
   size_t change = promo_decrement(cur_promo);
   size_t desired_promo_size = cur_promo - change;
@@ -1136,9 +1136,9 @@ size_t CMSAdaptiveSizePolicy::adjust_promo_for_footprint(size_t cur_promo,
 }
 
 void CMSAdaptiveSizePolicy::compute_tenured_generation_free_space(
-				size_t cur_tenured_free,
+                                size_t cur_tenured_free,
                                 size_t max_tenured_available,
-				size_t cur_eden) {
+                                size_t cur_eden) {
   // This can be bad if the desired value grows/shrinks without
   // any connection to the read free space
   size_t desired_promo_size = promo_size();
@@ -1148,7 +1148,7 @@ void CMSAdaptiveSizePolicy::compute_tenured_generation_free_space(
   if (PrintGC && PrintAdaptiveSizePolicy) {
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::compute_tenured_generation_free_space: "
-      "cur_tenured_free " SIZE_FORMAT 
+      "cur_tenured_free " SIZE_FORMAT
       " max_tenured_available " SIZE_FORMAT,
       cur_tenured_free, max_tenured_available);
   }
@@ -1163,19 +1163,19 @@ void CMSAdaptiveSizePolicy::compute_tenured_generation_free_space(
   } else if (avg_minor_pause()->padded_average() > gc_pause_goal_sec()) {
     // Nothing to do since the minor collections are too large and
     // this method only deals with the cms generation.
-  } else if ((cms_gc_cost() >= 0.0) && 
-	     (adjusted_mutator_cost() < _throughput_goal)) {
+  } else if ((cms_gc_cost() >= 0.0) &&
+             (adjusted_mutator_cost() < _throughput_goal)) {
     desired_promo_size = adjust_promo_for_throughput(cur_tenured_free);
   } else {
     desired_promo_size = adjust_promo_for_footprint(cur_tenured_free,
-						    cur_eden);
+                                                    cur_eden);
   }
 
   if (PrintGC && PrintAdaptiveSizePolicy) {
     gclog_or_tty->print_cr(
       "CMSAdaptiveSizePolicy::compute_tenured_generation_free_space limits:"
       " desired_promo_size: " SIZE_FORMAT
-      " old_promo_size: " SIZE_FORMAT, 
+      " old_promo_size: " SIZE_FORMAT,
       desired_promo_size, cur_tenured_free);
   }
 
@@ -1187,12 +1187,12 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
                                              int tenuring_threshold,
                                              size_t survivor_limit) {
   assert(survivor_limit >= generation_alignment(),
-	 "survivor_limit too small");
+         "survivor_limit too small");
   assert((size_t)align_size_down(survivor_limit, generation_alignment())
-	 == survivor_limit, "survivor_limit not aligned");
+         == survivor_limit, "survivor_limit not aligned");
 
   // Change UsePSAdaptiveSurvivorSizePolicy -> UseAdaptiveSurvivorSizePolicy?
-  if (!UsePSAdaptiveSurvivorSizePolicy || 
+  if (!UsePSAdaptiveSurvivorSizePolicy ||
       !young_gen_policy_is_ready()) {
     return tenuring_threshold;
   }
@@ -1209,11 +1209,11 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
   set_decrement_tenuring_threshold_for_survivor_limit(false);
 
   if (!is_survivor_overflow) {
-    // Keep running averages on how much survived 
+    // Keep running averages on how much survived
 
     // We use the tenuring threshold to equalize the cost of major
     // and minor collections.
-    // ThresholdTolerance is used to indicate how sensitive the 
+    // ThresholdTolerance is used to indicate how sensitive the
     // tenuring threshold is to differences in cost betweent the
     // collection types.
 
@@ -1237,7 +1237,7 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
     // Survivor space overflow occurred, so promoted and survived are
     // not accurate. We'll make our best guess by combining survived
     // and promoted and count them as survivors.
-    // 
+    //
     // We'll lower the tenuring threshold to see if we can correct
     // things. Also, set the survivor size conservatively. We're
     // trying to avoid many overflows from occurring if defnew size
@@ -1250,7 +1250,7 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
   // we use this to see how good of an estimate we have of what survived.
   // We're trying to pad the survivor size as little as possible without
   // overflowing the survivor spaces.
-  size_t target_size = align_size_up((size_t)_avg_survived->padded_average(), 
+  size_t target_size = align_size_up((size_t)_avg_survived->padded_average(),
                                      generation_alignment());
   target_size = MAX2(target_size, generation_alignment());
 
@@ -1276,24 +1276,24 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
   }
 
   // We keep a running average of the amount promoted which is used
-  // to decide when we should collect the old generation (when 
+  // to decide when we should collect the old generation (when
   // the amount of old gen free space is less than what we expect to
   // promote).
- 
+
   if (PrintAdaptiveSizePolicy) {
     // A little more detail if Verbose is on
     GenCollectedHeap* gch = GenCollectedHeap::heap();
-    if (Verbose) { 
+    if (Verbose) {
       gclog_or_tty->print( "  avg_survived: %f"
                   "  avg_deviation: %f",
-                  _avg_survived->average(), 
+                  _avg_survived->average(),
                   _avg_survived->deviation());
     }
 
     gclog_or_tty->print( "  avg_survived_padded_avg: %f",
                 _avg_survived->padded_average());
 
-    if (Verbose) { 
+    if (Verbose) {
       gclog_or_tty->print( "  avg_promoted_avg: %f"
                   "  avg_promoted_dev: %f",
                   gch->gc_stats(1)->avg_promoted()->average(),
@@ -1304,7 +1304,7 @@ int CMSAdaptiveSizePolicy::compute_survivor_space_size_and_threshold(
                 "  avg_pretenured_padded_avg: %f"
                 "  tenuring_thresh: %d"
                 "  target_size: " SIZE_FORMAT
-		"  survivor_limit: " SIZE_FORMAT,
+                "  survivor_limit: " SIZE_FORMAT,
                 gch->gc_stats(1)->avg_promoted()->padded_average(),
                 _avg_pretenured->padded_average(),
                 tenuring_threshold, target_size, survivor_limit);
@@ -1323,15 +1323,15 @@ bool CMSAdaptiveSizePolicy::get_and_clear_first_after_collection() {
 }
 
 bool CMSAdaptiveSizePolicy::print_adaptive_size_policy_on(
-						    outputStream* st) const {
+                                                    outputStream* st) const {
 
   if (!UseAdaptiveSizePolicy) return false;
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   Generation* gen0 = gch->get_gen(0);
   DefNewGeneration* def_new = gen0->as_DefNewGeneration();
-  return 
+  return
     AdaptiveSizePolicy::print_adaptive_size_policy_on(
-					 st, 
-					 def_new->tenuring_threshold());
+                                         st,
+                                         def_new->tenuring_threshold());
 }

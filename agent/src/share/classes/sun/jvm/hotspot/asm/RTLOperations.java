@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm;
@@ -45,7 +45,7 @@ public interface RTLOperations {
    public static final int RTLOP_OR           = 9;
    public static final int RTLOP_NOT          = 10;
    public static final int RTLOP_NAND         = 11;
-   public static final int RTLOP_NOR          = 12; 
+   public static final int RTLOP_NOR          = 12;
    public static final int RTLOP_XOR          = 13;
    public static final int RTLOP_XNOR         = 14;
 

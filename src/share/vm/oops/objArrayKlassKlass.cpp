@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)objArrayKlassKlass.cpp	1.79 07/05/29 09:44:24 JVM"
+#pragma ident "@(#)objArrayKlassKlass.cpp       1.79 07/05/29 09:44:24 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +30,7 @@
 
 klassOop objArrayKlassKlass::create_klass(TRAPS) {
   objArrayKlassKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
   KlassHandle k = base_create_klass(h_this_klass, header_size(), o.vtbl_value(), CHECK_0);
   assert(k()->size() == align_object_size(header_size()), "wrong size for object");
   java_lang_Class::create_mirror(k, CHECK_0); // Allocate mirror
@@ -53,7 +53,7 @@ klassOop objArrayKlassKlass::allocate_objArray_klass(int n, KlassHandle element_
   return allocate_objArray_klass_impl(this_oop, n, element_klass, THREAD);
 }
 
-klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHandle this_oop, 
+klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHandle this_oop,
                                                           int n, KlassHandle element_klass, TRAPS) {
 
   // Eagerly allocate the direct array supertype.
@@ -66,32 +66,32 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
       bool supers_exist = super_klass.not_null();
       // Also, see if the element has secondary supertypes.
       // We need an array type for each.
-      objArrayHandle element_supers = objArrayHandle(THREAD, 
+      objArrayHandle element_supers = objArrayHandle(THREAD,
                                             element_klass->secondary_supers());
       for( int i = element_supers->length()-1; i >= 0; i-- ) {
-	klassOop elem_super = (klassOop) element_supers->obj_at(i);
-	if (Klass::cast(elem_super)->array_klass_or_null() == NULL) {
-	  supers_exist = false;
-	  break;
-	}
+        klassOop elem_super = (klassOop) element_supers->obj_at(i);
+        if (Klass::cast(elem_super)->array_klass_or_null() == NULL) {
+          supers_exist = false;
+          break;
+        }
       }
       if (!supers_exist) {
-	// Oops.  Not allocated yet.  Back out, allocate it, and retry.
+        // Oops.  Not allocated yet.  Back out, allocate it, and retry.
 #ifndef PRODUCT
-	if (WizardMode) {
+        if (WizardMode) {
           tty->print_cr("Must retry array klass creation for depth %d",n);
         }
 #endif
         KlassHandle ek;
         {
-	  MutexUnlocker mu(MultiArray_lock);
-	  MutexUnlocker mc(Compile_lock);   // for vtables
-	  klassOop sk = element_super->array_klass(CHECK_0);
-	  super_klass = KlassHandle(THREAD, sk);
-	  for( int i = element_supers->length()-1; i >= 0; i-- ) {
-	    KlassHandle elem_super (THREAD, element_supers->obj_at(i));
-	    elem_super->array_klass(CHECK_0);
-	  }
+          MutexUnlocker mu(MultiArray_lock);
+          MutexUnlocker mc(Compile_lock);   // for vtables
+          klassOop sk = element_super->array_klass(CHECK_0);
+          super_klass = KlassHandle(THREAD, sk);
+          for( int i = element_supers->length()-1; i >= 0; i-- ) {
+            KlassHandle elem_super (THREAD, element_supers->obj_at(i));
+            elem_super->array_klass(CHECK_0);
+          }
           // Now retry from the beginning
           klassOop klass_oop = element_klass->array_klass(n, CHECK_0);
           // Create a handle because the enclosing brace, when locking
@@ -112,7 +112,7 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
   // get a handle to the new objArrayKlass we want to construct.  We cannot
   // block while holding a handling to a partly initialized object.
   symbolHandle name = symbolHandle();
-  
+
   if (!element_klass->oop_is_symbol()) {
     ResourceMark rm(THREAD);
     char *name_str = element_klass->name()->as_C_string();
@@ -122,24 +122,24 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
     new_str[idx++] = '[';
     if (element_klass->oop_is_instance()) { // it could be an array or simple type
       new_str[idx++] = 'L';
-    } 
+    }
     memcpy(&new_str[idx], name_str, len * sizeof(char));
     idx += len;
     if (element_klass->oop_is_instance()) {
       new_str[idx++] = ';';
     }
     new_str[idx++] = '\0';
-    name = oopFactory::new_symbol_handle(new_str, CHECK_0);    
-  } 
+    name = oopFactory::new_symbol_handle(new_str, CHECK_0);
+  }
 
-  objArrayKlass o;  
-  arrayKlassHandle k = arrayKlass::base_create_array_klass(o.vtbl_value(), 
-                                                           objArrayKlass::header_size(), 
-                                                          this_oop, 
+  objArrayKlass o;
+  arrayKlassHandle k = arrayKlass::base_create_array_klass(o.vtbl_value(),
+                                                           objArrayKlass::header_size(),
+                                                          this_oop,
                                                            CHECK_0);
 
 
-  // Initialize instance variables  
+  // Initialize instance variables
   objArrayKlass* oak = objArrayKlass::cast(k());
   oak->set_dimension(n);
   oak->set_element_klass(element_klass());
@@ -178,7 +178,7 @@ void objArrayKlassKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void objArrayKlassKlass::oop_follow_contents(ParCompactionManager* cm,
-					     oop obj) {
+                                             oop obj) {
   assert(obj->is_klass(), "must be klass");
   assert(klassOop(obj)->klass_part()->oop_is_objArray_slow(), "must be obj array");
 
@@ -252,8 +252,8 @@ int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-					    HeapWord* beg_addr,
-					    HeapWord* end_addr) {
+                                            HeapWord* beg_addr,
+                                            HeapWord* end_addr) {
   assert(obj->is_klass(), "must be klass");
   assert(klassOop(obj)->klass_part()->oop_is_objArray_slow(), "must be obj array");
 
@@ -309,4 +309,3 @@ void objArrayKlassKlass::oop_verify_on(oop obj, outputStream* st) {
   Klass* bk = Klass::cast(oak->bottom_klass());
   guarantee(bk->oop_is_instance() || bk->oop_is_typeArray(),  "invalid bottom klass");
 }
-

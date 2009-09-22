@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perf.cpp	1.15 07/05/05 17:06:34 JVM"
+#pragma ident "@(#)perf.cpp     1.15 07/05/05 17:06:34 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /*
@@ -136,8 +136,8 @@ PERF_ENTRY(jobject, Perf_CreateLong(JNIEnv *env, jobject perf, jstring name,
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "PerfLong name already exists");
   }
 
-  switch(variability) { 
-  case 1:  /* V_Constant */ 
+  switch(variability) {
+  case 1:  /* V_Constant */
     pl = PerfDataManager::create_long_constant(NULL_NS, (char *)name_utf,
                                                (PerfData::Units)units, value,
                                                CHECK_NULL);
@@ -314,4 +314,3 @@ JVM_ENTRY(void, JVM_RegisterPerfMethods(JNIEnv *env, jclass perfclass))
     guarantee(ok == 0, "register perf natives");
   }
 JVM_END
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)IOBuf.cpp	1.14 07/05/05 17:02:05 JVM"
+#pragma ident "@(#)IOBuf.cpp    1.14 07/05/05 17:02:05 JVM"
 #endif
 /*
  * Copyright 2000-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include <stdio.h>
@@ -248,7 +248,7 @@ IOBuf::flush() {
 bool
 IOBuf::writeString(const char* str) {
   int len = strlen(str);
-  
+
   if (len > outBuf->size()) {
     return false;
   }
@@ -258,7 +258,7 @@ IOBuf::writeString(const char* str) {
       return false;
     }
   }
-  
+
   // NOTE we do not copy the null terminator of the string.
 
   strncpy(outBuf->fillPos(), str, len);

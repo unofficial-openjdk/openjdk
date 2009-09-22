@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -120,7 +120,7 @@ public interface DebugVC50TypeEnums {
       <p>
       <i>vdisp</i>: displacement within virtual base table
       </p>
-      
+
       <p>
       NULL value is (*,*,0xffffffff).
       </p>
@@ -172,7 +172,7 @@ public interface DebugVC50TypeEnums {
   public static final short PTR_FORMAT_METHOD_NVB_MAP = (short) 12;
 
   /** <p> 16:32 method with virtual bases. Pointer layout is: </p>
-      
+
       <p>
       <table width = "60%">
       <tr> <td> 4 <td> 4 <td> 4 <td> 4

@@ -1,6 +1,6 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)classLoader.hpp	1.66 07/07/16 11:55:32 JVM"
-#endif 
+#pragma ident "@(#)classLoader.hpp      1.66 07/07/16 11:55:32 JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The VM class loader.
@@ -84,14 +84,14 @@ class ClassPathDirEntry: public ClassPathEntry {
 // Type definitions for zip file and zip file entry
 typedef void* jzfile;
 typedef struct {
-  char *name;	  	  	/* entry name */
-  jlong time;            	/* modification time */
-  jlong size;	  	  	/* size of uncompressed data */
-  jlong csize;  	  	/* size of compressed data (zero if uncompressed) */
-  jint crc;		  	/* crc of uncompressed data */
-  char *comment;	  	/* optional zip file comment */
-  jbyte *extra;	  		/* optional extra data */
-  jlong pos;	  	  	/* position of LOC header (if negative) or data */
+  char *name;                   /* entry name */
+  jlong time;                   /* modification time */
+  jlong size;                   /* size of uncompressed data */
+  jlong csize;                  /* size of compressed data (zero if uncompressed) */
+  jint crc;                     /* crc of uncompressed data */
+  char *comment;                /* optional zip file comment */
+  jbyte *extra;                 /* optional extra data */
+  jlong pos;                    /* position of LOC header (if negative) or data */
 } jzentry;
 
 
@@ -147,7 +147,7 @@ class ClassLoader: AllStatic {
   };
  private:
   friend class LazyClassPathEntry;
-  
+
   // Performance counters
   static PerfCounter* _perf_accumulated_time;
   static PerfCounter* _perf_classes_inited;
@@ -155,13 +155,13 @@ class ClassLoader: AllStatic {
   static PerfCounter* _perf_class_verify_time;
   static PerfCounter* _perf_classes_linked;
   static PerfCounter* _perf_class_link_time;
-  
+
   static PerfCounter* _sync_systemLoaderLockContentionRate;
   static PerfCounter* _sync_nonSystemLoaderLockContentionRate;
   static PerfCounter* _sync_JVMFindLoadedClassLockFreeCounter;
   static PerfCounter* _sync_JVMDefineClassLockFreeCounter;
   static PerfCounter* _sync_JNIDefineClassLockFreeCounter;
-  
+
   static PerfCounter* _unsafe_defineClassCallCounter;
   static PerfCounter* _isUnsyncloadClass;
   static PerfCounter* _load_instance_class_failCounter;
@@ -176,7 +176,7 @@ class ClassLoader: AllStatic {
 
   // Hash function
   static unsigned int hash(const char *s, int n);
-  // Returns the package file name corresponding to the specified package 
+  // Returns the package file name corresponding to the specified package
   // or class name, or null if not found.
   static PackageInfo* lookup_package(const char *pkgname);
   // Adds a new package entry for the specified class or package name and
@@ -220,7 +220,7 @@ class ClassLoader: AllStatic {
   static PerfCounter* sync_JVMFindLoadedClassLockFreeCounter() {
     return _sync_JVMFindLoadedClassLockFreeCounter;
   }
-  
+
   // Record how many calls to JVM_DefineClass w/o holding a lock
   static PerfCounter* sync_JVMDefineClassLockFreeCounter() {
     return _sync_JVMDefineClassLockFreeCounter;
@@ -241,9 +241,9 @@ class ClassLoader: AllStatic {
   static PerfCounter* load_instance_class_failCounter() {
     return _load_instance_class_failCounter;
   }
-  
+
   // Load individual .class file
-  static instanceKlassHandle load_classfile(symbolHandle h_name, TRAPS);  
+  static instanceKlassHandle load_classfile(symbolHandle h_name, TRAPS);
 
   // If the specified package has been loaded by the system, then returns
   // the name of the directory or ZIP file that the package was loaded from.
@@ -295,7 +295,7 @@ class ClassLoader: AllStatic {
   static void add_to_list(ClassPathEntry* new_entry);
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
-  static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);   
+  static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

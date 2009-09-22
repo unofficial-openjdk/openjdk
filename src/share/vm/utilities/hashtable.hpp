@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)hashtable.hpp	1.14 07/05/05 17:07:10 JVM"
+#pragma ident "@(#)hashtable.hpp        1.14 07/05/05 17:07:10 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This is a generic hashtable, designed to be used for the symbol
@@ -219,7 +219,7 @@ public:
 
   // GC support
   //   Delete pointers to otherwise-unreachable objects.
-  void unlink(BoolObjectClosure* cl); 
+  void unlink(BoolObjectClosure* cl);
 
   // Reverse the order of elements in each of the buckets. Hashtable
   // entries which refer to objects at a lower address than 'boundary'
@@ -268,8 +268,8 @@ protected:
 
 public:
   unsigned int compute_hash(symbolHandle name, Handle loader) {
-    // Be careful with identity_hash(), it can safepoint and if this 
-    // were one expression, the compiler could choose to unhandle each 
+    // Be careful with identity_hash(), it can safepoint and if this
+    // were one expression, the compiler could choose to unhandle each
     // oop before calling identity_hash() for either of them.  If the first
     // causes a GC, the next would fail.
     unsigned int name_hash = name->identity_hash();

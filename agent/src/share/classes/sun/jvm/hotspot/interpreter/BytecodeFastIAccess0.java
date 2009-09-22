@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -67,7 +67,7 @@ public class BytecodeFastIAccess0 extends BytecodeGetPut {
   public static BytecodeFastIAccess0 at(BytecodeStream bcs) {
     return new BytecodeFastIAccess0(bcs.method(), bcs.bci());
   }
-  
+
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append("aload_0");

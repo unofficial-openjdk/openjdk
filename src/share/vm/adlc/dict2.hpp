@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)dict2.hpp	1.16 07/05/05 17:05:01 JVM"
+#pragma ident "@(#)dict2.hpp    1.16 07/05/05 17:05:01 JVM"
 #endif
 /*
  * Copyright 1998-2000 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _DICT_
@@ -45,24 +45,24 @@ typedef void (*FuncDict)(const void *key, const void *val, Dict *d);
 
 class Dict { // Dictionary structure
  private:
-  class Arena *_arena;		// Where to draw storage from
-  class bucket *_bin;		// Hash table is array of buckets
-  int _size;			// Size (# of slots) in hash table
-  int _cnt;			// Number of key-value pairs in hash table
-  const Hash _hash;		// Hashing function
-  const CmpKey _cmp;		// Key comparison function
-  void doubhash( void );	// Double hash table size
+  class Arena *_arena;          // Where to draw storage from
+  class bucket *_bin;           // Hash table is array of buckets
+  int _size;                    // Size (# of slots) in hash table
+  int _cnt;                     // Number of key-value pairs in hash table
+  const Hash _hash;             // Hashing function
+  const CmpKey _cmp;            // Key comparison function
+  void doubhash( void );        // Double hash table size
 
  public:
-  friend class DictI;		 // Friendly iterator function
+  friend class DictI;            // Friendly iterator function
 
   // cmp is a key comparision routine.  hash is a routine to hash a key.
   Dict( CmpKey cmp, Hash hash );
   Dict( CmpKey cmp, Hash hash, Arena *arena );
-  void init(); 
+  void init();
   ~Dict();
 
-  Dict( const Dict & );		// Deep-copy guts
+  Dict( const Dict & );         // Deep-copy guts
   Dict &operator =( const Dict & );
 
   // Zap to empty; ready for re-use
@@ -74,9 +74,9 @@ class Dict { // Dictionary structure
   // Insert inserts the given key-value pair into the dictionary.  The prior
   // value of the key is returned; NULL if the key was not previously defined.
   const void *Insert(const void *key, const void *val); // A new key-value
-  const void *Delete(void *key);	                // Delete & return old
+  const void *Delete(void *key);                        // Delete & return old
 
-  // Find finds the value of a given key; or NULL if not found.  
+  // Find finds the value of a given key; or NULL if not found.
   // The dictionary is NOT changed.
   const void *operator [](const void *key) const;  // Do a lookup
 
@@ -91,7 +91,7 @@ class Dict { // Dictionary structure
 };
 
 // Hashing functions
-int hashstr(const void *s);	   // Nice string hash
+int hashstr(const void *s);        // Nice string hash
 // Slimey cheap hash function; no guarenteed performance.  Better than the
 // default for pointers, especially on MS-DOS machines.
 int hashptr(const void *key);
@@ -105,7 +105,7 @@ int cmpkey(const void *key1, const void *key2);
 
 //------------------------------Iteration--------------------------------------
 // The class of dictionary iterators.  Fails in the presences of modifications
-// to the dictionary during iteration (including searches).  
+// to the dictionary during iteration (including searches).
 // Usage:  for( DictI i(dict); i.test(); ++i ) { body = i.key; body = i.value;}
 class DictI {
  private:
@@ -121,5 +121,3 @@ class DictI {
 };
 
 #endif // _DICT_
-
-

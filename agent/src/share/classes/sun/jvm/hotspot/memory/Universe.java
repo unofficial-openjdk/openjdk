@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -65,13 +65,13 @@ public class Universe {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("Universe");
-    
+
     collectedHeapField = type.getAddressField("_collectedHeap");
 
     heapConstructor = new VirtualConstructor(db);
     heapConstructor.addMapping("GenCollectedHeap", GenCollectedHeap.class);
     heapConstructor.addMapping("ParallelScavengeHeap", ParallelScavengeHeap.class);
-    
+
     mainThreadGroupField   = type.getOopField("_main_thread_group");
     systemThreadGroupField = type.getOopField("_system_thread_group");
 
@@ -133,7 +133,7 @@ public class Universe {
   public Oop systemObjArrayKlassObj() {
     return newOop(systemObjArrayKlassObjField.getValue());
   }
-  
+
   // iterate through the single dimensional primitive array klasses
   // refer to basic_type_classes_do(void f(klassOop)) in universe.cpp
   public void basicTypeClassesDo(SystemDictionary.ClassVisitor visitor) {
@@ -159,7 +159,7 @@ public class Universe {
     return type == BasicType.T_DOUBLE || type == BasicType.T_LONG;
   }
 
-  // Check whether an object field (static/non-static) of the given type must be 
+  // Check whether an object field (static/non-static) of the given type must be
   // aligned 0 mod 8.
   public static boolean fieldTypeShouldBeAligned(BasicType type) {
     return type == BasicType.T_DOUBLE || type == BasicType.T_LONG;

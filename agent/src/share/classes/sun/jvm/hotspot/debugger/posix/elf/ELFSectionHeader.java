@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.posix.elf;
@@ -90,7 +90,7 @@ public interface ELFSectionHeader {
     /** Flag informaing that section contains executable machine
      * instructions. */
     public static final int FLAG_EXEC_INSTR = 0x4;
-    /** Flag informing that all the bits in the mask are reserved for processor 
+    /** Flag informing that all the bits in the mask are reserved for processor
      * specific semantics. */
     public static final int FLAG_MASK = 0xf0000000;
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -43,11 +43,11 @@ public class SignatureConverter extends SignatureIterator {
     public void doShort () { appendComma(); buf.append("short");   }
     public void doInt   () { appendComma(); buf.append("int");     }
     public void doLong  () { appendComma(); buf.append("long");    }
-    public void doVoid  () { 
+    public void doVoid  () {
        if(isReturnType()) {
           appendComma(); buf.append("void");
        } else {
-          throw new RuntimeException("Should not reach here"); 
+          throw new RuntimeException("Should not reach here");
        }
     }
 

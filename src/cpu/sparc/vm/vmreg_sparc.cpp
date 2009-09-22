@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmreg_sparc.cpp	1.6 07/05/05 17:04:32 JVM"
+#pragma ident "@(#)vmreg_sparc.cpp      1.6 07/05/05 17:04:32 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -52,4 +52,3 @@ void VMRegImpl::set_regName() {
     regName[i] = "NON-GPR-FPR";
   }
 }
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)stackMapFrame.hpp	1.20 07/05/05 17:06:57 JVM"
+#pragma ident "@(#)stackMapFrame.hpp    1.20 07/05/05 17:06:57 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A StackMapFrame represents one frame in the stack map attribute.
@@ -35,9 +35,9 @@ class StackMapFrame : public ResourceObj {
  private:
   int32_t _offset;
 
-  // See comment in StackMapTable about _frame_count about why these 
+  // See comment in StackMapTable about _frame_count about why these
   // fields are int32_t instead of u2.
-  int32_t _locals_size;  // number of valid type elements in _locals 
+  int32_t _locals_size;  // number of valid type elements in _locals
   int32_t _stack_size;   // number of valid type elements in _stack
 
   int32_t _max_locals;
@@ -52,7 +52,7 @@ class StackMapFrame : public ResourceObj {
  public:
   // constructors
 
-  // This constructor is used by the type checker to allocate frames 
+  // This constructor is used by the type checker to allocate frames
   // in type state, which have _max_locals and _max_stack array elements
   // in _locals and _stack.
   StackMapFrame(u2 max_locals, u2 max_stack, ClassVerifier* verifier);
@@ -62,7 +62,7 @@ class StackMapFrame : public ResourceObj {
   StackMapFrame(int32_t offset,
                 u1 flags,
                 u2 locals_size,
-                u2 stack_size, 
+                u2 stack_size,
                 u2 max_locals,
                 u2 max_stack,
                 VerificationType* locals,
@@ -170,7 +170,7 @@ class StackMapFrame : public ResourceObj {
     if (_stack_size != 0) {
       VerificationType top = _stack[_stack_size - 1];
       bool subtype = type.is_assignable_from(
-        top, verifier()->current_class(), 
+        top, verifier()->current_class(),
         CHECK_(VerificationType::bogus_type()));
       if (subtype) {
         _stack_size --;
@@ -227,4 +227,3 @@ class StackMapFrame : public ResourceObj {
   // Debugging
   void print() const PRODUCT_RETURN;
 };
-

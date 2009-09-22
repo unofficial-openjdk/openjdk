@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)libproc.h	1.16 07/05/05 17:02:02 JVM"
+#pragma ident "@(#)libproc.h    1.16 07/05/05 17:02:02 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _LIBPROC_H_
@@ -37,7 +37,7 @@
   If _LP64 is defined ptrace.h should be taken from /usr/include/asm-sparc64
   otherwise it should be from /usr/include/asm-sparc
   These two files define pt_regs structure differently
-*/ 
+*/
 #ifdef _LP64
 #include "asm-sparc64/ptrace.h"
 #else
@@ -48,31 +48,31 @@
 
 /************************************************************************************
 
-0. This is very minimal subset of Solaris libproc just enough for current application. 
+0. This is very minimal subset of Solaris libproc just enough for current application.
 Please note that the bulk of the functionality is from proc_service interface. This
-adds Pgrab__ and some missing stuff. We hide the difference b/w live process and core 
+adds Pgrab__ and some missing stuff. We hide the difference b/w live process and core
 file by this interface.
 
 1. pthread_id unique in both NPTL & LinuxThreads. We store this in
-OSThread::_pthread_id in JVM code. 
+OSThread::_pthread_id in JVM code.
 
 2. All threads see the same pid when they call getpid() under NPTL.
 Threads receive different pid under LinuxThreads. We used to save the result of
 ::getpid() call in OSThread::_thread_id. This way uniqueness of OSThread::_thread_id
-was lost under NPTL. Now, we store the result of ::gettid() call in 
+was lost under NPTL. Now, we store the result of ::gettid() call in
 OSThread::_thread_id. Because gettid returns actual pid of thread (lwp id), this is
 unique again. We therefore use OSThread::_thread_id as unique identifier.
 
 3. There is a unique LWP id under both thread libraries. libthread_db  maps pthread_id
-to its underlying lwp_id under both the thread libraries. thread_info.lwp_id stores 
-lwp_id of the thread. The lwp id is nothing but the actual pid of clone'd processes. But 
-unfortunately libthread_db does not work very well for core dumps. So, we get pthread_id 
+to its underlying lwp_id under both the thread libraries. thread_info.lwp_id stores
+lwp_id of the thread. The lwp id is nothing but the actual pid of clone'd processes. But
+unfortunately libthread_db does not work very well for core dumps. So, we get pthread_id
 only for processes. For core dumps, we don't use libthread_db at all (like gdb).
 
 4. ptrace operates on this LWP id under both the thread libraries. When we say 'pid' for
 ptrace call, we refer to lwp_id of the thread.
 
-5. for core file, we parse ELF files and read data from them. For processes we  use 
+5. for core file, we parse ELF files and read data from them. For processes we  use
 combination of ptrace and /proc calls.
 
 *************************************************************************************/
@@ -92,20 +92,20 @@ unsigned long   regs[IA64_REG_COUNT];     /* integer and fp regs */
 
 // This C bool type must be int for compatibility with Linux calls and
 // it would be a mistake to equivalence it to C++ bool on many platforms
-  
+
 typedef int bool;
 #define true  1
 #define false 0
 
 struct ps_prochandle;
 
-// attach to a process 
+// attach to a process
 struct ps_prochandle* Pgrab(pid_t pid);
 
-// attach to a core dump 
+// attach to a core dump
 struct ps_prochandle* Pgrab_core(const char* execfile, const char* corefile);
 
-// release a process or core 
+// release a process or core
 void Prelease(struct ps_prochandle* ph);
 
 // functions not directly available in Solaris libproc
@@ -114,19 +114,19 @@ void Prelease(struct ps_prochandle* ph);
 // pass true to make library verbose
 bool init_libproc(bool verbose);
 
-// get number of threads 
+// get number of threads
 int get_num_threads(struct ps_prochandle* ph);
 
-// get lwp_id of n'th thread 
+// get lwp_id of n'th thread
 lwpid_t get_lwp_id(struct ps_prochandle* ph, int index);
 
 // get regs for a given lwp
 bool get_lwp_regs(struct ps_prochandle* ph, lwpid_t lid, struct user_regs_struct* regs);
 
-// get number of shared objects 
+// get number of shared objects
 int get_num_libs(struct ps_prochandle* ph);
 
-// get name of n'th lib 
+// get name of n'th lib
 const char* get_lib_name(struct ps_prochandle* ph, int index);
 
 // get base of lib

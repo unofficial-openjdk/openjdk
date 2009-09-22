@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.code;
@@ -55,7 +55,7 @@ public class CompressedReadStream extends CompressedStream {
   public int readSignedInt() {
     return decodeSign(readInt());
   }
-   
+
   public int readInt() {
     int b0 = read();
     if (b0 < L) {
@@ -65,7 +65,7 @@ public class CompressedReadStream extends CompressedStream {
     }
   }
 
-  
+
   public float readFloat() {
     return Float.intBitsToFloat(reverseInt(readInt()));
   }
@@ -112,7 +112,7 @@ public class CompressedReadStream extends CompressedStream {
     // must collect more bytes: b[1]...b[4]
     int lg_H_i = lg_H;
     for (int i = 0; ;) {
-      int b_i = read(pos + (++i)); 
+      int b_i = read(pos + (++i));
       sum += b_i << lg_H_i; // sum += b[i]*(64**i)
       if (b_i < L || i == MAX_i) {
         setPosition(pos+i+1);

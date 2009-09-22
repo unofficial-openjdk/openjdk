@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)specialized_oop_closures.hpp	1.30 07/05/29 09:44:17 JVM"
+#pragma ident "@(#)specialized_oop_closures.hpp 1.30 07/05/29 09:44:17 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // The following OopClosure types get specialized versions of
@@ -75,7 +75,7 @@ class CMSInnerParMarkAndPushClosure;
 
 #ifndef SERIALGC
 #define SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_P(f)       \
-  f(ParScanWithBarrierClosure,_nv)	        	\
+  f(ParScanWithBarrierClosure,_nv)                      \
   f(ParScanWithoutBarrierClosure,_nv)
 #else  // SERIALGC
 #define SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_P(f)
@@ -91,7 +91,7 @@ class CMSInnerParMarkAndPushClosure;
   f(Par_MarkRefsIntoAndScanClosure,_nv)                 \
   f(PushAndMarkClosure,_nv)                             \
   f(Par_PushAndMarkClosure,_nv)                         \
-  f(PushOrMarkClosure,_nv)				\
+  f(PushOrMarkClosure,_nv)                              \
   f(Par_PushOrMarkClosure,_nv)                          \
   f(CMSKeepAliveClosure,_nv)                            \
   f(CMSInnerParMarkAndPushClosure,_nv)                  \
@@ -144,7 +144,7 @@ class CMSInnerParMarkAndPushClosure;
 #endif
 
 #define SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES_YOUNG_S(f) \
-  f(ScanClosure,_nv)					 \
+  f(ScanClosure,_nv)                                     \
   f(FastScanClosure,_nv)
 
 #ifndef SERIALGC
@@ -218,7 +218,7 @@ public:
   static inline void record_do_oop_call_nv(Kind k)  PRODUCT_RETURN;
 
   static void print() PRODUCT_RETURN;
-};  
+};
 
 #ifndef PRODUCT
 #if ENABLE_SPECIALIZATION_STATS

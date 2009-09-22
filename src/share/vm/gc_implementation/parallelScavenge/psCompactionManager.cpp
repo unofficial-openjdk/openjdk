@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psCompactionManager.cpp	1.17 06/07/10 23:27:02 JVM"
+#pragma ident "@(#)psCompactionManager.cpp      1.17 06/07/10 23:27:02 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -43,7 +43,7 @@ ParCompactionManager::ParCompactionManager() :
 
   _old_gen = heap->old_gen();
   _start_array = old_gen()->start_array();
-    
+
 
   marking_stack()->initialize();
 
@@ -61,7 +61,7 @@ ParCompactionManager::ParCompactionManager() :
 
   // Note that _revisit_klass_stack is allocated out of the
   // C heap (as opposed to out of ResourceArena).
-  int size = 
+  int size =
     (SystemDictionary::number_of_classes() * 2) * 2 / ParallelGCThreads;
   _revisit_klass_stack = new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
 
@@ -76,7 +76,7 @@ ParCompactionManager::~ParCompactionManager() {
 }
 
 void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
-  assert(PSParallelCompact::gc_task_manager() != NULL, 
+  assert(PSParallelCompact::gc_task_manager() != NULL,
     "Needed for initialization");
 
   _mark_bitmap = mbm;
@@ -86,7 +86,7 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
   assert(_manager_array == NULL, "Attempt to initialize twice");
   _manager_array = NEW_C_HEAP_ARRAY(ParCompactionManager*, parallel_gc_threads+1 );
   guarantee(_manager_array != NULL, "Could not initialize promotion manager");
-  
+
   _stack_array = new OopTaskQueueSet(parallel_gc_threads);
   guarantee(_stack_array != NULL, "Count not initialize promotion manager");
   _region_array = new RegionTaskQueueSet(parallel_gc_threads);
@@ -105,9 +105,9 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
   }
 
   // The VMThread gets its own ParCompactionManager, which is not available
-  // for work stealing. 
+  // for work stealing.
   _manager_array[parallel_gc_threads] = new ParCompactionManager();
-  guarantee(_manager_array[parallel_gc_threads] != NULL, 
+  guarantee(_manager_array[parallel_gc_threads] != NULL,
     "Could not create ParCompactionManager");
   assert(PSParallelCompact::gc_task_manager()->workers() != 0,
     "Not initialized?");
@@ -115,14 +115,14 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
 
 bool ParCompactionManager::should_update() {
   assert(action() != NotValid, "Action is not set");
-  return (action() == ParCompactionManager::Update) || 
+  return (action() == ParCompactionManager::Update) ||
          (action() == ParCompactionManager::CopyAndUpdate) ||
          (action() == ParCompactionManager::UpdateAndCopy);
 }
 
 bool ParCompactionManager::should_copy() {
   assert(action() != NotValid, "Action is not set");
-  return (action() == ParCompactionManager::Copy) || 
+  return (action() == ParCompactionManager::Copy) ||
          (action() == ParCompactionManager::CopyAndUpdate) ||
          (action() == ParCompactionManager::UpdateAndCopy);
 }
@@ -146,7 +146,7 @@ void ParCompactionManager::stack_push(oop obj) {
 
   if(!marking_stack()->push(obj)) {
     overflow_stack()->push(obj);
-  } 
+  }
 }
 
 oop ParCompactionManager::retrieve_for_scanning() {
@@ -188,7 +188,7 @@ bool ParCompactionManager::retrieve_for_processing(size_t& region_index) {
 #endif
 }
 
-ParCompactionManager* 
+ParCompactionManager*
 ParCompactionManager::gc_thread_compaction_manager(int index) {
   assert(index >= 0 && index < (int)ParallelGCThreads, "index out of range");
   assert(_manager_array != NULL, "Sanity");
@@ -209,7 +209,7 @@ void ParCompactionManager::drain_marking_stacks(OopClosure* blk) {
   MutableSpace* old_space = heap->old_gen()->object_space();
   MutableSpace* perm_space = heap->perm_gen()->object_space();
 #endif /* ASSERT */
-  
+
 
   do {
 
@@ -248,7 +248,7 @@ void ParCompactionManager::drain_region_stacks() {
   MutableSpace* old_space = heap->old_gen()->object_space();
   MutableSpace* perm_space = heap->perm_gen()->object_space();
 #endif /* ASSERT */
-  
+
 #if 1 // def DO_PARALLEL - the serial code hasn't been updated
   do {
 

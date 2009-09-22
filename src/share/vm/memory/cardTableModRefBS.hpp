@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cardTableModRefBS.hpp	1.53 07/10/04 10:49:32 JVM"
+#pragma ident "@(#)cardTableModRefBS.hpp        1.53 07/10/04 10:49:32 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This kind of "BarrierSet" allows a "CollectedHeap" to detect and
@@ -78,7 +78,7 @@ class CardTableModRefBS: public ModRefBarrierSet {
     return CardTableModRefBS::card_is_dirty_wrt_gen_iter(cv);
   }
 
-  // Returns "true" iff the value "cv" may have represented a dirty card at 
+  // Returns "true" iff the value "cv" may have represented a dirty card at
   // some point.
   virtual bool card_may_have_been_dirty(jbyte cv) {
     return card_is_dirty_wrt_gen_iter(cv);
@@ -131,18 +131,18 @@ class CardTableModRefBS: public ModRefBarrierSet {
   void resize_covered_region(MemRegion new_region);
 
   // Returns the leftmost end of a committed region corresponding to a
-  // covered region before covered region "ind", or else "NULL" if "ind" is 
+  // covered region before covered region "ind", or else "NULL" if "ind" is
   // the first covered region.
   HeapWord* largest_prev_committed_end(int ind) const;
 
-  // Returns the part of the region mr that doesn't intersect with 
-  // any committed region other than self.  Used to prevent uncommitting 
+  // Returns the part of the region mr that doesn't intersect with
+  // any committed region other than self.  Used to prevent uncommitting
   // regions that are also committed by other regions.  Also protects
   // against uncommitting the guard region.
   MemRegion committed_unique_to_self(int self, MemRegion mr) const;
 
   // Mapping from address to card marking array entry
-  jbyte* byte_for(const void* p) const { 
+  jbyte* byte_for(const void* p) const {
     assert(_whole_heap.contains(p),
            "out of bounds access to card marking array");
     jbyte* result = &byte_map_base[uintptr_t(p) >> card_shift];
@@ -165,13 +165,13 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // may be modified. Note that this function will operate in a parallel
   // mode if worker threads are available.
   void non_clean_card_iterate(Space* sp, MemRegion mr,
-			      DirtyCardToOopClosure* dcto_cl,
-			      MemRegionClosure* cl,
-			      bool clear);
+                              DirtyCardToOopClosure* dcto_cl,
+                              MemRegionClosure* cl,
+                              bool clear);
 
   // Utility function used to implement the other versions below.
   void non_clean_card_iterate_work(MemRegion mr, MemRegionClosure* cl,
-				   bool clear);
+                                   bool clear);
 
   void par_non_clean_card_iterate_work(Space* sp, MemRegion mr,
                                        DirtyCardToOopClosure* dcto_cl,
@@ -210,16 +210,16 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // covering "sp", and "lowest_non_clean_base_chunk_index" to the chunk
   // index of the corresponding to the first element of that array.
   // Ensures that these arrays are of sufficient size, allocating if necessary.
-  // May be called by several threads concurrently.  
+  // May be called by several threads concurrently.
   void get_LNC_array_for_space(Space* sp,
-			       jbyte**& lowest_non_clean, 
-			       uintptr_t& lowest_non_clean_base_chunk_index,
-			       size_t& lowest_non_clean_chunk_size);
+                               jbyte**& lowest_non_clean,
+                               uintptr_t& lowest_non_clean_base_chunk_index,
+                               size_t& lowest_non_clean_chunk_size);
 
   // Returns the number of chunks necessary to cover "mr".
   size_t chunks_to_cover(MemRegion mr) {
     return (size_t)(addr_to_chunk_index(mr.last()) -
-  		    addr_to_chunk_index(mr.start()) + 1);
+                    addr_to_chunk_index(mr.start()) + 1);
   }
 
   // Returns the index of the chunk in a stride which
@@ -232,25 +232,25 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // Apply cl, which must either itself apply dcto_cl or be dcto_cl,
   // to the cards in the stride (of n_strides) within the given space.
   void process_stride(Space* sp,
-		      MemRegion used,
-		      jint stride, int n_strides,
-		      DirtyCardToOopClosure* dcto_cl,
-		      MemRegionClosure* cl,
-		      bool clear,
-		      jbyte** lowest_non_clean,
-		      uintptr_t lowest_non_clean_base_chunk_index,
-		      size_t lowest_non_clean_chunk_size);
+                      MemRegion used,
+                      jint stride, int n_strides,
+                      DirtyCardToOopClosure* dcto_cl,
+                      MemRegionClosure* cl,
+                      bool clear,
+                      jbyte** lowest_non_clean,
+                      uintptr_t lowest_non_clean_base_chunk_index,
+                      size_t lowest_non_clean_chunk_size);
 
   // Makes sure that chunk boundaries are handled appropriately, by
   // adjusting the min_done of dcto_cl, and by using a special card-table
   // value to indicate how min_done should be set.
   void process_chunk_boundaries(Space* sp,
-				DirtyCardToOopClosure* dcto_cl,
-				MemRegion chunk_mr,
-				MemRegion used,
-				jbyte** lowest_non_clean,
-				uintptr_t lowest_non_clean_base_chunk_index,
-				size_t    lowest_non_clean_chunk_size);
+                                DirtyCardToOopClosure* dcto_cl,
+                                MemRegion chunk_mr,
+                                MemRegion used,
+                                jbyte** lowest_non_clean,
+                                uintptr_t lowest_non_clean_base_chunk_index,
+                                size_t    lowest_non_clean_chunk_size);
 
 public:
   // Constants
@@ -272,7 +272,7 @@ public:
     return bsn == BarrierSet::CardTableModRef || ModRefBarrierSet::is_a(bsn);
   }
 
-  CardTableModRefBS(MemRegion whole_heap, int max_covered_regions); 
+  CardTableModRefBS(MemRegion whole_heap, int max_covered_regions);
 
   // *** Barrier set functions.
 
@@ -285,8 +285,8 @@ public:
   }
 
   // Record a reference update. Note that these versions are precise!
-  // The scanning code has to handle the fact that the write barrier may be 
-  // either precise or imprecise. We make non-virtual inline variants of 
+  // The scanning code has to handle the fact that the write barrier may be
+  // either precise or imprecise. We make non-virtual inline variants of
   // these functions here for performance.
 protected:
   void write_ref_field_work(oop obj, size_t offset, oop newVal);
@@ -383,9 +383,9 @@ public:
   void clear(MemRegion mr);
   void dirty(MemRegion mr);
   void mod_oop_in_space_iterate(Space* sp, OopClosure* cl,
-				bool clear = false,
-				bool before_save_marks = false);
- 
+                                bool clear = false,
+                                bool before_save_marks = false);
+
   // *** Card-table-RemSet-specific things.
 
   // Invoke "cl.do_MemRegion" on a set of MemRegions that collectively
@@ -405,7 +405,7 @@ public:
   // for cards within the MemRegion "mr" (which is required to be
   // card-aligned and sized.)
   void mod_card_iterate(MemRegion mr, MemRegionClosure* cl,
-			bool clear = false) {
+                        bool clear = false) {
     non_clean_card_iterate_work(mr, cl, clear);
   }
 
@@ -447,7 +447,7 @@ public:
   // Mapping from address to card marking array index.
   size_t index_for(void* p) {
     assert(_whole_heap.contains(p),
-	   "out of bounds access to card marking array");
+           "out of bounds access to card marking array");
     return byte_for(p) - _byte_map;
   }
 
@@ -476,8 +476,8 @@ protected:
   bool card_may_have_been_dirty(jbyte cv);
 public:
   CardTableModRefBSForCTRS(MemRegion whole_heap,
-			   int max_covered_regions) :
+                           int max_covered_regions) :
     CardTableModRefBS(whole_heap, max_covered_regions) {}
-    
+
   void set_CTRS(CardTableRS* rs) { _rs = rs; }
 };

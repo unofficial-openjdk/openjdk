@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -87,7 +87,7 @@ public class JNITypeParser {
     List argumentTypeNames() {
         return typeNameList().subList(0, typeNameList().size() - 1);
     }
-        
+
     String signature() {
         return (String)signatureList().get(signatureList().size()-1);
     }
@@ -108,14 +108,14 @@ public class JNITypeParser {
     String componentSignature(int level) {
         return signature().substring(level);
     }
-        
+
     private synchronized List signatureList() {
         if (signatureList == null) {
             signatureList = new ArrayList(10);
             String elem;
-            
+
             currentIndex = 0;
-    
+
             while(currentIndex < signature.length()) {
                 elem = nextSignature();
                 signatureList.add(elem);
@@ -132,9 +132,9 @@ public class JNITypeParser {
         if (typeNameList == null) {
             typeNameList = new ArrayList(10);
             String elem;
-            
+
             currentIndex = 0;
-    
+
             while(currentIndex < signature.length()) {
                 elem = nextTypeName();
                 typeNameList.add(elem);
@@ -151,17 +151,17 @@ public class JNITypeParser {
         char key = signature.charAt(currentIndex++);
 
         switch(key) {
-	    case '[':
+            case '[':
                 return  key + nextSignature();
-                
-  	    case 'L':
-                int endClass = signature.indexOf(SIGNATURE_ENDCLASS, 
+
+            case 'L':
+                int endClass = signature.indexOf(SIGNATURE_ENDCLASS,
                                                  currentIndex);
-                String retVal = signature.substring(currentIndex - 1, 
+                String retVal = signature.substring(currentIndex - 1,
                                                     endClass + 1);
                 currentIndex = endClass + 1;
                 return retVal;
-            
+
             case 'V':
             case 'Z':
             case 'B':
@@ -176,11 +176,11 @@ public class JNITypeParser {
             case SIGNATURE_FUNC:
             case SIGNATURE_ENDFUNC:
                 return nextSignature();
-                
+
             default:
                 throw new IllegalArgumentException(
                     "Invalid JNI signature character '" + key + "'");
-                
+
         }
     }
 
@@ -190,51 +190,51 @@ public class JNITypeParser {
         switch(key) {
             case '[':
                 return  nextTypeName() + "[]";
-                
+
             case 'B':
                 return "byte";
-                
+
             case 'C':
                 return "char";
-                
+
             case 'L':
-                int endClass = signature.indexOf(SIGNATURE_ENDCLASS, 
+                int endClass = signature.indexOf(SIGNATURE_ENDCLASS,
                                                  currentIndex);
-                String retVal = signature.substring(currentIndex, 
+                String retVal = signature.substring(currentIndex,
                                                     endClass);
                 retVal = retVal.replace('/','.');
                 currentIndex = endClass + 1;
                 return retVal;
-                
+
             case 'F':
                 return "float";
-                
+
             case 'D':
                 return "double";
-                
+
             case 'I':
                 return "int";
-                
+
             case 'J':
                 return "long";
-                
+
             case 'S':
                 return "short";
-                
+
             case 'V':
                 return "void";
-                
+
             case 'Z':
                 return "boolean";
 
             case SIGNATURE_ENDFUNC:
             case SIGNATURE_FUNC:
                 return nextTypeName();
-                
+
             default:
                 throw new IllegalArgumentException(
                     "Invalid JNI signature character '" + key + "'");
-                
+
         }
     }
 }

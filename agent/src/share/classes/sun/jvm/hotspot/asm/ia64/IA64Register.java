@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.ia64;
@@ -30,7 +30,7 @@ import sun.jvm.hotspot.utilities.*;
 
 public class IA64Register extends Register {
 
-  // 
+  //
   private static final int STACKED_BASE = 32;
   private static final int STACKED_END = 127;
 
@@ -67,7 +67,7 @@ public class IA64Register extends Register {
 
   public boolean isStackPointer() {
     return number == 12;
-  } 
+  }
 
   public boolean isFloat() {
     return false;

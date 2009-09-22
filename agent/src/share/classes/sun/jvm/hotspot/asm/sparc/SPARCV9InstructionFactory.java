@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -32,9 +32,9 @@ public interface SPARCV9InstructionFactory extends SPARCInstructionFactory {
     public SPARCInstruction newV9RegisterBranchInstruction(String name, PCRelativeAddress addr,
                                boolean isAnnuled, int regConditionCode, SPARCRegister conditionRegister,
                                boolean predictTaken);
-    public SPARCInstruction newV9CasInstruction(String name, SPARCRegisterIndirectAddress addr, 
+    public SPARCInstruction newV9CasInstruction(String name, SPARCRegisterIndirectAddress addr,
                                SPARCRegister rs2, SPARCRegister rd, int dataType);
-    public SPARCInstruction newV9PrefetchInstruction(String name, SPARCRegisterIndirectAddress addr, 
+    public SPARCInstruction newV9PrefetchInstruction(String name, SPARCRegisterIndirectAddress addr,
                                int prefetchFcn);
     public SPARCInstruction newV9FlushwInstruction();
     public SPARCInstruction newV9MOVccInstruction(String name, int conditionCode, int conditionFlag,
@@ -50,14 +50,14 @@ public interface SPARCV9InstructionFactory extends SPARCInstructionFactory {
     public SPARCInstruction newV9SavedInstruction();
     public SPARCInstruction newV9RestoredInstruction();
     public SPARCInstruction newV9ReadInstruction(int specialRegNum, int asrRegNum, SPARCRegister rd);
-    public SPARCInstruction newV9WriteInstruction(int specialRegNum, int asrRegNum, SPARCRegister rs1, 
+    public SPARCInstruction newV9WriteInstruction(int specialRegNum, int asrRegNum, SPARCRegister rs1,
                                                   ImmediateOrRegister operand2);
     public SPARCInstruction newV9MembarInstruction(int mmask, int cmask);
     public SPARCInstruction newV9SirInstruction();
     public SPARCInstruction newV9FMOVccInstruction(String name, int opf, int conditionCode,
                               int conditionFlag, SPARCFloatRegister rs,
                               SPARCFloatRegister rd);
-    public SPARCInstruction newV9FMOVrInstruction(String name, int opf, 
-                                   SPARCRegister rs1, SPARCFloatRegister rs2, 
+    public SPARCInstruction newV9FMOVrInstruction(String name, int opf,
+                                   SPARCRegister rs1, SPARCFloatRegister rs2,
                                    SPARCFloatRegister rd, int regConditionCode);
 }

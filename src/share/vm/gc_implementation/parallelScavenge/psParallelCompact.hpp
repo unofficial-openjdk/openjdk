@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psParallelCompact.hpp	1.48 07/10/04 10:49:38 JVM"
+#pragma ident "@(#)psParallelCompact.hpp        1.48 07/10/04 10:49:38 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ParallelScavengeHeap;
@@ -402,7 +402,7 @@ public:
 #ifdef  ASSERT
   void verify_clear(const PSVirtualSpace* vspace);
   void verify_clear();
-#endif	// #ifdef ASSERT
+#endif  // #ifdef ASSERT
 
 private:
   bool initialize_region_data(size_t region_size);
@@ -410,9 +410,9 @@ private:
 
 private:
   HeapWord*       _region_start;
-#ifdef	ASSERT
+#ifdef  ASSERT
   HeapWord*       _region_end;
-#endif	// #ifdef ASSERT
+#endif  // #ifdef ASSERT
 
   PSVirtualSpace* _region_vspace;
   RegionData*     _region_data;
@@ -499,14 +499,14 @@ inline void ParallelCompactData::RegionData::set_highest_ref(HeapWord* addr)
   while (addr > tmp) {
     tmp = (HeapWord*)Atomic::cmpxchg_ptr(addr, &_highest_ref, tmp);
   }
-#endif	// #ifdef ASSERT
+#endif  // #ifdef ASSERT
 }
 
 inline bool ParallelCompactData::RegionData::claim()
 {
   const int los = (int) live_obj_size();
   const int old = Atomic::cmpxchg(dc_claimed | los,
-				  (volatile int*) &_dc_and_los, los);
+                                  (volatile int*) &_dc_and_los, los);
   return old == los;
 }
 
@@ -593,7 +593,7 @@ ParallelCompactData::is_region_aligned(HeapWord* addr) const
 
 // Abstract closure for use with ParMarkBitMap::iterate(), which will invoke the
 // do_addr() method.
-// 
+//
 // The closure is initialized with the number of heap words to process
 // (words_remaining()), and becomes 'full' when it reaches 0.  The do_addr()
 // methods in subclasses should update the total as words are processed.  Since
@@ -609,7 +609,7 @@ class ParMarkBitMapClosure: public StackObj {
 
  public:
   inline ParMarkBitMapClosure(ParMarkBitMap* mbm, ParCompactionManager* cm,
-			      size_t words = max_uintx);
+                              size_t words = max_uintx);
 
   inline ParCompactionManager* compaction_manager() const;
   inline ParMarkBitMap*        bitmap() const;
@@ -628,18 +628,18 @@ class ParMarkBitMapClosure: public StackObj {
   ParMarkBitMap* const        _bitmap;
   ParCompactionManager* const _compaction_manager;
   DEBUG_ONLY(const size_t     _initial_words_remaining;) // Useful in debugger.
-  size_t                      _words_remaining;	// Words left to copy.
+  size_t                      _words_remaining; // Words left to copy.
 
  protected:
-  HeapWord*                   _source;		// Next addr that would be read.
+  HeapWord*                   _source;          // Next addr that would be read.
 };
 
 inline
 ParMarkBitMapClosure::ParMarkBitMapClosure(ParMarkBitMap* bitmap,
-					   ParCompactionManager* cm,
-					   size_t words):
+                                           ParCompactionManager* cm,
+                                           size_t words):
   _bitmap(bitmap), _compaction_manager(cm)
-#ifdef	ASSERT
+#ifdef  ASSERT
   , _initial_words_remaining(words)
 #endif
 {
@@ -822,10 +822,10 @@ class PSParallelCompact : AllStatic {
     virtual void do_oop(narrowOop* p);
   };
 
-  // Closure for verifying update of pointers.  Does not 
+  // Closure for verifying update of pointers.  Does not
   // have any side effects.
   class VerifyUpdateClosure: public ParMarkBitMapClosure {
-    const MutableSpace* _space;	// Is this ever used?
+    const MutableSpace* _space; // Is this ever used?
 
    public:
     VerifyUpdateClosure(ParCompactionManager* cm, const MutableSpace* sp) :
@@ -862,7 +862,7 @@ class PSParallelCompact : AllStatic {
   static CollectorCounters*   _counters;
   static ParMarkBitMap        _mark_bitmap;
   static ParallelCompactData  _summary_data;
-  static IsAliveClosure	      _is_alive_closure;
+  static IsAliveClosure       _is_alive_closure;
   static SpaceInfo            _space_info[last_space_id];
   static bool                 _print_phases;
   static AdjustPointerClosure _adjust_root_pointer_closure;
@@ -879,9 +879,9 @@ class PSParallelCompact : AllStatic {
   static double _dwl_std_dev;
   static double _dwl_first_term;
   static double _dwl_adjustment;
-#ifdef	ASSERT
+#ifdef  ASSERT
   static bool   _dwl_initialized;
-#endif	// #ifdef ASSERT
+#endif  // #ifdef ASSERT
 
  private:
   // Closure accessors
@@ -902,7 +902,7 @@ class PSParallelCompact : AllStatic {
 
   // Mark live objects
   static void marking_phase(ParCompactionManager* cm,
-			    bool maximum_heap_compaction);
+                            bool maximum_heap_compaction);
   static void follow_stack(ParCompactionManager* cm);
   static void follow_weak_klass_links(ParCompactionManager* cm);
 
@@ -915,7 +915,7 @@ class PSParallelCompact : AllStatic {
   // Compute the dense prefix for the designated space.  This is an experimental
   // implementation currently not used in production.
   static HeapWord* compute_dense_prefix_via_density(const SpaceId id,
-						    bool maximum_compaction);
+                                                    bool maximum_compaction);
 
   // Methods used to compute the dense prefix.
 
@@ -956,7 +956,7 @@ class PSParallelCompact : AllStatic {
 
   // Compute the dense prefix for the designated space.
   static HeapWord* compute_dense_prefix(const SpaceId id,
-					bool maximum_compaction);
+                                        bool maximum_compaction);
 
   // Return true if dead space crosses onto the specified Region; bit must be
   // the bit index corresponding to the first word of the Region.
@@ -1009,7 +1009,7 @@ class PSParallelCompact : AllStatic {
 
   // Add dense prefix update tasks to the task queue.
   static void enqueue_dense_prefix_tasks(GCTaskQueue* q,
-					 uint parallel_gc_threads);
+                                         uint parallel_gc_threads);
 
   // Add region stealing tasks to the task queue.
   static void enqueue_region_stealing_tasks(
@@ -1023,8 +1023,8 @@ class PSParallelCompact : AllStatic {
   // If objects are left in eden after a collection, try to move the boundary
   // and absorb them into the old gen.  Returns true if eden was emptied.
   static bool absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
-					 PSYoungGen* young_gen,
-					 PSOldGen* old_gen);
+                                         PSYoungGen* young_gen,
+                                         PSOldGen* old_gen);
 
   // Reset time since last full gc
   static void reset_millis_since_last_gc();
@@ -1092,10 +1092,10 @@ class PSParallelCompact : AllStatic {
 
   // Used to add tasks
   static GCTaskManager* const gc_task_manager();
-  static klassOop updated_int_array_klass_obj() { 
-    return _updated_int_array_klass_obj; 
+  static klassOop updated_int_array_klass_obj() {
+    return _updated_int_array_klass_obj;
   }
-  
+
   // Marking support
   static inline bool mark_obj(oop obj);
   // Check mark and maybe push on marking stack
@@ -1114,7 +1114,7 @@ class PSParallelCompact : AllStatic {
   static inline ObjectStartArray* start_array(SpaceId space_id);
 
   // Return true if the klass should be updated.
-  static inline bool should_update_klass(klassOop k); 
+  static inline bool should_update_klass(klassOop k);
 
   // Move and update the live objects in the specified space.
   static void move_and_update(ParCompactionManager* cm, SpaceId space_id);
@@ -1218,13 +1218,13 @@ class PSParallelCompact : AllStatic {
   // within an oop that was live during the last GC. Helpful for
   // tracking down heap stomps.
   static void print_new_location_of_heap_address(HeapWord* q);
-#endif	// #ifdef VALIDATE_MARK_SWEEP
+#endif  // #ifdef VALIDATE_MARK_SWEEP
 
   // Call backs for class unloading
   // Update subklass/sibling/implementor links at end of marking.
-  static void revisit_weak_klass_link(ParCompactionManager* cm, Klass* k); 
+  static void revisit_weak_klass_link(ParCompactionManager* cm, Klass* k);
 
-#ifndef	PRODUCT
+#ifndef PRODUCT
   // Debugging support.
   static const char* space_names[last_space_id];
   static void print_region_ranges();
@@ -1243,7 +1243,7 @@ class PSParallelCompact : AllStatic {
   static inline void check_new_location(HeapWord* old_addr, HeapWord* new_addr);
   // Verify that all the regions have been emptied.
   static void verify_complete(SpaceId space_id);
-#endif	// #ifdef ASSERT
+#endif  // #ifdef ASSERT
 };
 
 inline bool PSParallelCompact::mark_obj(oop obj) {
@@ -1420,8 +1420,8 @@ PSParallelCompact::check_new_location(HeapWord* old_addr, HeapWord* new_addr)
 class MoveAndUpdateClosure: public ParMarkBitMapClosure {
  public:
   inline MoveAndUpdateClosure(ParMarkBitMap* bitmap, ParCompactionManager* cm,
-			      ObjectStartArray* start_array,
-			      HeapWord* destination, size_t words);
+                              ObjectStartArray* start_array,
+                              HeapWord* destination, size_t words);
 
   // Accessors.
   HeapWord* destination() const         { return _destination; }
@@ -1447,15 +1447,15 @@ class MoveAndUpdateClosure: public ParMarkBitMapClosure {
 
  protected:
   ObjectStartArray* const _start_array;
-  HeapWord*               _destination;		// Next addr to be written.
+  HeapWord*               _destination;         // Next addr to be written.
 };
 
 inline
 MoveAndUpdateClosure::MoveAndUpdateClosure(ParMarkBitMap* bitmap,
-					   ParCompactionManager* cm,
-					   ObjectStartArray* start_array,
-					   HeapWord* destination,
-					   size_t words) :
+                                           ParCompactionManager* cm,
+                                           ObjectStartArray* start_array,
+                                           HeapWord* destination,
+                                           size_t words) :
   ParMarkBitMapClosure(bitmap, cm, words), _start_array(start_array)
 {
   _destination = destination;
@@ -1474,9 +1474,9 @@ class UpdateOnlyClosure: public ParMarkBitMapClosure {
   ObjectStartArray* const          _start_array;
 
  public:
-  UpdateOnlyClosure(ParMarkBitMap* mbm, 
-		    ParCompactionManager* cm,
-		    PSParallelCompact::SpaceId space_id);
+  UpdateOnlyClosure(ParMarkBitMap* mbm,
+                    ParCompactionManager* cm,
+                    PSParallelCompact::SpaceId space_id);
 
   // Update the object.
   virtual IterationStatus do_addr(HeapWord* addr, size_t words);

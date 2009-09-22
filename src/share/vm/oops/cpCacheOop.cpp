@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cpCacheOop.cpp	1.79 07/05/29 09:44:19 JVM"
+#pragma ident "@(#)cpCacheOop.cpp       1.79 07/05/29 09:44:19 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -91,8 +91,8 @@ void ConstantPoolCacheEntry::set_bytecode_2(Bytecodes::Code code) {
 // case.
 bool ConstantPoolCacheEntry::same_methodOop(oop cur_f1, oop f1) {
   return (cur_f1 == f1 || ((methodOop)cur_f1)->name() ==
-	 ((methodOop)f1)->name() || ((methodOop)cur_f1)->signature() == 
-	 ((methodOop)f1)->signature());
+         ((methodOop)f1)->name() || ((methodOop)cur_f1)->signature() ==
+         ((methodOop)f1)->signature());
 }
 #endif
 
@@ -101,12 +101,12 @@ bool ConstantPoolCacheEntry::same_methodOop(oop cur_f1, oop f1) {
 // the damaged entry.  More seriously, the memory synchronization is needed
 // to flush other fields (f1, f2) completely to memory before the bytecodes
 // are updated, lest other processors see a non-zero bytecode but zero f1/f2.
-void ConstantPoolCacheEntry::set_field(Bytecodes::Code get_code, 
+void ConstantPoolCacheEntry::set_field(Bytecodes::Code get_code,
                                        Bytecodes::Code put_code,
-                                       KlassHandle field_holder, 
-                                       int orig_field_index, 
-                                       int field_offset, 
-                                       TosState field_type, 
+                                       KlassHandle field_holder,
+                                       int orig_field_index,
+                                       int field_offset,
+                                       TosState field_type,
                                        bool is_final,
                                        bool is_volatile) {
   set_f1(field_holder());
@@ -143,7 +143,7 @@ void ConstantPoolCacheEntry::set_method(Bytecodes::Code invoke_code,
     case Bytecodes::_invokeinterface: {
         if (method->can_be_statically_bound()) {
           set_f2((intptr_t)method());
-	  needs_vfinal_flag = true;
+          needs_vfinal_flag = true;
         } else {
           assert(vtable_index >= 0, "valid index");
           set_f2(vtable_index);
@@ -166,9 +166,9 @@ void ConstantPoolCacheEntry::set_method(Bytecodes::Code invoke_code,
   }
 
   set_flags(as_flags(as_TosState(method->result_type()),
-                     method->is_final_method(), 
-                     needs_vfinal_flag, 
-                     false, 
+                     method->is_final_method(),
+                     needs_vfinal_flag,
+                     false,
                      change_to_virtual,
                      true)|
             method()->size_of_parameters());
@@ -181,7 +181,7 @@ void ConstantPoolCacheEntry::set_method(Bytecodes::Code invoke_code,
       // NOTE: THIS IS A HACK - BE VERY CAREFUL!!!
       //
       // Workaround for the case where we encounter an invokeinterface, but we
-      // should really have an _invokevirtual since the resolved method is a 
+      // should really have an _invokevirtual since the resolved method is a
       // virtual method in java.lang.Object. This is a corner case in the spec
       // but is presumably legal. javac does not generate this code.
       //
@@ -210,7 +210,7 @@ void ConstantPoolCacheEntry::set_interface_call(methodHandle method, int index) 
   set_f1(interf);
   set_f2(index);
   set_flags(as_flags(as_TosState(method->result_type()), method->is_final_method(), false, false, false, true) | method()->size_of_parameters());
-  set_bytecode_1(Bytecodes::_invokeinterface);  
+  set_bytecode_1(Bytecodes::_invokeinterface);
 }
 
 
@@ -291,7 +291,7 @@ void ConstantPoolCacheEntry::update_pointers() {
 }
 
 void ConstantPoolCacheEntry::update_pointers(HeapWord* beg_addr,
-					     HeapWord* end_addr) {
+                                             HeapWord* end_addr) {
   assert(in_words(size()) == 4, "check code below - may need adjustment");
   // field[1] is always oop or NULL
   PSParallelCompact::adjust_pointer((oop*)&_f1, beg_addr, end_addr);

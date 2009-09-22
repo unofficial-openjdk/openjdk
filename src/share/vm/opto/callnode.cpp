@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)callnode.cpp	1.238 07/10/04 14:36:00 JVM"
+#pragma ident "@(#)callnode.cpp 1.238 07/10/04 14:36:00 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -53,7 +53,7 @@ void StartNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uin
 }
 
 //------------------------------Registers--------------------------------------
-const RegMask &StartNode::in_RegMask(uint) const { 
+const RegMask &StartNode::in_RegMask(uint) const {
   return RegMask::Empty;
 }
 
@@ -61,7 +61,7 @@ const RegMask &StartNode::in_RegMask(uint) const {
 // Construct projections for incoming parameters, and their RegMask info
 Node *StartNode::match( const ProjNode *proj, const Matcher *match ) {
   switch (proj->_con) {
-  case TypeFunc::Control: 
+  case TypeFunc::Control:
   case TypeFunc::I_O:
   case TypeFunc::Memory:
     return new (match->C, 1) MachProjNode(this,proj->_con,RegMask::Empty,MachProjNode::unmatched_proj);
@@ -79,7 +79,7 @@ Node *StartNode::match( const ProjNode *proj, const Matcher *match ) {
       RegMask &rm = match->_calling_convention_mask[parm_num];
       return new (match->C, 1) MachProjNode(this,proj->_con,rm,ideal_reg);
     }
-  } 
+  }
   return NULL;
 }
 
@@ -117,8 +117,8 @@ uint ParmNode::ideal_reg() const {
   case TypeFunc::I_O      : // fall through
   case TypeFunc::Memory   : return 0;
   case TypeFunc::FramePtr : // fall through
-  case TypeFunc::ReturnAdr: return Op_RegP;      
-  default                 : assert( _con > TypeFunc::Parms, "" ); 
+  case TypeFunc::ReturnAdr: return Op_RegP;
+  default                 : assert( _con > TypeFunc::Parms, "" );
     // fall through
   case TypeFunc::Parms    : {
     // Type of argument being passed
@@ -131,19 +131,19 @@ uint ParmNode::ideal_reg() const {
 }
 
 //=============================================================================
-ReturnNode::ReturnNode(uint edges, Node *cntrl, Node *i_o, Node *memory, Node *frameptr, Node *retadr ) : Node(edges) { 
-  init_req(TypeFunc::Control,cntrl); 
-  init_req(TypeFunc::I_O,i_o); 
-  init_req(TypeFunc::Memory,memory); 
+ReturnNode::ReturnNode(uint edges, Node *cntrl, Node *i_o, Node *memory, Node *frameptr, Node *retadr ) : Node(edges) {
+  init_req(TypeFunc::Control,cntrl);
+  init_req(TypeFunc::I_O,i_o);
+  init_req(TypeFunc::Memory,memory);
   init_req(TypeFunc::FramePtr,frameptr);
-  init_req(TypeFunc::ReturnAdr,retadr); 
+  init_req(TypeFunc::ReturnAdr,retadr);
 }
 
 Node *ReturnNode::Ideal(PhaseGVN *phase, bool can_reshape){
-  return remove_dead_region(phase, can_reshape) ? this : NULL; 
+  return remove_dead_region(phase, can_reshape) ? this : NULL;
 }
 
-const Type *ReturnNode::Value( PhaseTransform *phase ) const { 
+const Type *ReturnNode::Value( PhaseTransform *phase ) const {
   return ( phase->type(in(TypeFunc::Control)) == Type::TOP)
     ? Type::TOP
     : Type::BOTTOM;
@@ -175,20 +175,20 @@ RethrowNode::RethrowNode(
   Node* frameptr,
   Node* ret_adr,
   Node* exception
-) : Node(TypeFunc::Parms + 1) { 
-  init_req(TypeFunc::Control  , cntrl    ); 
-  init_req(TypeFunc::I_O      , i_o      ); 
-  init_req(TypeFunc::Memory   , memory   ); 
+) : Node(TypeFunc::Parms + 1) {
+  init_req(TypeFunc::Control  , cntrl    );
+  init_req(TypeFunc::I_O      , i_o      );
+  init_req(TypeFunc::Memory   , memory   );
   init_req(TypeFunc::FramePtr , frameptr );
   init_req(TypeFunc::ReturnAdr, ret_adr);
   init_req(TypeFunc::Parms    , exception);
 }
 
 Node *RethrowNode::Ideal(PhaseGVN *phase, bool can_reshape){
-  return remove_dead_region(phase, can_reshape) ? this : NULL; 
+  return remove_dead_region(phase, can_reshape) ? this : NULL;
 }
 
-const Type *RethrowNode::Value( PhaseTransform *phase ) const { 
+const Type *RethrowNode::Value( PhaseTransform *phase ) const {
   return (phase->type(in(TypeFunc::Control)) == Type::TOP)
     ? Type::TOP
     : Type::BOTTOM;
@@ -322,19 +322,19 @@ static void format_helper( PhaseRegAlloc *regalloc, outputStream* st, Node *n, c
     char buf[50];
     regalloc->dump_register(n,buf);
     st->print(" %s%d]=%s",msg,i,buf);
-  } else {                      // No register, but might be constant  
+  } else {                      // No register, but might be constant
     const Type *t = n->bottom_type();
     switch (t->base()) {
-    case Type::Int:  
-      st->print(" %s%d]=#"INT32_FORMAT,msg,i,t->is_int()->get_con()); 
+    case Type::Int:
+      st->print(" %s%d]=#"INT32_FORMAT,msg,i,t->is_int()->get_con());
       break;
-    case Type::AnyPtr: 
+    case Type::AnyPtr:
       assert( t == TypePtr::NULL_PTR, "" );
       st->print(" %s%d]=#NULL",msg,i);
       break;
-    case Type::AryPtr: 
+    case Type::AryPtr:
     case Type::KlassPtr:
-    case Type::InstPtr: 
+    case Type::InstPtr:
       st->print(" %s%d]=#Ptr" INTPTR_FORMAT,msg,i,t->isa_oopptr()->const_oop());
       break;
     case Type::NarrowOop:
@@ -353,7 +353,7 @@ static void format_helper( PhaseRegAlloc *regalloc, outputStream* st, Node *n, c
       st->print(" %s%d]=#"INT64_FORMAT,msg,i,t->is_long()->get_con());
       break;
     case Type::Half:
-    case Type::Top:  
+    case Type::Top:
       st->print(" %s%d]=_",msg,i);
       break;
     default: ShouldNotReachHere();
@@ -380,7 +380,7 @@ void JVMState::format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) 
       format_helper( regalloc, st, mcall->local(this, i), "L[", i, &scobjs );
     // Print stack
     for (i = 0; i < (uint)stk_size(); i++) {
-      if ((uint)(_stkoff + i) >= mcall->len()) 
+      if ((uint)(_stkoff + i) >= mcall->len())
         st->print(" oob ");
       else
        format_helper( regalloc, st, mcall->stack(this, i), "STK[", i, &scobjs );
@@ -565,7 +565,7 @@ JVMState* JVMState::clone_deep(Compile* C) const {
 uint CallNode::cmp( const Node &n ) const
 { return _tf == ((CallNode&)n)._tf && _jvms == ((CallNode&)n)._jvms; }
 #ifndef PRODUCT
-void CallNode::dump_req() const { 
+void CallNode::dump_req() const {
   // Dump the required inputs, enclosed in '(' and ')'
   uint i;                       // Exit value of loop
   for( i=0; i<req(); i++ ) {    // For all required inputs
@@ -576,8 +576,8 @@ void CallNode::dump_req() const {
   tty->print(")");
 }
 
-void CallNode::dump_spec(outputStream *st) const { 
-  st->print(" "); 
+void CallNode::dump_spec(outputStream *st) const {
+  st->print(" ");
   tf()->dump_on(st);
   if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
   if (jvms() != NULL)  jvms()->dump_spec(st);
@@ -585,14 +585,14 @@ void CallNode::dump_spec(outputStream *st) const {
 #endif
 
 const Type *CallNode::bottom_type() const { return tf()->range(); }
-const Type *CallNode::Value(PhaseTransform *phase) const { 
+const Type *CallNode::Value(PhaseTransform *phase) const {
   if (phase->type(in(0)) == Type::TOP)  return Type::TOP;
-  return tf()->range(); 
+  return tf()->range();
 }
 
 //------------------------------calling_convention-----------------------------
 void CallNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt ) const {
-  // Use the standard compiler calling convention 
+  // Use the standard compiler calling convention
   Matcher::calling_convention( sig_bt, parm_regs, argcnt, true );
 }
 
@@ -602,7 +602,7 @@ void CallNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uint
 // return result(s) along with their RegMask info
 Node *CallNode::match( const ProjNode *proj, const Matcher *match ) {
   switch (proj->_con) {
-  case TypeFunc::Control: 
+  case TypeFunc::Control:
   case TypeFunc::I_O:
   case TypeFunc::Memory:
     return new (match->C, 1) MachProjNode(this,proj->_con,RegMask::Empty,MachProjNode::unmatched_proj);
@@ -614,7 +614,7 @@ Node *CallNode::match( const ProjNode *proj, const Matcher *match ) {
 
   case TypeFunc::Parms: {       // Normal returns
     uint ideal_reg = Matcher::base2reg[tf()->range()->field_at(TypeFunc::Parms)->base()];
-    OptoRegPair regs = is_CallRuntime() 
+    OptoRegPair regs = is_CallRuntime()
       ? match->c_return_value(ideal_reg,true)  // Calls into C runtime
       : match->  return_value(ideal_reg,true); // Calls into compiled Java code
     RegMask rm = RegMask(regs.first());
@@ -690,12 +690,12 @@ Node *CallNode::result_cast() {
 
 //=============================================================================
 uint CallJavaNode::size_of() const { return sizeof(*this); }
-uint CallJavaNode::cmp( const Node &n ) const { 
+uint CallJavaNode::cmp( const Node &n ) const {
   CallJavaNode &call = (CallJavaNode&)n;
-  return CallNode::cmp(call) && _method == call._method; 
+  return CallNode::cmp(call) && _method == call._method;
 }
 #ifndef PRODUCT
-void CallJavaNode::dump_spec(outputStream *st) const { 
+void CallJavaNode::dump_spec(outputStream *st) const {
   if( _method ) _method->print_short_name(st);
   CallNode::dump_spec(st);
 }
@@ -703,9 +703,9 @@ void CallJavaNode::dump_spec(outputStream *st) const {
 
 //=============================================================================
 uint CallStaticJavaNode::size_of() const { return sizeof(*this); }
-uint CallStaticJavaNode::cmp( const Node &n ) const { 
+uint CallStaticJavaNode::cmp( const Node &n ) const {
   CallStaticJavaNode &call = (CallStaticJavaNode&)n;
-  return CallJavaNode::cmp(call); 
+  return CallJavaNode::cmp(call);
 }
 
 //----------------------------uncommon_trap_request----------------------------
@@ -730,7 +730,7 @@ int CallStaticJavaNode::extract_uncommon_trap_request(const Node* call) {
 }
 
 #ifndef PRODUCT
-void CallStaticJavaNode::dump_spec(outputStream *st) const { 
+void CallStaticJavaNode::dump_spec(outputStream *st) const {
   st->print("# Static ");
   if (_name != NULL) {
     st->print("%s", _name);
@@ -749,12 +749,12 @@ void CallStaticJavaNode::dump_spec(outputStream *st) const {
 
 //=============================================================================
 uint CallDynamicJavaNode::size_of() const { return sizeof(*this); }
-uint CallDynamicJavaNode::cmp( const Node &n ) const { 
+uint CallDynamicJavaNode::cmp( const Node &n ) const {
   CallDynamicJavaNode &call = (CallDynamicJavaNode&)n;
-  return CallJavaNode::cmp(call); 
+  return CallJavaNode::cmp(call);
 }
 #ifndef PRODUCT
-void CallDynamicJavaNode::dump_spec(outputStream *st) const { 
+void CallDynamicJavaNode::dump_spec(outputStream *st) const {
   st->print("# Dynamic ");
   CallJavaNode::dump_spec(st);
 }
@@ -762,13 +762,13 @@ void CallDynamicJavaNode::dump_spec(outputStream *st) const {
 
 //=============================================================================
 uint CallRuntimeNode::size_of() const { return sizeof(*this); }
-uint CallRuntimeNode::cmp( const Node &n ) const { 
+uint CallRuntimeNode::cmp( const Node &n ) const {
   CallRuntimeNode &call = (CallRuntimeNode&)n;
   return CallNode::cmp(call) && !strcmp(_name,call._name);
 }
 #ifndef PRODUCT
-void CallRuntimeNode::dump_spec(outputStream *st) const { 
-  st->print("# "); 
+void CallRuntimeNode::dump_spec(outputStream *st) const {
+  st->print("# ");
   st->print(_name);
   CallNode::dump_spec(st);
 }
@@ -785,8 +785,8 @@ void CallRuntimeNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_reg
 
 //=============================================================================
 #ifndef PRODUCT
-void CallLeafNode::dump_spec(outputStream *st) const { 
-  st->print("# "); 
+void CallLeafNode::dump_spec(outputStream *st) const {
+  st->print("# ");
   st->print(_name);
   CallNode::dump_spec(st);
 }
@@ -811,7 +811,7 @@ void SafePointNode::set_local(JVMState* jvms, uint idx, Node *c) {
 }
 
 uint SafePointNode::size_of() const { return sizeof(*this); }
-uint SafePointNode::cmp( const Node &n ) const { 
+uint SafePointNode::cmp( const Node &n ) const {
   return (&n == this);          // Always fail except on self
 }
 
@@ -876,12 +876,12 @@ const Type *SafePointNode::Value( PhaseTransform *phase ) const {
 }
 
 #ifndef PRODUCT
-void SafePointNode::dump_spec(outputStream *st) const { 
-  st->print(" SafePoint "); 
+void SafePointNode::dump_spec(outputStream *st) const {
+  st->print(" SafePoint ");
 }
 #endif
 
-const RegMask &SafePointNode::in_RegMask(uint idx) const { 
+const RegMask &SafePointNode::in_RegMask(uint idx) const {
   if( idx < TypeFunc::Parms ) return RegMask::Empty;
   // Values outside the domain represent debug info
   return *(Compile::current()->matcher()->idealreg2debugmask[in(idx)->ideal_reg()]);
@@ -1097,7 +1097,7 @@ uint LockNode::size_of() const { return sizeof(*this); }
 //
 // Assuming p is a simple predicate which can't trap in any way and s
 // is a synchronized method consider this code:
-// 
+//
 //   s();
 //   if (p)
 //     s();
@@ -1122,7 +1122,7 @@ uint LockNode::size_of() const { return sizeof(*this); }
 //
 // 3. In this case we eliminate the unlock of the first s, the lock
 // and unlock in the then case and the lock in the final s.
-// 
+//
 // Note also that in all these cases the then/else pieces don't have
 // to be trivial as long as they begin and end with synchronization
 // operations.
@@ -1233,7 +1233,7 @@ static Node *next_control(Node *ctrl) {
   return ctrl;
 }
 //
-// Given a control, see if it's the control projection of an Unlock which 
+// Given a control, see if it's the control projection of an Unlock which
 // operating on the same object as lock.
 //
 bool AbstractLockNode::find_matching_unlock(const Node* ctrl, LockNode* lock,
@@ -1301,7 +1301,7 @@ bool AbstractLockNode::find_lock_and_unlock_through_if(Node* node, LockNode* loc
                                                        GrowableArray<AbstractLockNode*> &lock_ops) {
   Node* if_node = node->in(0);
   bool  if_true = node->is_IfTrue();
-     
+
   if (if_node->is_If() && if_node->outcnt() == 2 && (if_true || node->is_IfFalse())) {
     Node *lock_ctrl = next_control(if_node->in(0));
     if (find_matching_unlock(lock_ctrl, lock, lock_ops)) {

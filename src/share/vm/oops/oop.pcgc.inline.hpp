@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oop.pcgc.inline.hpp	1.16 07/05/29 09:44:24 JVM"
+#pragma ident "@(#)oop.pcgc.inline.hpp  1.16 07/05/29 09:44:24 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void oopDesc::update_contents(ParCompactionManager* cm) {
@@ -32,7 +32,7 @@ inline void oopDesc::update_contents(ParCompactionManager* cm) {
 
   // Can the option to update and/or copy be moved up in the
   // call chain to avoid calling into here?
- 
+
   if (PSParallelCompact::should_update_klass(klass())) {
     update_header();
     assert(klass()->is_klass(), "Not updated correctly");
@@ -49,8 +49,8 @@ inline void oopDesc::update_contents(ParCompactionManager* cm) {
 }
 
 inline void oopDesc::update_contents(ParCompactionManager* cm,
-				     HeapWord* begin_limit,
-				     HeapWord* end_limit) {
+                                     HeapWord* begin_limit,
+                                     HeapWord* end_limit) {
   // The klass field must be updated before anything else
   // can be done.
   debug_only(klassOopDesc* original_klass = klass());
@@ -59,11 +59,11 @@ inline void oopDesc::update_contents(ParCompactionManager* cm,
 }
 
 inline void oopDesc::update_contents(ParCompactionManager* cm,
-				     klassOop old_klass,
-				     HeapWord* begin_limit,
-				     HeapWord* end_limit) {
+                                     klassOop old_klass,
+                                     HeapWord* begin_limit,
+                                     HeapWord* end_limit) {
 
-  klassOop updated_klass = 
+  klassOop updated_klass =
     PSParallelCompact::summary_data().calc_new_klass(old_klass);
 
   // Needs to be boundary aware for the 64 bit case
@@ -84,7 +84,7 @@ inline void oopDesc::update_contents(ParCompactionManager* cm,
 }
 
 inline void oopDesc::follow_contents(ParCompactionManager* cm) {
-  assert (PSParallelCompact::mark_bitmap()->is_marked(this), 
+  assert (PSParallelCompact::mark_bitmap()->is_marked(this),
     "should be marked");
   blueprint()->oop_follow_contents(cm, this);
 }
@@ -101,7 +101,7 @@ inline void oopDesc::follow_header(ParCompactionManager* cm) {
 
 inline oop oopDesc::forward_to_atomic(oop p) {
   assert(ParNewGeneration::is_legal_forward_ptr(p),
-	 "illegal forwarding pointer value.");
+         "illegal forwarding pointer value.");
   markOop oldMark = mark();
   markOop forwardPtrMark = markOopDesc::encode_pointer_as_mark(p);
   markOop curMark;

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -84,20 +84,20 @@ public class SACoreAttachingConnector extends ConnectorImpl implements Attaching
     }
 
     private VirtualMachine createVirtualMachine(Class vmImplClass,
-						String javaExec, String corefile) 
-	throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-	java.lang.reflect.Method connectByCoreMethod = vmImplClass.getMethod(
+                                                String javaExec, String corefile)
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        java.lang.reflect.Method connectByCoreMethod = vmImplClass.getMethod(
                                  "createVirtualMachineForCorefile",
                                   new Class[] {
-				      VirtualMachineManager.class,
+                                      VirtualMachineManager.class,
                                       String.class, String.class,
                                       Integer.TYPE
                                   });
         return (VirtualMachine) connectByCoreMethod.invoke(null,
                                   new Object[] {
-	                              Bootstrap.virtualMachineManager(),
-                                      javaExec, 
-                                      corefile, 
+                                      Bootstrap.virtualMachineManager(),
+                                      javaExec,
+                                      corefile,
                                       new Integer(0)
                                   });
     }
@@ -119,17 +119,17 @@ public class SACoreAttachingConnector extends ConnectorImpl implements Attaching
 
         VirtualMachine myVM = null;
         try {
-	    try {
-		Class vmImplClass = loadVirtualMachineImplClass();
-		myVM = createVirtualMachine(vmImplClass, javaExec, corefile);
-	    } catch (InvocationTargetException ite) {
-		Class vmImplClass = handleVMVersionMismatch(ite);
-		if (vmImplClass != null) {
-		    return createVirtualMachine(vmImplClass, javaExec, corefile);
-		} else {
-		    throw ite;
-		}
-	    }
+            try {
+                Class vmImplClass = loadVirtualMachineImplClass();
+                myVM = createVirtualMachine(vmImplClass, javaExec, corefile);
+            } catch (InvocationTargetException ite) {
+                Class vmImplClass = handleVMVersionMismatch(ite);
+                if (vmImplClass != null) {
+                    return createVirtualMachine(vmImplClass, javaExec, corefile);
+                } else {
+                    throw ite;
+                }
+            }
         } catch (Exception ee) {
             if (DEBUG) {
                 System.out.println("VirtualMachineImpl() got an exception:");
@@ -154,4 +154,3 @@ public class SACoreAttachingConnector extends ConnectorImpl implements Attaching
         return transport;
     }
 }
-

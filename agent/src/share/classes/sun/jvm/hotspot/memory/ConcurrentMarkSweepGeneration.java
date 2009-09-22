@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.memory;
@@ -53,7 +53,7 @@ public class ConcurrentMarkSweepGeneration extends CardGeneration {
   // Accessing space
   public CompactibleFreeListSpace cmsSpace() {
     return (CompactibleFreeListSpace) VMObjectFactory.newObject(
-                                 CompactibleFreeListSpace.class, 
+                                 CompactibleFreeListSpace.class,
                                  cmsSpaceField.getValue(addr));
   }
 
@@ -62,7 +62,7 @@ public class ConcurrentMarkSweepGeneration extends CardGeneration {
   public long free()                    { return cmsSpace().free(); }
   public long contiguousAvailable()     { throw new RuntimeException("not yet implemented"); }
   public boolean contains(Address p)    { return cmsSpace().contains(p); }
-  public void spaceIterate(SpaceClosure blk, boolean usedOnly) { 
+  public void spaceIterate(SpaceClosure blk, boolean usedOnly) {
      blk.doSpace(cmsSpace());
   }
 

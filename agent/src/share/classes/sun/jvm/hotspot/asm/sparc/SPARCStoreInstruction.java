@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -64,13 +64,13 @@ public class SPARCStoreInstruction extends SPARCMemoryInstruction
                     break;
                 case STH:
                     buf.append("clrh");
-                    break; 
+                    break;
                 case STB:
                     buf.append("clrb");
-                    break; 
+                    break;
                 default:
                     return defaultInitDescription(buf);
-            } 
+            }
             buf.append(spaces);
             buf.append(address.toString());
             return buf.toString();

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -55,7 +55,7 @@ public class CLHSDB {
             attachDebugger(execPath, coreFilename);
         }
 
-        
+
         CommandProcessor.DebuggerInterface di = new CommandProcessor.DebuggerInterface() {
                 public HotSpotAgent getAgent() {
                     return agent;
@@ -85,7 +85,7 @@ public class CLHSDB {
             };
 
 
-        BufferedReader in = 
+        BufferedReader in =
             new BufferedReader(new InputStreamReader(System.in));
         CommandProcessor cp = new CommandProcessor(di, in, System.out, System.err);
         cp.run(true);
@@ -133,7 +133,7 @@ public class CLHSDB {
                 coreFilename = "core";
             }
             break;
-        
+
         case (2):
             execPath = args[0];
             coreFilename = args[1];

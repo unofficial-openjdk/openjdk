@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)nativeInst_sparc.hpp	1.89 07/05/05 17:04:31 JVM"
+#pragma ident "@(#)nativeInst_sparc.hpp 1.89 07/05/05 17:04:31 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // We have interface for the following instructions:
@@ -49,8 +49,8 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   bool is_dtrace_trap();
   bool is_nop()                        { return long_at(0) == nop_instruction(); }
   bool is_call()                       { return is_op(long_at(0), Assembler::call_op); }
-  bool is_sethi()		       { return (is_op2(long_at(0), Assembler::sethi_op2) 
-			                  && inv_rd(long_at(0)) != G0); } 
+  bool is_sethi()                      { return (is_op2(long_at(0), Assembler::sethi_op2)
+                                          && inv_rd(long_at(0)) != G0); }
 
   bool sets_cc() {
     // conservative (returns true for some instructions that do not set the
@@ -63,22 +63,22 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   bool is_illegal();
   bool is_zombie() {
     int x = long_at(0);
-    return is_op3(x, 
-		  VM_Version::v9_instructions_work() ? 
-		    Assembler::ldsw_op3 : Assembler::lduw_op3, 
-		  Assembler::ldst_op)
+    return is_op3(x,
+                  VM_Version::v9_instructions_work() ?
+                    Assembler::ldsw_op3 : Assembler::lduw_op3,
+                  Assembler::ldst_op)
         && Assembler::inv_rs1(x) == G0
         && Assembler::inv_rd(x) == O7;
   }
-  bool is_ic_miss_trap();	// Inline-cache uses a trap to detect a miss
+  bool is_ic_miss_trap();       // Inline-cache uses a trap to detect a miss
   bool is_return() {
     // is it the output of MacroAssembler::ret or MacroAssembler::retl?
     int x = long_at(0);
     const int pc_return_offset = 8; // see frame_sparc.hpp
     return is_op3(x, Assembler::jmpl_op3, Assembler::arith_op)
-	&& (inv_rs1(x) == I7 || inv_rs1(x) == O7)
-	&& inv_immed(x) && inv_simm(x, 13) == pc_return_offset
-	&& inv_rd(x) == G0;
+        && (inv_rs1(x) == I7 || inv_rs1(x) == O7)
+        && inv_immed(x) && inv_simm(x, 13) == pc_return_offset
+        && inv_rd(x) == G0;
   }
   bool is_int_jump() {
     // is it the output of MacroAssembler::b?
@@ -102,7 +102,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   bool is_stack_bang() {
     int x = long_at(0);
     return is_op3(x, Assembler::stw_op3, Assembler::ldst_op) &&
-      (inv_rd(x) == G0) && (inv_rs1(x) == SP) && (inv_rs2(x) == G3_scratch); 
+      (inv_rd(x) == G0) && (inv_rs1(x) == SP) && (inv_rs2(x) == G3_scratch);
   }
 
   bool is_prefetch() {
@@ -182,8 +182,8 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   static int  inv_cond(  int x ) { return Assembler::inv_cond(x); }
 
   static int inv_op(  int x ) { return Assembler::inv_op( x); }
-  static int inv_op2( int x ) { return Assembler::inv_op2(x); } 
-  static int inv_op3( int x ) { return Assembler::inv_op3(x); } 
+  static int inv_op2( int x ) { return Assembler::inv_op2(x); }
+  static int inv_op3( int x ) { return Assembler::inv_op3(x); }
 
   static int inv_simm(    int x, int nbits ) { return Assembler::inv_simm(x, nbits); }
   static intptr_t inv_wdisp(   int x, int nbits ) { return Assembler::inv_wdisp(  x, 0, nbits); }
@@ -224,18 +224,18 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   // get a simm13 field from an arithmetic or memory instruction
   static int get_simm13(int insn) {
     assert(is_either(Assembler::inv_op(insn),
-		     Assembler::arith_op, Assembler::ldst_op) &&
-	    (insn & Assembler::immed(true)), "must have a simm13 field");
+                     Assembler::arith_op, Assembler::ldst_op) &&
+            (insn & Assembler::immed(true)), "must have a simm13 field");
     return Assembler::inv_simm(insn, 13);
   }
 
   // set the simm13 field of an arithmetic or memory instruction
   static bool set_simm13(int insn, int imm) {
-    get_simm13(insn);		// tickle the assertion check
+    get_simm13(insn);           // tickle the assertion check
     return set_simm(insn, imm, 13);
   }
 
-  // combine the fields of a sethi stream (7 instructions ) and an add, jmp or ld/st 
+  // combine the fields of a sethi stream (7 instructions ) and an add, jmp or ld/st
   static intptr_t data64( address pc, int arith_insn ) {
     assert(is_op2(*(unsigned int *)pc, Assembler::sethi_op2), "must be sethi");
     intptr_t hi = (intptr_t)gethi( (unsigned int *)pc );
@@ -245,7 +245,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   }
 
   // Regenerate the instruction sequence that performs the 64 bit
-  // sethi.  This only does the sethi.  The disp field (bottom 10 bits) 
+  // sethi.  This only does the sethi.  The disp field (bottom 10 bits)
   // must be handled seperately.
   static void set_data64_sethi(address instaddr, intptr_t x);
 
@@ -265,7 +265,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   }
 
   static int set_data32_simm13(int arith_insn, int imm) {
-    get_simm13(arith_insn);		// tickle the assertion check
+    get_simm13(arith_insn);             // tickle the assertion check
     int imm10 = Assembler::low10(imm);
     return (arith_insn &~ Assembler::simm(-1, 13)) | Assembler::simm(imm10, 13);
   }
@@ -276,7 +276,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
 
   // Perform the inverse of the LP64 Macroassembler::sethi
   // routine.  Extracts the 54 bits of address from the instruction
-  // stream. This routine must agree with the sethi routine in 
+  // stream. This routine must agree with the sethi routine in
   // assembler_inline_sparc.hpp
   static address gethi( unsigned int *pc ) {
     int i = 0;
@@ -293,16 +293,16 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
          case Assembler::xor_op3:
            adr ^= (intptr_t)get_simm13( *pc );
            return ( (address)adr );
-	   break;
+           break;
          case Assembler::sll_op3:
            adr <<= ( *pc & 0x3f );
-	   break;
+           break;
          case Assembler::or_op3:
- 	   adr |= (intptr_t)get_simm13( *pc );
-	   break;
+           adr |= (intptr_t)get_simm13( *pc );
+           break;
          default:
-	   assert ( 0, "in gethi - Should not reach here" );
-	   break;
+           assert ( 0, "in gethi - Should not reach here" );
+           break;
        }
        pc++;
        i++;
@@ -315,7 +315,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   void  print();
 
   // unit test stuff
-  static void test() {}			// override for testing
+  static void test() {}                 // override for testing
 
   inline friend NativeInstruction* nativeInstruction_at(address address);
 };
@@ -335,15 +335,15 @@ inline NativeInstruction* nativeInstruction_at(address address) {
 // The NativeCall is an abstraction for accessing/manipulating native call imm32 instructions.
 // (used to manipulate inline caches, primitive & dll calls, etc.)
 inline NativeCall* nativeCall_at(address instr);
-inline NativeCall* nativeCall_overwriting_at(address instr, 
+inline NativeCall* nativeCall_overwriting_at(address instr,
                                              address destination);
 inline NativeCall* nativeCall_before(address return_address);
 class NativeCall: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
-    instruction_size 		       = 8,
+    instruction_size                   = 8,
     return_address_offset              = 8,
-    call_displacement_width	       = 30,
+    call_displacement_width            = 30,
     displacement_offset                = 0,
     instruction_offset                 = 0
   };
@@ -362,9 +362,9 @@ class NativeCall: public NativeInstruction {
 
   // unit test stuff
   static void  test();
- 
+
   // Creation
-  friend inline NativeCall* nativeCall_at(address instr);  
+  friend inline NativeCall* nativeCall_at(address instr);
   friend NativeCall* nativeCall_overwriting_at(address instr, address destination = NULL) {
     // insert a "blank" call:
     NativeCall* call = (NativeCall*)instr;
@@ -402,7 +402,7 @@ class NativeCall: public NativeInstruction {
     (void)nativeCall_overwriting_at(code_pos, entry);
   }
 
-  static void replace_mt_safe(address instr_addr, address code_buffer);  
+  static void replace_mt_safe(address instr_addr, address code_buffer);
 };
 inline NativeCall* nativeCall_at(address instr) {
   NativeCall* call = (NativeCall*)instr;
@@ -434,7 +434,7 @@ public:
 
 // The format of this extended-range call is:
 //      jumpl_to addr, lreg
-//	== sethi %hi54(addr), O7 ;  jumpl O7, %lo10(addr), O7 ;  <delay>
+//      == sethi %hi54(addr), O7 ;  jumpl O7, %lo10(addr), O7 ;  <delay>
 // That is, it is essentially the same as a NativeJump.
 class NativeFarCall;
 inline NativeFarCall* nativeFarCall_overwriting_at(address instr, address destination);
@@ -443,9 +443,9 @@ class NativeFarCall: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
     // instruction_size includes the delay slot instruction.
-    instruction_size 		       = 9 * BytesPerInstWord,
+    instruction_size                   = 9 * BytesPerInstWord,
     return_address_offset              = 9 * BytesPerInstWord,
-    jmpl_offset            	       = 7 * BytesPerInstWord,
+    jmpl_offset                        = 7 * BytesPerInstWord,
     displacement_offset                = 0,
     instruction_offset                 = 0
   };
@@ -466,7 +466,7 @@ class NativeFarCall: public NativeInstruction {
 
   // unit test stuff
   static void  test();
- 
+
   // Creation
   friend inline NativeFarCall* nativeFarCall_at(address instr) {
     NativeFarCall* call = (NativeFarCall*)instr;
@@ -496,7 +496,7 @@ class NativeFarCall: public NativeInstruction {
   static void insert(address code_pos, address entry) {
     (void)nativeFarCall_overwriting_at(code_pos, entry);
   }
-  static void replace_mt_safe(address instr_addr, address code_buffer);  
+  static void replace_mt_safe(address instr_addr, address code_buffer);
 };
 
 #endif // _LP64
@@ -504,7 +504,7 @@ class NativeFarCall: public NativeInstruction {
 // An interface for accessing/manipulating native set_oop imm, reg instructions.
 // (used to manipulate inlined data references, etc.)
 //      set_oop imm, reg
-//	== sethi %hi22(imm), reg ;  add reg, %lo10(imm), reg
+//      == sethi %hi22(imm), reg ;  add reg, %lo10(imm), reg
 class NativeMovConstReg;
 inline NativeMovConstReg* nativeMovConstReg_at(address address);
 class NativeMovConstReg: public NativeInstruction {
@@ -532,7 +532,7 @@ class NativeMovConstReg: public NativeInstruction {
 
   void  verify();
   void  print();
-  
+
   // unit test stuff
   static void test();
 
@@ -560,7 +560,7 @@ class NativeMovConstReg: public NativeInstruction {
 // An interface for accessing/manipulating native set_oop imm, reg instructions.
 // (used to manipulate inlined data references, etc.)
 //      set_oop imm, reg
-//	== sethi %hi22(imm), reg; nop; add reg, %lo10(imm), reg
+//      == sethi %hi22(imm), reg; nop; add reg, %lo10(imm), reg
 //
 // Note that it is identical to NativeMovConstReg with the exception of a nop between the
 // sethi and the add.  The nop is required to be in the delay slot of the call instruction
@@ -591,7 +591,7 @@ inline NativeMovConstRegPatching* nativeMovConstRegPatching_at(address address);
 
   void  verify();
   void  print();
-  
+
   // unit test stuff
   static void test();
 
@@ -617,10 +617,10 @@ inline NativeMovConstRegPatching* nativeMovConstRegPatching_at(address address);
 
 
 // An interface for accessing/manipulating native memory ops
-//	ld* [reg + offset], reg
+//      ld* [reg + offset], reg
 //      st* reg, [reg + offset]
-//	sethi %hi(imm), reg; add reg, %lo(imm), reg; ld* [reg1 + reg], reg2
-//	sethi %hi(imm), reg; add reg, %lo(imm), reg; st* reg2, [reg1 + reg]
+//      sethi %hi(imm), reg; add reg, %lo(imm), reg; ld* [reg1 + reg], reg2
+//      sethi %hi(imm), reg; add reg, %lo(imm), reg; st* reg2, [reg1 + reg]
 // Ops covered: {lds,ldu,st}{w,b,h}, {ld,st}{d,x}
 //
 class NativeMovRegMem;
@@ -629,23 +629,23 @@ class NativeMovRegMem: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
     op3_mask_ld = 1 << Assembler::lduw_op3 |
-		  1 << Assembler::ldub_op3 |
-		  1 << Assembler::lduh_op3 |
-		  1 << Assembler::ldd_op3 |
-		  1 << Assembler::ldsw_op3 |
-		  1 << Assembler::ldsb_op3 |
-		  1 << Assembler::ldsh_op3 |
-		  1 << Assembler::ldx_op3,
+                  1 << Assembler::ldub_op3 |
+                  1 << Assembler::lduh_op3 |
+                  1 << Assembler::ldd_op3 |
+                  1 << Assembler::ldsw_op3 |
+                  1 << Assembler::ldsb_op3 |
+                  1 << Assembler::ldsh_op3 |
+                  1 << Assembler::ldx_op3,
     op3_mask_st = 1 << Assembler::stw_op3 |
-		  1 << Assembler::stb_op3 |
-		  1 << Assembler::sth_op3 |
-		  1 << Assembler::std_op3 |
-		  1 << Assembler::stx_op3,
+                  1 << Assembler::stb_op3 |
+                  1 << Assembler::sth_op3 |
+                  1 << Assembler::std_op3 |
+                  1 << Assembler::stx_op3,
     op3_ldst_int_limit = Assembler::ldf_op3,
     op3_mask_ldf = 1 << (Assembler::ldf_op3  - op3_ldst_int_limit) |
-		   1 << (Assembler::lddf_op3 - op3_ldst_int_limit),
+                   1 << (Assembler::lddf_op3 - op3_ldst_int_limit),
     op3_mask_stf = 1 << (Assembler::stf_op3  - op3_ldst_int_limit) |
-		   1 << (Assembler::stdf_op3 - op3_ldst_int_limit),
+                   1 << (Assembler::stdf_op3 - op3_ldst_int_limit),
 
     offset_width    = 13,
     sethi_offset    = 0,
@@ -654,7 +654,7 @@ class NativeMovRegMem: public NativeInstruction {
 #else
     add_offset      = 4,
 #endif
-    ldst_offset	    = add_offset + BytesPerInstWord 
+    ldst_offset     = add_offset + BytesPerInstWord
   };
   bool is_immediate() const {
     // check if instruction is ld* [reg + offset], reg or st* reg, [reg + offset]
@@ -662,15 +662,15 @@ class NativeMovRegMem: public NativeInstruction {
     return (is_op(i0, Assembler::ldst_op));
   }
 
-  address instruction_address() const	        { return addr_at(0); }
-  address next_instruction_address() const	{ 
+  address instruction_address() const           { return addr_at(0); }
+  address next_instruction_address() const      {
 #ifdef _LP64
     return addr_at(is_immediate() ? 4 : (7 * BytesPerInstWord));
 #else
     return addr_at(is_immediate() ? 4 : 12);
 #endif
   }
-  intptr_t   offset() const	                        {
+  intptr_t   offset() const                             {
      return is_immediate()? inv_simm(long_at(0), offset_width) :
                             nativeMovConstReg_at(addr_at(0))->data();
   }
@@ -706,10 +706,10 @@ class NativeMovRegMem: public NativeInstruction {
 
 
 // An interface for accessing/manipulating native memory ops
-//	ld* [reg + offset], reg
+//      ld* [reg + offset], reg
 //      st* reg, [reg + offset]
-//	sethi %hi(imm), reg; nop; add reg, %lo(imm), reg; ld* [reg1 + reg], reg2
-//	sethi %hi(imm), reg; nop; add reg, %lo(imm), reg; st* reg2, [reg1 + reg]
+//      sethi %hi(imm), reg; nop; add reg, %lo(imm), reg; ld* [reg1 + reg], reg2
+//      sethi %hi(imm), reg; nop; add reg, %lo(imm), reg; st* reg2, [reg1 + reg]
 // Ops covered: {lds,ldu,st}{w,b,h}, {ld,st}{d,x}
 //
 // Note that it is identical to NativeMovRegMem with the exception of a nop between the
@@ -721,23 +721,23 @@ class NativeMovRegMemPatching: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
     op3_mask_ld = 1 << Assembler::lduw_op3 |
-		  1 << Assembler::ldub_op3 |
-		  1 << Assembler::lduh_op3 |
-		  1 << Assembler::ldd_op3 |
-		  1 << Assembler::ldsw_op3 |
-		  1 << Assembler::ldsb_op3 |
-		  1 << Assembler::ldsh_op3 |
-		  1 << Assembler::ldx_op3,
+                  1 << Assembler::ldub_op3 |
+                  1 << Assembler::lduh_op3 |
+                  1 << Assembler::ldd_op3 |
+                  1 << Assembler::ldsw_op3 |
+                  1 << Assembler::ldsb_op3 |
+                  1 << Assembler::ldsh_op3 |
+                  1 << Assembler::ldx_op3,
     op3_mask_st = 1 << Assembler::stw_op3 |
-		  1 << Assembler::stb_op3 |
-		  1 << Assembler::sth_op3 |
-		  1 << Assembler::std_op3 |
-		  1 << Assembler::stx_op3,
+                  1 << Assembler::stb_op3 |
+                  1 << Assembler::sth_op3 |
+                  1 << Assembler::std_op3 |
+                  1 << Assembler::stx_op3,
     op3_ldst_int_limit = Assembler::ldf_op3,
     op3_mask_ldf = 1 << (Assembler::ldf_op3  - op3_ldst_int_limit) |
-		   1 << (Assembler::lddf_op3 - op3_ldst_int_limit),
+                   1 << (Assembler::lddf_op3 - op3_ldst_int_limit),
     op3_mask_stf = 1 << (Assembler::stf_op3  - op3_ldst_int_limit) |
-		   1 << (Assembler::stdf_op3 - op3_ldst_int_limit),
+                   1 << (Assembler::stdf_op3 - op3_ldst_int_limit),
 
     offset_width    = 13,
     sethi_offset    = 0,
@@ -747,7 +747,7 @@ class NativeMovRegMemPatching: public NativeInstruction {
     nop_offset      = 4,
 #endif
     add_offset      = nop_offset + BytesPerInstWord,
-    ldst_offset	    = add_offset + BytesPerInstWord
+    ldst_offset     = add_offset + BytesPerInstWord
   };
   bool is_immediate() const {
     // check if instruction is ld* [reg + offset], reg or st* reg, [reg + offset]
@@ -755,11 +755,11 @@ class NativeMovRegMemPatching: public NativeInstruction {
     return (is_op(i0, Assembler::ldst_op));
   }
 
-  address instruction_address() const	        { return addr_at(0); }
-  address next_instruction_address() const	{ 
+  address instruction_address() const           { return addr_at(0); }
+  address next_instruction_address() const      {
     return addr_at(is_immediate()? 4 : 16);
   }
-  int   offset() const	                        {
+  int   offset() const                          {
      return is_immediate()? inv_simm(long_at(0), offset_width) :
                             nativeMovConstRegPatching_at(addr_at(0))->data();
   }
@@ -797,9 +797,9 @@ class NativeMovRegMemPatching: public NativeInstruction {
 
 // An interface for accessing/manipulating native jumps
 //      jump_to addr
-//	== sethi %hi22(addr), temp ;  jumpl reg, %lo10(addr), G0 ;  <delay>
+//      == sethi %hi22(addr), temp ;  jumpl reg, %lo10(addr), G0 ;  <delay>
 //      jumpl_to addr, lreg
-//	== sethi %hi22(addr), temp ;  jumpl reg, %lo10(addr), lreg ;  <delay>
+//      == sethi %hi22(addr), temp ;  jumpl reg, %lo10(addr), lreg ;  <delay>
 class NativeJump;
 inline NativeJump* nativeJump_at(address address);
 class NativeJump: public NativeInstruction {
@@ -873,11 +873,11 @@ inline NativeGeneralJump* nativeGeneralJump_at(address address);
 class NativeGeneralJump: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
-    instruction_size 		       = 8
+    instruction_size                   = 8
   };
 
-  address instruction_address() const       { return addr_at(0); }  
-  address jump_destination()	const       { return addr_at(0) + branch_destination_offset(long_at(0)); }
+  address instruction_address() const       { return addr_at(0); }
+  address jump_destination()    const       { return addr_at(0) + branch_destination_offset(long_at(0)); }
   void set_jump_destination(address dest) {
     int patched_instr = patch_branch_destination_offset(dest - addr_at(0), long_at(0));
     set_long_at(0, patched_instr);
@@ -901,7 +901,7 @@ class NativeGeneralJump: public NativeInstruction {
 
   // Insertion of native general jump instruction
   static void insert_unconditional(address code_pos, address entry);
-  static void replace_mt_safe(address instr_addr, address code_buffer);  
+  static void replace_mt_safe(address instr_addr, address code_buffer);
 
   void verify();
 };
@@ -910,7 +910,7 @@ class NativeGeneralJump: public NativeInstruction {
 class NativeIllegalInstruction: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
-    instruction_size	        =    4
+    instruction_size            =    4
   };
 
   // Insert illegal opcode as specific address

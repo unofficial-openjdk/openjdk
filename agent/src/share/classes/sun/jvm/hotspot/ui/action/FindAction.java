@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.action;
@@ -43,11 +43,11 @@ public class FindAction extends DelegateAction {
     public static final String VALUE_LONG_DESCRIPTION = VALUE_SHORT_DESCRIPTION;
 
     public FindAction() {
-	super(VALUE_NAME, ActionManager.getIcon(VALUE_SMALL_ICON));
-	    
-	putValue(Action.ACTION_COMMAND_KEY, VALUE_COMMAND);
-	putValue(Action.SHORT_DESCRIPTION, VALUE_SHORT_DESCRIPTION);
-	putValue(Action.LONG_DESCRIPTION, VALUE_LONG_DESCRIPTION);
-	putValue(Action.MNEMONIC_KEY, VALUE_MNEMONIC);        
-    }	    
+        super(VALUE_NAME, ActionManager.getIcon(VALUE_SMALL_ICON));
+
+        putValue(Action.ACTION_COMMAND_KEY, VALUE_COMMAND);
+        putValue(Action.SHORT_DESCRIPTION, VALUE_SHORT_DESCRIPTION);
+        putValue(Action.LONG_DESCRIPTION, VALUE_LONG_DESCRIPTION);
+        putValue(Action.MNEMONIC_KEY, VALUE_MNEMONIC);
+    }
 }

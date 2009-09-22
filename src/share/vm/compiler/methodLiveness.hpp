@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)methodLiveness.hpp	1.25 07/05/05 17:05:24 JVM"
+#pragma ident "@(#)methodLiveness.hpp   1.25 07/05/05 17:05:24 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ciMethod;
@@ -47,7 +47,7 @@ class MethodLivenessResult : public BitMap {
 };
 
 class MethodLiveness : public ResourceObj {
- public: 
+ public:
   // The BasicBlock class is used to represent a basic block in the
   // liveness analysis.
   class BasicBlock : public ResourceObj {
@@ -57,7 +57,7 @@ class MethodLiveness : public ResourceObj {
 
     // The analyzer which created this basic block.
     MethodLiveness* _analyzer;
-    
+
     // The range of this basic block is [start_bci,limit_bci)
     int _start_bci;
     int _limit_bci;
@@ -73,7 +73,7 @@ class MethodLiveness : public ResourceObj {
     // by exceptional control flow
     BitMap _exception_exit;
 
-    // These members hold the results of the last call to 
+    // These members hold the results of the last call to
     // compute_gen_kill_range().  _gen is the set of locals
     // used before they are defined in the range.  _kill is the
     // set of locals defined before they are used.
@@ -85,7 +85,7 @@ class MethodLiveness : public ResourceObj {
     // in normal (non-exceptional) control flow.  We propagate liveness
     // information to these blocks.
     GrowableArray<BasicBlock*>* _normal_predecessors;
-    
+
     // A list of all blocks which could come directly before this one
     // in exceptional control flow.
     GrowableArray<BasicBlock*>* _exception_predecessors;
@@ -123,7 +123,7 @@ class MethodLiveness : public ResourceObj {
     int start_bci() const { return _start_bci; }
 
     int limit_bci() const { return _limit_bci; }
-    void set_limit_bci(int limit) { _limit_bci = limit; } 
+    void set_limit_bci(int limit) { _limit_bci = limit; }
 
     BasicBlock *next() const { return _next; }
     void set_next(BasicBlock *next) { _next = next; }
@@ -148,7 +148,7 @@ class MethodLiveness : public ResourceObj {
     BasicBlock *split(int splitBci);
 
     // -- Dataflow.
-    
+
     void compute_gen_kill(ciMethod* method);
 
     // Propagate changes from this basic block
@@ -248,10 +248,10 @@ class MethodLiveness : public ResourceObj {
 
   static long _total_method_locals;
   static int  _max_method_locals;
-  
+
   static long _total_locals_queried;
   static long _total_live_locals_queried;
-  
+
   static long _total_visits;
 
 #endif

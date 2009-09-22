@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)libInfo.cpp	1.11 07/05/05 17:02:06 JVM"
+#pragma ident "@(#)libInfo.cpp  1.11 07/05/05 17:02:06 JVM"
 #endif
 /*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Disable too-long symbol warnings
@@ -67,10 +67,10 @@ libInfoImplNT4(DWORD pid, vector<LibInfo>& info) {
   static EnumProcessModulesFunc*   enumFunc = NULL;
   static GetModuleFileNameExFunc*  fnFunc   = NULL;
   static GetModuleInformationFunc* infoFunc = NULL;
-  
+
   if (enumFunc == NULL) {
     HMODULE dll = loadPSAPIDLL();
-    
+
     enumFunc = (EnumProcessModulesFunc*)   GetProcAddress(dll, "EnumProcessModules");
     fnFunc   = (GetModuleFileNameExFunc*)  GetProcAddress(dll, "GetModuleFileNameExA");
     infoFunc = (GetModuleInformationFunc*) GetProcAddress(dll, "GetModuleInformation");
@@ -140,7 +140,7 @@ libInfoImplNT4(DWORD pid, vector<LibInfo>& info) {
       done = true;
     }
   } while (!done);
-  
+
   CloseHandle(proc);
   return;
 }
@@ -155,7 +155,7 @@ libInfoImplToolHelp(DWORD pid, vector<LibInfo>& info) {
 
   if (snapshotFunc == NULL) {
     HMODULE dll = loadDLL();
-    
+
     snapshotFunc =
       (CreateToolhelp32SnapshotFunc*) GetProcAddress(dll,
                                                      "CreateToolhelp32Snapshot");
@@ -165,7 +165,7 @@ libInfoImplToolHelp(DWORD pid, vector<LibInfo>& info) {
 
     nextFunc = (Module32NextFunc*) GetProcAddress(dll,
                                                   "Module32Next");
-    
+
     assert(snapshotFunc != NULL);
     assert(firstFunc    != NULL);
     assert(nextFunc     != NULL);
@@ -184,6 +184,6 @@ libInfoImplToolHelp(DWORD pid, vector<LibInfo>& info) {
       info.push_back(LibInfo(string(module.szExePath), (void*) module.modBaseAddr));
     } while ((*nextFunc)(snapshot, &module));
   }
-  
+
   CloseHandle(snapshot);
 }

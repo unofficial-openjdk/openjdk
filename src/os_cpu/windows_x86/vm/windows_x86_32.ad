@@ -19,7 +19,7 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//  
+//
 //
 
 // X86 Win32 Architecture Description File
@@ -59,22 +59,22 @@ encode %{
   %}
 
   enc_class call_epilog %{
-    if( VerifyStackAtCalls ) { 
+    if( VerifyStackAtCalls ) {
       // Check that stack depth is unchanged: find majik cookie on stack
       int framesize = ra_->reg2offset_unchecked(OptoReg::add(ra_->_matcher._old_SP,-3*VMRegImpl::slots_per_word));
       if(framesize >= 128) {
-	emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
-	emit_d8(cbuf,0xBC);
-	emit_d8(cbuf,0x24);
-	emit_d32(cbuf,framesize); // Find majik cookie from ESP
-	emit_d32(cbuf, 0xbadb100d);
+        emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
+        emit_d8(cbuf,0xBC);
+        emit_d8(cbuf,0x24);
+        emit_d32(cbuf,framesize); // Find majik cookie from ESP
+        emit_d32(cbuf, 0xbadb100d);
       }
       else {
-	emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
-	emit_d8(cbuf,0x7C);
-	emit_d8(cbuf,0x24);
-	emit_d8(cbuf,framesize); // Find majik cookie from ESP
-	emit_d32(cbuf, 0xbadb100d);
+        emit_opcode(cbuf, 0x81); // cmp [esp+0],0xbadb1ood
+        emit_d8(cbuf,0x7C);
+        emit_d8(cbuf,0x24);
+        emit_d8(cbuf,framesize); // Find majik cookie from ESP
+        emit_d32(cbuf, 0xbadb100d);
       }
       // jmp EQ around INT3
       emit_opcode(cbuf,0x74);

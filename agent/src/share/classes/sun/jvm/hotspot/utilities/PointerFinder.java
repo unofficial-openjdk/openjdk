@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -49,7 +49,7 @@ public class PointerFinder {
             break;
           }
         }
-        
+
         if (loc.gen == null) {
           // Should be in perm gen
           Generation permGen = genheap.permGen();
@@ -58,7 +58,7 @@ public class PointerFinder {
           }
           loc.permGen = permGen;
         }
-        
+
         if (VM.getVM().getUseTLAB()) {
           // Try to find thread containing it
           for (JavaThread t = VM.getVM().getThreads().first(); t != null; t = t.next()) {
@@ -71,7 +71,7 @@ public class PointerFinder {
             }
           }
         }
-        
+
         return loc;
       }
     } else {

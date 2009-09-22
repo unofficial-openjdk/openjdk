@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_FpuStackSim_x86.cpp	1.8 07/09/17 09:25:57 JVM"
+#pragma ident "@(#)c1_FpuStackSim_x86.cpp       1.8 07/09/17 09:25:57 JVM"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -57,7 +57,7 @@ void FpuStackSim::inc_stack_size() {
   assert(_stack_size <= FrameMap::nof_fpu_regs, "FPU stack overflow");
 }
 
-FpuStackSim::FpuStackSim(Compilation* compilation) 
+FpuStackSim::FpuStackSim(Compilation* compilation)
  : _compilation(compilation)
 {
   _stack_size = 0;

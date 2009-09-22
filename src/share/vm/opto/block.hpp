@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)block.hpp	1.102 07/09/25 09:22:14 JVM"
+#pragma ident "@(#)block.hpp    1.102 07/09/25 09:22:14 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Optimization - Graph Style
@@ -38,7 +38,7 @@ struct Tarjan;
 //------------------------------Block_Array------------------------------------
 // Map dense integer indices to Blocks.  Uses classic doubling-array trick.
 // Abstractly provides an infinite array of Block*'s, initialized to NULL.
-// Note that the constructor just zeros things, and since I use Arena 
+// Note that the constructor just zeros things, and since I use Arena
 // allocation I do not need a destructor to reclaim storage.
 class Block_Array : public ResourceObj {
   uint _size;                   // allocated size, as opposed to formal limit
@@ -83,7 +83,7 @@ public:
 
 
 class CFGElement : public ResourceObj {
- public:  
+ public:
   float _freq; // Execution frequency (estimate)
 
   CFGElement() : _freq(0.0f) {}
@@ -130,7 +130,7 @@ class Block : public CFGElement {
   Block* _idom;                 // Immediate dominator block
 
   CFGLoop *_loop;               // Loop to which this block belongs
-  uint _rpo;			// Number in reverse post order walk 
+  uint _rpo;                    // Number in reverse post order walk
 
   virtual bool is_block() { return true; }
   float succ_prob(uint i);      // return probability of i'th successor
@@ -155,7 +155,7 @@ class Block : public CFGElement {
   uint compute_loop_alignment();
 
   // BLOCK_FREQUENCY is a sentinel to mark uses of constant block frequencies.
-  // It is currently also used to scale such frequencies relative to 
+  // It is currently also used to scale such frequencies relative to
   // FreqCountInvocations relative to the old value of 1500.
 #define BLOCK_FREQUENCY(f) ((f * (float) 1500) / FreqCountInvocations)
 
@@ -174,7 +174,7 @@ class Block : public CFGElement {
   void    set_raise_LCA_visited(node_idx_t x) { _raise_LCA_visited = x; }
   node_idx_t  raise_LCA_visited() const       { return _raise_LCA_visited; }
 
-  // Estimated size in bytes of first instructions in a loop. 
+  // Estimated size in bytes of first instructions in a loop.
   uint _first_inst_size;
   uint first_inst_size() const     { return _first_inst_size; }
   void set_first_inst_size(uint s) { _first_inst_size = s; }
@@ -204,7 +204,7 @@ class Block : public CFGElement {
     return 0;
   }
 
-  // Connector blocks. Connector blocks are basic blocks devoid of 
+  // Connector blocks. Connector blocks are basic blocks devoid of
   // instructions, but may have relevant non-instruction Nodes, such as
   // Phis or MergeMems. Such blocks are discovered and marked during the
   // RemoveEmpty phase, and elided during Output.
@@ -229,18 +229,18 @@ class Block : public CFGElement {
 
   // Create a new Block with given head Node.
   // Creates the (empty) predecessor arrays.
-  Block( Arena *a, Node *headnode ) 
+  Block( Arena *a, Node *headnode )
     : CFGElement(),
-      _nodes(a), 
-      _succs(a), 
-      _num_succs(0), 
-      _pre_order(0), 
-      _idom(0), 
-      _loop(NULL), 
-      _reg_pressure(0), 
-      _ihrp_index(1), 
-      _freg_pressure(0), 
-      _fhrp_index(1), 
+      _nodes(a),
+      _succs(a),
+      _num_succs(0),
+      _pre_order(0),
+      _idom(0),
+      _loop(NULL),
+      _reg_pressure(0),
+      _ihrp_index(1),
+      _freg_pressure(0),
+      _fhrp_index(1),
       _raise_LCA_mark(0),
       _raise_LCA_visited(0),
       _first_inst_size(999999),
@@ -251,7 +251,7 @@ class Block : public CFGElement {
 
   // Index of 'end' Node
   uint end_idx() const {
-    // %%%%% add a proj after every goto 
+    // %%%%% add a proj after every goto
     // so (last->is_block_proj() != last) always, then simplify this code
     // This will not give correct end_idx for block 0 when it only contains root.
     int last_idx = _nodes.size() - 1;
@@ -260,7 +260,7 @@ class Block : public CFGElement {
     return (last->is_block_proj() == last) ? last_idx : (last_idx - _num_succs);
   }
 
-  // Basic blocks have a Node which ends them.  This Node determines which 
+  // Basic blocks have a Node which ends them.  This Node determines which
   // basic block follows this one in the program flow.  This Node is either an
   // IfNode, a GotoNode, a JmpNode, or a ReturnNode.
   Node *end() const { return _nodes[end_idx()]; }
@@ -271,7 +271,7 @@ class Block : public CFGElement {
   // Find node in block
   uint find_node( const Node *n ) const;
   // Find and remove n from block list
-  void find_remove( const Node *n ); 
+  void find_remove( const Node *n );
 
   // Schedule a call next in the block
   uint sched_call(Matcher &matcher, Block_Array &bbs, uint node_cnt, Node_List &worklist, int *ready_cnt, MachCallNode *mcall, VectorSet &next_call);
@@ -283,7 +283,7 @@ class Block : public CFGElement {
   bool schedule_local(PhaseCFG *cfg, Matcher &m, int *ready_cnt, VectorSet &next_call);
   // Cleanup if any code lands between a Call and his Catch
   void call_catch_cleanup(Block_Array &bbs);
-  // Detect implicit-null-check opportunities.  Basically, find NULL checks 
+  // Detect implicit-null-check opportunities.  Basically, find NULL checks
   // with suitable memory ops nearby.  Use the memory op to do the NULL check.
   // I can generate a memory op if there is not one nearby.
   void implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowed_reasons);
@@ -316,7 +316,7 @@ class Block : public CFGElement {
     return _succs[i]->non_connector();
   }
 
-  // Examine block's code shape to predict if it is not commonly executed. 
+  // Examine block's code shape to predict if it is not commonly executed.
   bool has_uncommon_code() const;
 
   // Use frequency calculations and code shape to predict if the block
@@ -341,10 +341,10 @@ class PhaseCFG : public Phase {
   // Build a proper looking cfg.  Return count of basic blocks
   uint build_cfg();
 
-  // Perform DFS search.  
-  // Setup 'vertex' as DFS to vertex mapping.  
-  // Setup 'semi' as vertex to DFS mapping.  
-  // Set 'parent' to DFS parent.             
+  // Perform DFS search.
+  // Setup 'vertex' as DFS to vertex mapping.
+  // Setup 'semi' as vertex to DFS mapping.
+  // Set 'parent' to DFS parent.
   uint DFS( Tarjan *tarjan );
 
   // Helper function to insert a node into a block
@@ -366,13 +366,13 @@ class PhaseCFG : public Phase {
   PhaseCFG( Arena *a, RootNode *r, Matcher &m );
 
   uint _num_blocks;             // Count of basic blocks
-  Block_List _blocks;           // List of basic blocks  
+  Block_List _blocks;           // List of basic blocks
   RootNode *_root;              // Root of whole program
   Block_Array _bbs;             // Map Nodes to owning Basic Block
   Block *_broot;                // Basic block of root
   uint _rpo_ctr;
   CFGLoop* _root_loop;
-  
+
   // Per node latency estimation, valid only during GCM
   GrowableArray<uint> _node_latency;
 
@@ -389,7 +389,7 @@ class PhaseCFG : public Phase {
   // Global Code Motion.  See Click's PLDI95 paper.  Place Nodes in specific
   // basic blocks; i.e. _bbs now maps _idx for all Nodes to some Block.
   void GlobalCodeMotion( Matcher &m, uint unique, Node_List &proj_list );
- 
+
   // Compute the (backwards) latency of a node from the uses
   void latency_from_uses(Node *n);
 
@@ -434,10 +434,10 @@ class PhaseCFG : public Phase {
   CFGLoop* create_loop_tree();
 
   // Insert a node into a block, and update the _bbs
-  void insert( Block *b, uint idx, Node *n ) { 
-    b->_nodes.insert( idx, n ); 
-    _bbs.map( n->_idx, b ); 
-  } 
+  void insert( Block *b, uint idx, Node *n ) {
+    b->_nodes.insert( idx, n );
+    _bbs.map( n->_idx, b );
+  }
 
 #ifndef PRODUCT
   bool trace_opto_pipelining() const { return _trace_opto_pipelining; }
@@ -515,13 +515,13 @@ class CFGLoop : public CFGElement {
   void update_succ_freq(Block* b, float freq);
 
  public:
-  CFGLoop(int id) : 
-    CFGElement(), 
-    _id(id), 
-    _depth(0), 
-    _parent(NULL), 
-    _sibling(NULL), 
-    _child(NULL), 
+  CFGLoop(int id) :
+    CFGElement(),
+    _id(id),
+    _depth(0),
+    _parent(NULL),
+    _sibling(NULL),
+    _child(NULL),
     _exit_prob(1.0f) {}
   CFGLoop* parent() { return _parent; }
   void push_pred(Block* blk, int i, Block_List& worklist, Block_Array& node_to_blk);

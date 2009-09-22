@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os_solaris_sparc.cpp	1.120 07/06/20 10:37:06 JVM"
+#pragma ident "@(#)os_solaris_sparc.cpp 1.120 07/06/20 10:37:06 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // do not include  precompiled  header file
@@ -93,7 +93,7 @@ char* os::non_memory_address_word() {
 
 // Validate a ucontext retrieved from walking a uc_link of a ucontext.
 // There are issues with libthread giving out uc_links for different threads
-// on the same uc_link chain and bad or circular links. 
+// on the same uc_link chain and bad or circular links.
 //
 bool os::Solaris::valid_ucontext(Thread* thread, ucontext_t* valid, ucontext_t* suspect) {
   if (valid >= suspect ||
@@ -111,7 +111,7 @@ bool os::Solaris::valid_ucontext(Thread* thread, ucontext_t* valid, ucontext_t* 
     }
     address _sp   = (address)((intptr_t)suspect->uc_mcontext.gregs[REG_SP] + STACK_BIAS);
     if (!valid_stack_address(thread, _sp) ||
-	!frame::is_valid_stack_pointer(((JavaThread*)thread)->base_of_stack_pointer(), (intptr_t*)_sp)) {
+        !frame::is_valid_stack_pointer(((JavaThread*)thread)->base_of_stack_pointer(), (intptr_t*)_sp)) {
       DEBUG_ONLY(tty->print_cr("valid_ucontext: stackpointer not in thread stack");)
       return false;
     }
@@ -191,7 +191,7 @@ ExtendedPC os::Solaris::fetch_frame_from_ucontext(Thread* thread,
 
 
 // ret_fp parameter is only used by Solaris X86.
-ExtendedPC os::fetch_frame_from_context(void* ucVoid, 
+ExtendedPC os::fetch_frame_from_context(void* ucVoid,
                     intptr_t** ret_sp, intptr_t** ret_fp) {
 
   ExtendedPC  epc;
@@ -221,8 +221,8 @@ frame os::get_sender_for_C_frame(frame* fr) {
 }
 
 frame os::current_frame() {
-  intptr_t* sp = StubRoutines::Sparc::flush_callers_register_windows_func()();                                                                                
-  frame myframe(sp, frame::unpatchable, 
+  intptr_t* sp = StubRoutines::Sparc::flush_callers_register_windows_func()();
+  frame myframe(sp, frame::unpatchable,
                 CAST_FROM_FN_PTR(address, os::current_frame));
   if (os::is_first_C_frame(&myframe)) {
     // stack is not walkable
@@ -239,9 +239,9 @@ void GetThreadPC_Callback::execute(OSThread::InterruptArguments *args) {
   intptr_t* sp;
 
   assert(ProfileVM && thread->is_VM_thread(), "just checking");
-    
+
   // Skip the mcontext corruption verification. If if occasionally
-  // things get corrupt, it is ok for profiling - we will just get an unresolved 
+  // things get corrupt, it is ok for profiling - we will just get an unresolved
   // function name
   ExtendedPC new_addr((address)uc->uc_mcontext.gregs[REG_PC]);
   _addr = new_addr;
@@ -256,13 +256,13 @@ static int threadgetstate(thread_t tid, int *flags, lwpid_t *lwp, stack_t *ss, g
     return (err);
   if (*flags == TRS_LWPID) {
     sprintf(lwpstatusfile, "/proc/%d/lwp/%d/lwpstatus", getpid(),
-	    *lwp);
+            *lwp);
     if ((lwpfd = open(lwpstatusfile, O_RDONLY)) < 0) {
       perror("thr_mutator_status: open lwpstatus");
       return (EINVAL);
     }
     if (pread(lwpfd, lwpstatus, sizeof (lwpstatus_t), (off_t)0) !=
-	sizeof (lwpstatus_t)) {
+        sizeof (lwpstatus_t)) {
       perror("thr_mutator_status: read lwpstatus");
       (void) close(lwpfd);
       return (EINVAL);
@@ -281,10 +281,10 @@ bool os::is_allocatable(size_t bytes) {
 #endif
 }
 
-extern "C" void Fetch32PFI () ; 
-extern "C" void Fetch32Resume () ; 
-extern "C" void FetchNPFI () ; 
-extern "C" void FetchNResume () ; 
+extern "C" void Fetch32PFI () ;
+extern "C" void Fetch32Resume () ;
+extern "C" void FetchNPFI () ;
+extern "C" void FetchNResume () ;
 
 extern "C" int JVM_handle_solaris_signal(int signo, siginfo_t* siginfo, void* ucontext, int abort_if_unrecognized);
 
@@ -314,10 +314,10 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
   if (os::Solaris::signal_handlers_are_installed) {
     if (t != NULL ){
       if(t->is_Java_thread()) {
-	thread = (JavaThread*)t;
+        thread = (JavaThread*)t;
       }
       else if(t->is_VM_thread()){
-	vmthread = (VMThread *)t;
+        vmthread = (VMThread *)t;
       }
     }
   }
@@ -336,7 +336,7 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     } else if (os::Solaris::chained_handler(sig, info, ucVoid)) {
       return true;
     } else {
-      // If os::Solaris::SIGasync not chained, and this is a non-vm and 
+      // If os::Solaris::SIGasync not chained, and this is a non-vm and
       // non-java thread
       return true;
     }
@@ -362,52 +362,52 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     npc = (address) uc->uc_mcontext.gregs[REG_nPC];
 
     // SafeFetch() support
-    // Implemented with either a fixed set of addresses such 
-    // as Fetch32*, or with Thread._OnTrap.  
-    if (uc->uc_mcontext.gregs[REG_PC] == intptr_t(Fetch32PFI)) { 
-      uc->uc_mcontext.gregs [REG_PC]  = intptr_t(Fetch32Resume) ; 
-      uc->uc_mcontext.gregs [REG_nPC] = intptr_t(Fetch32Resume) + 4 ; 
-      return true ;  
+    // Implemented with either a fixed set of addresses such
+    // as Fetch32*, or with Thread._OnTrap.
+    if (uc->uc_mcontext.gregs[REG_PC] == intptr_t(Fetch32PFI)) {
+      uc->uc_mcontext.gregs [REG_PC]  = intptr_t(Fetch32Resume) ;
+      uc->uc_mcontext.gregs [REG_nPC] = intptr_t(Fetch32Resume) + 4 ;
+      return true ;
     }
-    if (uc->uc_mcontext.gregs[REG_PC] == intptr_t(FetchNPFI)) { 
-      uc->uc_mcontext.gregs [REG_PC]  = intptr_t(FetchNResume) ; 
-      uc->uc_mcontext.gregs [REG_nPC] = intptr_t(FetchNResume) + 4 ; 
-      return true ;  
+    if (uc->uc_mcontext.gregs[REG_PC] == intptr_t(FetchNPFI)) {
+      uc->uc_mcontext.gregs [REG_PC]  = intptr_t(FetchNResume) ;
+      uc->uc_mcontext.gregs [REG_nPC] = intptr_t(FetchNResume) + 4 ;
+      return true ;
     }
 
     // Handle ALL stack overflow variations here
     if (sig == SIGSEGV && info->si_code == SEGV_ACCERR) {
       address addr = (address) info->si_addr;
       if (thread->in_stack_yellow_zone(addr)) {
-	thread->disable_stack_yellow_zone();
-	// Sometimes the register windows are not properly flushed.
-	if(uc->uc_mcontext.gwins != NULL) {
-	  ::handle_unflushed_register_windows(uc->uc_mcontext.gwins);
-	}
-	if (thread->thread_state() == _thread_in_Java) {
-	  // Throw a stack overflow exception.  Guard pages will be reenabled
-	  // while unwinding the stack.
-	  stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::STACK_OVERFLOW);
-	} else {
-	  // Thread was in the vm or native code.  Return and try to finish.
-	  return true;
-	}
+        thread->disable_stack_yellow_zone();
+        // Sometimes the register windows are not properly flushed.
+        if(uc->uc_mcontext.gwins != NULL) {
+          ::handle_unflushed_register_windows(uc->uc_mcontext.gwins);
+        }
+        if (thread->thread_state() == _thread_in_Java) {
+          // Throw a stack overflow exception.  Guard pages will be reenabled
+          // while unwinding the stack.
+          stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::STACK_OVERFLOW);
+        } else {
+          // Thread was in the vm or native code.  Return and try to finish.
+          return true;
+        }
       } else if (thread->in_stack_red_zone(addr)) {
-	// Fatal red zone violation.  Disable the guard pages and fall through
-	// to handle_unexpected_exception way down below.
-	thread->disable_stack_red_zone();
-	tty->print_raw_cr("An irrecoverable stack overflow has occurred.");
-	// Sometimes the register windows are not properly flushed.
-	if(uc->uc_mcontext.gwins != NULL) {
-	  ::handle_unflushed_register_windows(uc->uc_mcontext.gwins);
-	}
+        // Fatal red zone violation.  Disable the guard pages and fall through
+        // to handle_unexpected_exception way down below.
+        thread->disable_stack_red_zone();
+        tty->print_raw_cr("An irrecoverable stack overflow has occurred.");
+        // Sometimes the register windows are not properly flushed.
+        if(uc->uc_mcontext.gwins != NULL) {
+          ::handle_unflushed_register_windows(uc->uc_mcontext.gwins);
+        }
       }
     }
 
 
     if (thread->thread_state() == _thread_in_vm) {
       if (sig == SIGBUS && info->si_code == BUS_OBJERR && thread->doing_unsafe_access()) {
-        stub = StubRoutines::handler_for_unsafe_access(); 
+        stub = StubRoutines::handler_for_unsafe_access();
       }
     }
 
@@ -423,10 +423,10 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
       // Not needed on x86 solaris because verify_oops doesn't generate
       // SEGV/BUS like sparc does.
       if ( (sig == SIGSEGV || sig == SIGBUS)
-	   && pc >= MacroAssembler::_verify_oop_implicit_branch[0]
-	   && pc <  MacroAssembler::_verify_oop_implicit_branch[1] ) {
-	stub     =  MacroAssembler::_verify_oop_implicit_branch[2];
-	warning("fixed up memory fault in +VerifyOops at address " INTPTR_FORMAT, info->si_addr);
+           && pc >= MacroAssembler::_verify_oop_implicit_branch[0]
+           && pc <  MacroAssembler::_verify_oop_implicit_branch[1] ) {
+        stub     =  MacroAssembler::_verify_oop_implicit_branch[2];
+        warning("fixed up memory fault in +VerifyOops at address " INTPTR_FORMAT, info->si_addr);
       }
 
       // This is not factored because on x86 solaris the patching for
@@ -438,7 +438,7 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
         // At the stub it needs to look like a call from the caller of this
         // method (not a call from the segv site).
         pc = (address)uc->uc_mcontext.gregs[REG_O7];
-      }   
+      }
       else if (sig == SIGBUS && info->si_code == BUS_OBJERR) {
         // BugId 4454115: A read from a MappedByteBuffer can fault
         // here if the underlying file has been truncated.
@@ -451,11 +451,11 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
       }
 
       else if (sig == SIGFPE && info->si_code == FPE_INTDIV) {
-	// integer divide by zero
+        // integer divide by zero
         stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_DIVIDE_BY_ZERO);
       }
       else if (sig == SIGFPE && info->si_code == FPE_FLTDIV) {
-	// floating-point divide by zero
+        // floating-point divide by zero
         stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_DIVIDE_BY_ZERO);
       }
 #ifdef COMPILER2
@@ -466,13 +466,13 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
         assert(cb->is_compiled_by_c2(), "Wrong compiler");
   #endif // TIERED
 #endif // ASSERT
-	// Inline cache missed and user trap "Tne G0+ST_RESERVED_FOR_USER_0+2" taken.
-	stub = SharedRuntime::get_ic_miss_stub();
+        // Inline cache missed and user trap "Tne G0+ST_RESERVED_FOR_USER_0+2" taken.
+        stub = SharedRuntime::get_ic_miss_stub();
         // At the stub it needs to look like a call from the caller of this
         // method (not a call from the segv site).
         pc = (address)uc->uc_mcontext.gregs[REG_O7];
       }
-#endif	// COMPILER2
+#endif  // COMPILER2
 
       else if (sig == SIGSEGV && info->si_code > 0 && !MacroAssembler::needs_explicit_null_check((intptr_t)info->si_addr)) {
         // Determination of interpreter/vtable stub/compiled code null exception
@@ -534,7 +534,7 @@ int JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid, int abort_
     sigaction(sig, (struct sigaction *)0, &oldAct);
     if (oldAct.sa_sigaction != signalHandler) {
       void* sighand = oldAct.sa_sigaction ? CAST_FROM_FN_PTR(void*, oldAct.sa_sigaction)
-					  : CAST_FROM_FN_PTR(void*, oldAct.sa_handler);
+                                          : CAST_FROM_FN_PTR(void*, oldAct.sa_handler);
       warning("Unexpected Signal %d occured under user-defined signal handler " INTPTR_FORMAT, sig, (intptr_t)sighand);
     }
   }
@@ -561,26 +561,26 @@ void os::print_context(outputStream *st, void *context) {
   ucontext_t *uc = (ucontext_t*)context;
   st->print_cr("Registers:");
 
-  st->print_cr(" O0=" INTPTR_FORMAT " O1=" INTPTR_FORMAT 
+  st->print_cr(" O0=" INTPTR_FORMAT " O1=" INTPTR_FORMAT
                " O2=" INTPTR_FORMAT " O3=" INTPTR_FORMAT,
                  uc->uc_mcontext.gregs[REG_O0],
                  uc->uc_mcontext.gregs[REG_O1],
                  uc->uc_mcontext.gregs[REG_O2],
                  uc->uc_mcontext.gregs[REG_O3]);
-  st->print_cr(" O4=" INTPTR_FORMAT " O5=" INTPTR_FORMAT 
+  st->print_cr(" O4=" INTPTR_FORMAT " O5=" INTPTR_FORMAT
                " O6=" INTPTR_FORMAT " O7=" INTPTR_FORMAT,
             uc->uc_mcontext.gregs[REG_O4],
             uc->uc_mcontext.gregs[REG_O5],
             uc->uc_mcontext.gregs[REG_O6],
             uc->uc_mcontext.gregs[REG_O7]);
 
-  st->print_cr(" G1=" INTPTR_FORMAT " G2=" INTPTR_FORMAT 
+  st->print_cr(" G1=" INTPTR_FORMAT " G2=" INTPTR_FORMAT
                " G3=" INTPTR_FORMAT " G4=" INTPTR_FORMAT,
             uc->uc_mcontext.gregs[REG_G1],
             uc->uc_mcontext.gregs[REG_G2],
             uc->uc_mcontext.gregs[REG_G3],
             uc->uc_mcontext.gregs[REG_G4]);
-  st->print_cr(" G5=" INTPTR_FORMAT " G6=" INTPTR_FORMAT 
+  st->print_cr(" G5=" INTPTR_FORMAT " G6=" INTPTR_FORMAT
                " G7=" INTPTR_FORMAT " Y=" INTPTR_FORMAT,
             uc->uc_mcontext.gregs[REG_G5],
             uc->uc_mcontext.gregs[REG_G6],

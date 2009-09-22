@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)prefetchQueue.hpp	1.13 07/05/05 17:05:28 JVM"
+#pragma ident "@(#)prefetchQueue.hpp    1.13 07/05/05 17:05:28 JVM"
 #endif
 /*
  * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -69,6 +69,3 @@ class PrefetchQueue : public CHeapObj {
     return _prefetch_queue[_prefetch_index];
   }
 };
-
-
-

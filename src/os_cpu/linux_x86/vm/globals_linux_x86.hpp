@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globals_linux_x86.hpp	1.28 07/09/17 09:20:24 JVM"
+#pragma ident "@(#)globals_linux_x86.hpp        1.28 07/09/17 09:20:24 JVM"
 #endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -37,8 +37,8 @@ define_pd_global(intx, VMThreadStackSize,        1024);
 // ThreadStackSize 320 allows TaggedStackInterpreter and a couple of test cases
 // to run while keeping the number of threads that can be created high.
 // System default ThreadStackSize appears to be 512 which is too big.
-define_pd_global(intx, ThreadStackSize,		 320);
-define_pd_global(intx, VMThreadStackSize,	 512);
+define_pd_global(intx, ThreadStackSize,          320);
+define_pd_global(intx, VMThreadStackSize,        512);
 #endif // AMD64
 
 define_pd_global(intx, CompilerThreadStackSize,  0);
@@ -48,4 +48,3 @@ define_pd_global(uintx, JVMInvokeMethodSlack,    8192);
 
 // Only used on 64 bit Windows platforms
 define_pd_global(bool, UseVectoredExceptions,    false);
-

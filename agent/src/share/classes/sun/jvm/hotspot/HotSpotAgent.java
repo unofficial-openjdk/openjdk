@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -56,44 +56,44 @@ public class HotSpotAgent {
     private JVMDebugger debugger;
     private MachineDescription machDesc;
     private TypeDataBase db;
-    
+
     private String os;
     private String cpu;
     private String fileSep;
-    
+
     // The system can work in several ways:
     //  - Attaching to local process
     //  - Attaching to local core file
     //  - Connecting to remote debug server
     //  - Starting debug server for process
     //  - Starting debug server for core file
-    
+
     // These are options for the "client" side of things
     private static final int PROCESS_MODE   = 0;
     private static final int CORE_FILE_MODE = 1;
     private static final int REMOTE_MODE    = 2;
     private int startupMode;
-    
+
     // This indicates whether we are really starting a server or not
     private boolean isServer;
-    
+
     // All possible required information for connecting
     private int pid;
     private String javaExecutableName;
     private String coreFileName;
     private String debugServerID;
-    
+
     // All needed information for server side
     private String serverID;
-    
+
     private String[] jvmLibNames;
-    
+
     // FIXME: make these configurable, i.e., via a dotfile; also
     // consider searching within the JDK from which this Java executable
     // comes to find them
     private static final String defaultDbxPathPrefix                = "/net/jano.sfbay/export/disk05/hotspot/sa";
     private static final String defaultDbxSvcAgentDSOPathPrefix     = "/net/jano.sfbay/export/disk05/hotspot/sa";
-    
+
     static void showUsage() {
         System.out.println("    You can also pass these -D options to java to specify where to find dbx and the \n" +
         "    Serviceability Agent plugin for dbx:");
@@ -113,7 +113,7 @@ public class HotSpotAgent {
         "                   <os>/<arch>/bin/lib/libsvc_agent_dbx.so\n" +
         "             The default is " + defaultDbxSvcAgentDSOPathPrefix);
     }
-    
+
     public HotSpotAgent() {
         // for non-server add shutdown hook to clean-up debugger in case
         // of forced exit. For remote server, shutdown hook is added by
@@ -129,23 +129,23 @@ public class HotSpotAgent {
             }
         }));
     }
-    
+
     //--------------------------------------------------------------------------------
     // Accessors (once the system is set up)
     //
-    
+
     public synchronized Debugger getDebugger() {
         return debugger;
     }
-    
+
     public synchronized TypeDataBase getTypeDataBase() {
         return db;
     }
-    
+
     //--------------------------------------------------------------------------------
     // Client-side operations
     //
-    
+
     /** This attaches to a process running on the local machine. */
     public synchronized void attach(int processID)
     throws DebuggerException {
@@ -157,7 +157,7 @@ public class HotSpotAgent {
         isServer = false;
         go();
     }
-    
+
     /** This opens a core file on the local machine */
     public synchronized void attach(String javaExecutableName, String coreFileName)
     throws DebuggerException {
@@ -173,7 +173,7 @@ public class HotSpotAgent {
         isServer = false;
         go();
     }
-    
+
     /** This attaches to a "debug server" on a remote machine; this
       remote server has already attached to a process or opened a
       core file and is waiting for RMI calls on the Debugger object to
@@ -186,13 +186,13 @@ public class HotSpotAgent {
         if (remoteServerID == null) {
             throw new DebuggerException("Debug server id must be specified");
         }
-        
+
         debugServerID = remoteServerID;
         startupMode = REMOTE_MODE;
         isServer = false;
         go();
     }
-    
+
     /** This should only be called by the user on the client machine,
       not the server machine */
     public synchronized boolean detach() throws DebuggerException {
@@ -201,11 +201,11 @@ public class HotSpotAgent {
         }
         return detachInternal();
     }
-    
+
     //--------------------------------------------------------------------------------
     // Server-side operations
     //
-    
+
     /** This attaches to a process running on the local machine and
       starts a debug server, allowing remote machines to connect and
       examine this process. Uses specified name to uniquely identify a
@@ -220,7 +220,7 @@ public class HotSpotAgent {
         serverID = uniqueID;
         go();
     }
-    
+
     /** This attaches to a process running on the local machine and
       starts a debug server, allowing remote machines to connect and
       examine this process. */
@@ -228,7 +228,7 @@ public class HotSpotAgent {
     throws DebuggerException {
         startServer(processID, null);
     }
-    
+
     /** This opens a core file on the local machine and starts a debug
       server, allowing remote machines to connect and examine this
       core file. Uses supplied uniqueID to uniquely identify a specific
@@ -249,7 +249,7 @@ public class HotSpotAgent {
         serverID = uniqueID;
         go();
     }
-    
+
     /** This opens a core file on the local machine and starts a debug
       server, allowing remote machines to connect and examine this
       core file. */
@@ -257,7 +257,7 @@ public class HotSpotAgent {
     throws DebuggerException {
         startServer(javaExecutableName, coreFileName, null);
     }
-    
+
     /** This may only be called on the server side after startServer()
       has been called */
     public synchronized boolean shutdownServer() throws DebuggerException {
@@ -266,12 +266,12 @@ public class HotSpotAgent {
         }
         return detachInternal();
     }
-    
-    
+
+
     //--------------------------------------------------------------------------------
     // Internals only below this point
     //
-    
+
     private boolean detachInternal() {
         if (debugger == null) {
             return false;
@@ -300,7 +300,7 @@ public class HotSpotAgent {
         if (dbg != null) {
             retval = dbg.detach();
         }
-        
+
         debugger = null;
         machDesc = null;
         db = null;
@@ -309,19 +309,19 @@ public class HotSpotAgent {
         }
         return retval;
     }
-    
+
     private void go() {
         setupDebugger();
         setupVM();
     }
-    
+
     private void setupDebugger() {
         if (startupMode != REMOTE_MODE) {
             //
             // Local mode (client attaching to local process or setting up
             // server, but not client attaching to server)
             //
-            
+
             try {
                 os  = PlatformInfo.getOS();
                 cpu = PlatformInfo.getCPU();
@@ -330,7 +330,7 @@ public class HotSpotAgent {
                 throw new DebuggerException(e);
             }
             fileSep = System.getProperty("file.separator");
-            
+
             if (os.equals("solaris")) {
                 setupDebuggerSolaris();
             } else if (os.equals("win32")) {
@@ -341,7 +341,7 @@ public class HotSpotAgent {
                 // Add support for more operating systems here
                 throw new DebuggerException("Operating system " + os + " not yet supported");
             }
-            
+
             if (isServer) {
                 RemoteDebuggerServer remote = null;
                 try {
@@ -356,29 +356,29 @@ public class HotSpotAgent {
             //
             // Remote mode (client attaching to server)
             //
-            
+
             // Create and install a security manager
-            
+
             // FIXME: currently commented out because we were having
             // security problems since we're "in the sun.* hierarchy" here.
             // Perhaps a permissive policy file would work around this. In
             // the long run, will probably have to move into com.sun.*.
-            
+
             //    if (System.getSecurityManager() == null) {
             //      System.setSecurityManager(new RMISecurityManager());
             //    }
-            
+
             connectRemoteDebugger();
         }
     }
-    
+
     private void setupVM() {
         // We need to instantiate a HotSpotTypeDataBase on both the client
         // and server machine. On the server it is only currently used to
         // configure the Java primitive type sizes (which we should
         // consider making constant). On the client it is used to
         // configure the VM.
-        
+
         try {
             if (os.equals("solaris")) {
                 db = new HotSpotTypeDataBase(machDesc,
@@ -400,7 +400,7 @@ public class HotSpotAgent {
             throw new DebuggerException("Doesn't appear to be a HotSpot VM (could not find symbol \"" +
             e.getSymbol() + "\" in remote process)");
         }
-        
+
         if (startupMode != REMOTE_MODE) {
             // Configure the debugger with the primitive type sizes just obtained from the VM
             debugger.configureJavaPrimitiveTypeSizes(db.getJBooleanType().getSize(),
@@ -412,7 +412,7 @@ public class HotSpotAgent {
             db.getJLongType().getSize(),
             db.getJShortType().getSize());
         }
-        
+
         if (!isServer) {
             // Do not initialize the VM on the server (unnecessary, since it's
             // instantiated on the client)
@@ -425,22 +425,22 @@ public class HotSpotAgent {
             }
         }
     }
-    
+
     //--------------------------------------------------------------------------------
     // OS-specific debugger setup/connect routines
     //
-    
+
     //
     // Solaris
     //
-    
+
     private void setupDebuggerSolaris() {
         setupJVMLibNamesSolaris();
         if(System.getProperty("sun.jvm.hotspot.debugger.useProcDebugger") != null) {
             ProcDebuggerLocal dbg = new ProcDebuggerLocal(null, true);
             debugger = dbg;
             attachDebugger();
-            
+
             // Set up CPU-dependent stuff
             if (cpu.equals("x86")) {
                 machDesc = new MachineDescriptionIntelX86();
@@ -450,7 +450,7 @@ public class HotSpotAgent {
                     throw new DebuggerException("Error occurred while trying to determine the remote process's " +
                     "address size");
                 }
-                
+
                 if (addressSize == 32) {
                     machDesc = new MachineDescriptionSPARC32Bit();
                 } else if (addressSize == 64) {
@@ -460,20 +460,20 @@ public class HotSpotAgent {
                 }
             } else if (cpu.equals("amd64")) {
                 machDesc = new MachineDescriptionAMD64();
-            } else {                
+            } else {
                 throw new DebuggerException("Solaris only supported on sparc/sparcv9/x86/amd64");
-            }            
-            
+            }
+
             dbg.setMachineDescription(machDesc);
             return;
-            
+
         } else {
             String dbxPathName;
             String dbxPathPrefix;
             String dbxSvcAgentDSOPathName;
             String dbxSvcAgentDSOPathPrefix;
             String[] dbxSvcAgentDSOPathNames = null;
-            
+
             // use path names/prefixes specified on command
             dbxPathName = System.getProperty("dbxPathName");
             if (dbxPathName == null) {
@@ -483,7 +483,7 @@ public class HotSpotAgent {
                 }
                 dbxPathName = dbxPathPrefix + fileSep + os + fileSep + cpu + fileSep + "bin" + fileSep + "dbx";
             }
-            
+
             dbxSvcAgentDSOPathName = System.getProperty("dbxSvcAgentDSOPathName");
             if (dbxSvcAgentDSOPathName != null) {
                 dbxSvcAgentDSOPathNames = new String[] { dbxSvcAgentDSOPathName } ;
@@ -511,14 +511,14 @@ public class HotSpotAgent {
                     };
                 }
             }
-            
+
             // Note we do not use a cache for the local debugger in server
             // mode; it's taken care of on the client side
             DbxDebuggerLocal dbg = new DbxDebuggerLocal(null, dbxPathName, dbxSvcAgentDSOPathNames, !isServer);
             debugger = dbg;
-            
+
             attachDebugger();
-            
+
             // Set up CPU-dependent stuff
             if (cpu.equals("x86")) {
                 machDesc = new MachineDescriptionIntelX86();
@@ -530,7 +530,7 @@ public class HotSpotAgent {
                     "initialize. Examine the standard output and standard error streams from the dbx " +
                     "process for more information.");
                 }
-                
+
                 if (addressSize == 32) {
                     machDesc = new MachineDescriptionSPARC32Bit();
                 } else if (addressSize == 64) {
@@ -539,12 +539,12 @@ public class HotSpotAgent {
                     throw new DebuggerException("Address size " + addressSize + " is not supported on SPARC");
                 }
             }
-            
+
             dbg.setMachineDescription(machDesc);
-            
+
         }
     }
-    
+
     private void connectRemoteDebugger() throws DebuggerException {
         RemoteDebugger remote =
         (RemoteDebugger) RMIHelper.lookup(debugServerID);
@@ -560,21 +560,21 @@ public class HotSpotAgent {
         } else {
             throw new RuntimeException("Unknown OS type");
         }
-        
+
         cpu = debugger.getCPU();
     }
-    
+
     private void setupJVMLibNamesSolaris() {
         jvmLibNames = new String[] { "libjvm.so", "libjvm_g.so", "gamma_g" };
     }
-    
+
     //
     // Win32
     //
-    
+
     private void setupDebuggerWin32() {
         setupJVMLibNamesWin32();
-        
+
         if (cpu.equals("x86")) {
             machDesc = new MachineDescriptionIntelX86();
         } else if (cpu.equals("amd64")) {
@@ -584,33 +584,33 @@ public class HotSpotAgent {
         } else {
             throw new DebuggerException("Win32 supported under x86, amd64 and ia64 only");
         }
-        
+
         // Note we do not use a cache for the local debugger in server
         // mode; it will be taken care of on the client side (once remote
         // debugging is implemented).
-        
+
         if (System.getProperty("sun.jvm.hotspot.debugger.useWindbgDebugger") != null) {
             debugger = new WindbgDebuggerLocal(machDesc, !isServer);
         } else {
             debugger = new Win32DebuggerLocal(machDesc, !isServer);
         }
-        
+
         attachDebugger();
-        
+
         // FIXME: add support for server mode
     }
-    
+
     private void setupJVMLibNamesWin32() {
         jvmLibNames = new String[] { "jvm.dll", "jvm_g.dll" };
     }
-    
+
     //
     // Linux
     //
-    
+
     private void setupDebuggerLinux() {
         setupJVMLibNamesLinux();
-        
+
         if (cpu.equals("x86")) {
             machDesc = new MachineDescriptionIntelX86();
         } else if (cpu.equals("ia64")) {
@@ -619,25 +619,25 @@ public class HotSpotAgent {
             machDesc = new MachineDescriptionAMD64();
         } else if (cpu.equals("sparc")) {
             if (LinuxDebuggerLocal.getAddressSize()==8) {
-        	    machDesc = new MachineDescriptionSPARC64Bit();
+                    machDesc = new MachineDescriptionSPARC64Bit();
             } else {
-	            machDesc = new MachineDescriptionSPARC32Bit();
+                    machDesc = new MachineDescriptionSPARC32Bit();
             }
         } else {
             throw new DebuggerException("Linux only supported on x86/ia64/amd64/sparc/sparc64");
         }
-        
+
         LinuxDebuggerLocal dbg =
         new LinuxDebuggerLocal(machDesc, !isServer);
         debugger = dbg;
-        
+
         attachDebugger();
     }
-    
+
     private void setupJVMLibNamesLinux() {
         jvmLibNames = new String[] { "libjvm.so", "libjvm_g.so" };
     }
-    
+
     /** Convenience routine which should be called by per-platform
       debugger setup. Should not be called when startupMode is
       REMOTE_MODE. */

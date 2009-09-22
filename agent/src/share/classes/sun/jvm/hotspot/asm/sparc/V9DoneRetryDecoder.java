@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-class V9DoneRetryDecoder extends InstructionDecoder 
+class V9DoneRetryDecoder extends InstructionDecoder
               implements V9InstructionDecoder {
     Instruction decode(int instruction, SPARCInstructionFactory factory) {
         SPARCV9InstructionFactory v9factory = (SPARCV9InstructionFactory) factory;

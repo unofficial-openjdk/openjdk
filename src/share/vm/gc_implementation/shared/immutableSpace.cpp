@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)immutableSpace.cpp	1.13 07/05/05 17:05:34 JVM"
+#pragma ident "@(#)immutableSpace.cpp   1.13 07/05/05 17:05:34 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -80,4 +80,3 @@ void ImmutableSpace::verify(bool allow_dirty) {
   }
   guarantee(p == end(), "end of last object must match end of space");
 }
-

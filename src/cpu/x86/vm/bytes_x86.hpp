@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytes_x86.hpp	1.28 07/09/17 09:38:36 JVM"
+#pragma ident "@(#)bytes_x86.hpp        1.28 07/09/17 09:38:36 JVM"
 #endif
 /*
  * Copyright 1997-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class Bytes: AllStatic {

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecode.hpp	1.67 07/05/05 17:05:36 JVM"
+#pragma ident "@(#)bytecode.hpp 1.67 07/05/05 17:05:36 JVM"
 #endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Base class for different kinds of abstractions working
@@ -99,7 +99,7 @@ class Bytecode: public ThisRelativeObj {
   int     fast_index() const                     { return Bytes::get_native_u2(addr_at(1)); }
 
   // Attribute modification
-  void    set_code(Bytecodes::Code code);  
+  void    set_code(Bytecodes::Code code);
   void    set_fast_index(int i);
 
   // Creation
@@ -120,7 +120,7 @@ class LookupswitchPair: ThisRelativeObj {
 
  public:
   int  match() const                             { return java_signed_word_at(0 * jintSize); }
-  int  offset() const                            { return java_signed_word_at(1 * jintSize); }   
+  int  offset() const                            { return java_signed_word_at(1 * jintSize); }
 };
 
 
@@ -207,17 +207,17 @@ class Bytecode_invoke: public ResourceObj {
   // Creation
   inline friend Bytecode_invoke* Bytecode_invoke_at(methodHandle method, int bci);
 
-  // Like Bytecode_invoke_at. Instead it returns NULL if the bci is not at an invoke. 
+  // Like Bytecode_invoke_at. Instead it returns NULL if the bci is not at an invoke.
   inline friend Bytecode_invoke* Bytecode_invoke_at_check(methodHandle method, int bci);
 };
 
-inline Bytecode_invoke* Bytecode_invoke_at(methodHandle method, int bci) {    
+inline Bytecode_invoke* Bytecode_invoke_at(methodHandle method, int bci) {
   Bytecode_invoke* b = new Bytecode_invoke(method, bci);
   debug_only(b->verify());
   return b;
 }
 
-inline Bytecode_invoke* Bytecode_invoke_at_check(methodHandle method, int bci) {    
+inline Bytecode_invoke* Bytecode_invoke_at_check(methodHandle method, int bci) {
   Bytecode_invoke* b = new Bytecode_invoke(method, bci);
   return b->is_valid() ? b : NULL;
 }
@@ -255,7 +255,7 @@ class Bytecode_static: public Bytecode {
   inline friend Bytecode_static* Bytecode_static_at(const methodOop method, address bcp);
 };
 
-inline Bytecode_static* Bytecode_static_at(const methodOop method, address bcp) {    
+inline Bytecode_static* Bytecode_static_at(const methodOop method, address bcp) {
   Bytecode_static* b = (Bytecode_static*)bcp;
   debug_only(b->verify());
   return b;
@@ -275,11 +275,11 @@ class Bytecode_checkcast: public Bytecode {
   inline friend Bytecode_checkcast* Bytecode_checkcast_at(address bcp);
 };
 
-inline Bytecode_checkcast* Bytecode_checkcast_at(address bcp) {    
+inline Bytecode_checkcast* Bytecode_checkcast_at(address bcp) {
   Bytecode_checkcast* b = (Bytecode_checkcast*)bcp;
   debug_only(b->verify());
   return b;
-}  
+}
 
 
 // Abstraction for instanceof
@@ -295,11 +295,11 @@ class Bytecode_instanceof: public Bytecode {
   inline friend Bytecode_instanceof* Bytecode_instanceof_at(address bcp);
 };
 
-inline Bytecode_instanceof* Bytecode_instanceof_at(address bcp) {    
+inline Bytecode_instanceof* Bytecode_instanceof_at(address bcp) {
   Bytecode_instanceof* b = (Bytecode_instanceof*)bcp;
   debug_only(b->verify());
   return b;
-}  
+}
 
 
 class Bytecode_new: public Bytecode {
@@ -313,11 +313,11 @@ class Bytecode_new: public Bytecode {
   inline friend Bytecode_new* Bytecode_new_at(address bcp);
 };
 
-inline Bytecode_new* Bytecode_new_at(address bcp) {    
+inline Bytecode_new* Bytecode_new_at(address bcp) {
   Bytecode_new* b = (Bytecode_new*)bcp;
   debug_only(b->verify());
   return b;
-}  
+}
 
 
 class Bytecode_multianewarray: public Bytecode {
@@ -331,11 +331,11 @@ class Bytecode_multianewarray: public Bytecode {
   inline friend Bytecode_multianewarray* Bytecode_multianewarray_at(address bcp);
 };
 
-inline Bytecode_multianewarray* Bytecode_multianewarray_at(address bcp) {    
+inline Bytecode_multianewarray* Bytecode_multianewarray_at(address bcp) {
   Bytecode_multianewarray* b = (Bytecode_multianewarray*)bcp;
   debug_only(b->verify());
   return b;
-}  
+}
 
 
 class Bytecode_anewarray: public Bytecode {
@@ -349,11 +349,11 @@ class Bytecode_anewarray: public Bytecode {
   inline friend Bytecode_anewarray* Bytecode_anewarray_at(address bcp);
 };
 
-inline Bytecode_anewarray* Bytecode_anewarray_at(address bcp) {    
+inline Bytecode_anewarray* Bytecode_anewarray_at(address bcp) {
   Bytecode_anewarray* b = (Bytecode_anewarray*)bcp;
   debug_only(b->verify());
   return b;
-}  
+}
 
 
 // Abstraction for ldc, ldc_w and ldc2_w
@@ -362,7 +362,7 @@ class Bytecode_loadconstant: public Bytecode {
  public:
   void verify() const {
     Bytecodes::Code stdc = Bytecodes::java_code(code());
-    assert(stdc == Bytecodes::_ldc || 
+    assert(stdc == Bytecodes::_ldc ||
            stdc == Bytecodes::_ldc_w ||
            stdc == Bytecodes::_ldc2_w, "load constant");
   }

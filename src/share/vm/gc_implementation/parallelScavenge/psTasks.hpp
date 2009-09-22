@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psTasks.hpp	1.21 07/05/05 17:05:29 JVM"
+#pragma ident "@(#)psTasks.hpp  1.21 07/05/05 17:05:29 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -45,7 +45,7 @@ class VMThread;
 //
 // This task scans all the roots of a given type.
 //
-// 
+//
 
 class ScavengeRootsTask : public GCTask {
  public:
@@ -57,13 +57,13 @@ class ScavengeRootsTask : public GCTask {
     flat_profiler         = 5,
     system_dictionary     = 6,
     management            = 7,
-    jvmti		  = 8
-  }; 
+    jvmti                 = 8
+  };
  private:
   RootType _root_type;
  public:
   ScavengeRootsTask(RootType value) : _root_type(value) {}
-  
+
   char* name() { return (char *)"scavenge-roots-task"; }
 
   virtual void do_it(GCTaskManager* manager, uint which);
@@ -74,7 +74,7 @@ class ScavengeRootsTask : public GCTask {
 //
 // This task scans the roots of a single thread. This task
 // enables scanning of thread roots in parallel.
-// 
+//
 
 class ThreadRootsTask : public GCTask {
  private:
@@ -83,7 +83,7 @@ class ThreadRootsTask : public GCTask {
  public:
   ThreadRootsTask(JavaThread* root) : _java_thread(root), _vm_thread(NULL) {}
   ThreadRootsTask(VMThread* root) : _java_thread(NULL), _vm_thread(root) {}
-  
+
   char* name() { return (char *)"thread-roots-task"; }
 
   virtual void do_it(GCTaskManager* manager, uint which);
@@ -93,7 +93,7 @@ class ThreadRootsTask : public GCTask {
 // StealTask
 //
 // This task is used to distribute work to idle threads.
-// 
+//
 
 class StealTask : public GCTask {
  private:
@@ -117,11 +117,11 @@ class SerialOldToYoungRootsTask : public GCTask {
  private:
   PSOldGen* _gen;
   HeapWord* _gen_top;
-  
+
  public:
   SerialOldToYoungRootsTask(PSOldGen *gen, HeapWord* gen_top) :
-    _gen(gen), _gen_top(gen_top) { } 
-  
+    _gen(gen), _gen_top(gen_top) { }
+
   char* name() { return (char *)"serial-old-to-young-roots-task"; }
 
   virtual void do_it(GCTaskManager* manager, uint which);
@@ -137,13 +137,12 @@ class OldToYoungRootsTask : public GCTask {
   PSOldGen* _gen;
   HeapWord* _gen_top;
   uint _stripe_number;
-  
+
  public:
   OldToYoungRootsTask(PSOldGen *gen, HeapWord* gen_top, uint stripe_number) :
-    _gen(gen), _gen_top(gen_top), _stripe_number(stripe_number) { } 
+    _gen(gen), _gen_top(gen_top), _stripe_number(stripe_number) { }
 
   char* name() { return (char *)"old-to-young-roots-task"; }
 
   virtual void do_it(GCTaskManager* manager, uint which);
 };
-

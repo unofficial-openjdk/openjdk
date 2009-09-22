@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)mulnode.cpp	1.134 07/07/19 19:08:26 JVM"
+#pragma ident "@(#)mulnode.cpp  1.134 07/07/19 19:08:26 JVM"
 #endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Portions of code courtesy of Clifford Click
@@ -33,7 +33,7 @@
 
 //=============================================================================
 //------------------------------hash-------------------------------------------
-// Hash function over MulNodes.  Needs to be commutative; i.e., I swap 
+// Hash function over MulNodes.  Needs to be commutative; i.e., I swap
 // (commute) inputs to MulNodes willy-nilly so the hash function must return
 // the same value in the presence of edge swapping.
 uint MulNode::hash() const {
@@ -51,7 +51,7 @@ Node *MulNode::Identity( PhaseTransform *phase ) {
 }
 
 //------------------------------Ideal------------------------------------------
-// We also canonicalize the Node, moving constants to the right input, 
+// We also canonicalize the Node, moving constants to the right input,
 // and flatten expressions (so that 1+x+2 becomes x+3).
 Node *MulNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   const Type *t1 = phase->type( in(1) );
@@ -77,14 +77,14 @@ Node *MulNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   uint op = Opcode();
   if( t2->singleton() &&        // Right input is a constant?
       op != Op_MulF &&          // Float & double cannot reassociate
-      op != Op_MulD ) { 
+      op != Op_MulD ) {
     if( t2 == Type::TOP ) return NULL;
     Node *mul1 = in(1);
 #ifdef ASSERT
     // Check for dead loop
     int   op1 = mul1->Opcode();
     if( phase->eqv( mul1, this ) || phase->eqv( in(2), this ) ||
-        ( op1 == mul_opcode() || op1 == add_opcode() ) && 
+        ( op1 == mul_opcode() || op1 == add_opcode() ) &&
         ( phase->eqv( mul1->in(1), this ) || phase->eqv( mul1->in(2), this ) ||
           phase->eqv( mul1->in(1), mul1 ) || phase->eqv( mul1->in(2), mul1 ) ) )
       assert(false, "dead loop in MulNode::Ideal");
@@ -92,7 +92,7 @@ Node *MulNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
     if( mul1->Opcode() == mul_opcode() ) {  // Left input is a multiply?
       // Mul of a constant?
-      const Type *t12 = phase->type( mul1->in(2) ); 
+      const Type *t12 = phase->type( mul1->in(2) );
       if( t12->singleton() && t12 != Type::TOP) { // Left input is an add of a constant?
         // Compute new constant; check for overflow
         const Type *tcon01 = mul1->as_Mul()->mul_ring(t2,t12);
@@ -105,18 +105,18 @@ Node *MulNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         }
       }
     }
-    // If the right input is a constant, and the left input is an add of a 
+    // If the right input is a constant, and the left input is an add of a
     // constant, flatten the tree: (X+con1)*con0 ==> X*con0 + con1*con0
     const Node *add1 = in(1);
     if( add1->Opcode() == add_opcode() ) {      // Left input is an add?
       // Add of a constant?
-      const Type *t12 = phase->type( add1->in(2) ); 
+      const Type *t12 = phase->type( add1->in(2) );
       if( t12->singleton() && t12 != Type::TOP ) { // Left input is an add of a constant?
         assert( add1->in(1) != add1, "dead loop in MulNode::Ideal" );
         // Compute new constant; check for overflow
         const Type *tcon01 = mul_ring(t2,t12);
         if( tcon01->singleton() ) {
-        
+
         // Convert (X+con1)*con0 into X*con0
           Node *mul = clone();    // mul = ()*con0
           mul->set_req(1,add1->in(1));  // mul = X*con0
@@ -179,7 +179,7 @@ Node *MulINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   } else if ((con = in(2)->find_int_con(0)) == 0) {
     return MulNode::Ideal(phase, can_reshape);
   }
- 
+
   // Now we have a constant Node on the right and the constant in con
   if( con == 0 ) return NULL;   // By zero is handled by Value call
   if( con == 1 ) return NULL;   // By one  is handled by Identity call
@@ -275,7 +275,7 @@ Node *MulLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   } else if ((con = in(2)->find_long_con(0)) == 0) {
     return MulNode::Ideal(phase, can_reshape);
   }
- 
+
   // Now we have a constant Node on the right and the constant in con
   if( con == CONST64(0) ) return NULL;  // By zero is handled by Value call
   if( con == CONST64(1) ) return NULL;  // By one  is handled by Identity call
@@ -406,7 +406,7 @@ const Type *AndINode::mul_ring( const Type *t0, const Type *t1 ) const {
   int widen = MAX2(r0->_widen,r1->_widen);
 
   // If either input is a constant, might be able to trim cases
-  if( !r0->is_con() && !r1->is_con() ) 
+  if( !r0->is_con() && !r1->is_con() )
     return TypeInt::INT;        // No constants to be had
 
   // Both constants?  Return bits
@@ -444,11 +444,11 @@ Node *AndINode::Identity( PhaseTransform *phase ) {
       if ((t1_support & con) == t1_support)
         return load;
     }
-    uint lop = load->Opcode();      
+    uint lop = load->Opcode();
     if( lop == Op_LoadC &&
         con == 0x0000FFFF )     // Already zero-extended
       return load;
-    // Masking off the high bits of a unsigned-shift-right is not 
+    // Masking off the high bits of a unsigned-shift-right is not
     // needed either.
     if( lop == Op_URShiftI ) {
       const TypeInt *t12 = phase->type( load->in(2) )->isa_int();
@@ -512,7 +512,7 @@ Node *AndINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       int shift = t12->get_con();
       shift &= BitsPerJavaInteger-1;  // semantics of Java shifts
       const int sign_bits_mask = ~right_n_bits(BitsPerJavaInteger - shift);
-      // If the AND'ing of the 2 masks has no bits, then only original shifted 
+      // If the AND'ing of the 2 masks has no bits, then only original shifted
       // bits survive.  NO sign-extension bits survive the maskings.
       if( (sign_bits_mask & mask) == 0 ) {
         // Use zero-fill shift instead
@@ -525,7 +525,7 @@ Node *AndINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Check for 'negate/and-1', a pattern emitted when someone asks for
   // 'mod 2'.  Negate leaves the low order bit unchanged (think: complement
   // plus 1) and the mask is of the low order bit.  Skip the negate.
-  if( lop == Op_SubI && mask == 1 && load->in(1) && 
+  if( lop == Op_SubI && mask == 1 && load->in(1) &&
       phase->type(load->in(1)) == TypeInt::ZERO )
     return new (phase->C, 3) AndINode( load->in(2), in(2) );
 
@@ -544,7 +544,7 @@ const Type *AndLNode::mul_ring( const Type *t0, const Type *t1 ) const {
   int widen = MAX2(r0->_widen,r1->_widen);
 
   // If either input is a constant, might be able to trim cases
-  if( !r0->is_con() && !r1->is_con() ) 
+  if( !r0->is_con() && !r1->is_con() )
     return TypeLong::LONG;      // No constants to be had
 
   // Both constants?  Return bits
@@ -579,7 +579,7 @@ Node *AndLNode::Identity( PhaseTransform *phase ) {
         return usr;
     }
     uint lop = usr->Opcode();
-    // Masking off the high bits of a unsigned-shift-right is not 
+    // Masking off the high bits of a unsigned-shift-right is not
     // needed either.
     if( lop == Op_URShiftL ) {
       const TypeInt *t12 = phase->type( usr->in(2) )->isa_int();
@@ -633,7 +633,7 @@ Node *LShiftINode::Identity( PhaseTransform *phase ) {
 }
 
 //------------------------------Ideal------------------------------------------
-// If the right input is a constant, and the left input is an add of a 
+// If the right input is a constant, and the left input is an add of a
 // constant, flatten the tree: (X+con1)<<con0 ==> X<<con0 + con1<<con0
 Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   const Type *t  = phase->type( in(2) );
@@ -651,7 +651,7 @@ Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
     assert( add1 != add1->in(1), "dead loop in LShiftINode::Ideal" );
     const TypeInt *t12 = phase->type(add1->in(2))->isa_int();
     if( t12 && t12->is_con() ){ // Left input is an add of a con?
-      // Transform is legal, but check for profit.  Avoid breaking 'i2s' 
+      // Transform is legal, but check for profit.  Avoid breaking 'i2s'
       // and 'i2b' patterns which typically fold into 'StoreC/StoreB'.
       if( con < 16 ) {
         // Compute X << con0
@@ -664,7 +664,7 @@ Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Check for "(x>>c0)<<c0" which just masks off low bits
   if( (add1_op == Op_RShiftI || add1_op == Op_URShiftI ) &&
-      add1->in(2) == in(2) ) 
+      add1->in(2) == in(2) )
     // Convert to "(x & -(1<<c0))"
     return new (phase->C, 3) AndINode(add1->in(1),phase->intcon( -(1<<con)));
 
@@ -706,7 +706,7 @@ const Type *LShiftINode::Value( PhaseTransform *phase ) const {
 
   // Either input is BOTTOM ==> the result is BOTTOM
   if( (t1 == TypeInt::INT) || (t2 == TypeInt::INT) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return TypeInt::INT;
 
   const TypeInt *r1 = t1->is_int(); // Handy access
@@ -745,7 +745,7 @@ Node *LShiftLNode::Identity( PhaseTransform *phase ) {
 }
 
 //------------------------------Ideal------------------------------------------
-// If the right input is a constant, and the left input is an add of a 
+// If the right input is a constant, and the left input is an add of a
 // constant, flatten the tree: (X+con1)<<con0 ==> X<<con0 + con1<<con0
 Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   const Type *t  = phase->type( in(2) );
@@ -773,7 +773,7 @@ Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Check for "(x>>c0)<<c0" which just masks off low bits
   if( (add1_op == Op_RShiftL || add1_op == Op_URShiftL ) &&
-      add1->in(2) == in(2) ) 
+      add1->in(2) == in(2) )
     // Convert to "(x & -(1<<c0))"
     return new (phase->C, 3) AndLNode(add1->in(1),phase->longcon( -(CONST64(1)<<con)));
 
@@ -815,7 +815,7 @@ const Type *LShiftLNode::Value( PhaseTransform *phase ) const {
 
   // Either input is BOTTOM ==> the result is BOTTOM
   if( (t1 == TypeLong::LONG) || (t2 == TypeInt::INT) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
     return TypeLong::LONG;
 
   const TypeLong *r1 = t1->is_long(); // Handy access
@@ -918,10 +918,10 @@ Node *RShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       set_req(2, phase->intcon(0));
       return this;
     }
-    else if( ld->Opcode() == Op_LoadC ) 
+    else if( ld->Opcode() == Op_LoadC )
       // Replace zero-extension-load with sign-extension-load
-      return new (phase->C, 3) LoadSNode( ld->in(MemNode::Control), 
-                                ld->in(MemNode::Memory), 
+      return new (phase->C, 3) LoadSNode( ld->in(MemNode::Control),
+                                ld->in(MemNode::Memory),
                                 ld->in(MemNode::Address),
                                 ld->adr_type());
   }
@@ -962,7 +962,7 @@ const Type *RShiftINode::Value( PhaseTransform *phase ) const {
 
   if (t2 == TypeInt::INT)
     return TypeInt::INT;
-      
+
   const TypeInt *r1 = t1->is_int(); // Handy access
   const TypeInt *r2 = t2->is_int(); // Handy access
 
@@ -1024,7 +1024,7 @@ const Type *RShiftLNode::Value( PhaseTransform *phase ) const {
 
   if (t2 == TypeInt::INT)
     return TypeLong::LONG;
-      
+
   const TypeLong *r1 = t1->is_long(); // Handy access
   const TypeInt  *r2 = t2->is_int (); // Handy access
 
@@ -1061,18 +1061,18 @@ Node *URShiftINode::Identity( PhaseTransform *phase ) {
   const TypeInt *ti = phase->type( in(2) )->isa_int();
   if ( ti && ti->is_con() && ( ti->get_con() & ( BitsPerInt - 1 ) ) == 0 ) return in(1);
 
-  // Check for "((x << LogBytesPerWord) + (wordSize-1)) >> LogBytesPerWord" which is just "x". 
+  // Check for "((x << LogBytesPerWord) + (wordSize-1)) >> LogBytesPerWord" which is just "x".
   // Happens during new-array length computation.
   // Safe if 'x' is in the range [0..(max_int>>LogBytesPerWord)]
   Node *add = in(1);
   if( add->Opcode() == Op_AddI ) {
     const TypeInt *t2  = phase->type(add->in(2))->isa_int();
-    if( t2 && t2->is_con(wordSize - 1) && 
+    if( t2 && t2->is_con(wordSize - 1) &&
         add->in(1)->Opcode() == Op_LShiftI ) {
       // Check that shift_counts are LogBytesPerWord
       Node          *lshift_count   = add->in(1)->in(2);
       const TypeInt *t_lshift_count = phase->type(lshift_count)->isa_int();
-      if( t_lshift_count && t_lshift_count->is_con(LogBytesPerWord) && 
+      if( t_lshift_count && t_lshift_count->is_con(LogBytesPerWord) &&
           t_lshift_count == phase->type(in(2)) ) {
         Node          *x   = add->in(1)->in(1);
         const TypeInt *t_x = phase->type(x)->isa_int();
@@ -1096,7 +1096,7 @@ Node *URShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   const int mask = right_n_bits(BitsPerJavaInteger - con);
 
   int in1_op = in(1)->Opcode();
-  
+
   // Check for ((x>>>a)>>>b) and replace with (x>>>(a+b)) when a+b < 32
   if( in1_op == Op_URShiftI ) {
     const TypeInt *t12 = phase->type( in(1)->in(2) )->isa_int();
@@ -1108,7 +1108,7 @@ Node *URShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
         return new (phase->C, 3) URShiftINode( in(1)->in(1), phase->intcon(con3) );
     }
   }
-  
+
   // Check for ((x << z) + Y) >>> z.  Replace with x + con>>>z
   // The idiom for rounding to a power of 2 is "(Q+(2^z-1)) >>> z".
   // If Q is "X << z" the rounding is useless.  Look for patterns like
@@ -1144,8 +1144,8 @@ Node *URShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Check for "(X << z ) >>> z" which simply zero-extends
   Node *shl = in(1);
-  if( in1_op == Op_LShiftI && 
-      phase->type(shl->in(2)) == t2 ) 
+  if( in1_op == Op_LShiftI &&
+      phase->type(shl->in(2)) == t2 )
     return new (phase->C, 3) AndINode( shl->in(1), phase->intcon(mask) );
 
   return NULL;
@@ -1172,7 +1172,7 @@ const Type *URShiftINode::Value( PhaseTransform *phase ) const {
 
   if (t2 == TypeInt::INT)
     return TypeInt::INT;
-      
+
   const TypeInt *r1 = t1->is_int();     // Handy access
   const TypeInt *r2 = t2->is_int();     // Handy access
 
@@ -1207,18 +1207,18 @@ const Type *URShiftINode::Value( PhaseTransform *phase ) const {
     return ti;
   }
 
-  // 
+  //
   // Do not support shifted oops in info for GC
-  // 
+  //
   // else if( t1->base() == Type::InstPtr ) {
-  //   
+  //
   //   const TypeInstPtr *o = t1->is_instptr();
-  //   if( t1->singleton() ) 
+  //   if( t1->singleton() )
   //     return TypeInt::make( ((uint32)o->const_oop() + o->_offset) >> shift );
   // }
   // else if( t1->base() == Type::KlassPtr ) {
   //   const TypeKlassPtr *o = t1->is_klassptr();
-  //   if( t1->singleton() ) 
+  //   if( t1->singleton() )
   //     return TypeInt::make( ((uint32)o->const_oop() + o->_offset) >> shift );
   // }
 
@@ -1273,8 +1273,8 @@ Node *URShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Check for "(X << z ) >>> z" which simply zero-extends
   Node *shl = in(1);
-  if( shl->Opcode() == Op_LShiftL && 
-      phase->type(shl->in(2)) == t2 ) 
+  if( shl->Opcode() == Op_LShiftL &&
+      phase->type(shl->in(2)) == t2 )
     return new (phase->C, 3) AndLNode( shl->in(1), phase->longcon(mask) );
 
   return NULL;
@@ -1301,7 +1301,7 @@ const Type *URShiftLNode::Value( PhaseTransform *phase ) const {
 
   if (t2 == TypeInt::INT)
     return TypeLong::LONG;
-      
+
   const TypeLong *r1 = t1->is_long(); // Handy access
   const TypeInt  *r2 = t2->is_int (); // Handy access
 

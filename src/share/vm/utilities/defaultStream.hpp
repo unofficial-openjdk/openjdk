@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)defaultStream.hpp	1.13 07/05/05 17:07:08 JVM"
+#pragma ident "@(#)defaultStream.hpp    1.13 07/05/05 17:07:08 JVM"
 #endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class defaultStream : public xmlTextStream {
@@ -44,27 +44,27 @@ class defaultStream : public xmlTextStream {
  public:
   // must defer time stamp due to the fact that os::init() hasn't
   // yet been called and os::elapsed_counter() may not be valid
-  defaultStream() { 
+  defaultStream() {
     _log_file = NULL;
     _inited = false;
     _writer = -1;
     _last_writer = -1;
   }
 
-  ~defaultStream() { 
+  ~defaultStream() {
     if (has_log_file())  finish_log();
   }
 
   static inline FILE* output_stream() {
     return DisplayVMOutputToStderr ? _error_stream : _output_stream;
   }
-  static inline FILE* error_stream() { 
+  static inline FILE* error_stream() {
     return DisplayVMOutputToStdout ? _output_stream : _error_stream;
   }
-  static inline int output_fd() { 
+  static inline int output_fd() {
     return DisplayVMOutputToStderr ? _error_fd : _output_fd;
   }
-  static inline int error_fd() { 
+  static inline int error_fd() {
     return DisplayVMOutputToStdout ? _output_fd : _error_fd;
   }
 

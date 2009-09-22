@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os.hpp	1.223 07/10/04 10:49:22 JVM"
+#pragma ident "@(#)os.hpp       1.223 07/10/04 10:49:22 JVM"
 #endif
 /*
  * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // os defines the interface to operating system; this includes traditional
@@ -43,7 +43,7 @@ template<class E> class GrowableArray;
 // Platform-independent error return values from OS functions
 enum OSReturn {
   OS_OK         =  0,        // Operation was successful
-  OS_ERR        = -1,        // Operation failed 
+  OS_ERR        = -1,        // Operation failed
   OS_INTRPT     = -2,        // Operation was interrupted
   OS_TIMEOUT    = -3,        // Operation timed out
   OS_NOMEM      = -5,        // Operation failed for lack of memory
@@ -59,7 +59,7 @@ enum ThreadPriority {        // JLS 20.20.1-3
                              // ensures that VMThread doesn't starve profiler
 };
 
-// Typedef for structured exception handling support 
+// Typedef for structured exception handling support
 typedef void (*java_call_t)(JavaValue* value, methodHandle* method, JavaCallArguments* args, Thread* thread);
 
 class os: AllStatic {
@@ -79,7 +79,7 @@ class os: AllStatic {
 
  public:
 
-  static void init(void);			// Called before command line parsing
+  static void init(void);                       // Called before command line parsing
   static jint init_2(void);                    // Called after command line parsing
 
   // File names are case-insensitive on windows only
@@ -101,9 +101,9 @@ class os: AllStatic {
   // Returns real time in seconds since an arbitrary point
   // in the past.
   static bool getTimesSecs(double* process_real_time,
-			   double* process_user_time, 
-			   double* process_system_time);
-    
+                           double* process_user_time,
+                           double* process_system_time);
+
   // Interface to the performance counter
   static jlong elapsed_counter();
   static jlong elapsed_frequency();
@@ -154,7 +154,7 @@ class os: AllStatic {
   //     first you generate a distribution of processes to processors,
   //     then you bind processes according to that distribution.
   // Compute a distribution for number of processes to processors.
-  //    Stores the processor id's into the distribution array argument. 
+  //    Stores the processor id's into the distribution array argument.
   //    Returns true if it worked, false if it didn't.
   static bool distribute_processes(uint length, uint* distribution);
   // Binds the current process to a processor.
@@ -178,15 +178,15 @@ class os: AllStatic {
   // is a hint intended to limit fragmentation; it says the returned page size
   // should be <= region_max_size / min_pages.  Because min_pages is a hint,
   // this routine may return a size larger than region_max_size / min_pages.
-  // 
+  //
   // The current implementation ignores min_pages if a larger page size is an
   // exact multiple of both region_min_size and region_max_size.  This allows
   // larger pages to be used when doing so would not cause fragmentation; in
   // particular, a single page can be used when region_min_size ==
   // region_max_size == a supported page size.
   static size_t page_size_for_region(size_t region_min_size,
-				     size_t region_max_size,
-				     uint min_pages);
+                                     size_t region_max_size,
+                                     uint min_pages);
 
   // Method for tracing page sizes returned by the above method; enabled by
   // TracePageSizes.  The region_{min,max}_size parameters should be the values
@@ -194,14 +194,14 @@ class os: AllStatic {
   // call.  The (optional) base and size parameters should come from the
   // ReservedSpace base() and size() methods.
   static void trace_page_sizes(const char* str, const size_t region_min_size,
-			       const size_t region_max_size,
-			       const size_t page_size,
-			       const char* base = NULL,
-			       const size_t size = 0) PRODUCT_RETURN;
+                               const size_t region_max_size,
+                               const size_t page_size,
+                               const char* base = NULL,
+                               const size_t size = 0) PRODUCT_RETURN;
 
   static int    vm_allocation_granularity();
   static char*  reserve_memory(size_t bytes, char* addr = 0,
-			       size_t alignment_hint = 0);
+                               size_t alignment_hint = 0);
   static char*  attempt_reserve_memory_at(size_t bytes, char* addr);
   static void   split_reserved_memory(char *base, size_t size,
                                       size_t split, bool realloc);
@@ -266,15 +266,15 @@ class os: AllStatic {
   // Since we write to the serialize page from every thread, we
   // want stores to be on unique cache lines whenever possible
   // in order to minimize CPU cross talk.  We pre-compute the
-  // amount to shift the thread* to make this offset unique to 
+  // amount to shift the thread* to make this offset unique to
   // each thread.
   static int     get_serialize_page_shift_count() {
     return SerializePageShiftCount;
-  } 
+  }
 
   static void     set_serialize_page_mask(uintptr_t mask) {
     _serialize_page_mask = mask;
-  } 
+  }
 
   static unsigned int  get_serialize_page_mask() {
     return _serialize_page_mask;
@@ -282,18 +282,18 @@ class os: AllStatic {
 
   static void    set_memory_serialize_page(address page);
 
-  static address get_memory_serialize_page() { 
-    return (address)_mem_serialize_page; 
+  static address get_memory_serialize_page() {
+    return (address)_mem_serialize_page;
   }
 
   static inline void write_memory_serialize_page(JavaThread *thread) {
-    uintptr_t page_offset = ((uintptr_t)thread >> 
+    uintptr_t page_offset = ((uintptr_t)thread >>
                             get_serialize_page_shift_count()) &
-                            get_serialize_page_mask(); 
-    *(volatile int32_t *)((uintptr_t)_mem_serialize_page+page_offset) = 1; 
+                            get_serialize_page_mask();
+    *(volatile int32_t *)((uintptr_t)_mem_serialize_page+page_offset) = 1;
   }
 
-  static bool    is_memory_serialize_page(JavaThread *thread, address addr) { 
+  static bool    is_memory_serialize_page(JavaThread *thread, address addr) {
     address thr_addr;
     if (UseMembar) return false;
     // Calculate thread specific address
@@ -301,14 +301,14 @@ class os: AllStatic {
     // TODO-FIXME: some platforms mask off faulting addresses to the base pagesize.
     // Instead of using a test for equality we should probably use something
     // of the form:
-    // return ((_mem_serialize_page ^ addr) & -pagesize) == 0 
-    // 
-    thr_addr  = (address)(((uintptr_t)thread >> 
+    // return ((_mem_serialize_page ^ addr) & -pagesize) == 0
+    //
+    thr_addr  = (address)(((uintptr_t)thread >>
                 get_serialize_page_shift_count()) &
-                get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page; 
+                get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page;
     return  (thr_addr == addr);
   }
-  
+
   static void block_on_serialize_page_trap();
 
   // threads
@@ -345,13 +345,13 @@ class os: AllStatic {
   static void yield();        // Yields to all threads with same priority
   enum YieldResult {
     YIELD_SWITCHED = 1,         // caller descheduled, other ready threads exist & ran
-    YIELD_NONEREADY = 0,        // No other runnable/ready threads. 
+    YIELD_NONEREADY = 0,        // No other runnable/ready threads.
                                 // platform-specific yield return immediately
     YIELD_UNKNOWN = -1          // Unknown: platform doesn't support _SWITCHED or _NONEREADY
-    // YIELD_SWITCHED and YIELD_NONREADY imply the platform supports a "strong" 
-    // yield that can be used in lieu of blocking.  
-  } ; 
-  static YieldResult NakedYield () ; 
+    // YIELD_SWITCHED and YIELD_NONREADY imply the platform supports a "strong"
+    // yield that can be used in lieu of blocking.
+  } ;
+  static YieldResult NakedYield () ;
   static void yield_all(int attempts = 0); // Yields to all other threads including lower priority
   static void loop_breaker(int attempts);  // called from within tight loops to possibly influence time-sharing
   static OSReturn set_priority(Thread* thread, ThreadPriority priority);
@@ -361,7 +361,7 @@ class os: AllStatic {
   static bool is_interrupted(Thread* thread, bool clear_interrupted);
 
   static int pd_self_suspend_thread(Thread* thread);
-  
+
   static ExtendedPC fetch_frame_from_context(void* ucVoid, intptr_t** sp, intptr_t** fp);
   static frame      fetch_frame_from_context(void* ucVoid);
 
@@ -399,7 +399,7 @@ class os: AllStatic {
   static int            readdir_buf_size(const char *path);
   static struct dirent* readdir(DIR* dirp, dirent* dbuf);
   static int            closedir(DIR* dirp);
-  
+
   // Dynamic library extension
   static const char*    dll_file_extension();
 
@@ -419,7 +419,7 @@ class os: AllStatic {
                                            int buflen, int* offset);
 
   // Locate DLL/DSO. On success, full path of the library is copied to
-  // buf, and offset is set to be the distance between addr and the 
+  // buf, and offset is set to be the distance between addr and the
   // library's base address. On failure, buf[0] is set to '\0' and
   // offset is set to -1.
   static bool dll_address_to_library_name(address addr, char* buf,
@@ -428,7 +428,7 @@ class os: AllStatic {
   // Find out whether the pc is in the static code for jvm.dll/libjvm.so.
   static bool address_is_in_vm(address addr);
 
-  // Loads .dll/.so and 
+  // Loads .dll/.so and
   // in case of error it checks if .dll/.so was built for the
   // same architecture as Hotspot is running on
   static void* dll_load(const char *name, char *ebuf, int ebuflen);
@@ -448,15 +448,15 @@ class os: AllStatic {
   static void print_signal_handlers(outputStream* st, char* buf, size_t buflen);
   static void print_date_and_time(outputStream* st);
 
-  // The following two functions are used by fatal error handler to trace 
-  // native (C) frames. They are not part of frame.hpp/frame.cpp because 
+  // The following two functions are used by fatal error handler to trace
+  // native (C) frames. They are not part of frame.hpp/frame.cpp because
   // frame.hpp/cpp assume thread is JavaThread, and also because different
-  // OS/compiler may have different convention or provide different API to 
+  // OS/compiler may have different convention or provide different API to
   // walk C frames.
   //
-  // We don't attempt to become a debugger, so we only follow frames if that 
+  // We don't attempt to become a debugger, so we only follow frames if that
   // does not require a lookup in the unwind table, which is part of the binary
-  // file but may be unsafe to read after a fatal error. So on x86, we can 
+  // file but may be unsafe to read after a fatal error. So on x86, we can
   // only walk stack if %ebp is used as frame pointer; on ia64, it's not
   // possible to walk C stack without having the unwind table.
   static bool is_first_C_frame(frame *fr);
@@ -467,7 +467,7 @@ class os: AllStatic {
 
   static void print_hex_dump(outputStream* st, address start, address end, int unitsize);
 
-  // returns a string to describe the exception/signal; 
+  // returns a string to describe the exception/signal;
   // returns NULL if exception_code is not an OS exception/signal.
   static const char* exception_name(int exception_code, char* buf, size_t buflen);
 
@@ -579,7 +579,7 @@ class os: AllStatic {
 
   // debugging support (mostly used by debug.cpp)
   static bool find(address pc) PRODUCT_RETURN0; // OS specific function to make sense out of an address
-  
+
   static bool dont_yield();                     // when true, JVM_Yield() is nop
   static void print_statistics();
 
@@ -591,9 +591,9 @@ class os: AllStatic {
   // Void return because it's a hint and can fail.
   static void hint_no_preempt();
 
-  // Used at creation if requested by the diagnostic flag PauseAtStartup.  
-  // Causes the VM to wait until an external stimulus has been applied 
-  // (for Unix, that stimulus is a signal, for Windows, an external 
+  // Used at creation if requested by the diagnostic flag PauseAtStartup.
+  // Causes the VM to wait until an external stimulus has been applied
+  // (for Unix, that stimulus is a signal, for Windows, an external
   // ResumeThread call)
   static void pause();
 
@@ -612,11 +612,9 @@ class os: AllStatic {
 
 // Note that "PAUSE" is almost always used with synchronization
 // so arguably we should provide Atomic::SpinPause() instead
-// of the global SpinPause() with C linkage.  
-// It'd also be eligible for inlining on many platforms. 
+// of the global SpinPause() with C linkage.
+// It'd also be eligible for inlining on many platforms.
 
-extern "C" int SpinPause () ; 
-extern "C" int SafeFetch32 (int * adr, int errValue) ; 
-extern "C" intptr_t SafeFetchN (intptr_t * adr, intptr_t errValue) ; 
-
-
+extern "C" int SpinPause () ;
+extern "C" int SafeFetch32 (int * adr, int errValue) ;
+extern "C" intptr_t SafeFetchN (intptr_t * adr, intptr_t errValue) ;

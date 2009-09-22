@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -84,7 +84,7 @@ public class GraphicsUtilities {
     }
     component.setSize(desiredX, desiredY);
   }
-  
+
   public static void constrainToSize(Component component, Dimension containerDimension) {
     Dimension d = component.getSize();
     int x = d.width;

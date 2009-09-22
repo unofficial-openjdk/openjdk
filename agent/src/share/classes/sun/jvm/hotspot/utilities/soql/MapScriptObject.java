@@ -1,5 +1,5 @@
 /*
- * @(#)MapScriptObject.java	1.3 07/05/05 17:03:44
+ * @(#)MapScriptObject.java     1.3 07/05/05 17:03:44
  *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -104,7 +104,7 @@ public class MapScriptObject implements ScriptObject {
       return true;
     } else {
       return false;
-    } 
+    }
   }
 
   // add a function valued property that invokes given Method
@@ -115,7 +115,7 @@ public class MapScriptObject implements ScriptObject {
   // add a function valued property that invokes given Method
   protected void putFunction(Object target, Method method, boolean wrapArgs) {
     map.put(method.getName(), new MethodCallable(target, method, wrapArgs));
-  } 
+  }
 
   // add a function valued property that invokes given script function
   protected void putFunction(Object target, String name, Invocable invocable) {

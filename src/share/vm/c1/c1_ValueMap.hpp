@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_ValueMap.hpp	1.22 07/05/05 17:05:07 JVM"
+#pragma ident "@(#)c1_ValueMap.hpp      1.22 07/05/05 17:05:07 JVM"
 #endif
 /*
  * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class ValueMapEntry: public CompilationResourceObj {
@@ -33,7 +33,7 @@ class ValueMapEntry: public CompilationResourceObj {
   ValueMapEntry* _next;
 
  public:
-  ValueMapEntry(intx hash, Value value, int nesting, ValueMapEntry* next) 
+  ValueMapEntry(intx hash, Value value, int nesting, ValueMapEntry* next)
     : _hash(hash)
     , _value(value)
     , _nesting(nesting)

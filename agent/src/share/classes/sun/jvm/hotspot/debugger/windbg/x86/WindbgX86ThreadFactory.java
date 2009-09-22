@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.windbg.x86;
@@ -29,7 +29,7 @@ import sun.jvm.hotspot.debugger.windbg.*;
 
 public class WindbgX86ThreadFactory implements WindbgThreadFactory {
   private WindbgDebugger debugger;
-  
+
   public WindbgX86ThreadFactory(WindbgDebugger debugger) {
     this.debugger = debugger;
   }

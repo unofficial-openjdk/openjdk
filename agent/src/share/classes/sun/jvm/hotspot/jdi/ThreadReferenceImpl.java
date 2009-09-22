@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -44,9 +44,9 @@ import java.util.*;
 
 public class ThreadReferenceImpl extends ObjectReferenceImpl
              implements ThreadReference, /* imports */ JVMTIThreadState {
-    
+
     private JavaThread myJavaThread;
-    private ArrayList frames;    // StackFrames 
+    private ArrayList frames;    // StackFrames
     private List ownedMonitors; // List<ObjectReferenceImpl>
     private List ownedMonitorsInfo; // List<MonitorInfo>
     private ObjectReferenceImpl currentContendingMonitor;
@@ -65,15 +65,15 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
         // Instance must be of type java.lang.Thread
         super(vm, oRef);
 
-        // JavaThread retrieved from java.lang.Thread instance may be null. 
-        // This is the case for threads not-started and for zombies. Wherever 
+        // JavaThread retrieved from java.lang.Thread instance may be null.
+        // This is the case for threads not-started and for zombies. Wherever
         // appropriate, check for null instead of resulting in NullPointerException.
         myJavaThread = OopUtilities.threadOopGetJavaThread(oRef);
     }
 
     // return value may be null. refer to the comment in constructor.
     JavaThread getJavaThread() {
-	return myJavaThread;
+        return myJavaThread;
     }
 
     protected String description() {
@@ -81,10 +81,10 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
     }
 
     /**
-     * Note that we only cache the name string while suspended because 
+     * Note that we only cache the name string while suspended because
      * it can change via Thread.setName arbitrarily
      */
-    public String name() { 
+    public String name() {
         return OopUtilities.threadOopGetName(ref());
     }
 
@@ -132,7 +132,7 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
     }
 
     public int status() {
-        int state = jvmtiGetThreadState();       
+        int state = jvmtiGetThreadState();
         int status = THREAD_STATUS_UNKNOWN;
         // refer to map2jdwpThreadStatus in util.c (back-end)
         if (! ((state & JVMTI_THREAD_STATE_ALIVE) != 0) ) {
@@ -151,7 +151,7 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
             } else if ((state & JVMTI_THREAD_STATE_RUNNABLE) != 0) {
                 status = THREAD_STATUS_RUNNING;
             }
-	}
+        }
         return status;
     }
 
@@ -169,9 +169,9 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
         return false;
     }
 
-    public ThreadGroupReference threadGroup() { 
+    public ThreadGroupReference threadGroup() {
         return (ThreadGroupReferenceImpl)vm.threadGroupMirror(
-	       (Instance)OopUtilities.threadOopGetThreadGroup(ref()));
+               (Instance)OopUtilities.threadOopGetThreadGroup(ref()));
     }
 
     public int frameCount() throws IncompatibleThreadStateException  { //fixme jjh
@@ -188,7 +188,7 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
         return (StackFrame)list.get(0);
     }
 
-    public List frames(int start, int length) 
+    public List frames(int start, int length)
                               throws IncompatibleThreadStateException  {
         if (length < 0) {
             throw new IndexOutOfBoundsException(
@@ -198,16 +198,16 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
     }
 
     /**
-     * Private version of frames() allows "-1" to specify all 
+     * Private version of frames() allows "-1" to specify all
      * remaining frames.
      */
 
-    private List privateFrames(int start, int length) 
+    private List privateFrames(int start, int length)
                               throws IncompatibleThreadStateException  {
-	if (myJavaThread == null) { 
-	    // for zombies and yet-to-be-started threads we need to throw exception
-	    throw new IncompatibleThreadStateException();
-	}
+        if (myJavaThread == null) {
+            // for zombies and yet-to-be-started threads we need to throw exception
+            throw new IncompatibleThreadStateException();
+        }
         if (frames == null) {
             frames = new ArrayList(10);
             JavaVFrame myvf = myJavaThread.getLastJavaVFrameDbg();
@@ -241,22 +241,22 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
         if (myJavaThread == null) {
            throw new IncompatibleThreadStateException();
         }
-        
+
         if (ownedMonitors != null) {
             return ownedMonitors;
         }
-        
+
         ownedMonitorsWithStackDepth();
-                
+
         for (Iterator omi = ownedMonitorsInfo.iterator(); omi.hasNext(); ) {
             //FIXME : Change the MonitorInfoImpl cast to com.sun.jdi.MonitorInfo
             //        when hotspot start building with jdk1.6.
             ownedMonitors.add(((MonitorInfoImpl)omi.next()).monitor());
         }
-        
+
         return ownedMonitors;
     }
-    
+
     // new method since 1.6.
     // Real body will be supplied later.
     public List ownedMonitorsAndFrames() throws IncompatibleThreadStateException {
@@ -268,7 +268,7 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
         if (myJavaThread == null) {
            throw new IncompatibleThreadStateException();
         }
-        
+
         if (ownedMonitorsInfo != null) {
             return ownedMonitorsInfo;
         }
@@ -358,30 +358,30 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
            throw new IncompatibleThreadStateException();
         }
         ObjectMonitor mon = myJavaThread.getCurrentWaitingMonitor();
-	if (mon == null) {
+        if (mon == null) {
            // thread is not doing an Object.wait() call
-	   mon = myJavaThread.getCurrentPendingMonitor();
+           mon = myJavaThread.getCurrentPendingMonitor();
            if (mon != null) {
-	       OopHandle handle = mon.object();
+               OopHandle handle = mon.object();
                // If obj == NULL, then ObjectMonitor is raw which doesn't count
                // as contended for this API
-	       return vm.objectMirror(vm.saObjectHeap().newOop(handle));
+               return vm.objectMirror(vm.saObjectHeap().newOop(handle));
            } else {
-	       // no contended ObjectMonitor
-	       return null;
-	   }
+               // no contended ObjectMonitor
+               return null;
+           }
         } else {
            // thread is doing an Object.wait() call
            OopHandle handle = mon.object();
-	   if (Assert.ASSERTS_ENABLED) {
-	       Assert.that(handle != null, "Object.wait() should have an object");
-	   }
-	   Oop obj = vm.saObjectHeap().newOop(handle);
-	   return vm.objectMirror(obj);
+           if (Assert.ASSERTS_ENABLED) {
+               Assert.that(handle != null, "Object.wait() should have an object");
+           }
+           Oop obj = vm.saObjectHeap().newOop(handle);
+           return vm.objectMirror(obj);
         }
     }
 
-         
+
     public void popFrames(StackFrame frame) throws IncompatibleThreadStateException {
         vm.throwNotReadOnlyException("ThreadReference.popFrames()");
     }
@@ -391,7 +391,7 @@ public class ThreadReferenceImpl extends ObjectReferenceImpl
     }
 
     public String toString() {
-        return "instance of " + referenceType().name() + 
+        return "instance of " + referenceType().name() +
                "(name='" + name() + "', " + "id=" + uniqueID() + ")";
     }
 }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 /*
@@ -64,12 +64,12 @@ const char *
 GetArch();
 
 void CreateExecutionEnvironment(int *_argc,
-				       char ***_argv,
-				       char jrepath[],
-				       jint so_jrepath,
-				       char jvmpath[],
-				       jint so_jvmpath,
-				       char **original_argv);
+                                       char ***_argv,
+                                       char jrepath[],
+                                       jint so_jrepath,
+                                       char jvmpath[],
+                                       jint so_jvmpath,
+                                       char **original_argv);
 
 /*
  * Report an error message to stderr or a window as appropriate.  The
@@ -89,10 +89,10 @@ void ReportExceptionDescription(JNIEnv * env);
 jboolean RemovableMachineDependentOption(char * option);
 void PrintMachineDependentOptions();
 
-/* 
+/*
  * Functions defined in java.c and used in java_md.c.
  */
-jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative); 
+jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative);
 char *CheckJvmType(int *argc, char ***argv, jboolean speculative);
 void* MemAlloc(size_t size);
 

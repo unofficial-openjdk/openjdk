@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)callGenerator.cpp	1.49 07/08/07 15:24:21 JVM"
+#pragma ident "@(#)callGenerator.cpp    1.49 07/08/07 15:24:21 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -79,7 +79,7 @@ JVMState* ParseGenerator::generate(JVMState* jvms) {
 #ifdef ASSERT
   if (parser.tf() != (parser.depth() == 1 ? C->tf() : tf())) {
     MutexLockerEx ml(Compile_lock, Mutex::_no_safepoint_check_flag);
-    assert(C->env()->system_dictionary_modification_counter_changed(), 
+    assert(C->env()->system_dictionary_modification_counter_changed(),
            "Must invalidate if TypeFuncs differ");
   }
 #endif
@@ -632,7 +632,7 @@ bool WarmCallInfo::is_hot() const {
   return false;
 }
 
-// compute_heat:  
+// compute_heat:
 float WarmCallInfo::compute_heat() const {
   assert(!is_cold(), "compute heat only on warm nodes");
   assert(!is_hot(),  "compute heat only on warm nodes");

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -60,7 +60,7 @@ public class BasicObjectLock extends VMObject {
       of BasicObjectLocks in interpreter activation frames since it
       includes machine-specific padding. This routine returns a size
       in BYTES in this system! */
-  public static int size() { return size; }          
+  public static int size() { return size; }
 
   /** Helper routine for Frames (also probably needed for iteration) */
   public Address address() { return addr; }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)classFileParser.hpp	1.85 07/07/09 11:19:50 JVM"
+#pragma ident "@(#)classFileParser.hpp  1.85 07/07/09 11:19:50 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Parser for for .class files
@@ -32,7 +32,7 @@
 class ClassFileParser VALUE_OBJ_CLASS_SPEC {
  private:
   bool _need_verify;
-  bool _relax_verify;  
+  bool _relax_verify;
   u2   _major_version;
   u2   _minor_version;
   symbolHandle _class_name;
@@ -61,7 +61,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   // Interface parsing
   objArrayHandle parse_interfaces(constantPoolHandle cp,
                                   int length,
-                                  Handle class_loader, 
+                                  Handle class_loader,
                                   Handle protection_domain,
                                   PerfTraceTime* vmtimer,
                                   symbolHandle class_name,
@@ -69,23 +69,23 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
 
   // Field parsing
   void parse_field_attributes(constantPoolHandle cp, u2 attributes_count,
-                              bool is_static, u2 signature_index, 
+                              bool is_static, u2 signature_index,
                               u2* constantvalue_index_addr,
-                              bool* is_synthetic_addr, 
+                              bool* is_synthetic_addr,
                               u2* generic_signature_index_addr,
                               typeArrayHandle* field_annotations, TRAPS);
-  typeArrayHandle parse_fields(constantPoolHandle cp, bool is_interface, 
+  typeArrayHandle parse_fields(constantPoolHandle cp, bool is_interface,
                                struct FieldAllocationCount *fac,
                                objArrayHandle* fields_annotations, TRAPS);
 
   // Method parsing
-  methodHandle parse_method(constantPoolHandle cp, bool is_interface, 
+  methodHandle parse_method(constantPoolHandle cp, bool is_interface,
                             AccessFlags* promoted_flags,
                             typeArrayHandle* method_annotations,
                             typeArrayHandle* method_parameter_annotations,
                             typeArrayHandle* method_default_annotations,
                             TRAPS);
-  objArrayHandle parse_methods (constantPoolHandle cp, bool is_interface, 
+  objArrayHandle parse_methods (constantPoolHandle cp, bool is_interface,
                                 AccessFlags* promoted_flags,
                                 bool* has_final_method,
                                 objArrayOop* methods_annotations_oop,
@@ -97,7 +97,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                 objArrayHandle methods_parameter_annotations,
                                 objArrayHandle methods_default_annotations,
                                 TRAPS);
-  typeArrayHandle parse_exception_table(u4 code_length, u4 exception_table_length, 
+  typeArrayHandle parse_exception_table(u4 code_length, u4 exception_table_length,
                                         constantPoolHandle cp, TRAPS);
   void parse_linenumber_table(
       u4 code_attribute_length, u4 code_length,
@@ -113,14 +113,14 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
 
   // Classfile attribute parsing
   void parse_classfile_sourcefile_attribute(constantPoolHandle cp, instanceKlassHandle k, TRAPS);
-  void parse_classfile_source_debug_extension_attribute(constantPoolHandle cp, 
+  void parse_classfile_source_debug_extension_attribute(constantPoolHandle cp,
                                                 instanceKlassHandle k, int length, TRAPS);
-  u2   parse_classfile_inner_classes_attribute(constantPoolHandle cp, 
+  u2   parse_classfile_inner_classes_attribute(constantPoolHandle cp,
                                                instanceKlassHandle k, TRAPS);
   void parse_classfile_attributes(constantPoolHandle cp, instanceKlassHandle k, TRAPS);
   void parse_classfile_synthetic_attribute(constantPoolHandle cp, instanceKlassHandle k, TRAPS);
   void parse_classfile_signature_attribute(constantPoolHandle cp, instanceKlassHandle k, TRAPS);
-  
+
   // Annotations handling
   typeArrayHandle assemble_annotations(u1* runtime_visible_annotations,
                                        int runtime_visible_annotations_length,
@@ -128,18 +128,18 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                        int runtime_invisible_annotations_length, TRAPS);
 
   // Final setup
-  int  compute_oop_map_size(instanceKlassHandle super, int nonstatic_oop_count, 
+  int  compute_oop_map_size(instanceKlassHandle super, int nonstatic_oop_count,
                             int first_nonstatic_oop_offset);
-  void fill_oop_maps(instanceKlassHandle k, int nonstatic_oop_map_count, 
+  void fill_oop_maps(instanceKlassHandle k, int nonstatic_oop_map_count,
                      u2* nonstatic_oop_offsets, u2* nonstatic_oop_length);
   void set_precomputed_flags(instanceKlassHandle k);
-  objArrayHandle compute_transitive_interfaces(instanceKlassHandle super, 
+  objArrayHandle compute_transitive_interfaces(instanceKlassHandle super,
                                                objArrayHandle local_ifs, TRAPS);
 
   // Special handling for certain classes.
   // Add the "discovered" field to java.lang.ref.Reference if
   // it does not exist.
-  void java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr, 
+  void java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr,
     constantPoolHandle cp, FieldAllocationCount *fac_ptr, TRAPS);
   // Adjust the field allocation counts for java.lang.Class to add
   // fake fields.
@@ -241,15 +241,15 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   ClassFileParser(ClassFileStream* st) { set_stream(st); }
 
   // Parse .class file and return new klassOop. The klassOop is not hooked up
-  // to the system dictionary or any other structures, so a .class file can 
-  // be loaded several times if desired. 
+  // to the system dictionary or any other structures, so a .class file can
+  // be loaded several times if desired.
   // The system dictionary hookup is done by the caller.
   //
   // "parsed_name" is updated by this method, and is the name found
   // while parsing the stream.
-  instanceKlassHandle parseClassFile(symbolHandle name, 
-                                     Handle class_loader, 
-                                     Handle protection_domain, 
+  instanceKlassHandle parseClassFile(symbolHandle name,
+                                     Handle class_loader,
+                                     Handle protection_domain,
                                      symbolHandle& parsed_name,
                                      TRAPS) {
     return parseClassFile(name, class_loader, protection_domain, NULL, parsed_name, THREAD);

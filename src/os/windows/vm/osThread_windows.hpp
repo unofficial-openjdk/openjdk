@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)osThread_windows.hpp	1.29 07/05/05 17:04:45 JVM"
+#pragma ident "@(#)osThread_windows.hpp 1.29 07/05/05 17:04:45 JVM"
 #endif
 /*
  * Copyright 1997-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 typedef void* HANDLE;
@@ -36,11 +36,11 @@ typedef void* HANDLE;
 
  public:
   // The following will only apply in the Win32 implementation, and should only
-  // be visible in the concrete class, not this which should be an abstract base class 
+  // be visible in the concrete class, not this which should be an abstract base class
   HANDLE thread_handle() const                     { return _thread_handle; }
   void set_thread_handle(HANDLE handle)            { _thread_handle = handle; }
   HANDLE interrupt_event() const                   { return _interrupt_event; }
-  void set_interrupt_event(HANDLE interrupt_event) { _interrupt_event = interrupt_event; } 
+  void set_interrupt_event(HANDLE interrupt_event) { _interrupt_event = interrupt_event; }
 
   unsigned long thread_id() const                  { return _thread_id; }
 #ifndef PRODUCT

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psMarkSweep.hpp	1.26 07/05/05 17:05:28 JVM"
+#pragma ident "@(#)psMarkSweep.hpp      1.26 07/05/05 17:05:28 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class PSAdaptiveSizePolicy;
@@ -66,8 +66,8 @@ class PSMarkSweep : public MarkSweep {
   // If objects are left in eden after a collection, try to move the boundary
   // and absorb them into the old gen.  Returns true if eden was emptied.
   static bool absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
-					 PSYoungGen* young_gen,
-					 PSOldGen* old_gen);
+                                         PSYoungGen* young_gen,
+                                         PSOldGen* old_gen);
 
   // Reset time since last full gc
   static void reset_millis_since_last_gc();
@@ -86,4 +86,3 @@ class PSMarkSweep : public MarkSweep {
   // Time since last full gc (in milliseconds)
   static jlong millis_since_last_gc();
 };
-

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)gcCause.hpp	1.24 07/05/05 17:05:40 JVM"
+#pragma ident "@(#)gcCause.hpp  1.24 07/05/05 17:05:40 JVM"
 #endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -75,10 +75,10 @@ class GCCause : public AllStatic {
   }
 
   inline static bool is_serviceability_requested_gc(GCCause::Cause
-						             cause) {
+                                                             cause) {
     return (cause == GCCause::_jvmti_force_gc ||
-	    cause == GCCause::_heap_inspection || 
-	    cause == GCCause::_heap_dump);
+            cause == GCCause::_heap_inspection ||
+            cause == GCCause::_heap_dump);
   }
 
   // Return a string describing the GCCause.

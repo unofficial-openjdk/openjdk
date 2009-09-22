@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -42,65 +42,65 @@ public class PerfDataPrologue extends VMObject {
     private static JIntField  numEntriesField;
 
     static {
-	VM.registerVMInitializedObserver(new Observer() {
-		public void update(Observable o, Object data) {
-		    initialize(VM.getVM().getTypeDataBase());
-		}
-	    });
+        VM.registerVMInitializedObserver(new Observer() {
+                public void update(Observable o, Object data) {
+                    initialize(VM.getVM().getTypeDataBase());
+                }
+            });
     }
 
     private static synchronized void initialize(TypeDataBase db) {
-	Type type = db.lookupType("PerfDataPrologue");
-	magicField = type.getJIntField("magic");
-	byteOrderField = type.getJByteField("byte_order");
-	majorVersionField = type.getJByteField("major_version");
-	minorVersionField = type.getJByteField("minor_version");
-	accessibleField = type.getJByteField("accessible");
-	usedField = type.getJIntField("used");
-	overflowField = type.getJIntField("overflow");
-	modTimeStampField = type.getJLongField("mod_time_stamp");
-	entryOffsetField = type.getJIntField("entry_offset");
-	numEntriesField = type.getJIntField("num_entries");
+        Type type = db.lookupType("PerfDataPrologue");
+        magicField = type.getJIntField("magic");
+        byteOrderField = type.getJByteField("byte_order");
+        majorVersionField = type.getJByteField("major_version");
+        minorVersionField = type.getJByteField("minor_version");
+        accessibleField = type.getJByteField("accessible");
+        usedField = type.getJIntField("used");
+        overflowField = type.getJIntField("overflow");
+        modTimeStampField = type.getJLongField("mod_time_stamp");
+        entryOffsetField = type.getJIntField("entry_offset");
+        numEntriesField = type.getJIntField("num_entries");
     }
 
     public PerfDataPrologue(Address addr) {
-	super(addr);
+        super(addr);
     }
 
     // Accessors
     public int magic() {
-	return (int) magicField.getValue(addr);
+        return (int) magicField.getValue(addr);
     }
 
     public byte byteOrder() {
-	return (byte) byteOrderField.getValue(addr);
+        return (byte) byteOrderField.getValue(addr);
     }
 
     public byte majorVersion() {
-	return (byte) majorVersionField.getValue(addr);
+        return (byte) majorVersionField.getValue(addr);
     }
 
     public boolean accessible() {
-	return ((byte) accessibleField.getValue(addr)) != (byte)0;
+        return ((byte) accessibleField.getValue(addr)) != (byte)0;
     }
 
     public int used() {
-	return (int) usedField.getValue(addr);
+        return (int) usedField.getValue(addr);
     }
 
     public int overflow() {
-	return (int) overflowField.getValue(addr);
+        return (int) overflowField.getValue(addr);
     }
 
     public long modTimeStamp() {
-	return (long) modTimeStampField.getValue(addr);
+        return (long) modTimeStampField.getValue(addr);
     }
 
     public int entryOffset() {
-	return (int) entryOffsetField.getValue(addr);
+        return (int) entryOffsetField.getValue(addr);
     }
 
     public int numEntries() {
-	return (int) numEntriesField.getValue(addr);
+        return (int) numEntriesField.getValue(addr);
     }
 }

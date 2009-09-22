@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -32,7 +32,7 @@ public class SPARCV9FMOVccInstruction extends SPARCFPMoveInstruction
     final int conditionFlag;
 
     public SPARCV9FMOVccInstruction(String name, int opf, int conditionCode,
-                              int conditionFlag, SPARCFloatRegister rs, 
+                              int conditionFlag, SPARCFloatRegister rs,
                               SPARCFloatRegister rd) {
         super(name, opf, rs, rd);
         this.conditionFlag = conditionFlag;

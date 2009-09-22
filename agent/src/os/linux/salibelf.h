@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)salibelf.h	1.13 07/05/05 17:02:03 JVM"
+#pragma ident "@(#)salibelf.h   1.13 07/05/05 17:02:03 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _SALIBELF_H_
@@ -32,8 +32,8 @@
 #include "elfmacros.h"
 #include "libproc_impl.h"
 
-// read ELF file header. 
-int read_elf_header(int fd, ELF_EHDR* ehdr); 
+// read ELF file header.
+int read_elf_header(int fd, ELF_EHDR* ehdr);
 
 // is given file descriptor corresponds to an ELF file?
 bool is_elf_file(int fd);

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -36,13 +36,13 @@ public class RMIHelper {
     private static String serverNamePrefix;
 
     static {
-	String tmp = System.getProperty("sun.jvm.hotspot.rmi.startRegistry");
-	if (tmp != null && tmp.equals("false")) {
-	    startRegistry = false;
-	} else {
-	    // by default, we attempt to start rmiregistry
-	    startRegistry = true;
-	}
+        String tmp = System.getProperty("sun.jvm.hotspot.rmi.startRegistry");
+        if (tmp != null && tmp.equals("false")) {
+            startRegistry = false;
+        } else {
+            // by default, we attempt to start rmiregistry
+            startRegistry = true;
+        }
 
         port = Registry.REGISTRY_PORT;
         tmp = System.getProperty("sun.jvm.hotspot.rmi.port");
@@ -61,7 +61,7 @@ public class RMIHelper {
     public static void rebind(String uniqueID, Remote object) throws DebuggerException {
         String name = getName(uniqueID);
         try {
-	    Naming.rebind(name, object);
+            Naming.rebind(name, object);
         } catch (RemoteException re) {
             if (startRegistry) {
                 // may be the user didn't start rmiregistry, try to start it
@@ -81,17 +81,17 @@ public class RMIHelper {
 
     public static void unbind(String uniqueID) throws DebuggerException {
         String name = getName(uniqueID);
-	try {
+        try {
             Naming.unbind(name);
-	} catch (Exception exp) {
-	    throw new DebuggerException(exp);
-	}
+        } catch (Exception exp) {
+            throw new DebuggerException(exp);
+        }
     }
 
     public static Remote lookup(String debugServerID) throws DebuggerException {
         // debugServerID follows the pattern [unique_id@]host[:port]
         // we have to transform this as //host[:port]/<serverNamePrefix>['_'<unique_id>]
-    
+
         int index = debugServerID.indexOf('@');
         StringBuffer nameBuf = new StringBuffer("//");
         String uniqueID = null;
@@ -113,7 +113,7 @@ public class RMIHelper {
             return Naming.lookup(nameBuf.toString());
         } catch (Exception exp) {
             throw new DebuggerException(exp);
-        } 
+        }
     }
 
     private static String getName(String uniqueID) {

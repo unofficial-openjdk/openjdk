@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)saproc.cpp	1.29 07/05/05 17:02:04 JVM"
+#pragma ident "@(#)saproc.cpp   1.29 07/05/05 17:02:04 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "salibproc.h"
@@ -49,7 +49,7 @@ static int _libsaproc_debug = 0;
 static void print_debug(const char* format,...) {
   if (_libsaproc_debug) {
     va_list alist;
-   
+
     va_start(alist, format);
     fputs("libsaproc DEBUG: ", stderr);
     vfprintf(stderr, format, alist);
@@ -181,8 +181,8 @@ static void detach_internal(JNIEnv* env, jobject this_obj) {
   }
 }
 
-// Is it okay to ignore libthread_db failure? Set env var to ignore 
-// libthread_db failure. You can still debug, but will miss threads 
+// Is it okay to ignore libthread_db failure? Set env var to ignore
+// libthread_db failure. You can still debug, but will miss threads
 // related functionality.
 static bool sa_ignore_threaddb = (getenv("SA_IGNORE_THREADDB") != 0);
 
@@ -411,10 +411,10 @@ fill_thread_list(const td_thrhandle_t *p_td_thragent_t, void* cd) {
   td_thrinfo_t thrinfo;
   p_td_thr_get_info_t p_td_thr_get_info = (p_td_thr_get_info_t) env->GetLongField(this_obj, p_td_thr_get_info_ID);
 
-  if (p_td_thr_get_info(p_td_thragent_t, &thrinfo) != TD_OK) 
+  if (p_td_thr_get_info(p_td_thragent_t, &thrinfo) != TD_OK)
     return (0);
- 
-  jobject threadProxy = env->CallObjectMethod(this_obj, getThreadForThreadId_ID, (jlong)(uintptr_t) thrinfo.ti_tid); 
+
+  jobject threadProxy = env->CallObjectMethod(this_obj, getThreadForThreadId_ID, (jlong)(uintptr_t) thrinfo.ti_tid);
   CHECK_EXCEPTION_(1);
   env->CallBooleanMethod(list, listAdd_ID, threadProxy);
   CHECK_EXCEPTION_(1);
@@ -438,9 +438,9 @@ fill_load_object_list(void *cd, const prmap_t* pmp, const char* obj_name) {
                                   objectName, mapSize, (jlong)(uintptr_t)pmp->pr_vaddr);
      CHECK_EXCEPTION_(1);
      env->CallBooleanMethod(list, listAdd_ID, sharedObject);
-     CHECK_EXCEPTION_(1); 
+     CHECK_EXCEPTION_(1);
   }
-  
+
   return 0;
 }
 
@@ -468,7 +468,7 @@ fill_cframe_list(void *cd, const prgregset_t regs, uint_t argc, const long *argv
 
 // part of the class sharing workaround
 
-// FIXME: !!HACK ALERT!! 
+// FIXME: !!HACK ALERT!!
 
 // The format of sharing achive file header is needed to read shared heap
 // file mappings. For now, I am hard coding portion of FileMapHeader here.
@@ -497,11 +497,11 @@ struct FileMapHeader {
    size_t _used;            // for setting space top on read
 
    bool   _read_only;       // read only space?
-   bool   _allow_exec;      // executable code in space? 
+   bool   _allow_exec;      // executable code in space?
 
  } _space[NUM_SHARED_MAPS]; // was _space[CompactingPermGenGen::n_regions];
 
- // Ignore the rest of the FileMapHeader. We don't need those fields here. 
+ // Ignore the rest of the FileMapHeader. We don't need those fields here.
 };
 
 static bool
@@ -527,7 +527,7 @@ read_pointer(struct ps_prochandle* ph, psaddr_t addr, uintptr_t* pvalue) {
 }
 
 static bool
-read_string(struct ps_prochandle* ph, psaddr_t addr, char* buf, size_t size) {	
+read_string(struct ps_prochandle* ph, psaddr_t addr, char* buf, size_t size) {
   char ch = ' ';
   size_t i = 0;
 
@@ -535,7 +535,7 @@ read_string(struct ps_prochandle* ph, psaddr_t addr, char* buf, size_t size) {
     if (ps_pread(ph, addr, &ch, sizeof(ch)) != PS_OK)
       return false;
 
-    if (i < size - 1) { 
+    if (i < size - 1) {
       buf[i] = ch;
     } else { // smaller buffer
       return false;
@@ -623,7 +623,7 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
     close(fd);
     THROW_NEW_DEBUGGER_EXCEPTION_("can't allocate memory for shared file map header", 1);
   }
-   
+
   memset(pheader, 0, sizeof(struct FileMapHeader));
   // read FileMapHeader
   size_t n = read(fd, pheader, sizeof(struct FileMapHeader));
@@ -634,23 +634,23 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
     sprintf(errMsg, "unable to read shared archive file map header from %s", classes_jsa);
     THROW_NEW_DEBUGGER_EXCEPTION_(errMsg, 1);
   }
-   
+
   // check file magic
   if (pheader->_magic != 0xf00baba2) {
     free(pheader);
     close(fd);
     char errMsg[ERR_MSG_SIZE];
-    sprintf(errMsg, "%s has bad shared archive magic 0x%x, expecting 0xf00baba2", 
+    sprintf(errMsg, "%s has bad shared archive magic 0x%x, expecting 0xf00baba2",
                    classes_jsa, pheader->_magic);
     THROW_NEW_DEBUGGER_EXCEPTION_(errMsg, 1);
   }
 
-  // check version 
+  // check version
   if (pheader->_version != CURRENT_ARCHIVE_VERSION) {
     free(pheader);
     close(fd);
     char errMsg[ERR_MSG_SIZE];
-    sprintf(errMsg, "%s has wrong shared archive version %d, expecting %d", 
+    sprintf(errMsg, "%s has wrong shared archive version %d, expecting %d",
                    classes_jsa, pheader->_version, CURRENT_ARCHIVE_VERSION);
     THROW_NEW_DEBUGGER_EXCEPTION_(errMsg, 1);
   }
@@ -658,7 +658,7 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
   if (_libsaproc_debug) {
     for (int m = 0; m < NUM_SHARED_MAPS; m++) {
        print_debug("shared file offset %d mapped at 0x%lx, size = %ld, read only? = %d\n",
-          pheader->_space[m]._file_offset, pheader->_space[m]._base, 
+          pheader->_space[m]._file_offset, pheader->_space[m]._base,
           pheader->_space[m]._used, pheader->_space[m]._read_only);
     }
   }
@@ -669,7 +669,7 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
   dbg->env->SetIntField(this_obj, classes_jsa_fd_ID, fd);
   dbg->env->SetLongField(this_obj, p_file_map_header_ID, (jlong)(uintptr_t) pheader);
   return 1;
-} 
+}
 
 } // extern "C"
 
@@ -684,7 +684,7 @@ static const char* proc_arg_grab_errmsgs[] = {
  /* G_NOEXEC */       "Cannot locate executable file",
  /* G_ZOMB   */       "Zombie processs",
  /* G_PERM   */       "No permission to attach",
- /* G_BUSY   */       "Another process has already attached", 
+ /* G_BUSY   */       "Another process has already attached",
  /* G_SYS    */       "System process - can not attach",
  /* G_SELF   */       "Process is self - can't debug myself!",
  /* G_INTR   */       "Interrupt received while grabbing",
@@ -740,9 +740,9 @@ static void attach_internal(JNIEnv* env, jobject this_obj, jstring cmdLine, jboo
         }
      }
   }
- 
+
   // even though libproc.so supports 64 bit debugger and 32 bit debuggee, we don't
-  // support such cross-bit-debugging. check for that combination and throw error. 
+  // support such cross-bit-debugging. check for that combination and throw error.
 #ifdef _LP64
   int data_model;
   if (ps_pdmodel(ph, &data_model) != PS_OK) {
@@ -763,8 +763,8 @@ static void attach_internal(JNIEnv* env, jobject this_obj, jstring cmdLine, jboo
   jthrowable exception = 0;
   if (! isProcess) {
     /*
-     * With class sharing, shared perm. gen heap is allocated in with MAP_SHARED|PROT_READ. 
-     * These pages are mapped from the file "classes[_g].jsa". MAP_SHARED pages are not dumped 
+     * With class sharing, shared perm. gen heap is allocated in with MAP_SHARED|PROT_READ.
+     * These pages are mapped from the file "classes[_g].jsa". MAP_SHARED pages are not dumped
      * in Solaris core.To read shared heap pages, we have to read classes[_g].jsa file.
      */
     Pobject_iter(ph, init_classsharing_workaround, &dbg);
@@ -792,7 +792,7 @@ static void attach_internal(JNIEnv* env, jobject this_obj, jstring cmdLine, jboo
     }
     return;
   }
-  
+
   // init libthread_db and create thread_db agent
   p_td_init_t p_td_init = (p_td_init_t) env->GetLongField(this_obj, p_td_init_ID);
   if (p_td_init == 0) {
@@ -817,7 +817,7 @@ static void attach_internal(JNIEnv* env, jobject this_obj, jstring cmdLine, jboo
       detach_internal(env, this_obj);
     }
     HANDLE_THREADDB_FAILURE("Can't create thread_db agent!");
-  } 
+  }
   env->SetLongField(this_obj, p_td_thragent_t_ID, (jlong)(uintptr_t) p_td_thragent_t);
 
 }
@@ -882,7 +882,7 @@ JNIEXPORT jint JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_getR
 JNIEXPORT jint JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_getPageSize0
   (JNIEnv *env, jobject this_obj) {
 
-/* 
+/*
   We are not yet attached to a java process or core file. getPageSize is called from
   the constructor of ProcDebuggerLocal. The following won't work!
 
@@ -890,7 +890,7 @@ JNIEXPORT jint JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_getP
     p_ps_prochandle = env->GetLongField(this_obj, p_ps_prochandle_ID);
     CHECK_EXCEPTION_(-1);
     struct ps_prochandle* prochandle = (struct ps_prochandle*) p_ps_prochandle;
-    return (Pstate(prochandle) == PS_DEAD) ? Pgetauxval(prochandle, AT_PAGESZ) 
+    return (Pstate(prochandle) == PS_DEAD) ? Pgetauxval(prochandle, AT_PAGESZ)
                                            : getpagesize();
 
   So even though core may have been generated with a different page size settings, for now
@@ -944,7 +944,7 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLoca
  */
 JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_fillThreadList0
   (JNIEnv *env, jobject this_obj, jobject list) {
-  
+
   td_thragent_t* p_td_thragent_t = (td_thragent_t*) env->GetLongField(this_obj, p_td_thragent_t_ID);
   if (p_td_thragent_t == 0) {
      return;
@@ -1005,7 +1005,7 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_fill
   dbgo.this_obj = this_obj;
   dbgo.obj = list;
 
-  jlong p_ps_prochandle = env->GetLongField(this_obj, p_ps_prochandle_ID); 
+  jlong p_ps_prochandle = env->GetLongField(this_obj, p_ps_prochandle_ID);
   Pobject_iter((struct ps_prochandle*) p_ps_prochandle, fill_load_object_list, &dbgo);
 }
 
@@ -1023,10 +1023,10 @@ JNIEXPORT jbyteArray JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLoca
   jboolean isCopy;
   jbyte* bufPtr = env->GetByteArrayElements(array, &isCopy);
   CHECK_EXCEPTION_(0);
- 
+
   jlong p_ps_prochandle = env->GetLongField(this_obj, p_ps_prochandle_ID);
-  ps_err_e ret = ps_pread((struct ps_prochandle*) p_ps_prochandle, 
-                       (psaddr_t)address, bufPtr, (size_t)numBytes); 
+  ps_err_e ret = ps_pread((struct ps_prochandle*) p_ps_prochandle,
+                       (psaddr_t)address, bufPtr, (size_t)numBytes);
 
   if (ret != PS_OK) {
     // part of the class sharing workaround. try shared heap area
@@ -1039,36 +1039,36 @@ JNIEXPORT jbyteArray JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLoca
       // so, linear walking is okay.
       for (int m = 0; m < NUM_SHARED_MAPS; m++) {
 
-        // We can skip the non-read-only maps. These are mapped as MAP_PRIVATE 
+        // We can skip the non-read-only maps. These are mapped as MAP_PRIVATE
         // and hence will be read by libproc. Besides, the file copy may be
         // stale because the process might have modified those pages.
         if (pheader->_space[m]._read_only) {
           jlong baseAddress = (jlong) (uintptr_t) pheader->_space[m]._base;
           size_t usedSize = pheader->_space[m]._used;
-	  if (address >= baseAddress && address < (baseAddress + usedSize)) {
-	    // the given address falls in this shared heap area
+          if (address >= baseAddress && address < (baseAddress + usedSize)) {
+            // the given address falls in this shared heap area
             print_debug("found shared map at 0x%lx\n", (long) baseAddress);
 
 
             // If more data is asked than actually mapped from file, we need to zero fill
-            // till the end-of-page boundary. But, java array new does that for us. we just 
+            // till the end-of-page boundary. But, java array new does that for us. we just
             // need to read as much as data available.
-           
+
 #define MIN2(x, y) (((x) < (y))? (x) : (y))
-            
-	    jlong diff = address - baseAddress; 
-	    jlong bytesToRead = MIN2(numBytes, usedSize - diff);
-	    off_t offset = pheader->_space[m]._file_offset  + off_t(diff);
-            ssize_t bytesRead = pread(classes_jsa_fd, bufPtr, bytesToRead, offset); 
-	    if (bytesRead != bytesToRead) {
-	      env->ReleaseByteArrayElements(array, bufPtr, JNI_ABORT);
-	      print_debug("shared map read failed\n");
-	      return jbyteArray(0);
-	    } else {
+
+            jlong diff = address - baseAddress;
+            jlong bytesToRead = MIN2(numBytes, usedSize - diff);
+            off_t offset = pheader->_space[m]._file_offset  + off_t(diff);
+            ssize_t bytesRead = pread(classes_jsa_fd, bufPtr, bytesToRead, offset);
+            if (bytesRead != bytesToRead) {
+              env->ReleaseByteArrayElements(array, bufPtr, JNI_ABORT);
+              print_debug("shared map read failed\n");
+              return jbyteArray(0);
+            } else {
               print_debug("shared map read succeeded\n");
               env->ReleaseByteArrayElements(array, bufPtr, 0);
               return array;
-	    }
+            }
           } // is in current map
         } // is read only map
       } // for shared maps
@@ -1218,7 +1218,7 @@ typedef int (*find_file_hook_t)(const char *, int elf_checksum);
  * Description: get JNI ids for fields and methods of ProcDebuggerLocal class
  */
 JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_initIDs
-  (JNIEnv *env, jclass clazz) { 
+  (JNIEnv *env, jclass clazz) {
   _libsaproc_debug = getenv("LIBSAPROC_DEBUG") != NULL;
   if (_libsaproc_debug) {
      // propagate debug mode to libproc.so
@@ -1227,7 +1227,7 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_init
   }
 
   void* libproc_handle = dlopen("libproc.so", RTLD_LAZY | RTLD_GLOBAL);
-  if (libproc_handle == 0) 
+  if (libproc_handle == 0)
      THROW_NEW_DEBUGGER_EXCEPTION("can't load libproc.so, if you are using Solaris 5.7 or below, copy libproc.so from 5.8!");
 
   // If possible, set shared object find file hook.
@@ -1270,7 +1270,7 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_init
   p_td_thr_getgregs_ID = env->GetFieldID(clazz, "p_td_thr_getgregs", "J");
   CHECK_EXCEPTION;
 
-  getThreadForThreadId_ID = env->GetMethodID(clazz, 
+  getThreadForThreadId_ID = env->GetMethodID(clazz,
                             "getThreadForThreadId", "(J)Lsun/jvm/hotspot/debugger/ThreadProxy;");
   CHECK_EXCEPTION;
 
@@ -1280,15 +1280,15 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_init
   fpRegIndex_ID = env->GetFieldID(clazz, "fpRegIndex", "I");
   CHECK_EXCEPTION;
 
-  createSenderFrame_ID = env->GetMethodID(clazz, 
+  createSenderFrame_ID = env->GetMethodID(clazz,
                             "createSenderFrame", "(Lsun/jvm/hotspot/debugger/proc/ProcCFrame;JJ)Lsun/jvm/hotspot/debugger/proc/ProcCFrame;");
   CHECK_EXCEPTION;
 
-  createLoadObject_ID = env->GetMethodID(clazz, 
+  createLoadObject_ID = env->GetMethodID(clazz,
                             "createLoadObject", "(Ljava/lang/String;JJ)Lsun/jvm/hotspot/debugger/cdbg/LoadObject;");
   CHECK_EXCEPTION;
 
-  createClosestSymbol_ID = env->GetMethodID(clazz, 
+  createClosestSymbol_ID = env->GetMethodID(clazz,
                             "createClosestSymbol", "(Ljava/lang/String;J)Lsun/jvm/hotspot/debugger/cdbg/ClosestSymbol;");
   CHECK_EXCEPTION;
 
@@ -1301,4 +1301,3 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_init
   p_file_map_header_ID = env->GetFieldID(clazz, "p_file_map_header", "J");
   CHECK_EXCEPTION;
 }
-

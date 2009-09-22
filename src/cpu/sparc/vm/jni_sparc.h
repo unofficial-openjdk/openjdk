@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jni_sparc.h	1.17 07/05/05 17:04:29 JVM"
+#pragma ident "@(#)jni_sparc.h  1.17 07/05/05 17:04:29 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -26,8 +26,8 @@
  * have any questions.
  */
 
-#define JNIEXPORT 
-#define JNIIMPORT 
+#define JNIEXPORT
+#define JNIIMPORT
 #define JNICALL
 
 typedef int jint;

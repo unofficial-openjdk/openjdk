@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -42,13 +42,13 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
         return "ThreadGroupReference " + uniqueID();
     }
 
-    public String name() { 
+    public String name() {
         return OopUtilities.threadGroupOopGetName(ref());
     }
 
     public ThreadGroupReference parent() {
         return (ThreadGroupReferenceImpl)vm.threadGroupMirror(
-	       (Instance)OopUtilities.threadGroupOopGetParent(ref()));
+               (Instance)OopUtilities.threadGroupOopGetParent(ref()));
     }
 
     public void suspend() {
@@ -58,7 +58,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     public void resume() {
         vm.throwNotReadOnlyException("ThreadGroupReference.resume()");
     }
-  
+
     public List threads() {
         // Each element of this array is the Oop for a thread;
         // NOTE it is not the JavaThread that we need to create
@@ -81,7 +81,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
         ArrayList myList = new ArrayList(myGroups.length);
         for (int ii = 0; ii < myGroups.length; ii++) {
             ThreadGroupReferenceImpl xx = (ThreadGroupReferenceImpl)vm.threadGroupMirror(
-					  (Instance)myGroups[ii]);
+                                          (Instance)myGroups[ii]);
             myList.add(xx);
 
         }
@@ -89,7 +89,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     }
 
     public String toString() {
-        return "instance of " + referenceType().name() + 
+        return "instance of " + referenceType().name() +
                "(name='" + name() + "', " + "id=" + uniqueID() + ")";
     }
 }

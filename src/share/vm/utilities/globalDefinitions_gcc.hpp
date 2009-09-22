@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globalDefinitions_gcc.hpp	1.47 07/05/05 17:07:10 JVM"
+#pragma ident "@(#)globalDefinitions_gcc.hpp    1.47 07/05/05 17:07:10 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // This file holds compiler-dependent includes,
@@ -44,7 +44,7 @@
 #include <math.h>
 #ifndef FP_PZERO
 // Linux doesn't have positive/negative zero
-#define FP_PZERO FP_ZERO  
+#define FP_PZERO FP_ZERO
 #endif
 #if (!defined fpclass) && ((!defined SPARC) || (!defined SOLARIS))
 #define fpclass fpclassify
@@ -110,7 +110,7 @@
 #endif
 
 // NULL vs NULL_WORD:
-// On Linux NULL is defined as a special type '__null'. Assigning __null to 
+// On Linux NULL is defined as a special type '__null'. Assigning __null to
 // integer variable will cause gcc warning. Use NULL_WORD in places where a
 // pointer is stored as integer value.  On some platforms, sizeof(intptr_t) >
 // sizeof(void*), so here we want something which is integer type, but has the
@@ -125,7 +125,7 @@
   #define NULL_WORD  NULL
 #endif
 
-#ifndef	LINUX
+#ifndef LINUX
 // Compiler-specific primitive types
 typedef unsigned short     uint16_t;
 #ifndef _UINT32_T
@@ -139,8 +139,8 @@ typedef unsigned int       uint32_t;
 typedef unsigned long long uint64_t;
 #endif // _UINT64_T
 // %%%% how to access definition of intptr_t portably in 5.5 onward?
-typedef int			intptr_t;
-typedef unsigned int		uintptr_t;
+typedef int                     intptr_t;
+typedef unsigned int            uintptr_t;
 // If this gets an error, figure out a symbol XXX that implies the
 // prior definition of intptr_t, and add "&& !defined(XXX)" above.
 #endif // _SYS_INT_TYPES_H
@@ -186,11 +186,11 @@ const jlong max_jlong = CONST64(0x7fffffffffffffff);
 //
 // This also means that pointers to functions can no longer be "hidden"
 // in opaque types like void * because at the invokation point warnings
-// will be generated. While this makes perfect sense from a type safety 
+// will be generated. While this makes perfect sense from a type safety
 // point of view it causes a lot of warnings on old code using C header
 // files. Here are some typedefs to make the job of silencing warnings
 // a bit easier.
-// 
+//
 // The final kick in the teeth is that you can only have extern "C" linkage
 // specified at file scope. So these typedefs are here rather than in the
 // .hpp for the class (os:Solaris usually) that needs them.
@@ -267,7 +267,7 @@ inline int wcslen(const jchar* x) { return wcslen((const wchar_t*)x); }
 #endif // _LP64
 
 // HACK: gcc warns about applying offsetof() to non-POD object or calculating
-//       offset directly when base address is NULL. Use 16 to get around the 
+//       offset directly when base address is NULL. Use 16 to get around the
 //       warning. gcc-3.4 has an option -Wno-invalid-offsetof to suppress
 //       this warning.
 #define offset_of(klass,field) (size_t)((intx)&(((klass*)16)->field) - 16)
@@ -276,4 +276,3 @@ inline int wcslen(const jchar* x) { return wcslen((const wchar_t*)x); }
 # undef offsetof
 #endif
 #define offsetof(klass,field) offset_of(klass,field)
-

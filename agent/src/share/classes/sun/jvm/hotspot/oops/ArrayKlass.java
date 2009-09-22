@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -127,7 +127,7 @@ public class ArrayKlass extends Klass {
 
   boolean computeSubtypeOf(Klass k) {
     // An array is a subtype of Serializable, Clonable, and Object
-    Symbol name = k.getName(); 
+    Symbol name = k.getName();
     if (name != null && (name.equals(javaIoSerializableName()) ||
                          name.equals(javaLangCloneableName()) ||
                          name.equals(javaLangObjectName()))) {
@@ -136,7 +136,7 @@ public class ArrayKlass extends Klass {
       return false;
     }
   }
-  
+
   public void printValueOn(PrintStream tty) {
     tty.print("ArrayKlass");
   }

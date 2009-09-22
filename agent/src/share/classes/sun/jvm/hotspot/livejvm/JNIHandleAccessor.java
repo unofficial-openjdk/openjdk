@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.livejvm;
@@ -31,7 +31,7 @@ import sun.jvm.hotspot.utilities.*;
 class JNIHandleAccessor {
   private Address addr;
   private ObjectHeap heap;
-  
+
   JNIHandleAccessor(Address addr, ObjectHeap heap) {
     this.addr = addr;
     this.heap = heap;
@@ -43,7 +43,7 @@ class JNIHandleAccessor {
     if (handle == null) return null;
     return heap.newOop(handle.getOopHandleAt(0));
   }
-  
+
   void setValue(Oop value) {
     Address handle = addr.getAddressAt(0);
     if (Assert.ASSERTS_ENABLED) {

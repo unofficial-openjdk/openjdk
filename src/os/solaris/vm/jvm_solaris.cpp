@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvm_solaris.cpp	1.27 07/05/05 17:04:40 JVM"
+#pragma ident "@(#)jvm_solaris.cpp      1.27 07/05/05 17:04:40 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -31,7 +31,7 @@
 #include <signal.h>
 
 // sun.misc.Signal ///////////////////////////////////////////////////////////
-// Signal code is mostly copied from classic vm, signals_md.c	1.4 98/08/23
+// Signal code is mostly copied from classic vm, signals_md.c   1.4 98/08/23
 /*
  * This function is included primarily as a debugging aid. If Java is
  * running in a console window, then pressing <CTRL-\\> will cause
@@ -41,7 +41,7 @@
 
 JVM_ENTRY_NO_ENV(void*, JVM_RegisterSignal(jint sig, void* handler))
   // Copied from classic vm
-  // signals_md.c	1.4 98/08/23
+  // signals_md.c       1.4 98/08/23
   void* newHandler = handler == (void *)2
                    ? os::user_handler()
                    : handler;
@@ -59,10 +59,10 @@ JVM_ENTRY_NO_ENV(void*, JVM_RegisterSignal(jint sig, void* handler))
       return (void *)-1;
 
     /* The following signals are used for Shutdown Hooks support. However, if
-       ReduceSignalUsage (-Xrs) is set, Shutdown Hooks must be invoked via 
-       System.exit(), Java is not allowed to use these signals, and the the 
+       ReduceSignalUsage (-Xrs) is set, Shutdown Hooks must be invoked via
+       System.exit(), Java is not allowed to use these signals, and the the
        user is allowed to set his own _native_ handler for these signals and
-       invoke System.exit() as needed. Terminator.setup() is avoiding 
+       invoke System.exit() as needed. Terminator.setup() is avoiding
        registration of these signals when -Xrs is present.
        - If the HUP signal is ignored (from the nohup) command, then Java
          is not allowed to use this signal.
@@ -113,17 +113,17 @@ JVM_ENTRY_NO_ENV(jboolean, JVM_RaiseSignal(jint sig))
 JVM_END
 
 
-/* 
-  All the defined signal names for Solaris are defined by str2sig(). 
+/*
+  All the defined signal names for Solaris are defined by str2sig().
 
   NOTE that not all of these names are accepted by our Java implementation
 
   Via an existing claim by the VM, sigaction restrictions, or
   the "rules of Unix" some of these names will be rejected at runtime.
-  For example the VM sets up to handle USR1, sigaction returns EINVAL for 
+  For example the VM sets up to handle USR1, sigaction returns EINVAL for
   CANCEL, and Solaris simply doesn't allow catching of KILL.
 
-  Here are the names currently accepted by a user of sun.misc.Signal with 
+  Here are the names currently accepted by a user of sun.misc.Signal with
   1.4.1 (ignoring potential interaction with use of chaining, etc):
 
       HUP, INT, TRAP, IOT, ABRT, EMT, BUS, SYS, PIPE, ALRM, TERM, USR2,

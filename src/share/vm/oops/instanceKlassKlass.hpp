@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)instanceKlassKlass.hpp	1.54 07/05/29 09:44:21 JVM"
+#pragma ident "@(#)instanceKlassKlass.hpp       1.54 07/05/29 09:44:21 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // An instanceKlassKlass is the klass of an instanceKlass
@@ -39,17 +39,17 @@ class instanceKlassKlass : public klassKlass {
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(instanceKlassKlass);
   static klassOop create_klass(TRAPS);
-  klassOop allocate_instance_klass(int vtable_len, 
-                                   int itable_len, 
-                                   int static_field_size, 
-                                   int nonstatic_oop_map_size, 
-                                   ReferenceType rt, 
+  klassOop allocate_instance_klass(int vtable_len,
+                                   int itable_len,
+                                   int static_field_size,
+                                   int nonstatic_oop_map_size,
+                                   ReferenceType rt,
                                    TRAPS);
 
   // Casting from klassOop
   static instanceKlassKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_klass(), "cast to instanceKlassKlass");
-    return (instanceKlassKlass*) k->klass_part(); 
+    return (instanceKlassKlass*) k->klass_part();
   }
 
   // Sizing
@@ -87,4 +87,3 @@ private:
   bool oop_partially_loaded(oop obj) const;
   void oop_set_partially_loaded(oop obj);
 };
-

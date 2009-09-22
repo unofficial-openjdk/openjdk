@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jniTypes_sparc.hpp	1.38 07/05/05 17:04:30 JVM"
+#pragma ident "@(#)jniTypes_sparc.hpp   1.38 07/05/05 17:04:30 JVM"
 #endif
 /*
  * Copyright 1998-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// This file holds platform-dependent routines used to write primitive jni 
+// This file holds platform-dependent routines used to write primitive jni
 // types to the array of arguments passed into JavaCalls::call
 
 class JNITypes : AllStatic {
@@ -40,71 +40,71 @@ class JNITypes : AllStatic {
 
 private:
   // Helper routines.
-  static inline void    put_int2 (jint *from, jint *to)	          { to[0] = from[0]; to[1] = from[1]; }
+  static inline void    put_int2 (jint *from, jint *to)           { to[0] = from[0]; to[1] = from[1]; }
   static inline void    put_int2 (jint *from, jint *to, int& pos) { put_int2 (from, (jint *)((intptr_t *)to + pos)); pos += 2; }
-  static inline void    put_int2r(jint *from, jint *to)	          { to[0] = from[1]; to[1] = from[0]; }
+  static inline void    put_int2r(jint *from, jint *to)           { to[0] = from[1]; to[1] = from[0]; }
   static inline void    put_int2r(jint *from, jint *to, int& pos) { put_int2r(from, (jint *)((intptr_t *)to + pos)); pos += 2; }
 
 public:
   // Ints are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_int(jint  from, intptr_t *to)		{ *(jint *)(to +   0  ) =  from; }
-  static inline void    put_int(jint  from, intptr_t *to, int& pos)	{ *(jint *)(to + pos++) =  from; }
-  static inline void    put_int(jint *from, intptr_t *to, int& pos)	{ *(jint *)(to + pos++) = *from; }
+  static inline void    put_int(jint  from, intptr_t *to)               { *(jint *)(to +   0  ) =  from; }
+  static inline void    put_int(jint  from, intptr_t *to, int& pos)     { *(jint *)(to + pos++) =  from; }
+  static inline void    put_int(jint *from, intptr_t *to, int& pos)     { *(jint *)(to + pos++) = *from; }
 
 #ifdef _LP64
   // Longs are stored in native format in one JavaCallArgument slot at *(to+1).
-  static inline void    put_long(jlong  from, intptr_t *to)		{ *(jlong *)(to + 1 +   0) =  from; }
-  static inline void    put_long(jlong  from, intptr_t *to, int& pos)	{ *(jlong *)(to + 1 + pos) =  from; pos += 2; }
-  static inline void    put_long(jlong *from, intptr_t *to, int& pos)	{ *(jlong *)(to + 1 + pos) = *from; pos += 2; }
+  static inline void    put_long(jlong  from, intptr_t *to)             { *(jlong *)(to + 1 +   0) =  from; }
+  static inline void    put_long(jlong  from, intptr_t *to, int& pos)   { *(jlong *)(to + 1 + pos) =  from; pos += 2; }
+  static inline void    put_long(jlong *from, intptr_t *to, int& pos)   { *(jlong *)(to + 1 + pos) = *from; pos += 2; }
 #else
   // Longs are stored in reversed native word format in two JavaCallArgument slots at *to.
   // The high half is in *(to+1) and the low half in *to.
-  static inline void    put_long(jlong  from, intptr_t *to)	       { put_int2r((jint *)&from, (jint *)to); }
+  static inline void    put_long(jlong  from, intptr_t *to)            { put_int2r((jint *)&from, (jint *)to); }
   static inline void    put_long(jlong  from, intptr_t *to, int& pos)  { put_int2r((jint *)&from, (jint *)to, pos); }
   static inline void    put_long(jlong *from, intptr_t *to, int& pos)  { put_int2r((jint *) from, (jint *)to, pos); }
 #endif
 
   // Oops are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_obj(oop  from, intptr_t *to)		{ *(oop *)(to +   0  ) =  from; }
-  static inline void    put_obj(oop  from, intptr_t *to, int& pos)	{ *(oop *)(to + pos++) =  from; }
-  static inline void    put_obj(oop *from, intptr_t *to, int& pos)	{ *(oop *)(to + pos++) = *from; }
+  static inline void    put_obj(oop  from, intptr_t *to)                { *(oop *)(to +   0  ) =  from; }
+  static inline void    put_obj(oop  from, intptr_t *to, int& pos)      { *(oop *)(to + pos++) =  from; }
+  static inline void    put_obj(oop *from, intptr_t *to, int& pos)      { *(oop *)(to + pos++) = *from; }
 
   // Floats are stored in native format in one JavaCallArgument slot at *to.
-  static inline void    put_float(jfloat  from, intptr_t *to)   	{ *(jfloat *)(to +   0  ) =  from; }
+  static inline void    put_float(jfloat  from, intptr_t *to)           { *(jfloat *)(to +   0  ) =  from; }
   static inline void    put_float(jfloat  from, intptr_t *to, int& pos) { *(jfloat *)(to + pos++) =  from; }
   static inline void    put_float(jfloat *from, intptr_t *to, int& pos) { *(jfloat *)(to + pos++) = *from; }
 
 #ifdef _LP64
   // Doubles are stored in native word format in one JavaCallArgument slot at *(to+1).
-  static inline void    put_double(jdouble  from, intptr_t *to)  	  { *(jdouble *)(to + 1 +   0) =  from; }
+  static inline void    put_double(jdouble  from, intptr_t *to)           { *(jdouble *)(to + 1 +   0) =  from; }
   static inline void    put_double(jdouble  from, intptr_t *to, int& pos) { *(jdouble *)(to + 1 + pos) =  from; pos += 2; }
   static inline void    put_double(jdouble *from, intptr_t *to, int& pos) { *(jdouble *)(to + 1 + pos) = *from; pos += 2; }
 #else
   // Doubles are stored in reversed native word format in two JavaCallArgument slots at *to.
-  static inline void    put_double(jdouble  from, intptr_t *to)	          { put_int2r((jint *)&from, (jint *)to); }
+  static inline void    put_double(jdouble  from, intptr_t *to)           { put_int2r((jint *)&from, (jint *)to); }
   static inline void    put_double(jdouble  from, intptr_t *to, int& pos) { put_int2r((jint *)&from, (jint *)to, pos); }
   static inline void    put_double(jdouble *from, intptr_t *to, int& pos) { put_int2r((jint *) from, (jint *)to, pos); }
 #endif
 
   // The get_xxx routines, on the other hand, actually _do_ fetch
   // java primitive types from the interpreter stack.
-  static inline jint    get_int(intptr_t *from)		{ return *(jint *)from; }
+  static inline jint    get_int(intptr_t *from)         { return *(jint *)from; }
 
 #ifdef _LP64
   static inline jlong   get_long(intptr_t *from)        { return *(jlong *)from; }
 #else
   static inline jlong   get_long(intptr_t *from)        { return ((jlong)(*(  signed int *)((jint *)from    )) << 32) |
-							         ((jlong)(*(unsigned int *)((jint *)from + 1)) <<  0); }
+                                                                 ((jlong)(*(unsigned int *)((jint *)from + 1)) <<  0); }
 #endif
 
-  static inline oop     get_obj(intptr_t *from)		{ return *(oop *)from; }
+  static inline oop     get_obj(intptr_t *from)         { return *(oop *)from; }
   static inline jfloat  get_float(intptr_t *from)       { return *(jfloat *)from; }
-  
+
 #ifdef _LP64
   static inline jdouble get_double(intptr_t *from)      { return *(jdouble *)from; }
 #else
   static inline jdouble get_double(intptr_t *from)      { jlong jl = ((jlong)(*(  signed int *)((jint *)from    )) << 32) |
-							             ((jlong)(*(unsigned int *)((jint *)from + 1)) <<  0);
+                                                                     ((jlong)(*(unsigned int *)((jint *)from + 1)) <<  0);
                                                           return *(jdouble *)&jl; }
 #endif
 

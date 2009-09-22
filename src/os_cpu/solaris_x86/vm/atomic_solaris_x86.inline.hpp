@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)atomic_solaris_x86.inline.hpp	1.1 07/08/15 15:40:31 JVM"
+#pragma ident "@(#)atomic_solaris_x86.inline.hpp        1.1 07/08/15 15:40:31 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 inline void Atomic::store    (jbyte    store_value, jbyte*    dest) { *dest = store_value; }
@@ -144,9 +144,9 @@ extern "C" {
   inline jint _Atomic_add(jint add_value, volatile jint* dest, int mp) {
     jint addend = add_value;
     __asm__ volatile (  LOCK_IF_MP(%3) "xaddl %0,(%2)"
-		    : "=r" (addend)
-		    : "0" (addend), "r" (dest), "r" (mp)
-		    : "cc", "memory");
+                    : "=r" (addend)
+                    : "0" (addend), "r" (dest), "r" (mp)
+                    : "cc", "memory");
     return addend + add_value;
   }
 
@@ -231,4 +231,3 @@ extern "C" {
 #undef LOCK_IF_MP
 
 #endif // _GNU_SOURCE
-

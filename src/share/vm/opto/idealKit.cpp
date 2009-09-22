@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)idealKit.cpp	1.8 07/06/18 14:25:26 JVM"
+#pragma ident "@(#)idealKit.cpp 1.8 07/06/18 14:25:26 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -99,7 +99,7 @@ void IdealKit::else_() {
 
 //-------------------------------end_if-------------------------------------
 // Merge the "then" and "else" cvstates.
-// 
+//
 // The if_then() pushed the current state for later use
 // as the initial state for a future "else" clause.  The
 // current state then became the initial state for the
@@ -147,7 +147,7 @@ void IdealKit::end_if() {
 //           i = i + 1
 //           goto top
 //  *     } else // exits loop
-// 
+//
 // Pushes the loop top cvstate first, then the else (loop exit) cvstate
 // onto the stack.
 void IdealKit::loop(IdealVariable& iv, Node* init, BoolTest::mask relop, Node* limit, float prob, float cnt) {
@@ -498,7 +498,7 @@ void IdealKit::make_leaf_call(const TypeFunc *slow_call_type,
   // Make memory for the call
   Node* mem = _gvn.transform( new (C, 1) ProjNode(call, TypeFunc::Memory) );
 
-  // Set the RawPtr memory state only.  
+  // Set the RawPtr memory state only.
   set_memory(mem, adr_idx);
 
   assert(C->alias_type(call->adr_type()) == C->alias_type(adr_type),

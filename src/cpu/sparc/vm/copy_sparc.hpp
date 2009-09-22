@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)copy_sparc.hpp	1.12 07/05/05 17:04:26 JVM"
+#pragma ident "@(#)copy_sparc.hpp       1.12 07/05/05 17:04:26 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Inline functions for memory copy and fill.
@@ -157,23 +157,23 @@ static void pd_fill_to_words(HeapWord* tohw, size_t count, juint value) {
 }
 
 static void pd_fill_to_aligned_words(HeapWord* tohw, size_t count, juint value) {
-  assert(MinObjAlignmentInBytes == BytesPerLong, "need alternate implementation"); 
-  
+  assert(MinObjAlignmentInBytes == BytesPerLong, "need alternate implementation");
+
    julong* to = (julong*)tohw;
    julong  v  = ((julong)value << 32) | value;
-   // If count is odd, odd will be equal to 1 on 32-bit platform 
+   // If count is odd, odd will be equal to 1 on 32-bit platform
    // and be equal to 0 on 64-bit platform.
    size_t odd = count % (BytesPerLong / HeapWordSize) ;
 
-   size_t aligned_count = align_object_size(count - odd) / HeapWordsPerLong; 
-   julong* end = ((julong*)tohw) + aligned_count - 1; 
-   while (to <= end) { 
-     DEBUG_ONLY(count -= BytesPerLong / HeapWordSize ;) 
+   size_t aligned_count = align_object_size(count - odd) / HeapWordsPerLong;
+   julong* end = ((julong*)tohw) + aligned_count - 1;
+   while (to <= end) {
+     DEBUG_ONLY(count -= BytesPerLong / HeapWordSize ;)
      *to++ = v;
    }
-   assert(count == odd, "bad bounds on loop filling to aligned words"); 
-   if (odd) { 
-     *((juint*)to) = value; 
+   assert(count == odd, "bad bounds on loop filling to aligned words");
+   if (odd) {
+     *((juint*)to) = value;
 
    }
 }

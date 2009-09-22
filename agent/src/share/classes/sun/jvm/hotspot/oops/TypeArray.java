@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -49,7 +49,7 @@ public class TypeArray extends Array {
   TypeArray(OopHandle handle, ObjectHeap heap) {
     super(handle, heap);
   }
-  
+
   public boolean isTypeArray()         { return true; }
 
   public byte getByteAt(long index) {
@@ -118,7 +118,7 @@ public class TypeArray extends Array {
       case TypeArrayKlass.T_FLOAT: {
         long offset = baseOffsetInBytes(BasicType.T_FLOAT) + index * getHeap().getFloatSize();
         visitor.doFloat(new FloatField(id, offset, false), false);
-        break; 
+        break;
       }
       case TypeArrayKlass.T_DOUBLE: {
         long offset = baseOffsetInBytes(BasicType.T_DOUBLE) + index * getHeap().getDoubleSize();
@@ -143,7 +143,7 @@ public class TypeArray extends Array {
       case TypeArrayKlass.T_LONG: {
         long offset = baseOffsetInBytes(BasicType.T_LONG) + index * getHeap().getLongSize();
         visitor.doLong(new LongField(id, offset, false), false);
-        break;      
+        break;
       }
       }
     }

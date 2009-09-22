@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -49,7 +49,7 @@ public interface DebugVC50SymbolIterator
 
   /** Length of record, in bytes, excluding the length field. */
   public short getLength();
-  
+
   /** The type enumeration is defined in {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50SymbolTypes} */
   public int getType();
@@ -90,7 +90,7 @@ public interface DebugVC50SymbolIterator
 
   // Note: register tracking elided as it is not implemented in the
   // Microsoft compilers.
-  
+
   //////////////////////////
   // S_CONSTANT accessors //
   //////////////////////////
@@ -108,10 +108,10 @@ public interface DebugVC50SymbolIterator
 
   /** Numeric leaf containing the value of the symbol as a float */
   public float getConstantValueAsFloat() throws DebugVC50WrongNumericTypeException;
-  
+
   /** Numeric leaf containing the value of the symbol as a double */
   public double getConstantValueAsDouble() throws DebugVC50WrongNumericTypeException;
-  
+
   /** Length-prefixed name of the symbol */
   public String getConstantName();
 
@@ -131,7 +131,7 @@ public interface DebugVC50SymbolIterator
   /////////////////////////
 
   // FIXME: Add more documentation and understand what this does
-  
+
   /** $$SYMBOL offset of the procedure or thunk record for this module
       that has the lowest offset for the specified segment. */
   public int getSearchSymbolOffset();
@@ -155,13 +155,13 @@ public interface DebugVC50SymbolIterator
   // (No accessors)
   // Use the length field, available in every symbol, to skip over
   // these records.
-  
+
   ///////////////////////////
   // S_CVRESERVE accessors //
   ///////////////////////////
 
   // (No accessors)
-  
+
   /////////////////////////
   // S_OBJNAME accessors //
   /////////////////////////
@@ -288,13 +288,13 @@ public interface DebugVC50SymbolIterator
 
   /** Type index of the symbol. */
   public int getLGDataType();
-  
+
   /** Offset portion of the symbol address. */
   public int getLGDataOffset();
 
   /** Segment portion of the symbol address. */
   public short getLGDataSegment();
-  
+
   /** Length-prefixed name of symbol. */
   public String getLGDataName();
 
@@ -429,19 +429,19 @@ public interface DebugVC50SymbolIterator
 
   /** Length in bytes of this thunk. */
   public short getThunkLength();
-  
+
   /** Ordinal specifying the type of thunk; see THUNK enumeration in
       {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50SymbolEnums}. */
   public byte getThunkType();
-  
+
   /** Length-prefixed name of thunk. */
   public String getThunkName();
 
   /** Delta to be added to "this" pointer; only valid if thunk type is
       "adjustor". */
   public short getThunkAdjustorThisDelta();
-  
+
   /** Length-prefixed name of target function; only valid if thunk type is
       "adjustor". */
   public String getThunkAdjustorTargetName();
@@ -492,7 +492,7 @@ public interface DebugVC50SymbolIterator
 
   /** Segment portion of the segmented procedure address. */
   public short getBlockSegment();
-  
+
   /** Length-prefixed name of the block. */
   public String getBlockName();
 
@@ -539,7 +539,7 @@ public interface DebugVC50SymbolIterator
   /** The execution model, enumerated in EXMODEL constants in {@link
       sun.jvm.hotspot.debugger.win32.coff.DebugVC50SymbolEnums}. */
   public short getChangeModel();
-  
+
   // FIXME: figure out how to deal with variant (or whether it is
   // necessary)
 
@@ -559,7 +559,7 @@ public interface DebugVC50SymbolIterator
 
   /** Offset portion of start of the virtual function table. */
   public int getVTableOffset();
-  
+
   /** Segment portion of the virtual function table. */
   public short getVTableSegment();
 
@@ -582,7 +582,7 @@ public interface DebugVC50SymbolIterator
 
   /** Length-prefixed name of the symbol. */
   public String getRegRelName();
-  
+
   ///////////////////////////////////////////
   // S_LTHREAD32 and S_GTHREAD32 accessors //
   ///////////////////////////////////////////
@@ -602,7 +602,7 @@ public interface DebugVC50SymbolIterator
 
   /** Offset into thread local storage. */
   public int getLThreadOffset();
-  
+
   /** Segment of thread local storage. */
   public short getLThreadSegment();
 

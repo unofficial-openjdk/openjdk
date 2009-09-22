@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)connode.cpp	1.222 07/10/16 13:32:21 JVM"
+#pragma ident "@(#)connode.cpp  1.222 07/10/16 13:32:21 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Optimization - Graph Style
@@ -82,7 +82,7 @@ we get to keep around the knowledge that an oop is not-null after some test.
 Alas, the CastPP's interfere with GVN (some values are the regular oop, some
 are the CastPP of the oop, all merge at Phi's which cannot collapse, etc).
 This cost us 10% on SpecJVM, even when I removed some of the more trivial
-cases in the optimizer.  Removing more useless Phi's started allowing Loads to 
+cases in the optimizer.  Removing more useless Phi's started allowing Loads to
 illegally float above null checks.  I gave up on this approach.
 
 (4) Add BOTH control edges to both tests.  Alas, too much code knows that
@@ -100,7 +100,7 @@ matter ever).
 
 
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  
+// Return a node which is more "ideal" than the current node.
 // Move constants to the right.
 Node *CMoveNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( in(0) && remove_dead_region(phase, can_reshape) ) return this;
@@ -132,7 +132,7 @@ Node *CMoveNode::is_cmove_id( PhaseTransform *phase, Node *cmp, Node *t, Node *f
       (phase->eqv(cmp->in(2),f) &&
        phase->eqv(cmp->in(1),t)) ) {
     // Check for "(t==f)?t:f;" and replace with "f"
-    if( b->_test._test == BoolTest::eq ) 
+    if( b->_test._test == BoolTest::eq )
       return f;
     // Allow the inverted case as well
     // Check for "(t!=f)?t:f;" and replace with "t"
@@ -148,9 +148,9 @@ Node *CMoveNode::is_cmove_id( PhaseTransform *phase, Node *cmp, Node *t, Node *f
 Node *CMoveNode::Identity( PhaseTransform *phase ) {
   if( phase->eqv(in(IfFalse),in(IfTrue)) ) // C-moving identical inputs?
     return in(IfFalse);         // Then it doesn't matter
-  if( phase->type(in(Condition)) == TypeInt::ZERO ) 
+  if( phase->type(in(Condition)) == TypeInt::ZERO )
     return in(IfFalse);         // Always pick left(false) input
-  if( phase->type(in(Condition)) == TypeInt::ONE ) 
+  if( phase->type(in(Condition)) == TypeInt::ONE )
     return in(IfTrue);          // Always pick right(true) input
 
   // Check for CMove'ing a constant after comparing against the constant.
@@ -199,7 +199,7 @@ CMoveNode *CMoveNode::make( Compile *C, Node *c, Node *bol, Node *left, Node *ri
 
 //=============================================================================
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  
+// Return a node which is more "ideal" than the current node.
 // Check for conversions to boolean
 Node *CMoveINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Try generic ideal's first
@@ -251,14 +251,14 @@ Node *CMoveINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       return NULL;
     flip = 1 - flip;
   } else return NULL;
-  
+
   // Convert to a bool (flipped)
   // Build int->bool conversion
 #ifndef PRODUCT
   if( PrintOpto ) tty->print_cr("CMOV to I2B");
 #endif
   Node *n = new (phase->C, 2) Conv2BNode( cmp->in(1) );
-  if( flip ) 
+  if( flip )
     n = new (phase->C, 3) XorINode( phase->transform(n), phase->intcon(1) );
 
   return n;
@@ -266,7 +266,7 @@ Node *CMoveINode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
 //=============================================================================
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  
+// Return a node which is more "ideal" than the current node.
 // Check for absolute value
 Node *CMoveFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Try generic ideal's first
@@ -309,8 +309,8 @@ Node *CMoveFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node *sub = in(phi_sub_idx);
 
   // Allow only SubF(0,X) and fail out for all others; NegF is not OK
-  if( sub->Opcode() != Op_SubF || 
-      sub->in(2) != X || 
+  if( sub->Opcode() != Op_SubF ||
+      sub->in(2) != X ||
       phase->type(sub->in(1)) != TypeF::ZERO ) return NULL;
 
   Node *abs = new (phase->C, 2) AbsFNode( X );
@@ -322,7 +322,7 @@ Node *CMoveFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
 //=============================================================================
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  
+// Return a node which is more "ideal" than the current node.
 // Check for absolute value
 Node *CMoveDNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Try generic ideal's first
@@ -365,8 +365,8 @@ Node *CMoveDNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node *sub = in(phi_sub_idx);
 
   // Allow only SubD(0,X) and fail out for all others; NegD is not OK
-  if( sub->Opcode() != Op_SubD || 
-      sub->in(2) != X || 
+  if( sub->Opcode() != Op_SubD ||
+      sub->in(2) != X ||
       phase->type(sub->in(1)) != TypeD::ZERO ) return NULL;
 
   Node *abs = new (phase->C, 2) AbsDNode( X );
@@ -413,10 +413,10 @@ const Type *ConstraintCastNode::Value( PhaseTransform *phase ) const {
 }
 
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  Strip out 
+// Return a node which is more "ideal" than the current node.  Strip out
 // control copies
 Node *ConstraintCastNode::Ideal(PhaseGVN *phase, bool can_reshape){
-  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL; 
+  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL;
 }
 
 //------------------------------Ideal_DU_postCCP-------------------------------
@@ -507,10 +507,10 @@ const Type *CheckCastPPNode::Value( PhaseTransform *phase ) const {
   // JOIN NOT DONE HERE BECAUSE OF INTERFACE ISSUES.
   // FIX THIS (DO THE JOIN) WHEN UNION TYPES APPEAR!
 
-  // 
+  //
   // Remove this code after overnight run indicates no performance
   // loss from not performing JOIN at CheckCastPPNode
-  // 
+  //
   // const TypeInstPtr *in_oop = in->isa_instptr();
   // const TypeInstPtr *my_oop = _type->isa_instptr();
   // // If either input is an 'interface', return destination type
@@ -525,9 +525,9 @@ const Type *CheckCastPPNode::Value( PhaseTransform *phase ) const {
   //   }
   //   return _type;
   // }
-  // 
-  // // Neither the input nor the destination type is an interface, 
-  // 
+  //
+  // // Neither the input nor the destination type is an interface,
+  //
   // // history: JOIN used to cause weird corner case bugs
   // //          return (in == TypeOopPtr::NULL_PTR) ? in : _type;
   // // JOIN picks up NotNull in common instance-of/check-cast idioms, both oops.
@@ -543,7 +543,7 @@ const Type *CheckCastPPNode::Value( PhaseTransform *phase ) const {
   //       join_ptr == TypePtr::NotNull || join_ptr == TypePtr::Constant ) {
   //     return join;
   //   }
-  //   // ELSE return same old type as before 
+  //   // ELSE return same old type as before
   //   return _type;
   // }
   // // Not joining two pointers
@@ -551,10 +551,10 @@ const Type *CheckCastPPNode::Value( PhaseTransform *phase ) const {
 }
 
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  Strip out 
+// Return a node which is more "ideal" than the current node.  Strip out
 // control copies
 Node *CheckCastPPNode::Ideal(PhaseGVN *phase, bool can_reshape){
-  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL; 
+  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL;
 }
 
 
@@ -1006,7 +1006,7 @@ const Type *ConvL2INode::Value( PhaseTransform *phase ) const {
 }
 
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  
+// Return a node which is more "ideal" than the current node.
 // Blow off prior masking to int
 Node *ConvL2INode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node *andl = in(1);
@@ -1121,7 +1121,7 @@ const Type *CastP2XNode::Value( PhaseTransform *phase ) const {
 }
 
 Node *CastP2XNode::Ideal(PhaseGVN *phase, bool can_reshape) {
-  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL; 
+  return (in(0) && remove_dead_region(phase, can_reshape)) ? this : NULL;
 }
 
 //------------------------------Identity---------------------------------------
@@ -1179,7 +1179,7 @@ const Type *RoundDoubleNode::Value( PhaseTransform *phase ) const {
 //=============================================================================
 // Do not allow value-numbering
 uint Opaque1Node::hash() const { return NO_HASH; }
-uint Opaque1Node::cmp( const Node &n ) const { 
+uint Opaque1Node::cmp( const Node &n ) const {
   return (&n == this);          // Always fail except on self
 }
 
@@ -1206,7 +1206,7 @@ Node *Opaque1Node::Identity( PhaseTransform *phase ) {
 
 // Do not allow value-numbering
 uint Opaque2Node::hash() const { return NO_HASH; }
-uint Opaque2Node::cmp( const Node &n ) const { 
+uint Opaque2Node::cmp( const Node &n ) const {
   return (&n == this);          // Always fail except on self
 }
 

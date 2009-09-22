@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perfMemory_windows.cpp	1.36 07/09/27 12:57:31 JVM"
+#pragma ident "@(#)perfMemory_windows.cpp       1.36 07/09/27 12:57:31 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -81,16 +81,16 @@ static void delete_standard_memory(char* addr, size_t size) {
 //
 static void save_memory_to_file(char* addr, size_t size) {
 
-  const char* destfile = PerfMemory::get_perfdata_file_path(); 
-  assert(destfile[0] != '\0', "invalid Perfdata file path"); 
-  
-  int fd = ::_open(destfile, _O_BINARY|_O_CREAT|_O_WRONLY|_O_TRUNC, 
+  const char* destfile = PerfMemory::get_perfdata_file_path();
+  assert(destfile[0] != '\0', "invalid Perfdata file path");
+
+  int fd = ::_open(destfile, _O_BINARY|_O_CREAT|_O_WRONLY|_O_TRUNC,
                    _S_IREAD|_S_IWRITE);
 
   if (fd == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
       warning("Could not create Perfdata save file: %s: %s\n",
-	      destfile, strerror(errno));
+              destfile, strerror(errno));
     }
   } else {
     for (size_t remaining = size; remaining > 0;) {
@@ -115,7 +115,7 @@ static void save_memory_to_file(char* addr, size_t size) {
       }
     }
   }
-  
+
   FREE_C_HEAP_ARRAY(char, destfile);
 }
 
@@ -214,7 +214,7 @@ static bool is_directory_secure(const char* path) {
       // unexpected error, declare the path insecure
       if (PrintMiscellaneous && Verbose) {
         warning("could not get attributes for file %s: ",
-		" lasterror = %d\n", path, lasterror);
+                " lasterror = %d\n", path, lasterror);
       }
       return false;
     }
@@ -247,7 +247,7 @@ static bool is_directory_secure(const char* path) {
     //
     if (PrintMiscellaneous && Verbose) {
       warning("%s is not a directory, file attributes = "
-	      INTPTR_FORMAT "\n", path, fa);
+              INTPTR_FORMAT "\n", path, fa);
     }
     return false;
   }
@@ -428,7 +428,7 @@ static char* get_user_name(int vmid) {
 //
 static char *get_sharedmem_objectname(const char* user, int vmid) {
 
-  // construct file mapping object's name, add 3 for two '_' and a 
+  // construct file mapping object's name, add 3 for two '_' and a
   // null terminator.
   int nbytes = (int)strlen(PERFDATA_NAME) + (int)strlen(user) + 3;
 
@@ -479,7 +479,7 @@ static void remove_file(const char* dirname, const char* filename) {
     if (PrintMiscellaneous && Verbose) {
       if (errno != ENOENT) {
         warning("Could not unlink shared memory backing"
-		" store file %s : %s\n", path, strerror(errno));
+                " store file %s : %s\n", path, strerror(errno));
       }
     }
   }
@@ -562,8 +562,8 @@ static bool is_filesystem_secure(const char* path) {
     // we can't get information about the volume, so assume unsafe.
     if (PrintMiscellaneous && Verbose) {
       warning("could not get device information for %s: "
-	      " path = %s: lasterror = %d\n",
-	      root_path, path, GetLastError());
+              " path = %s: lasterror = %d\n",
+              root_path, path, GetLastError());
     }
     return false;
   }
@@ -572,7 +572,7 @@ static bool is_filesystem_secure(const char* path) {
     // file system doesn't support ACLs, declare file system unsafe
     if (PrintMiscellaneous && Verbose) {
       warning("file system type %s on device %s does not support"
-	      " ACLs\n", fs_type, root_path);
+              " ACLs\n", fs_type, root_path);
     }
     return false;
   }
@@ -581,7 +581,7 @@ static bool is_filesystem_secure(const char* path) {
     // file system is compressed, declare file system unsafe
     if (PrintMiscellaneous && Verbose) {
       warning("file system type %s on device %s is compressed\n",
-	      fs_type, root_path);
+              fs_type, root_path);
     }
     return false;
   }
@@ -782,7 +782,7 @@ static PSID get_user_sid(HANDLE hProcess) {
     if (lasterror != ERROR_INSUFFICIENT_BUFFER) {
       if (PrintMiscellaneous && Verbose) {
         warning("GetTokenInformation failure: lasterror = %d,"
-		" rsize = %d\n", lasterror, rsize);
+                " rsize = %d\n", lasterror, rsize);
       }
       CloseHandle(hAccessToken);
       return NULL;
@@ -795,7 +795,7 @@ static PSID get_user_sid(HANDLE hProcess) {
   if (!GetTokenInformation(hAccessToken, TokenUser, token_buf, rsize, &rsize)) {
     if (PrintMiscellaneous && Verbose) {
       warning("GetTokenInformation failure: lasterror = %d,"
-	      " rsize = %d\n", GetLastError(), rsize);
+              " rsize = %d\n", GetLastError(), rsize);
     }
     FREE_C_HEAP_ARRAY(char, token_buf);
     CloseHandle(hAccessToken);
@@ -808,7 +808,7 @@ static PSID get_user_sid(HANDLE hProcess) {
   if (!CopySid(nbytes, pSID, token_buf->User.Sid)) {
     if (PrintMiscellaneous && Verbose) {
       warning("GetTokenInformation failure: lasterror = %d,"
-	      " rsize = %d\n", GetLastError(), rsize);
+              " rsize = %d\n", GetLastError(), rsize);
     }
     FREE_C_HEAP_ARRAY(char, token_buf);
     FREE_C_HEAP_ARRAY(char, pSID);
@@ -853,7 +853,7 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
   if (!GetSecurityDescriptorDacl(pSD, &exists, &oldACL, &isdefault)) {
     if (PrintMiscellaneous && Verbose) {
       warning("GetSecurityDescriptor failure: lasterror = %d \n",
-	      GetLastError());
+              GetLastError());
     }
     return false;
   }
@@ -861,7 +861,7 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
   // get the size of the DACL
   ACL_SIZE_INFORMATION aclinfo;
 
-  // GetSecurityDescriptorDacl may return true value for exists (lpbDaclPresent) 
+  // GetSecurityDescriptorDacl may return true value for exists (lpbDaclPresent)
   // while oldACL is NULL for some case.
   if (oldACL == NULL) {
     exists = FALSE;
@@ -887,9 +887,9 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
   //   * size of ACL structure.
   //   * size of each ACE structure that ACL is to contain minus the sid
   //     sidStart member (DWORD) of the ACE.
-  //   * length of the SID that each ACE is to contain. 
-  DWORD newACLsize = aclinfo.AclBytesInUse + 
-			(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) * ace_count;
+  //   * length of the SID that each ACE is to contain.
+  DWORD newACLsize = aclinfo.AclBytesInUse +
+                        (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) * ace_count;
   for (int i = 0; i < ace_count; i++) {
      newACLsize += GetLengthSid(aces[i].pSid);
   }
@@ -930,7 +930,7 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
       for (int i = 0; i < ace_count; i++) {
         if (EqualSid(aces[i].pSid, &(((ACCESS_ALLOWED_ACE *)ace)->SidStart))) {
           matches++;
-	  break;
+          break;
         }
       }
 
@@ -998,7 +998,7 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
   }
 
   // if running on windows 2000 or later, set the automatic inheritence
-  // control flags. 
+  // control flags.
   SetSecurityDescriptorControlFnPtr _SetSecurityDescriptorControl;
   _SetSecurityDescriptorControl = (SetSecurityDescriptorControlFnPtr)
        GetProcAddress(GetModuleHandle(TEXT("advapi32.dll")),
@@ -1023,7 +1023,7 @@ static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
    //
    return true;
 }
- 
+
 // method to create a security attributes structure, which contains a
 // security descriptor and an access control list comprised of 0 or more
 // access control entries. The method take an array of ace_data structures
@@ -1043,7 +1043,7 @@ static LPSECURITY_ATTRIBUTES make_security_attr(ace_data_t aces[], int count) {
   if (!InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION)) {
     if (PrintMiscellaneous && Verbose) {
       warning("InitializeSecurityDescriptor failure: "
-	      "lasterror = %d \n", GetLastError());
+              "lasterror = %d \n", GetLastError());
     }
     free_security_desc(pSD);
     return NULL;
@@ -1109,7 +1109,7 @@ static LPSECURITY_ATTRIBUTES make_user_everybody_admin_security_attr(
   // get the well known SID for the universal Everybody
   PSID everybodySid = NULL;
   SID_IDENTIFIER_AUTHORITY SIDAuthEverybody = SECURITY_WORLD_SID_AUTHORITY;
-  
+
   if (!AllocateAndInitializeSid( &SIDAuthEverybody, 1, SECURITY_WORLD_RID,
            0, 0, 0, 0, 0, 0, 0, &everybodySid)) {
 
@@ -1230,11 +1230,11 @@ static bool make_user_tmp_dir(const char* dirname) {
       SECURITY_INFORMATION secInfo = DACL_SECURITY_INFORMATION;
       if (!SetFileSecurity(dirname, secInfo, pDirSA->lpSecurityDescriptor)) {
         if (PrintMiscellaneous && Verbose) {
-	  lasterror = GetLastError();
-          warning("SetFileSecurity failed for %s directory.  lasterror %d \n", 
-							dirname, lasterror);
+          lasterror = GetLastError();
+          warning("SetFileSecurity failed for %s directory.  lasterror %d \n",
+                                                        dirname, lasterror);
         }
-      } 
+      }
     }
     else {
       if (PrintMiscellaneous && Verbose) {
@@ -1355,7 +1355,7 @@ static HANDLE open_sharedmem_object(const char* objectname, DWORD ofm_access, TR
   if (fmh == NULL) {
     if (PrintMiscellaneous && Verbose) {
       warning("OpenFileMapping failed for shared memory object %s:"
-	      " lasterror = %d\n", objectname, GetLastError());
+              " lasterror = %d\n", objectname, GetLastError());
     }
     THROW_MSG_(vmSymbols::java_lang_Exception(),
                "Could not open PerfMemory", INVALID_HANDLE_VALUE);
@@ -1505,7 +1505,7 @@ static size_t sharedmem_filesize(const char* filename, TRAPS) {
   if ((statbuf.st_size == 0) || (statbuf.st_size % os::vm_page_size() != 0)) {
     if (PrintMiscellaneous && Verbose) {
       warning("unexpected file size: size = " SIZE_FORMAT "\n",
-	      statbuf.st_size);
+              statbuf.st_size);
     }
     THROW_MSG_0(vmSymbols::java_lang_Exception(),
                 "Invalid PerfMemory size");
@@ -1516,7 +1516,7 @@ static size_t sharedmem_filesize(const char* filename, TRAPS) {
 
 // this method opens a file mapping object and maps the object
 // into the address space of the process
-// 
+//
 static void open_file_mapping(const char* user, int vmid,
                               PerfMemory::PerfMemoryMode mode,
                               char** addrp, size_t* sizep, TRAPS) {
@@ -1635,7 +1635,7 @@ static void open_file_mapping(const char* user, int vmid,
 
 // this method unmaps the the mapped view of the the
 // file mapping object.
-// 
+//
 static void remove_file_mapping(char* addr) {
 
   // the file mapping object was closed in open_file_mapping()
@@ -1704,7 +1704,7 @@ void PerfMemory::delete_memory_region() {
 
   // If user specifies PerfDataSaveFile, it will save the performance data
   // to the specified file name no matter whether PerfDataSaveToFile is specified
-  // or not. In other word, -XX:PerfDataSaveFile=.. overrides flag 
+  // or not. In other word, -XX:PerfDataSaveFile=.. overrides flag
   // -XX:+PerfDataSaveToFile.
   if (PerfDataSaveToFile || PerfDataSaveFile != NULL) {
     save_memory_to_file(start(), capacity());
@@ -1777,4 +1777,3 @@ void PerfMemory::detach(char* addr, size_t bytes, TRAPS) {
 char* PerfMemory::backing_store_filename() {
   return sharedmem_fileName;
 }
-

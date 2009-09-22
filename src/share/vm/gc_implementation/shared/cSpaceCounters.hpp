@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cSpaceCounters.hpp	1.12 07/05/05 17:05:33 JVM"
+#pragma ident "@(#)cSpaceCounters.hpp   1.12 07/05/05 17:05:33 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A CSpaceCounters is a holder class for performance counters
@@ -50,7 +50,7 @@ class CSpaceCounters: public CHeapObj {
   ~CSpaceCounters() {
       if (_name_space != NULL) FREE_C_HEAP_ARRAY(char, _name_space);
   }
-  
+
   inline void update_capacity() {
     _capacity->set_value(_space->capacity());
   }
@@ -78,4 +78,3 @@ class ContiguousSpaceUsedHelper : public PerfLongSampleHelper {
       return _space->used();
     }
 };
-

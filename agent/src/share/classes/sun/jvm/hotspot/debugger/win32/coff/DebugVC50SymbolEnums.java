@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -64,7 +64,7 @@ public interface DebugVC50SymbolEnums {
   public static final int  COMPFLAG_LANGUAGE_COBOL   = 6;
 
   public static final int  COMPFLAG_PCODE_PRESENT_MASK  = 0x00008000;
-  
+
   // Float precision enumeration
   public static final int  COMPFLAG_FLOAT_PRECISION_MASK   = 0x00006000;
   public static final int  COMPFLAG_FLOAT_PRECISION_SHIFT  = 13;
@@ -93,7 +93,7 @@ public interface DebugVC50SymbolEnums {
   // FIXME: verify these are correct
   public static final short FUNCRET_VARARGS_LEFT_TO_RIGHT_MASK  = (short) 0x0001;
   public static final short FUNCRET_RETURNEE_STACK_CLEANUP_MASK = (short) 0x0002;
-  
+
   // Return styles
   public static final byte FUNCRET_VOID                   = (byte) 0x00;
   public static final byte FUNCRET_IN_REGISTERS           = (byte) 0x01;

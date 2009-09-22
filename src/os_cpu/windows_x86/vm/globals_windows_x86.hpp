@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globals_windows_x86.hpp	1.30 07/09/17 09:12:32 JVM"
+#pragma ident "@(#)globals_windows_x86.hpp      1.30 07/09/17 09:12:32 JVM"
 #endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -35,10 +35,10 @@ define_pd_global(bool, DontYieldALot,            false);
 // has a default value of 320K/1MB [32bit/64bit]). Depending on Windows version, changing
 // ThreadStackSize to non-zero may have significant impact on memory usage.
 // See comments in os_windows.cpp.
-define_pd_global(intx, ThreadStackSize,		 0); // 0 => use system default
-define_pd_global(intx, VMThreadStackSize,	 0); // 0 => use system default
+define_pd_global(intx, ThreadStackSize,          0); // 0 => use system default
+define_pd_global(intx, VMThreadStackSize,        0); // 0 => use system default
 
-define_pd_global(intx, SurvivorRatio,            8); 
+define_pd_global(intx, SurvivorRatio,            8);
 
 #ifdef ASSERT
 define_pd_global(intx, CompilerThreadStackSize,  1024);
@@ -50,4 +50,3 @@ define_pd_global(uintx, JVMInvokeMethodSlack,    8192);
 
 // Only used on 64 bit Windows platforms
 define_pd_global(bool, UseVectoredExceptions,    false);
-

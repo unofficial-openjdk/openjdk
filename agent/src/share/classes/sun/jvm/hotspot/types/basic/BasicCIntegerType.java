@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.types.basic;
@@ -36,7 +36,7 @@ public class BasicCIntegerType extends BasicType implements CIntegerType {
 
   public BasicCIntegerType(BasicTypeDataBase db, String name, boolean isUnsigned) {
     super(db, name, null);
-    
+
     this.isUnsigned = isUnsigned;
   }
 
@@ -50,11 +50,11 @@ public class BasicCIntegerType extends BasicType implements CIntegerType {
     }
 
     BasicCIntegerType arg = (BasicCIntegerType) obj;
-    
+
     if (isUnsigned != arg.isUnsigned) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -67,7 +67,7 @@ public class BasicCIntegerType extends BasicType implements CIntegerType {
     if (prefix != null) {
       return prefix + " " + getName();
     }
-    
+
     return getName();
   }
 

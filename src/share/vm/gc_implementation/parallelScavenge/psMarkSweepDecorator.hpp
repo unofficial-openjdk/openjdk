@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psMarkSweepDecorator.hpp	1.14 07/05/05 17:05:29 JVM"
+#pragma ident "@(#)psMarkSweepDecorator.hpp     1.14 07/05/05 17:05:29 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// 
+//
 // A PSMarkSweepDecorator is used to add "ParallelScavenge" style mark sweep operations
 // to a MutableSpace.
 //
@@ -76,7 +76,3 @@ class PSMarkSweepDecorator: public CHeapObj {
   void precompact();
   void compact(bool mangle_free_space);
 };
-
-
-
-

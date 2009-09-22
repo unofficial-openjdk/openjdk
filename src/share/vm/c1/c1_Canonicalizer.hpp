@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_Canonicalizer.hpp	1.29 07/05/05 17:05:05 JVM"
+#pragma ident "@(#)c1_Canonicalizer.hpp 1.29 07/05/05 17:05:05 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class Canonicalizer: InstructionVisitor {
@@ -97,4 +97,3 @@ class Canonicalizer: InstructionVisitor {
   virtual void do_ProfileCall    (ProfileCall*     x);
   virtual void do_ProfileCounter (ProfileCounter*  x);
 };
-

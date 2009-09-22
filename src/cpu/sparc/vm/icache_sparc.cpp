@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)icache_sparc.cpp	1.29 07/05/05 17:04:28 JVM"
+#pragma ident "@(#)icache_sparc.cpp     1.29 07/05/05 17:04:28 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -44,7 +44,7 @@ void ICacheStubGenerator::generate_icache_flush(
   __ delayed()->inc( O0, 8 );
   __ retl(false);
   __ delayed()->mov( O2, O0 ); // handshake with caller to make sure it happened!
-  
+
   // Must be set here so StubCodeMark destructor can call the flush stub.
   *flush_icache_stub = (ICache::flush_icache_stub_t)start;
 };

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.livejvm;
@@ -30,7 +30,7 @@ class CIntegerAccessor {
   private Address addr;
   private long numBytes;
   private boolean isUnsigned;
-  
+
   CIntegerAccessor(Address addr, long numBytes, boolean isUnsigned) {
     this.addr = addr;
     this.numBytes = numBytes;
@@ -40,7 +40,7 @@ class CIntegerAccessor {
   long getValue() {
     return addr.getCIntegerAt(0, numBytes, isUnsigned);
   }
-  
+
   void setValue(long value) {
     addr.setCIntegerAt(0, numBytes, value);
   }

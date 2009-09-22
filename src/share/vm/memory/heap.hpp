@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)heap.hpp	1.43 07/05/05 17:05:47 JVM"
+#pragma ident "@(#)heap.hpp     1.43 07/05/05 17:05:47 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Blocks
@@ -32,7 +32,7 @@ class HeapBlock VALUE_OBJ_CLASS_SPEC {
 
  public:
   struct Header {
-    size_t  _length;                             // the length in segments    
+    size_t  _length;                             // the length in segments
     bool    _used;                               // Used bit
   };
 
@@ -49,7 +49,7 @@ class HeapBlock VALUE_OBJ_CLASS_SPEC {
 
   // Accessors
   void* allocated_space() const                  { return (void*)(this + 1); }
-  size_t length() const                          { return _header._length; }  
+  size_t length() const                          { return _header._length; }
 
   // Used/free
   void set_used()                                { _header._used = true; }
@@ -59,19 +59,19 @@ class HeapBlock VALUE_OBJ_CLASS_SPEC {
 
 class FreeBlock: public HeapBlock {
   friend class VMStructs;
- protected:  
-  FreeBlock* _link; 
+ protected:
+  FreeBlock* _link;
 
  public:
   // Initialization
   void initialize(size_t length)             { HeapBlock::initialize(length); _link= NULL; }
 
-  // Merging    
+  // Merging
   void set_length(size_t l)                  { _header._length = l; }
-  
-  // Accessors    
-  FreeBlock* link() const                    { return _link; }  
-  void set_link(FreeBlock* link)             { _link = link; }  
+
+  // Accessors
+  FreeBlock* link() const                    { return _link; }
+  void set_link(FreeBlock* link)             { _link = link; }
 };
 
 class CodeHeap : public CHeapObj {
@@ -87,7 +87,7 @@ class CodeHeap : public CHeapObj {
 
   size_t       _next_segment;
 
-  FreeBlock*   _freelist; 
+  FreeBlock*   _freelist;
   size_t       _free_segments;                   // No. of segments in freelist
 
   // Helper functions
@@ -100,11 +100,11 @@ class CodeHeap : public CHeapObj {
   void  mark_segmap_as_free(size_t beg, size_t end);
   void  mark_segmap_as_used(size_t beg, size_t end);
 
-  // Freelist management helpers      
+  // Freelist management helpers
   FreeBlock* following_block(FreeBlock *b);
   void insert_after(FreeBlock* a, FreeBlock* b);
   void merge_right (FreeBlock* a);
-  
+
   // Toplevel freelist management
   void add_to_freelist(HeapBlock *b);
   FreeBlock* search_freelist(size_t length);
@@ -146,18 +146,18 @@ class CodeHeap : public CHeapObj {
   char *high_boundary() const                    { return _memory.high_boundary(); }
 
   // Iteration
-  
+
   // returns the first block or NULL
   void* first() const       { return next_free(first_block()); }
   // returns the next block given a block p or NULL
   void* next(void* p) const { return next_free(next_block(block_start(p))); }
 
   // Statistics
-  size_t capacity() const;  
+  size_t capacity() const;
   size_t max_capacity() const;
   size_t allocated_capacity() const;
   size_t unallocated_capacity() const            { return max_capacity() - allocated_capacity(); }
-  
+
   // Debugging
   void verify();
   void print()  PRODUCT_RETURN;

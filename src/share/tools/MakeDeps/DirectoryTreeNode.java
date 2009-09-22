@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import java.util.*;
@@ -32,5 +32,5 @@ public interface DirectoryTreeNode {
     public Iterator getChildren() throws IllegalArgumentException;
     public int getNumChildren() throws IllegalArgumentException;
     public DirectoryTreeNode getChild(int i)
-	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -47,7 +47,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         if (kk == null) {
             return null;
         }
-        return (ClassType) vm.referenceType(kk); 
+        return (ClassType) vm.referenceType(kk);
     }
 
     public List interfaces()  {
@@ -140,14 +140,14 @@ public class ClassTypeImpl extends ReferenceTypeImpl
             clazz = clazz.superclass();
         }
         /*
-         * Avoid duplicate checking on each method by iterating through 
+         * Avoid duplicate checking on each method by iterating through
          * duplicate-free allInterfaces() rather than recursing
          */
         Iterator iter = allInterfaces().iterator();
         while (iter.hasNext()) {
             InterfaceType interfaze = (InterfaceType)iter.next();
             list.addAll(interfaze.methods());
-        } 
+        }
         return list;
     }
 
@@ -168,40 +168,40 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         }
     }
 
-    public void setValue(Field field, Value value) 
+    public void setValue(Field field, Value value)
         throws InvalidTypeException, ClassNotLoadedException {
         vm.throwNotReadOnlyException("ClassType.setValue(...)");
     }
 
 
-    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf, 
-                              List arguments, int options) 
+    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf,
+                              List arguments, int options)
                                    throws InvalidTypeException,
                                           ClassNotLoadedException,
                                           IncompatibleThreadStateException,
                                           InvocationException {
         vm.throwNotReadOnlyException("ClassType.invokeMethod(...)");
-	return null;
+        return null;
     }
 
-    public ObjectReference newInstance(ThreadReference threadIntf, 
-                                       Method methodIntf, 
-                                       List arguments, int options) 
+    public ObjectReference newInstance(ThreadReference threadIntf,
+                                       Method methodIntf,
+                                       List arguments, int options)
                                    throws InvalidTypeException,
                                           ClassNotLoadedException,
                                           IncompatibleThreadStateException,
                                           InvocationException {
         vm.throwNotReadOnlyException("ClassType.newInstance(...)");
-	return null;
+        return null;
     }
 
     void addVisibleMethods(Map methodMap) {
         /*
-         * Add methods from 
+         * Add methods from
          * parent types first, so that the methods in this class will
          * overwrite them in the hash table
          */
-      
+
         Iterator iter = interfaces().iterator();
         while (iter.hasNext()) {
             InterfaceTypeImpl interfaze = (InterfaceTypeImpl)iter.next();
@@ -212,7 +212,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         if (clazz != null) {
             clazz.addVisibleMethods(methodMap);
         }
-      
+
         addToMethodMap(methodMap, methods());
     }
 

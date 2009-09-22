@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)management.hpp	1.23 07/05/05 17:07:05 JVM"
+#pragma ident "@(#)management.hpp       1.23 07/05/05 17:07:05 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class OopClosure;
@@ -50,7 +50,7 @@ private:
 public:
   static void init();
   static void initialize(TRAPS);
- 
+
   static jlong ticks_to_ms(jlong ticks);
   static jlong timestamp();
 
@@ -72,7 +72,7 @@ public:
   static jlong vm_init_done_time() {
     return _vm_init_done_time->get_value();
   }
- 
+
   // methods to return a klassOop.
   static klassOop java_lang_management_ThreadInfo_klass(TRAPS);
   static klassOop java_lang_management_MemoryUsage_klass(TRAPS);
@@ -95,15 +95,15 @@ public:
   TraceVmCreationTime() {}
   ~TraceVmCreationTime() {}
 
-  void start() 
+  void start()
   { _timer.update_to(0); _begin_time = os::javaTimeMillis(); }
 
   /**
-   * Only call this if initialization completes successfully; it will   
+   * Only call this if initialization completes successfully; it will
    * crash if PerfMemory_exit() has already been called (usually by
    * os::shutdown() when there was an initialization failure).
    */
-  void end()  
+  void end()
   { Management::record_vm_startup_time(_begin_time, _timer.milliseconds()); }
 
 };

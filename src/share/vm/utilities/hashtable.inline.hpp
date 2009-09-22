@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)hashtable.inline.hpp	1.9 07/05/05 17:07:10 JVM"
+#pragma ident "@(#)hashtable.inline.hpp 1.9 07/05/05 17:07:10 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Inline function definitions for hashtable.hpp.

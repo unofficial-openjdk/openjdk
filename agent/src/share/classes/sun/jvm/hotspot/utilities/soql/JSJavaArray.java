@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -53,8 +53,8 @@ public abstract class JSJavaArray extends JSJavaObject {
    }
 
    public Object get(int index) {
-      return (isInRange(index)) ? type.getFieldValue(index, getArray()) 
-	  : super.get(index);
+      return (isInRange(index)) ? type.getFieldValue(index, getArray())
+          : super.get(index);
    }
 
    public Object[] getIds() {
@@ -62,7 +62,7 @@ public abstract class JSJavaArray extends JSJavaObject {
       final int len = (int) getArray().getLength();
       Object[] res = new Object[superFields.length + len];
       for (int i = 0; i < len; i++) {
-	  res[i] = new Integer(i);
+          res[i] = new Integer(i);
       }
       System.arraycopy(superFields, 0, res, len, superFields.length);
       return  res;

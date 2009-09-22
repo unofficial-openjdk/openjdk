@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime;
@@ -51,7 +51,7 @@ public abstract class SignatureIterator {
   protected Symbol _signature;       // the signature to iterate over
   protected int    _index;           // the current character index (only valid during iteration)
   protected int    _parameter_index; // the current parameter index (0 outside iteration phase)
- 
+
   protected void expect(char c) {
     if (_signature.getByteAt(_index) != (byte) c) {
       throw new RuntimeException("expecting '" + c + "'");
@@ -182,7 +182,7 @@ public abstract class SignatureIterator {
     _parameter_index = 0; // so isReturnType() is false outside iteration
   }
 
-  // Returns the word index of the current parameter; returns a negative value at the return type 
+  // Returns the word index of the current parameter; returns a negative value at the return type
   public int  parameterIndex()               { return _parameter_index; }
   public boolean isReturnType()              { return (parameterIndex() < 0); }
 

@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-abstract class V9AlternateSpaceDecoder extends MemoryInstructionDecoder 
+abstract class V9AlternateSpaceDecoder extends MemoryInstructionDecoder
                     implements V9InstructionDecoder {
     V9AlternateSpaceDecoder(int op3, String name, int dataType) {
         super(op3, name, dataType);
@@ -57,7 +57,7 @@ abstract class V9AlternateSpaceDecoder extends MemoryInstructionDecoder
             int asi = (instruction & ASI_MASK) >>> ASI_START_BIT;
             v9addr.setAddressSpace(asi);
         }
-        return decodeV9AsiLoadStore(instruction, v9addr, rd, 
+        return decodeV9AsiLoadStore(instruction, v9addr, rd,
                                     (SPARCV9InstructionFactory) factory);
     }
 }

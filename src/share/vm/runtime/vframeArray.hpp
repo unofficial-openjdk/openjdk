@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vframeArray.hpp	1.77 07/05/05 17:07:01 JVM"
+#pragma ident "@(#)vframeArray.hpp      1.77 07/05/05 17:07:01 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A vframeArray is an array used for momentarily storing off stack Java method activations
@@ -75,17 +75,17 @@ class vframeArrayElement : public _ValueObj {
 
   // Returns the on stack word size for this frame
   // callee_parameters is the number of callee locals residing inside this frame
-  int on_stack_size(int callee_parameters, 
-		    int callee_locals, 
-		    bool is_top_frame, 
-		    int popframe_extra_stack_expression_els) const;
+  int on_stack_size(int callee_parameters,
+                    int callee_locals,
+                    bool is_top_frame,
+                    int popframe_extra_stack_expression_els) const;
 
   // Unpacks the element to skeletal interpreter frame
-  void unpack_on_stack(int callee_parameters, 
-		       int callee_locals,
-		       frame* caller,
-		       bool is_top_frame,
-		       int exec_mode);
+  void unpack_on_stack(int callee_parameters,
+                       int callee_locals,
+                       frame* caller,
+                       bool is_top_frame,
+                       int exec_mode);
 
 #ifndef PRODUCT
   void print(outputStream* st);
@@ -103,16 +103,16 @@ class vframeArray: public CHeapObj {
   // Here is what a vframeArray looks like in memory
 
   /*
-      fixed part 
-	description of the original frame
-	_frames - number of vframes in this array
-	adapter info
-	callee register save area
+      fixed part
+        description of the original frame
+        _frames - number of vframes in this array
+        adapter info
+        callee register save area
       variable part
-	vframeArrayElement   [ 0 ]
-	...
-	vframeArrayElement   [_frames - 1]
-       
+        vframeArrayElement   [ 0 ]
+        ...
+        vframeArrayElement   [_frames - 1]
+
   */
 
   JavaThread*                  _owner_thread;
@@ -129,7 +129,7 @@ class vframeArray: public CHeapObj {
   intptr_t                     _callee_registers[RegisterMap::reg_count];
   unsigned char                _valid[RegisterMap::reg_count];
 
-  vframeArrayElement           _elements[1];   // First variable section. 
+  vframeArrayElement           _elements[1];   // First variable section.
 
   void fill_in_element(int index, compiledVFrame* vf);
 
@@ -200,6 +200,5 @@ class vframeArray: public CHeapObj {
   // Comparing
   bool structural_compare(JavaThread* thread, GrowableArray<compiledVFrame*>* chunk);
 #endif
-  
-};
 
+};

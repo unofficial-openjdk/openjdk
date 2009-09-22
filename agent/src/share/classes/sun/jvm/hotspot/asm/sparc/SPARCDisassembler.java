@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -28,7 +28,7 @@ import sun.jvm.hotspot.asm.*;
 import java.io.*;
 import java.util.*;
 
-public abstract class SPARCDisassembler extends Disassembler 
+public abstract class SPARCDisassembler extends Disassembler
                     implements /* imports */ SPARCOpcodes, RTLDataTypes, RTLOperations {
 
     // instruction cache - Map<Integer, Instruction>.
@@ -134,7 +134,7 @@ public abstract class SPARCDisassembler extends Disassembler
 
                 visitor.visit(startPc + len, instr);
                 len += 4;
-            } 
+            }
         } catch (IOException ioExp) {
             // ignore, can't happen
         } finally {

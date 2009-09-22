@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.jdi;
@@ -39,15 +39,15 @@ public class ClassObjectReferenceImpl extends ObjectReferenceImpl
 
     public ReferenceType reflectedType() {
         if (reflectedType == null) {
-	    Klass k = OopUtilities.classOopToKlass(ref());
-	    reflectedType = vm.referenceType(k);
+            Klass k = OopUtilities.classOopToKlass(ref());
+            reflectedType = vm.referenceType(k);
         }
         return reflectedType;
     }
 
     public String toString() {
-        return "instance of " + referenceType().name() + 
-               "(reflected class=" + reflectedType().name() + ", " + "id=" + 
+        return "instance of " + referenceType().name() +
+               "(reflected class=" + reflectedType().name() + ", " + "id=" +
                uniqueID() + ")";
     }
 }

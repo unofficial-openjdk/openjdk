@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)hpi_solaris.hpp	1.30 07/08/29 13:42:20 JVM"
+#pragma ident "@(#)hpi_solaris.hpp      1.30 07/08/29 13:42:20 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 //
@@ -40,11 +40,11 @@
 // HPI_FileInterface
 
 // Many system calls can be interrupted by signals and must be restarted.
-// Restart support was added without disturbing the extent of thread 
+// Restart support was added without disturbing the extent of thread
 // interruption support.
 
 inline int    hpi::close(int fd) {
-  RESTARTABLE_RETURN_INT(::close(fd)); 
+  RESTARTABLE_RETURN_INT(::close(fd));
 }
 
 inline size_t hpi::read(int fd, void *buf, unsigned int nBytes) {
@@ -59,7 +59,7 @@ inline size_t hpi::write(int fd, const void *buf, unsigned int nBytes) {
 // HPI_SocketInterface
 
 inline int    hpi::socket_close(int fd) {
-  RESTARTABLE_RETURN_INT(::close(fd)); 
+  RESTARTABLE_RETURN_INT(::close(fd));
 }
 
 inline int    hpi::socket(int domain, int type, int protocol) {
@@ -81,7 +81,7 @@ inline int    hpi::raw_send(int fd, char *buf, int nBytes, int flags) {
 // As both poll and select can be interrupted by signals, we have to be
 // prepared to restart the system call after updating the timeout, unless
 // a poll() is done with timeout == -1, in which case we repeat with this
-// "wait forever" value. 
+// "wait forever" value.
 
 inline int    hpi::timeout(int fd, long timeout) {
   int res;
@@ -99,23 +99,23 @@ inline int    hpi::timeout(int fd, long timeout) {
   for(;;) {
     INTERRUPTIBLE_NORESTART(::poll(&pfd, 1, timeout), res, os::Solaris::clear_interrupted);
     if(res == OS_ERR && errno == EINTR) {
-	if(timeout != -1) {
-	    gettimeofday(&t, &aNull);
-	    newtime = ((julong)t.tv_sec * 1000)  +  t.tv_usec /1000;
-	    timeout -= newtime - prevtime;
-	    if(timeout <= 0)
-	      return OS_OK;
-	    prevtime = newtime;
-	}
+        if(timeout != -1) {
+            gettimeofday(&t, &aNull);
+            newtime = ((julong)t.tv_sec * 1000)  +  t.tv_usec /1000;
+            timeout -= newtime - prevtime;
+            if(timeout <= 0)
+              return OS_OK;
+            prevtime = newtime;
+        }
     } else
       return res;
   }
 }
 
 inline int    hpi::listen(int fd, int count) {
-  if (fd < 0) 
+  if (fd < 0)
     return OS_ERR;
-  
+
   return ::listen(fd, count);
 }
 
@@ -124,7 +124,7 @@ hpi::connect(int fd, struct sockaddr *him, int len) {
   do {
     int _result;
     INTERRUPTIBLE_NORESTART(::connect(fd, him, len), _result,
-			    os::Solaris::clear_interrupted);
+                            os::Solaris::clear_interrupted);
 
     // Depending on when thread interruption is reset, _result could be
     // one of two values when errno == EINTR
@@ -132,11 +132,11 @@ hpi::connect(int fd, struct sockaddr *him, int len) {
     if (((_result == OS_INTRPT) || (_result == OS_ERR)) && (errno == EINTR)) {
       /* restarting a connect() changes its errno semantics */
       INTERRUPTIBLE(::connect(fd, him, len), _result,
-		      os::Solaris::clear_interrupted);
+                      os::Solaris::clear_interrupted);
       /* undo these changes */
       if (_result == OS_ERR) {
-	if (errno == EALREADY) errno = EINPROGRESS; /* fall through */
-	else if (errno == EISCONN) { errno = 0; return OS_OK; }
+        if (errno == EALREADY) errno = EINPROGRESS; /* fall through */
+        else if (errno == EISCONN) { errno = 0; return OS_OK; }
       }
     }
     return _result;
@@ -146,17 +146,17 @@ hpi::connect(int fd, struct sockaddr *him, int len) {
 inline int    hpi::accept(int fd, struct sockaddr *him, int *len) {
   if (fd < 0)
     return OS_ERR;
-  INTERRUPTIBLE_RETURN_INT((int)::accept(fd, him, (socklen_t*) len), os::Solaris::clear_interrupted); 
+  INTERRUPTIBLE_RETURN_INT((int)::accept(fd, him, (socklen_t*) len), os::Solaris::clear_interrupted);
 }
 
 inline int    hpi::recvfrom(int fd, char *buf, int nBytes, int flags,
-			    sockaddr *from, int *fromlen) {
+                            sockaddr *from, int *fromlen) {
   //%%note jvm_r11
   INTERRUPTIBLE_RETURN_INT((int)::recvfrom(fd, buf, nBytes, (unsigned int) flags, from, (socklen_t *)fromlen), os::Solaris::clear_interrupted);
 }
 
 inline int    hpi::sendto(int fd, char *buf, int len, int flags,
-			  struct sockaddr *to, int tolen) {
+                          struct sockaddr *to, int tolen) {
   //%%note jvm_r11
   INTERRUPTIBLE_RETURN_INT((int)::sendto(fd, buf, len, (unsigned int) flags, to, tolen),os::Solaris::clear_interrupted);
 }
@@ -177,18 +177,18 @@ inline int    hpi::socket_available(int fd, jint *pbytes) {
 
 
 /*
-HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown, 
+HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown,
         int, "%d",
         (int fd, int howto),
         ("fd = %d, howto = %d", fd, howto),
         (fd, howto));
-	*/
+        */
 inline int hpi::socket_shutdown(int fd, int howto){
   return ::shutdown(fd, howto);
 }
 
 /*
-HPIDECL(bind, "bind", _socket, Bind, 
+HPIDECL(bind, "bind", _socket, Bind,
         int, "%d",
         (int fd, struct sockaddr *him, int len),
         ("fd = %d, him = %p, len = %d",
@@ -200,15 +200,15 @@ inline int hpi::bind(int fd, struct sockaddr *him, int len){
 }
 
 /*
-HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName, 
+HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName,
         int, "%d",
         (int fd, struct sockaddr *him, int *len),
         ("fd = %d, him = %p, len = %p",
          fd, him, len),
         (fd, him, len));
-	*/
+        */
 inline int hpi::get_sock_name(int fd, struct sockaddr *him, int *len){
-  return ::getsockname(fd, him, (socklen_t*) len); 
+  return ::getsockname(fd, him, (socklen_t*) len);
 }
 
 /*
@@ -217,7 +217,7 @@ HPIDECL(get_host_name, "get_host_name", _socket, GetHostName, int, "%d",
         ("hostname = %p, namelen = %d",
          hostname, namelen),
         (hostname, namelen));
-	*/
+        */
 inline int hpi::get_host_name(char* name, int namelen){
   return ::gethostname(name, namelen);
 }
@@ -228,10 +228,10 @@ HPIDECL(get_sock_opt, "get_sock_opt", _socket, SocketGetOption, int, "%d",
         ("fd = %d, level = %d, optname = %d, optval = %p, optlen = %p",
          fd, level, optname, optval, optlen),
         (fd, level, optname, optval, optlen));
-	*/
-inline int hpi::get_sock_opt(int fd, int level, int optname, 
-			     char *optval, int* optlen){
-  return ::getsockopt(fd, level, optname, optval, (socklen_t*) optlen); 
+        */
+inline int hpi::get_sock_opt(int fd, int level, int optname,
+                             char *optval, int* optlen){
+  return ::getsockopt(fd, level, optname, optval, (socklen_t*) optlen);
 }
 
 /*
@@ -240,9 +240,9 @@ HPIDECL(set_sock_opt, "set_sock_opt", _socket, SocketSetOption, int, "%d",
         ("fd = %d, level = %d, optname = %d, optval = %p, optlen = %d",
          fd, level, optname, optval, optlen),
         (fd, level, optname, optval, optlen));
-	*/
-inline int hpi::set_sock_opt(int fd, int level, int optname, 
-			     const char *optval, int optlen){
+        */
+inline int hpi::set_sock_opt(int fd, int level, int optname,
+                             const char *optval, int optlen){
   return ::setsockopt(fd, level, optname, optval, optlen);
 }
 

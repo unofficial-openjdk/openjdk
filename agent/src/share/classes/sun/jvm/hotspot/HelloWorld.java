@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot;
@@ -45,11 +45,11 @@ public class HelloWorld {
   private static int b() {
     return 1 + c();
   }
-  
+
   private static int c() {
     return 1 + d("Hi");
   }
-  
+
   private static int d(String x) {
     System.out.println("HelloWorld.d() received \"" + x + "\" as argument");
     synchronized(lock) {
@@ -73,7 +73,7 @@ public class HelloWorld {
         byte b = (byte) i;
 
         int ret = e();
-      
+
         System.out.println("Tenth Fibonacci number in all formats: " +
                            i + ", " +
                            l + ", " +

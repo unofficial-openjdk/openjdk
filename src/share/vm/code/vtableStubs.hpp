@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vtableStubs.hpp	1.27 07/05/05 17:05:22 JVM"
+#pragma ident "@(#)vtableStubs.hpp      1.27 07/05/05 17:05:22 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // A VtableStub holds an individual code stub for a pair (vtable index, #args) for either itables or vtables
@@ -61,7 +61,7 @@ class VtableStub {
     return _index == index && _is_vtable_stub == is_vtable_stub;
   }
   bool contains(address pc) const                { return code_begin() <= pc && pc < code_end(); }
-  
+
   void set_exception_points(address npe_addr, address ame_addr) {
     _npe_offset = npe_addr - code_begin();
     _ame_offset = ame_addr - code_begin();
@@ -72,10 +72,10 @@ class VtableStub {
   }
 
   // platform-dependent routines
-  static int  pd_code_size_limit(bool is_vtable_stub);  
+  static int  pd_code_size_limit(bool is_vtable_stub);
   static int  pd_code_alignment();
   // CNC: Removed because vtable stubs are now made with an ideal graph
-  // static bool pd_disregard_arg_size(); 
+  // static bool pd_disregard_arg_size();
 
   static void align_chunk() {
     uintptr_t off = (uintptr_t)( _chunk + sizeof(VtableStub) ) % pd_code_alignment();
@@ -84,8 +84,8 @@ class VtableStub {
 
  public:
   // Query
-  bool is_itable_stub()                          { return !_is_vtable_stub; } 
-  bool is_vtable_stub()                          { return  _is_vtable_stub; } 
+  bool is_itable_stub()                          { return !_is_vtable_stub; }
+  bool is_vtable_stub()                          { return  _is_vtable_stub; }
   bool is_abstract_method_error(address epc)     { return epc == code_begin()+_ame_offset; }
   bool is_null_pointer_exception(address epc)    { return epc == code_begin()+_npe_offset; }
 

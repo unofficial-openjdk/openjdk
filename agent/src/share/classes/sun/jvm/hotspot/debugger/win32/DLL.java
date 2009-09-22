@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger.win32;
@@ -42,7 +42,7 @@ class DLL implements LoadObject {
     file = new MemoizedObject() {
         public Object computeValue() {
           return COFFFileParser.getParser().parse(fullPathName);
-        }        
+        }
       };
     addr = relocation;
   }
@@ -97,7 +97,7 @@ class DLL implements LoadObject {
     if (db != null) {
       return db;
     }
-    
+
     // Try to parse
     if (dbg == null) {
       return null; // Need Win32Debugger
@@ -106,7 +106,7 @@ class DLL implements LoadObject {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(fullPathName != null, "Need full path name to build debug info database");
     }
-    
+
     db = new Win32CDebugInfoBuilder(dbg).buildDataBase(fullPathName, addr);
     return db;
   }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -34,7 +34,7 @@ public class BytecodeGoto extends BytecodeJmp {
 
   public int getTargetBCI() {
     return bci() + javaShortAt(1);
-  } 
+  }
 
   public void verify() {
     if (Assert.ASSERTS_ENABLED) {

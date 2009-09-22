@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -73,7 +73,7 @@ public class JSJavaTypeArrayKlass extends JSJavaArrayKlass {
       int type = (int) getTypeArrayKlass().getElementType();
       switch (type) {
          case TypeArrayKlass.T_BOOLEAN:
-	    return Boolean.valueOf(typeArr.getBooleanAt(index));
+            return Boolean.valueOf(typeArr.getBooleanAt(index));
          case TypeArrayKlass.T_CHAR:
             return new String(new char[] { typeArr.getCharAt(index) });
          case TypeArrayKlass.T_FLOAT:

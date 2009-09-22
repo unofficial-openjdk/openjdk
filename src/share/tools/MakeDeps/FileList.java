@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import java.io.*;
@@ -43,13 +43,13 @@ public class FileList extends Vector {
     private Platform plat;
 
     public FileList(String n, Platform plat) {
-	super();
-	this.plat = plat;
-	beenHere = mayBeCycle = isCycle = false;
-	platformDependentInclude = null;
-	name = n;
-	count = 0;
-	useGrandInclude = plat.haveGrandInclude();
+        super();
+        this.plat = plat;
+        beenHere = mayBeCycle = isCycle = false;
+        platformDependentInclude = null;
+        name = n;
+        count = 0;
+        useGrandInclude = plat.haveGrandInclude();
     }
 
     // Change definition of equality from AbstractList so remove() works properly
@@ -59,98 +59,98 @@ public class FileList extends Vector {
 
     // Necessary accessors
     public String getName() {
-	return name;
+        return name;
     }
 
     public void setPlatformDependentInclude(String arg) {
-	platformDependentInclude = arg;
+        platformDependentInclude = arg;
     }
 
     public String getPlatformDependentInclude() {
-	return platformDependentInclude;
+        return platformDependentInclude;
     }
 
     public boolean getUseGrandInclude() {
-	return useGrandInclude;
+        return useGrandInclude;
     }
 
     public void setUseGrandInclude(boolean arg) {
-	useGrandInclude = arg;
+        useGrandInclude = arg;
     }
 
     public void incrementCount() {
-	count++;
+        count++;
     }
 
     public int getCount() {
-	return count;
+        return count;
     }
 
     public FileList listForFile(String fileName) {
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    FileList fl = (FileList) iter.next();
-	    if (plat.fileNameStringEquality(fl.name, fileName)) {
-		plat.fileNamePortabilityCheck(fl.name, fileName);
-		return fl;
-	    }
-	}
-	plat.fileNamePortabilityCheck(fileName);
-	FileList newList = new FileList(fileName, plat);
-	add(newList);
-	return newList;
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            FileList fl = (FileList) iter.next();
+            if (plat.fileNameStringEquality(fl.name, fileName)) {
+                plat.fileNamePortabilityCheck(fl.name, fileName);
+                return fl;
+            }
+        }
+        plat.fileNamePortabilityCheck(fileName);
+        FileList newList = new FileList(fileName, plat);
+        add(newList);
+        return newList;
     }
 
     public boolean hasListForFile(String fileName) {
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    FileList fl = (FileList) iter.next();
-	    if (plat.fileNameStringEquality(fl.name, fileName)) {
-		plat.fileNamePortabilityCheck(fl.name, fileName);
-		return true;
-	    }
-	}
-	return false;
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            FileList fl = (FileList) iter.next();
+            if (plat.fileNameStringEquality(fl.name, fileName)) {
+                plat.fileNamePortabilityCheck(fl.name, fileName);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean compareLists(FileList s) {
-	Iterator myIter = iterator();
-	Iterator hisIter = s.iterator();
+        Iterator myIter = iterator();
+        Iterator hisIter = s.iterator();
 
-	while (myIter.hasNext() &&
-	       hisIter.hasNext()) {
-	    // crude: order dependent
-	    FileList myElement = (FileList) myIter.next();
-	    FileList hisElement = (FileList) hisIter.next();
-	    if (!plat.fileNameStringEquality(myElement.name,
-					     hisElement.name)) {
-		return false;
-	    }
-	}
-	
-	if (myIter.hasNext() != hisIter.hasNext()) {
-	    // One ended earlier
-	    return false;
-	}
-	
-	return true;
+        while (myIter.hasNext() &&
+               hisIter.hasNext()) {
+            // crude: order dependent
+            FileList myElement = (FileList) myIter.next();
+            FileList hisElement = (FileList) hisIter.next();
+            if (!plat.fileNameStringEquality(myElement.name,
+                                             hisElement.name)) {
+                return false;
+            }
+        }
+
+        if (myIter.hasNext() != hisIter.hasNext()) {
+            // One ended earlier
+            return false;
+        }
+
+        return true;
     }
 
     public void addIfAbsent(FileList s) {
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    if (iter.next() == s) {
-		return;
-	    }
-	}
-	add(s);
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            if (iter.next() == s) {
+                return;
+            }
+        }
+        add(s);
     }
 
     public void sortByName() {
-	Collections.sort(this, new Comparator() {
-		public int compare(Object o1, Object o2) {
-		    FileList fl1 = (FileList) o1;
-		    FileList fl2 = (FileList) o2;
-		    return fl1.getName().compareTo(fl2.getName());
-		}
-	    });
+        Collections.sort(this, new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    FileList fl1 = (FileList) o1;
+                    FileList fl2 = (FileList) o2;
+                    return fl1.getName().compareTo(fl2.getName());
+                }
+            });
     }
 
     public void setFirstFile(FileList s) {
@@ -166,98 +166,98 @@ public class FileList extends Vector {
     }
 
     public boolean doFiles(FileList s) {
-	boolean result = true;
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    FileList h = (FileList) iter.next();
-	    if (h.platformDependentInclude != null) {
-		System.err.println("Error: the source for " +
-				   h.platformDependentInclude +
-				   " is " + h.name + ".");
-		System.err.println("\tIt shouldn't be included directly by " +
-				   name + ".");
-		h.platformDependentInclude = null; // report once per file
-		result = false;
-	    }
-	    h.doHFile(s);
-	}
-	return result;
+        boolean result = true;
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            FileList h = (FileList) iter.next();
+            if (h.platformDependentInclude != null) {
+                System.err.println("Error: the source for " +
+                                   h.platformDependentInclude +
+                                   " is " + h.name + ".");
+                System.err.println("\tIt shouldn't be included directly by " +
+                                   name + ".");
+                h.platformDependentInclude = null; // report once per file
+                result = false;
+            }
+            h.doHFile(s);
+        }
+        return result;
     }
-    
+
     public void traceCycle(FileList s) {
-	if (isCycle) // already traced
-	    return;
-	isCycle = true;
-	System.err.println("\ttracing cycle for " + name);
-	// FIXME: must return status in caller routine
-	// exitCode = 1;
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    FileList q = (FileList) iter.next();
-	    if (q.mayBeCycle) {
-		if (s == q) {
-		    plat.fatalError("\tend of cycle for " + s.getName());
-		} else {
-		    q.traceCycle(s);
-		}
-	    }
-	}
+        if (isCycle) // already traced
+            return;
+        isCycle = true;
+        System.err.println("\ttracing cycle for " + name);
+        // FIXME: must return status in caller routine
+        // exitCode = 1;
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            FileList q = (FileList) iter.next();
+            if (q.mayBeCycle) {
+                if (s == q) {
+                    plat.fatalError("\tend of cycle for " + s.getName());
+                } else {
+                    q.traceCycle(s);
+                }
+            }
+        }
     }
-    
+
     public void doHFile(FileList s) {
-	if (beenHere) {
-	    if (mayBeCycle) {
-		traceCycle(this);
-	    }
-	    return;
-	}
-	beenHere = true;
-	mayBeCycle = true;
-	doFiles(s);
-	mayBeCycle = false;
-	s.add(this);
+        if (beenHere) {
+            if (mayBeCycle) {
+                traceCycle(this);
+            }
+            return;
+        }
+        beenHere = true;
+        mayBeCycle = true;
+        doFiles(s);
+        mayBeCycle = false;
+        s.add(this);
     }
 
     public FileList doCFile() {
-	FileList s = new FileList(name, plat);
-	s.useGrandInclude = useGrandInclude; // propagate this
-	doFiles(s);
-	for (Iterator iter = s.iterator(); iter.hasNext(); ) {
-	    FileList l = (FileList) iter.next();
-	    l.beenHere = false;
-	}
-	return s;
+        FileList s = new FileList(name, plat);
+        s.useGrandInclude = useGrandInclude; // propagate this
+        doFiles(s);
+        for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+            FileList l = (FileList) iter.next();
+            l.beenHere = false;
+        }
+        return s;
     }
-    
+
     /** if .h file is included thresh times, put it in the grand
         include file */
     public void putInclFile(Database db)
-	throws IOException {
+        throws IOException {
         boolean needline = true;
-	FileName inclName = plat.getInclFileTemplate().copyStem(name);
-	PrintWriter inclFile =
-	    new PrintWriter(new FileWriter(inclName.dirPreStemSuff()));
-	if (plat.haveGrandInclude() && plat.includeGIInEachIncl()) {
-	    inclFile.println("# include \"" +
-			     plat.getGIFileTemplate().dirPreStemAltSuff() +
-			     "\"");
-	    needline = false;
-	}
-	for (Iterator iter = iterator(); iter.hasNext(); ) {
-	    FileList hfile = (FileList) iter.next();
-	    if (!db.hfileIsInGrandInclude(hfile, this)) {
-		inclFile.println("# include \"" +
-				 plat.getInclFileTemplate().getInvDir() +
-				 hfile.name +
-				 "\"");
-	        needline = false;
-	    }
-	}
+        FileName inclName = plat.getInclFileTemplate().copyStem(name);
+        PrintWriter inclFile =
+            new PrintWriter(new FileWriter(inclName.dirPreStemSuff()));
+        if (plat.haveGrandInclude() && plat.includeGIInEachIncl()) {
+            inclFile.println("# include \"" +
+                             plat.getGIFileTemplate().dirPreStemAltSuff() +
+                             "\"");
+            needline = false;
+        }
+        for (Iterator iter = iterator(); iter.hasNext(); ) {
+            FileList hfile = (FileList) iter.next();
+            if (!db.hfileIsInGrandInclude(hfile, this)) {
+                inclFile.println("# include \"" +
+                                 plat.getInclFileTemplate().getInvDir() +
+                                 hfile.name +
+                                 "\"");
+                needline = false;
+            }
+        }
 
-	// Solaris C++ in strict mode warns about empty files
+        // Solaris C++ in strict mode warns about empty files
 
-	if(needline) {
-	    inclFile.println();
-	}
+        if(needline) {
+            inclFile.println();
+        }
 
-	inclFile.close();
+        inclFile.close();
     }
 }

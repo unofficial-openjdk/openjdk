@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmStructs.cpp	1.189 08/04/09 19:20:08 JVM"
+#pragma ident "@(#)vmStructs.cpp        1.189 08/04/09 19:20:08 JVM"
 #endif
 /*
  * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -1282,7 +1282,7 @@ static inline uint64_t cast_uint64_t(size_t x)
    declare_integer_type(ReferenceType)                                    \
   declare_toplevel_type(StubQueue*)                                       \
   declare_toplevel_type(Thread*)                                          \
-  declare_toplevel_type(Universe)  
+  declare_toplevel_type(Universe)
 
   /* NOTE that we do not use the last_entry() macro here; it is used  */
   /* in vmStructs_<os>_<cpu>.hpp's VM_TYPES_OS_CPU macro (and must be */
@@ -1754,15 +1754,15 @@ static inline uint64_t cast_uint64_t(size_t x)
 // This macro checks the type of a VMStructEntry by comparing pointer types
 #define CHECK_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)                 \
  {typeName *dummyObj = NULL; type* dummy = &dummyObj->fieldName; }
- 
+
 // This macro checks the type of a volatile VMStructEntry by comparing pointer types
 #define CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)        \
  {typedef type dummyvtype; typeName *dummyObj = NULL; volatile dummyvtype* dummy = &dummyObj->fieldName; }
- 
+
 // This macro checks the type of a VMStructEntry by comparing pointer types
 #define CHECK_STATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)                    \
  {type* dummy = &typeName::fieldName; }
- 
+
 // This macro ensures the type of a field and its containing type are
 // present in the type table. The assertion string is shorter than
 // preferable because (incredibly) of a bug in Solstice NFS client
@@ -1951,7 +1951,7 @@ static inline uint64_t cast_uint64_t(size_t x)
 
 //
 // Instantiation of VMStructEntries, VMTypeEntries and VMIntConstantEntries
-// 
+//
 
 // These initializers are allowed to access private fields in classes
 // as long as class VMStructs is a friend

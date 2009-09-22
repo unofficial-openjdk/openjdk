@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciInstance.cpp	1.17 07/09/28 10:23:24 JVM"
+#pragma ident "@(#)ciInstance.cpp       1.17 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -69,13 +69,13 @@ ciConstant ciInstance::field_value(ciField* field) {
   int offset = field->offset();
 
   switch(field_btype) {
-  case T_BYTE: 
+  case T_BYTE:
     return ciConstant(field_btype, obj->byte_field(offset));
     break;
-  case T_CHAR: 
+  case T_CHAR:
     return ciConstant(field_btype, obj->char_field(offset));
     break;
-  case T_SHORT: 
+  case T_SHORT:
     return ciConstant(field_btype, obj->short_field(offset));
     break;
   case T_BOOLEAN:

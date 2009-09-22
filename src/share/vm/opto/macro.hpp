@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)macro.hpp	1.11 07/07/19 19:08:26 JVM"
+#pragma ident "@(#)macro.hpp    1.11 07/07/19 19:08:26 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 class  AllocateNode;
@@ -99,7 +99,7 @@ private:
   Node* opt_bits_test(Node* ctrl, Node* region, int edge, Node* word, int mask, int bits, bool return_fast_path = false);
   void copy_predefined_input_for_runtime_call(Node * ctrl, CallNode* oldcall, CallNode* call);
   CallNode* make_slow_call(CallNode *oldcall, const TypeFunc* slow_call_type, address slow_call,
-                       const char* leaf_name, Node* slow_path, Node* parm0, Node* parm1); 
+                       const char* leaf_name, Node* slow_path, Node* parm0, Node* parm1);
   void extract_call_projections(CallNode *call);
 
   Node* initialize_object(AllocateNode* alloc,
@@ -108,7 +108,7 @@ private:
                           Node* size_in_bytes);
 
   Node* prefetch_allocation(Node* i_o,
-                            Node*& needgc_false, Node*& contended_phi_rawmem, 
+                            Node*& needgc_false, Node*& contended_phi_rawmem,
                             Node* old_eden_top, Node* new_eden_top,
                             Node* length);
 

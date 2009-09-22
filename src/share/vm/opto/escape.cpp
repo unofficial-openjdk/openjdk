@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)escape.cpp	1.10 07/05/17 15:58:23 JVM"
+#pragma ident "@(#)escape.cpp   1.10 07/05/17 15:58:23 JVM"
 #endif
 /*
  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -782,7 +782,7 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
 //
 //  Convert the types of unescaped object to instance types where possible,
 //  propagate the new type information through the graph, and update memory
-//  edges and MergeMem inputs to reflect the new type.  
+//  edges and MergeMem inputs to reflect the new type.
 //
 //  We start with allocations (and calls which may be allocations)  on alloc_worklist.
 //  The processing is done in 4 phases:
@@ -1662,7 +1662,7 @@ void ConnectionGraph::process_call_arguments(CallNode *call, PhaseTransform *pha
         for (uint i = TypeFunc::Parms; i < d->cnt(); i++) {
           const Type* at = d->field_at(i);
           int k = i - TypeFunc::Parms;
-  
+
           if (at->isa_oopptr() != NULL) {
             Node *arg = call->in(i)->uncast();
 
@@ -1817,7 +1817,7 @@ void ConnectionGraph::process_call_result(ProjNode *resproj, PhaseTransform *pha
           bool ret_arg = false;
           for (uint i = TypeFunc::Parms; i < d->cnt(); i++) {
             const Type* at = d->field_at(i);
-    
+
             if (at->isa_oopptr() != NULL) {
               Node *arg = call->in(i)->uncast();
 

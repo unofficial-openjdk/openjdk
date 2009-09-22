@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)IOBuf.hpp	1.13 07/05/05 17:02:04 JVM"
+#pragma ident "@(#)IOBuf.hpp    1.13 07/05/05 17:02:04 JVM"
 #endif
 /*
  * Copyright 2000-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #ifndef _IO_BUF_
@@ -197,7 +197,7 @@ private:
   // Buffers
   Buffer* inBuf;
   Buffer* outBuf;
-  
+
   // Simple finite-state machine to handle binary data
   enum State {
     TEXT_STATE,

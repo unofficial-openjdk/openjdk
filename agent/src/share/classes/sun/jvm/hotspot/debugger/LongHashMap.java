@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.debugger;
@@ -42,7 +42,7 @@ public class LongHashMap
         private long   key;
         private Object value;
         private Entry  next;
-        
+
         Entry(int hash, long key, Object value, Entry next) {
             this.hash  = hash;
             this.key   = key;
@@ -50,90 +50,90 @@ public class LongHashMap
             this.next  = next;
         }
 
-    	/**
-	 * Returns the key corresponding to this entry.
-	 *
-	 * @return the key corresponding to this entry.
-	 */
-	long getKey() { return key; }
-
-    	/**
-	 * Returns the value corresponding to this entry.  If the mapping
-	 * has been removed from the backing map (by the iterator's
-	 * <tt>remove</tt> operation), the results of this call are undefined.
-	 *
-	 * @return the value corresponding to this entry.
-	 */
-	Object getValue() { return value; }
-
-    	/**
-	 * Replaces the value corresponding to this entry with the specified
-	 * value (optional operation).  (Writes through to the map.)  The
-	 * behavior of this call is undefined if the mapping has already been
-	 * removed from the map (by the iterator's <tt>remove</tt> operation).
-	 *
-	 * @param value new value to be stored in this entry.
-	 * @return old value corresponding to the entry.
-         * 
-	 * @throws UnsupportedOperationException if the <tt>put</tt> operation
-	 *	      is not supported by the backing map.
-	 * @throws ClassCastException if the class of the specified value
-	 * 	      prevents it from being stored in the backing map.
-	 * @throws    IllegalArgumentException if some aspect of this value
-	 *	      prevents it from being stored in the backing map.
-	 * @throws NullPointerException the backing map does not permit
-	 *	      <tt>null</tt> values, and the specified value is
-	 *	      <tt>null</tt>.
+        /**
+         * Returns the key corresponding to this entry.
+         *
+         * @return the key corresponding to this entry.
          */
-	Object setValue(Object value) {
-	    Object oldValue = this.value;
-	    this.value = value;
-	    return oldValue;
+        long getKey() { return key; }
+
+        /**
+         * Returns the value corresponding to this entry.  If the mapping
+         * has been removed from the backing map (by the iterator's
+         * <tt>remove</tt> operation), the results of this call are undefined.
+         *
+         * @return the value corresponding to this entry.
+         */
+        Object getValue() { return value; }
+
+        /**
+         * Replaces the value corresponding to this entry with the specified
+         * value (optional operation).  (Writes through to the map.)  The
+         * behavior of this call is undefined if the mapping has already been
+         * removed from the map (by the iterator's <tt>remove</tt> operation).
+         *
+         * @param value new value to be stored in this entry.
+         * @return old value corresponding to the entry.
+         *
+         * @throws UnsupportedOperationException if the <tt>put</tt> operation
+         *            is not supported by the backing map.
+         * @throws ClassCastException if the class of the specified value
+         *            prevents it from being stored in the backing map.
+         * @throws    IllegalArgumentException if some aspect of this value
+         *            prevents it from being stored in the backing map.
+         * @throws NullPointerException the backing map does not permit
+         *            <tt>null</tt> values, and the specified value is
+         *            <tt>null</tt>.
+         */
+        Object setValue(Object value) {
+            Object oldValue = this.value;
+            this.value = value;
+            return oldValue;
         }
 
-	/**
-	 * Compares the specified object with this entry for equality.
-	 * Returns <tt>true</tt> if the given object is also a map entry and
-	 * the two entries represent the same mapping.  More formally, two
-	 * entries <tt>e1</tt> and <tt>e2</tt> represent the same mapping
-	 * if<pre>
+        /**
+         * Compares the specified object with this entry for equality.
+         * Returns <tt>true</tt> if the given object is also a map entry and
+         * the two entries represent the same mapping.  More formally, two
+         * entries <tt>e1</tt> and <tt>e2</tt> represent the same mapping
+         * if<pre>
          *     (e1.getKey()==null ?
          *      e2.getKey()==null : e1.getKey().equals(e2.getKey()))  &&
          *     (e1.getValue()==null ?
          *      e2.getValue()==null : e1.getValue().equals(e2.getValue()))
          * </pre>
-	 * This ensures that the <tt>equals</tt> method works properly across
-	 * different implementations of the <tt>Map.Entry</tt> interface.
-	 *
-	 * @param o object to be compared for equality with this map entry.
-	 * @return <tt>true</tt> if the specified object is equal to this map
-	 *         entry.
+         * This ensures that the <tt>equals</tt> method works properly across
+         * different implementations of the <tt>Map.Entry</tt> interface.
+         *
+         * @param o object to be compared for equality with this map entry.
+         * @return <tt>true</tt> if the specified object is equal to this map
+         *         entry.
          */
-	public boolean equals(Object o) {
-	    if (!(o instanceof Entry))
-		return false;
-	    Entry e = (Entry)o;
-	    return (key == e.getKey()) && eq(value, e.getValue());
+        public boolean equals(Object o) {
+            if (!(o instanceof Entry))
+                return false;
+            Entry e = (Entry)o;
+            return (key == e.getKey()) && eq(value, e.getValue());
         }
 
-	/**
-	 * Returns the hash code value for this map entry.  The hash code
-	 * of a map entry <tt>e</tt> is defined to be: <pre>
-	 *     (e.getKey()==null   ? 0 : e.getKey().hashCode()) ^
-	 *     (e.getValue()==null ? 0 : e.getValue().hashCode())
+        /**
+         * Returns the hash code value for this map entry.  The hash code
+         * of a map entry <tt>e</tt> is defined to be: <pre>
+         *     (e.getKey()==null   ? 0 : e.getKey().hashCode()) ^
+         *     (e.getValue()==null ? 0 : e.getValue().hashCode())
          * </pre>
-	 * This ensures that <tt>e1.equals(e2)</tt> implies that
-	 * <tt>e1.hashCode()==e2.hashCode()</tt> for any two Entries
-	 * <tt>e1</tt> and <tt>e2</tt>, as required by the general
-	 * contract of <tt>Object.hashCode</tt>.
-	 *
-	 * @return the hash code value for this map entry.
-	 * @see Object#hashCode()
-	 * @see Object#equals(Object)
-	 * @see #equals(Object)
-	 */
-	public int hashCode() {
-	    return hash ^ (value==null ? 0 : value.hashCode());
+         * This ensures that <tt>e1.equals(e2)</tt> implies that
+         * <tt>e1.hashCode()==e2.hashCode()</tt> for any two Entries
+         * <tt>e1</tt> and <tt>e2</tt>, as required by the general
+         * contract of <tt>Object.hashCode</tt>.
+         *
+         * @return the hash code value for this map entry.
+         * @see Object#hashCode()
+         * @see Object#equals(Object)
+         * @see #equals(Object)
+         */
+        public int hashCode() {
+            return hash ^ (value==null ? 0 : value.hashCode());
         }
     }
 
@@ -172,8 +172,8 @@ public class LongHashMap
     transient int modCount = 0;
 
     /**
-     * Constructs a new, empty map with the specified initial 
-     * capacity and the specified load factor. 
+     * Constructs a new, empty map with the specified initial
+     * capacity and the specified load factor.
      *
      * @param      initialCapacity   the initial capacity of the HashMap.
      * @param      loadFactor        the load factor of the HashMap
@@ -181,17 +181,17 @@ public class LongHashMap
      *               than zero, or if the load factor is nonpositive.
      */
     public LongHashMap(int initialCapacity, float loadFactor) {
-	if (initialCapacity < 0)
-	    throw new IllegalArgumentException("Illegal Initial Capacity: "+
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Initial Capacity: "+
                                                initialCapacity);
         if (loadFactor <= 0 || Float.isNaN(loadFactor))
             throw new IllegalArgumentException("Illegal Load factor: "+
                                                loadFactor);
         if (initialCapacity==0)
             initialCapacity = 1;
-	this.loadFactor = loadFactor;
-	table = new Entry[initialCapacity];
-	threshold = (int)(initialCapacity * loadFactor);
+        this.loadFactor = loadFactor;
+        table = new Entry[initialCapacity];
+        threshold = (int)(initialCapacity * loadFactor);
     }
 
     /**
@@ -203,7 +203,7 @@ public class LongHashMap
      *              than zero.
      */
     public LongHashMap(int initialCapacity) {
-	this(initialCapacity, 0.75f);
+        this(initialCapacity, 0.75f);
     }
 
     /**
@@ -211,7 +211,7 @@ public class LongHashMap
      * factor, which is <tt>0.75</tt>.
      */
     public LongHashMap() {
-	this(11, 0.75f);
+        this(11, 0.75f);
     }
 
     /**
@@ -220,7 +220,7 @@ public class LongHashMap
      * @return the number of key-value mappings in this map.
      */
     public int size() {
-	return size;
+        return size;
     }
 
     /**
@@ -229,7 +229,7 @@ public class LongHashMap
      * @return <tt>true</tt> if this map contains no key-value mappings.
      */
     public boolean isEmpty() {
-	return size == 0;
+        return size == 0;
     }
 
     /**
@@ -251,7 +251,7 @@ public class LongHashMap
     /**
      * Returns <tt>true</tt> if this map contains a mapping for the specified
      * key.
-     * 
+     *
      * @return <tt>true</tt> if this map contains a mapping for the specified
      * key.
      * @param key key whose presence in this Map is to be tested.
@@ -266,7 +266,7 @@ public class LongHashMap
      * for this key.
      */
     Entry getEntry(long key) {
-	Entry tab[] = table;
+        Entry tab[] = table;
         int hash = (int) key;
         int index = (hash & 0x7FFFFFFF) % tab.length;
 
@@ -274,7 +274,7 @@ public class LongHashMap
             if (e.hash == hash && e.key ==key)
                 return e;
 
-	return null;
+        return null;
     }
 
     /**
@@ -286,21 +286,21 @@ public class LongHashMap
      *         specified value.
      */
     public boolean containsValue(Object value) {
-	Entry tab[] = table;
+        Entry tab[] = table;
 
-	if (value==null) {
-	    for (int i = tab.length ; i-- > 0 ;)
-		for (Entry e = tab[i] ; e != null ; e = e.next)
-		    if (e.value==null)
-			return true;
-	} else {
-	    for (int i = tab.length ; i-- > 0 ;)
-		for (Entry e = tab[i] ; e != null ; e = e.next)
-		    if (value.equals(e.value))
-			return true;
-	}
+        if (value==null) {
+            for (int i = tab.length ; i-- > 0 ;)
+                for (Entry e = tab[i] ; e != null ; e = e.next)
+                    if (e.value==null)
+                        return true;
+        } else {
+            for (int i = tab.length ; i-- > 0 ;)
+                for (Entry e = tab[i] ; e != null ; e = e.next)
+                    if (value.equals(e.value))
+                        return true;
+        }
 
-	return false;
+        return false;
     }
 
     /**
@@ -311,12 +311,12 @@ public class LongHashMap
      * @param key key with which the specified value is to be associated.
      * @param value value to be associated with the specified key.
      * @return previous value associated with specified key, or <tt>null</tt>
-     *	       if there was no mapping for key.  A <tt>null</tt> return can
-     *	       also indicate that the HashMap previously associated
-     *	       <tt>null</tt> with the specified key.
+     *         if there was no mapping for key.  A <tt>null</tt> return can
+     *         also indicate that the HashMap previously associated
+     *         <tt>null</tt> with the specified key.
      */
     public Object put(long key, Object value) {
-	Entry tab[] = table;
+        Entry tab[] = table;
         int hash = (int) key;
         int index = (hash & 0x7FFFFFFF) % tab.length;
 
@@ -330,17 +330,17 @@ public class LongHashMap
         }
 
         // It's not there; grow the hash table if necessary...
-	modCount++;
-	if (size >= threshold) {
-	    rehash();
+        modCount++;
+        if (size >= threshold) {
+            rehash();
             tab = table;
             index = (hash & 0x7FFFFFFF) % tab.length;
-	}
+        }
 
         // ...and add the entry
-	size++;
+        size++;
         tab[index] = newEntry(hash, key, value, tab[index]);
-	return null;
+        return null;
     }
 
     /**
@@ -348,9 +348,9 @@ public class LongHashMap
      *
      * @param key key whose mapping is to be removed from the map.
      * @return previous value associated with specified key, or <tt>null</tt>
-     *	       if there was no mapping for key.  A <tt>null</tt> return can
-     *	       also indicate that the map previously associated <tt>null</tt>
-     *	       with the specified key.
+     *         if there was no mapping for key.  A <tt>null</tt> return can
+     *         also indicate that the map previously associated <tt>null</tt>
+     *         with the specified key.
      */
     public Object remove(long key) {
         Entry e = removeEntryForKey(key);
@@ -363,7 +363,7 @@ public class LongHashMap
      * for this key.
      */
     Entry removeEntryForKey(long key) {
-	Entry tab[] = table;
+        Entry tab[] = table;
         int hash = (int) key;
         int index = (hash & 0x7FFFFFFF) % tab.length;
 
@@ -381,7 +381,7 @@ public class LongHashMap
             }
         }
 
-	return null;
+        return null;
     }
 
     /**
@@ -412,11 +412,11 @@ public class LongHashMap
      * Removes all mappings from this map.
      */
     public void clear() {
-	Entry tab[] = table;
-	modCount++;
-	for (int index = tab.length; --index >= 0; )
-	    tab[index] = null;
-	size = 0;
+        Entry tab[] = table;
+        modCount++;
+        for (int index = tab.length; --index >= 0; )
+            tab[index] = null;
+        size = 0;
     }
 
     /**
@@ -425,25 +425,25 @@ public class LongHashMap
      * number of keys in this map exceeds its capacity and load factor.
      */
     void rehash() {
-	Entry oldTable[] = table;
-	int oldCapacity = oldTable.length;
-	int newCapacity = oldCapacity * 2 + 1;
-	Entry newTable[] = new Entry[newCapacity];
+        Entry oldTable[] = table;
+        int oldCapacity = oldTable.length;
+        int newCapacity = oldCapacity * 2 + 1;
+        Entry newTable[] = new Entry[newCapacity];
 
-	modCount++;
-	threshold = (int)(newCapacity * loadFactor);
-	table = newTable;
+        modCount++;
+        threshold = (int)(newCapacity * loadFactor);
+        table = newTable;
 
-	for (int i = oldCapacity ; i-- > 0 ;) {
-	    for (Entry old = oldTable[i] ; old != null ; ) {
-		Entry e = old;
-		old = old.next;
+        for (int i = oldCapacity ; i-- > 0 ;) {
+            for (Entry old = oldTable[i] ; old != null ; ) {
+                Entry e = old;
+                old = old.next;
 
-		int index = (e.hash & 0x7FFFFFFF) % newCapacity;
-		e.next = newTable[index];
-		newTable[index] = e;
-	    }
-	}
+                int index = (e.hash & 0x7FFFFFFF) % newCapacity;
+                e.next = newTable[index];
+                newTable[index] = e;
+            }
+        }
     }
 
     static boolean eq(Object o1, Object o2) {

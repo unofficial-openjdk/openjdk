@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)threadCritical_windows.cpp	1.17 07/09/17 09:59:36 JVM"
+#pragma ident "@(#)threadCritical_windows.cpp   1.17 07/09/17 09:59:36 JVM"
 #endif
 /*
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -62,7 +62,7 @@ void ThreadCritical::release() {
   CloseHandle(lock_event);
 }
 
-ThreadCritical::ThreadCritical() { 
+ThreadCritical::ThreadCritical() {
   DWORD current_thread = GetCurrentThreadId();
 
   if (lock_owner != current_thread) {
@@ -80,7 +80,7 @@ ThreadCritical::ThreadCritical() {
       lock_event = CreateEvent(NULL, false, false, NULL);
       initialized = true;
     }
-      
+
     assert(lock_owner == -1, "Lock acquired illegally.");
     lock_owner = current_thread;
   } else {
@@ -107,4 +107,3 @@ ThreadCritical::~ThreadCritical() {
     lock_count--;
   }
 }
-

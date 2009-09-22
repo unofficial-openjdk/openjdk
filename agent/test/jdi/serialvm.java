@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 import com.sun.jdi.*;
@@ -42,7 +42,7 @@ public class serialvm {
     static VirtualMachine vm1;
     static VirtualMachine vm2;
     static VirtualMachineManager vmmgr;
-    
+
     public static void println(String msg) {
         System.out.println(msg);
     }
@@ -66,7 +66,7 @@ public class serialvm {
                 "sun.jvm.hotspot.jdi.SAPIDAttachingConnector")) {
                 myPIDConn = tmpCon;
                 break;
-            } 
+            }
         }
 
         int pid1 = 0, pid2 = 0;
@@ -89,8 +89,8 @@ public class serialvm {
             usage();
         }
 
-	// attach, dispose, attach2, dispose2 pattern
-	// as opposed to attach1, attach2, dispose1, dispose2
+        // attach, dispose, attach2, dispose2 pattern
+        // as opposed to attach1, attach2, dispose1, dispose2
         vm1 = attachPID(pid1);
         if (vm1 != null) {
             System.out.println("vm1: attached ok!");

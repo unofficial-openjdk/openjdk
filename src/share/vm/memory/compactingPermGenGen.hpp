@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compactingPermGenGen.hpp	1.22 07/08/31 18:41:29 JVM"
+#pragma ident "@(#)compactingPermGenGen.hpp     1.22 07/08/31 18:41:29 JVM"
 #endif
 /*
  * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // All heaps contains a "permanent generation," containing permanent
@@ -59,13 +59,13 @@ private:
   // variable is initialized for only the unshared part but is
   // later extended to include the shared part during initialization
   // if shared spaces are being used.
-  // The reserved size for the _virtual_space for CompactingPermGenGen 
+  // The reserved size for the _virtual_space for CompactingPermGenGen
   // is the size of the space for the permanent generation including the
   // the shared spaces.  This can be seen by the use of MaxPermSize
-  // in the allocation of PermanentGenerationSpec.  The space for the 
+  // in the allocation of PermanentGenerationSpec.  The space for the
   // shared spaces is committed separately (???).
   // In general at initialization only a part of the
-  // space for the unshared part of the permanent generation is 
+  // space for the unshared part of the permanent generation is
   // committed and more is committed as the permanent generation is
   // grown.  In growing the permanent generation the capacity() and
   // max_capacity() of the generation are used.  For the permanent
@@ -117,13 +117,13 @@ public:
 
   CompactingPermGenGen(ReservedSpace rs, ReservedSpace shared_rs,
                        size_t initial_byte_size, int level, GenRemSet* remset,
-		       ContiguousSpace* space,
+                       ContiguousSpace* space,
                        PermanentGenerationSpec* perm_spec);
 
   const char* name() const {
     return "compacting perm gen";
   }
-  
+
   const char* short_name() const {
     return "Perm";
   }
@@ -165,11 +165,11 @@ public:
 
   bool is_in_unshared(const void* p) const {
     return OneContigSpaceCardGeneration::is_in(p);
-  } 
+  }
 
   bool is_in_shared(const void* p) const {
    return p >= shared_bottom && p < shared_end;
-   } 
+   }
 
   inline bool is_in(const void* p) const {
     return is_in_unshared(p) || is_in_shared(p);

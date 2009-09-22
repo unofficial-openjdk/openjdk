@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public interface HeapVisitor {
   public void prologue(long usedSize);
 
   // Callback method for each object
-  // Return true if the iteration should be stopped.	
+  // Return true if the iteration should be stopped.
   public boolean doObj(Oop obj);
 
   // This is called after the traversal is complete

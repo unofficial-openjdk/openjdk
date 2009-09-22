@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)codeBlob.cpp	1.128 07/05/05 17:05:19 JVM"
+#pragma ident "@(#)codeBlob.cpp 1.128 07/05/05 17:05:19 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -93,7 +93,7 @@ CodeBlob::CodeBlob(
   _name                  = name;
   _size                  = size;
   _frame_complete_offset = frame_complete;
-  _header_size           = header_size;  
+  _header_size           = header_size;
   _relocation_size       = round_to(cb->total_relocation_size(), oopSize);
   _instructions_offset   = align_code_offset(header_size + _relocation_size);
   _data_offset           = _instructions_offset + round_to(cb->total_code_size(), oopSize);
@@ -170,9 +170,9 @@ void CodeBlob::copy_oops(GrowableArray<jobject>* array) {
 relocInfo::relocType CodeBlob::reloc_type_for_address(address pc) {
   RelocIterator iter(this, pc, pc+1);
   while (iter.next()) {
-    return (relocInfo::relocType) iter.type();  
+    return (relocInfo::relocType) iter.type();
   }
-  // No relocation info found for pc 
+  // No relocation info found for pc
   ShouldNotReachHere();
   return relocInfo::none; // dummy return value
 }
@@ -224,7 +224,7 @@ void CodeBlob::fix_oop_relocations(address begin, address end,
 void CodeBlob::do_unloading(BoolObjectClosure* is_alive,
                             OopClosure* keep_alive,
                             bool unloading_occurred) {
-  ShouldNotReachHere(); 
+  ShouldNotReachHere();
 }
 
 OopMap* CodeBlob::oop_map_for_return_address(address return_address) {
@@ -243,7 +243,7 @@ BufferBlob::BufferBlob(const char* name, int size)
 {}
 
 BufferBlob* BufferBlob::create(const char* name, int buffer_size) {
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
 
   BufferBlob* blob = NULL;
   unsigned int size = sizeof(BufferBlob);
@@ -268,7 +268,7 @@ BufferBlob::BufferBlob(const char* name, int size, CodeBuffer* cb)
 {}
 
 BufferBlob* BufferBlob::create(const char* name, CodeBuffer* cb) {
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
 
   BufferBlob* blob = NULL;
   unsigned int size = allocation_size(cb, sizeof(BufferBlob));
@@ -292,8 +292,8 @@ void* BufferBlob::operator new(size_t s, unsigned size) {
 
 
 void BufferBlob::free( BufferBlob *blob ) {
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
-  { 
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+  {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     CodeCache::free((CodeBlob*)blob);
   }
@@ -316,9 +316,9 @@ RuntimeStub::RuntimeStub(
   int         frame_size,
   OopMapSet*  oop_maps,
   bool        caller_must_gc_arguments
-) 
+)
 : CodeBlob(name, cb, sizeof(RuntimeStub), size, frame_complete, frame_size, oop_maps)
-{  
+{
   _caller_must_gc_arguments = caller_must_gc_arguments;
 }
 
@@ -331,7 +331,7 @@ RuntimeStub* RuntimeStub::new_runtime_stub(const char* stub_name,
                                            bool caller_must_gc_arguments)
 {
   RuntimeStub* stub = NULL;
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     unsigned int size = allocation_size(cb, sizeof(RuntimeStub));
@@ -346,11 +346,11 @@ RuntimeStub* RuntimeStub::new_runtime_stub(const char* stub_name,
       tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, stub);
       Disassembler::decode(stub->instructions_begin(), stub->instructions_end());
     }
-    VTune::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());   
-    Forte::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());   
+    VTune::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());
+    Forte::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated(stub_name, stub->instructions_begin(), stub->instructions_end());      
+      JvmtiExport::post_dynamic_code_generated(stub_name, stub->instructions_begin(), stub->instructions_end());
     }
   }
 
@@ -374,7 +374,7 @@ void* RuntimeStub::operator new(size_t s, unsigned size) {
 DeoptimizationBlob::DeoptimizationBlob(
   CodeBuffer* cb,
   int         size,
-  OopMapSet*  oop_maps, 
+  OopMapSet*  oop_maps,
   int         unpack_offset,
   int         unpack_with_exception_offset,
   int         unpack_with_reexecution_offset,
@@ -382,7 +382,7 @@ DeoptimizationBlob::DeoptimizationBlob(
 )
 : SingletonBlob("DeoptimizationBlob", cb, sizeof(DeoptimizationBlob), size, frame_size, oop_maps)
 {
-  _unpack_offset           = unpack_offset;  
+  _unpack_offset           = unpack_offset;
   _unpack_with_exception   = unpack_with_exception_offset;
   _unpack_with_reexecution = unpack_with_reexecution_offset;
 #ifdef COMPILER1
@@ -393,14 +393,14 @@ DeoptimizationBlob::DeoptimizationBlob(
 
 DeoptimizationBlob* DeoptimizationBlob::create(
   CodeBuffer* cb,
-  OopMapSet*  oop_maps, 
+  OopMapSet*  oop_maps,
   int        unpack_offset,
   int        unpack_with_exception_offset,
   int        unpack_with_reexecution_offset,
   int        frame_size)
 {
   DeoptimizationBlob* blob = NULL;
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     unsigned int size = allocation_size(cb, sizeof(DeoptimizationBlob));
@@ -426,9 +426,9 @@ DeoptimizationBlob* DeoptimizationBlob::create(
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
       JvmtiExport::post_dynamic_code_generated("DeoptimizationBlob",
-					       blob->instructions_begin(),
-					       blob->instructions_end());
-    }    
+                                               blob->instructions_begin(),
+                                               blob->instructions_end());
+    }
   }
 
   // Track memory usage statistic after releasing CodeCache_lock
@@ -464,10 +464,10 @@ UncommonTrapBlob* UncommonTrapBlob::create(
   int        frame_size)
 {
   UncommonTrapBlob* blob = NULL;
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    unsigned int size = allocation_size(cb, sizeof(UncommonTrapBlob)); 
+    unsigned int size = allocation_size(cb, sizeof(UncommonTrapBlob));
     blob = new (size) UncommonTrapBlob(cb, size, oop_maps, frame_size);
   }
 
@@ -481,12 +481,12 @@ UncommonTrapBlob* UncommonTrapBlob::create(
     }
     VTune::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
     Forte::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
-   
+
     if (JvmtiExport::should_post_dynamic_code_generated()) {
       JvmtiExport::post_dynamic_code_generated("UncommonTrapBlob",
-					       blob->instructions_begin(),
-					       blob->instructions_end());
-    }    
+                                               blob->instructions_begin(),
+                                               blob->instructions_end());
+    }
   }
 
   // Track memory usage statistic after releasing CodeCache_lock
@@ -513,7 +513,7 @@ ExceptionBlob::ExceptionBlob(
   int         size,
   OopMapSet*  oop_maps,
   int         frame_size
-) 
+)
 : SingletonBlob("ExceptionBlob", cb, sizeof(ExceptionBlob), size, frame_size, oop_maps)
 {}
 
@@ -524,10 +524,10 @@ ExceptionBlob* ExceptionBlob::create(
   int         frame_size)
 {
   ExceptionBlob* blob = NULL;
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    unsigned int size = allocation_size(cb, sizeof(ExceptionBlob)); 
+    unsigned int size = allocation_size(cb, sizeof(ExceptionBlob));
     blob = new (size) ExceptionBlob(cb, size, oop_maps, frame_size);
   }
 
@@ -544,11 +544,11 @@ ExceptionBlob* ExceptionBlob::create(
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
       JvmtiExport::post_dynamic_code_generated("ExceptionBlob",
-					       blob->instructions_begin(),
-					       blob->instructions_end());
-    }    
+                                               blob->instructions_begin(),
+                                               blob->instructions_end());
+    }
   }
-  
+
   // Track memory usage statistic after releasing CodeCache_lock
   MemoryService::track_code_cache_memory_usage();
 
@@ -572,7 +572,7 @@ SafepointBlob::SafepointBlob(
   int         size,
   OopMapSet*  oop_maps,
   int         frame_size
-) 
+)
 : SingletonBlob("SafepointBlob", cb, sizeof(SafepointBlob), size, frame_size, oop_maps)
 {}
 
@@ -583,10 +583,10 @@ SafepointBlob* SafepointBlob::create(
   int         frame_size)
 {
   SafepointBlob* blob = NULL;
-  ThreadInVMfromUnknown __tiv;	// get to VM state in case we block on CodeCache_lock
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    unsigned int size = allocation_size(cb, sizeof(SafepointBlob)); 
+    unsigned int size = allocation_size(cb, sizeof(SafepointBlob));
     blob = new (size) SafepointBlob(cb, size, oop_maps, frame_size);
   }
 
@@ -603,8 +603,8 @@ SafepointBlob* SafepointBlob::create(
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
       JvmtiExport::post_dynamic_code_generated("SafepointBlob",
-					       blob->instructions_begin(),
-					       blob->instructions_end());
+                                               blob->instructions_begin(),
+                                               blob->instructions_end());
     }
   }
 
@@ -626,7 +626,7 @@ void* SafepointBlob::operator new(size_t s, unsigned size) {
 // Verification and printing
 
 void CodeBlob::verify() {
-  ShouldNotReachHere(); 
+  ShouldNotReachHere();
 }
 
 #ifndef PRODUCT
@@ -662,7 +662,7 @@ void BufferBlob::print_value_on(outputStream* st) const {
 
 #endif
 
-void RuntimeStub::verify() {  
+void RuntimeStub::verify() {
   // unimplemented
 }
 
@@ -682,14 +682,14 @@ void RuntimeStub::print_value_on(outputStream* st) const {
 
 #endif
 
-void SingletonBlob::verify() {  
+void SingletonBlob::verify() {
   // unimplemented
 }
 
 #ifndef PRODUCT
 
 void SingletonBlob::print() const {
-  CodeBlob::print();  
+  CodeBlob::print();
   tty->print_cr(name());
   Disassembler::decode((CodeBlob*)this);
 }

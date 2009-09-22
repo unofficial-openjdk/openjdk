@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -50,9 +50,9 @@ import com.sun.java.swing.ui.CommonToolBar;
 import com.sun.java.swing.action.ActionManager;
 import com.sun.java.swing.action.DelegateAction;
 
-/** 
+/**
  * Displays the results of an ObjectHistogram run in a JTable, with a
- * button to display all objects of that type 
+ * button to display all objects of that type
  */
 public class ObjectHistogramPanel extends JPanel implements ActionListener {
     private ObjectHistogramTableModel dataModel;
@@ -62,98 +62,98 @@ public class ObjectHistogramPanel extends JPanel implements ActionListener {
     private java.util.List listeners;
 
     public ObjectHistogramPanel(ObjectHistogram histo) {
-	dataModel = new ObjectHistogramTableModel(histo);
-	statusBar = new StatusBar();
+        dataModel = new ObjectHistogramTableModel(histo);
+        statusBar = new StatusBar();
 
-	table = new JTable(dataModel, new ObjectHistogramColummModel());
-	table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-	table.addMouseListener(new MouseAdapter() {
-		public void mouseClicked(MouseEvent evt) {
-		    if (evt.getClickCount() == 2) {
-			fireShowObjectsOfType();
-		    }
-		}
-	    });
+        table = new JTable(dataModel, new ObjectHistogramColummModel());
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent evt) {
+                    if (evt.getClickCount() == 2) {
+                        fireShowObjectsOfType();
+                    }
+                }
+            });
 
-	JTableHeader header = table.getTableHeader();
-	header.setDefaultRenderer(new SortHeaderCellRenderer(header, dataModel));
-	header.addMouseListener(new SortHeaderMouseAdapter(table, dataModel));
+        JTableHeader header = table.getTableHeader();
+        header.setDefaultRenderer(new SortHeaderCellRenderer(header, dataModel));
+        header.addMouseListener(new SortHeaderMouseAdapter(table, dataModel));
 
-	setLayout(new BorderLayout());
+        setLayout(new BorderLayout());
 
-	toolbar = new ObjectHistogramToolBar(statusBar);
-	add(toolbar, BorderLayout.NORTH);
-	add(new JScrollPane(table), BorderLayout.CENTER);
-	add(statusBar, BorderLayout.SOUTH);
+        toolbar = new ObjectHistogramToolBar(statusBar);
+        add(toolbar, BorderLayout.NORTH);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        add(statusBar, BorderLayout.SOUTH);
 
-	registerActions();
+        registerActions();
     }
 
     private class ObjectHistogramToolBar extends CommonToolBar {
-	
-	private JTextField searchTF;
 
-	public ObjectHistogramToolBar(StatusBar status) {
-	    super(HSDBActionManager.getInstance(), status);
-	}
+        private JTextField searchTF;
 
-	protected void addComponents() {
-	    searchTF = new JTextField();
-	    searchTF.setToolTipText("Find in Class Description");
+        public ObjectHistogramToolBar(StatusBar status) {
+            super(HSDBActionManager.getInstance(), status);
+        }
 
-	    // Pressing Enter on the text field will search
-	    InputMap im = searchTF.getInputMap();
-	    im.put(KeyStroke.getKeyStroke("ENTER"), "enterPressed");
-	    ActionMap am = searchTF.getActionMap();
-	    am.put("enterPressed", manager.getAction(FindAction.VALUE_COMMAND));
+        protected void addComponents() {
+            searchTF = new JTextField();
+            searchTF.setToolTipText("Find in Class Description");
 
-	    add(searchTF);
-	    addButton(manager.getAction(FindAction.VALUE_COMMAND));
-	    addButton(manager.getAction(ShowAction.VALUE_COMMAND));
-	}
+            // Pressing Enter on the text field will search
+            InputMap im = searchTF.getInputMap();
+            im.put(KeyStroke.getKeyStroke("ENTER"), "enterPressed");
+            ActionMap am = searchTF.getActionMap();
+            am.put("enterPressed", manager.getAction(FindAction.VALUE_COMMAND));
 
-	public String getFindText() {
-	    return searchTF.getText();
-	}
+            add(searchTF);
+            addButton(manager.getAction(FindAction.VALUE_COMMAND));
+            addButton(manager.getAction(ShowAction.VALUE_COMMAND));
+        }
+
+        public String getFindText() {
+            return searchTF.getText();
+        }
     }
 
     private class ObjectHistogramColummModel extends DefaultTableColumnModel {
-	private final String LABEL_SIZE = "Size";
-	private final String LABEL_COUNT = "Count";
-	private final String LABEL_DESC = "Class Description";
+        private final String LABEL_SIZE = "Size";
+        private final String LABEL_COUNT = "Count";
+        private final String LABEL_DESC = "Class Description";
 
 
-	public ObjectHistogramColummModel() {
-	    // Should actually get the line metrics for
-	    int PREF_WIDTH = 80;
-	    int MAX_WIDTH = 100;
-	    int HUGE_WIDTH = 140;
+        public ObjectHistogramColummModel() {
+            // Should actually get the line metrics for
+            int PREF_WIDTH = 80;
+            int MAX_WIDTH = 100;
+            int HUGE_WIDTH = 140;
 
-	    LongCellRenderer lcRender = new LongCellRenderer();
+            LongCellRenderer lcRender = new LongCellRenderer();
 
-	    TableColumn column;
+            TableColumn column;
 
-	    // Size
-	    column = new TableColumn(0, PREF_WIDTH);
-	    column.setHeaderValue(LABEL_SIZE);
-	    column.setMaxWidth(MAX_WIDTH);
-	    column.setResizable(false);
-	    column.setCellRenderer(lcRender);
-	    addColumn(column);
-        
-	    // Count
-	    column = new TableColumn(1, PREF_WIDTH);
-	    column.setHeaderValue(LABEL_COUNT);
-	    column.setMaxWidth(MAX_WIDTH);
-	    column.setResizable(false);
-	    column.setCellRenderer(lcRender);
-	    addColumn(column);
-        
-	    // Description
-	    column = new TableColumn(2, HUGE_WIDTH);
-	    column.setHeaderValue(LABEL_DESC);
-	    addColumn(column);
-	}	
+            // Size
+            column = new TableColumn(0, PREF_WIDTH);
+            column.setHeaderValue(LABEL_SIZE);
+            column.setMaxWidth(MAX_WIDTH);
+            column.setResizable(false);
+            column.setCellRenderer(lcRender);
+            addColumn(column);
+
+            // Count
+            column = new TableColumn(1, PREF_WIDTH);
+            column.setHeaderValue(LABEL_COUNT);
+            column.setMaxWidth(MAX_WIDTH);
+            column.setResizable(false);
+            column.setCellRenderer(lcRender);
+            addColumn(column);
+
+            // Description
+            column = new TableColumn(2, HUGE_WIDTH);
+            column.setHeaderValue(LABEL_DESC);
+            addColumn(column);
+        }
     }
 
 
@@ -161,117 +161,117 @@ public class ObjectHistogramPanel extends JPanel implements ActionListener {
      * A table model which encapsulates the ObjectHistogram
      */
     private class ObjectHistogramTableModel extends SortableTableModel {
-	private String[] columnNames = { "Size", "Count", "Class Description" };
-	private Class[] columnClasses = { Long.class, Long.class, String.class };
+        private String[] columnNames = { "Size", "Count", "Class Description" };
+        private Class[] columnClasses = { Long.class, Long.class, String.class };
 
-	public ObjectHistogramTableModel(ObjectHistogram histo) {
-	    // Set the rows 
-	    elements = histo.getElements();
-	    setComparator(new ObjectHistogramComparator(this));
+        public ObjectHistogramTableModel(ObjectHistogram histo) {
+            // Set the rows
+            elements = histo.getElements();
+            setComparator(new ObjectHistogramComparator(this));
 
-	}
-	
-	public int getColumnCount() { 
-	    return columnNames.length;
-	}
-
-	public int getRowCount() { 
-	    return elements.size(); 
-	}
-
-	public String getColumnName(int col) {
-	    return columnNames[col];
         }
 
-	public Class getColumnClass(int col) {
-	    return columnClasses[col];
-	}
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        public int getRowCount() {
+            return elements.size();
+        }
+
+        public String getColumnName(int col) {
+            return columnNames[col];
+        }
+
+        public Class getColumnClass(int col) {
+            return columnClasses[col];
+        }
 
         public Object getValueAt(int row, int col) {
-	    return getValueForColumn(getElement(row), col);
-	}
+            return getValueForColumn(getElement(row), col);
+        }
 
-	public Object getValueForColumn(Object obj, int col) {
-	    ObjectHistogramElement el = (ObjectHistogramElement)obj;
-	    switch (col) {
-	    case 0:
-		return new Long(el.getSize());
-	    case 1:
-		return new Long(el.getCount());
-	    case 2:
-		return el.getDescription();
-	    default:
-		throw new RuntimeException("Index (" + col + ") out of bounds");
-	    }
-	}
-	
-	public ObjectHistogramElement getElement(int index) {
-	    return (ObjectHistogramElement) elements.get(index);
-	}
+        public Object getValueForColumn(Object obj, int col) {
+            ObjectHistogramElement el = (ObjectHistogramElement)obj;
+            switch (col) {
+            case 0:
+                return new Long(el.getSize());
+            case 1:
+                return new Long(el.getCount());
+            case 2:
+                return el.getDescription();
+            default:
+                throw new RuntimeException("Index (" + col + ") out of bounds");
+            }
+        }
 
-	private class ObjectHistogramComparator extends TableModelComparator {
-	
-	    public ObjectHistogramComparator(ObjectHistogramTableModel model) {
-		super(model);
-	    }
+        public ObjectHistogramElement getElement(int index) {
+            return (ObjectHistogramElement) elements.get(index);
+        }
 
-	    /**
-	     * Returns the value for the comparing object for the
-	     * column.
-	     *
-	     * @param obj Object that was passed for Comparator
-	     * @param column the column to retrieve
-	     */
-	    public Object getValueForColumn(Object obj, int column) {
-		ObjectHistogramTableModel omodel = (ObjectHistogramTableModel)model;
-		return omodel.getValueForColumn(obj, column);
-	    }	
-	}
+        private class ObjectHistogramComparator extends TableModelComparator {
+
+            public ObjectHistogramComparator(ObjectHistogramTableModel model) {
+                super(model);
+            }
+
+            /**
+             * Returns the value for the comparing object for the
+             * column.
+             *
+             * @param obj Object that was passed for Comparator
+             * @param column the column to retrieve
+             */
+            public Object getValueForColumn(Object obj, int column) {
+                ObjectHistogramTableModel omodel = (ObjectHistogramTableModel)model;
+                return omodel.getValueForColumn(obj, column);
+            }
+        }
 
     }
-    
+
 
     //
     // ActionListener implementation and actions support
     //
 
     public void actionPerformed(ActionEvent evt) {
-	String command = evt.getActionCommand();
+        String command = evt.getActionCommand();
 
-	if (command.equals(ShowAction.VALUE_COMMAND)) {
-	    fireShowObjectsOfType();
-	} else if (command.equals(FindAction.VALUE_COMMAND)) {
-	    findObject();
-	}
-	    
+        if (command.equals(ShowAction.VALUE_COMMAND)) {
+            fireShowObjectsOfType();
+        } else if (command.equals(FindAction.VALUE_COMMAND)) {
+            findObject();
+        }
+
     }
 
     protected void registerActions() {
-	registerAction(FindAction.VALUE_COMMAND);
-	registerAction(ShowAction.VALUE_COMMAND);
+        registerAction(FindAction.VALUE_COMMAND);
+        registerAction(ShowAction.VALUE_COMMAND);
     }
 
     private void registerAction(String actionName) {
-	ActionManager manager = ActionManager.getInstance();
-	DelegateAction action = manager.getDelegateAction(actionName);
-	action.addActionListener(this);
+        ActionManager manager = ActionManager.getInstance();
+        DelegateAction action = manager.getDelegateAction(actionName);
+        action.addActionListener(this);
     }
 
     public interface Listener {
-	public void showObjectsOfType(Klass type);
+        public void showObjectsOfType(Klass type);
     }
 
     public void addPanelListener(Listener listener) {
-	if (listeners == null) {
-	    listeners = new ArrayList();
-	}
-	listeners.add(listener);
+        if (listeners == null) {
+            listeners = new ArrayList();
+        }
+        listeners.add(listener);
     }
 
     public void removePanelListener(Listener listener) {
-	if (listeners != null) {
-	    listeners.remove(listener);
-	}
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
     }
 
     //--------------------------------------------------------------------------------
@@ -286,60 +286,60 @@ public class ObjectHistogramPanel extends JPanel implements ActionListener {
      * model and internal representation.
      */
     private void findObject() {
-	String findText = toolbar.getFindText();
+        String findText = toolbar.getFindText();
 
-	if (findText == null || findText.equals("")) {
-	    return;
-	}
-	
+        if (findText == null || findText.equals("")) {
+            return;
+        }
+
         TableModel model = table.getModel();
 
-	int row = table.getSelectedRow();
-	if (row == model.getRowCount()) {
-	    row = 0;
-	} else {
-	    // Start at the row after the selected row.
-	    row++;
-	}
+        int row = table.getSelectedRow();
+        if (row == model.getRowCount()) {
+            row = 0;
+        } else {
+            // Start at the row after the selected row.
+            row++;
+        }
 
-	String value;
-	for (int i = row; i < model.getRowCount(); i++) {
-	    value = (String)model.getValueAt(i, 2);
-	    if (value != null && value.startsWith(findText)) {
-		table.setRowSelectionInterval(i, i);
-		Rectangle cellBounds = table.getCellRect(i, 0, true);
-		table.scrollRectToVisible(cellBounds);
-		return;
-	    }
-	}
+        String value;
+        for (int i = row; i < model.getRowCount(); i++) {
+            value = (String)model.getValueAt(i, 2);
+            if (value != null && value.startsWith(findText)) {
+                table.setRowSelectionInterval(i, i);
+                Rectangle cellBounds = table.getCellRect(i, 0, true);
+                table.scrollRectToVisible(cellBounds);
+                return;
+            }
+        }
 
-	// Wrap the table to search in the top rows.
-	for (int i = 0; i < row; i++) {
-	    value = (String)model.getValueAt(i, 2);
-	    if (value != null && value.startsWith(findText)) {
-		table.setRowSelectionInterval(i, i);
-		Rectangle cellBounds = table.getCellRect(i, 0, true);
-		table.scrollRectToVisible(cellBounds);
-		return;
-	    }
-	}
+        // Wrap the table to search in the top rows.
+        for (int i = 0; i < row; i++) {
+            value = (String)model.getValueAt(i, 2);
+            if (value != null && value.startsWith(findText)) {
+                table.setRowSelectionInterval(i, i);
+                Rectangle cellBounds = table.getCellRect(i, 0, true);
+                table.scrollRectToVisible(cellBounds);
+                return;
+            }
+        }
     }
 
     private void fireShowObjectsOfType() {
-	int i = table.getSelectedRow();
-	if (i < 0) {
-	    return;
-	}
+        int i = table.getSelectedRow();
+        if (i < 0) {
+            return;
+        }
 
-	ObjectHistogramElement el = dataModel.getElement(i);
+        ObjectHistogramElement el = dataModel.getElement(i);
 
-	for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
-	    Listener listener = (Listener) iter.next();
-	    listener.showObjectsOfType(el.getKlass());
-	}
+        for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
+            Listener listener = (Listener) iter.next();
+            listener.showObjectsOfType(el.getKlass());
+        }
     }
 
     public static void main(String[] args) {
-	
+
     }
 }

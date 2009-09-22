@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -59,7 +59,7 @@ public class AnnotatedMemoryPanel extends JPanel {
         public int compare(Object o1, Object o2) {
           Address a1 = (Address) o1;
           Address a2 = (Address) o2;
-          
+
           if ((a1 == null) && (a2 == null)) {
             return 0;
           } else if (a1 == null) {
@@ -163,10 +163,10 @@ public class AnnotatedMemoryPanel extends JPanel {
     }
     scrollBar.setVisibleAmountHP(offsetVal.add(perLine));
     scrollBar.setBlockIncrementHP(offsetVal);
-    
+
     Address startAddr = bigIntToAddress(startVal);
     Address endAddr   = bigIntToAddress(endVal);
-    
+
     // Scroll last-known annotations
     int scrollOffset = 0;
     if (lastStartAddr != null) {
@@ -221,7 +221,7 @@ public class AnnotatedMemoryPanel extends JPanel {
     for (Iterator iter = visibleAnnotations.iterator(); iter.hasNext(); ) {
       Annotation anno   = (Annotation) iter.next();
       Interval interval = anno.getInterval();
-      
+
       if (!drawStack.empty()) {
         // See whether we can pop any items off the stack
         boolean shouldContinue = true;
@@ -368,8 +368,8 @@ public class AnnotatedMemoryPanel extends JPanel {
   private static BigInteger defaultMemoryLocation(boolean is64Bit) {
     if (is64Bit) {
       return new BigInteger(1, new byte[] {
-		           (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-		           (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00});
+                           (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                           (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00});
     } else {
       return new BigInteger(1, new byte[] { (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00});
     }
@@ -396,9 +396,9 @@ public class AnnotatedMemoryPanel extends JPanel {
   }
 
   private void setupScrollBar() {
-    setupScrollBar(defaultMemoryLocation(is64Bit), 
-		   defaultMemoryLow(is64Bit), 
-		   defaultMemoryHigh(is64Bit));
+    setupScrollBar(defaultMemoryLocation(is64Bit),
+                   defaultMemoryLow(is64Bit),
+                   defaultMemoryHigh(is64Bit));
   }
 
   private String bigIntToHexString(BigInteger bi) {
@@ -494,7 +494,7 @@ public class AnnotatedMemoryPanel extends JPanel {
 
     for (Iterator iter = va.iterator(); iter.hasNext(); ) {
       Annotation anno = (Annotation) ((IntervalNode) iter.next()).getData();
-      
+
       // Search forward for this one
       boolean found = false;
       for (int i = searchIndex; i < visibleAnnotations.size(); i++) {

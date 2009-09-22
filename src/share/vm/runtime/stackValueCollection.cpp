@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)stackValueCollection.cpp	1.18 07/05/05 17:06:53 JVM"
+#pragma ident "@(#)stackValueCollection.cpp     1.18 07/05/05 17:06:53 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -40,7 +40,7 @@ jlong StackValueCollection::long_at(int slot) const {
 #else
   union {
     jlong jl;
-    jint  array[2]; 
+    jint  array[2];
   } value;
   // Interpreter stack is reversed in memory:
   // low memory location is in higher java local slot.
@@ -66,7 +66,7 @@ jdouble StackValueCollection::double_at(int slot) const {
 #else
   union {
     jdouble jd;
-    jint    array[2]; 
+    jint    array[2];
   } value;
   // Interpreter stack is reversed in memory:
   // low memory location is in higher java local slot.
@@ -88,7 +88,7 @@ void StackValueCollection::set_long_at(int slot, jlong value) {
 #else
   union {
     jlong jl;
-    jint  array[2]; 
+    jint  array[2];
   } x;
   // Interpreter stack is reversed in memory:
   // low memory location is in higher java local slot.
@@ -106,7 +106,7 @@ void StackValueCollection::set_float_at(int slot, jfloat value) {
 #ifdef _LP64
   union {
     intptr_t jd;
-    jint    array[2]; 
+    jint    array[2];
   } val;
   // Interpreter stores 32 bit floats in first half of 64 bit word.
   val.array[0] = *(jint*)(&value);
@@ -123,7 +123,7 @@ void StackValueCollection::set_double_at(int slot, jdouble value) {
 #else
   union {
     jdouble jd;
-    jint    array[2]; 
+    jint    array[2];
   } x;
   // Interpreter stack is reversed in memory:
   // low memory location is in higher java local slot.

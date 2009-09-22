@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)mutex_solaris.inline.hpp	1.18 07/06/29 04:03:19 JVM"
+#pragma ident "@(#)mutex_solaris.inline.hpp     1.18 07/06/29 04:03:19 JVM"
 #endif
 /*
  * Copyright 1998-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,6 +22,5 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
-

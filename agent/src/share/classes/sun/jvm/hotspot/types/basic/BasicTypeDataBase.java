@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.types.basic;
@@ -58,7 +58,7 @@ public class BasicTypeDataBase implements TypeDataBase {
   private Type jintType;
   private Type jlongType;
   private Type jshortType;
-  
+
   /** For debugging */
   private static final boolean DEBUG;
   static {
@@ -272,11 +272,11 @@ public class BasicTypeDataBase implements TypeDataBase {
   public Iterator getTypes() {
     return nameToTypeMap.values().iterator();
   }
- 
+
   public Iterator getIntConstants() {
     return nameToIntConstantMap.keySet().iterator();
   }
- 
+
   public Iterator getLongConstants() {
     return nameToLongConstantMap.keySet().iterator();
   }
@@ -356,7 +356,7 @@ public class BasicTypeDataBase implements TypeDataBase {
     if (!curType.equals(type)) {
       throw new RuntimeException("a different type of name \"" + type.getName() + "\" was present");
     }
-    
+
     nameToTypeMap.remove(type.getName());
   }
 

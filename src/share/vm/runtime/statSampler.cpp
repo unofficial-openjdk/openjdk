@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)statSampler.cpp	1.24 07/05/05 17:06:58 JVM"
+#pragma ident "@(#)statSampler.cpp      1.24 07/05/05 17:06:58 JVM"
 #endif
 /*
  * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -77,7 +77,7 @@ void StatSampler::engage() {
 
     // start up the periodic task
     _task = new StatSamplerTask(PerfDataSamplingInterval);
-    _task->enroll();    
+    _task->enroll();
   }
 }
 
@@ -158,7 +158,7 @@ void StatSampler::collect_sample() {
   //   }
   //   _sampled = PerfDataManager::sampled();
   // }
-  
+
   assert(_sampled != NULL, "list not initialized");
 
   sample_data(_sampled);
@@ -248,7 +248,7 @@ static PropertyCounters property_counters[] = {
   { property_counters_uu, SUN_PROPERTY },
   { NULL, SUN_PROPERTY }
 };
-  
+
 
 /*
  * Method to create PerfData string instruments that contain the values
@@ -318,7 +318,7 @@ void StatSampler::create_misc_perfdata() {
 
   // the Java VM Internal version string
   PerfDataManager::create_string_constant(SUN_RT, "internalVersion",
-                                         VM_Version::internal_vm_info_string(), 
+                                         VM_Version::internal_vm_info_string(),
                                          CHECK);
 
   // create sampled instrumentation objects
@@ -361,4 +361,3 @@ void statSampler_exit() {
 
   StatSampler::destroy();
 }
-

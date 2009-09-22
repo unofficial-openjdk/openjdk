@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)instanceKlass.hpp	1.201 08/11/24 12:22:50 JVM"
+#pragma ident "@(#)instanceKlass.hpp    1.201 08/11/24 12:22:50 JVM"
 #endif
 /*
  * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-// An instanceKlass is the VM level representation of a Java class. 
+// An instanceKlass is the VM level representation of a Java class.
 // It contains all information needed for at class at execution runtime.
 
 //  instanceKlass layout:
@@ -36,7 +36,7 @@
 //    [instance size              ] Klass
 //    [java mirror                ] Klass
 //    [super                      ] Klass
-//    [access_flags               ] Klass 
+//    [access_flags               ] Klass
 //    [name                       ] Klass
 //    [first subklass             ] Klass
 //    [next sibling               ] Klass
@@ -93,11 +93,11 @@ public:
 #ifndef PRODUCT
 // Print fields.
 // If "obj" argument to constructor is NULL, prints static fields, otherwise prints non-static fields.
-class FieldPrinter: public FieldClosure { 
-   oop _obj; 
-   outputStream* _st; 
- public: 
-   FieldPrinter(outputStream* st, oop obj = NULL) : _obj(obj), _st(st) {} 
+class FieldPrinter: public FieldClosure {
+   oop _obj;
+   outputStream* _st;
+ public:
+   FieldPrinter(outputStream* st, oop obj = NULL) : _obj(obj), _st(st) {}
    void do_field(fieldDescriptor* fd);
 };
 #endif  // !PRODUCT
@@ -105,7 +105,7 @@ class FieldPrinter: public FieldClosure {
 class instanceKlass: public Klass {
   friend class VMStructs;
  public:
-  // See "The Java Virtual Machine Specification" section 2.16.2-5 for a detailed description 
+  // See "The Java Virtual Machine Specification" section 2.16.2-5 for a detailed description
   // of the class loading & initialization procedure, and the use of the states.
   enum ClassState {
     unparsable_by_gc = 0,               // object is not yet parsable by gc. Value of _init_state at object allocation.
@@ -126,9 +126,9 @@ class instanceKlass: public Klass {
   };
 
  protected:
-  // 
+  //
   // The oop block.  See comment in klass.hpp before making changes.
-  // 
+  //
 
   // Array classes holding elements of this class.
   klassOop        _array_klasses;
@@ -175,11 +175,11 @@ class instanceKlass: public Klass {
   // Index is the idnum, which is initially the same as the methods array index.
   objArrayOop     _methods_annotations;
   // Annotation objects (byte arrays) for methods' parameters, or null if no
-  // such annotations. 
+  // such annotations.
   // Index is the idnum, which is initially the same as the methods array index.
   objArrayOop     _methods_parameter_annotations;
   // Annotation objects (byte arrays) for methods' default values, or null if no
-  // such annotations.  
+  // such annotations.
   // Index is the idnum, which is initially the same as the methods array index.
   objArrayOop     _methods_default_annotations;
 
@@ -237,13 +237,13 @@ class instanceKlass: public Klass {
   // field sizes
   int nonstatic_field_size() const         { return _nonstatic_field_size; }
   void set_nonstatic_field_size(int size)  { _nonstatic_field_size = size; }
-  
+
   int static_field_size() const            { return _static_field_size; }
   void set_static_field_size(int size)     { _static_field_size = size; }
-  
+
   int static_oop_field_size() const        { return _static_oop_field_size; }
   void set_static_oop_field_size(int size) { _static_oop_field_size = size; }
-  
+
   // Java vtable
   int  vtable_length() const               { return _vtable_len; }
   void set_vtable_length(int len)          { _vtable_len = len; }
@@ -251,7 +251,7 @@ class instanceKlass: public Klass {
   // Java itable
   int  itable_length() const               { return _itable_len; }
   void set_itable_length(int len)          { _itable_len = len; }
-  
+
   // array klasses
   klassOop array_klasses() const           { return _array_klasses; }
   void set_array_klasses(klassOop k)       { oop_store_without_check((oop*) &_array_klasses, (oop) k); }
@@ -273,7 +273,7 @@ class instanceKlass: public Klass {
 
   // fields
   // Field info extracted from the class file and stored
-  // as an array of 7 shorts 
+  // as an array of 7 shorts
   enum FieldOffset {
     access_flags_offset    = 0,
     name_index_offset      = 1,
@@ -290,7 +290,7 @@ class instanceKlass: public Klass {
     return build_int_from_shorts( fields()->ushort_at(index + low_offset),
                                   fields()->ushort_at(index + high_offset) );
   }
- 
+
   void set_fields(typeArrayOop f)          { oop_store_without_check((oop*) &_fields, (oop) f); }
 
   // inner classes
@@ -310,8 +310,8 @@ class instanceKlass: public Klass {
   bool is_same_class_package(klassOop class2);
   bool is_same_class_package(oop classloader2, symbolOop classname2);
   static bool is_same_class_package(oop class_loader1, symbolOop class_name1, oop class_loader2, symbolOop class_name2);
-  
-  // initialization state  
+
+  // initialization state
   bool is_loaded() const                   { return _init_state >= loaded; }
   bool is_linked() const                   { return _init_state >= linked; }
   bool is_initialized() const              { return _init_state == fully_initialized; }
@@ -334,7 +334,7 @@ class instanceKlass: public Klass {
   void unlink_class();
   void rewrite_class(TRAPS);
   methodOop class_initializer();
-  
+
   // set the class to initialized if no static initializer is present
   void eager_initialize(Thread *thread);
 
@@ -350,7 +350,7 @@ class instanceKlass: public Klass {
   klassOop find_field(symbolOop name, symbolOop sig, fieldDescriptor* fd) const;
   // find instance or static fields according to JVM spec 5.4.3.2, returns the klass in which the field is defined
   klassOop find_field(symbolOop name, symbolOop sig, bool is_static, fieldDescriptor* fd) const;
-  
+
   // find a non-static or static field given its offset within the class.
   bool contains_field_offset(int offset) {
     return instanceOopDesc::contains_field_offset(offset, nonstatic_field_size());
@@ -358,7 +358,7 @@ class instanceKlass: public Klass {
 
   bool find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
   bool find_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
-  
+
   // find a local method (returns NULL if not found)
   methodOop find_method(symbolOop name, symbolOop signature) const;
   static methodOop find_method(objArrayOop methods, symbolOop name, symbolOop signature);
@@ -369,15 +369,15 @@ class instanceKlass: public Klass {
   // lookup a method in all the interfaces that this class implements
   // (returns NULL if not found)
   methodOop lookup_method_in_all_interfaces(symbolOop name, symbolOop signature) const;
-  
+
   // constant pool
   constantPoolOop constants() const        { return _constants; }
   void set_constants(constantPoolOop c)    { oop_store_without_check((oop*) &_constants, (oop) c); }
- 
+
   // class loader
   oop class_loader() const                 { return _class_loader; }
   void set_class_loader(oop l)             { oop_store((oop*) &_class_loader, l); }
- 
+
   // protection domain
   oop protection_domain()                  { return _protection_domain; }
   void set_protection_domain(oop pd)       { oop_store((oop*) &_protection_domain, pd); }
@@ -390,7 +390,7 @@ class instanceKlass: public Klass {
   // signers
   objArrayOop signers() const              { return _signers; }
   void set_signers(objArrayOop s)          { oop_store((oop*) &_signers, oop(s)); }
- 
+
   // source file name
   symbolOop source_file_name() const       { return _source_file_name; }
   void set_source_file_name(symbolOop n)   { oop_store_without_check((oop*) &_source_file_name, (oop) n); }
@@ -427,12 +427,12 @@ class instanceKlass: public Klass {
   jint get_cached_class_file_len()                    { return _cached_class_file_len; }
   unsigned char * get_cached_class_file_bytes()       { return _cached_class_file_bytes; }
 
-  // JVMTI: Support for caching of field indices, types, and offsets 
-  void set_jvmti_cached_class_field_map(JvmtiCachedClassFieldMap* descriptor) { 
+  // JVMTI: Support for caching of field indices, types, and offsets
+  void set_jvmti_cached_class_field_map(JvmtiCachedClassFieldMap* descriptor) {
     _jvmti_cached_class_field_map = descriptor;
   }
-  JvmtiCachedClassFieldMap* jvmti_cached_class_field_map() const { 
-    return _jvmti_cached_class_field_map; 
+  JvmtiCachedClassFieldMap* jvmti_cached_class_field_map() const {
+    return _jvmti_cached_class_field_map;
   }
 
   // for adding methods, constMethodOopDesc::UNSET_IDNUM means no more ids available
@@ -469,17 +469,17 @@ class instanceKlass: public Klass {
   void set_methods_annotations(objArrayOop md)           { set_annotations(md, &_methods_annotations); }
   void set_methods_parameter_annotations(objArrayOop md) { set_annotations(md, &_methods_parameter_annotations); }
   void set_methods_default_annotations(objArrayOop md)   { set_annotations(md, &_methods_default_annotations); }
-  typeArrayOop get_method_annotations_of(int idnum)    
+  typeArrayOop get_method_annotations_of(int idnum)
                                                 { return get_method_annotations_from(idnum, _methods_annotations); }
   typeArrayOop get_method_parameter_annotations_of(int idnum)
                                                 { return get_method_annotations_from(idnum, _methods_parameter_annotations); }
   typeArrayOop get_method_default_annotations_of(int idnum)
                                                 { return get_method_annotations_from(idnum, _methods_default_annotations); }
-  void set_method_annotations_of(int idnum, typeArrayOop anno)          
+  void set_method_annotations_of(int idnum, typeArrayOop anno)
                                                 { set_methods_annotations_of(idnum, anno, &_methods_annotations); }
   void set_method_parameter_annotations_of(int idnum, typeArrayOop anno)
                                                 { set_methods_annotations_of(idnum, anno, &_methods_annotations); }
-  void set_method_default_annotations_of(int idnum, typeArrayOop anno)  
+  void set_method_default_annotations_of(int idnum, typeArrayOop anno)
                                                 { set_methods_annotations_of(idnum, anno, &_methods_annotations); }
 
   // allocation
@@ -582,9 +582,9 @@ class instanceKlass: public Klass {
   static int vtable_start_offset()    { return header_size(); }
   static int vtable_length_offset()   { return oopDesc::header_size() + offset_of(instanceKlass, _vtable_len) / HeapWordSize; }
   static int object_size(int extra)   { return align_object_size(header_size() + extra); }
-  
+
   intptr_t* start_of_vtable() const        { return ((intptr_t*)as_klassOop()) + vtable_start_offset(); }
-  intptr_t* start_of_itable() const        { return start_of_vtable() + align_object_offset(vtable_length()); }  
+  intptr_t* start_of_itable() const        { return start_of_vtable() + align_object_offset(vtable_length()); }
   int  itable_offset_in_words() const { return start_of_itable() - (intptr_t*)as_klassOop(); }
 
   // Static field offset is an offset into the Heap, should be converted by
@@ -687,9 +687,9 @@ class instanceKlass: public Klass {
   void iterate_static_fields(OopClosure* closure, MemRegion mr);
 
 private:
-  // initialization state  
+  // initialization state
 #ifdef ASSERT
-  void set_init_state(ClassState state);  
+  void set_init_state(ClassState state);
 #else
   void set_init_state(ClassState state) { _init_state = state; }
 #endif
@@ -697,12 +697,12 @@ private:
   void set_init_thread(Thread *thread)  { _init_thread = thread; }
 
   u2 idnum_allocated_count() const      { return _idnum_allocated_count; }
-  jmethodID* methods_jmethod_ids_acquire() const 
+  jmethodID* methods_jmethod_ids_acquire() const
          { return (jmethodID*)OrderAccess::load_ptr_acquire(&_methods_jmethod_ids); }
   void release_set_methods_jmethod_ids(jmethodID* jmeths)
          { OrderAccess::release_store_ptr(&_methods_jmethod_ids, jmeths); }
 
-  int* methods_cached_itable_indices_acquire() const 
+  int* methods_cached_itable_indices_acquire() const
          { return (int*)OrderAccess::load_ptr_acquire(&_methods_cached_itable_indices); }
   void release_set_methods_cached_itable_indices(int* indices)
          { OrderAccess::release_store_ptr(&_methods_cached_itable_indices, indices); }
@@ -745,13 +745,13 @@ private:
   static void set_initialization_state_and_notify_impl  (instanceKlassHandle this_oop, ClassState state, TRAPS);
   static void call_class_initializer_impl               (instanceKlassHandle this_oop, TRAPS);
   static klassOop array_klass_impl                      (instanceKlassHandle this_oop, bool or_null, int n, TRAPS);
-  static void do_local_static_fields_impl               (instanceKlassHandle this_oop, void f(fieldDescriptor* fd, TRAPS), TRAPS);              
+  static void do_local_static_fields_impl               (instanceKlassHandle this_oop, void f(fieldDescriptor* fd, TRAPS), TRAPS);
   /* jni_id_for_impl for jfieldID only */
-  static JNIid* jni_id_for_impl                         (instanceKlassHandle this_oop, int offset);      
+  static JNIid* jni_id_for_impl                         (instanceKlassHandle this_oop, int offset);
 
   // Returns the array class for the n'th dimension
   klassOop array_klass_impl(bool or_null, int n, TRAPS);
-  
+
   // Returns the array class with this class as element type
   klassOop array_klass_impl(bool or_null, TRAPS);
 
@@ -781,7 +781,7 @@ public:
   // Verification
   const char* internal_name() const;
   void oop_verify_on(oop obj, outputStream* st);
-  
+
 #ifndef PRODUCT
   static void verify_class_klass_nonstatic_oop_maps(klassOop k) PRODUCT_RETURN;
 #endif
@@ -807,11 +807,11 @@ inline typeArrayOop instanceKlass::get_method_annotations_from(int idnum, objArr
 
 // for adding methods
 // UNSET_IDNUM return means no more ids available
-inline u2 instanceKlass::next_method_idnum() { 
+inline u2 instanceKlass::next_method_idnum() {
   if (_idnum_allocated_count == constMethodOopDesc::MAX_IDNUM) {
     return constMethodOopDesc::UNSET_IDNUM; // no more ids available
   } else {
-    return _idnum_allocated_count++; 
+    return _idnum_allocated_count++;
   }
 }
 
@@ -823,7 +823,7 @@ class OopMapBlock VALUE_OBJ_CLASS_SPEC {
   jushort _offset;    // Offset of first oop in oop-map block
   jushort _length;    // Length of oop-map block
  public:
-  // Accessors  
+  // Accessors
   jushort offset() const          { return _offset; }
   void set_offset(jushort offset) { _offset = offset; }
 
@@ -832,38 +832,38 @@ class OopMapBlock VALUE_OBJ_CLASS_SPEC {
 };
 
 /* JNIid class for jfieldIDs only */
-class JNIid: public CHeapObj { 
-  friend class VMStructs; 
- private: 
-  klassOop           _holder; 
-  JNIid*             _next; 
-  int                _offset; 
-#ifdef ASSERT 
-  bool               _is_static_field_id; 
-#endif 
+class JNIid: public CHeapObj {
+  friend class VMStructs;
+ private:
+  klassOop           _holder;
+  JNIid*             _next;
+  int                _offset;
+#ifdef ASSERT
+  bool               _is_static_field_id;
+#endif
 
- public: 
-  // Accessors 
-  klassOop holder() const         { return _holder; } 
-  int offset() const              { return _offset; } 
-  JNIid* next()                   { return _next; } 
-  // Constructor 
-  JNIid(klassOop holder, int offset, JNIid* next); 
-  // Identifier lookup 
-  JNIid* find(int offset); 
- 
-  // Garbage collection support 
+ public:
+  // Accessors
+  klassOop holder() const         { return _holder; }
+  int offset() const              { return _offset; }
+  JNIid* next()                   { return _next; }
+  // Constructor
+  JNIid(klassOop holder, int offset, JNIid* next);
+  // Identifier lookup
+  JNIid* find(int offset);
+
+  // Garbage collection support
   oop* holder_addr() { return (oop*)&_holder; }
-  void oops_do(OopClosure* f); 
-  static void deallocate(JNIid* id); 
-  // Debugging 
-#ifdef ASSERT 
-  bool is_static_field_id() const { return _is_static_field_id; } 
-  void set_is_static_field_id()   { _is_static_field_id = true; } 
-#endif 
-  void verify(klassOop holder); 
-}; 
- 
+  void oops_do(OopClosure* f);
+  static void deallocate(JNIid* id);
+  // Debugging
+#ifdef ASSERT
+  bool is_static_field_id() const { return _is_static_field_id; }
+  void set_is_static_field_id()   { _is_static_field_id = true; }
+#endif
+  void verify(klassOop holder);
+};
+
 
 // If breakpoints are more numerous than just JVMTI breakpoints,
 // consider compressing this data structure.

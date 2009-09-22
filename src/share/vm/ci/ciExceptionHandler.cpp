@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciExceptionHandler.cpp	1.12 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciExceptionHandler.cpp       1.12 07/05/05 17:05:13 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -34,7 +34,7 @@
 
 // ------------------------------------------------------------------
 // ciExceptionHandler::catch_klass
-// 
+//
 // Get the exception klass that this handler catches.
 ciInstanceKlass* ciExceptionHandler::catch_klass() {
   assert(!is_catch_all(), "bad index");

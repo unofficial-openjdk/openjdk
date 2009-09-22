@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vtune_windows.cpp	1.26 07/09/17 09:59:36 JVM"
+#pragma ident "@(#)vtune_windows.cpp    1.26 07/09/17 09:59:36 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
@@ -105,7 +105,7 @@ extern "C" {
     char* source_file_name;               // fully qualified source file name
 
     MethodLoadInfo(nmethod* nm);          // for real nmethods
-    MethodLoadInfo(const char* vm_name, address start, address end);        
+    MethodLoadInfo(const char* vm_name, address start, address end);
                                           // for "nmethods" like stubs, interpreter, etc
 
   };
@@ -252,7 +252,7 @@ void VTune::register_stub(const char* name, address start, address end) {
   if (flags & NotifyNMethodCreate) {
     MethodLoadInfo* info = new MethodLoadInfo(name, start, end);
     if (PrintMiscellaneous && WizardMode && Verbose) {
-      tty->print_cr("NMethodCreate %s (%d): %#x..%#x", info->name, info->methodID, 
+      tty->print_cr("NMethodCreate %s (%d): %#x..%#x", info->name, info->methodID,
                     info->instr_start, info->instr_start + info->instr_size);
     }
     iJIT_NotifyEvent(NMethodCreate, info);
@@ -263,7 +263,7 @@ void VTune::create_nmethod(nmethod* nm) {
   if (flags & NotifyNMethodCreate) {
     MethodLoadInfo* info = new MethodLoadInfo(nm);
     if (PrintMiscellaneous && WizardMode && Verbose) {
-      tty->print_cr("NMethodCreate %s (%d): %#x..%#x", info->name, info->methodID, 
+      tty->print_cr("NMethodCreate %s (%d): %#x..%#x", info->name, info->methodID,
                     info->instr_start, info->instr_start + info->instr_size);
     }
     iJIT_NotifyEvent(NMethodCreate, info);
@@ -277,8 +277,8 @@ void VTune::delete_nmethod(nmethod* nm) {
   }
 }
 
-static void set_flags(int new_flags) { 
-  flags = new_flags; 
+static void set_flags(int new_flags) {
+  flags = new_flags;
   // if (WizardMode) tty->print_cr("*new VTune flags: %#x", flags);
 }
 
@@ -291,5 +291,3 @@ void vtune_init() {
     assert(flags == 0, "flags shouldn't be set");
   }
 }
-
-

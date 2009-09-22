@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -37,10 +37,10 @@ public class JSJavaFactoryImpl implements JSJavaFactory {
       JSJavaObject res = (sref != null)? (JSJavaObject) sref.get() : null;
       if (res == null) {
          if (oop instanceof TypeArray) {
-	    res = new JSJavaTypeArray((TypeArray)oop, this);
-	 } else if (oop instanceof ObjArray) {
-	     res = new JSJavaObjArray((ObjArray)oop, this);
-	 } else if (oop instanceof Instance) {
+            res = new JSJavaTypeArray((TypeArray)oop, this);
+         } else if (oop instanceof ObjArray) {
+             res = new JSJavaObjArray((ObjArray)oop, this);
+         } else if (oop instanceof Instance) {
             res = newJavaInstance((Instance) oop);
          } else if (oop instanceof Method) {
             res = new JSJavaMethod((Method) oop, this);
@@ -55,9 +55,9 @@ public class JSJavaFactoryImpl implements JSJavaFactory {
    public JSJavaKlass newJSJavaKlass(Klass klass) {
       JSJavaKlass res = null;
       if (klass instanceof InstanceKlass) {
-	  res = new JSJavaInstanceKlass((InstanceKlass) klass, this);
+          res = new JSJavaInstanceKlass((InstanceKlass) klass, this);
       } else if (klass instanceof ObjArrayKlass) {
-	  res = new JSJavaObjArrayKlass((ObjArrayKlass) klass, this);
+          res = new JSJavaObjArrayKlass((ObjArrayKlass) klass, this);
       } else if (klass instanceof TypeArrayKlass) {
           res = new JSJavaTypeArrayKlass((TypeArrayKlass) klass, this);
       }
@@ -95,9 +95,9 @@ public class JSJavaFactoryImpl implements JSJavaFactory {
    public Object newJSJavaWrapper(Object item) {
       if (item == null) return null;
       if (item instanceof Oop) {
-	 return newJSJavaObject((Oop) item);
+         return newJSJavaObject((Oop) item);
       } else if (item instanceof Field) {
-	 return newJSJavaField((Field) item);
+         return newJSJavaField((Field) item);
       } else if (item instanceof JavaThread) {
          return newJSJavaThread((JavaThread) item);
       } else if (item instanceof JavaVFrame) {
@@ -159,26 +159,26 @@ public class JSJavaFactoryImpl implements JSJavaFactory {
          res = new JSJavaThread(instance, this);
       } else if (className.equals(javaLangClass())) {
          Klass reflectedType = OopUtilities.classOopToKlass(instance);
-	 if (reflectedType != null) {
-	     JSJavaKlass jk = newJSJavaKlass(reflectedType);
-	     // we don't support mirrors of VM internal Klasses
-	     if (jk == null) return null;
-	     res = new JSJavaClass(instance, jk, this);	    	     
-	 } else {
-	     // for primitive Classes, the reflected type is null
-	     return null;
-	 }
+         if (reflectedType != null) {
+             JSJavaKlass jk = newJSJavaKlass(reflectedType);
+             // we don't support mirrors of VM internal Klasses
+             if (jk == null) return null;
+             res = new JSJavaClass(instance, jk, this);
+         } else {
+             // for primitive Classes, the reflected type is null
+             return null;
+         }
       } else {
-	 // not a well-known class. But the base class may be
+         // not a well-known class. But the base class may be
          // one of the known classes.
          Klass kls = instance.getKlass().getSuper();
          while (kls != null) {
             className = kls.getName();
             // java.lang.Class and java.lang.String are final classes
             if (className.equals(javaLangThread())) {
-               res = new JSJavaThread(instance, this); 
+               res = new JSJavaThread(instance, this);
                break;
-            } 
+            }
             kls = kls.getSuper();
          }
       }
@@ -189,7 +189,7 @@ public class JSJavaFactoryImpl implements JSJavaFactory {
    }
 
    // Map<Oop, SoftReference<JSJavaObject>>
-   private Map om = new HashMap(); 
+   private Map om = new HashMap();
    private Symbol javaLangString;
    private Symbol javaLangThread;
    private Symbol javaLangClass;

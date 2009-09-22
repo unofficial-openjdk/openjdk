@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)jvmtiCodeBlobEvents.hpp	1.11 07/05/05 17:06:35 JVM"
+#pragma ident "@(#)jvmtiCodeBlobEvents.hpp      1.11 07/05/05 17:06:35 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,9 +22,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
- 
+
 #ifndef _JVMTI_CODE_BLOB_EVENTS_H_
 #define _JVMTI_CODE_BLOB_EVENTS_H_
 
@@ -41,17 +41,17 @@ class JvmtiEnv;
 class JvmtiCodeBlobEvents : public AllStatic {
  public:
 
-  // generate a DYNAMIC_CODE_GENERATED_EVENT event for each non-nmethod 
+  // generate a DYNAMIC_CODE_GENERATED_EVENT event for each non-nmethod
   // code blob in the code cache.
   static jvmtiError generate_dynamic_code_events(JvmtiEnv* env);
 
-  // generate a COMPILED_METHOD_LOAD event for each nmethod 
+  // generate a COMPILED_METHOD_LOAD event for each nmethod
   // code blob in the code cache.
   static jvmtiError generate_compiled_method_load_events(JvmtiEnv* env);
 
   // create a C-heap allocated address location map for an nmethod
-  static void build_jvmti_addr_location_map(nmethod *nm, jvmtiAddrLocationMap** map, 
-					    jint *map_length);
-}; 
+  static void build_jvmti_addr_location_map(nmethod *nm, jvmtiAddrLocationMap** map,
+                                            jint *map_length);
+};
 
 #endif

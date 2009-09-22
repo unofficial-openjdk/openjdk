@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)icache_x86.hpp	1.19 07/09/17 09:33:02 JVM"
+#pragma ident "@(#)icache_x86.hpp       1.19 07/09/17 09:33:02 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 // Interface for updating the instruction cache.  Whenever the VM modifies

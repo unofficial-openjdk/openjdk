@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.runtime.ia64;
@@ -46,7 +46,7 @@ public class IA64CurrentFrameGuess {
   private Address          spFound;
   private Address          fpFound;
   private Address          pcFound;
-  
+
   private static final boolean DEBUG = false;
 
   public IA64CurrentFrameGuess(IA64ThreadContext context,

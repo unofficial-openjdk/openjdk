@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cpCacheKlass.cpp	1.46 07/05/29 09:44:18 JVM"
+#pragma ident "@(#)cpCacheKlass.cpp     1.46 07/05/29 09:44:18 JVM"
 #endif
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_cpCacheKlass.cpp.incl"
 
 
-int constantPoolCacheKlass::oop_size(oop obj) const { 
+int constantPoolCacheKlass::oop_size(oop obj) const {
   assert(obj->is_constantPoolCache(), "must be constantPool");
   return constantPoolCacheOop(obj)->object_size();
 }
@@ -60,7 +60,7 @@ klassOop constantPoolCacheKlass::create_klass(TRAPS) {
 void constantPoolCacheKlass::oop_follow_contents(oop obj) {
   assert(obj->is_constantPoolCache(), "obj must be constant pool cache");
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
-  // Performance tweak: We skip iterating over the klass pointer since we 
+  // Performance tweak: We skip iterating over the klass pointer since we
   // know that Universe::constantPoolCacheKlassObj never moves.
   // gc of constant pool cache instance variables
   MarkSweep::mark_and_push((oop*)cache->constant_pool_addr());
@@ -71,10 +71,10 @@ void constantPoolCacheKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void constantPoolCacheKlass::oop_follow_contents(ParCompactionManager* cm,
-						 oop obj) {
+                                                 oop obj) {
   assert(obj->is_constantPoolCache(), "obj must be constant pool cache");
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
-  // Performance tweak: We skip iterating over the klass pointer since we 
+  // Performance tweak: We skip iterating over the klass pointer since we
   // know that Universe::constantPoolCacheKlassObj never moves.
   // gc of constant pool cache instance variables
   PSParallelCompact::mark_and_push(cm, (oop*)cache->constant_pool_addr());
@@ -90,8 +90,8 @@ int constantPoolCacheKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cache->object_size();  
-  // Performance tweak: We skip iterating over the klass pointer since we 
+  int size = cache->object_size();
+  // Performance tweak: We skip iterating over the klass pointer since we
   // know that Universe::constantPoolCacheKlassObj never moves.
   // iteration over constant pool cache instance variables
   blk->do_oop((oop*)cache->constant_pool_addr());
@@ -106,8 +106,8 @@ int constantPoolCacheKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegio
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cache->object_size();  
-  // Performance tweak: We skip iterating over the klass pointer since we 
+  int size = cache->object_size();
+  // Performance tweak: We skip iterating over the klass pointer since we
   // know that Universe::constantPoolCacheKlassObj never moves.
   // iteration over constant pool cache instance variables
   oop* addr = (oop*)cache->constant_pool_addr();
@@ -123,8 +123,8 @@ int constantPoolCacheKlass::oop_adjust_pointers(oop obj) {
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
   // Get size before changing pointers.
   // Don't call size() or oop_size() since that is a virtual call.
-  int size = cache->object_size();  
-  // Performance tweak: We skip iterating over the klass pointer since we 
+  int size = cache->object_size();
+  // Performance tweak: We skip iterating over the klass pointer since we
   // know that Universe::constantPoolCacheKlassObj never moves.
   // Iteration over constant pool cache instance variables
   MarkSweep::adjust_pointer((oop*)cache->constant_pool_addr());
@@ -135,13 +135,13 @@ int constantPoolCacheKlass::oop_adjust_pointers(oop obj) {
 }
 
 #ifndef SERIALGC
-void constantPoolCacheKlass::oop_copy_contents(PSPromotionManager* pm, 
-					       oop obj) {
+void constantPoolCacheKlass::oop_copy_contents(PSPromotionManager* pm,
+                                               oop obj) {
   assert(obj->is_constantPoolCache(), "should be constant pool");
 }
 
-void constantPoolCacheKlass::oop_push_contents(PSPromotionManager* pm, 
-					       oop obj) {
+void constantPoolCacheKlass::oop_push_contents(PSPromotionManager* pm,
+                                               oop obj) {
   assert(obj->is_constantPoolCache(), "should be constant pool");
 }
 
@@ -163,8 +163,8 @@ constantPoolCacheKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 constantPoolCacheKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-					    HeapWord* beg_addr,
-					    HeapWord* end_addr) {
+                                            HeapWord* beg_addr,
+                                            HeapWord* end_addr) {
   assert(obj->is_constantPoolCache(), "obj must be constant pool cache");
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
 
@@ -204,7 +204,6 @@ void constantPoolCacheKlass::oop_verify_on(oop obj, outputStream* st) {
 }
 
 
-const char* constantPoolCacheKlass::internal_name() const { 
-  return "{constant pool cache}"; 
+const char* constantPoolCacheKlass::internal_name() const {
+  return "{constant pool cache}";
 }
-

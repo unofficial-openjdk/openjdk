@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui;
@@ -57,7 +57,7 @@ public class MemoryPanel extends JPanel {
   private boolean haveLead;
   private int     rowLeadIndex;
   private int     colLeadIndex;
-  
+
   abstract class ActionWrapper extends AbstractAction {
     private Action parent;
     ActionWrapper() {
@@ -126,7 +126,7 @@ public class MemoryPanel extends JPanel {
     table = new JTable(model);
     table.setTableHeader(null);
     table.setShowGrid(false);
-    table.setIntercellSpacing(new Dimension(0, 0));	
+    table.setIntercellSpacing(new Dimension(0, 0));
     table.setCellSelectionEnabled(true);
     table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     table.setDragEnabled(true);
@@ -162,7 +162,7 @@ public class MemoryPanel extends JPanel {
                 buf.append("\n");
               }
             }
-                
+
             return new StringTransferable(buf.toString());
           }
           return null;
@@ -171,7 +171,7 @@ public class MemoryPanel extends JPanel {
         public int getSourceActions(JComponent c) {
           return COPY;
         }
-            
+
         public boolean importData(JComponent c, Transferable t) {
           if (canImport(c, t.getTransferDataFlavors())) {
             try {
@@ -185,7 +185,7 @@ public class MemoryPanel extends JPanel {
 
           return false;
         }
-    
+
         public boolean canImport(JComponent c, DataFlavor[] flavors) {
           for (int i = 0; i < flavors.length; i++) {
             if (DataFlavor.stringFlavor.equals(flavors[i])) {
@@ -194,7 +194,7 @@ public class MemoryPanel extends JPanel {
           }
           return false;
         }
-            
+
         private void handleImport(JComponent c, String str) {
           // do whatever you want with the string here
           try {
@@ -463,7 +463,7 @@ public class MemoryPanel extends JPanel {
       });
     updateFromScrollBar();
   }
-  
+
   /** Makes the given address visible somewhere in the window */
   public void makeVisible(Address addr) {
     BigInteger bi = addressToBigInt(addr);

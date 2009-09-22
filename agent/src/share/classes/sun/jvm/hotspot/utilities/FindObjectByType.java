@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.utilities;
@@ -35,7 +35,7 @@ public class FindObjectByType implements HeapVisitor {
   public FindObjectByType(Klass type) {
     this.type = type;
   }
-  
+
   /** Returns a List of Oops */
   public List getResults() {
     return results;
@@ -43,11 +43,11 @@ public class FindObjectByType implements HeapVisitor {
 
   public void prologue(long size) {}
   public void epilogue()          {}
- 
+
   public boolean doObj(Oop obj) {
     if (obj.getKlass().equals(type)) {
       results.add(obj);
     }
-	return false;
+        return false;
   }
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)arrayKlassKlass.cpp	1.56 07/05/29 09:44:17 JVM"
+#pragma ident "@(#)arrayKlassKlass.cpp  1.56 07/05/29 09:44:17 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 # include "incls/_precompiled.incl"
@@ -60,7 +60,7 @@ void arrayKlassKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void arrayKlassKlass::oop_follow_contents(ParCompactionManager* cm,
-					  oop obj) {
+                                          oop obj) {
   assert(obj->is_klass(), "must be klass");
   arrayKlass* ak = arrayKlass::cast(klassOop(obj));
   PSParallelCompact::mark_and_push(cm, ak->adr_component_mirror());
@@ -134,7 +134,7 @@ int arrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 arrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-				     HeapWord* beg_addr, HeapWord* end_addr) {
+                                     HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_klass(), "must be klass");
   arrayKlass* ak = arrayKlass::cast(klassOop(obj));
 

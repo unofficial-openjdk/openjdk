@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
 package sun.jvm.hotspot.ui.table;
@@ -36,29 +36,28 @@ public class LongCellRenderer extends DefaultTableCellRenderer {
 
     private JFormattedTextField textField;
 
-    // Subclassed to set the background value 
-    public Component getTableCellRendererComponent(JTable table, Object value, 
-						   boolean isSelected, boolean hasFocus,
-						   int row, int column)  {
-	if (textField == null) {
-	    textField = new JFormattedTextField();
-	    textField.setFont(table.getFont());
-	    textField.setHorizontalAlignment(JTextField.RIGHT);
-	}
+    // Subclassed to set the background value
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus,
+                                                   int row, int column)  {
+        if (textField == null) {
+            textField = new JFormattedTextField();
+            textField.setFont(table.getFont());
+            textField.setHorizontalAlignment(JTextField.RIGHT);
+        }
 
-	textField.setForeground(isSelected ? table.getSelectionForeground() :
-				table.getForeground());
-	textField.setBackground(isSelected ? table.getSelectionBackground() :
-				table.getBackground());
-	if (hasFocus) {
-	    textField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-	} else {
-	    textField.setBorder(noFocusBorder);
-	}
+        textField.setForeground(isSelected ? table.getSelectionForeground() :
+                                table.getForeground());
+        textField.setBackground(isSelected ? table.getSelectionBackground() :
+                                table.getBackground());
+        if (hasFocus) {
+            textField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
+        } else {
+            textField.setBorder(noFocusBorder);
+        }
 
-	textField.setValue((Long)value);
-	    
-	return textField;
+        textField.setValue((Long)value);
+
+        return textField;
     }
 }
-
