@@ -1,6 +1,3 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)mutex.cpp    1.73 07/07/10 14:13:50 JVM"
-#endif
 
 /*
  * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,4 +1,3 @@
-.ident	"@(#)solaris_x86_32.s	1.14 07/05/17 15:49:05 JVM"
 //
 // Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.

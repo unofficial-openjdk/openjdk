@@ -28,7 +28,6 @@ import javax.swing.tree.*;
 import javax.swing.event.*;
 
 /**
- * @version 1.2 10/27/98
  * An abstract implementation of the TreeTableModel interface, handling the list
  * of listeners.
  * @author Philip Milne

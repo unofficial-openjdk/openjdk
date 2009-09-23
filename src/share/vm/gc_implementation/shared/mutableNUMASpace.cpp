@@ -1,6 +1,3 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)mutableNUMASpace.cpp 1.8 07/05/05 17:05:35 JVM"
-#endif
 
 /*
  * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.

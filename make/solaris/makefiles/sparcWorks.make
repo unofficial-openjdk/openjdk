@@ -543,6 +543,3 @@ STRIP_LIB.CC/POST_HOOK = $(STRIP) -x $@ || exit 1;
 # in certain configurations, such as product.make.  Other configurations,
 # such as debug.make, do not include the strip operation.
 
-# Enable "#pragma ident" directives.  They are conditionally compiled because
-# redundant copies from header files can bloat the binaries on some platforms.
-SYSDEFS += -DUSE_PRAGMA_IDENT_HDR -DUSE_PRAGMA_IDENT_SRC

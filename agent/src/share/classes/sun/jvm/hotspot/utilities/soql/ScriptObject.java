@@ -1,6 +1,4 @@
 /*
- * @(#)ScriptObject.java        1.3 07/05/05 17:03:46
- *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *

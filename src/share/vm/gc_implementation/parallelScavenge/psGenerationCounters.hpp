@@ -1,6 +1,3 @@
-#ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psGenerationCounters.hpp     1.8 07/05/05 17:05:29 JVM"
-#endif
 
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,4 +1,4 @@
-// Platform file for win32 NT platform @(#)platform_amd64	1.2 07/09/17 09:41:33
+// Platform file for win32 NT platform
 
 os_family = windows
 

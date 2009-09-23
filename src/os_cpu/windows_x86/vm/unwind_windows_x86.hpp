@@ -22,9 +22,6 @@
  *
  */
 
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)unwind_windows_x86.hpp       1.6 07/09/17 09:09:52 JVM"
-#endif
 
 #ifdef AMD64
 typedef unsigned char UBYTE;

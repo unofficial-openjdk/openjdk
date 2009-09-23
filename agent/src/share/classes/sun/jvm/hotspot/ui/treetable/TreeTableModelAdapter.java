@@ -39,7 +39,6 @@ import javax.swing.event.TreeModelListener;
  * all of the event dispatching support provided by the superclass:
  * the AbstractTableModel.
  *
- * @version 1.2 10/27/98
  *
  * @author Philip Milne
  * @author Scott Violet
