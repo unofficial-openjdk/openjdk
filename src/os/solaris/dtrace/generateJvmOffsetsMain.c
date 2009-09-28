@@ -22,9 +22,6 @@
  *
  */
 
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)generateJvmOffsetsMain.c     1.15 07/06/21 15:54:43 JVM"
-#endif
 
 #include "generateJvmOffsets.h"
 

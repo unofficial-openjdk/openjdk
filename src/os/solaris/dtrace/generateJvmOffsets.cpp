@@ -28,7 +28,7 @@
  * contents of __JvmOffsets[] table.
  * The __JvmOffsets[] table is located in generated JvmOffsets.cpp.
  *
- * GENOFFS_SCCS_VER 33
+ * GENOFFS_SCCS_VER 34
  */
 
 #include "generateJvmOffsets.h"
