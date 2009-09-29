@@ -2024,7 +2024,7 @@ public class Parser {
 
     /* AnnotationValue          = ConditionalExpression
      *                          | Annotation
-     *                          | "{" [ AnnotationValue { "," AnnotationValue } ] "}"
+     *                          | "{" [ AnnotationValue { "," AnnotationValue } ] [","] "}"
      */
     JCExpression annotationValue() {
         int pos;
@@ -2041,7 +2041,7 @@ public class Parser {
                 buf.append(annotationValue());
                 while (S.token() == COMMA) {
                     S.nextToken();
-                    if (S.token() == RPAREN) break;
+                    if (S.token() == RBRACE) break;
                     buf.append(annotationValue());
                 }
             }
