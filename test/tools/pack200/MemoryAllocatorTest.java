@@ -374,15 +374,22 @@ public class MemoryAllocatorTest {
     /*
      * These tests uses the unpacker on packfiles provided by external
      * contributors which cannot be recreated programmatically.
+     * Note: The jar file containing the tests may not be included in all
+     * opensource repositories and the test will pass if the packfiles.jar
+     * is missing.
      */
     static void runBadPackTests() throws Exception {
-       String[] jarCmd = { "xvf", System.getProperty("test.src", ".") +
-               File.separator + "packfiles.jar"};
+       File packJar = new File(System.getProperty("test.src", "."), "packfiles.jar");
+       if (!packJar.exists()) {
+           System.out.println("Warning: packfiles.jar missing, therefore this test passes vacuously");
+           return;
+       }
+       String[] jarCmd = { "xvf", packJar.getAbsolutePath()};
        ByteArrayOutputStream baos = new ByteArrayOutputStream();
        PrintStream jarout = new PrintStream(baos);
        sun.tools.jar.Main jarTool = new sun.tools.jar.Main(jarout, System.err, "jar-tool");
        if (!jarTool.run(jarCmd)) {
-           throw new RuntimeException("Error: could not extract arcvive");
+           throw new RuntimeException("Error: could not extract archive");
        }
        TestResult tr = null;
        jarout.close();
