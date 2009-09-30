@@ -828,7 +828,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     topLevelClasses  = List.nil();
                     packageInfoFiles = List.nil();
 
-                    compiler.close();
+                    compiler.close(false);
                     currentContext = contextForNextRound(currentContext, true);
 
                     JavaFileManager fileManager = currentContext.get(JavaFileManager.class);
@@ -876,7 +876,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         }
         runLastRound(xout, roundNumber, errorStatus, taskListener);
 
-        compiler.close();
+        compiler.close(false);
         currentContext = contextForNextRound(currentContext, true);
         compiler = JavaCompiler.instance(currentContext);
         filer.newRound(currentContext, true);
@@ -910,7 +910,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         } else if (procOnly) {
             compiler.todo.clear();
         } else { // Final compilation
-            compiler.close();
+            compiler.close(false);
             currentContext = contextForNextRound(currentContext, true);
             compiler = JavaCompiler.instance(currentContext);
 
