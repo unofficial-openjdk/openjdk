@@ -968,11 +968,6 @@ class JavaThread: public Thread {
     return (_suspend_flags & _ext_suspended) != 0;
   }
 
-  // legacy method that checked for either external suspension or vm suspension
-  bool is_any_suspended() const {
-    return is_ext_suspended();
-  }
-
   bool is_external_suspend_with_lock() const {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     return is_external_suspend();
@@ -998,10 +993,6 @@ class JavaThread: public Thread {
     return ret;
   }
 
-  bool is_any_suspended_with_lock() const {
-    MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
-    return is_any_suspended();
-  }
   // utility methods to see if we are doing some kind of suspension
   bool is_being_ext_suspended() const            {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
