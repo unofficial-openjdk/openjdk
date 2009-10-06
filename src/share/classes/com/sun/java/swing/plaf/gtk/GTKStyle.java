@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.java.swing.plaf.gtk;
 
 import java.awt.*;
 import java.lang.reflect.*;
-import java.security.*;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
@@ -908,7 +907,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
 
     static class GTKStockIconInfo {
         private static Map<String,Integer> ICON_TYPE_MAP;
-        private static final Object ICON_SIZE_KEY = new StringBuffer("IconSize");
+        private static final Object ICON_SIZE_KEY = new Object(); // IconSize
 
         private static Dimension[] getIconSizesMap() {
             AppContext appContext = AppContext.getAppContext();

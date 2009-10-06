@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,8 +61,7 @@ public class PopupFactory {
      * <code>AppContext</code>. This is the key used in the
      * <code>AppContext</code> to locate the <code>PopupFactory</code>.
      */
-    private static final Object SharedInstanceKey =
-        new StringBuffer("PopupFactory.SharedInstanceKey");
+    private static final Object SharedInstanceKey = new Object(); // PopupFactory.SharedInstanceKey
 
     /**
      * Max number of items to store in any one particular cache.
@@ -291,8 +290,7 @@ public class PopupFactory {
      * Popup implementation that uses a Window as the popup.
      */
     private static class HeavyWeightPopup extends Popup {
-        private static final Object heavyWeightPopupCacheKey =
-                 new StringBuffer("PopupFactory.heavyWeightPopupCache");
+        private static final Object heavyWeightPopupCacheKey = new Object(); // PopupFactory.heavyWeightPopupCache
 
         /**
          * Returns either a new or recycled <code>Popup</code> containing
@@ -641,8 +639,7 @@ public class PopupFactory {
      * Popup implementation that uses a JPanel as the popup.
      */
     private static class LightWeightPopup extends ContainerPopup {
-        private static final Object lightWeightPopupCacheKey =
-                         new StringBuffer("PopupFactory.lightPopupCache");
+        private static final Object lightWeightPopupCacheKey = new Object(); // PopupFactory.lightPopupCache
 
         /**
          * Returns a light weight <code>Popup</code> implementation. If
@@ -796,8 +793,7 @@ public class PopupFactory {
      * Popup implementation that uses a Panel as the popup.
      */
     private static class MediumWeightPopup extends ContainerPopup {
-        private static final Object mediumWeightPopupCacheKey =
-                             new StringBuffer("PopupFactory.mediumPopupCache");
+        private static final Object mediumWeightPopupCacheKey = new Object(); // PopupFactory.mediumPopupCache
 
         /** Child of the panel. The contents are added to this. */
         private JRootPane rootPane;

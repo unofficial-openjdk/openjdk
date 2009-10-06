@@ -944,15 +944,15 @@ public class ICC_Profile implements Serializable {
      * and it does not permit read access to the given file.
      */
     public static ICC_Profile getInstance(String fileName) throws IOException {
-    ICC_Profile thisProfile;
-    FileInputStream fis;
+        ICC_Profile thisProfile;
+        FileInputStream fis = null;
 
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkRead(fileName);
+
+        File f = getProfileFile(fileName);
+        if (f != null) {
+            fis = new FileInputStream(f);
         }
-
-        if ((fis = openProfile(fileName)) == null) {
+        if (fis == null) {
             throw new IOException("Cannot open file " + fileName);
         }
 
@@ -1064,13 +1064,24 @@ public class ICC_Profile implements Serializable {
 
 
     void activateDeferredProfile() {
-    byte profileData[];
-    FileInputStream fis;
-    String fileName = deferralInfo.filename;
+        byte profileData[];
+        FileInputStream fis;
+        final String fileName = deferralInfo.filename;
 
         profileActivator = null;
         deferralInfo = null;
-        if ((fis = openProfile(fileName)) == null) {
+        PrivilegedAction<FileInputStream> pa = new PrivilegedAction<FileInputStream>() {
+            public FileInputStream run() {
+                File f = getStandardProfileFile(fileName);
+                if (f != null) {
+                    try {
+                        return new FileInputStream(f);
+                    } catch (FileNotFoundException e) {}
+                }
+                return null;
+            }
+        };
+        if ((fis = AccessController.doPrivileged(pa)) == null) {
             throw new IllegalArgumentException("Cannot open file " + fileName);
         }
         try {
@@ -1765,65 +1776,87 @@ public class ICC_Profile implements Serializable {
      * available, such as a profile for sRGB.  Built-in profiles use .pf as
      * the file name extension for profiles, e.g. sRGB.pf.
      */
-    private static FileInputStream openProfile(final String fileName) {
-        return (FileInputStream)java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction() {
-            public Object run() {
-                return privilegedOpenProfile(fileName);
-            }
-        });
-    }
-
-    /*
-     * this version is called from doPrivileged in privilegedOpenProfile.
-     * the whole method is privileged!
-     */
-    private static FileInputStream privilegedOpenProfile(String fileName) {
-        FileInputStream fis = null;
+    private static File getProfileFile(String fileName) {
         String path, dir, fullPath;
 
         File f = new File(fileName); /* try absolute file name */
-
+        if (f.isAbsolute()) {
+            /* Rest of code has little sense for an absolute pathname,
+               so return here. */
+            return f.isFile() ? f : null;
+        }
         if ((!f.isFile()) &&
                 ((path = System.getProperty("java.iccprofile.path")) != null)){
                                     /* try relative to java.iccprofile.path */
-                StringTokenizer st =
-                    new StringTokenizer(path, File.pathSeparator);
-                while (st.hasMoreTokens() && (!f.isFile())) {
-                    dir = st.nextToken();
-                        fullPath = dir + File.separatorChar + fileName;
-                    f = new File(fullPath);
-                }
-            }
-
-        if ((!f.isFile()) &&
-                ((path = System.getProperty("java.class.path")) != null)) {
-                                    /* try relative to java.class.path */
-                StringTokenizer st =
-                    new StringTokenizer(path, File.pathSeparator);
-                while (st.hasMoreTokens() && (!f.isFile())) {
-                    dir = st.nextToken();
-                        fullPath = dir + File.separatorChar + fileName;
-                    f = new File(fullPath);
-                }
-            }
-
-        if (!f.isFile()) { /* try the directory of built-in profiles */
-                dir = System.getProperty("java.home") +
-                    File.separatorChar + "lib" + File.separatorChar + "cmm";
+            StringTokenizer st =
+                new StringTokenizer(path, File.pathSeparator);
+            while (st.hasMoreTokens() && ((f == null) || (!f.isFile()))) {
+                dir = st.nextToken();
                 fullPath = dir + File.separatorChar + fileName;
                 f = new File(fullPath);
-            }
-
-        if (f.isFile()) {
-            try {
-                fis = new FileInputStream(f);
-            } catch (FileNotFoundException e) {
+                if (!isChildOf(f, dir)) {
+                    f = null;
+                }
             }
         }
-        return fis;
+
+        if (((f == null) || (!f.isFile())) &&
+                ((path = System.getProperty("java.class.path")) != null)) {
+                                    /* try relative to java.class.path */
+            StringTokenizer st =
+                new StringTokenizer(path, File.pathSeparator);
+            while (st.hasMoreTokens() && ((f == null) || (!f.isFile()))) {
+                dir = st.nextToken();
+                fullPath = dir + File.separatorChar + fileName;
+                f = new File(fullPath);
+                if (!isChildOf(f, dir)) {
+                    f = null;
+                }
+            }
+        }
+        if ((f == null) || (!f.isFile())) {
+            /* try the directory of built-in profiles */
+            f = getStandardProfileFile(fileName);
+        }
+        if (f != null && f.isFile()) {
+            return f;
+        }
+        return null;
     }
 
+    /**
+     * Returns a file object corresponding to a built-in profile
+     * specified by fileName.
+     * If there is no built-in profile with such name, then the method
+     * returns null.
+     */
+    private static File getStandardProfileFile(String fileName) {
+        String dir = System.getProperty("java.home") +
+            File.separatorChar + "lib" + File.separatorChar + "cmm";
+        String fullPath = dir + File.separatorChar + fileName;
+        File f = new File(fullPath);
+        return (f.isFile() && isChildOf(f, dir)) ? f : null;
+    }
+
+    /**
+     * Checks whether given file resides inside give directory.
+     */
+    private static boolean isChildOf(File f, String dirName) {
+        try {
+            File dir = new File(dirName);
+            String canonicalDirName = dir.getCanonicalPath();
+            if (!canonicalDirName.endsWith(File.separator)) {
+                canonicalDirName += File.separator;
+            }
+            String canonicalFileName = f.getCanonicalPath();
+            return canonicalFileName.startsWith(canonicalDirName);
+        } catch (IOException e) {
+            /* we do not expect the IOException here, because invocation
+             * of this function is always preceeded by isFile() call.
+             */
+            return false;
+        }
+    }
 
     /*
      * Serialization support.

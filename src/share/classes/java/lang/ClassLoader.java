@@ -1,5 +1,5 @@
 /*
- * Copyright 1994-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1994-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,11 +163,6 @@ public abstract class ClassLoader {
         registerNatives();
     }
 
-    // If initialization succeed this is set to true and security checks will
-    // succeed.  Otherwise the object is not initialized and the object is
-    // useless.
-    private boolean initialized = false;
-
     // The parent class loader for delegation
     private ClassLoader parent;
 
@@ -193,6 +188,19 @@ public abstract class ClassLoader {
     // to its corresponding Package object.
     private HashMap packages = new HashMap();
 
+    private static Void checkCreateClassLoader() {
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+            security.checkCreateClassLoader();
+	}
+        return null;
+    }
+
+    private ClassLoader(Void unused, ClassLoader parent) {
+        this.parent = parent;
+    }
+
+
     /**
      * Creates a new class loader using the specified parent class loader for
      * delegation.
@@ -213,12 +221,7 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected ClassLoader(ClassLoader parent) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = parent;
-        initialized = true;
+	this(checkCreateClassLoader(), parent);
     }
 
     /**
@@ -237,12 +240,7 @@ public abstract class ClassLoader {
      *          of a new class loader.
      */
     protected ClassLoader() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = getSystemClassLoader();
-        initialized = true;
+	this(checkCreateClassLoader(), getSystemClassLoader());
     }
 
 
@@ -627,7 +625,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
         protectionDomain = preDefineClass(name, protectionDomain);
 
         Class c = null;
@@ -709,8 +706,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
-
         int len = b.remaining();
 
         // Use byte[] if not a direct ByteBufer:
@@ -858,7 +853,6 @@ public abstract class ClassLoader {
      * @see  #defineClass(String, byte[], int, int)
      */
     protected final void resolveClass(Class<?> c) {
-        check();
         resolveClass0(c);
     }
 
@@ -889,7 +883,6 @@ public abstract class ClassLoader {
     protected final Class<?> findSystemClass(String name)
         throws ClassNotFoundException
     {
-        check();
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
             if (!checkName(name))
@@ -902,7 +895,6 @@ public abstract class ClassLoader {
     private Class findBootstrapClass0(String name)
         throws ClassNotFoundException
     {
-        check();
         if (!checkName(name))
             throw new ClassNotFoundException(name);
         return findBootstrapClass(name);
@@ -910,13 +902,6 @@ public abstract class ClassLoader {
 
     private native Class findBootstrapClass(String name)
         throws ClassNotFoundException;
-
-    // Check to make sure the class loader has been initialized.
-    private void check() {
-        if (!initialized) {
-            throw new SecurityException("ClassLoader object not initialized");
-        }
-    }
 
     /**
      * Returns the class with the given <a href="#name">binary name</a> if this
@@ -933,7 +918,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final Class<?> findLoadedClass(String name) {
-        check();
         if (!checkName(name))
             return null;
         return findLoadedClass0(name);
@@ -954,7 +938,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final void setSigners(Class<?> c, Object[] signers) {
-        check();
         c.setSigners(signers);
     }
 

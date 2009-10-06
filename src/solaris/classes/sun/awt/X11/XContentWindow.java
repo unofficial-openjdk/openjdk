@@ -98,8 +98,10 @@ public class XContentWindow extends XWindow implements XConstants {
             if (in != null) {
                 newBounds.setLocation(-in.left, -in.top);
             }
-            if (insLog.isLoggable(Level.FINE)) insLog.log(Level.FINE, "Setting content bounds {0}, old bounds {1}",
-                                                          new Object[] {newBounds, getBounds()});
+            if (insLog.isLoggable(Level.FINE)) {
+                insLog.log(Level.FINE, "Setting content bounds {0}, old bounds {1}",
+                           new Object[] {String.valueOf(newBounds), String.valueOf(getBounds())});
+            }
             // Fix for 5023533:
             // Change in the size of the content window means, well, change of the size
             // Change in the location of the content window means change in insets

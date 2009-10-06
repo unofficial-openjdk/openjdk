@@ -46,8 +46,7 @@ public class DefaultLookup {
     /**
      * Key used to store DefaultLookup for AppContext.
      */
-    private static final Object DEFAULT_LOOKUP_KEY = new
-                                        StringBuffer("DefaultLookup");
+    private static final Object DEFAULT_LOOKUP_KEY = new Object(); // DefaultLookup
     /**
      * Thread that last asked for a default.
      */
