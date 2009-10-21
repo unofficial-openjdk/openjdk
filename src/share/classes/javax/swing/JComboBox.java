@@ -32,12 +32,10 @@ import java.awt.event.*;
 
 import java.io.Serializable;
 import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 import java.io.IOException;
 
 import javax.swing.event.*;
 import javax.swing.plaf.*;
-import javax.swing.border.*;
 
 import javax.accessibility.*;
 
@@ -225,7 +223,7 @@ implements ItemSelectable,ListDataListener,ActionListener, Accessible {
 
     private void init() {
         installAncestorListener();
-        setOpaque(true);
+        setUIProperty("opaque",true);
         updateUI();
     }
 

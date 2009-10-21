@@ -31,7 +31,7 @@ BUILDDIR = ../../..
 PRODUCT = plugin
 include $(BUILDDIR)/common/Defs.gmk
 
-SUBDIRS = browser pack
+SUBDIRS = browser pack swing/plaf/nimbus
 all build clean clobber::
 	$(SUBDIRS-loop)
 

@@ -49,6 +49,7 @@ SUBDIRS =                   \
   jdwpgen                   \
   makeclasslist             \
   spp                       \
+  swing-nimbus		    \
   strip_properties
 
 
