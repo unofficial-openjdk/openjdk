@@ -33,8 +33,6 @@ import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.print.PrinterGraphics;
 
-import static com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel.deriveARGB;
-
 /**
  * Convenient base class for defining Painter instances for rendering a
  * region or component in Nimbus.
@@ -349,7 +347,7 @@ public abstract class AbstractRegionPainter implements Painter<JComponent> {
      */
     protected final Color decodeColor(Color color1, Color color2,
                                       float midPoint) {
-        return new Color(deriveARGB(color1, color2, midPoint));
+        return new Color(NimbusLookAndFeel.deriveARGB(color1, color2, midPoint));
     }
 
     /**
