@@ -49,9 +49,11 @@ SUBDIRS =                   \
   jdwpgen                   \
   makeclasslist             \
   spp                       \
-  swing-nimbus		    \
   strip_properties
 
+ifndef DISABLE_NIMBUS
+  SUBDIRS += swing-nimbus
+endif
 
 all build clean clobber::
 	$(SUBDIRS-loop)
