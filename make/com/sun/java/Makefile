@@ -33,10 +33,6 @@ include $(BUILDDIR)/common/Defs.gmk
 
 SUBDIRS = browser pack
 
-ifndef DISABLE_NIMBUS
-  SUBDIRS = swing/plaf/nimbus
-endif
-
 all build clean clobber::
 	$(SUBDIRS-loop)
 
