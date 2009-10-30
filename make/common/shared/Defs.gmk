@@ -479,7 +479,7 @@ ifneq ($(PLATFORM), windows)
 JDK_CUPS_HEADERS_PATH=$(JDK_DEVTOOLS_DIR)/share/cups/include
   ifdef ALT_CUPS_HEADERS_PATH
      CUPS_HEADERS_PATH:=$(call FullPath,$(ALT_CUPS_HEADERS_PATH))
-     CUP_HEADERS_PATH:=$(call AltCheckValue,CUPS_HEADERS_PATH)
+     CUPS_HEADERS_PATH:=$(call AltCheckValue,CUPS_HEADERS_PATH)
   else 
     CUPS_HEADERS_PATH:= \
       $(shell if [ -d "$(JDK_CUPS_HEADERS_PATH)" ]; then \

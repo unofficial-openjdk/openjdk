@@ -27,6 +27,7 @@ package sun.swing;
 import java.awt.Color;
 import java.awt.Insets;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import sun.awt.AppContext;
 
@@ -136,6 +137,10 @@ public class DefaultLookup {
         return ((Number)iValue).intValue();
     }
 
+    public static int getInt(JComponent c, ComponentUI ui, String key) {
+        return getInt(c, ui, key, -1);
+    }
+
     public static Insets getInsets(JComponent c, ComponentUI ui, String key,
                                    Insets defaultValue) {
         Object iValue = get(c, ui, key);
@@ -144,6 +149,10 @@ public class DefaultLookup {
             return defaultValue;
         }
         return (Insets)iValue;
+    }
+
+    public static Insets getInsets(JComponent c, ComponentUI ui, String key) {
+        return getInsets(c, ui, key, null);
     }
 
     public static boolean getBoolean(JComponent c, ComponentUI ui, String key,
@@ -156,6 +165,10 @@ public class DefaultLookup {
         return ((Boolean)iValue).booleanValue();
     }
 
+    public static boolean getBoolean(JComponent c, ComponentUI ui, String key) {
+        return getBoolean(c, ui, key, false);
+    }
+
     public static Color getColor(JComponent c, ComponentUI ui, String key,
                                  Color defaultValue) {
         Object iValue = get(c, ui, key);
@@ -166,7 +179,35 @@ public class DefaultLookup {
         return (Color)iValue;
     }
 
+    public static Color getColor(JComponent c, ComponentUI ui, String key) {
+        return getColor(c, ui, key, null);
+    }
 
+    public static Icon getIcon(JComponent c, ComponentUI ui, String key,
+            Icon defaultValue) {
+        Object iValue = get(c, ui, key);
+        if (iValue == null || !(iValue instanceof Icon)) {
+            return defaultValue;
+        }
+        return (Icon)iValue;
+    }
+
+    public static Icon getIcon(JComponent c, ComponentUI ui, String key) {
+        return getIcon(c, ui, key, null);
+    }
+
+    public static Border getBorder(JComponent c, ComponentUI ui, String key,
+            Border defaultValue) {
+        Object iValue = get(c, ui, key);
+        if (iValue == null || !(iValue instanceof Border)) {
+            return defaultValue;
+        }
+        return (Border)iValue;
+    }
+
+    public static Border getBorder(JComponent c, ComponentUI ui, String key) {
+        return getBorder(c, ui, key, null);
+    }
 
     public Object getDefault(JComponent c, ComponentUI ui, String key) {
         // basic

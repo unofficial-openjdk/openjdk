@@ -32,6 +32,7 @@ PRODUCT = plugin
 include $(BUILDDIR)/common/Defs.gmk
 
 SUBDIRS = browser pack
+
 all build clean clobber::
 	$(SUBDIRS-loop)
 

@@ -51,6 +51,9 @@ SUBDIRS =                   \
   spp                       \
   strip_properties
 
+ifndef DISABLE_NIMBUS
+  SUBDIRS += generate_nimbus
+endif
 
 all build clean clobber::
 	$(SUBDIRS-loop)

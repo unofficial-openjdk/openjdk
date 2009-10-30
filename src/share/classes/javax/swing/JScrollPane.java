@@ -32,15 +32,12 @@ import javax.accessibility.*;
 
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.Insets;
-import java.awt.Color;
 import java.awt.LayoutManager;
 import java.awt.Point;
 
 import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 import java.io.IOException;
 
 import java.beans.*;
@@ -303,7 +300,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         if (view != null) {
             setViewportView(view);
         }
-        setOpaque(true);
+        setUIProperty("opaque",true);
         updateUI();
 
         if (!this.getComponentOrientation().isLeftToRight()) {

@@ -971,6 +971,7 @@ public class SwingUtilities implements SwingConstants
 
         boolean textIsEmpty = (text == null) || text.equals("");
         int lsb = 0;
+        int rsb = 0;
         /* Unless both text and icon are non-null, we effectively ignore
          * the value of textIconGap.
          */
@@ -1012,7 +1013,7 @@ public class SwingUtilities implements SwingConstants
                 if (lsb < 0) {
                     textR.width -= lsb;
                 }
-                int rsb = SwingUtilities2.getRightSideBearing(c, fm, text);
+                rsb = SwingUtilities2.getRightSideBearing(c, fm, text);
                 if (rsb > 0) {
                     textR.width += rsb;
                 }
@@ -1115,6 +1116,11 @@ public class SwingUtilities implements SwingConstants
             // lsb is negative. Shift the x location so that the text is
             // visually drawn at the right location.
             textR.x -= lsb;
+
+            textR.width += lsb;
+        }
+        if (rsb > 0) {
+            textR.width -= rsb;
         }
 
         return text;

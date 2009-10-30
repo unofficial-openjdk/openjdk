@@ -263,6 +263,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
     private Color   listViewBackground;
     private boolean listViewWindowsStyle;
     private boolean readOnly;
+    private boolean fullRowSelection = false;
 
     private ListSelectionModel listSelectionModel;
     private JList list;
@@ -446,6 +447,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         kiloByteString = UIManager.getString("FileChooser.fileSizeKiloBytes", l);
         megaByteString = UIManager.getString("FileChooser.fileSizeMegaBytes", l);
         gigaByteString = UIManager.getString("FileChooser.fileSizeGigaBytes", l);
+        fullRowSelection = UIManager.getBoolean("FileView.fullRowSelection");
 
         renameErrorTitleText = UIManager.getString("FileChooser.renameErrorTitleText", l);
         renameErrorText = UIManager.getString("FileChooser.renameErrorText", l);
@@ -976,6 +978,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         public DetailsTableCellEditor(JTextField tf) {
             super(tf);
             this.tf = tf;
+            tf.setName("Table.editor");
             tf.addFocusListener(editorFocusListener);
         }
 
@@ -1003,7 +1006,8 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         }
 
         public void setBounds(int x, int y, int width, int height) {
-            if (getHorizontalAlignment() == SwingConstants.LEADING) {
+        if (getHorizontalAlignment() == SwingConstants.LEADING &&
+                    !fullRowSelection) {
                 // Restrict width to actual text
                 width = Math.min(width, this.getPreferredSize().width+4);
             } else {
@@ -1024,9 +1028,9 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         public Component getTableCellRendererComponent(JTable table, Object value,
                               boolean isSelected, boolean hasFocus, int row, int column) {
 
-            if (table.convertColumnIndexToModel(column) != COLUMN_FILENAME ||
-                    (listViewWindowsStyle && !table.isFocusOwner())) {
-
+            if ((table.convertColumnIndexToModel(column) != COLUMN_FILENAME ||
+                    (listViewWindowsStyle && !table.isFocusOwner())) &&
+                    !fullRowSelection) {
                 isSelected = false;
             }
 
@@ -1322,6 +1326,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
             Rectangle r = list.getCellBounds(index, index);
             if (editCell == null) {
                 editCell = new JTextField();
+                editCell.setName("Tree.cellEditor");
                 editCell.addActionListener(new EditActionListener());
                 editCell.addFocusListener(editorFocusListener);
                 editCell.setNextFocusableComponent(list);
@@ -1774,10 +1779,11 @@ public class FilePane extends JPanel implements PropertyChangeListener {
                 Point p = evt.getPoint();
                 index = table.rowAtPoint(p);
 
-                if (SwingUtilities2.pointOutsidePrefSize(table,
-                                                         index,
-                                                         table.columnAtPoint(p), p)) {
+                boolean pointOutsidePrefSize =
+                        SwingUtilities2.pointOutsidePrefSize(
+                            table, index, table.columnAtPoint(p), p);
 
+                if (pointOutsidePrefSize && !fullRowSelection) {
                     return;
                 }
 
