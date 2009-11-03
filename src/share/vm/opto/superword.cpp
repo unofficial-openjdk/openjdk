@@ -1902,6 +1902,11 @@ SWPointer::SWPointer(MemNode* mem, SuperWord* slp) :
   }
   // Match AddP(base, AddP(ptr, k*iv [+ invariant]), constant)
   Node* base = adr->in(AddPNode::Base);
+  // Unsafe reference could not be aligned appropriately without runtime checking
+  if (base == NULL || base->bottom_type() == Type::TOP) {
+    assert(!valid(), "unsafe access");
+    return;
+  }
   for (int i = 0; i < 3; i++) {
     if (!scaled_iv_plus_offset(adr->in(AddPNode::Offset))) {
       assert(!valid(), "too complex");
