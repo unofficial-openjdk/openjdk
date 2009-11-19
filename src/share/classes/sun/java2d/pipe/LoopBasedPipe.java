@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,15 @@
  * have any questions.
  */
 
-package build.tools.fontchecker;
+package sun.java2d.pipe;
 
-public interface FontCheckerConstants {
+/**
+ * This is a marker interface used by Pipes that need RenderLoops.
+ * RenderLoops are validated in SurfaceData when a pipe is recognised to
+ * implement this interface.
+ *
+ * @author Mario Torre <neugens@aicas.com>
+ */
+public interface LoopBasedPipe {
 
-    /* code sent to indicate child process started OK */
-    public static final int CHILD_STARTED_OK   = 100;
-
-    /* error codes returned from child process */
-    public static final int ERR_FONT_OK         = 65;
-    public static final int ERR_FONT_NOT_FOUND  = 60;
-    public static final int ERR_FONT_BAD_FORMAT = 61;
-    public static final int ERR_FONT_READ_EXCPT = 62;
-    public static final int ERR_FONT_DISPLAY    = 64;
-    public static final int ERR_FONT_EOS        = -1;
-    /* nl char sent after child crashes */
-    public static final int ERR_FONT_CRASH      = 10;
-
-    /* 0 and 1 are reserved, and commands can only be a single digit integer */
-    public static final int EXITCOMMAND = 2;
 }
