@@ -194,6 +194,9 @@ ifeq ($(SYSTEM_UNAME), Linux)
                 sparc*) \
                     echo sparc \
                     ;; \
+                arm*) \
+                    echo arm \
+                    ;; \
                 *) \
                     echo $(mach) \
                     ;; \
