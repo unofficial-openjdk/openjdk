@@ -141,6 +141,9 @@ java/awt/Frame/LayoutOnMaximizeTest/LayoutOnMaximizeTest.java	generic-all
 #  very small tests and could greatly benefit from a samevm test run.
 #  So a large batch of beans tests are currently run with othervm mode.
 
+# Fails on OpenSolaris
+java/beans/XMLEncoder/javax_swing_tree_TreePath.java		generic-all
+
 # Hangs on most solaris runs.
 java/beans/Introspector/memory/Test4508780.java			generic-all
 
@@ -179,6 +182,9 @@ java/beans/Introspector/Test4144543.java			generic-all
 # Should be othervm, or corrected for samevm, fails with samevm:
 java/io/BufferedReader/BigMark.java			 	generic-all
 java/io/BufferedReader/ReadLineSync.java		 	generic-all
+
+# Fails on OpenSolaris
+java/io/File/GetXSpace.java					generic-all
 
 # One of these is leaving "a.ser" file open, windows samevm
 java/io/Serializable/duplicateSerialFields/Setup.java		generic-all
@@ -324,6 +330,10 @@ java/io/StreamTokenizer/Comment.java			 	generic-all
 # Some of these tests (like java/lang/management) may just need to be marked
 #   othervm, but that is partially speculation.
 
+# Fails on OpenSolaris
+java/lang/ClassLoader/UninitializedParent.java			generic-all
+java/lang/annotations/ParameterAnnotations.java			generic-all
+
 # Times out on solaris 10 sparc
 java/lang/ClassLoader/Assert.java				generic-all
 
@@ -456,6 +466,11 @@ java/math/BigInteger/ModPow65537.java			 	generic-all
 
 # jdk_misc
 
+# Fails on OpenSolaris
+com/sun/java/swing/plaf/nimbus/Test6741426.java			generic-all
+com/sun/java/swing/plaf/nimbus/Test6849805.java			generic-all
+com/sun/org/apache/xml/internal/ws/server/Test.java		generic-all
+
 # Need to be marked othervm, or changed to be samevm safe
 com/sun/jndi/ldap/ReadTimeoutTest.java				generic-all
 com/sun/jndi/rmi/registry/RegistryContext/UnbindIdempotent.java	generic-all
@@ -509,6 +524,15 @@ javax/print/attribute/MediaMappingsTest.java 			generic-all
 
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
+
+# Fails on OpenSolaris
+java/net/NetworkInterface/NetParamsTest.java			generic-all
+sun/net/www/AuthHeaderTest.java					generic-all
+sun/net/www/protocol/http/HttpInputStream.java			generic-all
+sun/net/www/protocol/http/Modified.java				generic-all
+sun/net/www/protocol/http/ProtocolRedirect.java			generic-all
+sun/net/www/protocol/http/SetChunkedStreamingMode.java		generic-all
+sun/net/www/protocol/http/SetIfModifiedSince.java		generic-all
 
 # Fails on OpenSolaris, BindException unexpected 
 java/net/BindException/Test.java				generic-all
@@ -970,6 +994,16 @@ sun/tools/jps/jps-l_2.sh					generic-all
 sun/tools/jps/jps-lm.sh						generic-all
 sun/tools/jps/jps-Vvml_2.sh					generic-all
 sun/tools/jps/jps-m_2.sh					generic-all
+
+# Fails with othervm on OpenSolaris
+sun/tools/jps/jps-Defaults.sh					generic-all
+sun/tools/jps/jps-V_2.sh					generic-all
+sun/tools/jps/jps-Vm_2.sh					generic-all
+sun/tools/jps/jps-Vvml.sh					generic-all
+sun/tools/jps/jps-v_1.sh					generic-all
+sun/tools/jps/jps-vm_1.sh					generic-all
+sun/tools/jps/jps-Vvm.sh					generic-all
+sun/tools/jps/jps-m.sh						generic-all
 
 # Server name error, port 2098 problem?
 sun/tools/jstatd/jstatdServerName.sh				generic-all
