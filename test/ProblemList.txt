@@ -974,9 +974,6 @@ sun/tools/jps/jps-m.sh						generic-all
 # Server name error, port 2098 problem?
 sun/tools/jstatd/jstatdServerName.sh				generic-all
 
-# Solaris, handshake failed, othervm mode
-com/sun/jdi/RedefineException.sh				generic-all
-
 # Problems on windows, jmap.exe hangs?
 com/sun/tools/attach/BasicTests.sh				windows-all
 
