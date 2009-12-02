@@ -287,6 +287,7 @@ class MulticastSocket extends DatagramSocket {
             throw new SocketException("Socket is closed");
         }
 
+        checkAddress(mcastaddr, "joinGroup");
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkMulticast(mcastaddr);
@@ -321,6 +322,7 @@ class MulticastSocket extends DatagramSocket {
             throw new SocketException("Socket is closed");
         }
 
+        checkAddress(mcastaddr, "leaveGroup");
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkMulticast(mcastaddr);
@@ -368,6 +370,7 @@ class MulticastSocket extends DatagramSocket {
         if (oldImpl)
             throw new UnsupportedOperationException();
 
+        checkAddress(((InetSocketAddress)mcastaddr).getAddress(), "joinGroup");
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkMulticast(((InetSocketAddress)mcastaddr).getAddress());
@@ -414,6 +417,7 @@ class MulticastSocket extends DatagramSocket {
         if (oldImpl)
             throw new UnsupportedOperationException();
 
+        checkAddress(((InetSocketAddress)mcastaddr).getAddress(), "leaveGroup");
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkMulticast(((InetSocketAddress)mcastaddr).getAddress());
@@ -439,6 +443,7 @@ class MulticastSocket extends DatagramSocket {
         if (isClosed()) {
             throw new SocketException("Socket is closed");
         }
+        checkAddress(inf, "setInterface");
         synchronized (infLock) {
             getImpl().setOption(SocketOptions.IP_MULTICAST_IF, inf);
             infAddress = inf;
@@ -630,6 +635,7 @@ class MulticastSocket extends DatagramSocket {
         throws IOException {
             if (isClosed())
                 throw new SocketException("Socket is closed");
+            checkAddress(p.getAddress(), "send");
             synchronized(ttlLock) {
                 synchronized(p) {
                     if (connectState == ST_NOT_CONNECTED) {
