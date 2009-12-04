@@ -282,11 +282,23 @@ STATS_TXT = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/$(STATS_TXT_NAME)
 RUNLIST   = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/runlist.txt
 PASSLIST  = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/passlist.txt
 FAILLIST  = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/faillist.txt
+EXITCODE  = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/exitcode.txt
+
+TESTEXIT = \
+  if [ ! -s $(EXITCODE) ] ; then \
+    $(ECHO) "ERROR: EXITCODE file not filled in."; \
+    $(ECHO) "1" > $(EXITCODE); \
+  fi ; \
+  testExitCode=`$(CAT) $(EXITCODE)`; \
+  $(ECHO) "EXIT CODE: $${testExitCode}"; \
+  exit $${testExitCode}
+
 BUNDLE_UP_AND_EXIT = \
 ( \
-  exitCode=$$? && \
+  jtregExitCode=$$? && \
   _summary="$(SUMMARY_TXT)"; \
-  $(RM) -f $(STATS_TXT) $(RUNLIST) $(PASSLIST) $(FAILLIST); \
+  $(RM) -f $(STATS_TXT) $(RUNLIST) $(PASSLIST) $(FAILLIST) $(EXITCODE); \
+  $(ECHO) "$${jtregExitCode}" > $(EXITCODE); \
   if [ -r "$${_summary}" ] ; then \
     $(ECHO) "Summary: $${_summary}" > $(STATS_TXT); \
     $(EXPAND) $${_summary} | $(EGREP) -v ' Not run\.' > $(RUNLIST); \
@@ -297,10 +309,13 @@ BUNDLE_UP_AND_EXIT = \
       $(EGREP) ' Error\.' $(RUNLIST); \
       $(EGREP) -v ' Passed\.' $(RUNLIST) ) \
       | $(SORT) | $(UNIQ) > $(FAILLIST); \
-    if [ $${exitCode} != 0 -o -s $(FAILLIST) ] ; then \
+    if [ $${jtregExitCode} != 0 -o -s $(FAILLIST) ] ; then \
       $(EXPAND) $(FAILLIST) \
         | $(CUT) -d' ' -f1 \
         | $(SED) -e 's@^@FAILED: @' >> $(STATS_TXT); \
+      if [ $${jtregExitCode} = 0 ] ; then \
+        jtregExitCode=1; \
+      fi; \
     fi; \
     runc="`$(CAT) $(RUNLIST)      | $(WC) -l | $(AWK) '{print $$1;}'`"; \
     passc="`$(CAT) $(PASSLIST)    | $(WC) -l | $(AWK) '{print $$1;}'`"; \
@@ -312,8 +327,8 @@ BUNDLE_UP_AND_EXIT = \
     $(ECHO) "Missing file: $${_summary}" >> $(STATS_TXT); \
   fi; \
   $(CAT) $(STATS_TXT); \
-  $(ZIP_UP_RESULTS) && $(KILL_DISPLAY) && \
-  exit $${exitCode} \
+  $(ZIP_UP_RESULTS) && $(KILL_DISPLAY) ; \
+  $(TESTEXIT) \
 )
 
 ################################################################
@@ -521,10 +536,14 @@ jdk_text: java/text sun/text
 	$(call RunSamevmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
-#   Using samevm has serious problems with these tests
+#   Using samevm has serious problems with these tests, but just with openjdk6?
+#   Normally the com/sun/jdi tests should work with samevm.
+#   But on openjdk6 jtreg will occasionally complain with:
+#     Error. Error while cleaning up threads after test
+#  This could be a hotspot vm issue. So someday, change this to Samevm.
 JDK_ALL_TARGETS += jdk_tools1
 jdk_tools1: com/sun/jdi
-	$(call RunSamevmBatch)
+	$(call RunOthevmBatch)
 JDK_ALL_TARGETS += jdk_tools2
 jdk_tools2: com/sun/tools sun/jvmstat sun/tools tools vm 
 	$(call RunOthervmBatch)
@@ -586,7 +605,7 @@ jtreg_tests: prep $(PRODUCT_HOME) $(JTREG) $(EXCLUDELIST)
               $(JTREG_TEST_OPTIONS)                                          \
               $(TESTDIRS)                                                    \
 	  ) ; $(BUNDLE_UP_AND_EXIT)                                          \
-	) 2>&1 | $(TEE) $(ABS_TEST_OUTPUT_DIR)/output.txt
+	) 2>&1 | $(TEE) $(ABS_TEST_OUTPUT_DIR)/output.txt ; $(TESTEXIT)
 
 PHONY_LIST += jtreg_tests
 
