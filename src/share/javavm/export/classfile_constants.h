@@ -30,6 +30,10 @@
 extern "C" {
 #endif
 
+/* Classfile version number for this information */
+#define JVM_CLASSFILE_MAJOR_VERSION 50
+#define JVM_CLASSFILE_MINOR_VERSION 0
+
 /* Flags */
 
 enum {
