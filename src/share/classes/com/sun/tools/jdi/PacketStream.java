@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -485,7 +485,7 @@ class PacketStream {
      * Read field represented as vm specific byte sequence.
      */
     Field readField() {
-        ReferenceTypeImpl refType = (ReferenceTypeImpl)readReferenceType();
+        ReferenceTypeImpl refType = readReferenceType();
         long fieldRef = readFieldRef();
         return refType.getFieldMirror(fieldRef);
     }

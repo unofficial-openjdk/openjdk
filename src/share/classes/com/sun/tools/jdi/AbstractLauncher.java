@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
 
         String[] tokenArray = new String[tokenList.size()];
         for (int i = 0; i < tokenList.size(); i++) {
-            tokenArray[i] = (String)tokenList.get(i);
+            tokenArray[i] = tokenList.get(i);
         }
         return tokenArray;
     }

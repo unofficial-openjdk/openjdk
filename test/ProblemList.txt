@@ -179,6 +179,11 @@ java/beans/Introspector/Test4144543.java			generic-all
 # Many of these tests have a tendency to leave input streams open, which
 #  will cause following tests to be failures when used in samevm mode.
 
+# Fails on Windows 2000 & 2003/x64
+#   Exception: .\x.SetAccessPermission.dir: setWritable(false, true) Failed
+#	at SetAccess.doTest(SetAccess.java:144)
+java/io/File/SetAccess.java 					generic-all
+
 # Should be othervm, or corrected for samevm, fails with samevm:
 java/io/BufferedReader/BigMark.java			 	generic-all
 java/io/BufferedReader/ReadLineSync.java		 	generic-all
@@ -330,6 +335,17 @@ java/io/StreamTokenizer/Comment.java			 	generic-all
 # Some of these tests (like java/lang/management) may just need to be marked
 #   othervm, but that is partially speculation.
 
+# Fails on Fedora 9 32bit, 
+#  RuntimeException: Current Peak = 14 Expected to be == previous peak = 13 + 0
+#   at ResetPeakThreadCount.startThreads(ResetPeakThreadCount.java:141)
+java/lang/management/ThreadMXBean/ResetPeakThreadCount.java	generic-all
+
+# Fails on Fedora 9 32bit
+# ATestCaseScaffold$TestCaseScaffoldException: TT[Trans12][001] 
+#   incorrectly appeared before TT[Trans12][000] i=1 j=507 size=1014
+#	at ATestCaseScaffold.fail(ATestCaseScaffold.java:116)
+java/lang/instrument/TransformerManagementThreadAddTests.java 	generic-all
+
 # Fails on OpenSolaris
 java/lang/ClassLoader/UninitializedParent.java			generic-all
 java/lang/annotations/ParameterAnnotations.java			generic-all
@@ -410,6 +426,62 @@ java/lang/Thread/ThreadStateTest.java				generic-all
 ############################################################################
 
 # jdk_management
+
+# Fails on Solaris 10 sparc 
+#  NoClassDefFoundError: javax/rmi/GetORBPropertiesFileAction$1
+#  at javax.rmi.GetORBPropertiesFileAction.getSystemProperty(PortableRemoteObject.java:230)
+javax/management/remote/mandatory/connection/FailedConnectionTest.java generic-all
+javax/management/remote/mandatory/connection/IIOPURLTest.java generic-all
+javax/management/remote/mandatory/connection/IdleTimeoutTest.java generic-all
+
+# Fails on Solaris 10 sparc and Solaris 10 x86
+#   java.lang.NoClassDefFoundError: javax/rmi/GetORBPropertiesFileAction$1
+#   at javax.rmi.GetORBPropertiesFileAction.getSystemProperty(PortableRemoteObject.java:230)
+sun/management/jmxremote/bootstrap/LocalOnlyTest.java		generic-all
+sun/management/jmxremote/bootstrap/RmiSslNoKeyStoreTest.sh	generic-all
+
+# Fails on Solaris 10 sparc and Solaris 10 x86
+#   java.lang.NoClassDefFoundError: javax/rmi/GetORBPropertiesFileAction$1
+#   at javax.rmi.GetORBPropertiesFileAction.getSystemProperty(PortableRemoteObject.java:230)
+javax/management/modelmbean/DescriptorSupportSerialTest.java 	generic-all
+javax/management/modelmbean/UnserializableTargetObjectTest.java generic-all
+javax/management/mxbean/GenericArrayTypeTest.java 		generic-all
+javax/management/mxbean/MXBeanTest.java 			generic-all
+javax/management/proxy/NotificationEmitterProxy.java 		generic-all
+javax/management/proxy/ProxyObjectMethodsTest.java 		generic-all
+javax/management/remote/mandatory/connection/AddressableTest.java generic-all
+javax/management/remote/mandatory/connection/BrokenConnectionTest.java generic-all
+javax/management/remote/mandatory/connection/CloseServerTest.java generic-all
+javax/management/remote/mandatory/connection/CloseUnconnectedTest.java generic-all
+javax/management/remote/mandatory/connection/ConnectionTest.java generic-all
+javax/management/remote/mandatory/connection/DeadLockTest.java 	generic-all
+javax/management/remote/mandatory/connection/FailedConnectioent/remote/mandatory/connection/IdleTimeoutTest.java generic-all
+javax/management/remote/mandatory/connection/MultiOpenCloseTest.java generic-all
+javax/management/remote/mandatory/connection/RMIConnectionIdTest.java generic-all
+javax/management/remote/mandatory/connection/RMIExitTest.java	generic-all
+javax/management/remote/mandatory/connection/ReconnectTest.java	generic-all
+javax/management/remote/mandatory/connectorServer/RMIExporterTest.java generic-all
+javax/management/remote/mandatory/loading/DeserializeEncodedURLTest.java generic-all
+javax/management/remote/mandatory/loading/MethodResultTest.java generic-all
+javax/management/remote/mandatory/loading/MissingClassTest.java generic-all
+javax/management/remote/mandatory/loading/RMIDownloadTest.java generic-all
+javax/management/remote/mandatory/loading/UserClassLoaderTest.java generic-all
+javax/management/remote/mandatory/notif/AddRemoveTest.java generic-all
+javax/management/remote/mandatory/notif/DiffHBTest.java 	generic-all
+javax/management/remote/mandatory/notif/EmptyDomainNotificationTest.java generic-all
+javax/management/remote/mandatory/notif/NotSerializableNotifTest.java generic-all
+javax/management/remote/mandatory/notif/NotifBufferSizePropertyNameTest.java generic-all
+javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java generic-all
+javax/management/remote/mandatory/notif/NotificationAccessControllerTest.java generic-all
+javax/management/remote/mandatory/notif/NotificationBufferCreationTest.java generic-all
+javax/management/remote/mandatory/notif/NotificationEmissionTest.java generic-all
+javax/management/remote/mandatory/notif/ServerNotifs.java 	generic-all
+javax/management/remote/mandatory/notif/UnexpectedNotifTest.java generic-all
+javax/management/remote/mandatory/passwordAccessFile/NonJMXPrincipalsTest.java generic-all
+javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java generic-all
+javax/management/remote/mandatory/provider/ProviderTest.java generic-all
+javax/management/remote/mandatory/serverError/JMXServerErrorTest.java generic-all
+javax/management/remote/mandatory/threads/NoServerTimeoutTest.java generic-all
 
 # Solaris 10 sparc, NPE from org.omg.stub.javax.management.remote.rmi._RMIConnectionImpl_Tie._invoke
 javax/management/remote/mandatory/threads/ExecutorTest.java 	generic-all
@@ -504,6 +576,13 @@ javax/print/attribute/MediaMappingsTest.java 			generic-all
 
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
+
+# Fails on Linux Fedora 9, 32bit and 64bit, Windows 2000 & 2003/X64
+#   samevm "cleaning up threads" issue, kind of passes,
+#   then jtreg says: Error while cleaning up threads after test
+#   Could this be a hotspot issue? Or tests that need to be marked othervm?
+sun/net/www/protocol/http/Finalizer.java			generic-all
+sun/net/www/protocol/http/RetryUponTimeout.java			generic-all
 
 # Fails on OpenSolaris
 java/net/NetworkInterface/NetParamsTest.java			generic-all
@@ -652,6 +731,33 @@ sun/net/www/protocol/http/DigestTest.java			generic-all
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
 
+# Fails on Windows 2000, Can't delete test directory .\x.SetLastModified.dir
+#    at SetLastModified.main(SetLastModified.java:107)
+java/io/File/SetLastModified.java				generic-all
+
+# Fails on Windows 2000, run.sh 40: save: fork_level=1 SetHandleInformation() 
+#    failed: fd 0 handle 0x23fc type 0: The handle is invalid.
+java/io/Serializable/evolution/RenamePackage/run.sh	generic-all
+
+# Fails on Windows 2000, Execution failed: exit code 125
+java/io/Serializable/serialver/classpath/run.sh			generic-all
+
+# Fails on Solaris x86, times out.
+java/nio/channels/SocketChannel/AsyncCloseChannel.java		generic-all
+
+# Fails on Solaris 10 x86 BindException: Address already in use
+java/nio/channels/DatagramChannel/SRTest.java			generic-all
+
+# Fails on Solaris 8 x86, java.io.IOException: File too large
+java/io/File/Basic.java						generic-all
+
+# Fails on Solaris 8 x86, java.io.IOException: File too large
+java/nio/channels/FileChannel/Size.java				generic-all
+java/nio/channels/FileChannel/Transfer.java			generic-all
+
+# Fails on OpenSolaris, times out
+java/nio/channels/DatagramChannel/AdaptDatagramSocket.java	generic-all
+
 # Fails on OpenSolaris, various reasons, consustent failures, othervm
 java/nio/Buffer/Basic.java					generic-all
 java/nio/channels/Channels/ReadOffset.java			generic-all
@@ -799,6 +905,13 @@ java/rmi/server/UnicastRemoteObject/unexportObject/UnexportLeak.java generic-all
 
 # jdk_security
 
+# Fails almost everywhere: Unexpected exit from test [exit code: 1]
+com/sun/crypto/provider/KeyFactory/TestProviderLeak.java	generic-all
+
+# Fails everywhere: java.lang.Exception: Function #1 check fails
+#	at StartDateTest.main(StartDateTest.java:63)
+sun/security/tools/keytool/StartDateTest.java			generic-all
+
 # Run too slow on Solaris 10 sparc
 sun/security/ssl/com/sun/net/ssl/internal/ssl/InputRecord/SSLSocketTimeoutNulls.java solaris-sparc
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/ClientTimeout.java solaris-sparc
@@ -806,6 +919,9 @@ sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/ServerTimeout.java s
 sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/ReadTimeout.java solaris-sparc
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/NotifyHandshakeTest.sh solaris-sparc
 sun/security/tools/keytool/AltProviderPath.sh 			solaris-sparc
+
+# OpenSolaris, fails to compile when run with -samevm
+sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/CheckMethods.java generic-all
 
 # Solaris 10 sparc, passed/failed confusion? java.security.ProviderException: update() failed
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/AsyncSSLSocketClose.java generic-all
@@ -1005,6 +1121,9 @@ com/sun/tools/extcheck/TestExtcheckArgs.java			generic-all
 ############################################################################
 
 # jdk_util
+
+# Fails Windows 2000, AssertionError: Some tests failed at Basic.java:96
+java/util/concurrent/TimeUnit/Basic.java			generic-all
 
 # Assert error, failures, on Linux Fedora 9 -server
 #   Windows samevm failure, assert error "Passed = 134, failed = 2"

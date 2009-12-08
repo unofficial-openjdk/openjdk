@@ -35,6 +35,7 @@ import java.io.BufferedInputStream;
 import java.net.ServerSocket;
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.AttachingConnector;
 import java.util.Map;
@@ -45,8 +46,7 @@ public class RunToExit {
 
     /* Increment this when ERROR: seen */
     static int error_seen = 0;
-    static String locker = "";
-
+    static volatile boolean ready = false;
     /*
      * Helper class to direct process output to a StringBuffer
      */
@@ -76,9 +76,7 @@ public class RunToExit {
                     // The first thing that will get read is
                     //    Listening for transport dt_socket at address: xxxxx
                     // which shows the debuggee is ready to accept connections.
-                    synchronized(locker) {
-                        locker.notify();
-                    }
+                    ready = true;
                     if (n < 0) {
                         break;
                     }
@@ -117,9 +115,10 @@ public class RunToExit {
         String exe =   System.getProperty("java.home")
                      + File.separator + "bin" + File.separator;
         String arch = System.getProperty("os.arch");
-        if (arch.equals("sparcv9")) {
+        String osname = System.getProperty("os.name");
+        if (osname.equals("SunOS") && arch.equals("sparcv9")) {
             exe += "sparcv9/java";
-        } else if (arch.equals("amd64")) {
+        } else if (osname.equals("SunOS") && arch.equals("amd64")) {
             exe += "amd64/java";
         } else {
             exe += "java";
@@ -156,9 +155,13 @@ public class RunToExit {
         // launch the server debuggee
         Process process = launch(address, "Exit0");
 
-        // give server debuggee time to suspend
-        synchronized(locker) {
-            locker.wait();
+        // wait for the debugge to be ready
+        while (!ready) {
+            try {
+                Thread.sleep(1000);
+            } catch(Exception ee) {
+                throw ee;
+            }
         }
 
         // attach to server debuggee and resume it so it can exit
@@ -168,6 +171,16 @@ public class RunToExit {
             (Connector.IntegerArgument)conn_args.get("port");
         port_arg.setValue(port);
         VirtualMachine vm = conn.attach(conn_args);
+
+        // The first event is always a VMStartEvent, and it is always in
+        // an EventSet by itself.  Wait for it.
+        EventSet evtSet = vm.eventQueue().remove();
+        for (Event event: evtSet) {
+            if (event instanceof VMStartEvent) {
+                break;
+            }
+            throw new RuntimeException("Test failed - debuggee did not start properly");
+        }
         vm.eventRequestManager().deleteAllBreakpoints();
         vm.resume();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,30 +86,22 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     }
 
     public void suspend() {
-        List threads = threads();
-        Iterator iter = threads.iterator();
-        while (iter.hasNext()) {
-                ((ThreadReference)iter.next()).suspend();
+        for (ThreadReference thread : threads()) {
+            thread.suspend();
         }
 
-        List groups = threadGroups();
-        iter = groups.iterator();
-        while (iter.hasNext()) {
-                ((ThreadGroupReference)iter.next()).suspend();
+        for (ThreadGroupReference threadGroup : threadGroups()) {
+            threadGroup.suspend();
         }
     }
 
     public void resume() {
-        List threads = threads();
-        Iterator iter = threads.iterator();
-        while (iter.hasNext()) {
-                ((ThreadReference)iter.next()).resume();
+        for (ThreadReference thread : threads()) {
+            thread.resume();
         }
 
-        List groups = threadGroups();
-        iter = groups.iterator();
-        while (iter.hasNext()) {
-                ((ThreadGroupReference)iter.next()).resume();
+        for (ThreadGroupReference threadGroup : threadGroups()) {
+            threadGroup.resume();
         }
     }
 
