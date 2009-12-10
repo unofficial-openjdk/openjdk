@@ -1,5 +1,5 @@
 /*
- * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,16 +116,25 @@ class VMState {
     }
 
     /**
-     * Tell listeners to invalidate suspend-sensitive caches.
+     * All threads are resuming
      */
-    synchronized void thaw() {
+    void thaw() {
+        thaw(null);
+    }
+
+    /**
+     * Tell listeners to invalidate suspend-sensitive caches.
+     * If resumingThread != null, then only that thread is being
+     * resumed.
+     */
+    synchronized void thaw(ThreadReference resumingThread) {
         if (cache != null) {
             if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
                 vm.printTrace("Clearing VM suspended cache");
             }
             disableCache();
         }
-        processVMAction(new VMAction(vm, VMAction.VM_NOT_SUSPENDED));
+        processVMAction(new VMAction(vm, resumingThread, VMAction.VM_NOT_SUSPENDED));
     }
 
     private synchronized void processVMAction(VMAction action) {

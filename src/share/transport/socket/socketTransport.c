@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,8 @@ setLastError(jdwpTransportError err, char *newmsg) {
 
     if (err == JDWPTRANSPORT_ERROR_IO_ERROR) {
         char *join_str = ": ";
-        int msg_len = strlen(newmsg) + strlen(join_str) + strlen(buf) + 3;
+        int msg_len = (int)strlen(newmsg) + (int)strlen(join_str) +
+                      (int)strlen(buf) + 3;
         msg = (*callback->alloc)(msg_len);
         if (msg != NULL) {
             strcpy(msg, newmsg);
@@ -93,7 +94,7 @@ setLastError(jdwpTransportError err, char *newmsg) {
             strcat(msg, buf);
         }
     } else {
-        msg = (*callback->alloc)(strlen(newmsg)+1);
+        msg = (*callback->alloc)((int)strlen(newmsg)+1);
         if (msg != NULL) {
             strcpy(msg, newmsg);
         }
@@ -133,15 +134,16 @@ setOptions(int fd)
 
 static jdwpTransportError
 handshake(int fd, jlong timeout) {
-    char *hello = "JDWP-Handshake";
+    const char *hello = "JDWP-Handshake";
     char b[16];
-    int rv, received, i;
+    int rv, helloLen, received;
 
     if (timeout > 0) {
         dbgsysConfigureBlocking(fd, JNI_FALSE);
     }
+    helloLen = (int)strlen(hello);
     received = 0;
-    while (received < (int)strlen(hello)) {
+    while (received < helloLen) {
         int n;
         char *buf;
         if (timeout > 0) {
@@ -153,7 +155,7 @@ handshake(int fd, jlong timeout) {
         }
         buf = b;
         buf += received;
-        n = dbgsysRecv(fd, buf, strlen(hello)-received, 0);
+        n = dbgsysRecv(fd, buf, helloLen-received, 0);
         if (n == 0) {
             setLastError(0, "handshake failed - connection prematurally closed");
             return JDWPTRANSPORT_ERROR_IO_ERROR;
@@ -166,27 +168,26 @@ handshake(int fd, jlong timeout) {
     if (timeout > 0) {
         dbgsysConfigureBlocking(fd, JNI_TRUE);
     }
-    for (i=0; i<(int)strlen(hello); i++) {
-        if (b[i] != hello[i]) {
-            char msg[64];
-            strcpy(msg, "handshake failed - received >");
-            strncat(msg, b, strlen(hello));
-            strcat(msg, "< - excepted >");
-            strcat(msg, hello);
-            strcat(msg, "<");
-            setLastError(0, msg);
-            return JDWPTRANSPORT_ERROR_IO_ERROR;
-        }
+    if (strncmp(b, hello, received) != 0) {
+        char msg[80+2*16];
+        b[received] = '\0';
+        /*
+         * We should really use snprintf here but it's not available on Windows.
+         * We can't use jio_snprintf without linking the transport against the VM.
+         */
+        sprintf(msg, "handshake failed - received >%s< - expected >%s<", b, hello);
+        setLastError(0, msg);
+        return JDWPTRANSPORT_ERROR_IO_ERROR;
     }
 
-    if (dbgsysSend(fd, hello, strlen(hello), 0) != (int)strlen(hello)) {
+    if (dbgsysSend(fd, (char*)hello, helloLen, 0) != helloLen) {
         RETURN_IO_ERROR("send failed during handshake");
     }
     return JDWPTRANSPORT_ERROR_NONE;
 }
 
 static jdwpTransportError
-parseAddress(const char *address, struct sockaddr_in *sa, UINT32 defaultHost) {
+parseAddress(const char *address, struct sockaddr_in *sa, uint32_t defaultHost) {
     char *colon;
 
     memset((void *)sa,0,sizeof(struct sockaddr_in));
@@ -202,9 +203,9 @@ parseAddress(const char *address, struct sockaddr_in *sa, UINT32 defaultHost) {
         char *buf;
         char *hostname;
         u_short port;
-        UINT32 addr;
+        uint32_t addr;
 
-        buf = (*callback->alloc)(strlen(address)+1);
+        buf = (*callback->alloc)((int)strlen(address)+1);
         if (buf == NULL) {
             RETURN_ERROR(JDWPTRANSPORT_ERROR_OUT_OF_MEMORY, "out of memory");
         }
@@ -306,7 +307,7 @@ socketTransport_startListening(jdwpTransportEnv* env, const char* address,
                                (struct sockaddr *)&sa, &len);
         portNum = dbgsysNetworkToHostShort(sa.sin_port);
         sprintf(buf, "%d", portNum);
-        *actualAddress = (*callback->alloc)(strlen(buf) + 1);
+        *actualAddress = (*callback->alloc)((int)strlen(buf) + 1);
         if (*actualAddress == NULL) {
             RETURN_ERROR(JDWPTRANSPORT_ERROR_OUT_OF_MEMORY, "out of memory");
         } else {
@@ -679,7 +680,7 @@ socketTransport_getLastError(jdwpTransportEnv* env, char** msgP) {
     if (msg == NULL) {
         return JDWPTRANSPORT_ERROR_MSG_NOT_AVAILABLE;
     }
-    *msgP = (*callback->alloc)(strlen(msg)+1);
+    *msgP = (*callback->alloc)((int)strlen(msg)+1);
     if (*msgP == NULL) {
         return JDWPTRANSPORT_ERROR_OUT_OF_MEMORY;
     }

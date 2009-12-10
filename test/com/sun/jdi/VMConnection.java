@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ class VMConnection {
         if (testClasses == null) {
             return retVal;
         }
+        retVal += "-classpath " + testClasses + " ";
         File myFile = new File(testClasses, "@debuggeeVMOptions");
 
         if (!myFile.canRead()) {
@@ -97,7 +98,7 @@ class VMConnection {
             if (line.length() != 0 && !line.startsWith("#")) {
                 System.out.println("-- Added debuggeeVM options from file " +
                                    wholePath + ": " + line);
-                retVal = line;
+                retVal += line;
                 break;
             }
             // Else, read he next line.
@@ -115,7 +116,7 @@ class VMConnection {
             return cmdLine;
         }
         // Insert the options at position 1.  Blanks in args are not allowed!
-        String[] v1 = opts.split(" ");
+        String[] v1 = opts.split(" +");
         String[] retVal = new String[cmdLine.length + v1.length];
         retVal[0] = cmdLine[0];
         System.arraycopy(v1, 0, retVal, 1, v1.length);

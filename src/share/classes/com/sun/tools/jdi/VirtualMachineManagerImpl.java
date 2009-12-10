@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
             Connector connector;
 
             try {
-                connector = (Connector)connectors.next();
+                connector = connectors.next();
             } catch (ThreadDeath x) {
                 throw x;
             } catch (Exception x) {
@@ -121,7 +121,7 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
             TransportService transportService;
 
             try {
-                transportService = (TransportService)transportServices.next();
+                transportService = transportServices.next();
             } catch (ThreadDeath x) {
                 throw x;
             } catch (Exception x) {

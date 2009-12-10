@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -146,8 +146,9 @@ class VirtualMachineImpl extends MirrorImpl
     public boolean threadResumable(ThreadAction action) {
         /*
          * If any thread is resumed, the VM is considered not suspended.
+         * Just one thread is being resumed so pass it to thaw.
          */
-        state.thaw();
+        state.thaw(action.thread());
         return true;
     }
 
@@ -302,9 +303,10 @@ class VirtualMachineImpl extends MirrorImpl
         Iterator it = classToBytes.entrySet().iterator();
         for (int i = 0; it.hasNext(); i++) {
             Map.Entry entry = (Map.Entry)it.next();
+            ReferenceTypeImpl refType = (ReferenceTypeImpl)entry.getKey();
+            validateMirror(refType);
             defs[i] = new JDWP.VirtualMachine.RedefineClasses
-                       .ClassDef((ReferenceTypeImpl)entry.getKey(),
-                                 (byte[])entry.getValue());
+                       .ClassDef(refType, (byte[])entry.getValue());
         }
 
         // flush caches and disable caching until the next suspend
@@ -533,6 +535,7 @@ class VirtualMachineImpl extends MirrorImpl
         ReferenceTypeImpl[] rtArray = new ReferenceTypeImpl[classes.size()];
         int ii = 0;
         for (ReferenceType rti: classes) {
+            validateMirror(rti);
             rtArray[ii++] = (ReferenceTypeImpl)rti;
         }
         try {
@@ -1189,8 +1192,7 @@ class VirtualMachineImpl extends MirrorImpl
                 }
                 requests = new JDWP.VirtualMachine.DisposeObjects.Request[size];
                 for (int i = 0; i < requests.length; i++) {
-                    SoftObjectReference ref =
-                        (SoftObjectReference)batchedDisposeRequests.get(i);
+                    SoftObjectReference ref = batchedDisposeRequests.get(i);
                     if ((traceFlags & TRACE_OBJREFS) != 0) {
                         printTrace("Disposing object " + ref.key().longValue() +
                                    " (ref count = " + ref.count() + ")");
@@ -1434,7 +1436,7 @@ class VirtualMachineImpl extends MirrorImpl
        }
 
        ObjectReferenceImpl object() {
-           return (ObjectReferenceImpl)get();
+           return get();
        }
    }
 }

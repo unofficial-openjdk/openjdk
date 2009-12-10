@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,10 @@ public class JavaStatic {
             id = ((JavaObjectRef)value).getId();
         }
         value = value.dereference(snapshot, field);
-        if (value.isHeapAllocated()) {
+        if (value.isHeapAllocated() &&
+            clazz.getLoader() == snapshot.getNullThing()) {
+            // static fields are only roots if they are in classes
+            //    loaded by the root classloader.
             JavaHeapObject ho = (JavaHeapObject) value;
             String s = "Static reference from " + clazz.getName()
                        + "." + field.getName();
