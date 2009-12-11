@@ -2744,6 +2744,12 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   if (!UseBiasedLocking || EmitSync != 0) {
     UseOptoBiasInlining = false;
   }
+  if (DoEscapeAnalysis) {
+    if (FLAG_IS_CMDLINE(DoEscapeAnalysis)) {
+      warning("Escape Analysis is disabled in this release.");
+    }
+    FLAG_SET_DEFAULT(DoEscapeAnalysis, false);
+  }
 #endif
 
   if (PrintCommandLineFlags) {
