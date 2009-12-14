@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -237,9 +237,8 @@ bool frame::is_interpreted_frame() const  {
   return Interpreter::contains(pc());
 }
 
-int frame::frame_size() const {
-  RegisterMap map(JavaThread::current(), false);
-  frame sender = this->sender(&map);
+int frame::frame_size(RegisterMap* map) const {
+  frame sender = this->sender(map);
   return sender.sp() - sp();
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -517,6 +517,11 @@ class Generation: public CHeapObj {
   // Iterate over all objects in the generation, calling "cl.do_object" on
   // each.
   virtual void object_iterate(ObjectClosure* cl);
+
+  // Iterate over all safe objects in the generation, calling "cl.do_object" on
+  // each.  An object is safe if its references point to other objects in
+  // the heap.  This defaults to object_iterate() unless overridden.
+  virtual void safe_object_iterate(ObjectClosure* cl);
 
   // Iterate over all objects allocated in the generation since the last
   // collection, calling "cl.do_object" on each.  The generation must have

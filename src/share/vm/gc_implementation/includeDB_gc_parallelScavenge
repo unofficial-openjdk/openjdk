@@ -1,5 +1,5 @@
 //
-// Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -253,10 +253,11 @@ psParallelCompact.cpp			gcCause.hpp
 psParallelCompact.cpp			gcLocker.inline.hpp
 psParallelCompact.cpp                   gcTaskManager.hpp
 psParallelCompact.cpp			isGCActiveMark.hpp
+psParallelCompact.cpp			management.hpp
+psParallelCompact.cpp			memoryService.hpp
+psParallelCompact.cpp			methodDataOop.hpp
 psParallelCompact.cpp			oop.inline.hpp
 psParallelCompact.cpp			oop.pcgc.inline.hpp
-psParallelCompact.cpp			memoryService.hpp
-psParallelCompact.cpp			management.hpp
 psParallelCompact.cpp			parallelScavengeHeap.inline.hpp
 psParallelCompact.cpp			pcTasks.hpp
 psParallelCompact.cpp			psMarkSweep.hpp
@@ -302,6 +303,8 @@ psOldGen.hpp                         	safepoint.hpp
 psOldGen.hpp                            spaceCounters.hpp
 
 psPermGen.cpp                           gcUtil.hpp
+psPermGen.cpp                           markOop.inline.hpp
+psPermGen.cpp                           markSweep.inline.hpp
 psPermGen.cpp                           parallelScavengeHeap.hpp
 psPermGen.cpp                           psMarkSweepDecorator.hpp
 psPermGen.cpp                           psParallelCompact.hpp
@@ -370,6 +373,7 @@ psScavenge.inline.hpp                   parallelScavengeHeap.hpp
 psScavenge.inline.hpp                   psPromotionManager.hpp
 psScavenge.inline.hpp                   psScavenge.hpp
 
+pcTasks.cpp                             codeCache.hpp
 pcTasks.cpp                             collectedHeap.hpp
 pcTasks.cpp                             fprofiler.hpp
 pcTasks.cpp                             jniHandles.hpp
@@ -389,6 +393,7 @@ pcTasks.hpp				gcTaskManager.hpp
 pcTasks.hpp				psTasks.hpp
 
 psTasks.cpp                             cardTableExtension.hpp
+psTasks.cpp                             codeCache.hpp
 psTasks.cpp                             fprofiler.hpp
 psTasks.cpp                             gcTaskManager.hpp
 psTasks.cpp                             iterator.hpp

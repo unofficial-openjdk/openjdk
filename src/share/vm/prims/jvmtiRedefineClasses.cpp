@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -831,6 +831,9 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
   ResourceMark rm(THREAD);
 
   JvmtiThreadState *state = JvmtiThreadState::state_for(JavaThread::current());
+  // state can only be NULL if the current thread is exiting which
+  // should not happen since we're trying to do a RedefineClasses
+  guarantee(state != NULL, "exiting thread calling load_new_class_versions");
   for (int i = 0; i < _class_count; i++) {
     oop mirror = JNIHandles::resolve_non_null(_class_defs[i].klass);
     // classes for primitives cannot be redefined
@@ -930,7 +933,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // description.
       RedefineVerifyMark rvm(&the_class, &scratch_class, state);
       Verifier::verify(
-        scratch_class, Verifier::ThrowException, THREAD);
+        scratch_class, Verifier::ThrowException, true, THREAD);
     }
 
     if (HAS_PENDING_EXCEPTION) {
@@ -956,7 +959,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // verify what we have done during constant pool merging
       {
         RedefineVerifyMark rvm(&the_class, &scratch_class, state);
-        Verifier::verify(scratch_class, Verifier::ThrowException, THREAD);
+        Verifier::verify(scratch_class, Verifier::ThrowException, true, THREAD);
       }
 
       if (HAS_PENDING_EXCEPTION) {
@@ -1230,8 +1233,14 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
 
   // Constant pools are not easily reused so we allocate a new one
   // each time.
+  // merge_cp is created unsafe for concurrent GC processing.  It
+  // should be marked safe before discarding it because, even if
+  // garbage.  If it crosses a card boundary, it may be scanned
+  // in order to find the start of the first complete object on the card.
   constantPoolHandle merge_cp(THREAD,
-    oopFactory::new_constantPool(merge_cp_length, THREAD));
+    oopFactory::new_constantPool(merge_cp_length,
+                                 methodOopDesc::IsUnsafeConc,
+                                 THREAD));
   int orig_length = old_cp->orig_length();
   if (orig_length == 0) {
     // This old_cp is an actual original constant pool. We save
@@ -1274,6 +1283,7 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
       // rewriting so we can't use the old constant pool with the new
       // class.
 
+      merge_cp()->set_is_conc_safe(true);
       merge_cp = constantPoolHandle();  // toss the merged constant pool
     } else if (old_cp->length() < scratch_cp->length()) {
       // The old constant pool has fewer entries than the new constant
@@ -1283,6 +1293,7 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
       // rewriting so we can't use the new constant pool with the old
       // class.
 
+      merge_cp()->set_is_conc_safe(true);
       merge_cp = constantPoolHandle();  // toss the merged constant pool
     } else {
       // The old constant pool has more entries than the new constant
@@ -1296,6 +1307,7 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
       set_new_constant_pool(scratch_class, merge_cp, merge_cp_length, true,
         THREAD);
       // drop local ref to the merged constant pool
+      merge_cp()->set_is_conc_safe(true);
       merge_cp = constantPoolHandle();
     }
   } else {
@@ -1325,7 +1337,10 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
     // GCed.
     set_new_constant_pool(scratch_class, merge_cp, merge_cp_length, true,
       THREAD);
+    merge_cp()->set_is_conc_safe(true);
   }
+  assert(old_cp()->is_conc_safe(), "Just checking");
+  assert(scratch_cp()->is_conc_safe(), "Just checking");
 
   return JVMTI_ERROR_NONE;
 } // end merge_cp_and_rewrite()
@@ -1337,39 +1352,39 @@ bool VM_RedefineClasses::rewrite_cp_refs(instanceKlassHandle scratch_class,
 
   // rewrite constant pool references in the methods:
   if (!rewrite_cp_refs_in_methods(scratch_class, THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
   // rewrite constant pool references in the class_annotations:
   if (!rewrite_cp_refs_in_class_annotations(scratch_class, THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
   // rewrite constant pool references in the fields_annotations:
   if (!rewrite_cp_refs_in_fields_annotations(scratch_class, THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
   // rewrite constant pool references in the methods_annotations:
   if (!rewrite_cp_refs_in_methods_annotations(scratch_class, THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
   // rewrite constant pool references in the methods_parameter_annotations:
   if (!rewrite_cp_refs_in_methods_parameter_annotations(scratch_class,
          THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
   // rewrite constant pool references in the methods_default_annotations:
   if (!rewrite_cp_refs_in_methods_default_annotations(scratch_class,
          THREAD)) {
-    // propogate failure back to caller
+    // propagate failure back to caller
     return false;
   }
 
@@ -1588,7 +1603,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_annotations_typeArray(
            byte_i_ref, THREAD)) {
       RC_TRACE_WITH_THREAD(0x02000000, THREAD,
         ("bad annotation_struct at %d", calc_num_annotations));
-      // propogate failure back to caller
+      // propagate failure back to caller
       return false;
     }
   }
@@ -1654,7 +1669,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_annotation_struct(
            byte_i_ref, THREAD)) {
       RC_TRACE_WITH_THREAD(0x02000000, THREAD,
         ("bad element_value at %d", calc_num_element_value_pairs));
-      // propogate failure back to caller
+      // propagate failure back to caller
       return false;
     }
   } // end for each component
@@ -1803,7 +1818,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_element_value(
       // field. This is a nested annotation.
       if (!rewrite_cp_refs_in_annotation_struct(annotations_typeArray,
              byte_i_ref, THREAD)) {
-        // propogate failure back to caller
+        // propagate failure back to caller
         return false;
       }
       break;
@@ -1830,7 +1845,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_element_value(
                annotations_typeArray, byte_i_ref, THREAD)) {
           RC_TRACE_WITH_THREAD(0x02000000, THREAD,
             ("bad nested element_value at %d", calc_num_values));
-          // propogate failure back to caller
+          // propagate failure back to caller
           return false;
         }
       }
@@ -1874,7 +1889,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_fields_annotations(
            THREAD)) {
       RC_TRACE_WITH_THREAD(0x02000000, THREAD,
         ("bad field_annotations at %d", i));
-      // propogate failure back to caller
+      // propagate failure back to caller
       return false;
     }
   }
@@ -1911,7 +1926,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_methods_annotations(
            THREAD)) {
       RC_TRACE_WITH_THREAD(0x02000000, THREAD,
         ("bad method_annotations at %d", i));
-      // propogate failure back to caller
+      // propagate failure back to caller
       return false;
     }
   }
@@ -1979,7 +1994,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_methods_parameter_annotations(
              method_parameter_annotations, byte_i, THREAD)) {
         RC_TRACE_WITH_THREAD(0x02000000, THREAD,
           ("bad method_parameter_annotations at %d", calc_num_parameters));
-        // propogate failure back to caller
+        // propagate failure back to caller
         return false;
       }
     }
@@ -2029,7 +2044,7 @@ bool VM_RedefineClasses::rewrite_cp_refs_in_methods_default_annotations(
            method_default_annotations, byte_i, THREAD)) {
       RC_TRACE_WITH_THREAD(0x02000000, THREAD,
         ("bad default element_value at %d", i));
-      // propogate failure back to caller
+      // propagate failure back to caller
       return false;
     }
   }
@@ -2314,13 +2329,16 @@ void VM_RedefineClasses::set_new_constant_pool(
     // worst case merge situation. We want to associate the minimum
     // sized constant pool with the klass to save space.
     constantPoolHandle smaller_cp(THREAD,
-      oopFactory::new_constantPool(scratch_cp_length, THREAD));
+      oopFactory::new_constantPool(scratch_cp_length,
+                                   methodOopDesc::IsUnsafeConc,
+                                   THREAD));
     // preserve orig_length() value in the smaller copy
     int orig_length = scratch_cp->orig_length();
     assert(orig_length != 0, "sanity check");
     smaller_cp->set_orig_length(orig_length);
     scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
     scratch_cp = smaller_cp;
+    smaller_cp()->set_is_conc_safe(true);
   }
 
   // attach new constant pool to klass
@@ -2516,6 +2534,7 @@ void VM_RedefineClasses::set_new_constant_pool(
 
     rewrite_cp_refs_in_stack_map_table(method, THREAD);
   } // end for each method
+  assert(scratch_cp()->is_conc_safe(), "Just checking");
 } // end set_new_constant_pool()
 
 

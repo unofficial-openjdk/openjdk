@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,11 +207,24 @@ public:
   virtual BasicType memory_type() const { return T_BYTE; }
 };
 
-//------------------------------LoadCNode--------------------------------------
-// Load a char (16bits unsigned) from memory
-class LoadCNode : public LoadNode {
+//------------------------------LoadUBNode-------------------------------------
+// Load a unsigned byte (8bits unsigned) from memory
+class LoadUBNode : public LoadNode {
 public:
-  LoadCNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::CHAR )
+  LoadUBNode(Node* c, Node* mem, Node* adr, const TypePtr* at, const TypeInt* ti = TypeInt::UBYTE )
+    : LoadNode(c, mem, adr, at, ti) {}
+  virtual int Opcode() const;
+  virtual uint ideal_reg() const { return Op_RegI; }
+  virtual Node* Ideal(PhaseGVN *phase, bool can_reshape);
+  virtual int store_Opcode() const { return Op_StoreB; }
+  virtual BasicType memory_type() const { return T_BYTE; }
+};
+
+//------------------------------LoadUSNode-------------------------------------
+// Load an unsigned short/char (16bits unsigned) from memory
+class LoadUSNode : public LoadNode {
+public:
+  LoadUSNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::CHAR )
     : LoadNode(c,mem,adr,at,ti) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegI; }
@@ -230,6 +243,18 @@ public:
   virtual uint ideal_reg() const { return Op_RegI; }
   virtual int store_Opcode() const { return Op_StoreI; }
   virtual BasicType memory_type() const { return T_INT; }
+};
+
+//------------------------------LoadUI2LNode-----------------------------------
+// Load an unsigned integer into long from memory
+class LoadUI2LNode : public LoadNode {
+public:
+  LoadUI2LNode(Node* c, Node* mem, Node* adr, const TypePtr* at, const TypeLong* t = TypeLong::UINT)
+    : LoadNode(c, mem, adr, at, t) {}
+  virtual int Opcode() const;
+  virtual uint ideal_reg() const { return Op_RegL; }
+  virtual int store_Opcode() const { return Op_StoreL; }
+  virtual BasicType memory_type() const { return T_LONG; }
 };
 
 //------------------------------LoadRangeNode----------------------------------
@@ -557,12 +582,16 @@ public:
 // The last StoreCM before a SafePoint must be preserved and occur after its "oop" store
 // Preceeding equivalent StoreCMs may be eliminated.
 class StoreCMNode : public StoreNode {
+ private:
+  int _oop_alias_idx;   // The alias_idx of OopStore
 public:
-  StoreCMNode( Node *c, Node *mem, Node *adr, const TypePtr* at, Node *val, Node *oop_store ) : StoreNode(c,mem,adr,at,val,oop_store) {}
+  StoreCMNode( Node *c, Node *mem, Node *adr, const TypePtr* at, Node *val, Node *oop_store, int oop_alias_idx ) : StoreNode(c,mem,adr,at,val,oop_store), _oop_alias_idx(oop_alias_idx) {}
   virtual int Opcode() const;
   virtual Node *Identity( PhaseTransform *phase );
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual const Type *Value( PhaseTransform *phase ) const;
   virtual BasicType memory_type() const { return T_VOID; } // unspecific
+  int oop_alias_idx() const { return _oop_alias_idx; }
 };
 
 //------------------------------LoadPLockedNode---------------------------------
@@ -719,22 +748,47 @@ public:
 //------------------------------StrComp-------------------------------------
 class StrCompNode: public Node {
 public:
-  StrCompNode(Node *control,
-              Node* char_array_mem,
-              Node* value_mem,
-              Node* count_mem,
-              Node* offset_mem,
-              Node* s1, Node* s2): Node(control,
-                                        char_array_mem,
-                                        value_mem,
-                                        count_mem,
-                                        offset_mem,
-                                        s1, s2) {};
+  StrCompNode(Node* control, Node* char_array_mem,
+              Node* s1, Node* c1,
+              Node* s2, Node* c2): Node(control, char_array_mem,
+                                        s1, c1,
+                                        s2, c2) {};
   virtual int Opcode() const;
   virtual bool depends_only_on_test() const { return false; }
   virtual const Type* bottom_type() const { return TypeInt::INT; }
-  // a StrCompNode (conservatively) aliases with everything:
-  virtual const TypePtr* adr_type() const { return TypePtr::BOTTOM; }
+  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+  virtual uint match_edge(uint idx) const;
+  virtual uint ideal_reg() const { return Op_RegI; }
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+};
+
+//------------------------------StrEquals-------------------------------------
+class StrEqualsNode: public Node {
+public:
+  StrEqualsNode(Node* control, Node* char_array_mem,
+                Node* s1, Node* s2, Node* c): Node(control, char_array_mem,
+                                                   s1, s2, c) {};
+  virtual int Opcode() const;
+  virtual bool depends_only_on_test() const { return false; }
+  virtual const Type* bottom_type() const { return TypeInt::BOOL; }
+  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+  virtual uint match_edge(uint idx) const;
+  virtual uint ideal_reg() const { return Op_RegI; }
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+};
+
+//------------------------------StrIndexOf-------------------------------------
+class StrIndexOfNode: public Node {
+public:
+  StrIndexOfNode(Node* control, Node* char_array_mem,
+                 Node* s1, Node* c1,
+                 Node* s2, Node* c2): Node(control, char_array_mem,
+                                           s1, c1,
+                                           s2, c2) {};
+  virtual int Opcode() const;
+  virtual bool depends_only_on_test() const { return false; }
+  virtual const Type* bottom_type() const { return TypeInt::INT; }
+  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
   virtual uint match_edge(uint idx) const;
   virtual uint ideal_reg() const { return Op_RegI; }
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
@@ -743,11 +797,13 @@ public:
 //------------------------------AryEq---------------------------------------
 class AryEqNode: public Node {
 public:
-  AryEqNode(Node *control, Node* s1, Node* s2): Node(control, s1, s2) {};
+  AryEqNode(Node* control, Node* char_array_mem,
+            Node* s1, Node* s2): Node(control, char_array_mem, s1, s2) {};
   virtual int Opcode() const;
   virtual bool depends_only_on_test() const { return false; }
   virtual const Type* bottom_type() const { return TypeInt::BOOL; }
   virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+  virtual uint match_edge(uint idx) const;
   virtual uint ideal_reg() const { return Op_RegI; }
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 };
@@ -757,10 +813,10 @@ public:
 // Model.  Monitor-enter and volatile-load act as Aquires: no following ref
 // can be moved to before them.  We insert a MemBar-Acquire after a FastLock or
 // volatile-load.  Monitor-exit and volatile-store act as Release: no
-// preceeding ref can be moved to after them.  We insert a MemBar-Release
+// preceding ref can be moved to after them.  We insert a MemBar-Release
 // before a FastUnlock or volatile-store.  All volatiles need to be
 // serialized, so we follow all volatile-stores with a MemBar-Volatile to
-// seperate it from any following volatile-load.
+// separate it from any following volatile-load.
 class MemBarNode: public MultiNode {
   virtual uint hash() const ;                  // { return NO_HASH; }
   virtual uint cmp( const Node &n ) const ;    // Always fail, except on self

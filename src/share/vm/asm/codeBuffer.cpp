@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,6 +123,10 @@ CodeBuffer::~CodeBuffer() {
     // addresses constructed before expansions will not be confused.
     cb->free_blob();
   }
+
+  // free any overflow storage
+  delete _overflow_arena;
+
 #ifdef ASSERT
   Copy::fill_to_bytes(this, sizeof(*this), badResourceValue);
 #endif

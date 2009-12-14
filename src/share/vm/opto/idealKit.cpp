@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@
 const uint IdealKit::first_var = TypeFunc::Parms + 1;
 
 //----------------------------IdealKit-----------------------------------------
-IdealKit::IdealKit(PhaseGVN &gvn, Node* control, Node* mem, bool delay_all_transforms) :
+IdealKit::IdealKit(PhaseGVN &gvn, Node* control, Node* mem, bool delay_all_transforms, bool has_declarations) :
   _gvn(gvn), C(gvn.C) {
   _initial_ctrl = control;
   _initial_memory = mem;
@@ -47,6 +47,9 @@ IdealKit::IdealKit(PhaseGVN &gvn, Node* control, Node* mem, bool delay_all_trans
   _pending_cvstates = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
   _delay_transform  = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
   DEBUG_ONLY(_state = new (C->node_arena()) GrowableArray<int>(C->node_arena(), init_size, 0, 0));
+  if (!has_declarations) {
+     declarations_done();
+  }
 }
 
 //-------------------------------if_then-------------------------------------
@@ -97,7 +100,7 @@ void IdealKit::else_() {
 //-------------------------------end_if-------------------------------------
 // Merge the "then" and "else" cvstates.
 //
-// The if_then() pushed the current state for later use
+// The if_then() pushed a copy of the current state for later use
 // as the initial state for a future "else" clause.  The
 // current state then became the initial state for the
 // then clause.  If an "else" clause was encountered, it will
@@ -258,8 +261,8 @@ Node* IdealKit::promote_to_phi(Node* n, Node* reg) {
   return delay_transform(PhiNode::make(reg, n, ct));
 }
 
-//-----------------------------declares_done-----------------------------------
-void IdealKit::declares_done() {
+//-----------------------------declarations_done-------------------------------
+void IdealKit::declarations_done() {
   _cvstate = new_cvstate();   // initialize current cvstate
   set_ctrl(_initial_ctrl);    // initialize control in current cvstate
   set_all_memory(_initial_memory);// initialize memory in current cvstate
@@ -277,7 +280,9 @@ Node* IdealKit::transform(Node* n) {
 
 //-----------------------------delay_transform-----------------------------------
 Node* IdealKit::delay_transform(Node* n) {
-  gvn().set_type(n, n->bottom_type());
+  if (!gvn().is_IterGVN() || !gvn().is_IterGVN()->delay_transform()) {
+    gvn().set_type(n, n->bottom_type());
+  }
   _delay_transform->push(n);
   return n;
 }
@@ -321,7 +326,9 @@ IdealVariable::IdealVariable(IdealKit &k) {
 Node* IdealKit::memory(uint alias_idx) {
   MergeMemNode* mem = merged_memory();
   Node* p = mem->memory_at(alias_idx);
-  _gvn.set_type(p, Type::MEMORY);  // must be mapped
+  if (!gvn().is_IterGVN() || !gvn().is_IterGVN()->delay_transform()) {
+    _gvn.set_type(p, Type::MEMORY);  // must be mapped
+  }
   return p;
 }
 
@@ -371,7 +378,7 @@ Node* IdealKit::store(Node* ctl, Node* adr, Node *val, BasicType bt,
 
 // Card mark store. Must be ordered so that it will come after the store of
 // the oop.
-Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store,
+Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store, int oop_adr_idx,
                         BasicType bt,
                         int adr_idx) {
   assert(adr_idx != Compile::AliasIdxTop, "use other store_to_memory factory" );
@@ -381,7 +388,7 @@ Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store,
 
   // Add required edge to oop_store, optimizer does not support precedence edges.
   // Convert required edge to precedence edge before allocation.
-  Node* st = new (C, 5) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store);
+  Node* st = new (C, 5) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store, oop_adr_idx);
 
   st = transform(st);
   set_memory(st, adr_idx);
@@ -462,9 +469,6 @@ void IdealKit::make_leaf_call(const TypeFunc *slow_call_type,
   const TypePtr* adr_type = TypeRawPtr::BOTTOM;
   uint adr_idx = C->get_alias_index(adr_type);
 
-  // Clone initial memory
-  MergeMemNode* cloned_mem =  MergeMemNode::make(C, merged_memory());
-
   // Slow-path leaf call
   int size = slow_call_type->domain()->cnt();
   CallNode *call =  (CallNode*)new (C, size) CallLeafNode( slow_call_type, slow_call, leaf_name, adr_type);
@@ -488,9 +492,6 @@ void IdealKit::make_leaf_call(const TypeFunc *slow_call_type,
   // Slow leaf call has no side-effects, sets few values
 
   set_ctrl(transform( new (C, 1) ProjNode(call,TypeFunc::Control) ));
-
-  // Set the incoming clone of memory as current memory
-  set_all_memory(cloned_mem);
 
   // Make memory for the call
   Node* mem = _gvn.transform( new (C, 1) ProjNode(call, TypeFunc::Memory) );

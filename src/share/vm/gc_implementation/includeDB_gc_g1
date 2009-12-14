@@ -1,5 +1,5 @@
 //
-// Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -27,13 +27,15 @@
 bufferingOopClosure.hpp			genOopClosures.hpp
 bufferingOopClosure.hpp			generation.hpp
 bufferingOopClosure.hpp			os.hpp
+bufferingOopClosure.hpp			taskqueue.hpp
 
 cardTableRS.cpp				concurrentMark.hpp
 cardTableRS.cpp				g1SATBCardTableModRefBS.hpp
 
-collectionSetChooser.cpp		g1CollectedHeap.hpp
+collectionSetChooser.cpp		g1CollectedHeap.inline.hpp
 collectionSetChooser.cpp		g1CollectorPolicy.hpp
 collectionSetChooser.cpp		collectionSetChooser.hpp
+collectionSetChooser.cpp		space.inline.hpp
 
 collectionSetChooser.hpp		heapRegion.hpp
 collectionSetChooser.hpp                growableArray.hpp
@@ -42,28 +44,32 @@ concurrentG1Refine.cpp			atomic.hpp
 concurrentG1Refine.cpp			concurrentG1Refine.hpp
 concurrentG1Refine.cpp			concurrentG1RefineThread.hpp
 concurrentG1Refine.cpp			copy.hpp
-concurrentG1Refine.cpp			g1CollectedHeap.hpp
+concurrentG1Refine.cpp			g1CollectedHeap.inline.hpp
+concurrentG1Refine.cpp                  g1CollectorPolicy.hpp
 concurrentG1Refine.cpp			g1RemSet.hpp
+concurrentG1Refine.cpp			space.inline.hpp
+concurrentG1Refine.cpp                  heapRegionSeq.inline.hpp
 
 concurrentG1Refine.hpp			globalDefinitions.hpp
+concurrentG1Refine.hpp			allocation.hpp
+concurrentG1Refine.hpp                  cardTableModRefBS.hpp
+concurrentG1Refine.hpp			thread.hpp
 
 concurrentG1RefineThread.cpp		concurrentG1Refine.hpp
 concurrentG1RefineThread.cpp		concurrentG1RefineThread.hpp
-concurrentG1RefineThread.cpp		g1CollectedHeap.hpp
+concurrentG1RefineThread.cpp		g1CollectedHeap.inline.hpp
 concurrentG1RefineThread.cpp            g1CollectorPolicy.hpp
 concurrentG1RefineThread.cpp		handles.inline.hpp
 concurrentG1RefineThread.cpp		mutexLocker.hpp
 concurrentG1RefineThread.cpp		resourceArea.hpp
 
 concurrentG1RefineThread.hpp		concurrentGCThread.hpp
-concurrentG1RefineThread.hpp		coTracker.hpp
 
 concurrentMark.cpp			concurrentMark.hpp
 concurrentMark.cpp			concurrentMarkThread.inline.hpp
 concurrentMark.cpp			g1CollectedHeap.inline.hpp
 concurrentMark.cpp                      g1CollectorPolicy.hpp
 concurrentMark.cpp                      g1RemSet.hpp
-concurrentMark.cpp		        gcOverheadReporter.hpp
 concurrentMark.cpp		        genOopClosures.inline.hpp
 concurrentMark.cpp                      heapRegionRemSet.hpp
 concurrentMark.cpp                      heapRegionSeq.inline.hpp
@@ -74,7 +80,6 @@ concurrentMark.cpp                      referencePolicy.hpp
 concurrentMark.cpp			resourceArea.hpp
 concurrentMark.cpp			symbolTable.hpp
 
-concurrentMark.hpp			coTracker.hpp
 concurrentMark.hpp			heapRegion.hpp
 concurrentMark.hpp			taskqueue.hpp
 
@@ -99,7 +104,6 @@ concurrentZFThread.cpp			mutexLocker.hpp
 concurrentZFThread.cpp			space.inline.hpp
 
 concurrentZFThread.hpp			concurrentGCThread.hpp
-concurrentZFThread.hpp			coTracker.hpp
 
 dirtyCardQueue.cpp                      atomic.hpp
 dirtyCardQueue.cpp                      dirtyCardQueue.hpp
@@ -135,11 +139,10 @@ g1CollectedHeap.cpp                     concurrentZFThread.hpp
 g1CollectedHeap.cpp                     g1CollectedHeap.inline.hpp
 g1CollectedHeap.cpp                     g1CollectorPolicy.hpp
 g1CollectedHeap.cpp                     g1MarkSweep.hpp
-g1CollectedHeap.cpp                     g1RemSet.hpp
+g1CollectedHeap.cpp                     g1RemSet.inline.hpp
 g1CollectedHeap.cpp                     g1OopClosures.inline.hpp
 g1CollectedHeap.cpp                     genOopClosures.inline.hpp
 g1CollectedHeap.cpp                     gcLocker.inline.hpp
-g1CollectedHeap.cpp                     gcOverheadReporter.hpp
 g1CollectedHeap.cpp                     generationSpec.hpp
 g1CollectedHeap.cpp                     heapRegionRemSet.hpp
 g1CollectedHeap.cpp                     heapRegionSeq.inline.hpp
@@ -147,13 +150,14 @@ g1CollectedHeap.cpp                     icBuffer.hpp
 g1CollectedHeap.cpp                     isGCActiveMark.hpp
 g1CollectedHeap.cpp			oop.inline.hpp
 g1CollectedHeap.cpp			oop.pcgc.inline.hpp
-g1CollectedHeap.cpp			parGCAllocBuffer.hpp
 g1CollectedHeap.cpp                     vm_operations_g1.hpp
 g1CollectedHeap.cpp                     vmThread.hpp
 
 g1CollectedHeap.hpp                     barrierSet.hpp
+g1CollectedHeap.hpp                     g1RemSet.hpp
 g1CollectedHeap.hpp                     heapRegion.hpp
 g1CollectedHeap.hpp                     memRegion.hpp
+g1CollectedHeap.hpp			parGCAllocBuffer.hpp
 g1CollectedHeap.hpp                     sharedHeap.hpp
 
 g1CollectedHeap.inline.hpp              concurrentMark.hpp
@@ -161,15 +165,17 @@ g1CollectedHeap.inline.hpp              g1CollectedHeap.hpp
 g1CollectedHeap.inline.hpp              heapRegionSeq.hpp
 g1CollectedHeap.inline.hpp		taskqueue.hpp
 
+g1CollectorPolicy.cpp			arguments.hpp
 g1CollectorPolicy.cpp			concurrentG1Refine.hpp
 g1CollectorPolicy.cpp			concurrentMark.hpp
 g1CollectorPolicy.cpp			concurrentMarkThread.inline.hpp
 g1CollectorPolicy.cpp			debug.hpp
 g1CollectorPolicy.cpp			java.hpp
-g1CollectorPolicy.cpp                   g1CollectedHeap.hpp
+g1CollectorPolicy.cpp                   g1CollectedHeap.inline.hpp
 g1CollectorPolicy.cpp                   g1CollectorPolicy.hpp
 g1CollectorPolicy.cpp                   heapRegionRemSet.hpp
 g1CollectorPolicy.cpp			mutexLocker.hpp
+g1CollectorPolicy.cpp			gcPolicyCounters.hpp
 
 g1CollectorPolicy.hpp                   collectorPolicy.hpp
 g1CollectorPolicy.hpp                   collectionSetChooser.hpp
@@ -187,7 +193,7 @@ g1MarkSweep.cpp                         biasedLocking.hpp
 g1MarkSweep.cpp                         codeCache.hpp
 g1MarkSweep.cpp                         events.hpp
 g1MarkSweep.cpp                         fprofiler.hpp
-g1MarkSweep.hpp                         g1CollectedHeap.hpp
+g1MarkSweep.hpp                         g1CollectedHeap.inline.hpp
 g1MarkSweep.cpp                         g1MarkSweep.hpp
 g1MarkSweep.cpp                         gcLocker.hpp
 g1MarkSweep.cpp                         genCollectedHeap.hpp
@@ -226,7 +232,7 @@ g1MMUTracker.cpp			ostream.hpp
 g1MMUTracker.cpp			mutexLocker.hpp
 
 g1MMUTracker.hpp			debug.hpp
-
+g1MMUTracker.hpp			allocation.hpp
 g1RemSet.cpp				bufferingOopClosure.hpp
 g1RemSet.cpp				concurrentG1Refine.hpp
 g1RemSet.cpp				concurrentG1RefineThread.hpp
@@ -240,6 +246,7 @@ g1RemSet.cpp				intHisto.hpp
 g1RemSet.cpp				iterator.hpp
 g1RemSet.cpp				oop.inline.hpp
 
+g1RemSet.inline.hpp			oop.inline.hpp
 g1RemSet.inline.hpp			g1RemSet.hpp
 g1RemSet.inline.hpp			heapRegionRemSet.hpp
 
@@ -250,6 +257,7 @@ g1SATBCardTableModRefBS.cpp		thread.hpp
 g1SATBCardTableModRefBS.cpp		thread_<os_family>.inline.hpp
 g1SATBCardTableModRefBS.cpp		satbQueue.hpp
 
+g1SATBCardTableModRefBS.hpp		oop.inline.hpp
 g1SATBCardTableModRefBS.hpp		cardTableModRefBS.hpp
 g1SATBCardTableModRefBS.hpp		memRegion.hpp
 
@@ -264,17 +272,19 @@ heapRegion.cpp                          heapRegionSeq.inline.hpp
 heapRegion.cpp                          iterator.hpp
 heapRegion.cpp                          oop.inline.hpp
 
-heapRegion.hpp                          space.hpp
+heapRegion.hpp                          space.inline.hpp
 heapRegion.hpp                          spaceDecorator.hpp
 heapRegion.hpp                          g1BlockOffsetTable.inline.hpp
 heapRegion.hpp                          watermark.hpp
 heapRegion.hpp				g1_specialized_oop_closures.hpp
 heapRegion.hpp				survRateGroup.hpp
+heapRegion.hpp				ageTable.hpp
 
 heapRegionRemSet.hpp			sparsePRT.hpp
 
 heapRegionRemSet.cpp                    allocation.hpp
 heapRegionRemSet.cpp                    bitMap.inline.hpp
+heapRegionRemSet.cpp                    concurrentG1Refine.hpp
 heapRegionRemSet.cpp                    g1BlockOffsetTable.inline.hpp
 heapRegionRemSet.cpp                    g1CollectedHeap.inline.hpp
 heapRegionRemSet.cpp                    heapRegionRemSet.hpp
@@ -283,7 +293,7 @@ heapRegionRemSet.cpp                    globalDefinitions.hpp
 heapRegionRemSet.cpp                    space.inline.hpp
 
 heapRegionSeq.cpp                       allocation.hpp
-heapRegionSeq.cpp                       g1CollectedHeap.hpp
+heapRegionSeq.cpp                       g1CollectedHeap.inline.hpp
 heapRegionSeq.cpp                       heapRegionSeq.hpp
 
 heapRegionSeq.hpp                       growableArray.hpp
@@ -326,6 +336,7 @@ sparsePRT.cpp				space.inline.hpp
 sparsePRT.hpp				allocation.hpp
 sparsePRT.hpp				cardTableModRefBS.hpp
 sparsePRT.hpp				globalDefinitions.hpp
+sparsePRT.hpp                           g1CollectedHeap.inline.hpp
 sparsePRT.hpp				heapRegion.hpp
 sparsePRT.hpp				mutex.hpp
 
@@ -334,18 +345,18 @@ specialized_oop_closures.hpp		g1_specialized_oop_closures.hpp
 survRateGroup.hpp			numberSeq.hpp
 
 survRateGroup.cpp			allocation.hpp
-survRateGroup.cpp			g1CollectedHeap.hpp
+survRateGroup.cpp			g1CollectedHeap.inline.hpp
 survRateGroup.cpp			g1CollectorPolicy.hpp
 survRateGroup.cpp			heapRegion.hpp
 survRateGroup.cpp			survRateGroup.hpp
 
 thread.cpp				concurrentMarkThread.inline.hpp
 
-universe.cpp                            g1CollectedHeap.hpp
+universe.cpp                            g1CollectedHeap.inline.hpp
 universe.cpp                            g1CollectorPolicy.hpp
 
 vm_operations_g1.hpp			vmGCOperations.hpp
 
 vm_operations_g1.cpp			vm_operations_g1.hpp
-vm_operations_g1.cpp                    g1CollectedHeap.hpp
+vm_operations_g1.cpp                    g1CollectedHeap.inline.hpp
 vm_operations_g1.cpp                    isGCActiveMark.hpp

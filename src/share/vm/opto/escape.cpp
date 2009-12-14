@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -439,6 +439,11 @@ static Node* get_addp_base(Node *addp) {
   Node *base = addp->in(AddPNode::Base)->uncast();
   if (base->is_top()) { // The AddP case #3 and #6.
     base = addp->in(AddPNode::Address)->uncast();
+    while (base->is_AddP()) {
+      // Case #6 (unsafe access) may have several chained AddP nodes.
+      assert(base->in(AddPNode::Base)->is_top(), "expected unsafe access address only");
+      base = base->in(AddPNode::Address)->uncast();
+    }
     assert(base->Opcode() == Op_ConP || base->Opcode() == Op_ThreadLocal ||
            base->Opcode() == Op_CastX2P || base->is_DecodeN() ||
            (base->is_Mem() && base->bottom_type() == TypeRawPtr::NOTNULL) ||
@@ -515,22 +520,26 @@ bool ConnectionGraph::split_AddP(Node *addp, Node *base,  PhaseGVN  *igvn) {
   // cause the failure in add_offset() with narrow oops since TypeOopPtr()
   // constructor verifies correctness of the offset.
   //
-  // It could happend on subclass's branch (from the type profiling
+  // It could happened on subclass's branch (from the type profiling
   // inlining) which was not eliminated during parsing since the exactness
   // of the allocation type was not propagated to the subclass type check.
+  //
+  // Or the type 't' could be not related to 'base_t' at all.
+  // It could happened when CHA type is different from MDO type on a dead path
+  // (for example, from instanceof check) which is not collapsed during parsing.
   //
   // Do nothing for such AddP node and don't process its users since
   // this code branch will go away.
   //
   if (!t->is_known_instance() &&
-      !t->klass()->equals(base_t->klass()) &&
-      t->klass()->is_subtype_of(base_t->klass())) {
+      !base_t->klass()->is_subtype_of(t->klass())) {
      return false; // bail out
   }
 
   const TypeOopPtr *tinst = base_t->add_offset(t->offset())->is_oopptr();
-  // Do NOT remove the next call: ensure an new alias index is allocated
-  // for the instance type
+  // Do NOT remove the next line: ensure a new alias index is allocated
+  // for the instance type. Note: C++ will not remove it since the call
+  // has side effect.
   int alias_idx = _compile->get_alias_index(tinst);
   igvn->set_type(addp, tinst);
   // record the allocation in the node map
@@ -578,10 +587,23 @@ PhiNode *ConnectionGraph::create_split_phi(PhiNode *orig_phi, int alias_idx, Gro
   if (phi_alias_idx == alias_idx) {
     return orig_phi;
   }
-  // have we already created a Phi for this alias index?
+  // Have we recently created a Phi for this alias index?
   PhiNode *result = get_map_phi(orig_phi->_idx);
   if (result != NULL && C->get_alias_index(result->adr_type()) == alias_idx) {
     return result;
+  }
+  // Previous check may fail when the same wide memory Phi was split into Phis
+  // for different memory slices. Search all Phis for this region.
+  if (result != NULL) {
+    Node* region = orig_phi->in(0);
+    for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
+      Node* phi = region->fast_out(i);
+      if (phi->is_Phi() &&
+          C->get_alias_index(phi->as_Phi()->adr_type()) == alias_idx) {
+        assert(phi->_idx >= nodes_size(), "only new Phi per instance memory slice");
+        return phi->as_Phi();
+      }
+    }
   }
   if ((int)C->unique() + 2*NodeLimitFudgeFactor > MaxNodeLimit) {
     if (C->do_escape_analysis() == true && !C->failing()) {
@@ -595,6 +617,7 @@ PhiNode *ConnectionGraph::create_split_phi(PhiNode *orig_phi, int alias_idx, Gro
   orig_phi_worklist.append_if_missing(orig_phi);
   const TypePtr *atype = C->get_adr_type(alias_idx);
   result = PhiNode::make(orig_phi->in(0), NULL, Type::MEMORY, atype);
+  C->copy_node_notes_to(result, orig_phi);
   set_map_phi(orig_phi->_idx, result);
   igvn->set_type(result, result->bottom_type());
   record_for_optimizer(result);
@@ -703,7 +726,7 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
   while (prev != result) {
     prev = result;
     if (result == start_mem)
-      break;  // hit one of our sentinals
+      break;  // hit one of our sentinels
     if (result->is_Mem()) {
       const Type *at = phase->type(result->in(MemNode::Address));
       if (at != Type::TOP) {
@@ -720,7 +743,7 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
     if (result->is_Proj() && result->as_Proj()->_con == TypeFunc::Memory) {
       Node *proj_in = result->in(0);
       if (proj_in->is_Allocate() && proj_in->_idx == (uint)tinst->instance_id()) {
-        break;  // hit one of our sentinals
+        break;  // hit one of our sentinels
       } else if (proj_in->is_Call()) {
         CallNode *call = proj_in->as_Call();
         if (!call->may_modify(tinst, phase)) {
@@ -756,6 +779,16 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
       } else {
         break;
       }
+    } else if (result->Opcode() == Op_SCMemProj) {
+      assert(result->in(0)->is_LoadStore(), "sanity");
+      const Type *at = phase->type(result->in(0)->in(MemNode::Address));
+      if (at != Type::TOP) {
+        assert (at->isa_ptr() != NULL, "pointer type required.");
+        int idx = C->get_alias_index(at->is_ptr());
+        assert(idx != alias_idx, "Object is not scalar replaceable if a LoadStore node access its field");
+        break;
+      }
+      result = result->in(0)->in(MemNode::Memory);
     }
   }
   if (result->is_Phi()) {
@@ -794,7 +827,7 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
 //  Phase 2:  Process MemNode's from memnode_worklist. compute new address type and
 //            search the Memory chain for a store with the appropriate type
 //            address type.  If a Phi is found, create a new version with
-//            the approriate memory slices from each of the Phi inputs.
+//            the appropriate memory slices from each of the Phi inputs.
 //            For stores, process the users as follows:
 //               MemNode:  push on memnode_worklist
 //               MergeMem: push on mergemem_worklist
@@ -895,15 +928,22 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist)
       // see if it is unescaped.
       if (es != PointsToNode::NoEscape || !ptn->_scalar_replaceable)
         continue;
-      if (alloc->is_Allocate()) {
-        // Set the scalar_replaceable flag before the next check.
-        alloc->as_Allocate()->_is_scalar_replaceable = true;
-      }
-      // find CheckCastPP of call return value
+
+      // Find CheckCastPP for the allocate or for the return value of a call
       n = alloc->result_cast();
-      if (n == NULL ||          // No uses accept Initialize or
-          !n->is_CheckCastPP()) // not unique CheckCastPP.
+      if (n == NULL) {            // No uses except Initialize node
+        if (alloc->is_Allocate()) {
+          // Set the scalar_replaceable flag for allocation
+          // so it could be eliminated if it has no uses.
+          alloc->as_Allocate()->_is_scalar_replaceable = true;
+        }
         continue;
+      }
+      if (!n->is_CheckCastPP()) { // not unique CheckCastPP.
+        assert(!alloc->is_Allocate(), "allocation should have unique type");
+        continue;
+      }
+
       // The inline code for Object.clone() casts the allocation result to
       // java.lang.Object and then to the actual type of the allocated
       // object. Detect this case and use the second cast.
@@ -924,8 +964,16 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist)
         if (cast2 != NULL) {
           n = cast2;
         } else {
+          // Non-scalar replaceable if the allocation type is unknown statically
+          // (reflection allocation), the object can't be restored during
+          // deoptimization without precise type.
           continue;
         }
+      }
+      if (alloc->is_Allocate()) {
+        // Set the scalar_replaceable flag for allocation
+        // so it could be eliminated.
+        alloc->as_Allocate()->_is_scalar_replaceable = true;
       }
       set_escape_state(n->_idx, es);
       // in order for an object to be scalar-replaceable, it must be:
@@ -1102,7 +1150,6 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist)
     } else {
       assert(n->is_Mem(), "memory node required.");
       Node *addr = n->in(MemNode::Address);
-      assert(addr->is_AddP(), "AddP required");
       const Type *addr_t = igvn->type(addr);
       if (addr_t == Type::TOP)
         continue;
@@ -1548,7 +1595,7 @@ bool ConnectionGraph::compute_escape() {
       has_non_escaping_obj = true; // Non GlobalEscape
     Node* n = ptn->_node;
     if (n->is_Allocate() && ptn->_scalar_replaceable ) {
-      // Push scalar replaceable alocations on alloc_worklist
+      // Push scalar replaceable allocations on alloc_worklist
       // for processing in split_unique_types().
       alloc_worklist.append(n);
     }

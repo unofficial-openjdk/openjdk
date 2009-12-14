@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
 
   mark_sweep_phase1(marked_for_unloading, clear_all_softrefs);
 
-  if (G1VerifyConcMark) {
+  if (VerifyDuringGC) {
       G1CollectedHeap* g1h = G1CollectedHeap::heap();
       g1h->checkConcurrentMark();
   }
@@ -102,9 +102,14 @@ void G1MarkSweep::allocate_stacks() {
   GenMarkSweep::_marking_stack =
     new (ResourceObj::C_HEAP) GrowableArray<oop>(4000, true);
 
-  size_t size = SystemDictionary::number_of_classes() * 2;
+  int size = SystemDictionary::number_of_classes() * 2;
   GenMarkSweep::_revisit_klass_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<Klass*>((int)size, true);
+    new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
+  // (#klass/k)^2 for k ~ 10 appears a better fit, but this will have to do
+  // for now until we have a chance to work out a more optimal setting.
+  GenMarkSweep::_revisit_mdo_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<DataLayout*>(size*2, true);
+
 }
 
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
@@ -116,9 +121,11 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activeate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_SystemClasses,
                            &GenMarkSweep::follow_root_closure,
+                           &GenMarkSweep::follow_code_root_closure,
                            &GenMarkSweep::follow_root_closure);
 
   // Process reference objects found during marking
@@ -139,12 +146,17 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   CodeCache::do_unloading(&GenMarkSweep::is_alive,
                                    &GenMarkSweep::keep_alive,
                                    purged_class);
-           GenMarkSweep::follow_stack();
+  GenMarkSweep::follow_stack();
 
   // Update subklass/sibling/implementor links of live klasses
   GenMarkSweep::follow_weak_klass_links();
   assert(GenMarkSweep::_marking_stack->is_empty(),
          "stack should be empty by now");
+
+  // Visit memoized MDO's and clear any unmarked weak refs
+  GenMarkSweep::follow_mdo_weak_refs();
+  assert(GenMarkSweep::_marking_stack->is_empty(), "just drained");
+
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(&GenMarkSweep::is_alive);
@@ -157,7 +169,6 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 class G1PrepareCompactClosure: public HeapRegionClosure {
   ModRefBarrierSet* _mrbs;
   CompactPoint _cp;
-  bool _popular_only;
 
   void free_humongous_region(HeapRegion* hr) {
     HeapWord* bot = hr->bottom();
@@ -172,17 +183,11 @@ class G1PrepareCompactClosure: public HeapRegionClosure {
   }
 
 public:
-  G1PrepareCompactClosure(CompactibleSpace* cs, bool popular_only) :
+  G1PrepareCompactClosure(CompactibleSpace* cs) :
     _cp(NULL, cs, cs->initialize_threshold()),
-    _mrbs(G1CollectedHeap::heap()->mr_bs()),
-    _popular_only(popular_only)
+    _mrbs(G1CollectedHeap::heap()->mr_bs())
   {}
   bool doHeapRegion(HeapRegion* hr) {
-    if (_popular_only && !hr->popular())
-      return true; // terminate early
-    else if (!_popular_only && hr->popular())
-      return false; // skip this one.
-
     if (hr->isHumongous()) {
       if (hr->startsHumongous()) {
         oop obj = oop(hr->bottom());
@@ -203,20 +208,15 @@ public:
     return false;
   }
 };
-// Stolen verbatim from g1CollectedHeap.cpp
+
+// Finds the first HeapRegion.
 class FindFirstRegionClosure: public HeapRegionClosure {
   HeapRegion* _a_region;
-  bool _find_popular;
 public:
-  FindFirstRegionClosure(bool find_popular) :
-    _a_region(NULL), _find_popular(find_popular) {}
+  FindFirstRegionClosure() : _a_region(NULL) {}
   bool doHeapRegion(HeapRegion* r) {
-    if (r->popular() == _find_popular) {
-      _a_region = r;
-      return true;
-    } else {
-      return false;
-    }
+    _a_region = r;
+    return true;
   }
   HeapRegion* result() { return _a_region; }
 };
@@ -242,30 +242,15 @@ void G1MarkSweep::mark_sweep_phase2() {
   TraceTime tm("phase 2", PrintGC && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace("2");
 
-  // First we compact the popular regions.
-  if (G1NumPopularRegions > 0) {
-    CompactibleSpace* sp = g1h->first_compactible_space();
-    FindFirstRegionClosure cl(true /*find_popular*/);
-    g1h->heap_region_iterate(&cl);
-    HeapRegion *r = cl.result();
-    assert(r->popular(), "should have found a popular region.");
-    assert(r == sp, "first popular heap region should "
-                    "== first compactible space");
-    G1PrepareCompactClosure blk(sp, true/*popular_only*/);
-    g1h->heap_region_iterate(&blk);
-  }
-
-  // Now we do the regular regions.
-  FindFirstRegionClosure cl(false /*find_popular*/);
+  FindFirstRegionClosure cl;
   g1h->heap_region_iterate(&cl);
   HeapRegion *r = cl.result();
-  assert(!r->popular(), "should have founda non-popular region.");
   CompactibleSpace* sp = r;
   if (r->isHumongous() && oop(r->bottom())->is_gc_marked()) {
     sp = r->next_compaction_space();
   }
 
-  G1PrepareCompactClosure blk(sp, false/*popular_only*/);
+  G1PrepareCompactClosure blk(sp);
   g1h->heap_region_iterate(&blk);
 
   CompactPoint perm_cp(pg, NULL, NULL);
@@ -303,9 +288,11 @@ void G1MarkSweep::mark_sweep_phase3() {
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_AllClasses,
                            &GenMarkSweep::adjust_root_pointer_closure,
+                           NULL,  // do not touch code cache here
                            &GenMarkSweep::adjust_pointer_closure);
 
   g1h->ref_processor()->weak_oops_do(&GenMarkSweep::adjust_root_pointer_closure);

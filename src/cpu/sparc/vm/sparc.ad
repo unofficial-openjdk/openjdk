@@ -1,5 +1,5 @@
 //
-// Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -189,42 +189,42 @@ reg_def R_F31( SOC, SOC, Op_RegF, 31, F31->as_VMReg());
 // double fp register numbers.  FloatRegisterImpl in register_sparc.hpp
 // wants 0-63, so we have to convert every time we want to use fp regs
 // with the macroassembler, using reg_to_DoubleFloatRegister_object().
-// 255 is a flag meaning 'dont go here'.
+// 255 is a flag meaning "don't go here".
 // I believe we can't handle callee-save doubles D32 and up until
 // the place in the sparc stack crawler that asserts on the 255 is
 // fixed up.
-reg_def R_D32x(SOC, SOC, Op_RegD,255, F32->as_VMReg());
-reg_def R_D32 (SOC, SOC, Op_RegD,  1, F32->as_VMReg()->next());
-reg_def R_D34x(SOC, SOC, Op_RegD,255, F34->as_VMReg());
-reg_def R_D34 (SOC, SOC, Op_RegD,  3, F34->as_VMReg()->next());
-reg_def R_D36x(SOC, SOC, Op_RegD,255, F36->as_VMReg());
-reg_def R_D36 (SOC, SOC, Op_RegD,  5, F36->as_VMReg()->next());
-reg_def R_D38x(SOC, SOC, Op_RegD,255, F38->as_VMReg());
-reg_def R_D38 (SOC, SOC, Op_RegD,  7, F38->as_VMReg()->next());
-reg_def R_D40x(SOC, SOC, Op_RegD,255, F40->as_VMReg());
-reg_def R_D40 (SOC, SOC, Op_RegD,  9, F40->as_VMReg()->next());
-reg_def R_D42x(SOC, SOC, Op_RegD,255, F42->as_VMReg());
-reg_def R_D42 (SOC, SOC, Op_RegD, 11, F42->as_VMReg()->next());
-reg_def R_D44x(SOC, SOC, Op_RegD,255, F44->as_VMReg());
-reg_def R_D44 (SOC, SOC, Op_RegD, 13, F44->as_VMReg()->next());
-reg_def R_D46x(SOC, SOC, Op_RegD,255, F46->as_VMReg());
-reg_def R_D46 (SOC, SOC, Op_RegD, 15, F46->as_VMReg()->next());
-reg_def R_D48x(SOC, SOC, Op_RegD,255, F48->as_VMReg());
-reg_def R_D48 (SOC, SOC, Op_RegD, 17, F48->as_VMReg()->next());
-reg_def R_D50x(SOC, SOC, Op_RegD,255, F50->as_VMReg());
-reg_def R_D50 (SOC, SOC, Op_RegD, 19, F50->as_VMReg()->next());
-reg_def R_D52x(SOC, SOC, Op_RegD,255, F52->as_VMReg());
-reg_def R_D52 (SOC, SOC, Op_RegD, 21, F52->as_VMReg()->next());
-reg_def R_D54x(SOC, SOC, Op_RegD,255, F54->as_VMReg());
-reg_def R_D54 (SOC, SOC, Op_RegD, 23, F54->as_VMReg()->next());
-reg_def R_D56x(SOC, SOC, Op_RegD,255, F56->as_VMReg());
-reg_def R_D56 (SOC, SOC, Op_RegD, 25, F56->as_VMReg()->next());
-reg_def R_D58x(SOC, SOC, Op_RegD,255, F58->as_VMReg());
-reg_def R_D58 (SOC, SOC, Op_RegD, 27, F58->as_VMReg()->next());
-reg_def R_D60x(SOC, SOC, Op_RegD,255, F60->as_VMReg());
-reg_def R_D60 (SOC, SOC, Op_RegD, 29, F60->as_VMReg()->next());
-reg_def R_D62x(SOC, SOC, Op_RegD,255, F62->as_VMReg());
-reg_def R_D62 (SOC, SOC, Op_RegD, 31, F62->as_VMReg()->next());
+reg_def R_D32 (SOC, SOC, Op_RegD,  1, F32->as_VMReg());
+reg_def R_D32x(SOC, SOC, Op_RegD,255, F32->as_VMReg()->next());
+reg_def R_D34 (SOC, SOC, Op_RegD,  3, F34->as_VMReg());
+reg_def R_D34x(SOC, SOC, Op_RegD,255, F34->as_VMReg()->next());
+reg_def R_D36 (SOC, SOC, Op_RegD,  5, F36->as_VMReg());
+reg_def R_D36x(SOC, SOC, Op_RegD,255, F36->as_VMReg()->next());
+reg_def R_D38 (SOC, SOC, Op_RegD,  7, F38->as_VMReg());
+reg_def R_D38x(SOC, SOC, Op_RegD,255, F38->as_VMReg()->next());
+reg_def R_D40 (SOC, SOC, Op_RegD,  9, F40->as_VMReg());
+reg_def R_D40x(SOC, SOC, Op_RegD,255, F40->as_VMReg()->next());
+reg_def R_D42 (SOC, SOC, Op_RegD, 11, F42->as_VMReg());
+reg_def R_D42x(SOC, SOC, Op_RegD,255, F42->as_VMReg()->next());
+reg_def R_D44 (SOC, SOC, Op_RegD, 13, F44->as_VMReg());
+reg_def R_D44x(SOC, SOC, Op_RegD,255, F44->as_VMReg()->next());
+reg_def R_D46 (SOC, SOC, Op_RegD, 15, F46->as_VMReg());
+reg_def R_D46x(SOC, SOC, Op_RegD,255, F46->as_VMReg()->next());
+reg_def R_D48 (SOC, SOC, Op_RegD, 17, F48->as_VMReg());
+reg_def R_D48x(SOC, SOC, Op_RegD,255, F48->as_VMReg()->next());
+reg_def R_D50 (SOC, SOC, Op_RegD, 19, F50->as_VMReg());
+reg_def R_D50x(SOC, SOC, Op_RegD,255, F50->as_VMReg()->next());
+reg_def R_D52 (SOC, SOC, Op_RegD, 21, F52->as_VMReg());
+reg_def R_D52x(SOC, SOC, Op_RegD,255, F52->as_VMReg()->next());
+reg_def R_D54 (SOC, SOC, Op_RegD, 23, F54->as_VMReg());
+reg_def R_D54x(SOC, SOC, Op_RegD,255, F54->as_VMReg()->next());
+reg_def R_D56 (SOC, SOC, Op_RegD, 25, F56->as_VMReg());
+reg_def R_D56x(SOC, SOC, Op_RegD,255, F56->as_VMReg()->next());
+reg_def R_D58 (SOC, SOC, Op_RegD, 27, F58->as_VMReg());
+reg_def R_D58x(SOC, SOC, Op_RegD,255, F58->as_VMReg()->next());
+reg_def R_D60 (SOC, SOC, Op_RegD, 29, F60->as_VMReg());
+reg_def R_D60x(SOC, SOC, Op_RegD,255, F60->as_VMReg()->next());
+reg_def R_D62 (SOC, SOC, Op_RegD, 31, F62->as_VMReg());
+reg_def R_D62x(SOC, SOC, Op_RegD,255, F62->as_VMReg()->next());
 
 
 // ----------------------------
@@ -462,7 +462,7 @@ extern bool can_branch_register( Node *bol, Node *cmp );
 
 // Macros to extract hi & lo halves from a long pair.
 // G0 is not part of any long pair, so assert on that.
-// Prevents accidently using G1 instead of G0.
+// Prevents accidentally using G1 instead of G0.
 #define LONG_HI_REG(x) (x)
 #define LONG_LO_REG(x) (x)
 
@@ -547,7 +547,11 @@ int MachCallDynamicJavaNode::ret_addr_offset() {
     int v_off = entry_offset*wordSize + vtableEntry::method_offset_in_bytes();
     int klass_load_size;
     if (UseCompressedOops) {
-      klass_load_size = 3*BytesPerInstWord; // see MacroAssembler::load_klass()
+      assert(Universe::heap() != NULL, "java heap should be initialized");
+      if (Universe::narrow_oop_base() == NULL)
+        klass_load_size = 2*BytesPerInstWord; // see MacroAssembler::load_klass()
+      else
+        klass_load_size = 3*BytesPerInstWord;
     } else {
       klass_load_size = 1*BytesPerInstWord;
     }
@@ -762,7 +766,7 @@ void emit_form3_mem_reg(CodeBuffer &cbuf, const MachNode* n, int primary, int te
     case Assembler::stdf_op3: st_op = Op_StoreD; break;
 
     case Assembler::ldsb_op3: ld_op = Op_LoadB; break;
-    case Assembler::lduh_op3: ld_op = Op_LoadC; break;
+    case Assembler::lduh_op3: ld_op = Op_LoadUS; break;
     case Assembler::ldsh_op3: ld_op = Op_LoadS; break;
     case Assembler::ldx_op3:  // may become LoadP or stay LoadI
     case Assembler::ldsw_op3: // may become LoadP or stay LoadI
@@ -976,8 +980,8 @@ void emit_call_reloc(CodeBuffer &cbuf, intptr_t entry_point, relocInfo::relocTyp
   // This code sequence is relocatable to any address, even on LP64.
   if ( force_far_call ) {
     __ relocate(rtype);
-    Address dest(O7, (address)entry_point);
-    __ jumpl_to(dest, O7);
+    AddressLiteral dest(entry_point);
+    __ jumpl_to(dest, O7, O7);
   }
   else
 #endif
@@ -1026,17 +1030,6 @@ void emit_call_reloc(CodeBuffer &cbuf, intptr_t entry_point, relocInfo::relocTyp
 // REQUIRED FUNCTIONALITY for encoding
 void emit_lo(CodeBuffer &cbuf, int val) {  }
 void emit_hi(CodeBuffer &cbuf, int val) {  }
-
-void emit_ptr(CodeBuffer &cbuf, intptr_t val, Register reg, bool ForceRelocatable) {
-  MacroAssembler _masm(&cbuf);
-  if (ForceRelocatable) {
-    Address addr(reg, (address)val);
-    __ sethi(addr, ForceRelocatable);
-    __ add(addr, reg);
-  } else {
-    __ set(val, reg);
-  }
-}
 
 
 //=============================================================================
@@ -1145,8 +1138,8 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 
   // If this does safepoint polling, then do it here
   if( do_polling() && ra_->C->is_method_compilation() ) {
-    Address polling_page(L0, (address)os::get_polling_page());
-    __ sethi(polling_page, false);
+    AddressLiteral polling_page(os::get_polling_page());
+    __ sethi(polling_page, L0);
     __ relocate(relocInfo::poll_return_type);
     __ ld_ptr( L0, 0, G0 );
   }
@@ -1431,7 +1424,7 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf,
 
 #ifndef _LP64
   // In the LP64 build, all registers can be moved as aligned/adjacent
-  // pairs, so there's never any need to move the high bits seperately.
+  // pairs, so there's never any need to move the high bits separately.
   // The 32-bit builds have to deal with the 32-bit ABI which can force
   // all sorts of silly alignment problems.
 
@@ -1572,8 +1565,8 @@ void emit_java_to_interp(CodeBuffer &cbuf ) {
   __ set_oop(NULL, reg_to_register_object(Matcher::inline_cache_reg_encode()));
 
   __ set_inst_mark();
-  Address a(G3, (address)-1);
-  __ JUMP(a, 0);
+  AddressLiteral addrlit(-1);
+  __ JUMP(addrlit, G3, 0);
 
   __ delayed()->nop();
 
@@ -1601,9 +1594,11 @@ void MachUEPNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   st->print_cr("\nUEP:");
 #ifdef    _LP64
   if (UseCompressedOops) {
+    assert(Universe::heap() != NULL, "java heap should be initialized");
     st->print_cr("\tLDUW   [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check - compressed klass");
     st->print_cr("\tSLL    R_G5,3,R_G5");
-    st->print_cr("\tADD    R_G5,R_G6_heap_base,R_G5");
+    if (Universe::narrow_oop_base() != NULL)
+      st->print_cr("\tADD    R_G5,R_G6_heap_base,R_G5");
   } else {
     st->print_cr("\tLDX    [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check");
   }
@@ -1624,7 +1619,7 @@ void MachUEPNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   Register temp_reg   = G3;
   assert( G5_ic_reg != temp_reg, "conflicting registers" );
 
-  // Load klass from reciever
+  // Load klass from receiver
   __ load_klass(O0, temp_reg);
   // Compare against expected klass
   __ cmp(temp_reg, G5_ic_reg);
@@ -1656,7 +1651,7 @@ uint size_deopt_handler() {
 // Emit exception handler code.
 int emit_exception_handler(CodeBuffer& cbuf) {
   Register temp_reg = G3;
-  Address exception_blob(temp_reg, OptoRuntime::exception_blob()->instructions_begin());
+  AddressLiteral exception_blob(OptoRuntime::exception_blob()->instructions_begin());
   MacroAssembler _masm(&cbuf);
 
   address base =
@@ -1665,7 +1660,7 @@ int emit_exception_handler(CodeBuffer& cbuf) {
 
   int offset = __ offset();
 
-  __ JUMP(exception_blob, 0); // sethi;jmp
+  __ JUMP(exception_blob, temp_reg, 0); // sethi;jmp
   __ delayed()->nop();
 
   assert(__ offset() - offset <= (int) size_exception_handler(), "overflow");
@@ -1679,7 +1674,7 @@ int emit_deopt_handler(CodeBuffer& cbuf) {
   // Can't use any of the current frame's registers as we may have deopted
   // at a poll and everything (including G3) can be live.
   Register temp_reg = L0;
-  Address deopt_blob(temp_reg, SharedRuntime::deopt_blob()->unpack());
+  AddressLiteral deopt_blob(SharedRuntime::deopt_blob()->unpack());
   MacroAssembler _masm(&cbuf);
 
   address base =
@@ -1688,7 +1683,7 @@ int emit_deopt_handler(CodeBuffer& cbuf) {
 
   int offset = __ offset();
   __ save_frame(0);
-  __ JUMP(deopt_blob, 0); // sethi;jmp
+  __ JUMP(deopt_blob, temp_reg, 0); // sethi;jmp
   __ delayed()->restore();
 
   assert(__ offset() - offset <= (int) size_deopt_handler(), "overflow");
@@ -1715,6 +1710,23 @@ static FloatRegister reg_to_DoubleFloatRegister_object(int register_encoding) {
   assert(F4->encoding(FloatRegisterImpl::D) == R_F4_enc, "right coding");
   assert(F32->encoding(FloatRegisterImpl::D) == R_D32_enc, "right coding");
   return as_DoubleFloatRegister(register_encoding);
+}
+
+const bool Matcher::match_rule_supported(int opcode) {
+  if (!has_match_rule(opcode))
+    return false;
+
+  switch (opcode) {
+  case Op_CountLeadingZerosI:
+  case Op_CountLeadingZerosL:
+  case Op_CountTrailingZerosI:
+  case Op_CountTrailingZerosL:
+    if (!UsePopCountInstruction)
+      return false;
+    break;
+  }
+
+  return true;  // Per default match rules are supported.
 }
 
 int Matcher::regnum_to_fpu_offset(int regnum) {
@@ -1879,15 +1891,17 @@ RegMask Matcher::modL_proj_mask() {
 // The intptr_t operand types, defined by textual substitution.
 // (Cf. opto/type.hpp.  This lets us avoid many, many other ifdefs.)
 #ifdef _LP64
-#define immX    immL
-#define immX13  immL13
-#define iRegX   iRegL
-#define g1RegX  g1RegL
+#define immX      immL
+#define immX13    immL13
+#define immX13m7  immL13m7
+#define iRegX     iRegL
+#define g1RegX    g1RegL
 #else
-#define immX    immI
-#define immX13  immI13
-#define iRegX   iRegI
-#define g1RegX  g1RegI
+#define immX      immI
+#define immX13    immI13
+#define immX13m7  immI13m7
+#define iRegX     iRegI
+#define g1RegX    g1RegI
 #endif
 
 //----------ENCODING BLOCK-----------------------------------------------------
@@ -2255,9 +2269,8 @@ encode %{
     address table_base = __ address_table_constant(_index2label);
     RelocationHolder rspec = internal_word_Relocation::spec(table_base);
 
-    // Load table address
-    Address the_pc(table_reg, table_base, rspec);
-    __ load_address(the_pc);
+    // Move table address into a register.
+    __ set(table_base, table_reg, rspec);
 
     // Jump to base address + switch value
     __ ld_ptr(table_reg, switch_reg, table_reg);
@@ -2396,13 +2409,13 @@ encode %{
   // The 64 bit pointer is stored in the generated code stream
   enc_class SetPtr( immP src, iRegP rd ) %{
     Register dest = reg_to_register_object($rd$$reg);
+    MacroAssembler _masm(&cbuf);
     // [RGV] This next line should be generated from ADLC
     if ( _opnds[1]->constant_is_oop() ) {
       intptr_t val = $src$$constant;
-      MacroAssembler _masm(&cbuf);
       __ set_oop_constant((jobject)val, dest);
     } else {          // non-oop pointers, e.g. card mark base, heap top
-      emit_ptr(cbuf, $src$$constant, dest, /*ForceRelocatable=*/ false);
+      __ set($src$$constant, dest);
     }
   %}
 
@@ -2502,7 +2515,11 @@ encode %{
       __ load_klass(O0, G3_scratch);
       int klass_load_size;
       if (UseCompressedOops) {
-        klass_load_size = 3*BytesPerInstWord;
+        assert(Universe::heap() != NULL, "java heap should be initialized");
+        if (Universe::narrow_oop_base() == NULL)
+          klass_load_size = 2*BytesPerInstWord;
+        else
+          klass_load_size = 3*BytesPerInstWord;
       } else {
         klass_load_size = 1*BytesPerInstWord;
       }
@@ -2779,46 +2796,6 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ set64( $src$$constant, dest, temp );
   %}
 
-  enc_class LdImmF(immF src, regF dst, o7RegP tmp) %{    // Load Immediate
-    address float_address = MacroAssembler(&cbuf).float_constant($src$$constant);
-    RelocationHolder rspec = internal_word_Relocation::spec(float_address);
-#ifdef _LP64
-    Register   tmp_reg = reg_to_register_object($tmp$$reg);
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit_ptr(cbuf, (intptr_t)float_address, tmp_reg, /*ForceRelocatable=*/ true);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::ldf_op3, $tmp$$reg, 0 );
-#else  // _LP64
-    uint *code;
-    int tmp_reg = $tmp$$reg;
-
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit2_22( cbuf, Assembler::branch_op, tmp_reg, Assembler::sethi_op2, (intptr_t) float_address );
-
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::ldf_op3, tmp_reg, (intptr_t) float_address );
-#endif // _LP64
-  %}
-
-  enc_class LdImmD(immD src, regD dst, o7RegP tmp) %{    // Load Immediate
-    address double_address = MacroAssembler(&cbuf).double_constant($src$$constant);
-    RelocationHolder rspec = internal_word_Relocation::spec(double_address);
-#ifdef _LP64
-    Register   tmp_reg = reg_to_register_object($tmp$$reg);
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit_ptr(cbuf, (intptr_t)double_address, tmp_reg, /*ForceRelocatable=*/ true);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::lddf_op3, $tmp$$reg, 0 );
-#else // _LP64
-    uint *code;
-    int tmp_reg = $tmp$$reg;
-
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit2_22( cbuf, Assembler::branch_op, tmp_reg, Assembler::sethi_op2, (intptr_t) double_address );
-
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::lddf_op3, tmp_reg, (intptr_t) double_address );
-#endif // _LP64
-  %}
-
   enc_class LdReplImmI(immI src, regD dst, o7RegP tmp, int count, int width) %{
     // Load a constant replicated "count" times with width "width"
     int bit_width = $width$$constant * 8;
@@ -2830,28 +2807,15 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
         val |= elt_val;
     }
     jdouble dval = *(jdouble*)&val; // coerce to double type
-    address double_address = MacroAssembler(&cbuf).double_constant(dval);
+    MacroAssembler _masm(&cbuf);
+    address double_address = __ double_constant(dval);
     RelocationHolder rspec = internal_word_Relocation::spec(double_address);
-#ifdef _LP64
-    Register   tmp_reg = reg_to_register_object($tmp$$reg);
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit_ptr(cbuf, (intptr_t)double_address, tmp_reg, /*ForceRelocatable=*/ true);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::lddf_op3, $tmp$$reg, 0 );
-#else // _LP64
-    uint *code;
-    int tmp_reg = $tmp$$reg;
+    AddressLiteral addrlit(double_address, rspec);
 
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit2_22( cbuf, Assembler::branch_op, tmp_reg, Assembler::sethi_op2, (intptr_t) double_address );
-
-    cbuf.relocate(cbuf.code_end(), rspec, 0);
-    emit3_simm10( cbuf, Assembler::ldst_op, $dst$$reg, Assembler::lddf_op3, tmp_reg, (intptr_t) double_address );
-#endif // _LP64
-  %}
-
-
-  enc_class ShouldNotEncodeThis ( ) %{
-    ShouldNotCallThis();
+    __ sethi(addrlit, $tmp$$Register);
+    // XXX This is a quick fix for 6833573.
+    //__ ldf(FloatRegisterImpl::D, $tmp$$Register, addrlit.low10(), $dst$$FloatRegister, rspec);
+    __ ldf(FloatRegisterImpl::D, $tmp$$Register, addrlit.low10(), as_DoubleFloatRegister($dst$$reg), rspec);
   %}
 
   // Compiler ensures base is doubleword aligned and cnt is count of doublewords
@@ -2874,63 +2838,41 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
   %}
 
 
-  enc_class enc_String_Compare(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result) %{
+  enc_class enc_String_Compare(o0RegP str1, o1RegP str2, g3RegI cnt1, g4RegI cnt2, notemp_iRegI result) %{
     Label Ldone, Lloop;
     MacroAssembler _masm(&cbuf);
 
     Register   str1_reg = reg_to_register_object($str1$$reg);
     Register   str2_reg = reg_to_register_object($str2$$reg);
-    Register   tmp1_reg = reg_to_register_object($tmp1$$reg);
-    Register   tmp2_reg = reg_to_register_object($tmp2$$reg);
+    Register   cnt1_reg = reg_to_register_object($cnt1$$reg);
+    Register   cnt2_reg = reg_to_register_object($cnt2$$reg);
     Register result_reg = reg_to_register_object($result$$reg);
 
-    // Get the first character position in both strings
-    //         [8] char array, [12] offset, [16] count
-    int  value_offset = java_lang_String:: value_offset_in_bytes();
-    int offset_offset = java_lang_String::offset_offset_in_bytes();
-    int  count_offset = java_lang_String:: count_offset_in_bytes();
-
-    // load str1 (jchar*) base address into tmp1_reg
-    __ load_heap_oop(Address(str1_reg, 0,  value_offset), tmp1_reg);
-    __ ld(Address(str1_reg, 0, offset_offset), result_reg);
-    __ add(tmp1_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp1_reg);
-    __    ld(Address(str1_reg, 0, count_offset), str1_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __    load_heap_oop(Address(str2_reg, 0,  value_offset), tmp2_reg); // hoisted
-    __ add(result_reg, tmp1_reg, tmp1_reg);
-
-    // load str2 (jchar*) base address into tmp2_reg
-    // __ ld_ptr(Address(str2_reg, 0,  value_offset), tmp2_reg); // hoisted
-    __ ld(Address(str2_reg, 0, offset_offset), result_reg);
-    __ add(tmp2_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp2_reg);
-    __    ld(Address(str2_reg, 0, count_offset), str2_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __   subcc(str1_reg, str2_reg, O7); // hoisted
-    __ add(result_reg, tmp2_reg, tmp2_reg);
+    assert(result_reg != str1_reg &&
+           result_reg != str2_reg &&
+           result_reg != cnt1_reg &&
+           result_reg != cnt2_reg ,
+           "need different registers");
 
     // Compute the minimum of the string lengths(str1_reg) and the
     // difference of the string lengths (stack)
 
-    // discard string base pointers, after loading up the lengths
-    // __ ld(Address(str1_reg, 0, count_offset), str1_reg); // hoisted
-    // __ ld(Address(str2_reg, 0, count_offset), str2_reg); // hoisted
-
     // See if the lengths are different, and calculate min in str1_reg.
     // Stash diff in O7 in case we need it for a tie-breaker.
     Label Lskip;
-    // __ subcc(str1_reg, str2_reg, O7); // hoisted
-    __ sll(str1_reg, exact_log2(sizeof(jchar)), str1_reg); // scale the limit
+    __ subcc(cnt1_reg, cnt2_reg, O7);
+    __ sll(cnt1_reg, exact_log2(sizeof(jchar)), cnt1_reg); // scale the limit
     __ br(Assembler::greater, true, Assembler::pt, Lskip);
-    // str2 is shorter, so use its count:
-    __ delayed()->sll(str2_reg, exact_log2(sizeof(jchar)), str1_reg); // scale the limit
+    // cnt2 is shorter, so use its count:
+    __ delayed()->sll(cnt2_reg, exact_log2(sizeof(jchar)), cnt1_reg); // scale the limit
     __ bind(Lskip);
 
-    // reallocate str1_reg, str2_reg, result_reg
+    // reallocate cnt1_reg, cnt2_reg, result_reg
     // Note:  limit_reg holds the string length pre-scaled by 2
-    Register limit_reg =   str1_reg;
-    Register  chr2_reg =   str2_reg;
+    Register limit_reg =   cnt1_reg;
+    Register  chr2_reg =   cnt2_reg;
     Register  chr1_reg = result_reg;
-    // tmp{12} are the base pointers
+    // str{12} are the base pointers
 
     // Is the minimum length zero?
     __ cmp(limit_reg, (int)(0 * sizeof(jchar))); // use cast to resolve overloading ambiguity
@@ -2938,8 +2880,8 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ delayed()->mov(O7, result_reg);  // result is difference in lengths
 
     // Load first characters
-    __ lduh(tmp1_reg, 0, chr1_reg);
-    __ lduh(tmp2_reg, 0, chr2_reg);
+    __ lduh(str1_reg, 0, chr1_reg);
+    __ lduh(str2_reg, 0, chr2_reg);
 
     // Compare first characters
     __ subcc(chr1_reg, chr2_reg, chr1_reg);
@@ -2951,7 +2893,7 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
       // Check after comparing first character to see if strings are equivalent
       Label LSkip2;
       // Check if the strings start at same location
-      __ cmp(tmp1_reg, tmp2_reg);
+      __ cmp(str1_reg, str2_reg);
       __ brx(Assembler::notEqual, true, Assembler::pt, LSkip2);
       __ delayed()->nop();
 
@@ -2968,23 +2910,23 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ br(Assembler::equal, true, Assembler::pn, Ldone);
     __ delayed()->mov(O7, result_reg);  // result is difference in lengths
 
-    // Shift tmp1_reg and tmp2_reg to the end of the arrays, negate limit
-    __ add(tmp1_reg, limit_reg, tmp1_reg);
-    __ add(tmp2_reg, limit_reg, tmp2_reg);
+    // Shift str1_reg and str2_reg to the end of the arrays, negate limit
+    __ add(str1_reg, limit_reg, str1_reg);
+    __ add(str2_reg, limit_reg, str2_reg);
     __ neg(chr1_reg, limit_reg);  // limit = -(limit-2)
 
     // Compare the rest of the characters
-    __ lduh(tmp1_reg, limit_reg, chr1_reg);
+    __ lduh(str1_reg, limit_reg, chr1_reg);
     __ bind(Lloop);
-    // __ lduh(tmp1_reg, limit_reg, chr1_reg); // hoisted
-    __ lduh(tmp2_reg, limit_reg, chr2_reg);
+    // __ lduh(str1_reg, limit_reg, chr1_reg); // hoisted
+    __ lduh(str2_reg, limit_reg, chr2_reg);
     __ subcc(chr1_reg, chr2_reg, chr1_reg);
     __ br(Assembler::notZero, false, Assembler::pt, Ldone);
     assert(chr1_reg == result_reg, "result must be pre-placed");
     __ delayed()->inccc(limit_reg, sizeof(jchar));
     // annul LDUH if branch is not taken to prevent access past end of string
     __ br(Assembler::notZero, true, Assembler::pt, Lloop);
-    __ delayed()->lduh(tmp1_reg, limit_reg, chr1_reg); // hoisted
+    __ delayed()->lduh(str1_reg, limit_reg, chr1_reg); // hoisted
 
     // If strings are equal up to min length, return the length difference.
     __ mov(O7, result_reg);
@@ -2993,22 +2935,145 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ bind(Ldone);
   %}
 
+enc_class enc_String_Equals(o0RegP str1, o1RegP str2, g3RegI cnt, notemp_iRegI result) %{
+    Label Lword_loop, Lpost_word, Lchar, Lchar_loop, Ldone;
+    MacroAssembler _masm(&cbuf);
+
+    Register   str1_reg = reg_to_register_object($str1$$reg);
+    Register   str2_reg = reg_to_register_object($str2$$reg);
+    Register    cnt_reg = reg_to_register_object($cnt$$reg);
+    Register   tmp1_reg = O7;
+    Register result_reg = reg_to_register_object($result$$reg);
+
+    assert(result_reg != str1_reg &&
+           result_reg != str2_reg &&
+           result_reg !=  cnt_reg &&
+           result_reg != tmp1_reg ,
+           "need different registers");
+
+    __ cmp(str1_reg, str2_reg); //same char[] ?
+    __ brx(Assembler::equal, true, Assembler::pn, Ldone);
+    __ delayed()->add(G0, 1, result_reg);
+
+    __ br_on_reg_cond(Assembler::rc_z, true, Assembler::pn, cnt_reg, Ldone);
+    __ delayed()->add(G0, 1, result_reg); // count == 0
+
+    //rename registers
+    Register limit_reg =    cnt_reg;
+    Register  chr1_reg = result_reg;
+    Register  chr2_reg =   tmp1_reg;
+
+    //check for alignment and position the pointers to the ends
+    __ or3(str1_reg, str2_reg, chr1_reg);
+    __ andcc(chr1_reg, 0x3, chr1_reg);
+    // notZero means at least one not 4-byte aligned.
+    // We could optimize the case when both arrays are not aligned
+    // but it is not frequent case and it requires additional checks.
+    __ br(Assembler::notZero, false, Assembler::pn, Lchar); // char by char compare
+    __ delayed()->sll(limit_reg, exact_log2(sizeof(jchar)), limit_reg); // set byte count
+
+    // Compare char[] arrays aligned to 4 bytes.
+    __ char_arrays_equals(str1_reg, str2_reg, limit_reg, result_reg,
+                          chr1_reg, chr2_reg, Ldone);
+    __ ba(false,Ldone);
+    __ delayed()->add(G0, 1, result_reg);
+
+    // char by char compare
+    __ bind(Lchar);
+    __ add(str1_reg, limit_reg, str1_reg);
+    __ add(str2_reg, limit_reg, str2_reg);
+    __ neg(limit_reg); //negate count
+
+    __ lduh(str1_reg, limit_reg, chr1_reg);
+    // Lchar_loop
+    __ bind(Lchar_loop);
+    __ lduh(str2_reg, limit_reg, chr2_reg);
+    __ cmp(chr1_reg, chr2_reg);
+    __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
+    __ delayed()->mov(G0, result_reg); //not equal
+    __ inccc(limit_reg, sizeof(jchar));
+    // annul LDUH if branch is not taken to prevent access past end of string
+    __ br(Assembler::notZero, true, Assembler::pt, Lchar_loop);
+    __ delayed()->lduh(str1_reg, limit_reg, chr1_reg); // hoisted
+
+    __ add(G0, 1, result_reg);  //equal
+
+    __ bind(Ldone);
+  %}
+
+enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, notemp_iRegI result) %{
+    Label Lvector, Ldone, Lloop;
+    MacroAssembler _masm(&cbuf);
+
+    Register   ary1_reg = reg_to_register_object($ary1$$reg);
+    Register   ary2_reg = reg_to_register_object($ary2$$reg);
+    Register   tmp1_reg = reg_to_register_object($tmp1$$reg);
+    Register   tmp2_reg = O7;
+    Register result_reg = reg_to_register_object($result$$reg);
+
+    int length_offset  = arrayOopDesc::length_offset_in_bytes();
+    int base_offset    = arrayOopDesc::base_offset_in_bytes(T_CHAR);
+
+    // return true if the same array
+    __ cmp(ary1_reg, ary2_reg);
+    __ brx(Assembler::equal, true, Assembler::pn, Ldone);
+    __ delayed()->add(G0, 1, result_reg); // equal
+
+    __ br_null(ary1_reg, true, Assembler::pn, Ldone);
+    __ delayed()->mov(G0, result_reg);    // not equal
+
+    __ br_null(ary2_reg, true, Assembler::pn, Ldone);
+    __ delayed()->mov(G0, result_reg);    // not equal
+
+    //load the lengths of arrays
+    __ ld(Address(ary1_reg, length_offset), tmp1_reg);
+    __ ld(Address(ary2_reg, length_offset), tmp2_reg);
+
+    // return false if the two arrays are not equal length
+    __ cmp(tmp1_reg, tmp2_reg);
+    __ br(Assembler::notEqual, true, Assembler::pn, Ldone);
+    __ delayed()->mov(G0, result_reg);     // not equal
+
+    __ br_on_reg_cond(Assembler::rc_z, true, Assembler::pn, tmp1_reg, Ldone);
+    __ delayed()->add(G0, 1, result_reg); // zero-length arrays are equal
+
+    // load array addresses
+    __ add(ary1_reg, base_offset, ary1_reg);
+    __ add(ary2_reg, base_offset, ary2_reg);
+
+    // renaming registers
+    Register chr1_reg  =  result_reg; // for characters in ary1
+    Register chr2_reg  =  tmp2_reg;   // for characters in ary2
+    Register limit_reg =  tmp1_reg;   // length
+
+    // set byte count
+    __ sll(limit_reg, exact_log2(sizeof(jchar)), limit_reg);
+
+    // Compare char[] arrays aligned to 4 bytes.
+    __ char_arrays_equals(ary1_reg, ary2_reg, limit_reg, result_reg,
+                          chr1_reg, chr2_reg, Ldone);
+    __ add(G0, 1, result_reg); // equals
+
+    __ bind(Ldone);
+  %}
+
   enc_class enc_rethrow() %{
     cbuf.set_inst_mark();
     Register temp_reg = G3;
-    Address rethrow_stub(temp_reg, OptoRuntime::rethrow_stub());
+    AddressLiteral rethrow_stub(OptoRuntime::rethrow_stub());
     assert(temp_reg != reg_to_register_object(R_I0_num), "temp must not break oop_reg");
     MacroAssembler _masm(&cbuf);
 #ifdef ASSERT
     __ save_frame(0);
-    Address last_rethrow_addr(L1, (address)&last_rethrow);
-    __ sethi(last_rethrow_addr);
+    AddressLiteral last_rethrow_addrlit(&last_rethrow);
+    __ sethi(last_rethrow_addrlit, L1);
+    Address addr(L1, last_rethrow_addrlit.low10());
     __ get_pc(L2);
     __ inc(L2, 3 * BytesPerInstWord);  // skip this & 2 more insns to point at jump_to
-    __ st_ptr(L2, last_rethrow_addr);
+    __ st_ptr(L2, addr);
     __ restore();
 #endif
-    __ JUMP(rethrow_stub, 0); // sethi;jmp
+    __ JUMP(rethrow_stub, temp_reg, 0); // sethi;jmp
     __ delayed()->nop();
   %}
 
@@ -3285,12 +3350,40 @@ operand immI() %{
   interface(CONST_INTER);
 %}
 
+// Integer Immediate: 8-bit
+operand immI8() %{
+  predicate(Assembler::is_simm(n->get_int(), 8));
+  match(ConI);
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
 // Integer Immediate: 13-bit
 operand immI13() %{
   predicate(Assembler::is_simm13(n->get_int()));
   match(ConI);
   op_cost(0);
 
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Integer Immediate: 13-bit minus 7
+operand immI13m7() %{
+  predicate((-4096 < n->get_int()) && ((n->get_int() + 7) <= 4095));
+  match(ConI);
+  op_cost(0);
+
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Integer Immediate: 16-bit
+operand immI16() %{
+  predicate(Assembler::is_simm(n->get_int(), 16));
+  match(ConI);
+  op_cost(0);
   format %{ %}
   interface(CONST_INTER);
 %}
@@ -3373,9 +3466,41 @@ operand immI_32_63() %{
   interface(CONST_INTER);
 %}
 
+// Immediates for special shifts (sign extend)
+
+// Integer Immediate: the value 16
+operand immI_16() %{
+  predicate(n->get_int() == 16);
+  match(ConI);
+  op_cost(0);
+
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Integer Immediate: the value 24
+operand immI_24() %{
+  predicate(n->get_int() == 24);
+  match(ConI);
+  op_cost(0);
+
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
 // Integer Immediate: the value 255
 operand immI_255() %{
   predicate( n->get_int() == 255 );
+  match(ConI);
+  op_cost(0);
+
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Integer Immediate: the value 65535
+operand immI_65535() %{
+  predicate(n->get_int() == 65535);
   match(ConI);
   op_cost(0);
 
@@ -3481,6 +3606,16 @@ operand immL0() %{
 // Long Immediate: 13-bit
 operand immL13() %{
   predicate((-4096L < n->get_long()) && (n->get_long() <= 4095L));
+  match(ConL);
+  op_cost(0);
+
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Long Immediate: 13-bit minus 7
+operand immL13m7() %{
+  predicate((-4096L < n->get_long()) && ((n->get_long() + 7L) <= 4095L));
   match(ConL);
   op_cost(0);
 
@@ -3869,6 +4004,8 @@ operand regD() %{
   constraint(ALLOC_IN_RC(dflt_reg));
   match(RegD);
 
+  match(regD_low);
+
   format %{ %}
   interface(REG_INTER);
 %}
@@ -3883,7 +4020,7 @@ operand regF() %{
 
 operand regD_low() %{
   constraint(ALLOC_IN_RC(dflt_low_reg));
-  match(RegD);
+  match(regD);
 
   format %{ %}
   interface(REG_INTER);
@@ -3923,8 +4060,23 @@ operand indirect(sp_ptr_RegP reg) %{
   %}
 %}
 
-// Indirect with Offset
+// Indirect with simm13 Offset
 operand indOffset13(sp_ptr_RegP reg, immX13 offset) %{
+  constraint(ALLOC_IN_RC(sp_ptr_reg));
+  match(AddP reg offset);
+
+  op_cost(100);
+  format %{ "[$reg + $offset]" %}
+  interface(MEMORY_INTER) %{
+    base($reg);
+    index(0x0);
+    scale(0x0);
+    disp($offset);
+  %}
+%}
+
+// Indirect with simm13 Offset minus 7
+operand indOffset13m7(sp_ptr_RegP reg, immX13m7 offset) %{
   constraint(ALLOC_IN_RC(sp_ptr_reg));
   match(AddP reg offset);
 
@@ -4147,7 +4299,7 @@ operand cmpOp_commute() %{
 
 //----------OPERAND CLASSES----------------------------------------------------
 // Operand Classes are groups of operands that are used to simplify
-// instruction definitions by not requiring the AD writer to specify seperate
+// instruction definitions by not requiring the AD writer to specify separate
 // instructions for every form of operand when the instruction accepts
 // multiple operand types with the same basic encoding and format.  The classic
 // case of this is memory operands.
@@ -5284,69 +5436,349 @@ instruct loadB(iRegI dst, memory mem) %{
   ins_cost(MEMORY_REF_COST);
 
   size(4);
-  format %{ "LDSB   $mem,$dst" %}
-  opcode(Assembler::ldsb_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  format %{ "LDSB   $mem,$dst\t! byte" %}
+  ins_encode %{
+    __ ldsb($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mask_mem);
 %}
 
-// Load Byte (8bit UNsigned) into an int reg
-instruct loadUB(iRegI dst, memory mem, immI_255 bytemask) %{
-  match(Set dst (AndI (LoadB mem) bytemask));
+// Load Byte (8bit signed) into a Long Register
+instruct loadB2L(iRegL dst, memory mem) %{
+  match(Set dst (ConvI2L (LoadB mem)));
   ins_cost(MEMORY_REF_COST);
 
   size(4);
-  format %{ "LDUB   $mem,$dst" %}
-  opcode(Assembler::ldub_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  format %{ "LDSB   $mem,$dst\t! byte -> long" %}
+  ins_encode %{
+    __ ldsb($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mask_mem);
 %}
 
-// Load Byte (8bit UNsigned) into a Long Register
-instruct loadUBL(iRegL dst, memory mem, immL_FF bytemask) %{
-  match(Set dst (AndL (ConvI2L (LoadB mem)) bytemask));
+// Load Unsigned Byte (8bit UNsigned) into an int reg
+instruct loadUB(iRegI dst, memory mem) %{
+  match(Set dst (LoadUB mem));
   ins_cost(MEMORY_REF_COST);
 
   size(4);
-  format %{ "LDUB   $mem,$dst" %}
-  opcode(Assembler::ldub_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  format %{ "LDUB   $mem,$dst\t! ubyte" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Byte (8bit UNsigned) into a Long Register
+instruct loadUB2L(iRegL dst, memory mem) %{
+  match(Set dst (ConvI2L (LoadUB mem)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUB   $mem,$dst\t! ubyte -> long" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Byte (8 bit UNsigned) with 8-bit mask into Long Register
+instruct loadUB2L_immI8(iRegL dst, memory mem, immI8 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadUB mem) mask)));
+  ins_cost(MEMORY_REF_COST + DEFAULT_COST);
+
+  size(2*4);
+  format %{ "LDUB   $mem,$dst\t# ubyte & 8-bit mask -> long\n\t"
+            "AND    $dst,$mask,$dst" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register);
+    __ and3($dst$$Register, $mask$$constant, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Short (16bit signed)
+instruct loadS(iRegI dst, memory mem) %{
+  match(Set dst (LoadS mem));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDSH   $mem,$dst\t! short" %}
+  ins_encode %{
+    __ ldsh($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mask_mem);
 %}
 
-// Load Char (16bit UNsigned) into a Long Register
-instruct loadUCL(iRegL dst, memory mem, immL_FFFF bytemask) %{
-  match(Set dst (AndL (ConvI2L (LoadC mem)) bytemask));
+// Load Short (16 bit signed) to Byte (8 bit signed)
+instruct loadS2B(iRegI dst, indOffset13m7 mem, immI_24 twentyfour) %{
+  match(Set dst (RShiftI (LShiftI (LoadS mem) twentyfour) twentyfour));
   ins_cost(MEMORY_REF_COST);
 
   size(4);
-  format %{ "LDUH   $mem,$dst" %}
-  opcode(Assembler::lduh_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+
+  format %{ "LDSB   $mem+1,$dst\t! short -> byte" %}
+  ins_encode %{
+    __ ldsb($mem$$Address, $dst$$Register, 1);
+  %}
   ins_pipe(iload_mask_mem);
 %}
 
-// Load Char (16bit unsigned)
-instruct loadC(iRegI dst, memory mem) %{
-  match(Set dst (LoadC mem));
+// Load Short (16bit signed) into a Long Register
+instruct loadS2L(iRegL dst, memory mem) %{
+  match(Set dst (ConvI2L (LoadS mem)));
   ins_cost(MEMORY_REF_COST);
 
   size(4);
-  format %{ "LDUH   $mem,$dst" %}
-  opcode(Assembler::lduh_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  format %{ "LDSH   $mem,$dst\t! short -> long" %}
+  ins_encode %{
+    __ ldsh($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mask_mem);
+%}
+
+// Load Unsigned Short/Char (16bit UNsigned)
+instruct loadUS(iRegI dst, memory mem) %{
+  match(Set dst (LoadUS mem));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUH   $mem,$dst\t! ushort/char" %}
+  ins_encode %{
+    __ lduh($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Short/Char (16 bit UNsigned) to Byte (8 bit signed)
+instruct loadUS2B(iRegI dst, indOffset13m7 mem, immI_24 twentyfour) %{
+  match(Set dst (RShiftI (LShiftI (LoadUS mem) twentyfour) twentyfour));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDSB   $mem+1,$dst\t! ushort -> byte" %}
+  ins_encode %{
+    __ ldsb($mem$$Address, $dst$$Register, 1);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Unsigned Short/Char (16bit UNsigned) into a Long Register
+instruct loadUS2L(iRegL dst, memory mem) %{
+  match(Set dst (ConvI2L (LoadUS mem)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUH   $mem,$dst\t! ushort/char -> long" %}
+  ins_encode %{
+    __ lduh($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Short/Char (16bit UNsigned) with mask 0xFF into a Long Register
+instruct loadUS2L_immI_255(iRegL dst, indOffset13m7 mem, immI_255 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadUS mem) mask)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUB   $mem+1,$dst\t! ushort/char & 0xFF -> long" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register, 1);  // LSB is index+1 on BE
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Short/Char (16bit UNsigned) with a 13-bit mask into a Long Register
+instruct loadUS2L_immI13(iRegL dst, memory mem, immI13 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadUS mem) mask)));
+  ins_cost(MEMORY_REF_COST + DEFAULT_COST);
+
+  size(2*4);
+  format %{ "LDUH   $mem,$dst\t! ushort/char & 13-bit mask -> long\n\t"
+            "AND    $dst,$mask,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    __ lduh($mem$$Address, Rdst);
+    __ and3(Rdst, $mask$$constant, Rdst);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Short/Char (16bit UNsigned) with a 16-bit mask into a Long Register
+instruct loadUS2L_immI16(iRegL dst, memory mem, immI16 mask, iRegL tmp) %{
+  match(Set dst (ConvI2L (AndI (LoadUS mem) mask)));
+  effect(TEMP dst, TEMP tmp);
+  ins_cost(MEMORY_REF_COST + 2*DEFAULT_COST);
+
+  size((3+1)*4);  // set may use two instructions.
+  format %{ "LDUH   $mem,$dst\t! ushort/char & 16-bit mask -> long\n\t"
+            "SET    $mask,$tmp\n\t"
+            "AND    $dst,$tmp,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rtmp = $tmp$$Register;
+    __ lduh($mem$$Address, Rdst);
+    __ set($mask$$constant, Rtmp);
+    __ and3(Rdst, Rtmp, Rdst);
+  %}
+  ins_pipe(iload_mem);
 %}
 
 // Load Integer
 instruct loadI(iRegI dst, memory mem) %{
   match(Set dst (LoadI mem));
   ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUW   $mem,$dst\t! int" %}
+  ins_encode %{
+    __ lduw($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Integer to Byte (8 bit signed)
+instruct loadI2B(iRegI dst, indOffset13m7 mem, immI_24 twentyfour) %{
+  match(Set dst (RShiftI (LShiftI (LoadI mem) twentyfour) twentyfour));
+  ins_cost(MEMORY_REF_COST);
+
   size(4);
 
-  format %{ "LDUW   $mem,$dst" %}
-  opcode(Assembler::lduw_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  format %{ "LDSB   $mem+3,$dst\t! int -> byte" %}
+  ins_encode %{
+    __ ldsb($mem$$Address, $dst$$Register, 3);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Integer to Unsigned Byte (8 bit UNsigned)
+instruct loadI2UB(iRegI dst, indOffset13m7 mem, immI_255 mask) %{
+  match(Set dst (AndI (LoadI mem) mask));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+
+  format %{ "LDUB   $mem+3,$dst\t! int -> ubyte" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register, 3);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Integer to Short (16 bit signed)
+instruct loadI2S(iRegI dst, indOffset13m7 mem, immI_16 sixteen) %{
+  match(Set dst (RShiftI (LShiftI (LoadI mem) sixteen) sixteen));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+
+  format %{ "LDSH   $mem+2,$dst\t! int -> short" %}
+  ins_encode %{
+    __ ldsh($mem$$Address, $dst$$Register, 2);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Integer to Unsigned Short (16 bit UNsigned)
+instruct loadI2US(iRegI dst, indOffset13m7 mem, immI_65535 mask) %{
+  match(Set dst (AndI (LoadI mem) mask));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+
+  format %{ "LDUH   $mem+2,$dst\t! int -> ushort/char" %}
+  ins_encode %{
+    __ lduh($mem$$Address, $dst$$Register, 2);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Integer into a Long Register
+instruct loadI2L(iRegL dst, memory mem) %{
+  match(Set dst (ConvI2L (LoadI mem)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDSW   $mem,$dst\t! int -> long" %}
+  ins_encode %{
+    __ ldsw($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mask_mem);
+%}
+
+// Load Integer with mask 0xFF into a Long Register
+instruct loadI2L_immI_255(iRegL dst, indOffset13m7 mem, immI_255 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadI mem) mask)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUB   $mem+3,$dst\t! int & 0xFF -> long" %}
+  ins_encode %{
+    __ ldub($mem$$Address, $dst$$Register, 3);  // LSB is index+3 on BE
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Integer with mask 0xFFFF into a Long Register
+instruct loadI2L_immI_65535(iRegL dst, indOffset13m7 mem, immI_65535 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadI mem) mask)));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUH   $mem+2,$dst\t! int & 0xFFFF -> long" %}
+  ins_encode %{
+    __ lduh($mem$$Address, $dst$$Register, 2);  // LSW is index+2 on BE
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Integer with a 13-bit mask into a Long Register
+instruct loadI2L_immI13(iRegL dst, memory mem, immI13 mask) %{
+  match(Set dst (ConvI2L (AndI (LoadI mem) mask)));
+  ins_cost(MEMORY_REF_COST + DEFAULT_COST);
+
+  size(2*4);
+  format %{ "LDUW   $mem,$dst\t! int & 13-bit mask -> long\n\t"
+            "AND    $dst,$mask,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    __ lduw($mem$$Address, Rdst);
+    __ and3(Rdst, $mask$$constant, Rdst);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Integer with a 32-bit mask into a Long Register
+instruct loadI2L_immI(iRegL dst, memory mem, immI mask, iRegL tmp) %{
+  match(Set dst (ConvI2L (AndI (LoadI mem) mask)));
+  effect(TEMP dst, TEMP tmp);
+  ins_cost(MEMORY_REF_COST + 2*DEFAULT_COST);
+
+  size((3+1)*4);  // set may use two instructions.
+  format %{ "LDUW   $mem,$dst\t! int & 32-bit mask -> long\n\t"
+            "SET    $mask,$tmp\n\t"
+            "AND    $dst,$tmp,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rtmp = $tmp$$Register;
+    __ lduw($mem$$Address, Rdst);
+    __ set($mask$$constant, Rtmp);
+    __ and3(Rdst, Rtmp, Rdst);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load Unsigned Integer into a Long Register
+instruct loadUI2L(iRegL dst, memory mem) %{
+  match(Set dst (LoadUI2L mem));
+  ins_cost(MEMORY_REF_COST);
+
+  size(4);
+  format %{ "LDUW   $mem,$dst\t! uint -> long" %}
+  ins_encode %{
+    __ lduw($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mem);
 %}
 
@@ -5354,10 +5786,12 @@ instruct loadI(iRegI dst, memory mem) %{
 instruct loadL(iRegL dst, memory mem ) %{
   match(Set dst (LoadL mem));
   ins_cost(MEMORY_REF_COST);
+
   size(4);
   format %{ "LDX    $mem,$dst\t! long" %}
-  opcode(Assembler::ldx_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
+  ins_encode %{
+    __ ldx($mem$$Address, $dst$$Register);
+  %}
   ins_pipe(iload_mem);
 %}
 
@@ -5452,33 +5886,29 @@ instruct loadP(iRegP dst, memory mem) %{
 
 #ifndef _LP64
   format %{ "LDUW   $mem,$dst\t! ptr" %}
-  opcode(Assembler::lduw_op3, 0, REGP_OP);
+  ins_encode %{
+    __ lduw($mem$$Address, $dst$$Register);
+  %}
 #else
   format %{ "LDX    $mem,$dst\t! ptr" %}
-  opcode(Assembler::ldx_op3, 0, REGP_OP);
+  ins_encode %{
+    __ ldx($mem$$Address, $dst$$Register);
+  %}
 #endif
-  ins_encode( form3_mem_reg( mem, dst ) );
   ins_pipe(iload_mem);
 %}
 
 // Load Compressed Pointer
 instruct loadN(iRegN dst, memory mem) %{
-   match(Set dst (LoadN mem));
-   ins_cost(MEMORY_REF_COST);
-   size(4);
+  match(Set dst (LoadN mem));
+  ins_cost(MEMORY_REF_COST);
+  size(4);
 
-   format %{ "LDUW   $mem,$dst\t! compressed ptr" %}
-   ins_encode %{
-     Register base = as_Register($mem$$base);
-     Register index = as_Register($mem$$index);
-     Register dst = $dst$$Register;
-     if (index != G0) {
-       __ lduw(base, index, dst);
-     } else {
-       __ lduw(base, $mem$$disp, dst);
-     }
-   %}
-   ins_pipe(iload_mem);
+  format %{ "LDUW   $mem,$dst\t! compressed ptr" %}
+  ins_encode %{
+    __ lduw($mem$$Address, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
 %}
 
 // Load Klass Pointer
@@ -5489,12 +5919,15 @@ instruct loadKlass(iRegP dst, memory mem) %{
 
 #ifndef _LP64
   format %{ "LDUW   $mem,$dst\t! klass ptr" %}
-  opcode(Assembler::lduw_op3, 0, REGP_OP);
+  ins_encode %{
+    __ lduw($mem$$Address, $dst$$Register);
+  %}
 #else
   format %{ "LDX    $mem,$dst\t! klass ptr" %}
-  opcode(Assembler::ldx_op3, 0, REGP_OP);
+  ins_encode %{
+    __ ldx($mem$$Address, $dst$$Register);
+  %}
 #endif
-  ins_encode( form3_mem_reg( mem, dst ) );
   ins_pipe(iload_mem);
 %}
 
@@ -5505,30 +5938,10 @@ instruct loadNKlass(iRegN dst, memory mem) %{
   size(4);
 
   format %{ "LDUW   $mem,$dst\t! compressed klass ptr" %}
-
   ins_encode %{
-     Register base = as_Register($mem$$base);
-     Register index = as_Register($mem$$index);
-     Register dst = $dst$$Register;
-     if (index != G0) {
-       __ lduw(base, index, dst);
-     } else {
-       __ lduw(base, $mem$$disp, dst);
-     }
+    __ lduw($mem$$Address, $dst$$Register);
   %}
   ins_pipe(iload_mem);
-%}
-
-// Load Short (16bit signed)
-instruct loadS(iRegI dst, memory mem) %{
-  match(Set dst (LoadS mem));
-  ins_cost(MEMORY_REF_COST);
-
-  size(4);
-  format %{ "LDSH   $mem,$dst" %}
-  opcode(Assembler::ldsh_op3);
-  ins_encode(simple_form3_mem_reg( mem, dst ) );
-  ins_pipe(iload_mask_mem);
 %}
 
 // Load Double
@@ -5612,8 +6025,8 @@ instruct loadConP_poll(iRegP dst, immP_poll src) %{
   ins_cost(DEFAULT_COST);
   format %{ "SET    $src,$dst\t!ptr" %}
   ins_encode %{
-    Address polling_page(reg_to_register_object($dst$$reg), (address)os::get_polling_page());
-    __ sethi(polling_page, false );
+    AddressLiteral polling_page(os::get_polling_page());
+    __ sethi(polling_page, reg_to_register_object($dst$$reg));
   %}
   ins_pipe(loadConP_poll);
 %}
@@ -5672,14 +6085,21 @@ instruct loadConF(regF dst, immF src, o7RegP tmp) %{
   effect(KILL tmp);
 
 #ifdef _LP64
-  size(36);
+  size(8*4);
 #else
-  size(8);
+  size(2*4);
 #endif
 
   format %{ "SETHI  hi(&$src),$tmp\t!get float $src from table\n\t"
             "LDF    [$tmp+lo(&$src)],$dst" %}
-  ins_encode( LdImmF(src, dst, tmp) );
+  ins_encode %{
+    address float_address = __ float_constant($src$$constant);
+    RelocationHolder rspec = internal_word_Relocation::spec(float_address);
+    AddressLiteral addrlit(float_address, rspec);
+
+    __ sethi(addrlit, $tmp$$Register);
+    __ ldf(FloatRegisterImpl::S, $tmp$$Register, addrlit.low10(), $dst$$FloatRegister, rspec);
+  %}
   ins_pipe(loadConFD);
 %}
 
@@ -5688,14 +6108,23 @@ instruct loadConD(regD dst, immD src, o7RegP tmp) %{
   effect(KILL tmp);
 
 #ifdef _LP64
-  size(36);
+  size(8*4);
 #else
-  size(8);
+  size(2*4);
 #endif
 
   format %{ "SETHI  hi(&$src),$tmp\t!get double $src from table\n\t"
             "LDDF   [$tmp+lo(&$src)],$dst" %}
-  ins_encode( LdImmD(src, dst, tmp) );
+  ins_encode %{
+    address double_address = __ double_constant($src$$constant);
+    RelocationHolder rspec = internal_word_Relocation::spec(double_address);
+    AddressLiteral addrlit(double_address, rspec);
+
+    __ sethi(addrlit, $tmp$$Register);
+    // XXX This is a quick fix for 6833573.
+    //__ ldf(FloatRegisterImpl::D, $tmp$$Register, addrlit.low10(), $dst$$FloatRegister, rspec);
+    __ ldf(FloatRegisterImpl::D, $tmp$$Register, addrlit.low10(), as_DoubleFloatRegister($dst$$reg), rspec);
+  %}
   ins_pipe(loadConFD);
 %}
 
@@ -6845,7 +7274,7 @@ instruct mul_hi(iRegIsafe dst, iRegIsafe src1, iRegIsafe src2 ) %{
   ins_pipe(sdiv_reg_reg);
 %}
 
-// Magic constant, reciprical of 10
+// Magic constant, reciprocal of 10
 instruct loadConI_x66666667(iRegIsafe dst) %{
   effect( DEF dst );
 
@@ -6855,7 +7284,7 @@ instruct loadConI_x66666667(iRegIsafe dst) %{
   ins_pipe(ialu_hi_lo_reg);
 %}
 
-// Register Shift Right Arithmatic Long by 32-63
+// Register Shift Right Arithmetic Long by 32-63
 instruct sra_31( iRegI dst, iRegI src ) %{
   effect( DEF dst, USE src );
   format %{ "SRA    $src,31,$dst\t! Used in div-by-10" %}
@@ -8946,15 +9375,202 @@ instruct clear_array(iRegX cnt, iRegP base, iRegX temp, Universe dummy, flagsReg
   ins_pipe(long_memory_op);
 %}
 
-instruct string_compare(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result,
-                        o7RegI tmp3, flagsReg ccr) %{
-  match(Set result (StrComp str1 str2));
-  effect(USE_KILL str1, USE_KILL str2, KILL tmp1, KILL tmp2, KILL ccr, KILL tmp3);
+instruct string_compare(o0RegP str1, o1RegP str2, g3RegI cnt1, g4RegI cnt2, notemp_iRegI result,
+                        o7RegI tmp, flagsReg ccr) %{
+  match(Set result (StrComp (Binary str1 cnt1) (Binary str2 cnt2)));
+  effect(USE_KILL str1, USE_KILL str2, USE_KILL cnt1, USE_KILL cnt2, KILL ccr, KILL tmp);
   ins_cost(300);
-  format %{ "String Compare $str1,$str2 -> $result" %}
-  ins_encode( enc_String_Compare(str1, str2, tmp1, tmp2, result) );
+  format %{ "String Compare $str1,$cnt1,$str2,$cnt2 -> $result   // KILL $tmp" %}
+  ins_encode( enc_String_Compare(str1, str2, cnt1, cnt2, result) );
   ins_pipe(long_memory_op);
 %}
+
+instruct string_equals(o0RegP str1, o1RegP str2, g3RegI cnt, notemp_iRegI result,
+                       o7RegI tmp, flagsReg ccr) %{
+  match(Set result (StrEquals (Binary str1 str2) cnt));
+  effect(USE_KILL str1, USE_KILL str2, USE_KILL cnt, KILL tmp, KILL ccr);
+  ins_cost(300);
+  format %{ "String Equals $str1,$str2,$cnt -> $result   // KILL $tmp" %}
+  ins_encode( enc_String_Equals(str1, str2, cnt, result) );
+  ins_pipe(long_memory_op);
+%}
+
+instruct array_equals(o0RegP ary1, o1RegP ary2, g3RegI tmp1, notemp_iRegI result,
+                      o7RegI tmp2, flagsReg ccr) %{
+  match(Set result (AryEq ary1 ary2));
+  effect(USE_KILL ary1, USE_KILL ary2, KILL tmp1, KILL tmp2, KILL ccr);
+  ins_cost(300);
+  format %{ "Array Equals $ary1,$ary2 -> $result   // KILL $tmp1,$tmp2" %}
+  ins_encode( enc_Array_Equals(ary1, ary2, tmp1, result));
+  ins_pipe(long_memory_op);
+%}
+
+
+//---------- Zeros Count Instructions ------------------------------------------
+
+instruct countLeadingZerosI(iRegI dst, iRegI src, iRegI tmp, flagsReg cr) %{
+  predicate(UsePopCountInstruction);  // See Matcher::match_rule_supported
+  match(Set dst (CountLeadingZerosI src));
+  effect(TEMP dst, TEMP tmp, KILL cr);
+
+  // x |= (x >> 1);
+  // x |= (x >> 2);
+  // x |= (x >> 4);
+  // x |= (x >> 8);
+  // x |= (x >> 16);
+  // return (WORDBITS - popc(x));
+  format %{ "SRL     $src,1,$tmp\t! count leading zeros (int)\n\t"
+            "SRL     $src,0,$dst\t! 32-bit zero extend\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRL     $dst,2,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRL     $dst,4,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRL     $dst,8,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRL     $dst,16,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "POPC    $dst,$dst\n\t"
+            "MOV     32,$tmp\n\t"
+            "SUB     $tmp,$dst,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rsrc = $src$$Register;
+    Register Rtmp = $tmp$$Register;
+    __ srl(Rsrc, 1, Rtmp);
+    __ srl(Rsrc, 0, Rdst);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srl(Rdst, 2, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srl(Rdst, 4, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srl(Rdst, 8, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srl(Rdst, 16, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ popc(Rdst, Rdst);
+    __ mov(BitsPerInt, Rtmp);
+    __ sub(Rtmp, Rdst, Rdst);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+instruct countLeadingZerosL(iRegI dst, iRegL src, iRegL tmp, flagsReg cr) %{
+  predicate(UsePopCountInstruction);  // See Matcher::match_rule_supported
+  match(Set dst (CountLeadingZerosL src));
+  effect(TEMP dst, TEMP tmp, KILL cr);
+
+  // x |= (x >> 1);
+  // x |= (x >> 2);
+  // x |= (x >> 4);
+  // x |= (x >> 8);
+  // x |= (x >> 16);
+  // x |= (x >> 32);
+  // return (WORDBITS - popc(x));
+  format %{ "SRLX    $src,1,$tmp\t! count leading zeros (long)\n\t"
+            "OR      $src,$tmp,$dst\n\t"
+            "SRLX    $dst,2,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRLX    $dst,4,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRLX    $dst,8,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRLX    $dst,16,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "SRLX    $dst,32,$tmp\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
+            "POPC    $dst,$dst\n\t"
+            "MOV     64,$tmp\n\t"
+            "SUB     $tmp,$dst,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rsrc = $src$$Register;
+    Register Rtmp = $tmp$$Register;
+    __ srlx(Rsrc, 1, Rtmp);
+    __ or3(Rsrc, Rtmp, Rdst);
+    __ srlx(Rdst, 2, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srlx(Rdst, 4, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srlx(Rdst, 8, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srlx(Rdst, 16, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ srlx(Rdst, 32, Rtmp);
+    __ or3(Rdst, Rtmp, Rdst);
+    __ popc(Rdst, Rdst);
+    __ mov(BitsPerLong, Rtmp);
+    __ sub(Rtmp, Rdst, Rdst);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+instruct countTrailingZerosI(iRegI dst, iRegI src, flagsReg cr) %{
+  predicate(UsePopCountInstruction);  // See Matcher::match_rule_supported
+  match(Set dst (CountTrailingZerosI src));
+  effect(TEMP dst, KILL cr);
+
+  // return popc(~x & (x - 1));
+  format %{ "SUB     $src,1,$dst\t! count trailing zeros (int)\n\t"
+            "ANDN    $dst,$src,$dst\n\t"
+            "SRL     $dst,R_G0,$dst\n\t"
+            "POPC    $dst,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rsrc = $src$$Register;
+    __ sub(Rsrc, 1, Rdst);
+    __ andn(Rdst, Rsrc, Rdst);
+    __ srl(Rdst, G0, Rdst);
+    __ popc(Rdst, Rdst);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+instruct countTrailingZerosL(iRegI dst, iRegL src, flagsReg cr) %{
+  predicate(UsePopCountInstruction);  // See Matcher::match_rule_supported
+  match(Set dst (CountTrailingZerosL src));
+  effect(TEMP dst, KILL cr);
+
+  // return popc(~x & (x - 1));
+  format %{ "SUB     $src,1,$dst\t! count trailing zeros (long)\n\t"
+            "ANDN    $dst,$src,$dst\n\t"
+            "POPC    $dst,$dst" %}
+  ins_encode %{
+    Register Rdst = $dst$$Register;
+    Register Rsrc = $src$$Register;
+    __ sub(Rsrc, 1, Rdst);
+    __ andn(Rdst, Rsrc, Rdst);
+    __ popc(Rdst, Rdst);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+
+//---------- Population Count Instructions -------------------------------------
+
+instruct popCountI(iRegI dst, iRegI src) %{
+  predicate(UsePopCountInstruction);
+  match(Set dst (PopCountI src));
+
+  format %{ "POPC   $src, $dst" %}
+  ins_encode %{
+    __ popc($src$$Register, $dst$$Register);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+// Note: Long.bitCount(long) returns an int.
+instruct popCountL(iRegI dst, iRegL src) %{
+  predicate(UsePopCountInstruction);
+  match(Set dst (PopCountL src));
+
+  format %{ "POPC   $src, $dst" %}
+  ins_encode %{
+    __ popc($src$$Register, $dst$$Register);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
 
 // ============================================================================
 //------------Bytes reverse--------------------------------------------------
@@ -9046,7 +9662,7 @@ instruct storeL_reversed(memory dst, iRegL src) %{
 // These must follow all instruction definitions as they use the names
 // defined in the instructions definitions.
 //
-// peepmatch ( root_instr_name [preceeding_instruction]* );
+// peepmatch ( root_instr_name [preceding_instruction]* );
 //
 // peepconstraint %{
 // (instruction_number.operand_name relational_op instruction_number.operand_name

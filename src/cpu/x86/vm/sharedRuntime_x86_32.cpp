@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ RuntimeStub*       SharedRuntime::_ic_miss_blob;
 RuntimeStub*       SharedRuntime::_resolve_opt_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_static_call_blob;
+
+const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
 
 class RegisterSaver {
   enum { FPU_regs_live = 8 /*for the FPU stack*/+8/*eight more for XMM registers*/ };
@@ -1299,7 +1301,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Now compute actual number of stack words we need rounding to make
   // stack properly aligned.
-  stack_slots = round_to(stack_slots, 2 * VMRegImpl::slots_per_word);
+  stack_slots = round_to(stack_slots, StackAlignmentInSlots);
 
   int stack_size = stack_slots * VMRegImpl::stack_slot_size;
 
@@ -1532,6 +1534,13 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
          thread, rax);
   }
 
+  // RedefineClasses() tracing support for obsolete method entry
+  if (RC_TRACE_IN_RANGE(0x00001000, 0x00002000)) {
+    __ movoop(rax, JNIHandles::make_local(method()));
+    __ call_VM_leaf(
+         CAST_FROM_FN_PTR(address, SharedRuntime::rc_trace_method_entry),
+         thread, rax);
+  }
 
   // These are register definitions we need for locking/unlocking
   const Register swap_reg = rax;  // Must use rax, for cmpxchg instruction
@@ -1793,7 +1802,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   // reset handle block
   __ movptr(rcx, Address(thread, JavaThread::active_handles_offset()));
 
-  __ movptr(Address(rcx, JNIHandleBlock::top_offset_in_bytes()), (int32_t)NULL_WORD);
+  __ movptr(Address(rcx, JNIHandleBlock::top_offset_in_bytes()), NULL_WORD);
 
   // Any exception pending?
   __ cmpptr(Address(thread, in_bytes(Thread::pending_exception_offset())), (int32_t)NULL_WORD);
@@ -1865,7 +1874,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     // Save pending exception around call to VM (which contains an EXCEPTION_MARK)
 
     __ pushptr(Address(thread, in_bytes(Thread::pending_exception_offset())));
-    __ movptr(Address(thread, in_bytes(Thread::pending_exception_offset())), (int32_t)NULL_WORD);
+    __ movptr(Address(thread, in_bytes(Thread::pending_exception_offset())), NULL_WORD);
 
 
     // should be a peal
@@ -2372,7 +2381,7 @@ void SharedRuntime::generate_deopt_blob() {
 
   // Save everything in sight.
 
-  map = RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  map = RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
   // Normal deoptimization
   __ push(Deoptimization::Unpack_deopt);
   __ jmp(cont);
@@ -2383,7 +2392,7 @@ void SharedRuntime::generate_deopt_blob() {
   // return address is the pc describes what bci to do re-execute at
 
   // No need to update map as each call to save_live_registers will produce identical oopmap
-  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
 
   __ push(Deoptimization::Unpack_reexecute);
   __ jmp(cont);
@@ -2419,7 +2428,7 @@ void SharedRuntime::generate_deopt_blob() {
   // Save everything in sight.
 
   // No need to update map as each call to save_live_registers will produce identical oopmap
-  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
 
   // Now it is safe to overwrite any register
 
@@ -2431,7 +2440,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ get_thread(rdi);
   __ movptr(rdx, Address(rdi, JavaThread::exception_pc_offset()));
   __ movptr(Address(rbp, wordSize), rdx);
-  __ movptr(Address(rdi, JavaThread::exception_pc_offset()), (int32_t)NULL_WORD);
+  __ movptr(Address(rdi, JavaThread::exception_pc_offset()), NULL_WORD);
 
 #ifdef ASSERT
   // verify that there is really an exception oop in JavaThread
@@ -2489,8 +2498,8 @@ void SharedRuntime::generate_deopt_blob() {
   __ jcc(Assembler::notEqual, noException);
   __ movptr(rax, Address(rcx, JavaThread::exception_oop_offset()));
   __ movptr(rdx, Address(rcx, JavaThread::exception_pc_offset()));
-  __ movptr(Address(rcx, JavaThread::exception_oop_offset()), (int32_t)NULL_WORD);
-  __ movptr(Address(rcx, JavaThread::exception_pc_offset()), (int32_t)NULL_WORD);
+  __ movptr(Address(rcx, JavaThread::exception_oop_offset()), NULL_WORD);
+  __ movptr(Address(rcx, JavaThread::exception_pc_offset()), NULL_WORD);
 
   __ verify_oop(rax);
 
@@ -2505,6 +2514,11 @@ void SharedRuntime::generate_deopt_blob() {
   // in the vframeArray.
 
   RegisterSaver::restore_result_registers(masm);
+
+  // Non standard control word may be leaked out through a safepoint blob, and we can
+  // deopt at a poll point with the non standard control word. However, we should make
+  // sure the control word is correct after restore_result_registers.
+  __ fldcw(ExternalAddress(StubRoutines::addr_fpu_cntrl_wrd_std()));
 
   // All of the register save area has been popped of the stack. Only the
   // return address remains.
@@ -2582,7 +2596,7 @@ void SharedRuntime::generate_deopt_blob() {
           rbx); // Make it walkable
 #else /* CC_INTERP */
   // This value is corrected by layout_activation_impl
-  __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD );
+  __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
   __ movptr(Address(rbp, frame::interpreter_frame_sender_sp_offset * wordSize), rbx); // Make it walkable
 #endif /* CC_INTERP */
   __ movptr(sp_temp, rsp);              // pass to next frame
@@ -2802,7 +2816,7 @@ void SharedRuntime::generate_uncommon_trap_blob() {
           rbx); // Make it walkable
 #else /* CC_INTERP */
   // This value is corrected by layout_activation_impl
-  __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD );
+  __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD );
   __ movptr(Address(rbp, frame::interpreter_frame_sender_sp_offset * wordSize), rbx); // Make it walkable
 #endif /* CC_INTERP */
   __ movptr(sp_temp, rsp);              // pass to next frame
@@ -3020,7 +3034,7 @@ static RuntimeStub* generate_resolve_blob(address destination, const char* name)
   // exception pending => remove activation and forward to exception handler
 
   __ get_thread(thread);
-  __ movptr(Address(thread, JavaThread::vm_result_offset()), (int32_t)NULL_WORD);
+  __ movptr(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
   __ movptr(rax, Address(thread, Thread::pending_exception_offset()));
   __ jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
 

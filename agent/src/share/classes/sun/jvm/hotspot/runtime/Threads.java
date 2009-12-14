@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,20 +164,11 @@ public class Threads {
             }
         }
 
-        long leastDiff = 0;
-        boolean leastDiffInitialized = false;
-        JavaThread theOwner = null;
         for (JavaThread thread = first(); thread != null; thread = thread.next()) {
-            Address addr = thread.highestLock();
-            if (addr == null || addr.lessThan(o)) continue;
-            long diff = addr.minus(o);
-            if (!leastDiffInitialized || diff < leastDiff) {
-                leastDiffInitialized = true;
-                leastDiff = diff;
-                theOwner = thread;
-            }
+          if (thread.isLockOwned(o))
+            return thread;
         }
-        return theOwner;
+        return null;
     }
 
     public JavaThread owningThreadFromMonitor(ObjectMonitor monitor) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -449,6 +449,8 @@ public:
     hash_delete(old);
     subsume_node(old, nn);
   }
+
+  bool delay_transform() const { return _delay_transform; }
 
   void set_delay_transform(bool delay) {
     _delay_transform = delay;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -249,29 +249,61 @@ klassOop constantPoolOopDesc::klass_ref_at_if_loaded_check(constantPoolHandle th
 }
 
 
-symbolOop constantPoolOopDesc::uncached_name_ref_at(int which) {
-  jint ref_index = name_and_type_at(uncached_name_and_type_ref_index_at(which));
-  int name_index = extract_low_short_from_int(ref_index);
+symbolOop constantPoolOopDesc::impl_name_ref_at(int which, bool uncached) {
+  int name_index = name_ref_index_at(impl_name_and_type_ref_index_at(which, uncached));
   return symbol_at(name_index);
 }
 
 
-symbolOop constantPoolOopDesc::uncached_signature_ref_at(int which) {
-  jint ref_index = name_and_type_at(uncached_name_and_type_ref_index_at(which));
-  int signature_index = extract_high_short_from_int(ref_index);
+symbolOop constantPoolOopDesc::impl_signature_ref_at(int which, bool uncached) {
+  int signature_index = signature_ref_index_at(impl_name_and_type_ref_index_at(which, uncached));
   return symbol_at(signature_index);
 }
 
 
-int constantPoolOopDesc::uncached_name_and_type_ref_index_at(int which) {
-  jint ref_index = field_or_method_at(which, true);
+int constantPoolOopDesc::impl_name_and_type_ref_index_at(int which, bool uncached) {
+  int i = which;
+  if (!uncached && cache() != NULL) {
+    if (constantPoolCacheOopDesc::is_secondary_index(which))
+      // Invokedynamic indexes are always processed in native order
+      // so there is no question of reading a native u2 in Java order here.
+      return cache()->main_entry_at(which)->constant_pool_index();
+    // change byte-ordering and go via cache
+    i = remap_instruction_operand_from_cache(which);
+  } else {
+    if (tag_at(which).is_name_and_type())
+      // invokedynamic index is a simple name-and-type
+      return which;
+  }
+  assert(tag_at(i).is_field_or_method(), "Corrupted constant pool");
+  jint ref_index = *int_at_addr(i);
   return extract_high_short_from_int(ref_index);
 }
 
 
-int constantPoolOopDesc::uncached_klass_ref_index_at(int which) {
-  jint ref_index = field_or_method_at(which, true);
+int constantPoolOopDesc::impl_klass_ref_index_at(int which, bool uncached) {
+  guarantee(!constantPoolCacheOopDesc::is_secondary_index(which),
+            "an invokedynamic instruction does not have a klass");
+  int i = which;
+  if (!uncached && cache() != NULL) {
+    // change byte-ordering and go via cache
+    i = remap_instruction_operand_from_cache(which);
+  }
+  assert(tag_at(i).is_field_or_method(), "Corrupted constant pool");
+  jint ref_index = *int_at_addr(i);
   return extract_low_short_from_int(ref_index);
+}
+
+
+
+int constantPoolOopDesc::remap_instruction_operand_from_cache(int operand) {
+  // Operand was fetched by a stream using get_Java_u2, yet was stored
+  // by Rewriter::rewrite_member_reference in native order.
+  // So now we have to fix the damage by swapping back to native order.
+  assert((int)(u2)operand == operand, "clean u2");
+  int cpc_index = Bytes::swap_u2(operand);
+  int member_index = cache()->entry_at(cpc_index)->constant_pool_index();
+  return member_index;
 }
 
 
@@ -290,26 +322,14 @@ void constantPoolOopDesc::verify_constant_pool_resolve(constantPoolHandle this_o
 }
 
 
-int constantPoolOopDesc::klass_ref_index_at(int which) {
-  jint ref_index = field_or_method_at(which, false);
+int constantPoolOopDesc::name_ref_index_at(int which_nt) {
+  jint ref_index = name_and_type_at(which_nt);
   return extract_low_short_from_int(ref_index);
 }
 
 
-int constantPoolOopDesc::name_and_type_ref_index_at(int which) {
-  jint ref_index = field_or_method_at(which, false);
-  return extract_high_short_from_int(ref_index);
-}
-
-
-int constantPoolOopDesc::name_ref_index_at(int which) {
-  jint ref_index = name_and_type_at(which);
-  return extract_low_short_from_int(ref_index);
-}
-
-
-int constantPoolOopDesc::signature_ref_index_at(int which) {
-  jint ref_index = name_and_type_at(which);
+int constantPoolOopDesc::signature_ref_index_at(int which_nt) {
+  jint ref_index = name_and_type_at(which_nt);
   return extract_high_short_from_int(ref_index);
 }
 
@@ -350,20 +370,6 @@ char* constantPoolOopDesc::string_at_noresolve(int which) {
   } else {
     return (char*)"<pseudo-string>";
   }
-}
-
-
-symbolOop constantPoolOopDesc::name_ref_at(int which) {
-  jint ref_index = name_and_type_at(name_and_type_ref_index_at(which));
-  int name_index = extract_low_short_from_int(ref_index);
-  return symbol_at(name_index);
-}
-
-
-symbolOop constantPoolOopDesc::signature_ref_at(int which) {
-  jint ref_index = name_and_type_at(name_and_type_ref_index_at(which));
-  int signature_index = extract_high_short_from_int(ref_index);
-  return symbol_at(signature_index);
 }
 
 
@@ -962,7 +968,7 @@ static void print_cpool_bytes(jint cnt, u1 *bytes) {
       }
       case JVM_CONSTANT_Long: {
         u8 val = Bytes::get_Java_u8(bytes);
-        printf("long         %lldl", *(jlong *) &val);
+        printf("long         "INT64_FORMAT, *(jlong *) &val);
         ent_size = 8;
         idx++; // Long takes two cpool slots
         break;
@@ -1198,7 +1204,28 @@ int constantPoolOopDesc::copy_cpool_bytes(int cpool_size,
         unsigned int hash;
         char *str = string_at_noresolve(idx);
         symbolOop sym = SymbolTable::lookup_only(str, (int) strlen(str), hash);
-        idx1 = tbl->symbol_to_value(sym);
+        if (sym == NULL) {
+          // sym can be NULL if string refers to incorrectly encoded JVM_CONSTANT_Utf8
+          // this can happen with JVM TI; see CR 6839599 for more details
+          oop string = *(obj_at_addr(idx));
+          assert(java_lang_String::is_instance(string),"Not a String");
+          DBG(printf("Error #%03hd tag=%03hd\n", idx, tag));
+          idx1 = 0;
+          for (int j = 0; j < tbl->table_size() && idx1 == 0; j++) {
+            for (SymbolHashMapEntry* cur = tbl->bucket(j); cur != NULL; cur = cur->next()) {
+              int length;
+              sym = cur->symbol();
+              jchar* chars = sym->as_unicode(length);
+              if (java_lang_String::equals(string, chars, length)) {
+                idx1 = cur->value();
+                DBG(printf("Index found: %d\n",idx1));
+                break;
+              }
+            }
+          }
+        } else {
+          idx1 = tbl->symbol_to_value(sym);
+        }
         assert(idx1 != 0, "Have not found a hashtable entry");
         Bytes::put_Java_u2((address) (bytes+1), idx1);
         DBG(printf("JVM_CONSTANT_String: idx=#%03hd, %s", idx1, str));

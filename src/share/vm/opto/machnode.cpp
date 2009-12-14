@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,7 +136,7 @@ void MachNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 // Size of instruction in bytes
 uint MachNode::size(PhaseRegAlloc *ra_) const {
   // If a virtual was not defined for this specific instruction,
-  // Call the helper which finds the size by emiting the bits.
+  // Call the helper which finds the size by emitting the bits.
   return MachNode::emit_size(ra_);
 }
 
@@ -300,6 +300,12 @@ const Node* MachNode::get_base_and_disp(intptr_t &offset, const TypePtr* &adr_ty
           }
         }
         adr_type = t_disp->add_offset(offset);
+      } else if( base == NULL && offset != 0 && offset != Type::OffsetBot ) {
+        // Use ideal type if it is oop ptr.
+        const TypePtr *tp = oper->type()->isa_ptr();
+        if( tp != NULL) {
+          adr_type = tp;
+        }
       }
     }
 
@@ -340,6 +346,10 @@ const class TypePtr *MachNode::adr_type() const {
   if (base == NodeSentinel)  return TypePtr::BOTTOM;
 
   const Type* t = base->bottom_type();
+  if (UseCompressedOops && Universe::narrow_oop_shift() == 0) {
+    // 32-bit unscaled narrow oop can be the base of any address expression
+    t = t->make_ptr();
+  }
   if (t->isa_intptr_t() && offset != 0 && offset != Type::OffsetBot) {
     // We cannot assert that the offset does not look oop-ish here.
     // Depending on the heap layout the cardmark base could land
@@ -353,6 +363,7 @@ const class TypePtr *MachNode::adr_type() const {
 
   // be conservative if we do not recognize the type
   if (tp == NULL) {
+    assert(false, "this path may produce not optimal code");
     return TypePtr::BOTTOM;
   }
   assert(tp->base() != Type::AnyPtr, "not a bare pointer");

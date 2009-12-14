@@ -69,9 +69,10 @@ bool Flag::is_external() const {
 
 void Flag::print_on(outputStream* st) {
   st->print("%5s %-35s %c= ", type, name, (origin != DEFAULT ? ':' : ' '));
-  if (is_bool())  st->print("%-16s", get_bool() ? "true" : "false");
-  if (is_intx())  st->print("%-16ld", get_intx());
-  if (is_uintx()) st->print("%-16lu", get_uintx());
+  if (is_bool())     st->print("%-16s", get_bool() ? "true" : "false");
+  if (is_intx())     st->print("%-16ld", get_intx());
+  if (is_uintx())    st->print("%-16lu", get_uintx());
+  if (is_uint64_t()) st->print("%-16lu", get_uint64_t());
   if (is_ccstr()) {
     const char* cp = get_ccstr();
     if (cp != NULL) {
@@ -100,6 +101,8 @@ void Flag::print_as_flag(outputStream* st) {
     st->print("-XX:%s=" INTX_FORMAT, name, get_intx());
   } else if (is_uintx()) {
     st->print("-XX:%s=" UINTX_FORMAT, name, get_uintx());
+  } else if (is_uint64_t()) {
+    st->print("-XX:%s=" UINT64_FORMAT, name, get_uint64_t());
   } else if (is_ccstr()) {
     st->print("-XX:%s=", name);
     const char* cp = get_ccstr();
@@ -321,6 +324,32 @@ void CommandLineFlagsEx::uintxAtPut(CommandLineFlagWithType flag, uintx value, F
   Flag* faddr = address_of_flag(flag);
   guarantee(faddr != NULL && faddr->is_uintx(), "wrong flag type");
   faddr->set_uintx(value);
+  faddr->origin = origin;
+}
+
+bool CommandLineFlags::uint64_tAt(char* name, size_t len, uint64_t* value) {
+  Flag* result = Flag::find_flag(name, len);
+  if (result == NULL) return false;
+  if (!result->is_uint64_t()) return false;
+  *value = result->get_uint64_t();
+  return true;
+}
+
+bool CommandLineFlags::uint64_tAtPut(char* name, size_t len, uint64_t* value, FlagValueOrigin origin) {
+  Flag* result = Flag::find_flag(name, len);
+  if (result == NULL) return false;
+  if (!result->is_uint64_t()) return false;
+  uint64_t old_value = result->get_uint64_t();
+  result->set_uint64_t(*value);
+  *value = old_value;
+  result->origin = origin;
+  return true;
+}
+
+void CommandLineFlagsEx::uint64_tAtPut(CommandLineFlagWithType flag, uint64_t value, FlagValueOrigin origin) {
+  Flag* faddr = address_of_flag(flag);
+  guarantee(faddr != NULL && faddr->is_uint64_t(), "wrong flag type");
+  faddr->set_uint64_t(value);
   faddr->origin = origin;
 }
 

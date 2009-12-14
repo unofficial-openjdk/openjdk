@@ -24,7 +24,7 @@
 
 # top.make is included in the Makefile in the build directories.
 # It DOES NOT include the vm dependency info in order to be faster.
-# It's main job is to implement the incremental form of make lists.
+# Its main job is to implement the incremental form of make lists.
 # It also:
 #   -builds and runs adlc via adlc.make
 #   -generates JVMTI source and docs via jvmti.make (JSR-163)
@@ -74,6 +74,7 @@ Include_DBs/CORE        = $(VM)/includeDB_core   $(Include_DBs/GC) \
 Include_DBs/COMPILER1   = $(Include_DBs/CORE) $(VM)/includeDB_compiler1
 Include_DBs/COMPILER2   = $(Include_DBs/CORE) $(VM)/includeDB_compiler2
 Include_DBs/TIERED      = $(Include_DBs/CORE) $(VM)/includeDB_compiler1 $(VM)/includeDB_compiler2
+Include_DBs/ZERO        = $(Include_DBs/CORE) $(VM)/includeDB_zero
 Include_DBs = $(Include_DBs/$(TYPE))
 
 Cached_plat = $(GENERATED)/platform.current
@@ -114,7 +115,7 @@ vm_build_preliminaries:  checks $(Incremental_Lists) $(AD_Files_If_Required) jvm
 # make makeDeps: (and zap the cached db files to force a nonincremental run)
 
 $(GENERATED)/$(MakeDepsClass): $(MakeDepsSources)
-	@$(REMOTE) $(COMPILE.JAVAC) -classpath $(GAMMADIR)/src/share/tools/MakeDeps -g -d $(GENERATED) $(MakeDepsSources)
+	@$(REMOTE) $(COMPILE.JAVAC) -classpath $(GAMMADIR)/src/share/tools/MakeDeps -d $(GENERATED) $(MakeDepsSources)
 	@echo Removing $(Incremental_Lists) to force regeneration.
 	@rm -f $(Incremental_Lists)
 	@$(CDG) echo >$(Cached_plat)

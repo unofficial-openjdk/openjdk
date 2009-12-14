@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,9 @@ VM_PICFLAG/LIBJVM = $(PICFLAG)
 VM_PICFLAG/AOUT   =
 VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))
 
+ifeq ($(ZERO_BUILD), true)
+CFLAGS += $(LIBFFI_CFLAGS)
+endif
 CFLAGS += $(VM_PICFLAG)
 CFLAGS += -fno-rtti
 CFLAGS += -fno-exceptions
@@ -64,6 +67,7 @@ ARCHFLAG/amd64   = -m64
 ARCHFLAG/ia64    =
 ARCHFLAG/sparc   = -m32 -mcpu=v9
 ARCHFLAG/sparcv9 = -m64 -mcpu=v9
+ARCHFLAG/zero    = $(ZERO_ARCHFLAG)
 
 CFLAGS     += $(ARCHFLAG)
 AOUT_FLAGS += $(ARCHFLAG)
@@ -113,6 +117,11 @@ endif
 
 OPT_CFLAGS/NOOPT=-O0
 
+# 6835796. Problem in GCC 4.3.0 with mulnode.o optimized compilation. 
+ifneq "$(shell expr \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) = 3 \) \))" "0"
+OPT_CFLAGS/mulnode.o += -O0
+endif
+
 #------------------------------------------------------------------------
 # Linker flags
 
@@ -130,6 +139,14 @@ endif
 
 # Enable linker optimization
 LFLAGS += -Xlinker -O1
+
+# If this is a --hash-style=gnu system, use --hash-style=both
+#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | grep -- '--hash-style=gnu')
+ifneq ($(_HAS_HASH_STYLE_GNU),)
+  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+endif
+LFLAGS += $(LDFLAGS_HASH_STYLE)
 
 # Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
 MAPFLAG = -Xlinker --version-script=FILENAME
@@ -157,4 +174,10 @@ DEBUG_CFLAGS/amd64 = -g
 DEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
 ifeq ($(DEBUG_CFLAGS/$(BUILDARCH)),)
 DEBUG_CFLAGS += -gstabs
+endif
+
+# DEBUG_BINARIES overrides everything, use full -g debug information
+ifeq ($(DEBUG_BINARIES), true)
+  DEBUG_CFLAGS = -g
+  CFLAGS += $(DEBUG_CFLAGS)
 endif

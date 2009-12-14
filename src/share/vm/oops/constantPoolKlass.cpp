@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_constantPoolKlass.cpp.incl"
 
-constantPoolOop constantPoolKlass::allocate(int length, TRAPS) {
+constantPoolOop constantPoolKlass::allocate(int length, bool is_conc_safe, TRAPS) {
   int size = constantPoolOopDesc::object_size(length);
   KlassHandle klass (THREAD, as_klassOop());
   constantPoolOop c =
@@ -38,6 +38,9 @@ constantPoolOop constantPoolKlass::allocate(int length, TRAPS) {
   c->set_flags(0);
   // only set to non-zero if constant pool is merged by RedefineClasses
   c->set_orig_length(0);
+  // if constant pool may change during RedefineClasses, it is created
+  // unsafe for GC concurrent processing.
+  c->set_is_conc_safe(is_conc_safe);
   // all fields are initialized; needed for GC
 
   // initialize tag array
@@ -207,6 +210,11 @@ int constantPoolKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr)
   return size;
 }
 
+bool constantPoolKlass::oop_is_conc_safe(oop obj) const {
+  assert(obj->is_constantPool(), "must be constantPool");
+  return constantPoolOop(obj)->is_conc_safe();
+}
+
 #ifndef SERIALGC
 int constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   assert (obj->is_constantPool(), "obj must be constant pool");
@@ -304,6 +312,7 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
   if (cp->flags() != 0) {
     st->print(" - flags : 0x%x", cp->flags());
     if (cp->has_pseudo_string()) st->print(" has_pseudo_string");
+    if (cp->has_invokedynamic()) st->print(" has_invokedynamic");
     st->cr();
   }
 

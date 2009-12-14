@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ class PSVirtualSpace : public CHeapObj {
   inline  void   set_reserved(char* low_addr, char* high_addr, bool special);
   inline  void   set_reserved(ReservedSpace rs);
   inline  void   set_committed(char* low_addr, char* high_addr);
-  virtual bool   expand_by(size_t bytes, bool pre_touch = false);
+  virtual bool   expand_by(size_t bytes);
   virtual bool   shrink_by(size_t bytes);
   virtual size_t expand_into(PSVirtualSpace* space, size_t bytes);
   void           release();
@@ -127,7 +127,7 @@ class PSVirtualSpaceHighToLow : public PSVirtualSpace {
   PSVirtualSpaceHighToLow(ReservedSpace rs, size_t alignment);
   PSVirtualSpaceHighToLow(ReservedSpace rs);
 
-  virtual bool   expand_by(size_t bytes, bool pre_touch = false);
+  virtual bool   expand_by(size_t bytes);
   virtual bool   shrink_by(size_t bytes);
   virtual size_t expand_into(PSVirtualSpace* space, size_t bytes);
 

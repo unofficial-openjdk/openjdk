@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,13 @@ void Compile::Output() {
   init_scratch_buffer_blob();
   if (failing())  return; // Out of memory
 
+  // The number of new nodes (mostly MachNop) is proportional to
+  // the number of java calls and inner loops which are aligned.
+  if ( C->check_node_count((NodeLimitFudgeFactor + C->java_calls()*3 +
+                            C->inner_loops()*(OptoLoopAlignment-1)),
+                           "out of nodes before code generation" ) ) {
+    return;
+  }
   // Make sure I can find the Start Node
   Block_Array& bbs = _cfg->_bbs;
   Block *entry = _cfg->_blocks[1];
@@ -604,7 +611,7 @@ void Compile::FillLocArray( int idx, MachSafePointNode* sfpt, Node *local,
       assert(cik->is_instance_klass() ||
              cik->is_array_klass(), "Not supported allocation.");
       sv = new ObjectValue(spobj->_idx,
-                           new ConstantOopWriteValue(cik->encoding()));
+                           new ConstantOopWriteValue(cik->constant_encoding()));
       Compile::set_sv_for_object_node(objs, sv);
 
       uint first_ind = spobj->first_index();
@@ -695,13 +702,13 @@ void Compile::FillLocArray( int idx, MachSafePointNode* sfpt, Node *local,
   case Type::AryPtr:
   case Type::InstPtr:
   case Type::KlassPtr:          // fall through
-    array->append(new ConstantOopWriteValue(t->isa_oopptr()->const_oop()->encoding()));
+    array->append(new ConstantOopWriteValue(t->isa_oopptr()->const_oop()->constant_encoding()));
     break;
   case Type::NarrowOop:
     if (t == TypeNarrowOop::NULL_PTR) {
       array->append(new ConstantOopWriteValue(NULL));
     } else {
-      array->append(new ConstantOopWriteValue(t->make_ptr()->isa_oopptr()->const_oop()->encoding()));
+      array->append(new ConstantOopWriteValue(t->make_ptr()->isa_oopptr()->const_oop()->constant_encoding()));
     }
     break;
   case Type::Int:
@@ -864,7 +871,7 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
           assert(cik->is_instance_klass() ||
                  cik->is_array_klass(), "Not supported allocation.");
           ObjectValue* sv = new ObjectValue(spobj->_idx,
-                                new ConstantOopWriteValue(cik->encoding()));
+                                new ConstantOopWriteValue(cik->constant_encoding()));
           Compile::set_sv_for_object_node(objs, sv);
 
           uint first_ind = spobj->first_index();
@@ -883,7 +890,7 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
         }
       } else {
         const TypePtr *tp = obj_node->bottom_type()->make_ptr();
-        scval = new ConstantOopWriteValue(tp->is_instptr()->const_oop()->encoding());
+        scval = new ConstantOopWriteValue(tp->is_instptr()->const_oop()->constant_encoding());
       }
 
       OptoReg::Name box_reg = BoxLockNode::stack_slot(box_node);
@@ -904,8 +911,9 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
     ciMethod* scope_method = method ? method : _method;
     // Describe the scope here
     assert(jvms->bci() >= InvocationEntryBci && jvms->bci() <= 0x10000, "must be a valid or entry BCI");
+    assert(!jvms->should_reexecute() || depth==max_depth, "reexecute allowed only for the youngest");
     // Now we can describe the scope.
-    debug_info()->describe_scope(safepoint_pc_offset,scope_method,jvms->bci(),locvals,expvals,monvals);
+    debug_info()->describe_scope(safepoint_pc_offset,scope_method,jvms->bci(),jvms->should_reexecute(),locvals,expvals,monvals);
   } // End jvms loop
 
   // Mark the end of the scope set.
@@ -987,7 +995,8 @@ void NonSafepointEmitter::emit_non_safepoint() {
   for (int depth = 1; depth <= max_depth; depth++) {
     JVMState* jvms = youngest_jvms->of_depth(depth);
     ciMethod* method = jvms->has_method() ? jvms->method() : NULL;
-    debug_info->describe_scope(pc_offset, method, jvms->bci());
+    assert(!jvms->should_reexecute() || depth==max_depth, "reexecute allowed only for the youngest");
+    debug_info->describe_scope(pc_offset, method, jvms->bci(), jvms->should_reexecute());
   }
 
   // Mark the end of the scope set.
@@ -1105,7 +1114,7 @@ void Compile::Fill_buffer() {
   uint *call_returns = NEW_RESOURCE_ARRAY(uint, _cfg->_num_blocks+1);
 
   uint  return_offset = 0;
-  MachNode *nop = new (this) MachNopNode();
+  int nop_size = (new (this) MachNopNode())->size(_regalloc);
 
   int previous_offset = 0;
   int current_offset  = 0;
@@ -1171,7 +1180,7 @@ void Compile::Fill_buffer() {
         cb->flush_bundle(false);
 
       // The following logic is duplicated in the code ifdeffed for
-      // ENABLE_ZAP_DEAD_LOCALS which apppears above in this file.  It
+      // ENABLE_ZAP_DEAD_LOCALS which appears above in this file.  It
       // should be factored out.  Or maybe dispersed to the nodes?
 
       // Special handling for SafePoint/Call Nodes
@@ -1188,7 +1197,6 @@ void Compile::Fill_buffer() {
         }
 
         // align the instruction if necessary
-        int nop_size = nop->size(_regalloc);
         int padding = mach->compute_padding(current_offset);
         // Make sure safepoint node for polling is distinct from a call's
         // return by adding a nop if needed.
@@ -1275,7 +1283,7 @@ void Compile::Fill_buffer() {
         }
 
 #ifdef ASSERT
-        // Check that oop-store preceeds the card-mark
+        // Check that oop-store precedes the card-mark
         else if( mach->ideal_Opcode() == Op_StoreCM ) {
           uint storeCM_idx = j;
           Node *oop_store = mach->in(mach->_cnt);  // First precedence edge
@@ -1291,7 +1299,7 @@ void Compile::Fill_buffer() {
 #endif
 
         else if( !n->is_Proj() ) {
-          // Remember the begining of the previous instruction, in case
+          // Remember the beginning of the previous instruction, in case
           // it's followed by a flag-kill and a null-check.  Happens on
           // Intel all the time, with add-to-memory kind of opcodes.
           previous_offset = current_offset;
@@ -1372,7 +1380,6 @@ void Compile::Fill_buffer() {
 
     // If the next block is the top of a loop, pad this block out to align
     // the loop top a little. Helps prevent pipe stalls at loop back branches.
-    int nop_size = (new (this) MachNopNode())->size(_regalloc);
     if( i<_cfg->_num_blocks-1 ) {
       Block *nb = _cfg->_blocks[i+1];
       uint padding = nb->alignment_padding(current_offset);
@@ -1567,7 +1574,7 @@ Scheduling::Scheduling(Arena *arena, Compile &compile)
 
   compile.set_node_bundling_limit(_node_bundling_limit);
 
-  // This one is persistant within the Compile class
+  // This one is persistent within the Compile class
   _node_bundling_base = NEW_ARENA_ARRAY(compile.comp_arena(), Bundle, node_max);
 
   // Allocate space for fixed-size arrays
@@ -1666,7 +1673,7 @@ void Compile::ScheduleAndBundle() {
 // Compute the latency of all the instructions.  This is fairly simple,
 // because we already have a legal ordering.  Walk over the instructions
 // from first to last, and compute the latency of the instruction based
-// on the latency of the preceeding instruction(s).
+// on the latency of the preceding instruction(s).
 void Scheduling::ComputeLocalLatenciesForward(const Block *bb) {
 #ifndef PRODUCT
   if (_cfg->C->trace_opto_output())
@@ -1931,7 +1938,7 @@ void Scheduling::AddNodeToBundle(Node *n, const Block *bb) {
     uint siz = _available.size();
 
     // Conditional branches can support an instruction that
-    // is unconditionally executed and not dependant by the
+    // is unconditionally executed and not dependent by the
     // branch, OR a conditionally executed instruction if
     // the branch is taken.  In practice, this means that
     // the first instruction at the branch target is
@@ -1947,7 +1954,7 @@ void Scheduling::AddNodeToBundle(Node *n, const Block *bb) {
 #endif
 
       // At least 1 instruction is on the available list
-      // that is not dependant on the branch
+      // that is not dependent on the branch
       for (uint i = 0; i < siz; i++) {
         Node *d = _available[i];
         const Pipeline *avail_pipeline = d->pipeline();
@@ -2256,7 +2263,8 @@ void Scheduling::DoScheduling() {
     // bother scheduling them.
     Node *last = bb->_nodes[_bb_end];
     if( last->is_Catch() ||
-       (last->is_Mach() && last->as_Mach()->ideal_Opcode() == Op_Halt) ) {
+       // Exclude unreachable path case when Halt node is in a separate block.
+       (_bb_end > 1 && last->is_Mach() && last->as_Mach()->ideal_Opcode() == Op_Halt) ) {
       // There must be a prior call.  Skip it.
       while( !bb->_nodes[--_bb_end]->is_Call() ) {
         assert( bb->_nodes[_bb_end]->is_Proj(), "skipping projections after expected call" );

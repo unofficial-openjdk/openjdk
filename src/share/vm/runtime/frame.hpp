@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,7 +117,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool can_be_deoptimized() const;
 
   // returns the frame size in stack slots
-  int frame_size() const;
+  int frame_size(RegisterMap* map) const;
 
   // returns the sending frame
   frame sender(RegisterMap* map) const;
@@ -384,16 +384,14 @@ class frame VALUE_OBJ_CLASS_SPEC {
   void oops_interpreted_arguments_do(symbolHandle signature, bool is_static, OopClosure* f);
 
   // Iteration of oops
-  void oops_do_internal(OopClosure* f, RegisterMap* map, bool use_interpreter_oop_map_cache);
+  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache);
   void oops_entry_do(OopClosure* f, const RegisterMap* map);
-  void oops_code_blob_do(OopClosure* f, const RegisterMap* map);
+  void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* map);
   int adjust_offset(methodOop method, int index); // helper for above fn
-  // Iteration of nmethods
-  void nmethods_code_blob_do();
  public:
   // Memory management
-  void oops_do(OopClosure* f, RegisterMap* map) { oops_do_internal(f, map, true); }
-  void nmethods_do();
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map) { oops_do_internal(f, cf, map, true); }
+  void nmethods_do(CodeBlobClosure* cf);
 
   void gc_prologue();
   void gc_epilogue();

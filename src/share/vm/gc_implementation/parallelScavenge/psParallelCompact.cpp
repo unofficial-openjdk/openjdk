@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -508,6 +508,7 @@ ParallelCompactData::summarize_split_space(size_t src_region,
   assert(destination <= target_end, "sanity");
   assert(destination + _region_data[src_region].data_size() > target_end,
     "region should not fit into target space");
+  assert(is_region_aligned(target_end), "sanity");
 
   size_t split_region = src_region;
   HeapWord* split_destination = destination;
@@ -538,14 +539,12 @@ ParallelCompactData::summarize_split_space(size_t src_region,
     //         max(top, max(new_top, clear_top))
     //
     // where clear_top is a new field in SpaceInfo.  Would have to set clear_top
-    // to destination + partial_obj_size, where both have the values passed to
-    // this routine.
+    // to target_end.
     const RegionData* const sr = region(split_region);
     const size_t beg_idx =
       addr_to_region_idx(region_align_up(sr->destination() +
                                          sr->partial_obj_size()));
-    const size_t end_idx =
-      addr_to_region_idx(region_align_up(destination + partial_obj_size));
+    const size_t end_idx = addr_to_region_idx(target_end);
 
     if (TraceParallelOldGCSummaryPhase) {
         gclog_or_tty->print_cr("split:  clearing source_region field in ["
@@ -1982,6 +1981,8 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     heap->record_gen_tops_before_GC();
   }
 
+  heap->pre_full_gc_dump();
+
   _print_phases = PrintGCDetails && PrintParallelOldGCPhaseTimes;
 
   // Make sure data structures are sane, make the heap parsable, and do other
@@ -2203,6 +2204,12 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
                            collection_exit.ticks());
     gc_task_manager()->print_task_time_stamps();
   }
+
+  heap->post_full_gc_dump();
+
+#ifdef TRACESPINNING
+  ParallelTaskTerminator::print_termination_counts();
+#endif
 }
 
 bool PSParallelCompact::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
@@ -2315,6 +2322,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   {
     TraceTime tm_m("par mark", print_phases(), true, gclog_or_tty);
+    ParallelScavengeHeap::ParStrongRootsScope psrs;
 
     GCTaskQueue* q = GCTaskQueue::create();
 
@@ -2328,6 +2336,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::system_dictionary));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::jvmti));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::vm_symbols));
+    q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::code_cache));
 
     if (parallel_gc_threads > 1) {
       for (uint j = 0; j < parallel_gc_threads; j++) {
@@ -2371,7 +2380,10 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   // Update subklass/sibling/implementor links of live klasses
   // revisit_klass_stack is used in follow_weak_klass_links().
-  follow_weak_klass_links(cm);
+  follow_weak_klass_links();
+
+  // Revisit memoized MDO's and clear any unmarked weak refs
+  follow_mdo_weak_refs();
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(is_alive_closure());
@@ -2398,7 +2410,7 @@ void PSParallelCompact::adjust_roots() {
   Universe::oops_do(adjust_root_pointer_closure());
   ReferenceProcessor::oops_do(adjust_root_pointer_closure());
   JNIHandles::oops_do(adjust_root_pointer_closure());   // Global (strong) JNI handles
-  Threads::oops_do(adjust_root_pointer_closure());
+  Threads::oops_do(adjust_root_pointer_closure(), NULL);
   ObjectSynchronizer::oops_do(adjust_root_pointer_closure());
   FlatProfiler::oops_do(adjust_root_pointer_closure());
   Management::oops_do(adjust_root_pointer_closure());
@@ -2714,17 +2726,25 @@ void PSParallelCompact::follow_stack(ParCompactionManager* cm) {
 }
 
 void
-PSParallelCompact::follow_weak_klass_links(ParCompactionManager* serial_cm) {
+PSParallelCompact::follow_weak_klass_links() {
   // All klasses on the revisit stack are marked at this point.
   // Update and follow all subklass, sibling and implementor links.
-  for (uint i = 0; i < ParallelGCThreads+1; i++) {
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
     ParCompactionManager* cm = ParCompactionManager::manager_array(i);
     KeepAliveClosure keep_alive_closure(cm);
-    for (int i = 0; i < cm->revisit_klass_stack()->length(); i++) {
-      cm->revisit_klass_stack()->at(i)->follow_weak_klass_links(
+    int length = cm->revisit_klass_stack()->length();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit klass stack[%d] length = %d", i, length);
+    }
+    for (int j = 0; j < length; j++) {
+      cm->revisit_klass_stack()->at(j)->follow_weak_klass_links(
         is_alive_closure(),
         &keep_alive_closure);
     }
+    // revisit_klass_stack is cleared in reset()
     follow_stack(cm);
   }
 }
@@ -2733,6 +2753,33 @@ void
 PSParallelCompact::revisit_weak_klass_link(ParCompactionManager* cm, Klass* k) {
   cm->revisit_klass_stack()->push(k);
 }
+
+void PSParallelCompact::revisit_mdo(ParCompactionManager* cm, DataLayout* p) {
+  cm->revisit_mdo_stack()->push(p);
+}
+
+void PSParallelCompact::follow_mdo_weak_refs() {
+  // All strongly reachable oops have been marked at this point;
+  // we can visit and clear any weak references from MDO's which
+  // we memoized during the strong marking phase.
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
+    ParCompactionManager* cm = ParCompactionManager::manager_array(i);
+    GrowableArray<DataLayout*>* rms = cm->revisit_mdo_stack();
+    int length = rms->length();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit MDO stack[%d] length = %d", i, length);
+    }
+    for (int j = 0; j < length; j++) {
+      rms->at(j)->follow_weak_refs(is_alive_closure());
+    }
+    // revisit_mdo_stack is cleared in reset()
+    follow_stack(cm);
+  }
+}
+
 
 #ifdef VALIDATE_MARK_SWEEP
 

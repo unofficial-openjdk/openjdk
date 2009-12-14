@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -299,7 +299,12 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
     }
   }
   klassOop k = SystemDictionary::resolve_from_stream(class_name, class_loader,
-                                                     Handle(), &st, CHECK_NULL);
+                                                     Handle(), &st, true,
+                                                     CHECK_NULL);
+
+  if (TraceClassResolution && k != NULL) {
+    trace_class_resolution(k);
+  }
 
   cls = (jclass)JNIHandles::make_local(
     env, Klass::cast(k)->java_mirror());
@@ -364,6 +369,10 @@ JNI_ENTRY(jclass, jni_FindClass(JNIEnv *env, const char *name))
   symbolHandle sym = oopFactory::new_symbol_handle(name, CHECK_NULL);
   result = find_class_from_class_loader(env, sym, true, loader,
                                         protection_domain, true, thread);
+
+  if (TraceClassResolution && result != NULL) {
+    trace_class_resolution(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(result)));
+  }
 
   // If we were the first invocation of jni_FindClass, we enable compilation again
   // rather than just allowing invocation counter to overflow and decay.
@@ -2107,7 +2116,7 @@ JNI_ENTRY(jobject, jni_GetObjectArrayElement(JNIEnv *env, jobjectArray array, js
   DT_RETURN_MARK(GetObjectArrayElement, jobject, (const jobject&)ret);
   objArrayOop a = objArrayOop(JNIHandles::resolve_non_null(array));
   if (a->is_within_bounds(index)) {
-    jobject ret = JNIHandles::make_local(env, a->obj_at(index));
+    ret = JNIHandles::make_local(env, a->obj_at(index));
     return ret;
   } else {
     char buf[jintAsStringSize];
@@ -2141,14 +2150,14 @@ JNI_END
 
 #define DEFINE_NEWSCALARARRAY(Return,Allocator,Result) \
 \
-  DT_RETURN_MARK_DECL_FOR(Result, New##Result##Array, Return);\
+  DT_RETURN_MARK_DECL(New##Result##Array, Return);\
 \
 JNI_ENTRY(Return, \
           jni_New##Result##Array(JNIEnv *env, jsize len)) \
   JNIWrapper("New" XSTR(Result) "Array"); \
   DTRACE_PROBE2(hotspot_jni, New##Result##Array__entry, env, len);\
   Return ret = NULL;\
-  DT_RETURN_MARK_FOR(Result, New##Result##Array, Return, (const Return&)ret);\
+  DT_RETURN_MARK(New##Result##Array, Return, (const Return&)ret);\
 \
   oop obj= oopFactory::Allocator(len, CHECK_0); \
   ret = (Return) JNIHandles::make_local(env, obj); \
@@ -2646,7 +2655,12 @@ static jclass lookupOne(JNIEnv* env, const char* name, TRAPS) {
   Handle protection_domain; // null protection domain
 
   symbolHandle sym = oopFactory::new_symbol_handle(name, CHECK_NULL);
-  return find_class_from_class_loader(env, sym, true, loader, protection_domain, true, CHECK_NULL);
+  jclass result =  find_class_from_class_loader(env, sym, true, loader, protection_domain, true, CHECK_NULL);
+
+  if (TraceClassResolution && result != NULL) {
+    trace_class_resolution(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(result)));
+  }
+  return result;
 }
 
 // These lookups are done with the NULL (bootstrap) ClassLoader to
@@ -2691,8 +2705,13 @@ static bool initializeDirectBufferSupport(JNIEnv* env, JavaThread* thread) {
 
     directBufferSupportInitializeEnded = 1;
   } else {
-    ThreadInVMfromNative tivn(thread); // set state as yield_all can call os:sleep
     while (!directBufferSupportInitializeEnded && !directBufferSupportInitializeFailed) {
+      // Set state as yield_all can call os:sleep. On Solaris, yield_all calls
+      // os::sleep which requires the VM state transition. On other platforms, it
+      // is not necessary. The following call to change the VM state is purposely
+      // put inside the loop to avoid potential deadlock when multiple threads
+      // try to call this method. See 6791815 for more details.
+      ThreadInVMfromNative tivn(thread);
       os::yield_all();
     }
   }
@@ -3211,6 +3230,21 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
 
   jint result = JNI_ERR;
   DT_RETURN_MARK(CreateJavaVM, jint, (const jint&)result);
+
+  // We're about to use Atomic::xchg for synchronization.  Some Zero
+  // platforms use the GCC builtin __sync_lock_test_and_set for this,
+  // but __sync_lock_test_and_set is not guaranteed to do what we want
+  // on all architectures.  So we check it works before relying on it.
+#if defined(ZERO) && defined(ASSERT)
+  {
+    jint a = 0xcafebabe;
+    jint b = Atomic::xchg(0xdeadbeef, &a);
+    void *c = &a;
+    void *d = Atomic::xchg_ptr(&b, &c);
+    assert(a == 0xdeadbeef && b == (jint) 0xcafebabe, "Atomic::xchg() works");
+    assert(c == &b && d == &a, "Atomic::xchg_ptr() works");
+  }
+#endif // ZERO && ASSERT
 
   // At the moment it's only possible to have one Java VM,
   // since some of the runtime state is in global variables.

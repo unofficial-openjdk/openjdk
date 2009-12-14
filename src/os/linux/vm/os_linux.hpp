@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,7 +147,7 @@ class Linux {
 
   static void libpthread_init();
   static bool libnuma_init();
-
+  static void* libnuma_dlsym(void* handle, const char* name);
   // Minimum stack size a thread can be created with (allowing
   // the VM to completely create the thread and enter user code)
   static size_t min_stack_allowed;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,7 +176,9 @@ bool os::have_special_privileges() {
 #endif
 
 // Cpu architecture string
-#if   defined(IA64)
+#if   defined(ZERO)
+static char cpu_arch[] = ZERO_LIBARCH;
+#elif defined(IA64)
 static char cpu_arch[] = "ia64";
 #elif defined(IA32)
 static char cpu_arch[] = "i386";
@@ -279,7 +281,11 @@ void os::init_system_properties_values() {
  *        ...
  *        7: The default directories, normally /lib and /usr/lib.
  */
+#if defined(AMD64) || defined(_LP64) && (defined(SPARC) || defined(PPC) || defined(S390))
+#define DEFAULT_LIBPATH "/usr/lib64:/lib64:/lib:/usr/lib"
+#else
 #define DEFAULT_LIBPATH "/lib:/usr/lib"
+#endif
 
 #define EXTENSIONS_DIR  "/lib/ext"
 #define ENDORSED_DIR    "/lib/endorsed"
@@ -1160,7 +1166,10 @@ void os::Linux::capture_initial_stack(size_t max_size) {
 
         /*                                     1   1   1   1   1   1   1   1   1   1   2   2   2   2   2   2   2   2   2 */
         /*              3  4  5  6  7  8   9   0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5   6   7   8 */
-        i = sscanf(s, "%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %lu %lu %ld %lu %lu %lu %lu",
+        i = sscanf(s, "%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld "
+                   UINTX_FORMAT UINTX_FORMAT UINTX_FORMAT
+                   " %lu "
+                   UINTX_FORMAT UINTX_FORMAT UINTX_FORMAT,
              &state,          /* 3  %c  */
              &ppid,           /* 4  %d  */
              &pgrp,           /* 5  %d  */
@@ -1180,13 +1189,13 @@ void os::Linux::capture_initial_stack(size_t max_size) {
              &nice,           /* 19 %ld  */
              &junk,           /* 20 %ld  */
              &it_real,        /* 21 %ld  */
-             &start,          /* 22 %lu  */
-             &vsize,          /* 23 %lu  */
-             &rss,            /* 24 %ld  */
+             &start,          /* 22 UINTX_FORMAT  */
+             &vsize,          /* 23 UINTX_FORMAT  */
+             &rss,            /* 24 UINTX_FORMAT  */
              &rsslim,         /* 25 %lu  */
-             &scodes,         /* 26 %lu  */
-             &ecode,          /* 27 %lu  */
-             &stack_start);   /* 28 %lu  */
+             &scodes,         /* 26 UINTX_FORMAT  */
+             &ecode,          /* 27 UINTX_FORMAT  */
+             &stack_start);   /* 28 UINTX_FORMAT  */
       }
 
       if (i != 28 - 2) {
@@ -1425,6 +1434,10 @@ char * os::local_time_string(char *buf, size_t buflen) {
   return buf;
 }
 
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // runtime exit support
 
@@ -1507,21 +1520,51 @@ const char* os::dll_file_extension() { return ".so"; }
 
 const char* os::get_temp_directory() { return "/tmp/"; }
 
-void os::dll_build_name(
-    char* buffer, size_t buflen, const char* pname, const char* fname) {
-  // copied from libhpi
+static bool file_exists(const char* filename) {
+  struct stat statbuf;
+  if (filename == NULL || strlen(filename) == 0) {
+    return false;
+  }
+  return os::stat(filename, &statbuf) == 0;
+}
+
+void os::dll_build_name(char* buffer, size_t buflen,
+                        const char* pname, const char* fname) {
+  // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
 
-  /* Quietly truncate on buffer overflow.  Should be an error. */
+  // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
       *buffer = '\0';
       return;
   }
 
   if (pnamelen == 0) {
-      sprintf(buffer, "lib%s.so", fname);
+    snprintf(buffer, buflen, "lib%s.so", fname);
+  } else if (strchr(pname, *os::path_separator()) != NULL) {
+    int n;
+    char** pelements = split_path(pname, &n);
+    for (int i = 0 ; i < n ; i++) {
+      // Really shouldn't be NULL, but check can't hurt
+      if (pelements[i] == NULL || strlen(pelements[i]) == 0) {
+        continue; // skip the empty path values
+      }
+      snprintf(buffer, buflen, "%s/lib%s.so", pelements[i], fname);
+      if (file_exists(buffer)) {
+        break;
+      }
+    }
+    // release the storage
+    for (int i = 0 ; i < n ; i++) {
+      if (pelements[i] != NULL) {
+        FREE_C_HEAP_ARRAY(char, pelements[i]);
+      }
+    }
+    if (pelements != NULL) {
+      FREE_C_HEAP_ARRAY(char*, pelements);
+    }
   } else {
-      sprintf(buffer, "%s/lib%s.so", pname, fname);
+    snprintf(buffer, buflen, "%s/lib%s.so", pname, fname);
   }
 }
 
@@ -1702,7 +1745,14 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     {EM_SPARC32PLUS, EM_SPARC,   ELFCLASS32, ELFDATA2MSB, (char*)"Sparc 32"},
     {EM_SPARCV9,     EM_SPARCV9, ELFCLASS64, ELFDATA2MSB, (char*)"Sparc v9 64"},
     {EM_PPC,         EM_PPC,     ELFCLASS32, ELFDATA2MSB, (char*)"Power PC 32"},
-    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"}
+    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"},
+    {EM_ARM,         EM_ARM,     ELFCLASS32,   ELFDATA2LSB, (char*)"ARM"},
+    {EM_S390,        EM_S390,    ELFCLASSNONE, ELFDATA2MSB, (char*)"IBM System/390"},
+    {EM_ALPHA,       EM_ALPHA,   ELFCLASS64, ELFDATA2LSB, (char*)"Alpha"},
+    {EM_MIPS_RS3_LE, EM_MIPS_RS3_LE, ELFCLASS32, ELFDATA2LSB, (char*)"MIPSel"},
+    {EM_MIPS,        EM_MIPS,    ELFCLASS32, ELFDATA2MSB, (char*)"MIPS"},
+    {EM_PARISC,      EM_PARISC,  ELFCLASS32, ELFDATA2MSB, (char*)"PARISC"},
+    {EM_68K,         EM_68K,     ELFCLASS32, ELFDATA2MSB, (char*)"M68k"}
   };
 
   #if  (defined IA32)
@@ -1719,9 +1769,23 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     static  Elf32_Half running_arch_code=EM_PPC64;
   #elif  (defined __powerpc__)
     static  Elf32_Half running_arch_code=EM_PPC;
+  #elif  (defined ARM)
+    static  Elf32_Half running_arch_code=EM_ARM;
+  #elif  (defined S390)
+    static  Elf32_Half running_arch_code=EM_S390;
+  #elif  (defined ALPHA)
+    static  Elf32_Half running_arch_code=EM_ALPHA;
+  #elif  (defined MIPSEL)
+    static  Elf32_Half running_arch_code=EM_MIPS_RS3_LE;
+  #elif  (defined PARISC)
+    static  Elf32_Half running_arch_code=EM_PARISC;
+  #elif  (defined MIPS)
+    static  Elf32_Half running_arch_code=EM_MIPS;
+  #elif  (defined M68K)
+    static  Elf32_Half running_arch_code=EM_68K;
   #else
     #error Method os::dll_load requires that one of following is defined:\
-         IA32, AMD64, IA64, __sparc, __powerpc__
+         IA32, AMD64, IA64, __sparc, __powerpc__, ARM, S390, ALPHA, MIPS, MIPSEL, PARISC, M68K
   #endif
 
   // Identify compatability class for VM's architecture and library's architecture
@@ -1753,10 +1817,12 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     return NULL;
   }
 
+#ifndef S390
   if (lib_arch.elf_class != arch_array[running_arch_index].elf_class) {
     ::snprintf(diag_msg_buf, diag_msg_max_length-1," (Possible cause: architecture word width mismatch)");
     return NULL;
   }
+#endif // !S390
 
   if (lib_arch.compat_class != arch_array[running_arch_index].compat_class) {
     if ( lib_arch.name!=NULL ) {
@@ -2024,7 +2090,8 @@ void os::jvm_path(char *buf, jint len) {
                 CAST_FROM_FN_PTR(address, os::jvm_path),
                 dli_fname, sizeof(dli_fname), NULL);
   assert(ret != 0, "cannot locate libjvm");
-  realpath(dli_fname, buf);
+  if (realpath(dli_fname, buf) == NULL)
+    return;
 
   if (strcmp(Arguments::sun_java_launcher(), "gamma") == 0) {
     // Support for the gamma launcher.  Typical value for buf is
@@ -2048,7 +2115,8 @@ void os::jvm_path(char *buf, jint len) {
         assert(strstr(p, "/libjvm") == p, "invalid library name");
         p = strstr(p, "_g") ? "_g" : "";
 
-        realpath(java_home_var, buf);
+        if (realpath(java_home_var, buf) == NULL)
+          return;
         sprintf(buf + strlen(buf), "/jre/lib/%s", cpu_arch);
         if (0 == access(buf, F_OK)) {
           // Use current module name "libjvm[_g].so" instead of
@@ -2059,7 +2127,8 @@ void os::jvm_path(char *buf, jint len) {
           sprintf(buf + strlen(buf), "/hotspot/libjvm%s.so", p);
         } else {
           // Go back to path of .so
-          realpath(dli_fname, buf);
+          if (realpath(dli_fname, buf) == NULL)
+            return;
         }
       }
     }
@@ -2255,21 +2324,23 @@ void linux_wrap_code(char* base, size_t size) {
 //       All it does is to check if there are enough free pages
 //       left at the time of mmap(). This could be a potential
 //       problem.
-bool os::commit_memory(char* addr, size_t size) {
-  uintptr_t res = (uintptr_t) ::mmap(addr, size,
-                                   PROT_READ|PROT_WRITE|PROT_EXEC,
+bool os::commit_memory(char* addr, size_t size, bool exec) {
+  int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
+  uintptr_t res = (uintptr_t) ::mmap(addr, size, prot,
                                    MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
   return res != (uintptr_t) MAP_FAILED;
 }
 
-bool os::commit_memory(char* addr, size_t size, size_t alignment_hint) {
-  return commit_memory(addr, size);
+bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
+                       bool exec) {
+  return commit_memory(addr, size, exec);
 }
 
 void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) { }
 
 void os::free_memory(char *addr, size_t bytes) {
-  uncommit_memory(addr, bytes);
+  ::mmap(addr, bytes, PROT_READ | PROT_WRITE,
+         MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
 }
 
 void os::numa_make_global(char *addr, size_t bytes) {
@@ -2316,6 +2387,19 @@ char *os::scan_pages(char *start, char* end, page_info* page_expected, page_info
 extern "C" void numa_warn(int number, char *where, ...) { }
 extern "C" void numa_error(char *where) { }
 
+
+// If we are running with libnuma version > 2, then we should
+// be trying to use symbols with versions 1.1
+// If we are running with earlier version, which did not have symbol versions,
+// we should use the base version.
+void* os::Linux::libnuma_dlsym(void* handle, const char *name) {
+  void *f = dlvsym(handle, name, "libnuma_1.1");
+  if (f == NULL) {
+    f = dlsym(handle, name);
+  }
+  return f;
+}
+
 bool os::Linux::libnuma_init() {
   // sched_getcpu() should be in libc.
   set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t,
@@ -2325,19 +2409,19 @@ bool os::Linux::libnuma_init() {
     void *handle = dlopen("libnuma.so.1", RTLD_LAZY);
     if (handle != NULL) {
       set_numa_node_to_cpus(CAST_TO_FN_PTR(numa_node_to_cpus_func_t,
-                                           dlsym(handle, "numa_node_to_cpus")));
+                                           libnuma_dlsym(handle, "numa_node_to_cpus")));
       set_numa_max_node(CAST_TO_FN_PTR(numa_max_node_func_t,
-                                       dlsym(handle, "numa_max_node")));
+                                       libnuma_dlsym(handle, "numa_max_node")));
       set_numa_available(CAST_TO_FN_PTR(numa_available_func_t,
-                                        dlsym(handle, "numa_available")));
+                                        libnuma_dlsym(handle, "numa_available")));
       set_numa_tonode_memory(CAST_TO_FN_PTR(numa_tonode_memory_func_t,
-                                            dlsym(handle, "numa_tonode_memory")));
+                                            libnuma_dlsym(handle, "numa_tonode_memory")));
       set_numa_interleave_memory(CAST_TO_FN_PTR(numa_interleave_memory_func_t,
-                                            dlsym(handle, "numa_interleave_memory")));
+                                            libnuma_dlsym(handle, "numa_interleave_memory")));
 
 
       if (numa_available() != -1) {
-        set_numa_all_nodes((unsigned long*)dlsym(handle, "numa_all_nodes"));
+        set_numa_all_nodes((unsigned long*)libnuma_dlsym(handle, "numa_all_nodes"));
         // Create a cpu -> node mapping
         _cpu_to_node = new (ResourceObj::C_HEAP) GrowableArray<int>(0, true);
         rebuild_cpu_to_node_map();
@@ -2403,8 +2487,7 @@ os::Linux::numa_interleave_memory_func_t os::Linux::_numa_interleave_memory;
 unsigned long* os::Linux::_numa_all_nodes;
 
 bool os::uncommit_memory(char* addr, size_t size) {
-  return ::mmap(addr, size,
-                PROT_READ|PROT_WRITE|PROT_EXEC,
+  return ::mmap(addr, size, PROT_NONE,
                 MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0)
     != MAP_FAILED;
 }
@@ -2427,7 +2510,9 @@ static char* anon_mmap(char* requested_addr, size_t bytes, bool fixed) {
     flags |= MAP_FIXED;
   }
 
-  addr = (char*)::mmap(requested_addr, bytes, PROT_READ|PROT_WRITE|PROT_EXEC,
+  // Map uncommitted pages PROT_READ and PROT_WRITE, change access
+  // to PROT_EXEC if executable when we commit the page.
+  addr = (char*)::mmap(requested_addr, bytes, PROT_READ|PROT_WRITE,
                        flags, -1, 0);
 
   if (addr != MAP_FAILED) {
@@ -2526,7 +2611,9 @@ bool os::large_page_init() {
     // format has been changed), we'll use the largest page size supported by
     // the processor.
 
+#ifndef ZERO
     _large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M);
+#endif // ZERO
 
     FILE *fp = fopen("/proc/meminfo", "r");
     if (fp) {
@@ -2568,7 +2655,9 @@ bool os::large_page_init() {
 #define SHM_HUGETLB 04000
 #endif
 
-char* os::reserve_memory_special(size_t bytes) {
+char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
+  // "exec" is passed in but not used.  Creating the shared image for
+  // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages, "only for large pages");
 
   key_t key = IPC_PRIVATE;
@@ -4184,11 +4273,11 @@ static jlong slow_thread_cpu_time(Thread *thread, bool user_sys_cpu_time) {
   // Skip blank chars
   do s++; while (isspace(*s));
 
-  count = sscanf(s,"%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu",
-                 &idummy, &idummy, &idummy, &idummy, &idummy, &idummy,
+  count = sscanf(s,"%*c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu",
+                 &idummy, &idummy, &idummy, &idummy, &idummy,
                  &ldummy, &ldummy, &ldummy, &ldummy, &ldummy,
                  &user_time, &sys_time);
-  if ( count != 13 ) return -1;
+  if ( count != 12 ) return -1;
   if (user_sys_cpu_time) {
     return ((jlong)sys_time + (jlong)user_time) * (1000000000 / clock_tics_per_sec);
   } else {
@@ -4594,6 +4683,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   if (_counter > 0) {
       _counter = 0 ;
+      OrderAccess::fence();
       return ;
   }
 
@@ -4636,6 +4726,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = pthread_mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    OrderAccess::fence();
     return;
   }
 
@@ -4676,6 +4767,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     jt->java_suspend_self();
   }
 
+  OrderAccess::fence();
 }
 
 void Parker::unpark() {

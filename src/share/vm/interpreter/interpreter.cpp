@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -168,10 +168,14 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
   // Abstract method?
   if (m->is_abstract()) return abstract;
 
+  // Invoker for method handles?
+  if (m->is_method_handle_invoke())  return method_handle;
+
   // Native method?
   // Note: This test must come _before_ the test for intrinsic
   //       methods. See also comments below.
   if (m->is_native()) {
+    assert(!m->is_method_handle_invoke(), "overlapping bits here, watch out");
     return m->is_synchronized() ? native_synchronized : native;
   }
 
@@ -249,6 +253,7 @@ void AbstractInterpreter::print_method_kind(MethodKind kind) {
     case empty                  : tty->print("empty"                  ); break;
     case accessor               : tty->print("accessor"               ); break;
     case abstract               : tty->print("abstract"               ); break;
+    case method_handle          : tty->print("method_handle"          ); break;
     case java_lang_math_sin     : tty->print("java_lang_math_sin"     ); break;
     case java_lang_math_cos     : tty->print("java_lang_math_cos"     ); break;
     case java_lang_math_tan     : tty->print("java_lang_math_tan"     ); break;
@@ -279,27 +284,89 @@ static BasicType constant_pool_type(methodOop method, int index) {
 //------------------------------------------------------------------------------------------------------------------------
 // Deoptimization support
 
-// If deoptimization happens, this method returns the point where to continue in
-// interpreter. For calls (invokexxxx, newxxxx) the continuation is at next
-// bci and the top of stack is in eax/edx/FPU tos.
-// For putfield/getfield, put/getstatic, the continuation is at the same
-// bci and the TOS is on stack.
-
-// Note: deopt_entry(type, 0) means reexecute bytecode
-//       deopt_entry(type, length) means continue at next bytecode
-
-address AbstractInterpreter::continuation_for(methodOop method, address bcp, int callee_parameters, bool is_top_frame, bool& use_next_mdp) {
+// If deoptimization happens, this function returns the point of next bytecode to continue execution
+address AbstractInterpreter::deopt_continue_after_entry(methodOop method, address bcp, int callee_parameters, bool is_top_frame) {
   assert(method->contains(bcp), "just checkin'");
   Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+  assert(!Interpreter::bytecode_should_reexecute(code), "should not reexecute");
   int             bci    = method->bci_from(bcp);
   int             length = -1; // initial value for debugging
   // compute continuation length
   length = Bytecodes::length_at(bcp);
   // compute result type
   BasicType type = T_ILLEGAL;
-  // when continuing after a compiler safepoint, re-execute the bytecode
-  // (an invoke is continued after the safepoint)
-  use_next_mdp = true;
+
+  switch (code) {
+    case Bytecodes::_invokevirtual  :
+    case Bytecodes::_invokespecial  :
+    case Bytecodes::_invokestatic   :
+    case Bytecodes::_invokeinterface: {
+      Thread *thread = Thread::current();
+      ResourceMark rm(thread);
+      methodHandle mh(thread, method);
+      type = Bytecode_invoke_at(mh, bci)->result_type(thread);
+      // since the cache entry might not be initialized:
+      // (NOT needed for the old calling convension)
+      if (!is_top_frame) {
+        int index = Bytes::get_native_u2(bcp+1);
+        method->constants()->cache()->entry_at(index)->set_parameter_size(callee_parameters);
+      }
+      break;
+    }
+
+   case Bytecodes::_invokedynamic: {
+      Thread *thread = Thread::current();
+      ResourceMark rm(thread);
+      methodHandle mh(thread, method);
+      type = Bytecode_invoke_at(mh, bci)->result_type(thread);
+      // since the cache entry might not be initialized:
+      // (NOT needed for the old calling convension)
+      if (!is_top_frame) {
+        int index = Bytes::get_native_u4(bcp+1);
+        method->constants()->cache()->entry_at(index)->set_parameter_size(callee_parameters);
+      }
+      break;
+    }
+
+    case Bytecodes::_ldc   :
+      type = constant_pool_type( method, *(bcp+1) );
+      break;
+
+    case Bytecodes::_ldc_w : // fall through
+    case Bytecodes::_ldc2_w:
+      type = constant_pool_type( method, Bytes::get_Java_u2(bcp+1) );
+      break;
+
+    default:
+      type = Bytecodes::result_type(code);
+      break;
+  }
+
+  // return entry point for computed continuation state & bytecode length
+  return
+    is_top_frame
+    ? Interpreter::deopt_entry (as_TosState(type), length)
+    : Interpreter::return_entry(as_TosState(type), length);
+}
+
+// If deoptimization happens, this function returns the point where the interpreter reexecutes
+// the bytecode.
+// Note: Bytecodes::_athrow is a special case in that it does not return
+//       Interpreter::deopt_entry(vtos, 0) like others
+address AbstractInterpreter::deopt_reexecute_entry(methodOop method, address bcp) {
+  assert(method->contains(bcp), "just checkin'");
+  Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+#ifdef COMPILER1
+  if(code == Bytecodes::_athrow ) {
+    return Interpreter::rethrow_exception_entry();
+  }
+#endif /* COMPILER1 */
+  return Interpreter::deopt_entry(vtos, 0);
+}
+
+// If deoptimization happens, the interpreter should reexecute these bytecodes.
+// This function mainly helps the compilers to set up the reexecute bit.
+bool AbstractInterpreter::bytecode_should_reexecute(Bytecodes::Code code) {
   switch (code) {
     case Bytecodes::_lookupswitch:
     case Bytecodes::_tableswitch:
@@ -335,56 +402,15 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
     case Bytecodes::_getstatic :
     case Bytecodes::_putstatic :
     case Bytecodes::_aastore   :
-      // reexecute the operation and TOS value is on stack
-      assert(is_top_frame, "must be top frame");
-      use_next_mdp = false;
-      return Interpreter::deopt_entry(vtos, 0);
-      break;
-
 #ifdef COMPILER1
+    //special case of reexecution
     case Bytecodes::_athrow    :
-      assert(is_top_frame, "must be top frame");
-      use_next_mdp = false;
-      return Interpreter::rethrow_exception_entry();
-      break;
-#endif /* COMPILER1 */
-
-    case Bytecodes::_invokevirtual  :
-    case Bytecodes::_invokespecial  :
-    case Bytecodes::_invokestatic   :
-    case Bytecodes::_invokeinterface: {
-      Thread *thread = Thread::current();
-      ResourceMark rm(thread);
-      methodHandle mh(thread, method);
-      type = Bytecode_invoke_at(mh, bci)->result_type(thread);
-      // since the cache entry might not be initialized:
-      // (NOT needed for the old calling convension)
-      if (!is_top_frame) {
-        int index = Bytes::get_native_u2(bcp+1);
-        method->constants()->cache()->entry_at(index)->set_parameter_size(callee_parameters);
-      }
-      break;
-    }
-
-    case Bytecodes::_ldc   :
-      type = constant_pool_type( method, *(bcp+1) );
-      break;
-
-    case Bytecodes::_ldc_w : // fall through
-    case Bytecodes::_ldc2_w:
-      type = constant_pool_type( method, Bytes::get_Java_u2(bcp+1) );
-      break;
+#endif
+      return true;
 
     default:
-      type = Bytecodes::result_type(code);
-      break;
+      return false;
   }
-
-  // return entry point for computed continuation state & bytecode length
-  return
-    is_top_frame
-    ? Interpreter::deopt_entry (as_TosState(type), length)
-    : Interpreter::return_entry(as_TosState(type), length);
 }
 
 void AbstractInterpreterGenerator::bang_stack_shadow_pages(bool native_call) {

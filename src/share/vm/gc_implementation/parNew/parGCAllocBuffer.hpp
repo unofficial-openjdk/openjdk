@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,9 +63,8 @@ public:
   // return NULL.
   HeapWord* allocate(size_t word_sz) {
     HeapWord* res = _top;
-    HeapWord* new_top = _top + word_sz;
-    if (new_top <= _end) {
-      _top = new_top;
+    if (pointer_delta(_end, _top) >= word_sz) {
+      _top = _top + word_sz;
       return res;
     } else {
       return NULL;
@@ -75,10 +74,9 @@ public:
   // Undo the last allocation in the buffer, which is required to be of the
   // "obj" of the given "word_sz".
   void undo_allocation(HeapWord* obj, size_t word_sz) {
-    assert(_top - word_sz >= _bottom
-           && _top - word_sz == obj,
-           "Bad undo_allocation");
-    _top = _top - word_sz;
+    assert(pointer_delta(_top, _bottom) >= word_sz, "Bad undo");
+    assert(pointer_delta(_top, obj)     == word_sz, "Bad undo");
+    _top = obj;
   }
 
   // The total (word) size of the buffer, including both allocated and

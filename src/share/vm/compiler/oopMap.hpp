@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -232,6 +232,10 @@ class OopMapSet : public ResourceObj {
 
   int heap_size() const;
   void copy_to(address addr);
+
+  // Methods oops_do() and all_do() filter out NULL oops and
+  // oop == Universe::narrow_oop_base() before passing oops
+  // to closures.
 
   // Iterates through frame for a compiled method
   static void oops_do            (const frame* fr,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -263,7 +263,9 @@ static inline uint64_t cast_uint64_t(size_t x)
      static_field(Universe,                    _bootstrapping,                                bool)                                  \
      static_field(Universe,                    _fully_initialized,                            bool)                                  \
      static_field(Universe,                    _verify_count,                                 int)                                   \
-     static_field(Universe,                    _heap_base,                                    address)                                   \
+     static_field(Universe,                    _narrow_oop._base,                             address)                               \
+     static_field(Universe,                    _narrow_oop._shift,                            int)                                   \
+     static_field(Universe,                    _narrow_oop._use_implicit_null_checks,         bool)                                  \
                                                                                                                                      \
   /**********************************************************************************/                                               \
   /* Generation and Space hierarchies                                               */                                               \
@@ -547,6 +549,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /********************************/                                                                                                 \
                                                                                                                                      \
      static_field(CodeCache,                   _heap,                                         CodeHeap*)                             \
+     static_field(CodeCache,                   _scavenge_root_nmethods,                       nmethod*)                              \
                                                                                                                                      \
   /*******************************/                                                                                                  \
   /* CodeHeap (NOTE: incomplete) */                                                                                                  \
@@ -591,6 +594,8 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                                                                                      \
   nonstatic_field(PcDesc,                      _pc_offset,                                    int)                                   \
   nonstatic_field(PcDesc,                      _scope_decode_offset,                          int)                                   \
+  nonstatic_field(PcDesc,                      _obj_decode_offset,                            int)                                   \
+  nonstatic_field(PcDesc,                      _flags,                        PcDesc::PcDescFlags)                                   \
                                                                                                                                      \
   /***************************************************/                                                                              \
   /* CodeBlobs (NOTE: incomplete, but only a little) */                                                                              \
@@ -615,7 +620,9 @@ static inline uint64_t cast_uint64_t(size_t x)
      static_field(nmethod,             _zombie_instruction_size,                      int)                                   \
   nonstatic_field(nmethod,             _method,                                       methodOop)                             \
   nonstatic_field(nmethod,             _entry_bci,                                    int)                                   \
-  nonstatic_field(nmethod,             _link,                                         nmethod*)                              \
+  nonstatic_field(nmethod,             _osr_link,                                     nmethod*)                              \
+  nonstatic_field(nmethod,             _scavenge_root_link,                           nmethod*)                              \
+  nonstatic_field(nmethod,             _scavenge_root_state,                          jbyte)                                 \
   nonstatic_field(nmethod,             _exception_offset,                             int)                                   \
   nonstatic_field(nmethod,             _deoptimize_offset,                            int)                                   \
   nonstatic_field(nmethod,             _orig_pc_offset,                               int)                                   \
@@ -654,12 +661,12 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                                                                                      \
    volatile_nonstatic_field(Thread,            _suspend_flags,                                uint32_t)                              \
   nonstatic_field(Thread,                      _active_handles,                               JNIHandleBlock*)                       \
-  nonstatic_field(Thread,                      _highest_lock,                                 address)                               \
   nonstatic_field(Thread,                      _tlab,                                         ThreadLocalAllocBuffer)                \
   nonstatic_field(Thread,                      _current_pending_monitor,                      ObjectMonitor*)                        \
   nonstatic_field(Thread,                      _current_pending_monitor_is_from_java,         bool)                                  \
   nonstatic_field(Thread,                      _current_waiting_monitor,                      ObjectMonitor*)                        \
   nonstatic_field(NamedThread,                 _name,                                         char*)                                 \
+  nonstatic_field(NamedThread,                 _processed_thread,                             JavaThread*)                           \
   nonstatic_field(JavaThread,                  _next,                                         JavaThread*)                           \
   nonstatic_field(JavaThread,                  _threadObj,                                    oop)                                   \
   nonstatic_field(JavaThread,                  _anchor,                                       JavaFrameAnchor)                       \
@@ -1157,6 +1164,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /***************************************/                               \
                                                                           \
   declare_toplevel_type(PcDesc)                                           \
+  declare_integer_type(PcDesc::PcDescFlags)                               \
                                                                           \
   /************************/                                              \
   /* OopMap and OopMapSet */                                              \

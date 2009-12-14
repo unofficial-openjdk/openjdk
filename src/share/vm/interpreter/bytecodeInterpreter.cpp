@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,7 +163,7 @@
 #ifdef USELABELS
 // Have to do this dispatch this way in C++ because otherwise gcc complains about crossing an
 // initialization (which is is the initialization of the table pointer...)
-#define DISPATCH(opcode) goto *dispatch_table[opcode]
+#define DISPATCH(opcode) goto *(void*)dispatch_table[opcode]
 #define CONTINUE {                              \
         opcode = *pc;                           \
         DO_UPDATE_INSTRUCTION_COUNT(opcode);    \
@@ -281,7 +281,7 @@
 
 #define DO_BACKEDGE_CHECKS(skip, branch_pc)                                                         \
     if ((skip) <= 0) {                                                                              \
-      if (UseCompiler && UseLoopCounter) {                                                          \
+      if (UseLoopCounter) {                                                                         \
         bool do_OSR = UseOnStackReplacement;                                                        \
         BACKEDGE_COUNT->increment();                                                                \
         if (do_OSR) do_OSR = BACKEDGE_COUNT->reached_InvocationLimit();                             \
@@ -289,16 +289,12 @@
           nmethod*  osr_nmethod;                                                                    \
           OSR_REQUEST(osr_nmethod, branch_pc);                                                      \
           if (osr_nmethod != NULL && osr_nmethod->osr_entry_bci() != InvalidOSREntryBci) {          \
-            intptr_t* buf;                                                                          \
-            CALL_VM(buf=SharedRuntime::OSR_migration_begin(THREAD), handle_exception);              \
+            intptr_t* buf = SharedRuntime::OSR_migration_begin(THREAD);                             \
             istate->set_msg(do_osr);                                                                \
             istate->set_osr_buf((address)buf);                                                      \
             istate->set_osr_entry(osr_nmethod->osr_entry());                                        \
             return;                                                                                 \
           }                                                                                         \
-        } else {                                                                                    \
-          INCR_INVOCATION_COUNT;                                                                    \
-          SAFEPOINT;                                                                                \
         }                                                                                           \
       }  /* UseCompiler ... */                                                                      \
       INCR_INVOCATION_COUNT;                                                                        \
@@ -341,7 +337,7 @@
  */
 #undef CHECK_NULL
 #define CHECK_NULL(obj_)                                                 \
-    if ((obj_) == 0) {                                                   \
+    if ((obj_) == NULL) {                                                \
         VM_JAVA_ERROR(vmSymbols::java_lang_NullPointerException(), "");  \
     }
 
@@ -1281,12 +1277,7 @@ run:
           jfloat f;
           jdouble r;
           f = STACK_FLOAT(-1);
-#ifdef IA64
-          // IA64 gcc bug
-          r = ( f == 0.0f ) ? (jdouble) f : (jdouble) f + ia64_double_zero;
-#else
           r = (jdouble) f;
-#endif
           MORE_STACK(-1); // POP
           SET_STACK_DOUBLE(r, 1);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 2);
@@ -1362,7 +1353,7 @@ run:
 
 #define NULL_COMPARISON_NOT_OP(name)                                         \
       CASE(_if##name): {                                                     \
-          int skip = (!(STACK_OBJECT(-1) == 0))                              \
+          int skip = (!(STACK_OBJECT(-1) == NULL))                           \
                       ? (int16_t)Bytes::get_Java_u2(pc + 1) : 3;             \
           address branch_pc = pc;                                            \
           UPDATE_PC_AND_TOS(skip, -1);                                       \
@@ -1372,7 +1363,7 @@ run:
 
 #define NULL_COMPARISON_OP(name)                                             \
       CASE(_if##name): {                                                     \
-          int skip = ((STACK_OBJECT(-1) == 0))                               \
+          int skip = ((STACK_OBJECT(-1) == NULL))                            \
                       ? (int16_t)Bytes::get_Java_u2(pc + 1) : 3;             \
           address branch_pc = pc;                                            \
           UPDATE_PC_AND_TOS(skip, -1);                                       \
@@ -2642,7 +2633,7 @@ handle_return:
         // two interpreted frames). We need to save the current arguments in C heap so that
         // the deoptimized frame when it restarts can copy the arguments to its expression
         // stack and re-execute the call. We also have to notify deoptimization that this
-        // has occured and to pick the preerved args copy them to the deoptimized frame's
+        // has occurred and to pick the preserved args copy them to the deoptimized frame's
         // java expression stack. Yuck.
         //
         THREAD->popframe_preserve_args(in_ByteSize(METHOD->size_of_parameters() * wordSize),
@@ -3031,9 +3022,9 @@ BytecodeInterpreter::print() {
   tty->print_cr("&native_fresult: " INTPTR_FORMAT, (uintptr_t) &this->_native_fresult);
   tty->print_cr("native_lresult: " INTPTR_FORMAT, (uintptr_t) this->_native_lresult);
 #endif
-#ifdef IA64
+#if defined(IA64) && !defined(ZERO)
   tty->print_cr("last_Java_fp: " INTPTR_FORMAT, (uintptr_t) this->_last_Java_fp);
-#endif // IA64
+#endif // IA64 && !ZERO
   tty->print_cr("self_link: " INTPTR_FORMAT, (uintptr_t) this->_self_link);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -223,6 +223,7 @@ uint TailJumpNode::match_edge(uint idx) const {
 JVMState::JVMState(ciMethod* method, JVMState* caller) {
   assert(method != NULL, "must be valid call site");
   _method = method;
+  _reexecute = Reexecute_Undefined;
   debug_only(_bci = -99);  // random garbage value
   debug_only(_map = (SafePointNode*)-1);
   _caller = caller;
@@ -237,6 +238,7 @@ JVMState::JVMState(ciMethod* method, JVMState* caller) {
 JVMState::JVMState(int stack_size) {
   _method = NULL;
   _bci = InvocationEntryBci;
+  _reexecute = Reexecute_Undefined;
   debug_only(_map = (SafePointNode*)-1);
   _caller = NULL;
   _depth  = 1;
@@ -269,6 +271,7 @@ bool JVMState::same_calls_as(const JVMState* that) const {
     if (p->_method != q->_method)    return false;
     if (p->_method == NULL)          return true;   // bci is irrelevant
     if (p->_bci    != q->_bci)       return false;
+    if (p->_reexecute != q->_reexecute)  return false;
     p = p->caller();
     q = q->caller();
     if (p == q)                      return true;
@@ -418,21 +421,23 @@ void JVMState::format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) 
         iklass = cik->as_instance_klass();
       } else if (cik->is_type_array_klass()) {
         cik->as_array_klass()->base_element_type()->print_name_on(st);
-        st->print("[%d]=", spobj->n_fields());
+        st->print("[%d]", spobj->n_fields());
       } else if (cik->is_obj_array_klass()) {
-        ciType* cie = cik->as_array_klass()->base_element_type();
-        int ndim = 1;
-        while (cie->is_obj_array_klass()) {
-          ndim += 1;
-          cie = cie->as_array_klass()->base_element_type();
+        ciKlass* cie = cik->as_obj_array_klass()->base_element_klass();
+        if (cie->is_instance_klass()) {
+          cie->print_name_on(st);
+        } else if (cie->is_type_array_klass()) {
+          cie->as_array_klass()->base_element_type()->print_name_on(st);
+        } else {
+          ShouldNotReachHere();
         }
-        cie->print_name_on(st);
+        st->print("[%d]", spobj->n_fields());
+        int ndim = cik->as_array_klass()->dimension() - 1;
         while (ndim-- > 0) {
           st->print("[]");
         }
-        st->print("[%d]=", spobj->n_fields());
       }
-      st->print("{");
+      st->print("={");
       uint nf = spobj->n_fields();
       if (nf > 0) {
         uint first_ind = spobj->first_index();
@@ -490,6 +495,8 @@ void JVMState::dump_spec(outputStream *st) const {
     if (!printed)
       _method->print_short_name(st);
     st->print(" @ bci:%d",_bci);
+    if(_reexecute == Reexecute_True)
+      st->print(" reexecute");
   } else {
     st->print(" runtime stub");
   }
@@ -509,8 +516,8 @@ void JVMState::dump_on(outputStream* st) const {
     }
     _map->dump(2);
   }
-  st->print("JVMS depth=%d loc=%d stk=%d mon=%d scalar=%d end=%d mondepth=%d sp=%d bci=%d method=",
-             depth(), locoff(), stkoff(), monoff(), scloff(), endoff(), monitor_depth(), sp(), bci());
+  st->print("JVMS depth=%d loc=%d stk=%d mon=%d scalar=%d end=%d mondepth=%d sp=%d bci=%d reexecute=%s method=",
+             depth(), locoff(), stkoff(), monoff(), scloff(), endoff(), monitor_depth(), sp(), bci(), should_reexecute()?"true":"false");
   if (_method == NULL) {
     st->print_cr("(none)");
   } else {
@@ -537,6 +544,7 @@ void dump_jvms(JVMState* jvms) {
 JVMState* JVMState::clone_shallow(Compile* C) const {
   JVMState* n = has_method() ? new (C) JVMState(_method, _caller) : new (C) JVMState(0);
   n->set_bci(_bci);
+  n->_reexecute = _reexecute;
   n->set_locoff(_locoff);
   n->set_stkoff(_stkoff);
   n->set_monoff(_monoff);
@@ -975,6 +983,7 @@ SafePointScalarObjectNode::SafePointScalarObjectNode(const TypeOopPtr* tp,
 }
 
 bool SafePointScalarObjectNode::pinned() const { return true; }
+bool SafePointScalarObjectNode::depends_only_on_test() const { return false; }
 
 uint SafePointScalarObjectNode::ideal_reg() const {
   return 0; // No matching to machine instruction
@@ -1041,6 +1050,51 @@ AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
 
 //=============================================================================
 uint AllocateArrayNode::size_of() const { return sizeof(*this); }
+
+Node* AllocateArrayNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+  if (remove_dead_region(phase, can_reshape))  return this;
+
+  const Type* type = phase->type(Ideal_length());
+  if (type->isa_int() && type->is_int()->_hi < 0) {
+    if (can_reshape) {
+      PhaseIterGVN *igvn = phase->is_IterGVN();
+      // Unreachable fall through path (negative array length),
+      // the allocation can only throw so disconnect it.
+      Node* proj = proj_out(TypeFunc::Control);
+      Node* catchproj = NULL;
+      if (proj != NULL) {
+        for (DUIterator_Fast imax, i = proj->fast_outs(imax); i < imax; i++) {
+          Node *cn = proj->fast_out(i);
+          if (cn->is_Catch()) {
+            catchproj = cn->as_Multi()->proj_out(CatchProjNode::fall_through_index);
+            break;
+          }
+        }
+      }
+      if (catchproj != NULL && catchproj->outcnt() > 0 &&
+          (catchproj->outcnt() > 1 ||
+           catchproj->unique_out()->Opcode() != Op_Halt)) {
+        assert(catchproj->is_CatchProj(), "must be a CatchProjNode");
+        Node* nproj = catchproj->clone();
+        igvn->register_new_node_with_optimizer(nproj);
+
+        Node *frame = new (phase->C, 1) ParmNode( phase->C->start(), TypeFunc::FramePtr );
+        frame = phase->transform(frame);
+        // Halt & Catch Fire
+        Node *halt = new (phase->C, TypeFunc::Parms) HaltNode( nproj, frame );
+        phase->C->root()->add_req(halt);
+        phase->transform(halt);
+
+        igvn->replace_node(catchproj, phase->C->top());
+        return this;
+      }
+    } else {
+      // Can't correct it during regular GVN so register for IGVN
+      phase->C->record_for_igvn(this);
+    }
+  }
+  return NULL;
+}
 
 // Retrieve the length from the AllocateArrayNode. Narrow the type with a
 // CastII, if appropriate.  If we are not allowed to create new nodes, and

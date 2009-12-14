@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   uint i4;
   for( i4 = 1; i4 < phi->req(); i4++ ) {
     con1 = phi->in(i4);
-    if( !con1 ) return NULL;    // Do not optimize partially collaped merges
+    if( !con1 ) return NULL;    // Do not optimize partially collapsed merges
     if( con1->is_Con() ) break; // Found a constant
     // Also allow null-vs-not-null checks
     const TypePtr *tp = igvn->type(con1)->isa_ptr();
@@ -204,7 +204,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   //      T  F                              T  F                  T  F
   // ..s..    ..t ..                   ..s..    ..t..        ..s..    ..t..
   //
-  // Split the paths coming into the merge point into 2 seperate groups of
+  // Split the paths coming into the merge point into 2 separate groups of
   // merges.  On the left will be all the paths feeding constants into the
   // Cmp's Phi.  On the right will be the remaining paths.  The Cmp's Phi
   // will fold up into a constant; this will let the Cmp fold up as well as
@@ -236,17 +236,17 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   }
 
   // Register the new RegionNodes but do not transform them.  Cannot
-  // transform until the entire Region/Phi conglerate has been hacked
+  // transform until the entire Region/Phi conglomerate has been hacked
   // as a single huge transform.
   igvn->register_new_node_with_optimizer( region_c );
   igvn->register_new_node_with_optimizer( region_x );
-  phi_x = phase->transform( phi_x );
   // Prevent the untimely death of phi_x.  Currently he has no uses.  He is
   // about to get one.  If this only use goes away, then phi_x will look dead.
   // However, he will be picking up some more uses down below.
   Node *hook = new (igvn->C, 4) Node(4);
   hook->init_req(0, phi_x);
   hook->init_req(1, phi_c);
+  phi_x = phase->transform( phi_x );
 
   // Make the compare
   Node *cmp_c = phase->makecon(t);
@@ -322,6 +322,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
         phi_s = PhiNode::make_blank(region_s,phi);
         phi_s->init_req( 1, phi_c );
         phi_s->init_req( 2, phi_x );
+        hook->add_req(phi_s);
         phi_s = phase->transform(phi_s);
       }
       proj_path_data = phi_s;
@@ -333,6 +334,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
         phi_f = PhiNode::make_blank(region_f,phi);
         phi_f->init_req( 1, phi_c );
         phi_f->init_req( 2, phi_x );
+        hook->add_req(phi_f);
         phi_f = phase->transform(phi_f);
       }
       proj_path_data = phi_f;
@@ -378,7 +380,18 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
 
   // Force the original merge dead
   igvn->hash_delete(r);
-  r->set_req_X(0,NULL,igvn);
+  // First, remove region's dead users.
+  for (DUIterator_Last lmin, l = r->last_outs(lmin); l >= lmin;) {
+    Node* u = r->last_out(l);
+    if( u == r ) {
+      r->set_req(0, NULL);
+    } else {
+      assert(u->outcnt() == 0, "only dead users");
+      igvn->remove_dead_node(u);
+    }
+    l -= 1;
+  }
+  igvn->remove_dead_node(r);
 
   // Now remove the bogus extra edges used to keep things alive
   igvn->remove_dead_node( hook );
@@ -599,7 +612,7 @@ const TypeInt* IfNode::filtered_int_type(PhaseGVN* gvn, Node *val, Node* if_proj
 
 //------------------------------fold_compares----------------------------
 // See if a pair of CmpIs can be converted into a CmpU.  In some cases
-// the direction of this if is determined by the preciding if so it
+// the direction of this if is determined by the preceding if so it
 // can be eliminate entirely.  Given an if testing (CmpI n c) check
 // for an immediately control dependent if that is testing (CmpI n c2)
 // and has one projection leading to this if and the other projection
@@ -811,7 +824,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     // Try to remove extra range checks.  All 'up_one_dom' gives up at merges
     // so all checks we inspect post-dominate the top-most check we find.
     // If we are going to fail the current check and we reach the top check
-    // then we are guarenteed to fail, so just start interpreting there.
+    // then we are guaranteed to fail, so just start interpreting there.
     // We 'expand' the top 2 range checks to include all post-dominating
     // checks.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -141,6 +141,10 @@ void Matcher::verify_new_nodes_only(Node* xroot) {
 
 //---------------------------match---------------------------------------------
 void Matcher::match( ) {
+  if( MaxLabelRootDepth < 100 ) { // Too small?
+    assert(false, "invalid MaxLabelRootDepth, increase it to 100 minimum");
+    MaxLabelRootDepth = 100;
+  }
   // One-time initialization of some register masks.
   init_spill_mask( C->root()->in(1) );
   _return_addr_mask = return_addr();
@@ -275,6 +279,12 @@ void Matcher::match( ) {
 
   C->print_method("Before Matching");
 
+  // Create new ideal node ConP #NULL even if it does exist in old space
+  // to avoid false sharing if the corresponding mach node is not used.
+  // The corresponding mach node is only used in rare cases for derived
+  // pointers.
+  Node* new_ideal_null = ConNode::make(C, TypePtr::NULL_PTR);
+
   // Swap out to old-space; emptying new-space
   Arena *old = C->node_arena()->move_contents(C->old_arena());
 
@@ -316,7 +326,16 @@ void Matcher::match( ) {
         }
       }
 
+      // Generate new mach node for ConP #NULL
+      assert(new_ideal_null != NULL, "sanity");
+      _mach_null = match_tree(new_ideal_null);
+      // Don't set control, it will confuse GCM since there are no uses.
+      // The control will be set when this node is used first time
+      // in find_base_for_derived().
+      assert(_mach_null != NULL, "");
+
       C->set_root(xroot->is_Root() ? xroot->as_Root() : NULL);
+
 #ifdef ASSERT
       verify_new_nodes_only(xroot);
 #endif
@@ -746,6 +765,8 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
   if (nidx == Compile::AliasIdxBot && midx == Compile::AliasIdxTop) {
     switch (n->Opcode()) {
     case Op_StrComp:
+    case Op_StrEquals:
+    case Op_StrIndexOf:
     case Op_AryEq:
     case Op_MemBarVolatile:
     case Op_MemBarCPUOrder: // %%% these ideals should have narrower adr_type?
@@ -897,7 +918,7 @@ Node *Matcher::xform( Node *n, int max_stack ) {
 #ifdef ASSERT
           _new2old_map.map(m->_idx, n);
 #endif
-          mstack.push(m, Post_Visit, n, i); // Don't neet to visit
+          mstack.push(m, Post_Visit, n, i); // Don't need to visit
           mstack.push(m->in(0), Visit, m, 0);
         } else {
           mstack.push(m, Visit, n, i);
@@ -1267,7 +1288,7 @@ static bool match_into_reg( const Node *n, Node *m, Node *control, int i, bool s
     }
   }
 
-  // Not forceably cloning.  If shared, put it into a register.
+  // Not forceable cloning.  If shared, put it into a register.
   return shared;
 }
 
@@ -1468,8 +1489,7 @@ MachNode *Matcher::ReduceInst( State *s, int rule, Node *&mem ) {
 #ifdef ASSERT
     // Verify adr type after matching memory operation
     const MachOper* oper = mach->memory_operand();
-    if (oper != NULL && oper != (MachOper*)-1 &&
-        mach->adr_type() != TypeRawPtr::BOTTOM) { // non-direct addressing mode
+    if (oper != NULL && oper != (MachOper*)-1) {
       // It has a unique memory operand.  Find corresponding ideal mem node.
       Node* m = NULL;
       if (leaf->is_Mem()) {
@@ -1481,8 +1501,13 @@ MachNode *Matcher::ReduceInst( State *s, int rule, Node *&mem ) {
       const Type* mach_at = mach->adr_type();
       // DecodeN node consumed by an address may have different type
       // then its input. Don't compare types for such case.
-      if (m->adr_type() != mach_at && m->in(MemNode::Address)->is_AddP() &&
-          m->in(MemNode::Address)->in(AddPNode::Address)->is_DecodeN()) {
+      if (m->adr_type() != mach_at &&
+          (m->in(MemNode::Address)->is_DecodeN() ||
+           m->in(MemNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->is_DecodeN() ||
+           m->in(MemNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->is_AddP() &&
+           m->in(MemNode::Address)->in(AddPNode::Address)->in(AddPNode::Address)->is_DecodeN())) {
         mach_at = m->adr_type();
       }
       if (m->adr_type() != mach_at) {
@@ -1542,7 +1567,7 @@ void Matcher::ReduceInst_Chain_Rule( State *s, int rule, Node *&mem, MachNode *m
   // This is what my child will give me.
   int opnd_class_instance = s->_rule[op];
   // Choose between operand class or not.
-  // This is what I will recieve.
+  // This is what I will receive.
   int catch_op = (FIRST_OPERAND_CLASS <= op && op < NUM_OPERANDS) ? opnd_class_instance : op;
   // New rule for child.  Chase operand classes to get the actual rule.
   int newrule = s->_rule[catch_op];
@@ -1707,11 +1732,18 @@ OptoReg::Name Matcher::find_receiver( bool is_outgoing ) {
 void Matcher::find_shared( Node *n ) {
   // Allocate stack of size C->unique() * 2 to avoid frequent realloc
   MStack mstack(C->unique() * 2);
+  // Mark nodes as address_visited if they are inputs to an address expression
+  VectorSet address_visited(Thread::current()->resource_area());
   mstack.push(n, Visit);     // Don't need to pre-visit root node
   while (mstack.is_nonempty()) {
     n = mstack.node();       // Leave node on stack
     Node_State nstate = mstack.state();
+    uint nop = n->Opcode();
     if (nstate == Pre_Visit) {
+      if (address_visited.test(n->_idx)) { // Visited in address already?
+        // Flag as visited and shared now.
+        set_visited(n);
+      }
       if (is_visited(n)) {   // Visited already?
         // Node is shared and has no reason to clone.  Flag it as shared.
         // This causes it to match into a register for the sharing.
@@ -1726,7 +1758,7 @@ void Matcher::find_shared( Node *n ) {
       set_visited(n);   // Flag as visited now
       bool mem_op = false;
 
-      switch( n->Opcode() ) {  // Handle some opcodes special
+      switch( nop ) {  // Handle some opcodes special
       case Op_Phi:             // Treat Phis as shared roots
       case Op_Parm:
       case Op_Proj:            // All handled specially during matching
@@ -1776,6 +1808,8 @@ void Matcher::find_shared( Node *n ) {
         mstack.push(n->in(0), Pre_Visit);     // Visit Control input
         continue;                             // while (mstack.is_nonempty())
       case Op_StrComp:
+      case Op_StrEquals:
+      case Op_StrIndexOf:
       case Op_AryEq:
         set_shared(n); // Force result into register (it will be anyways)
         break;
@@ -1798,67 +1832,23 @@ void Matcher::find_shared( Node *n ) {
       case Op_Binary:         // These are introduced in the Post_Visit state.
         ShouldNotReachHere();
         break;
-      case Op_StoreB:         // Do match these, despite no ideal reg
-      case Op_StoreC:
-      case Op_StoreCM:
-      case Op_StoreD:
-      case Op_StoreF:
-      case Op_StoreI:
-      case Op_StoreL:
-      case Op_StoreP:
-      case Op_StoreN:
-      case Op_Store16B:
-      case Op_Store8B:
-      case Op_Store4B:
-      case Op_Store8C:
-      case Op_Store4C:
-      case Op_Store2C:
-      case Op_Store4I:
-      case Op_Store2I:
-      case Op_Store2L:
-      case Op_Store4F:
-      case Op_Store2F:
-      case Op_Store2D:
       case Op_ClearArray:
       case Op_SafePoint:
         mem_op = true;
         break;
-      case Op_LoadB:
-      case Op_LoadC:
-      case Op_LoadD:
-      case Op_LoadF:
-      case Op_LoadI:
-      case Op_LoadKlass:
-      case Op_LoadNKlass:
-      case Op_LoadL:
-      case Op_LoadS:
-      case Op_LoadP:
-      case Op_LoadN:
-      case Op_LoadRange:
-      case Op_LoadD_unaligned:
-      case Op_LoadL_unaligned:
-      case Op_Load16B:
-      case Op_Load8B:
-      case Op_Load4B:
-      case Op_Load4C:
-      case Op_Load2C:
-      case Op_Load8C:
-      case Op_Load8S:
-      case Op_Load4S:
-      case Op_Load2S:
-      case Op_Load4I:
-      case Op_Load2I:
-      case Op_Load2L:
-      case Op_Load4F:
-      case Op_Load2F:
-      case Op_Load2D:
-        mem_op = true;
-        // Must be root of match tree due to prior load conflict
-        if( C->subsume_loads() == false ) {
-          set_shared(n);
+      default:
+        if( n->is_Store() ) {
+          // Do match stores, despite no ideal reg
+          mem_op = true;
+          break;
+        }
+        if( n->is_Mem() ) { // Loads and LoadStores
+          mem_op = true;
+          // Loads must be root of match tree due to prior load conflict
+          if( C->subsume_loads() == false )
+            set_shared(n);
         }
         // Fall into default case
-      default:
         if( !n->ideal_reg() )
           set_dontcare(n);  // Unmatchable Nodes
       } // end_switch
@@ -1879,42 +1869,59 @@ void Matcher::find_shared( Node *n ) {
           continue; // for(int i = ...)
         }
 
-        // Clone addressing expressions as they are "free" in most instructions
+        if( mop == Op_AddP && m->in(AddPNode::Base)->Opcode() == Op_DecodeN ) {
+          // Bases used in addresses must be shared but since
+          // they are shared through a DecodeN they may appear
+          // to have a single use so force sharing here.
+          set_shared(m->in(AddPNode::Base)->in(1));
+        }
+
+        // Clone addressing expressions as they are "free" in memory access instructions
         if( mem_op && i == MemNode::Address && mop == Op_AddP ) {
-          if (m->in(AddPNode::Base)->Opcode() == Op_DecodeN) {
-            // Bases used in addresses must be shared but since
-            // they are shared through a DecodeN they may appear
-            // to have a single use so force sharing here.
-            set_shared(m->in(AddPNode::Base)->in(1));
-          }
+          // Some inputs for address expression are not put on stack
+          // to avoid marking them as shared and forcing them into register
+          // if they are used only in address expressions.
+          // But they should be marked as shared if there are other uses
+          // besides address expressions.
+
           Node *off = m->in(AddPNode::Offset);
-          if( off->is_Con() ) {
-            set_visited(m);  // Flag as visited now
+          if( off->is_Con() &&
+              // When there are other uses besides address expressions
+              // put it on stack and mark as shared.
+              !is_visited(m) ) {
+            address_visited.test_set(m->_idx); // Flag as address_visited
             Node *adr = m->in(AddPNode::Address);
 
             // Intel, ARM and friends can handle 2 adds in addressing mode
             if( clone_shift_expressions && adr->is_AddP() &&
                 // AtomicAdd is not an addressing expression.
                 // Cheap to find it by looking for screwy base.
-                !adr->in(AddPNode::Base)->is_top() ) {
-              set_visited(adr);  // Flag as visited now
+                !adr->in(AddPNode::Base)->is_top() &&
+                // Are there other uses besides address expressions?
+                !is_visited(adr) ) {
+              address_visited.set(adr->_idx); // Flag as address_visited
               Node *shift = adr->in(AddPNode::Offset);
               // Check for shift by small constant as well
               if( shift->Opcode() == Op_LShiftX && shift->in(2)->is_Con() &&
-                  shift->in(2)->get_int() <= 3 ) {
-                set_visited(shift);  // Flag as visited now
+                  shift->in(2)->get_int() <= 3 &&
+                  // Are there other uses besides address expressions?
+                  !is_visited(shift) ) {
+                address_visited.set(shift->_idx); // Flag as address_visited
                 mstack.push(shift->in(2), Visit);
+                Node *conv = shift->in(1);
 #ifdef _LP64
                 // Allow Matcher to match the rule which bypass
                 // ConvI2L operation for an array index on LP64
                 // if the index value is positive.
-                if( shift->in(1)->Opcode() == Op_ConvI2L &&
-                    shift->in(1)->as_Type()->type()->is_long()->_lo >= 0 ) {
-                  set_visited(shift->in(1));  // Flag as visited now
-                  mstack.push(shift->in(1)->in(1), Pre_Visit);
+                if( conv->Opcode() == Op_ConvI2L &&
+                    conv->as_Type()->type()->is_long()->_lo >= 0 &&
+                    // Are there other uses besides address expressions?
+                    !is_visited(conv) ) {
+                  address_visited.set(conv->_idx); // Flag as address_visited
+                  mstack.push(conv->in(1), Pre_Visit);
                 } else
 #endif
-                mstack.push(shift->in(1), Pre_Visit);
+                mstack.push(conv, Pre_Visit);
               } else {
                 mstack.push(shift, Pre_Visit);
               }
@@ -1942,7 +1949,7 @@ void Matcher::find_shared( Node *n ) {
       // BoolNode::match_edge always returns a zero.
 
       // We reorder the Op_If in a pre-order manner, so we can visit without
-      // accidently sharing the Cmp (the Bool and the If make 2 users).
+      // accidentally sharing the Cmp (the Bool and the If make 2 users).
       n->add_req( n->in(1)->in(1) ); // Add the Cmp next to the Bool
     }
     else if (nstate == Post_Visit) {
@@ -1979,6 +1986,23 @@ void Matcher::find_shared( Node *n ) {
         Node *pair2 = new (C, 3) BinaryNode(n->in(2),n->in(3));
         n->set_req(2,pair2);
         n->del_req(3);
+        break;
+      }
+      case Op_StrEquals: {
+        Node *pair1 = new (C, 3) BinaryNode(n->in(2),n->in(3));
+        n->set_req(2,pair1);
+        n->set_req(3,n->in(4));
+        n->del_req(4);
+        break;
+      }
+      case Op_StrComp:
+      case Op_StrIndexOf: {
+        Node *pair1 = new (C, 3) BinaryNode(n->in(2),n->in(3));
+        n->set_req(2,pair1);
+        Node *pair2 = new (C, 3) BinaryNode(n->in(4),n->in(5));
+        n->set_req(3,pair2);
+        n->del_req(5);
+        n->del_req(4);
         break;
       }
       default:

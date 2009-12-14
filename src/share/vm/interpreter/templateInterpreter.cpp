@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -168,6 +168,7 @@ address    TemplateInterpreter::_throw_ArrayIndexOutOfBoundsException_entry = NU
 address    TemplateInterpreter::_throw_ArrayStoreException_entry            = NULL;
 address    TemplateInterpreter::_throw_ArithmeticException_entry            = NULL;
 address    TemplateInterpreter::_throw_ClassCastException_entry             = NULL;
+address    TemplateInterpreter::_throw_WrongMethodType_entry                = NULL;
 address    TemplateInterpreter::_throw_NullPointerException_entry           = NULL;
 address    TemplateInterpreter::_throw_StackOverflowError_entry             = NULL;
 address    TemplateInterpreter::_throw_exception_entry                      = NULL;
@@ -297,8 +298,9 @@ void TemplateInterpreterGenerator::generate_all() {
 
   for (int j = 0; j < number_of_states; j++) {
     const TosState states[] = {btos, ctos, stos, itos, ltos, ftos, dtos, atos, vtos};
-    Interpreter::_return_3_addrs_by_index[Interpreter::TosState_as_index(states[j])] = Interpreter::return_entry(states[j], 3);
-    Interpreter::_return_5_addrs_by_index[Interpreter::TosState_as_index(states[j])] = Interpreter::return_entry(states[j], 5);
+    int index = Interpreter::TosState_as_index(states[j]);
+    Interpreter::_return_3_addrs_by_index[index] = Interpreter::return_entry(states[j], 3);
+    Interpreter::_return_5_addrs_by_index[index] = Interpreter::return_entry(states[j], 5);
   }
 
   { CodeletMark cm(_masm, "continuation entry points");
@@ -341,6 +343,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_throw_ArrayStoreException_entry            = generate_klass_exception_handler("java/lang/ArrayStoreException"                 );
     Interpreter::_throw_ArithmeticException_entry            = generate_exception_handler("java/lang/ArithmeticException"           , "/ by zero");
     Interpreter::_throw_ClassCastException_entry             = generate_ClassCastException_handler();
+    Interpreter::_throw_WrongMethodType_entry                = generate_WrongMethodType_handler();
     Interpreter::_throw_NullPointerException_entry           = generate_exception_handler("java/lang/NullPointerException"          , NULL       );
     Interpreter::_throw_StackOverflowError_entry             = generate_StackOverflowError_handler();
   }
@@ -358,6 +361,7 @@ void TemplateInterpreterGenerator::generate_all() {
   method_entry(empty)
   method_entry(accessor)
   method_entry(abstract)
+  method_entry(method_handle)
   method_entry(java_lang_math_sin  )
   method_entry(java_lang_math_cos  )
   method_entry(java_lang_math_tan  )
@@ -461,9 +465,11 @@ void TemplateInterpreterGenerator::set_wide_entry_point(Template* t, address& we
 void TemplateInterpreterGenerator::set_short_entry_points(Template* t, address& bep, address& cep, address& sep, address& aep, address& iep, address& lep, address& fep, address& dep, address& vep) {
   assert(t->is_valid(), "template must exist");
   switch (t->tos_in()) {
-    case btos: vep = __ pc(); __ pop(btos); bep = __ pc(); generate_and_dispatch(t); break;
-    case ctos: vep = __ pc(); __ pop(ctos); sep = __ pc(); generate_and_dispatch(t); break;
-    case stos: vep = __ pc(); __ pop(stos); sep = __ pc(); generate_and_dispatch(t); break;
+    case btos:
+    case ctos:
+    case stos:
+      ShouldNotReachHere();  // btos/ctos/stos should use itos.
+      break;
     case atos: vep = __ pc(); __ pop(atos); aep = __ pc(); generate_and_dispatch(t); break;
     case itos: vep = __ pc(); __ pop(itos); iep = __ pc(); generate_and_dispatch(t); break;
     case ltos: vep = __ pc(); __ pop(ltos); lep = __ pc(); generate_and_dispatch(t); break;
@@ -569,28 +575,41 @@ void TemplateInterpreter::ignore_safepoints() {
   }
 }
 
-// If deoptimization happens, this method returns the point where to continue in
-// interpreter. For calls (invokexxxx, newxxxx) the continuation is at next
-// bci and the top of stack is in eax/edx/FPU tos.
-// For putfield/getfield, put/getstatic, the continuation is at the same
-// bci and the TOS is on stack.
+//------------------------------------------------------------------------------------------------------------------------
+// Deoptimization support
 
-// Note: deopt_entry(type, 0) means reexecute bytecode
-//       deopt_entry(type, length) means continue at next bytecode
+// If deoptimization happens, this function returns the point of next bytecode to continue execution
+address TemplateInterpreter::deopt_continue_after_entry(methodOop method, address bcp, int callee_parameters, bool is_top_frame) {
+  return AbstractInterpreter::deopt_continue_after_entry(method, bcp, callee_parameters, is_top_frame);
+}
 
-address TemplateInterpreter::continuation_for(methodOop method, address bcp, int callee_parameters, bool is_top_frame, bool& use_next_mdp) {
+// If deoptimization happens, this function returns the point where the interpreter reexecutes
+// the bytecode.
+// Note: Bytecodes::_athrow (C1 only) and Bytecodes::_return are the special cases
+//       that do not return "Interpreter::deopt_entry(vtos, 0)"
+address TemplateInterpreter::deopt_reexecute_entry(methodOop method, address bcp) {
   assert(method->contains(bcp), "just checkin'");
   Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
   if (code == Bytecodes::_return) {
-      // This is used for deopt during registration of finalizers
-      // during Object.<init>.  We simply need to resume execution at
-      // the standard return vtos bytecode to pop the frame normally.
-      // reexecuting the real bytecode would cause double registration
-      // of the finalizable object.
-      assert(is_top_frame, "must be on top");
-      return _normal_table.entry(Bytecodes::_return).entry(vtos);
+    // This is used for deopt during registration of finalizers
+    // during Object.<init>.  We simply need to resume execution at
+    // the standard return vtos bytecode to pop the frame normally.
+    // reexecuting the real bytecode would cause double registration
+    // of the finalizable object.
+    return _normal_table.entry(Bytecodes::_return).entry(vtos);
   } else {
-    return AbstractInterpreter::continuation_for(method, bcp, callee_parameters, is_top_frame, use_next_mdp);
+    return AbstractInterpreter::deopt_reexecute_entry(method, bcp);
+  }
+}
+
+// If deoptimization happens, the interpreter should reexecute this bytecode.
+// This function mainly helps the compilers to set up the reexecute bit.
+bool TemplateInterpreter::bytecode_should_reexecute(Bytecodes::Code code) {
+  if (code == Bytecodes::_return) {
+    //Yes, we consider Bytecodes::_return as a special case of reexecution
+    return true;
+  } else {
+    return AbstractInterpreter::bytecode_should_reexecute(code);
   }
 }
 

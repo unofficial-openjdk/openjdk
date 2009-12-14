@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,6 +109,9 @@ class Matcher : public PhaseTransform {
   Node* _mem_node;   // Ideal memory node consumed by mach node
 #endif
 
+  // Mach node for ConP #NULL
+  MachNode* _mach_null;
+
 public:
   int LabelRootDepth;
   static const int base2reg[];        // Map Types to machine register types
@@ -121,6 +124,8 @@ public:
   static uint mreg2regmask_max;
   static RegMask mreg2regmask[];
   static RegMask STACK_ONLY_mask;
+
+  MachNode* mach_null() const { return _mach_null; }
 
   bool    is_shared( Node *n ) { return _shared.test(n->_idx) != 0; }
   void   set_shared( Node *n ) {  _shared.set(n->_idx); }
@@ -220,9 +225,15 @@ public:
   OptoRegPair *_parm_regs;        // Array of machine registers per argument
   RegMask *_calling_convention_mask; // Array of RegMasks per argument
 
-  // Does matcher support this ideal node?
+  // Does matcher have a match rule for this ideal node?
   static const bool has_match_rule(int opcode);
   static const bool _hasMatchRule[_last_opcode];
+
+  // Does matcher have a match rule for this ideal node and is the
+  // predicate (if there is one) true?
+  // NOTE: If this function is used more commonly in the future, ADLC
+  // should generate this one.
+  static const bool match_rule_supported(int opcode);
 
   // Used to determine if we have fast l2f conversion
   // USII has it, USIII doesn't

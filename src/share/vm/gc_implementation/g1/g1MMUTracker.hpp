@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,24 +28,20 @@
 /***** ALL TIMES ARE IN SECS!!!!!!! *****/
 
 // this is the "interface"
-class G1MMUTracker {
+class G1MMUTracker: public CHeapObj {
 protected:
   double          _time_slice;
   double          _max_gc_time; // this is per time slice
 
-  double          _conc_overhead_time_sec;
-
 public:
   G1MMUTracker(double time_slice, double max_gc_time);
-
-  void update_conc_overhead(double conc_overhead);
 
   virtual void add_pause(double start, double end, bool gc_thread) = 0;
   virtual double longest_pause(double current_time) = 0;
   virtual double when_sec(double current_time, double pause_time) = 0;
 
   double max_gc_time() {
-    return _max_gc_time - _conc_overhead_time_sec;
+    return _max_gc_time;
   }
 
   inline bool now_max_gc(double current_time) {
@@ -67,7 +63,7 @@ public:
   }
 };
 
-class G1MMUTrackerQueueElem {
+class G1MMUTrackerQueueElem VALUE_OBJ_CLASS_SPEC {
 private:
   double _start_time;
   double _end_time;

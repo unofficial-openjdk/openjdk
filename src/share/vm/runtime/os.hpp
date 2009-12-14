@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,7 +120,8 @@ class os: AllStatic {
   // Return current local time in a string (YYYY-MM-DD HH:MM:SS).
   // It is MT safe, but not async-safe, as reading time zone
   // information may require a lock on some platforms.
-  static char* local_time_string(char *buf, size_t buflen);
+  static char*      local_time_string(char *buf, size_t buflen);
+  static struct tm* localtime_pd     (const time_t* clock, struct tm*  res);
   // Fill in buffer with current local time as an ISO-8601 string.
   // E.g., YYYY-MM-DDThh:mm:ss.mmm+zzzz.
   // Returns buffer, or NULL if it failed.
@@ -201,8 +202,10 @@ class os: AllStatic {
   static char*  attempt_reserve_memory_at(size_t bytes, char* addr);
   static void   split_reserved_memory(char *base, size_t size,
                                       size_t split, bool realloc);
-  static bool   commit_memory(char* addr, size_t bytes);
-  static bool   commit_memory(char* addr, size_t size, size_t alignment_hint);
+  static bool   commit_memory(char* addr, size_t bytes,
+                              bool executable = false);
+  static bool   commit_memory(char* addr, size_t size, size_t alignment_hint,
+                              bool executable = false);
   static bool   uncommit_memory(char* addr, size_t bytes);
   static bool   release_memory(char* addr, size_t bytes);
 
@@ -242,7 +245,8 @@ class os: AllStatic {
 
   static char*  non_memory_address_word();
   // reserve, commit and pin the entire memory region
-  static char*  reserve_memory_special(size_t size);
+  static char*  reserve_memory_special(size_t size, char* addr = NULL,
+                bool executable = false);
   static bool   release_memory_special(char* addr, size_t bytes);
   static bool   large_page_init();
   static size_t large_page_size();
@@ -290,19 +294,16 @@ class os: AllStatic {
   }
 
   static bool    is_memory_serialize_page(JavaThread *thread, address addr) {
-    address thr_addr;
     if (UseMembar) return false;
-    // Calculate thread specific address
+    // Previously this function calculated the exact address of this
+    // thread's serialize page, and checked if the faulting address
+    // was equal.  However, some platforms mask off faulting addresses
+    // to the page size, so now we just check that the address is
+    // within the page.  This makes the thread argument unnecessary,
+    // but we retain the NULL check to preserve existing behaviour.
     if (thread == NULL) return false;
-    // TODO-FIXME: some platforms mask off faulting addresses to the base pagesize.
-    // Instead of using a test for equality we should probably use something
-    // of the form:
-    // return ((_mem_serialize_page ^ addr) & -pagesize) == 0
-    //
-    thr_addr  = (address)(((uintptr_t)thread >>
-                get_serialize_page_shift_count()) &
-                get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page;
-    return  (thr_addr == addr);
+    address page = (address) _mem_serialize_page;
+    return addr >= page && addr < (page + os::vm_page_size());
   }
 
   static void block_on_serialize_page_trap();
@@ -603,6 +604,7 @@ class os: AllStatic {
                                 char fileSep,
                                 char pathSep);
   static bool set_boot_path(char fileSep, char pathSep);
+  static char** split_path(const char* path, int* n);
 };
 
 // Note that "PAUSE" is almost always used with synchronization

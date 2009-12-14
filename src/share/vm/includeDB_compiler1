@@ -1,5 +1,5 @@
 //
-// Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -270,6 +270,7 @@ c1_LIRGenerator_<arch>.cpp             vmreg_<arch>.inline.hpp
 
 c1_LinearScan.cpp                       bitMap.inline.hpp
 c1_LinearScan.cpp                       c1_CFGPrinter.hpp
+c1_LinearScan.cpp                       c1_CodeStubs.hpp
 c1_LinearScan.cpp                       c1_Compilation.hpp
 c1_LinearScan.cpp                       c1_FrameMap.hpp
 c1_LinearScan.cpp                       c1_IR.hpp
@@ -386,7 +387,7 @@ c1_ValueMap.hpp                         c1_ValueSet.hpp
 c1_ValueSet.cpp                         c1_ValueSet.hpp
 
 c1_ValueSet.hpp                         allocation.hpp
-c1_ValueSet.hpp                         bitMap.hpp
+c1_ValueSet.hpp                         bitMap.inline.hpp
 c1_ValueSet.hpp                         c1_Instruction.hpp
 
 c1_ValueStack.cpp                       c1_IR.hpp
@@ -407,8 +408,6 @@ ciEnv.cpp                               c1_Runtime1.hpp
 codeBlob.cpp                            c1_Runtime1.hpp
 
 compileBroker.cpp                       c1_Compiler.hpp
-
-frame.hpp                               c1_Defs.hpp
 
 frame_<arch>.cpp                        c1_Runtime1.hpp
 
@@ -431,8 +430,6 @@ oopMap.cpp                              c1_Defs.hpp
 os_<os_family>.cpp                      c1_Runtime1.hpp
 
 os_<os_arch>.cpp                        c1_Runtime1.hpp
-
-registerMap.hpp                         c1_Defs.hpp
 
 safepoint.cpp                           c1_globals.hpp
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -358,6 +358,7 @@ bool PSScavenge::invoke_no_policy() {
     PSPromotionManager* promotion_manager = PSPromotionManager::vm_thread_promotion_manager();
     {
       // TraceTime("Roots");
+      ParallelScavengeHeap::ParStrongRootsScope psrs;
 
       GCTaskQueue* q = GCTaskQueue::create();
 
@@ -376,6 +377,7 @@ bool PSScavenge::invoke_no_policy() {
       q->enqueue(new ScavengeRootsTask(ScavengeRootsTask::management));
       q->enqueue(new ScavengeRootsTask(ScavengeRootsTask::system_dictionary));
       q->enqueue(new ScavengeRootsTask(ScavengeRootsTask::jvmti));
+      q->enqueue(new ScavengeRootsTask(ScavengeRootsTask::code_cache));
 
       ParallelTaskTerminator terminator(
         gc_task_manager()->workers(),
@@ -614,6 +616,10 @@ bool PSScavenge::invoke_no_policy() {
                   scavenge_exit.ticks());
     gc_task_manager()->print_task_time_stamps();
   }
+
+#ifdef TRACESPINNING
+  ParallelTaskTerminator::print_termination_counts();
+#endif
 
   return !promotion_failure_occurred;
 }

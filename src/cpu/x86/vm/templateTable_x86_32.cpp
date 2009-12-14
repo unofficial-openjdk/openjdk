@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,7 +137,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
         // Do the actual store
         // noreg means NULL
         if (val == noreg) {
-          __ movl(Address(rdx, 0), NULL_WORD);
+          __ movptr(Address(rdx, 0), NULL_WORD);
           // No post barrier for NULL
         } else {
           __ movl(Address(rdx, 0), val);
@@ -152,7 +152,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::CardTableExtension:
       {
         if (val == noreg) {
-          __ movl(obj, NULL_WORD);
+          __ movptr(obj, NULL_WORD);
         } else {
           __ movl(obj, val);
           // flatten object address if needed
@@ -168,7 +168,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::ModRef:
     case BarrierSet::Other:
       if (val == noreg) {
-        __ movl(obj, NULL_WORD);
+        __ movptr(obj, NULL_WORD);
       } else {
         __ movl(obj, val);
       }
@@ -206,12 +206,12 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bytecode, Register bc,
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::set_original_bytecode_at), scratch, rsi, bc);
 #ifndef ASSERT
     __ jmpb(patch_done);
-    __ bind(fast_patch);
-  }
 #else
     __ jmp(patch_done);
+#endif
     __ bind(fast_patch);
   }
+#ifdef ASSERT
   Label okay;
   __ load_unsigned_byte(scratch, at_bcp(0));
   __ cmpl(scratch, (int)Bytecodes::java_code(bytecode));
@@ -296,7 +296,7 @@ void TemplateTable::bipush() {
 
 void TemplateTable::sipush() {
   transition(vtos, itos);
-  __ load_unsigned_word(rax, at_bcp(1));
+  __ load_unsigned_short(rax, at_bcp(1));
   __ bswapl(rax);
   __ sarl(rax, 16);
 }
@@ -662,7 +662,7 @@ void TemplateTable::caload() {
   index_check(rdx, rax);  // kills rbx,
   // rax,: index
   // can do better code for P5 - may want to improve this at some point
-  __ load_unsigned_word(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_CHAR)));
+  __ load_unsigned_short(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_CHAR)));
   __ mov(rax, rbx);
 }
 
@@ -677,7 +677,7 @@ void TemplateTable::fast_icaload() {
   // rdx: array
   index_check(rdx, rax);
   // rax,: index
-  __ load_unsigned_word(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_CHAR)));
+  __ load_unsigned_short(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_CHAR)));
   __ mov(rax, rbx);
 }
 
@@ -687,7 +687,7 @@ void TemplateTable::saload() {
   index_check(rdx, rax);  // kills rbx,
   // rax,: index
   // can do better code for P5 - may want to improve this at some point
-  __ load_signed_word(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_SHORT)));
+  __ load_signed_short(rbx, Address(rdx, rax, Address::times_2, arrayOopDesc::base_offset_in_bytes(T_SHORT)));
   __ mov(rax, rbx);
 }
 
@@ -1586,7 +1586,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
 
   // Handle all the JSR stuff here, then exit.
   // It's much shorter and cleaner than intermingling with the
-  // non-JSR normal-branch stuff occuring below.
+  // non-JSR normal-branch stuff occurring below.
   if (is_jsr) {
     // Pre-load the next target bytecode into EBX
     __ load_unsigned_byte(rbx, Address(rsi, rdx, Address::times_1, 0));
@@ -2105,6 +2105,7 @@ void TemplateTable::volatile_barrier(Assembler::Membar_mask_bits order_constrain
 
 void TemplateTable::resolve_cache_and_index(int byte_no, Register Rcache, Register index) {
   assert(byte_no == 1 || byte_no == 2, "byte_no out of range");
+  bool is_invokedynamic = (bytecode() == Bytecodes::_invokedynamic);
 
   Register temp = rbx;
 
@@ -2112,16 +2113,19 @@ void TemplateTable::resolve_cache_and_index(int byte_no, Register Rcache, Regist
 
   const int shift_count = (1 + byte_no)*BitsPerByte;
   Label resolved;
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
-  __ movl(temp, Address(Rcache,
-                          index,
-                          Address::times_ptr,
-                          constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
-  __ shrl(temp, shift_count);
-  // have we resolved this bytecode?
-  __ andptr(temp, 0xFF);
-  __ cmpl(temp, (int)bytecode());
-  __ jcc(Assembler::equal, resolved);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
+  if (is_invokedynamic) {
+    // we are resolved if the f1 field contains a non-null CallSite object
+    __ cmpptr(Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::f1_offset()), (int32_t) NULL_WORD);
+    __ jcc(Assembler::notEqual, resolved);
+  } else {
+    __ movl(temp, Address(Rcache, index, Address::times_4, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
+    __ shrl(temp, shift_count);
+    // have we resolved this bytecode?
+    __ andl(temp, 0xFF);
+    __ cmpl(temp, (int)bytecode());
+    __ jcc(Assembler::equal, resolved);
+  }
 
   // resolve first time through
   address entry;
@@ -2134,12 +2138,13 @@ void TemplateTable::resolve_cache_and_index(int byte_no, Register Rcache, Regist
     case Bytecodes::_invokespecial  : // fall through
     case Bytecodes::_invokestatic   : // fall through
     case Bytecodes::_invokeinterface: entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invoke);  break;
+    case Bytecodes::_invokedynamic  : entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invokedynamic); break;
     default                         : ShouldNotReachHere();                                 break;
   }
   __ movl(temp, (int)bytecode());
   __ call_VM(noreg, entry, temp);
   // Update registers with resolved info
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
   __ bind(resolved);
 }
 
@@ -2310,7 +2315,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
   __ cmpl(flags, ctos );
   __ jcc(Assembler::notEqual, notChar);
 
-  __ load_unsigned_word(rax, lo );
+  __ load_unsigned_short(rax, lo );
   __ push(ctos);
   if (!is_static) {
     patch_bytecode(Bytecodes::_fast_cgetfield, rcx, rbx);
@@ -2322,7 +2327,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
   __ cmpl(flags, stos );
   __ jcc(Assembler::notEqual, notShort);
 
-  __ load_signed_word(rax, lo );
+  __ load_signed_short(rax, lo );
   __ push(stos);
   if (!is_static) {
     patch_bytecode(Bytecodes::_fast_sgetfield, rcx, rbx);
@@ -2830,8 +2835,8 @@ void TemplateTable::fast_accessfield(TosState state) {
   // access field
   switch (bytecode()) {
     case Bytecodes::_fast_bgetfield: __ movsbl(rax, lo );                 break;
-    case Bytecodes::_fast_sgetfield: __ load_signed_word(rax, lo );       break;
-    case Bytecodes::_fast_cgetfield: __ load_unsigned_word(rax, lo );     break;
+    case Bytecodes::_fast_sgetfield: __ load_signed_short(rax, lo );      break;
+    case Bytecodes::_fast_cgetfield: __ load_unsigned_short(rax, lo );    break;
     case Bytecodes::_fast_igetfield: __ movl(rax, lo);                    break;
     case Bytecodes::_fast_lgetfield: __ stop("should not be rewritten");  break;
     case Bytecodes::_fast_fgetfield: __ fld_s(lo);                        break;
@@ -2884,12 +2889,14 @@ void TemplateTable::count_calls(Register method, Register temp) {
 }
 
 
-void TemplateTable::prepare_invoke(Register method, Register index, int byte_no, Bytecodes::Code code) {
+void TemplateTable::prepare_invoke(Register method, Register index, int byte_no) {
   // determine flags
+  Bytecodes::Code code = bytecode();
   const bool is_invokeinterface  = code == Bytecodes::_invokeinterface;
+  const bool is_invokedynamic    = code == Bytecodes::_invokedynamic;
   const bool is_invokevirtual    = code == Bytecodes::_invokevirtual;
   const bool is_invokespecial    = code == Bytecodes::_invokespecial;
-  const bool load_receiver       = code != Bytecodes::_invokestatic;
+  const bool load_receiver      = (code != Bytecodes::_invokestatic && code != Bytecodes::_invokedynamic);
   const bool receiver_null_check = is_invokespecial;
   const bool save_flags = is_invokeinterface || is_invokevirtual;
   // setup registers & access constant pool cache
@@ -2907,8 +2914,13 @@ void TemplateTable::prepare_invoke(Register method, Register index, int byte_no,
     __ movl(recv, flags);
     __ andl(recv, 0xFF);
     // recv count is 0 based?
-    __ movptr(recv, Address(rsp, recv, Interpreter::stackElementScale(), -Interpreter::expr_offset_in_bytes(1)));
-    __ verify_oop(recv);
+    Address recv_addr(rsp, recv, Interpreter::stackElementScale(), -Interpreter::expr_offset_in_bytes(1));
+    if (is_invokedynamic) {
+      __ lea(recv, recv_addr);
+    } else {
+      __ movptr(recv, recv_addr);
+      __ verify_oop(recv);
+    }
   }
 
   // do null check if needed
@@ -2926,8 +2938,12 @@ void TemplateTable::prepare_invoke(Register method, Register index, int byte_no,
   ConstantPoolCacheEntry::verify_tosBits();
   // load return address
   {
-    ExternalAddress table(is_invokeinterface ? (address)Interpreter::return_5_addrs_by_index_table() :
-                                               (address)Interpreter::return_3_addrs_by_index_table());
+    address table_addr;
+    if (is_invokeinterface || is_invokedynamic)
+      table_addr = (address)Interpreter::return_5_addrs_by_index_table();
+    else
+      table_addr = (address)Interpreter::return_3_addrs_by_index_table();
+    ExternalAddress table(table_addr);
     __ movptr(flags, ArrayAddress(table, Address(noreg, flags, Address::times_ptr)));
   }
 
@@ -2990,7 +3006,7 @@ void TemplateTable::invokevirtual_helper(Register index, Register recv,
 
 void TemplateTable::invokevirtual(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
 
   // rbx,: index
   // rcx: receiver
@@ -3002,7 +3018,7 @@ void TemplateTable::invokevirtual(int byte_no) {
 
 void TemplateTable::invokespecial(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -3012,7 +3028,7 @@ void TemplateTable::invokespecial(int byte_no) {
 
 void TemplateTable::invokestatic(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -3028,7 +3044,7 @@ void TemplateTable::fast_invokevfinal(int byte_no) {
 
 void TemplateTable::invokeinterface(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rax, rbx, byte_no, bytecode());
+  prepare_invoke(rax, rbx, byte_no);
 
   // rax,: Interface
   // rbx,: index
@@ -3055,35 +3071,44 @@ void TemplateTable::invokeinterface(int byte_no) {
   // profile this call
   __ profile_virtual_call(rdx, rsi, rdi);
 
-  __ mov(rdi, rdx); // Save klassOop in rdi
+  Label no_such_interface, no_such_method;
 
-  // Compute start of first itableOffsetEntry (which is at the end of the vtable)
-  const int base = instanceKlass::vtable_start_offset() * wordSize;
-  assert(vtableEntry::size() * wordSize == (1 << (int)Address::times_ptr), "adjust the scaling in the code below");
-  __ movl(rsi, Address(rdx, instanceKlass::vtable_length_offset() * wordSize)); // Get length of vtable
-  __ lea(rdx, Address(rdx, rsi, Address::times_4, base));
-  if (HeapWordsPerLong > 1) {
-    // Round up to align_object_offset boundary
-    __ round_to(rdx, BytesPerLong);
-  }
+  __ lookup_interface_method(// inputs: rec. class, interface, itable index
+                             rdx, rax, rbx,
+                             // outputs: method, scan temp. reg
+                             rbx, rsi,
+                             no_such_interface);
 
-  Label entry, search, interface_ok;
+  // rbx,: methodOop to call
+  // rcx: receiver
+  // Check for abstract method error
+  // Note: This should be done more efficiently via a throw_abstract_method_error
+  //       interpreter entry point and a conditional jump to it in case of a null
+  //       method.
+  __ testptr(rbx, rbx);
+  __ jcc(Assembler::zero, no_such_method);
 
-  __ jmpb(entry);
-  __ bind(search);
-  __ addptr(rdx, itableOffsetEntry::size() * wordSize);
+  // do the call
+  // rcx: receiver
+  // rbx,: methodOop
+  __ jump_from_interpreted(rbx, rdx);
+  __ should_not_reach_here();
 
-  __ bind(entry);
+  // exception handling code follows...
+  // note: must restore interpreter registers to canonical
+  //       state for exception handling to work correctly!
 
-  // Check that the entry is non-null.  A null entry means that the receiver
-  // class doesn't implement the interface, and wasn't the same as the
-  // receiver class checked when the interface was resolved.
-  __ push(rdx);
-  __ movptr(rdx, Address(rdx, itableOffsetEntry::interface_offset_in_bytes()));
-  __ testptr(rdx, rdx);
-  __ jcc(Assembler::notZero, interface_ok);
+  __ bind(no_such_method);
   // throw exception
-  __ pop(rdx);           // pop saved register first.
+  __ pop(rbx);           // pop return address (pushed by prepare_invoke)
+  __ restore_bcp();      // rsi must be correct for exception handler   (was destroyed)
+  __ restore_locals();   // make sure locals pointer is correct as well (was destroyed)
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::throw_AbstractMethodError));
+  // the call_VM checks for exception, so we should never return here.
+  __ should_not_reach_here();
+
+  __ bind(no_such_interface);
+  // throw exception
   __ pop(rbx);           // pop return address (pushed by prepare_invoke)
   __ restore_bcp();      // rsi must be correct for exception handler   (was destroyed)
   __ restore_locals();   // make sure locals pointer is correct as well (was destroyed)
@@ -3091,42 +3116,41 @@ void TemplateTable::invokeinterface(int byte_no) {
                    InterpreterRuntime::throw_IncompatibleClassChangeError));
   // the call_VM checks for exception, so we should never return here.
   __ should_not_reach_here();
-  __ bind(interface_ok);
+}
 
-    __ pop(rdx);
+void TemplateTable::invokedynamic(int byte_no) {
+  transition(vtos, vtos);
 
-    __ cmpptr(rax, Address(rdx, itableOffsetEntry::interface_offset_in_bytes()));
-    __ jcc(Assembler::notEqual, search);
+  if (!EnableInvokeDynamic) {
+    // We should not encounter this bytecode if !EnableInvokeDynamic.
+    // The verifier will stop it.  However, if we get past the verifier,
+    // this will stop the thread in a reasonable way, without crashing the JVM.
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address,
+                     InterpreterRuntime::throw_IncompatibleClassChangeError));
+    // the call_VM checks for exception, so we should never return here.
+    __ should_not_reach_here();
+    return;
+  }
 
-    __ movl(rdx, Address(rdx, itableOffsetEntry::offset_offset_in_bytes()));
-    __ addptr(rdx, rdi); // Add offset to klassOop
-    assert(itableMethodEntry::size() * wordSize == (1 << (int)Address::times_ptr), "adjust the scaling in the code below");
-    __ movptr(rbx, Address(rdx, rbx, Address::times_ptr));
-    // rbx,: methodOop to call
-    // rcx: receiver
-    // Check for abstract method error
-    // Note: This should be done more efficiently via a throw_abstract_method_error
-    //       interpreter entry point and a conditional jump to it in case of a null
-    //       method.
-    { Label L;
-      __ testptr(rbx, rbx);
-      __ jcc(Assembler::notZero, L);
-      // throw exception
-          // note: must restore interpreter registers to canonical
-          //       state for exception handling to work correctly!
-          __ pop(rbx);           // pop return address (pushed by prepare_invoke)
-          __ restore_bcp();      // rsi must be correct for exception handler   (was destroyed)
-          __ restore_locals();   // make sure locals pointer is correct as well (was destroyed)
-      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::throw_AbstractMethodError));
-      // the call_VM checks for exception, so we should never return here.
-      __ should_not_reach_here();
-      __ bind(L);
-    }
+  prepare_invoke(rax, rbx, byte_no);
 
-  // do the call
-  // rcx: receiver
-  // rbx,: methodOop
-  __ jump_from_interpreted(rbx, rdx);
+  // rax: CallSite object (f1)
+  // rbx: unused (f2)
+  // rcx: receiver address
+  // rdx: flags (unused)
+
+  if (ProfileInterpreter) {
+    Label L;
+    // %%% should make a type profile for any invokedynamic that takes a ref argument
+    // profile this call
+    __ profile_call(rsi);
+  }
+
+  Label handle_unlinked_site;
+  __ movptr(rcx, Address(rax, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
+  __ null_check(rcx);
+  __ prepare_to_jump_from_interpreted();
+  __ jump_to_method_handle_entry(rcx, rdx);
 }
 
 //----------------------------------------------------------------------------------------------------

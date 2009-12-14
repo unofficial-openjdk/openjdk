@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,12 @@ class IdealGraphPrinter;
 
 // Class hierarchy
 // - Thread
-//   - VMThread
+//   - NamedThread
+//     - VMThread
+//     - ConcurrentGCThread
+//     - WorkerThread
+//       - GangWorker
+//       - GCTaskThread
 //   - JavaThread
 //   - WatcherThread
 
@@ -191,6 +196,9 @@ class Thread: public ThreadShadow {
   NOT_PRODUCT(int _allow_safepoint_count;)       // If 0, thread allow a safepoint to happen
   debug_only (int _allow_allocation_count;)      // If 0, the thread is allowed to allocate oops.
 
+  // Used by SkipGCALot class.
+  NOT_PRODUCT(bool _skip_gcalot;)                // Should we elide gc-a-lot?
+
   // Record when GC is locked out via the GC_locker mechanism
   CHECK_UNHANDLED_OOPS_ONLY(int _gc_locked_out_count;)
 
@@ -199,14 +207,6 @@ class Thread: public ThreadShadow {
   friend class Pause_No_Safepoint_Verifier;
   friend class ThreadLocalStorage;
   friend class GC_locker;
-
-  // In order for all threads to be able to use fast locking, we need to know the highest stack
-  // address of where a lock is on the stack (stacks normally grow towards lower addresses). This
-  // variable is initially set to NULL, indicating no locks are used by the thread. During the thread's
-  // execution, it will be set whenever locking can happen, i.e., when we call out to Java code or use
-  // an ObjectLocker. The value is never decreased, hence, it will over the lifetime of a thread
-  // approximate the real stackbase.
-  address _highest_lock;                         // Highest stack address where a JavaLock exist
 
   ThreadLocalAllocBuffer _tlab;                  // Thread-local eden
 
@@ -254,6 +254,7 @@ class Thread: public ThreadShadow {
   virtual bool is_GC_task_thread() const             { return false; }
   virtual bool is_Watcher_thread() const             { return false; }
   virtual bool is_ConcurrentGC_thread() const        { return false; }
+  virtual bool is_Named_thread() const               { return false; }
 
   virtual char* name() const { return (char*)"Unknown thread"; }
 
@@ -316,6 +317,11 @@ class Thread: public ThreadShadow {
   bool is_gc_locked_out() { return _gc_locked_out_count > 0; }
 #endif // CHECK_UNHANDLED_OOPS
 
+#ifndef PRODUCT
+  bool skip_gcalot()           { return _skip_gcalot; }
+  void set_skip_gcalot(bool v) { _skip_gcalot = v;    }
+#endif
+
  public:
   // Installs a pending exception to be inserted later
   static void send_async_exception(oop thread_oop, oop java_throwable);
@@ -374,7 +380,8 @@ class Thread: public ThreadShadow {
 
   // GC support
   // Apply "f->do_oop" to all root oops in "this".
-  void oops_do(OopClosure* f);
+  // Apply "cf->do_code_blob" (if !NULL) to all code blobs active in frames
+  void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   // Handles the parallel case for the method below.
 private:
@@ -398,20 +405,16 @@ public:
   }
 
   // Sweeper support
-  void nmethods_do();
-
-  // Fast-locking support
-  address highest_lock() const                   { return _highest_lock; }
-  void update_highest_lock(address base)         { if (base > _highest_lock) _highest_lock = base; }
+  void nmethods_do(CodeBlobClosure* cf);
 
   // Tells if adr belong to this thread. This is used
   // for checking if a lock is owned by the running thread.
-  // Warning: the method can only be used on the running thread
-  // Fast lock support uses these methods
-  virtual bool lock_is_in_stack(address adr) const;
+
+  // Used by fast lock support
   virtual bool is_lock_owned(address adr) const;
 
   // Check if address is in the stack of the thread (not just for locks).
+  // Warning: the method can only be used on the running thread
   bool is_in_stack(address adr) const;
 
   // Sets this thread as starting thread. Returns failure if thread
@@ -571,12 +574,18 @@ class NamedThread: public Thread {
   };
  private:
   char* _name;
+  // log JavaThread being processed by oops_do
+  JavaThread* _processed_thread;
+
  public:
   NamedThread();
   ~NamedThread();
   // May only be called once per thread.
   void set_name(const char* format, ...);
+  virtual bool is_Named_thread() const { return true; }
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
+  JavaThread *processed_thread() { return _processed_thread; }
+  void set_processed_thread(JavaThread *thread) { _processed_thread = thread; }
 };
 
 // Worker threads are named and have an id of an assigned work.
@@ -687,8 +696,13 @@ class JavaThread: public Thread {
   methodOop     _callee_target;
 
   // Oop results of VM runtime calls
-  oop           _vm_result;                      // Used to pass back an oop result into Java code, GC-preserved
-  oop           _vm_result_2;                    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result;    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result_2;  // Used to pass back an oop result into Java code, GC-preserved
+
+  // See ReduceInitialCardMarks: this holds the precise space interval of
+  // the most recent slow path allocation for which compiled code has
+  // elided card-marks for performance along the fast-path.
+  MemRegion     _deferred_card_mark;
 
   MonitorChunk* _monitor_chunks;                 // Contains the off stack monitors
                                                  // allocated during deoptimization
@@ -971,11 +985,6 @@ class JavaThread: public Thread {
     return (_suspend_flags & _ext_suspended) != 0;
   }
 
-  // legacy method that checked for either external suspension or vm suspension
-  bool is_any_suspended() const {
-    return is_ext_suspended();
-  }
-
   bool is_external_suspend_with_lock() const {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     return is_external_suspend();
@@ -1001,10 +1010,6 @@ class JavaThread: public Thread {
     return ret;
   }
 
-  bool is_any_suspended_with_lock() const {
-    MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
-    return is_any_suspended();
-  }
   // utility methods to see if we are doing some kind of suspension
   bool is_being_ext_suspended() const            {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
@@ -1093,6 +1098,9 @@ class JavaThread: public Thread {
 
   oop  vm_result_2() const                       { return _vm_result_2; }
   void set_vm_result_2  (oop x)                  { _vm_result_2   = x; }
+
+  MemRegion deferred_card_mark() const           { return _deferred_card_mark; }
+  void set_deferred_card_mark(MemRegion mr)      { _deferred_card_mark = mr;   }
 
   // Exception handling for compiled methods
   oop      exception_oop() const                 { return _exception_oop; }
@@ -1242,10 +1250,10 @@ class JavaThread: public Thread {
   void frames_do(void f(frame*, const RegisterMap*));
 
   // Memory operations
-  void oops_do(OopClosure* f);
+  void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   // Sweeper operations
-  void nmethods_do();
+  void nmethods_do(CodeBlobClosure* cf);
 
   // Memory management operations
   void gc_epilogue();
@@ -1345,6 +1353,13 @@ public:
  public:
   // Thread local information maintained by JVMTI.
   void set_jvmti_thread_state(JvmtiThreadState *value)                           { _jvmti_thread_state = value; }
+  // A JvmtiThreadState is lazily allocated. This jvmti_thread_state()
+  // getter is used to get this JavaThread's JvmtiThreadState if it has
+  // one which means NULL can be returned. JvmtiThreadState::state_for()
+  // is used to get the specified JavaThread's JvmtiThreadState if it has
+  // one or it allocates a new JvmtiThreadState for the JavaThread and
+  // returns it. JvmtiThreadState::state_for() will return NULL only if
+  // the specified JavaThread is exiting.
   JvmtiThreadState *jvmti_thread_state() const                                   { return _jvmti_thread_state; }
   static ByteSize jvmti_thread_state_offset()                                    { return byte_offset_of(JavaThread, _jvmti_thread_state); }
   void set_jvmti_get_loaded_classes_closure(JvmtiGetLoadedClassesClosure* value) { _jvmti_get_loaded_classes_closure = value; }
@@ -1626,9 +1641,9 @@ class Threads: AllStatic {
 
   // Apply "f->do_oop" to all root oops in all threads.
   // This version may only be called by sequential code.
-  static void oops_do(OopClosure* f);
+  static void oops_do(OopClosure* f, CodeBlobClosure* cf);
   // This version may be called by sequential or parallel code.
-  static void possibly_parallel_oops_do(OopClosure* f);
+  static void possibly_parallel_oops_do(OopClosure* f, CodeBlobClosure* cf);
   // This creates a list of GCTasks, one per thread.
   static void create_thread_roots_tasks(GCTaskQueue* q);
   // This creates a list of GCTasks, one per thread, for marking objects.
@@ -1636,13 +1651,13 @@ class Threads: AllStatic {
 
   // Apply "f->do_oop" to roots in all threads that
   // are part of compiled frames
-  static void compiled_frame_oops_do(OopClosure* f);
+  static void compiled_frame_oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   static void convert_hcode_pointers();
   static void restore_hcode_pointers();
 
   // Sweeper
-  static void nmethods_do();
+  static void nmethods_do(CodeBlobClosure* cf);
 
   static void gc_epilogue();
   static void gc_prologue();

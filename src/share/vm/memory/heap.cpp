@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,7 @@ bool CodeHeap::reserve(size_t reserved_size, size_t committed_size,
 
   const size_t rs_align = page_size == (size_t) os::vm_page_size() ? 0 :
     MAX2(page_size, granularity);
-  ReservedSpace rs(r_size, rs_align, rs_align > 0);
+  ReservedCodeSpace rs(r_size, rs_align, rs_align > 0);
   os::trace_page_sizes("code heap", committed_size, reserved_size, page_size,
                        rs.base(), rs.size());
   if (!_memory.initialize(rs, c_size)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,7 +107,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
   // are saved in register windows - I's and L's in the caller's frame and O's in the stub frame
   // (as the stub's I's) when the runtime routine called by the stub creates its frame.
   int i;
-  // Always make the frame size 16 bytr aligned.
+  // Always make the frame size 16 byte aligned.
   int frame_size = round_to(additional_frame_words + register_save_size, 16);
   // OopMap frame size is in c2 stack slots (sizeof(jint)) not bytes or words
   int frame_size_in_slots = frame_size / sizeof(jint);
@@ -201,15 +201,14 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
   __ stx(G5, SP, ccr_offset+STACK_BIAS);
   __ stxfsr(SP, fsr_offset+STACK_BIAS);
 
-  // Save all the FP registers
+  // Save all the FP registers: 32 doubles (32 floats correspond to the 2 halves of the first 16 doubles)
   int offset = d00_offset;
-  for( int i=0; i<64; i+=2 ) {
+  for( int i=0; i<FloatRegisterImpl::number_of_registers; i+=2 ) {
     FloatRegister f = as_FloatRegister(i);
     __ stf(FloatRegisterImpl::D,  f, SP, offset+STACK_BIAS);
+    // Record as callee saved both halves of double registers (2 float registers).
     map->set_callee_saved(VMRegImpl::stack2reg(offset>>2), f->as_VMReg());
-    if (true) {
-      map->set_callee_saved(VMRegImpl::stack2reg((offset + sizeof(float))>>2), f->as_VMReg()->next());
-    }
+    map->set_callee_saved(VMRegImpl::stack2reg((offset + sizeof(float))>>2), f->as_VMReg()->next());
     offset += sizeof(double);
   }
 
@@ -224,7 +223,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
 void RegisterSaver::restore_live_registers(MacroAssembler* masm) {
 
   // Restore all the FP registers
-  for( int i=0; i<64; i+=2 ) {
+  for( int i=0; i<FloatRegisterImpl::number_of_registers; i+=2 ) {
     __ ldf(FloatRegisterImpl::D, SP, d00_offset+i*sizeof(float)+STACK_BIAS, as_FloatRegister(i));
   }
 
@@ -540,14 +539,12 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
 
 }
 
-// Helper class mostly to avoid passing masm everywhere, and handle store
-// displacement overflow logic for LP64
+// Helper class mostly to avoid passing masm everywhere, and handle
+// store displacement overflow logic.
 class AdapterGenerator {
   MacroAssembler *masm;
-#ifdef _LP64
   Register Rdisp;
   void set_Rdisp(Register r)  { Rdisp = r; }
-#endif // _LP64
 
   void patch_callers_callsite();
   void tag_c2i_arg(frame::Tag t, Register base, int st_off, Register scratch);
@@ -558,15 +555,18 @@ class AdapterGenerator {
     return st_off - Interpreter::stackElementSize() + Interpreter::value_offset_in_bytes();
   }
 
-#ifdef _LP64
-  // On _LP64 argument slot values are loaded first into a register
-  // because they might not fit into displacement.
-  Register arg_slot(const int st_off);
-  Register next_arg_slot(const int st_off);
-#else
-  int arg_slot(const int st_off)      { return arg_offset(st_off); }
-  int next_arg_slot(const int st_off) { return next_arg_offset(st_off); }
-#endif // _LP64
+  int tag_offset(const int st_off) { return st_off + Interpreter::tag_offset_in_bytes(); }
+  int next_tag_offset(const int st_off) {
+    return st_off - Interpreter::stackElementSize() + Interpreter::tag_offset_in_bytes();
+  }
+
+  // Argument slot values may be loaded first into a register because
+  // they might not fit into displacement.
+  RegisterOrConstant arg_slot(const int st_off);
+  RegisterOrConstant next_arg_slot(const int st_off);
+
+  RegisterOrConstant tag_slot(const int st_off);
+  RegisterOrConstant next_tag_slot(const int st_off);
 
   // Stores long into offset pointed to by base
   void store_c2i_long(Register r, Register base,
@@ -625,9 +625,9 @@ void AdapterGenerator::patch_callers_callsite() {
   __ mov(I7, O1);                // VM needs caller's callsite
   // Must be a leaf call...
   // can be very far once the blob has been relocated
-  Address dest(O7, CAST_FROM_FN_PTR(address, SharedRuntime::fixup_callers_callsite));
+  AddressLiteral dest(CAST_FROM_FN_PTR(address, SharedRuntime::fixup_callers_callsite));
   __ relocate(relocInfo::runtime_call_type);
-  __ jumpl_to(dest, O7);
+  __ jumpl_to(dest, O7, O7);
   __ delayed()->mov(G2_thread, L7_thread_cache);
   __ mov(L7_thread_cache, G2_thread);
   __ mov(L1, G1);
@@ -656,44 +656,42 @@ void AdapterGenerator::patch_callers_callsite() {
 void AdapterGenerator::tag_c2i_arg(frame::Tag t, Register base, int st_off,
                  Register scratch) {
   if (TaggedStackInterpreter) {
-    int tag_off = st_off + Interpreter::tag_offset_in_bytes();
-#ifdef _LP64
-    Register tag_slot = Rdisp;
-    __ set(tag_off, tag_slot);
-#else
-    int tag_slot = tag_off;
-#endif // _LP64
+    RegisterOrConstant slot = tag_slot(st_off);
     // have to store zero because local slots can be reused (rats!)
     if (t == frame::TagValue) {
-      __ st_ptr(G0, base, tag_slot);
+      __ st_ptr(G0, base, slot);
     } else if (t == frame::TagCategory2) {
-      __ st_ptr(G0, base, tag_slot);
-      int next_tag_off  = st_off - Interpreter::stackElementSize() +
-                                   Interpreter::tag_offset_in_bytes();
-#ifdef _LP64
-      __ set(next_tag_off, tag_slot);
-#else
-      tag_slot = next_tag_off;
-#endif // _LP64
-      __ st_ptr(G0, base, tag_slot);
+      __ st_ptr(G0, base, slot);
+      __ st_ptr(G0, base, next_tag_slot(st_off));
     } else {
       __ mov(t, scratch);
-      __ st_ptr(scratch, base, tag_slot);
+      __ st_ptr(scratch, base, slot);
     }
   }
 }
 
-#ifdef _LP64
-Register AdapterGenerator::arg_slot(const int st_off) {
-  __ set( arg_offset(st_off), Rdisp);
-  return Rdisp;
+
+RegisterOrConstant AdapterGenerator::arg_slot(const int st_off) {
+  RegisterOrConstant roc(arg_offset(st_off));
+  return __ ensure_simm13_or_reg(roc, Rdisp);
 }
 
-Register AdapterGenerator::next_arg_slot(const int st_off){
-  __ set( next_arg_offset(st_off), Rdisp);
-  return Rdisp;
+RegisterOrConstant AdapterGenerator::next_arg_slot(const int st_off) {
+  RegisterOrConstant roc(next_arg_offset(st_off));
+  return __ ensure_simm13_or_reg(roc, Rdisp);
 }
-#endif // _LP64
+
+
+RegisterOrConstant AdapterGenerator::tag_slot(const int st_off) {
+  RegisterOrConstant roc(tag_offset(st_off));
+  return __ ensure_simm13_or_reg(roc, Rdisp);
+}
+
+RegisterOrConstant AdapterGenerator::next_tag_slot(const int st_off) {
+  RegisterOrConstant roc(next_tag_offset(st_off));
+  return __ ensure_simm13_or_reg(roc, Rdisp);
+}
+
 
 // Stores long into offset pointed to by base
 void AdapterGenerator::store_c2i_long(Register r, Register base,
@@ -937,12 +935,12 @@ void AdapterGenerator::gen_i2c_adapter(
   // Inputs:
   // G2_thread      - TLS
   // G5_method      - Method oop
-  // O0             - Flag telling us to restore SP from O5
-  // O4_args        - Pointer to interpreter's args
-  // O5             - Caller's saved SP, to be restored if needed
+  // G4 (Gargs)     - Pointer to interpreter's args
+  // O0..O4         - free for scratch
+  // O5_savedSP     - Caller's saved SP, to be restored if needed
   // O6             - Current SP!
   // O7             - Valid return address
-  // L0-L7, I0-I7    - Caller's temps (no frame pushed yet)
+  // L0-L7, I0-I7   - Caller's temps (no frame pushed yet)
 
   // Outputs:
   // G2_thread      - TLS
@@ -954,7 +952,7 @@ void AdapterGenerator::gen_i2c_adapter(
   // F0-F7          - more outgoing args
 
 
-  // O4 is about to get loaded up with compiled callee's args
+  // Gargs is the incoming argument base, and also an outgoing argument.
   __ sub(Gargs, BytesPerWord, Gargs);
 
 #ifdef ASSERT
@@ -1052,9 +1050,7 @@ void AdapterGenerator::gen_i2c_adapter(
 
     // Load in argument order going down.
     const int ld_off = (total_args_passed-i)*Interpreter::stackElementSize();
-#ifdef _LP64
     set_Rdisp(G1_scratch);
-#endif // _LP64
 
     VMReg r_1 = regs[i].first();
     VMReg r_2 = regs[i].second();
@@ -1074,7 +1070,7 @@ void AdapterGenerator::gen_i2c_adapter(
 #ifdef _LP64
         // In V9, longs are given 2 64-bit slots in the interpreter, but the
         // data is passed in only 1 slot.
-        Register slot = (sig_bt[i]==T_LONG) ?
+        RegisterOrConstant slot = (sig_bt[i] == T_LONG) ?
               next_arg_slot(ld_off) : arg_slot(ld_off);
         __ ldx(Gargs, slot, r);
 #else
@@ -1092,7 +1088,7 @@ void AdapterGenerator::gen_i2c_adapter(
         // data is passed in only 1 slot.  This code also handles longs that
         // are passed on the stack, but need a stack-to-stack move through a
         // spare float register.
-        Register slot = (sig_bt[i]==T_LONG || sig_bt[i] == T_DOUBLE) ?
+        RegisterOrConstant slot = (sig_bt[i] == T_LONG || sig_bt[i] == T_DOUBLE) ?
               next_arg_slot(ld_off) : arg_slot(ld_off);
         __ ldf(FloatRegisterImpl::D, Gargs, slot, r_1->as_FloatRegister());
 #else
@@ -1109,8 +1105,9 @@ void AdapterGenerator::gen_i2c_adapter(
       // Convert stack slot to an SP offset
       int st_off = reg2offset(regs[i].first()) + STACK_BIAS;
       // Store down the shuffled stack word.  Target address _is_ aligned.
-      if (!r_2->is_valid()) __ stf(FloatRegisterImpl::S, r_1->as_FloatRegister(), SP, st_off);
-      else                  __ stf(FloatRegisterImpl::D, r_1->as_FloatRegister(), SP, st_off);
+      RegisterOrConstant slot = __ ensure_simm13_or_reg(st_off, Rdisp);
+      if (!r_2->is_valid()) __ stf(FloatRegisterImpl::S, r_1->as_FloatRegister(), SP, slot);
+      else                  __ stf(FloatRegisterImpl::D, r_1->as_FloatRegister(), SP, slot);
     }
   }
   bool made_space = false;
@@ -1152,7 +1149,7 @@ void AdapterGenerator::gen_i2c_adapter(
 #ifndef _LP64
     if (g3_crushed) {
       // Rats load was wasted, at least it is in cache...
-      __ ld_ptr(G5_method, in_bytes(methodOopDesc::from_compiled_offset()), G3);
+      __ ld_ptr(G5_method, methodOopDesc::from_compiled_offset(), G3);
     }
 #endif /* _LP64 */
 
@@ -1165,7 +1162,7 @@ void AdapterGenerator::gen_i2c_adapter(
     // we try and find the callee by normal means a safepoint
     // is possible. So we stash the desired callee in the thread
     // and the vm will find there should this case occur.
-    Address callee_target_addr(G2_thread, 0, in_bytes(JavaThread::callee_target_offset()));
+    Address callee_target_addr(G2_thread, JavaThread::callee_target_offset());
     __ st_ptr(G5_method, callee_target_addr);
 
     if (StressNonEntrant) {
@@ -1218,7 +1215,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
     Register R_temp   = G1;   // another scratch register
 #endif
 
-    Address ic_miss(G3_scratch, SharedRuntime::get_ic_miss_stub());
+    AddressLiteral ic_miss(SharedRuntime::get_ic_miss_stub());
 
     __ verify_oop(O0);
     __ verify_oop(G5_method);
@@ -1240,7 +1237,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
     Label ok, ok2;
     __ brx(Assembler::equal, false, Assembler::pt, ok);
     __ delayed()->ld_ptr(G5_method, compiledICHolderOopDesc::holder_method_offset(), G5_method);
-    __ jump_to(ic_miss);
+    __ jump_to(ic_miss, G3_scratch);
     __ delayed()->nop();
 
     __ bind(ok);
@@ -1251,7 +1248,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
     __ bind(ok2);
     __ br_null(G3_scratch, false, __ pt, skip_fixup);
     __ delayed()->ld_ptr(G5_method, in_bytes(methodOopDesc::interpreter_entry_offset()), G3_scratch);
-    __ jump_to(ic_miss);
+    __ jump_to(ic_miss, G3_scratch);
     __ delayed()->nop();
 
   }
@@ -1444,8 +1441,8 @@ static void check_forward_pending_exception(MacroAssembler *masm, Register Rex_o
   // without calling into the VM: it's the empty function.  Just pop this
   // frame and then jump to forward_exception_entry; O7 will contain the
   // native caller's return PC.
-  Address exception_entry(G3_scratch, StubRoutines::forward_exception_entry());
-  __ jump_to(exception_entry);
+ AddressLiteral exception_entry(StubRoutines::forward_exception_entry());
+  __ jump_to(exception_entry, G3_scratch);
   __ delayed()->restore();      // Pop this frame off.
   __ bind(L);
 }
@@ -1822,14 +1819,14 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   {
     Label L;
     const Register temp_reg = G3_scratch;
-    Address ic_miss(temp_reg, SharedRuntime::get_ic_miss_stub());
+    AddressLiteral ic_miss(SharedRuntime::get_ic_miss_stub());
     __ verify_oop(O0);
     __ load_klass(O0, temp_reg);
     __ cmp(temp_reg, G5_inline_cache_reg);
     __ brx(Assembler::equal, true, Assembler::pt, L);
     __ delayed()->nop();
 
-    __ jump_to(ic_miss, 0);
+    __ jump_to(ic_miss, temp_reg);
     __ delayed()->nop();
     __ align(CodeEntryAlignment);
     __ bind(L);
@@ -2161,6 +2158,18 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     __ restore();
   }
 
+  // RedefineClasses() tracing support for obsolete method entry
+  if (RC_TRACE_IN_RANGE(0x00001000, 0x00002000)) {
+    // create inner frame
+    __ save_frame(0);
+    __ mov(G2_thread, L7_thread_cache);
+    __ set_oop_constant(JNIHandles::make_local(method()), O1);
+    __ call_VM_leaf(L7_thread_cache,
+         CAST_FROM_FN_PTR(address, SharedRuntime::rc_trace_method_entry),
+         G2_thread, O1);
+    __ restore();
+  }
+
   // We are in the jni frame unless saved_frame is true in which case
   // we are in one frame deeper (the "inner" frame). If we are in the
   // "inner" frames the args are in the Iregs and if the jni frame then
@@ -2249,21 +2258,19 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
   // Transition from _thread_in_Java to _thread_in_native.
   __ set(_thread_in_native, G3_scratch);
-  __ st(G3_scratch, G2_thread, in_bytes(JavaThread::thread_state_offset()));
+  __ st(G3_scratch, G2_thread, JavaThread::thread_state_offset());
 
   // We flushed the windows ages ago now mark them as flushed
 
   // mark windows as flushed
   __ set(JavaFrameAnchor::flushed, G3_scratch);
 
-  Address flags(G2_thread,
-                0,
-                in_bytes(JavaThread::frame_anchor_offset()) + in_bytes(JavaFrameAnchor::flags_offset()));
+  Address flags(G2_thread, JavaThread::frame_anchor_offset() + JavaFrameAnchor::flags_offset());
 
 #ifdef _LP64
-  Address dest(O7, method->native_function());
+  AddressLiteral dest(method->native_function());
   __ relocate(relocInfo::runtime_call_type);
-  __ jumpl_to(dest, O7);
+  __ jumpl_to(dest, O7, O7);
 #else
   __ call(method->native_function(), relocInfo::runtime_call_type);
 #endif
@@ -2304,7 +2311,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // Block, if necessary, before resuming in _thread_in_Java state.
   // In order for GC to work, don't clear the last_Java_sp until after blocking.
   { Label no_block;
-    Address sync_state(G3_scratch, SafepointSynchronize::address_of_state());
+    AddressLiteral sync_state(SafepointSynchronize::address_of_state());
 
     // Switch thread to "native transition" state before reading the synchronization state.
     // This additional state is necessary because reading and testing the synchronization
@@ -2314,7 +2321,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     //     Thread A is resumed to finish this native method, but doesn't block here since it
     //     didn't see any synchronization is progress, and escapes.
     __ set(_thread_in_native_trans, G3_scratch);
-    __ st(G3_scratch, G2_thread, in_bytes(JavaThread::thread_state_offset()));
+    __ st(G3_scratch, G2_thread, JavaThread::thread_state_offset());
     if(os::is_MP()) {
       if (UseMembar) {
         // Force this write out before the read below
@@ -2331,10 +2338,9 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     __ cmp(G3_scratch, SafepointSynchronize::_not_synchronized);
 
     Label L;
-    Address suspend_state(G2_thread, 0, in_bytes(JavaThread::suspend_flags_offset()));
+    Address suspend_state(G2_thread, JavaThread::suspend_flags_offset());
     __ br(Assembler::notEqual, false, Assembler::pn, L);
-    __ delayed()->
-      ld(suspend_state, G3_scratch);
+    __ delayed()->ld(suspend_state, G3_scratch);
     __ cmp(G3_scratch, 0);
     __ br(Assembler::equal, false, Assembler::pt, no_block);
     __ delayed()->nop();
@@ -2360,11 +2366,11 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
 
   __ set(_thread_in_Java, G3_scratch);
-  __ st(G3_scratch, G2_thread, in_bytes(JavaThread::thread_state_offset()));
+  __ st(G3_scratch, G2_thread, JavaThread::thread_state_offset());
 
 
   Label no_reguard;
-  __ ld(G2_thread, in_bytes(JavaThread::stack_guard_state_offset()), G3_scratch);
+  __ ld(G2_thread, JavaThread::stack_guard_state_offset(), G3_scratch);
   __ cmp(G3_scratch, JavaThread::stack_guard_yellow_disabled);
   __ br(Assembler::notEqual, false, Assembler::pt, no_reguard);
   __ delayed()->nop();
@@ -2672,14 +2678,14 @@ nmethod *SharedRuntime::generate_dtrace_nmethod(
   {
     Label L;
     const Register temp_reg = G3_scratch;
-    Address ic_miss(temp_reg, SharedRuntime::get_ic_miss_stub());
+    AddressLiteral ic_miss(SharedRuntime::get_ic_miss_stub());
     __ verify_oop(O0);
     __ ld_ptr(O0, oopDesc::klass_offset_in_bytes(), temp_reg);
     __ cmp(temp_reg, G5_inline_cache_reg);
     __ brx(Assembler::equal, true, Assembler::pt, L);
     __ delayed()->nop();
 
-    __ jump_to(ic_miss, 0);
+    __ jump_to(ic_miss, temp_reg);
     __ delayed()->nop();
     __ align(CodeEntryAlignment);
     __ bind(L);
@@ -3143,15 +3149,13 @@ static void make_new_frames(MacroAssembler* masm, bool deopt) {
   // Do this after the caller's return address is on top of stack
   if (UseStackBanging) {
     // Get total frame size for interpreted frames
-    __ ld(Address(O2UnrollBlock, 0,
-         Deoptimization::UnrollBlock::total_frame_sizes_offset_in_bytes()), O4);
+    __ ld(O2UnrollBlock, Deoptimization::UnrollBlock::total_frame_sizes_offset_in_bytes(), O4);
     __ bang_stack_size(O4, O3, G3_scratch);
   }
 
-  __ ld(Address(O2UnrollBlock, 0, Deoptimization::UnrollBlock::number_of_frames_offset_in_bytes()), O4array_size);
-  __ ld_ptr(Address(O2UnrollBlock, 0, Deoptimization::UnrollBlock::frame_pcs_offset_in_bytes()), G3pcs);
-
-  __ ld_ptr(Address(O2UnrollBlock, 0, Deoptimization::UnrollBlock::frame_sizes_offset_in_bytes()), O3array);
+  __ ld(O2UnrollBlock, Deoptimization::UnrollBlock::number_of_frames_offset_in_bytes(), O4array_size);
+  __ ld_ptr(O2UnrollBlock, Deoptimization::UnrollBlock::frame_pcs_offset_in_bytes(), G3pcs);
+  __ ld_ptr(O2UnrollBlock, Deoptimization::UnrollBlock::frame_sizes_offset_in_bytes(), O3array);
 
   // Adjust old interpreter frame to make space for new frame's extra java locals
   //
@@ -3164,7 +3168,7 @@ static void make_new_frames(MacroAssembler* masm, bool deopt) {
   // for each frame we create and keep up the illusion every where.
   //
 
-  __ ld(Address(O2UnrollBlock, 0, Deoptimization::UnrollBlock::caller_adjustment_offset_in_bytes()), O7);
+  __ ld(O2UnrollBlock, Deoptimization::UnrollBlock::caller_adjustment_offset_in_bytes(), O7);
   __ mov(SP, O5_savedSP);       // remember initial sender's original sp before adjustment
   __ sub(SP, O7, SP);
 
@@ -3209,13 +3213,12 @@ void SharedRuntime::generate_deopt_blob() {
   Register        Oreturn0           = O0;
   Register        Oreturn1           = O1;
   Register        O2UnrollBlock      = O2;
-  Register        O3tmp              = O3;
-  Register        I5exception_tmp    = I5;
-  Register        G4exception_tmp    = G4_scratch;
+  Register        L0deopt_mode       = L0;
+  Register        G4deopt_mode       = G4_scratch;
   int             frame_size_words;
-  Address         saved_Freturn0_addr(FP, 0, -sizeof(double) + STACK_BIAS);
+  Address         saved_Freturn0_addr(FP, -sizeof(double) + STACK_BIAS);
 #if !defined(_LP64) && defined(COMPILER2)
-  Address         saved_Greturn1_addr(FP, 0, -sizeof(double) -sizeof(jlong) + STACK_BIAS);
+  Address         saved_Greturn1_addr(FP, -sizeof(double) -sizeof(jlong) + STACK_BIAS);
 #endif
   Label           cont;
 
@@ -3261,7 +3264,7 @@ void SharedRuntime::generate_deopt_blob() {
 
   map = RegisterSaver::save_live_registers(masm, 0, &frame_size_words);
   __ ba(false, cont);
-  __ delayed()->mov(Deoptimization::Unpack_deopt, I5exception_tmp);
+  __ delayed()->mov(Deoptimization::Unpack_deopt, L0deopt_mode);
 
   int exception_offset = __ offset() - start;
 
@@ -3277,7 +3280,7 @@ void SharedRuntime::generate_deopt_blob() {
   // save exception oop in JavaThread and fall through into the
   // exception_in_tls case since they are handled in same way except
   // for where the pending exception is kept.
-  __ st_ptr(Oexception, G2_thread, in_bytes(JavaThread::exception_oop_offset()));
+  __ st_ptr(Oexception, G2_thread, JavaThread::exception_oop_offset());
 
   //
   // Vanilla deoptimization with an exception pending in exception_oop
@@ -3294,7 +3297,7 @@ void SharedRuntime::generate_deopt_blob() {
   {
     // verify that there is really an exception oop in exception_oop
     Label has_exception;
-    __ ld_ptr(G2_thread, in_bytes(JavaThread::exception_oop_offset()), Oexception);
+    __ ld_ptr(G2_thread, JavaThread::exception_oop_offset(), Oexception);
     __ br_notnull(Oexception, false, Assembler::pt, has_exception);
     __ delayed()-> nop();
     __ stop("no exception in thread");
@@ -3302,7 +3305,7 @@ void SharedRuntime::generate_deopt_blob() {
 
     // verify that there is no pending exception
     Label no_pending_exception;
-    Address exception_addr(G2_thread, 0, in_bytes(Thread::pending_exception_offset()));
+    Address exception_addr(G2_thread, Thread::pending_exception_offset());
     __ ld_ptr(exception_addr, Oexception);
     __ br_null(Oexception, false, Assembler::pt, no_pending_exception);
     __ delayed()->nop();
@@ -3312,7 +3315,7 @@ void SharedRuntime::generate_deopt_blob() {
 #endif
 
   __ ba(false, cont);
-  __ delayed()->mov(Deoptimization::Unpack_exception, I5exception_tmp);;
+  __ delayed()->mov(Deoptimization::Unpack_exception, L0deopt_mode);;
 
   //
   // Reexecute entry, similar to c2 uncommon trap
@@ -3322,7 +3325,7 @@ void SharedRuntime::generate_deopt_blob() {
   // No need to update oop_map  as each call to save_live_registers will produce identical oopmap
   (void) RegisterSaver::save_live_registers(masm, 0, &frame_size_words);
 
-  __ mov(Deoptimization::Unpack_reexecute, I5exception_tmp);
+  __ mov(Deoptimization::Unpack_reexecute, L0deopt_mode);
 
   __ bind(cont);
 
@@ -3345,14 +3348,14 @@ void SharedRuntime::generate_deopt_blob() {
   // NOTE: we know that only O0/O1 will be reloaded by restore_result_registers
   // so this move will survive
 
-  __ mov(I5exception_tmp, G4exception_tmp);
+  __ mov(L0deopt_mode, G4deopt_mode);
 
   __ mov(O0, O2UnrollBlock->after_save());
 
   RegisterSaver::restore_result_registers(masm);
 
   Label noException;
-  __ cmp(G4exception_tmp, Deoptimization::Unpack_exception);   // Was exception pending?
+  __ cmp(G4deopt_mode, Deoptimization::Unpack_exception);   // Was exception pending?
   __ br(Assembler::notEqual, false, Assembler::pt, noException);
   __ delayed()->nop();
 
@@ -3386,10 +3389,10 @@ void SharedRuntime::generate_deopt_blob() {
   }
 #endif
   __ set_last_Java_frame(SP, noreg);
-  __ call_VM_leaf(L7_thread_cache, CAST_FROM_FN_PTR(address, Deoptimization::unpack_frames), G2_thread, G4exception_tmp);
+  __ call_VM_leaf(L7_thread_cache, CAST_FROM_FN_PTR(address, Deoptimization::unpack_frames), G2_thread, G4deopt_mode);
 #else
   // LP64 uses g4 in set_last_Java_frame
-  __ mov(G4exception_tmp, O1);
+  __ mov(G4deopt_mode, O1);
   __ set_last_Java_frame(SP, G0);
   __ call_VM_leaf(L7_thread_cache, CAST_FROM_FN_PTR(address, Deoptimization::unpack_frames), G2_thread, O1);
 #endif
@@ -3442,7 +3445,6 @@ void SharedRuntime::generate_uncommon_trap_blob() {
 #endif
   MacroAssembler* masm               = new MacroAssembler(&buffer);
   Register        O2UnrollBlock      = O2;
-  Register        O3tmp              = O3;
   Register        O2klass_index      = O2;
 
   //

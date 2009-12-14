@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,7 @@ void instanceKlassKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(ik->adr_host_klass());
   MarkSweep::mark_and_push(ik->adr_signers());
   MarkSweep::mark_and_push(ik->adr_generic_signature());
+  MarkSweep::mark_and_push(ik->adr_bootstrap_method());
   MarkSweep::mark_and_push(ik->adr_class_annotations());
   MarkSweep::mark_and_push(ik->adr_fields_annotations());
   MarkSweep::mark_and_push(ik->adr_methods_annotations());
@@ -124,6 +125,7 @@ void instanceKlassKlass::oop_follow_contents(ParCompactionManager* cm,
   PSParallelCompact::mark_and_push(cm, ik->adr_host_klass());
   PSParallelCompact::mark_and_push(cm, ik->adr_signers());
   PSParallelCompact::mark_and_push(cm, ik->adr_generic_signature());
+  PSParallelCompact::mark_and_push(cm, ik->adr_bootstrap_method());
   PSParallelCompact::mark_and_push(cm, ik->adr_class_annotations());
   PSParallelCompact::mark_and_push(cm, ik->adr_fields_annotations());
   PSParallelCompact::mark_and_push(cm, ik->adr_methods_annotations());
@@ -170,6 +172,7 @@ int instanceKlassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
     blk->do_oop(&ik->adr_implementors()[i]);
   }
   blk->do_oop(ik->adr_generic_signature());
+  blk->do_oop(ik->adr_bootstrap_method());
   blk->do_oop(ik->adr_class_annotations());
   blk->do_oop(ik->adr_fields_annotations());
   blk->do_oop(ik->adr_methods_annotations());
@@ -230,6 +233,8 @@ int instanceKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
   }
   adr = ik->adr_generic_signature();
   if (mr.contains(adr)) blk->do_oop(adr);
+  adr = ik->adr_bootstrap_method();
+  if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_class_annotations();
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_fields_annotations();
@@ -274,6 +279,7 @@ int instanceKlassKlass::oop_adjust_pointers(oop obj) {
     MarkSweep::adjust_pointer(&ik->adr_implementors()[i]);
   }
   MarkSweep::adjust_pointer(ik->adr_generic_signature());
+  MarkSweep::adjust_pointer(ik->adr_bootstrap_method());
   MarkSweep::adjust_pointer(ik->adr_class_annotations());
   MarkSweep::adjust_pointer(ik->adr_fields_annotations());
   MarkSweep::adjust_pointer(ik->adr_methods_annotations());
@@ -311,6 +317,11 @@ void instanceKlassKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
     pm->claim_or_forward_breadth(sg_addr);
   }
 
+  oop* bsm_addr = ik->adr_bootstrap_method();
+  if (PSScavenge::should_scavenge(bsm_addr)) {
+    pm->claim_or_forward_breadth(bsm_addr);
+  }
+
   klassKlass::oop_copy_contents(pm, obj);
 }
 
@@ -337,6 +348,11 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   oop* sg_addr = ik->adr_signers();
   if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_depth(sg_addr);
+  }
+
+  oop* bsm_addr = ik->adr_bootstrap_method();
+  if (PSScavenge::should_scavenge(bsm_addr)) {
+    pm->claim_or_forward_depth(bsm_addr);
   }
 
   klassKlass::oop_copy_contents(pm, obj);
@@ -396,9 +412,14 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 }
 #endif // SERIALGC
 
-klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len, int static_field_size,
-                                                     int nonstatic_oop_map_size, ReferenceType rt, TRAPS) {
+klassOop
+instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
+                                            int static_field_size,
+                                            unsigned nonstatic_oop_map_count,
+                                            ReferenceType rt, TRAPS) {
 
+  const int nonstatic_oop_map_size =
+    instanceKlass::nonstatic_oop_map_size(nonstatic_oop_map_count);
   int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + static_field_size + nonstatic_oop_map_size);
 
   // Allocation
@@ -454,6 +475,7 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
     ik->set_breakpoints(NULL);
     ik->init_previous_versions();
     ik->set_generic_signature(NULL);
+    ik->set_bootstrap_method(NULL);
     ik->release_set_methods_jmethod_ids(NULL);
     ik->release_set_methods_cached_itable_indices(NULL);
     ik->set_class_annotations(NULL);
@@ -487,6 +509,8 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
 
 // Printing
 
+#define BULLET  " - "
+
 static const char* state_names[] = {
   "unparseable_by_gc", "allocated", "loaded", "linked", "being_initialized", "fully_initialized", "initialization_error"
 };
@@ -497,13 +521,13 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
   klassKlass::oop_print_on(obj, st);
 
-  st->print(" - instance size:     %d", ik->size_helper());                        st->cr();
-  st->print(" - klass size:        %d", ik->object_size());                        st->cr();
-  st->print(" - access:            "); ik->access_flags().print_on(st);            st->cr();
-  st->print(" - state:             "); st->print_cr(state_names[ik->_init_state]);
-  st->print(" - name:              "); ik->name()->print_value_on(st);             st->cr();
-  st->print(" - super:             "); ik->super()->print_value_on(st);            st->cr();
-  st->print(" - sub:               ");
+  st->print(BULLET"instance size:     %d", ik->size_helper());                        st->cr();
+  st->print(BULLET"klass size:        %d", ik->object_size());                        st->cr();
+  st->print(BULLET"access:            "); ik->access_flags().print_on(st);            st->cr();
+  st->print(BULLET"state:             "); st->print_cr(state_names[ik->_init_state]);
+  st->print(BULLET"name:              "); ik->name()->print_value_on(st);             st->cr();
+  st->print(BULLET"super:             "); ik->super()->print_value_on(st);            st->cr();
+  st->print(BULLET"sub:               ");
   Klass* sub = ik->subklass();
   int n;
   for (n = 0; sub != NULL; n++, sub = sub->next_sibling()) {
@@ -516,12 +540,12 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->cr();
 
   if (ik->is_interface()) {
-    st->print_cr(" - nof implementors:  %d", ik->nof_implementors());
+    st->print_cr(BULLET"nof implementors:  %d", ik->nof_implementors());
     int print_impl = 0;
     for (int i = 0; i < instanceKlass::implementors_limit; i++) {
       if (ik->implementor(i) != NULL) {
         if (++print_impl == 1)
-          st->print_cr(" - implementor:    ");
+          st->print_cr(BULLET"implementor:    ");
         st->print("   ");
         ik->implementor(i)->print_value_on(st);
       }
@@ -529,34 +553,33 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
     if (print_impl > 0)  st->cr();
   }
 
-  st->print(" - arrays:            "); ik->array_klasses()->print_value_on(st);     st->cr();
-  st->print(" - methods:           "); ik->methods()->print_value_on(st);           st->cr();
+  st->print(BULLET"arrays:            "); ik->array_klasses()->print_value_on(st);     st->cr();
+  st->print(BULLET"methods:           "); ik->methods()->print_value_on(st);           st->cr();
   if (Verbose) {
     objArrayOop methods = ik->methods();
     for(int i = 0; i < methods->length(); i++) {
       tty->print("%d : ", i); methods->obj_at(i)->print_value(); tty->cr();
     }
   }
-  st->print(" - method ordering:   "); ik->method_ordering()->print_value_on(st);       st->cr();
-  st->print(" - local interfaces:  "); ik->local_interfaces()->print_value_on(st);      st->cr();
-  st->print(" - trans. interfaces: "); ik->transitive_interfaces()->print_value_on(st); st->cr();
-  st->print(" - constants:         "); ik->constants()->print_value_on(st);         st->cr();
-  st->print(" - class loader:      "); ik->class_loader()->print_value_on(st);      st->cr();
-  st->print(" - protection domain: "); ik->protection_domain()->print_value_on(st); st->cr();
-  st->print(" - host class: ");        ik->host_klass()->print_value_on(st);        st->cr();
-  st->print(" - signers:           "); ik->signers()->print_value_on(st);           st->cr();
+  st->print(BULLET"method ordering:   "); ik->method_ordering()->print_value_on(st);       st->cr();
+  st->print(BULLET"local interfaces:  "); ik->local_interfaces()->print_value_on(st);      st->cr();
+  st->print(BULLET"trans. interfaces: "); ik->transitive_interfaces()->print_value_on(st); st->cr();
+  st->print(BULLET"constants:         "); ik->constants()->print_value_on(st);         st->cr();
+  st->print(BULLET"class loader:      "); ik->class_loader()->print_value_on(st);      st->cr();
+  st->print(BULLET"protection domain: "); ik->protection_domain()->print_value_on(st); st->cr();
+  st->print(BULLET"host class:        "); ik->host_klass()->print_value_on(st);        st->cr();
+  st->print(BULLET"signers:           "); ik->signers()->print_value_on(st);           st->cr();
   if (ik->source_file_name() != NULL) {
-    st->print(" - source file:       ");
+    st->print(BULLET"source file:       ");
     ik->source_file_name()->print_value_on(st);
     st->cr();
   }
   if (ik->source_debug_extension() != NULL) {
-    st->print(" - source debug extension:       ");
+    st->print(BULLET"source debug extension:       ");
     ik->source_debug_extension()->print_value_on(st);
     st->cr();
   }
 
-  st->print_cr(" - previous version:       ");
   {
     ResourceMark rm;
     // PreviousVersionInfo objects returned via PreviousVersionWalker
@@ -564,42 +587,52 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
     // GrowableArray _after_ the PreviousVersionWalker destructor
     // has destroyed the handles.
     {
+      bool have_pv = false;
       PreviousVersionWalker pvw(ik);
       for (PreviousVersionInfo * pv_info = pvw.next_previous_version();
            pv_info != NULL; pv_info = pvw.next_previous_version()) {
+        if (!have_pv)
+          st->print(BULLET"previous version:  ");
+        have_pv = true;
         pv_info->prev_constant_pool_handle()()->print_value_on(st);
       }
-      st->cr();
+      if (have_pv)  st->cr();
     } // pvw is cleaned up
   } // rm is cleaned up
 
-  if (ik->generic_signature() != NULL) {
-    st->print(" - generic signature:            ");
-    ik->generic_signature()->print_value_on(st);
+  if (ik->bootstrap_method() != NULL) {
+    st->print(BULLET"bootstrap method:  ");
+    ik->bootstrap_method()->print_value_on(st);
+    st->cr();
   }
-  st->print(" - inner classes:     "); ik->inner_classes()->print_value_on(st);     st->cr();
-  st->print(" - java mirror:       "); ik->java_mirror()->print_value_on(st);       st->cr();
-  st->print(" - vtable length      %d  (start addr: " INTPTR_FORMAT ")", ik->vtable_length(), ik->start_of_vtable());  st->cr();
-  st->print(" - itable length      %d (start addr: " INTPTR_FORMAT ")", ik->itable_length(), ik->start_of_itable()); st->cr();
-  st->print_cr(" - static fields:");
+  if (ik->generic_signature() != NULL) {
+    st->print(BULLET"generic signature: ");
+    ik->generic_signature()->print_value_on(st);
+    st->cr();
+  }
+  st->print(BULLET"inner classes:     "); ik->inner_classes()->print_value_on(st);     st->cr();
+  st->print(BULLET"java mirror:       "); ik->java_mirror()->print_value_on(st);       st->cr();
+  st->print(BULLET"vtable length      %d  (start addr: " INTPTR_FORMAT ")", ik->vtable_length(), ik->start_of_vtable());  st->cr();
+  st->print(BULLET"itable length      %d (start addr: " INTPTR_FORMAT ")", ik->itable_length(), ik->start_of_itable()); st->cr();
+  st->print_cr(BULLET"---- static fields (%d words):", ik->static_field_size());
   FieldPrinter print_static_field(st);
   ik->do_local_static_fields(&print_static_field);
-  st->print_cr(" - non-static fields:");
-  FieldPrinter print_nonstatic_field(st, obj);
+  st->print_cr(BULLET"---- non-static fields (%d words):", ik->nonstatic_field_size());
+  FieldPrinter print_nonstatic_field(st);
   ik->do_nonstatic_fields(&print_nonstatic_field);
 
-  st->print(" - static oop maps:     ");
+  st->print(BULLET"static oop maps:     ");
   if (ik->static_oop_field_size() > 0) {
     int first_offset = ik->offset_of_static_fields();
     st->print("%d-%d", first_offset, first_offset + ik->static_oop_field_size() - 1);
   }
   st->cr();
 
-  st->print(" - non-static oop maps: ");
+  st->print(BULLET"non-static oop maps: ");
   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
-  OopMapBlock* end_map = map + ik->nonstatic_oop_map_size();
+  OopMapBlock* end_map = map + ik->nonstatic_oop_map_count();
   while (map < end_map) {
-    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->length() - 1));
+    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->count() - 1));
     map++;
   }
   st->cr();

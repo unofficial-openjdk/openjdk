@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,13 @@
   #define JNICALL
 
   typedef int jint;
+
+#ifdef _LP64
+  typedef long jlong;
+#else
   typedef long long jlong;
+#endif
+
 #else
   #define JNIEXPORT __declspec(dllexport)
   #define JNIIMPORT __declspec(dllimport)

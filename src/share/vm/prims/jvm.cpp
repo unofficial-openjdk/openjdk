@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,7 @@ static void trace_class_resolution_impl(klassOop to_class, TRAPS) {
   ResourceMark rm;
   int line_number = -1;
   const char * source_file = NULL;
+  const char * trace = "explicit";
   klassOop caller = NULL;
   JavaThread* jthread = JavaThread::current();
   if (jthread->has_last_Java_frame()) {
@@ -107,12 +108,21 @@ static void trace_class_resolution_impl(klassOop to_class, TRAPS) {
                (last_caller->name() == vmSymbols::loadClassInternal_name() ||
                 last_caller->name() == vmSymbols::loadClass_name())) {
       found_it = true;
+    } else if (!vfst.at_end()) {
+      if (vfst.method()->is_native()) {
+        // JNI call
+        found_it = true;
+      }
     }
     if (found_it && !vfst.at_end()) {
       // found the caller
       caller = vfst.method()->method_holder();
       line_number = vfst.method()->line_number_from_bci(vfst.bci());
-      symbolOop s = instanceKlass::cast(vfst.method()->method_holder())->source_file_name();
+      if (line_number == -1) {
+        // show method name if it's a native method
+        trace = vfst.method()->name_and_sig_as_C_string();
+      }
+      symbolOop s = instanceKlass::cast(caller)->source_file_name();
       if (s != NULL) {
         source_file = s->as_C_string();
       }
@@ -124,15 +134,15 @@ static void trace_class_resolution_impl(klassOop to_class, TRAPS) {
       const char * to = Klass::cast(to_class)->external_name();
       // print in a single call to reduce interleaving between threads
       if (source_file != NULL) {
-        tty->print("RESOLVE %s %s %s:%d (explicit)\n", from, to, source_file, line_number);
+        tty->print("RESOLVE %s %s %s:%d (%s)\n", from, to, source_file, line_number, trace);
       } else {
-        tty->print("RESOLVE %s %s (explicit)\n", from, to);
+        tty->print("RESOLVE %s %s (%s)\n", from, to, trace);
       }
     }
   }
 }
 
-static void trace_class_resolution(klassOop to_class) {
+void trace_class_resolution(klassOop to_class) {
   EXCEPTION_MARK;
   trace_class_resolution_impl(to_class, THREAD);
   if (HAS_PENDING_EXCEPTION) {
@@ -628,11 +638,54 @@ JVM_ENTRY(void, JVM_ResolveClass(JNIEnv* env, jclass cls))
   if (PrintJVMWarnings) warning("JVM_ResolveClass not implemented");
 JVM_END
 
-// Common implementation for JVM_FindClassFromBootLoader and
-// JVM_FindClassFromLoader
-static jclass jvm_find_class_from_class_loader(JNIEnv* env, const char* name,
-                                  jboolean init, jobject loader,
-                                  jboolean throwError, TRAPS) {
+
+// Returns a class loaded by the bootstrap class loader; or null
+// if not found.  ClassNotFoundException is not thrown.
+//
+// Rationale behind JVM_FindClassFromBootLoader
+// a> JVM_FindClassFromClassLoader was never exported in the export tables.
+// b> because of (a) java.dll has a direct dependecy on the  unexported
+//    private symbol "_JVM_FindClassFromClassLoader@20".
+// c> the launcher cannot use the private symbol as it dynamically opens
+//    the entry point, so if something changes, the launcher will fail
+//    unexpectedly at runtime, it is safest for the launcher to dlopen a
+//    stable exported interface.
+// d> re-exporting JVM_FindClassFromClassLoader as public, will cause its
+//    signature to change from _JVM_FindClassFromClassLoader@20 to
+//    JVM_FindClassFromClassLoader and will not be backward compatible
+//    with older JDKs.
+// Thus a public/stable exported entry point is the right solution,
+// public here means public in linker semantics, and is exported only
+// to the JDK, and is not intended to be a public API.
+
+JVM_ENTRY(jclass, JVM_FindClassFromBootLoader(JNIEnv* env,
+                                              const char* name))
+  JVMWrapper2("JVM_FindClassFromBootLoader %s", name);
+
+  // Java libraries should ensure that name is never null...
+  if (name == NULL || (int)strlen(name) > symbolOopDesc::max_length()) {
+    // It's impossible to create this class;  the name cannot fit
+    // into the constant pool.
+    return NULL;
+  }
+
+  symbolHandle h_name = oopFactory::new_symbol_handle(name, CHECK_NULL);
+  klassOop k = SystemDictionary::resolve_or_null(h_name, CHECK_NULL);
+  if (k == NULL) {
+    return NULL;
+  }
+
+  if (TraceClassResolution) {
+    trace_class_resolution(k);
+  }
+  return (jclass) JNIHandles::make_local(env, Klass::cast(k)->java_mirror());
+JVM_END
+
+JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name,
+                                               jboolean init, jobject loader,
+                                               jboolean throwError))
+  JVMWrapper3("JVM_FindClassFromClassLoader %s throw %s", name,
+               throwError ? "error" : "exception");
   // Java libraries should ensure that name is never null...
   if (name == NULL || (int)strlen(name) > symbolOopDesc::max_length()) {
     // It's impossible to create this class;  the name cannot fit
@@ -652,40 +705,6 @@ static jclass jvm_find_class_from_class_loader(JNIEnv* env, const char* name,
     trace_class_resolution(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(result)));
   }
   return result;
-}
-
-// Rationale behind JVM_FindClassFromBootLoader
-// a> JVM_FindClassFromClassLoader was never exported in the export tables.
-// b> because of (a) java.dll has a direct dependecy on the  unexported
-//    private symbol "_JVM_FindClassFromClassLoader@20".
-// c> the launcher cannot use the private symbol as it dynamically opens
-//    the entry point, so if something changes, the launcher will fail
-//    unexpectedly at runtime, it is safest for the launcher to dlopen a
-//    stable exported interface.
-// d> re-exporting JVM_FindClassFromClassLoader as public, will cause its
-//    signature to change from _JVM_FindClassFromClassLoader@20 to
-//    JVM_FindClassFromClassLoader and will not be backward compatible
-//    with older JDKs.
-// Thus a public/stable exported entry point is the right solution,
-// public here means public in linker semantics, and is exported only
-// to the JDK, and is not intended to be a public API.
-
-JVM_ENTRY(jclass, JVM_FindClassFromBootLoader(JNIEnv* env,
-                                              const char* name,
-                                              jboolean throwError))
-  JVMWrapper3("JVM_FindClassFromBootLoader %s throw %s", name,
-              throwError ? "error" : "exception");
-  return jvm_find_class_from_class_loader(env, name, JNI_FALSE,
-                                          (jobject)NULL, throwError, THREAD);
-JVM_END
-
-JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name,
-                                               jboolean init, jobject loader,
-                                               jboolean throwError))
-  JVMWrapper3("JVM_FindClassFromClassLoader %s throw %s", name,
-               throwError ? "error" : "exception");
-  return jvm_find_class_from_class_loader(env, name, init, loader,
-                                          throwError, THREAD);
 JVM_END
 
 
@@ -743,8 +762,26 @@ static void is_lock_held_by_thread(Handle loader, PerfCounter* counter, TRAPS) {
 }
 
 // common code for JVM_DefineClass() and JVM_DefineClassWithSource()
-static jclass jvm_define_class_common(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len, jobject pd, const char *source, TRAPS) {
+// and JVM_DefineClassWithSourceCond()
+static jclass jvm_define_class_common(JNIEnv *env, const char *name,
+                                      jobject loader, const jbyte *buf,
+                                      jsize len, jobject pd, const char *source,
+                                      jboolean verify, TRAPS) {
   if (source == NULL)  source = "__JVM_DefineClass__";
+
+  assert(THREAD->is_Java_thread(), "must be a JavaThread");
+  JavaThread* jt = (JavaThread*) THREAD;
+
+  PerfClassTraceTime vmtimer(ClassLoader::perf_define_appclass_time(),
+                             ClassLoader::perf_define_appclass_selftime(),
+                             ClassLoader::perf_define_appclasses(),
+                             jt->get_thread_stat()->perf_recursion_counts_addr(),
+                             jt->get_thread_stat()->perf_timers_addr(),
+                             PerfClassTraceTime::DEFINE_CLASS);
+
+  if (UsePerfData) {
+    ClassLoader::perf_app_classfile_bytes_read()->inc(len);
+  }
 
   // Since exceptions can be thrown, class initialization can take place
   // if name is NULL no check for class name in .class stream has to be made.
@@ -770,6 +807,7 @@ static jclass jvm_define_class_common(JNIEnv *env, const char *name, jobject loa
   Handle protection_domain (THREAD, JNIHandles::resolve(pd));
   klassOop k = SystemDictionary::resolve_from_stream(class_name, class_loader,
                                                      protection_domain, &st,
+                                                     verify != 0,
                                                      CHECK_NULL);
 
   if (TraceClassResolution && k != NULL) {
@@ -783,16 +821,24 @@ static jclass jvm_define_class_common(JNIEnv *env, const char *name, jobject loa
 JVM_ENTRY(jclass, JVM_DefineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len, jobject pd))
   JVMWrapper2("JVM_DefineClass %s", name);
 
-  return jvm_define_class_common(env, name, loader, buf, len, pd, NULL, THREAD);
+  return jvm_define_class_common(env, name, loader, buf, len, pd, NULL, true, THREAD);
 JVM_END
 
 
 JVM_ENTRY(jclass, JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len, jobject pd, const char *source))
   JVMWrapper2("JVM_DefineClassWithSource %s", name);
 
-  return jvm_define_class_common(env, name, loader, buf, len, pd, source, THREAD);
+  return jvm_define_class_common(env, name, loader, buf, len, pd, source, true, THREAD);
 JVM_END
 
+JVM_ENTRY(jclass, JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
+                                                jobject loader, const jbyte *buf,
+                                                jsize len, jobject pd,
+                                                const char *source, jboolean verify))
+  JVMWrapper2("JVM_DefineClassWithSourceCond %s", name);
+
+  return jvm_define_class_common(env, name, loader, buf, len, pd, source, verify, THREAD);
+JVM_END
 
 JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name))
   JVMWrapper("JVM_FindLoadedClass");
@@ -1242,7 +1288,7 @@ JVM_ENTRY(jobjectArray, JVM_GetDeclaredClasses(JNIEnv *env, jclass ofClass))
 
            // Throws an exception if outer klass has not declared k as
            // an inner klass
-           Reflection::check_for_inner_class(k, inner_klass, CHECK_NULL);
+           Reflection::check_for_inner_class(k, inner_klass, true, CHECK_NULL);
 
            result->obj_at_put(members, inner_klass->java_mirror());
            members++;
@@ -1265,16 +1311,29 @@ JVM_END
 
 
 JVM_ENTRY(jclass, JVM_GetDeclaringClass(JNIEnv *env, jclass ofClass))
-  const int inner_class_info_index = 0;
-  const int outer_class_info_index = 1;
-
+{
   // ofClass is a reference to a java_lang_Class object.
   if (java_lang_Class::is_primitive(JNIHandles::resolve_non_null(ofClass)) ||
       ! Klass::cast(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(ofClass)))->oop_is_instance()) {
     return NULL;
   }
 
-  instanceKlassHandle k(thread, java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(ofClass)));
+  symbolOop simple_name = NULL;
+  klassOop outer_klass
+    = instanceKlass::cast(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(ofClass))
+                          )->compute_enclosing_class(simple_name, CHECK_NULL);
+  if (outer_klass == NULL)  return NULL;  // already a top-level class
+  if (simple_name == NULL)  return NULL;  // an anonymous class (inside a method)
+  return (jclass) JNIHandles::make_local(env, Klass::cast(outer_klass)->java_mirror());
+}
+JVM_END
+
+// should be in instanceKlass.cpp, but is here for historical reasons
+klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle k,
+                                                     symbolOop& simple_name_result, TRAPS) {
+  Thread* thread = THREAD;
+  const int inner_class_info_index = inner_class_inner_class_info_offset;
+  const int outer_class_info_index = inner_class_outer_class_info_offset;
 
   if (k->inner_classes()->length() == 0) {
     // No inner class info => no declaring class
@@ -1288,35 +1347,51 @@ JVM_ENTRY(jclass, JVM_GetDeclaringClass(JNIEnv *env, jclass ofClass))
   bool found = false;
   klassOop ok;
   instanceKlassHandle outer_klass;
+  bool inner_is_member = false;
+  int simple_name_index = 0;
 
   // Find inner_klass attribute
-  for(int i = 0; i < i_length && !found; i+= 4) {
+  for (int i = 0; i < i_length && !found; i += inner_class_next_offset) {
     int ioff = i_icls->ushort_at(i + inner_class_info_index);
     int ooff = i_icls->ushort_at(i + outer_class_info_index);
-
-    if (ioff != 0 && ooff != 0) {
+    int noff = i_icls->ushort_at(i + inner_class_inner_name_offset);
+    if (ioff != 0) {
       // Check to see if the name matches the class we're looking for
       // before attempting to find the class.
       if (i_cp->klass_name_at_matches(k, ioff)) {
         klassOop inner_klass = i_cp->klass_at(ioff, CHECK_NULL);
-        if (k() == inner_klass) {
-          found = true;
+        found = (k() == inner_klass);
+        if (found && ooff != 0) {
           ok = i_cp->klass_at(ooff, CHECK_NULL);
           outer_klass = instanceKlassHandle(thread, ok);
+          simple_name_index = noff;
+          inner_is_member = true;
         }
       }
     }
   }
 
+  if (found && outer_klass.is_null()) {
+    // It may be anonymous; try for that.
+    int encl_method_class_idx = k->enclosing_method_class_index();
+    if (encl_method_class_idx != 0) {
+      ok = i_cp->klass_at(encl_method_class_idx, CHECK_NULL);
+      outer_klass = instanceKlassHandle(thread, ok);
+      inner_is_member = false;
+    }
+  }
+
   // If no inner class attribute found for this class.
-  if (!found) return NULL;
+  if (outer_klass.is_null())  return NULL;
 
   // Throws an exception if outer klass has not declared k as an inner klass
-  Reflection::check_for_inner_class(outer_klass, k, CHECK_NULL);
+  // We need evidence that each klass knows about the other, or else
+  // the system could allow a spoof of an inner class to gain access rights.
+  Reflection::check_for_inner_class(outer_klass, k, inner_is_member, CHECK_NULL);
 
-  return (jclass)JNIHandles::make_local(env, outer_klass->java_mirror());
-JVM_END
-
+  simple_name_result = (inner_is_member ? i_cp->symbol_at(simple_name_index) : symbolOop(NULL));
+  return outer_klass();
+}
 
 JVM_ENTRY(jstring, JVM_GetClassSignature(JNIEnv *env, jclass cls))
   assert (cls != NULL, "illegal class");
@@ -2182,6 +2257,7 @@ JVM_ENTRY(const char*, JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cls, jint cp_i
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
+    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_name_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodNameUTF: illegal constant");
@@ -2199,6 +2275,7 @@ JVM_ENTRY(const char*, JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cls, jint
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
+    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_signature_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodSignatureUTF: illegal constant");
@@ -2475,7 +2552,8 @@ void jio_print(const char* s) {
   if (Arguments::vfprintf_hook() != NULL) {
     jio_fprintf(defaultStream::output_stream(), "%s", s);
   } else {
-    ::write(defaultStream::output_fd(), s, (int)strlen(s));
+    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    size_t count = ::write(defaultStream::output_fd(), s, (int)strlen(s));
   }
 }
 
@@ -3212,8 +3290,12 @@ JVM_ENTRY(jclass, JVM_LoadClass0(JNIEnv *env, jobject receiver,
   }
   Handle h_loader(THREAD, loader);
   Handle h_prot  (THREAD, protection_domain);
-  return find_class_from_class_loader(env, name, true, h_loader, h_prot,
-                                      false, thread);
+  jclass result =  find_class_from_class_loader(env, name, true, h_loader, h_prot,
+                                                false, thread);
+  if (TraceClassResolution && result != NULL) {
+    trace_class_resolution(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(result)));
+  }
+  return result;
 JVM_END
 
 
@@ -3855,6 +3937,7 @@ jclass find_class_from_class_loader(JNIEnv* env, symbolHandle name, jboolean ini
   //   The Java level wrapper will perform the necessary security check allowing
   //   us to pass the NULL as the initiating class loader.
   klassOop klass = SystemDictionary::resolve_or_fail(name, loader, protection_domain, throwError != 0, CHECK_NULL);
+
   KlassHandle klass_handle(THREAD, klass);
   // Check if we should initialize the class
   if (init && klass_handle->oop_is_instance()) {

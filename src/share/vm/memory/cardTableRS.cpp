@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,8 @@ CardTableRS::CardTableRS(MemRegion whole_heap,
 {
 #ifndef SERIALGC
   if (UseG1GC) {
-    if (G1RSBarrierUseQueue) {
       _ct_bs = new G1SATBCardTableLoggingModRefBS(whole_heap,
                                                   max_covered_regions);
-    } else {
-      _ct_bs = new G1SATBCardTableModRefBS(whole_heap, max_covered_regions);
-    }
   } else {
     _ct_bs = new CardTableModRefBSForCTRS(whole_heap, max_covered_regions);
   }

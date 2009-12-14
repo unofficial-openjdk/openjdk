@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -196,7 +196,7 @@ void NodeHash::hash_insert( Node *n ) {
 }
 
 //------------------------------hash_delete------------------------------------
-// Replace in hash table with sentinal
+// Replace in hash table with sentinel
 bool NodeHash::hash_delete( const Node *n ) {
   Node *k;
   uint hash = n->hash();
@@ -207,7 +207,7 @@ bool NodeHash::hash_delete( const Node *n ) {
   uint key = hash & (_max-1);
   uint stride = key | 0x01;
   debug_only( uint counter = 0; );
-  for( ; /* (k != NULL) && (k != _sentinal) */; ) {
+  for( ; /* (k != NULL) && (k != _sentinel) */; ) {
     debug_only( counter++ );
     debug_only( _delete_probes++ );
     k = _table[key];            // Get hashed value
@@ -715,7 +715,7 @@ Node *PhaseGVN::transform_no_reclaim( Node *n ) {
 
 #ifdef ASSERT
 //------------------------------dead_loop_check--------------------------------
-// Check for a simple dead loop when a data node references itself direcly
+// Check for a simple dead loop when a data node references itself directly
 // or through an other data node excluding cons and phis.
 void PhaseGVN::dead_loop_check( Node *n ) {
   // Phi may reference itself in a loop
@@ -1359,7 +1359,7 @@ void PhaseCCP::analyze() {
               worklist.push(p); // Propagate change to user
           }
         }
-        // If we changed the reciever type to a call, we need to revisit
+        // If we changed the receiver type to a call, we need to revisit
         // the Catch following the call.  It's looking for a non-NULL
         // receiver to know when to enable the regular fall-through path
         // in addition to the NullPtrException path
@@ -1502,7 +1502,7 @@ Node *PhaseCCP::transform_once( Node *n ) {
 //---------------------------------saturate------------------------------------
 const Type* PhaseCCP::saturate(const Type* new_type, const Type* old_type,
                                const Type* limit_type) const {
-  const Type* wide_type = new_type->widen(old_type);
+  const Type* wide_type = new_type->widen(old_type, limit_type);
   if (wide_type != new_type) {          // did we widen?
     // If so, we may have widened beyond the limit type.  Clip it back down.
     new_type = wide_type->filter(limit_type);
@@ -1622,9 +1622,11 @@ void Node::set_req_X( uint i, Node *n, PhaseIterGVN *igvn ) {
   // old goes dead?
   if( old ) {
     switch (old->outcnt()) {
-    case 0:      // Kill all his inputs, and recursively kill other dead nodes.
+    case 0:
+      // Put into the worklist to kill later. We do not kill it now because the
+      // recursive kill will delete the current node (this) if dead-loop exists
       if (!old->is_top())
-        igvn->remove_dead_node( old );
+        igvn->_worklist.push( old );
       break;
     case 1:
       if( old->is_Store() || old->has_special_unique_user() )

@@ -1,6 +1,6 @@
 @echo off
 REM
-REM Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+REM Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 REM DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 REM
 REM This code is free software; you can redistribute it and/or modify it
@@ -72,12 +72,20 @@ REM figure out MSC version
 for /F %%i in ('sh %HotSpotWorkSpace%/make/windows/get_msc_ver.sh') do set %%i
 
 echo **************************************************************
+set ProjectFile=vm.vcproj
 if "%MSC_VER%" == "1200" (
 set ProjectFile=vm.dsp
 echo Will generate VC6 project {unsupported}
 ) else (
-set ProjectFile=vm.vcproj
-echo Will generate VC7 project
+if "%MSC_VER%" == "1400" (
+echo Will generate VC8 {Visual Studio 2005}
+) else (
+if "%MSC_VER%" == "1500" (
+echo Will generate VC9 {Visual Studio 2008}
+) else (
+echo Will generate VC7 project {Visual Studio 2003 .NET}
+)
+)
 )
 echo                            %ProjectFile%
 echo **************************************************************

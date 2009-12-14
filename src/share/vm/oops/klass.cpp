@@ -71,7 +71,7 @@ Klass *Klass::up_cast_abstract() {
   return r;                   // Return the 1 concrete class
 }
 
-// Find LCA in class heirarchy
+// Find LCA in class hierarchy
 Klass *Klass::LCA( Klass *k2 ) {
   Klass *k1 = this;
   while( 1 ) {
@@ -496,11 +496,13 @@ const char* Klass::external_name() const {
       return result;
     }
   }
+  if (name() == NULL)  return "<unknown>";
   return name()->as_klass_external_name();
 }
 
 
-char* Klass::signature_name() const {
+const char* Klass::signature_name() const {
+  if (name() == NULL)  return "<unknown>";
   return name()->as_C_string();
 }
 

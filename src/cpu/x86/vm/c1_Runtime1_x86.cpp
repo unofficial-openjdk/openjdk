@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,10 +78,10 @@ int StubAssembler::call_RT(Register oop_result1, Register oop_result2, address e
     movptr(rax, Address(thread, Thread::pending_exception_offset()));
     // make sure that the vm_results are cleared
     if (oop_result1->is_valid()) {
-      movptr(Address(thread, JavaThread::vm_result_offset()), (int32_t)NULL_WORD);
+      movptr(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
     }
     if (oop_result2->is_valid()) {
-      movptr(Address(thread, JavaThread::vm_result_2_offset()), (int32_t)NULL_WORD);
+      movptr(Address(thread, JavaThread::vm_result_2_offset()), NULL_WORD);
     }
     if (frame_size() == no_frame_size) {
       leave();
@@ -96,12 +96,12 @@ int StubAssembler::call_RT(Register oop_result1, Register oop_result2, address e
   // get oop results if there are any and reset the values in the thread
   if (oop_result1->is_valid()) {
     movptr(oop_result1, Address(thread, JavaThread::vm_result_offset()));
-    movptr(Address(thread, JavaThread::vm_result_offset()), (int32_t)NULL_WORD);
+    movptr(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
     verify_oop(oop_result1);
   }
   if (oop_result2->is_valid()) {
     movptr(oop_result2, Address(thread, JavaThread::vm_result_2_offset()));
-    movptr(Address(thread, JavaThread::vm_result_2_offset()), (int32_t)NULL_WORD);
+    movptr(Address(thread, JavaThread::vm_result_2_offset()), NULL_WORD);
     verify_oop(oop_result2);
   }
   return call_offset;
@@ -728,8 +728,8 @@ void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_map
 
   // clear exception fields in JavaThread because they are no longer needed
   // (fields must be cleared because they are processed by GC otherwise)
-  __ movptr(Address(thread, JavaThread::exception_oop_offset()), (int32_t)NULL_WORD);
-  __ movptr(Address(thread, JavaThread::exception_pc_offset()), (int32_t)NULL_WORD);
+  __ movptr(Address(thread, JavaThread::exception_oop_offset()), NULL_WORD);
+  __ movptr(Address(thread, JavaThread::exception_pc_offset()), NULL_WORD);
 
   // pop the stub frame off
   __ leave();
@@ -878,7 +878,7 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 
     // load and clear pending exception
     __ movptr(rax, Address(thread, Thread::pending_exception_offset()));
-    __ movptr(Address(thread, Thread::pending_exception_offset()), (int32_t)NULL_WORD);
+    __ movptr(Address(thread, Thread::pending_exception_offset()), NULL_WORD);
 
     // check that there is really a valid exception
     __ verify_not_null_oop(rax);
@@ -971,14 +971,14 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         // load pending exception oop into rax,
         __ movptr(exception_oop, Address(thread, Thread::pending_exception_offset()));
         // clear pending exception
-        __ movptr(Address(thread, Thread::pending_exception_offset()), (int32_t)NULL_WORD);
+        __ movptr(Address(thread, Thread::pending_exception_offset()), NULL_WORD);
 
         // load issuing PC (the return address for this stub) into rdx
         __ movptr(exception_pc, Address(rbp, 1*BytesPerWord));
 
         // make sure that the vm_results are cleared (may be unnecessary)
-        __ movptr(Address(thread, JavaThread::vm_result_offset()), (int32_t)NULL_WORD);
-        __ movptr(Address(thread, JavaThread::vm_result_2_offset()), (int32_t)NULL_WORD);
+        __ movptr(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
+        __ movptr(Address(thread, JavaThread::vm_result_2_offset()), NULL_WORD);
 
         // verify that that there is really a valid exception in rax,
         __ verify_not_null_oop(exception_oop);
@@ -1354,6 +1354,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
     case slow_subtype_check_id:
       {
+        // Typical calling sequence:
+        // __ push(klass_RInfo);  // object klass or other subclass
+        // __ push(sup_k_RInfo);  // array element klass or other superclass
+        // __ call(slow_subtype_check);
+        // Note that the subclass is pushed first, and is therefore deepest.
+        // Previous versions of this code reversed the names 'sub' and 'super'.
+        // This was operationally harmless but made the code unreadable.
         enum layout {
           rax_off, SLOT2(raxH_off)
           rcx_off, SLOT2(rcxH_off)
@@ -1361,9 +1368,10 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           rdi_off, SLOT2(rdiH_off)
           // saved_rbp_off, SLOT2(saved_rbpH_off)
           return_off, SLOT2(returnH_off)
-          sub_off, SLOT2(subH_off)
-          super_off, SLOT2(superH_off)
-          framesize
+          sup_k_off, SLOT2(sup_kH_off)
+          klass_off, SLOT2(superH_off)
+          framesize,
+          result_off = klass_off  // deepest argument is also the return value
         };
 
         __ set_info("slow_subtype_check", dont_gc_arguments);
@@ -1373,19 +1381,14 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ push(rax);
 
         // This is called by pushing args and not with C abi
-        __ movptr(rsi, Address(rsp, (super_off) * VMRegImpl::stack_slot_size)); // super
-        __ movptr(rax, Address(rsp, (sub_off  ) * VMRegImpl::stack_slot_size)); // sub
-
-        __ movptr(rdi,Address(rsi,sizeof(oopDesc) + Klass::secondary_supers_offset_in_bytes()));
-        // since size is postive movl does right thing on 64bit
-        __ movl(rcx, Address(rdi, arrayOopDesc::length_offset_in_bytes()));
-        __ addptr(rdi, arrayOopDesc::base_offset_in_bytes(T_OBJECT));
+        __ movptr(rsi, Address(rsp, (klass_off) * VMRegImpl::stack_slot_size)); // subclass
+        __ movptr(rax, Address(rsp, (sup_k_off) * VMRegImpl::stack_slot_size)); // superclass
 
         Label miss;
-        __ repne_scan();
-        __ jcc(Assembler::notEqual, miss);
-        __ movptr(Address(rsi,sizeof(oopDesc) + Klass::secondary_super_cache_offset_in_bytes()), rax);
-        __ movptr(Address(rsp, (super_off) * VMRegImpl::stack_slot_size), 1); // result
+        __ check_klass_subtype_slow_path(rsi, rax, rcx, rdi, NULL, &miss);
+
+        // fallthrough on success:
+        __ movptr(Address(rsp, (result_off) * VMRegImpl::stack_slot_size), 1); // result
         __ pop(rax);
         __ pop(rcx);
         __ pop(rsi);
@@ -1393,7 +1396,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ ret(0);
 
         __ bind(miss);
-        __ movptr(Address(rsp, (super_off) * VMRegImpl::stack_slot_size), 0); // result
+        __ movptr(Address(rsp, (result_off) * VMRegImpl::stack_slot_size), NULL_WORD); // result
         __ pop(rax);
         __ pop(rcx);
         __ pop(rsi);

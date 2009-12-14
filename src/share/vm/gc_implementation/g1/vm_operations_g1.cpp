@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,15 +43,8 @@ void VM_G1IncCollectionPause::doit() {
   JvmtiGCForAllocationMarker jgcm;
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   GCCauseSetter x(g1h, GCCause::_g1_inc_collection_pause);
-  g1h->do_collection_pause_at_safepoint(NULL);
+  g1h->do_collection_pause_at_safepoint();
 }
-
-void VM_G1PopRegionCollectionPause::doit() {
-  JvmtiGCForAllocationMarker jgcm;
-  G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  g1h->do_collection_pause_at_safepoint(_pop_region);
-}
-
 
 void VM_CGC_Operation::doit() {
   gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);

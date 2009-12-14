@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,6 +99,8 @@ class JNIHandles : AllStatic {
 
 class JNIHandleBlock : public CHeapObj {
   friend class VMStructs;
+  friend class CppInterpreter;
+
  private:
   enum SomeConstants {
     block_size_in_oops  = 32                    // Number of handles per handle block
@@ -126,9 +128,11 @@ class JNIHandleBlock : public CHeapObj {
   // Fill block with bad_handle values
   void zap();
 
+ protected:
   // No more handles in the both the current and following blocks
   void clear() { _top = 0; }
 
+ private:
   // Free list computation
   void rebuild_free_list();
 
@@ -196,12 +200,16 @@ inline methodOop JNIHandles::resolve_jmethod_id(jmethodID mid) {
 };
 
 inline methodOop JNIHandles::checked_resolve_jmethod_id(jmethodID mid) {
-  jobject handle = (jobject)mid;
-  if (is_weak_global_handle(handle)) {
-    return (methodOop) resolve_non_null(handle);
-  } else {
+  if (mid == NULL) {
     return (methodOop) NULL;
   }
+
+  oop o = resolve_non_null((jobject) mid);
+  if (!o->is_method()) {
+    return (methodOop) NULL;
+  }
+
+  return (methodOop) o;
 };
 
 

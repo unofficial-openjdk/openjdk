@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ inline address* frame::native_param_addr(int idx) const { return (address*) addr
 #ifdef CC_INTERP
 
 inline interpreterState frame::get_interpreterState() const {
-  return ((interpreterState)addr_at( -sizeof(BytecodeInterpreter)/wordSize ));
+  return ((interpreterState)addr_at( -((int)sizeof(BytecodeInterpreter))/wordSize ));
 }
 
 inline intptr_t*    frame::sender_sp()        const {

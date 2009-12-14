@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ RuntimeStub*       SharedRuntime::_ic_miss_blob;
 RuntimeStub*       SharedRuntime::_resolve_opt_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_static_call_blob;
+
+const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
 
 #define __ masm->
 
@@ -1286,7 +1288,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Now compute actual number of stack words we need rounding to make
   // stack properly aligned.
-  stack_slots = round_to(stack_slots, 4 * VMRegImpl::slots_per_word);
+  stack_slots = round_to(stack_slots, StackAlignmentInSlots);
 
   int stack_size = stack_slots * VMRegImpl::stack_slot_size;
 
@@ -1300,22 +1302,19 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   const Register ic_reg = rax;
   const Register receiver = j_rarg0;
-  const Register tmp = rdx;
 
   Label ok;
   Label exception_pending;
 
+  assert_different_registers(ic_reg, receiver, rscratch1);
   __ verify_oop(receiver);
-  __ push(tmp); // spill (any other registers free here???)
-  __ load_klass(tmp, receiver);
-  __ cmpq(ic_reg, tmp);
+  __ load_klass(rscratch1, receiver);
+  __ cmpq(ic_reg, rscratch1);
   __ jcc(Assembler::equal, ok);
 
-  __ pop(tmp);
   __ jump(RuntimeAddress(SharedRuntime::get_ic_miss_stub()));
 
   __ bind(ok);
-  __ pop(tmp);
 
   // Verified entry point must be aligned
   __ align(8);
@@ -1348,7 +1347,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     {
       Label L;
       __ mov(rax, rsp);
-      __ andptr(rax, -16); // must be 16 byte boundry (see amd64 ABI)
+      __ andptr(rax, -16); // must be 16 byte boundary (see amd64 ABI)
       __ cmpptr(rax, rsp);
       __ jcc(Assembler::equal, L);
       __ stop("improperly aligned stack");
@@ -1502,6 +1501,17 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     __ movoop(c_rarg1, JNIHandles::make_local(method()));
     __ call_VM_leaf(
       CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_entry),
+      r15_thread, c_rarg1);
+    restore_args(masm, total_c_args, c_arg, out_regs);
+  }
+
+  // RedefineClasses() tracing support for obsolete method entry
+  if (RC_TRACE_IN_RANGE(0x00001000, 0x00002000)) {
+    // protect the args we've loaded
+    save_args(masm, total_c_args, c_arg, out_regs);
+    __ movoop(c_rarg1, JNIHandles::make_local(method()));
+    __ call_VM_leaf(
+      CAST_FROM_FN_PTR(address, SharedRuntime::rc_trace_method_entry),
       r15_thread, c_rarg1);
     restore_args(masm, total_c_args, c_arg, out_regs);
   }
@@ -2678,7 +2688,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ mov(rdi, rax);
 
    Label noException;
-  __ cmpl(r12, Deoptimization::Unpack_exception);   // Was exception pending?
+  __ cmpl(r14, Deoptimization::Unpack_exception);   // Was exception pending?
   __ jcc(Assembler::notEqual, noException);
   __ movptr(rax, Address(r15_thread, JavaThread::exception_oop_offset()));
   // QQQ this is useless it was NULL above
@@ -2954,10 +2964,16 @@ void SharedRuntime::generate_uncommon_trap_blob() {
   __ pushptr(Address(rcx, 0));     // Save return address
   __ enter();                      // Save old & set new rbp
   __ subptr(rsp, rbx);             // Prolog
+#ifdef CC_INTERP
+  __ movptr(Address(rbp,
+                  -(sizeof(BytecodeInterpreter)) + in_bytes(byte_offset_of(BytecodeInterpreter, _sender_sp))),
+            sender_sp); // Make it walkable
+#else // CC_INTERP
   __ movptr(Address(rbp, frame::interpreter_frame_sender_sp_offset * wordSize),
             sender_sp);            // Make it walkable
   // This value is corrected by layout_activation_impl
   __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD );
+#endif // CC_INTERP
   __ mov(sender_sp, rsp);          // Pass sender_sp to next frame
   __ addptr(rsi, wordSize);        // Bump array pointer (sizes)
   __ addptr(rcx, wordSize);        // Bump array pointer (pcs)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -168,7 +168,7 @@ public:
   // MEET operation; lower in lattice.
   const Type *meet( const Type *t ) const;
   // WIDEN: 'widens' for Ints and other range types
-  virtual const Type *widen( const Type *old ) const { return this; }
+  virtual const Type *widen( const Type *old, const Type* limit ) const { return this; }
   // NARROW: complement for widen, used by pessimistic phases
   virtual const Type *narrow( const Type *old ) const { return this; }
 
@@ -189,6 +189,11 @@ public:
   // Normalizes all empty values to TOP.  Does not kill _widen bits.
   // Currently, it also works around limitations involving interface types.
   virtual const Type *filter( const Type *kills ) const;
+
+#ifdef ASSERT
+  // One type is interface, the other is oop
+  virtual bool interface_vs_oop(const Type *t) const;
+#endif
 
   // Returns true if this pointer points at memory which contains a
   // compressed oop references.
@@ -227,6 +232,11 @@ public:
 
   // Returns this ptr type or the equivalent ptr type for this compressed pointer.
   const TypePtr* make_ptr() const;
+
+  // Returns this oopptr type or the equivalent oopptr type for this compressed pointer.
+  // Asserts if the underlying type is not an oopptr or narrowoop.
+  const TypeOopPtr* make_oopptr() const;
+
   // Returns this compressed pointer or the equivalent compressed version
   // of this pointer type.
   const TypeNarrowOop* make_narrowoop() const;
@@ -399,7 +409,7 @@ public:
 
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
-  virtual const Type *widen( const Type *t ) const;
+  virtual const Type *widen( const Type *t, const Type* limit_type ) const;
   virtual const Type *narrow( const Type *t ) const;
   // Do not kill _widen bits.
   virtual const Type *filter( const Type *kills ) const;
@@ -415,6 +425,7 @@ public:
   static const TypeInt *CC_LE;  // [-1,0]
   static const TypeInt *CC_GE;  // [0,1] == BOOL (!)
   static const TypeInt *BYTE;
+  static const TypeInt *UBYTE;
   static const TypeInt *CHAR;
   static const TypeInt *SHORT;
   static const TypeInt *POS;
@@ -454,7 +465,7 @@ public:
 
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
-  virtual const Type *widen( const Type *t ) const;
+  virtual const Type *widen( const Type *t, const Type* limit_type ) const;
   virtual const Type *narrow( const Type *t ) const;
   // Do not kill _widen bits.
   virtual const Type *filter( const Type *kills ) const;
@@ -545,6 +556,10 @@ public:
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
   bool ary_must_be_exact() const;  // true if arrays of such are never generic
+#ifdef ASSERT
+  // One type is interface, the other is oop
+  virtual bool interface_vs_oop(const Type *t) const;
+#endif
 #ifndef PRODUCT
   virtual void dump2( Dict &d, uint, outputStream *st  ) const; // Specialized per-Type dumping
 #endif
@@ -696,10 +711,13 @@ public:
     return make_from_klass_common(klass, false, false);
   }
   // Creates a singleton type given an object.
-  static const TypeOopPtr* make_from_constant(ciObject* o);
+  // If the object cannot be rendered as a constant,
+  // may return a non-singleton type.
+  // If require_constant, produce a NULL if a singleton is not possible.
+  static const TypeOopPtr* make_from_constant(ciObject* o, bool require_constant = false);
 
   // Make a generic (unclassed) pointer to an oop.
-  static const TypeOopPtr* make(PTR ptr, int offset);
+  static const TypeOopPtr* make(PTR ptr, int offset, int instance_id);
 
   ciObject* const_oop()    const { return _const_oop; }
   virtual ciKlass* klass() const { return _klass;     }
@@ -866,6 +884,10 @@ public:
   }
   static const TypeAryPtr *_array_body_type[T_CONFLICT+1];
   // sharpen the type of an int which is used as an array size
+#ifdef ASSERT
+  // One type is interface, the other is oop
+  virtual bool interface_vs_oop(const Type *t) const;
+#endif
 #ifndef PRODUCT
   virtual void dump2( Dict &d, uint depth, outputStream *st ) const; // Specialized per-Type dumping
 #endif
@@ -881,6 +903,8 @@ class TypeKlassPtr : public TypeOopPtr {
 
 public:
   ciSymbol* name()  const { return _klass->name(); }
+
+  bool  is_loaded() const { return _klass->is_loaded(); }
 
   // ptr to klass 'k'
   static const TypeKlassPtr *make( ciKlass* k ) { return make( TypePtr::Constant, k, 0); }
@@ -916,13 +940,13 @@ public:
 // between the normal and the compressed form.
 class TypeNarrowOop : public Type {
 protected:
-  const TypePtr* _ooptype; // Could be TypePtr::NULL_PTR
+  const TypePtr* _ptrtype; // Could be TypePtr::NULL_PTR
 
-  TypeNarrowOop( const TypePtr* ooptype): Type(NarrowOop),
-    _ooptype(ooptype) {
-    assert(ooptype->offset() == 0 ||
-           ooptype->offset() == OffsetBot ||
-           ooptype->offset() == OffsetTop, "no real offsets");
+  TypeNarrowOop( const TypePtr* ptrtype): Type(NarrowOop),
+    _ptrtype(ptrtype) {
+    assert(ptrtype->offset() == 0 ||
+           ptrtype->offset() == OffsetBot ||
+           ptrtype->offset() == OffsetTop, "no real offsets");
   }
 public:
   virtual bool eq( const Type *t ) const;
@@ -946,8 +970,8 @@ public:
   }
 
   // returns the equivalent ptr type for this compressed pointer
-  const TypePtr *make_oopptr() const {
-    return _ooptype;
+  const TypePtr *get_ptrtype() const {
+    return _ptrtype;
   }
 
   static const TypeNarrowOop *BOTTOM;
@@ -1134,8 +1158,12 @@ inline const TypeKlassPtr *Type::is_klassptr() const {
 }
 
 inline const TypePtr* Type::make_ptr() const {
-  return (_base == NarrowOop) ? is_narrowoop()->make_oopptr() :
+  return (_base == NarrowOop) ? is_narrowoop()->get_ptrtype() :
                                 (isa_ptr() ? is_ptr() : NULL);
+}
+
+inline const TypeOopPtr* Type::make_oopptr() const {
+  return (_base == NarrowOop) ? is_narrowoop()->get_ptrtype()->is_oopptr() : is_oopptr();
 }
 
 inline const TypeNarrowOop* Type::make_narrowoop() const {
@@ -1191,6 +1219,8 @@ inline bool Type::is_floatingpoint() const {
 #define Op_AndX      Op_AndL
 #define Op_AddX      Op_AddL
 #define Op_SubX      Op_SubL
+#define Op_XorX      Op_XorL
+#define Op_URShiftX  Op_URShiftL
 // conversions
 #define ConvI2X(x)   ConvI2L(x)
 #define ConvL2X(x)   (x)
@@ -1233,6 +1263,8 @@ inline bool Type::is_floatingpoint() const {
 #define Op_AndX      Op_AndI
 #define Op_AddX      Op_AddI
 #define Op_SubX      Op_SubI
+#define Op_XorX      Op_XorI
+#define Op_URShiftX  Op_URShiftI
 // conversions
 #define ConvI2X(x)   (x)
 #define ConvL2X(x)   ConvL2I(x)

@@ -83,7 +83,7 @@ class VMOperationQueue : public CHeapObj {
 // like scavenge, garbage_collect etc.
 //
 
-class VMThread: public Thread {
+class VMThread: public NamedThread {
  private:
   static ThreadPriority _current_priority;
 
@@ -100,8 +100,6 @@ class VMThread: public Thread {
   // Tester
   bool is_VM_thread() const                      { return true; }
   bool is_GC_thread() const                      { return true; }
-
-  char* name() const { return (char*)"VM Thread"; }
 
   // The ever running loop for the VMThread
   void loop();
@@ -121,7 +119,7 @@ class VMThread: public Thread {
   static VMThread* vm_thread()                    { return _vm_thread; }
 
   // GC support
-  void oops_do(OopClosure* f);
+  void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   // Debugging
   void print_on(outputStream* st) const;
