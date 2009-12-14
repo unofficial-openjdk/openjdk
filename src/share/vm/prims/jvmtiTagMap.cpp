@@ -3006,15 +3006,6 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
             return false;
           }
         }
-      } else {
-         if (is_reporting_primitive_fields()) {
-           address addr = (address)k + field->field_offset();
-           int slot = field->field_index();
-           if (!CallbackInvoker::report_primitive_static_field(mirror, slot, addr, type)) {
-             delete field_map;
-             return false;
-          }
-        }
       }
     }
     delete field_map;

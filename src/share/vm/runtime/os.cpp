@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,13 +74,12 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
   const int milliseconds_after_second =
     milliseconds_since_19700101 % milliseconds_per_microsecond;
   // Convert the time value to a tm and timezone variable
-  const struct tm *time_struct_temp = localtime(&seconds_since_19700101);
-  if (time_struct_temp == NULL) {
-    assert(false, "Failed localtime");
+  struct tm time_struct;
+  if (localtime_pd(&seconds_since_19700101, &time_struct) == NULL) {
+    assert(false, "Failed localtime_pd");
     return NULL;
   }
-  // Save the results of localtime
-  const struct tm time_struct = *time_struct_temp;
+
   const time_t zone = timezone;
 
   // If daylight savings time is in effect,
@@ -93,10 +92,10 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     UTC_to_local = UTC_to_local - seconds_per_hour;
   }
   // Compute the time zone offset.
-  //    localtime(3C) sets timezone to the difference (in seconds)
+  //    localtime_pd sets timezone to the difference (in seconds)
   //    between UTC and and local time.
   //    ISO 8601 says we need the difference between local time and UTC,
-  //    we change the sign of the localtime(3C) result.
+  //    we change the sign of the localtime_pd result.
   const time_t local_to_UTC = -(UTC_to_local);
   // Then we have to figure out if if we are ahead (+) or behind (-) UTC.
   char sign_local_to_UTC = '+';
@@ -864,7 +863,6 @@ char* os::format_boot_path(const char* format_string,
 
 
 bool os::set_boot_path(char fileSep, char pathSep) {
-
     const char* home = Arguments::get_java_home();
     int home_len = (int)strlen(home);
 
@@ -892,6 +890,60 @@ bool os::set_boot_path(char fileSep, char pathSep) {
     Arguments::set_sysclasspath(sysclasspath);
 
     return true;
+}
+
+/*
+ * Splits a path, based on its separator, the number of
+ * elements is returned back in n.
+ * It is the callers responsibility to:
+ *   a> check the value of n, and n may be 0.
+ *   b> ignore any empty path elements
+ *   c> free up the data.
+ */
+char** os::split_path(const char* path, int* n) {
+  *n = 0;
+  if (path == NULL || strlen(path) == 0) {
+    return NULL;
+  }
+  const char psepchar = *os::path_separator();
+  char* inpath = (char*)NEW_C_HEAP_ARRAY(char, strlen(path) + 1);
+  if (inpath == NULL) {
+    return NULL;
+  }
+  strncpy(inpath, path, strlen(path));
+  int count = 1;
+  char* p = strchr(inpath, psepchar);
+  // Get a count of elements to allocate memory
+  while (p != NULL) {
+    count++;
+    p++;
+    p = strchr(p, psepchar);
+  }
+  char** opath = (char**) NEW_C_HEAP_ARRAY(char*, count);
+  if (opath == NULL) {
+    return NULL;
+  }
+
+  // do the actual splitting
+  p = inpath;
+  for (int i = 0 ; i < count ; i++) {
+    size_t len = strcspn(p, os::path_separator());
+    if (len > JVM_MAXPATHLEN) {
+      return NULL;
+    }
+    // allocate the string and add terminator storage
+    char* s  = (char*)NEW_C_HEAP_ARRAY(char, len + 1);
+    if (s == NULL) {
+      return NULL;
+    }
+    strncpy(s, p, len);
+    s[len] = '\0';
+    opath[i] = s;
+    p += len + 1;
+  }
+  FREE_C_HEAP_ARRAY(char, inpath);
+  *n = count;
+  return opath;
 }
 
 void os::set_memory_serialize_page(address page) {

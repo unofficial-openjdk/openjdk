@@ -33,7 +33,7 @@
 // old versions synchronously.
 
 
-class SparsePRTEntry {
+class SparsePRTEntry: public CHeapObj {
 public:
   enum SomePublicConstants {
     CardsPerEntry = (short)4,
@@ -167,7 +167,7 @@ public:
 };
 
   // ValueObj because will be embedded in HRRS iterator.
-class RSHashTableIter: public CHeapObj {
+class RSHashTableIter VALUE_OBJ_CLASS_SPEC {
     short _tbl_ind;
     short _bl_ind;
     short _card_ind;
@@ -213,7 +213,7 @@ class RSHashTableIter: public CHeapObj {
 
 class SparsePRTIter;
 
-class SparsePRT : public CHeapObj {
+class SparsePRT VALUE_OBJ_CLASS_SPEC {
   //  Iterations are done on the _cur hash table, since they only need to
   //  see entries visible at the start of a collection pause.
   //  All other operations are done using the _next hash table.
@@ -274,7 +274,7 @@ public:
 
   // Clean up all tables on the expanded list.  Called single threaded.
   static void cleanup_all();
-  RSHashTable* next() const { return _next; }
+  RSHashTable* cur() const { return _cur; }
 
 
   void init_iterator(SparsePRTIter* sprt_iter);
@@ -300,7 +300,7 @@ public:
   {}
 
   void init(const SparsePRT* sprt) {
-    RSHashTableIter::init(sprt->next());
+    RSHashTableIter::init(sprt->cur());
   }
   bool has_next(size_t& card_index) {
     return RSHashTableIter::has_next(card_index);

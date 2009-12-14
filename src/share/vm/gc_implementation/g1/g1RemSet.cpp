@@ -105,33 +105,6 @@ StupidG1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
   _g1->heap_region_iterate(&rc);
 }
 
-class UpdateRSOopClosure: public OopClosure {
-  HeapRegion* _from;
-  HRInto_G1RemSet* _rs;
-  int _worker_i;
-public:
-  UpdateRSOopClosure(HRInto_G1RemSet* rs, int worker_i = 0) :
-    _from(NULL), _rs(rs), _worker_i(worker_i) {
-    guarantee(_rs != NULL, "Requires an HRIntoG1RemSet");
-  }
-
-  void set_from(HeapRegion* from) {
-    assert(from != NULL, "from region must be non-NULL");
-    _from = from;
-  }
-
-  virtual void do_oop(narrowOop* p) {
-    guarantee(false, "NYI");
-  }
-  virtual void do_oop(oop* p) {
-    assert(_from != NULL, "from region must be non-NULL");
-    _rs->par_write_ref(_from, p, _worker_i);
-  }
-  // Override: this closure is idempotent.
-  //  bool idempotent() { return true; }
-  bool apply_to_weak_ref_discovered_field() { return true; }
-};
-
 class UpdateRSOutOfRegionClosure: public HeapRegionClosure {
   G1CollectedHeap*    _g1h;
   ModRefBarrierSet*   _mr_bs;
@@ -177,11 +150,19 @@ HRInto_G1RemSet::HRInto_G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
     _cards_scanned(NULL), _total_cards_scanned(0)
 {
   _seq_task = new SubTasksDone(NumSeqTasks);
-  _new_refs = NEW_C_HEAP_ARRAY(GrowableArray<oop*>*, ParallelGCThreads);
+  guarantee(n_workers() > 0, "There should be some workers");
+  _new_refs = NEW_C_HEAP_ARRAY(GrowableArray<oop*>*, n_workers());
+  for (uint i = 0; i < n_workers(); i++) {
+    _new_refs[i] = new (ResourceObj::C_HEAP) GrowableArray<oop*>(8192,true);
+  }
 }
 
 HRInto_G1RemSet::~HRInto_G1RemSet() {
   delete _seq_task;
+  for (uint i = 0; i < n_workers(); i++) {
+    delete _new_refs[i];
+  }
+  FREE_C_HEAP_ARRAY(GrowableArray<oop*>*, _new_refs);
 }
 
 void CountNonCleanMemRegionClosure::do_MemRegion(MemRegion mr) {
@@ -199,6 +180,7 @@ class ScanRSClosure : public HeapRegionClosure {
   CardTableModRefBS *_ct_bs;
   int _worker_i;
   bool _try_claimed;
+  size_t _min_skip_distance, _max_skip_distance;
 public:
   ScanRSClosure(OopsInHeapRegionClosure* oc, int worker_i) :
     _oc(oc),
@@ -210,6 +192,8 @@ public:
     _g1h = G1CollectedHeap::heap();
     _bot_shared = _g1h->bot_shared();
     _ct_bs = (CardTableModRefBS*) (_g1h->barrier_set());
+    _min_skip_distance = 16;
+    _max_skip_distance = 2 * _g1h->n_par_threads() * _min_skip_distance;
   }
 
   void set_try_claimed() { _try_claimed = true; }
@@ -264,9 +248,13 @@ public:
     HeapRegionRemSetIterator* iter = _g1h->rem_set_iterator(_worker_i);
     hrrs->init_iterator(iter);
     size_t card_index;
+    size_t skip_distance = 0, current_card = 0, jump_to_card = 0;
     while (iter->has_next(card_index)) {
+      if (current_card < jump_to_card) {
+        ++current_card;
+        continue;
+      }
       HeapWord* card_start = _g1h->bot_shared()->address_for_index(card_index);
-
 #if 0
       gclog_or_tty->print("Rem set iteration yielded card [" PTR_FORMAT ", " PTR_FORMAT ").\n",
                           card_start, card_start + CardTableModRefBS::card_size_in_words);
@@ -276,19 +264,28 @@ public:
       assert(card_region != NULL, "Yielding cards not in the heap?");
       _cards++;
 
-      if (!card_region->in_collection_set()) {
-        // If the card is dirty, then we will scan it during updateRS.
-        if (!_ct_bs->is_card_claimed(card_index) &&
-            !_ct_bs->is_card_dirty(card_index)) {
-          assert(_ct_bs->is_card_clean(card_index) ||
-                 _ct_bs->is_card_claimed(card_index),
-                 "Card is either dirty, clean, or claimed");
-          if (_ct_bs->claim_card(card_index))
+       // If the card is dirty, then we will scan it during updateRS.
+      if (!card_region->in_collection_set() && !_ct_bs->is_card_dirty(card_index)) {
+          if (!_ct_bs->is_card_claimed(card_index) && _ct_bs->claim_card(card_index)) {
             scanCard(card_index, card_region);
-        }
+          } else if (_try_claimed) {
+            if (jump_to_card == 0 || jump_to_card != current_card) {
+              // We did some useful work in the previous iteration.
+              // Decrease the distance.
+              skip_distance = MAX2(skip_distance >> 1, _min_skip_distance);
+            } else {
+              // Previous iteration resulted in a claim failure.
+              // Increase the distance.
+              skip_distance = MIN2(skip_distance << 1, _max_skip_distance);
+            }
+            jump_to_card = current_card + skip_distance;
+          }
       }
+      ++current_card;
     }
-    hrrs->set_iter_complete();
+    if (!_try_claimed) {
+      hrrs->set_iter_complete();
+    }
     return false;
   }
   // Set all cards back to clean.
@@ -338,14 +335,12 @@ void HRInto_G1RemSet::scanRS(OopsInHeapRegionClosure* oc, int worker_i) {
 
   _g1p->record_scan_rs_start_time(worker_i, rs_time_start * 1000.0);
   _g1p->record_scan_rs_time(worker_i, scan_rs_time_sec * 1000.0);
-  if (ParallelGCThreads > 0) {
-    // In this case, we called scanNewRefsRS and recorded the corresponding
-    // time.
-    double scan_new_refs_time_ms = _g1p->get_scan_new_refs_time(worker_i);
-    if (scan_new_refs_time_ms > 0.0) {
-      closure_app_time_ms += scan_new_refs_time_ms;
-    }
+
+  double scan_new_refs_time_ms = _g1p->get_scan_new_refs_time(worker_i);
+  if (scan_new_refs_time_ms > 0.0) {
+    closure_app_time_ms += scan_new_refs_time_ms;
   }
+
   _g1p->record_obj_copy_time(worker_i, closure_app_time_ms);
 }
 
@@ -469,8 +464,8 @@ HRInto_G1RemSet::scanNewRefsRS(OopsInHeapRegionClosure* oc,
   double scan_new_refs_start_sec = os::elapsedTime();
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   CardTableModRefBS* ct_bs = (CardTableModRefBS*) (g1h->barrier_set());
-  while (_new_refs[worker_i]->is_nonempty()) {
-    oop* p = _new_refs[worker_i]->pop();
+  for (int i = 0; i < _new_refs[worker_i]->length(); i++) {
+    oop* p = _new_refs[worker_i]->at(i);
     oop obj = *p;
     // *p was in the collection set when p was pushed on "_new_refs", but
     // another thread may have processed this location from an RS, so it
@@ -480,10 +475,6 @@ HRInto_G1RemSet::scanNewRefsRS(OopsInHeapRegionClosure* oc,
       HeapRegion* r = g1h->heap_region_containing(p);
 
       DEBUG_ONLY(HeapRegion* to = g1h->heap_region_containing(obj));
-      assert(ParallelGCThreads > 1
-             || to->rem_set()->contains_reference(p),
-             "Invariant: pushed after being added."
-             "(Not reliable in parallel code.)");
       oc->set_region(r);
       // If "p" has already been processed concurrently, this is
       // idempotent.
@@ -526,20 +517,31 @@ HRInto_G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
   }
 
   if (ParallelGCThreads > 0) {
-    // This is a temporary change to serialize the update and scanning
-    // of remembered sets. There are some race conditions when this is
-    // done in parallel and they are causing failures. When we resolve
-    // said race conditions, we'll revert back to parallel remembered
-    // set updating and scanning. See CRs 6677707 and 6677708.
-    if (worker_i == 0) {
+    // The two flags below were introduced temporarily to serialize
+    // the updating and scanning of remembered sets. There are some
+    // race conditions when these two operations are done in parallel
+    // and they are causing failures. When we resolve said race
+    // conditions, we'll revert back to parallel remembered set
+    // updating and scanning. See CRs 6677707 and 6677708.
+    if (G1ParallelRSetUpdatingEnabled || (worker_i == 0)) {
       updateRS(worker_i);
       scanNewRefsRS(oc, worker_i);
+    } else {
+      _g1p->record_update_rs_start_time(worker_i, os::elapsedTime());
+      _g1p->record_update_rs_processed_buffers(worker_i, 0.0);
+      _g1p->record_update_rs_time(worker_i, 0.0);
+      _g1p->record_scan_new_refs_time(worker_i, 0.0);
+    }
+    if (G1ParallelRSetScanningEnabled || (worker_i == 0)) {
       scanRS(oc, worker_i);
+    } else {
+      _g1p->record_scan_rs_start_time(worker_i, os::elapsedTime());
+      _g1p->record_scan_rs_time(worker_i, 0.0);
     }
   } else {
     assert(worker_i == 0, "invariant");
-
     updateRS(0);
+    scanNewRefsRS(oc, 0);
     scanRS(oc, 0);
   }
 }
@@ -559,11 +561,7 @@ prepare_for_oops_into_collection_set_do() {
   assert(!_par_traversal_in_progress, "Invariant between iterations.");
   if (ParallelGCThreads > 0) {
     set_par_traversal(true);
-    int n_workers = _g1->workers()->total_workers();
-    _seq_task->set_par_threads(n_workers);
-    for (uint i = 0; i < ParallelGCThreads; i++)
-      _new_refs[i] = new (ResourceObj::C_HEAP) GrowableArray<oop*>(8192,true);
-
+    _seq_task->set_par_threads((int)n_workers());
     if (cg1r->do_traversal()) {
       updateRS(0);
       // Have to do this again after updaters
@@ -572,6 +570,9 @@ prepare_for_oops_into_collection_set_do() {
   }
   guarantee( _cards_scanned == NULL, "invariant" );
   _cards_scanned = NEW_C_HEAP_ARRAY(size_t, n_workers());
+  for (uint i = 0; i < n_workers(); ++i) {
+    _cards_scanned[i] = 0;
+  }
   _total_cards_scanned = 0;
 }
 
@@ -583,6 +584,51 @@ class cleanUpIteratorsClosure : public HeapRegionClosure {
     return false;
   }
 };
+
+class UpdateRSetOopsIntoCSImmediate : public OopClosure {
+  G1CollectedHeap* _g1;
+public:
+  UpdateRSetOopsIntoCSImmediate(G1CollectedHeap* g1) : _g1(g1) { }
+  virtual void do_oop(narrowOop* p) {
+    guarantee(false, "NYI");
+  }
+  virtual void do_oop(oop* p) {
+    HeapRegion* to = _g1->heap_region_containing(*p);
+    if (to->in_collection_set()) {
+      to->rem_set()->add_reference(p, 0);
+    }
+  }
+};
+
+class UpdateRSetOopsIntoCSDeferred : public OopClosure {
+  G1CollectedHeap* _g1;
+  CardTableModRefBS* _ct_bs;
+  DirtyCardQueue* _dcq;
+public:
+  UpdateRSetOopsIntoCSDeferred(G1CollectedHeap* g1, DirtyCardQueue* dcq) :
+    _g1(g1), _ct_bs((CardTableModRefBS*)_g1->barrier_set()), _dcq(dcq) { }
+  virtual void do_oop(narrowOop* p) {
+    guarantee(false, "NYI");
+  }
+  virtual void do_oop(oop* p) {
+    oop obj = *p;
+    if (_g1->obj_in_cs(obj)) {
+      size_t card_index = _ct_bs->index_for(p);
+      if (_ct_bs->mark_card_deferred(card_index)) {
+        _dcq->enqueue((jbyte*)_ct_bs->byte_for_index(card_index));
+      }
+    }
+  }
+};
+
+void HRInto_G1RemSet::new_refs_iterate(OopClosure* cl) {
+  for (size_t i = 0; i < n_workers(); i++) {
+    for (int j = 0; j < _new_refs[i]->length(); j++) {
+      oop* p = _new_refs[i]->at(j);
+      cl->do_oop(p);
+    }
+  }
+}
 
 void HRInto_G1RemSet::cleanup_after_oops_into_collection_set_do() {
   guarantee( _cards_scanned != NULL, "invariant" );
@@ -606,11 +652,25 @@ void HRInto_G1RemSet::cleanup_after_oops_into_collection_set_do() {
     if (cg1r->do_traversal()) {
       cg1r->cg1rThread()->set_do_traversal(false);
     }
-    for (uint i = 0; i < ParallelGCThreads; i++) {
-      delete _new_refs[i];
-    }
     set_par_traversal(false);
   }
+
+  if (_g1->evacuation_failed()) {
+    // Restore remembered sets for the regions pointing into
+    // the collection set.
+    if (G1DeferredRSUpdate) {
+      DirtyCardQueue dcq(&_g1->dirty_card_queue_set());
+      UpdateRSetOopsIntoCSDeferred deferred_update(_g1, &dcq);
+      new_refs_iterate(&deferred_update);
+    } else {
+      UpdateRSetOopsIntoCSImmediate immediate_update(_g1);
+      new_refs_iterate(&immediate_update);
+    }
+  }
+  for (uint i = 0; i < n_workers(); i++) {
+    _new_refs[i]->clear();
+  }
+
   assert(!_par_traversal_in_progress, "Invariant between iterations.");
 }
 
@@ -977,9 +1037,8 @@ void HRInto_G1RemSet::print_summary_info() {
     gclog_or_tty->print_cr("    %d occupied cards represented.",
                            blk.occupied());
     gclog_or_tty->print_cr("    Max sz region = [" PTR_FORMAT ", " PTR_FORMAT " )"
-                           " %s, cap = " SIZE_FORMAT "K, occ = " SIZE_FORMAT "K.",
+                           ", cap = " SIZE_FORMAT "K, occ = " SIZE_FORMAT "K.",
                            blk.max_mem_sz_region()->bottom(), blk.max_mem_sz_region()->end(),
-                           (blk.max_mem_sz_region()->popular() ? "POP" : ""),
                            (blk.max_mem_sz_region()->rem_set()->mem_size() + K - 1)/K,
                            (blk.max_mem_sz_region()->rem_set()->occupied() + K - 1)/K);
     gclog_or_tty->print_cr("    Did %d coarsenings.",
@@ -988,7 +1047,9 @@ void HRInto_G1RemSet::print_summary_info() {
   }
 }
 void HRInto_G1RemSet::prepare_for_verify() {
-  if (G1HRRSFlushLogBuffersOnVerify && VerifyBeforeGC && !_g1->full_collection()) {
+  if (G1HRRSFlushLogBuffersOnVerify &&
+      (VerifyBeforeGC || VerifyAfterGC)
+      &&  !_g1->full_collection()) {
     cleanupHRRS();
     _g1->set_refine_cte_cl_concurrency(false);
     if (SafepointSynchronize::is_at_safepoint()) {
@@ -999,5 +1060,7 @@ void HRInto_G1RemSet::prepare_for_verify() {
     _cg1r->set_use_cache(false);
     updateRS(0);
     _cg1r->set_use_cache(cg1r_use_cache);
+
+    assert(JavaThread::dirty_card_queue_set().completed_buffers_num() == 0, "All should be consumed");
   }
 }

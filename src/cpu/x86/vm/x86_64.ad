@@ -2587,8 +2587,8 @@ encode %{
     __ lea(Rrcx, ExternalAddress((address)&SharedRuntime::_partial_subtype_ctr));
     __ incrementl(Address(Rrcx, 0));
 #endif //PRODUCT
-    __ movptr(Rrdi, Address(Rrsi, 
-                          sizeof(oopDesc) + 
+    __ movptr(Rrdi, Address(Rrsi,
+                          sizeof(oopDesc) +
                           Klass::secondary_supers_offset_in_bytes()));
     __ movl(Rrcx, Address(Rrdi, arrayOopDesc::length_offset_in_bytes()));
     __ addptr(Rrdi, arrayOopDesc::base_offset_in_bytes(T_OBJECT));
@@ -3532,8 +3532,8 @@ encode %{
     }
     if (EmitSync & 1) {
         // Without cast to int32_t a movptr will destroy r10 which is typically obj
-        masm.movptr (Address(boxReg, 0), (int32_t)intptr_t(markOopDesc::unused_mark())) ; 
-        masm.cmpptr(rsp, (int32_t)NULL_WORD) ; 
+        masm.movptr (Address(boxReg, 0), (int32_t)intptr_t(markOopDesc::unused_mark())) ;
+        masm.cmpptr(rsp, (int32_t)NULL_WORD) ;
     } else
     if (EmitSync & 2) {
         Label DONE_LABEL;
@@ -3561,10 +3561,10 @@ encode %{
     } else {
         Label DONE_LABEL, IsInflated, Egress;
 
-        masm.movptr(tmpReg, Address(objReg, 0)) ; 
+        masm.movptr(tmpReg, Address(objReg, 0)) ;
         masm.testl (tmpReg, 0x02) ;         // inflated vs stack-locked|neutral|biased
-        masm.jcc   (Assembler::notZero, IsInflated) ; 
-         
+        masm.jcc   (Assembler::notZero, IsInflated) ;
+
         // it's stack-locked, biased or neutral
         // TODO: optimize markword triage order to reduce the number of
         // conditional branches in the most common cases.
@@ -3578,9 +3578,9 @@ encode %{
         }
 
         // was q will it destroy high?
-        masm.orl   (tmpReg, 1) ; 
-        masm.movptr(Address(boxReg, 0), tmpReg) ;  
-        if (os::is_MP()) { masm.lock(); } 
+        masm.orl   (tmpReg, 1) ;
+        masm.movptr(Address(boxReg, 0), tmpReg) ;
+        if (os::is_MP()) { masm.lock(); }
         masm.cmpxchgptr(boxReg, Address(objReg, 0)); // Updates tmpReg
         if (_counters != NULL) {
            masm.cond_inc32(Assembler::equal,
@@ -3607,16 +3607,16 @@ encode %{
         // fetched _owner.  If the CAS is successful we may
         // avoid an RTO->RTS upgrade on the $line.
         // Without cast to int32_t a movptr will destroy r10 which is typically obj
-        masm.movptr(Address(boxReg, 0), (int32_t)intptr_t(markOopDesc::unused_mark())) ; 
+        masm.movptr(Address(boxReg, 0), (int32_t)intptr_t(markOopDesc::unused_mark())) ;
 
-        masm.mov    (boxReg, tmpReg) ; 
-        masm.movptr (tmpReg, Address(tmpReg, ObjectMonitor::owner_offset_in_bytes()-2)) ; 
-        masm.testptr(tmpReg, tmpReg) ;   
-        masm.jcc    (Assembler::notZero, DONE_LABEL) ; 
+        masm.mov    (boxReg, tmpReg) ;
+        masm.movptr (tmpReg, Address(tmpReg, ObjectMonitor::owner_offset_in_bytes()-2)) ;
+        masm.testptr(tmpReg, tmpReg) ;
+        masm.jcc    (Assembler::notZero, DONE_LABEL) ;
 
         // It's inflated and appears unlocked
-        if (os::is_MP()) { masm.lock(); } 
-        masm.cmpxchgptr(r15_thread, Address(boxReg, ObjectMonitor::owner_offset_in_bytes()-2)) ; 
+        if (os::is_MP()) { masm.lock(); }
+        masm.cmpxchgptr(r15_thread, Address(boxReg, ObjectMonitor::owner_offset_in_bytes()-2)) ;
         // Intentional fall-through into DONE_LABEL ...
 
         masm.bind  (DONE_LABEL) ;
@@ -3635,8 +3635,8 @@ encode %{
     Register tmpReg = as_Register($tmp$$reg);
     MacroAssembler masm(&cbuf);
 
-    if (EmitSync & 4) { 
-       masm.cmpptr(rsp, 0) ; 
+    if (EmitSync & 4) {
+       masm.cmpptr(rsp, 0) ;
     } else
     if (EmitSync & 8) {
        Label DONE_LABEL;
@@ -3663,25 +3663,25 @@ encode %{
        if (UseBiasedLocking && !UseOptoBiasInlining) {
          masm.biased_locking_exit(objReg, tmpReg, DONE_LABEL);
        }
-        
-       masm.movptr(tmpReg, Address(objReg, 0)) ; 
-       masm.cmpptr(Address(boxReg, 0), (int32_t)NULL_WORD) ; 
-       masm.jcc   (Assembler::zero, DONE_LABEL) ; 
-       masm.testl (tmpReg, 0x02) ; 
-       masm.jcc   (Assembler::zero, Stacked) ; 
-        
+
+       masm.movptr(tmpReg, Address(objReg, 0)) ;
+       masm.cmpptr(Address(boxReg, 0), (int32_t)NULL_WORD) ;
+       masm.jcc   (Assembler::zero, DONE_LABEL) ;
+       masm.testl (tmpReg, 0x02) ;
+       masm.jcc   (Assembler::zero, Stacked) ;
+
        // It's inflated
-       masm.movptr(boxReg, Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2)) ; 
-       masm.xorptr(boxReg, r15_thread) ; 
-       masm.orptr (boxReg, Address (tmpReg, ObjectMonitor::recursions_offset_in_bytes()-2)) ; 
-       masm.jcc   (Assembler::notZero, DONE_LABEL) ; 
-       masm.movptr(boxReg, Address (tmpReg, ObjectMonitor::cxq_offset_in_bytes()-2)) ; 
-       masm.orptr (boxReg, Address (tmpReg, ObjectMonitor::EntryList_offset_in_bytes()-2)) ; 
-       masm.jcc   (Assembler::notZero, CheckSucc) ; 
-       masm.movptr(Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), (int32_t)NULL_WORD) ; 
-       masm.jmp   (DONE_LABEL) ; 
-        
-       if ((EmitSync & 65536) == 0) { 
+       masm.movptr(boxReg, Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2)) ;
+       masm.xorptr(boxReg, r15_thread) ;
+       masm.orptr (boxReg, Address (tmpReg, ObjectMonitor::recursions_offset_in_bytes()-2)) ;
+       masm.jcc   (Assembler::notZero, DONE_LABEL) ;
+       masm.movptr(boxReg, Address (tmpReg, ObjectMonitor::cxq_offset_in_bytes()-2)) ;
+       masm.orptr (boxReg, Address (tmpReg, ObjectMonitor::EntryList_offset_in_bytes()-2)) ;
+       masm.jcc   (Assembler::notZero, CheckSucc) ;
+       masm.movptr(Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), (int32_t)NULL_WORD) ;
+       masm.jmp   (DONE_LABEL) ;
+
+       if ((EmitSync & 65536) == 0) {
          Label LSuccess, LGoSlowPath ;
          masm.bind  (CheckSucc) ;
          masm.cmpptr(Address (tmpReg, ObjectMonitor::succ_offset_in_bytes()-2), (int32_t)NULL_WORD) ;
@@ -3713,9 +3713,9 @@ encode %{
          masm.jmp   (DONE_LABEL) ;
        }
 
-       masm.bind  (Stacked) ; 
+       masm.bind  (Stacked) ;
        masm.movptr(tmpReg, Address (boxReg, 0)) ;      // re-fetch
-       if (os::is_MP()) { masm.lock(); } 
+       if (os::is_MP()) { masm.lock(); }
        masm.cmpxchgptr(tmpReg, Address(objReg, 0)); // Uses RAX which is box
 
        if (EmitSync & 65536) {
@@ -3811,7 +3811,7 @@ encode %{
     // Discard the stored length difference
     masm.bind(POP_LABEL);
     masm.addptr(rsp, 8);
-       
+
     // That's it
     masm.bind(DONE_LABEL);
   %}
@@ -3830,11 +3830,11 @@ encode %{
     int base_offset    = arrayOopDesc::base_offset_in_bytes(T_CHAR);
 
     // Check the input args
-    masm.cmpq(ary1Reg, ary2Reg);                        
+    masm.cmpq(ary1Reg, ary2Reg);
     masm.jcc(Assembler::equal, TRUE_LABEL);
-    masm.testq(ary1Reg, ary1Reg);                       
+    masm.testq(ary1Reg, ary1Reg);
     masm.jcc(Assembler::zero, FALSE_LABEL);
-    masm.testq(ary2Reg, ary2Reg);                       
+    masm.testq(ary2Reg, ary2Reg);
     masm.jcc(Assembler::zero, FALSE_LABEL);
 
     // Check the lengths
@@ -7845,7 +7845,7 @@ instruct storePConditional(memory heap_top_ptr,
                            rFlagsReg cr)
 %{
   match(Set cr (StorePConditional heap_top_ptr (Binary oldval newval)));
- 
+
   format %{ "cmpxchgq $heap_top_ptr, $newval\t# (ptr) "
             "If rax == $heap_top_ptr then store $newval into $heap_top_ptr" %}
   opcode(0x0F, 0xB1);
@@ -9408,9 +9408,9 @@ instruct xorI_rReg(rRegI dst, rRegI src, rFlagsReg cr)
 
 // Xor Register with Immediate -1
 instruct xorI_rReg_im1(rRegI dst, immI_M1 imm) %{
-  match(Set dst (XorI dst imm));  
+  match(Set dst (XorI dst imm));
 
-  format %{ "not    $dst" %}  
+  format %{ "not    $dst" %}
   ins_encode %{
      __ notl($dst$$Register);
   %}
@@ -9651,9 +9651,9 @@ instruct xorL_rReg(rRegL dst, rRegL src, rFlagsReg cr)
 
 // Xor Register with Immediate -1
 instruct xorL_rReg_im1(rRegL dst, immL_M1 imm) %{
-  match(Set dst (XorL dst imm));  
+  match(Set dst (XorL dst imm));
 
-  format %{ "notq   $dst" %}  
+  format %{ "notq   $dst" %}
   ins_encode %{
      __ notq($dst$$Register);
   %}
@@ -11149,7 +11149,7 @@ instruct string_compare(rdi_RegP str1, rsi_RegP str2, rax_RegI tmp1,
 %}
 
 // fast array equals
-instruct array_equals(rdi_RegP ary1, rsi_RegP ary2, rax_RegI tmp1, 
+instruct array_equals(rdi_RegP ary1, rsi_RegP ary2, rax_RegI tmp1,
                       rbx_RegI tmp2, rcx_RegI result, rFlagsReg cr) %{
   match(Set result (AryEq ary1 ary2));
   effect(USE_KILL ary1, USE_KILL ary2, KILL tmp1, KILL tmp2, KILL cr);

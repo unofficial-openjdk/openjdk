@@ -238,15 +238,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // See "sort_index" method.  -1 means is not in the array.
   int _sort_index;
 
-  // Means it has (or at least had) a very large RS, and should not be
-  // considered for membership in a collection set.
-  enum PopularityState {
-    NotPopular,
-    PopularPending,
-    Popular
-  };
-  PopularityState _popularity;
-
   // <PREDICTION>
   double _gc_efficiency;
   // </PREDICTION>
@@ -318,7 +309,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
     FinalCountClaimValue  = 1,
     NoteEndClaimValue     = 2,
     ScrubRemSetClaimValue = 3,
-    ParVerifyClaimValue   = 4
+    ParVerifyClaimValue   = 4,
+    RebuildRSClaimValue   = 5
   };
 
   // Concurrent refinement requires contiguous heap regions (in which TLABs
@@ -430,10 +422,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
     assert(is_gc_alloc_region(), "should only invoke on member of CS.");
     assert(r == NULL || r->is_gc_alloc_region(), "Malformed CS.");
     _next_in_special_set = r;
-  }
-
-  bool is_reserved() {
-    return popular();
   }
 
   bool is_on_free_list() {
@@ -566,7 +554,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void note_end_of_copying() {
     assert(top() >= _next_top_at_mark_start,
            "Increase only");
-    _next_top_at_mark_start = top();
+    // Survivor regions will be scanned on the start of concurrent
+    // marking.
+    if (!is_survivor()) {
+      _next_top_at_mark_start = top();
+    }
   }
 
   // Returns "false" iff no object in the region was allocated when the
@@ -602,23 +594,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
 
     zero_marked_bytes();
     init_top_at_mark_start();
-  }
-
-  bool popular() { return _popularity == Popular; }
-  void set_popular(bool b) {
-    if (b) {
-      _popularity = Popular;
-    } else {
-      _popularity = NotPopular;
-    }
-  }
-  bool popular_pending() { return _popularity == PopularPending; }
-  void set_popular_pending(bool b) {
-    if (b) {
-      _popularity = PopularPending;
-    } else {
-      _popularity = NotPopular;
-    }
   }
 
   // <PREDICTION>
@@ -829,7 +804,7 @@ class HeapRegionClosure : public StackObj {
 
 // A linked lists of heap regions.  It leaves the "next" field
 // unspecified; that's up to subtypes.
-class RegionList {
+class RegionList VALUE_OBJ_CLASS_SPEC {
 protected:
   virtual HeapRegion* get_next(HeapRegion* chr) = 0;
   virtual void set_next(HeapRegion* chr,

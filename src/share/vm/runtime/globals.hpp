@@ -1297,6 +1297,19 @@ class CommandLineFlags {
   product(intx, ParGCArrayScanChunk, 50,                                    \
           "Scan a subset and push remainder, if array is bigger than this") \
                                                                             \
+  product(bool, ParGCUseLocalOverflow, false,                               \
+          "Instead of a global overflow list, use local overflow stacks")   \
+                                                                            \
+  product(bool, ParGCTrimOverflow, true,                                    \
+          "Eagerly trim the local overflow lists (when ParGCUseLocalOverflow") \
+                                                                            \
+  notproduct(bool, ParGCWorkQueueOverflowALot, false,                       \
+          "Whether we should simulate work queue overflow in ParNew")       \
+                                                                            \
+  notproduct(uintx, ParGCWorkQueueOverflowInterval, 1000,                   \
+          "An `interval' counter that determines how frequently"            \
+          " we simulate overflow; a smaller number increases frequency")    \
+                                                                            \
   product(intx, ParGCDesiredObjsFromOverflowList, 20,                       \
           "The desired number of objects to claim from the overflow list")  \
                                                                             \
@@ -1484,7 +1497,7 @@ class CommandLineFlags {
           "CMSPrecleanNumerator:CMSPrecleanDenominator yields convergence"  \
           " ratio")                                                         \
                                                                             \
-  product(bool, CMSPrecleanRefLists1, true,                                 \
+  product(bool, CMSPrecleanRefLists1, true,                                \
           "Preclean ref lists during (initial) preclean phase")             \
                                                                             \
   product(bool, CMSPrecleanRefLists2, false,                                \
@@ -1773,7 +1786,11 @@ class CommandLineFlags {
           "Decay factor to TenuredGenerationSizeIncrement")                 \
                                                                             \
   product(uintx, MaxGCPauseMillis, max_uintx,                               \
-          "Adaptive size policy maximum GC pause time goal in msec")        \
+          "Adaptive size policy maximum GC pause time goal in msec, "       \
+          "or (G1 Only) the max. GC time per MMU time slice")               \
+                                                                            \
+  product(intx, GCPauseIntervalMillis, 500,                                 \
+          "Time slice for MMU specification")                               \
                                                                             \
   product(uintx, MaxGCMinorPauseMillis, max_uintx,                          \
           "Adaptive size policy maximum GC minor pause time goal in msec")  \
@@ -2169,6 +2186,9 @@ class CommandLineFlags {
                                                                             \
   product(bool, PrintVMOptions, trueInDebug,                                \
          "print VM flag settings")                                          \
+                                                                            \
+  product(bool, IgnoreUnrecognizedVMOptions, false,                         \
+         "Ignore unrecognized VM options")                                  \
                                                                             \
   diagnostic(bool, SerializeVMOutput, true,                                 \
          "Use a mutex to serialize output to tty and hotspot.log")          \

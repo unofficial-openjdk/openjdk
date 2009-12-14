@@ -1506,6 +1506,17 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     restore_args(masm, total_c_args, c_arg, out_regs);
   }
 
+  // RedefineClasses() tracing support for obsolete method entry
+  if (RC_TRACE_IN_RANGE(0x00001000, 0x00002000)) {
+    // protect the args we've loaded
+    save_args(masm, total_c_args, c_arg, out_regs);
+    __ movoop(c_rarg1, JNIHandles::make_local(method()));
+    __ call_VM_leaf(
+      CAST_FROM_FN_PTR(address, SharedRuntime::rc_trace_method_entry),
+      r15_thread, c_rarg1);
+    restore_args(masm, total_c_args, c_arg, out_regs);
+  }
+
   // Lock a synchronized method
 
   // Register definitions used by locking and unlocking
@@ -2678,7 +2689,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ mov(rdi, rax);
 
    Label noException;
-  __ cmpl(r12, Deoptimization::Unpack_exception);   // Was exception pending?
+  __ cmpl(r14, Deoptimization::Unpack_exception);   // Was exception pending?
   __ jcc(Assembler::notEqual, noException);
   __ movptr(rax, Address(r15_thread, JavaThread::exception_oop_offset()));
   // QQQ this is useless it was NULL above

@@ -29,7 +29,6 @@
 
 class HeapRegion;
 class HeapRegionSeq;
-class HeapRegionList;
 class PermanentGenerationSpec;
 class GenerationSpec;
 class OopsInHeapRegionClosure;
@@ -90,7 +89,7 @@ private:
   HeapRegion* _curr_scan_only;
 
   HeapRegion* _survivor_head;
-  HeapRegion* _survivors_tail;
+  HeapRegion* _survivor_tail;
   size_t      _survivor_length;
 
   void          empty_list(HeapRegion* list);
@@ -105,6 +104,7 @@ public:
   bool          is_empty() { return _length == 0; }
   size_t        length() { return _length; }
   size_t        scan_only_length() { return _scan_only_length; }
+  size_t        survivor_length() { return _survivor_length; }
 
   void rs_length_sampling_init();
   bool rs_length_sampling_more();
@@ -120,6 +120,7 @@ public:
   HeapRegion* first_region() { return _head; }
   HeapRegion* first_scan_only_region() { return _scan_only_head; }
   HeapRegion* first_survivor_region() { return _survivor_head; }
+  HeapRegion* last_survivor_region() { return _survivor_tail; }
   HeapRegion* par_get_next_scan_only_region() {
     MutexLockerEx x(ParGCRareEvent_lock, Mutex::_no_safepoint_check_flag);
     HeapRegion* ret = _curr_scan_only;
@@ -141,7 +142,6 @@ class G1CollectedHeap : public SharedHeap {
   friend class VM_GenCollectForPermanentAllocation;
   friend class VM_G1CollectFull;
   friend class VM_G1IncCollectionPause;
-  friend class VM_G1PopRegionCollectionPause;
   friend class VMStructs;
 
   // Closures used in implementation.
@@ -169,7 +169,6 @@ private:
     MinHeapDeltaBytes = 10 * HeapRegion::GrainBytes,      // FIXME
     NumAPIs = HeapRegion::MaxAge
   };
-
 
   // The one and only G1CollectedHeap, so static functions can find it.
   static G1CollectedHeap* _g1h;
@@ -215,11 +214,20 @@ private:
 
   // Postcondition: cur_alloc_region == NULL.
   void abandon_cur_alloc_region();
+  void abandon_gc_alloc_regions();
 
   // The to-space memory regions into which objects are being copied during
   // a GC.
   HeapRegion* _gc_alloc_regions[GCAllocPurposeCount];
-  uint _gc_alloc_region_counts[GCAllocPurposeCount];
+  size_t _gc_alloc_region_counts[GCAllocPurposeCount];
+  // These are the regions, one per GCAllocPurpose, that are half-full
+  // at the end of a collection and that we want to reuse during the
+  // next collection.
+  HeapRegion* _retained_gc_alloc_regions[GCAllocPurposeCount];
+  // This specifies whether we will keep the last half-full region at
+  // the end of a collection so that it can be reused during the next
+  // collection (this is specified per GCAllocPurpose)
+  bool _retain_gc_alloc_region[GCAllocPurposeCount];
 
   // A list of the regions that have been set to be alloc regions in the
   // current collection.
@@ -243,9 +251,26 @@ private:
   // than the current allocation region.
   size_t _summary_bytes_used;
 
-  // Summary information about popular objects; method to print it.
-  NumberSeq _pop_obj_rc_at_copy;
-  void print_popularity_summary_info() const;
+  // This is used for a quick test on whether a reference points into
+  // the collection set or not. Basically, we have an array, with one
+  // byte per region, and that byte denotes whether the corresponding
+  // region is in the collection set or not. The entry corresponding
+  // the bottom of the heap, i.e., region 0, is pointed to by
+  // _in_cset_fast_test_base.  The _in_cset_fast_test field has been
+  // biased so that it actually points to address 0 of the address
+  // space, to make the test as fast as possible (we can simply shift
+  // the address to address into it, instead of having to subtract the
+  // bottom of the heap from the address before shifting it; basically
+  // it works in the same way the card table works).
+  bool* _in_cset_fast_test;
+
+  // The allocated array used for the fast test on whether a reference
+  // points into the collection set or not. This field is also used to
+  // free the array.
+  bool* _in_cset_fast_test_base;
+
+  // The length of the _in_cset_fast_test_base array.
+  size_t _in_cset_fast_test_length;
 
   volatile unsigned _gc_time_stamp;
 
@@ -260,8 +285,8 @@ protected:
   // Returns "true" iff none of the gc alloc regions have any allocations
   // since the last call to "save_marks".
   bool all_alloc_regions_no_allocs_since_save_marks();
-  // Calls "note_end_of_copying on all gc alloc_regions.
-  void all_alloc_regions_note_end_of_copying();
+  // Perform finalization stuff on all allocation regions.
+  void retire_all_alloc_regions();
 
   // The number of regions allocated to hold humongous objects.
   int         _num_humongous_regions;
@@ -330,6 +355,10 @@ protected:
   // that parallel threads might be attempting allocations.
   void par_allocate_remaining_space(HeapRegion* r);
 
+  // Retires an allocation region when it is full or at the end of a
+  // GC pause.
+  void  retire_alloc_region(HeapRegion* alloc_region, bool par);
+
   // Helper function for two callbacks below.
   // "full", if true, indicates that the GC is for a System.gc() request,
   // and should collect the entire heap.  If "clear_all_soft_refs" is true,
@@ -368,6 +397,38 @@ public:
   virtual void gc_prologue(bool full);
   virtual void gc_epilogue(bool full);
 
+  // We register a region with the fast "in collection set" test. We
+  // simply set to true the array slot corresponding to this region.
+  void register_region_with_in_cset_fast_test(HeapRegion* r) {
+    assert(_in_cset_fast_test_base != NULL, "sanity");
+    assert(r->in_collection_set(), "invariant");
+    int index = r->hrs_index();
+    assert(0 <= (size_t) index && (size_t) index < _in_cset_fast_test_length,
+           "invariant");
+    assert(!_in_cset_fast_test_base[index], "invariant");
+    _in_cset_fast_test_base[index] = true;
+  }
+
+  // This is a fast test on whether a reference points into the
+  // collection set or not. It does not assume that the reference
+  // points into the heap; if it doesn't, it will return false.
+  bool in_cset_fast_test(oop obj) {
+    assert(_in_cset_fast_test != NULL, "sanity");
+    if (_g1_committed.contains((HeapWord*) obj)) {
+      // no need to subtract the bottom of the heap from obj,
+      // _in_cset_fast_test is biased
+      size_t index = ((size_t) obj) >> HeapRegion::LogOfHRGrainBytes;
+      bool ret = _in_cset_fast_test[index];
+      // let's make sure the result is consistent with what the slower
+      // test returns
+      assert( ret || !obj_in_cs(obj), "sanity");
+      assert(!ret ||  obj_in_cs(obj), "sanity");
+      return ret;
+    } else {
+      return false;
+    }
+  }
+
 protected:
 
   // Shrink the garbage-first heap by at most the given size (in bytes!).
@@ -380,10 +441,8 @@ protected:
   virtual void do_collection_pause();
 
   // The guts of the incremental collection pause, executed by the vm
-  // thread.  If "popular_region" is non-NULL, this pause should evacuate
-  // this single region whose remembered set has gotten large, moving
-  // any popular objects to one of the popular regions.
-  virtual void do_collection_pause_at_safepoint(HeapRegion* popular_region);
+  // thread.
+  virtual void do_collection_pause_at_safepoint();
 
   // Actually do the work of evacuating the collection set.
   virtual void evacuate_collection_set();
@@ -397,6 +456,10 @@ protected:
   G1RemSet* _g1_rem_set;
   // And it's mod ref barrier set, used to track updates for the above.
   ModRefBarrierSet* _mr_bs;
+
+  // A set of cards that cover the objects for which the Rsets should be updated
+  // concurrently after the collection.
+  DirtyCardQueueSet _dirty_card_queue_set;
 
   // The Heap Region Rem Set Iterator.
   HeapRegionRemSetIterator** _rem_set_iterator;
@@ -526,8 +589,21 @@ protected:
 
   // Ensure that the relevant gc_alloc regions are set.
   void get_gc_alloc_regions();
-  // We're done with GC alloc regions; release them, as appropriate.
-  void release_gc_alloc_regions();
+  // We're done with GC alloc regions. We are going to tear down the
+  // gc alloc list and remove the gc alloc tag from all the regions on
+  // that list. However, we will also retain the last (i.e., the one
+  // that is half-full) GC alloc region, per GCAllocPurpose, for
+  // possible reuse during the next collection, provided
+  // _retain_gc_alloc_region[] indicates that it should be the
+  // case. Said regions are kept in the _retained_gc_alloc_regions[]
+  // array. If the parameter totally is set, we will not retain any
+  // regions, irrespective of what _retain_gc_alloc_region[]
+  // indicates.
+  void release_gc_alloc_regions(bool totally);
+#ifndef PRODUCT
+  // Useful for debugging.
+  void print_gc_alloc_regions();
+#endif // !PRODUCT
 
   // ("Weak") Reference processing support
   ReferenceProcessor* _ref_processor;
@@ -541,71 +617,17 @@ protected:
 
   SubTasksDone* _process_strong_tasks;
 
-  // Allocate space to hold a popular object.  Result is guaranteed below
-  // "popular_object_boundary()".  Note: CURRENTLY halts the system if we
-  // run out of space to hold popular objects.
-  HeapWord* allocate_popular_object(size_t word_size);
-
-  // The boundary between popular and non-popular objects.
-  HeapWord* _popular_object_boundary;
-
-  HeapRegionList* _popular_regions_to_be_evacuated;
-
-  // Compute which objects in "single_region" are popular.  If any are,
-  // evacuate them to a popular region, leaving behind forwarding pointers,
-  // and select "popular_region" as the single collection set region.
-  // Otherwise, leave the collection set null.
-  void popularity_pause_preamble(HeapRegion* populer_region);
-
-  // Compute which objects in "single_region" are popular, and evacuate
-  // them to a popular region, leaving behind forwarding pointers.
-  // Returns "true" if at least one popular object is discovered and
-  // evacuated.  In any case, "*max_rc" is set to the maximum reference
-  // count of an object in the region.
-  bool compute_reference_counts_and_evac_popular(HeapRegion* populer_region,
-                                                 size_t* max_rc);
-  // Subroutines used in the above.
-  bool _rc_region_above;
-  size_t _rc_region_diff;
-  jint* obj_rc_addr(oop obj) {
-    uintptr_t obj_addr = (uintptr_t)obj;
-    if (_rc_region_above) {
-      jint* res = (jint*)(obj_addr + _rc_region_diff);
-      assert((uintptr_t)res > obj_addr, "RC region is above.");
-      return res;
-    } else {
-      jint* res = (jint*)(obj_addr - _rc_region_diff);
-      assert((uintptr_t)res < obj_addr, "RC region is below.");
-      return res;
-    }
-  }
-  jint obj_rc(oop obj) {
-    return *obj_rc_addr(obj);
-  }
-  void inc_obj_rc(oop obj) {
-    (*obj_rc_addr(obj))++;
-  }
-  void atomic_inc_obj_rc(oop obj);
-
-
-  // Number of popular objects and bytes (latter is cheaper!).
-  size_t pop_object_used_objs();
-  size_t pop_object_used_bytes();
-
-  // Index of the popular region in which allocation is currently being
-  // done.
-  int _cur_pop_hr_index;
-
   // List of regions which require zero filling.
   UncleanRegionList _unclean_region_list;
   bool _unclean_regions_coming;
-
-  bool check_age_cohort_well_formed_work(int a, HeapRegion* hr);
 
 public:
   void set_refine_cte_cl_concurrency(bool concurrent);
 
   RefToScanQueue *task_queue(int i);
+
+  // A set of cards where updates happened during the GC
+  DirtyCardQueueSet& dirty_card_queue_set() { return _dirty_card_queue_set; }
 
   // Create a G1CollectedHeap with the specified policy.
   // Must call the initialize method afterwards.
@@ -843,13 +865,25 @@ public:
 
   // Iterate over all the ref-containing fields of all objects, calling
   // "cl.do_oop" on each.
-  virtual void oop_iterate(OopClosure* cl);
+  virtual void oop_iterate(OopClosure* cl) {
+    oop_iterate(cl, true);
+  }
+  void oop_iterate(OopClosure* cl, bool do_perm);
 
   // Same as above, restricted to a memory region.
-  virtual void oop_iterate(MemRegion mr, OopClosure* cl);
+  virtual void oop_iterate(MemRegion mr, OopClosure* cl) {
+    oop_iterate(mr, cl, true);
+  }
+  void oop_iterate(MemRegion mr, OopClosure* cl, bool do_perm);
 
   // Iterate over all objects, calling "cl.do_object" on each.
-  virtual void object_iterate(ObjectClosure* cl);
+  virtual void object_iterate(ObjectClosure* cl) {
+    object_iterate(cl, true);
+  }
+  virtual void safe_object_iterate(ObjectClosure* cl) {
+    object_iterate(cl, true);
+  }
+  void object_iterate(ObjectClosure* cl, bool do_perm);
 
   // Iterate over all objects allocated since the last collection, calling
   // "cl.do_object" on each.  The heap must have been initialized properly
@@ -977,21 +1011,6 @@ public:
   // The boundary between a "large" and "small" array of primitives, in
   // words.
   virtual size_t large_typearray_limit();
-
-  // All popular objects are guaranteed to have addresses below this
-  // boundary.
-  HeapWord* popular_object_boundary() {
-    return _popular_object_boundary;
-  }
-
-  // Declare the region as one that should be evacuated because its
-  // remembered set is too large.
-  void schedule_popular_region_evac(HeapRegion* r);
-  // If there is a popular region to evacuate it, remove it from the list
-  // and return it.
-  HeapRegion* popular_region_to_evac();
-  // Evacuate the given popular region.
-  void evac_popular_region(HeapRegion* r);
 
   // Returns "true" iff the given word_size is "very large".
   static bool isHumongous(size_t word_size) {
