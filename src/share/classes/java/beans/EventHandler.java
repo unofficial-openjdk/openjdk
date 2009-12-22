@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import java.util.EventObject;
 import sun.reflect.misc.MethodUtil;
 
 /**
@@ -279,9 +278,9 @@ import sun.reflect.misc.MethodUtil;
 public class EventHandler implements InvocationHandler {
     private Object target;
     private String action;
-    private String eventPropertyName;
-    private String listenerMethodName;
-    private AccessControlContext acc;
+    private final String eventPropertyName;
+    private final String listenerMethodName;
+    private final AccessControlContext acc = AccessController.getContext();
 
     /**
      * Creates a new <code>EventHandler</code> object;
@@ -309,7 +308,6 @@ public class EventHandler implements InvocationHandler {
      * @see #getListenerMethodName
      */
     public EventHandler(Object target, String action, String eventPropertyName, String listenerMethodName) {
-        this.acc = AccessController.getContext();
         this.target = target;
         this.action = action;
         if (target == null) {
@@ -421,7 +419,11 @@ public class EventHandler implements InvocationHandler {
      * @see EventHandler
      */
     public Object invoke(final Object proxy, final Method method, final Object[] arguments) {
-        return AccessController.doPrivileged(new PrivilegedAction() {
+        AccessControlContext acc = this.acc;
+        if ((acc == null) && (System.getSecurityManager() != null)) {
+            throw new SecurityException("AccessControlContext is not set");
+        }
+        return AccessController.doPrivileged(new PrivilegedAction<Object>() {
             public Object run() {
                 return invokeInternal(proxy, method, arguments);
             }
@@ -481,7 +483,10 @@ public class EventHandler implements InvocationHandler {
                 throw new RuntimeException(ex);
             }
             catch (InvocationTargetException ex) {
-                throw new RuntimeException(ex.getTargetException());
+                Throwable th = ex.getTargetException();
+                throw (th instanceof RuntimeException)
+                        ? (RuntimeException) th
+                        : new RuntimeException(th);
             }
         }
         return null;
