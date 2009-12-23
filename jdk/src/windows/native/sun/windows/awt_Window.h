@@ -63,8 +63,11 @@ public:
     static jfieldID sysWID;
     static jfieldID sysHID;
 
+    static jfieldID windowTypeID;
+
     static jmethodID getWarningStringMID;
     static jmethodID calculateSecurityWarningPositionMID;
+    static jmethodID windowTypeNameMID;
 
     AwtWindow();
     virtual ~AwtWindow();
@@ -229,6 +232,7 @@ public:
     static void _SetOpaque(void* param);
     static void _UpdateWindow(void* param);
     static void _RepositionSecurityWarning(void* param);
+    static void _SetFullScreenExclusiveModeState(void* param);
 
     inline static BOOL IsResizing() {
         return sm_resizing;
@@ -331,6 +335,16 @@ private:
     static void SetLayered(HWND window, bool layered);
     static bool IsLayered(HWND window);
 
+    BOOL fullScreenExclusiveModeState;
+    inline void setFullScreenExclusiveModeState(BOOL isEntered) {
+        fullScreenExclusiveModeState = isEntered;
+        UpdateSecurityWarningVisibility();
+    }
+    inline BOOL isFullScreenExclusiveMode() {
+        return fullScreenExclusiveModeState;
+    }
+
+
 public:
     void UpdateSecurityWarningVisibility();
     static bool IsWarningWindow(HWND hWnd);
@@ -351,10 +365,28 @@ protected:
 
     void EnableTranslucency(BOOL enable);
 
+    // Native representation of the java.awt.Window.Type enum
+    enum Type {
+        NORMAL, UTILITY, POPUP
+    };
+
+    inline Type GetType() { return m_windowType; }
+
 private:
     int m_screenNum;
 
     void InitOwner(AwtWindow *owner);
+
+    Type m_windowType;
+    void InitType(JNIEnv *env, jobject peer);
+
+    // Tweak the style according to the type of the window
+    void TweakStyle(DWORD & style, DWORD & exStyle);
+
+    // Set in _SetAlwaysOnTop()
+    bool m_alwaysOnTop;
+public:
+    inline bool IsAlwaysOnTop() { return m_alwaysOnTop; }
 };
 
 #endif /* AWT_WINDOW_H */

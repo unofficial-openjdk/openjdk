@@ -26,6 +26,7 @@
 package sun.security.tools;
 
 import java.io.*;
+import java.security.CodeSigner;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -34,11 +35,11 @@ import java.security.PublicKey;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.Signature;
+import java.security.Timestamp;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.Principal;
 import java.security.Provider;
-import java.security.Identity;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -46,6 +47,8 @@ import java.security.cert.CertificateException;
 import java.text.Collator;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -53,9 +56,6 @@ import java.net.URLClassLoader;
 import sun.misc.BASE64Encoder;
 import sun.security.util.ObjectIdentifier;
 import sun.security.pkcs.PKCS10;
-import sun.security.provider.IdentityDatabase;
-import sun.security.provider.SystemSigner;
-import sun.security.provider.SystemIdentity;
 import sun.security.provider.X509Factory;
 import sun.security.util.DerOutputStream;
 import sun.security.util.Password;
@@ -130,6 +130,7 @@ public final class KeyTool {
     private File ksfile = null;
     private InputStream ksStream = null; // keystore stream
     private String sslserver = null;
+    private String jarfile = null;
     private KeyStore keyStore = null;
     private boolean token = false;
     private boolean nullStream = false;
@@ -206,7 +207,7 @@ public final class KeyTool {
             "-providername", "-providerclass", "-providerarg",
             "-providerpath", "-v", "-protected"),
         PRINTCERT("Prints the content of a certificate",
-            "-rfc", "-file", "-sslserver", "-v"),
+            "-rfc", "-file", "-sslserver", "-jarfile", "-v"),
         PRINTCERTREQ("Prints the content of a certificate request",
             "-file", "-v"),
         SELFCERT("Generates a self-signed certificate",
@@ -266,6 +267,7 @@ public final class KeyTool {
         {"-srcstorepass", "<arg>", "source keystore password"},
         {"-srcstoretype", "<srcstoretype>", "source keystore type"},
         {"-sslserver", "<server[:port]>", "SSL server host and port"},
+        {"-jarfile", "<filename>", "signed jar file"},
         {"-startdate", "<startdate>", "certificate validity start date/time"},
         {"-storepass", "<arg>", "keystore password"},
         {"-storetype", "<storetype>", "keystore type"},
@@ -453,6 +455,8 @@ public final class KeyTool {
                 outfilename = args[++i];
             } else if (collator.compare(flags, "-sslserver") == 0) {
                 sslserver = args[++i];
+            } else if (collator.compare(flags, "-jarfile") == 0) {
+                jarfile = args[++i];
             } else if (collator.compare(flags, "-srckeystore") == 0) {
                 srcksfname = args[++i];
             } else if ((collator.compare(flags, "-provider") == 0) ||
@@ -1155,18 +1159,16 @@ public final class KeyTool {
         Signature signature = Signature.getInstance(sigAlgName);
         signature.initSign(privateKey);
 
-        X500Signer signer = new X500Signer(signature, issuer);
-
         X509CertInfo info = new X509CertInfo();
         info.set(X509CertInfo.VALIDITY, interval);
         info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(
                     new java.util.Random().nextInt() & 0x7fffffff));
         info.set(X509CertInfo.VERSION,
-                     new CertificateVersion(CertificateVersion.V3));
+                    new CertificateVersion(CertificateVersion.V3));
         info.set(X509CertInfo.ALGORITHM_ID,
-                     new CertificateAlgorithmId(signer.getAlgorithmId()));
-        info.set(X509CertInfo.ISSUER,
-                     new CertificateIssuerName(signer.getSigner()));
+                    new CertificateAlgorithmId(
+                        AlgorithmId.getAlgorithmId(sigAlgName)));
+        info.set(X509CertInfo.ISSUER, new CertificateIssuerName(issuer));
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         boolean canRead = false;
@@ -1241,7 +1243,7 @@ public final class KeyTool {
         request.getAttributes().setAttribute(X509CertInfo.EXTENSIONS,
                 new PKCS10Attribute(PKCS9Attribute.EXTENSION_REQUEST_OID, ext));
 
-        // Construct an X500Signer object, so that we can sign the request
+        // Construct a Signature object, so that we can sign the request
         if (sigAlgName == null) {
             sigAlgName = getCompatibleSigAlgName(privKey.getAlgorithm());
         }
@@ -1251,10 +1253,9 @@ public final class KeyTool {
         X500Name subject = dname == null?
                 new X500Name(((X509Certificate)cert).getSubjectDN().toString()):
                 new X500Name(dname);
-        X500Signer signer = new X500Signer(signature, subject);
 
         // Sign the request and base-64 encode it
-        request.encodeAndSign(signer);
+        request.encodeAndSign(subject, signature);
         request.print(out);
     }
 
@@ -1407,7 +1408,7 @@ public final class KeyTool {
         } else if ("RSA".equalsIgnoreCase(keyAlgName)) {
             return "SHA256WithRSA";
         } else if ("EC".equalsIgnoreCase(keyAlgName)) {
-            return "SHA1withECDSA";
+            return "SHA256withECDSA";
         } else {
             throw new Exception(rb.getString
                     ("Cannot derive signature algorithm"));
@@ -1556,75 +1557,8 @@ public final class KeyTool {
     private void doImportIdentityDatabase(InputStream in)
         throws Exception
     {
-        byte[] encoded;
-        ByteArrayInputStream bais;
-        java.security.cert.X509Certificate newCert;
-        java.security.cert.Certificate[] chain = null;
-        PrivateKey privKey;
-        boolean modified = false;
-
-        IdentityDatabase idb = IdentityDatabase.fromStream(in);
-        for (Enumeration<Identity> enum_ = idb.identities();
-                                        enum_.hasMoreElements();) {
-            Identity id = enum_.nextElement();
-            newCert = null;
-            // only store trusted identities in keystore
-            if ((id instanceof SystemSigner && ((SystemSigner)id).isTrusted())
-                || (id instanceof SystemIdentity
-                    && ((SystemIdentity)id).isTrusted())) {
-                // ignore if keystore entry with same alias name already exists
-                if (keyStore.containsAlias(id.getName())) {
-                    MessageFormat form = new MessageFormat
-                        (rb.getString("Keystore entry for <id.getName()> already exists"));
-                    Object[] source = {id.getName()};
-                    System.err.println(form.format(source));
-                    continue;
-                }
-                java.security.Certificate[] certs = id.certificates();
-                if (certs!=null && certs.length>0) {
-                    // we can only store one user cert per identity.
-                    // convert old-style to new-style cert via the encoding
-                    DerOutputStream dos = new DerOutputStream();
-                    certs[0].encode(dos);
-                    encoded = dos.toByteArray();
-                    bais = new ByteArrayInputStream(encoded);
-                    newCert = (X509Certificate)cf.generateCertificate(bais);
-                    bais.close();
-
-                    // if certificate is self-signed, make sure it verifies
-                    if (isSelfSigned(newCert)) {
-                        PublicKey pubKey = newCert.getPublicKey();
-                        try {
-                            newCert.verify(pubKey);
-                        } catch (Exception e) {
-                            // ignore this cert
-                            continue;
-                        }
-                    }
-
-                    if (id instanceof SystemSigner) {
-                        MessageFormat form = new MessageFormat(rb.getString
-                            ("Creating keystore entry for <id.getName()> ..."));
-                        Object[] source = {id.getName()};
-                        System.err.println(form.format(source));
-                        if (chain==null) {
-                            chain = new java.security.cert.Certificate[1];
-                        }
-                        chain[0] = newCert;
-                        privKey = ((SystemSigner)id).getPrivateKey();
-                        keyStore.setKeyEntry(id.getName(), privKey, storePass,
-                                             chain);
-                    } else {
-                        keyStore.setCertificateEntry(id.getName(), newCert);
-                    }
-                    kssave = true;
-                }
-            }
-        }
-        if (!kssave) {
-            System.err.println(rb.getString
-                ("No entries from identity database added"));
-        }
+        System.err.println(rb.getString
+            ("No entries from identity database added"));
     }
 
     /**
@@ -2065,7 +1999,71 @@ public final class KeyTool {
     }
 
     private void doPrintCert(final PrintStream out) throws Exception {
-        if (sslserver != null) {
+        if (jarfile != null) {
+            JarFile jf = new JarFile(jarfile, true);
+            Enumeration<JarEntry> entries = jf.entries();
+            Set<CodeSigner> ss = new HashSet<CodeSigner>();
+            byte[] buffer = new byte[8192];
+            int pos = 0;
+            while (entries.hasMoreElements()) {
+                JarEntry je = entries.nextElement();
+                InputStream is = null;
+                try {
+                    is = jf.getInputStream(je);
+                    while (is.read(buffer) != -1) {
+                        // we just read. this will throw a SecurityException
+                        // if a signature/digest check fails. This also
+                        // populate the signers
+                    }
+                } finally {
+                    if (is != null) {
+                        is.close();
+                    }
+                }
+                CodeSigner[] signers = je.getCodeSigners();
+                if (signers != null) {
+                    for (CodeSigner signer: signers) {
+                        if (!ss.contains(signer)) {
+                            ss.add(signer);
+                            out.printf(rb.getString("Signer #%d:"), ++pos);
+                            out.println();
+                            out.println();
+                            out.println(rb.getString("Signature:"));
+                            out.println();
+                            for (Certificate cert: signer.getSignerCertPath().getCertificates()) {
+                                X509Certificate x = (X509Certificate)cert;
+                                if (rfc) {
+                                    out.println(rb.getString("Certificate owner: ") + x.getSubjectDN() + "\n");
+                                    dumpCert(x, out);
+                                } else {
+                                    printX509Cert(x, out);
+                                }
+                                out.println();
+                            }
+                            Timestamp ts = signer.getTimestamp();
+                            if (ts != null) {
+                                out.println(rb.getString("Timestamp:"));
+                                out.println();
+                                for (Certificate cert: ts.getSignerCertPath().getCertificates()) {
+                                    X509Certificate x = (X509Certificate)cert;
+                                    if (rfc) {
+                                        out.println(rb.getString("Certificate owner: ") + x.getSubjectDN() + "\n");
+                                        dumpCert(x, out);
+                                    } else {
+                                        printX509Cert(x, out);
+                                    }
+                                    out.println();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            jf.close();
+            if (ss.size() == 0) {
+                out.println(rb.getString("Not a signed jar file"));
+            }
+        } else if (sslserver != null) {
             SSLContext sc = SSLContext.getInstance("SSL");
             final boolean[] certPrinted = new boolean[1];
             sc.init(null, new TrustManager[] {

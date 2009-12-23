@@ -199,7 +199,17 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer,
     }
 
     native void createAwtWindow(WComponentPeer parent);
+
+    private volatile Window.Type windowType = Window.Type.NORMAL;
+
+    // This method must be called for Window, Dialog, and Frame before creating
+    // the hwnd
+    void preCreate(WComponentPeer parent) {
+        windowType = ((Window)target).getType();
+    }
+
     void create(WComponentPeer parent) {
+        preCreate(parent);
         createAwtWindow(parent);
     }
 
@@ -510,6 +520,9 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer,
 
     private native int getScreenImOn();
 
+    // Used in Win32GraphicsDevice.
+    public final native void setFullScreenExclusiveModeState(boolean state);
+
 /*
  * ----END DISPLAY CHANGE SUPPORT----
  */
@@ -575,11 +588,17 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer,
         }
     }
 
+    public final Graphics getTranslucentGraphics() {
+        synchronized (getStateLock()) {
+            return isOpaque ? null : painter.getBackBuffer(false).getGraphics();
+        }
+    }
+
     @Override
     public Graphics getGraphics() {
         synchronized (getStateLock()) {
             if (!isOpaque) {
-                return painter.getBackBuffer(false).getGraphics();
+                return getTranslucentGraphics();
             }
         }
         return super.getGraphics();

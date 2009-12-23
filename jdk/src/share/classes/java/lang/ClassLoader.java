@@ -175,26 +175,60 @@ import sun.security.util.SecurityConstants;
 public abstract class ClassLoader {
 
     private static native void registerNatives();
-
-    // Set of classes which are registered as parallel capable class loaders
-    private static final Set<Class<? extends ClassLoader>> parallelLoaders
-        = Collections.newSetFromMap(Collections.synchronizedMap
-              (new WeakHashMap<Class<? extends ClassLoader>, Boolean>()));
-
     static {
         registerNatives();
-        parallelLoaders.add(ClassLoader.class);
     }
-
-    // If initialization succeed this is set to true and security checks will
-    // succeed.  Otherwise the object is not initialized and the object is
-    // useless.
-    private final boolean initialized;
 
     // The parent class loader for delegation
     // Note: VM hardcoded the offset of this field, thus all new fields
     // must be added *after* it.
     private final ClassLoader parent;
+
+    /**
+     * Encapsulates the set of parallel capable loader types.
+     */
+    private static class ParallelLoaders {
+        private ParallelLoaders() {}
+
+        // the set of parallel capable loader types
+        private static final Set<Class<? extends ClassLoader>> loaderTypes =
+            Collections.newSetFromMap(
+                new WeakHashMap<Class<? extends ClassLoader>, Boolean>());
+        static {
+            synchronized (loaderTypes) { loaderTypes.add(ClassLoader.class); }
+        }
+
+        /**
+         * Registers the given class loader type as parallel capabale.
+         * Returns {@code true} is successfully registered; {@code false} if
+         * loader's super class is not registered.
+         */
+        static boolean register(Class<? extends ClassLoader> c) {
+            synchronized (loaderTypes) {
+                if (loaderTypes.contains(c.getSuperclass())) {
+                    // register the class loader as parallel capable
+                    // if and only if all of its super classes are.
+                    // Note: given current classloading sequence, if
+                    // the immediate super class is parallel capable,
+                    // all the super classes higher up must be too.
+                    loaderTypes.add(c);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        /**
+         * Returns {@code true} if the given class loader type is
+         * registered as parallel capable.
+         */
+        static boolean isRegistered(Class<? extends ClassLoader> c) {
+            synchronized (loaderTypes) {
+                return loaderTypes.contains(c);
+            }
+        }
+    }
 
     // Maps class name to the corresponding lock object when the current
     // class loader is parallel capable.
@@ -232,6 +266,31 @@ public abstract class ClassLoader {
     private final HashMap<String, Package> packages =
         new HashMap<String, Package>();
 
+    private static Void checkCreateClassLoader() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkCreateClassLoader();
+        }
+        return null;
+    }
+
+    private ClassLoader(Void unused, ClassLoader parent) {
+        this.parent = parent;
+        if (ParallelLoaders.isRegistered(this.getClass())) {
+            parallelLockMap = new ConcurrentHashMap<String, Object>();
+            package2certs = new ConcurrentHashMap<String, Certificate[]>();
+            domains =
+                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
+            assertionLock = new Object();
+        } else {
+            // no finer-grained lock; lock on the classloader instance
+            parallelLockMap = null;
+            package2certs = new Hashtable<String, Certificate[]>();
+            domains = new HashSet<ProtectionDomain>();
+            assertionLock = this;
+        }
+    }
+
     /**
      * Creates a new class loader using the specified parent class loader for
      * delegation.
@@ -252,25 +311,7 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected ClassLoader(ClassLoader parent) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = parent;
-        if (parallelLoaders.contains(this.getClass())) {
-            parallelLockMap = new ConcurrentHashMap<String, Object>();
-            package2certs = new ConcurrentHashMap<String, Certificate[]>();
-            domains =
-                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
-            assertionLock = new Object();
-        } else {
-            // no finer-grained lock; lock on the classloader instance
-            parallelLockMap = null;
-            package2certs = new Hashtable<String, Certificate[]>();
-            domains = new HashSet<ProtectionDomain>();
-            assertionLock = this;
-        }
-        initialized = true;
+        this(checkCreateClassLoader(), parent);
     }
 
     /**
@@ -289,25 +330,7 @@ public abstract class ClassLoader {
      *          of a new class loader.
      */
     protected ClassLoader() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = getSystemClassLoader();
-        if (parallelLoaders.contains(this.getClass())) {
-            parallelLockMap = new ConcurrentHashMap<String, Object>();
-            package2certs = new ConcurrentHashMap<String, Certificate[]>();
-            domains =
-                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
-            assertionLock = new Object();
-        } else {
-            // no finer-grained lock; lock on the classloader instance
-            parallelLockMap = null;
-            package2certs = new Hashtable<String, Certificate[]>();
-            domains = new HashSet<ProtectionDomain>();
-            assertionLock = this;
-        }
-        initialized = true;
+        this(checkCreateClassLoader(), getSystemClassLoader());
     }
 
     // -- Class --
@@ -754,7 +777,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
         protectionDomain = preDefineClass(name, protectionDomain);
 
         Class c = null;
@@ -838,8 +860,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
-
         int len = b.remaining();
 
         // Use byte[] if not a direct ByteBufer:
@@ -984,7 +1004,6 @@ public abstract class ClassLoader {
      * @see  #defineClass(String, byte[], int, int)
      */
     protected final void resolveClass(Class<?> c) {
-        check();
         resolveClass0(c);
     }
 
@@ -1015,7 +1034,6 @@ public abstract class ClassLoader {
     protected final Class<?> findSystemClass(String name)
         throws ClassNotFoundException
     {
-        check();
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
             if (!checkName(name))
@@ -1035,7 +1053,6 @@ public abstract class ClassLoader {
      */
     private Class findBootstrapClassOrNull(String name)
     {
-        check();
         if (!checkName(name)) return null;
 
         return findBootstrapClass(name);
@@ -1043,13 +1060,6 @@ public abstract class ClassLoader {
 
     // return null if not found
     private native Class findBootstrapClass(String name);
-
-    // Check to make sure the class loader has been initialized.
-    private void check() {
-        if (!initialized) {
-            throw new SecurityException("ClassLoader object not initialized");
-        }
-    }
 
     /**
      * Returns the class with the given <a href="#name">binary name</a> if this
@@ -1066,7 +1076,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final Class<?> findLoadedClass(String name) {
-        check();
         if (!checkName(name))
             return null;
         return findLoadedClass0(name);
@@ -1087,7 +1096,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final void setSigners(Class<?> c, Object[] signers) {
-        check();
         c.setSigners(signers);
     }
 
@@ -1225,24 +1233,7 @@ public abstract class ClassLoader {
      * @since   1.7
      */
     protected static boolean registerAsParallelCapable() {
-        Class<? extends ClassLoader> caller = getCaller(1);
-        Class superCls = caller.getSuperclass();
-        boolean result = false;
-        // Explicit synchronization needed for composite action
-        synchronized (parallelLoaders) {
-            if (!parallelLoaders.contains(caller)) {
-                if (parallelLoaders.contains(superCls)) {
-                    // register the immediate caller as parallel capable
-                    // if and only if all of its super classes are.
-                    // Note: given current classloading sequence, if
-                    // the immediate super class is parallel capable,
-                    // all the super classes higher up must be too.
-                    result = true;
-                    parallelLoaders.add(caller);
-                }
-            } else result = true;
-        }
-        return result;
+        return ParallelLoaders.register(getCaller(1));
     }
 
     /**

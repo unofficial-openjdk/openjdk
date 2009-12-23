@@ -148,6 +148,51 @@ import sun.util.logging.PlatformLogger;
 public class Window extends Container implements Accessible {
 
     /**
+     * Enumeration of available <i>window types</i>.
+     *
+     * A window type defines the generic visual appearance and behavior of a
+     * top-level window. For example, the type may affect the kind of
+     * decorations of a decorated {@code Frame} or {@code Dialog} instance.
+     * <p>
+     * Some platforms may not fully support a certain window type. Depending on
+     * the level of support, some properties of the window type may be
+     * disobeyed.
+     *
+     * @see   #getType
+     * @see   #setType
+     * @since 1.7
+     */
+    public static enum Type {
+        /**
+         * Represents a <i>normal</i> window.
+         *
+         * This is the default type for objects of the {@code Window} class or
+         * its descendants. Use this type for regular top-level windows.
+         */
+        NORMAL,
+
+        /**
+         * Represents a <i>utility</i> window.
+         *
+         * A utility window is usually a small window such as a toolbar or a
+         * palette. The native system may render the window with smaller
+         * title-bar if the window is either a {@code Frame} or a {@code
+         * Dialog} object, and if it has its decorations enabled.
+         */
+        UTILITY,
+
+        /**
+         * Represents a <i>popup</i> window.
+         *
+         * A popup window is a temporary window such as a drop-down menu or a
+         * tooltip. On some platforms, windows of that type may be forcibly
+         * made undecorated even if they are instances of the {@code Frame} or
+         * {@code Dialog} class, and have decorations enabled.
+         */
+        POPUP
+    }
+
+    /**
      * This represents the warning message that is
      * to be displayed in a non secure window. ie :
      * a window that has a security manager installed for
@@ -767,7 +812,7 @@ public class Window extends Container implements Accessible {
             isPacked = true;
         }
 
-        validate();
+        validateUnconditionally();
     }
 
     /**
@@ -943,7 +988,7 @@ public class Window extends Container implements Accessible {
         if (peer == null) {
             addNotify();
         }
-        validate();
+        validateUnconditionally();
 
         isInShow = true;
         if (visible) {
@@ -2600,6 +2645,21 @@ public class Window extends Container implements Accessible {
     }
 
     /**
+     * Indicates if this container is a validate root.
+     * <p>
+     * {@code Window} objects are the validate roots, and, therefore, they
+     * override this method to return {@code true}.
+     *
+     * @return {@code true}
+     * @since 1.7
+     * @see java.awt.Container#isValidateRoot
+     */
+    @Override
+    public boolean isValidateRoot() {
+        return true;
+    }
+
+    /**
      * Dispatches an event to this window or one of its sub components.
      * @param e the event
      */
@@ -2700,6 +2760,52 @@ public class Window extends Container implements Accessible {
 
     private void removeFromWindowList() {
         removeFromWindowList(appContext, weakThis);
+    }
+
+    /**
+     * Window type.
+     *
+     * Synchronization: ObjectLock
+     */
+    private Type type = Type.NORMAL;
+
+    /**
+     * Sets the type of the window.
+     *
+     * This method can only be called while the window is not displayable.
+     *
+     * @throws IllegalComponentStateException if the window
+     *         is displayable.
+     * @throws IllegalArgumentException if the type is {@code null}
+     * @see    Component#isDisplayable
+     * @see    #getType
+     * @since 1.7
+     */
+    public void setType(Type type) {
+        if (type == null) {
+            throw new IllegalArgumentException("type should not be null.");
+        }
+        synchronized (getTreeLock()) {
+            if (isDisplayable()) {
+                throw new IllegalComponentStateException(
+                        "The window is displayable.");
+            }
+            synchronized (getObjectLock()) {
+                this.type = type;
+            }
+        }
+    }
+
+    /**
+     * Returns the type of the window.
+     *
+     * @see   #setType
+     * @since 1.7
+     */
+    public Type getType() {
+        synchronized (getObjectLock()) {
+            return type;
+        }
     }
 
     /**
@@ -3857,6 +3963,18 @@ public class Window extends Container implements Accessible {
 
             public void setLWRequestStatus(Window changed, boolean status) {
                 changed.syncLWRequests = status;
+            }
+
+            public boolean isAutoRequestFocus(Window w) {
+                return w.autoRequestFocus;
+            }
+
+            public boolean isTrayIconWindow(Window w) {
+                return w.isTrayIconWindow;
+            }
+
+            public void setTrayIconWindow(Window w, boolean isTrayIconWindow) {
+                w.isTrayIconWindow = isTrayIconWindow;
             }
         }); // WindowAccessor
     } // static
