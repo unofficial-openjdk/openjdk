@@ -520,8 +520,9 @@ public class KDC {
             // Do not call EncryptionKey.acquireSecretKeys(), otherwise
             // the krb5.conf config file would be loaded.
             Integer kvno = null;
-            // For service whose password ending with a number, use it as kvno
-            if (p.toString().indexOf('/') >= 0) {
+            // For service whose password ending with a number, use it as kvno.
+            // Kvno must be postive.
+            if (p.toString().indexOf('/') > 0) {
                 char[] pass = getPassword(p, server);
                 if (Character.isDigit(pass[pass.length-1])) {
                     kvno = pass[pass.length-1] - '0';
