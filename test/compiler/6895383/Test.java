@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,30 @@
  *
  */
 
-  static void prepare_invoke(Register method, Register index, int byte_no);
-  static void invokevirtual_helper(Register index, Register recv,
-                                   Register flags);
-  static void volatile_barrier(Assembler::Membar_mask_bits order_constraint);
+/**
+ * @test
+ * @bug 6895383
+ * @summary JCK test throws NPE for method compiled with Escape Analysis
+ *
+ * @run main/othervm -Xcomp Test
+ */
 
-  // Helpers
-  static void index_check(Register array, Register index);
-  static void index_check_without_pop(Register array, Register index);
+public class Test {
+    public static void main(String argv[]) {
+        Test test = new Test();
+        test.testRemove1_IndexOutOfBounds();
+        test.testAddAll1_IndexOutOfBoundsException();
+    }
+
+    public void testRemove1_IndexOutOfBounds() {
+        CopyOnWriteArrayList c = new CopyOnWriteArrayList();
+    }
+
+    public void testAddAll1_IndexOutOfBoundsException() {
+        try {
+            CopyOnWriteArrayList c = new CopyOnWriteArrayList();
+            c.addAll(-1, new LinkedList()); // should throw IndexOutOfBoundsException
+        } catch (IndexOutOfBoundsException e) {
+        }
+    }
+}

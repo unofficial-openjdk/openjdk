@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,27 @@
  *
  */
 
-  static void prepare_invoke(Register method, Register index, int byte_no);
-  static void invokevirtual_helper(Register index, Register recv,
-                                   Register flags);
-  static void volatile_barrier(Assembler::Membar_mask_bits order_constraint);
+/*
+ * @test
+ * @bug 6896727
+ * @summary nsk/logging/LoggingPermission/LoggingPermission/logperm002 fails with G1, EscapeAnalisys w/o COOPs
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -Xcomp -XX:+DoEscapeAnalysis -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC Test
+ */
 
-  // Helpers
-  static void index_check(Register array, Register index);
-  static void index_check_without_pop(Register array, Register index);
+public class Test {
+
+    final static String testString = "abracadabra";
+    public static void main(String args[]) {
+        String params[][] = {
+            {"control", testString}
+        };
+        for (int i=0; i<params.length; i++) {
+            try {
+                System.out.println("Params :" + testString + " and " + params[i][0] + ", " + params[i][1]);
+                if (params[i][1] == null) {
+                    System.exit(97);
+                }
+            } catch (Exception e) {}
+        }
+    }
+}
