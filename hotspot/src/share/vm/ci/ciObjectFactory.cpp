@@ -153,6 +153,10 @@ void ciObjectFactory::init_shared_objects() {
   ciEnv::_ClassCastException =
     get(SystemDictionary::ClassCastException_klass())
       ->as_instance_klass();
+  if (EnableInvokeDynamic) {
+    ciEnv::_InvokeDynamic =
+      get(SystemDictionary::InvokeDynamic_klass())->as_instance_klass();
+  }
   ciEnv::_Object =
     get(SystemDictionary::object_klass())
       ->as_instance_klass();
@@ -333,13 +337,21 @@ ciObject* ciObjectFactory::create_new_object(oop o) {
     return new (arena()) ciMethodData(h_md);
   } else if (o->is_instance()) {
     instanceHandle h_i(THREAD, (instanceOop)o);
-    return new (arena()) ciInstance(h_i);
+    if (java_dyn_CallSite::is_instance(o))
+      return new (arena()) ciCallSite(h_i);
+    else if (java_dyn_MethodHandle::is_instance(o))
+      return new (arena()) ciMethodHandle(h_i);
+    else
+      return new (arena()) ciInstance(h_i);
   } else if (o->is_objArray()) {
     objArrayHandle h_oa(THREAD, (objArrayOop)o);
     return new (arena()) ciObjArray(h_oa);
   } else if (o->is_typeArray()) {
     typeArrayHandle h_ta(THREAD, (typeArrayOop)o);
     return new (arena()) ciTypeArray(h_ta);
+  } else if (o->is_constantPoolCache()) {
+    constantPoolCacheHandle h_cpc(THREAD, (constantPoolCacheOop) o);
+    return new (arena()) ciCPCache(h_cpc);
   }
 
   // The oop is of some type not supported by the compiler interface.

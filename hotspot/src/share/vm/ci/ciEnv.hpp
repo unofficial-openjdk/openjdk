@@ -77,6 +77,7 @@ private:
   static ciInstanceKlass* _ArrayStoreException;
   static ciInstanceKlass* _Class;
   static ciInstanceKlass* _ClassCastException;
+  static ciInstanceKlass* _InvokeDynamic;
   static ciInstanceKlass* _Object;
   static ciInstanceKlass* _Throwable;
   static ciInstanceKlass* _Thread;
@@ -120,37 +121,45 @@ private:
                              bool require_local);
 
   // Constant pool access.
-  ciKlass*   get_klass_by_index(ciInstanceKlass* loading_klass,
+  ciKlass*   get_klass_by_index(constantPoolHandle cpool,
                                 int klass_index,
-                                bool& is_accessible);
-  ciConstant get_constant_by_index(ciInstanceKlass* loading_klass,
-                                   int constant_index);
+                                bool& is_accessible,
+                                ciInstanceKlass* loading_klass);
+  ciConstant get_constant_by_index(constantPoolHandle cpool,
+                                   int constant_index,
+                                   ciInstanceKlass* accessor);
   bool       is_unresolved_string(ciInstanceKlass* loading_klass,
                                    int constant_index) const;
   bool       is_unresolved_klass(ciInstanceKlass* loading_klass,
                                    int constant_index) const;
   ciField*   get_field_by_index(ciInstanceKlass* loading_klass,
                                 int field_index);
-  ciMethod*  get_method_by_index(ciInstanceKlass* loading_klass,
-                                 int method_index, Bytecodes::Code bc);
+  ciMethod*  get_method_by_index(constantPoolHandle cpool,
+                                 int method_index, Bytecodes::Code bc,
+                                 ciInstanceKlass* loading_klass);
 
   // Implementation methods for loading and constant pool access.
   ciKlass* get_klass_by_name_impl(ciKlass* accessing_klass,
                                   ciSymbol* klass_name,
                                   bool require_local);
-  ciKlass*   get_klass_by_index_impl(ciInstanceKlass* loading_klass,
+  ciKlass*   get_klass_by_index_impl(constantPoolHandle cpool,
                                      int klass_index,
-                                     bool& is_accessible);
-  ciConstant get_constant_by_index_impl(ciInstanceKlass* loading_klass,
-                                        int constant_index);
+                                     bool& is_accessible,
+                                     ciInstanceKlass* loading_klass);
+  ciConstant get_constant_by_index_impl(constantPoolHandle cpool,
+                                        int constant_index,
+                                        ciInstanceKlass* loading_klass);
   bool       is_unresolved_string_impl (instanceKlass* loading_klass,
                                         int constant_index) const;
   bool       is_unresolved_klass_impl (instanceKlass* loading_klass,
                                         int constant_index) const;
   ciField*   get_field_by_index_impl(ciInstanceKlass* loading_klass,
                                      int field_index);
-  ciMethod*  get_method_by_index_impl(ciInstanceKlass* loading_klass,
-                                      int method_index, Bytecodes::Code bc);
+  ciMethod*  get_method_by_index_impl(constantPoolHandle cpool,
+                                      int method_index, Bytecodes::Code bc,
+                                      ciInstanceKlass* loading_klass);
+  ciMethod*  get_fake_invokedynamic_method_impl(constantPoolHandle cpool,
+                                                int index, Bytecodes::Code bc);
 
   // Helper methods
   bool       check_klass_accessibility(ciKlass* accessing_klass,
@@ -300,6 +309,9 @@ public:
   }
   ciInstanceKlass* ClassCastException_klass() {
     return _ClassCastException;
+  }
+  ciInstanceKlass* InvokeDynamic_klass() {
+    return _InvokeDynamic;
   }
   ciInstanceKlass* Object_klass() {
     return _Object;
