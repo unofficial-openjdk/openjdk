@@ -173,8 +173,8 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
                                      "\ud22c\ub974\ud06c\uba54\ub2c8\uc2a4\ud0c4 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "TMST"};
         String ULAT[]= new String[] {"\uc6b8\ub780\ubc14\ud0c0\ub974 \uc2dc\uac04", "ULAT",
                                      "\uc6b8\ub780\ubc14\ud0c0\ub974 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "ULAST"};
-        String WART[] = new String[] {"\uc544\ub974\ud5e8\ud2f0\ub098 \uc2dc\uac04", "WART",
-                                      "\uc544\ub974\ud5e8\ud2f0\ub098 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WARST"};
+        String WART[] = new String[] {"\uc11c\ubd80 \uc544\ub974\ud5e8\ud2f0\ub098 \uc2dc\uac04", "WART",
+                                      "\uc11c\ubd80 \uc544\ub974\ud5e8\ud2f0\ub098 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WARST"};
         String WAT[] = new String[] {"\uc11c\ubd80 \uc544\ud504\ub9ac\uce74 \uc2dc\uac04", "WAT",
                                      "\uc11c\ubd80 \uc544\ud504\ub9ac\uce74 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WAST"};
         String WET[] = new String[] {"\uc11c\uc720\ub7fd \uc2dc\uac04", "WET",
