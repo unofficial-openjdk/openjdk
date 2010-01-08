@@ -2625,6 +2625,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     if (match_option(option, "-XX:-IgnoreUnrecognizedVMOptions", &tail)) {
       IgnoreUnrecognizedVMOptions = false;
     }
+    if (match_option(option, "-XX:+PrintFlagsInitial", &tail)) {
+      CommandLineFlags::printFlags();
+      vm_exit(0);
+    }
   }
 
   if (IgnoreUnrecognizedVMOptions) {
@@ -2765,11 +2769,9 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     CommandLineFlags::printSetFlags();
   }
 
-#ifdef ASSERT
   if (PrintFlagsFinal) {
     CommandLineFlags::printFlags();
   }
-#endif
 
   return JNI_OK;
 }
