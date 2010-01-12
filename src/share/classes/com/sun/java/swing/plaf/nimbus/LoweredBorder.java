@@ -44,7 +44,7 @@ import java.awt.image.BufferedImage;
  *
  * @author Jasper Potts
  */
-class LoweredBorder extends AbstractRegionPainter implements Border {
+public class LoweredBorder extends AbstractRegionPainter implements Border {
     private static final int IMG_SIZE = 30;
     private static final int RADIUS = 13;
     private static final Insets INSETS = new Insets(10,10,10,10);
