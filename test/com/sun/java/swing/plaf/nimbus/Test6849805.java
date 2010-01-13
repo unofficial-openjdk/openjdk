@@ -35,7 +35,7 @@ public class Test6849805 {
 
     static boolean pass = true;
 
-    static class Minimbus extends javax.swing.plaf.nimbus.NimbusLookAndFeel {
+    static class Minimbus extends com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel {
 
         public void test(Color c1, Color c2, float f) {
             Color r = getDerivedColor(c1, c2, f);

@@ -41,7 +41,7 @@ import java.awt.image.BufferedImage;
  *
  * @author Created by Jasper Potts (Jan 28, 2008)
  */
-class TableScrollPaneCorner extends JComponent implements UIResource{
+public class TableScrollPaneCorner extends JComponent implements UIResource{
 
     /**
      * Paint the component using the Nimbus Table Header Background Painter
