@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package sun.security.provider.certpath;
 
-import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import java.security.AccessController;
@@ -33,11 +32,13 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.cert.*;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.security.auth.x500.X500Principal;
 
 import sun.misc.IOUtils;
-import sun.security.util.*;
+import static sun.security.provider.certpath.OCSP.*;
+import sun.security.util.Debug;
 import sun.security.x509.*;
 
 /**
@@ -50,26 +51,18 @@ import sun.security.x509.*;
  */
 class OCSPChecker extends PKIXCertPathChecker {
 
-    public static final String OCSP_ENABLE_PROP = "ocsp.enable";
-    public static final String OCSP_URL_PROP = "ocsp.responderURL";
-    public static final String OCSP_CERT_SUBJECT_PROP =
+    static final String OCSP_ENABLE_PROP = "ocsp.enable";
+    static final String OCSP_URL_PROP = "ocsp.responderURL";
+    static final String OCSP_CERT_SUBJECT_PROP =
         "ocsp.responderCertSubjectName";
-    public static final String OCSP_CERT_ISSUER_PROP =
+    static final String OCSP_CERT_ISSUER_PROP =
         "ocsp.responderCertIssuerName";
-    public static final String OCSP_CERT_NUMBER_PROP =
+    static final String OCSP_CERT_NUMBER_PROP =
         "ocsp.responderCertSerialNumber";
 
     private static final String HEX_DIGITS = "0123456789ABCDEFabcdef";
     private static final Debug DEBUG = Debug.getInstance("certpath");
     private static final boolean dump = false;
-
-    // Supported extensions
-    private static final int OCSP_NONCE_DATA[] =
-        { 1, 3, 6, 1, 5, 5, 7, 48, 1, 2 };
-    private static final ObjectIdentifier OCSP_NONCE_OID;
-    static {
-        OCSP_NONCE_OID = ObjectIdentifier.newInternal(OCSP_NONCE_DATA);
-    }
 
     private int remainingCerts;
 
@@ -79,19 +72,26 @@ class OCSPChecker extends PKIXCertPathChecker {
 
     private PKIXParameters pkixParams;
 
+    private boolean onlyEECert = false;
+
     /**
      * Default Constructor
      *
      * @param certPath the X509 certification path
      * @param pkixParams the input PKIX parameter set
-     * @exception CertPathValidatorException Exception thrown if cert path
-     * does not validate.
+     * @throws CertPathValidatorException if OCSPChecker can not be created
      */
     OCSPChecker(CertPath certPath, PKIXParameters pkixParams)
+        throws CertPathValidatorException {
+        this(certPath, pkixParams, false);
+    }
+
+    OCSPChecker(CertPath certPath, PKIXParameters pkixParams, boolean onlyEECert)
         throws CertPathValidatorException {
 
         this.cp = certPath;
         this.pkixParams = pkixParams;
+        this.onlyEECert = onlyEECert;
         List<? extends Certificate> tmp = cp.getCertificates();
         certs = tmp.toArray(new X509Certificate[tmp.size()]);
         init(false);
@@ -101,6 +101,7 @@ class OCSPChecker extends PKIXCertPathChecker {
      * Initializes the internal state of the checker from parameters
      * specified in the constructor
      */
+    @Override
     public void init(boolean forward) throws CertPathValidatorException {
         if (!forward) {
             remainingCerts = certs.length;
@@ -110,11 +111,11 @@ class OCSPChecker extends PKIXCertPathChecker {
         }
     }
 
-    public boolean isForwardCheckingSupported() {
+    @Override public boolean isForwardCheckingSupported() {
         return false;
     }
 
-    public Set<String> getSupportedExtensions() {
+    @Override public Set<String> getSupportedExtensions() {
         return Collections.<String>emptySet();
     }
 
@@ -127,180 +128,188 @@ class OCSPChecker extends PKIXCertPathChecker {
      * @exception CertPathValidatorException Exception is thrown if the
      *            certificate has been revoked.
      */
+    @Override
     public void check(Certificate cert, Collection<String> unresolvedCritExts)
         throws CertPathValidatorException {
 
-        InputStream in = null;
-        OutputStream out = null;
+        X509CertImpl currCertImpl = null;
         try {
-            // Examine OCSP properties
-            X509Certificate responderCert = null;
-            boolean seekResponderCert = false;
-            X500Principal responderSubjectName = null;
-            X500Principal responderIssuerName = null;
-            BigInteger responderSerialNumber = null;
+            currCertImpl = X509CertImpl.toImpl((X509Certificate)cert);
+        } catch (CertificateException ce) {
+            throw new CertPathValidatorException(ce);
+        }
 
-            /*
-             * OCSP security property values, in the following order:
-             *   1. ocsp.responderURL
-             *   2. ocsp.responderCertSubjectName
-             *   3. ocsp.responderCertIssuerName
-             *   4. ocsp.responderCertSerialNumber
-             */
-            String[] properties = getOCSPProperties();
+        if (onlyEECert && currCertImpl.getBasicConstraints() != -1) {
+            if (DEBUG != null) {
+                DEBUG.println("Skipping revocation check, not end entity cert");
+            }
+            return;
+        }
 
-            // When responder's subject name is set then the issuer/serial
-            // properties are ignored
-            if (properties[1] != null) {
-                responderSubjectName = new X500Principal(properties[1]);
+        /*
+         * OCSP security property values, in the following order:
+         *   1. ocsp.responderURL
+         *   2. ocsp.responderCertSubjectName
+         *   3. ocsp.responderCertIssuerName
+         *   4. ocsp.responderCertSerialNumber
+         */
+        // should cache these properties to avoid calling every time?
+        String[] properties = getOCSPProperties();
 
-            } else if (properties[2] != null && properties[3] != null) {
-                responderIssuerName = new X500Principal(properties[2]);
-                // remove colon or space separators
-                String value = stripOutSeparators(properties[3]);
-                responderSerialNumber = new BigInteger(value, 16);
+        // Check whether OCSP is feasible before seeking cert information
+        URI uri = getOCSPServerURI(currCertImpl, properties[0]);
 
-            } else if (properties[2] != null || properties[3] != null) {
+        // When responder's subject name is set then the issuer/serial
+        // properties are ignored
+        X500Principal responderSubjectName = null;
+        X500Principal responderIssuerName = null;
+        BigInteger responderSerialNumber = null;
+        if (properties[1] != null) {
+            responderSubjectName = new X500Principal(properties[1]);
+        } else if (properties[2] != null && properties[3] != null) {
+            responderIssuerName = new X500Principal(properties[2]);
+            // remove colon or space separators
+            String value = stripOutSeparators(properties[3]);
+            responderSerialNumber = new BigInteger(value, 16);
+        } else if (properties[2] != null || properties[3] != null) {
+            throw new CertPathValidatorException(
+                "Must specify both ocsp.responderCertIssuerName and " +
+                "ocsp.responderCertSerialNumber properties");
+        }
+
+        // If the OCSP responder cert properties are set then the
+        // identified cert must be located in the trust anchors or
+        // in the cert stores.
+        boolean seekResponderCert = false;
+        if (responderSubjectName != null || responderIssuerName != null) {
+            seekResponderCert = true;
+        }
+
+        // Set the issuer certificate to the next cert in the chain
+        // (unless we're processing the final cert).
+        X509Certificate issuerCert = null;
+        boolean seekIssuerCert = true;
+        X509Certificate responderCert = null;
+        if (remainingCerts < certs.length) {
+            issuerCert = certs[remainingCerts];
+            seekIssuerCert = false; // done
+
+            // By default, the OCSP responder's cert is the same as the
+            // issuer of the cert being validated.
+            if (!seekResponderCert) {
+                responderCert = issuerCert;
+                if (DEBUG != null) {
+                    DEBUG.println("Responder's certificate is the same " +
+                        "as the issuer of the certificate being validated");
+                }
+            }
+        }
+
+        // Check anchor certs for:
+        //    - the issuer cert (of the cert being validated)
+        //    - the OCSP responder's cert
+        if (seekIssuerCert || seekResponderCert) {
+
+            if (DEBUG != null && seekResponderCert) {
+                DEBUG.println("Searching trust anchors for responder's " +
+                    "certificate");
+            }
+
+            // Extract the anchor certs
+            Iterator<TrustAnchor> anchors
+                = pkixParams.getTrustAnchors().iterator();
+            if (!anchors.hasNext()) {
                 throw new CertPathValidatorException(
-                    "Must specify both ocsp.responderCertIssuerName and " +
-                    "ocsp.responderCertSerialNumber properties");
+                    "Must specify at least one trust anchor");
             }
 
-            // If the OCSP responder cert properties are set then the
-            // identified cert must be located in the trust anchors or
-            // in the cert stores.
-            if (responderSubjectName != null || responderIssuerName != null) {
-                seekResponderCert = true;
-            }
+            X500Principal certIssuerName =
+                currCertImpl.getIssuerX500Principal();
+            while (anchors.hasNext() && (seekIssuerCert || seekResponderCert)) {
 
-            boolean seekIssuerCert = true;
-            X509CertImpl issuerCertImpl = null;
-            X509CertImpl currCertImpl =
-                X509CertImpl.toImpl((X509Certificate)cert);
-            remainingCerts--;
+                TrustAnchor anchor = anchors.next();
+                X509Certificate anchorCert = anchor.getTrustedCert();
+                X500Principal anchorSubjectName =
+                    anchorCert.getSubjectX500Principal();
 
-            // Set the issuer certificate
-            if (remainingCerts != 0) {
-                issuerCertImpl = X509CertImpl.toImpl(certs[remainingCerts]);
-                seekIssuerCert = false; // done
+                if (dump) {
+                    System.out.println("Issuer DN is " + certIssuerName);
+                    System.out.println("Subject DN is " + anchorSubjectName);
+                }
 
-                // By default, the OCSP responder's cert is the same as the
-                // issuer of the cert being validated.
-                if (! seekResponderCert) {
-                    responderCert = certs[remainingCerts];
-                    if (DEBUG != null) {
-                        DEBUG.println("Responder's certificate is the same " +
-                            "as the issuer of the certificate being validated");
+                // Check if anchor cert is the issuer cert
+                if (seekIssuerCert &&
+                    certIssuerName.equals(anchorSubjectName)) {
+
+                    issuerCert = anchorCert;
+                    seekIssuerCert = false; // done
+
+                    // By default, the OCSP responder's cert is the same as
+                    // the issuer of the cert being validated.
+                    if (!seekResponderCert && responderCert == null) {
+                        responderCert = anchorCert;
+                        if (DEBUG != null) {
+                            DEBUG.println("Responder's certificate is the" +
+                                " same as the issuer of the certificate " +
+                                "being validated");
+                        }
+                    }
+                }
+
+                // Check if anchor cert is the responder cert
+                if (seekResponderCert) {
+                    // Satisfy the responder subject name property only, or
+                    // satisfy the responder issuer name and serial number
+                    // properties only
+                    if ((responderSubjectName != null &&
+                         responderSubjectName.equals(anchorSubjectName)) ||
+                        (responderIssuerName != null &&
+                         responderSerialNumber != null &&
+                         responderIssuerName.equals(
+                            anchorCert.getIssuerX500Principal()) &&
+                         responderSerialNumber.equals(
+                            anchorCert.getSerialNumber()))) {
+
+                        responderCert = anchorCert;
+                        seekResponderCert = false; // done
                     }
                 }
             }
+            if (issuerCert == null) {
+                throw new CertPathValidatorException(
+                    "No trusted certificate for " + currCertImpl.getIssuerDN());
+            }
 
-            // Check anchor certs for:
-            //    - the issuer cert (of the cert being validated)
-            //    - the OCSP responder's cert
-            if (seekIssuerCert || seekResponderCert) {
-
-                if (DEBUG != null && seekResponderCert) {
-                    DEBUG.println("Searching trust anchors for responder's " +
+            // Check cert stores if responder cert has not yet been found
+            if (seekResponderCert) {
+                if (DEBUG != null) {
+                    DEBUG.println("Searching cert stores for responder's " +
                         "certificate");
                 }
-
-                // Extract the anchor certs
-                Iterator anchors = pkixParams.getTrustAnchors().iterator();
-                if (! anchors.hasNext()) {
-                    throw new CertPathValidatorException(
-                        "Must specify at least one trust anchor");
+                X509CertSelector filter = null;
+                if (responderSubjectName != null) {
+                    filter = new X509CertSelector();
+                    filter.setSubject(responderSubjectName);
+                } else if (responderIssuerName != null &&
+                    responderSerialNumber != null) {
+                    filter = new X509CertSelector();
+                    filter.setIssuer(responderIssuerName);
+                    filter.setSerialNumber(responderSerialNumber);
                 }
-
-                X500Principal certIssuerName =
-                    currCertImpl.getIssuerX500Principal();
-                while (anchors.hasNext() &&
-                        (seekIssuerCert || seekResponderCert)) {
-
-                    TrustAnchor anchor = (TrustAnchor)anchors.next();
-                    X509Certificate anchorCert = anchor.getTrustedCert();
-                    X500Principal anchorSubjectName =
-                        anchorCert.getSubjectX500Principal();
-
-                    if (dump) {
-                        System.out.println("Issuer DN is " + certIssuerName);
-                        System.out.println("Subject DN is " +
-                            anchorSubjectName);
-                    }
-
-                    // Check if anchor cert is the issuer cert
-                    if (seekIssuerCert &&
-                        certIssuerName.equals(anchorSubjectName)) {
-
-                        issuerCertImpl = X509CertImpl.toImpl(anchorCert);
-                        seekIssuerCert = false; // done
-
-                        // By default, the OCSP responder's cert is the same as
-                        // the issuer of the cert being validated.
-                        if (! seekResponderCert && responderCert == null) {
-                            responderCert = anchorCert;
-                            if (DEBUG != null) {
-                                DEBUG.println("Responder's certificate is the" +
-                                    " same as the issuer of the certificate " +
-                                    "being validated");
-                            }
-                        }
-                    }
-
-                    // Check if anchor cert is the responder cert
-                    if (seekResponderCert) {
-                        // Satisfy the responder subject name property only, or
-                        // satisfy the responder issuer name and serial number
-                        // properties only
-                        if ((responderSubjectName != null &&
-                             responderSubjectName.equals(anchorSubjectName)) ||
-                            (responderIssuerName != null &&
-                             responderSerialNumber != null &&
-                             responderIssuerName.equals(
-                                anchorCert.getIssuerX500Principal()) &&
-                             responderSerialNumber.equals(
-                                anchorCert.getSerialNumber()))) {
-
-                            responderCert = anchorCert;
-                            seekResponderCert = false; // done
-                        }
-                    }
-                }
-                if (issuerCertImpl == null) {
-                    throw new CertPathValidatorException(
-                        "No trusted certificate for " +
-                        currCertImpl.getIssuerDN());
-                }
-
-                // Check cert stores if responder cert has not yet been found
-                if (seekResponderCert) {
-                    if (DEBUG != null) {
-                        DEBUG.println("Searching cert stores for responder's " +
-                            "certificate");
-                    }
-                    X509CertSelector filter = null;
-                    if (responderSubjectName != null) {
-                        filter = new X509CertSelector();
-                        filter.setSubject(responderSubjectName.getName());
-                    } else if (responderIssuerName != null &&
-                        responderSerialNumber != null) {
-                        filter = new X509CertSelector();
-                        filter.setIssuer(responderIssuerName.getName());
-                        filter.setSerialNumber(responderSerialNumber);
-                    }
-                    if (filter != null) {
-                        List<CertStore> certStores = pkixParams.getCertStores();
-                        AlgorithmChecker algChecker=
-                                                AlgorithmChecker.getInstance();
-                        for (CertStore certStore : certStores) {
+                if (filter != null) {
+                    List<CertStore> certStores = pkixParams.getCertStores();
+                    AlgorithmChecker algChecker =
+                        AlgorithmChecker.getInstance();
+                    for (CertStore certStore : certStores) {
+                        try {
                             for (Certificate selected :
-                                    certStore.getCertificates(filter)) {
+                                certStore.getCertificates(filter)) {
                                 try {
                                     // don't bother to trust algorithm disabled
                                     // certificate as responder
                                     algChecker.check(selected);
 
-                                    responderCert = (X509Certificate)selected;
+                                    responderCert = (X509Certificate) selected;
                                     seekResponderCert = false; // done
                                     break;
                                 } catch (CertPathValidatorException cpve) {
@@ -311,10 +320,15 @@ class OCSPChecker extends PKIXCertPathChecker {
                                     }
                                 }
                             }
-
                             if (!seekResponderCert) {
                                 break;
                             }
+                        } catch (CertStoreException cse) {
+                            // ignore and try next certStore
+                            if (DEBUG != null) {
+                                DEBUG.println("CertStore exception:" + cse);
+                            }
+                            continue;
                         }
                     }
                 }
@@ -327,89 +341,30 @@ class OCSPChecker extends PKIXCertPathChecker {
                     "(set using the OCSP security properties).");
             }
 
-            // Construct an OCSP Request
-            OCSPRequest ocspRequest =
-                new OCSPRequest(currCertImpl, issuerCertImpl);
-            URL url = getOCSPServerURL(currCertImpl, properties);
-            HttpURLConnection con = (HttpURLConnection)url.openConnection();
-            if (DEBUG != null) {
-                DEBUG.println("connecting to OCSP service at: " + url);
+            CertId certId = null;
+            OCSPResponse response = null;
+            try {
+                certId = new CertId
+                    (issuerCert, currCertImpl.getSerialNumberObject());
+                response = OCSP.check(Collections.singletonList(certId), uri,
+                    responderCert, pkixParams.getDate());
+            } catch (Exception e) {
+                if (e instanceof CertPathValidatorException) {
+                    throw (CertPathValidatorException) e;
+                } else {
+                    // Wrap exceptions in CertPathValidatorException so that
+                    // we can fallback to CRLs, if enabled.
+                    throw new CertPathValidatorException(e);
+                }
             }
-
-            // Indicate that both input and output will be performed,
-            // that the method is POST, and that the content length is
-            // the length of the byte array
-
-            con.setDoOutput(true);
-            con.setDoInput(true);
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Content-type", "application/ocsp-request");
-            byte[] bytes = ocspRequest.encodeBytes();
-            CertId certId = ocspRequest.getCertId();
-
-            con.setRequestProperty("Content-length",
-                String.valueOf(bytes.length));
-            out = con.getOutputStream();
-            out.write(bytes);
-            out.flush();
-
-            // Check the response
-            if (DEBUG != null &&
-                con.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                DEBUG.println("Received HTTP error: " + con.getResponseCode() +
-                    " - " + con.getResponseMessage());
-            }
-            in = con.getInputStream();
-
-            int contentLength = con.getContentLength();
-            byte[] response = IOUtils.readFully(in, contentLength, false);
-
-            OCSPResponse ocspResponse = new OCSPResponse(response, pkixParams,
-                responderCert);
-            // Check that response applies to the cert that was supplied
-            if (! certId.equals(ocspResponse.getCertId())) {
-                throw new CertPathValidatorException(
-                    "Certificate in the OCSP response does not match the " +
-                    "certificate supplied in the OCSP request.");
-            }
-            SerialNumber serialNumber = currCertImpl.getSerialNumberObject();
-            int certOCSPStatus = ocspResponse.getCertStatus(serialNumber);
-
-            if (DEBUG != null) {
-                DEBUG.println("Status of certificate (with serial number " +
-                    serialNumber.getNumber() + ") is: " +
-                    OCSPResponse.certStatusToText(certOCSPStatus));
-            }
-
-            if (certOCSPStatus == OCSPResponse.CERT_STATUS_REVOKED) {
-                throw new CertificateRevokedException(
-                    "Certificate has been revoked", cp, remainingCerts);
-
-            } else if (certOCSPStatus == OCSPResponse.CERT_STATUS_UNKNOWN) {
+            RevocationStatus rs = (RevocationStatus) response.getSingleResponse(certId);
+            RevocationStatus.CertStatus certStatus = rs.getCertStatus();
+            if (certStatus == RevocationStatus.CertStatus.REVOKED) {
+                throw new CertificateRevokedException(cp, remainingCerts - 1);
+            } else if (certStatus == RevocationStatus.CertStatus.UNKNOWN) {
                 throw new CertPathValidatorException(
                     "Certificate's revocation status is unknown", null, cp,
-                    remainingCerts);
-            }
-        } catch (CertificateRevokedException cre) {
-            throw cre;
-        } catch (CertPathValidatorException cpve) {
-            throw cpve;
-        } catch (Exception e) {
-            throw new CertPathValidatorException(e);
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException ioe) {
-                    throw new CertPathValidatorException(ioe);
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException ioe) {
-                    throw new CertPathValidatorException(ioe);
-                }
+                    remainingCerts - 1);
             }
         }
     }
@@ -421,20 +376,18 @@ class OCSPChecker extends PKIXCertPathChecker {
      *   3. ocsp.responderCertIssuerName
      *   4. ocsp.responderCertSerialNumber
      */
-    private static URL getOCSPServerURL(X509CertImpl currCertImpl,
-        String[] properties)
-        throws CertificateParsingException, CertPathValidatorException {
+    private static URI getOCSPServerURI(X509CertImpl currCertImpl,
+        String responderURL) throws CertPathValidatorException {
 
-        if (properties[0] != null) {
-           try {
-                return new URL(properties[0]);
-           } catch (java.net.MalformedURLException e) {
+        if (responderURL != null) {
+            try {
+                return new URI(responderURL);
+            } catch (URISyntaxException e) {
                 throw new CertPathValidatorException(e);
-           }
+            }
         }
 
         // Examine the certificate's AuthorityInfoAccess extension
-
         AuthorityInfoAccessExtension aia =
             currCertImpl.getAuthorityInfoAccessExtension();
         if (aia == null) {
@@ -449,13 +402,8 @@ class OCSPChecker extends PKIXCertPathChecker {
 
                 GeneralName generalName = description.getAccessLocation();
                 if (generalName.getType() == GeneralNameInterface.NAME_URI) {
-                    try {
-                        URIName uri = (URIName) generalName.getName();
-                        return (new URL(uri.getName()));
-
-                    } catch (java.net.MalformedURLException e) {
-                        throw new CertPathValidatorException(e);
-                    }
+                    URIName uri = (URIName) generalName.getName();
+                    return uri.getURI();
                 }
             }
         }
@@ -508,7 +456,7 @@ class OCSPChecker extends PKIXCertPathChecker {
 final class CertificateRevokedException extends
     CertPathValidatorException {
 
-    CertificateRevokedException(String msg, CertPath certPath, int index) {
-        super(msg, null, certPath, index);
+    CertificateRevokedException(CertPath certPath, int index) {
+        super("Certificate has been revoked", null, certPath, index);
     }
 }
