@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2010 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,19 @@
 # have any questions.
 #
 
-BUILDDIR = ../..
+BUILDDIR = ../../..
+PRODUCT = demo/jvmti
+DEMONAME = compiledMethodLoad
 include $(BUILDDIR)/common/Defs.gmk
 
+DEMO_ROOT       = $(SHARE_SRC)/demo/jvmti/$(DEMONAME)
+DEMO_TOPFILES   = ./README.txt
+DEMO_DESTDIR    = $(DEMODIR)/jvmti/$(DEMONAME)
+
+DEMO_OBJECTS = agent_util.$(OBJECT_SUFFIX)
+
 #
-# Make the directories of include files shipped with the JDK.
+# Demo jar building rules.
 #
-
-FILES_h = $(INCLUDEDIR)/jni.h 			\
-	  $(PLATFORM_INCLUDE)/jni_md.h		\
-	  $(INCLUDEDIR)/jvmti.h			\
-	  $(INCLUDEDIR)/jvmticmlr.h		\
-	  $(INCLUDEDIR)/classfile_constants.h
-
-$(INCLUDEDIR)/%.h: $(SHARE_SRC)/javavm/export/%.h
-	$(install-file)
-
-$(PLATFORM_INCLUDE)/%.h: $(PLATFORM_SRC)/javavm/export/%.h
-	$(install-file)
-
-all: build
-
-build: $(FILES_h)
-
-clean clobber:: 
-	$(RM) $(FILES_h)
+include $(BUILDDIR)/common/Demo.gmk
 
