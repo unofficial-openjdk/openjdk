@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,18 +143,20 @@ const char* OptoRuntime::stub_name(address entry) {
 // We failed the fast-path allocation.  Now we need to do a scavenge or GC
 // and try allocation again.
 
-void OptoRuntime::do_eager_card_mark(JavaThread* thread) {
+void OptoRuntime::maybe_defer_card_mark(JavaThread* thread) {
   // After any safepoint, just before going back to compiled code,
-  // we perform a card mark.  This lets the compiled code omit
-  // card marks for initialization of new objects.
-  // Keep this code consistent with GraphKit::store_barrier.
+  // we inform the GC that we will be doing initializing writes to
+  // this object in the future without emitting card-marks, so
+  // GC may take any compensating steps.
+  // NOTE: Keep this code consistent with GraphKit::store_barrier.
 
   oop new_obj = thread->vm_result();
   if (new_obj == NULL)  return;
 
   assert(Universe::heap()->can_elide_tlab_store_barriers(),
          "compiler must check this first");
-  new_obj = Universe::heap()->new_store_barrier(new_obj);
+  // GC may decide to give back a safer copy of new_obj.
+  new_obj = Universe::heap()->defer_store_barrier(thread, new_obj);
   thread->set_vm_result(new_obj);
 }
 
@@ -197,8 +199,8 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(klassOopDesc* klass, JavaThrea
   JRT_BLOCK_END;
 
   if (GraphKit::use_ReduceInitialCardMarks()) {
-    // do them now so we don't have to do them on the fast path
-    do_eager_card_mark(thread);
+    // inform GC that we won't do card marks for initializing writes.
+    maybe_defer_card_mark(thread);
   }
 JRT_END
 
@@ -236,8 +238,8 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(klassOopDesc* array_type, int len
   JRT_BLOCK_END;
 
   if (GraphKit::use_ReduceInitialCardMarks()) {
-    // do them now so we don't have to do them on the fast path
-    do_eager_card_mark(thread);
+    // inform GC that we won't do card marks for initializing writes.
+    maybe_defer_card_mark(thread);
   }
 JRT_END
 
@@ -788,7 +790,7 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
   NOT_PRODUCT(Exceptions::debug_check_abort(exception));
 
   #ifdef ASSERT
-    if (!(exception->is_a(SystemDictionary::throwable_klass()))) {
+    if (!(exception->is_a(SystemDictionary::Throwable_klass()))) {
       // should throw an exception here
       ShouldNotReachHere();
     }
@@ -856,6 +858,9 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
     thread->set_exception_pc(pc);
     thread->set_exception_handler_pc(handler_address);
     thread->set_exception_stack_size(0);
+
+    // Check if the exception PC is a MethodHandle call.
+    thread->set_is_method_handle_exception(nm->is_method_handle_return(pc));
   }
 
   // Restore correct return pc.  Was saved above.
@@ -934,7 +939,7 @@ address OptoRuntime::rethrow_C(oopDesc* exception, JavaThread* thread, address r
 #endif
   assert (exception != NULL, "should have thrown a NULLPointerException");
 #ifdef ASSERT
-  if (!(exception->is_a(SystemDictionary::throwable_klass()))) {
+  if (!(exception->is_a(SystemDictionary::Throwable_klass()))) {
     // should throw an exception here
     ShouldNotReachHere();
   }
@@ -1196,7 +1201,7 @@ JRT_END
 
 // The following does not work because for one thing, the
 // thread state is wrong; it expects java, but it is native.
-// Also, the invarients in a native stub are different and
+// Also, the invariants in a native stub are different and
 // I'm not sure it is safe to have a MachCalRuntimeDirectNode
 // in there.
 // So for now, we do not zap in native stubs.

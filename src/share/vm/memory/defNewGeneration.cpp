@@ -555,12 +555,14 @@ void DefNewGeneration::collect(bool   full,
          "save marks have not been newly set.");
 
   gch->gen_process_strong_roots(_level,
-                                true, // Process younger gens, if any, as
-                                      // strong roots.
-                                false,// not collecting permanent generation.
+                                true,  // Process younger gens, if any,
+                                       // as strong roots.
+                                true,  // activate StrongRootsScope
+                                false, // not collecting perm generation.
                                 SharedHeap::SO_AllClasses,
-                                &fsc_with_gc_barrier,
-                                &fsc_with_no_gc_barrier);
+                                &fsc_with_no_gc_barrier,
+                                true,   // walk *all* scavengable nmethods
+                                &fsc_with_gc_barrier);
 
   // "evacuate followers".
   evacuate_followers.do_void();
@@ -607,7 +609,7 @@ void DefNewGeneration::collect(bool   full,
 
     remove_forwarding_pointers();
     if (PrintGCDetails) {
-      gclog_or_tty->print(" (promotion failed)");
+      gclog_or_tty->print(" (promotion failed) ");
     }
     // Add to-space to the list of space to compact
     // when a promotion failure has occurred.  In that
@@ -617,6 +619,9 @@ void DefNewGeneration::collect(bool   full,
     swap_spaces();   // For the sake of uniformity wrt ParNewGeneration::collect().
     from()->set_next_compaction_space(to());
     gch->set_incremental_collection_will_fail();
+
+    // Inform the next generation that a promotion failure occurred.
+    _next_gen->promotion_failure_occurred();
 
     // Reset the PromotionFailureALot counters.
     NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
@@ -677,6 +682,11 @@ void DefNewGeneration::preserve_mark_if_necessary(oop obj, markOop m) {
 
 void DefNewGeneration::handle_promotion_failure(oop old) {
   preserve_mark_if_necessary(old, old->mark());
+  if (!_promotion_failed && PrintPromotionFailure) {
+    gclog_or_tty->print(" (promotion failure size = " SIZE_FORMAT ") ",
+                        old->size());
+  }
+
   // forward to self
   old->forward_to(old);
   _promotion_failed = true;

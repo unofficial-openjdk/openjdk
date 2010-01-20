@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -55,9 +55,9 @@ default::  $(GENERATED)\sa-jdi.jar
 $(GENERATED)\sa-jdi.jar: $(AGENT_FILES1:/=\) $(AGENT_FILES2:/=\)
 	@if not exist $(SA_CLASSDIR) mkdir $(SA_CLASSDIR)
 	@echo ...Building sa-jdi.jar
-	@echo ...$(COMPILE_JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -g -d $(SA_CLASSDIR) ....
-	@$(COMPILE_JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES1:/=\)
-	@$(COMPILE_JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES2:/=\)
+	@echo ...$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -d $(SA_CLASSDIR) ....
+	@$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES1:/=\)
+	@$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES2:/=\)
 	$(COMPILE_RMIC) -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	$(QUIETLY) echo $(SA_BUILD_VERSION_PROP)> $(SA_PROPERTIES)
 	$(QUIETLY) rm -f $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql/sa.js
@@ -89,9 +89,11 @@ checkAndBuildSA:: $(SAWINDBG)
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 !elseif "$(BUILDARCH)" == "amd64"
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+!if "$(COMPILER_NAME)" == "VS2005"
 # On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
 # otherwise we get missing __security_check_cookie externals at link time. 
 SA_LINK_FLAGS = bufferoverflowU.lib
+!endif
 !else
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /ZI /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 !endif

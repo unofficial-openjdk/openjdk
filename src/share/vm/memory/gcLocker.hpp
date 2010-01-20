@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,6 +239,31 @@ class Pause_No_Safepoint_Verifier : public Pause_No_GC_Verifier {
   Pause_No_Safepoint_Verifier(No_Safepoint_Verifier * nsv)
     : Pause_No_GC_Verifier(nsv) {}
   ~Pause_No_Safepoint_Verifier() {}
+#endif
+};
+
+// A SkipGCALot object is used to elide the usual effect of gc-a-lot
+// over a section of execution by a thread. Currently, it's used only to
+// prevent re-entrant calls to GC.
+class SkipGCALot : public StackObj {
+  private:
+   bool _saved;
+   Thread* _t;
+
+  public:
+#ifdef ASSERT
+    SkipGCALot(Thread* t) : _t(t) {
+      _saved = _t->skip_gcalot();
+      _t->set_skip_gcalot(true);
+    }
+
+    ~SkipGCALot() {
+      assert(_t->skip_gcalot(), "Save-restore protocol invariant");
+      _t->set_skip_gcalot(_saved);
+    }
+#else
+    SkipGCALot(Thread* t) { }
+    ~SkipGCALot() { }
 #endif
 };
 

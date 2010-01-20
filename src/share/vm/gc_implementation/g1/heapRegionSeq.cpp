@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,6 @@ HeapRegionSeq::alloc_obj_from_region_index(int ind, size_t word_size) {
     //       [first, cur)
     HeapRegion* curhr = _regions.at(cur);
     if (curhr->is_empty()
-        && !curhr->is_reserved()
         && (first == cur
             || (_regions.at(cur-1)->end() ==
                 curhr->bottom()))) {
@@ -121,35 +120,27 @@ HeapRegionSeq::alloc_obj_from_region_index(int ind, size_t word_size) {
   }
 }
 
-void HeapRegionSeq::print_empty_runs(bool reserved_are_empty) {
+void HeapRegionSeq::print_empty_runs() {
   int empty_run = 0;
   int n_empty = 0;
-  bool at_least_one_reserved = false;
   int empty_run_start;
   for (int i = 0; i < _regions.length(); i++) {
     HeapRegion* r = _regions.at(i);
     if (r->continuesHumongous()) continue;
-    if (r->is_empty() && (reserved_are_empty || !r->is_reserved())) {
+    if (r->is_empty()) {
       assert(!r->isHumongous(), "H regions should not be empty.");
       if (empty_run == 0) empty_run_start = i;
       empty_run++;
       n_empty++;
-      if (r->is_reserved()) {
-        at_least_one_reserved = true;
-      }
     } else {
       if (empty_run > 0) {
         gclog_or_tty->print("  %d:%d", empty_run_start, empty_run);
-        if (reserved_are_empty && at_least_one_reserved)
-          gclog_or_tty->print("(R)");
         empty_run = 0;
-        at_least_one_reserved = false;
       }
     }
   }
   if (empty_run > 0) {
     gclog_or_tty->print(" %d:%d", empty_run_start, empty_run);
-    if (reserved_are_empty && at_least_one_reserved) gclog_or_tty->print("(R)");
   }
   gclog_or_tty->print_cr(" [tot = %d]", n_empty);
 }
@@ -193,7 +184,6 @@ size_t HeapRegionSeq::free_suffix() {
   int cur = first;
   while (cur >= 0 &&
          (_regions.at(cur)->is_empty()
-          && !_regions.at(cur)->is_reserved()
           && (first == cur
               || (_regions.at(cur+1)->bottom() ==
                   _regions.at(cur)->end())))) {
@@ -312,9 +302,9 @@ MemRegion HeapRegionSeq::shrink_by(size_t shrink_bytes,
     if (cur->isHumongous()) {
       return MemRegion(last_start, end);
     }
-    cur->reset_zero_fill();
     assert(cur == _regions.top(), "Should be top");
     if (!cur->is_empty()) break;
+    cur->reset_zero_fill();
     shrink_bytes -= cur->capacity();
     num_regions_deleted++;
     _regions.pop();

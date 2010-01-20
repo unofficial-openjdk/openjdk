@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,11 +148,14 @@ inline bool oopDesc::is_null(narrowOop obj) { return obj == 0; }
 
 inline narrowOop oopDesc::encode_heap_oop_not_null(oop v) {
   assert(!is_null(v), "oop value can never be zero");
-  address heap_base = Universe::heap_base();
-  uint64_t pd = (uint64_t)(pointer_delta((void*)v, (void*)heap_base, 1));
+  assert(Universe::heap()->is_in_reserved(v), "Address not in heap");
+  address base = Universe::narrow_oop_base();
+  int    shift = Universe::narrow_oop_shift();
+  uint64_t  pd = (uint64_t)(pointer_delta((void*)v, (void*)base, 1));
   assert(OopEncodingHeapMax > pd, "change encoding max if new encoding");
-  uint64_t result = pd >> LogMinObjAlignmentInBytes;
+  uint64_t result = pd >> shift;
   assert((result & CONST64(0xffffffff00000000)) == 0, "narrow oop overflow");
+  assert(decode_heap_oop(result) == v, "reversibility");
   return (narrowOop)result;
 }
 
@@ -162,8 +165,9 @@ inline narrowOop oopDesc::encode_heap_oop(oop v) {
 
 inline oop oopDesc::decode_heap_oop_not_null(narrowOop v) {
   assert(!is_null(v), "narrow oop value can never be zero");
-  address heap_base = Universe::heap_base();
-  return (oop)(void*)((uintptr_t)heap_base + ((uintptr_t)v << LogMinObjAlignmentInBytes));
+  address base = Universe::narrow_oop_base();
+  int    shift = Universe::narrow_oop_shift();
+  return (oop)(void*)((uintptr_t)base + ((uintptr_t)v << shift));
 }
 
 inline oop oopDesc::decode_heap_oop(narrowOop v) {
@@ -347,6 +351,9 @@ inline void oopDesc::release_float_field_put(int offset, jfloat contents)   { Or
 inline jdouble oopDesc::double_field_acquire(int offset) const              { return OrderAccess::load_acquire(double_field_addr(offset));     }
 inline void oopDesc::release_double_field_put(int offset, jdouble contents) { OrderAccess::release_store(double_field_addr(offset), contents); }
 
+inline address oopDesc::address_field_acquire(int offset) const             { return (address) OrderAccess::load_ptr_acquire(address_field_addr(offset)); }
+inline void oopDesc::release_address_field_put(int offset, address contents) { OrderAccess::release_store_ptr(address_field_addr(offset), contents); }
+
 inline int oopDesc::size_given_klass(Klass* klass)  {
   int lh = klass->layout_helper();
   int s  = lh >> LogHeapWordSize;  // deliver size scaled by wordSize
@@ -435,12 +442,16 @@ inline bool oopDesc::is_parsable() {
   return blueprint()->oop_is_parsable(this);
 }
 
+inline bool oopDesc::is_conc_safe() {
+  return blueprint()->oop_is_conc_safe(this);
+}
+
 inline void update_barrier_set(void* p, oop v) {
   assert(oopDesc::bs() != NULL, "Uninitialized bs in oop!");
   oopDesc::bs()->write_ref_field(p, v);
 }
 
-inline void update_barrier_set_pre(void* p, oop v) {
+template <class T> inline void update_barrier_set_pre(T* p, oop v) {
   oopDesc::bs()->write_ref_field_pre(p, v);
 }
 
@@ -450,15 +461,15 @@ template <class T> inline void oop_store(T* p, oop v) {
   } else {
     update_barrier_set_pre(p, v);
     oopDesc::encode_store_heap_oop(p, v);
-    update_barrier_set(p, v);
+    update_barrier_set((void*)p, v);  // cast away type
   }
 }
 
 template <class T> inline void oop_store(volatile T* p, oop v) {
-  update_barrier_set_pre((void*)p, v);
+  update_barrier_set_pre((T*)p, v);   // cast away volatile
   // Used by release_obj_field_put, so use release_store_ptr.
   oopDesc::release_encode_store_heap_oop(p, v);
-  update_barrier_set((void*)p, v);
+  update_barrier_set((void*)p, v);    // cast away type
 }
 
 template <class T> inline void oop_store_without_check(T* p, oop v) {

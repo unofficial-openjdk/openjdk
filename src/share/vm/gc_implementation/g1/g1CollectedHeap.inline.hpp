@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,12 @@ G1CollectedHeap::heap_region_containing(const void* addr) const {
 
 inline HeapRegion*
 G1CollectedHeap::heap_region_containing_raw(const void* addr) const {
-  HeapRegion* res = _hrs->addr_to_region(addr);
-  assert(res != NULL, "addr outside of heap?");
+  assert(_g1_reserved.contains(addr), "invariant");
+  size_t index = pointer_delta(addr, _g1_reserved.start(), 1)
+                                        >> HeapRegion::LogOfHRGrainBytes;
+
+  HeapRegion* res = _hrs->at(index);
+  assert(res == _hrs->addr_to_region(addr), "sanity");
   return res;
 }
 

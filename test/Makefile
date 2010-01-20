@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,9 @@
 
 # Get OS/ARCH specifics
 OSNAME = $(shell uname -s)
-SLASH_JAVA = /java
 ifeq ($(OSNAME), SunOS)
   PLATFORM = solaris
+  SLASH_JAVA = /java
   ARCH = $(shell uname -p)
   ifeq ($(ARCH), i386)
     ARCH=i586
@@ -38,6 +38,7 @@ ifeq ($(OSNAME), SunOS)
 endif
 ifeq ($(OSNAME), Linux)
   PLATFORM = linux
+  SLASH_JAVA = /java
   ARCH = $(shell uname -m)
   ifeq ($(ARCH), i386)
     ARCH = i586
@@ -60,6 +61,10 @@ ifeq ($(OSNAME), Windows_NT)
     endif
   endif
   EXESUFFIX = .exe
+endif
+
+ifdef ALT_SLASH_JAVA
+  SLASH_JAVA = $(ALT_SLASH_JAVA)
 endif
 
 # Utilities used
@@ -164,6 +169,33 @@ jtreg_tests: prep $(JT_HOME) $(PRODUCT_HOME) $(JTREG)
 	$(BUNDLE_UP)
 
 PHONY_LIST += jtreg_tests
+
+################################################################
+
+# clienttest (make sure various basic java client options work)
+
+clienttest: prep $(PRODUCT_HOME)
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -version
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -help
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -X
+	$(RM) $(PRODUCT_HOME)/jre/lib/*/client/classes.jsa
+	$(RM) $(PRODUCT_HOME)/jre/lib/*/client/classes_g.jsa
+	$(RM) $(PRODUCT_HOME)/jre/bin/client/classes.jsa
+	$(RM) $(PRODUCT_HOME)/jre/bin/client/classes_g.jsa
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -Xshare:dump
+
+PHONY_LIST += clienttest
+
+################################################################
+
+# servertest (make sure various basic java server options work)
+
+servertest: prep $(PRODUCT_HOME)
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -version
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -help
+	$(PRODUCT_HOME)/bin/java $(JAVA_OPTIONS) -X
+
+PHONY_LIST += servertest
 
 ################################################################
 

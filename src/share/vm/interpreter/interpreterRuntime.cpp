@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,6 +293,24 @@ IRT_ENTRY(void, InterpreterRuntime::throw_ClassCastException(
   THROW_MSG(vmSymbols::java_lang_ClassCastException(), message);
 IRT_END
 
+// required can be either a MethodType, or a Class (for a single argument)
+// actual (if not null) can be either a MethodHandle, or an arbitrary value (for a single argument)
+IRT_ENTRY(void, InterpreterRuntime::throw_WrongMethodTypeException(JavaThread* thread,
+                                                                   oopDesc* required,
+                                                                   oopDesc* actual)) {
+  ResourceMark rm(thread);
+  char* message = SharedRuntime::generate_wrong_method_type_message(thread, required, actual);
+
+  if (ProfileTraps) {
+    note_trap(thread, Deoptimization::Reason_constraint, CHECK);
+  }
+
+  // create exception
+  THROW_MSG(vmSymbols::java_dyn_WrongMethodTypeException(), message);
+}
+IRT_END
+
+
 
 // exception_handler_for_exception(...) returns the continuation address,
 // the exception oop (via TLS) and sets the bci/bcp for the continuation.
@@ -335,7 +353,7 @@ IRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
     assert(h_exception.not_null(), "NULL exceptions should be handled by athrow");
     assert(h_exception->is_oop(), "just checking");
     // Check that exception is a subclass of Throwable, otherwise we have a VerifyError
-    if (!(h_exception->is_a(SystemDictionary::throwable_klass()))) {
+    if (!(h_exception->is_a(SystemDictionary::Throwable_klass()))) {
       if (ExitVMOnVerifyError) vm_exit(-1);
       ShouldNotReachHere();
     }
@@ -567,7 +585,7 @@ IRT_ENTRY(void, InterpreterRuntime::new_illegal_monitor_state_exception(JavaThre
   Handle exception(thread, thread->vm_result());
   assert(exception() != NULL, "vm result should be set");
   thread->set_vm_result(NULL); // clear vm result before continuing (may cause memory leaks and assert failures)
-  if (!exception->is_a(SystemDictionary::threaddeath_klass())) {
+  if (!exception->is_a(SystemDictionary::ThreadDeath_klass())) {
     exception = get_preinitialized_exception(
                        SystemDictionary::IllegalMonitorStateException_klass(),
                        CATCH);
@@ -642,7 +660,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes
       tty->print_cr("Resolving: klass: %s to method: %s", info.resolved_klass()->name()->as_C_string(), info.resolved_method()->name()->as_C_string());
     }
     if (info.resolved_method()->method_holder() ==
-                                            SystemDictionary::object_klass()) {
+                                            SystemDictionary::Object_klass()) {
       // NOTE: THIS IS A FIX FOR A CORNER CASE in the JVM spec
       // (see also cpCacheOop.cpp for details)
       methodHandle rm = info.resolved_method();
@@ -660,6 +678,78 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes
       info.resolved_method(),
       info.vtable_index());
   }
+IRT_END
+
+
+// First time execution:  Resolve symbols, create a permanent CallSite object.
+IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
+  ResourceMark rm(thread);
+
+  assert(EnableInvokeDynamic, "");
+
+  const Bytecodes::Code bytecode = Bytecodes::_invokedynamic;
+
+  methodHandle caller_method(thread, method(thread));
+
+  // first determine if there is a bootstrap method
+  {
+    KlassHandle caller_klass(thread, caller_method->method_holder());
+    Handle bootm = SystemDictionary::find_bootstrap_method(caller_klass, KlassHandle(), CHECK);
+    if (bootm.is_null()) {
+      // If there is no bootstrap method, throw IncompatibleClassChangeError.
+      // This is a valid generic error type for resolution (JLS 12.3.3).
+      char buf[200];
+      jio_snprintf(buf, sizeof(buf), "Class %s has not declared a bootstrap method for invokedynamic",
+                   (Klass::cast(caller_klass()))->external_name());
+      THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
+    }
+  }
+
+  constantPoolHandle pool(thread, caller_method->constants());
+  pool->set_invokedynamic();    // mark header to flag active call sites
+
+  int site_index = four_byte_index(thread);
+  // there is a second CPC entries that is of interest; it caches signature info:
+  int main_index = pool->cache()->secondary_entry_at(site_index)->main_entry_index();
+
+  // first resolve the signature to a MH.invoke methodOop
+  if (!pool->cache()->entry_at(main_index)->is_resolved(bytecode)) {
+    JvmtiHideSingleStepping jhss(thread);
+    CallInfo info;
+    LinkResolver::resolve_invoke(info, Handle(), pool,
+                                 site_index, bytecode, CHECK);
+    // The main entry corresponds to a JVM_CONSTANT_NameAndType, and serves
+    // as a common reference point for all invokedynamic call sites with
+    // that exact call descriptor.  We will link it in the CP cache exactly
+    // as if it were an invokevirtual of MethodHandle.invoke.
+    pool->cache()->entry_at(main_index)->set_method(
+      bytecode,
+      info.resolved_method(),
+      info.vtable_index());
+    assert(pool->cache()->entry_at(main_index)->is_vfinal(), "f2 must be a methodOop");
+  }
+
+  // The method (f2 entry) of the main entry is the MH.invoke for the
+  // invokedynamic target call signature.
+  intptr_t f2_value = pool->cache()->entry_at(main_index)->f2();
+  methodHandle mh_invdyn(THREAD, (methodOop) f2_value);
+  assert(mh_invdyn.not_null() && mh_invdyn->is_method() && mh_invdyn->is_method_handle_invoke(),
+         "correct result from LinkResolver::resolve_invokedynamic");
+
+  symbolHandle call_site_name(THREAD, pool->name_ref_at(site_index));
+  Handle call_site
+    = SystemDictionary::make_dynamic_call_site(caller_method->method_holder(),
+                                               caller_method->method_idnum(),
+                                               caller_method->bci_from(bcp(thread)),
+                                               call_site_name,
+                                               mh_invdyn,
+                                               CHECK);
+
+  // In the secondary entry, the f1 field is the call site, and the f2 (index)
+  // field is some data about the invoke site.
+  int extra_data = 0;
+  pool->cache()->secondary_entry_at(site_index)->set_dynamic_call(call_site(), extra_data);
+}
 IRT_END
 
 
@@ -704,8 +794,25 @@ static void trace_osr_request(methodHandle method, nmethod* osr, int bci) {
 }
 #endif // !PRODUCT
 
+nmethod* InterpreterRuntime::frequency_counter_overflow(JavaThread* thread, address branch_bcp) {
+  nmethod* nm = frequency_counter_overflow_inner(thread, branch_bcp);
+  assert(branch_bcp != NULL || nm == NULL, "always returns null for non OSR requests");
+  if (branch_bcp != NULL && nm != NULL) {
+    // This was a successful request for an OSR nmethod.  Because
+    // frequency_counter_overflow_inner ends with a safepoint check,
+    // nm could have been unloaded so look it up again.  It's unsafe
+    // to examine nm directly since it might have been freed and used
+    // for something else.
+    frame fr = thread->last_frame();
+    methodOop method =  fr.interpreter_frame_method();
+    int bci = method->bci_from(fr.interpreter_frame_bcp());
+    nm = method->lookup_osr_nmethod_for(bci);
+  }
+  return nm;
+}
+
 IRT_ENTRY(nmethod*,
-          InterpreterRuntime::frequency_counter_overflow(JavaThread* thread, address branch_bcp))
+          InterpreterRuntime::frequency_counter_overflow_inner(JavaThread* thread, address branch_bcp))
   // use UnlockFlagSaver to clear and restore the _do_not_unlock_if_synchronized
   // flag, in case this method triggers classloading which will call into Java.
   UnlockFlagSaver fs(thread);
@@ -778,7 +885,6 @@ IRT_ENTRY(nmethod*,
         }
         BiasedLocking::revoke(objects_to_revoke);
       }
-
       return osr_nm;
     }
   }
@@ -1144,7 +1250,7 @@ IRT_LEAF(void, InterpreterRuntime::popframe_move_outgoing_args(JavaThread* threa
   methodHandle mh(thread, fr.interpreter_frame_method());
   Bytecode_invoke* invoke = Bytecode_invoke_at(mh, bci);
   ArgumentSizeComputer asc(invoke->signature());
-  int size_of_arguments = (asc.size() + (invoke->is_invokestatic() ? 0 : 1)); // receiver
+  int size_of_arguments = (asc.size() + (invoke->has_receiver() ? 1 : 0)); // receiver
   Copy::conjoint_bytes(src_address, dest_address,
                        size_of_arguments * Interpreter::stackElementSize());
 IRT_END

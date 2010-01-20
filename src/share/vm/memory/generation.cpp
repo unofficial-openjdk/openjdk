@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -319,6 +319,21 @@ void Generation::object_iterate(ObjectClosure* cl) {
   space_iterate(&blk);
 }
 
+class GenerationSafeObjIterateClosure : public SpaceClosure {
+ private:
+  ObjectClosure* _cl;
+ public:
+  virtual void do_space(Space* s) {
+    s->safe_object_iterate(_cl);
+  }
+  GenerationSafeObjIterateClosure(ObjectClosure* cl) : _cl(cl) {}
+};
+
+void Generation::safe_object_iterate(ObjectClosure* cl) {
+  GenerationSafeObjIterateClosure blk(cl);
+  space_iterate(&blk);
+}
+
 void Generation::prepare_for_compaction(CompactPoint* cp) {
   // Generic implementation, can be specialized
   CompactibleSpace* space = first_compaction_space();
@@ -591,6 +606,13 @@ void OneContigSpaceCardGeneration::shrink_by(size_t bytes) {
 void OneContigSpaceCardGeneration::prepare_for_verify() {}
 
 
+// Override for a card-table generation with one contiguous
+// space. NOTE: For reasons that are lost in the fog of history,
+// this code is used when you iterate over perm gen objects,
+// even when one uses CDS, where the perm gen has a couple of
+// other spaces; this is because CompactingPermGenGen derives
+// from OneContigSpaceCardGeneration. This should be cleaned up,
+// see CR 6897789..
 void OneContigSpaceCardGeneration::object_iterate(ObjectClosure* blk) {
   _the_space->object_iterate(blk);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,128 +25,43 @@
 #include "incls/_precompiled.incl"
 #include "incls/_concurrentG1RefineThread.cpp.incl"
 
-// ======= Concurrent Mark Thread ========
-
-// The CM thread is created when the G1 garbage collector is used
-
 ConcurrentG1RefineThread::
-ConcurrentG1RefineThread(ConcurrentG1Refine* cg1r) :
+ConcurrentG1RefineThread(ConcurrentG1Refine* cg1r, ConcurrentG1RefineThread *next,
+                         int worker_id_offset, int worker_id) :
   ConcurrentGCThread(),
+  _worker_id_offset(worker_id_offset),
+  _worker_id(worker_id),
+  _active(false),
+  _next(next),
+  _monitor(NULL),
   _cg1r(cg1r),
-  _started(false),
-  _in_progress(false),
-  _do_traversal(false),
-  _vtime_accum(0.0),
-  _co_tracker(G1CRGroup),
-  _interval_ms(5.0)
+  _vtime_accum(0.0)
 {
+
+  // Each thread has its own monitor. The i-th thread is responsible for signalling
+  // to thread i+1 if the number of buffers in the queue exceeds a threashold for this
+  // thread. Monitors are also used to wake up the threads during termination.
+  // The 0th worker in notified by mutator threads and has a special monitor.
+  // The last worker is used for young gen rset size sampling.
+  if (worker_id > 0) {
+    _monitor = new Monitor(Mutex::nonleaf, "Refinement monitor", true);
+  } else {
+    _monitor = DirtyCardQ_CBL_mon;
+  }
+  initialize();
   create_and_start();
 }
 
-const long timeout = 200; // ms.
-
-void ConcurrentG1RefineThread::traversalBasedRefinement() {
-  _cg1r->wait_for_ConcurrentG1Refine_enabled();
-  MutexLocker x(G1ConcRefine_mon);
-  while (_cg1r->enabled()) {
-    MutexUnlocker ux(G1ConcRefine_mon);
-    ResourceMark rm;
-    HandleMark   hm;
-
-    if (TraceG1Refine) gclog_or_tty->print_cr("G1-Refine starting pass");
-    _sts.join();
-    bool no_sleep = _cg1r->refine();
-    _sts.leave();
-    if (!no_sleep) {
-      MutexLockerEx x(CGC_lock, Mutex::_no_safepoint_check_flag);
-      // We do this only for the timeout; we don't expect this to be signalled.
-      CGC_lock->wait(Mutex::_no_safepoint_check_flag, timeout);
-    }
-  }
-}
-
-void ConcurrentG1RefineThread::queueBasedRefinement() {
-  DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
-  // Wait for completed log buffers to exist.
-  {
-    MutexLockerEx x(DirtyCardQ_CBL_mon, Mutex::_no_safepoint_check_flag);
-    while (!_do_traversal && !dcqs.process_completed_buffers() &&
-           !_should_terminate) {
-      DirtyCardQ_CBL_mon->wait(Mutex::_no_safepoint_check_flag);
-    }
-  }
-
-  if (_should_terminate) {
-    return;
-  }
-
-  // Now we take them off (this doesn't hold locks while it applies
-  // closures.)  (If we did a full collection, then we'll do a full
-  // traversal.
-  _sts.join();
-  if (_do_traversal) {
-    (void)_cg1r->refine();
-    switch (_cg1r->get_last_pya()) {
-    case PYA_cancel: case PYA_continue:
-      // Continue was caught and handled inside "refine".  If it's still
-      // "continue" when we get here, we're done.
-      _do_traversal = false;
-      break;
-    case PYA_restart:
-      assert(_do_traversal, "Because of Full GC.");
-      break;
-    }
+void ConcurrentG1RefineThread::initialize() {
+  if (_worker_id < cg1r()->worker_thread_num()) {
+    // Current thread activation threshold
+    _threshold = MIN2<int>(cg1r()->thread_threshold_step() * (_worker_id + 1) + cg1r()->green_zone(),
+                           cg1r()->yellow_zone());
+    // A thread deactivates once the number of buffer reached a deactivation threshold
+    _deactivation_threshold = MAX2<int>(_threshold - cg1r()->thread_threshold_step(), cg1r()->green_zone());
   } else {
-    int n_logs = 0;
-    int lower_limit = 0;
-    double start_vtime_sec; // only used when G1SmoothConcRefine is on
-    int prev_buffer_num; // only used when G1SmoothConcRefine is on
-
-    if (G1SmoothConcRefine) {
-      lower_limit = 0;
-      start_vtime_sec = os::elapsedVTime();
-      prev_buffer_num = (int) dcqs.completed_buffers_num();
-    } else {
-      lower_limit = DCQBarrierProcessCompletedThreshold / 4; // For now.
-    }
-    while (dcqs.apply_closure_to_completed_buffer(0, lower_limit)) {
-      double end_vtime_sec;
-      double elapsed_vtime_sec;
-      int elapsed_vtime_ms;
-      int curr_buffer_num;
-
-      if (G1SmoothConcRefine) {
-        end_vtime_sec = os::elapsedVTime();
-        elapsed_vtime_sec = end_vtime_sec - start_vtime_sec;
-        elapsed_vtime_ms = (int) (elapsed_vtime_sec * 1000.0);
-        curr_buffer_num = (int) dcqs.completed_buffers_num();
-
-        if (curr_buffer_num > prev_buffer_num ||
-            curr_buffer_num > DCQBarrierProcessCompletedThreshold) {
-          decreaseInterval(elapsed_vtime_ms);
-        } else if (curr_buffer_num < prev_buffer_num) {
-          increaseInterval(elapsed_vtime_ms);
-        }
-      }
-
-      sample_young_list_rs_lengths();
-      _co_tracker.update(false);
-
-      if (G1SmoothConcRefine) {
-        start_vtime_sec = os::elapsedVTime();
-        prev_buffer_num = curr_buffer_num;
-
-        _sts.leave();
-        os::sleep(Thread::current(), (jlong) _interval_ms, false);
-        _sts.join();
-      }
-
-      n_logs++;
-    }
-    // Make sure we harvest the PYA, if any.
-    (void)_cg1r->get_pya();
+    set_active(true);
   }
-  _sts.leave();
 }
 
 void ConcurrentG1RefineThread::sample_young_list_rs_lengths() {
@@ -154,7 +69,6 @@ void ConcurrentG1RefineThread::sample_young_list_rs_lengths() {
   G1CollectorPolicy* g1p = g1h->g1_policy();
   if (g1p->adaptive_young_list_length()) {
     int regions_visited = 0;
-
     g1h->young_list_rs_length_sampling_init();
     while (g1h->young_list_rs_length_sampling_more()) {
       g1h->young_list_rs_length_sampling_next();
@@ -175,43 +89,138 @@ void ConcurrentG1RefineThread::sample_young_list_rs_lengths() {
   }
 }
 
+void ConcurrentG1RefineThread::run_young_rs_sampling() {
+  DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+  _vtime_start = os::elapsedVTime();
+  while(!_should_terminate) {
+    _sts.join();
+    sample_young_list_rs_lengths();
+    _sts.leave();
+
+    if (os::supports_vtime()) {
+      _vtime_accum = (os::elapsedVTime() - _vtime_start);
+    } else {
+      _vtime_accum = 0.0;
+    }
+
+    MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
+    if (_should_terminate) {
+      break;
+    }
+    _monitor->wait(Mutex::_no_safepoint_check_flag, G1ConcRefineServiceInterval);
+  }
+}
+
+void ConcurrentG1RefineThread::wait_for_completed_buffers() {
+  DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+  MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
+  while (!_should_terminate && !is_active()) {
+    _monitor->wait(Mutex::_no_safepoint_check_flag);
+  }
+}
+
+bool ConcurrentG1RefineThread::is_active() {
+  DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+  return _worker_id > 0 ? _active : dcqs.process_completed_buffers();
+}
+
+void ConcurrentG1RefineThread::activate() {
+  MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
+  if (_worker_id > 0) {
+    if (G1TraceConcurrentRefinement) {
+      DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+      gclog_or_tty->print_cr("G1-Refine-activated worker %d, on threshold %d, current %d",
+                             _worker_id, _threshold, (int)dcqs.completed_buffers_num());
+    }
+    set_active(true);
+  } else {
+    DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+    dcqs.set_process_completed(true);
+  }
+  _monitor->notify();
+}
+
+void ConcurrentG1RefineThread::deactivate() {
+  MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
+  if (_worker_id > 0) {
+    if (G1TraceConcurrentRefinement) {
+      DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+      gclog_or_tty->print_cr("G1-Refine-deactivated worker %d, off threshold %d, current %d",
+                             _worker_id, _deactivation_threshold, (int)dcqs.completed_buffers_num());
+    }
+    set_active(false);
+  } else {
+    DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+    dcqs.set_process_completed(false);
+  }
+}
+
 void ConcurrentG1RefineThread::run() {
   initialize_in_thread();
-  _vtime_start = os::elapsedVTime();
   wait_for_universe_init();
 
-  _co_tracker.enable();
-  _co_tracker.start();
+  if (_worker_id >= cg1r()->worker_thread_num()) {
+    run_young_rs_sampling();
+    terminate();
+  }
 
+  _vtime_start = os::elapsedVTime();
   while (!_should_terminate) {
-    // wait until started is set.
-    if (G1RSBarrierUseQueue) {
-      queueBasedRefinement();
-    } else {
-      traversalBasedRefinement();
+    DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
+
+    // Wait for work
+    wait_for_completed_buffers();
+
+    if (_should_terminate) {
+      break;
     }
+
     _sts.join();
-    _co_tracker.update();
+
+    do {
+      int curr_buffer_num = (int)dcqs.completed_buffers_num();
+      // If the number of the buffers falls down into the yellow zone,
+      // that means that the transition period after the evacuation pause has ended.
+      if (dcqs.completed_queue_padding() > 0 && curr_buffer_num <= cg1r()->yellow_zone()) {
+        dcqs.set_completed_queue_padding(0);
+      }
+
+      if (_worker_id > 0 && curr_buffer_num <= _deactivation_threshold) {
+        // If the number of the buffer has fallen below our threshold
+        // we should deactivate. The predecessor will reactivate this
+        // thread should the number of the buffers cross the threshold again.
+        deactivate();
+        break;
+      }
+
+      // Check if we need to activate the next thread.
+      if (_next != NULL && !_next->is_active() && curr_buffer_num > _next->_threshold) {
+        _next->activate();
+      }
+    } while (dcqs.apply_closure_to_completed_buffer(_worker_id + _worker_id_offset, cg1r()->green_zone()));
+
+    // We can exit the loop above while being active if there was a yield request.
+    if (is_active()) {
+      deactivate();
+    }
+
     _sts.leave();
+
     if (os::supports_vtime()) {
       _vtime_accum = (os::elapsedVTime() - _vtime_start);
     } else {
       _vtime_accum = 0.0;
     }
   }
-  _sts.join();
-  _co_tracker.update(true);
-  _sts.leave();
   assert(_should_terminate, "just checking");
-
   terminate();
 }
 
 
 void ConcurrentG1RefineThread::yield() {
-  if (TraceG1Refine) gclog_or_tty->print_cr("G1-Refine-yield");
+  if (G1TraceConcurrentRefinement) gclog_or_tty->print_cr("G1-Refine-yield");
   _sts.yield("G1 refine");
-  if (TraceG1Refine) gclog_or_tty->print_cr("G1-Refine-yield-end");
+  if (G1TraceConcurrentRefinement) gclog_or_tty->print_cr("G1-Refine-yield-end");
 }
 
 void ConcurrentG1RefineThread::stop() {
@@ -222,8 +231,8 @@ void ConcurrentG1RefineThread::stop() {
   }
 
   {
-    MutexLockerEx x(DirtyCardQ_CBL_mon, Mutex::_no_safepoint_check_flag);
-    DirtyCardQ_CBL_mon->notify_all();
+    MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
+    _monitor->notify();
   }
 
   {
@@ -232,15 +241,15 @@ void ConcurrentG1RefineThread::stop() {
       Terminator_lock->wait();
     }
   }
-  if (TraceG1Refine) gclog_or_tty->print_cr("G1-Refine-stop");
+  if (G1TraceConcurrentRefinement) gclog_or_tty->print_cr("G1-Refine-stop");
 }
 
-void ConcurrentG1RefineThread::print() {
-  gclog_or_tty->print("\"Concurrent G1 Refinement Thread\" ");
-  Thread::print();
-  gclog_or_tty->cr();
+void ConcurrentG1RefineThread::print() const {
+  print_on(tty);
 }
 
-void ConcurrentG1RefineThread::set_do_traversal(bool b) {
-  _do_traversal = b;
+void ConcurrentG1RefineThread::print_on(outputStream* st) const {
+  st->print("\"G1 Concurrent Refinement Thread#%d\" ", _worker_id);
+  Thread::print_on(st);
+  st->cr();
 }

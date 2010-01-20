@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,6 +124,8 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     old_gen->verify_object_start_array();
     perm_gen->verify_object_start_array();
   }
+
+  heap->pre_full_gc_dump();
 
   // Filled in below to track the state of the young gen after the collection.
   bool eden_empty;
@@ -362,6 +364,12 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   if (PrintHeapAtGC) {
     Universe::print_heap_after_gc();
   }
+
+  heap->post_full_gc_dump();
+
+#ifdef TRACESPINNING
+  ParallelTaskTerminator::print_termination_counts();
+#endif
 }
 
 bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
@@ -474,6 +482,9 @@ void PSMarkSweep::allocate_stacks() {
 
   int size = SystemDictionary::number_of_classes() * 2;
   _revisit_klass_stack = new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
+  // (#klass/k)^2, for k ~ 10 appears a better setting, but this will have to do for
+  // now until we investigate a more optimal setting.
+  _revisit_mdo_stack   = new (ResourceObj::C_HEAP) GrowableArray<DataLayout*>(size*2, true);
 }
 
 
@@ -487,6 +498,7 @@ void PSMarkSweep::deallocate_stacks() {
 
   delete _marking_stack;
   delete _revisit_klass_stack;
+  delete _revisit_mdo_stack;
 }
 
 void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
@@ -499,16 +511,22 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
 
   // General strong roots.
-  Universe::oops_do(mark_and_push_closure());
-  ReferenceProcessor::oops_do(mark_and_push_closure());
-  JNIHandles::oops_do(mark_and_push_closure());   // Global (strong) JNI handles
-  Threads::oops_do(mark_and_push_closure());
-  ObjectSynchronizer::oops_do(mark_and_push_closure());
-  FlatProfiler::oops_do(mark_and_push_closure());
-  Management::oops_do(mark_and_push_closure());
-  JvmtiExport::oops_do(mark_and_push_closure());
-  SystemDictionary::always_strong_oops_do(mark_and_push_closure());
-  vmSymbols::oops_do(mark_and_push_closure());
+  {
+    ParallelScavengeHeap::ParStrongRootsScope psrs;
+    Universe::oops_do(mark_and_push_closure());
+    ReferenceProcessor::oops_do(mark_and_push_closure());
+    JNIHandles::oops_do(mark_and_push_closure());   // Global (strong) JNI handles
+    CodeBlobToOopClosure each_active_code_blob(mark_and_push_closure(), /*do_marking=*/ true);
+    Threads::oops_do(mark_and_push_closure(), &each_active_code_blob);
+    ObjectSynchronizer::oops_do(mark_and_push_closure());
+    FlatProfiler::oops_do(mark_and_push_closure());
+    Management::oops_do(mark_and_push_closure());
+    JvmtiExport::oops_do(mark_and_push_closure());
+    SystemDictionary::always_strong_oops_do(mark_and_push_closure());
+    vmSymbols::oops_do(mark_and_push_closure());
+    // Do not treat nmethods as strong roots for mark/sweep, since we can unload them.
+    //CodeCache::scavenge_root_nmethods_do(CodeBlobToOopClosure(mark_and_push_closure()));
+  }
 
   // Flush marking stack.
   follow_stack();
@@ -530,6 +548,10 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
 
   // Update subklass/sibling/implementor links of live klasses
   follow_weak_klass_links();
+  assert(_marking_stack->is_empty(), "just drained");
+
+  // Visit memoized mdo's and clear unmarked weak refs
+  follow_mdo_weak_refs();
   assert(_marking_stack->is_empty(), "just drained");
 
   // Visit symbol and interned string tables and delete unmarked oops
@@ -601,7 +623,7 @@ void PSMarkSweep::mark_sweep_phase3() {
   Universe::oops_do(adjust_root_pointer_closure());
   ReferenceProcessor::oops_do(adjust_root_pointer_closure());
   JNIHandles::oops_do(adjust_root_pointer_closure());   // Global (strong) JNI handles
-  Threads::oops_do(adjust_root_pointer_closure());
+  Threads::oops_do(adjust_root_pointer_closure(), NULL);
   ObjectSynchronizer::oops_do(adjust_root_pointer_closure());
   FlatProfiler::oops_do(adjust_root_pointer_closure());
   Management::oops_do(adjust_root_pointer_closure());
@@ -609,6 +631,7 @@ void PSMarkSweep::mark_sweep_phase3() {
   // SO_AllClasses
   SystemDictionary::oops_do(adjust_root_pointer_closure());
   vmSymbols::oops_do(adjust_root_pointer_closure());
+  //CodeCache::scavenge_root_nmethods_oops_do(adjust_root_pointer_closure());
 
   // Now adjust pointers in remaining weak roots.  (All of which should
   // have been cleared if they pointed to non-surviving objects.)

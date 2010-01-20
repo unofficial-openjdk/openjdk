@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -254,7 +254,6 @@ class Arguments : AllStatic {
   static bool   _has_profile;
   static bool   _has_alloc_profile;
   static const char*  _gc_log_filename;
-  static uintx  _initial_heap_size;
   static uintx  _min_heap_size;
 
   // -Xrun arguments
@@ -300,8 +299,8 @@ class Arguments : AllStatic {
   static void set_g1_gc_flags();
   // GC ergonomics
   static void set_ergonomics_flags();
-  // Setup heap size for a server platform
-  static void set_server_heap_size();
+  // Setup heap size
+  static void set_heap_size();
   // Based on automatic selection criteria, should the
   // low pause collector be used.
   static bool should_auto_select_low_pause_collector();
@@ -434,9 +433,7 @@ class Arguments : AllStatic {
   static bool has_profile()                 { return _has_profile; }
   static bool has_alloc_profile()           { return _has_alloc_profile; }
 
-  // -Xms , -Xmx
-  static uintx initial_heap_size()          { return _initial_heap_size; }
-  static void  set_initial_heap_size(uintx v) { _initial_heap_size = v;  }
+  // -Xms, -Xmx
   static uintx min_heap_size()              { return _min_heap_size; }
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
 
@@ -475,10 +472,13 @@ class Arguments : AllStatic {
   // System properties
   static void init_system_properties();
 
-  // Proptery List manipulation
+  // Property List manipulation
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
   static void PropertyList_add(SystemProperty** plist, const char* k, char* v);
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v);
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v) {
+    PropertyList_unique_add(plist, k, v, false);
+  }
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, char* v, jboolean append);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);

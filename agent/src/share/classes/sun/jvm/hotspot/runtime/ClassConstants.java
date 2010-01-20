@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,34 +142,35 @@ public interface ClassConstants
     // from jvm.h
 
     public static final long JVM_RECOGNIZED_CLASS_MODIFIERS   = (JVM_ACC_PUBLIC |
-                                        JVM_ACC_FINAL |
-                                        JVM_ACC_SUPER |
-                                        JVM_ACC_INTERFACE |
-                                        JVM_ACC_ABSTRACT |
-                                        JVM_ACC_ANNOTATION |
-                                        JVM_ACC_SYNTHETIC);
+                                                                 JVM_ACC_FINAL |
+                                                                 JVM_ACC_SUPER |
+                                                                 JVM_ACC_INTERFACE |
+                                                                 JVM_ACC_ABSTRACT |
+                                                                 JVM_ACC_ANNOTATION |
+                                                                 JVM_ACC_ENUM |
+                                                                 JVM_ACC_SYNTHETIC);
 
 
     public static final long JVM_RECOGNIZED_FIELD_MODIFIERS  = (JVM_ACC_PUBLIC |
-                                        JVM_ACC_PRIVATE |
-                                        JVM_ACC_PROTECTED |
-                                        JVM_ACC_STATIC |
-                                        JVM_ACC_FINAL |
-                                        JVM_ACC_VOLATILE |
-                                        JVM_ACC_TRANSIENT |
-                                        JVM_ACC_ENUM |
-                                        JVM_ACC_SYNTHETIC);
+                                                                JVM_ACC_PRIVATE |
+                                                                JVM_ACC_PROTECTED |
+                                                                JVM_ACC_STATIC |
+                                                                JVM_ACC_FINAL |
+                                                                JVM_ACC_VOLATILE |
+                                                                JVM_ACC_TRANSIENT |
+                                                                JVM_ACC_ENUM |
+                                                                JVM_ACC_SYNTHETIC);
 
     public static final long JVM_RECOGNIZED_METHOD_MODIFIERS  = (JVM_ACC_PUBLIC |
-                                         JVM_ACC_PRIVATE |
-                                         JVM_ACC_PROTECTED |
-                                         JVM_ACC_STATIC |
-                                         JVM_ACC_FINAL |
-                                         JVM_ACC_SYNCHRONIZED |
-                                         JVM_ACC_BRIDGE |
-                                         JVM_ACC_VARARGS |
-                                         JVM_ACC_NATIVE |
-                                         JVM_ACC_ABSTRACT |
-                                         JVM_ACC_STRICT |
-                                         JVM_ACC_SYNTHETIC);
+                                                                 JVM_ACC_PRIVATE |
+                                                                 JVM_ACC_PROTECTED |
+                                                                 JVM_ACC_STATIC |
+                                                                 JVM_ACC_FINAL |
+                                                                 JVM_ACC_SYNCHRONIZED |
+                                                                 JVM_ACC_BRIDGE |
+                                                                 JVM_ACC_VARARGS |
+                                                                 JVM_ACC_NATIVE |
+                                                                 JVM_ACC_ABSTRACT |
+                                                                 JVM_ACC_STRICT |
+                                                                 JVM_ACC_SYNTHETIC);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,6 +100,31 @@ address TemplateInterpreterGenerator::generate_ClassCastException_handler() {
   return entry;
 }
 
+// Arguments are: required type at TOS+8, failing object (or NULL) at TOS+4.
+address TemplateInterpreterGenerator::generate_WrongMethodType_handler() {
+  address entry = __ pc();
+
+  __ pop(c_rarg2);              // failing object is at TOS
+  __ pop(c_rarg1);              // required type is at TOS+8
+
+  __ verify_oop(c_rarg1);
+  __ verify_oop(c_rarg2);
+
+  // Various method handle types use interpreter registers as temps.
+  __ restore_bcp();
+  __ restore_locals();
+
+  // Expression stack must be empty before entering the VM for an exception.
+  __ empty_expression_stack();
+
+  __ call_VM(noreg,
+             CAST_FROM_FN_PTR(address,
+                              InterpreterRuntime::throw_WrongMethodTypeException),
+             // pass required type, failing object (or NULL)
+             c_rarg1, c_rarg2);
+  return entry;
+}
+
 address TemplateInterpreterGenerator::generate_exception_handler_common(
         const char* name, const char* message, bool pass_oop) {
   assert(!pass_oop || message == NULL, "either oop or message but not both");
@@ -162,15 +187,29 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state,
   __ restore_bcp();
   __ restore_locals();
 
-  __ get_cache_and_index_at_bcp(rbx, rcx, 1);
+  Label L_got_cache, L_giant_index;
+  if (EnableInvokeDynamic) {
+    __ cmpb(Address(r13, 0), Bytecodes::_invokedynamic);
+    __ jcc(Assembler::equal, L_giant_index);
+  }
+  __ get_cache_and_index_at_bcp(rbx, rcx, 1, false);
+  __ bind(L_got_cache);
   __ movl(rbx, Address(rbx, rcx,
-                       Address::times_8,
+                       Address::times_ptr,
                        in_bytes(constantPoolCacheOopDesc::base_offset()) +
                        3 * wordSize));
   __ andl(rbx, 0xFF);
   if (TaggedStackInterpreter) __ shll(rbx, 1); // 2 slots per parameter.
   __ lea(rsp, Address(rsp, rbx, Address::times_8));
   __ dispatch_next(state, step);
+
+  // out of the main line of code...
+  if (EnableInvokeDynamic) {
+    __ bind(L_giant_index);
+    __ get_cache_and_index_at_bcp(rbx, rcx, 1, true);
+    __ jmp(L_got_cache);
+  }
+
   return entry;
 }
 
@@ -410,8 +449,12 @@ void InterpreterGenerator::generate_stack_overflow_check(void) {
   __ addptr(rax, stack_base);
   __ subptr(rax, stack_size);
 
+  // Use the maximum number of pages we might bang.
+  const int max_pages = StackShadowPages > (StackRedPages+StackYellowPages) ? StackShadowPages :
+                                                                              (StackRedPages+StackYellowPages);
+
   // add in the red and yellow zone sizes
-  __ addptr(rax, (StackRedPages + StackYellowPages) * page_size);
+  __ addptr(rax, max_pages * page_size);
 
   // check against the current stack bottom
   __ cmpptr(rsp, rax);
@@ -650,7 +693,7 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     __ cmpl(rdx, stos);
     __ jcc(Assembler::notEqual, notShort);
     // stos
-    __ load_signed_word(rax, field_address);
+    __ load_signed_short(rax, field_address);
     __ jmp(xreturn_path);
 
     __ bind(notShort);
@@ -662,7 +705,7 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     __ bind(okay);
 #endif
     // ctos
-    __ load_unsigned_word(rax, field_address);
+    __ load_unsigned_short(rax, field_address);
 
     __ bind(xreturn_path);
 
@@ -702,7 +745,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   const Address access_flags      (rbx, methodOopDesc::access_flags_offset());
 
   // get parameter size (always needed)
-  __ load_unsigned_word(rcx, size_of_parameters);
+  __ load_unsigned_short(rcx, size_of_parameters);
 
   // native calls don't need the stack size check since they have no
   // expression stack and the arguments are already on the stack and
@@ -819,14 +862,14 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   // allocate space for parameters
   __ get_method(method);
   __ verify_oop(method);
-  __ load_unsigned_word(t,
-                        Address(method,
-                                methodOopDesc::size_of_parameters_offset()));
+  __ load_unsigned_short(t,
+                         Address(method,
+                                 methodOopDesc::size_of_parameters_offset()));
   __ shll(t, Interpreter::logStackElementSize());
 
   __ subptr(rsp, t);
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
-  __ andptr(rsp, -16); // must be 16 byte boundry (see amd64 ABI)
+  __ andptr(rsp, -16); // must be 16 byte boundary (see amd64 ABI)
 
   // get signature handler
   {
@@ -1165,13 +1208,13 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   const Address access_flags(rbx, methodOopDesc::access_flags_offset());
 
   // get parameter size (always needed)
-  __ load_unsigned_word(rcx, size_of_parameters);
+  __ load_unsigned_short(rcx, size_of_parameters);
 
   // rbx: methodOop
   // rcx: size of parameters
   // r13: sender_sp (could differ from sp+wordSize if we were called via c2i )
 
-  __ load_unsigned_word(rdx, size_of_locals); // get size of locals in words
+  __ load_unsigned_short(rdx, size_of_locals); // get size of locals in words
   __ subl(rdx, rcx); // rdx = no. of additional locals
 
   // YYY
@@ -1393,12 +1436,14 @@ address AbstractInterpreterGenerator::generate_method_entry(
   case Interpreter::empty                  : entry_point = ((InterpreterGenerator*) this)->generate_empty_entry();       break;
   case Interpreter::accessor               : entry_point = ((InterpreterGenerator*) this)->generate_accessor_entry();    break;
   case Interpreter::abstract               : entry_point = ((InterpreterGenerator*) this)->generate_abstract_entry();    break;
-  case Interpreter::java_lang_math_sin     :                                                                             break;
-  case Interpreter::java_lang_math_cos     :                                                                             break;
-  case Interpreter::java_lang_math_tan     :                                                                             break;
-  case Interpreter::java_lang_math_abs     :                                                                             break;
-  case Interpreter::java_lang_math_log     :                                                                             break;
-  case Interpreter::java_lang_math_log10   :                                                                             break;
+  case Interpreter::method_handle          : entry_point = ((InterpreterGenerator*) this)->generate_method_handle_entry();break;
+
+  case Interpreter::java_lang_math_sin     : // fall thru
+  case Interpreter::java_lang_math_cos     : // fall thru
+  case Interpreter::java_lang_math_tan     : // fall thru
+  case Interpreter::java_lang_math_abs     : // fall thru
+  case Interpreter::java_lang_math_log     : // fall thru
+  case Interpreter::java_lang_math_log10   : // fall thru
   case Interpreter::java_lang_math_sqrt    : entry_point = ((InterpreterGenerator*) this)->generate_math_entry(kind);    break;
   default                                  : ShouldNotReachHere();                                                       break;
   }
@@ -1422,7 +1467,8 @@ int AbstractInterpreter::size_top_interpreter_activation(methodOop method) {
     -(frame::interpreter_frame_initial_sp_offset) + entry_size;
 
   const int stub_code = frame::entry_frame_after_call_words;
-  const int method_stack = (method->max_locals() + method->max_stack()) *
+  const int extra_stack = methodOopDesc::extra_stack_entries();
+  const int method_stack = (method->max_locals() + method->max_stack() + extra_stack) *
                            Interpreter::stackElementWords();
   return (overhead_size + method_stack + stub_code);
 }
@@ -1460,8 +1506,10 @@ int AbstractInterpreter::layout_activation(methodOop method,
          tempcount* Interpreter::stackElementWords() + popframe_extra_args;
   if (interpreter_frame != NULL) {
 #ifdef ASSERT
-    assert(caller->unextended_sp() == interpreter_frame->interpreter_frame_sender_sp(),
-           "Frame not properly walkable");
+    if (!EnableMethodHandles)
+      // @@@ FIXME: Should we correct interpreter_frame_sender_sp in the calling sequences?
+      // Probably, since deoptimization doesn't work yet.
+      assert(caller->unextended_sp() == interpreter_frame->interpreter_frame_sender_sp(), "Frame not properly walkable");
     assert(caller->sp() == interpreter_frame->sender_sp(), "Frame not properly walkable(2)");
 #endif
 
@@ -1583,7 +1631,7 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
     // Compute size of arguments for saving when returning to
     // deoptimized caller
     __ get_method(rax);
-    __ load_unsigned_word(rax, Address(rax, in_bytes(methodOopDesc::
+    __ load_unsigned_short(rax, Address(rax, in_bytes(methodOopDesc::
                                                 size_of_parameters_offset())));
     __ shll(rax, Interpreter::logStackElementSize());
     __ restore_locals(); // XXX do we need this?

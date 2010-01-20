@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ inline address* frame::native_param_addr(int idx) const { return (address*) addr
 #ifdef CC_INTERP
 
 inline interpreterState frame::get_interpreterState() const {
-  return ((interpreterState)addr_at( -sizeof(BytecodeInterpreter)/wordSize ));
+  return ((interpreterState)addr_at( -((int)sizeof(BytecodeInterpreter))/wordSize ));
 }
 
 inline intptr_t*    frame::sender_sp()        const {
@@ -225,11 +225,12 @@ inline methodOop* frame::interpreter_frame_method_addr() const {
 // top of expression stack
 inline intptr_t* frame::interpreter_frame_tos_address() const {
   intptr_t* last_sp = interpreter_frame_last_sp();
-  if (last_sp == NULL ) {
+  if (last_sp == NULL) {
     return sp();
   } else {
-    // sp() may have been extended by an adapter
-    assert(last_sp < fp() && last_sp >= sp(), "bad tos");
+    // sp() may have been extended or shrunk by an adapter.  At least
+    // check that we don't fall behind the legal region.
+    assert(last_sp < (intptr_t*) interpreter_frame_monitor_begin(), "bad tos");
     return last_sp;
   }
 }

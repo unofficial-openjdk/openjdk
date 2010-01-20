@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,6 +106,7 @@ GrowableArray<MonitorInfo*>* javaVFrame::locked_monitors() {
 
   for (int index = (mons->length()-1); index >= 0; index--) {
     MonitorInfo* monitor = mons->at(index);
+    if (monitor->eliminated() && is_compiled_frame()) continue; // skip eliminated monitor
     oop obj = monitor->owner();
     if (obj == NULL) continue; // skip unowned monitor
     //
@@ -123,7 +124,7 @@ GrowableArray<MonitorInfo*>* javaVFrame::locked_monitors() {
 static void print_locked_object_class_name(outputStream* st, Handle obj, const char* lock_state) {
   if (obj.not_null()) {
     st->print("\t- %s <" INTPTR_FORMAT "> ", lock_state, (address)obj());
-    if (obj->klass() == SystemDictionary::class_klass()) {
+    if (obj->klass() == SystemDictionary::Class_klass()) {
       klassOop target_klass = java_lang_Class::as_klassOop(obj());
       st->print_cr("(a java.lang.Class for %s)", instanceKlass::cast(target_klass)->external_name());
     } else {
@@ -162,6 +163,18 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
     bool found_first_monitor = false;
     for (int index = (mons->length()-1); index >= 0; index--) {
       MonitorInfo* monitor = mons->at(index);
+      if (monitor->eliminated() && is_compiled_frame()) { // Eliminated in compiled code
+        if (monitor->owner_is_scalar_replaced()) {
+          Klass* k = Klass::cast(monitor->owner_klass());
+          st->print("\t- eliminated <owner is scalar replaced> (a %s)", k->external_name());
+        } else {
+          oop obj = monitor->owner();
+          if (obj != NULL) {
+            print_locked_object_class_name(st, obj, "eliminated");
+          }
+        }
+        continue;
+      }
       if (monitor->owner() != NULL) {
 
         // First, assume we have the monitor locked. If we haven't found an
@@ -171,11 +184,11 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
 
         const char *lock_state = "locked"; // assume we have the monitor locked
         if (!found_first_monitor && frame_count == 0) {
-         markOop mark = monitor->owner()->mark();
-         if (mark->has_monitor() &&
-             mark->monitor() == thread()->current_pending_monitor()) {
+          markOop mark = monitor->owner()->mark();
+          if (mark->has_monitor() &&
+              mark->monitor() == thread()->current_pending_monitor()) {
             lock_state = "waiting to lock";
-         }
+          }
         }
 
         found_first_monitor = true;
@@ -206,7 +219,7 @@ GrowableArray<MonitorInfo*>* interpretedVFrame::monitors() const {
   for (BasicObjectLock* current = (fr().previous_monitor_in_interpreter_frame(fr().interpreter_frame_monitor_begin()));
        current >= fr().interpreter_frame_monitor_end();
        current = fr().previous_monitor_in_interpreter_frame(current)) {
-    result->push(new MonitorInfo(current->obj(), current->lock(), false));
+    result->push(new MonitorInfo(current->obj(), current->lock(), false, false));
   }
   return result;
 }
@@ -417,8 +430,10 @@ void vframeStreamCommon::security_get_caller_frame(int depth) {
       // This is Method.invoke() -- skip it
     } else if (use_new_reflection &&
               Klass::cast(method()->method_holder())
-                 ->is_subclass_of(SystemDictionary::reflect_method_accessor_klass())) {
+                 ->is_subclass_of(SystemDictionary::reflect_MethodAccessorImpl_klass())) {
       // This is an auxilary frame -- skip it
+    } else if (method()->is_method_handle_adapter()) {
+      // This is an internal adapter frame from the MethodHandleCompiler -- skip it
     } else {
       // This is non-excluded frame, we need to count it against the depth
       if (depth-- <= 0) {
@@ -477,8 +492,8 @@ void vframeStreamCommon::skip_prefixed_method_and_wrappers() {
 void vframeStreamCommon::skip_reflection_related_frames() {
   while (!at_end() &&
          (JDK_Version::is_gte_jdk14x_version() && UseNewReflection &&
-          (Klass::cast(method()->method_holder())->is_subclass_of(SystemDictionary::reflect_method_accessor_klass()) ||
-           Klass::cast(method()->method_holder())->is_subclass_of(SystemDictionary::reflect_constructor_accessor_klass())))) {
+          (Klass::cast(method()->method_holder())->is_subclass_of(SystemDictionary::reflect_MethodAccessorImpl_klass()) ||
+           Klass::cast(method()->method_holder())->is_subclass_of(SystemDictionary::reflect_ConstructorAccessorImpl_klass())))) {
     next();
   }
 }
@@ -531,8 +546,18 @@ void javaVFrame::print() {
   tty->print_cr("\tmonitor list:");
   for (int index = (list->length()-1); index >= 0; index--) {
     MonitorInfo* monitor = list->at(index);
-    tty->print("\t  obj\t"); monitor->owner()->print_value();
-    tty->print("(" INTPTR_FORMAT ")", (address)monitor->owner());
+    tty->print("\t  obj\t");
+    if (monitor->owner_is_scalar_replaced()) {
+      Klass* k = Klass::cast(monitor->owner_klass());
+      tty->print("( is scalar replaced %s)", k->external_name());
+    } else if (monitor->owner() == NULL) {
+      tty->print("( null )");
+    } else {
+      monitor->owner()->print_value();
+      tty->print("(" INTPTR_FORMAT ")", (address)monitor->owner());
+    }
+    if (monitor->eliminated() && is_compiled_frame())
+      tty->print(" ( lock is eliminated )");
     tty->cr();
     tty->print("\t  ");
     monitor->lock()->print_on(tty);
@@ -559,7 +584,8 @@ void javaVFrame::print_value() const {
   }
   // Check frame size and print warning if it looks suspiciously large
   if (fr().sp() != NULL) {
-    uint size = fr().frame_size();
+    RegisterMap map = *register_map();
+    uint size = fr().frame_size(&map);
 #ifdef _LP64
     if (size > 8*K) warning("SUSPICIOUSLY LARGE FRAME (%d)", size);
 #else

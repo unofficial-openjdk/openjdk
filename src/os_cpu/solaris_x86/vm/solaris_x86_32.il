@@ -1,5 +1,5 @@
 //
-// Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,15 @@
       popl     %edi
       popl     %ebx
       .end
+
+  // Support for void Atomic::load(volatile jlong* src, volatile jlong* dest).
+      .inline _Atomic_load_long,2
+      movl     0(%esp), %eax   // src
+      fildll    (%eax)
+      movl     4(%esp), %eax   // dest
+      fistpll   (%eax)
+      .end
+
 
   // Support for OrderAccess::acquire()
       .inline _OrderAccess_acquire,0

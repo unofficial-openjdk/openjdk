@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,25 @@ void Parse::do_field_access(bool is_get, bool is_field) {
 
 void Parse::do_get_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field) {
   // Does this field have a constant value?  If so, just push the value.
-  if (field->is_constant() && push_constant(field->constant_value()))  return;
+  if (field->is_constant()) {
+    if (field->is_static()) {
+      // final static field
+      if (push_constant(field->constant_value()))
+        return;
+    }
+    else {
+      // final non-static field of a trusted class ({java,sun}.dyn
+      // classes).
+      if (obj->is_Con()) {
+        const TypeOopPtr* oop_ptr = obj->bottom_type()->isa_oopptr();
+        ciObject* constant_oop = oop_ptr->const_oop();
+        ciConstant constant = field->constant_value_of(constant_oop);
+
+        if (push_constant(constant, true))
+          return;
+      }
+    }
+  }
 
   ciType* field_klass = field->type();
   bool is_vol = field->is_volatile();
@@ -145,7 +163,7 @@ void Parse::do_get_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool 
     if (!field->type()->is_loaded()) {
       type = TypeInstPtr::BOTTOM;
       must_assert_null = true;
-    } else if (field->is_constant()) {
+    } else if (field->is_constant() && field->is_static()) {
       // This can happen if the constant oop is non-perm.
       ciObject* con = field->constant_value().as_object();
       // Do not "join" in the previous type; it doesn't add value,
@@ -222,7 +240,7 @@ void Parse::do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool 
   // Store the value.
   Node* store;
   if (bt == T_OBJECT) {
-    const TypePtr* field_type;
+    const TypeOopPtr* field_type;
     if (!field->type()->is_loaded()) {
       field_type = TypeInstPtr::BOTTOM;
     } else {
@@ -240,19 +258,19 @@ void Parse::do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool 
     // membar is dependent on the store, keeping any other membars generated
     // below from floating up past the store.
     int adr_idx = C->get_alias_index(adr_type);
-    insert_mem_bar_volatile(Op_MemBarVolatile, adr_idx);
+    insert_mem_bar_volatile(Op_MemBarVolatile, adr_idx, store);
 
     // Now place a membar for AliasIdxBot for the unknown yet-to-be-parsed
     // volatile alias indices. Skip this if the membar is redundant.
     if (adr_idx != Compile::AliasIdxBot) {
-      insert_mem_bar_volatile(Op_MemBarVolatile, Compile::AliasIdxBot);
+      insert_mem_bar_volatile(Op_MemBarVolatile, Compile::AliasIdxBot, store);
     }
 
     // Finally, place alias-index-specific membars for each volatile index
     // that isn't the adr_idx membar. Typically there's only 1 or 2.
     for( int i = Compile::AliasIdxRaw; i < C->num_alias_types(); i++ ) {
       if (i != adr_idx && C->alias_type(i)->is_volatile()) {
-        insert_mem_bar_volatile(Op_MemBarVolatile, i);
+        insert_mem_bar_volatile(Op_MemBarVolatile, i, store);
       }
     }
   }
@@ -267,7 +285,7 @@ void Parse::do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool 
 }
 
 
-bool Parse::push_constant(ciConstant constant) {
+bool Parse::push_constant(ciConstant constant, bool require_constant) {
   switch (constant.basic_type()) {
   case T_BOOLEAN:  push( intcon(constant.as_boolean()) ); break;
   case T_INT:      push( intcon(constant.as_int())     ); break;
@@ -279,13 +297,16 @@ bool Parse::push_constant(ciConstant constant) {
   case T_LONG:     push_pair( longcon(constant.as_long()) ); break;
   case T_ARRAY:
   case T_OBJECT: {
-    // the oop is in perm space if the ciObject "has_encoding"
+    // cases:
+    //   can_be_constant    = (oop not scavengable || ScavengeRootsInCode != 0)
+    //   should_be_constant = (oop not scavengable || ScavengeRootsInCode >= 2)
+    // An oop is not scavengable if it is in the perm gen.
     ciObject* oop_constant = constant.as_object();
     if (oop_constant->is_null_object()) {
       push( zerocon(T_OBJECT) );
       break;
-    } else if (oop_constant->has_encoding()) {
-      push( makecon(TypeOopPtr::make_from_constant(oop_constant)) );
+    } else if (require_constant || oop_constant->should_be_constant()) {
+      push( makecon(TypeOopPtr::make_from_constant(oop_constant, require_constant)) );
       break;
     } else {
       // we cannot inline the oop, but we can use it later to narrow a type
@@ -335,7 +356,7 @@ void Parse::do_anewarray() {
 
   const TypeKlassPtr* array_klass_type = TypeKlassPtr::make(array_klass);
   Node* count_val = pop();
-  Node* obj = new_array(makecon(array_klass_type), count_val);
+  Node* obj = new_array(makecon(array_klass_type), count_val, 1);
   push(obj);
 }
 
@@ -345,26 +366,26 @@ void Parse::do_newarray(BasicType elem_type) {
 
   Node*   count_val = pop();
   const TypeKlassPtr* array_klass = TypeKlassPtr::make(ciTypeArrayKlass::make(elem_type));
-  Node*   obj = new_array(makecon(array_klass), count_val);
+  Node*   obj = new_array(makecon(array_klass), count_val, 1);
   // Push resultant oop onto stack
   push(obj);
 }
 
 // Expand simple expressions like new int[3][5] and new Object[2][nonConLen].
 // Also handle the degenerate 1-dimensional case of anewarray.
-Node* Parse::expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions) {
+Node* Parse::expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions, int nargs) {
   Node* length = lengths[0];
   assert(length != NULL, "");
-  Node* array = new_array(makecon(TypeKlassPtr::make(array_klass)), length);
+  Node* array = new_array(makecon(TypeKlassPtr::make(array_klass)), length, nargs);
   if (ndimensions > 1) {
     jint length_con = find_int_con(length, -1);
     guarantee(length_con >= 0, "non-constant multianewarray");
     ciArrayKlass* array_klass_1 = array_klass->as_obj_array_klass()->element_klass()->as_array_klass();
     const TypePtr* adr_type = TypeAryPtr::OOPS;
-    const Type*    elemtype = _gvn.type(array)->is_aryptr()->elem();
+    const TypeOopPtr*    elemtype = _gvn.type(array)->is_aryptr()->elem()->make_oopptr();
     const intptr_t header   = arrayOopDesc::base_offset_in_bytes(T_OBJECT);
     for (jint i = 0; i < length_con; i++) {
-      Node*    elem   = expand_multianewarray(array_klass_1, &lengths[1], ndimensions-1);
+      Node*    elem   = expand_multianewarray(array_klass_1, &lengths[1], ndimensions-1, nargs);
       intptr_t offset = header + ((intptr_t)i << LogBytesPerHeapOop);
       Node*    eaddr  = basic_plus_adr(array, offset);
       store_oop_to_array(control(), array, eaddr, adr_type, elem, elemtype, T_OBJECT);
@@ -419,7 +440,7 @@ void Parse::do_multianewarray() {
   // Can use multianewarray instead of [a]newarray if only one dimension,
   // or if all non-final dimensions are small constants.
   if (expand_count == 1 || (1 <= expand_count && expand_count <= expand_limit)) {
-    Node* obj = expand_multianewarray(array_klass, &length[0], ndimensions);
+    Node* obj = expand_multianewarray(array_klass, &length[0], ndimensions, ndimensions);
     push(obj);
     return;
   }

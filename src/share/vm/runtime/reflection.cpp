@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -449,7 +449,7 @@ bool Reflection::verify_class_access(klassOop current_class, klassOop new_class,
   // sun/reflect/MagicAccessorImpl subclasses to succeed trivially.
   if (   JDK_Version::is_gte_jdk14x_version()
       && UseNewReflection
-      && Klass::cast(current_class)->is_subclass_of(SystemDictionary::reflect_magic_klass())) {
+      && Klass::cast(current_class)->is_subclass_of(SystemDictionary::reflect_MagicAccessorImpl_klass())) {
     return true;
   }
 
@@ -480,6 +480,11 @@ bool Reflection::can_relax_access_check_for(
   // because one is inside the other.
   if (under_host_klass(accessor_ik, accessee) ||
       under_host_klass(accessee_ik, accessor))
+    return true;
+
+  // Adapter frames can access anything.
+  if (MethodHandleCompiler::klass_is_method_handle_adapter_holder(accessor))
+    // This is an internal adapter frame from the MethodHandleCompiler.
     return true;
 
   if (RelaxAccessControlCheck ||
@@ -541,7 +546,7 @@ bool Reflection::verify_field_access(klassOop current_class,
   // sun/reflect/MagicAccessorImpl subclasses to succeed trivially.
   if (   JDK_Version::is_gte_jdk14x_version()
       && UseNewReflection
-      && Klass::cast(current_class)->is_subclass_of(SystemDictionary::reflect_magic_klass())) {
+      && Klass::cast(current_class)->is_subclass_of(SystemDictionary::reflect_MagicAccessorImpl_klass())) {
     return true;
   }
 
@@ -554,10 +559,18 @@ bool Reflection::is_same_class_package(klassOop class1, klassOop class2) {
   return instanceKlass::cast(class1)->is_same_class_package(class2);
 }
 
+bool Reflection::is_same_package_member(klassOop class1, klassOop class2, TRAPS) {
+  return instanceKlass::cast(class1)->is_same_package_member(class2, THREAD);
+}
+
 
 // Checks that the 'outer' klass has declared 'inner' as being an inner klass. If not,
 // throw an incompatible class change exception
-void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassHandle inner, TRAPS) {
+// If inner_is_member, require the inner to be a member of the outer.
+// If !inner_is_member, require the inner to be anonymous (a non-member).
+// Caller is responsible for figuring out in advance which case must be true.
+void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassHandle inner,
+                                       bool inner_is_member, TRAPS) {
   const int inner_class_info_index = 0;
   const int outer_class_info_index = 1;
 
@@ -567,13 +580,20 @@ void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassH
      int ioff = icls->ushort_at(i + inner_class_info_index);
      int ooff = icls->ushort_at(i + outer_class_info_index);
 
-     if (ioff != 0 && ooff != 0) {
+     if (inner_is_member && ioff != 0 && ooff != 0) {
         klassOop o = cp->klass_at(ooff, CHECK);
         if (o == outer()) {
           klassOop i = cp->klass_at(ioff, CHECK);
           if (i == inner()) {
             return;
           }
+        }
+     }
+     if (!inner_is_member && ioff != 0 && ooff == 0 &&
+         cp->klass_name_at_matches(inner, ioff)) {
+        klassOop i = cp->klass_at(ioff, CHECK);
+        if (i == inner()) {
+          return;
         }
      }
   }
@@ -616,7 +636,7 @@ oop get_mirror_from_signature(methodHandle method, SignatureStream* ss, TRAPS) {
 
 objArrayHandle Reflection::get_parameter_types(methodHandle method, int parameter_count, oop* return_type, TRAPS) {
   // Allocate array holding parameter types (java.lang.Class instances)
-  objArrayOop m = oopFactory::new_objArray(SystemDictionary::class_klass(), parameter_count, CHECK_(objArrayHandle()));
+  objArrayOop m = oopFactory::new_objArray(SystemDictionary::Class_klass(), parameter_count, CHECK_(objArrayHandle()));
   objArrayHandle mirrors (THREAD, m);
   int index = 0;
   // Collect parameter types
@@ -1293,7 +1313,7 @@ oop Reflection::reflect_method(oop mirror, symbolHandle method_name, objArrayHan
   if (Klass::cast(klass)->oop_is_array() && which == MEMBER_DECLARED)  return NULL;
 
   if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {
-    klass = SystemDictionary::object_klass();
+    klass = SystemDictionary::Object_klass();
   }
   instanceKlassHandle h_k(THREAD, klass);
 
@@ -1360,13 +1380,13 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
   // Exclude primitive types
   if (java_lang_Class::is_primitive(mirror) ||
      (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array() && (which == MEMBER_DECLARED))) {
-    klassOop klass = SystemDictionary::reflect_method_klass();
+    klassOop klass = SystemDictionary::reflect_Method_klass();
     return oopFactory::new_objArray(klass, 0, CHECK_NULL);  // Return empty array
   }
 
   klassOop klass = java_lang_Class::as_klassOop(mirror);
   if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {
-    klass = SystemDictionary::object_klass();
+    klass = SystemDictionary::Object_klass();
   }
   instanceKlassHandle h_k(THREAD, klass);
 
@@ -1396,7 +1416,7 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
         }
 
         // Allocate result
-        klassOop klass = SystemDictionary::reflect_method_klass();
+        klassOop klass = SystemDictionary::reflect_Method_klass();
         objArrayOop r = oopFactory::new_objArray(klass, count, CHECK_NULL);
         objArrayHandle h_result (THREAD, r);
 
@@ -1447,7 +1467,7 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
           }
         }
         // Allocate result
-        klassOop klass = SystemDictionary::reflect_method_klass();
+        klassOop klass = SystemDictionary::reflect_Method_klass();
         objArrayOop r = oopFactory::new_objArray(klass, count, CHECK_NULL);
         objArrayHandle h_result (THREAD, r);
 
@@ -1508,7 +1528,7 @@ objArrayOop Reflection::reflect_constructors(oop mirror, jint which, TRAPS) {
   bool prim  = java_lang_Class::is_primitive(mirror);
   Klass* k = prim ? NULL : Klass::cast(java_lang_Class::as_klassOop(mirror));
   if (prim || k->is_interface() || k->oop_is_array()) {
-    return oopFactory::new_objArray(SystemDictionary::reflect_constructor_klass(), 0, CHECK_NULL);  // Return empty array
+    return oopFactory::new_objArray(SystemDictionary::reflect_Constructor_klass(), 0, CHECK_NULL);  // Return empty array
   }
 
   // Must be instanceKlass at this point

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -233,7 +233,7 @@ class RecordInstanceClosure : public ObjectClosure {
   size_t missed_count() { return _missed_count; }
 };
 
-void HeapInspection::heap_inspection(outputStream* st) {
+void HeapInspection::heap_inspection(outputStream* st, bool need_prologue) {
   ResourceMark rm;
   HeapWord* ref;
 
@@ -244,7 +244,9 @@ void HeapInspection::heap_inspection(outputStream* st) {
     case CollectedHeap::GenCollectedHeap: {
       is_shared_heap = true;
       SharedHeap* sh = (SharedHeap*)heap;
-      sh->gc_prologue(false /* !full */); // get any necessary locks, etc.
+      if (need_prologue) {
+        sh->gc_prologue(false /* !full */); // get any necessary locks, etc.
+      }
       ref = sh->perm_gen()->used_region().start();
       break;
     }
@@ -263,6 +265,9 @@ void HeapInspection::heap_inspection(outputStream* st) {
   if (!cit.allocation_failed()) {
     // Iterate over objects in the heap
     RecordInstanceClosure ric(&cit);
+    // If this operation encounters a bad object when using CMS,
+    // consider using safe_object_iterate() which avoids perm gen
+    // objects that may contain bad references.
     Universe::heap()->object_iterate(&ric);
 
     // Report if certain classes are not counted because of
@@ -287,7 +292,7 @@ void HeapInspection::heap_inspection(outputStream* st) {
   }
   st->flush();
 
-  if (is_shared_heap) {
+  if (need_prologue && is_shared_heap) {
     SharedHeap* sh = (SharedHeap*)heap;
     sh->gc_epilogue(false /* !full */); // release all acquired locks, etc.
   }
@@ -317,5 +322,8 @@ void HeapInspection::find_instances_at_safepoint(klassOop k, GrowableArray<oop>*
 
   // Iterate over objects in the heap
   FindInstanceClosure fic(k, result);
+  // If this operation encounters a bad object when using CMS,
+  // consider using safe_object_iterate() which avoids perm gen
+  // objects that may contain bad references.
   Universe::heap()->object_iterate(&fic);
 }

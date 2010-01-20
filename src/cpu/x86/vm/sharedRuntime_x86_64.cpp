@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ RuntimeStub*       SharedRuntime::_ic_miss_blob;
 RuntimeStub*       SharedRuntime::_resolve_opt_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_virtual_call_blob;
 RuntimeStub*       SharedRuntime::_resolve_static_call_blob;
+
+const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
 
 #define __ masm->
 
@@ -636,6 +638,10 @@ static void gen_i2c_adapter(MacroAssembler *masm,
 
   __ movptr(rax, Address(rsp, 0));
 
+  // Must preserve original SP for loading incoming arguments because
+  // we need to align the outgoing SP for compiled code.
+  __ movptr(r11, rsp);
+
   // Cut-out for having no stack args.  Since up to 2 int/oop args are passed
   // in registers, we will occasionally have no stack args.
   int comp_words_on_stack = 0;
@@ -659,6 +665,10 @@ static void gen_i2c_adapter(MacroAssembler *masm,
   // as far as the placement of the call instruction
   __ push(rax);
 
+  // Put saved SP in another register
+  const Register saved_sp = rax;
+  __ movptr(saved_sp, r11);
+
   // Will jump to the compiled code just as if compiled code was doing it.
   // Pre-load the register-jump target early, to schedule it better.
   __ movptr(r11, Address(rbx, in_bytes(methodOopDesc::from_compiled_offset())));
@@ -678,11 +688,7 @@ static void gen_i2c_adapter(MacroAssembler *masm,
     assert(!regs[i].second()->is_valid() || regs[i].first()->next() == regs[i].second(),
             "scrambled load targets?");
     // Load in argument order going down.
-    // int ld_off = (total_args_passed + comp_words_on_stack -i)*wordSize;
-    // base ld_off on r13 (sender_sp) as the stack alignment makes offsets from rsp
-    // unpredictable
-    int ld_off = ((total_args_passed - 1) - i)*Interpreter::stackElementSize();
-
+    int ld_off = (total_args_passed - i)*Interpreter::stackElementSize() + Interpreter::value_offset_in_bytes();
     // Point to interpreter value (vs. tag)
     int next_off = ld_off - Interpreter::stackElementSize();
     //
@@ -697,10 +703,14 @@ static void gen_i2c_adapter(MacroAssembler *masm,
     if (r_1->is_stack()) {
       // Convert stack slot to an SP offset (+ wordSize to account for return address )
       int st_off = regs[i].first()->reg2stack()*VMRegImpl::stack_slot_size + wordSize;
+
+      // We can use r13 as a temp here because compiled code doesn't need r13 as an input
+      // and if we end up going thru a c2i because of a miss a reasonable value of r13
+      // will be generated.
       if (!r_2->is_valid()) {
         // sign extend???
-        __ movl(rax, Address(r13, ld_off));
-        __ movptr(Address(rsp, st_off), rax);
+        __ movl(r13, Address(saved_sp, ld_off));
+        __ movptr(Address(rsp, st_off), r13);
       } else {
         //
         // We are using two optoregs. This can be either T_OBJECT, T_ADDRESS, T_LONG, or T_DOUBLE
@@ -713,9 +723,9 @@ static void gen_i2c_adapter(MacroAssembler *masm,
         // ld_off is MSW so get LSW
         const int offset = (sig_bt[i]==T_LONG||sig_bt[i]==T_DOUBLE)?
                            next_off : ld_off;
-        __ movq(rax, Address(r13, offset));
+        __ movq(r13, Address(saved_sp, offset));
         // st_off is LSW (i.e. reg.first())
-        __ movq(Address(rsp, st_off), rax);
+        __ movq(Address(rsp, st_off), r13);
       }
     } else if (r_1->is_Register()) {  // Register argument
       Register r = r_1->as_Register();
@@ -730,16 +740,16 @@ static void gen_i2c_adapter(MacroAssembler *masm,
                            next_off : ld_off;
 
         // this can be a misaligned move
-        __ movq(r, Address(r13, offset));
+        __ movq(r, Address(saved_sp, offset));
       } else {
         // sign extend and use a full word?
-        __ movl(r, Address(r13, ld_off));
+        __ movl(r, Address(saved_sp, ld_off));
       }
     } else {
       if (!r_2->is_valid()) {
-        __ movflt(r_1->as_XMMRegister(), Address(r13, ld_off));
+        __ movflt(r_1->as_XMMRegister(), Address(saved_sp, ld_off));
       } else {
-        __ movdbl(r_1->as_XMMRegister(), Address(r13, next_off));
+        __ movdbl(r_1->as_XMMRegister(), Address(saved_sp, next_off));
       }
     }
   }
@@ -1286,7 +1296,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Now compute actual number of stack words we need rounding to make
   // stack properly aligned.
-  stack_slots = round_to(stack_slots, 4 * VMRegImpl::slots_per_word);
+  stack_slots = round_to(stack_slots, StackAlignmentInSlots);
 
   int stack_size = stack_slots * VMRegImpl::stack_slot_size;
 
@@ -1300,22 +1310,19 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   const Register ic_reg = rax;
   const Register receiver = j_rarg0;
-  const Register tmp = rdx;
 
   Label ok;
   Label exception_pending;
 
+  assert_different_registers(ic_reg, receiver, rscratch1);
   __ verify_oop(receiver);
-  __ push(tmp); // spill (any other registers free here???)
-  __ load_klass(tmp, receiver);
-  __ cmpq(ic_reg, tmp);
+  __ load_klass(rscratch1, receiver);
+  __ cmpq(ic_reg, rscratch1);
   __ jcc(Assembler::equal, ok);
 
-  __ pop(tmp);
   __ jump(RuntimeAddress(SharedRuntime::get_ic_miss_stub()));
 
   __ bind(ok);
-  __ pop(tmp);
 
   // Verified entry point must be aligned
   __ align(8);
@@ -1348,7 +1355,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     {
       Label L;
       __ mov(rax, rsp);
-      __ andptr(rax, -16); // must be 16 byte boundry (see amd64 ABI)
+      __ andptr(rax, -16); // must be 16 byte boundary (see amd64 ABI)
       __ cmpptr(rax, rsp);
       __ jcc(Assembler::equal, L);
       __ stop("improperly aligned stack");
@@ -1502,6 +1509,17 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     __ movoop(c_rarg1, JNIHandles::make_local(method()));
     __ call_VM_leaf(
       CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_entry),
+      r15_thread, c_rarg1);
+    restore_args(masm, total_c_args, c_arg, out_regs);
+  }
+
+  // RedefineClasses() tracing support for obsolete method entry
+  if (RC_TRACE_IN_RANGE(0x00001000, 0x00002000)) {
+    // protect the args we've loaded
+    save_args(masm, total_c_args, c_arg, out_regs);
+    __ movoop(c_rarg1, JNIHandles::make_local(method()));
+    __ call_VM_leaf(
+      CAST_FROM_FN_PTR(address, SharedRuntime::rc_trace_method_entry),
       r15_thread, c_rarg1);
     restore_args(masm, total_c_args, c_arg, out_regs);
   }
@@ -2678,7 +2696,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ mov(rdi, rax);
 
    Label noException;
-  __ cmpl(r12, Deoptimization::Unpack_exception);   // Was exception pending?
+  __ cmpl(r14, Deoptimization::Unpack_exception);   // Was exception pending?
   __ jcc(Assembler::notEqual, noException);
   __ movptr(rax, Address(r15_thread, JavaThread::exception_oop_offset()));
   // QQQ this is useless it was NULL above
@@ -2954,10 +2972,16 @@ void SharedRuntime::generate_uncommon_trap_blob() {
   __ pushptr(Address(rcx, 0));     // Save return address
   __ enter();                      // Save old & set new rbp
   __ subptr(rsp, rbx);             // Prolog
+#ifdef CC_INTERP
+  __ movptr(Address(rbp,
+                  -(sizeof(BytecodeInterpreter)) + in_bytes(byte_offset_of(BytecodeInterpreter, _sender_sp))),
+            sender_sp); // Make it walkable
+#else // CC_INTERP
   __ movptr(Address(rbp, frame::interpreter_frame_sender_sp_offset * wordSize),
             sender_sp);            // Make it walkable
   // This value is corrected by layout_activation_impl
   __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD );
+#endif // CC_INTERP
   __ mov(sender_sp, rsp);          // Pass sender_sp to next frame
   __ addptr(rsi, wordSize);        // Bump array pointer (sizes)
   __ addptr(rcx, wordSize);        // Bump array pointer (pcs)
@@ -3302,6 +3326,10 @@ void OptoRuntime::generate_exception_blob() {
   __ pop(rdx);                  // No need for exception pc anymore
 
   // rax: exception handler
+
+  // Restore SP from BP if the exception PC is a MethodHandle call.
+  __ cmpl(Address(r15_thread, JavaThread::is_method_handle_exception_offset()), 0);
+  __ cmovptr(Assembler::notEqual, rsp, rbp);
 
   // We have a handler in rax (could be deopt blob).
   __ mov(r8, rax);

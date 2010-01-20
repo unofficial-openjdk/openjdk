@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,8 +72,8 @@ class ConcurrentGCThread: public NamedThread {
   friend class VMStructs;
 
 protected:
-  static bool _should_terminate;
-  static bool _has_terminated;
+  bool _should_terminate;
+  bool _has_terminated;
 
   enum CGC_flag_type {
     CGC_nil           = 0x0,

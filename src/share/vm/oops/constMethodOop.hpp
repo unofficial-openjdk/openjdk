@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,6 +104,7 @@ private:
   // loads and stores.  This value may updated and read without a lock by
   // multiple threads, so is volatile.
   volatile uint64_t _fingerprint;
+  volatile bool     _is_conc_safe; // if true, safe for concurrent GC processing
 
 public:
   oop* oop_block_beg() const { return adr_method(); }
@@ -257,6 +258,11 @@ public:
   LocalVariableTableElement* localvariable_table_start() const;
 
   // byte codes
+  void    set_code(address code) {
+    if (code_size() > 0) {
+      memcpy(code_base(), code, code_size());
+    }
+  }
   address code_base() const            { return (address) (this+1); }
   address code_end() const             { return code_base() + code_size(); }
   bool    contains(address bcp) const  { return code_base() <= bcp
@@ -273,6 +279,8 @@ public:
   oop*  adr_method() const             { return (oop*)&_method;          }
   oop*  adr_stackmap_data() const      { return (oop*)&_stackmap_data;   }
   oop*  adr_exception_table() const    { return (oop*)&_exception_table; }
+  bool is_conc_safe() { return _is_conc_safe; }
+  void set_is_conc_safe(bool v) { _is_conc_safe = v; }
 
   // Unique id for the method
   static const u2 MAX_IDNUM;

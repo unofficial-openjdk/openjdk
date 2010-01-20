@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -258,7 +258,7 @@ void C1_MacroAssembler::initialize_object(Register obj, Register klass, Register
     }
   }
 
-  if (DTraceAllocProbes) {
+  if (CURRENT_ENV->dtrace_alloc_probes()) {
     assert(obj == rax, "must be");
     call(RuntimeAddress(Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)));
   }
@@ -291,7 +291,7 @@ void C1_MacroAssembler::allocate_array(Register obj, Register len, Register t1, 
   const Register len_zero = len;
   initialize_body(obj, arr_size, header_size * BytesPerWord, len_zero);
 
-  if (DTraceAllocProbes) {
+  if (CURRENT_ENV->dtrace_alloc_probes()) {
     assert(obj == rax, "must be");
     call(RuntimeAddress(Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)));
   }

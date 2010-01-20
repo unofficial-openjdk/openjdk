@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ class InlineTree : public ResourceObj {
   // Always between 0.0 and 1.0.  Represents the percentage of the method's
   // total execution time used at this call site.
   const float _site_invoke_ratio;
+  const int   _site_depth_adjust;
   float compute_callee_frequency( int caller_bci ) const;
 
   GrowableArray<InlineTree*> _subtrees;
@@ -50,7 +51,8 @@ protected:
              ciMethod* callee_method,
              JVMState* caller_jvms,
              int caller_bci,
-             float site_invoke_ratio);
+             float site_invoke_ratio,
+             int site_depth_adjust);
   InlineTree *build_inline_tree_for_callee(ciMethod* callee_method,
                                            JVMState* caller_jvms,
                                            int caller_bci);
@@ -61,14 +63,15 @@ protected:
 
   InlineTree *caller_tree()       const { return _caller_tree;  }
   InlineTree* callee_at(int bci, ciMethod* m) const;
-  int         inline_depth()      const { return _caller_jvms ? _caller_jvms->depth() : 0; }
+  int         inline_depth()      const { return stack_depth() + _site_depth_adjust; }
+  int         stack_depth()       const { return _caller_jvms ? _caller_jvms->depth() : 0; }
 
 public:
   static InlineTree* build_inline_tree_root();
   static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee, bool create_if_not_found = false);
 
   // For temporary (stack-allocated, stateless) ilts:
-  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio);
+  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int site_depth_adjust);
 
   // InlineTree enum
   enum InlineStyle {
@@ -78,7 +81,7 @@ public:
   };
 
   // See if it is OK to inline.
-  // The reciever is the inline tree for the caller.
+  // The receiver is the inline tree for the caller.
   //
   // The result is a temperature indication.  If it is hot or cold,
   // inlining is immediate or undesirable.  Otherwise, the info block
@@ -469,14 +472,14 @@ class Parse : public GraphKit {
 
   // loading from a constant field or the constant pool
   // returns false if push failed (non-perm field constants only, not ldcs)
-  bool push_constant(ciConstant con);
+  bool push_constant(ciConstant con, bool require_constant = false);
 
   // implementation of object creation bytecodes
   void do_new();
   void do_newarray(BasicType elemtype);
   void do_anewarray();
   void do_multianewarray();
-  Node* expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions);
+  Node* expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions, int nargs);
 
   // implementation of jsr/ret
   void do_jsr();

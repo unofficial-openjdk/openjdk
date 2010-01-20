@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public:
   void do_oop(oop* p) {
     if (p != NULL) {
       oop obj = *p;
-      if (obj->klass() == SystemDictionary::string_klass()) {
+      if (obj->klass() == SystemDictionary::String_klass()) {
 
         int hash;
         typeArrayOop value = java_lang_String::value(obj);
@@ -625,11 +625,11 @@ public:
 
     if (obj->is_klass() || obj->is_instance()) {
       if (obj->is_klass() ||
-          obj->is_a(SystemDictionary::class_klass()) ||
-          obj->is_a(SystemDictionary::throwable_klass())) {
+          obj->is_a(SystemDictionary::Class_klass()) ||
+          obj->is_a(SystemDictionary::Throwable_klass())) {
         // Do nothing
       }
-      else if (obj->is_a(SystemDictionary::string_klass())) {
+      else if (obj->is_a(SystemDictionary::String_klass())) {
         // immutable objects.
       } else {
         // someone added an object we hadn't accounted for.
@@ -928,6 +928,10 @@ public:
     // shared classes at runtime, where constraints were previously created.
     guarantee(SystemDictionary::constraints()->number_of_entries() == 0,
               "loader constraints are not saved");
+    // Revisit and implement this if we prelink method handle call sites:
+    guarantee(SystemDictionary::invoke_method_table() == NULL ||
+              SystemDictionary::invoke_method_table()->number_of_entries() == 0,
+              "invoke method table is not saved");
     GenCollectedHeap* gch = GenCollectedHeap::heap();
 
     // At this point, many classes have been loaded.

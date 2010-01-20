@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,17 @@
 
 // Implememtation of ConstantPoolCacheEntry
 
-void ConstantPoolCacheEntry::set_initial_state(int index) {
-  assert(0 <= index && index < 0x10000, "sanity check");
+void ConstantPoolCacheEntry::initialize_entry(int index) {
+  assert(0 < index && index < 0x10000, "sanity check");
   _indices = index;
+  assert(constant_pool_index() == index, "");
 }
 
+void ConstantPoolCacheEntry::initialize_secondary_entry(int main_index) {
+  assert(0 <= main_index && main_index < 0x10000, "sanity check");
+  _indices = (main_index << 16);
+  assert(main_entry_index() == main_index, "");
+}
 
 int ConstantPoolCacheEntry::as_flags(TosState state, bool is_final,
                     bool is_vfinal, bool is_volatile,
@@ -136,6 +142,7 @@ void ConstantPoolCacheEntry::set_method(Bytecodes::Code invoke_code,
   int byte_no = -1;
   bool needs_vfinal_flag = false;
   switch (invoke_code) {
+    case Bytecodes::_invokedynamic:
     case Bytecodes::_invokevirtual:
     case Bytecodes::_invokeinterface: {
         if (method->can_be_statically_bound()) {
@@ -208,6 +215,23 @@ void ConstantPoolCacheEntry::set_interface_call(methodHandle method, int index) 
   set_f2(index);
   set_flags(as_flags(as_TosState(method->result_type()), method->is_final_method(), false, false, false, true) | method()->size_of_parameters());
   set_bytecode_1(Bytecodes::_invokeinterface);
+}
+
+
+void ConstantPoolCacheEntry::set_dynamic_call(Handle call_site, int extra_data) {
+  methodOop method = (methodOop) java_dyn_CallSite::vmmethod(call_site());
+  assert(method->is_method(), "must be initialized properly");
+  int param_size = method->size_of_parameters();
+  assert(param_size >= 1, "method argument size must include MH.this");
+  param_size -= 1;              // do not count MH.this; it is not stacked for invokedynamic
+  if (Atomic::cmpxchg_ptr(call_site(), &_f1, NULL) == NULL) {
+    // racing threads might be trying to install their own favorites
+    set_f1(call_site());
+  }
+  set_f2(extra_data);
+  set_flags(as_flags(as_TosState(method->result_type()), method->is_final_method(), false, false, false, true) | param_size);
+  // do not do set_bytecode on a secondary CP cache entry
+  //set_bytecode_1(Bytecodes::_invokedynamic);
 }
 
 
@@ -392,7 +416,11 @@ void ConstantPoolCacheEntry::print(outputStream* st, int index) const {
   // print separator
   if (index == 0) tty->print_cr("                 -------------");
   // print entry
-  tty->print_cr("%3d  (%08x)  [%02x|%02x|%5d]", index, this, bytecode_2(), bytecode_1(), constant_pool_index());
+  tty->print_cr("%3d  (%08x)  ", index, this);
+  if (is_secondary_entry())
+    tty->print_cr("[%5d|secondary]", main_entry_index());
+  else
+    tty->print_cr("[%02x|%02x|%5d]", bytecode_2(), bytecode_1(), constant_pool_index());
   tty->print_cr("                 [   %08x]", (address)(oop)_f1);
   tty->print_cr("                 [   %08x]", _f2);
   tty->print_cr("                 [   %08x]", _flags);
@@ -407,7 +435,18 @@ void ConstantPoolCacheEntry::verify(outputStream* st) const {
 
 void constantPoolCacheOopDesc::initialize(intArray& inverse_index_map) {
   assert(inverse_index_map.length() == length(), "inverse index map must have same length as cache");
-  for (int i = 0; i < length(); i++) entry_at(i)->set_initial_state(inverse_index_map[i]);
+  for (int i = 0; i < length(); i++) {
+    ConstantPoolCacheEntry* e = entry_at(i);
+    int original_index = inverse_index_map[i];
+    if ((original_index & Rewriter::_secondary_entry_tag) != 0) {
+      int main_index = (original_index - Rewriter::_secondary_entry_tag);
+      assert(!entry_at(main_index)->is_secondary_entry(), "valid main index");
+      e->initialize_secondary_entry(main_index);
+    } else {
+      e->initialize_entry(original_index);
+    }
+    assert(entry_at(i) == e, "sanity");
+  }
 }
 
 // RedefineClasses() API support:

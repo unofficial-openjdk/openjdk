@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,7 +95,7 @@ Node *Parse::fetch_interpreter_state(int index,
   switch( bt ) {                // Signature is flattened
   case T_INT:     l = new (C, 3) LoadINode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
   case T_FLOAT:   l = new (C, 3) LoadFNode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
-  case T_ADDRESS:
+  case T_ADDRESS: l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM  ); break;
   case T_OBJECT:  l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeInstPtr::BOTTOM ); break;
   case T_LONG:
   case T_DOUBLE: {
@@ -229,12 +229,15 @@ void Parse::load_interpreter_state(Node* osr_buf) {
     }
   }
 
+  // Use the raw liveness computation to make sure that unexpected
+  // values don't propagate into the OSR frame.
   MethodLivenessResult live_locals = method()->liveness_at_bci(osr_bci());
   if (!live_locals.is_valid()) {
     // Degenerate or breakpointed method.
     C->record_method_not_compilable("OSR in empty or breakpointed method");
     return;
   }
+  MethodLivenessResult raw_live_locals = method()->raw_liveness_at_bci(osr_bci());
 
   // Extract the needed locals from the interpreter frame.
   Node *locals_addr = basic_plus_adr(osr_buf, osr_buf, (max_locals-1)*wordSize);
@@ -313,6 +316,10 @@ void Parse::load_interpreter_state(Node* osr_buf) {
         // skip type check for dead oops
         continue;
       }
+    }
+    if (type->basic_type() == T_ADDRESS && !raw_live_locals.at(index)) {
+      // Skip type check for dead address locals
+      continue;
     }
     set_local(index, check_interpreter_type(l, type, bad_type_exit));
   }
@@ -439,7 +446,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   // Always register dependence if JVMTI is enabled, because
   // either breakpoint setting or hotswapping of methods may
   // cause deoptimization.
-  if (JvmtiExport::can_hotswap_or_post_breakpoint()) {
+  if (C->env()->jvmti_can_hotswap_or_post_breakpoint()) {
     C->dependencies()->assert_evol_method(method());
   }
 
@@ -607,7 +614,7 @@ void Parse::do_all_blocks() {
       if (control()->is_Region() && !block->is_loop_head() && !has_irreducible && !block->is_handler()) {
         // In the absence of irreducible loops, the Region and Phis
         // associated with a merge that doesn't involve a backedge can
-        // be simplfied now since the RPO parsing order guarantees
+        // be simplified now since the RPO parsing order guarantees
         // that any path which was supposed to reach here has already
         // been parsed or must be dead.
         Node* c = control();
@@ -828,6 +835,7 @@ bool Parse::can_rerun_bytecode() {
     break;
 
   case Bytecodes::_invokestatic:
+  case Bytecodes::_invokedynamic:
   case Bytecodes::_invokespecial:
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:
@@ -952,7 +960,7 @@ void Parse::do_exits() {
   bool do_synch = method()->is_synchronized() && GenerateSynchronizationCode;
 
   // record exit from a method if compiled while Dtrace is turned on.
-  if (do_synch || DTraceMethodProbes) {
+  if (do_synch || C->env()->dtrace_method_probes()) {
     // First move the exception list out of _exits:
     GraphKit kit(_exits.transfer_exceptions_into_jvms());
     SafePointNode* normal_map = kit.map();  // keep this guy safe
@@ -974,7 +982,7 @@ void Parse::do_exits() {
         // Unlock!
         kit.shared_unlock(_synch_lock->box_node(), _synch_lock->obj_node());
       }
-      if (DTraceMethodProbes) {
+      if (C->env()->dtrace_method_probes()) {
         kit.make_dtrace_method_exit(method());
       }
       // Done with exception-path processing.
@@ -1073,7 +1081,7 @@ void Parse::do_method_entry() {
 
   NOT_PRODUCT( count_compiled_calls(true/*at_method_entry*/, false/*is_inline*/); )
 
-  if (DTraceMethodProbes) {
+  if (C->env()->dtrace_method_probes()) {
     make_dtrace_method_entry(method());
   }
 
@@ -1959,7 +1967,7 @@ void Parse::return_current(Node* value) {
   if (method()->is_synchronized() && GenerateSynchronizationCode) {
     shared_unlock(_synch_lock->box_node(), _synch_lock->obj_node());
   }
-  if (DTraceMethodProbes) {
+  if (C->env()->dtrace_method_probes()) {
     make_dtrace_method_exit(method());
   }
   SafePointNode* exit_return = _exits.map();

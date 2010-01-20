@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -858,9 +858,15 @@ const Type *PhiNode::Value( PhaseTransform *phase ) const {
   // convert the one to the other.
   const TypePtr* ttp = _type->make_ptr();
   const TypeInstPtr* ttip = (ttp != NULL) ? ttp->isa_instptr() : NULL;
+  const TypeKlassPtr* ttkp = (ttp != NULL) ? ttp->isa_klassptr() : NULL;
   bool is_intf = false;
   if (ttip != NULL) {
     ciKlass* k = ttip->klass();
+    if (k->is_loaded() && k->is_interface())
+      is_intf = true;
+  }
+  if (ttkp != NULL) {
+    ciKlass* k = ttkp->klass();
     if (k->is_loaded() && k->is_interface())
       is_intf = true;
   }
@@ -921,6 +927,8 @@ const Type *PhiNode::Value( PhaseTransform *phase ) const {
     // uplift the type.
     if( !t->empty() && ttip && ttip->is_loaded() && ttip->klass()->is_interface() )
       { assert(ft == _type, ""); } // Uplift to interface
+    else if( !t->empty() && ttkp && ttkp->is_loaded() && ttkp->klass()->is_interface() )
+      { assert(ft == _type, ""); } // Uplift to interface
     // Otherwise it's something stupid like non-overlapping int ranges
     // found on dying counted loops.
     else
@@ -936,12 +944,21 @@ const Type *PhiNode::Value( PhaseTransform *phase ) const {
     // because the type system doesn't interact well with interfaces.
     const TypePtr *jtp = jt->make_ptr();
     const TypeInstPtr *jtip = (jtp != NULL) ? jtp->isa_instptr() : NULL;
+    const TypeKlassPtr *jtkp = (jtp != NULL) ? jtp->isa_klassptr() : NULL;
     if( jtip && ttip ) {
       if( jtip->is_loaded() &&  jtip->klass()->is_interface() &&
           ttip->is_loaded() && !ttip->klass()->is_interface() ) {
         // Happens in a CTW of rt.jar, 320-341, no extra flags
         assert(ft == ttip->cast_to_ptr_type(jtip->ptr()) ||
                ft->isa_narrowoop() && ft->make_ptr() == ttip->cast_to_ptr_type(jtip->ptr()), "");
+        jt = ft;
+      }
+    }
+    if( jtkp && ttkp ) {
+      if( jtkp->is_loaded() &&  jtkp->klass()->is_interface() &&
+          ttkp->is_loaded() && !ttkp->klass()->is_interface() ) {
+        assert(ft == ttkp->cast_to_ptr_type(jtkp->ptr()) ||
+               ft->isa_narrowoop() && ft->make_ptr() == ttkp->cast_to_ptr_type(jtkp->ptr()), "");
         jt = ft;
       }
     }
@@ -1333,7 +1350,7 @@ static void split_once(PhaseIterGVN *igvn, Node *phi, Node *val, Node *n, Node *
   }
 
   // Register the new node but do not transform it.  Cannot transform until the
-  // entire Region/Phi conglerate has been hacked as a single huge transform.
+  // entire Region/Phi conglomerate has been hacked as a single huge transform.
   igvn->register_new_node_with_optimizer( newn );
   // Now I can point to the new node.
   n->add_req(newn);
@@ -1364,7 +1381,7 @@ static Node* split_flow_path(PhaseGVN *phase, PhiNode *phi) {
   Node *val = phi->in(i);       // Constant to split for
   uint hit = 0;                 // Number of times it occurs
 
-  for( ; i < phi->req(); i++ ){ // Count occurances of constant
+  for( ; i < phi->req(); i++ ){ // Count occurrences of constant
     Node *n = phi->in(i);
     if( !n ) return NULL;
     if( phase->type(n) == Type::TOP ) return NULL;
@@ -1406,7 +1423,7 @@ static Node* split_flow_path(PhaseGVN *phase, PhiNode *phi) {
 
 //=============================================================================
 //------------------------------simple_data_loop_check-------------------------
-//  Try to determing if the phi node in a simple safe/unsafe data loop.
+//  Try to determining if the phi node in a simple safe/unsafe data loop.
 //  Returns:
 // enum LoopSafety { Safe = 0, Unsafe, UnsafeLoop };
 // Safe       - safe case when the phi and it's inputs reference only safe data
@@ -1514,6 +1531,8 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return NULL;                // No change
 
   Node *top = phase->C->top();
+  bool new_phi = (outcnt() == 0); // transforming new Phi
+  assert(!can_reshape || !new_phi, "for igvn new phi should be hooked");
 
   // The are 2 situations when only one valid phi's input is left
   // (in addition to Region input).
@@ -1531,6 +1550,12 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         progress = this;        // Record progress
       }
     }
+  }
+
+  if (can_reshape && outcnt() == 0) {
+    // set_req() above may kill outputs if Phi is referenced
+    // only by itself on the dead (top) control path.
+    return top;
   }
 
   Node* uin = unique_input(phase);
@@ -1667,10 +1692,9 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
             // Equivalent code is in MemNode::Ideal_common
             Node *m  = phase->transform(n);
             if (outcnt() == 0) {  // Above transform() may kill us!
-              progress = phase->C->top();
-              break;
+              return top;
             }
-            // If tranformed to a MergeMem, get the desired slice
+            // If transformed to a MergeMem, get the desired slice
             // Otherwise the returned node represents memory for every slice
             Node *new_mem = (m->is_MergeMem()) ?
                              m->as_MergeMem()->memory_at(alias_idx) : m;
@@ -1775,12 +1799,13 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if (UseCompressedOops && can_reshape && progress == NULL) {
     bool may_push = true;
     bool has_decodeN = false;
-    Node* in_decodeN = NULL;
     for (uint i=1; i<req(); ++i) {// For all paths in
       Node *ii = in(i);
       if (ii->is_DecodeN() && ii->bottom_type() == bottom_type()) {
-        has_decodeN = true;
-        in_decodeN = ii->in(1);
+        // Do optimization if a non dead path exist.
+        if (ii->in(1)->bottom_type() != Type::TOP) {
+          has_decodeN = true;
+        }
       } else if (!ii->is_Phi()) {
         may_push = false;
       }
@@ -1788,8 +1813,9 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
     if (has_decodeN && may_push) {
       PhaseIterGVN *igvn = phase->is_IterGVN();
-      // Note: in_decodeN is used only to define the type of new phi here.
-      PhiNode *new_phi = PhiNode::make_blank(in(0), in_decodeN);
+      // Make narrow type for new phi.
+      const Type* narrow_t = TypeNarrowOop::make(this->bottom_type()->is_ptr());
+      PhiNode* new_phi = new (phase->C, r->req()) PhiNode(r, narrow_t);
       uint orig_cnt = req();
       for (uint i=1; i<req(); ++i) {// For all paths in
         Node *ii = in(i);
@@ -1802,7 +1828,7 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
           if (ii->as_Phi() == this) {
             new_ii = new_phi;
           } else {
-            new_ii = new (phase->C, 2) EncodePNode(ii, in_decodeN->bottom_type());
+            new_ii = new (phase->C, 2) EncodePNode(ii, narrow_t);
             igvn->register_new_node_with_optimizer(new_ii);
           }
         }
@@ -1945,7 +1971,7 @@ const Type *CatchNode::Value( PhaseTransform *phase ) const {
         f[CatchProjNode::fall_through_index] = Type::TOP;
       } else if( call->req() > TypeFunc::Parms ) {
         const Type *arg0 = phase->type( call->in(TypeFunc::Parms) );
-        // Check for null reciever to virtual or interface calls
+        // Check for null receiver to virtual or interface calls
         if( call->is_CallDynamicJava() &&
             arg0->higher_equal(TypePtr::NULL_PTR) ) {
           f[CatchProjNode::fall_through_index] = Type::TOP;
@@ -1978,7 +2004,7 @@ Node *CatchProjNode::Identity( PhaseTransform *phase ) {
   // also remove any exception table entry.  Thus we must know the call
   // feeding the Catch will not really throw an exception.  This is ok for
   // the main fall-thru control (happens when we know a call can never throw
-  // an exception) or for "rethrow", because a further optimnization will
+  // an exception) or for "rethrow", because a further optimization will
   // yank the rethrow (happens when we inline a function that can throw an
   // exception and the caller has no handler).  Not legal, e.g., for passing
   // a NULL receiver to a v-call, or passing bad types to a slow-check-cast.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ inline void OrderAccess::release() {
 
 inline void OrderAccess::fence() {
 #ifdef AMD64
-  (*os::fence_func)();
+  StubRoutines_fence();
 #else
   if (os::is_MP()) {
     __asm {

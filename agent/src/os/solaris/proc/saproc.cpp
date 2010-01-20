@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,49 +214,58 @@ static void init_alt_root() {
   }
 }
 
-static int find_file_hook(const char * name, int elf_checksum) {
-  init_alt_root();
+// This function is a complete substitute for the open system call
+// since it's also used to override open calls from libproc to
+// implement as a pathmap style facility for the SA.  If libproc
+// starts using other interfaces then this might have to extended to
+// cover other calls.
+extern "C" int libsaproc_open(const char * name, int oflag, ...) {
+  if (oflag == O_RDONLY) {
+    init_alt_root();
 
-  if (_libsaproc_debug) {
-    printf("libsaproc DEBUG: find_file_hook %s 0x%x\n", name, elf_checksum);
-  }
-
-  if (alt_root_len > 0) {
-    int fd = -1;
-    char alt_path[PATH_MAX+1];
-
-    strcpy(alt_path, alt_root);
-    strcat(alt_path, name);
-    fd = open(alt_path, O_RDONLY);
-    if (fd >= 0) {
-      if (_libsaproc_debug) {
-        printf("libsaproc DEBUG: find_file_hook substituted %s\n", alt_path);
-      }
-      return fd;
+    if (_libsaproc_debug) {
+      printf("libsaproc DEBUG: libsaproc_open %s\n", name);
     }
 
-    if (strrchr(name, '/')) {
+    if (alt_root_len > 0) {
+      int fd = -1;
+      char alt_path[PATH_MAX+1];
+
       strcpy(alt_path, alt_root);
-      strcat(alt_path, strrchr(name, '/'));
+      strcat(alt_path, name);
       fd = open(alt_path, O_RDONLY);
       if (fd >= 0) {
         if (_libsaproc_debug) {
-          printf("libsaproc DEBUG: find_file_hook substituted %s\n", alt_path);
+          printf("libsaproc DEBUG: libsaproc_open substituted %s\n", alt_path);
         }
         return fd;
       }
+
+      if (strrchr(name, '/')) {
+        strcpy(alt_path, alt_root);
+        strcat(alt_path, strrchr(name, '/'));
+        fd = open(alt_path, O_RDONLY);
+        if (fd >= 0) {
+          if (_libsaproc_debug) {
+            printf("libsaproc DEBUG: libsaproc_open substituted %s\n", alt_path);
+          }
+          return fd;
+        }
+      }
     }
   }
-  return -1;
+
+  {
+    mode_t mode;
+    va_list ap;
+    va_start(ap, oflag);
+    mode = va_arg(ap, mode_t);
+    va_end(ap);
+
+    return open(name, oflag, mode);
+  }
 }
 
-static int pathmap_open(const char* name) {
-  int fd = open(name, O_RDONLY);
-  if (fd < 0) {
-    fd = find_file_hook(name, 0);
-  }
-  return fd;
-}
 
 static void * pathmap_dlopen(const char * name, int mode) {
   init_alt_root();
@@ -502,8 +511,8 @@ struct FileMapHeader {
 };
 
 static bool
-read_int(struct ps_prochandle* ph, psaddr_t addr, int* pvalue) {
-  int i;
+read_jboolean(struct ps_prochandle* ph, psaddr_t addr, jboolean* pvalue) {
+  jboolean i;
   if (ps_pread(ph, addr, &i, sizeof(i)) == PS_OK) {
     *pvalue = i;
     return true;
@@ -575,10 +584,13 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
   }
 
   // read the value of the flag "UseSharedSpaces"
-  int value = 0;
-  if (read_int(ph, useSharedSpacesAddr, &value) != true) {
+  // Since hotspot types are not available to build this library. So
+  // equivalent type "jboolean" is used to read the value of "UseSharedSpaces"
+  // which is same as hotspot type "bool".
+  jboolean value = 0;
+  if (read_jboolean(ph, useSharedSpacesAddr, &value) != true) {
     THROW_NEW_DEBUGGER_EXCEPTION_("can't read 'UseSharedSpaces' flag", 1);
-  } else if (value == 0) {
+  } else if ((int)value == 0) {
     print_debug("UseSharedSpaces is false, assuming -Xshare:off!\n");
     return 1;
   }
@@ -605,7 +617,7 @@ init_classsharing_workaround(void *cd, const prmap_t* pmap, const char* obj_name
   print_debug("looking for %s\n", classes_jsa);
 
   // open the classes[_g].jsa
-  int fd = pathmap_open(classes_jsa);
+  int fd = libsaproc_open(classes_jsa, O_RDONLY);
   if (fd < 0) {
     char errMsg[ERR_MSG_SIZE];
     sprintf(errMsg, "can't open shared archive file %s", classes_jsa);
@@ -1206,8 +1218,6 @@ JNIEXPORT jstring JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_d
   return res;
 }
 
-typedef int (*find_file_hook_t)(const char *, int elf_checksum);
-
 /*
  * Class:       sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal
  * Method:      initIDs
@@ -1226,16 +1236,6 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal_init
   void* libproc_handle = dlopen("libproc.so", RTLD_LAZY | RTLD_GLOBAL);
   if (libproc_handle == 0)
      THROW_NEW_DEBUGGER_EXCEPTION("can't load libproc.so, if you are using Solaris 5.7 or below, copy libproc.so from 5.8!");
-
-  // If possible, set shared object find file hook.
-  void (*set_hook)(find_file_hook_t) = (void(*)(find_file_hook_t))dlsym(libproc_handle, "Pset_find_file_hook");
-  if (set_hook) {
-    // we found find file hook symbol, set up our hook function.
-    set_hook(find_file_hook);
-  } else if (getenv(SA_ALTROOT)) {
-    printf("libsaproc WARNING: %s set, but can't set file hook. " \
-           "Did you use right version of libproc.so?\n", SA_ALTROOT);
-  }
 
   p_ps_prochandle_ID = env->GetFieldID(clazz, "p_ps_prochandle", "J");
   CHECK_EXCEPTION;

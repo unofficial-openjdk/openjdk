@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -425,7 +425,7 @@ JRT_ENTRY_NO_ASYNC(static address, exception_handler_for_pc_helper(JavaThread* t
   assert(exception.not_null(), "NULL exceptions should be handled by throw_exception");
   assert(exception->is_oop(), "just checking");
   // Check that exception is a subclass of Throwable, otherwise we have a VerifyError
-  if (!(exception->is_a(SystemDictionary::throwable_klass()))) {
+  if (!(exception->is_a(SystemDictionary::Throwable_klass()))) {
     if (ExitVMOnVerifyError) vm_exit(-1);
     ShouldNotReachHere();
   }

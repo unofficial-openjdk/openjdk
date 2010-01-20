@@ -39,6 +39,7 @@ public:
   static void apply_closure_to_buffer(ObjectClosure* cl,
                                       void** buf, size_t index, size_t sz);
 
+  void verify_oops_in_buffer() NOT_DEBUG_RETURN;
 };
 
 
@@ -59,8 +60,8 @@ public:
   SATBMarkQueueSet();
 
   void initialize(Monitor* cbl_mon, Mutex* fl_lock,
-                  int max_completed_queue = 0,
-                  Mutex* lock = NULL);
+                  int process_completed_threshold,
+                  Mutex* lock);
 
   static void handle_zero_index_for_thread(JavaThread* t);
 

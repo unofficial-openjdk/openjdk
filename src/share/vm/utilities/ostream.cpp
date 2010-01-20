@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -300,7 +300,10 @@ fileStream::fileStream(const char* file_name) {
 }
 
 void fileStream::write(const char* s, size_t len) {
-  if (_file != NULL)  fwrite(s, 1, len, _file);
+  if (_file != NULL)  {
+    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    size_t count = fwrite(s, 1, len, _file);
+  }
   update_position(s, len);
 }
 
@@ -328,7 +331,10 @@ fdStream::~fdStream() {
 }
 
 void fdStream::write(const char* s, size_t len) {
-  if (_fd != -1) ::write(_fd, s, (int)len);
+  if (_fd != -1) {
+    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    size_t count = ::write(_fd, s, (int)len);
+  }
   update_position(s, len);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -769,9 +769,9 @@ class InterpreterFrameClosure : public OffsetClosure {
 
 class InterpretedArgumentOopFinder: public SignatureInfo {
  private:
-  OopClosure* _f;      // Closure to invoke
-  int    _offset;      // TOS-relative offset, decremented with each argument
-  bool   _is_static;   // true if the callee is a static method
+  OopClosure* _f;        // Closure to invoke
+  int    _offset;        // TOS-relative offset, decremented with each argument
+  bool   _has_receiver;  // true if the callee has a receiver
   frame* _fr;
 
   void set(int size, BasicType type) {
@@ -786,9 +786,9 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  InterpretedArgumentOopFinder(symbolHandle signature, bool is_static, frame* fr, OopClosure* f) : SignatureInfo(signature) {
+  InterpretedArgumentOopFinder(symbolHandle signature, bool has_receiver, frame* fr, OopClosure* f) : SignatureInfo(signature), _has_receiver(has_receiver) {
     // compute size of arguments
-    int args_size = ArgumentSizeComputer(signature).size() + (is_static ? 0 : 1);
+    int args_size = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
     assert(!fr->is_interpreted_frame() ||
            args_size <= fr->interpreter_frame_expression_stack_size(),
             "args cannot be on stack anymore");
@@ -796,11 +796,10 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
     _f         = f;
     _fr        = fr;
     _offset    = args_size;
-    _is_static = is_static;
   }
 
   void oops_do() {
-    if (!_is_static) {
+    if (_has_receiver) {
       --_offset;
       oop_offset_do();
     }
@@ -912,7 +911,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   int max_locals = m->is_native() ? m->size_of_parameters() : m->max_locals();
 
   symbolHandle signature;
-  bool is_static = false;
+  bool has_receiver = false;
 
   // Process a callee's arguments if we are at a call site
   // (i.e., if we are at an invoke bytecode)
@@ -922,7 +921,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
     Bytecode_invoke *call = Bytecode_invoke_at_check(m, bci);
     if (call != NULL) {
       signature = symbolHandle(thread, call->signature());
-      is_static = call->is_invokestatic();
+      has_receiver = call->has_receiver();
       if (map->include_argument_oops() &&
           interpreter_frame_expression_stack_size() > 0) {
         ResourceMark rm(thread);  // is this right ???
@@ -930,13 +929,13 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
         // => process callee's arguments
         //
         // Note: The expression stack can be empty if an exception
-        //       occured during method resolution/execution. In all
+        //       occurred during method resolution/execution. In all
         //       cases we empty the expression stack completely be-
         //       fore handling the exception (the exception handling
         //       code in the interpreter calls a blocking runtime
         //       routine which can cause this code to be executed).
         //       (was bug gri 7/27/98)
-        oops_interpreted_arguments_do(signature, is_static, f);
+        oops_interpreted_arguments_do(signature, has_receiver, f);
       }
     }
   }
@@ -950,7 +949,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
     mask = &oopmap_mask;
 #endif // ASSERT
     oops_interpreted_locals_do(f, max_locals, mask);
-    oops_interpreted_expressions_do(f, signature, is_static,
+    oops_interpreted_expressions_do(f, signature, has_receiver,
                                     m->max_stack(),
                                     max_locals, mask);
   } else {
@@ -992,7 +991,7 @@ void frame::oops_interpreted_locals_do(OopClosure *f,
 
 void frame::oops_interpreted_expressions_do(OopClosure *f,
                                       symbolHandle signature,
-                                      bool is_static,
+                                      bool has_receiver,
                                       int max_stack,
                                       int max_locals,
                                       InterpreterOopMap *mask) {
@@ -1005,7 +1004,7 @@ void frame::oops_interpreted_expressions_do(OopClosure *f,
   // arguments in callee's locals.
   int args_size = 0;
   if (!signature.is_null()) {
-    args_size = ArgumentSizeComputer(signature).size() + (is_static ? 0 : 1);
+    args_size = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
   }
 
   intptr_t *tos_addr = interpreter_frame_tos_at(args_size);
@@ -1038,12 +1037,12 @@ void frame::oops_interpreted_expressions_do(OopClosure *f,
   }
 }
 
-void frame::oops_interpreted_arguments_do(symbolHandle signature, bool is_static, OopClosure* f) {
-  InterpretedArgumentOopFinder finder(signature, is_static, this, f);
+void frame::oops_interpreted_arguments_do(symbolHandle signature, bool has_receiver, OopClosure* f) {
+  InterpretedArgumentOopFinder finder(signature, has_receiver, this, f);
   finder.oops_do();
 }
 
-void frame::oops_code_blob_do(OopClosure* f, const RegisterMap* reg_map) {
+void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* reg_map) {
   assert(_cb != NULL, "sanity check");
   if (_cb->oop_maps() != NULL) {
     OopMapSet::oops_do(this, reg_map, f);
@@ -1058,28 +1057,16 @@ void frame::oops_code_blob_do(OopClosure* f, const RegisterMap* reg_map) {
   // oops referenced from nmethods active on thread stacks so as to
   // prevent them from being collected. However, this visit should be
   // restricted to certain phases of the collection only. The
-  // closure answers whether it wants nmethods to be traced.
-  // (All CodeBlob subtypes other than NMethod currently have
-  // an empty oops_do() method.
-  if (f->do_nmethods()) {
-    _cb->oops_do(f);
-  }
-}
-
-void frame::nmethods_code_blob_do() {
-  assert(_cb != NULL, "sanity check");
-
-  // If we see an activation belonging to a non_entrant nmethod, we mark it.
-  if (_cb->is_nmethod() && ((nmethod *)_cb)->is_not_entrant()) {
-    ((nmethod*)_cb)->mark_as_seen_on_stack();
-  }
+  // closure decides how it wants nmethods to be traced.
+  if (cf != NULL)
+    cf->do_code_blob(_cb);
 }
 
 class CompiledArgumentOopFinder: public SignatureInfo {
  protected:
   OopClosure*     _f;
-  int             _offset;      // the current offset, incremented with each argument
-  bool            _is_static;   // true if the callee is a static method
+  int             _offset;        // the current offset, incremented with each argument
+  bool            _has_receiver;  // true if the callee has a receiver
   frame           _fr;
   RegisterMap*    _reg_map;
   int             _arg_size;
@@ -1099,24 +1086,24 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  CompiledArgumentOopFinder(symbolHandle signature, bool is_static, OopClosure* f, frame fr,  const RegisterMap* reg_map)
+  CompiledArgumentOopFinder(symbolHandle signature, bool has_receiver, OopClosure* f, frame fr,  const RegisterMap* reg_map)
     : SignatureInfo(signature) {
 
     // initialize CompiledArgumentOopFinder
     _f         = f;
     _offset    = 0;
-    _is_static = is_static;
+    _has_receiver = has_receiver;
     _fr        = fr;
     _reg_map   = (RegisterMap*)reg_map;
-    _arg_size  = ArgumentSizeComputer(signature).size() + (is_static ? 0 : 1);
+    _arg_size  = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
 
     int arg_size;
-    _regs = SharedRuntime::find_callee_arguments(signature(), is_static, &arg_size);
+    _regs = SharedRuntime::find_callee_arguments(signature(), has_receiver, &arg_size);
     assert(arg_size == _arg_size, "wrong arg size");
   }
 
   void oops_do() {
-    if (!_is_static) {
+    if (_has_receiver) {
       handle_oop_offset();
       _offset++;
     }
@@ -1124,9 +1111,9 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   }
 };
 
-void frame::oops_compiled_arguments_do(symbolHandle signature, bool is_static, const RegisterMap* reg_map, OopClosure* f) {
+void frame::oops_compiled_arguments_do(symbolHandle signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f) {
   ResourceMark rm;
-  CompiledArgumentOopFinder finder(signature, is_static, f, *this, reg_map);
+  CompiledArgumentOopFinder finder(signature, has_receiver, f, *this, reg_map);
   finder.oops_do();
 }
 
@@ -1201,18 +1188,28 @@ void frame::oops_entry_do(OopClosure* f, const RegisterMap* map) {
 }
 
 
-void frame::oops_do_internal(OopClosure* f, RegisterMap* map, bool use_interpreter_oop_map_cache) {
-         if (is_interpreted_frame())    { oops_interpreted_do(f, map, use_interpreter_oop_map_cache);
-  } else if (is_entry_frame())          { oops_entry_do      (f, map);
-  } else if (CodeCache::contains(pc())) { oops_code_blob_do  (f, map);
+void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache) {
+#ifndef PRODUCT
+  // simulate GC crash here to dump java thread in error report
+  if (CrashGCForDumpingJavaThread) {
+    char *t = NULL;
+    *t = 'c';
+  }
+#endif
+  if (is_interpreted_frame()) {
+    oops_interpreted_do(f, map, use_interpreter_oop_map_cache);
+  } else if (is_entry_frame()) {
+    oops_entry_do(f, map);
+  } else if (CodeCache::contains(pc())) {
+    oops_code_blob_do(f, cf, map);
   } else {
     ShouldNotReachHere();
   }
 }
 
-void frame::nmethods_do() {
+void frame::nmethods_do(CodeBlobClosure* cf) {
   if (_cb != NULL && _cb->is_nmethod()) {
-    nmethods_code_blob_do();
+    cf->do_code_blob(_cb);
   }
 }
 
@@ -1358,7 +1355,7 @@ void frame::verify(const RegisterMap* map) {
     }
   }
   COMPILER2_PRESENT(assert(DerivedPointerTable::is_empty(), "must be empty before verify");)
-  oops_do_internal(&VerifyOopClosure::verify_oop, (RegisterMap*)map, false);
+  oops_do_internal(&VerifyOopClosure::verify_oop, NULL, (RegisterMap*)map, false);
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,6 @@ JavaCallWrapper::JavaCallWrapper(methodHandle callee_method, Handle receiver, Ja
   assert(!thread->owns_locks(), "must release all locks when leaving VM");
   guarantee(!thread->is_Compiler_thread(), "cannot make java calls from the compiler");
   _result   = result;
-
-  // Make sure that that the value of the  higest_lock is at least the same as the current stackpointer,
-  // since, the Java code is highly likely to use locks.
-  // Use '(address)this' to guarantee that highest_lock address is conservative and inside our thread
-  thread->update_highest_lock((address)this);
 
   // Allocate handle block for Java code. This must be done before we change thread_state to _thread_in_Java_or_stub,
   // since it can potentially block.

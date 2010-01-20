@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,7 @@ static const char * fatal_received_null_class = "JNI received a null class";
 static const char * fatal_class_not_a_class = "JNI received a class argument that is not a class";
 static const char * fatal_class_not_a_throwable_class = "JNI Throw or ThrowNew received a class argument that is not a Throwable or Throwable subclass";
 static const char * fatal_wrong_class_or_method = "Wrong object class or methodID passed to JNI call";
+static const char * fatal_non_weak_method = "non-weak methodID passed to JNI call";
 static const char * fatal_unknown_array_object = "Unknown array object passed to JNI array operations";
 static const char * fatal_object_array_expected = "Object array expected but not received for JNI array operation";
 static const char * fatal_non_array  = "Non-array passed to JNI array operations";
@@ -291,9 +292,15 @@ oop jniCheck::validate_handle(JavaThread* thr, jobject obj) {
 
 methodOop jniCheck::validate_jmethod_id(JavaThread* thr, jmethodID method_id) {
   ASSERT_OOPS_ALLOWED;
+  // do the fast jmethodID check first
   methodOop moop = JNIHandles::checked_resolve_jmethod_id(method_id);
   if (moop == NULL) {
     ReportJNIFatalError(thr, fatal_wrong_class_or_method);
+  }
+  // jmethodIDs are supposed to be weak global handles, but that
+  // can be expensive so check it last
+  else if (!JNIHandles::is_weak_global_handle((jobject) method_id)) {
+    ReportJNIFatalError(thr, fatal_non_weak_method);
   }
   return moop;
 }
@@ -334,7 +341,7 @@ klassOop jniCheck::validate_class(JavaThread* thr, jclass clazz, bool allow_prim
     ReportJNIFatalError(thr, fatal_received_null_class);
   }
 
-  if (mirror->klass() != SystemDictionary::class_klass()) {
+  if (mirror->klass() != SystemDictionary::Class_klass()) {
     ReportJNIFatalError(thr, fatal_class_not_a_class);
   }
 
@@ -351,7 +358,7 @@ void jniCheck::validate_throwable_klass(JavaThread* thr, klassOop klass) {
   assert(klass != NULL, "klass argument must have a value");
 
   if (!Klass::cast(klass)->oop_is_instance() ||
-      !instanceKlass::cast(klass)->is_subclass_of(SystemDictionary::throwable_klass())) {
+      !instanceKlass::cast(klass)->is_subclass_of(SystemDictionary::Throwable_klass())) {
     ReportJNIFatalError(thr, fatal_class_not_a_throwable_class);
   }
 }

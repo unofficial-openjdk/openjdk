@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,8 +204,8 @@ void VMThread::create() {
 }
 
 
-VMThread::VMThread() : Thread() {
-  // nothing to do
+VMThread::VMThread() : NamedThread() {
+  set_name("VM Thread");
 }
 
 void VMThread::destroy() {
@@ -531,6 +531,7 @@ void VMThread::execute(VM_Operation* op) {
   Thread* t = Thread::current();
 
   if (!t->is_VM_thread()) {
+    SkipGCALot sgcalot(t);    // avoid re-entrant attempts to gc-a-lot
     // JavaThread or WatcherThread
     t->check_for_valid_safepoint_state(true);
 
@@ -618,8 +619,8 @@ void VMThread::execute(VM_Operation* op) {
 }
 
 
-void VMThread::oops_do(OopClosure* f) {
-  Thread::oops_do(f);
+void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  Thread::oops_do(f, cf);
   _vm_queue->oops_do(f);
 }
 
@@ -651,5 +652,5 @@ void VMOperationQueue::verify_queue(int prio) {
 #endif
 
 void VMThread::verify() {
-  oops_do(&VerifyOopClosure::verify_oop);
+  oops_do(&VerifyOopClosure::verify_oop, NULL);
 }
