@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -321,6 +321,10 @@ size_t os::current_stack_size() {
   address base = current_stack_base();
   address bottom = (address)align_size_up((intptr_t)(base - size), os::vm_page_size());;
   return (size_t)(base - bottom);
+}
+
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
 }
 
 // interruptible infrastructure
@@ -1823,21 +1827,51 @@ const char* os::dll_file_extension() { return ".so"; }
 
 const char* os::get_temp_directory() { return "/tmp/"; }
 
-void os::dll_build_name(
-    char* buffer, size_t buflen, const char* pname, const char* fname) {
-  // copied from libhpi
+static bool file_exists(const char* filename) {
+  struct stat statbuf;
+  if (filename == NULL || strlen(filename) == 0) {
+    return false;
+  }
+  return os::stat(filename, &statbuf) == 0;
+}
+
+void os::dll_build_name(char* buffer, size_t buflen,
+                        const char* pname, const char* fname) {
+  // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
 
-  /* Quietly truncate on buffer overflow.  Should be an error. */
+  // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
-      *buffer = '\0';
-      return;
+    *buffer = '\0';
+    return;
   }
 
   if (pnamelen == 0) {
-      sprintf(buffer, "lib%s.so", fname);
+    snprintf(buffer, buflen, "lib%s.so", fname);
+  } else if (strchr(pname, *os::path_separator()) != NULL) {
+    int n;
+    char** pelements = split_path(pname, &n);
+    for (int i = 0 ; i < n ; i++) {
+      // really shouldn't be NULL but what the heck, check can't hurt
+      if (pelements[i] == NULL || strlen(pelements[i]) == 0) {
+        continue; // skip the empty path values
+      }
+      snprintf(buffer, buflen, "%s/lib%s.so", pelements[i], fname);
+      if (file_exists(buffer)) {
+        break;
+      }
+    }
+    // release the storage
+    for (int i = 0 ; i < n ; i++) {
+      if (pelements[i] != NULL) {
+        FREE_C_HEAP_ARRAY(char, pelements[i]);
+      }
+    }
+    if (pelements != NULL) {
+      FREE_C_HEAP_ARRAY(char*, pelements);
+    }
   } else {
-      sprintf(buffer, "%s/lib%s.so", pname, fname);
+    snprintf(buffer, buflen, "%s/lib%s.so", pname, fname);
   }
 }
 

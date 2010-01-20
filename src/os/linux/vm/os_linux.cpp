@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -567,15 +567,15 @@ void os::Linux::libpthread_init() {
   }
 
   if (strstr(libpthread_version(), "NPTL")) {
-     os::Linux::set_is_NPTL();
+    os::Linux::set_is_NPTL();
   } else {
-     os::Linux::set_is_LinuxThreads();
+    os::Linux::set_is_LinuxThreads();
   }
 
   // LinuxThreads have two flavors: floating-stack mode, which allows variable
   // stack size; and fixed-stack mode. NPTL is always floating-stack.
   if (os::Linux::is_NPTL() || os::Linux::supports_variable_stack_size()) {
-     os::Linux::set_is_floating_stack();
+    os::Linux::set_is_floating_stack();
   }
 }
 
@@ -1160,7 +1160,10 @@ void os::Linux::capture_initial_stack(size_t max_size) {
 
         /*                                     1   1   1   1   1   1   1   1   1   1   2   2   2   2   2   2   2   2   2 */
         /*              3  4  5  6  7  8   9   0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5   6   7   8 */
-        i = sscanf(s, "%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %lu %lu %ld %lu %lu %lu %lu",
+        i = sscanf(s, "%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld "
+                   UINTX_FORMAT UINTX_FORMAT UINTX_FORMAT
+                   " %lu "
+                   UINTX_FORMAT UINTX_FORMAT UINTX_FORMAT,
              &state,          /* 3  %c  */
              &ppid,           /* 4  %d  */
              &pgrp,           /* 5  %d  */
@@ -1180,13 +1183,13 @@ void os::Linux::capture_initial_stack(size_t max_size) {
              &nice,           /* 19 %ld  */
              &junk,           /* 20 %ld  */
              &it_real,        /* 21 %ld  */
-             &start,          /* 22 %lu  */
-             &vsize,          /* 23 %lu  */
-             &rss,            /* 24 %ld  */
+             &start,          /* 22 UINTX_FORMAT  */
+             &vsize,          /* 23 UINTX_FORMAT  */
+             &rss,            /* 24 UINTX_FORMAT  */
              &rsslim,         /* 25 %lu  */
-             &scodes,         /* 26 %lu  */
-             &ecode,          /* 27 %lu  */
-             &stack_start);   /* 28 %lu  */
+             &scodes,         /* 26 UINTX_FORMAT  */
+             &ecode,          /* 27 UINTX_FORMAT  */
+             &stack_start);   /* 28 UINTX_FORMAT  */
       }
 
       if (i != 28 - 2) {
@@ -1425,6 +1428,10 @@ char * os::local_time_string(char *buf, size_t buflen) {
   return buf;
 }
 
+struct tm* os::localtime_pd(const time_t* clock, struct tm*  res) {
+  return localtime_r(clock, res);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // runtime exit support
 
@@ -1507,21 +1514,51 @@ const char* os::dll_file_extension() { return ".so"; }
 
 const char* os::get_temp_directory() { return "/tmp/"; }
 
-void os::dll_build_name(
-    char* buffer, size_t buflen, const char* pname, const char* fname) {
-  // copied from libhpi
+static bool file_exists(const char* filename) {
+  struct stat statbuf;
+  if (filename == NULL || strlen(filename) == 0) {
+    return false;
+  }
+  return os::stat(filename, &statbuf) == 0;
+}
+
+void os::dll_build_name(char* buffer, size_t buflen,
+                        const char* pname, const char* fname) {
+  // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
 
-  /* Quietly truncate on buffer overflow.  Should be an error. */
+  // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
-      *buffer = '\0';
-      return;
+    *buffer = '\0';
+    return;
   }
 
   if (pnamelen == 0) {
-      sprintf(buffer, "lib%s.so", fname);
+    snprintf(buffer, buflen, "lib%s.so", fname);
+  } else if (strchr(pname, *os::path_separator()) != NULL) {
+    int n;
+    char** pelements = split_path(pname, &n);
+    for (int i = 0 ; i < n ; i++) {
+      // Really shouldn't be NULL, but check can't hurt
+      if (pelements[i] == NULL || strlen(pelements[i]) == 0) {
+        continue; // skip the empty path values
+      }
+      snprintf(buffer, buflen, "%s/lib%s.so", pelements[i], fname);
+      if (file_exists(buffer)) {
+        break;
+      }
+    }
+    // release the storage
+    for (int i = 0 ; i < n ; i++) {
+      if (pelements[i] != NULL) {
+        FREE_C_HEAP_ARRAY(char, pelements[i]);
+      }
+    }
+    if (pelements != NULL) {
+      FREE_C_HEAP_ARRAY(char*, pelements);
+    }
   } else {
-      sprintf(buffer, "%s/lib%s.so", pname, fname);
+    snprintf(buffer, buflen, "%s/lib%s.so", pname, fname);
   }
 }
 
@@ -2024,7 +2061,8 @@ void os::jvm_path(char *buf, jint len) {
                 CAST_FROM_FN_PTR(address, os::jvm_path),
                 dli_fname, sizeof(dli_fname), NULL);
   assert(ret != 0, "cannot locate libjvm");
-  realpath(dli_fname, buf);
+  if (realpath(dli_fname, buf) == NULL)
+    return;
 
   if (strcmp(Arguments::sun_java_launcher(), "gamma") == 0) {
     // Support for the gamma launcher.  Typical value for buf is
@@ -2048,7 +2086,8 @@ void os::jvm_path(char *buf, jint len) {
         assert(strstr(p, "/libjvm") == p, "invalid library name");
         p = strstr(p, "_g") ? "_g" : "";
 
-        realpath(java_home_var, buf);
+        if (realpath(java_home_var, buf) == NULL)
+          return;
         sprintf(buf + strlen(buf), "/jre/lib/%s", cpu_arch);
         if (0 == access(buf, F_OK)) {
           // Use current module name "libjvm[_g].so" instead of
@@ -2059,7 +2098,8 @@ void os::jvm_path(char *buf, jint len) {
           sprintf(buf + strlen(buf), "/hotspot/libjvm%s.so", p);
         } else {
           // Go back to path of .so
-          realpath(dli_fname, buf);
+          if (realpath(dli_fname, buf) == NULL)
+            return;
         }
       }
     }
@@ -4184,11 +4224,11 @@ static jlong slow_thread_cpu_time(Thread *thread, bool user_sys_cpu_time) {
   // Skip blank chars
   do s++; while (isspace(*s));
 
-  count = sscanf(s,"%c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu",
-                 &idummy, &idummy, &idummy, &idummy, &idummy, &idummy,
+  count = sscanf(s,"%*c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu",
+                 &idummy, &idummy, &idummy, &idummy, &idummy,
                  &ldummy, &ldummy, &ldummy, &ldummy, &ldummy,
                  &user_time, &sys_time);
-  if ( count != 13 ) return -1;
+  if ( count != 12 ) return -1;
   if (user_sys_cpu_time) {
     return ((jlong)sys_time + (jlong)user_time) * (1000000000 / clock_tics_per_sec);
   } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -327,6 +327,14 @@ size_t os::current_stack_size() {
   return sz;
 }
 
+struct tm* os::localtime_pd(const time_t* clock, struct tm* res) {
+  const struct tm* time_struct_ptr = localtime(clock);
+  if (time_struct_ptr != NULL) {
+    *res = *time_struct_ptr;
+    return res;
+  }
+  return NULL;
+}
 
 LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo);
 
@@ -996,26 +1004,61 @@ const char * os::get_temp_directory()
     }
 }
 
-void os::dll_build_name(char *holder, size_t holderlen,
-                        const char* pname, const char* fname)
-{
-    // copied from libhpi
-    const size_t pnamelen = pname ? strlen(pname) : 0;
-    const char c = (pnamelen > 0) ? pname[pnamelen-1] : 0;
+static bool file_exists(const char* filename) {
+  if (filename == NULL || strlen(filename) == 0) {
+    return false;
+  }
+  return GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES;
+}
 
-    /* Quietly truncates on buffer overflow. Should be an error. */
-    if (pnamelen + strlen(fname) + 10 > holderlen) {
-        *holder = '\0';
-        return;
-    }
+void os::dll_build_name(char *buffer, size_t buflen,
+                        const char* pname, const char* fname) {
+  // Copied from libhpi
+  const size_t pnamelen = pname ? strlen(pname) : 0;
+  const char c = (pnamelen > 0) ? pname[pnamelen-1] : 0;
 
-    if (pnamelen == 0) {
-        sprintf(holder, "%s.dll", fname);
-    } else if (c == ':' || c == '\\') {
-        sprintf(holder, "%s%s.dll", pname, fname);
-    } else {
-        sprintf(holder, "%s\\%s.dll", pname, fname);
+  // Quietly truncates on buffer overflow. Should be an error.
+  if (pnamelen + strlen(fname) + 10 > buflen) {
+    *buffer = '\0';
+    return;
+  }
+
+  if (pnamelen == 0) {
+    jio_snprintf(buffer, buflen, "%s.dll", fname);
+  } else if (c == ':' || c == '\\') {
+    jio_snprintf(buffer, buflen, "%s%s.dll", pname, fname);
+  } else if (strchr(pname, *os::path_separator()) != NULL) {
+    int n;
+    char** pelements = split_path(pname, &n);
+    for (int i = 0 ; i < n ; i++) {
+      char* path = pelements[i];
+      // Really shouldn't be NULL, but check can't hurt
+      size_t plen = (path == NULL) ? 0 : strlen(path);
+      if (plen == 0) {
+        continue; // skip the empty path values
+      }
+      const char lastchar = path[plen - 1];
+      if (lastchar == ':' || lastchar == '\\') {
+        jio_snprintf(buffer, buflen, "%s%s.dll", path, fname);
+      } else {
+        jio_snprintf(buffer, buflen, "%s\\%s.dll", path, fname);
+      }
+      if (file_exists(buffer)) {
+        break;
+      }
     }
+    // release the storage
+    for (int i = 0 ; i < n ; i++) {
+      if (pelements[i] != NULL) {
+        FREE_C_HEAP_ARRAY(char, pelements[i]);
+      }
+    }
+    if (pelements != NULL) {
+      FREE_C_HEAP_ARRAY(char*, pelements);
+    }
+  } else {
+    jio_snprintf(buffer, buflen, "%s\\%s.dll", pname, fname);
+  }
 }
 
 // Needs to be in os specific directory because windows requires another
@@ -1482,7 +1525,8 @@ void os::print_os_info(outputStream* st) {
     case 5000: st->print(" Windows 2000"); break;
     case 5001: st->print(" Windows XP"); break;
     case 5002:
-    case 6000: {
+    case 6000:
+    case 6001: {
       // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
       // find out whether we are running on 64 bit processor or not.
       SYSTEM_INFO si;
@@ -1505,11 +1549,20 @@ void os::print_os_info(outputStream* st) {
           st->print(" Windows XP x64 Edition");
         else
             st->print(" Windows Server 2003 family");
-      } else { // os_vers == 6000
+      } else if (os_vers == 6000) {
         if (osvi.wProductType == VER_NT_WORKSTATION)
             st->print(" Windows Vista");
         else
             st->print(" Windows Server 2008");
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+            st->print(" , 64 bit");
+      } else { // os_vers == 6001
+        if (osvi.wProductType == VER_NT_WORKSTATION) {
+            st->print(" Windows 7");
+        } else {
+            // Unrecognized windows, print out its major and minor versions
+            st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
       }

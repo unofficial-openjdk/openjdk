@@ -542,3 +542,4 @@ STRIP_LIB.CC/POST_HOOK = $(STRIP) -x $@ || exit 1;
 # STRIP_LIB.CC/POST_HOOK is incorporated into LINK_LIB.CC/POST_HOOK
 # in certain configurations, such as product.make.  Other configurations,
 # such as debug.make, do not include the strip operation.
+

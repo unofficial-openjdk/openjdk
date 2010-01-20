@@ -47,18 +47,16 @@ public:                                                                       \
   }
 
 class MainBodySummary;
-class PopPreambleSummary;
 
-class PauseSummary {
+class PauseSummary: public CHeapObj {
   define_num_seq(total)
     define_num_seq(other)
 
 public:
   virtual MainBodySummary*    main_body_summary()    { return NULL; }
-  virtual PopPreambleSummary* pop_preamble_summary() { return NULL; }
 };
 
-class MainBodySummary {
+class MainBodySummary: public CHeapObj {
   define_num_seq(satb_drain) // optional
   define_num_seq(parallel) // parallel only
     define_num_seq(ext_root_scan)
@@ -75,36 +73,13 @@ class MainBodySummary {
   define_num_seq(clear_ct)  // parallel only
 };
 
-class PopPreambleSummary {
-  define_num_seq(pop_preamble)
-    define_num_seq(pop_update_rs)
-    define_num_seq(pop_scan_rs)
-    define_num_seq(pop_closure_app)
-    define_num_seq(pop_evacuation)
-    define_num_seq(pop_other)
-};
-
-class NonPopSummary: public PauseSummary,
-                     public MainBodySummary {
+class Summary: public PauseSummary,
+               public MainBodySummary {
 public:
   virtual MainBodySummary*    main_body_summary()    { return this; }
 };
 
-class PopSummary: public PauseSummary,
-                  public MainBodySummary,
-                  public PopPreambleSummary {
-public:
-  virtual MainBodySummary*    main_body_summary()    { return this; }
-  virtual PopPreambleSummary* pop_preamble_summary() { return this; }
-};
-
-class NonPopAbandonedSummary: public PauseSummary {
-};
-
-class PopAbandonedSummary: public PauseSummary,
-                           public PopPreambleSummary {
-public:
-  virtual PopPreambleSummary* pop_preamble_summary() { return this; }
+class AbandonedSummary: public PauseSummary {
 };
 
 class G1CollectorPolicy: public CollectorPolicy {
@@ -146,10 +121,6 @@ protected:
   double _cur_satb_drain_time_ms;
   double _cur_clear_ct_time_ms;
   bool   _satb_drain_time_set;
-  double _cur_popular_preamble_start_ms;
-  double _cur_popular_preamble_time_ms;
-  double _cur_popular_compute_rc_time_ms;
-  double _cur_popular_evac_time_ms;
 
   double _cur_CH_strong_roots_end_sec;
   double _cur_CH_strong_roots_dur_ms;
@@ -173,10 +144,8 @@ protected:
   TruncatedSeq* _concurrent_mark_remark_times_ms;
   TruncatedSeq* _concurrent_mark_cleanup_times_ms;
 
-  NonPopSummary*           _non_pop_summary;
-  PopSummary*              _pop_summary;
-  NonPopAbandonedSummary*  _non_pop_abandoned_summary;
-  PopAbandonedSummary*     _pop_abandoned_summary;
+  Summary*           _summary;
+  AbandonedSummary*  _abandoned_summary;
 
   NumberSeq* _all_pause_times_ms;
   NumberSeq* _all_full_gc_times_ms;
@@ -209,18 +178,6 @@ protected:
   double* _par_last_scan_new_refs_times_ms;
   double* _par_last_obj_copy_times_ms;
   double* _par_last_termination_times_ms;
-
-  // there are two pases during popular pauses, so we need to store
-  // somewhere the results of the first pass
-  double* _pop_par_last_update_rs_start_times_ms;
-  double* _pop_par_last_update_rs_times_ms;
-  double* _pop_par_last_update_rs_processed_buffers;
-  double* _pop_par_last_scan_rs_start_times_ms;
-  double* _pop_par_last_scan_rs_times_ms;
-  double* _pop_par_last_closure_app_times_ms;
-
-  double _pop_compute_rc_start;
-  double _pop_evac_start;
 
   // indicates that we are in young GC mode
   bool _in_young_gc_mode;
@@ -557,6 +514,8 @@ public:
     return get_new_neg_prediction(_young_gc_eff_seq);
   }
 
+  double predict_survivor_regions_evac_time();
+
   // </NEW PREDICTION>
 
 public:
@@ -599,8 +558,8 @@ public:
 
   // Returns an estimate of the survival rate of the region at yg-age
   // "yg_age".
-  double predict_yg_surv_rate(int age) {
-    TruncatedSeq* seq = _short_lived_surv_rate_group->get_seq(age);
+  double predict_yg_surv_rate(int age, SurvRateGroup* surv_rate_group) {
+    TruncatedSeq* seq = surv_rate_group->get_seq(age);
     if (seq->num() == 0)
       gclog_or_tty->print("BARF! age is %d", age);
     guarantee( seq->num() > 0, "invariant" );
@@ -608,6 +567,10 @@ public:
     if (pred > 1.0)
       pred = 1.0;
     return pred;
+  }
+
+  double predict_yg_surv_rate(int age) {
+    return predict_yg_surv_rate(age, _short_lived_surv_rate_group);
   }
 
   double accum_yg_surv_rate_pred(int age) {
@@ -628,8 +591,7 @@ protected:
                          NumberSeq* calc_other_times_ms) const;
 
   void print_summary (PauseSummary* stats) const;
-  void print_abandoned_summary(PauseSummary* non_pop_summary,
-                               PauseSummary* pop_summary) const;
+  void print_abandoned_summary(PauseSummary* summary) const;
 
   void print_summary (int level, const char* str, NumberSeq* seq) const;
   void print_summary_sd (int level, const char* str, NumberSeq* seq) const;
@@ -822,6 +784,9 @@ public:
 
   virtual void init();
 
+  // Create jstat counters for the policy.
+  virtual void initialize_gc_policy_counters();
+
   virtual HeapWord* mem_allocate_work(size_t size,
                                       bool is_tlab,
                                       bool* gc_overhead_limit_was_exceeded);
@@ -847,9 +812,6 @@ public:
   virtual void record_collection_pause_start(double start_time_sec,
                                              size_t start_used);
 
-  virtual void record_popular_pause_preamble_start();
-  virtual void record_popular_pause_preamble_end();
-
   // Must currently be called while the world is stopped.
   virtual void record_concurrent_mark_init_start();
   virtual void record_concurrent_mark_init_end();
@@ -872,7 +834,7 @@ public:
   virtual void record_collection_pause_end_CH_strong_roots();
   virtual void record_collection_pause_end_G1_strong_roots();
 
-  virtual void record_collection_pause_end(bool popular, bool abandoned);
+  virtual void record_collection_pause_end(bool abandoned);
 
   // Record the fact that a full collection occurred.
   virtual void record_full_collection_start();
@@ -957,7 +919,7 @@ public:
     record_termination_time(0, ms);
   }
 
-  void record_pause_time(double ms) {
+  void record_pause_time_ms(double ms) {
     _last_pause_time_ms = ms;
   }
 
@@ -981,12 +943,6 @@ public:
     _cur_aux_times_ms[i] += ms;
   }
 
-  void record_pop_compute_rc_start();
-  void record_pop_compute_rc_end();
-
-  void record_pop_evac_start();
-  void record_pop_evac_end();
-
   // Record the fact that "bytes" bytes allocated in a region.
   void record_before_bytes(size_t bytes);
   void record_after_bytes(size_t bytes);
@@ -999,18 +955,13 @@ public:
   // Choose a new collection set.  Marks the chosen regions as being
   // "in_collection_set", and links them together.  The head and number of
   // the collection set are available via access methods.
-  // If "pop_region" is non-NULL, it is a popular region that has already
-  // been added to the collection set.
-  virtual void choose_collection_set(HeapRegion* pop_region = NULL) = 0;
+  virtual void choose_collection_set() = 0;
 
   void clear_collection_set() { _collection_set = NULL; }
 
   // The head of the list (via "next_in_collection_set()") representing the
   // current collection set.
   HeapRegion* collection_set() { return _collection_set; }
-
-  // Sets the collection set to the given single region.
-  virtual void set_single_region_collection_set(HeapRegion* hr);
 
   // The number of elements in the current collection set.
   size_t collection_set_size() { return _collection_set_size; }
@@ -1047,8 +998,12 @@ public:
   // Print stats on young survival ratio
   void print_yg_surv_rate_info() const;
 
-  void finished_recalculating_age_indexes() {
-    _short_lived_surv_rate_group->finished_recalculating_age_indexes();
+  void finished_recalculating_age_indexes(bool is_survivors) {
+    if (is_survivors) {
+      _survivor_surv_rate_group->finished_recalculating_age_indexes();
+    } else {
+      _short_lived_surv_rate_group->finished_recalculating_age_indexes();
+    }
     // do that for any other surv rate groups
   }
 
@@ -1097,6 +1052,17 @@ protected:
   // maximum amount of suvivors regions.
   int _tenuring_threshold;
 
+  // The limit on the number of regions allocated for survivors.
+  size_t _max_survivor_regions;
+
+  // The amount of survor regions after a collection.
+  size_t _recorded_survivor_regions;
+  // List of survivor regions.
+  HeapRegion* _recorded_survivor_head;
+  HeapRegion* _recorded_survivor_tail;
+
+  ageTable _survivors_age_table;
+
 public:
 
   inline GCAllocPurpose
@@ -1116,7 +1082,9 @@ public:
     return GCAllocForTenured;
   }
 
-  uint max_regions(int purpose);
+  static const size_t REGIONS_UNLIMITED = ~(size_t)0;
+
+  size_t max_regions(int purpose);
 
   // The limit on regions for a particular purpose is reached.
   void note_alloc_region_limit_reached(int purpose) {
@@ -1132,6 +1100,23 @@ public:
   void note_stop_adding_survivor_regions() {
     _survivor_surv_rate_group->stop_adding_regions();
   }
+
+  void record_survivor_regions(size_t      regions,
+                               HeapRegion* head,
+                               HeapRegion* tail) {
+    _recorded_survivor_regions = regions;
+    _recorded_survivor_head    = head;
+    _recorded_survivor_tail    = tail;
+  }
+
+  void record_thread_age_table(ageTable* age_table)
+  {
+    _survivors_age_table.merge_par(age_table);
+  }
+
+  // Calculates survivor space parameters.
+  void calculate_survivors_policy();
+
 };
 
 // This encapsulates a particular strategy for a g1 Collector.
@@ -1160,7 +1145,7 @@ class G1CollectorPolicy_BestRegionsFirst: public G1CollectorPolicy {
   // If the estimated is less then desirable, resize if possible.
   void expand_if_possible(size_t numRegions);
 
-  virtual void choose_collection_set(HeapRegion* pop_region = NULL);
+  virtual void choose_collection_set();
   virtual void record_collection_pause_start(double start_time_sec,
                                              size_t start_used);
   virtual void record_concurrent_mark_cleanup_end(size_t freed_bytes,
@@ -1171,9 +1156,8 @@ public:
   G1CollectorPolicy_BestRegionsFirst() {
     _collectionSetChooser = new CollectionSetChooser();
   }
-  void record_collection_pause_end(bool popular, bool abandoned);
+  void record_collection_pause_end(bool abandoned);
   bool should_do_collection_pause(size_t word_size);
-  virtual void set_single_region_collection_set(HeapRegion* hr);
   // This is not needed any more, after the CSet choosing code was
   // changed to use the pause prediction work. But let's leave the
   // hook in just in case.

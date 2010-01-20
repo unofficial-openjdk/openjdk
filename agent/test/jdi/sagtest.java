@@ -23,7 +23,8 @@
  */
 
 /**
- *  @test *  @bug 0000000
+ *  @test
+ *  @bug 0000000
  *  @summary This is just an exercise of various JDI elements for use in
  *           testing the SA/JDI client
  *
