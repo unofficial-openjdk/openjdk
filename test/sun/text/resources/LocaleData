@@ -6035,6 +6035,9 @@ LocaleNames/nl/YT=Mayotte
 LocaleNames/nl/ZA=Zuid-Afrika
 LocaleNames/nl/ZM=Zambia
 
+# bug 6919624
+CalendarData/hu/minimalDaysInFirstWeek=4
+
 #bug 6450945
 CalendarData/ro/firstDayOfWeek=2
 CalendarData/ro/minimalDaysInFirstWeek=1
