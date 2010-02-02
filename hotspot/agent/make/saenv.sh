@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,16 @@ if [ "$OS" = "Linux" ]; then
      CPU=i386
    fi
 else
+   # configure audit helper library if SA_ALTROOT is set
+   if [ -n "$SA_ALTROOT" ]; then
+     LD_AUDIT_32=$STARTDIR/../src/os/solaris/proc/`uname -p`/libsaproc_audit.so
+     export LD_AUDIT_32
+     if [ ! -f $LD_AUDIT_32 ]; then
+       echo "SA_ALTROOT is set and can't find libsaproc_audit.so."
+       echo "Make sure to build it with 'make natives'."
+       exit 1
+     fi
+   fi
    SA_LIBPATH=$STARTDIR/../src/os/solaris/proc/`uname -p`:$STARTDIR/solaris/`uname -p`
    OPTIONS="-Dsa.library.path=$SA_LIBPATH -Dsun.jvm.hotspot.debugger.useProcDebugger"
    CPU=sparc

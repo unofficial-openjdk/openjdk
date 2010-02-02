@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package sun.awt.X11;
 import java.awt.*;
 import java.awt.peer.*;
 import sun.awt.X11GraphicsConfig;
+import sun.awt.SunToolkit;
 
 class XRobotPeer implements RobotPeer {
     private X11GraphicsConfig   xgc = null;
@@ -38,7 +39,8 @@ class XRobotPeer implements RobotPeer {
 
     XRobotPeer(GraphicsConfiguration gc) {
         this.xgc = (X11GraphicsConfig)gc;
-        setup();
+        SunToolkit tk = (SunToolkit)Toolkit.getDefaultToolkit();
+        setup(tk.getNumberOfButtons());
     }
 
     public void dispose() {
@@ -81,7 +83,7 @@ class XRobotPeer implements RobotPeer {
         return pixelArray;
     }
 
-    private static native synchronized void setup();
+    private static native synchronized void setup(int numberOfButtons);
 
     private static native synchronized void mouseMoveImpl(X11GraphicsConfig xgc, int x, int y);
     private static native synchronized void mousePressImpl(int buttons);

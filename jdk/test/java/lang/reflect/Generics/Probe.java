@@ -23,50 +23,44 @@
 
 /*
  * @test
- * @bug 5003916
+ * @bug 5003916 6704655 6873951
  * @summary Testing parsing of signatures attributes of nested classes
  * @author Joseph D. Darcy
- * @compile -source 1.5 Probe.java
- * @run main Probe
  */
 
 import java.lang.reflect.*;
 import java.lang.annotation.*;
+import java.util.*;
+import static java.util.Arrays.*;
 
-@Classes({
-        "java.util.concurrent.FutureTask",
-        "java.util.concurrent.ConcurrentHashMap$EntryIterator",
-        "java.util.concurrent.ConcurrentHashMap$KeyIterator",
-        "java.util.concurrent.ConcurrentHashMap$ValueIterator",
-        "java.util.AbstractList$ListItr",
-        "java.util.EnumMap$EntryIterator",
-        "java.util.EnumMap$KeyIterator",
-        "java.util.EnumMap$ValueIterator",
-        "java.util.IdentityHashMap$EntryIterator",
-        "java.util.IdentityHashMap$KeyIterator",
-        "java.util.IdentityHashMap$ValueIterator",
-        "java.util.WeakHashMap$EntryIterator",
-        "java.util.WeakHashMap$KeyIterator",
-        "java.util.WeakHashMap$ValueIterator",
-        "java.util.TreeMap$EntryIterator",
-        "java.util.TreeMap$KeyIterator",
-        "java.util.TreeMap$ValueIterator",
-        "java.util.HashMap$EntryIterator",
-        "java.util.HashMap$KeyIterator",
-        "java.util.HashMap$ValueIterator",
-        "java.util.LinkedHashMap$EntryIterator",
-        "java.util.LinkedHashMap$KeyIterator",
-        "java.util.LinkedHashMap$ValueIterator",
-        "javax.crypto.SunJCE_c",
-        "javax.crypto.SunJCE_e",
-        "javax.crypto.SunJCE_f",
-        "javax.crypto.SunJCE_j",
-        "javax.crypto.SunJCE_k",
-        "javax.crypto.SunJCE_l"
-        })
+@Classes({"java.util.concurrent.FutureTask",
+          "java.util.concurrent.ConcurrentHashMap$EntryIterator",
+          "java.util.concurrent.ConcurrentHashMap$KeyIterator",
+          "java.util.concurrent.ConcurrentHashMap$ValueIterator",
+          "java.util.AbstractList$ListItr",
+          "java.util.EnumMap$EntryIterator",
+          "java.util.EnumMap$KeyIterator",
+          "java.util.EnumMap$ValueIterator",
+          "java.util.IdentityHashMap$EntryIterator",
+          "java.util.IdentityHashMap$KeyIterator",
+          "java.util.IdentityHashMap$ValueIterator",
+          "java.util.WeakHashMap$EntryIterator",
+          "java.util.WeakHashMap$KeyIterator",
+          "java.util.WeakHashMap$ValueIterator",
+          "java.util.TreeMap$EntryIterator",
+          "java.util.TreeMap$KeyIterator",
+          "java.util.TreeMap$ValueIterator",
+          "java.util.HashMap$EntryIterator",
+          "java.util.HashMap$KeyIterator",
+          "java.util.HashMap$ValueIterator",
+          "java.util.LinkedHashMap$EntryIterator",
+          "java.util.LinkedHashMap$KeyIterator",
+          "java.util.LinkedHashMap$ValueIterator"})
 public class Probe {
-    public static void main (String[] args) throws Throwable {
-        String [] names = (Probe.class).getAnnotation(Classes.class).value();
+    public static void main (String... args) throws Throwable {
+        Classes classesAnnotation = (Probe.class).getAnnotation(Classes.class);
+        List<String> names =
+            new ArrayList<String>(asList(classesAnnotation.value()));
 
         int errs = 0;
         for(String name: names) {

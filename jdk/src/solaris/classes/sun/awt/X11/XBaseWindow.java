@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,15 +27,15 @@ package sun.awt.X11;
 
 import java.awt.*;
 import sun.awt.*;
-import java.util.logging.*;
 import java.util.*;
+import sun.util.logging.PlatformLogger;
 
 public class XBaseWindow {
-    private static final Logger log = Logger.getLogger("sun.awt.X11.XBaseWindow");
-    private static final Logger insLog = Logger.getLogger("sun.awt.X11.insets.XBaseWindow");
-    private static final Logger eventLog = Logger.getLogger("sun.awt.X11.event.XBaseWindow");
-    private static final Logger focusLog = Logger.getLogger("sun.awt.X11.focus.XBaseWindow");
-    private static final Logger grabLog = Logger.getLogger("sun.awt.X11.grab.XBaseWindow");
+    private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.X11.XBaseWindow");
+    private static final PlatformLogger insLog = PlatformLogger.getLogger("sun.awt.X11.insets.XBaseWindow");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("sun.awt.X11.event.XBaseWindow");
+    private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.awt.X11.focus.XBaseWindow");
+    private static final PlatformLogger grabLog = PlatformLogger.getLogger("sun.awt.X11.grab.XBaseWindow");
 
     public static final String
         PARENT_WINDOW = "parent window", // parent window, Long
@@ -160,7 +160,7 @@ public class XBaseWindow {
      * with class-specific values and perform post-initialization actions.
      */
     void postInit(XCreateWindowParams params) {
-        if (log.isLoggable(Level.FINE)) log.fine("WM name is " + getWMName());
+        if (log.isLoggable(PlatformLogger.FINE)) log.fine("WM name is " + getWMName());
         updateWMName();
 
         // Set WM_CLIENT_LEADER property
@@ -198,7 +198,7 @@ public class XBaseWindow {
             awtUnlock();
             throw re;
         } catch (Throwable t) {
-            log.log(Level.WARNING, "Exception during peer initialization", t);
+            log.warning("Exception during peer initialization", t);
             awtLock();
             initialising = InitialiseState.FAILED_INITIALISATION;
             awtLockNotifyAll();
@@ -360,7 +360,7 @@ public class XBaseWindow {
                     value_mask |= XConstants.CWBitGravity;
                 }
 
-                if (log.isLoggable(Level.FINE)) {
+                if (log.isLoggable(PlatformLogger.FINE)) {
                     log.fine("Creating window for " + this + " with the following attributes: \n" + params);
                 }
                 window = XlibWrapper.XCreateWindow(XToolkit.getDisplay(),
@@ -480,7 +480,7 @@ public class XBaseWindow {
     }
 
     public void setSizeHints(long flags, int x, int y, int width, int height) {
-        if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, flags " + XlibWrapper.hintsToString(flags));
+        if (insLog.isLoggable(PlatformLogger.FINER)) insLog.finer("Setting hints, flags " + XlibWrapper.hintsToString(flags));
         XToolkit.awtLock();
         try {
             XSizeHints hints = getHints();
@@ -541,7 +541,7 @@ public class XBaseWindow {
             flags |= XUtilConstants.PWinGravity;
             hints.set_flags(flags);
             hints.set_win_gravity((int)XConstants.NorthWestGravity);
-            if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, resulted flags " + XlibWrapper.hintsToString(flags) +
+            if (insLog.isLoggable(PlatformLogger.FINER)) insLog.finer("Setting hints, resulted flags " + XlibWrapper.hintsToString(flags) +
                                                              ", values " + hints);
             XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(), getWindow(), hints.pData);
         } finally {
@@ -593,7 +593,7 @@ public class XBaseWindow {
     public void xRequestFocus(long time) {
         XToolkit.awtLock();
         try {
-            if (focusLog.isLoggable(Level.FINER)) focusLog.finer("XSetInputFocus on " + Long.toHexString(getWindow()) + " with time " + time);
+            if (focusLog.isLoggable(PlatformLogger.FINER)) focusLog.finer("XSetInputFocus on " + Long.toHexString(getWindow()) + " with time " + time);
             XlibWrapper.XSetInputFocus2(XToolkit.getDisplay(), getWindow(), time);
         } finally {
             XToolkit.awtUnlock();
@@ -602,7 +602,7 @@ public class XBaseWindow {
     public void xRequestFocus() {
         XToolkit.awtLock();
         try {
-            if (focusLog.isLoggable(Level.FINER)) focusLog.finer("XSetInputFocus on " + Long.toHexString(getWindow()));
+            if (focusLog.isLoggable(PlatformLogger.FINER)) focusLog.finer("XSetInputFocus on " + Long.toHexString(getWindow()));
              XlibWrapper.XSetInputFocus(XToolkit.getDisplay(), getWindow());
         } finally {
             XToolkit.awtUnlock();
@@ -619,7 +619,7 @@ public class XBaseWindow {
     }
 
     public void xSetVisible(boolean visible) {
-        if (log.isLoggable(Level.FINE)) log.fine("Setting visible on " + this + " to " + visible);
+        if (log.isLoggable(PlatformLogger.FINE)) log.fine("Setting visible on " + this + " to " + visible);
         XToolkit.awtLock();
         try {
             this.visible = visible;
@@ -824,7 +824,7 @@ public class XBaseWindow {
      * The active grab overrides activated automatic grab.
      */
     public boolean grabInput() {
-        grabLog.log(Level.FINE, "Grab input on {0}", new Object[] {this});
+        grabLog.fine("Grab input on {0}", this);
 
         XToolkit.awtLock();
         try {
@@ -842,27 +842,35 @@ public class XBaseWindow {
                 | XConstants.ButtonMotionMask);
             final int ownerEvents = 1;
 
-            int ptrGrab = XlibWrapper.XGrabPointer(XToolkit.getDisplay(),
-                getContentWindow(), ownerEvents, eventMask, XConstants.GrabModeAsync,
-                XConstants.GrabModeAsync, XConstants.None, (XWM.isMotif() ? XToolkit.arrowCursor : XConstants.None),
-                XConstants.CurrentTime);
-            // Check grab results to be consistent with X server grab
-            if (ptrGrab != XConstants.GrabSuccess) {
-                XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
-                XAwtState.setGrabWindow(null);
-                grabLog.fine("    Grab Failure - mouse");
-                return false;
-            }
 
-            int keyGrab = XlibWrapper.XGrabKeyboard(XToolkit.getDisplay(),
-                getContentWindow(), ownerEvents, XConstants.GrabModeAsync, XConstants.GrabModeAsync,
-                XConstants.CurrentTime);
-            if (keyGrab != XConstants.GrabSuccess) {
-                XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
-                XlibWrapper.XUngrabKeyboard(XToolkit.getDisplay(), XConstants.CurrentTime);
-                XAwtState.setGrabWindow(null);
-                grabLog.fine("    Grab Failure - keyboard");
-                return false;
+            //6714678: IDE (Netbeans, Eclipse, JDeveloper) Debugger hangs
+            //process on Linux
+            //The user must pass the sun.awt.disablegrab property to disable
+            //taking grabs. This prevents hanging of the GUI when a breakpoint
+            //is hit while a popup window taking the grab is open.
+            if (!XToolkit.getSunAwtDisableGrab()) {
+                int ptrGrab = XlibWrapper.XGrabPointer(XToolkit.getDisplay(),
+                        getContentWindow(), ownerEvents, eventMask, XConstants.GrabModeAsync,
+                        XConstants.GrabModeAsync, XConstants.None, (XWM.isMotif() ? XToolkit.arrowCursor : XConstants.None),
+                        XConstants.CurrentTime);
+                // Check grab results to be consistent with X server grab
+                if (ptrGrab != XConstants.GrabSuccess) {
+                    XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
+                    XAwtState.setGrabWindow(null);
+                    grabLog.fine("    Grab Failure - mouse");
+                    return false;
+                }
+
+                int keyGrab = XlibWrapper.XGrabKeyboard(XToolkit.getDisplay(),
+                        getContentWindow(), ownerEvents, XConstants.GrabModeAsync, XConstants.GrabModeAsync,
+                        XConstants.CurrentTime);
+                if (keyGrab != XConstants.GrabSuccess) {
+                    XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
+                    XlibWrapper.XUngrabKeyboard(XToolkit.getDisplay(), XConstants.CurrentTime);
+                    XAwtState.setGrabWindow(null);
+                    grabLog.fine("    Grab Failure - keyboard");
+                    return false;
+                }
             }
             if (prevGrabWindow != null) {
                 prevGrabWindow.ungrabInputImpl();
@@ -879,11 +887,13 @@ public class XBaseWindow {
         XToolkit.awtLock();
         try {
             XBaseWindow grabWindow = XAwtState.getGrabWindow();
-            grabLog.log(Level.FINE, "UnGrab input on {0}", new Object[] {grabWindow});
+            grabLog.fine("UnGrab input on {0}", grabWindow);
             if (grabWindow != null) {
                 grabWindow.ungrabInputImpl();
-                XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
-                XlibWrapper.XUngrabKeyboard(XToolkit.getDisplay(), XConstants.CurrentTime);
+                if (!XToolkit.getSunAwtDisableGrab()) {
+                    XlibWrapper.XUngrabPointer(XToolkit.getDisplay(), XConstants.CurrentTime);
+                    XlibWrapper.XUngrabKeyboard(XToolkit.getDisplay(), XConstants.CurrentTime);
+                }
                 XAwtState.setGrabWindow(null);
                 // we need to call XFlush() here to force ungrab
                 // see 6384219 for details
@@ -919,7 +929,7 @@ public class XBaseWindow {
         mapped = false;
     }
     public void handleReparentNotifyEvent(XEvent xev) {
-        if (eventLog.isLoggable(Level.FINER)) {
+        if (eventLog.isLoggable(PlatformLogger.FINER)) {
             XReparentEvent msg = xev.get_xreparent();
             eventLog.finer(msg.toString());
         }
@@ -929,8 +939,8 @@ public class XBaseWindow {
         if (XPropertyCache.isCachingSupported()) {
             XPropertyCache.clearCache(window, XAtom.get(msg.get_atom()));
         }
-        if (eventLog.isLoggable(Level.FINER)) {
-            eventLog.log(Level.FINER, "{0}", new Object[] {msg});
+        if (eventLog.isLoggable(PlatformLogger.FINER)) {
+            eventLog.finer("{0}", msg);
         }
     }
 
@@ -959,7 +969,7 @@ public class XBaseWindow {
     }
 
     public void handleClientMessage(XEvent xev) {
-        if (eventLog.isLoggable(Level.FINER)) {
+        if (eventLog.isLoggable(PlatformLogger.FINER)) {
             XClientMessageEvent msg = xev.get_xclient();
             eventLog.finer(msg.toString());
         }
@@ -979,8 +989,19 @@ public class XBaseWindow {
      */
     public void handleButtonPressRelease(XEvent xev) {
         XButtonEvent xbe = xev.get_xbutton();
-        final int buttonState = xbe.get_state() & (XConstants.Button1Mask | XConstants.Button2Mask
-            | XConstants.Button3Mask | XConstants.Button4Mask | XConstants.Button5Mask);
+        /*
+         * Ignore the buttons above 20 due to the bit limit for
+         * InputEvent.BUTTON_DOWN_MASK.
+         * One more bit is reserved for FIRST_HIGH_BIT.
+         */
+        if (xbe.get_button() > SunToolkit.MAX_BUTTONS_SUPPORTED) {
+            return;
+        }
+        int buttonState = 0;
+        final int buttonsNumber = ((SunToolkit)(Toolkit.getDefaultToolkit())).getNumberOfButtons();
+        for (int i = 0; i<buttonsNumber; i++){
+            buttonState |= (xbe.get_state() & XConstants.buttonsMask[i]);
+        }
         switch (xev.get_type()) {
         case XConstants.ButtonPress:
             if (buttonState == 0) {
@@ -1000,8 +1021,7 @@ public class XBaseWindow {
     }
     public void handleConfigureNotifyEvent(XEvent xev) {
         XConfigureEvent xe = xev.get_xconfigure();
-        insLog.log(Level.FINER, "Configure, {0}",
-                   new Object[] {xe});
+        insLog.finer("Configure, {0}", xe);
         x = xe.get_x();
         y = xe.get_y();
         width = xe.get_width();
@@ -1011,19 +1031,13 @@ public class XBaseWindow {
      * Checks ButtonRelease released all Mouse buttons
      */
     static boolean isFullRelease(int buttonState, int button) {
-        switch (button) {
-        case XConstants.Button1:
-            return buttonState == XConstants.Button1Mask;
-        case XConstants.Button2:
-            return buttonState == XConstants.Button2Mask;
-        case XConstants.Button3:
-            return buttonState == XConstants.Button3Mask;
-        case XConstants.Button4:
-            return buttonState == XConstants.Button4Mask;
-        case XConstants.Button5:
-            return buttonState == XConstants.Button5Mask;
+        final int buttonsNumber = ((SunToolkit)(Toolkit.getDefaultToolkit())).getNumberOfButtons();
+
+        if (button < 0 || button > buttonsNumber) {
+            return buttonState == 0;
+        } else {
+            return buttonState == XConstants.buttonsMask[button - 1];
         }
-        return buttonState == 0;
     }
 
     static boolean isGrabbedEvent(XEvent ev, XBaseWindow target) {
@@ -1058,7 +1072,7 @@ public class XBaseWindow {
     }
 
     public void dispatchEvent(XEvent xev) {
-        if (eventLog.isLoggable(Level.FINEST)) eventLog.finest(xev.toString());
+        if (eventLog.isLoggable(PlatformLogger.FINEST)) eventLog.finest(xev.toString());
         int type = xev.get_type();
 
         if (isDisposed()) {

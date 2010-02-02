@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import java.util.*;
  * with the "pacakge-summary.html" file for the clicked package.
  *
  * @author Atul M Dambalkar
+ * @author Bhavesh Patel (Modified)
  */
 public class PackageIndexWriter extends AbstractPackageIndexWriter {
 
@@ -54,7 +55,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
     /**
      * List to store the order groups as specified on the command line.
      */
-    private List groupList;
+    private List<String> groupList;
 
     /**
      * Construct the PackageIndexWriter. Also constructs the grouping
@@ -102,9 +103,9 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         if(pkg != null && pkg.name().length() > 0) {
             trBgcolorStyle("white", "TableRowColor");
             summaryRow(20);
-            bold();
+            strong();
             printPackageLink(pkg, Util.getPackageName(pkg), false);
-            boldEnd();
+            strongEnd();
             summaryRowEnd();
             summaryRow(0);
             printSummaryComment(pkg);
@@ -119,11 +120,14 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
      */
     protected void generateIndex() {
         for (int i = 0; i < groupList.size(); i++) {
-        String groupname = (String)groupList.get(i);
+        String groupname = groupList.get(i);
         List<PackageDoc> list = groupPackageMap.get(groupname);
             if (list != null && list.size() > 0) {
                 printIndexContents(list.toArray(new PackageDoc[list.size()]),
-                                    groupname);
+                        groupname,
+                        configuration.getText("doclet.Member_Table_Summary",
+                        groupname,
+                        configuration.getText("doclet.packages")));
             }
         }
     }
@@ -137,7 +141,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         if (root.inlineTags().length > 0) {
             printSummaryComment(root);
             p();
-            bold(configuration.getText("doclet.See"));
+            strong(configuration.getText("doclet.See"));
             br();
             printNbsps();
             printHyperLink("", "overview_description",
@@ -149,11 +153,12 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
     /**
      * Print Html tags for the table for this package index.
      */
-    protected void printIndexHeader(String text) {
-        tableIndexSummary();
-        tableHeaderStart("#CCCCFF");
-        bold(text);
-        tableHeaderEnd();
+    protected void printIndexHeader(String text, String tableSummary) {
+        tableIndexSummary(tableSummary);
+        tableCaptionStart();
+        print(text);
+        tableCaptionEnd();
+        summaryTableHeader(packageTableHeader, "col");
     }
 
     /**

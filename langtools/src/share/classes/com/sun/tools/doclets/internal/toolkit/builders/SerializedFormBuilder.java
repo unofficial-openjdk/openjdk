@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,13 @@
 
 package com.sun.tools.doclets.internal.toolkit.builders;
 
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.javadoc.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
+import com.sun.tools.doclets.internal.toolkit.*;
 
 /**
  * Builds the serialized form.
@@ -40,6 +41,7 @@ import java.util.*;
  * Do not use it as an API
  *
  * @author Jamie Ho
+ * @author Bhavesh Patel (Modified)
  * @since 1.5
  */
 public class SerializedFormBuilder extends AbstractBuilder {
@@ -130,7 +132,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
     /**
      * Build the serialized form.
      */
-    public void buildSerializedForm(List elements) throws Exception {
+    public void buildSerializedForm(List<?> elements) throws Exception {
         build(elements);
         writer.close();
     }
@@ -138,7 +140,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
     /**
      * {@inheritDoc}
      */
-    public void invokeMethod(String methodName, Class[] paramClasses,
+    public void invokeMethod(String methodName, Class<?>[] paramClasses,
             Object[] params)
     throws Exception {
         if (DEBUG) {
@@ -159,7 +161,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
     /**
      * Build the contents.
      */
-    public void buildSerializedFormSummaries(List elements) {
+    public void buildSerializedFormSummaries(List<?> elements) {
         PackageDoc[] packages = configuration.packages;
         for (int i = 0; i < packages.length; i++) {
             currentPackage = packages[i];
@@ -170,7 +172,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
     /**
      * Build the package serialized for for the current package being processed.
      */
-    public void buildPackageSerializedForm(List elements) {
+    public void buildPackageSerializedForm(List<?> elements) {
         String foo = currentPackage.name();
         ClassDoc[] classes = currentPackage.allClasses(false);
         if (classes == null || classes.length == 0) {
@@ -189,7 +191,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         writer.writePackageHeader(Util.getPackageName(currentPackage));
     }
 
-    public void buildClassSerializedForm(List elements) {
+    public void buildClassSerializedForm(List<?> elements) {
         ClassDoc[] classes = currentPackage.allClasses(false);
         Arrays.sort(classes);
         for (int j = 0; j < classes.length; j++) {
@@ -368,7 +370,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
     /**
      * build the information for the method.
      */
-    public void buildMethodInfo(List elements)  {
+    public void buildMethodInfo(List<?> elements)  {
         if(configuration.nocomment){
             return;
         }
@@ -379,7 +381,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * Build the method footer.
      */
     public void buildMethodFooter() {
-        methodWriter.writeMemberFooter((MethodDoc) currentMember);
+        methodWriter.writeMemberFooter();
     }
 
     /**
@@ -402,17 +404,21 @@ public class SerializedFormBuilder extends AbstractBuilder {
     public void buildFieldSerializationOverview(ClassDoc classDoc) {
         if (classDoc.definesSerializableFields()) {
             FieldDoc serialPersistentField =
-                (FieldDoc)((Util.asList(classDoc.serializableFields()).get(0)));
-            String comment = serialPersistentField.commentText();
-            if (comment.length() > 0) {
+                Util.asList(classDoc.serializableFields()).get(0);
+            // Check to see if there are inline comments, tags or deprecation
+            // information to be printed.
+            if (fieldWriter.shouldPrintOverview(serialPersistentField)) {
                 fieldWriter.writeHeader(
-                    configuration.getText("doclet.Serialized_Form_class"));
+                        configuration.getText("doclet.Serialized_Form_class"));
+                fieldWriter.writeMemberDeprecatedInfo(serialPersistentField);
                 if (!configuration.nocomment) {
-                    fieldWriter.writeMemberDeprecatedInfo(serialPersistentField);
                     fieldWriter.writeMemberDescription(serialPersistentField);
                     fieldWriter.writeMemberTags(serialPersistentField);
-                    fieldWriter.writeMemberFooter(serialPersistentField);
                 }
+                // Footer required to close the definition list tag
+                // for serialization overview.
+                fieldWriter.writeFooter(
+                        configuration.getText("doclet.Serialized_Form_class"));
             }
         }
     }
@@ -425,6 +431,16 @@ public class SerializedFormBuilder extends AbstractBuilder {
             FieldDoc field = (FieldDoc) currentMember;
             fieldWriter.writeMemberHeader(field.type().asClassDoc(),
                 field.type().typeName(), field.type().dimension(), field.name());
+        }
+    }
+
+    /**
+     * Build the field deprecation information.
+     */
+    public void buildFieldDeprecationInfo() {
+        if (!currentClass.definesSerializableFields()) {
+            FieldDoc field = (FieldDoc)currentMember;
+            fieldWriter.writeMemberDeprecatedInfo(field);
         }
     }
 
@@ -459,18 +475,17 @@ public class SerializedFormBuilder extends AbstractBuilder {
                         "doclet.MissingSerialTag", cd.qualifiedName(),
                         field.name());
             }
-            fieldWriter.writeMemberDeprecatedInfo(field);
             fieldWriter.writeMemberDescription(field);
             fieldWriter.writeMemberTags(field);
         }
     }
 
     /**
-     * Build the field footer.
+     * Build the field sub footer.
      */
-    public void buildFieldFooter() {
+    public void buildFieldSubFooter() {
         if (! currentClass.definesSerializableFields()) {
-            fieldWriter.writeMemberFooter((FieldDoc) currentMember);
+            fieldWriter.writeMemberFooter();
         }
     }
 
@@ -478,7 +493,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * Build the summaries for the methods that belong to the given
      * class.
      */
-    public void buildSerializableMethods(List elements) {
+    public void buildSerializableMethods(List<?> elements) {
         MemberDoc[] members = currentClass.serializationMethods();
         if (members.length > 0) {
             for (int i = 0; i < members.length; i++) {
@@ -492,7 +507,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * Build the summaries for the fields that belong to the given
      * class.
      */
-    public void buildSerializableFields(List elements) {
+    public void buildSerializableFields(List<?> elements) {
         MemberDoc[] members = currentClass.serializableFields();
         if (members.length > 0) {
             for (int i = 0; i < members.length; i++) {

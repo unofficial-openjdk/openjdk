@@ -37,11 +37,12 @@ import java.awt.dnd.InvalidDnDOperationException;
 
 import java.util.*;
 
-import java.util.logging.*;
-import sun.awt.ComponentAccessor;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.dnd.SunDragSourceContextPeer;
 import sun.awt.dnd.SunDropTargetContextPeer;
+import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 
 /**
  * The XDragSourceContextPeer class is the class responsible for handling
@@ -51,8 +52,8 @@ import sun.awt.dnd.SunDropTargetContextPeer;
  */
 public final class XDragSourceContextPeer
     extends SunDragSourceContextPeer implements XDragSourceProtocolListener {
-    private static final Logger logger =
-        Logger.getLogger("sun.awt.X11.xembed.xdnd.XDragSourceContextPeer");
+    private static final PlatformLogger logger =
+        PlatformLogger.getLogger("sun.awt.X11.xembed.xdnd.XDragSourceContextPeer");
 
     /* The events selected on the root window when the drag begins. */
     private static final int ROOT_EVENT_MASK = (int)XConstants.ButtonMotionMask |
@@ -115,7 +116,7 @@ public final class XDragSourceContextPeer
         XWindowPeer wpeer = null;
 
         for (c = component; c != null && !(c instanceof Window);
-             c = ComponentAccessor.getParent_NoClientCode(c));
+             c = AWTAccessor.getComponentAccessor().getParent(c));
 
         if (c instanceof Window) {
             wpeer = (XWindowPeer)c.getPeer();
@@ -541,7 +542,7 @@ public final class XDragSourceContextPeer
             return false;
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isLoggable(PlatformLogger.FINEST)) {
             logger.finest("        proxyModeSourceWindow=" +
                           getProxyModeSourceWindow() +
                           " ev=" + ev);
@@ -666,6 +667,15 @@ public final class XDragSourceContextPeer
         case XConstants.ButtonRelease: {
             XButtonEvent xbutton = ev.get_xbutton();
             /*
+             * Ignore the buttons above 20 due to the bit limit for
+             * InputEvent.BUTTON_DOWN_MASK.
+             * One more bit is reserved for FIRST_HIGH_BIT.
+             */
+            if (xbutton.get_button() > SunToolkit.MAX_BUTTONS_SUPPORTED) {
+                return true;
+            }
+
+            /*
              * On some X servers it could happen that ButtonRelease coordinates
              * differ from the latest MotionNotify coordinates, so we need to
              * process it as a mouse motion.
@@ -694,8 +704,8 @@ public final class XDragSourceContextPeer
             } finally {
                 xmotion.dispose();
             }
-            if (xbutton.get_button() == XConstants.Button1
-                    || xbutton.get_button() == XConstants.Button2) {
+            if (xbutton.get_button() == XConstants.buttons[0]
+                || xbutton.get_button() == XConstants.buttons[1]) {
                 // drag is initiated with Button1 or Button2 pressed and
                 // ended on release of either of these buttons (as the same
                 // behavior was with our old Motif DnD-based implementation)

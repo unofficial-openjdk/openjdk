@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,17 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +51,8 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.NestingKind;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileManager;
@@ -55,6 +61,9 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
 import com.sun.tools.classfile.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 
 /**
  *  "Main" class for javap, normally accessed from the command line
@@ -65,7 +74,7 @@ import com.sun.tools.classfile.*;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class JavapTask implements DisassemblerTool.DisassemblerTask {
+public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     public class BadArgs extends Exception {
         static final long serialVersionUID = 8765093759964640721L;
         BadArgs(String key, Object... args) {
@@ -211,9 +220,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
 
         new Option(false, "-Xold") {
             void process(JavapTask task, String opt, String arg) throws BadArgs {
-                // -Xold is only supported as first arg when invoked from
-                // command line; this is handled in Main,main
-                throw task.new BadArgs("err.Xold.not.supported.here");
+                task.log.println(task.getMessage("warn.Xold.not.supported"));
             }
         },
 
@@ -229,15 +236,53 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
             }
         },
 
-        new Option(false, "-XDjsr277") {
+        new Option(false, "-XDdetails") {
             void process(JavapTask task, String opt, String arg) {
-                task.options.jsr277 = true;
+                task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
             }
+
         },
 
-        new Option(false, "-XDignore.symbol.file") {
-            void process(JavapTask task, String opt, String arg) {
-                task.options.ignoreSymbolFile = true;
+        new Option(false, "-XDdetails:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                for (String v: opt.substring(sep + 1).split("[,: ]+")) {
+                    if (!handleArg(task, v))
+                        throw task.new BadArgs("err.invalid.arg.for.option", v);
+                }
+            }
+
+            boolean handleArg(JavapTask task, String arg) {
+                if (arg.length() == 0)
+                    return true;
+
+                if (arg.equals("all")) {
+                    task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
+                    return true;
+                }
+
+                boolean on = true;
+                if (arg.startsWith("-")) {
+                    on = false;
+                    arg = arg.substring(1);
+                }
+
+                for (InstructionDetailWriter.Kind k: InstructionDetailWriter.Kind.values()) {
+                    if (arg.equalsIgnoreCase(k.option)) {
+                        if (on)
+                            task.options.details.add(k);
+                        else
+                            task.options.details.remove(k);
+                        return true;
+                    }
+                }
+                return false;
             }
         },
 
@@ -245,35 +290,81 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
             void process(JavapTask task, String opt, String arg) {
                 task.options.showConstants = true;
             }
+        },
+
+        new Option(false, "-XDinner") {
+            void process(JavapTask task, String opt, String arg) {
+                task.options.showInnerClasses = true;
+            }
+        },
+
+        new Option(false, "-XDindent:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                try {
+                    task.options.indentWidth = Integer.valueOf(opt.substring(sep + 1));
+                } catch (NumberFormatException e) {
+                }
+            }
+        },
+
+        new Option(false, "-XDtab:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                try {
+                    task.options.tabColumn = Integer.valueOf(opt.substring(sep + 1));
+                } catch (NumberFormatException e) {
+                }
+            }
         }
 
     };
 
-    JavapTask() {
+    public JavapTask() {
         context = new Context();
+        context.put(Messages.class, this);
         options = Options.instance(context);
+        attributeFactory = new Attribute.Factory();
     }
 
-    JavapTask(Writer out,
+    public JavapTask(Writer out,
             JavaFileManager fileManager,
-            DiagnosticListener<? super JavaFileObject> diagnosticListener,
-            Iterable<String> options,
-            Iterable<String> classes) {
+            DiagnosticListener<? super JavaFileObject> diagnosticListener) {
         this();
         this.log = getPrintWriterForWriter(out);
         this.fileManager = fileManager;
         this.diagnosticListener = diagnosticListener;
+    }
 
-        try {
-            handleOptions(options, false);
-        } catch (BadArgs e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+    public JavapTask(Writer out,
+            JavaFileManager fileManager,
+            DiagnosticListener<? super JavaFileObject> diagnosticListener,
+            Iterable<String> options,
+            Iterable<String> classes) {
+        this(out, fileManager, diagnosticListener);
 
         this.classes = new ArrayList<String>();
         for (String classname: classes) {
             classname.getClass(); // null-check
             this.classes.add(classname);
+        }
+
+        try {
+            handleOptions(options, false);
+        } catch (BadArgs e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -320,10 +411,18 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
         final PrintWriter pw = getPrintWriterForWriter(w);
         return new DiagnosticListener<JavaFileObject> () {
             public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-                if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+                switch (diagnostic.getKind()) {
+                    case ERROR:
                         pw.print(getMessage("err.prefix"));
-                    pw.print(" ");
+                        break;
+                    case WARNING:
+                        pw.print(getMessage("warn.prefix"));
+                        break;
+                    case NOTE:
+                        pw.print(getMessage("note.prefix"));
+                        break;
                 }
+                pw.print(" ");
                 pw.println(diagnostic.getMessage(null));
             }
         };
@@ -350,10 +449,21 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
                     return EXIT_CMDERR;
             }
 
-            boolean ok = run();
-            return ok ? EXIT_OK : EXIT_ERROR;
+            try {
+                boolean ok = run();
+                return ok ? EXIT_OK : EXIT_ERROR;
+            } finally {
+                if (defaultFileManager != null) {
+                    try {
+                        defaultFileManager.close();
+                        defaultFileManager = null;
+                    } catch (IOException e) {
+                        throw new InternalError(e);
+                    }
+                }
+            }
         } catch (BadArgs e) {
-            diagnosticListener.report(createDiagnostic(e.key, e.args));
+            reportError(e.key, e.args);
             if (e.showUsage) {
                 log.println(getMessage("main.usage.summary", progname));
             }
@@ -367,7 +477,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
                 e_args[0] = e.getCause();
                 System.arraycopy(e.args, 0, e_args, 1, e.args.length);
             }
-            diagnosticListener.report(createDiagnostic("err.internal.error", e_args));
+            reportError("err.internal.error", e_args);
             return EXIT_ABNORMAL;
         } finally {
             log.flush();
@@ -419,9 +529,6 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
             throw new BadArgs("err.incompatible.options", sb);
         }
 
-        if (options.ignoreSymbolFile && fileManager instanceof JavapFileManager)
-            ((JavapFileManager) fileManager).setIgnoreSymbolFile(true);
-
         if ((classes == null || classes.size() == 0) &&
                 !(noArgs || options.help || options.version || options.fullVersion)) {
             throw new BadArgs("err.no.classes.specified");
@@ -469,84 +576,39 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
 
         context.put(PrintWriter.class, log);
         ClassWriter classWriter = ClassWriter.instance(context);
+        SourceWriter sourceWriter = SourceWriter.instance(context);
+        sourceWriter.setFileManager(fileManager);
+
+        attributeFactory.setCompat(options.compat);
 
         boolean ok = true;
 
         for (String className: classes) {
             JavaFileObject fo;
             try {
-                if (className.endsWith(".class")) {
-                    if (fileManager instanceof StandardJavaFileManager) {
-                        StandardJavaFileManager sfm = (StandardJavaFileManager) fileManager;
-                        fo = sfm.getJavaFileObjects(className).iterator().next();
-                    } else {
-                       diagnosticListener.report(createDiagnostic("err.not.standard.file.manager", className));
-                       ok = false;
-                       continue;
-                    }
-                } else {
-                    fo = getClassFileObject(className);
-                    if (fo == null) {
-                        // see if it is an inner class, by replacing dots to $, starting from the right
-                        String cn = className;
-                        int lastDot;
-                        while (fo == null && (lastDot = cn.lastIndexOf(".")) != -1) {
-                            cn = cn.substring(0, lastDot) + "$" + cn.substring(lastDot + 1);
-                            fo = getClassFileObject(cn);
-                        }
-                    }
-                    if (fo == null) {
-                       diagnosticListener.report(createDiagnostic("err.class.not.found", className));
-                       ok = false;
-                       continue;
-                    }
-                }
-                Attribute.Factory attributeFactory = new Attribute.Factory();
-                attributeFactory.setCompat(options.compat);
-                attributeFactory.setJSR277(options.jsr277);
-
-                InputStream in = fo.openInputStream();
-                SizeInputStream sizeIn = null;
-                MessageDigest md  = null;
-                if (options.sysInfo || options.verbose) {
-                    md = MessageDigest.getInstance("MD5");
-                    in = new DigestInputStream(in, md);
-                    in = sizeIn = new SizeInputStream(in);
-                }
-
-                ClassFile cf = ClassFile.read(in, attributeFactory);
-
-                if (options.sysInfo || options.verbose) {
-                    classWriter.setFile(fo.toUri());
-                    classWriter.setLastModified(fo.getLastModified());
-                    classWriter.setDigest("MD5", md.digest());
-                    classWriter.setFileSize(sizeIn.size());
-                }
-
-                classWriter.write(cf);
-
+                writeClass(classWriter, className);
             } catch (ConstantPoolException e) {
-                diagnosticListener.report(createDiagnostic("err.bad.constant.pool", className, e.getLocalizedMessage()));
+                reportError("err.bad.constant.pool", className, e.getLocalizedMessage());
                 ok = false;
             } catch (EOFException e) {
-                diagnosticListener.report(createDiagnostic("err.end.of.file", className));
+                reportError("err.end.of.file", className);
                 ok = false;
             } catch (FileNotFoundException e) {
-                diagnosticListener.report(createDiagnostic("err.file.not.found", e.getLocalizedMessage()));
+                reportError("err.file.not.found", e.getLocalizedMessage());
                 ok = false;
             } catch (IOException e) {
                 //e.printStackTrace();
                 Object msg = e.getLocalizedMessage();
                 if (msg == null)
                     msg = e;
-                diagnosticListener.report(createDiagnostic("err.ioerror", className, msg));
+                reportError("err.ioerror", className, msg);
                 ok = false;
             } catch (Throwable t) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 t.printStackTrace(pw);
                 pw.close();
-                diagnosticListener.report(createDiagnostic("err.crash", t.toString(), sw.toString()));
+                reportError("err.crash", t.toString(), sw.toString());
                 ok = false;
             }
         }
@@ -554,8 +616,253 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
         return ok;
     }
 
+    protected boolean writeClass(ClassWriter classWriter, String className)
+            throws IOException, ConstantPoolException {
+        JavaFileObject fo = open(className);
+        if (fo == null) {
+            reportError("err.class.not.found", className);
+            return false;
+        }
+
+        ClassFileInfo cfInfo = read(fo);
+        if (!className.endsWith(".class")) {
+            String cfName = cfInfo.cf.getName();
+            if (!cfName.replaceAll("[/$]", ".").equals(className.replaceAll("[/$]", ".")))
+                reportWarning("warn.unexpected.class", className, cfName.replace('/', '.'));
+        }
+        write(cfInfo);
+
+        if (options.showInnerClasses) {
+            ClassFile cf = cfInfo.cf;
+            Attribute a = cf.getAttribute(Attribute.InnerClasses);
+            if (a instanceof InnerClasses_attribute) {
+                InnerClasses_attribute inners = (InnerClasses_attribute) a;
+                try {
+                    boolean ok = true;
+                    for (int i = 0; i < inners.classes.length; i++) {
+                        int outerIndex = inners.classes[i].outer_class_info_index;
+                        ConstantPool.CONSTANT_Class_info outerClassInfo = cf.constant_pool.getClassInfo(outerIndex);
+                        String outerClassName = outerClassInfo.getName();
+                        if (outerClassName.equals(cf.getName())) {
+                            int innerIndex = inners.classes[i].inner_class_info_index;
+                            ConstantPool.CONSTANT_Class_info innerClassInfo = cf.constant_pool.getClassInfo(innerIndex);
+                            String innerClassName = innerClassInfo.getName();
+                            classWriter.println("// inner class " + innerClassName.replaceAll("[/$]", "."));
+                            classWriter.println();
+                            ok = ok & writeClass(classWriter, innerClassName);
+                        }
+                    }
+                    return ok;
+                } catch (ConstantPoolException e) {
+                    reportError("err.bad.innerclasses.attribute", className);
+                    return false;
+                }
+            } else if (a != null) {
+                reportError("err.bad.innerclasses.attribute", className);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected JavaFileObject open(String className) throws IOException {
+        // for compatibility, first see if it is a class name
+        JavaFileObject fo = getClassFileObject(className);
+        if (fo != null)
+            return fo;
+
+        // see if it is an inner class, by replacing dots to $, starting from the right
+        String cn = className;
+        int lastDot;
+        while ((lastDot = cn.lastIndexOf(".")) != -1) {
+            cn = cn.substring(0, lastDot) + "$" + cn.substring(lastDot + 1);
+            fo = getClassFileObject(cn);
+            if (fo != null)
+                return fo;
+        }
+
+        if (!className.endsWith(".class"))
+            return null;
+
+        if (fileManager instanceof StandardJavaFileManager) {
+            StandardJavaFileManager sfm = (StandardJavaFileManager) fileManager;
+            fo = sfm.getJavaFileObjects(className).iterator().next();
+            if (fo != null && fo.getLastModified() != 0) {
+                return fo;
+            }
+        }
+
+        // see if it is a URL, and if so, wrap it in just enough of a JavaFileObject
+        // to suit javap's needs
+        if (className.matches("^[A-Za-z]+:.*")) {
+            try {
+                final URI uri = new URI(className);
+                final URL url = uri.toURL();
+                final URLConnection conn = url.openConnection();
+                return new JavaFileObject() {
+                    public Kind getKind() {
+                        return JavaFileObject.Kind.CLASS;
+                    }
+
+                    public boolean isNameCompatible(String simpleName, Kind kind) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public NestingKind getNestingKind() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public Modifier getAccessLevel() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public URI toUri() {
+                        return uri;
+                    }
+
+                    public String getName() {
+                        return url.toString();
+                    }
+
+                    public InputStream openInputStream() throws IOException {
+                        return conn.getInputStream();
+                    }
+
+                    public OutputStream openOutputStream() throws IOException {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public Writer openWriter() throws IOException {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    public long getLastModified() {
+                        return conn.getLastModified();
+                    }
+
+                    public boolean delete() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                };
+            } catch (URISyntaxException ignore) {
+            } catch (IOException ignore) {
+            }
+        }
+
+        return null;
+    }
+
+    public static class ClassFileInfo {
+        ClassFileInfo(JavaFileObject fo, ClassFile cf, byte[] digest, int size) {
+            this.fo = fo;
+            this.cf = cf;
+            this.digest = digest;
+            this.size = size;
+        }
+        public final JavaFileObject fo;
+        public final ClassFile cf;
+        public final byte[] digest;
+        public final int size;
+    }
+
+    public ClassFileInfo read(JavaFileObject fo) throws IOException, ConstantPoolException {
+        InputStream in = fo.openInputStream();
+        try {
+            SizeInputStream sizeIn = null;
+            MessageDigest md  = null;
+            if (options.sysInfo || options.verbose) {
+                try {
+                    md = MessageDigest.getInstance("MD5");
+                } catch (NoSuchAlgorithmException ignore) {
+                }
+                in = new DigestInputStream(in, md);
+                in = sizeIn = new SizeInputStream(in);
+            }
+
+            ClassFile cf = ClassFile.read(in, attributeFactory);
+            byte[] digest = (md == null) ? null : md.digest();
+            int size = (sizeIn == null) ? -1 : sizeIn.size();
+            return new ClassFileInfo(fo, cf, digest, size);
+        } finally {
+            in.close();
+        }
+    }
+
+    public void write(ClassFileInfo info) {
+        ClassWriter classWriter = ClassWriter.instance(context);
+        if (options.sysInfo || options.verbose) {
+            classWriter.setFile(info.fo.toUri());
+            classWriter.setLastModified(info.fo.getLastModified());
+            classWriter.setDigest("MD5", info.digest);
+            classWriter.setFileSize(info.size);
+        }
+
+        classWriter.write(info.cf);
+    }
+
+    protected void setClassFile(ClassFile classFile) {
+        ClassWriter classWriter = ClassWriter.instance(context);
+        classWriter.setClassFile(classFile);
+    }
+
+    protected void setMethod(Method enclosingMethod) {
+        ClassWriter classWriter = ClassWriter.instance(context);
+        classWriter.setMethod(enclosingMethod);
+    }
+
+    protected void write(Attribute value) {
+        AttributeWriter attrWriter = AttributeWriter.instance(context);
+        ClassWriter classWriter = ClassWriter.instance(context);
+        ClassFile cf = classWriter.getClassFile();
+        attrWriter.write(cf, value, cf.constant_pool);
+    }
+
+    protected void write(Attributes attrs) {
+        AttributeWriter attrWriter = AttributeWriter.instance(context);
+        ClassWriter classWriter = ClassWriter.instance(context);
+        ClassFile cf = classWriter.getClassFile();
+        attrWriter.write(cf, attrs, cf.constant_pool);
+    }
+
+    protected void write(ConstantPool constant_pool) {
+        ConstantWriter constantWriter = ConstantWriter.instance(context);
+        constantWriter.writeConstantPool(constant_pool);
+    }
+
+    protected void write(ConstantPool constant_pool, int value) {
+        ConstantWriter constantWriter = ConstantWriter.instance(context);
+        constantWriter.write(value);
+    }
+
+    protected void write(ConstantPool.CPInfo value) {
+        ConstantWriter constantWriter = ConstantWriter.instance(context);
+        constantWriter.println(value);
+    }
+
+    protected void write(Field value) {
+        ClassWriter classWriter = ClassWriter.instance(context);
+        classWriter.writeField(value);
+    }
+
+    protected void write(Method value) {
+        ClassWriter classWriter = ClassWriter.instance(context);
+        classWriter.writeMethod(value);
+    }
+
     private JavaFileManager getDefaultFileManager(final DiagnosticListener<? super JavaFileObject> dl, PrintWriter log) {
-        return JavapFileManager.create(dl, log, options);
+        if (defaultFileManager == null)
+            defaultFileManager = JavapFileManager.create(dl, log);
+        return defaultFileManager;
     }
 
     private JavaFileObject getClassFileObject(String className) throws IOException {
@@ -609,10 +916,23 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
         }
     }
 
-    private Diagnostic<JavaFileObject> createDiagnostic(final String key, final Object... args) {
+    private void reportError(String key, Object... args) {
+        diagnosticListener.report(createDiagnostic(Diagnostic.Kind.ERROR, key, args));
+    }
+
+    private void reportNote(String key, Object... args) {
+        diagnosticListener.report(createDiagnostic(Diagnostic.Kind.NOTE, key, args));
+    }
+
+    private void reportWarning(String key, Object... args) {
+        diagnosticListener.report(createDiagnostic(Diagnostic.Kind.WARNING, key, args));
+    }
+
+    private Diagnostic<JavaFileObject> createDiagnostic(
+            final Diagnostic.Kind kind, final String key, final Object... args) {
         return new Diagnostic<JavaFileObject>() {
             public Kind getKind() {
-                return Diagnostic.Kind.ERROR;
+                return kind;
             }
 
             public JavaFileObject getSource() {
@@ -647,15 +967,20 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
                 return JavapTask.this.getMessage(locale, key, args);
             }
 
+            @Override
+            public String toString() {
+                return getClass().getName() + "[key=" + key + ",args=" + Arrays.asList(args) + "]";
+            }
+
         };
 
     }
 
-    private String getMessage(String key, Object... args) {
+    public String getMessage(String key, Object... args) {
         return getMessage(task_locale, key, args);
     }
 
-    private String getMessage(Locale locale, String key, Object... args) {
+    public String getMessage(Locale locale, String key, Object... args) {
         if (bundles == null) {
             // could make this a HashMap<Locale,SoftReference<ResourceBundle>>
             // and for efficiency, keep a hard reference to the bundle for the task
@@ -683,8 +1008,9 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
         }
     }
 
-    Context context;
+    protected Context context;
     JavaFileManager fileManager;
+    JavaFileManager defaultFileManager;
     PrintWriter log;
     DiagnosticListener<? super JavaFileObject> diagnosticListener;
     List<String> classes;
@@ -692,6 +1018,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
     //ResourceBundle bundle;
     Locale task_locale;
     Map<Locale, ResourceBundle> bundles;
+    protected Attribute.Factory attributeFactory;
 
     private static final String progname = "javap";
 

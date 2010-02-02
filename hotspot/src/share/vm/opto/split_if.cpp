@@ -219,6 +219,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
 
 //------------------------------register_new_node------------------------------
 void PhaseIdealLoop::register_new_node( Node *n, Node *blk ) {
+  assert(!n->is_CFG(), "must be data node");
   _igvn.register_new_node_with_optimizer(n);
   set_ctrl(n, blk);
   IdealLoopTree *loop = get_loop(blk);
@@ -318,7 +319,7 @@ Node *PhaseIdealLoop::find_use_block( Node *use, Node *def, Node *old_false, Nod
 
   if( use->is_Phi() ) {         // Phi uses in prior block
     // Grab the first Phi use; there may be many.
-    // Each will be handled as a seperate iteration of
+    // Each will be handled as a separate iteration of
     // the "while( phi->outcnt() )" loop.
     uint j;
     for( j = 1; j < use->req(); j++ )

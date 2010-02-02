@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,17 @@ jint      NMethodSweeper::_locked_seen = 0;
 jint      NMethodSweeper::_not_entrant_seen_on_stack = 0;
 bool      NMethodSweeper::_rescan = false;
 
+class MarkActivationClosure: public CodeBlobClosure {
+public:
+  virtual void do_code_blob(CodeBlob* cb) {
+    // If we see an activation belonging to a non_entrant nmethod, we mark it.
+    if (cb->is_nmethod() && ((nmethod*)cb)->is_not_entrant()) {
+      ((nmethod*)cb)->mark_as_seen_on_stack();
+    }
+  }
+};
+static MarkActivationClosure mark_activation_closure;
+
 void NMethodSweeper::sweep() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at a safepoint");
   if (!MethodFlushing) return;
@@ -57,7 +68,7 @@ void NMethodSweeper::sweep() {
     if (PrintMethodFlushing) {
       tty->print_cr("### Sweep: stack traversal %d", _traversals);
     }
-    Threads::nmethods_do();
+    Threads::nmethods_do(&mark_activation_closure);
 
     // reset the flags since we started a scan from the beginning.
     _rescan = false;
@@ -125,8 +136,14 @@ void NMethodSweeper::process_nmethod(nmethod *nm) {
     // there are no inline caches that referes to it.
     if (nm->is_marked_for_reclamation()) {
       assert(!nm->is_locked_by_vm(), "must not flush locked nmethods");
+      if (PrintMethodFlushing && Verbose) {
+        tty->print_cr("### Nmethod 0x%x (marked for reclamation) being flushed", nm);
+      }
       nm->flush();
     } else {
+      if (PrintMethodFlushing && Verbose) {
+        tty->print_cr("### Nmethod 0x%x (zombie) being marked for reclamation", nm);
+      }
       nm->mark_for_reclamation();
       _rescan = true;
     }
@@ -134,6 +151,9 @@ void NMethodSweeper::process_nmethod(nmethod *nm) {
     // If there is no current activations of this method on the
     // stack we can safely convert it to a zombie method
     if (nm->can_not_entrant_be_converted()) {
+      if (PrintMethodFlushing && Verbose) {
+        tty->print_cr("### Nmethod 0x%x (not entrant) being made zombie", nm);
+      }
       nm->make_zombie();
       _rescan = true;
     } else {
@@ -146,7 +166,9 @@ void NMethodSweeper::process_nmethod(nmethod *nm) {
     }
   } else if (nm->is_unloaded()) {
     // Unloaded code, just make it a zombie
-    if (nm->is_osr_only_method()) {
+    if (PrintMethodFlushing && Verbose)
+      tty->print_cr("### Nmethod 0x%x (unloaded) being made zombie", nm);
+    if (nm->is_osr_method()) {
       // No inline caches will ever point to osr methods, so we can just remove it
       nm->flush();
     } else {

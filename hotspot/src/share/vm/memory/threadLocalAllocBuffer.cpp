@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ void ThreadLocalAllocBuffer::accumulate_statistics() {
 void ThreadLocalAllocBuffer::make_parsable(bool retire) {
   if (end() != NULL) {
     invariants();
-    CollectedHeap::fill_with_object(top(), hard_end());
+    CollectedHeap::fill_with_object(top(), hard_end(), retire);
 
     if (retire || ZeroTLAB) {  // "Reset" the TLAB
       set_start(NULL);

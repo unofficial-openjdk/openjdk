@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,13 +58,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import java.util.logging.*;
-
+import sun.font.FontManager;
+import sun.font.FontManagerFactory;
+import sun.font.SunFontManager;
 import sun.misc.PerformanceLogger;
+import sun.util.logging.PlatformLogger;
 
 public class WToolkit extends SunToolkit implements Runnable {
 
-    private static final Logger log = Logger.getLogger("sun.awt.windows.WToolkit");
+    private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.windows.WToolkit");
 
     static GraphicsConfiguration config;
 
@@ -79,6 +81,10 @@ public class WToolkit extends SunToolkit implements Runnable {
 
     // Dynamic Layout Resize client code setting
     protected boolean dynamicLayoutSetting = false;
+
+    //Is it allowed to generate events assigned to extra mouse buttons.
+    //Set to true by default.
+    private static boolean areExtraMouseButtonsEnabled = true;
 
     /**
      * Initialize JNI field and method IDs
@@ -103,8 +109,8 @@ public class WToolkit extends SunToolkit implements Runnable {
         initIDs();
 
         // Print out which version of Windows is running
-        if (log.isLoggable(Level.FINE)) {
-            log.log(Level.FINE, "Win version: " + getWindowsVersion());
+        if (log.isLoggable(PlatformLogger.FINE)) {
+            log.fine("Win version: " + getWindowsVersion());
         }
 
         java.security.AccessController.doPrivileged(
@@ -249,6 +255,11 @@ public class WToolkit extends SunToolkit implements Runnable {
         // Enabled "live resizing" by default.  It remains controlled
         // by the native system though.
         setDynamicLayout(true);
+
+        areExtraMouseButtonsEnabled = Boolean.parseBoolean(System.getProperty("sun.awt.enableExtraMouseButtons", "true"));
+        //set system property if not yet assigned
+        System.setProperty("sun.awt.enableExtraMouseButtons", ""+areExtraMouseButtonsEnabled);
+        setExtraMouseButtonsEnabledNative(areExtraMouseButtonsEnabled);
     }
 
     public void run() {
@@ -485,6 +496,12 @@ public class WToolkit extends SunToolkit implements Runnable {
         return true;
     }
 
+    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager)
+      throws HeadlessException
+    {
+        return new WKeyboardFocusManagerPeer(manager);
+    }
+
     protected native void setDynamicLayoutNative(boolean b);
 
     public void setDynamicLayout(boolean b) {
@@ -557,8 +574,11 @@ public class WToolkit extends SunToolkit implements Runnable {
 
 
     public FontMetrics getFontMetrics(Font font) {
-        // REMIND: platform font flag should be removed post-merlin.
-        if (sun.font.FontManager.usePlatformFontMetrics()) {
+        // This is an unsupported hack, but left in for a customer.
+        // Do not remove.
+        FontManager fm = FontManagerFactory.getInstance();
+        if (fm instanceof SunFontManager
+            && ((SunFontManager) fm).usePlatformFontMetrics()) {
             return WFontMetrics.getFontMetrics(font);
         }
         return super.getFontMetrics(font);
@@ -809,10 +829,10 @@ public class WToolkit extends SunToolkit implements Runnable {
         lazilyInitWProps();
         Boolean prop = (Boolean) desktopProperties.get("awt.dynamicLayoutSupported");
 
-        if (log.isLoggable(Level.FINER)) {
-            log.log(Level.FINER, "In WTK.isDynamicLayoutSupported()" +
-                    "   nativeDynamic == " + nativeDynamic +
-                    "   wprops.dynamic == " + prop);
+        if (log.isLoggable(PlatformLogger.FINER)) {
+            log.finer("In WTK.isDynamicLayoutSupported()" +
+                      "   nativeDynamic == " + nativeDynamic +
+                      "   wprops.dynamic == " + prop);
         }
 
         if ((prop == null) || (nativeDynamic != prop.booleanValue())) {
@@ -847,8 +867,8 @@ public class WToolkit extends SunToolkit implements Runnable {
         Map<String, Object> props = wprops.getProperties();
         for (String propName : props.keySet()) {
             Object val = props.get(propName);
-            if (log.isLoggable(Level.FINER)) {
-                log.log(Level.FINER, "changed " + propName + " to " + val);
+            if (log.isLoggable(PlatformLogger.FINER)) {
+                log.finer("changed " + propName + " to " + val);
             }
             setDesktopProperty(propName, val);
         }
@@ -871,14 +891,12 @@ public class WToolkit extends SunToolkit implements Runnable {
      * this should be done in lazilyLoadDesktopProperty() only.
      */
     protected synchronized void initializeDesktopProperties() {
-        desktopProperties.put("DnD.Autoscroll.initialDelay",     Integer.valueOf(50));
-        desktopProperties.put("DnD.Autoscroll.interval",         Integer.valueOf(50));
-
-        try {
-            desktopProperties.put("Shell.shellFolderManager",
-                                  Class.forName("sun.awt.shell.Win32ShellFolderManager2"));
-        } catch (ClassNotFoundException ex) {
-        }
+        desktopProperties.put("DnD.Autoscroll.initialDelay",
+                              Integer.valueOf(50));
+        desktopProperties.put("DnD.Autoscroll.interval",
+                              Integer.valueOf(50));
+        desktopProperties.put("Shell.shellFolderManager",
+                              "sun.awt.shell.Win32ShellFolderManager2");
     }
 
     /*
@@ -961,4 +979,49 @@ public class WToolkit extends SunToolkit implements Runnable {
         return new WDesktopPeer();
     }
 
+    public static native void setExtraMouseButtonsEnabledNative(boolean enable);
+
+    public boolean areExtraMouseButtonsEnabled() throws HeadlessException {
+        return areExtraMouseButtonsEnabled;
+    }
+
+    private native synchronized int getNumberOfButtonsImpl();
+
+    @Override
+    public int getNumberOfButtons(){
+        if (numberOfButtons == 0) {
+            numberOfButtons = getNumberOfButtonsImpl();
+        }
+        return (numberOfButtons > MAX_BUTTONS_SUPPORTED)? MAX_BUTTONS_SUPPORTED : numberOfButtons;
+    }
+
+    @Override
+    public boolean isWindowOpacitySupported() {
+        // supported in Win2K and later
+        return true;
+    }
+
+    @Override
+    public boolean isWindowShapingSupported() {
+        return true;
+    }
+
+    @Override
+    public boolean isWindowTranslucencySupported() {
+        // supported in Win2K and later
+        return true;
+    }
+
+    @Override
+    public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
+        //XXX: worth checking if 8-bit? Anyway, it doesn't hurt.
+        return true;
+    }
+
+    // On MS Windows one must use the peer.updateWindow() to implement
+    // non-opaque windows.
+    @Override
+    public boolean needUpdateWindow() {
+        return true;
+    }
 }

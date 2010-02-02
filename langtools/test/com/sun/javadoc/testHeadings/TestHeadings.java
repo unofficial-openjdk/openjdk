@@ -47,63 +47,68 @@ public class TestHeadings extends JavadocTester {
     private static final String[][] TEST = {
         //Package summary
         {BUG_ID + FS + "pkg1" + FS + "package-summary.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Class Summary</B></FONT></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Class</TH>" + NL + "<TH CLASS=\"TableHeader\" SCOPE=\"col\"" +
+            " NOWRAP>Description</TH>"
         },
 
         // Class documentation
         {BUG_ID + FS + "pkg1" + FS + "C1.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Field Summary</B></FONT></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Modifier and Type</TH>" + NL + "<TH CLASS=\"TableHeader\"" +
+            " SCOPE=\"col\" NOWRAP>Field and Description</TH>"
         },
         {BUG_ID + FS + "pkg1" + FS + "C1.html",
-            "<TH ALIGN=\"left\"><B>Methods inherited from class " +            "java.lang.Object</B></TH>"
+            "<TH ALIGN=\"left\"><STRONG>Methods inherited from class " +            "java.lang.Object</STRONG></TH>"
         },
 
         // Class use documentation
         {BUG_ID + FS + "pkg1" + FS + "class-use" + FS + "C1.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
-            "Packages that use <A HREF=\"../../pkg1/C1.html\" " +            "title=\"class in pkg1\">C1</A></FONT></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Package</TH>" + NL + "<TH CLASS=\"TableHeader\"" +
+            " SCOPE=\"col\" NOWRAP>Description</TH>"
         },
         {BUG_ID + FS + "pkg1" + FS + "class-use" + FS + "C1.html",
             "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
             "Uses of <A HREF=\"../../pkg1/C1.html\" " +            "title=\"class in pkg1\">C1</A> in " +            "<A HREF=\"../../pkg2/package-summary.html\">pkg2</A></FONT></TH>"
         },
         {BUG_ID + FS + "pkg1" + FS + "class-use" + FS + "C1.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"2\">Fields in " +            "<A HREF=\"../../pkg2/package-summary.html\">pkg2</A> " +            "declared as <A HREF=\"../../pkg1/C1.html\" " +            "title=\"class in pkg1\">C1</A></FONT></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Modifier and Type</TH>" + NL + "<TH CLASS=\"TableHeader\"" +
+            " SCOPE=\"col\" NOWRAP>Field and Description</TH>"
         },
 
         // Deprecated
         {BUG_ID + FS + "deprecated-list.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Deprecated Methods</B></FONT></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Method and Description</TH>"
         },
 
         // Constant values
         {BUG_ID + FS + "constant-values.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"3\">pkg1.<A HREF=\"pkg1/C1.html\" " +            "title=\"class in pkg1\">C1</A></TH>"
-        },
-        {BUG_ID + FS + "constant-values.html",
-            "<TH ALIGN=\"left\" COLSPAN=\"3\">pkg1.<A HREF=\"pkg1/C1.html\" " +            "title=\"class in pkg1\">C1</A></TH>"
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>" +
+            "Modifier and Type</TH>" + NL + "<TH CLASS=\"TableHeader\"" +
+            " SCOPE=\"col\" NOWRAP>Constant Field</TH>" + NL +
+            "<TH CLASS=\"TableHeader\" SCOPE=\"col\" NOWRAP>Value</TH>"
         },
 
         // Serialized Form
         {BUG_ID + FS + "serialized-form.html",
             "<TH ALIGN=\"center\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Package</B> <B>pkg1</B></FONT></TH>"
+            "<STRONG>Package</STRONG> <STRONG>pkg1</STRONG></FONT></TH>"
         },
         {BUG_ID + FS + "serialized-form.html",
             "<TH ALIGN=\"left\" COLSPAN=\"2\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Class <A HREF=\"pkg1/C1.html\" " +            "title=\"class in pkg1\">pkg1.C1</A> extends java.lang.Object " +            "implements Serializable</B></FONT></TH>"
+            "<STRONG>Class <A HREF=\"pkg1/C1.html\" " +            "title=\"class in pkg1\">pkg1.C1</A> extends java.lang.Object " +            "implements Serializable</STRONG></FONT></TH>"
         },
         {BUG_ID + FS + "serialized-form.html",
             "<TH ALIGN=\"left\" COLSPAN=\"1\"><FONT SIZE=\"+2\">" + NL +
-            "<B>Serialized Fields</B></FONT></TH>"
+            "<STRONG>Serialized Fields</STRONG></FONT></TH>"
         },
 
         // Overview Frame
         {BUG_ID + FS + "overview-frame.html",
-            "<TH ALIGN=\"left\" NOWRAP><FONT size=\"+1\" " +            "CLASS=\"FrameTitleFont\">" + NL + "<B>Test Files</B></FONT></TH>"
+            "<TH ALIGN=\"left\" NOWRAP><FONT size=\"+1\" " +            "CLASS=\"FrameTitleFont\">" + NL + "<STRONG>Test Files</STRONG></FONT></TH>"
         },
         {BUG_ID + FS + "overview-frame.html",
             "<TITLE>" + NL +

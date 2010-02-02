@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -314,17 +314,24 @@ class JvmtiThreadState : public CHeapObj {
   void update_for_pop_top_frame();
 
   // already holding JvmtiThreadState_lock - retrieve or create JvmtiThreadState
+  // Can return NULL if JavaThread is exiting.
   inline static JvmtiThreadState *state_for_while_locked(JavaThread *thread) {
     assert(JvmtiThreadState_lock->is_locked(), "sanity check");
 
     JvmtiThreadState *state = thread->jvmti_thread_state();
     if (state == NULL) {
+      if (thread->is_exiting()) {
+        // don't add a JvmtiThreadState to a thread that is exiting
+        return NULL;
+      }
+
       state = new JvmtiThreadState(thread);
     }
     return state;
   }
 
   // retrieve or create JvmtiThreadState
+  // Can return NULL if JavaThread is exiting.
   inline static JvmtiThreadState *state_for(JavaThread *thread) {
     JvmtiThreadState *state = thread->jvmti_thread_state();
     if (state == NULL) {
@@ -374,6 +381,9 @@ class JvmtiThreadState : public CHeapObj {
   static ByteSize earlyret_value_offset() { return byte_offset_of(JvmtiThreadState, _earlyret_value); }
 
   void oops_do(OopClosure* f); // GC support
+
+public:
+  void set_should_post_on_exceptions(bool val) { _thread->set_should_post_on_exceptions_flag(val ? JNI_TRUE : JNI_FALSE); }
 };
 
 class RedefineVerifyMark : public StackObj {

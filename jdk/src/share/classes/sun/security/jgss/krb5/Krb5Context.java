@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@
 
 package sun.security.jgss.krb5;
 
+import com.sun.security.jgss.InquireType;
 import org.ietf.jgss.*;
 import sun.misc.HexDumpEncoder;
 import sun.security.jgss.GSSUtil;
+import sun.security.jgss.GSSCaller;
 import sun.security.jgss.spi.*;
 import sun.security.jgss.TokenTracker;
 import sun.security.krb5.*;
@@ -37,8 +39,7 @@ import java.io.IOException;
 import java.security.Provider;
 import java.security.AccessController;
 import java.security.AccessControlContext;
-import java.security.GeneralSecurityException;
-import java.security.PrivilegedAction;
+import java.security.Key;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedActionException;
 import javax.crypto.Cipher;
@@ -77,6 +78,7 @@ class Krb5Context implements GSSContextSpi {
     private boolean sequenceDetState  = true;
     private boolean confState  = true;
     private boolean integState  = true;
+    private boolean delegPolicyState = false;
 
     private int mySeqNumber;
     private int peerSeqNumber;
@@ -113,14 +115,14 @@ class Krb5Context implements GSSContextSpi {
     // stored elsewhere
     private Credentials serviceCreds;
     private KrbApReq apReq;
-    final private int caller;
+    final private GSSCaller caller;
     private static final boolean DEBUG = Krb5Util.DEBUG;
 
     /**
      * Constructor for Krb5Context to be called on the context initiator's
      * side.
      */
-    Krb5Context(int caller, Krb5NameElement peerName, Krb5CredElement myCred,
+    Krb5Context(GSSCaller caller, Krb5NameElement peerName, Krb5CredElement myCred,
                 int lifetime)
         throws GSSException {
 
@@ -138,7 +140,7 @@ class Krb5Context implements GSSContextSpi {
      * Constructor for Krb5Context to be called on the context acceptor's
      * side.
      */
-    Krb5Context(int caller, Krb5CredElement myCred)
+    Krb5Context(GSSCaller caller, Krb5CredElement myCred)
         throws GSSException {
         this.caller = caller;
         this.myCred = myCred;
@@ -148,7 +150,7 @@ class Krb5Context implements GSSContextSpi {
     /**
      * Constructor for Krb5Context to import a previously exported context.
      */
-    public Krb5Context(int caller, byte [] interProcessToken)
+    public Krb5Context(GSSCaller caller, byte [] interProcessToken)
         throws GSSException {
         throw new GSSException(GSSException.UNAVAILABLE,
                                -1, "GSS Import Context not available");
@@ -298,6 +300,21 @@ class Krb5Context implements GSSContextSpi {
         return sequenceDetState || replayDetState;
     }
 
+    /**
+     * Requests that the deleg policy be respected.
+     */
+    public final void requestDelegPolicy(boolean value) {
+        if (state == STATE_NEW && isInitiator())
+            delegPolicyState = value;
+    }
+
+    /**
+     * Is deleg policy respected?
+     */
+    public final boolean getDelegPolicyState() {
+        return delegPolicyState;
+    }
+
     /*
      * Anonymity is a little different in that after an application
      * requests anonymity it will want to know whether the mechanism
@@ -419,6 +436,10 @@ class Krb5Context implements GSSContextSpi {
 
     final void setIntegState(boolean state) {
         integState = state;
+    }
+
+    final void setDelegPolicyState(boolean state) {
+        delegPolicyState = state;
     }
 
     /**
@@ -573,7 +594,7 @@ class Krb5Context implements GSSContextSpi {
                                     // SubjectComber.find
                                     // instead of Krb5Util.getTicket
                                     return Krb5Util.getTicket(
-                                        GSSUtil.CALLER_UNKNOWN,
+                                        GSSCaller.CALLER_UNKNOWN,
                                         // since it's useSubjectCredsOnly here,
                                         // don't worry about the null
                                         myName.getKrb5PrincipalName().getName(),
@@ -1280,8 +1301,85 @@ class Krb5Context implements GSSContextSpi {
         }
     }
 
-    int getCaller() {
+    GSSCaller getCaller() {
         // Currently used by InitialToken only
         return caller;
+    }
+
+    /**
+     * The session key returned by inquireSecContext(KRB5_INQ_SSPI_SESSION_KEY)
+     */
+    static class KerberosSessionKey implements Key {
+        private final EncryptionKey key;
+
+        KerberosSessionKey(EncryptionKey key) {
+            this.key = key;
+        }
+
+        @Override
+        public String getAlgorithm() {
+            return Integer.toString(key.getEType());
+        }
+
+        @Override
+        public String getFormat() {
+            return "RAW";
+        }
+
+        @Override
+        public byte[] getEncoded() {
+            return key.getBytes().clone();
+        }
+
+        @Override
+        public String toString() {
+            return "Kerberos session key: etype: " + key.getEType() + "\n" +
+                    new sun.misc.HexDumpEncoder().encodeBuffer(key.getBytes());
+        }
+    }
+
+    /**
+     * Return the mechanism-specific attribute associated with {@code type}.
+     */
+    public Object inquireSecContext(InquireType type)
+            throws GSSException {
+        if (!isEstablished()) {
+             throw new GSSException(GSSException.NO_CONTEXT, -1,
+                     "Security context not established.");
+        }
+        switch (type) {
+            case KRB5_GET_SESSION_KEY:
+                return new KerberosSessionKey(key);
+            case KRB5_GET_TKT_FLAGS:
+                return tktFlags.clone();
+            case KRB5_GET_AUTHZ_DATA:
+                if (isInitiator()) {
+                    throw new GSSException(GSSException.UNAVAILABLE, -1,
+                            "AuthzData not available on initiator side.");
+                } else {
+                    return (authzData==null)?null:authzData.clone();
+                }
+            case KRB5_GET_AUTHTIME:
+                return authTime;
+        }
+        throw new GSSException(GSSException.UNAVAILABLE, -1,
+                "Inquire type not supported.");
+    }
+
+    // Helpers for inquireSecContext
+    private boolean[] tktFlags;
+    private String authTime;
+    private com.sun.security.jgss.AuthorizationDataEntry[] authzData;
+
+    public void setTktFlags(boolean[] tktFlags) {
+        this.tktFlags = tktFlags;
+    }
+
+    public void setAuthTime(String authTime) {
+        this.authTime = authTime;
+    }
+
+    public void setAuthzData(com.sun.security.jgss.AuthorizationDataEntry[] authzData) {
+        this.authzData = authzData;
     }
 }

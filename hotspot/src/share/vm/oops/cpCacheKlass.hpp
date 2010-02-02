@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ class constantPoolCacheKlass: public Klass {
 
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(constantPoolCacheKlass);
-  constantPoolCacheOop allocate(int length, TRAPS);
+  constantPoolCacheOop allocate(int length, bool is_conc_safe, TRAPS);
   static klassOop create_klass(TRAPS);
 
   // Casting from klassOop
@@ -48,6 +48,7 @@ class constantPoolCacheKlass: public Klass {
   // Garbage collection
   void oop_follow_contents(oop obj);
   int oop_adjust_pointers(oop obj);
+  virtual bool oop_is_conc_safe(oop obj) const;
 
   // Parallel Scavenge and Parallel Old
   PARALLEL_GC_DECLS
@@ -60,9 +61,10 @@ class constantPoolCacheKlass: public Klass {
   juint alloc_size() const              { return _alloc_size; }
   void set_alloc_size(juint n)          { _alloc_size = n; }
 
-#ifndef PRODUCT
  public:
   // Printing
+  void oop_print_value_on(oop obj, outputStream* st);
+#ifndef PRODUCT
   void oop_print_on(oop obj, outputStream* st);
 #endif
 

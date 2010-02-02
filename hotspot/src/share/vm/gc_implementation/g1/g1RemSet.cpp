@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,11 +65,10 @@ public:
   void set_region(HeapRegion* from) {
     _blk->set_region(from);
   }
-  virtual void do_oop(narrowOop* p) {
-    guarantee(false, "NYI");
-  }
-  virtual void do_oop(oop* p) {
-    oop obj = *p;
+  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
+  virtual void do_oop(      oop* p) { do_oop_work(p); }
+  template <class T> void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop(p);
     if (_g1->obj_in_cs(obj)) _blk->do_oop(p);
   }
   bool apply_to_weak_ref_discovered_field() { return true; }
@@ -105,65 +104,15 @@ StupidG1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
   _g1->heap_region_iterate(&rc);
 }
 
-class UpdateRSOopClosure: public OopClosure {
-  HeapRegion* _from;
-  HRInto_G1RemSet* _rs;
-  int _worker_i;
-public:
-  UpdateRSOopClosure(HRInto_G1RemSet* rs, int worker_i = 0) :
-    _from(NULL), _rs(rs), _worker_i(worker_i) {
-    guarantee(_rs != NULL, "Requires an HRIntoG1RemSet");
-  }
-
-  void set_from(HeapRegion* from) {
-    assert(from != NULL, "from region must be non-NULL");
-    _from = from;
-  }
-
-  virtual void do_oop(narrowOop* p) {
-    guarantee(false, "NYI");
-  }
-  virtual void do_oop(oop* p) {
-    assert(_from != NULL, "from region must be non-NULL");
-    _rs->par_write_ref(_from, p, _worker_i);
-  }
-  // Override: this closure is idempotent.
-  //  bool idempotent() { return true; }
-  bool apply_to_weak_ref_discovered_field() { return true; }
-};
-
-class UpdateRSOutOfRegionClosure: public HeapRegionClosure {
-  G1CollectedHeap*    _g1h;
-  ModRefBarrierSet*   _mr_bs;
-  UpdateRSOopClosure  _cl;
-  int _worker_i;
-public:
-  UpdateRSOutOfRegionClosure(G1CollectedHeap* g1, int worker_i = 0) :
-    _cl(g1->g1_rem_set()->as_HRInto_G1RemSet(), worker_i),
-    _mr_bs(g1->mr_bs()),
-    _worker_i(worker_i),
-    _g1h(g1)
-    {}
-  bool doHeapRegion(HeapRegion* r) {
-    if (!r->in_collection_set() && !r->continuesHumongous()) {
-      _cl.set_from(r);
-      r->set_next_filter_kind(HeapRegionDCTOC::OutOfRegionFilterKind);
-      _mr_bs->mod_oop_in_space_iterate(r, &_cl, true, true);
-    }
-    return false;
-  }
-};
-
 class VerifyRSCleanCardOopClosure: public OopClosure {
   G1CollectedHeap* _g1;
 public:
   VerifyRSCleanCardOopClosure(G1CollectedHeap* g1) : _g1(g1) {}
 
-  virtual void do_oop(narrowOop* p) {
-    guarantee(false, "NYI");
-  }
-  virtual void do_oop(oop* p) {
-    oop obj = *p;
+  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
+  virtual void do_oop(      oop* p) { do_oop_work(p); }
+  template <class T> void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop(p);
     HeapRegion* to = _g1->heap_region_containing(obj);
     guarantee(to == NULL || !to->in_collection_set(),
               "Missed a rem set member.");
@@ -177,11 +126,19 @@ HRInto_G1RemSet::HRInto_G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
     _cards_scanned(NULL), _total_cards_scanned(0)
 {
   _seq_task = new SubTasksDone(NumSeqTasks);
-  _new_refs = NEW_C_HEAP_ARRAY(GrowableArray<oop*>*, ParallelGCThreads);
+  guarantee(n_workers() > 0, "There should be some workers");
+  _new_refs = NEW_C_HEAP_ARRAY(GrowableArray<OopOrNarrowOopStar>*, n_workers());
+  for (uint i = 0; i < n_workers(); i++) {
+    _new_refs[i] = new (ResourceObj::C_HEAP) GrowableArray<OopOrNarrowOopStar>(8192,true);
+  }
 }
 
 HRInto_G1RemSet::~HRInto_G1RemSet() {
   delete _seq_task;
+  for (uint i = 0; i < n_workers(); i++) {
+    delete _new_refs[i];
+  }
+  FREE_C_HEAP_ARRAY(GrowableArray<OopOrNarrowOopStar>*, _new_refs);
 }
 
 void CountNonCleanMemRegionClosure::do_MemRegion(MemRegion mr) {
@@ -199,6 +156,7 @@ class ScanRSClosure : public HeapRegionClosure {
   CardTableModRefBS *_ct_bs;
   int _worker_i;
   bool _try_claimed;
+  size_t _min_skip_distance, _max_skip_distance;
 public:
   ScanRSClosure(OopsInHeapRegionClosure* oc, int worker_i) :
     _oc(oc),
@@ -210,6 +168,8 @@ public:
     _g1h = G1CollectedHeap::heap();
     _bot_shared = _g1h->bot_shared();
     _ct_bs = (CardTableModRefBS*) (_g1h->barrier_set());
+    _min_skip_distance = 16;
+    _max_skip_distance = 2 * _g1h->n_par_threads() * _min_skip_distance;
   }
 
   void set_try_claimed() { _try_claimed = true; }
@@ -257,6 +217,7 @@ public:
     HeapRegionRemSet* hrrs = r->rem_set();
     if (hrrs->iter_is_complete()) return false; // All done.
     if (!_try_claimed && !hrrs->claim_iter()) return false;
+    _g1h->push_dirty_cards_region(r);
     // If we didn't return above, then
     //   _try_claimed || r->claim_iter()
     // is true: either we're supposed to work on claimed-but-not-complete
@@ -264,9 +225,13 @@ public:
     HeapRegionRemSetIterator* iter = _g1h->rem_set_iterator(_worker_i);
     hrrs->init_iterator(iter);
     size_t card_index;
+    size_t skip_distance = 0, current_card = 0, jump_to_card = 0;
     while (iter->has_next(card_index)) {
+      if (current_card < jump_to_card) {
+        ++current_card;
+        continue;
+      }
       HeapWord* card_start = _g1h->bot_shared()->address_for_index(card_index);
-
 #if 0
       gclog_or_tty->print("Rem set iteration yielded card [" PTR_FORMAT ", " PTR_FORMAT ").\n",
                           card_start, card_start + CardTableModRefBS::card_size_in_words);
@@ -276,19 +241,32 @@ public:
       assert(card_region != NULL, "Yielding cards not in the heap?");
       _cards++;
 
-      if (!card_region->in_collection_set()) {
-        // If the card is dirty, then we will scan it during updateRS.
-        if (!_ct_bs->is_card_claimed(card_index) &&
-            !_ct_bs->is_card_dirty(card_index)) {
-          assert(_ct_bs->is_card_clean(card_index) ||
-                 _ct_bs->is_card_claimed(card_index),
-                 "Card is either dirty, clean, or claimed");
-          if (_ct_bs->claim_card(card_index))
-            scanCard(card_index, card_region);
-        }
+      if (!card_region->is_on_dirty_cards_region_list()) {
+        _g1h->push_dirty_cards_region(card_region);
       }
+
+       // If the card is dirty, then we will scan it during updateRS.
+      if (!card_region->in_collection_set() && !_ct_bs->is_card_dirty(card_index)) {
+          if (!_ct_bs->is_card_claimed(card_index) && _ct_bs->claim_card(card_index)) {
+            scanCard(card_index, card_region);
+          } else if (_try_claimed) {
+            if (jump_to_card == 0 || jump_to_card != current_card) {
+              // We did some useful work in the previous iteration.
+              // Decrease the distance.
+              skip_distance = MAX2(skip_distance >> 1, _min_skip_distance);
+            } else {
+              // Previous iteration resulted in a claim failure.
+              // Increase the distance.
+              skip_distance = MIN2(skip_distance << 1, _max_skip_distance);
+            }
+            jump_to_card = current_card + skip_distance;
+          }
+      }
+      ++current_card;
     }
-    hrrs->set_iter_complete();
+    if (!_try_claimed) {
+      hrrs->set_iter_complete();
+    }
     return false;
   }
   // Set all cards back to clean.
@@ -338,14 +316,12 @@ void HRInto_G1RemSet::scanRS(OopsInHeapRegionClosure* oc, int worker_i) {
 
   _g1p->record_scan_rs_start_time(worker_i, rs_time_start * 1000.0);
   _g1p->record_scan_rs_time(worker_i, scan_rs_time_sec * 1000.0);
-  if (ParallelGCThreads > 0) {
-    // In this case, we called scanNewRefsRS and recorded the corresponding
-    // time.
-    double scan_new_refs_time_ms = _g1p->get_scan_new_refs_time(worker_i);
-    if (scan_new_refs_time_ms > 0.0) {
-      closure_app_time_ms += scan_new_refs_time_ms;
-    }
+
+  double scan_new_refs_time_ms = _g1p->get_scan_new_refs_time(worker_i);
+  if (scan_new_refs_time_ms > 0.0) {
+    closure_app_time_ms += scan_new_refs_time_ms;
   }
+
   _g1p->record_obj_copy_time(worker_i, closure_app_time_ms);
 }
 
@@ -355,30 +331,17 @@ void HRInto_G1RemSet::updateRS(int worker_i) {
   double start = os::elapsedTime();
   _g1p->record_update_rs_start_time(worker_i, start * 1000.0);
 
-  if (G1RSBarrierUseQueue && !cg1r->do_traversal()) {
-    // Apply the appropriate closure to all remaining log entries.
-    _g1->iterate_dirty_card_closure(false, worker_i);
-    // Now there should be no dirty cards.
-    if (G1RSLogCheckCardTable) {
-      CountNonCleanMemRegionClosure cl(_g1);
-      _ct_bs->mod_card_iterate(&cl);
-      // XXX This isn't true any more: keeping cards of young regions
-      // marked dirty broke it.  Need some reasonable fix.
-      guarantee(cl.n() == 0, "Card table should be clean.");
-    }
-  } else {
-    UpdateRSOutOfRegionClosure update_rs(_g1, worker_i);
-    _g1->heap_region_iterate(&update_rs);
-    // We did a traversal; no further one is necessary.
-    if (G1RSBarrierUseQueue) {
-      assert(cg1r->do_traversal(), "Or we shouldn't have gotten here.");
-      cg1r->set_pya_cancel();
-    }
-    if (_cg1r->use_cache()) {
-      _cg1r->clear_and_record_card_counts();
-      _cg1r->clear_hot_cache();
-    }
+  // Apply the appropriate closure to all remaining log entries.
+  _g1->iterate_dirty_card_closure(false, worker_i);
+  // Now there should be no dirty cards.
+  if (G1RSLogCheckCardTable) {
+    CountNonCleanMemRegionClosure cl(_g1);
+    _ct_bs->mod_card_iterate(&cl);
+    // XXX This isn't true any more: keeping cards of young regions
+    // marked dirty broke it.  Need some reasonable fix.
+    guarantee(cl.n() == 0, "Card table should be clean.");
   }
+
   _g1p->record_update_rs_time(worker_i, (os::elapsedTime() - start) * 1000.0);
 }
 
@@ -463,15 +426,15 @@ public:
   }
 };
 
-void
-HRInto_G1RemSet::scanNewRefsRS(OopsInHeapRegionClosure* oc,
-                                             int worker_i) {
+template <class T> void
+HRInto_G1RemSet::scanNewRefsRS_work(OopsInHeapRegionClosure* oc,
+                                    int worker_i) {
   double scan_new_refs_start_sec = os::elapsedTime();
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   CardTableModRefBS* ct_bs = (CardTableModRefBS*) (g1h->barrier_set());
-  while (_new_refs[worker_i]->is_nonempty()) {
-    oop* p = _new_refs[worker_i]->pop();
-    oop obj = *p;
+  for (int i = 0; i < _new_refs[worker_i]->length(); i++) {
+    T* p = (T*) _new_refs[worker_i]->at(i);
+    oop obj = oopDesc::load_decode_heap_oop(p);
     // *p was in the collection set when p was pushed on "_new_refs", but
     // another thread may have processed this location from an RS, so it
     // might not point into the CS any longer.  If so, it's obviously been
@@ -480,10 +443,6 @@ HRInto_G1RemSet::scanNewRefsRS(OopsInHeapRegionClosure* oc,
       HeapRegion* r = g1h->heap_region_containing(p);
 
       DEBUG_ONLY(HeapRegion* to = g1h->heap_region_containing(obj));
-      assert(ParallelGCThreads > 1
-             || to->rem_set()->contains_reference(p),
-             "Invariant: pushed after being added."
-             "(Not reliable in parallel code.)");
       oc->set_region(r);
       // If "p" has already been processed concurrently, this is
       // idempotent.
@@ -493,11 +452,6 @@ HRInto_G1RemSet::scanNewRefsRS(OopsInHeapRegionClosure* oc,
   _g1p->record_scan_new_refs_time(worker_i,
                                   (os::elapsedTime() - scan_new_refs_start_sec)
                                   * 1000.0);
-}
-
-void HRInto_G1RemSet::set_par_traversal(bool b) {
-  _par_traversal_in_progress = b;
-  HeapRegionRemSet::set_par_traversal(b);
 }
 
 void HRInto_G1RemSet::cleanupHRRS() {
@@ -526,20 +480,31 @@ HRInto_G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
   }
 
   if (ParallelGCThreads > 0) {
-    // This is a temporary change to serialize the update and scanning
-    // of remembered sets. There are some race conditions when this is
-    // done in parallel and they are causing failures. When we resolve
-    // said race conditions, we'll revert back to parallel remembered
-    // set updating and scanning. See CRs 6677707 and 6677708.
-    if (worker_i == 0) {
+    // The two flags below were introduced temporarily to serialize
+    // the updating and scanning of remembered sets. There are some
+    // race conditions when these two operations are done in parallel
+    // and they are causing failures. When we resolve said race
+    // conditions, we'll revert back to parallel remembered set
+    // updating and scanning. See CRs 6677707 and 6677708.
+    if (G1ParallelRSetUpdatingEnabled || (worker_i == 0)) {
       updateRS(worker_i);
       scanNewRefsRS(oc, worker_i);
+    } else {
+      _g1p->record_update_rs_start_time(worker_i, os::elapsedTime() * 1000.0);
+      _g1p->record_update_rs_processed_buffers(worker_i, 0.0);
+      _g1p->record_update_rs_time(worker_i, 0.0);
+      _g1p->record_scan_new_refs_time(worker_i, 0.0);
+    }
+    if (G1ParallelRSetScanningEnabled || (worker_i == 0)) {
       scanRS(oc, worker_i);
+    } else {
+      _g1p->record_scan_rs_start_time(worker_i, os::elapsedTime() * 1000.0);
+      _g1p->record_scan_rs_time(worker_i, 0.0);
     }
   } else {
     assert(worker_i == 0, "invariant");
-
     updateRS(0);
+    scanNewRefsRS(oc, 0);
     scanRS(oc, 0);
   }
 }
@@ -559,19 +524,13 @@ prepare_for_oops_into_collection_set_do() {
   assert(!_par_traversal_in_progress, "Invariant between iterations.");
   if (ParallelGCThreads > 0) {
     set_par_traversal(true);
-    int n_workers = _g1->workers()->total_workers();
-    _seq_task->set_par_threads(n_workers);
-    for (uint i = 0; i < ParallelGCThreads; i++)
-      _new_refs[i] = new (ResourceObj::C_HEAP) GrowableArray<oop*>(8192,true);
-
-    if (cg1r->do_traversal()) {
-      updateRS(0);
-      // Have to do this again after updaters
-      cleanupHRRS();
-    }
+    _seq_task->set_par_threads((int)n_workers());
   }
   guarantee( _cards_scanned == NULL, "invariant" );
   _cards_scanned = NEW_C_HEAP_ARRAY(size_t, n_workers());
+  for (uint i = 0; i < n_workers(); ++i) {
+    _cards_scanned[i] = 0;
+  }
   _total_cards_scanned = 0;
 }
 
@@ -583,6 +542,49 @@ class cleanUpIteratorsClosure : public HeapRegionClosure {
     return false;
   }
 };
+
+class UpdateRSetOopsIntoCSImmediate : public OopClosure {
+  G1CollectedHeap* _g1;
+public:
+  UpdateRSetOopsIntoCSImmediate(G1CollectedHeap* g1) : _g1(g1) { }
+  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
+  virtual void do_oop(      oop* p) { do_oop_work(p); }
+  template <class T> void do_oop_work(T* p) {
+    HeapRegion* to = _g1->heap_region_containing(oopDesc::load_decode_heap_oop(p));
+    if (to->in_collection_set()) {
+      to->rem_set()->add_reference(p, 0);
+    }
+  }
+};
+
+class UpdateRSetOopsIntoCSDeferred : public OopClosure {
+  G1CollectedHeap* _g1;
+  CardTableModRefBS* _ct_bs;
+  DirtyCardQueue* _dcq;
+public:
+  UpdateRSetOopsIntoCSDeferred(G1CollectedHeap* g1, DirtyCardQueue* dcq) :
+    _g1(g1), _ct_bs((CardTableModRefBS*)_g1->barrier_set()), _dcq(dcq) { }
+  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
+  virtual void do_oop(      oop* p) { do_oop_work(p); }
+  template <class T> void do_oop_work(T* p) {
+    oop obj = oopDesc::load_decode_heap_oop(p);
+    if (_g1->obj_in_cs(obj)) {
+      size_t card_index = _ct_bs->index_for(p);
+      if (_ct_bs->mark_card_deferred(card_index)) {
+        _dcq->enqueue((jbyte*)_ct_bs->byte_for_index(card_index));
+      }
+    }
+  }
+};
+
+template <class T> void HRInto_G1RemSet::new_refs_iterate_work(OopClosure* cl) {
+  for (size_t i = 0; i < n_workers(); i++) {
+    for (int j = 0; j < _new_refs[i]->length(); j++) {
+      T* p = (T*) _new_refs[i]->at(j);
+      cl->do_oop(p);
+    }
+  }
+}
 
 void HRInto_G1RemSet::cleanup_after_oops_into_collection_set_do() {
   guarantee( _cards_scanned != NULL, "invariant" );
@@ -601,16 +603,27 @@ void HRInto_G1RemSet::cleanup_after_oops_into_collection_set_do() {
   _g1->collection_set_iterate(&iterClosure);
   // Set all cards back to clean.
   _g1->cleanUpCardTable();
+
   if (ParallelGCThreads > 0) {
-    ConcurrentG1Refine* cg1r = _g1->concurrent_g1_refine();
-    if (cg1r->do_traversal()) {
-      cg1r->cg1rThread()->set_do_traversal(false);
-    }
-    for (uint i = 0; i < ParallelGCThreads; i++) {
-      delete _new_refs[i];
-    }
     set_par_traversal(false);
   }
+
+  if (_g1->evacuation_failed()) {
+    // Restore remembered sets for the regions pointing into
+    // the collection set.
+    if (G1DeferredRSUpdate) {
+      DirtyCardQueue dcq(&_g1->dirty_card_queue_set());
+      UpdateRSetOopsIntoCSDeferred deferred_update(_g1, &dcq);
+      new_refs_iterate(&deferred_update);
+    } else {
+      UpdateRSetOopsIntoCSImmediate immediate_update(_g1);
+      new_refs_iterate(&immediate_update);
+    }
+  }
+  for (uint i = 0; i < n_workers(); i++) {
+    _new_refs[i]->clear();
+  }
+
   assert(!_par_traversal_in_progress, "Invariant between iterations.");
 }
 
@@ -661,194 +674,14 @@ void HRInto_G1RemSet::scrub_par(BitMap* region_bm, BitMap* card_bm,
 }
 
 
-class ConcRefineRegionClosure: public HeapRegionClosure {
-  G1CollectedHeap* _g1h;
-  CardTableModRefBS* _ctbs;
-  ConcurrentGCThread* _cgc_thrd;
-  ConcurrentG1Refine* _cg1r;
-  unsigned _cards_processed;
-  UpdateRSOopClosure _update_rs_oop_cl;
-public:
-  ConcRefineRegionClosure(CardTableModRefBS* ctbs,
-                          ConcurrentG1Refine* cg1r,
-                          HRInto_G1RemSet* g1rs) :
-    _ctbs(ctbs), _cg1r(cg1r), _cgc_thrd(cg1r->cg1rThread()),
-    _update_rs_oop_cl(g1rs), _cards_processed(0),
-    _g1h(G1CollectedHeap::heap())
-  {}
-
-  bool doHeapRegion(HeapRegion* r) {
-    if (!r->in_collection_set() &&
-        !r->continuesHumongous() &&
-        !r->is_young()) {
-      _update_rs_oop_cl.set_from(r);
-      UpdateRSObjectClosure update_rs_obj_cl(&_update_rs_oop_cl);
-
-      // For each run of dirty card in the region:
-      //   1) Clear the cards.
-      //   2) Process the range corresponding to the run, adding any
-      //      necessary RS entries.
-      // 1 must precede 2, so that a concurrent modification redirties the
-      // card.  If a processing attempt does not succeed, because it runs
-      // into an unparseable region, we will do binary search to find the
-      // beginning of the next parseable region.
-      HeapWord* startAddr = r->bottom();
-      HeapWord* endAddr = r->used_region().end();
-      HeapWord* lastAddr;
-      HeapWord* nextAddr;
-
-      for (nextAddr = lastAddr = startAddr;
-           nextAddr < endAddr;
-           nextAddr = lastAddr) {
-        MemRegion dirtyRegion;
-
-        // Get and clear dirty region from card table
-        MemRegion next_mr(nextAddr, endAddr);
-        dirtyRegion =
-          _ctbs->dirty_card_range_after_reset(
-                           next_mr,
-                           true, CardTableModRefBS::clean_card_val());
-        assert(dirtyRegion.start() >= nextAddr,
-               "returned region inconsistent?");
-
-        if (!dirtyRegion.is_empty()) {
-          HeapWord* stop_point =
-            r->object_iterate_mem_careful(dirtyRegion,
-                                          &update_rs_obj_cl);
-          if (stop_point == NULL) {
-            lastAddr = dirtyRegion.end();
-            _cards_processed +=
-              (int) (dirtyRegion.word_size() / CardTableModRefBS::card_size_in_words);
-          } else {
-            // We're going to skip one or more cards that we can't parse.
-            HeapWord* next_parseable_card =
-              r->next_block_start_careful(stop_point);
-            // Round this up to a card boundary.
-            next_parseable_card =
-              _ctbs->addr_for(_ctbs->byte_after_const(next_parseable_card));
-            // Now we invalidate the intervening cards so we'll see them
-            // again.
-            MemRegion remaining_dirty =
-              MemRegion(stop_point, dirtyRegion.end());
-            MemRegion skipped =
-              MemRegion(stop_point, next_parseable_card);
-            _ctbs->invalidate(skipped.intersection(remaining_dirty));
-
-            // Now start up again where we can parse.
-            lastAddr = next_parseable_card;
-
-            // Count how many we did completely.
-            _cards_processed +=
-              (stop_point - dirtyRegion.start()) /
-              CardTableModRefBS::card_size_in_words;
-          }
-          // Allow interruption at regular intervals.
-          // (Might need to make them more regular, if we get big
-          // dirty regions.)
-          if (_cgc_thrd != NULL) {
-            if (_cgc_thrd->should_yield()) {
-              _cgc_thrd->yield();
-              switch (_cg1r->get_pya()) {
-              case PYA_continue:
-                // This may have changed: re-read.
-                endAddr = r->used_region().end();
-                continue;
-              case PYA_restart: case PYA_cancel:
-                return true;
-              }
-            }
-          }
-        } else {
-          break;
-        }
-      }
-    }
-    // A good yield opportunity.
-    if (_cgc_thrd != NULL) {
-      if (_cgc_thrd->should_yield()) {
-        _cgc_thrd->yield();
-        switch (_cg1r->get_pya()) {
-        case PYA_restart: case PYA_cancel:
-          return true;
-        default:
-          break;
-        }
-
-      }
-    }
-    return false;
-  }
-
-  unsigned cards_processed() { return _cards_processed; }
-};
-
-
-void HRInto_G1RemSet::concurrentRefinementPass(ConcurrentG1Refine* cg1r) {
-  ConcRefineRegionClosure cr_cl(ct_bs(), cg1r, this);
-  _g1->heap_region_iterate(&cr_cl);
-  _conc_refine_traversals++;
-  _conc_refine_cards += cr_cl.cards_processed();
-}
-
 static IntHistogram out_of_histo(50, 50);
 
-
-
-void HRInto_G1RemSet::concurrentRefineOneCard(jbyte* card_ptr, int worker_i) {
-  // If the card is no longer dirty, nothing to do.
-  if (*card_ptr != CardTableModRefBS::dirty_card_val()) return;
-
+void HRInto_G1RemSet::concurrentRefineOneCard_impl(jbyte* card_ptr, int worker_i) {
   // Construct the region representing the card.
   HeapWord* start = _ct_bs->addr_for(card_ptr);
   // And find the region containing it.
   HeapRegion* r = _g1->heap_region_containing(start);
-  if (r == NULL) {
-    guarantee(_g1->is_in_permanent(start), "Or else where?");
-    return;  // Not in the G1 heap (might be in perm, for example.)
-  }
-  // Why do we have to check here whether a card is on a young region,
-  // given that we dirty young regions and, as a result, the
-  // post-barrier is supposed to filter them out and never to enqueue
-  // them? When we allocate a new region as the "allocation region" we
-  // actually dirty its cards after we release the lock, since card
-  // dirtying while holding the lock was a performance bottleneck. So,
-  // as a result, it is possible for other threads to actually
-  // allocate objects in the region (after the acquire the lock)
-  // before all the cards on the region are dirtied. This is unlikely,
-  // and it doesn't happen often, but it can happen. So, the extra
-  // check below filters out those cards.
-  if (r->is_young()) {
-    return;
-  }
-  // While we are processing RSet buffers during the collection, we
-  // actually don't want to scan any cards on the collection set,
-  // since we don't want to update remebered sets with entries that
-  // point into the collection set, given that live objects from the
-  // collection set are about to move and such entries will be stale
-  // very soon. This change also deals with a reliability issue which
-  // involves scanning a card in the collection set and coming across
-  // an array that was being chunked and looking malformed. Note,
-  // however, that if evacuation fails, we have to scan any objects
-  // that were not moved and create any missing entries.
-  if (r->in_collection_set()) {
-    return;
-  }
-
-  // Should we defer it?
-  if (_cg1r->use_cache()) {
-    card_ptr = _cg1r->cache_insert(card_ptr);
-    // If it was not an eviction, nothing to do.
-    if (card_ptr == NULL) return;
-
-    // OK, we have to reset the card start, region, etc.
-    start = _ct_bs->addr_for(card_ptr);
-    r = _g1->heap_region_containing(start);
-    if (r == NULL) {
-      guarantee(_g1->is_in_permanent(start), "Or else where?");
-      return;  // Not in the G1 heap (might be in perm, for example.)
-    }
-    guarantee(!r->is_young(), "It was evicted in the current minor cycle.");
-  }
+  assert(r != NULL, "unexpected null");
 
   HeapWord* end   = _ct_bs->addr_for(card_ptr + 1);
   MemRegion dirtyRegion(start, end);
@@ -892,6 +725,106 @@ void HRInto_G1RemSet::concurrentRefineOneCard(jbyte* card_ptr, int worker_i) {
   }
 }
 
+void HRInto_G1RemSet::concurrentRefineOneCard(jbyte* card_ptr, int worker_i) {
+  // If the card is no longer dirty, nothing to do.
+  if (*card_ptr != CardTableModRefBS::dirty_card_val()) return;
+
+  // Construct the region representing the card.
+  HeapWord* start = _ct_bs->addr_for(card_ptr);
+  // And find the region containing it.
+  HeapRegion* r = _g1->heap_region_containing(start);
+  if (r == NULL) {
+    guarantee(_g1->is_in_permanent(start), "Or else where?");
+    return;  // Not in the G1 heap (might be in perm, for example.)
+  }
+  // Why do we have to check here whether a card is on a young region,
+  // given that we dirty young regions and, as a result, the
+  // post-barrier is supposed to filter them out and never to enqueue
+  // them? When we allocate a new region as the "allocation region" we
+  // actually dirty its cards after we release the lock, since card
+  // dirtying while holding the lock was a performance bottleneck. So,
+  // as a result, it is possible for other threads to actually
+  // allocate objects in the region (after the acquire the lock)
+  // before all the cards on the region are dirtied. This is unlikely,
+  // and it doesn't happen often, but it can happen. So, the extra
+  // check below filters out those cards.
+  if (r->is_young()) {
+    return;
+  }
+  // While we are processing RSet buffers during the collection, we
+  // actually don't want to scan any cards on the collection set,
+  // since we don't want to update remebered sets with entries that
+  // point into the collection set, given that live objects from the
+  // collection set are about to move and such entries will be stale
+  // very soon. This change also deals with a reliability issue which
+  // involves scanning a card in the collection set and coming across
+  // an array that was being chunked and looking malformed. Note,
+  // however, that if evacuation fails, we have to scan any objects
+  // that were not moved and create any missing entries.
+  if (r->in_collection_set()) {
+    return;
+  }
+
+  // Should we defer processing the card?
+  //
+  // Previously the result from the insert_cache call would be
+  // either card_ptr (implying that card_ptr was currently "cold"),
+  // null (meaning we had inserted the card ptr into the "hot"
+  // cache, which had some headroom), or a "hot" card ptr
+  // extracted from the "hot" cache.
+  //
+  // Now that the _card_counts cache in the ConcurrentG1Refine
+  // instance is an evicting hash table, the result we get back
+  // could be from evicting the card ptr in an already occupied
+  // bucket (in which case we have replaced the card ptr in the
+  // bucket with card_ptr and "defer" is set to false). To avoid
+  // having a data structure (updates to which would need a lock)
+  // to hold these unprocessed dirty cards, we need to immediately
+  // process card_ptr. The actions needed to be taken on return
+  // from cache_insert are summarized in the following table:
+  //
+  // res      defer   action
+  // --------------------------------------------------------------
+  // null     false   card evicted from _card_counts & replaced with
+  //                  card_ptr; evicted ptr added to hot cache.
+  //                  No need to process res; immediately process card_ptr
+  //
+  // null     true    card not evicted from _card_counts; card_ptr added
+  //                  to hot cache.
+  //                  Nothing to do.
+  //
+  // non-null false   card evicted from _card_counts & replaced with
+  //                  card_ptr; evicted ptr is currently "cold" or
+  //                  caused an eviction from the hot cache.
+  //                  Immediately process res; process card_ptr.
+  //
+  // non-null true    card not evicted from _card_counts; card_ptr is
+  //                  currently cold, or caused an eviction from hot
+  //                  cache.
+  //                  Immediately process res; no need to process card_ptr.
+
+  jbyte* res = card_ptr;
+  bool defer = false;
+  if (_cg1r->use_cache()) {
+    jbyte* res = _cg1r->cache_insert(card_ptr, &defer);
+    if (res != NULL && (res != card_ptr || defer)) {
+      start = _ct_bs->addr_for(res);
+      r = _g1->heap_region_containing(start);
+      if (r == NULL) {
+        assert(_g1->is_in_permanent(start), "Or else where?");
+      } else {
+        guarantee(!r->is_young(), "It was evicted in the current minor cycle.");
+        // Process card pointer we get back from the hot card cache
+        concurrentRefineOneCard_impl(res, worker_i);
+      }
+    }
+  }
+
+  if (!defer) {
+    concurrentRefineOneCard_impl(card_ptr, worker_i);
+  }
+}
+
 class HRRSStatsIter: public HeapRegionClosure {
   size_t _occupied;
   size_t _total_mem_sz;
@@ -923,10 +856,16 @@ public:
   HeapRegion* max_mem_sz_region() { return _max_mem_sz_region; }
 };
 
+class PrintRSThreadVTimeClosure : public ThreadClosure {
+public:
+  virtual void do_thread(Thread *t) {
+    ConcurrentG1RefineThread* crt = (ConcurrentG1RefineThread*) t;
+    gclog_or_tty->print("    %5.2f", crt->vtime_accum());
+  }
+};
+
 void HRInto_G1RemSet::print_summary_info() {
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
-  ConcurrentG1RefineThread* cg1r_thrd =
-    g1->concurrent_g1_refine()->cg1rThread();
 
 #if CARD_REPEAT_HISTO
   gclog_or_tty->print_cr("\nG1 card_repeat count histogram: ");
@@ -939,15 +878,13 @@ void HRInto_G1RemSet::print_summary_info() {
     gclog_or_tty->print_cr("  # of CS ptrs --> # of cards with that number.");
     out_of_histo.print_on(gclog_or_tty);
   }
-  gclog_or_tty->print_cr("\n Concurrent RS processed %d cards in "
-                "%5.2fs.",
-                _conc_refine_cards, cg1r_thrd->vtime_accum());
-
+  gclog_or_tty->print_cr("\n Concurrent RS processed %d cards",
+                         _conc_refine_cards);
   DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   jint tot_processed_buffers =
     dcqs.processed_buffers_mut() + dcqs.processed_buffers_rs_thread();
   gclog_or_tty->print_cr("  Of %d completed buffers:", tot_processed_buffers);
-  gclog_or_tty->print_cr("     %8d (%5.1f%%) by conc RS thread.",
+  gclog_or_tty->print_cr("     %8d (%5.1f%%) by conc RS threads.",
                 dcqs.processed_buffers_rs_thread(),
                 100.0*(float)dcqs.processed_buffers_rs_thread()/
                 (float)tot_processed_buffers);
@@ -955,15 +892,12 @@ void HRInto_G1RemSet::print_summary_info() {
                 dcqs.processed_buffers_mut(),
                 100.0*(float)dcqs.processed_buffers_mut()/
                 (float)tot_processed_buffers);
-  gclog_or_tty->print_cr("   Did %d concurrent refinement traversals.",
-                _conc_refine_traversals);
-  if (!G1RSBarrierUseQueue) {
-    gclog_or_tty->print_cr("   Scanned %8.2f cards/traversal.",
-                  _conc_refine_traversals > 0 ?
-                  (float)_conc_refine_cards/(float)_conc_refine_traversals :
-                  0);
-  }
+  gclog_or_tty->print_cr("  Conc RS threads times(s)");
+  PrintRSThreadVTimeClosure p;
+  gclog_or_tty->print("     ");
+  g1->concurrent_g1_refine()->threads_do(&p);
   gclog_or_tty->print_cr("");
+
   if (G1UseHRIntoRS) {
     HRRSStatsIter blk;
     g1->heap_region_iterate(&blk);
@@ -977,9 +911,8 @@ void HRInto_G1RemSet::print_summary_info() {
     gclog_or_tty->print_cr("    %d occupied cards represented.",
                            blk.occupied());
     gclog_or_tty->print_cr("    Max sz region = [" PTR_FORMAT ", " PTR_FORMAT " )"
-                           " %s, cap = " SIZE_FORMAT "K, occ = " SIZE_FORMAT "K.",
+                           ", cap = " SIZE_FORMAT "K, occ = " SIZE_FORMAT "K.",
                            blk.max_mem_sz_region()->bottom(), blk.max_mem_sz_region()->end(),
-                           (blk.max_mem_sz_region()->popular() ? "POP" : ""),
                            (blk.max_mem_sz_region()->rem_set()->mem_size() + K - 1)/K,
                            (blk.max_mem_sz_region()->rem_set()->occupied() + K - 1)/K);
     gclog_or_tty->print_cr("    Did %d coarsenings.",
@@ -988,7 +921,9 @@ void HRInto_G1RemSet::print_summary_info() {
   }
 }
 void HRInto_G1RemSet::prepare_for_verify() {
-  if (G1HRRSFlushLogBuffersOnVerify && VerifyBeforeGC && !_g1->full_collection()) {
+  if (G1HRRSFlushLogBuffersOnVerify &&
+      (VerifyBeforeGC || VerifyAfterGC)
+      &&  !_g1->full_collection()) {
     cleanupHRRS();
     _g1->set_refine_cte_cl_concurrency(false);
     if (SafepointSynchronize::is_at_safepoint()) {
@@ -999,5 +934,7 @@ void HRInto_G1RemSet::prepare_for_verify() {
     _cg1r->set_use_cache(false);
     updateRS(0);
     _cg1r->set_use_cache(cg1r_use_cache);
+
+    assert(JavaThread::dirty_card_queue_set().completed_buffers_num() == 0, "All should be consumed");
   }
 }

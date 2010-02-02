@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,10 @@
 
 package com.sun.tools.classfile;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Iterator;
 
 /**
  * See JVMS3, section 4.5.
@@ -38,6 +41,7 @@ import java.io.IOException;
 public class ConstantPool {
 
     public class InvalidIndex extends ConstantPoolException {
+        private static final long serialVersionUID = -4350294289300939730L;
         InvalidIndex(int index) {
             super(index);
         }
@@ -50,6 +54,7 @@ public class ConstantPool {
     }
 
     public class UnexpectedEntry extends ConstantPoolException {
+        private static final long serialVersionUID = 6986335935377933211L;
         UnexpectedEntry(int index, int expected_tag, int found_tag) {
             super(index);
             this.expected_tag = expected_tag;
@@ -67,6 +72,7 @@ public class ConstantPool {
     }
 
     public class InvalidEntry extends ConstantPoolException {
+        private static final long serialVersionUID = 1000087545585204447L;
         InvalidEntry(int index, int tag) {
             super(index);
             this.tag = tag;
@@ -82,6 +88,7 @@ public class ConstantPool {
     }
 
     public class EntryNotFound extends ConstantPoolException {
+        private static final long serialVersionUID = 2885537606468581850L;
         EntryNotFound(Object value) {
             super(-1);
             this.value = value;
@@ -174,6 +181,16 @@ public class ConstantPool {
         return pool.length;
     }
 
+    public int byteLength() {
+        int length = 2;
+        for (int i = 1; i < size(); ) {
+            CPInfo cpInfo = pool[i];
+            length += cpInfo.byteLength();
+            i += cpInfo.size();
+        }
+        return length;
+    }
+
     public CPInfo get(int index) throws InvalidIndex {
         if (index <= 0 || index >= pool.length)
             throw new InvalidIndex(index);
@@ -219,6 +236,40 @@ public class ConstantPool {
         throw new EntryNotFound(value);
     }
 
+    public Iterable<CPInfo> entries() {
+        return new Iterable<CPInfo>() {
+            public Iterator<CPInfo> iterator() {
+                return new Iterator<CPInfo>() {
+
+                    public boolean hasNext() {
+                        return next < pool.length;
+                    }
+
+                    public CPInfo next() {
+                        current = pool[next];
+                        switch (current.getTag()) {
+                            case CONSTANT_Double:
+                            case CONSTANT_Long:
+                                next += 2;
+                                break;
+                            default:
+                                next += 1;
+                        }
+                        return current;
+                    }
+
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    private CPInfo current;
+                    private int next = 1;
+
+                };
+            }
+        };
+    }
+
     private CPInfo[] pool;
 
     public interface Visitor<R,P> {
@@ -246,6 +297,14 @@ public class ConstantPool {
 
         public abstract int getTag();
 
+        /** The number of slots in the constant pool used by this entry.
+         * 2 for CONSTANT_Double and CONSTANT_Long; 1 for everything else. */
+        public int size() {
+            return 1;
+        }
+
+        public abstract int byteLength();
+
         public abstract <R,D> R accept(Visitor<R,D> visitor, D data);
 
         protected final ConstantPool cp;
@@ -268,6 +327,10 @@ public class ConstantPool {
 
         public int getTag() {
             return tag;
+        }
+
+        public int byteLength() {
+            return 5;
         }
 
         public CONSTANT_Class_info getClassInfo() throws ConstantPoolException {
@@ -302,8 +365,45 @@ public class ConstantPool {
             return CONSTANT_Class;
         }
 
+        public int  byteLength() {
+            return 3;
+        }
+
+        /**
+         * Get the raw value of the class referenced by this constant pool entry.
+         * This will either be the name of the class, in internal form, or a
+         * descriptor for an array class.
+         * @return the raw value of the class
+         */
         public String getName() throws ConstantPoolException {
             return cp.getUTF8Value(name_index);
+        }
+
+        /**
+         * If this constant pool entry identifies either a class or interface type,
+         * or a possibly multi-dimensional array of a class of interface type,
+         * return the name of the class or interface in internal form. Otherwise,
+         * (i.e. if this is a possibly multi-dimensional array of a primitive type),
+         * return null.
+         * @return the base class or interface name
+         */
+        public String getBaseName() throws ConstantPoolException {
+            String name = getName();
+            if (name.startsWith("[")) {
+                int index = name.indexOf("[L");
+                if (index == -1)
+                    return null;
+                return name.substring(index + 2, name.length() - 1);
+            } else
+                return name;
+        }
+
+        public int getDimensionCount() throws ConstantPoolException {
+            String name = getName();
+            int count = 0;
+            while (name.charAt(count) == '[')
+                count++;
+            return count;
         }
 
         @Override
@@ -329,6 +429,15 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Double;
+        }
+
+        public int  byteLength() {
+            return 9;
+        }
+
+        @Override
+        public int size() {
+            return 2;
         }
 
         @Override
@@ -375,6 +484,10 @@ public class ConstantPool {
             return CONSTANT_Float;
         }
 
+        public int byteLength() {
+            return 5;
+        }
+
         @Override
         public String toString() {
             return "CONSTANT_Float_info[value: " + value + "]";
@@ -398,6 +511,10 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Integer;
+        }
+
+        public int byteLength() {
+            return 5;
         }
 
         @Override
@@ -442,6 +559,15 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Long;
+        }
+
+        @Override
+        public int size() {
+            return 2;
+        }
+
+        public int byteLength() {
+            return 9;
         }
 
         @Override
@@ -492,6 +618,10 @@ public class ConstantPool {
             return CONSTANT_NameAndType;
         }
 
+        public int byteLength() {
+            return 5;
+        }
+
         public String getName() throws ConstantPoolException {
             return cp.getUTF8Value(name_index);
         }
@@ -502,6 +632,11 @@ public class ConstantPool {
 
         public <R, D> R accept(Visitor<R, D> visitor, D data) {
             return visitor.visitNameAndType(this, data);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_NameAndType_info[name_index: " + name_index + ", type_index: " + type_index + "]";
         }
 
         public final int name_index;
@@ -523,12 +658,21 @@ public class ConstantPool {
             return CONSTANT_String;
         }
 
+        public int byteLength() {
+            return 3;
+        }
+
         public String getString() throws ConstantPoolException {
             return cp.getUTF8Value(string_index);
         }
 
         public <R, D> R accept(Visitor<R, D> visitor, D data) {
             return visitor.visitString(this, data);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_String_info[class_index: " + string_index + "]";
         }
 
         public final int string_index;
@@ -547,9 +691,35 @@ public class ConstantPool {
             return CONSTANT_Utf8;
         }
 
+        public int byteLength() {
+            class SizeOutputStream extends OutputStream {
+                @Override
+                public void write(int b) throws IOException {
+                    size++;
+                }
+                int size;
+            }
+            SizeOutputStream sizeOut = new SizeOutputStream();
+            DataOutputStream out = new DataOutputStream(sizeOut);
+            try { out.writeUTF(value); } catch (IOException ignore) { }
+            return 1 + sizeOut.size;
+        }
+
         @Override
         public String toString() {
-            return "CONSTANT_Utf8_info[value: " + value + "]";
+            if (value.length() < 32 && isPrintableAscii(value))
+                return "CONSTANT_Utf8_info[value: \"" + value + "\"]";
+            else
+                return "CONSTANT_Utf8_info[value: (" + value.length() + " chars)]";
+        }
+
+        static boolean isPrintableAscii(String s) {
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if (c < 32 || c >= 127)
+                    return false;
+            }
+            return true;
         }
 
         public <R, D> R accept(Visitor<R, D> visitor, D data) {

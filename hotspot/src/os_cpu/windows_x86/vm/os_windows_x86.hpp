@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,6 @@
   static jint      (*atomic_add_func)           (jint,      volatile jint*);
   static intptr_t  (*atomic_add_ptr_func)       (intptr_t,  volatile intptr_t*);
 
-  static void      (*fence_func)                ();
-
-
   static jint      atomic_xchg_bootstrap        (jint,      volatile jint*);
   static intptr_t  atomic_xchg_ptr_bootstrap    (intptr_t,  volatile intptr_t*);
 
@@ -53,8 +50,6 @@
 #ifdef AMD64
   static jint      atomic_add_bootstrap         (jint,      volatile jint*);
   static intptr_t  atomic_add_ptr_bootstrap     (intptr_t,  volatile intptr_t*);
-
-  static void      fence_bootstrap              ();
 #endif // AMD64
 
   static void setup_fpu();

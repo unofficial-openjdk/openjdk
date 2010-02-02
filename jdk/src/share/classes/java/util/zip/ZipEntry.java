@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package java.util.zip;
 
 import java.util.Date;
+import sun.misc.BootClassLoaderHook;
 
 /**
  * This class is used to represent a ZIP file entry.
@@ -40,6 +41,7 @@ class ZipEntry implements ZipConstants, Cloneable {
     long size = -1;     // uncompressed size of entry data
     long csize = -1;    // compressed size of entry data
     int method = -1;    // compression method
+    int flag = 0;       // general purpose flag
     byte[] extra;       // optional extra field data for entry
     String comment;     // optional comment string for entry
 
@@ -52,13 +54,6 @@ class ZipEntry implements ZipConstants, Cloneable {
      * Compression method for compressed (deflated) entries.
      */
     public static final int DEFLATED = 8;
-
-    static {
-        /* Zip library is loaded from System.initializeSystemClass */
-        initIDs();
-    }
-
-    private static native void initIDs();
 
     /**
      * Creates a new zip entry with the specified name.
@@ -90,28 +85,15 @@ class ZipEntry implements ZipConstants, Cloneable {
         size = e.size;
         csize = e.csize;
         method = e.method;
+        flag = e.flag;
         extra = e.extra;
         comment = e.comment;
     }
 
     /*
-     * Creates a new zip entry for the given name with fields initialized
-     * from the specified jzentry data.
+     * Creates a new un-initialized zip entry
      */
-    ZipEntry(String name, long jzentry) {
-        this.name = name;
-        initFields(jzentry);
-    }
-
-    private native void initFields(long jzentry);
-
-    /*
-     * Creates a new zip entry with fields initialized from the specified
-     * jzentry data.
-     */
-    ZipEntry(long jzentry) {
-        initFields(jzentry);
-    }
+    ZipEntry() {}
 
     /**
      * Returns the name of the entry.
@@ -128,7 +110,19 @@ class ZipEntry implements ZipConstants, Cloneable {
      * @see #getTime()
      */
     public void setTime(long time) {
-        this.time = javaToDosTime(time);
+        // Same value as defined in sun.jkernel.DownloadManager.KERNEL_STATIC_MODTIME
+        // to avoid direct reference to DownoadManager class.  Need to revisit
+        // if this is needed any more (see comment in the DownloadManager class)
+        final int KERNEL_STATIC_MODTIME = 10000000;
+        BootClassLoaderHook hook = BootClassLoaderHook.getHook();
+        if (hook != null && hook.isCurrentThreadPrefetching()) {
+            // fix for bug 6625963: we bypass time calculations while Kernel is
+            // downloading bundles, since they aren't necessary and would cause
+            // the Kernel core to depend upon the (very large) time zone data
+            this.time = KERNEL_STATIC_MODTIME;
+        } else {
+            this.time = javaToDosTime(time);
+        }
     }
 
     /**
@@ -144,11 +138,13 @@ class ZipEntry implements ZipConstants, Cloneable {
      * Sets the uncompressed size of the entry data.
      * @param size the uncompressed size in bytes
      * @exception IllegalArgumentException if the specified size is less
-     *            than 0 or greater than 0xFFFFFFFF bytes
+     *            than 0, is greater than 0xFFFFFFFF when
+     *            <a href="package-summary.html#zip64">ZIP64 format</a> is not supported,
+     *            or is less than 0 when ZIP64 is supported
      * @see #getSize()
      */
     public void setSize(long size) {
-        if (size < 0 || size > 0xFFFFFFFFL) {
+        if (size < 0) {
             throw new IllegalArgumentException("invalid entry size");
         }
         this.size = size;
@@ -256,16 +252,16 @@ class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Sets the optional comment string for the entry.
+     *
+     * <p>ZIP entry comments have maximum length of 0xffff. If the length of the
+     * specified comment string is greater than 0xFFFF bytes after encoding, only
+     * the first 0xFFFF bytes are output to the ZIP file entry.
+     *
      * @param comment the comment string
-     * @exception IllegalArgumentException if the length of the specified
-     *            comment string is greater than 0xFFFF bytes
+     *
      * @see #getComment()
      */
     public void setComment(String comment) {
-        if (comment != null && comment.length() > 0xffff/3
-                    && ZipOutputStream.getUTF8Length(comment) > 0xffff) {
-            throw new IllegalArgumentException("invalid entry comment length");
-        }
         this.comment = comment;
     }
 

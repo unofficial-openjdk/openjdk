@@ -53,7 +53,12 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
         }
     }
 
-    native void create(WComponentPeer parent);
+    native void createAwtDialog(WComponentPeer parent);
+    void create(WComponentPeer parent) {
+        preCreate(parent);
+        createAwtDialog(parent);
+    }
+
     native void showModal();
     native void endModal();
 
@@ -93,7 +98,7 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
 
     public void blockWindows(java.util.List<Window> toBlock) {
         for (Window w : toBlock) {
-            WWindowPeer wp = (WWindowPeer)ComponentAccessor.getPeer(w);
+            WWindowPeer wp = (WWindowPeer)AWTAccessor.getComponentAccessor().getPeer(w);
             if (wp != null) {
                 wp.setModalBlocked((Dialog)target, true);
             }
@@ -114,12 +119,10 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
     }
 
     public void reshape(int x, int y, int width, int height) {
-        Rectangle newBounds = constrainBounds(x, y, width, height);
-
         if (((Dialog)target).isUndecorated()) {
-            super.reshape(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
+            super.reshape(x, y, width, height);
         } else {
-            reshapeFrame(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
+            reshapeFrame(x, y, width, height);
         }
     }
 

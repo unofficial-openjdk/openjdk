@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -58,11 +58,12 @@ ifdef OPENJDK
 else
   RENDER_SUBDIR = dcpr
 endif
-SUBDIRS = jar security javazic misc net audio $(RENDER_SUBDIR) image \
-	  awt splashscreen $(XAWT_SUBDIR) \
+# nio need to be compiled before awt to have all charsets ready
+SUBDIRS = jar security javazic misc jkernel net audio $(RENDER_SUBDIR) image \
+	  nio awt splashscreen $(XAWT_SUBDIR) \
           $(HEADLESS_SUBDIR) $(DGA_SUBDIR) \
 	  font jpeg cmm applet rmi beans $(JDBC_SUBDIR) \
-	  jawt text nio launcher management $(ORG_SUBDIR) \
+	  jawt text launcher management $(ORG_SUBDIR) \
           native2ascii serialver tools jconsole tracing
 
 all build clean clobber::

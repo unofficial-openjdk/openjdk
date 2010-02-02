@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ echo "CLASSPATH=${CLASSPATH}"
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS | Linux )
+  SunOS | Linux | CYGWIN* )
     FS="/"
     ;;
   Windows_95 | Windows_98 | Windows_NT )
@@ -56,7 +56,7 @@ esac
 TMP1=T4955930.javap
 
 cp "${TESTSRC}${FS}T4955930.java" .
-"${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -target 6 T4955930.java
+"${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -source 6 -target 6 T4955930.java
 result=$?
 if [ $result -ne 0 ]
 then

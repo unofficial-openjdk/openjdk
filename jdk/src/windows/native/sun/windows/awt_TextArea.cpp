@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,9 @@
 #include "awt_Toolkit.h"
 #include "awt_TextArea.h"
 #include "awt_TextComponent.h"
-#include "awt_dlls.h"
-#include "awt_KeyboardFocusManager.h"
 #include "awt_Canvas.h"
-#include "awt_Unicode.h"
 #include "awt_Window.h"
+#include "awt_Frame.h"
 
 /* IMPORTANT! Read the README.JNI file for notes on JNI converted AWT code.
  */
@@ -50,7 +48,6 @@ struct ReplaceTextStruct {
 jfieldID AwtTextArea::scrollbarVisibilityID;
 
 WNDPROC AwtTextArea::sm_pDefWindowProc = NULL;
-BOOL AwtTextArea::sm_RichEdit20 = (IS_WIN98 || IS_NT);
 
 /************************************************************************
  * AwtTextArea methods
@@ -78,8 +75,12 @@ void AwtTextArea::Dispose()
 }
 
 LPCTSTR AwtTextArea::GetClassName() {
-    load_rich_edit_library();
-    return sm_RichEdit20 ? RICHEDIT_CLASS : TEXT("RICHEDIT");
+    static BOOL richedLibraryLoaded = FALSE;
+    if (!richedLibraryLoaded) {
+        ::LoadLibrary(TEXT("RICHED20.DLL"));
+        richedLibraryLoaded = TRUE;
+    }
+    return RICHEDIT_CLASS;
 }
 
 /* Create a new AwtTextArea object and window.   */
@@ -134,9 +135,8 @@ AwtTextArea* AwtTextArea::Create(jobject peer, jobject parent)
            * scrollbars instead of hiding them when not needed.
            */
           DWORD style = WS_CHILD | WS_CLIPSIBLINGS | ES_LEFT | ES_MULTILINE |
-              ES_WANTRETURN | scroll_style |
-              (IS_WIN4X ? 0 : WS_BORDER) | ES_DISABLENOSCROLL;
-          DWORD exStyle = IS_WIN4X ? WS_EX_CLIENTEDGE : 0;
+              ES_WANTRETURN | scroll_style | ES_DISABLENOSCROLL;
+          DWORD exStyle = WS_EX_CLIENTEDGE;
           if (GetRTL()) {
               exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
               if (GetRTLReadingOrder())
@@ -169,9 +169,7 @@ AwtTextArea* AwtTextArea::Create(jobject peer, jobject parent)
           //    end-of-document marker or carriage return,
           //    to format paragraphs.
           // kdm@sparc.spb.su
-          if (sm_RichEdit20) {
-              c->SendMessage(EM_SETTEXTMODE, TM_PLAINTEXT, 0);
-          }
+          c->SendMessage(EM_SETTEXTMODE, TM_PLAINTEXT, 0);
 
           c->m_backgroundColorSet = TRUE;
           /* suppress inheriting parent's color. */
@@ -242,7 +240,7 @@ size_t AwtTextArea::CountNewLines(JNIEnv *env, jstring jStr, size_t maxlen)
      */
     size_t length = env->GetStringLength(jStr) + 1;
     WCHAR *string = new WCHAR[length];
-    env->GetStringRegion(jStr, 0, static_cast<jsize>(length - 1), string);
+    env->GetStringRegion(jStr, 0, static_cast<jsize>(length - 1), reinterpret_cast<jchar*>(string));
     string[length-1] = '\0';
     for (size_t i = 0; i < maxlen && i < length - 1; i++) {
         if (string[i] == L'\n') {
@@ -364,13 +362,6 @@ AwtTextArea::EditProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     DASSERT(::IsWindow(::GetParent(hWnd)));
 
     switch (message) {
-    case WM_SETFOCUS:
-        ::SendMessage(::GetParent(hWnd), EM_HIDESELECTION, FALSE, 0);
-        break;
-    case WM_KILLFOCUS:
-        ::SendMessage(::GetParent(hWnd), EM_HIDESELECTION, TRUE, 0);
-        break;
-
     case WM_UNDO:
     case WM_CUT:
     case WM_COPY:
@@ -402,7 +393,6 @@ AwtTextArea::EditProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
 MsgRouting
 AwtTextArea::WmContextMenu(HWND hCtrl, UINT xPos, UINT yPos) {
-
     /* Use the system provided edit control class to generate context menu. */
     if (m_hEditCtrl == NULL) {
         DWORD dwStyle = WS_CHILD;
@@ -461,12 +451,7 @@ AwtTextArea::WmContextMenu(HWND hCtrl, UINT xPos, UINT yPos) {
             /* Check if all the text is selected. */
             if (cr.cpMin == 0) {
 
-                int len = 0;
-                if (m_isWin95) {
-                    len = ::GetWindowTextLengthA(GetHWnd());
-                } else {
-                    len = ::GetWindowTextLengthW(GetHWnd());
-                }
+                int len = ::GetWindowTextLength(GetHWnd());
                 if (cr.cpMin == 0 && cr.cpMax >= len) {
                     /*
                      * All the text is selected in RichEdit - select all the
@@ -501,22 +486,11 @@ AwtTextArea::WmContextMenu(HWND hCtrl, UINT xPos, UINT yPos) {
         VERIFY(::ClientToScreen(GetHWnd(), &p));
     }
 
-    ::SendMessage(m_hEditCtrl, WM_CONTEXTMENU, (WPARAM)m_hEditCtrl,
-                  MAKELPARAM(p.x, p.y));
-    /*
-     * After the context menu is dismissed focus is owned by the edit contol.
-     * Return focus to parent.
-     */
-    if (IsFocusable() && AwtComponent::sm_focusOwner != GetHWnd()) {
-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        jobject target = GetTarget(env);
-        env->CallStaticVoidMethod
-            (AwtKeyboardFocusManager::keyboardFocusManagerCls,
-             AwtKeyboardFocusManager::heavyweightButtonDownMID,
-             target, TimeHelper::getMessageTimeUTC());
-        env->DeleteLocalRef(target);
-        AwtSetFocus();
-    }
+    // The context menu steals focus from the proxy.
+    // So, set the focus-restore flag up.
+    SetRestoreFocus(TRUE);
+    ::SendMessage(m_hEditCtrl, WM_CONTEXTMENU, (WPARAM)m_hEditCtrl, MAKELPARAM(p.x, p.y));
+    SetRestoreFocus(FALSE);
 
     return mrConsume;
 }
@@ -565,20 +539,11 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
      * By consuming WM_MOUSEMOVE messages we also don't give
      * the RichEdit control a chance to recognize a drag gesture
      * and initiate its own drag-n-drop operation.
+     *
+     * The workaround also allows us to implement synthetic focus mechanism.
+     *
      */
-    if (msg->message == WM_LBUTTONDOWN || msg->message == WM_LBUTTONDBLCLK) {
-
-        if (IsFocusable() && AwtComponent::sm_focusOwner != GetHWnd()) {
-            JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-            jobject target = GetTarget(env);
-            env->CallStaticVoidMethod
-                (AwtKeyboardFocusManager::keyboardFocusManagerCls,
-                 AwtKeyboardFocusManager::heavyweightButtonDownMID,
-                 target, ((jlong)msg->time) & 0xFFFFFFFF);
-            env->DeleteLocalRef(target);
-            AwtSetFocus();
-        }
-
+    if (IsFocusingMouseMessage(msg)) {
         CHARRANGE cr;
 
         LONG lCurPos = EditGetCharFromPos(msg->pt);
@@ -724,6 +689,7 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
             p.x = -1;
             p.y = -1;
         }
+
         if (!::PostMessage(GetHWnd(), WM_CONTEXTMENU, (WPARAM)GetHWnd(),
                            MAKELPARAM(p.x, p.y))) {
             JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -731,6 +697,8 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
             env->ExceptionDescribe();
             env->ExceptionClear();
         }
+        delete msg;
+        return mrConsume;
     } else if (msg->message == WM_MOUSEWHEEL) {
         // 4417236: If there is an old version of RichEd32.dll which
         // does not provide the mouse wheel scrolling we have to
@@ -738,14 +706,8 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
         // kdm@sparc.spb.su
         UINT platfScrollLines = 3;
         // Retrieve a number of scroll lines.
-        if (!sm_RichEdit20) {
-            // 95 doesn't understand the SPI_GETWHEELSCROLLLINES - get the user
-            // preference by other means
-            platfScrollLines = Wheel95GetScrLines();
-        } else {
-            ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
-                                   &platfScrollLines, 0);
-        }
+        ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                               &platfScrollLines, 0);
 
         if (platfScrollLines > 0) {
             HWND hWnd = GetHWnd();
@@ -836,23 +798,6 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
     m_synthetic = FALSE;
 
     return returnVal;
-}
-
-int AwtTextArea::GetText(LPTSTR buffer, int size)
-{
-    // Due to a known limitation of the MSLU, GetWindowText cannot be
-    // issued for the Unicode RichEdit control on Win9x. Use EM_GETTEXTEX instead.
-    if (sm_RichEdit20 && !IS_NT) {
-        GETTEXTEX gte;
-        gte.cb            = size * sizeof(TCHAR);
-        gte.flags         = GT_USECRLF;
-        gte.codepage      = 1200; // implies Unicode
-        gte.lpDefaultChar = NULL;
-        gte.lpUsedDefChar = NULL;
-        return (int)SendMessage(EM_GETTEXTEX, (WPARAM)&gte, (LPARAM)buffer);
-    } else {
-        return ::GetWindowText(GetHWnd(), buffer, size);
-    }
 }
 
 /*
@@ -984,16 +929,16 @@ void AwtTextArea::_ReplaceText(void *param)
       jsize length = env->GetStringLength(text) + 1;
       // Bugid 4141477 - Can't use TO_WSTRING here because it uses alloca
       // WCHAR* buffer = TO_WSTRING(text);
-      WCHAR *buffer = new WCHAR[length];
-      env->GetStringRegion(text, 0, length-1, buffer);
+      TCHAR *buffer = new TCHAR[length];
+      env->GetStringRegion(text, 0, length-1, reinterpret_cast<jchar*>(buffer));
       buffer[length-1] = '\0';
 
       c->CheckLineSeparator(buffer);
       c->RemoveCR(buffer);
       // Fix for 5003402: added restoring/hiding selection to enable automatic scrolling
       c->SendMessage(EM_HIDESELECTION, FALSE, TRUE);
-      c->SendMessageW(EM_SETSEL, start, end);
-      c->SendMessageW(EM_REPLACESEL, FALSE, (LPARAM)buffer);
+      c->SendMessage(EM_SETSEL, start, end);
+      c->SendMessage(EM_REPLACESEL, FALSE, (LPARAM)buffer);
       c->SendMessage(EM_HIDESELECTION, TRUE, TRUE);
 
       delete[] buffer;
@@ -1187,12 +1132,11 @@ AwtTextArea::OleCallback::QueryAcceptData(LPDATAOBJECT pdataobj,
                                                HGLOBAL hMetaPict) {
     if (reco == RECO_PASTE) {
         // If CF_TEXT format is available edit controls will select it,
-        // otherwise if it is WinNT or Win2000 and CF_UNICODETEXT is
-        // available it will be selected, otherwise if CF_OEMTEXT is
-        // available it will be selected.
+        // otherwise if it is CF_UNICODETEXT is available it will be
+        // selected, otherwise if CF_OEMTEXT is available it will be selected.
         if (::IsClipboardFormatAvailable(CF_TEXT)) {
             *pcfFormat = CF_TEXT;
-        } else if (!m_isWin95 && ::IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+        } else if (::IsClipboardFormatAvailable(CF_UNICODETEXT)) {
             *pcfFormat = CF_UNICODETEXT;
         } else if (::IsClipboardFormatAvailable(CF_OEMTEXT)) {
             *pcfFormat = CF_OEMTEXT;

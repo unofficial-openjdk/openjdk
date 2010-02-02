@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
  */
 
 class AdapterHandlerEntry;
+class AdapterHandlerTable;
+class AdapterFingerPrint;
 class vframeStream;
 
 // Runtime is the base class for various runtime interfaces
@@ -166,6 +168,9 @@ class SharedRuntime: AllStatic {
   static void throw_and_post_jvmti_exception(JavaThread *thread, Handle h_exception);
   static void throw_and_post_jvmti_exception(JavaThread *thread, symbolOop name, const char *message = NULL);
 
+  // RedefineClasses() tracing support for obsolete method entry
+  static int rc_trace_method_entry(JavaThread* thread, methodOopDesc* m);
+
   // To be used as the entry point for unresolved native methods.
   static address native_method_throw_unsatisfied_link_error_entry();
 
@@ -176,9 +181,6 @@ class SharedRuntime: AllStatic {
   static void yield_all(JavaThread* thread, int attempts = 0);
 
   static oop retrieve_receiver( symbolHandle sig, frame caller );
-
-  static void verify_caller_frame(frame caller_frame, methodHandle callee_method) PRODUCT_RETURN;
-  static methodHandle find_callee_method_inside_interpreter(frame caller_frame, methodHandle caller_method, int bci) PRODUCT_RETURN_(return methodHandle(););
 
   static void register_finalizer(JavaThread* thread, oopDesc* obj);
 
@@ -212,10 +214,32 @@ class SharedRuntime: AllStatic {
   static char* generate_class_cast_message(JavaThread* thr, const char* name);
 
   /**
+   * Fill in the message for a WrongMethodTypeException
+   *
+   * @param thr the current thread
+   * @param mtype (optional) expected method type (or argument class)
+   * @param mhandle (optional) actual method handle (or argument)
+   * @return the dynamically allocated exception message
+   *
+   * BCP for the frame on top of the stack must refer to an
+   * 'invokevirtual' op for a method handle, or an 'invokedyamic' op.
+   * The caller (or one of its callers) must use a ResourceMark
+   * in order to correctly free the result.
+   */
+  static char* generate_wrong_method_type_message(JavaThread* thr,
+                                                  oopDesc* mtype = NULL,
+                                                  oopDesc* mhandle = NULL);
+
+  /** Return non-null if the mtype is a klass or Class, not a MethodType. */
+  static oop wrong_method_type_is_for_single_argument(JavaThread* thr,
+                                                      oopDesc* mtype);
+
+  /**
    * Fill in the "X cannot be cast to a Y" message for ClassCastException
    *
    * @param name the name of the class of the object attempted to be cast
    * @param klass the name of the target klass attempt
+   * @param gripe the specific kind of problem being reported
    * @return the dynamically allocated exception message (must be freed
    * by the caller using a resource mark)
    *
@@ -224,7 +248,8 @@ class SharedRuntime: AllStatic {
    * The caller (or one of it's callers) must use a ResourceMark
    * in order to correctly free the result.
    */
-  static char* generate_class_cast_message(const char* name, const char* klass);
+  static char* generate_class_cast_message(const char* name, const char* klass,
+                                           const char* gripe = " cannot be cast to ");
 
   // Resolves a call site- may patch in the destination of the call into the
   // compiled code.
@@ -314,7 +339,8 @@ class SharedRuntime: AllStatic {
                                                       int total_args_passed,
                                                       int max_arg,
                                                       const BasicType *sig_bt,
-                                                      const VMRegPair *regs);
+                                                      const VMRegPair *regs,
+                                                      AdapterFingerPrint* fingerprint);
 
   // OSR support
 
@@ -334,7 +360,7 @@ class SharedRuntime: AllStatic {
 
   // Convert a sig into a calling convention register layout
   // and find interesting things about it.
-  static VMRegPair* find_callee_arguments(symbolOop sig, bool is_static, int *arg_size);
+  static VMRegPair* find_callee_arguments(symbolOop sig, bool has_receiver, int *arg_size);
   static VMReg     name_for_receiver();
 
   // "Top of Stack" slots that may be unused by the calling convention but must
@@ -505,28 +531,41 @@ class SharedRuntime: AllStatic {
 // used by the adapters.  The code generation happens here because it's very
 // similar to what the adapters have to do.
 
-class AdapterHandlerEntry : public CHeapObj {
+class AdapterHandlerEntry : public BasicHashtableEntry {
+  friend class AdapterHandlerTable;
+
  private:
+  AdapterFingerPrint* _fingerprint;
   address _i2c_entry;
   address _c2i_entry;
   address _c2i_unverified_entry;
 
- public:
+  void init(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry) {
+    _fingerprint = fingerprint;
+    _i2c_entry = i2c_entry;
+    _c2i_entry = c2i_entry;
+    _c2i_unverified_entry = c2i_unverified_entry;
+  }
 
+  // should never be used
+  AdapterHandlerEntry();
+
+ public:
   // The name we give all buffer blobs
   static const char* name;
-
-  AdapterHandlerEntry(address i2c_entry, address c2i_entry, address c2i_unverified_entry):
-    _i2c_entry(i2c_entry),
-    _c2i_entry(c2i_entry),
-    _c2i_unverified_entry(c2i_unverified_entry) {
-  }
 
   address get_i2c_entry()            { return _i2c_entry; }
   address get_c2i_entry()            { return _c2i_entry; }
   address get_c2i_unverified_entry() { return _c2i_unverified_entry; }
 
   void relocate(address new_base);
+
+  AdapterFingerPrint* fingerprint()  { return _fingerprint; }
+
+  AdapterHandlerEntry* next() {
+    return (AdapterHandlerEntry*)BasicHashtableEntry::next();
+  }
+
 #ifndef PRODUCT
   void print();
 #endif /* PRODUCT */
@@ -534,30 +573,19 @@ class AdapterHandlerEntry : public CHeapObj {
 
 class AdapterHandlerLibrary: public AllStatic {
  private:
-  static u_char                   _buffer[];  // the temporary code buffer
-  static GrowableArray<uint64_t>* _fingerprints; // the fingerprint collection
-  static GrowableArray<AdapterHandlerEntry*> * _handlers; // the corresponding handlers
-  enum {
-    AbstractMethodHandler = 1 // special handler for abstract methods
-  };
+  static BufferBlob* _buffer; // the temporary code buffer in CodeCache
+  static AdapterHandlerTable* _adapters;
+  static AdapterHandlerEntry* _abstract_method_handler;
+  static BufferBlob* buffer_blob();
   static void initialize();
-  static int get_create_adapter_index(methodHandle method);
-  static address get_i2c_entry( int index ) {
-    return get_entry(index)->get_i2c_entry();
-  }
-  static address get_c2i_entry( int index ) {
-    return get_entry(index)->get_c2i_entry();
-  }
-  static address get_c2i_unverified_entry( int index ) {
-    return get_entry(index)->get_c2i_unverified_entry();
-  }
 
  public:
-  static AdapterHandlerEntry* get_entry( int index ) { return _handlers->at(index); }
+
+  static AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint,
+                                        address i2c_entry, address c2i_entry, address c2i_unverified_entry);
   static nmethod* create_native_wrapper(methodHandle method);
-  static AdapterHandlerEntry* get_adapter(methodHandle method)  {
-    return get_entry(get_create_adapter_index(method));
-  }
+  static AdapterHandlerEntry* get_adapter(methodHandle method);
+
 #ifdef HAVE_DTRACE_H
   static nmethod* create_dtrace_nmethod (methodHandle method);
 #endif // HAVE_DTRACE_H
@@ -565,6 +593,7 @@ class AdapterHandlerLibrary: public AllStatic {
 #ifndef PRODUCT
   static void print_handler(CodeBlob* b);
   static bool contains(CodeBlob* b);
+  static void print_statistics();
 #endif /* PRODUCT */
 
 };

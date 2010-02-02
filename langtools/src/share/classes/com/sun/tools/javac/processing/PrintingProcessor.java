@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,8 @@ import java.util.*;
  * deletion without notice.</b>
  */
 @SupportedAnnotationTypes("*")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+// TODO: Change to version 7 based visitors when available
+@SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class PrintingProcessor extends AbstractProcessor {
     PrintWriter writer;
 
@@ -125,7 +126,7 @@ public class PrintingProcessor extends AbstractProcessor {
                     return this;
 
                 defaultAction(e, true);
-                printFormalTypeParameters(e);
+                printFormalTypeParameters(e, true);
 
                 switch(kind) {
                     case CONSTRUCTOR:
@@ -207,7 +208,7 @@ public class PrintingProcessor extends AbstractProcessor {
                 writer.print(" ");
                 writer.print(e.getSimpleName());
 
-                printFormalTypeParameters(e);
+                printFormalTypeParameters(e, false);
 
                 // Print superclass information if informative
                 if (kind == CLASS) {
@@ -364,16 +365,9 @@ public class PrintingProcessor extends AbstractProcessor {
             }
         }
 
-        private void printFormalTypeParameters(ExecutableElement executable) {
-            printFormalTypeParameters(executable.getTypeParameters(), true);
-        }
-
-        private void printFormalTypeParameters(TypeElement type) {
-            printFormalTypeParameters(type.getTypeParameters(), false);
-        }
-
-        private void printFormalTypeParameters(List<? extends TypeParameterElement> typeParams,
+        private void printFormalTypeParameters(Parameterizable e,
                                                boolean pad) {
+            List<? extends TypeParameterElement> typeParams = e.getTypeParameters();
             if (typeParams.size() > 0) {
                 writer.print("<");
 
@@ -381,6 +375,7 @@ public class PrintingProcessor extends AbstractProcessor {
                 for(TypeParameterElement tpe: typeParams) {
                     if (!first)
                         writer.print(", ");
+                    printAnnotationsInline(tpe);
                     writer.print(tpe.toString());
                     first = false;
                 }

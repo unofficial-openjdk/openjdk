@@ -1,5 +1,5 @@
 #
-# Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,14 @@ LinuxDebuggerLocal.o: LinuxDebuggerLocal.c
 ifndef LDNOMAP
   LFLAGS_LIBSA = -Xlinker --version-script=mapfile
 endif
+
+# If this is a --hash-style=gnu system, use --hash-style=both
+#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | grep -- '--hash-style=gnu')
+ifneq ($(_HAS_HASH_STYLE_GNU),)
+  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+endif
+LFLAGS_LIBSA += $(LDFLAGS_HASH_STYLE)
 
 $(LIBSA): $(OBJS) mapfile
 	if [ ! -d $(ARCH) ] ; then mkdir $(ARCH) ; fi

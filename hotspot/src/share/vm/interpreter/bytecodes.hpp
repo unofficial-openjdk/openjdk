@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -218,7 +218,7 @@ class Bytecodes: AllStatic {
     _invokespecial        = 183, // 0xb7
     _invokestatic         = 184, // 0xb8
     _invokeinterface      = 185, // 0xb9
-    _xxxunusedxxx         = 186, // 0xba
+    _invokedynamic        = 186, // 0xba     // if EnableInvokeDynamic
     _new                  = 187, // 0xbb
     _newarray             = 188, // 0xbc
     _anewarray            = 189, // 0xbd

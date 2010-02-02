@@ -204,6 +204,15 @@ public class TreeInfo {
         return (JCMethodInvocation)exec.expr;
     }
 
+    /** Return true if a tree represents a diamond new expr. */
+    public static boolean isDiamond(JCTree tree) {
+        switch(tree.getTag()) {
+            case JCTree.TYPEAPPLY: return ((JCTypeApply)tree).getTypeArguments().isEmpty();
+            case JCTree.NEWCLASS: return isDiamond(((JCNewClass)tree).clazz);
+            default: return false;
+        }
+    }
+
     /** Return true if a tree represents the null literal. */
     public static boolean isNull(JCTree tree) {
         if (tree.getTag() != JCTree.LITERAL)
@@ -298,6 +307,8 @@ public class TreeInfo {
         case(JCTree.POSTINC):
         case(JCTree.POSTDEC):
             return getStartPos(((JCUnary) tree).arg);
+        case(JCTree.ANNOTATED_TYPE):
+            return getStartPos(((JCAnnotatedType) tree).underlyingType);
         case(JCTree.VARDEF): {
             JCVariableDecl node = (JCVariableDecl)tree;
             if (node.mods.pos != Position.NOPOS) {
@@ -857,6 +868,27 @@ public class TreeInfo {
 
         default:
             return null;
+        }
+    }
+
+    /**
+     * Returns the underlying type of the tree if it is annotated type,
+     * or the tree itself otherwise
+     */
+    public static JCExpression typeIn(JCExpression tree) {
+        switch (tree.getTag()) {
+        case JCTree.ANNOTATED_TYPE:
+            return ((JCAnnotatedType)tree).underlyingType;
+        case JCTree.IDENT: /* simple names */
+        case JCTree.TYPEIDENT: /* primitive name */
+        case JCTree.SELECT: /* qualified name */
+        case JCTree.TYPEARRAY: /* array types */
+        case JCTree.WILDCARD: /* wild cards */
+        case JCTree.TYPEPARAMETER: /* type parameters */
+        case JCTree.TYPEAPPLY: /* parameterized types */
+            return tree;
+        default:
+            throw new AssertionError("Unexpected type tree: " + tree);
         }
     }
 }

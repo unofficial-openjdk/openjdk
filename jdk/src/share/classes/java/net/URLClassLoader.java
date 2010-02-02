@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,12 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.Closeable;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandlerFactory;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.jar.Manifest;
@@ -70,12 +72,12 @@ import sun.security.util.SecurityConstants;
  * @author  David Connelly
  * @since   1.2
  */
-public class URLClassLoader extends SecureClassLoader {
+public class URLClassLoader extends SecureClassLoader implements Closeable {
     /* The search path for classes and resources */
-    URLClassPath ucp;
+    private final URLClassPath ucp;
 
     /* The context to be used when loading classes and resources */
-    private AccessControlContext acc;
+    private final AccessControlContext acc;
 
     /**
      * Constructs a new URLClassLoader for the given URLs. The URLs will be
@@ -85,13 +87,13 @@ public class URLClassLoader extends SecureClassLoader {
      * to refer to a JAR file which will be downloaded and opened as needed.
      *
      * <p>If there is a security manager, this method first
-     * calls the security manager's <code>checkCreateClassLoader</code> method
+     * calls the security manager's {@code checkCreateClassLoader} method
      * to ensure creation of a class loader is allowed.
      *
      * @param urls the URLs from which to load classes and resources
      * @param parent the parent class loader for delegation
      * @exception  SecurityException  if a security manager exists and its
-     *             <code>checkCreateClassLoader</code> method doesn't allow
+     *             {@code checkCreateClassLoader} method doesn't allow
      *             creation of a class loader.
      * @see SecurityManager#checkCreateClassLoader
      */
@@ -103,7 +105,19 @@ public class URLClassLoader extends SecureClassLoader {
             security.checkCreateClassLoader();
         }
         ucp = new URLClassPath(urls);
-        acc = AccessController.getContext();
+        this.acc = AccessController.getContext();
+    }
+
+    URLClassLoader(URL[] urls, ClassLoader parent,
+                   AccessControlContext acc) {
+        super(parent);
+        // this is to make the stack depth consistent with 1.1
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkCreateClassLoader();
+        }
+        ucp = new URLClassPath(urls);
+        this.acc = acc;
     }
 
     /**
@@ -134,7 +148,18 @@ public class URLClassLoader extends SecureClassLoader {
             security.checkCreateClassLoader();
         }
         ucp = new URLClassPath(urls);
-        acc = AccessController.getContext();
+        this.acc = AccessController.getContext();
+    }
+
+    URLClassLoader(URL[] urls, AccessControlContext acc) {
+        super();
+        // this is to make the stack depth consistent with 1.1
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkCreateClassLoader();
+        }
+        ucp = new URLClassPath(urls);
+        this.acc = acc;
     }
 
     /**
@@ -169,12 +194,65 @@ public class URLClassLoader extends SecureClassLoader {
         acc = AccessController.getContext();
     }
 
+
+   /**
+    * Closes this URLClassLoader, so that it can no longer be used to load
+    * new classes or resources that are defined by this loader.
+    * Classes and resources defined by any of this loader's parents in the
+    * delegation hierarchy are still accessible. Also, any classes or resources
+    * that are already loaded, are still accessible.
+    * <p>
+    * In the case of jar: and file: URLs, it also closes any class files,
+    * or JAR files that were opened by it. If another thread is loading a
+    * class when the {@code close} method is invoked, then the result of
+    * that load is undefined.
+    * <p>
+    * The method makes a best effort attempt to close all opened files,
+    * by catching {@link IOException}s internally. Unchecked exceptions
+    * and errors are not caught. Calling close on an already closed
+    * loader has no effect.
+    * <p>
+    * @throws IOException if closing any file opened by this class loader
+    * resulted in an IOException. Any such exceptions are caught, and a
+    * single IOException is thrown after the last file has been closed.
+    * If only one exception was thrown, it will be set as the <i>cause</i>
+    * of this IOException.
+    *
+    * @throws SecurityException if a security manager is set, and it denies
+    *   {@link RuntimePermission}<tt>("closeClassLoader")</tt>
+    *
+    * @since 1.7
+    */
+    public void close() throws IOException {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("closeClassLoader"));
+        }
+        List<IOException> errors = ucp.closeLoaders();
+        if (errors.isEmpty()) {
+            return;
+        }
+        if (errors.size() == 1) {
+            throw new IOException (
+                "Error closing URLClassLoader resource",
+                errors.get(0)
+            );
+        }
+        // Several exceptions. So, just combine the error messages
+        String errormsg = "Error closing resources: ";
+        for (IOException error: errors) {
+            errormsg = errormsg + "[" + error.toString() + "] ";
+        }
+        throw new IOException (errormsg);
+    }
+
     /**
      * Appends the specified URL to the list of URLs to search for
      * classes and resources.
      * <p>
      * If the URL specified is <code>null</code> or is already in the
-     * list of URLs, then invoking this method has no effect.
+     * list of URLs, or if this loader is closed, then invoking this
+     * method has no effect.
      *
      * @param url the URL to be added to the search path of URLs
      */
@@ -199,7 +277,8 @@ public class URLClassLoader extends SecureClassLoader {
      *
      * @param name the name of the class
      * @return the resulting class
-     * @exception ClassNotFoundException if the class could not be found
+     * @exception ClassNotFoundException if the class could not be found,
+     *            or if the loader is closed.
      */
     protected Class<?> findClass(final String name)
          throws ClassNotFoundException
@@ -227,41 +306,62 @@ public class URLClassLoader extends SecureClassLoader {
     }
 
     /*
+     * Retrieve the package using the specified package name.
+     * If non-null, verify the package using the specified code
+     * source and manifest.
+     */
+    private Package getAndVerifyPackage(String pkgname,
+                                        Manifest man, URL url) {
+        Package pkg = getPackage(pkgname);
+        if (pkg != null) {
+            // Package found, so check package sealing.
+            if (pkg.isSealed()) {
+                // Verify that code source URL is the same.
+                if (!pkg.isSealed(url)) {
+                    throw new SecurityException(
+                        "sealing violation: package " + pkgname + " is sealed");
+                }
+            } else {
+                // Make sure we are not attempting to seal the package
+                // at this code source URL.
+                if ((man != null) && isSealed(pkgname, man)) {
+                    throw new SecurityException(
+                        "sealing violation: can't seal package " + pkgname +
+                        ": already loaded");
+                }
+            }
+        }
+        return pkg;
+    }
+
+    /*
      * Defines a Class using the class bytes obtained from the specified
      * Resource. The resulting Class must be resolved before it can be
      * used.
      */
     private Class defineClass(String name, Resource res) throws IOException {
+        long t0 = System.nanoTime();
         int i = name.lastIndexOf('.');
         URL url = res.getCodeSourceURL();
         if (i != -1) {
             String pkgname = name.substring(0, i);
             // Check if package already loaded.
-            Package pkg = getPackage(pkgname);
             Manifest man = res.getManifest();
-            if (pkg != null) {
-                // Package found, so check package sealing.
-                if (pkg.isSealed()) {
-                    // Verify that code source URL is the same.
-                    if (!pkg.isSealed(url)) {
-                        throw new SecurityException(
-                            "sealing violation: package " + pkgname + " is sealed");
+            if (getAndVerifyPackage(pkgname, man, url) == null) {
+                try {
+                    if (man != null) {
+                        definePackage(pkgname, man, url);
+                    } else {
+                        definePackage(pkgname, null, null, null, null, null, null, null);
                     }
-
-                } else {
-                    // Make sure we are not attempting to seal the package
-                    // at this code source URL.
-                    if ((man != null) && isSealed(pkgname, man)) {
-                        throw new SecurityException(
-                            "sealing violation: can't seal package " + pkgname +
-                            ": already loaded");
+                } catch (IllegalArgumentException iae) {
+                    // parallel-capable class loaders: re-verify in case of a
+                    // race condition
+                    if (getAndVerifyPackage(pkgname, man, url) == null) {
+                        // Should never happen
+                        throw new AssertionError("Cannot find package " +
+                                                 pkgname);
                     }
-                }
-            } else {
-                if (man != null) {
-                    definePackage(pkgname, man, url);
-                } else {
-                    definePackage(pkgname, null, null, null, null, null, null, null);
                 }
             }
         }
@@ -271,12 +371,14 @@ public class URLClassLoader extends SecureClassLoader {
             // Use (direct) ByteBuffer:
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
+            sun.misc.PerfCounter.getReadClassBytesTime().addElapsedTimeFrom(t0);
             return defineClass(name, bb, cs);
         } else {
             byte[] b = res.getBytes();
             // must read certificates AFTER reading bytes.
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
+            sun.misc.PerfCounter.getReadClassBytesTime().addElapsedTimeFrom(t0);
             return defineClass(name, b, 0, b.length, cs);
         }
     }
@@ -370,7 +472,7 @@ public class URLClassLoader extends SecureClassLoader {
      *
      * @param name the name of the resource
      * @return a <code>URL</code> for the resource, or <code>null</code>
-     * if the resource could not be found.
+     * if the resource could not be found, or if the loader is closed.
      */
     public URL findResource(final String name) {
         /*
@@ -393,6 +495,7 @@ public class URLClassLoader extends SecureClassLoader {
      * @param name the resource name
      * @exception IOException if an I/O exception occurs
      * @return an <code>Enumeration</code> of <code>URL</code>s
+     *         If the loader is closed, the Enumeration will be empty.
      */
     public Enumeration<URL> findResources(final String name)
         throws IOException
@@ -542,17 +645,14 @@ public class URLClassLoader extends SecureClassLoader {
     public static URLClassLoader newInstance(final URL[] urls,
                                              final ClassLoader parent) {
         // Save the caller's context
-        AccessControlContext acc = AccessController.getContext();
+        final AccessControlContext acc = AccessController.getContext();
         // Need a privileged block to create the class loader
         URLClassLoader ucl = AccessController.doPrivileged(
             new PrivilegedAction<URLClassLoader>() {
                 public URLClassLoader run() {
-                    return new FactoryURLClassLoader(urls, parent);
+                    return new FactoryURLClassLoader(urls, parent, acc);
                 }
             });
-        // Now set the context on the loader using the one we saved,
-        // not the one inside the privileged block...
-        ucl.acc = acc;
         return ucl;
     }
 
@@ -569,18 +669,14 @@ public class URLClassLoader extends SecureClassLoader {
      */
     public static URLClassLoader newInstance(final URL[] urls) {
         // Save the caller's context
-        AccessControlContext acc = AccessController.getContext();
+        final AccessControlContext acc = AccessController.getContext();
         // Need a privileged block to create the class loader
         URLClassLoader ucl = AccessController.doPrivileged(
             new PrivilegedAction<URLClassLoader>() {
                 public URLClassLoader run() {
-                    return new FactoryURLClassLoader(urls);
+                    return new FactoryURLClassLoader(urls, acc);
                 }
             });
-
-        // Now set the context on the loader using the one we saved,
-        // not the one inside the privileged block...
-        ucl.acc = acc;
         return ucl;
     }
 
@@ -592,20 +688,26 @@ public class URLClassLoader extends SecureClassLoader {
                 }
             }
         );
+        ClassLoader.registerAsParallelCapable();
     }
 }
 
 final class FactoryURLClassLoader extends URLClassLoader {
 
-    FactoryURLClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
+    static {
+        ClassLoader.registerAsParallelCapable();
     }
 
-    FactoryURLClassLoader(URL[] urls) {
-        super(urls);
+    FactoryURLClassLoader(URL[] urls, ClassLoader parent,
+                          AccessControlContext acc) {
+        super(urls, parent, acc);
     }
 
-    public final synchronized Class loadClass(String name, boolean resolve)
+    FactoryURLClassLoader(URL[] urls, AccessControlContext acc) {
+        super(urls, acc);
+    }
+
+    public final Class loadClass(String name, boolean resolve)
         throws ClassNotFoundException
     {
         // First check if we have permission to access the package. This

@@ -1027,7 +1027,7 @@ public class BasicTableUI extends TableUI
                 shouldStartTimer =
                     table.isCellSelected(pressedRow, pressedCol) &&
                     !e.isShiftDown() &&
-                    !e.isControlDown() &&
+                    !BasicGraphicsUtils.isMenuShortcutKeyDown(e) &&
                     !outsidePrefSize;
             }
 
@@ -1051,7 +1051,7 @@ public class BasicTableUI extends TableUI
 
                 dragPressDidSelection = false;
 
-                if (e.isControlDown() && isFileList) {
+                if (BasicGraphicsUtils.isMenuShortcutKeyDown(e) && isFileList) {
                     // do nothing for control - will be handled on release
                     // or when drag starts
                     return;
@@ -1115,7 +1115,9 @@ public class BasicTableUI extends TableUI
 
             CellEditor editor = table.getCellEditor();
             if (dragEnabled || editor == null || editor.shouldSelectCell(e)) {
-                table.changeSelection(pressedRow, pressedCol, e.isControlDown(), e.isShiftDown());
+                table.changeSelection(pressedRow, pressedCol,
+                        BasicGraphicsUtils.isMenuShortcutKeyDown(e),
+                        e.isShiftDown());
             }
         }
 
@@ -1212,7 +1214,7 @@ public class BasicTableUI extends TableUI
         public void dragStarting(MouseEvent me) {
             dragStarted = true;
 
-            if (me.isControlDown() && isFileList) {
+            if (BasicGraphicsUtils.isMenuShortcutKeyDown(me) && isFileList) {
                 table.getSelectionModel().addSelectionInterval(pressedRow,
                                                                pressedRow);
                 table.getColumnModel().getSelectionModel().
@@ -1251,7 +1253,8 @@ public class BasicTableUI extends TableUI
                 return;
             }
 
-            table.changeSelection(row, column, e.isControlDown(), true);
+            table.changeSelection(row, column,
+                    BasicGraphicsUtils.isMenuShortcutKeyDown(e), true);
         }
 
 
@@ -1414,17 +1417,20 @@ public class BasicTableUI extends TableUI
 
         Color sbg = table.getSelectionBackground();
         if (sbg == null || sbg instanceof UIResource) {
-            table.setSelectionBackground(UIManager.getColor("Table.selectionBackground"));
+            sbg = UIManager.getColor("Table.selectionBackground");
+            table.setSelectionBackground(sbg != null ? sbg : UIManager.getColor("textHighlight"));
         }
 
         Color sfg = table.getSelectionForeground();
         if (sfg == null || sfg instanceof UIResource) {
-            table.setSelectionForeground(UIManager.getColor("Table.selectionForeground"));
+            sfg = UIManager.getColor("Table.selectionForeground");
+            table.setSelectionForeground(sfg != null ? sfg : UIManager.getColor("textHighlightText"));
         }
 
         Color gridColor = table.getGridColor();
         if (gridColor == null || gridColor instanceof UIResource) {
-            table.setGridColor(UIManager.getColor("Table.gridColor"));
+            gridColor = UIManager.getColor("Table.gridColor");
+            table.setGridColor(gridColor != null ? gridColor : Color.GRAY);
         }
 
         // install the scrollpane border

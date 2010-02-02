@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +33,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -264,6 +264,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
     private Color   listViewBackground;
     private boolean listViewWindowsStyle;
     private boolean readOnly;
+    private boolean fullRowSelection = false;
 
     private ListSelectionModel listSelectionModel;
     private JList list;
@@ -447,6 +448,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         kiloByteString = UIManager.getString("FileChooser.fileSizeKiloBytes", l);
         megaByteString = UIManager.getString("FileChooser.fileSizeMegaBytes", l);
         gigaByteString = UIManager.getString("FileChooser.fileSizeGigaBytes", l);
+        fullRowSelection = UIManager.getBoolean("FileView.fullRowSelection");
 
         renameErrorTitleText = UIManager.getString("FileChooser.renameErrorTitleText", l);
         renameErrorText = UIManager.getString("FileChooser.renameErrorText", l);
@@ -689,7 +691,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
 
         void updateColumnInfo() {
             File dir = chooser.getCurrentDirectory();
-            if (dir != null && fileChooserUIAccessor.usesShellFolder()) {
+            if (dir != null && usesShellFolder(chooser)) {
                 try {
                     dir = ShellFolder.getShellFolder(dir);
                 } catch (FileNotFoundException e) {
@@ -900,6 +902,16 @@ public class FilePane extends JPanel implements PropertyChangeListener {
             }
         }
 
+        @Override
+        public void sort() {
+            ShellFolder.invoke(new Callable<Void>() {
+                public Void call() {
+                    DetailsTableRowSorter.super.sort();
+                    return null;
+                }
+            });
+        }
+
         public void modelStructureChanged() {
             super.modelStructureChanged();
             updateComparators(detailsTableModel.getColumns());
@@ -980,6 +992,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         public DetailsTableCellEditor(JTextField tf) {
             super(tf);
             this.tf = tf;
+            tf.setName("Table.editor");
             tf.addFocusListener(editorFocusListener);
         }
 
@@ -1007,7 +1020,8 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         }
 
         public void setBounds(int x, int y, int width, int height) {
-            if (getHorizontalAlignment() == SwingConstants.LEADING) {
+        if (getHorizontalAlignment() == SwingConstants.LEADING &&
+                    !fullRowSelection) {
                 // Restrict width to actual text
                 width = Math.min(width, this.getPreferredSize().width+4);
             } else {
@@ -1028,9 +1042,9 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         public Component getTableCellRendererComponent(JTable table, Object value,
                               boolean isSelected, boolean hasFocus, int row, int column) {
 
-            if (table.convertColumnIndexToModel(column) != COLUMN_FILENAME ||
-                    (listViewWindowsStyle && !table.isFocusOwner())) {
-
+            if ((table.convertColumnIndexToModel(column) != COLUMN_FILENAME ||
+                    (listViewWindowsStyle && !table.isFocusOwner())) &&
+                    !fullRowSelection) {
                 isSelected = false;
             }
 
@@ -1327,6 +1341,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
             Rectangle r = list.getCellBounds(index, index);
             if (editCell == null) {
                 editCell = new JTextField();
+                editCell.setName("Tree.cellEditor");
                 editCell.addActionListener(new EditActionListener());
                 editCell.addFocusListener(editorFocusListener);
                 editCell.setNextFocusableComponent(list);
@@ -1786,10 +1801,11 @@ public class FilePane extends JPanel implements PropertyChangeListener {
                 Point p = evt.getPoint();
                 index = table.rowAtPoint(p);
 
-                if (SwingUtilities2.pointOutsidePrefSize(table,
-                                                         index,
-                                                         table.columnAtPoint(p), p)) {
+                boolean pointOutsidePrefSize =
+                        SwingUtilities2.pointOutsidePrefSize(
+                            table, index, table.columnAtPoint(p), p);
 
+                if (pointOutsidePrefSize && !fullRowSelection) {
                     return;
                 }
 
@@ -1947,7 +1963,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         if (f instanceof ShellFolder) {
             return ((ShellFolder) f).isFileSystem();
         } else {
-            if (fileChooserUIAccessor.usesShellFolder()) {
+            if (usesShellFolder(getFileChooser())) {
                 try {
                     return ShellFolder.getShellFolder(f).isFileSystem();
                 } catch (FileNotFoundException ex) {
@@ -1959,6 +1975,16 @@ public class FilePane extends JPanel implements PropertyChangeListener {
                 return true;
             }
         }
+    }
+
+    /**
+     * Returns true if specified FileChooser should use ShellFolder
+     */
+    public static boolean usesShellFolder(JFileChooser chooser) {
+        Boolean prop = (Boolean) chooser.getClientProperty("FileChooser.useShellFolder");
+
+        return prop == null ? chooser.getFileSystemView().equals(FileSystemView.getFileSystemView())
+                : prop.booleanValue();
     }
 
     // This interface is used to access methods in the FileChooserUI
@@ -1975,6 +2001,5 @@ public class FilePane extends JPanel implements PropertyChangeListener {
         public Action getNewFolderAction();
         public MouseListener createDoubleClickListener(JList list);
         public ListSelectionListener createListSelectionListener();
-        public boolean usesShellFolder();
     }
 }

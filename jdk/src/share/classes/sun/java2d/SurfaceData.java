@@ -69,6 +69,7 @@ import sun.java2d.pipe.DrawImagePipe;
 import sun.java2d.pipe.DrawImage;
 import sun.awt.SunHints;
 import sun.awt.image.SurfaceManager;
+import sun.java2d.pipe.LoopBasedPipe;
 
 /**
  * This class provides various pieces of information relevant to a
@@ -449,7 +450,8 @@ public abstract class SurfaceData
         // For now the answer can only be true in the following cases:
         if (sg2d.compositeState <= SunGraphics2D.COMP_ISCOPY &&
             sg2d.paintState <= SunGraphics2D.PAINT_ALPHACOLOR &&
-            sg2d.clipState <= SunGraphics2D.CLIP_RECTANGULAR)
+            sg2d.clipState <= SunGraphics2D.CLIP_RECTANGULAR &&
+            sg2d.surfaceData.getTransparency() == Transparency.OPAQUE)
         {
             if (haveLCDLoop == LCDLOOP_UNKNOWN) {
                 DrawGlyphListLCD loop =
@@ -505,7 +507,6 @@ public abstract class SurfaceData
                     sg2d.textpipe = solidTextRenderer;
                 }
                 sg2d.shapepipe = colorPrimitives;
-                sg2d.loops = getRenderLoops(sg2d);
                 // assert(sg2d.surfaceData == this);
             }
         } else if (sg2d.compositeState == sg2d.COMP_CUSTOM) {
@@ -602,8 +603,17 @@ public abstract class SurfaceData
 
             sg2d.textpipe = getTextPipe(sg2d, false /* AA==OFF */);
             sg2d.shapepipe = colorPrimitives;
-            sg2d.loops = getRenderLoops(sg2d);
             // assert(sg2d.surfaceData == this);
+        }
+
+        // check for loops
+        if (sg2d.textpipe  instanceof LoopBasedPipe ||
+            sg2d.shapepipe instanceof LoopBasedPipe ||
+            sg2d.fillpipe  instanceof LoopBasedPipe ||
+            sg2d.drawpipe  instanceof LoopBasedPipe ||
+            sg2d.imagepipe instanceof LoopBasedPipe)
+        {
+            sg2d.loops = getRenderLoops(sg2d);
         }
     }
 

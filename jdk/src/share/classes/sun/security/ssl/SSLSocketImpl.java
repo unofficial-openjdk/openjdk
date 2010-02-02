@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -368,7 +368,9 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         super();
         this.host = host;
         init(context, false);
-        SocketAddress socketAddress = new InetSocketAddress(host, port);
+        SocketAddress socketAddress =
+               host != null ? new InetSocketAddress(host, port) :
+               new InetSocketAddress(InetAddress.getByName(null), port);
         connect(socketAddress, 0);
     }
 
@@ -409,7 +411,9 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         this.host = host;
         init(context, false);
         bind(new InetSocketAddress(localAddr, localPort));
-        SocketAddress socketAddress = new InetSocketAddress(host, port);
+        SocketAddress socketAddress =
+               host != null ? new InetSocketAddress(host, port) :
+               new InetSocketAddress(InetAddress.getByName(null), port);
         connect(socketAddress, 0);
     }
 
@@ -1427,6 +1431,10 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
                     waitForClose(false);
                 }
 
+                // See comment in changeReadCiphers()
+                readCipher.dispose();
+                writeCipher.dispose();
+
                 // state will be set to cs_CLOSED in the finally block below
 
                 break;
@@ -1633,6 +1641,11 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
          * Clean up our side.
          */
         closeSocket();
+
+        // See comment in changeReadCiphers()
+        readCipher.dispose();
+        writeCipher.dispose();
+
         connectionState = (oldState == cs_APP_CLOSED) ? cs_APP_CLOSED
                                                       : cs_CLOSED;
         throw closeReason;
@@ -1763,6 +1776,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
 
         // ... create decompressor
 
+        CipherBox oldCipher = readCipher;
+
         try {
             readCipher = handshaker.newReadCipher();
             readMAC = handshaker.newReadMAC();
@@ -1771,6 +1786,16 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             throw (SSLException)new SSLException
                                 ("Algorithm missing:  ").initCause(e);
         }
+
+        /*
+         * Dispose of any intermediate state in the underlying cipher.
+         * For PKCS11 ciphers, this will release any attached sessions,
+         * and thus make finalization faster.
+         *
+         * Since MAC's doFinal() is called for every SSL/TLS packet, it's
+         * not necessary to do the same with MAC's.
+         */
+        oldCipher.dispose();
     }
 
     // used by Handshaker
@@ -1783,6 +1808,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
 
         // ... create compressor
 
+        CipherBox oldCipher = writeCipher;
+
         try {
             writeCipher = handshaker.newWriteCipher();
             writeMAC = handshaker.newWriteMAC();
@@ -1791,6 +1818,9 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             throw (SSLException)new SSLException
                                 ("Algorithm missing:  ").initCause(e);
         }
+
+        // See comment above.
+        oldCipher.dispose();
     }
 
     /*
@@ -1803,7 +1833,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
     }
 
     synchronized String getHost() {
-        if (host == null) {
+        // Note that the host may be null or empty for localhost.
+        if (host == null || host.length() == 0) {
             host = getInetAddress().getHostName();
         }
         return host;

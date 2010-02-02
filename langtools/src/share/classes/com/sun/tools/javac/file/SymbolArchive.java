@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,12 @@ import com.sun.tools.javac.file.RelativePath.RelativeDirectory;
 import com.sun.tools.javac.file.RelativePath.RelativeFile;
 import com.sun.tools.javac.util.List;
 
+/**
+ * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * If you write code that depends on this, you do so at your own risk.
+ * This code and its internal interfaces are subject to change or
+ * deletion without notice.</b>
+*/
 public class SymbolArchive extends ZipArchive {
 
     final File origFile;
@@ -67,14 +73,16 @@ public class SymbolArchive extends ZipArchive {
         map.put(dirname, list);
     }
 
+    @Override
     public JavaFileObject getFileObject(RelativeDirectory subdirectory, String file) {
         RelativeDirectory prefix_subdir = new RelativeDirectory(prefix, subdirectory.path);
-        ZipEntry ze = new RelativeFile(prefix_subdir, file).getZipEntry(zdir);
+        ZipEntry ze = new RelativeFile(prefix_subdir, file).getZipEntry(zfile);
         return new SymbolFileObject(this, file, ze);
     }
 
+    @Override
     public String toString() {
-        return "SymbolArchive[" + zdir.getName() + "]";
+        return "SymbolArchive[" + zfile.getName() + "]";
     }
 
     /**
@@ -87,7 +95,7 @@ public class SymbolArchive extends ZipArchive {
 
         @Override
         protected String inferBinaryName(Iterable<? extends File> path) {
-            String entryName = getZipEntryName();
+            String entryName = entry.getName();
             String prefix = ((SymbolArchive) zarch).prefix.path;
             if (entryName.startsWith(prefix))
                 entryName = entryName.substring(prefix.length());

@@ -105,6 +105,11 @@ else
   endif
 endif
 
+ifeq ($(DEBUG_CLASSFILES), true)
+  ANT_OPTIONS += -Djavac.debug=true
+  ANT_OPTIONS += -Ddebug.classfiles=true
+endif
+
 # Note: jdk/make/common/Defs.gmk uses LANGUAGE_VERSION (-source NN)
 # and the somewhat misnamed CLASS_VERSION (-target NN)
 ifdef TARGET_CLASS_VERSION
@@ -115,9 +120,34 @@ else
   endif
 endif 
 
+ifdef SOURCE_LANGUAGE_VERSION
+  ANT_OPTIONS += -Djavac.source=$(SOURCE_LANGUAGE_VERSION)
+else
+  ifdef JAVAC_SOURCE_ARG 
+    ANT_OPTIONS += -Djavac.source=$(JAVAC_SOURCE_ARG)
+  endif
+endif 
+
 ifdef ALT_BOOTDIR
   ANT_OPTIONS += -Dboot.java.home=$(ALT_BOOTDIR)
   ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
+endif
+
+# To facilitate bootstrapping, much of langtools can be compiled with (just)
+# a boot JDK. However, some source files need to be compiled against 
+# new JDK API. In a bootstrap build, an import JDK may not be available,
+# so build.xml can also build against the source files in a jdk repo,
+# in which case it will automatically generate stub files for the new JDK API.
+ifdef JDK_TOPDIR
+  ANT_OPTIONS += -Dimport.jdk=$(JDK_TOPDIR)
+else 
+  ifdef ALT_JDK_TOPDIR
+    ANT_OPTIONS += -Dimport.jdk=$(ALT_JDK_TOPDIR)
+  else 
+    ifdef ALT_JDK_IMPORT_DIR
+      ANT_OPTIONS += -Dimport.jdk=$(ALT_JDK_IMPORT_DIR)
+    endif
+  endif
 endif
 
 ifdef ALT_OUTPUTDIR

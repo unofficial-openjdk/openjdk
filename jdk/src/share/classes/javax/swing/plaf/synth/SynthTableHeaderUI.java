@@ -32,18 +32,18 @@ import javax.swing.border.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.table.*;
-
-import sun.swing.plaf.synth.*;
 import sun.swing.table.*;
 
 /**
- * SynthTableHeaderUI implementation
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.table.JTableHeader}.
  *
  * @author Alan Chung
  * @author Philip Milne
+ * @since 1.7
  */
-class SynthTableHeaderUI extends BasicTableHeaderUI implements
-           PropertyChangeListener, SynthUI {
+public class SynthTableHeaderUI extends BasicTableHeaderUI
+                                implements PropertyChangeListener, SynthUI {
 
 //
 // Instance Variables
@@ -53,10 +53,20 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
 
     private SynthStyle style;
 
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param h component to create UI object for
+     * @return the UI object
+     */
     public static ComponentUI createUI(JComponent h) {
         return new SynthTableHeaderUI();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installDefaults() {
         prevRenderer = header.getDefaultRenderer();
         if (prevRenderer instanceof UIResource) {
@@ -78,11 +88,19 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installListeners() {
         super.installListeners();
         header.addPropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallDefaults() {
         if (header.getDefaultRenderer() instanceof HeaderRenderer) {
             header.setDefaultRenderer(prevRenderer);
@@ -95,11 +113,19 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
         style = null;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallListeners() {
         header.removePropertyChangeListener(this);
         super.uninstallListeners();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -110,6 +136,10 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -117,10 +147,20 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
         context.dispose();
     }
 
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
         super.paint(g, context.getComponent());
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintTableHeaderBorder(context, g, x, y, w, h);
@@ -128,8 +168,12 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
 //
 // SynthUI
 //
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
@@ -137,29 +181,29 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
                     SynthLookAndFeel.getRegion(c), style, state);
     }
 
-    private Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
-    }
-
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
-            updateStyle((JTableHeader)evt.getSource());
-        }
-    }
-
+    /**
+     * @inheritDoc
+     */
     @Override
     protected void rolloverColumnUpdated(int oldColumn, int newColumn) {
         header.repaint(header.getHeaderRect(oldColumn));
         header.repaint(header.getHeaderRect(newColumn));
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+            updateStyle((JTableHeader)evt.getSource());
+        }
+    }
+
     private class HeaderRenderer extends DefaultTableCellHeaderRenderer {
         HeaderRenderer() {
             setHorizontalAlignment(JLabel.LEADING);
+            setName("TableHeader.renderer");
         }
 
         @Override
@@ -178,24 +222,40 @@ class SynthTableHeaderUI extends BasicTableHeaderUI implements
                 SynthLookAndFeel.resetSelectedUI();
             }
 
+            //stuff a variable into the client property of this renderer indicating the sort order,
+            //so that different rendering can be done for the header based on sorted state.
+            RowSorter rs = table == null ? null : table.getRowSorter();
+            java.util.List<? extends RowSorter.SortKey> sortKeys = rs == null ? null : rs.getSortKeys();
+            if (sortKeys != null && sortKeys.size() > 0 && sortKeys.get(0).getColumn() ==
+                    table.convertColumnIndexToModel(column)) {
+                switch(sortKeys.get(0).getSortOrder()) {
+                    case ASCENDING:
+                        putClientProperty("Table.sortOrder", "ASCENDING");
+                        break;
+                    case DESCENDING:
+                        putClientProperty("Table.sortOrder", "DESCENDING");
+                        break;
+                    case UNSORTED:
+                        putClientProperty("Table.sortOrder", "UNSORTED");
+                        break;
+                    default:
+                        throw new AssertionError("Cannot happen");
+                }
+            } else {
+                putClientProperty("Table.sortOrder", "UNSORTED");
+            }
+
             super.getTableCellRendererComponent(table, value, isSelected,
                                                 hasFocus, row, column);
 
             return this;
         }
 
+        @Override
         public void setBorder(Border border) {
             if (border instanceof SynthBorder) {
                 super.setBorder(border);
             }
-        }
-
-        public String getName() {
-            String name = super.getName();
-            if (name == null) {
-                return "TableHeader.renderer";
-            }
-            return name;
         }
     }
 }

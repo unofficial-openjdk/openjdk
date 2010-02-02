@@ -45,7 +45,6 @@ import java.util.*;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.WeakHashMap;
-import javax.swing.SwingUtilities;
 import sun.awt.AppContext;
 import sun.awt.EmbeddedFrame;
 import sun.awt.SunToolkit;
@@ -81,7 +80,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     /**
      * The classloader for the applet.
      */
-    AppletClassLoader loader;
+    protected AppletClassLoader loader;
 
     /* applet event ids */
     public final static int APPLET_DISPOSE = 0;
@@ -117,7 +116,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     /**
      * The thread for the applet.
      */
-    Thread handler;
+    protected Thread handler;
 
 
     /**
@@ -450,7 +449,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       try {
                           final AppletPanel p = this;
 
-                          SwingUtilities.invokeAndWait(new Runnable() {
+                          EventQueue.invokeAndWait(new Runnable() {
                                   public void run() {
                                       p.validate();
                                   }
@@ -480,7 +479,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                           final AppletPanel p = this;
                           final Applet a = applet;
 
-                          SwingUtilities.invokeAndWait(new Runnable() {
+                          EventQueue.invokeAndWait(new Runnable() {
                                   public void run() {
                                       p.validate();
                                       a.setVisible(true);
@@ -514,7 +513,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                     try {
                         final Applet a = applet;
 
-                        SwingUtilities.invokeAndWait(new Runnable() {
+                        EventQueue.invokeAndWait(new Runnable() {
                                 public void run()
                                 {
                                     a.setVisible(false);

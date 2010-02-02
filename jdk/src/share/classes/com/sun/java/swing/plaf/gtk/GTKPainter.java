@@ -24,7 +24,6 @@
  */
 package com.sun.java.swing.plaf.gtk;
 
-import sun.swing.plaf.synth.SynthUI;
 import sun.awt.UNIXToolkit;
 
 import javax.swing.plaf.synth.*;
@@ -299,7 +298,7 @@ class GTKPainter extends SynthPainter {
             // Paint the default indicator
             GTKStyle style = (GTKStyle)context.getStyle();
             if (defaultCapable && !toolButton) {
-                Insets defaultInsets = (Insets)style.getClassSpecificInsetsValue(
+                Insets defaultInsets = style.getClassSpecificInsetsValue(
                         context, "default-border",
                         GTKStyle.BUTTON_DEFAULT_BORDER_INSETS);
 

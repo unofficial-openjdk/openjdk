@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package sun.awt.shell;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.concurrent.Callable;
 
 /**
  * @author Michael Martak
@@ -56,8 +57,9 @@ class ShellFolderManager {
      *    folders, such as Desktop, Documents, History, Network, Home, etc.
      *    This is used in the shortcut panel of the filechooser on Windows 2000
      *    and Windows Me.
-     *  "fileChooserIcon nn":
-     *    Returns an <code>Image</code> - icon nn from resource 124 in comctl32.dll (Windows only).
+     *  "fileChooserIcon <icon>":
+     *    Returns an <code>Image</code> - icon can be ListView, DetailsView, UpFolder, NewFolder or
+     *    ViewMenu (Windows only).
      *
      * @return An Object matching the key string.
      */
@@ -96,9 +98,19 @@ class ShellFolderManager {
     }
 
     public boolean isFileSystemRoot(File dir) {
-        if (dir instanceof ShellFolder && !((ShellFolder)dir).isFileSystem()) {
+        if (dir instanceof ShellFolder && !((ShellFolder) dir).isFileSystem()) {
             return false;
         }
         return (dir.getParentFile() == null);
+    }
+
+    protected ShellFolder.Invoker createInvoker() {
+        return new DirectInvoker();
+    }
+
+    private static class DirectInvoker implements ShellFolder.Invoker {
+        public <T> T invoke(Callable<T> task) throws Exception {
+            return task.call();
+        }
     }
 }

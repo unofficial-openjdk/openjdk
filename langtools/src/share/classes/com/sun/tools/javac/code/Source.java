@@ -95,7 +95,7 @@ public enum Source {
         this.name = name;
     }
 
-    public static final Source DEFAULT = JDK1_5;
+    public static final Source DEFAULT = JDK1_7;
 
     public static Source lookup(String name) {
         return tab.get(name);
@@ -121,6 +121,9 @@ public enum Source {
     }
     public boolean allowGenerics() {
         return compareTo(JDK1_5) >= 0;
+    }
+    public boolean allowDiamond() {
+        return compareTo(JDK1_7) >= 0;
     }
     public boolean allowEnums() {
         return compareTo(JDK1_5) >= 0;
@@ -152,6 +155,18 @@ public enum Source {
     }
     public boolean enforceMandatoryWarnings() {
         return compareTo(JDK1_5) >= 0;
+    }
+    public boolean allowTypeAnnotations() {
+        return compareTo(JDK1_7) >= 0;
+    }
+    public boolean allowBinaryLiterals() {
+        return compareTo(JDK1_7) >= 0;
+    }
+    public boolean allowUnderscoresInLiterals() {
+        return compareTo(JDK1_7) >= 0;
+    }
+    public boolean allowStringsInSwitch() {
+        return compareTo(JDK1_7) >= 0;
     }
     public static SourceVersion toSourceVersion(Source source) {
         switch(source) {

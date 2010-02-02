@@ -216,6 +216,16 @@ printMedialibError(int status) {
 
 #endif /* ! DEBUG */
 
+static int
+getMlibEdgeHint(jint edgeHint) {
+    switch (edgeHint) {
+    case java_awt_image_ConvolveOp_EDGE_NO_OP:
+        return MLIB_EDGE_DST_COPY_SRC;
+    case java_awt_image_ConvolveOp_EDGE_ZERO_FILL:
+    default:
+        return MLIB_EDGE_DST_FILL_ZERO;
+    }
+}
 
 /***************************************************************************
  *                          External Functions                             *
@@ -400,22 +410,10 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         }
     }
 
-    if (edgeHint == java_awt_image_ConvolveOp_EDGE_NO_OP) {
-        int kw2 = kwidth>>1;
-        int kh2 = kheight>>1;
-        int bsize = mlib_ImageGetChannels(src)*
-            (mlib_ImageGetType(src) == MLIB_BYTE ? 1 : 2);
-
-        void *dstDataP = mlib_ImageGetData(dst);
-        void *srcDataP = mlib_ImageGetData(src);
-        /* REMIND: Copy a smaller area */
-        memcpy(dstDataP, srcDataP, dst->width*dst->height*bsize);
-    }
-
     cmask = (1<<src->channels)-1;
     status = (*sMlibFns[MLIB_CONVMxN].fptr)(dst, src, kdata, w, h,
                                (w-1)/2, (h-1)/2, scale, cmask,
-                               MLIB_EDGE_DST_NO_WRITE);
+                               getMlibEdgeHint(edgeHint));
 
     if (status != MLIB_SUCCESS) {
         printMedialibError(status);
@@ -660,22 +658,10 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         }
     }
 
-    if (edgeHint == java_awt_image_ConvolveOp_EDGE_NO_OP) {
-        int kw2 = kwidth>>1;
-        int kh2 = kheight>>1;
-        int bsize = mlib_ImageGetChannels(src)*
-            (mlib_ImageGetType(src) == MLIB_BYTE ? 1 : 2);
-
-        void *dstDataP = mlib_ImageGetData(dst);
-        void *srcDataP = mlib_ImageGetData(src);
-        /* REMIND: Copy a smaller area */
-        memcpy(dstDataP, srcDataP, dst->width*dst->height*bsize);
-    }
-
     cmask = (1<<src->channels)-1;
     status = (*sMlibFns[MLIB_CONVMxN].fptr)(dst, src, kdata, w, h,
                                (w-1)/2, (h-1)/2, scale, cmask,
-                               MLIB_EDGE_DST_NO_WRITE);
+                               getMlibEdgeHint(edgeHint));
 
     if (status != MLIB_SUCCESS) {
         printMedialibError(status);
@@ -974,20 +960,14 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
     mlib_filter filter;
     unsigned int *dP;
 
-    if ((srcRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
-        JNU_ThrowOutOfMemoryError(env, "Out of memory");
-        return -1;
-    }
-
-    if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
-        JNU_ThrowOutOfMemoryError(env, "Out of memory");
-        free(srcRasterP);
-        return -1;
-    }
-
     /* This function requires a lot of local refs ??? Is 64 enough ??? */
     if ((*env)->EnsureLocalCapacity(env, 64) < 0)
         return 0;
+
+    if (s_nomlib) return 0;
+    if (s_timeIt) {
+        (*start_timer)(3600);
+    }
 
     switch(interpType) {
     case java_awt_image_AffineTransformOp_TYPE_BILINEAR:
@@ -1004,9 +984,15 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         return -1;
     }
 
-    if (s_nomlib) return 0;
-    if (s_timeIt) {
-        (*start_timer)(3600);
+    if ((srcRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
+        JNU_ThrowOutOfMemoryError(env, "Out of memory");
+        return -1;
+    }
+
+    if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
+        JNU_ThrowOutOfMemoryError(env, "Out of memory");
+        free(srcRasterP);
+        return -1;
     }
 
     if ((*env)->GetArrayLength(env, jmatrix) < 6) {
@@ -1229,6 +1215,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     }
 
     if (tbl == NULL || table == NULL || jtable == NULL) {
+        if (tbl != NULL) free(tbl);
+        if (table != NULL) free(table);
+        if (jtable != NULL) free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         JNU_ThrowNullPointerException(env, "NULL LUT");
@@ -1238,6 +1227,11 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     for (i=0; i < jlen; i++) {
         jtable[i] = (*env)->GetObjectArrayElement(env, jtableArrays, i);
         if (jtable[i] == NULL) {
+            free(tbl);
+            free(table);
+            free(jtable);
+            awt_freeParsedImage(srcImageP, TRUE);
+            awt_freeParsedImage(dstImageP, TRUE);
             return 0;
         }
     }
@@ -1246,6 +1240,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
                         FALSE, &hint);
     if (nbands < 1) {
         /* Can't handle any custom images */
+        free(tbl);
+        free(table);
+        free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         return 0;
@@ -1254,12 +1251,18 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     /* Allocate the arrays */
     if (allocateArray(env, srcImageP, &src, &sdata, TRUE, FALSE, FALSE) < 0) {
         /* Must be some problem */
+        free(tbl);
+        free(table);
+        free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         return 0;
     }
     if (allocateArray(env, dstImageP, &dst, &ddata, FALSE, FALSE, FALSE) < 0) {
         /* Must be some problem */
+        free(tbl);
+        free(table);
+        free(jtable);
         freeArray(env, srcImageP, src, sdata, NULL, NULL, NULL);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
@@ -1298,6 +1301,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
                                                       (jbyte *) table[j],
                                                       JNI_ABORT);
             }
+            free(tbl);
+            free(table);
+            free(jtable);
             freeArray(env, srcImageP, src, sdata, NULL, NULL, NULL);
             awt_freeParsedImage(srcImageP, TRUE);
             awt_freeParsedImage(dstImageP, TRUE);
@@ -1427,12 +1433,15 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
 
     /* Parse the source raster - reject custom images */
     if ((status = awt_parseRaster(env, jsrc, srcRasterP)) <= 0) {
+        free(srcRasterP);
+        free(dstRasterP);
         return 0;
     }
 
     /* Parse the destination image - reject custom images */
     if ((status = awt_parseRaster(env, jdst, dstRasterP)) <= 0) {
         awt_freeParsedRaster(srcRasterP, TRUE);
+        free(dstRasterP);
         return 0;
     }
 

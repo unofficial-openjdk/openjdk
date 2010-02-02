@@ -76,6 +76,7 @@ public class MOAT {
         testCollection(new LinkedBlockingQueue<Integer>(20));
         testCollection(new LinkedBlockingDeque<Integer>(20));
         testCollection(new ConcurrentLinkedQueue<Integer>());
+        testCollection(new LinkedTransferQueue<Integer>());
         testCollection(new ConcurrentSkipListSet<Integer>());
         testCollection(Arrays.asList(new Integer(42)));
         testCollection(Arrays.asList(1,2,3));
@@ -161,6 +162,7 @@ public class MOAT {
         equal(c.toString(),"[]");
         equal(c.toArray().length, 0);
         equal(c.toArray(new Object[0]).length, 0);
+        check(c.toArray(new Object[]{42})[0] == null);
 
         Object[] a = new Object[1]; a[0] = Boolean.TRUE;
         equal(c.toArray(a), a);
@@ -419,13 +421,256 @@ public class MOAT {
 
     private static void testQueue(Queue<Integer> q) {
         q.clear();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++) {
+            testQueueAddRemove(q, null);
+            testQueueAddRemove(q, 537);
             q.add(i);
+        }
         equal(q.size(), 5);
         checkFunctionalInvariants(q);
         q.poll();
         equal(q.size(), 4);
         checkFunctionalInvariants(q);
+        if ((q instanceof LinkedBlockingQueue) ||
+            (q instanceof LinkedBlockingDeque) ||
+            (q instanceof ConcurrentLinkedQueue)) {
+            testQueueIteratorRemove(q);
+        }
+    }
+
+    private static void testQueueAddRemove(final Queue<Integer> q,
+                                           final Integer e) {
+        final List<Integer> originalContents = new ArrayList<Integer>(q);
+        final boolean isEmpty = q.isEmpty();
+        final boolean isList = (q instanceof List);
+        final List asList = isList ? (List) q : null;
+        check(!q.contains(e));
+        try {
+            q.add(e);
+        } catch (NullPointerException npe) {
+            check(e == null);
+            return;                     // Null elements not supported
+        }
+        check(q.contains(e));
+        check(q.remove(e));
+        check(!q.contains(e));
+        equal(new ArrayList<Integer>(q), originalContents);
+
+        if (q instanceof Deque<?>) {
+            final Deque<Integer> deq = (Deque<Integer>) q;
+            final List<Integer> singleton = Collections.singletonList(e);
+
+            // insert, query, remove element at head
+            if (isEmpty) {
+                THROWS(NoSuchElementException.class,
+                       new Fun(){void f(){ deq.getFirst(); }},
+                       new Fun(){void f(){ deq.element(); }},
+                       new Fun(){void f(){ deq.iterator().next(); }});
+                check(deq.peekFirst() == null);
+                check(deq.peek() == null);
+            } else {
+                check(deq.getFirst() != e);
+                check(deq.element() != e);
+                check(deq.iterator().next() != e);
+                check(deq.peekFirst() != e);
+                check(deq.peek() != e);
+            }
+            check(!deq.contains(e));
+            check(!deq.removeFirstOccurrence(e));
+            check(!deq.removeLastOccurrence(e));
+            if (isList) {
+                check(asList.indexOf(e) == -1);
+                check(asList.lastIndexOf(e) == -1);
+            }
+            switch (rnd.nextInt(isList ? 4 : 3)) {
+            case 0: deq.addFirst(e); break;
+            case 1: check(deq.offerFirst(e)); break;
+            case 2: deq.push(e); break;
+            case 3: asList.add(0, e); break;
+            default: throw new AssertionError();
+            }
+            check(deq.peekFirst() == e);
+            check(deq.getFirst() == e);
+            check(deq.element() == e);
+            check(deq.peek() == e);
+            check(deq.iterator().next() == e);
+            check(deq.contains(e));
+            if (isList) {
+                check(asList.get(0) == e);
+                check(asList.indexOf(e) == 0);
+                check(asList.lastIndexOf(e) == 0);
+                check(asList.subList(0, 1).equals(singleton));
+            }
+            switch (rnd.nextInt(isList ? 11 : 9)) {
+            case 0: check(deq.pollFirst() == e); break;
+            case 1: check(deq.removeFirst() == e); break;
+            case 2: check(deq.remove() == e); break;
+            case 3: check(deq.pop() == e); break;
+            case 4: check(deq.removeFirstOccurrence(e)); break;
+            case 5: check(deq.removeLastOccurrence(e)); break;
+            case 6: check(deq.remove(e)); break;
+            case 7: check(deq.removeAll(singleton)); break;
+            case 8: Iterator it = deq.iterator(); it.next(); it.remove(); break;
+            case 9: asList.remove(0); break;
+            case 10: asList.subList(0, 1).clear(); break;
+            default: throw new AssertionError();
+            }
+            if (isEmpty) {
+                THROWS(NoSuchElementException.class,
+                       new Fun(){void f(){ deq.getFirst(); }},
+                       new Fun(){void f(){ deq.element(); }},
+                       new Fun(){void f(){ deq.iterator().next(); }});
+                check(deq.peekFirst() == null);
+                check(deq.peek() == null);
+            } else {
+                check(deq.getFirst() != e);
+                check(deq.element() != e);
+                check(deq.iterator().next() != e);
+                check(deq.peekFirst() != e);
+                check(deq.peek() != e);
+            }
+            check(!deq.contains(e));
+            check(!deq.removeFirstOccurrence(e));
+            check(!deq.removeLastOccurrence(e));
+            if (isList) {
+                check(isEmpty || asList.get(0) != e);
+                check(asList.indexOf(e) == -1);
+                check(asList.lastIndexOf(e) == -1);
+            }
+            equal(new ArrayList<Integer>(deq), originalContents);
+
+            // insert, query, remove element at tail
+            if (isEmpty) {
+                check(deq.peekLast() == null);
+                THROWS(NoSuchElementException.class,
+                       new Fun(){void f(){ deq.getLast(); }});
+            } else {
+                check(deq.peekLast() != e);
+                check(deq.getLast() != e);
+            }
+            switch (rnd.nextInt(isList ? 6 : 4)) {
+            case 0: deq.addLast(e); break;
+            case 1: check(deq.offerLast(e)); break;
+            case 2: check(deq.add(e)); break;
+            case 3: deq.addAll(singleton); break;
+            case 4: asList.addAll(deq.size(), singleton); break;
+            case 5: asList.add(deq.size(), e); break;
+            default: throw new AssertionError();
+            }
+            check(deq.peekLast() == e);
+            check(deq.getLast() == e);
+            check(deq.contains(e));
+            if (isList) {
+                ListIterator it = asList.listIterator(asList.size());
+                check(it.previous() == e);
+                check(asList.get(asList.size() - 1) == e);
+                check(asList.indexOf(e) == asList.size() - 1);
+                check(asList.lastIndexOf(e) == asList.size() - 1);
+                int size = asList.size();
+                check(asList.subList(size - 1, size).equals(singleton));
+            }
+            switch (rnd.nextInt(isList ? 8 : 6)) {
+            case 0: check(deq.pollLast() == e); break;
+            case 1: check(deq.removeLast() == e); break;
+            case 2: check(deq.removeFirstOccurrence(e)); break;
+            case 3: check(deq.removeLastOccurrence(e)); break;
+            case 4: check(deq.remove(e)); break;
+            case 5: check(deq.removeAll(singleton)); break;
+            case 6: asList.remove(asList.size() - 1); break;
+            case 7:
+                ListIterator it = asList.listIterator(asList.size());
+                it.previous();
+                it.remove();
+                break;
+            default: throw new AssertionError();
+            }
+            if (isEmpty) {
+                check(deq.peekLast() == null);
+                THROWS(NoSuchElementException.class,
+                       new Fun(){void f(){ deq.getLast(); }});
+            } else {
+                check(deq.peekLast() != e);
+                check(deq.getLast() != e);
+            }
+            check(!deq.contains(e));
+            equal(new ArrayList<Integer>(deq), originalContents);
+
+            // Test operations on empty deque
+            switch (rnd.nextInt(isList ? 4 : 2)) {
+            case 0: deq.clear(); break;
+            case 1:
+                Iterator it = deq.iterator();
+                while (it.hasNext()) {
+                    it.next();
+                    it.remove();
+                }
+                break;
+            case 2: asList.subList(0, asList.size()).clear(); break;
+            case 3:
+                ListIterator lit = asList.listIterator(asList.size());
+                while (lit.hasPrevious()) {
+                    lit.previous();
+                    lit.remove();
+                }
+                break;
+            default: throw new AssertionError();
+            }
+            testEmptyCollection(deq);
+            check(!deq.iterator().hasNext());
+            if (isList) {
+                check(!asList.listIterator().hasPrevious());
+                THROWS(NoSuchElementException.class,
+                       new Fun(){void f(){ asList.listIterator().previous(); }});
+            }
+            THROWS(NoSuchElementException.class,
+                   new Fun(){void f(){ deq.iterator().next(); }},
+                   new Fun(){void f(){ deq.element(); }},
+                   new Fun(){void f(){ deq.getFirst(); }},
+                   new Fun(){void f(){ deq.getLast(); }},
+                   new Fun(){void f(){ deq.pop(); }},
+                   new Fun(){void f(){ deq.remove(); }},
+                   new Fun(){void f(){ deq.removeFirst(); }},
+                   new Fun(){void f(){ deq.removeLast(); }});
+
+            check(deq.poll() == null);
+            check(deq.pollFirst() == null);
+            check(deq.pollLast() == null);
+            check(deq.peek() == null);
+            check(deq.peekFirst() == null);
+            check(deq.peekLast() == null);
+            check(!deq.removeFirstOccurrence(e));
+            check(!deq.removeLastOccurrence(e));
+
+            check(deq.addAll(originalContents) == !isEmpty);
+            equal(new ArrayList<Integer>(deq), originalContents);
+            check(!deq.addAll(Collections.<Integer>emptyList()));
+            equal(new ArrayList<Integer>(deq), originalContents);
+        }
+    }
+
+    private static void testQueueIteratorRemove(Queue<Integer> q) {
+        System.err.printf("testQueueIteratorRemove %s%n",
+                          q.getClass().getSimpleName());
+        q.clear();
+        for (int i = 0; i < 5; i++)
+            q.add(i);
+        Iterator<Integer> it = q.iterator();
+        check(it.hasNext());
+        for (int i = 3; i >= 0; i--)
+            q.remove(i);
+        equal(it.next(), 0);
+        equal(it.next(), 4);
+
+        q.clear();
+        for (int i = 0; i < 5; i++)
+            q.add(i);
+        it = q.iterator();
+        equal(it.next(), 0);
+        check(it.hasNext());
+        for (int i = 1; i < 4; i++)
+            q.remove(i);
+        equal(it.next(), 1);
+        equal(it.next(), 4);
     }
 
     private static void testList(final List<Integer> l) {
@@ -451,6 +696,11 @@ public class MOAT {
     }
 
     private static void testCollection(Collection<Integer> c) {
+        try { testCollection1(c); }
+        catch (Throwable t) { unexpected(t); }
+    }
+
+    private static void testCollection1(Collection<Integer> c) {
 
         System.out.println("\n==> " + c.getClass().getName());
 
@@ -555,6 +805,7 @@ public class MOAT {
 
             NavigableMap<Integer,Integer> nm =
                 (NavigableMap<Integer,Integer>) m;
+            testNavigableMapRemovers(nm);
             testNavigableMap(nm);
             testNavigableMap(nm.headMap(6, false));
             testNavigableMap(nm.headMap(5, true));
@@ -740,6 +991,97 @@ public class MOAT {
         if (rnd.nextBoolean())
             check(it.hasNext());
         equal(it.next(), expected);
+    }
+
+    static void equalMaps(Map m1, Map m2) {
+        equal(m1, m2);
+        equal(m2, m1);
+        equal(m1.size(), m2.size());
+        equal(m1.isEmpty(), m2.isEmpty());
+        equal(m1.toString(), m2.toString());
+        check(Arrays.equals(m1.entrySet().toArray(), m2.entrySet().toArray()));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    static void testNavigableMapRemovers(NavigableMap m)
+    {
+        final Map emptyMap = new HashMap();
+
+        final Map singletonMap = new HashMap();
+        singletonMap.put(1, 2);
+
+        abstract class NavigableMapView {
+            abstract NavigableMap view(NavigableMap m);
+        }
+
+        NavigableMapView[] views = {
+            new NavigableMapView() { NavigableMap view(NavigableMap m) {
+                return m; }},
+            new NavigableMapView() { NavigableMap view(NavigableMap m) {
+                return m.headMap(99, true); }},
+            new NavigableMapView() { NavigableMap view(NavigableMap m) {
+                return m.tailMap(-99, false); }},
+            new NavigableMapView() { NavigableMap view(NavigableMap m) {
+                return m.subMap(-99, true, 99, false); }},
+        };
+
+        abstract class Remover {
+            abstract void remove(NavigableMap m, Object k, Object v);
+        }
+
+        Remover[] removers = {
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.remove(k), v); }},
+
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.descendingMap().remove(k), v); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.descendingMap().headMap(-86, false).remove(k), v); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.descendingMap().tailMap(86, true).remove(k), v); }},
+
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.headMap(86, true).remove(k), v); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.tailMap(-86, true).remove(k), v); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                equal(m.subMap(-86, false, 86, true).remove(k), v); }},
+
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.keySet().remove(k)); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.navigableKeySet().remove(k)); }},
+
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.navigableKeySet().headSet(86, true).remove(k)); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.navigableKeySet().tailSet(-86, false).remove(k)); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.navigableKeySet().subSet(-86, true, 86, false)
+                      .remove(k)); }},
+
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.descendingKeySet().headSet(-86, false).remove(k)); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.descendingKeySet().tailSet(86, true).remove(k)); }},
+            new Remover() { void remove(NavigableMap m, Object k, Object v) {
+                check(m.descendingKeySet().subSet(86, true, -86, false)
+                      .remove(k)); }},
+        };
+
+        for (NavigableMapView view : views) {
+            for (Remover remover : removers) {
+                try {
+                    m.clear();
+                    equalMaps(m, emptyMap);
+                    equal(m.put(1, 2), null);
+                    equalMaps(m, singletonMap);
+                    NavigableMap v = view.view(m);
+                    remover.remove(v, 1, 2);
+                    equalMaps(m, emptyMap);
+                } catch (Throwable t) { unexpected(t); }
+            }
+        }
     }
 
     private static void testNavigableMap(NavigableMap<Integer,Integer> m)

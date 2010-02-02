@@ -51,6 +51,9 @@ import java.io.Reader;
 import java.io.SequenceInputStream;
 import java.io.StringReader;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -63,12 +66,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import java.rmi.MarshalledObject;
-
+import java.security.AccessControlContext;
+import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +90,7 @@ import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
@@ -110,6 +114,8 @@ import javax.imageio.stream.ImageOutputStream;
 
 import sun.awt.image.ImageRepresentation;
 import sun.awt.image.ToolkitImage;
+
+import java.io.FilePermission;
 
 
 /**
@@ -217,7 +223,7 @@ public abstract class DataTransferer {
      */
     private static DataTransferer transferer;
 
-    private static final Logger dtLog = Logger.getLogger("sun.awt.datatransfer.DataTransfer");
+    private static final PlatformLogger dtLog = PlatformLogger.getLogger("sun.awt.datatransfer.DataTransfer");
 
     static {
         Class tCharArrayClass = null, tByteArrayClass = null;
@@ -377,9 +383,9 @@ public abstract class DataTransferer {
      * "text".
      */
     public static boolean doesSubtypeSupportCharset(DataFlavor flavor) {
-        if (dtLog.isLoggable(Level.FINE)) {
+        if (dtLog.isLoggable(PlatformLogger.FINE)) {
             if (!"text".equals(flavor.getPrimaryType())) {
-                dtLog.log(Level.FINE, "Assertion (\"text\".equals(flavor.getPrimaryType())) failed");
+                dtLog.fine("Assertion (\"text\".equals(flavor.getPrimaryType())) failed");
             }
         }
 
@@ -486,6 +492,13 @@ public abstract class DataTransferer {
         } catch (IllegalCharsetNameException icne) {
             return false;
         }
+    }
+
+    /**
+     * Returns {@code true} if the given type is a java.rmi.Remote.
+     */
+    public static boolean isRemote(Class<?> type) {
+        return RMI.isRemote(type);
     }
 
     /**
@@ -614,6 +627,14 @@ public abstract class DataTransferer {
      * format is DataFlavor.imageFlavor.
      */
     public abstract boolean isImageFormat(long format);
+
+    /**
+     * Determines whether the format is a URI list we can convert to
+     * a DataFlavor.javaFileListFlavor.
+     */
+    protected boolean isURIListFormat(long format) {
+        return false;
+    }
 
     /**
      * Returns a Map whose keys are all of the possible formats into which the
@@ -1177,8 +1198,10 @@ search:
             (String.class.equals(flavor.getRepresentationClass()) &&
              isFlavorCharsetTextType(flavor) && isTextFormat(format))) {
 
+            String str = removeSuspectedData(flavor, contents, (String)obj);
+
             return translateTransferableString(
-                (String)obj,
+                str,
                 format);
 
         // Source data is a Reader. Convert to a String and recur. In the
@@ -1285,38 +1308,53 @@ search:
             if (!DataFlavor.javaFileListFlavor.equals(flavor)) {
                 throw new IOException("data translation failed");
             }
+
             final List list = (List)obj;
-            int nFiles = 0;
-            for (int i = 0; i < list.size(); i++) {
-                Object o = list.get(i);
-                if (o instanceof File || o instanceof String) {
-                    nFiles++;
+
+            final ProtectionDomain userProtectionDomain = getUserProtectionDomain(contents);
+
+            final ArrayList<String> fileList = castToFiles(list, userProtectionDomain);
+
+            bos = convertFileListToBytes(fileList);
+
+
+        // Target data is a URI list. Source data must be a
+        // java.util.List which contains java.io.File or String instances.
+        } else if (isURIListFormat(format)) {
+            if (!DataFlavor.javaFileListFlavor.equals(flavor)) {
+                throw new IOException("data translation failed");
+            }
+            String nat = getNativeForFormat(format);
+            String targetCharset = null;
+            if (nat != null) {
+                try {
+                    targetCharset = new DataFlavor(nat).getParameter("charset");
+                } catch (ClassNotFoundException cnfe) {
+                    throw new IOException(cnfe);
                 }
             }
-            final String[] files = new String[nFiles];
-
-            try {
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws IOException {
-                        for (int i = 0, j = 0; i < list.size(); i++) {
-                            Object o = list.get(i);
-                            if (o instanceof File) {
-                                files[j++] = ((File)o).getCanonicalPath();
-                            } else if (o instanceof String) {
-                                files[j++] = (String)o;
-                            }
-                        }
-                        return null;
-                    }
-                });
-            } catch (PrivilegedActionException pae) {
-                throw new IOException(pae.getMessage());
+            if (targetCharset == null) {
+                targetCharset = "UTF-8";
             }
+            final List list = (List)obj;
+            final ProtectionDomain userProtectionDomain = getUserProtectionDomain(contents);
+            final ArrayList<String> fileList = castToFiles(list, userProtectionDomain);
+            final ArrayList<String> uriList = new ArrayList<String>(fileList.size());
+            for (String fileObject : fileList) {
+                final URI uri = new File(fileObject).toURI();
+                // Some implementations are fussy about the number of slashes (file:///path/to/file is best)
+                try {
+                    uriList.add(new URI(uri.getScheme(), "", uri.getPath(), uri.getFragment()).toString());
+                } catch (URISyntaxException uriSyntaxException) {
+                    throw new IOException(uriSyntaxException);
+                  }
+              }
 
-            for (int i = 0; i < files.length; i++) {
-                 byte[] bytes = files[i].getBytes();
-                 if (i != 0) bos.write(0);
-                 bos.write(bytes, 0, bytes.length);
+            byte[] eoln = "\r\n".getBytes(targetCharset);
+            for (int i = 0; i < uriList.size(); i++) {
+                byte[] bytes = uriList.get(i).getBytes(targetCharset);
+                bos.write(bytes, 0, bytes.length);
+                bos.write(eoln, 0, eoln.length);
             }
 
         // Source data is an InputStream. For arbitrary flavors, just grab the
@@ -1346,7 +1384,7 @@ search:
 
         // Source data is an RMI object
         } else if (flavor.isRepresentationClassRemote()) {
-            MarshalledObject mo = new MarshalledObject(obj);
+            Object mo = RMI.newMarshalledObject(obj);
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(mo);
             oos.close();
@@ -1365,6 +1403,154 @@ search:
         bos.close();
         return ret;
     }
+
+    protected abstract ByteArrayOutputStream convertFileListToBytes(ArrayList<String> fileList) throws IOException;
+
+    private String removeSuspectedData(DataFlavor flavor, final Transferable contents, final String str)
+            throws IOException
+    {
+        if (null == System.getSecurityManager()
+            || !flavor.isMimeTypeEqual("text/uri-list"))
+        {
+            return str;
+        }
+
+
+        String ret_val = "";
+        final ProtectionDomain userProtectionDomain = getUserProtectionDomain(contents);
+
+        try {
+            ret_val = (String) AccessController.doPrivileged(new PrivilegedExceptionAction() {
+                    public Object run() {
+
+                        StringBuffer allowedFiles = new StringBuffer(str.length());
+                        String [] uriArray = str.split("(\\s)+");
+
+                        for (String fileName : uriArray)
+                        {
+                            File file = new File(fileName);
+                            if (file.exists() &&
+                                !(isFileInWebstartedCache(file) ||
+                                isForbiddenToRead(file, userProtectionDomain)))
+                            {
+
+                                if (0 != allowedFiles.length())
+                                {
+                                    allowedFiles.append("\\r\\n");
+                                }
+
+                                allowedFiles.append(fileName);
+                            }
+                        }
+
+                        return allowedFiles.toString();
+                    }
+                });
+        } catch (PrivilegedActionException pae) {
+            throw new IOException(pae.getMessage(), pae);
+        }
+
+        return ret_val;
+    }
+
+    private static ProtectionDomain getUserProtectionDomain(Transferable contents) {
+        return contents.getClass().getProtectionDomain();
+    }
+
+    private boolean isForbiddenToRead (File file, ProtectionDomain protectionDomain)
+    {
+        if (null == protectionDomain) {
+            return false;
+        }
+        try {
+            FilePermission filePermission =
+                    new FilePermission(file.getCanonicalPath(), "read, delete");
+            if (protectionDomain.implies(filePermission)) {
+                return false;
+            }
+        } catch (IOException e) {}
+
+        return true;
+    }
+
+    private ArrayList<String> castToFiles(final List files,
+                                          final ProtectionDomain userProtectionDomain) throws IOException
+    {
+        final ArrayList<String> fileList = new ArrayList<String>();
+        try {
+            AccessController.doPrivileged(new PrivilegedExceptionAction() {
+                public Object run() throws IOException {
+                    for (Object fileObject : files)
+                    {
+                        File file = castToFile(fileObject);
+                        if (file != null &&
+                            (null == System.getSecurityManager() ||
+                            !(isFileInWebstartedCache(file) ||
+                            isForbiddenToRead(file, userProtectionDomain))))
+                        {
+                            fileList.add(file.getCanonicalPath());
+                        }
+                    }
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException pae) {
+            throw new IOException(pae.getMessage());
+        }
+        return fileList;
+    }
+
+    // It is important do not use user's successors
+    // of File class.
+    private File castToFile(Object fileObject) throws IOException {
+        String filePath = null;
+        if (fileObject instanceof File) {
+            filePath = ((File)fileObject).getCanonicalPath();
+        } else if (fileObject instanceof String) {
+           filePath = (String) fileObject;
+        } else {
+           return null;
+        }
+        return new File(filePath);
+    }
+
+    private final static String[] DEPLOYMENT_CACHE_PROPERTIES = {
+        "deployment.system.cachedir",
+        "deployment.user.cachedir",
+        "deployment.javaws.cachedir",
+        "deployment.javapi.cachedir"
+    };
+
+    private final static ArrayList <File> deploymentCacheDirectoryList =
+            new ArrayList<File>();
+
+    private static boolean isFileInWebstartedCache(File f) {
+
+        if (deploymentCacheDirectoryList.isEmpty()) {
+            for (String cacheDirectoryProperty : DEPLOYMENT_CACHE_PROPERTIES) {
+                String cacheDirectoryPath = System.getProperty(cacheDirectoryProperty);
+                if (cacheDirectoryPath != null) {
+                    try {
+                        File cacheDirectory = (new File(cacheDirectoryPath)).getCanonicalFile();
+                        if (cacheDirectory != null) {
+                            deploymentCacheDirectoryList.add(cacheDirectory);
+                        }
+                    } catch (IOException ioe) {}
+                }
+            }
+        }
+
+        for (File deploymentCacheDirectory : deploymentCacheDirectoryList) {
+            for (File dir = f; dir != null; dir = dir.getParentFile()) {
+                if (dir.equals(deploymentCacheDirectory)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     public Object translateBytes(byte[] bytes, DataFlavor flavor,
                                  long format, Transferable localeTransferable)
@@ -1428,6 +1614,29 @@ search:
 
             // Turn the list of Files into a List and return
             return Arrays.asList(files);
+
+        // Source data is a URI list. Convert to DataFlavor.javaFileListFlavor
+        // where possible.
+        } else if (isURIListFormat(format) && DataFlavor.javaFileListFlavor.equals(flavor)) {
+            try {
+                URI uris[] = dragQueryURIs(str, bytes, format, localeTransferable);
+                if (uris == null) {
+                    return null;
+                }
+                ArrayList files = new ArrayList();
+                for (URI uri : uris) {
+                    try {
+                        files.add(new File(uri));
+                    } catch (IllegalArgumentException illegalArg) {
+                        // When converting from URIs to less generic files,
+                        // common practice (Wine, SWT) seems to be to
+                        // silently drop the URIs that aren't local files.
+                    }
+                }
+                return files;
+            } finally {
+                str.close();
+            }
 
         // Target data is a String. Strip terminating NUL bytes. Decode bytes
         // into characters. Search-and-replace EOLN.
@@ -1540,7 +1749,7 @@ search:
             try {
                 byte[] ba = inputStreamToByteArray(str);
                 ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(ba));
-                Object ret = ((MarshalledObject)(ois.readObject())).get();
+                Object ret = RMI.getMarshalledObject(ois.readObject());
                 ois.close();
                 str.close();
                 return ret;
@@ -1812,6 +2021,19 @@ search:
      * Decodes a byte array into a set of String filenames.
      */
     protected abstract String[] dragQueryFile(byte[] bytes);
+
+    /**
+     * Decodes URIs from either a byte array or a stream.
+     */
+    protected URI[] dragQueryURIs(InputStream stream,
+                                  byte[] bytes,
+                                  long format,
+                                  Transferable localeTransferable)
+      throws IOException
+    {
+        throw new IOException(
+            new UnsupportedOperationException("not implemented on this platform"));
+    }
 
     /**
      * Translates either a byte array or an input stream which contain
@@ -2538,8 +2760,12 @@ search:
                                               Integer.valueOf(0));
                 nonTextRepresentationsMap.put(java.io.Serializable.class,
                                               Integer.valueOf(1));
-                nonTextRepresentationsMap.put(java.rmi.Remote.class,
-                                              Integer.valueOf(2));
+
+                Class<?> remoteClass = RMI.remoteClass();
+                if (remoteClass != null) {
+                    nonTextRepresentationsMap.put(remoteClass,
+                                                  Integer.valueOf(2));
+                }
 
                 nonTextRepresentations =
                     Collections.unmodifiableMap(nonTextRepresentationsMap);
@@ -2766,6 +2992,97 @@ search:
                 return -compareIndices(indexMap, obj1, obj2, FALLBACK_INDEX);
             } else {
                 return compareIndices(indexMap, obj1, obj2, FALLBACK_INDEX);
+            }
+        }
+    }
+
+    /**
+     * A class that provides access to java.rmi.Remote and java.rmi.MarshalledObject
+     * without creating a static dependency.
+     */
+    private static class RMI {
+        private static final Class<?> remoteClass = getClass("java.rmi.Remote");
+        private static final Class<?> marshallObjectClass =
+            getClass("java.rmi.MarshalledObject");
+        private static final Constructor<?> marshallCtor =
+            getConstructor(marshallObjectClass, Object.class);
+        private static final Method marshallGet =
+            getMethod(marshallObjectClass, "get");
+
+        private static Class<?> getClass(String name) {
+            try {
+                return Class.forName(name, true, null);
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+
+        private static Constructor<?> getConstructor(Class<?> c, Class<?>... types) {
+            try {
+                return (c == null) ? null : c.getDeclaredConstructor(types);
+            } catch (NoSuchMethodException x) {
+                throw new AssertionError(x);
+            }
+        }
+
+        private static Method getMethod(Class<?> c, String name, Class<?>... types) {
+            try {
+                return (c == null) ? null : c.getMethod(name, types);
+            } catch (NoSuchMethodException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        /**
+         * Returns {@code true} if the given class is java.rmi.Remote.
+         */
+        static boolean isRemote(Class<?> c) {
+            return (remoteClass == null) ? null : remoteClass.isAssignableFrom(c);
+        }
+
+        /**
+         * Returns java.rmi.Remote.class if RMI is present; otherwise {@code null}.
+         */
+        static Class<?> remoteClass() {
+            return remoteClass;
+        }
+
+        /**
+         * Returns a new MarshalledObject containing the serialized representation
+         * of the given object.
+         */
+        static Object newMarshalledObject(Object obj) throws IOException {
+            try {
+                return marshallCtor.newInstance(obj);
+            } catch (InstantiationException x) {
+                throw new AssertionError(x);
+            } catch (IllegalAccessException x) {
+                throw new AssertionError(x);
+            } catch (InvocationTargetException  x) {
+                Throwable cause = x.getCause();
+                if (cause instanceof IOException)
+                    throw (IOException)cause;
+                throw new AssertionError(x);
+            }
+        }
+
+        /**
+         * Returns a new copy of the contained marshalled object.
+         */
+        static Object getMarshalledObject(Object obj)
+            throws IOException, ClassNotFoundException
+        {
+            try {
+                return marshallGet.invoke(obj);
+            } catch (IllegalAccessException x) {
+                throw new AssertionError(x);
+            } catch (InvocationTargetException x) {
+                Throwable cause = x.getCause();
+                if (cause instanceof IOException)
+                    throw (IOException)cause;
+                if (cause instanceof ClassNotFoundException)
+                    throw (ClassNotFoundException)cause;
+                throw new AssertionError(x);
             }
         }
     }

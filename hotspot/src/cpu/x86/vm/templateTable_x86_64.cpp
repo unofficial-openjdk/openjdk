@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
         }
         __ g1_write_barrier_pre(rdx, r8, rbx, val != noreg);
         if (val == noreg) {
-          __ store_heap_oop(Address(rdx, 0), NULL_WORD);
+          __ store_heap_oop_null(Address(rdx, 0));
         } else {
           __ store_heap_oop(Address(rdx, 0), val);
           __ g1_write_barrier_post(rdx, val, r8, rbx);
@@ -152,7 +152,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::CardTableExtension:
       {
         if (val == noreg) {
-          __ store_heap_oop(obj, NULL_WORD);
+          __ store_heap_oop_null(obj);
         } else {
           __ store_heap_oop(obj, val);
           // flatten object address if needed
@@ -168,7 +168,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::ModRef:
     case BarrierSet::Other:
       if (val == noreg) {
-        __ store_heap_oop(obj, NULL_WORD);
+        __ store_heap_oop_null(obj);
       } else {
         __ store_heap_oop(obj, val);
       }
@@ -203,18 +203,15 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bytecode, Register bc,
     __ jcc(Assembler::notEqual, fast_patch);
     __ get_method(scratch);
     // Let breakpoint table handling rewrite to quicker bytecode
-    __ call_VM(noreg,
-               CAST_FROM_FN_PTR(address,
-                                InterpreterRuntime::set_original_bytecode_at),
-               scratch, r13, bc);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::set_original_bytecode_at), scratch, r13, bc);
 #ifndef ASSERT
     __ jmpb(patch_done);
-    __ bind(fast_patch);
-  }
 #else
     __ jmp(patch_done);
+#endif
     __ bind(fast_patch);
   }
+#ifdef ASSERT
   Label okay;
   __ load_unsigned_byte(scratch, at_bcp(0));
   __ cmpl(scratch, (int) Bytecodes::java_code(bytecode));
@@ -307,7 +304,7 @@ void TemplateTable::bipush() {
 
 void TemplateTable::sipush() {
   transition(vtos, itos);
-  __ load_unsigned_word(rax, at_bcp(1));
+  __ load_unsigned_short(rax, at_bcp(1));
   __ bswapl(rax);
   __ sarl(rax, 16);
 }
@@ -645,10 +642,10 @@ void TemplateTable::caload() {
   // eax: index
   // rdx: array
   index_check(rdx, rax); // kills rbx
-  __ load_unsigned_word(rax,
-                        Address(rdx, rax,
-                                Address::times_2,
-                                arrayOopDesc::base_offset_in_bytes(T_CHAR)));
+  __ load_unsigned_short(rax,
+                         Address(rdx, rax,
+                                 Address::times_2,
+                                 arrayOopDesc::base_offset_in_bytes(T_CHAR)));
 }
 
 // iload followed by caload frequent pair
@@ -663,10 +660,10 @@ void TemplateTable::fast_icaload() {
   // rdx: array
   __ pop_ptr(rdx);
   index_check(rdx, rax); // kills rbx
-  __ load_unsigned_word(rax,
-                        Address(rdx, rax,
-                                Address::times_2,
-                                arrayOopDesc::base_offset_in_bytes(T_CHAR)));
+  __ load_unsigned_short(rax,
+                         Address(rdx, rax,
+                                 Address::times_2,
+                                 arrayOopDesc::base_offset_in_bytes(T_CHAR)));
 }
 
 void TemplateTable::saload() {
@@ -675,10 +672,10 @@ void TemplateTable::saload() {
   // eax: index
   // rdx: array
   index_check(rdx, rax); // kills rbx
-  __ load_signed_word(rax,
-                      Address(rdx, rax,
-                              Address::times_2,
-                              arrayOopDesc::base_offset_in_bytes(T_SHORT)));
+  __ load_signed_short(rax,
+                       Address(rdx, rax,
+                               Address::times_2,
+                               arrayOopDesc::base_offset_in_bytes(T_SHORT)));
 }
 
 void TemplateTable::iload(int n) {
@@ -1559,7 +1556,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
 
   // Handle all the JSR stuff here, then exit.
   // It's much shorter and cleaner than intermingling with the non-JSR
-  // normal-branch stuff occuring below.
+  // normal-branch stuff occurring below.
   if (is_jsr) {
     // Pre-load the next target bytecode into rbx
     __ load_unsigned_byte(rbx, Address(r13, rdx, Address::times_1, 0));
@@ -2054,26 +2051,28 @@ void TemplateTable::volatile_barrier(Assembler::Membar_mask_bits
   }
 }
 
-void TemplateTable::resolve_cache_and_index(int byte_no,
-                                            Register Rcache,
-                                            Register index) {
+void TemplateTable::resolve_cache_and_index(int byte_no, Register Rcache, Register index) {
   assert(byte_no == 1 || byte_no == 2, "byte_no out of range");
+  bool is_invokedynamic = (bytecode() == Bytecodes::_invokedynamic);
 
   const Register temp = rbx;
   assert_different_registers(Rcache, index, temp);
 
   const int shift_count = (1 + byte_no) * BitsPerByte;
   Label resolved;
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
-  __ movl(temp, Address(Rcache,
-                        index, Address::times_8,
-                        constantPoolCacheOopDesc::base_offset() +
-                        ConstantPoolCacheEntry::indices_offset()));
-  __ shrl(temp, shift_count);
-  // have we resolved this bytecode?
-  __ andl(temp, 0xFF);
-  __ cmpl(temp, (int) bytecode());
-  __ jcc(Assembler::equal, resolved);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
+  if (is_invokedynamic) {
+    // we are resolved if the f1 field contains a non-null CallSite object
+    __ cmpptr(Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::f1_offset()), (int32_t) NULL_WORD);
+    __ jcc(Assembler::notEqual, resolved);
+  } else {
+    __ movl(temp, Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
+    __ shrl(temp, shift_count);
+    // have we resolved this bytecode?
+    __ andl(temp, 0xFF);
+    __ cmpl(temp, (int) bytecode());
+    __ jcc(Assembler::equal, resolved);
+  }
 
   // resolve first time through
   address entry;
@@ -2090,6 +2089,9 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   case Bytecodes::_invokeinterface:
     entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invoke);
     break;
+  case Bytecodes::_invokedynamic:
+    entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invokedynamic);
+    break;
   default:
     ShouldNotReachHere();
     break;
@@ -2098,7 +2100,7 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   __ call_VM(noreg, entry, temp);
 
   // Update registers with resolved info
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
   __ bind(resolved);
 }
 
@@ -2276,7 +2278,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
   __ cmpl(flags, ctos);
   __ jcc(Assembler::notEqual, notChar);
   // ctos
-  __ load_unsigned_word(rax, field);
+  __ load_unsigned_short(rax, field);
   __ push(ctos);
   // Rewrite bytecode to be faster
   if (!is_static) {
@@ -2288,7 +2290,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
   __ cmpl(flags, stos);
   __ jcc(Assembler::notEqual, notShort);
   // stos
-  __ load_signed_word(rax, field);
+  __ load_signed_short(rax, field);
   __ push(stos);
   // Rewrite bytecode to be faster
   if (!is_static) {
@@ -2751,10 +2753,10 @@ void TemplateTable::fast_accessfield(TosState state) {
     __ movsbl(rax, field);
     break;
   case Bytecodes::_fast_sgetfield:
-    __ load_signed_word(rax, field);
+    __ load_signed_short(rax, field);
     break;
   case Bytecodes::_fast_cgetfield:
-    __ load_unsigned_word(rax, field);
+    __ load_unsigned_short(rax, field);
     break;
   case Bytecodes::_fast_fgetfield:
     __ movflt(xmm0, field);
@@ -2832,15 +2834,14 @@ void TemplateTable::count_calls(Register method, Register temp) {
   ShouldNotReachHere();
 }
 
-void TemplateTable::prepare_invoke(Register method,
-                                   Register index,
-                                   int byte_no,
-                                   Bytecodes::Code code) {
+void TemplateTable::prepare_invoke(Register method, Register index, int byte_no) {
   // determine flags
+  Bytecodes::Code code = bytecode();
   const bool is_invokeinterface  = code == Bytecodes::_invokeinterface;
+  const bool is_invokedynamic    = code == Bytecodes::_invokedynamic;
   const bool is_invokevirtual    = code == Bytecodes::_invokevirtual;
   const bool is_invokespecial    = code == Bytecodes::_invokespecial;
-  const bool load_receiver       = code != Bytecodes::_invokestatic;
+  const bool load_receiver      = (code != Bytecodes::_invokestatic && code != Bytecodes::_invokedynamic);
   const bool receiver_null_check = is_invokespecial;
   const bool save_flags = is_invokeinterface || is_invokevirtual;
   // setup registers & access constant pool cache
@@ -2858,9 +2859,13 @@ void TemplateTable::prepare_invoke(Register method,
     __ movl(recv, flags);
     __ andl(recv, 0xFF);
     if (TaggedStackInterpreter) __ shll(recv, 1);  // index*2
-    __ movptr(recv, Address(rsp, recv, Address::times_8,
-                                 -Interpreter::expr_offset_in_bytes(1)));
-    __ verify_oop(recv);
+    Address recv_addr(rsp, recv, Address::times_8, -Interpreter::expr_offset_in_bytes(1));
+    if (is_invokedynamic) {
+      __ lea(recv, recv_addr);
+    } else {
+      __ movptr(recv, recv_addr);
+      __ verify_oop(recv);
+    }
   }
 
   // do null check if needed
@@ -2878,10 +2883,14 @@ void TemplateTable::prepare_invoke(Register method,
   ConstantPoolCacheEntry::verify_tosBits();
   // load return address
   {
-    ExternalAddress return_5((address)Interpreter::return_5_addrs_by_index_table());
-    ExternalAddress return_3((address)Interpreter::return_3_addrs_by_index_table());
-    __ lea(rscratch1, (is_invokeinterface ? return_5 : return_3));
-    __ movptr(flags, Address(rscratch1, flags, Address::times_8));
+    address table_addr;
+    if (is_invokeinterface || is_invokedynamic)
+      table_addr = (address)Interpreter::return_5_addrs_by_index_table();
+    else
+      table_addr = (address)Interpreter::return_3_addrs_by_index_table();
+    ExternalAddress table(table_addr);
+    __ lea(rscratch1, table);
+    __ movptr(flags, Address(rscratch1, flags, Address::times_ptr));
   }
 
   // push return address
@@ -2947,7 +2956,7 @@ void TemplateTable::invokevirtual_helper(Register index,
 
 void TemplateTable::invokevirtual(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
 
   // rbx: index
   // rcx: receiver
@@ -2959,7 +2968,7 @@ void TemplateTable::invokevirtual(int byte_no) {
 
 void TemplateTable::invokespecial(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -2969,7 +2978,7 @@ void TemplateTable::invokespecial(int byte_no) {
 
 void TemplateTable::invokestatic(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -2983,7 +2992,7 @@ void TemplateTable::fast_invokevfinal(int byte_no) {
 
 void TemplateTable::invokeinterface(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rax, rbx, byte_no, bytecode());
+  prepare_invoke(rax, rbx, byte_no);
 
   // rax: Interface
   // rbx: index
@@ -3010,96 +3019,88 @@ void TemplateTable::invokeinterface(int byte_no) {
   // profile this call
   __ profile_virtual_call(rdx, r13, r14);
 
-  __ mov(r14, rdx); // Save klassOop in r14
+  Label no_such_interface, no_such_method;
 
-  // Compute start of first itableOffsetEntry (which is at the end of
-  // the vtable)
-  const int base = instanceKlass::vtable_start_offset() * wordSize;
-  // Get length of vtable
-  assert(vtableEntry::size() * wordSize == 8,
-         "adjust the scaling in the code below");
-  __ movl(r13, Address(rdx,
-                       instanceKlass::vtable_length_offset() * wordSize));
-  __ lea(rdx, Address(rdx, r13, Address::times_8, base));
+  __ lookup_interface_method(// inputs: rec. class, interface, itable index
+                             rdx, rax, rbx,
+                             // outputs: method, scan temp. reg
+                             rbx, r13,
+                             no_such_interface);
 
-  if (HeapWordsPerLong > 1) {
-    // Round up to align_object_offset boundary
-    __ round_to(rdx, BytesPerLong);
-  }
+  // rbx,: methodOop to call
+  // rcx: receiver
+  // Check for abstract method error
+  // Note: This should be done more efficiently via a throw_abstract_method_error
+  //       interpreter entry point and a conditional jump to it in case of a null
+  //       method.
+  __ testptr(rbx, rbx);
+  __ jcc(Assembler::zero, no_such_method);
 
-  Label entry, search, interface_ok;
+  // do the call
+  // rcx: receiver
+  // rbx,: methodOop
+  __ jump_from_interpreted(rbx, rdx);
+  __ should_not_reach_here();
 
-  __ jmpb(entry);
-  __ bind(search);
-  __ addptr(rdx, itableOffsetEntry::size() * wordSize);
+  // exception handling code follows...
+  // note: must restore interpreter registers to canonical
+  //       state for exception handling to work correctly!
 
-  __ bind(entry);
-
-  // Check that the entry is non-null.  A null entry means that the
-  // receiver class doesn't implement the interface, and wasn't the
-  // same as the receiver class checked when the interface was
-  // resolved.
-  __ push(rdx);
-  __ movptr(rdx, Address(rdx, itableOffsetEntry::interface_offset_in_bytes()));
-  __ testptr(rdx, rdx);
-  __ jcc(Assembler::notZero, interface_ok);
+  __ bind(no_such_method);
   // throw exception
-  __ pop(rdx); // pop saved register first.
-  __ pop(rbx); // pop return address (pushed by prepare_invoke)
-  __ restore_bcp(); // r13 must be correct for exception handler (was
-                    // destroyed)
-  __ restore_locals(); // make sure locals pointer is correct as well
-                       // (was destroyed)
+  __ pop(rbx);           // pop return address (pushed by prepare_invoke)
+  __ restore_bcp();      // r13 must be correct for exception handler   (was destroyed)
+  __ restore_locals();   // make sure locals pointer is correct as well (was destroyed)
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::throw_AbstractMethodError));
+  // the call_VM checks for exception, so we should never return here.
+  __ should_not_reach_here();
+
+  __ bind(no_such_interface);
+  // throw exception
+  __ pop(rbx);           // pop return address (pushed by prepare_invoke)
+  __ restore_bcp();      // r13 must be correct for exception handler   (was destroyed)
+  __ restore_locals();   // make sure locals pointer is correct as well (was destroyed)
   __ call_VM(noreg, CAST_FROM_FN_PTR(address,
                    InterpreterRuntime::throw_IncompatibleClassChangeError));
   // the call_VM checks for exception, so we should never return here.
   __ should_not_reach_here();
-  __ bind(interface_ok);
+  return;
+}
 
-  __ pop(rdx);
+void TemplateTable::invokedynamic(int byte_no) {
+  transition(vtos, vtos);
 
-  __ cmpptr(rax, Address(rdx, itableOffsetEntry::interface_offset_in_bytes()));
-  __ jcc(Assembler::notEqual, search);
-
-  __ movl(rdx, Address(rdx, itableOffsetEntry::offset_offset_in_bytes()));
-
-  __ addptr(rdx, r14); // Add offset to klassOop
-  assert(itableMethodEntry::size() * wordSize == 8,
-         "adjust the scaling in the code below");
-  __ movptr(rbx, Address(rdx, rbx, Address::times_8));
-  // rbx: methodOop to call
-  // rcx: receiver
-  // Check for abstract method error
-  // Note: This should be done more efficiently via a
-  // throw_abstract_method_error interpreter entry point and a
-  // conditional jump to it in case of a null method.
-  {
-    Label L;
-    __ testptr(rbx, rbx);
-    __ jcc(Assembler::notZero, L);
-    // throw exception
-    // note: must restore interpreter registers to canonical
-    //       state for exception handling to work correctly!
-    __ pop(rbx);  // pop return address (pushed by prepare_invoke)
-    __ restore_bcp(); // r13 must be correct for exception handler
-                      // (was destroyed)
-    __ restore_locals(); // make sure locals pointer is correct as
-                         // well (was destroyed)
-    __ call_VM(noreg,
-               CAST_FROM_FN_PTR(address,
-                             InterpreterRuntime::throw_AbstractMethodError));
+  if (!EnableInvokeDynamic) {
+    // We should not encounter this bytecode if !EnableInvokeDynamic.
+    // The verifier will stop it.  However, if we get past the verifier,
+    // this will stop the thread in a reasonable way, without crashing the JVM.
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address,
+                     InterpreterRuntime::throw_IncompatibleClassChangeError));
     // the call_VM checks for exception, so we should never return here.
     __ should_not_reach_here();
-    __ bind(L);
+    return;
   }
 
-  __ movptr(rcx, Address(rbx, methodOopDesc::interpreter_entry_offset()));
+  prepare_invoke(rax, rbx, byte_no);
 
-  // do the call
-  // rcx: receiver
-  // rbx: methodOop
-  __ jump_from_interpreted(rbx, rdx);
+  // rax: CallSite object (f1)
+  // rbx: unused (f2)
+  // rcx: receiver address
+  // rdx: flags (unused)
+
+  if (ProfileInterpreter) {
+    Label L;
+    // %%% should make a type profile for any invokedynamic that takes a ref argument
+    // profile this call
+    __ profile_call(r13);
+  }
+
+  __ movptr(rcx, Address(rax, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
+  __ null_check(rcx);
+  __ prepare_to_jump_from_interpreted();
+  __ jump_to_method_handle_entry(rcx, rdx);
 }
+
 
 //-----------------------------------------------------------------------------
 // Allocation

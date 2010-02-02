@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ OTHER_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES
 # sun/awt/resources       handled by java/awt/Makefile
 # sun/java2d/pisces       handled by sun/pisces/Makefile
 #
-AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d
+AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d com/sun/awt
 AUTO_JAVA_PRUNE = resources pisces
 
 ifeq ($(PLATFORM), windows)
@@ -219,6 +219,7 @@ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/image/cvutils
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/shell
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/medialib
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/debug
+vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/utility
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/loops
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/pipe
@@ -247,8 +248,14 @@ endif # PLATFORM
 ifeq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv WINDOWS
 OTHER_LDLIBS = kernel32.lib user32.lib gdi32.lib winspool.lib \
-               imm32.lib ole32.lib uuid.lib $(JVMLIB) \
-               shell32.lib
+               imm32.lib ole32.lib uuid.lib shell32.lib \
+               comdlg32.lib winmm.lib comctl32.lib delayimp.lib \
+               $(JVMLIB) \
+               /DELAYLOAD:user32.dll /DELAYLOAD:gdi32.dll \
+               /DELAYLOAD:shell32.dll /DELAYLOAD:winmm.dll \
+               /DELAYLOAD:winspool.drv /DELAYLOAD:imm32.dll \
+               /DELAYLOAD:ole32.dll /DELAYLOAD:comdlg32.dll \
+               /DELAYLOAD:comctl32.dll
 
 clean:: awt.clean
 
@@ -333,8 +340,7 @@ ifeq ($(PLATFORM), windows)
 
 FONTCONFIGS_SRC = $(PLATFORM_SRC)/classes/sun/awt/windows
 _FONTCONFIGS = \
-        fontconfig.properties \
-        fontconfig.98.properties 
+        fontconfig.properties
 
 FONTCONFIGS_SRC_PREFIX =
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 // Defines all globals flags used by the server compiler.
 //
 
-#define C2_FLAGS(develop, develop_pd, product, product_pd, diagnostic, notproduct) \
+#define C2_FLAGS(develop, develop_pd, product, product_pd, diagnostic, experimental, notproduct) \
                                                                             \
   notproduct(intx, CompileZapFirst, 0,                                      \
           "If +ZapDeadCompiledLocals, "                                     \
@@ -154,6 +154,12 @@
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
                                                                             \
+  product(bool, UseLoopPredicate, true,                                     \
+          "Generate a predicate to select fast/slow loop versions")         \
+                                                                            \
+  develop(bool, TraceLoopPredicate, false,                                  \
+          "Trace generation of loop predicates")                            \
+                                                                            \
   develop(bool, OptoCoalesce, true,                                         \
           "Use Conservative Copy Coalescing in the Register Allocator")     \
                                                                             \
@@ -190,6 +196,9 @@
                                                                             \
   notproduct(bool, VerifyHashTableKeys, true,                               \
           "Verify the immutability of keys in the VN hash tables")          \
+                                                                            \
+  notproduct(bool, VerifyRegisterAllocator , false,                         \
+          "Verify Register Allocator")                                      \
                                                                             \
   develop_pd(intx, FLOATPRESSURE,                                           \
           "Number of float LRG's that constitute high register pressure")   \
@@ -373,7 +382,7 @@
   product(intx, AutoBoxCacheMax, 128,                                       \
           "Sets max value cached by the java.lang.Integer autobox cache")   \
                                                                             \
-  product(bool, DoEscapeAnalysis, false,                                    \
+  product(bool, DoEscapeAnalysis, true,                                     \
           "Perform escape analysis")                                        \
                                                                             \
   notproduct(bool, PrintEscapeAnalysis, false,                              \
@@ -388,8 +397,14 @@
   product(intx, EliminateAllocationArraySizeLimit, 64,                      \
           "Array size (number of elements) limit for scalar replacement")   \
                                                                             \
-  product(bool, UseOptoBiasInlining, true,                                 \
+  product(bool, UseOptoBiasInlining, true,                                  \
           "Generate biased locking code in C2 ideal graph")                 \
+                                                                            \
+  product(bool, OptimizeStringConcat, false,                                \
+          "Optimize the construction of Strings by StringBuilder")          \
+                                                                            \
+  notproduct(bool, PrintOptimizeStringConcat, false,                        \
+          "Print information about transformations performed on Strings")   \
                                                                             \
   product(intx, ValueSearchLimit, 1000,                                     \
           "Recursion limit in PhaseMacroExpand::value_from_mem_phi")        \
@@ -407,7 +422,7 @@
           "Miniumum %% of a successor (predecessor) for which block layout "\
           "a will allow a fork (join) in a single chain")                   \
                                                                             \
-  product(bool, BlockLayoutRotateLoops, false,                              \
+  product(bool, BlockLayoutRotateLoops, true,                               \
           "Allow back branches to be fall throughs in the block layour")    \
 
-C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
+C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG)

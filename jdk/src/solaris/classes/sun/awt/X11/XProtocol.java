@@ -25,30 +25,16 @@
 
 package sun.awt.X11;
 
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import java.util.*;
 
 class XProtocol {
-    private final static Logger log = Logger.getLogger("sun.awt.X11.XProtocol");
+    private final static PlatformLogger log = PlatformLogger.getLogger("sun.awt.X11.XProtocol");
 
     private Map<XAtom, XAtomList> atomToList = new HashMap<XAtom, XAtomList>();
     private Map<XAtom, Long> atomToAnchor = new HashMap<XAtom, Long>();
 
-    /*
-     * Temporary error handler that ensures that we know if
-     * XChangeProperty succeeded or not.
-     */
-    static XToolkit.XErrorHandler VerifyChangePropertyHandler = new XToolkit.XErrorHandler() {
-            public int handleError(long display, XErrorEvent err) {
-                XToolkit.XERROR_SAVE(err);
-                if (err.get_request_code() == XProtocolConstants.X_ChangeProperty) {
-                    return 0;
-                } else {
-                    return XToolkit.SAVED_ERROR_HANDLER(display, err);
-                }
-            }
-        };
     volatile boolean firstCheck = true;
     /*
      * Check that that the list of protocols specified by WM in property
@@ -68,7 +54,7 @@ class XProtocol {
         } finally {
             if (firstCheck) {
                 firstCheck = false;
-                log.log(Level.FINE, "{0}:{1} supports {2}", new Object[] {this, listName, protocols});
+                log.fine("{0}:{1} supports {2}", this, listName, protocols);
             }
         }
     }

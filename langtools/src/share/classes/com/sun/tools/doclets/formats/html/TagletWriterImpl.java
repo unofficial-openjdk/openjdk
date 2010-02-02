@@ -25,17 +25,18 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.builders.SerializedFormBuilder;
 import com.sun.tools.doclets.internal.toolkit.taglets.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
 
 /**
  * The taglet writer that writes HTML.
  *
  * @since 1.5
  * @author Jamie Ho
+ * @author Bhavesh Patel (Modified)
  */
 
 public class TagletWriterImpl extends TagletWriter {
@@ -69,9 +70,9 @@ public class TagletWriterImpl extends TagletWriter {
         Tag[] deprs = doc.tags("deprecated");
         if (doc instanceof ClassDoc) {
             if (Util.isDeprecated((ProgramElementDoc) doc)) {
-                output.append("<B>" +
+                output.append("<STRONG>" +
                     ConfigurationImpl.getInstance().
-                        getText("doclet.Deprecated") + "</B>&nbsp;");
+                        getText("doclet.Deprecated") + "</STRONG>&nbsp;");
                 if (deprs.length > 0) {
                     Tag[] commentTags = deprs[0].inlineTags();
                     if (commentTags.length > 0) {
@@ -86,9 +87,9 @@ public class TagletWriterImpl extends TagletWriter {
         } else {
             MemberDoc member = (MemberDoc) doc;
             if (Util.isDeprecated((ProgramElementDoc) doc)) {
-                output.append("<DD><B>" +
+                output.append("<DD><STRONG>" +
                     ConfigurationImpl.getInstance().
-                            getText("doclet.Deprecated") + "</B>&nbsp;");
+                            getText("doclet.Deprecated") + "</STRONG>&nbsp;");
                 if (deprs.length > 0) {
                     output.append("<I>");
                     output.append(commentTagsToOutput(null, doc,
@@ -99,11 +100,12 @@ public class TagletWriterImpl extends TagletWriter {
                     output.append(DocletConstants.NL + "<P>" +
                         DocletConstants.NL);
                 }
+                output.append("</DD>");
             } else {
                 if (Util.isDeprecated(member.containingClass())) {
-                    output.append("<DD><B>" +
+                    output.append("<DD><STRONG>" +
                     ConfigurationImpl.getInstance().
-                            getText("doclet.Deprecated") + "</B>&nbsp;");
+                            getText("doclet.Deprecated") + "</STRONG>&nbsp;</DD>");
                 }
             }
         }
@@ -123,7 +125,7 @@ public class TagletWriterImpl extends TagletWriter {
     public TagletOutput getParamHeader(String header) {
         StringBuffer result = new StringBuffer();
         result.append("<DT>");
-        result.append("<B>" +  header + "</B>");
+        result.append("<STRONG>" +  header + "</STRONG></DT>");
         return new TagletOutputImpl(result.toString());
     }
 
@@ -132,7 +134,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public TagletOutput paramTagOutput(ParamTag paramTag, String paramName) {
         TagletOutput result = new TagletOutputImpl("<DD><CODE>" + paramName + "</CODE>"
-         + " - " + htmlWriter.commentTagsToString(paramTag, null, paramTag.inlineTags(), false));
+         + " - " + htmlWriter.commentTagsToString(paramTag, null, paramTag.inlineTags(), false) + "</DD>");
         return result;
     }
 
@@ -141,10 +143,10 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public TagletOutput returnTagOutput(Tag returnTag) {
         TagletOutput result = new TagletOutputImpl(DocletConstants.NL + "<DT>" +
-            "<B>" + htmlWriter.configuration.getText("doclet.Returns") +
-            "</B>" + "<DD>" +
+            "<STRONG>" + htmlWriter.configuration.getText("doclet.Returns") +
+            "</STRONG>" + "</DT>" + "<DD>" +
             htmlWriter.commentTagsToString(returnTag, null, returnTag.inlineTags(),
-            false));
+            false) + "</DD>");
         return result;
     }
 
@@ -174,22 +176,21 @@ public class TagletWriterImpl extends TagletWriter {
         }
         if (holder.isClass() && ((ClassDoc)holder).isSerializable()) {
             //Automatically add link to serialized form page for serializable classes.
-            if (!(SerializedFormBuilder.serialInclude(holder) &&
+            if ((SerializedFormBuilder.serialInclude(holder) &&
                       SerializedFormBuilder.serialInclude(((ClassDoc)holder).containingPackage()))) {
-                return result.equals("") ? null : new TagletOutputImpl(result);
+                result = addSeeHeader(result);
+                result += htmlWriter.getHyperLink(htmlWriter.relativePath + "serialized-form.html",
+                        ((ClassDoc)holder).qualifiedName(), htmlWriter.configuration.getText("doclet.Serialized_Form"), false);
             }
-            result = addSeeHeader(result);
-            result += htmlWriter.getHyperLink(htmlWriter.relativePath + "serialized-form.html",
-                ((ClassDoc)holder).qualifiedName(), htmlWriter.configuration.getText("doclet.Serialized_Form"), false);
         }
-        return result.equals("") ? null : new TagletOutputImpl(result);
+        return result.equals("") ? null : new TagletOutputImpl(result + "</DD>");
     }
 
     private String addSeeHeader(String result) {
         if (result != null && result.length() > 0) {
             return result + ", " + DocletConstants.NL;
         } else {
-            return "<DT><B>" + htmlWriter.configuration().getText("doclet.See_Also") + "</B><DD>";
+            return "<DT><STRONG>" + htmlWriter.configuration().getText("doclet.See_Also") + "</STRONG></DT><DD>";
         }
      }
 
@@ -197,7 +198,7 @@ public class TagletWriterImpl extends TagletWriter {
      * {@inheritDoc}
      */
     public TagletOutput simpleTagOutput(Tag[] simpleTags, String header) {
-        String result = "<DT><B>" + header + "</B></DT>" + DocletConstants.NL +
+        String result = "<DT><STRONG>" + header + "</STRONG></DT>" + DocletConstants.NL +
             "  <DD>";
         for (int i = 0; i < simpleTags.length; i++) {
             if (i > 0) {
@@ -205,14 +206,15 @@ public class TagletWriterImpl extends TagletWriter {
             }
             result += htmlWriter.commentTagsToString(simpleTags[i], null, simpleTags[i].inlineTags(), false);
         }
-         return new TagletOutputImpl(result + "</DD>" + DocletConstants.NL);
+        result += "</DD>" + DocletConstants.NL;
+        return new TagletOutputImpl(result);
     }
 
     /**
      * {@inheritDoc}
      */
     public TagletOutput simpleTagOutput(Tag simpleTag, String header) {
-        return new TagletOutputImpl("<DT><B>" + header + "</B></DT>" + "  <DD>"
+        return new TagletOutputImpl("<DT><STRONG>" + header + "</STRONG></DT>" + "  <DD>"
             + htmlWriter.commentTagsToString(simpleTag, null, simpleTag.inlineTags(), false)
             + "</DD>" + DocletConstants.NL);
     }
@@ -221,8 +223,8 @@ public class TagletWriterImpl extends TagletWriter {
      * {@inheritDoc}
      */
     public TagletOutput getThrowsHeader() {
-        return new TagletOutputImpl(DocletConstants.NL + "<DT>" + "<B>" +
-            htmlWriter.configuration().getText("doclet.Throws") + "</B>");
+        return new TagletOutputImpl(DocletConstants.NL + "<DT>" + "<STRONG>" +
+            htmlWriter.configuration().getText("doclet.Throws") + "</STRONG></DT>");
     }
 
     /**
@@ -241,6 +243,7 @@ public class TagletWriterImpl extends TagletWriter {
         if (text != null && text.toString().length() > 0) {
             result += " - " + text;
         }
+        result += "</DD>";
         return new TagletOutputImpl(result);
     }
 
@@ -250,7 +253,7 @@ public class TagletWriterImpl extends TagletWriter {
     public TagletOutput throwsTagOutput(Type throwsType) {
         return new TagletOutputImpl(DocletConstants.NL + "<DD>" +
             htmlWriter.codeText(htmlWriter.getLink(
-                new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, throwsType))));
+                new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER, throwsType))) + "</DD>");
     }
 
     /**

@@ -28,6 +28,7 @@ package com.sun.imageio.plugins.jpeg;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
 import javax.imageio.spi.IIORegistry;
+import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.ImageWriter;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.IIOException;
@@ -42,8 +43,6 @@ public class JPEGImageWriterSpi extends ImageWriterSpi {
     private static String [] readerSpiNames =
         {"com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi"};
 
-    private boolean registered = false;
-
     public JPEGImageWriterSpi() {
         super(JPEG.vendor,
               JPEG.version,
@@ -51,7 +50,7 @@ public class JPEGImageWriterSpi extends ImageWriterSpi {
               JPEG.suffixes,
               JPEG.MIMETypes,
               "com.sun.imageio.plugins.jpeg.JPEGImageWriter",
-              STANDARD_OUTPUT_TYPE,
+              new Class[] { ImageOutputStream.class },
               readerSpiNames,
               true,
               JPEG.nativeStreamMetadataFormatName,
@@ -66,23 +65,6 @@ public class JPEGImageWriterSpi extends ImageWriterSpi {
 
     public String getDescription(Locale locale) {
         return "Standard JPEG Image Writer";
-    }
-
-    public void onRegistration(ServiceRegistry registry,
-                               Class<?> category) {
-        if (registered) {
-            return;
-        }
-        try {
-            java.security.AccessController.doPrivileged(
-                new sun.security.action.LoadLibraryAction("jpeg"));
-        } catch (Throwable e) { // Fail on any Throwable
-            // if it can't be loaded, deregister and return
-            registry.deregisterServiceProvider(this);
-            return;
-        }
-
-        registered = true;
     }
 
     public boolean isFormatLossless() {

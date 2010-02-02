@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @bug 6527316
+ * @bug 6527316 6732647
  * @summary Copies isn't supported for PS flavors.
  * @run main PSCopiesFlavorTest
  */
@@ -37,18 +37,26 @@ public class PSCopiesFlavorTest {
    public static void main(String args[]) {
 
        DocFlavor flavor = DocFlavor.INPUT_STREAM.POSTSCRIPT;
-       PrintService ps = PrintServiceLookup.lookupDefaultPrintService();
-       if (!(ps.isDocFlavorSupported(flavor))) {
-           System.out.println("unsupported flavor :" + flavor);
-           return;
+       PrintService[] ps = PrintServiceLookup.lookupPrintServices(flavor, null);
+       if (ps.length > 0) {
+           System.out.println("found PrintService: "+ps[0]);
+           Copies c = new Copies(1);
+           PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
+           aset.add(c);
+           boolean suppVal = ps[0].isAttributeValueSupported(c, flavor, null);
+           AttributeSet us = ps[0].getUnsupportedAttributes(flavor, aset);
+           if (suppVal || us == null) {
+               throw new RuntimeException("Copies should be unsupported value");
+           }
+
+           Object value = ps[0].getSupportedAttributeValues(Copies.class,
+                                                            flavor, null);
+
+            //Copies Supported
+            if(value instanceof CopiesSupported) {
+                throw new RuntimeException("Copies should have no supported values.");
+            }
        }
-       Copies c = new Copies(1);
-       PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
-       aset.add(c);
-       boolean suppVal = ps.isAttributeValueSupported(c, flavor, null);
-       AttributeSet us = ps.getUnsupportedAttributes(flavor, aset);
-       if (suppVal || us == null) {
-           throw new RuntimeException("Copies should be unsupported value");
-       }
+
    }
 }

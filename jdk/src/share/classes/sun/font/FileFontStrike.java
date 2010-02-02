@@ -26,6 +26,7 @@
 package sun.font;
 
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
@@ -113,7 +114,7 @@ public class FileFontStrike extends PhysicalStrike {
     private static native boolean initNative();
     private static boolean isXPorLater = false;
     static {
-        if (FontManager.isWindows && !FontManager.useT2K &&
+        if (FontUtilities.isWindows && !FontUtilities.useT2K &&
             !GraphicsEnvironment.isHeadless()) {
             isXPorLater = initNative();
         }
@@ -200,7 +201,7 @@ public class FileFontStrike extends PhysicalStrike {
             this.disposer = new FontStrikeDisposer(fileFont, desc);
             initGlyphCache();
             pScalerContext = NullFontScaler.getNullScalerContext();
-            FontManager.deRegisterBadFont(fileFont);
+            SunFontManager.getInstance().deRegisterBadFont(fileFont);
             return;
         }
         /* First, see if native code should be used to create the glyph.
@@ -210,8 +211,8 @@ public class FileFontStrike extends PhysicalStrike {
          * except that the advance returned by GDI is always overwritten by
          * the JDK rasteriser supplied one (see getGlyphImageFromWindows()).
          */
-        if (FontManager.isWindows && isXPorLater &&
-            !FontManager.useT2K &&
+        if (FontUtilities.isWindows && isXPorLater &&
+            !FontUtilities.useT2K &&
             !GraphicsEnvironment.isHeadless() &&
             !fileFont.useJavaRasterizer &&
             (desc.aaHint == INTVAL_TEXT_ANTIALIAS_LCD_HRGB ||
@@ -240,8 +241,8 @@ public class FileFontStrike extends PhysicalStrike {
                 }
             }
         }
-        if (FontManager.logging && FontManager.isWindows) {
-            FontManager.logger.info
+        if (FontUtilities.isLogging() && FontUtilities.isWindows) {
+            FontUtilities.getLogger().info
                 ("Strike for " + fileFont + " at size = " + intPtSize +
                  " use natives = " + useNatives +
                  " useJavaRasteriser = " + fileFont.useJavaRasterizer +
@@ -297,7 +298,7 @@ public class FileFontStrike extends PhysicalStrike {
     }
 
     long getGlyphImageFromNative(int glyphCode) {
-        if (FontManager.isWindows) {
+        if (FontUtilities.isWindows) {
             return getGlyphImageFromWindows(glyphCode);
         } else {
             return getGlyphImageFromX11(glyphCode);
@@ -365,8 +366,8 @@ public class FileFontStrike extends PhysicalStrike {
         } else {
             if (useNatives) {
                 glyphPtr = getGlyphImageFromNative(glyphCode);
-                if (glyphPtr == 0L && FontManager.logging) {
-                    FontManager.logger.info
+                if (glyphPtr == 0L && FontUtilities.isLogging()) {
+                    FontUtilities.getLogger().info
                         ("Strike for " + fileFont +
                          " at size = " + intPtSize +
                          " couldn't get native glyph for code = " + glyphCode);
@@ -527,7 +528,7 @@ public class FileFontStrike extends PhysicalStrike {
 
         if (segmentedCache) {
             int numSegments = (numGlyphs + SEGSIZE-1)/SEGSIZE;
-            if (FontManager.longAddresses) {
+            if (longAddresses) {
                 glyphCacheFormat = SEGLONGARRAY;
                 segLongGlyphImages = new long[numSegments][];
                 this.disposer.segLongGlyphImages = segLongGlyphImages;
@@ -537,7 +538,7 @@ public class FileFontStrike extends PhysicalStrike {
                  this.disposer.segIntGlyphImages = segIntGlyphImages;
              }
         } else {
-            if (FontManager.longAddresses) {
+            if (longAddresses) {
                 glyphCacheFormat = LONGARRAY;
                 longGlyphImages = new long[numGlyphs];
                 this.disposer.longGlyphImages = longGlyphImages;
@@ -842,8 +843,36 @@ public class FileFontStrike extends PhysicalStrike {
         return fileFont.getGlyphOutlineBounds(pScalerContext, glyphCode);
     }
 
+    private
+        WeakReference<ConcurrentHashMap<Integer,GeneralPath>> outlineMapRef;
+
     GeneralPath getGlyphOutline(int glyphCode, float x, float y) {
-        return fileFont.getGlyphOutline(pScalerContext, glyphCode, x, y);
+
+        GeneralPath gp = null;
+        ConcurrentHashMap<Integer, GeneralPath> outlineMap = null;
+
+        if (outlineMapRef != null) {
+            outlineMap = outlineMapRef.get();
+            if (outlineMap != null) {
+                gp = (GeneralPath)outlineMap.get(glyphCode);
+            }
+        }
+
+        if (gp == null) {
+            gp = fileFont.getGlyphOutline(pScalerContext, glyphCode, 0, 0);
+            if (outlineMap == null) {
+                outlineMap = new ConcurrentHashMap<Integer, GeneralPath>();
+                outlineMapRef =
+                   new WeakReference
+                       <ConcurrentHashMap<Integer,GeneralPath>>(outlineMap);
+            }
+            outlineMap.put(glyphCode, gp);
+        }
+        gp = (GeneralPath)gp.clone(); // mutable!
+        if (x != 0f || y != 0f) {
+            gp.transform(AffineTransform.getTranslateInstance(x, y));
+        }
+        return gp;
     }
 
     GeneralPath getGlyphVectorOutline(int[] glyphs, float x, float y) {

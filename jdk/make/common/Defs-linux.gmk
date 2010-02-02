@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,9 @@ ifndef OPTIMIZATION_LEVEL
     OPTIMIZATION_LEVEL = LOWER
   endif
 endif
+ifndef FASTDEBUG_OPTIMIZATION_LEVEL
+  FASTDEBUG_OPTIMIZATION_LEVEL = LOWER
+endif
 
 CC_OPT/NONE     = 
 CC_OPT/LOWER    = -O2
@@ -113,8 +116,24 @@ CFLAGS_REQUIRED_sparcv9 += -m64 -mcpu=v9
 LDFLAGS_COMMON_sparcv9  += -m64 -mcpu=v9
 CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
 LDFLAGS_COMMON_sparc    += -m32 -mcpu=v9
-CFLAGS_REQUIRED         =  $(CFLAGS_REQUIRED_$(ARCH))
-LDFLAGS_COMMON          += $(LDFLAGS_COMMON_$(ARCH))
+ifeq ($(ZERO_BUILD), true)
+  CFLAGS_REQUIRED       =  $(ZERO_ARCHFLAG)
+  ifeq ($(ZERO_ENDIANNESS), little)
+    CFLAGS_REQUIRED     += -D_LITTLE_ENDIAN
+  endif
+  LDFLAGS_COMMON        += $(ZERO_ARCHFLAG)
+else
+  CFLAGS_REQUIRED       =  $(CFLAGS_REQUIRED_$(ARCH))
+  LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
+endif
+
+# If this is a --hash-style=gnu system, use --hash-style=both
+#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | $(GREP) -- '--hash-style=gnu')
+ifneq ($(_HAS_HASH_STYLE_GNU),)
+  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+endif
+LDFLAGS_COMMON          += $(LDFLAGS_HASH_STYLE)
 
 #
 # Selection of warning messages
@@ -154,6 +173,12 @@ ifeq ($(FASTDEBUG), true)
   endif
 endif
 
+# DEBUG_BINARIES overrides everything, use full -g debug information
+ifeq ($(DEBUG_BINARIES), true)
+  DEBUG_FLAG = -g
+  CFLAGS_REQUIRED += $(DEBUG_FLAG)
+endif
+
 CFLAGS_OPT      = $(CC_OPT)
 CFLAGS_DBG      = $(DEBUG_FLAG)
 CFLAGS_COMMON += $(CFLAGS_REQUIRED)
@@ -165,8 +190,8 @@ CXXFLAGS_COMMON += $(CFLAGS_REQUIRED)
 
 # FASTDEBUG: Optimize the code in the -g versions, gives us a faster debug java
 ifeq ($(FASTDEBUG), true)
-  CFLAGS_DBG    += $(CC_OPT/LOWER)
-  CXXFLAGS_DBG	+= $(CC_OPT/LOWER)
+  CFLAGS_DBG    += $(CC_OPT/$(FASTDEBUG_OPTIMIZATION_LEVEL))
+  CXXFLAGS_DBG	+= $(CC_OPT/$(FASTDEBUG_OPTIMIZATION_LEVEL))
 endif
 
 CPPFLAGS_COMMON = -D$(ARCH) -DARCH='"$(ARCH)"' -DLINUX $(VERSION_DEFINES) \
@@ -176,7 +201,7 @@ ifeq ($(ARCH_DATA_MODEL), 64)
 CPPFLAGS_COMMON += -D_LP64=1
 endif
 
-CPPFLAGS_OPT    = 
+CPPFLAGS_OPT    = -DNDEBUG
 CPPFLAGS_DBG    = -DDEBUG
 ifneq ($(PRODUCT), java)
   CPPFLAGS_DBG    += -DLOGGING 
@@ -200,7 +225,7 @@ endif
 
 EXTRA_LIBS += -lc
 
-LDFLAGS_DEFS_OPTION  = -z defs
+LDFLAGS_DEFS_OPTION  = -Xlinker -z -Xlinker defs
 LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
 
 #
@@ -229,8 +254,11 @@ AUTOMATIC_PCH_OPTION =
 #
 ifeq ($(VARIANT), OPT)
   ifneq ($(NO_STRIP), true)
-    # Debug 'strip -g' leaves local function Elf symbols (better stack traces)
-    POST_STRIP_PROCESS = $(STRIP) -g
+    ifneq ($(DEBUG_BINARIES), true)
+      # Debug 'strip -g' leaves local function Elf symbols (better stack
+      # traces)
+      POST_STRIP_PROCESS = $(STRIP) -g
+    endif
   endif
 endif
 

@@ -30,6 +30,7 @@ import javax.swing.event.*;
 import java.util.BitSet;
 import java.util.Locale;
 
+import javax.swing.UIManager;
 import sun.swing.SwingUtilities2;
 
 /**
@@ -382,11 +383,10 @@ public class GlyphView extends View implements TabableView, Cloneable {
         Color bg = getBackground();
         Color fg = getForeground();
 
-        if (c instanceof JTextComponent) {
-            JTextComponent tc = (JTextComponent) c;
-            if  (!tc.isEnabled()) {
-                fg = tc.getDisabledTextColor();
-            }
+        if (c != null && ! c.isEnabled()) {
+            fg = (c instanceof JTextComponent ?
+                ((JTextComponent)c).getDisabledTextColor() :
+                UIManager.getColor("textInactiveText"));
         }
         if (bg != null) {
             g.setColor(bg);
@@ -540,30 +540,7 @@ public class GlyphView extends View implements TabableView, Cloneable {
      */
     @Override
     public float getMinimumSpan(int axis) {
-        switch (axis) {
-        case View.X_AXIS:
-            if (minimumSpan < 0) {
-                minimumSpan = 0;
-                int p0 = getStartOffset();
-                int p1 = getEndOffset();
-                while (p1 > p0) {
-                    int breakSpot = getBreakSpot(p0, p1);
-                    if (breakSpot == BreakIterator.DONE) {
-                        // the rest of the view is non-breakable
-                        breakSpot = p0;
-                    }
-                    minimumSpan = Math.max(minimumSpan,
-                            getPartialSpan(breakSpot, p1));
-                    // Note: getBreakSpot returns the *last* breakspot
-                    p1 = breakSpot - 1;
-                }
-            }
-            return minimumSpan;
-        case View.Y_AXIS:
-            return super.getMinimumSpan(axis);
-        default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
+        return super.getMinimumSpan(axis);
     }
 
     /**
@@ -719,8 +696,9 @@ public class GlyphView extends View implements TabableView, Cloneable {
             checkPainter();
             int p0 = getStartOffset();
             int p1 = painter.getBoundedPosition(this, p0, pos, len);
-            return ((p1 > p0) && (getBreakSpot(p0, p1) != BreakIterator.DONE)) ?
-                    View.ExcellentBreakWeight : View.BadBreakWeight;
+            return p1 == p0 ? View.BadBreakWeight :
+                   getBreakSpot(p0, p1) != BreakIterator.DONE ?
+                            View.ExcellentBreakWeight : View.GoodBreakWeight;
         }
         return super.getBreakWeight(axis, pos, len);
     }

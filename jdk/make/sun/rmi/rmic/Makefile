@@ -33,6 +33,13 @@ PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
 
 #
+# This program must contain a manifest that defines the execution level
+# needed to follow standard Vista User Access Control Guidelines
+# This must be set before Program.gmk is included
+#
+BUILD_MANIFEST=true
+
+#
 # Files
 #
 include FILES.gmk
@@ -43,7 +50,7 @@ FILES_java = $(RMIC_java)
 # Resources
 #
 LOCALE_SET_DEFINITION = jdk
-RESOURCE_BUNDLES_PROPERTIES = $(PKGDIR)/resources/rmic.properties
+RESOURCE_BUNDLES_UNCOMPILED_PROPERTIES = $(PKGDIR)/resources/rmic.properties
 
 #
 # Rules

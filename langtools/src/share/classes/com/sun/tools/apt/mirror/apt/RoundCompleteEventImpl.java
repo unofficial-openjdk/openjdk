@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,10 @@ import com.sun.mirror.apt.AnnotationProcessorEnvironment;
 import com.sun.mirror.apt.RoundCompleteEvent;
 import com.sun.mirror.apt.RoundState;
 
+@SuppressWarnings("deprecation")
 public class RoundCompleteEventImpl extends RoundCompleteEvent {
+    private static final long serialVersionUID = 7067621446720784300L;
+
     public RoundCompleteEventImpl(AnnotationProcessorEnvironment source,
                                   RoundState rs) {
         super(source, rs);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,13 @@
 package com.sun.tools.javac.util;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.api.DiagnosticFormatter;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -77,6 +77,10 @@ public class Log extends AbstractLog {
      */
     public boolean emitWarnings;
 
+    /** Switch: suppress note messages.
+     */
+    public boolean suppressNotes;
+
     /** Print stack trace on errors?
      */
     public boolean dumpOnError;
@@ -92,12 +96,17 @@ public class Log extends AbstractLog {
     protected DiagnosticListener<? super JavaFileObject> diagListener;
 
     /**
-     * Formatter for diagnostics
+     * Formatter for diagnostics.
      */
     private DiagnosticFormatter<JCDiagnostic> diagFormatter;
 
     /**
-     * JavacMessages object used for localization
+     * Keys for expected diagnostics.
+     */
+    public Set<String> expectDiagKeys;
+
+    /**
+     * JavacMessages object used for localization.
      */
     private JavacMessages messages;
 
@@ -115,6 +124,7 @@ public class Log extends AbstractLog {
         this.dumpOnError = options.get("-doe") != null;
         this.promptOnError = options.get("-prompt") != null;
         this.emitWarnings = options.get("-Xlint:none") == null;
+        this.suppressNotes = options.get("suppressNotes") != null;
         this.MaxErrors = getIntOption(options, "-Xmaxerrs", 100);
         this.MaxWarnings = getIntOption(options, "-Xmaxwarns", 100);
 
@@ -123,9 +133,13 @@ public class Log extends AbstractLog {
         this.diagFormatter = rawDiagnostics ? new RawDiagnosticFormatter(options) :
                                               new BasicDiagnosticFormatter(options, messages);
         @SuppressWarnings("unchecked") // FIXME
-        DiagnosticListener<? super JavaFileObject> diagListener =
+        DiagnosticListener<? super JavaFileObject> dl =
             context.get(DiagnosticListener.class);
-        this.diagListener = diagListener;
+        this.diagListener = dl;
+
+        String ek = options.get("expectKeys");
+        if (ek != null)
+            expectDiagKeys = new HashSet<String>(Arrays.asList(ek.split(", *")));
     }
     // where
         private int getIntOption(Options options, String optionName, int defaultValue) {
@@ -194,6 +208,18 @@ public class Log extends AbstractLog {
      */
     public JavaFileObject currentSourceFile() {
         return source == null ? null : source.getFile();
+    }
+
+    /** Get the current diagnostic formatter.
+     */
+    public DiagnosticFormatter<JCDiagnostic> getDiagnosticFormatter() {
+        return diagFormatter;
+    }
+
+    /** Set the current diagnostic formatter.
+     */
+    public void setDiagnosticFormatter(DiagnosticFormatter<JCDiagnostic> diagFormatter) {
+        this.diagFormatter = diagFormatter;
     }
 
     /** Flush the logs
@@ -291,6 +317,9 @@ public class Log extends AbstractLog {
      * reported so far, the diagnostic may be handed off to writeDiagnostic.
      */
     public void report(JCDiagnostic diagnostic) {
+        if (expectDiagKeys != null)
+            expectDiagKeys.remove(diagnostic.getCode());
+
         switch (diagnostic.getType()) {
         case FRAGMENT:
             throw new IllegalArgumentException();
@@ -299,7 +328,7 @@ public class Log extends AbstractLog {
             // Print out notes only when we are permitted to report warnings
             // Notes are only generated at the end of a compilation, so should be small
             // in number.
-            if (emitWarnings || diagnostic.isMandatory()) {
+            if ((emitWarnings || diagnostic.isMandatory()) && !suppressNotes) {
                 writeDiagnostic(diagnostic);
             }
             break;
@@ -398,7 +427,7 @@ public class Log extends AbstractLog {
             JavaFileObject file = source.getFile();
             if (file != null)
                 printLines(errWriter,
-                           JavacFileManager.getJavacFileName(file) + ":" +
+                           file.getName() + ":" +
                            line + ": " + msg);
             printErrLine(pos, errWriter);
         }

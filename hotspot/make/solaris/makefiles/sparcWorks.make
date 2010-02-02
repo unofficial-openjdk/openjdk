@@ -1,5 +1,5 @@
 #
-# Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ C_COMPILER_REV := \
 $(shell $(CC) -V 2>&1 | sed -n 's/^.*[ ,\t]C[ ,\t]\([1-9]\.[0-9][0-9]*\).*/\1/p')
 
 # Pick which compiler is validated
-ifeq ($(JDK_MINOR_VERSION),6)
+ifeq ($(JRE_RELEASE_VER),1.6.0)
   # Validated compiler for JDK6 is SS11 (5.8)
   VALIDATED_COMPILER_REV   := 5.8
   VALIDATED_C_COMPILER_REV := 5.8
@@ -101,18 +101,9 @@ CFLAGS += ${SOLARIS_7_OR_LATER}
 
 # New architecture options started in SS12 (5.9), we need both styles to build.
 #   The older arch options for SS11 (5.8) or older and also for /usr/ccs/bin/as.
-#   Note: SS12 default for 32bit sparc is now the same as v8plus, so the
-#         settings below have changed all SS12 32bit sparc builds to be v8plus.
-#         The older SS11 (5.8) settings have remained as they always have been.
-ifeq ($(TYPE),COMPILER2)
-  ARCHFLAG_OLD/sparc   = -xarch=v8plus
-else
-  ifeq ($(TYPE),TIERED)
-    ARCHFLAG_OLD/sparc = -xarch=v8plus
-  else
-    ARCHFLAG_OLD/sparc = -xarch=v8
-  endif
-endif
+#   Note: default for 32bit sparc is now the same as v8plus, so the
+#         settings below have changed all 32bit sparc builds to be v8plus.
+ARCHFLAG_OLD/sparc   = -xarch=v8plus
 ARCHFLAG_NEW/sparc   = -m32 -xarch=sparc
 ARCHFLAG_OLD/sparcv9 = -xarch=v9
 ARCHFLAG_NEW/sparcv9 = -m64 -xarch=sparc
@@ -290,8 +281,6 @@ else
 OPT_CFLAGS=-xO4 $(EXTRA_OPT_CFLAGS)
 endif
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_sparc/vm/solaris_sparc.il
-
 endif # sparc
 
 ifeq ("${Platform_arch_model}", "x86_32")
@@ -302,12 +291,13 @@ OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 # [phh] Is this still true for 6.1?
 OPT_CFLAGS+=-xO3
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_x86/vm/solaris_x86_32.il
-
 endif # 32bit x86
 
 # no more exceptions
 CFLAGS/NOEX=-noex
+
+# Inline functions
+CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_${Platform_arch}/vm/solaris_${Platform_arch_model}.il
 
 # Reduce code bloat by reverting back to 5.0 behavior for static initializers
 CFLAGS += -Qoption ccfe -one_static_init
@@ -320,6 +310,15 @@ PICFLAG/DEFAULT = $(PICFLAG)
 #PICFLAG/BETTER  = -pic
 PICFLAG/BETTER  = $(PICFLAG/DEFAULT)
 PICFLAG/BYFILE  = $(PICFLAG/$@)$(PICFLAG/DEFAULT$(PICFLAG/$@))
+
+# Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
+MAPFLAG = -M FILENAME
+
+# Use $(SONAMEFLAG:SONAME=soname) to specify the intrinsic name of a shared obj
+SONAMEFLAG = -h SONAME
+
+# Build shared library
+SHARED_FLAG = -G
 
 # Would be better if these weren't needed, since we link with CC, but
 # at present removing them causes run-time errors

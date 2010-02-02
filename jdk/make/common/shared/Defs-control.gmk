@@ -91,8 +91,10 @@ ABS_TEMP_DIR = $(ABS_OUTPUTDIR)/tmp
 
 dummy := $(shell $(MKDIR) -p $(TEMP_DIR))
 
+# The language version we want for this jdk build
+SOURCE_LANGUAGE_VERSION=7
 # The class version we want for this jdk build
-TARGET_CLASS_VERSION=5
+TARGET_CLASS_VERSION=7
 
 # The MESSAGE, WARNING and ERROR files are used to store sanity check and 
 # source check messages, warnings and errors. 

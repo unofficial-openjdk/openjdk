@@ -30,17 +30,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.LoggingMXBean;
-import java.util.logging.LogManager;
+import java.util.logging.PlatformLoggingMXBean;
 import java.nio.BufferPoolMXBean;
 import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 import sun.management.ManagementFactoryHelper;
+import sun.management.Util;
 
 /**
  * This enum class defines the list of platform components
@@ -181,14 +180,13 @@ enum PlatformComponent {
      * Logging facility.
      */
     LOGGING(
-        "java.util.logging.LoggingMXBean",
+        "java.util.logging.PlatformLoggingMXBean",
         "java.util.logging", "Logging", defaultKeyProperties(),
-        new MXBeanFetcher<LoggingMXBean>() {
-            public List<LoggingMXBean> getMXBeans() {
-                return Collections.singletonList(LogManager.getLoggingMXBean());
+        new MXBeanFetcher<PlatformLoggingMXBean>() {
+            public List<PlatformLoggingMXBean> getMXBeans() {
+                return ManagementFactoryHelper.getLoggingMXBean();
             }
         }),
-
 
     /**
      * Buffer pools.
@@ -198,10 +196,7 @@ enum PlatformComponent {
         "java.nio", "BufferPool", keyProperties("name"),
         new MXBeanFetcher<BufferPoolMXBean>() {
             public List<BufferPoolMXBean> getMXBeans() {
-                List<BufferPoolMXBean> pools = new ArrayList<BufferPoolMXBean>(2);
-                pools.add( sun.misc.SharedSecrets.getJavaNioAccess().getDirectBufferPoolMXBean() );
-                pools.add( sun.nio.ch.FileChannelImpl.getMappedBufferPoolMXBean() );
-                return pools;
+                return ManagementFactoryHelper.getBufferPoolMXBeans();
             }
         }),
 
@@ -388,7 +383,7 @@ enum PlatformComponent {
             // if there are more than 1 key properties (i.e. other than "type")
             domainAndType += ",*";
         }
-        ObjectName on = ObjectName.valueOf(domainAndType);
+        ObjectName on = Util.newObjectName(domainAndType);
         Set<ObjectName> set =  mbs.queryNames(on, null);
         for (PlatformComponent pc : subComponents) {
             set.addAll(pc.getObjectNames(mbs));

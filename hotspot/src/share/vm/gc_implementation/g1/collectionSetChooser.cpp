@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -277,8 +277,6 @@ printHeapRegion(HeapRegion *hr) {
     gclog_or_tty->print("H: ");
   if (hr->in_collection_set())
     gclog_or_tty->print("CS: ");
-  if (hr->popular())
-    gclog_or_tty->print("pop: ");
   gclog_or_tty->print_cr("Region " PTR_FORMAT " (%s%s) "
                          "[" PTR_FORMAT ", " PTR_FORMAT"] "
                          "Used: " SIZE_FORMAT "K, garbage: " SIZE_FORMAT "K.",
@@ -353,9 +351,16 @@ void
 CollectionSetChooser::printSortedHeapRegions() {
   gclog_or_tty->print_cr("Printing %d Heap Regions sorted by amount of known garbage",
                 _numMarkedRegions);
+
+  DEBUG_ONLY(int marked_count = 0;)
   for (int i = 0; i < _markedRegions.length(); i++) {
-    printHeapRegion(_markedRegions.at(i));
+    HeapRegion* r = _markedRegions.at(i);
+    if (r != NULL) {
+      printHeapRegion(r);
+      DEBUG_ONLY(marked_count++;)
+    }
   }
+  assert(marked_count == _numMarkedRegions, "must be");
   gclog_or_tty->print_cr("Done sorted heap region print");
 }
 

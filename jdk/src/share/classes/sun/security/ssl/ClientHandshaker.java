@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,15 +44,11 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 
 import javax.security.auth.Subject;
-import javax.security.auth.kerberos.KerberosPrincipal;
-import sun.security.jgss.krb5.Krb5Util;
-import sun.security.jgss.GSSUtil;
 
 import com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager;
 
 import sun.security.ssl.HandshakeMessage.*;
 import sun.security.ssl.CipherSuite.*;
-import static sun.security.ssl.CipherSuite.*;
 import static sun.security.ssl.CipherSuite.KeyExchange.*;
 
 /**
@@ -363,9 +359,7 @@ final class ClientHandshaker extends Handshaker {
                         subject = AccessController.doPrivileged(
                             new PrivilegedExceptionAction<Subject>() {
                             public Subject run() throws Exception {
-                                return Krb5Util.getSubject(
-                                    GSSUtil.CALLER_SSL_CLIENT,
-                                    getAccSE());
+                                return Krb5Helper.getClientSubject(getAccSE());
                             }});
                     } catch (PrivilegedActionException e) {
                         subject = null;
@@ -376,8 +370,9 @@ final class ClientHandshaker extends Handshaker {
                     }
 
                     if (subject != null) {
-                        Set<KerberosPrincipal> principals =
-                                subject.getPrincipals(KerberosPrincipal.class);
+                        // Eliminate dependency on KerberosPrincipal
+                        Set<Principal> principals =
+                            subject.getPrincipals(Principal.class);
                         if (!principals.contains(localPrincipal)) {
                             throw new SSLProtocolException("Server resumed" +
                                 " session with wrong subject identity");
@@ -755,7 +750,7 @@ final class ClientHandshaker extends Handshaker {
         case K_KRB5:
         case K_KRB5_EXPORT:
             byte[] secretBytes =
-                ((KerberosClientKeyExchange)m2).getPreMasterSecret().getUnencrypted();
+                ((KerberosClientKeyExchange)m2).getUnencryptedPreMasterSecret();
             preMasterSecret = new SecretKeySpec(secretBytes, "TlsPremasterSecret");
             break;
         case K_DHE_RSA:

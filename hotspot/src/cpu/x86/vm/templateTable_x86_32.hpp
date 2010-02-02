@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,7 @@
  *
  */
 
-  static void prepare_invoke(Register method, Register index, int byte_no,
-                             Bytecodes::Code code);
+  static void prepare_invoke(Register method, Register index, int byte_no);
   static void invokevirtual_helper(Register index, Register recv,
                                    Register flags);
   static void volatile_barrier(Assembler::Membar_mask_bits order_constraint );

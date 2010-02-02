@@ -486,6 +486,10 @@ public class BasicBigInteger extends Basic {
         //---------------------------------------------------------------------
         tryCatch("%-s", MissingFormatWidthException.class);
         tryCatch("%--s", DuplicateFormatFlagsException.class);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, 0);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, 0.5f);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, "hello");
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, null);
 
         //---------------------------------------------------------------------
         // %h
@@ -824,6 +828,52 @@ public class BasicBigInteger extends Basic {
         test("%#10X", "-0X1234567", new BigInteger("-1234567", 16));
         test("%X", "1234567A", new BigInteger("1234567a", 16));
         test("%X", "-1234567A", new BigInteger("-1234567a", 16));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

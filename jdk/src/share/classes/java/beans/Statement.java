@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import com.sun.beans.finder.ClassFinder;
+import com.sun.beans.finder.ConstructorFinder;
+import com.sun.beans.finder.MethodFinder;
 import sun.reflect.misc.MethodUtil;
 
 /**
@@ -64,6 +66,7 @@ public class Statement {
     Object target;
     String methodName;
     Object[] arguments;
+    ClassLoader loader;
 
     /**
      * Creates a new <code>Statement</code> object with a <code>target</code>,
@@ -155,7 +158,7 @@ public class Statement {
         // of core from a class inside core. Special
         // case this method.
         if (target == Class.class && methodName.equals("forName")) {
-            return ClassFinder.resolveClass((String)arguments[0]);
+            return ClassFinder.resolveClass((String)arguments[0], this.loader);
         }
         Class[] argClasses = new Class[arguments.length];
         for(int i = 0; i < arguments.length; i++) {
@@ -195,13 +198,18 @@ public class Statement {
                     argClasses[0] == String.class) {
                     return new Character(((String)arguments[0]).charAt(0));
                 }
-                m = ReflectionUtils.getConstructor((Class)target, argClasses);
+                try {
+                    m = ConstructorFinder.findConstructor((Class)target, argClasses);
+                }
+                catch (NoSuchMethodException exception) {
+                    m = null;
+                }
             }
             if (m == null && target != Class.class) {
-                m = ReflectionUtils.getMethod((Class)target, methodName, argClasses);
+                m = getMethod((Class)target, methodName, argClasses);
             }
             if (m == null) {
-                m = ReflectionUtils.getMethod(Class.class, methodName, argClasses);
+                m = getMethod(Class.class, methodName, argClasses);
             }
         }
         else {
@@ -224,7 +232,7 @@ public class Statement {
                     return null;
                 }
             }
-            m = ReflectionUtils.getMethod(target.getClass(), methodName, argClasses);
+            m = getMethod(target.getClass(), methodName, argClasses);
         }
         if (m != null) {
             try {
@@ -288,5 +296,14 @@ public class Statement {
         }
         result.append(");");
         return result.toString();
+    }
+
+    static Method getMethod(Class<?> type, String name, Class<?>... args) {
+        try {
+            return MethodFinder.findMethod(type, name, args);
+        }
+        catch (NoSuchMethodException exception) {
+            return null;
+        }
     }
 }

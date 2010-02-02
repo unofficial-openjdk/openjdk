@@ -108,7 +108,7 @@ public enum Target {
         this.minorVersion = minorVersion;
     }
 
-    public static final Target DEFAULT = JDK1_6;
+    public static final Target DEFAULT = JDK1_7;
 
     public static Target lookup(String name) {
         return tab.get(name);
@@ -251,6 +251,12 @@ public enum Target {
      */
     public boolean hasClassLiterals() {
         return compareTo(JDK1_5) >= 0;
+    }
+
+    /** Does the VM support an invokedynamic instruction?
+     */
+    public boolean hasInvokedynamic() {
+        return compareTo(JDK1_7) >= 0;
     }
 
     /** Although we may not have support for class literals, should we

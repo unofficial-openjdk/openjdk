@@ -27,6 +27,7 @@ package javax.swing.plaf.synth;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -53,15 +54,15 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import sun.swing.plaf.synth.SynthUI;
-
 /**
- * SynthTableUI implementation
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.JTable}.
  *
  * @author Philip Milne
+ * @since 1.7
  */
-class SynthTableUI extends BasicTableUI implements SynthUI,
-        PropertyChangeListener {
+public class SynthTableUI extends BasicTableUI
+                          implements SynthUI, PropertyChangeListener {
 //
 // Instance Variables
 //
@@ -70,6 +71,7 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
 
     private boolean useTableColors;
     private boolean useUIBorder;
+    private Color alternateColor; //the background color to use for cells for alternate cells
 
     // TableCellRenderer installed on the JTable at the time we're installed,
     // cached so that we can reinstall them at uninstallUI time.
@@ -86,18 +88,25 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
 //  The installation/uninstall procedures and support
 //
 
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
     public static ComponentUI createUI(JComponent c) {
         return new SynthTableUI();
     }
 
     /**
-     * Initialize JTable properties, e.g. font, foreground, and background.
+     * Initializes JTable properties, such as font, foreground, and background.
      * The font, foreground, and background properties are only set if their
      * current value is either null or a UIResource, other properties are set
      * if the current value is null.
      *
      * @see #installUI
      */
+    @Override
     protected void installDefaults() {
         dateRenderer = installRendererIfPossible(Date.class, null);
         numberRenderer = installRendererIfPossible(Number.class, null);
@@ -161,6 +170,21 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
             if (rowHeight != null) {
                 LookAndFeel.installProperty(table, "rowHeight", rowHeight);
             }
+            boolean showGrid = style.getBoolean(context, "Table.showGrid", true);
+            if (!showGrid) {
+                table.setShowGrid(false);
+            }
+            Dimension d = table.getIntercellSpacing();
+//            if (d == null || d instanceof UIResource) {
+            if (d != null) {
+                d = (Dimension)style.get(context, "Table.intercellSpacing");
+            }
+            alternateColor = (Color)style.get(context, "Table.alternateRowColor");
+            if (d != null) {
+                table.setIntercellSpacing(d);
+            }
+
+
             if (oldStyle != null) {
                 uninstallKeyboardActions();
                 installKeyboardActions();
@@ -172,11 +196,16 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
     /**
      * Attaches listeners to the JTable.
      */
+    @Override
     protected void installListeners() {
         super.installListeners();
         table.addPropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallDefaults() {
         table.setDefaultRenderer(Date.class, dateRenderer);
         table.setDefaultRenderer(Number.class, numberRenderer);
@@ -196,6 +225,10 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         style = null;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallListeners() {
         table.removePropertyChangeListener(this);
         super.uninstallListeners();
@@ -204,8 +237,13 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
     //
     // SynthUI
     //
+
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
@@ -213,18 +251,14 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                     SynthLookAndFeel.getRegion(c), style, state);
     }
 
-    private Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
-    }
-
 //
 //  Paint methods and support
 //
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -235,11 +269,19 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintTableBorder(context, g, x, y, w, h);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -247,6 +289,12 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         context.dispose();
     }
 
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
         Rectangle clip = g.getClipBounds();
 
@@ -617,11 +665,23 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         else {
             TableCellRenderer renderer = table.getCellRenderer(row, column);
             Component component = table.prepareRenderer(renderer, row, column);
+            Color b = component.getBackground();
+            if ((b == null || b instanceof UIResource
+                    || component instanceof SynthBooleanTableCellRenderer)
+                    && !table.isCellSelected(row, column)) {
+                if (alternateColor != null && row % 2 != 0) {
+                    component.setBackground(alternateColor);
+                }
+            }
             rendererPane.paintComponent(g, component, table, cellRect.x,
                     cellRect.y, cellRect.width, cellRect.height, true);
         }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void propertyChange(PropertyChangeEvent event) {
         if (SynthLookAndFeel.shouldUpdateStyle(event)) {
             updateStyle((JTable)event.getSource());
@@ -634,16 +694,8 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         private boolean isRowSelected;
 
         public SynthBooleanTableCellRenderer() {
-            super();
             setHorizontalAlignment(JLabel.CENTER);
-        }
-
-        public String getName() {
-            String name = super.getName();
-            if (name == null) {
-                return "Table.cellRenderer";
-            }
-            return name;
+            setName("Table.cellRenderer");
         }
 
         public Component getTableCellRendererComponent(
@@ -652,15 +704,22 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
             isRowSelected = isSelected;
 
             if (isSelected) {
-                setForeground(table.getSelectionForeground());
-                setBackground(table.getSelectionBackground());
+                setForeground(unwrap(table.getSelectionForeground()));
+                setBackground(unwrap(table.getSelectionBackground()));
             } else {
-                setForeground(table.getForeground());
-                setBackground(table.getBackground());
+                setForeground(unwrap(table.getForeground()));
+                setBackground(unwrap(table.getBackground()));
             }
 
             setSelected((value != null && ((Boolean)value).booleanValue()));
             return this;
+        }
+
+        private Color unwrap(Color c) {
+            if (c instanceof UIResource) {
+                return new Color(c.getRGB());
+            }
+            return c;
         }
 
         public boolean isOpaque() {
@@ -732,7 +791,7 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
             }
             else if (columnClass == Icon.class || columnClass == ImageIcon.class) {
                 setHorizontalAlignment(JLabel.CENTER);
-                setIcon((Icon)value);
+                setIcon((value instanceof Icon) ? (Icon)value : null);
                 setText("");
             }
             else if (columnClass == Date.class) {

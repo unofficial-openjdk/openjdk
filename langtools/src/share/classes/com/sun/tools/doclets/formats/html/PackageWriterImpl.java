@@ -38,6 +38,7 @@ import java.util.*;
  * class-kind will update the frame with the clicked class-kind page.
  *
  * @author Atul M Dambalkar
+ * @author Bhavesh Patel (Modified)
  */
 public class PackageWriterImpl extends HtmlDocletWriter
     implements PackageSummaryWriter {
@@ -107,14 +108,15 @@ public class PackageWriterImpl extends HtmlDocletWriter
     /**
      * {@inheritDoc}
      */
-    public void writeClassesSummary(ClassDoc[] classes, String label) {
+    public void writeClassesSummary(ClassDoc[] classes, String label, String tableSummary, String[] tableHeader) {
         if(classes.length > 0) {
             Arrays.sort(classes);
-            tableIndexSummary();
+            tableIndexSummary(tableSummary);
             boolean printedHeading = false;
             for (int i = 0; i < classes.length; i++) {
                 if (!printedHeading) {
-                    printFirstRow(label);
+                    printTableCaption(label);
+                    printFirstRow(tableHeader);
                     printedHeading = true;
                 }
                 if (!Util.isCoreClass(classes[i]) ||
@@ -123,14 +125,14 @@ public class PackageWriterImpl extends HtmlDocletWriter
                 }
                 trBgcolorStyle("white", "TableRowColor");
                 summaryRow(15);
-                bold();
+                strong();
                 printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_PACKAGE,
                     classes[i], false));
-                boldEnd();
+                strongEnd();
                 summaryRowEnd();
                 summaryRow(0);
                 if (Util.isDeprecated(classes[i])) {
-                    boldText("doclet.Deprecated");
+                    strongText("doclet.Deprecated");
                     if (classes[i].tags("deprecated").length > 0) {
                         space();
                         printSummaryDeprecatedComment(classes[i],
@@ -149,14 +151,23 @@ public class PackageWriterImpl extends HtmlDocletWriter
     }
 
     /**
+     * Print the table caption for the class-listing.
+     *
+     * @param label label for the Class kind listing.
+     */
+    protected void printTableCaption(String label) {
+        tableCaptionStart();
+        print(label);
+        tableCaptionEnd();
+    }
+
+    /**
      * Print the table heading for the class-listing.
      *
-     * @param label Label for the Class kind listing.
+     * @param tableHeader table header string for the Class listing.
      */
-    protected void printFirstRow(String label) {
-        tableHeaderStart("#CCCCFF");
-        bold(label);
-        tableHeaderEnd();
+    protected void printFirstRow(String[] tableHeader) {
+        summaryTableHeader(tableHeader, "col");
     }
 
     /**
@@ -194,7 +205,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
         if (packageDoc.inlineTags().length > 0 && ! configuration.nocomment) {
             printSummaryComment(packageDoc);
             p();
-            bold(configuration.getText("doclet.See"));
+            strong(configuration.getText("doclet.See"));
             br();
             printNbsps();
             printHyperLink("", "package_description",
@@ -268,7 +279,7 @@ public class PackageWriterImpl extends HtmlDocletWriter
     protected void navLinkPackage() {
         navCellRevStart();
         fontStyle("NavBarFont1Rev");
-        boldText("doclet.Package");
+        strongText("doclet.Package");
         fontEnd();
         navCellEnd();
     }

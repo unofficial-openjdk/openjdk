@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -94,10 +94,12 @@ ifeq ($(INCLUDE_SA), true)
   endif
 endif # INCLUDE_SA
 
-# Hotspot client is only available on 32-bit builds
+# Hotspot client is only available on 32-bit non-Zero builds
+ifneq ($(ZERO_BUILD), true)
 ifeq ($(ARCH_DATA_MODEL), 32)
   IMPORT_LIST += $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVM_NAME) \
                  $(LIB_LOCATION)/$(CLIENT_LOCATION)/Xusage.txt
+endif
 endif
 
 ifeq ($(PLATFORM), windows)
@@ -109,7 +111,7 @@ IMPORT_LIST += $(MS_RUNTIME_LIBRARIES:%=$(BINDIR)/%)
 $(BINDIR)/msvcrt.dll: $(MSVCRT_DLL_PATH)/msvcrt.dll
 	$(install-import-file)
 	$(CHMOD) a+x $@
-$(BINDIR)/msvcr71.dll: $(MSVCR71_DLL_PATH)/msvcr71.dll
+$(BINDIR)/$(MSVCRNN_DLL): $(MSVCRNN_DLL_PATH)/$(MSVCRNN_DLL)
 	$(install-import-file)
 	$(CHMOD) a+x $@
 
@@ -119,10 +121,15 @@ IMPORT_LIST += \
 	$(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMMAP_NAME) \
 	$(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMPDB_NAME)
 
-# Hotspot client is only available on 32-bit builds
+# Add .map and .pdb files to the import path for client and kernel VMs. 
+# These are only available on 32-bit windows builds. 
 ifeq ($(ARCH_DATA_MODEL), 32)
   IMPORT_LIST += $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVMMAP_NAME) \
                  $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVMPDB_NAME)
+  ifeq ($(DO_KERNEL), true)
+    IMPORT_LIST += $(LIB_LOCATION)/$(KERNEL_LOCATION)/$(JVMMAP_NAME) \
+                   $(LIB_LOCATION)/$(KERNEL_LOCATION)/$(JVMPDB_NAME)
+  endif
 endif
 
 $(LIBDIR)/$(JVMLIB_NAME): $(HOTSPOT_LIB_PATH)/$(JVMLIB_NAME)
@@ -134,6 +141,10 @@ $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVMMAP_NAME):
 	@$(prep-target)
 	-$(CP) $(HOTSPOT_CLIENT_PATH)/$(JVMMAP_NAME)  $@
 
+$(LIB_LOCATION)/$(KERNEL_LOCATION)/$(JVMMAP_NAME):
+	@$(prep-target)
+	-$(CP) $(HOTSPOT_KERNEL_PATH)/$(JVMMAP_NAME)  $@
+
 $(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMMAP_NAME):
 	@$(prep-target)
 	-$(CP) $(HOTSPOT_SERVER_PATH)/$(JVMMAP_NAME) $@
@@ -141,6 +152,10 @@ $(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMMAP_NAME):
 $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVMPDB_NAME):
 	@$(prep-target)
 	-$(CP) $(HOTSPOT_CLIENT_PATH)/$(JVMPDB_NAME)  $@
+
+$(LIB_LOCATION)/$(KERNEL_LOCATION)/$(JVMPDB_NAME):
+	@$(prep-target)
+	-$(CP) $(HOTSPOT_KERNEL_PATH)/$(JVMPDB_NAME)  $@
 
 $(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMPDB_NAME): 
 	@$(prep-target)
@@ -158,6 +173,7 @@ ifeq ($(PLATFORM), solaris)
   IMPORT_LIST += $(LIB_LOCATION)/$(SERVER_LOCATION)/$(JVMDB_NAME)
 endif 
 
+ifneq ($(ZERO_BUILD), true)
 ifeq ($(ARCH_DATA_MODEL), 32)
 
 IMPORT_LIST += $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(LIBJSIG_NAME)
@@ -178,15 +194,15 @@ endif
 # For backwards compatability, make a link of the 32-bit client JVM to $(LIBDIR)
 IMPORT_LIST += $(LIB_LOCATION)/$(JVM_NAME)
 
-# create a link from lib/libjvm.so to client/libjvm.so
 $(LIB_LOCATION)/$(JVM_NAME): $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVM_NAME)
 	@$(prep-target)
-	$(LN) -s $(CLIENT_LOCATION)/$(JVM_NAME) $@
 
 #  solaris   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ solaris
 endif # 32bit solaris
 
 endif # 32bit
+
+endif # ZERO_BUILD
 
 #  NOT Windows ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ NOT Windows
 
@@ -195,7 +211,10 @@ endif # PLATFORM
 $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(JVM_NAME): $(HOTSPOT_CLIENT_PATH)/$(JVM_NAME)
 	$(install-import-file)
 
-$(LIB_LOCATION)/$(LIBJSIG_NAME): $(HOTSPOT_SERVER_PATH)/$(LIBJSIG_NAME)
+$(LIB_LOCATION)/$(KERNEL_LOCATION)/$(JVM_NAME): $(HOTSPOT_KERNEL_PATH)/$(JVM_NAME)
+	$(install-file)
+
+$(LIB_LOCATION)/$(LIBJSIG_NAME): $(HOTSPOT_IMPORT_PATH)/$(ARCH_VM_SUBDIR)/$(LIBJSIG_NAME)
 	$(install-import-file)
 
 $(LIB_LOCATION)/$(CLIENT_LOCATION)/$(LIBJSIG_NAME) \
@@ -224,6 +243,9 @@ $(LIB_LOCATION)/$(SERVER_LOCATION)/Xusage.txt : $(HOTSPOT_SERVER_PATH)/Xusage.tx
 $(LIB_LOCATION)/$(CLIENT_LOCATION)/Xusage.txt : $(HOTSPOT_CLIENT_PATH)/Xusage.txt
 	$(install-import-file)
 
+$(LIB_LOCATION)/$(KERNEL_LOCATION)/Xusage.txt : $(HOTSPOT_KERNEL_PATH)/Xusage.txt
+	$(install-file)
+
 ifeq ($(INCLUDE_SA), true)
 # The Serviceability Agent is built in the Hotspot workspace.
 # It contains two files:
@@ -251,9 +273,11 @@ endif # INCLUDE_SA
 #
 ifdef OPENJDK
 
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
+  ifeq ($(IMPORT_BINARY_PLUGS),true)
+    include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
 
-build: import-binary-plugs
+    build: import-binary-plugs
+  endif
 
 else # !OPENJDK
 

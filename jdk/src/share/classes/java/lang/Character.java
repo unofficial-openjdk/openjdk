@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import java.util.Locale;
  * a character's category (lowercase letter, digit, etc.) and for converting
  * characters from uppercase to lowercase and vice versa.
  * <p>
- * Character information is based on the Unicode Standard, version 4.0.
+ * Character information is based on the Unicode Standard, version 5.1.0.
  * <p>
  * The methods and data of class <code>Character</code> are defined by
  * the information in the <i>UnicodeData</i> file that is part of the
@@ -162,7 +162,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      *
      * @since   1.0.2
      */
-    public static final char   MAX_VALUE = '\uffff';
+    public static final char   MAX_VALUE = '\uFFFF';
 
     /**
      * The <code>Class</code> instance representing the primitive type
@@ -518,75 +518,91 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     public static final byte DIRECTIONALITY_POP_DIRECTIONAL_FORMAT = 18;
 
     /**
-     * The minimum value of a Unicode high-surrogate code unit in the
-     * UTF-16 encoding. A high-surrogate is also known as a
-     * <i>leading-surrogate</i>.
+     * The minimum value of a
+     * <a href="http://www.unicode.org/glossary/#high_surrogate_code_unit">
+     * Unicode high-surrogate code unit</a>
+     * in the UTF-16 encoding, constant <code>'&#92;uD800'</code>.
+     * A high-surrogate is also known as a <i>leading-surrogate</i>.
      *
      * @since 1.5
      */
     public static final char MIN_HIGH_SURROGATE = '\uD800';
 
     /**
-     * The maximum value of a Unicode high-surrogate code unit in the
-     * UTF-16 encoding. A high-surrogate is also known as a
-     * <i>leading-surrogate</i>.
+     * The maximum value of a
+     * <a href="http://www.unicode.org/glossary/#high_surrogate_code_unit">
+     * Unicode high-surrogate code unit</a>
+     * in the UTF-16 encoding, constant <code>'&#92;uDBFF'</code>.
+     * A high-surrogate is also known as a <i>leading-surrogate</i>.
      *
      * @since 1.5
      */
     public static final char MAX_HIGH_SURROGATE = '\uDBFF';
 
     /**
-     * The minimum value of a Unicode low-surrogate code unit in the
-     * UTF-16 encoding. A low-surrogate is also known as a
-     * <i>trailing-surrogate</i>.
+     * The minimum value of a
+     * <a href="http://www.unicode.org/glossary/#low_surrogate_code_unit">
+     * Unicode low-surrogate code unit</a>
+     * in the UTF-16 encoding, constant <code>'&#92;uDC00'</code>.
+     * A low-surrogate is also known as a <i>trailing-surrogate</i>.
      *
      * @since 1.5
      */
     public static final char MIN_LOW_SURROGATE  = '\uDC00';
 
     /**
-     * The maximum value of a Unicode low-surrogate code unit in the
-     * UTF-16 encoding. A low-surrogate is also known as a
-     * <i>trailing-surrogate</i>.
+     * The maximum value of a
+     * <a href="http://www.unicode.org/glossary/#low_surrogate_code_unit">
+     * Unicode low-surrogate code unit</a>
+     * in the UTF-16 encoding, constant <code>'&#92;uDFFF'</code>.
+     * A low-surrogate is also known as a <i>trailing-surrogate</i>.
      *
      * @since 1.5
      */
     public static final char MAX_LOW_SURROGATE  = '\uDFFF';
 
     /**
-     * The minimum value of a Unicode surrogate code unit in the UTF-16 encoding.
+     * The minimum value of a Unicode surrogate code unit in the
+     * UTF-16 encoding, constant <code>'&#92;uD800'</code>.
      *
      * @since 1.5
      */
     public static final char MIN_SURROGATE = MIN_HIGH_SURROGATE;
 
     /**
-     * The maximum value of a Unicode surrogate code unit in the UTF-16 encoding.
+     * The maximum value of a Unicode surrogate code unit in the
+     * UTF-16 encoding, constant <code>'&#92;uDFFF'</code>.
      *
      * @since 1.5
      */
     public static final char MAX_SURROGATE = MAX_LOW_SURROGATE;
 
     /**
-     * The minimum value of a supplementary code point.
+     * The minimum value of a
+     * <a href="http://www.unicode.org/glossary/#supplementary_code_point">
+     * Unicode supplementary code point</a>, constant {@code U+10000}.
      *
      * @since 1.5
      */
     public static final int MIN_SUPPLEMENTARY_CODE_POINT = 0x010000;
 
     /**
-     * The minimum value of a Unicode code point.
+     * The minimum value of a
+     * <a href="http://www.unicode.org/glossary/#code_point">
+     * Unicode code point</a>, constant {@code U+0000}.
      *
      * @since 1.5
      */
     public static final int MIN_CODE_POINT = 0x000000;
 
     /**
-     * The maximum value of a Unicode code point.
+     * The maximum value of a
+     * <a href="http://www.unicode.org/glossary/#code_point">
+     * Unicode code point</a>, constant {@code U+10FFFF}.
      *
      * @since 1.5
      */
-    public static final int MAX_CODE_POINT = 0x10ffff;
+    public static final int MAX_CODE_POINT = 0X10FFFF;
 
 
     /**
@@ -920,9 +936,9 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          */
         public static final UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS =
             new UnicodeBlock("COMBINING_MARKS_FOR_SYMBOLS", new String[] {"Combining Diacritical Marks for Symbols",
-                                                                                                                                                  "CombiningDiacriticalMarksforSymbols",
-                                                                          "Combining Marks for Symbols",
-                                                                          "CombiningMarksforSymbols" });
+                                                                                                                                                   "CombiningDiacriticalMarksforSymbols",
+                                                                           "Combining Marks for Symbols",
+                                                                           "CombiningMarksforSymbols" });
 
         /**
          * Constant for the "Letterlike Symbols" Unicode character block.
@@ -1332,8 +1348,11 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * @since 1.5
          */
         public static final UnicodeBlock CYRILLIC_SUPPLEMENTARY =
-            new UnicodeBlock("CYRILLIC_SUPPLEMENTARY", new String[] {"Cyrillic Supplementary",
-                                                                     "CyrillicSupplementary"});
+            new UnicodeBlock("CYRILLIC_SUPPLEMENTARY",
+                             new String[] {"Cyrillic Supplementary",
+                                           "CyrillicSupplementary",
+                                           "Cyrillic Supplement",
+                                           "CyrillicSupplement"});
 
         /**
          * Constant for the "Tagalog" Unicode character block.
@@ -1641,157 +1660,579 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
         public static final UnicodeBlock LOW_SURROGATES =
             new UnicodeBlock("LOW_SURROGATES", new String[] {"Low Surrogates", "LowSurrogates"});
 
+        /**
+         * Constant for the "Arabic Supplement" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ARABIC_SUPPLEMENT =
+            new UnicodeBlock("ARABIC_SUPPLEMENT",
+                             new String[] { "Arabic Supplement",
+                                            "ArabicSupplement"});
+
+        /**
+         * Constant for the "NKo" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock NKO = new UnicodeBlock("NKO");
+
+        /**
+         * Constant for the "Ethiopic Supplement" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ETHIOPIC_SUPPLEMENT =
+            new UnicodeBlock("ETHIOPIC_SUPPLEMENT",
+                             new String[] { "Ethiopic Supplement",
+                                            "EthiopicSupplement"});
+
+        /**
+         * Constant for the "New Tai Lue" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock NEW_TAI_LUE =
+            new UnicodeBlock("NEW_TAI_LUE",
+                             new String[] { "New Tai Lue",
+                                            "NewTaiLue"});
+
+        /**
+         * Constant for the "Buginese" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock BUGINESE =
+            new UnicodeBlock("BUGINESE");
+
+        /**
+         * Constant for the "Balinese" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock BALINESE =
+            new UnicodeBlock("BALINESE");
+
+        /**
+         * Constant for the "Sundanese" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock SUNDANESE =
+            new UnicodeBlock("SUNDANESE");
+
+        /**
+         * Constant for the "Lepcha" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock LEPCHA = new UnicodeBlock("LEPCHA");
+
+        /**
+         * Constant for the "Ol Chiki" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock OL_CHIKI =
+            new UnicodeBlock("OL_CHIKI",
+                             new String[] { "Ol Chiki",
+                                            "OlChiki"});
+
+        /**
+         * Constant for the "Phonetic Extensions Supplement" Unicode character
+         * block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock PHONETIC_EXTENSIONS_SUPPLEMENT =
+            new UnicodeBlock("PHONETIC_EXTENSIONS_SUPPLEMENT",
+                             new String[] { "Phonetic Extensions Supplement",
+                                            "PhoneticExtensionsSupplement"});
+
+        /**
+         * Constant for the "Combining Diacritical Marks Supplement" Unicode
+         * character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock COMBINING_DIACRITICAL_MARKS_SUPPLEMENT =
+            new UnicodeBlock("COMBINING_DIACRITICAL_MARKS_SUPPLEMENT",
+                             new String[] { "Combining Diacritical Marks Supplement",
+                                            "CombiningDiacriticalMarksSupplement"});
+
+        /**
+         * Constant for the "Glagolitic" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock GLAGOLITIC =
+            new UnicodeBlock("GLAGOLITIC");
+
+        /**
+         * Constant for the "Latin Extended-C" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock LATIN_EXTENDED_C =
+            new UnicodeBlock("LATIN_EXTENDED_C",
+                             new String[] { "Latin Extended-C",
+                                            "LatinExtended-C"});
+
+        /**
+         * Constant for the "Coptic" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock COPTIC = new UnicodeBlock("COPTIC");
+
+        /**
+         * Constant for the "Georgian Supplement" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock GEORGIAN_SUPPLEMENT =
+            new UnicodeBlock("GEORGIAN_SUPPLEMENT",
+                             new String[] { "Georgian Supplement",
+                                            "GeorgianSupplement"});
+
+        /**
+         * Constant for the "Tifinagh" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock TIFINAGH =
+            new UnicodeBlock("TIFINAGH");
+
+        /**
+         * Constant for the "Ethiopic Extended" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ETHIOPIC_EXTENDED =
+            new UnicodeBlock("ETHIOPIC_EXTENDED",
+                             new String[] { "Ethiopic Extended",
+                                            "EthiopicExtended"});
+
+        /**
+         * Constant for the "Cyrillic Extended-A" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CYRILLIC_EXTENDED_A =
+            new UnicodeBlock("CYRILLIC_EXTENDED_A",
+                             new String[] { "Cyrillic Extended-A",
+                                            "CyrillicExtended-A"});
+
+        /**
+         * Constant for the "Supplemental Punctuation" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock SUPPLEMENTAL_PUNCTUATION =
+            new UnicodeBlock("SUPPLEMENTAL_PUNCTUATION",
+                             new String[] { "Supplemental Punctuation",
+                                            "SupplementalPunctuation"});
+
+        /**
+         * Constant for the "CJK Strokes" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CJK_STROKES =
+            new UnicodeBlock("CJK_STROKES",
+                             new String[] { "CJK Strokes",
+                                            "CJKStrokes"});
+
+        /**
+         * Constant for the "Vai" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock VAI = new UnicodeBlock("VAI");
+
+        /**
+         * Constant for the "Cyrillic Extended-B" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CYRILLIC_EXTENDED_B =
+            new UnicodeBlock("CYRILLIC_EXTENDED_B",
+                             new String[] { "Cyrillic Extended-B",
+                                            "CyrillicExtended-B"});
+
+        /**
+         * Constant for the "Modifier Tone Letters" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock MODIFIER_TONE_LETTERS =
+            new UnicodeBlock("MODIFIER_TONE_LETTERS",
+                             new String[] { "Modifier Tone Letters",
+                                            "ModifierToneLetters"});
+
+        /**
+         * Constant for the "Latin Extended-D" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock LATIN_EXTENDED_D =
+            new UnicodeBlock("LATIN_EXTENDED_D",
+                             new String[] { "Latin Extended-D",
+                                            "LatinExtended-D"});
+
+        /**
+         * Constant for the "Syloti Nagri" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock SYLOTI_NAGRI =
+            new UnicodeBlock("SYLOTI_NAGRI",
+                             new String[] { "Syloti Nagri",
+                                            "SylotiNagri"});
+
+        /**
+         * Constant for the "Phags-pa" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock PHAGS_PA =
+            new UnicodeBlock("PHAGS_PA", new String[] { "Phags-pa"});
+
+        /**
+         * Constant for the "Saurashtra" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock SAURASHTRA =
+            new UnicodeBlock("SAURASHTRA");
+
+        /**
+         * Constant for the "Kayah Li" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock KAYAH_LI =
+            new UnicodeBlock("KAYAH_LI",
+                             new String[] { "Kayah Li",
+                                            "KayahLi"});
+
+        /**
+         * Constant for the "Rejang" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock REJANG = new UnicodeBlock("REJANG");
+
+        /**
+         * Constant for the "Cham" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CHAM = new UnicodeBlock("CHAM");
+
+        /**
+         * Constant for the "Vertical Forms" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock VERTICAL_FORMS =
+            new UnicodeBlock("VERTICAL_FORMS",
+                             new String[] { "Vertical Forms",
+                                            "VerticalForms"});
+
+        /**
+         * Constant for the "Ancient Greek Numbers" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ANCIENT_GREEK_NUMBERS =
+            new UnicodeBlock("ANCIENT_GREEK_NUMBERS",
+                             new String[] { "Ancient Greek Numbers",
+                                            "AncientGreekNumbers"});
+
+        /**
+         * Constant for the "Ancient Symbols" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ANCIENT_SYMBOLS =
+            new UnicodeBlock("ANCIENT_SYMBOLS",
+                             new String[] { "Ancient Symbols",
+                                            "AncientSymbols"});
+
+        /**
+         * Constant for the "Phaistos Disc" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock PHAISTOS_DISC =
+            new UnicodeBlock("PHAISTOS_DISC",
+                             new String[] { "Phaistos Disc",
+                                            "PhaistosDisc"});
+
+        /**
+         * Constant for the "Lycian" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock LYCIAN = new UnicodeBlock("LYCIAN");
+
+        /**
+         * Constant for the "Carian" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CARIAN = new UnicodeBlock("CARIAN");
+
+        /**
+         * Constant for the "Old Persian" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock OLD_PERSIAN =
+            new UnicodeBlock("OLD_PERSIAN",
+                             new String[] { "Old Persian",
+                                            "OldPersian"});
+
+        /**
+         * Constant for the "Phoenician" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock PHOENICIAN =
+            new UnicodeBlock("PHOENICIAN");
+
+        /**
+         * Constant for the "Lydian" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock LYDIAN = new UnicodeBlock("LYDIAN");
+
+        /**
+         * Constant for the "Kharoshthi" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock KHAROSHTHI =
+            new UnicodeBlock("KHAROSHTHI");
+
+        /**
+         * Constant for the "Cuneiform" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CUNEIFORM =
+            new UnicodeBlock("CUNEIFORM");
+
+        /**
+         * Constant for the "Cuneiform Numbers and Punctuation" Unicode
+         * character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock CUNEIFORM_NUMBERS_AND_PUNCTUATION =
+            new UnicodeBlock("CUNEIFORM_NUMBERS_AND_PUNCTUATION",
+                             new String[] { "Cuneiform Numbers and Punctuation",
+                                            "CuneiformNumbersandPunctuation"});
+
+        /**
+         * Constant for the "Ancient Greek Musical Notation" Unicode character
+         * block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock ANCIENT_GREEK_MUSICAL_NOTATION =
+            new UnicodeBlock("ANCIENT_GREEK_MUSICAL_NOTATION",
+                             new String[] { "Ancient Greek Musical Notation",
+                                            "AncientGreekMusicalNotation"});
+
+        /**
+         * Constant for the "Counting Rod Numerals" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock COUNTING_ROD_NUMERALS =
+            new UnicodeBlock("COUNTING_ROD_NUMERALS",
+                             new String[] { "Counting Rod Numerals",
+                                            "CountingRodNumerals"});
+
+        /**
+         * Constant for the "Mahjong Tiles" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock MAHJONG_TILES =
+            new UnicodeBlock("MAHJONG_TILES",
+                             new String[] { "Mahjong Tiles",
+                                            "MahjongTiles"});
+
+        /**
+         * Constant for the "Domino Tiles" Unicode character block.
+         * @since 1.7
+         */
+        public static final UnicodeBlock DOMINO_TILES =
+            new UnicodeBlock("DOMINO_TILES",
+                             new String[] { "Domino Tiles",
+                                            "DominoTiles"});
+
         private static final int blockStarts[] = {
-            0x0000, // Basic Latin
-            0x0080, // Latin-1 Supplement
-            0x0100, // Latin Extended-A
-            0x0180, // Latin Extended-B
-            0x0250, // IPA Extensions
-            0x02B0, // Spacing Modifier Letters
-            0x0300, // Combining Diacritical Marks
-            0x0370, // Greek and Coptic
-            0x0400, // Cyrillic
-            0x0500, // Cyrillic Supplementary
-            0x0530, // Armenian
-            0x0590, // Hebrew
-            0x0600, // Arabic
-            0x0700, // Syriac
-            0x0750, // unassigned
-            0x0780, // Thaana
-            0x07C0, // unassigned
-            0x0900, // Devanagari
-            0x0980, // Bengali
-            0x0A00, // Gurmukhi
-            0x0A80, // Gujarati
-            0x0B00, // Oriya
-            0x0B80, // Tamil
-            0x0C00, // Telugu
-            0x0C80, // Kannada
-            0x0D00, // Malayalam
-            0x0D80, // Sinhala
-            0x0E00, // Thai
-            0x0E80, // Lao
-            0x0F00, // Tibetan
-            0x1000, // Myanmar
-            0x10A0, // Georgian
-            0x1100, // Hangul Jamo
-            0x1200, // Ethiopic
-            0x1380, // unassigned
-            0x13A0, // Cherokee
-            0x1400, // Unified Canadian Aboriginal Syllabics
-            0x1680, // Ogham
-            0x16A0, // Runic
-            0x1700, // Tagalog
-            0x1720, // Hanunoo
-            0x1740, // Buhid
-            0x1760, // Tagbanwa
-            0x1780, // Khmer
-            0x1800, // Mongolian
-            0x18B0, // unassigned
-            0x1900, // Limbu
-            0x1950, // Tai Le
-            0x1980, // unassigned
-            0x19E0, // Khmer Symbols
-            0x1A00, // unassigned
-            0x1D00, // Phonetic Extensions
-            0x1D80, // unassigned
-            0x1E00, // Latin Extended Additional
-            0x1F00, // Greek Extended
-            0x2000, // General Punctuation
-            0x2070, // Superscripts and Subscripts
-            0x20A0, // Currency Symbols
-            0x20D0, // Combining Diacritical Marks for Symbols
-            0x2100, // Letterlike Symbols
-            0x2150, // Number Forms
-            0x2190, // Arrows
-            0x2200, // Mathematical Operators
-            0x2300, // Miscellaneous Technical
-            0x2400, // Control Pictures
-            0x2440, // Optical Character Recognition
-            0x2460, // Enclosed Alphanumerics
-            0x2500, // Box Drawing
-            0x2580, // Block Elements
-            0x25A0, // Geometric Shapes
-            0x2600, // Miscellaneous Symbols
-            0x2700, // Dingbats
-            0x27C0, // Miscellaneous Mathematical Symbols-A
-            0x27F0, // Supplemental Arrows-A
-            0x2800, // Braille Patterns
-            0x2900, // Supplemental Arrows-B
-            0x2980, // Miscellaneous Mathematical Symbols-B
-            0x2A00, // Supplemental Mathematical Operators
-            0x2B00, // Miscellaneous Symbols and Arrows
-            0x2C00, // unassigned
-            0x2E80, // CJK Radicals Supplement
-            0x2F00, // Kangxi Radicals
-            0x2FE0, // unassigned
-            0x2FF0, // Ideographic Description Characters
-            0x3000, // CJK Symbols and Punctuation
-            0x3040, // Hiragana
-            0x30A0, // Katakana
-            0x3100, // Bopomofo
-            0x3130, // Hangul Compatibility Jamo
-            0x3190, // Kanbun
-            0x31A0, // Bopomofo Extended
-            0x31C0, // unassigned
-            0x31F0, // Katakana Phonetic Extensions
-            0x3200, // Enclosed CJK Letters and Months
-            0x3300, // CJK Compatibility
-            0x3400, // CJK Unified Ideographs Extension A
-            0x4DC0, // Yijing Hexagram Symbols
-            0x4E00, // CJK Unified Ideographs
-            0xA000, // Yi Syllables
-            0xA490, // Yi Radicals
-            0xA4D0, // unassigned
-            0xAC00, // Hangul Syllables
-            0xD7B0, // unassigned
-            0xD800, // High Surrogates
-            0xDB80, // High Private Use Surrogates
-            0xDC00, // Low Surrogates
-            0xE000, // Private Use
-            0xF900, // CJK Compatibility Ideographs
-            0xFB00, // Alphabetic Presentation Forms
-            0xFB50, // Arabic Presentation Forms-A
-            0xFE00, // Variation Selectors
-            0xFE10, // unassigned
-            0xFE20, // Combining Half Marks
-            0xFE30, // CJK Compatibility Forms
-            0xFE50, // Small Form Variants
-            0xFE70, // Arabic Presentation Forms-B
-            0xFF00, // Halfwidth and Fullwidth Forms
-            0xFFF0, // Specials
-            0x10000, // Linear B Syllabary
-            0x10080, // Linear B Ideograms
-            0x10100, // Aegean Numbers
-            0x10140, // unassigned
-            0x10300, // Old Italic
-            0x10330, // Gothic
-            0x10350, // unassigned
-            0x10380, // Ugaritic
-            0x103A0, // unassigned
-            0x10400, // Deseret
-            0x10450, // Shavian
-            0x10480, // Osmanya
-            0x104B0, // unassigned
-            0x10800, // Cypriot Syllabary
-            0x10840, // unassigned
-            0x1D000, // Byzantine Musical Symbols
-            0x1D100, // Musical Symbols
-            0x1D200, // unassigned
-            0x1D300, // Tai Xuan Jing Symbols
-            0x1D360, // unassigned
-            0x1D400, // Mathematical Alphanumeric Symbols
-            0x1D800, // unassigned
-            0x20000, // CJK Unified Ideographs Extension B
-            0x2A6E0, // unassigned
-            0x2F800, // CJK Compatibility Ideographs Supplement
-            0x2FA20, // unassigned
-            0xE0000, // Tags
-            0xE0080, // unassigned
-            0xE0100, // Variation Selectors Supplement
-            0xE01F0, // unassigned
-            0xF0000, // Supplementary Private Use Area-A
-            0x100000, // Supplementary Private Use Area-B
+            0x0000,   // 0000..007F; Basic Latin
+            0x0080,   // 0080..00FF; Latin-1 Supplement
+            0x0100,   // 0100..017F; Latin Extended-A
+            0x0180,   // 0180..024F; Latin Extended-B
+            0x0250,   // 0250..02AF; IPA Extensions
+            0x02B0,   // 02B0..02FF; Spacing Modifier Letters
+            0x0300,   // 0300..036F; Combining Diacritical Marks
+            0x0370,   // 0370..03FF; Greek and Coptic
+            0x0400,   // 0400..04FF; Cyrillic
+            0x0500,   // 0500..052F; Cyrillic Supplement
+            0x0530,   // 0530..058F; Armenian
+            0x0590,   // 0590..05FF; Hebrew
+            0x0600,   // 0600..06FF; Arabic
+            0x0700,   // 0700..074F; Syria
+            0x0750,   // 0750..077F; Arabic Supplement
+            0x0780,   // 0780..07BF; Thaana
+            0x07C0,   // 07C0..07FF; NKo
+            0x0800,   //             unassigned
+            0x0900,   // 0900..097F; Devanagari
+            0x0980,   // 0980..09FF; Bengali
+            0x0A00,   // 0A00..0A7F; Gurmukhi
+            0x0A80,   // 0A80..0AFF; Gujarati
+            0x0B00,   // 0B00..0B7F; Oriya
+            0x0B80,   // 0B80..0BFF; Tamil
+            0x0C00,   // 0C00..0C7F; Telugu
+            0x0C80,   // 0C80..0CFF; Kannada
+            0x0D00,   // 0D00..0D7F; Malayalam
+            0x0D80,   // 0D80..0DFF; Sinhala
+            0x0E00,   // 0E00..0E7F; Thai
+            0x0E80,   // 0E80..0EFF; Lao
+            0x0F00,   // 0F00..0FFF; Tibetan
+            0x1000,   // 1000..109F; Myanmar
+            0x10A0,   // 10A0..10FF; Georgian
+            0x1100,   // 1100..11FF; Hangul Jamo
+            0x1200,   // 1200..137F; Ethiopic
+            0x1380,   // 1380..139F; Ethiopic Supplement
+            0x13A0,   // 13A0..13FF; Cherokee
+            0x1400,   // 1400..167F; Unified Canadian Aboriginal Syllabics
+            0x1680,   // 1680..169F; Ogham
+            0x16A0,   // 16A0..16FF; Runic
+            0x1700,   // 1700..171F; Tagalog
+            0x1720,   // 1720..173F; Hanunoo
+            0x1740,   // 1740..175F; Buhid
+            0x1760,   // 1760..177F; Tagbanwa
+            0x1780,   // 1780..17FF; Khmer
+            0x1800,   // 1800..18AF; Mongolian
+            0x18B0,   //             unassigned
+            0x1900,   // 1900..194F; Limbu
+            0x1950,   // 1950..197F; Tai Le
+            0x1980,   // 1980..19DF; New Tai Lue
+            0x19E0,   // 19E0..19FF; Khmer Symbols
+            0x1A00,   // 1A00..1A1F; Buginese
+            0x1A20,   //             unassigned
+            0x1B00,   // 1B00..1B7F; Balinese
+            0x1B80,   // 1B80..1BBF; Sundanese
+            0x1BC0,   //             unassigned
+            0x1C00,   // 1C00..1C4F; Lepcha
+            0x1C50,   // 1C50..1C7F; Ol Chiki
+            0x1C80,   //             unassigned
+            0x1D00,   // 1D00..1D7F; Phonetic Extensions
+            0x1D80,   // 1D80..1DBF; Phonetic Extensions Supplement
+            0x1DC0,   // 1DC0..1DFF; Combining Diacritical Marks Supplement
+            0x1E00,   // 1E00..1EFF; Latin Extended Additional
+            0x1F00,   // 1F00..1FFF; Greek Extended
+            0x2000,   // 2000..206F; General Punctuation
+            0x2070,   // 2070..209F; Superscripts and Subscripts
+            0x20A0,   // 20A0..20CF; Currency Symbols
+            0x20D0,   // 20D0..20FF; Combining Diacritical Marks for Symbols
+            0x2100,   // 2100..214F; Letterlike Symbols
+            0x2150,   // 2150..218F; Number Forms
+            0x2190,   // 2190..21FF; Arrows
+            0x2200,   // 2200..22FF; Mathematical Operators
+            0x2300,   // 2300..23FF; Miscellaneous Technical
+            0x2400,   // 2400..243F; Control Pictures
+            0x2440,   // 2440..245F; Optical Character Recognition
+            0x2460,   // 2460..24FF; Enclosed Alphanumerics
+            0x2500,   // 2500..257F; Box Drawing
+            0x2580,   // 2580..259F; Block Elements
+            0x25A0,   // 25A0..25FF; Geometric Shapes
+            0x2600,   // 2600..26FF; Miscellaneous Symbols
+            0x2700,   // 2700..27BF; Dingbats
+            0x27C0,   // 27C0..27EF; Miscellaneous Mathematical Symbols-A
+            0x27F0,   // 27F0..27FF; Supplemental Arrows-A
+            0x2800,   // 2800..28FF; Braille Patterns
+            0x2900,   // 2900..297F; Supplemental Arrows-B
+            0x2980,   // 2980..29FF; Miscellaneous Mathematical Symbols-B
+            0x2A00,   // 2A00..2AFF; Supplemental Mathematical Operators
+            0x2B00,   // 2B00..2BFF; Miscellaneous Symbols and Arrows
+            0x2C00,   // 2C00..2C5F; Glagolitic
+            0x2C60,   // 2C60..2C7F; Latin Extended-C
+            0x2C80,   // 2C80..2CFF; Coptic
+            0x2D00,   // 2D00..2D2F; Georgian Supplement
+            0x2D30,   // 2D30..2D7F; Tifinagh
+            0x2D80,   // 2D80..2DDF; Ethiopic Extended
+            0x2DE0,   // 2DE0..2DFF; Cyrillic Extended-A
+            0x2E00,   // 2E00..2E7F; Supplemental Punctuation
+            0x2E80,   // 2E80..2EFF; CJK Radicals Supplement
+            0x2F00,   // 2F00..2FDF; Kangxi Radicals
+            0x2FE0,   //             unassigned
+            0x2FF0,   // 2FF0..2FFF; Ideographic Description Characters
+            0x3000,   // 3000..303F; CJK Symbols and Punctuation
+            0x3040,   // 3040..309F; Hiragana
+            0x30A0,   // 30A0..30FF; Katakana
+            0x3100,   // 3100..312F; Bopomofo
+            0x3130,   // 3130..318F; Hangul Compatibility Jamo
+            0x3190,   // 3190..319F; Kanbun
+            0x31A0,   // 31A0..31BF; Bopomofo Extended
+            0x31C0,   // 31C0..31EF; CJK Strokes
+            0x31F0,   // 31F0..31FF; Katakana Phonetic Extensions
+            0x3200,   // 3200..32FF; Enclosed CJK Letters and Months
+            0x3300,   // 3300..33FF; CJK Compatibility
+            0x3400,   // 3400..4DBF; CJK Unified Ideographs Extension A
+            0x4DC0,   // 4DC0..4DFF; Yijing Hexagram Symbols
+            0x4E00,   // 4E00..9FFF; CJK Unified Ideograph
+            0xA000,   // A000..A48F; Yi Syllables
+            0xA490,   // A490..A4CF; Yi Radicals
+            0xA4D0,   //             unassigned
+            0xA500,   // A500..A63F; Vai
+            0xA640,   // A640..A69F; Cyrillic Extended-B
+            0xA6A0,   //             unassigned
+            0xA700,   // A700..A71F; Modifier Tone Letters
+            0xA720,   // A720..A7FF; Latin Extended-D
+            0xA800,   // A800..A82F; Syloti Nagri
+            0xA830,   //             unassigned
+            0xA840,   // A840..A87F; Phags-pa
+            0xA880,   // A880..A8DF; Saurashtra
+            0xA8E0,   //             unassigned
+            0xA900,   // A900..A92F; Kayah Li
+            0xA930,   // A930..A95F; Rejang
+            0xA960,   //             unassigned
+            0xAA00,   // AA00..AA5F; Cham
+            0xAA60,   //             unassigned
+            0xAC00,   // AC00..D7AF; Hangul Syllables
+            0xD7B0,   //             unassigned
+            0xD800,   // D800..DB7F; High Surrogates
+            0xDB80,   // DB80..DBFF; High Private Use Surrogates
+            0xDC00,   // DC00..DFFF; Low Surrogates
+            0xE000,   // E000..F8FF; Private Use Area
+            0xF900,   // F900..FAFF; CJK Compatibility Ideographs
+            0xFB00,   // FB00..FB4F; Alphabetic Presentation Forms
+            0xFB50,   // FB50..FDFF; Arabic Presentation Forms-A
+            0xFE00,   // FE00..FE0F; Variation Selectors
+            0xFE10,   // FE10..FE1F; Vertical Forms
+            0xFE20,   // FE20..FE2F; Combining Half Marks
+            0xFE30,   // FE30..FE4F; CJK Compatibility Forms
+            0xFE50,   // FE50..FE6F; Small Form Variants
+            0xFE70,   // FE70..FEFF; Arabic Presentation Forms-B
+            0xFF00,   // FF00..FFEF; Halfwidth and Fullwidth Forms
+            0xFFF0,   // FFF0..FFFF; Specials
+            0x10000,  // 10000..1007F; Linear B Syllabary
+            0x10080,  // 10080..100FF; Linear B Ideograms
+            0x10100,  // 10100..1013F; Aegean Numbers
+            0x10140,  // 10140..1018F; Ancient Greek Numbers
+            0x10190,  // 10190..101CF; Ancient Symbols
+            0x101D0,  // 101D0..101FF; Phaistos Disc
+            0x10200,  //               unassigned
+            0x10280,  // 10280..1029F; Lycian
+            0x102A0,  // 102A0..102DF; Carian
+            0x102E0,  //               unassigned
+            0x10300,  // 10300..1032F; Old Italic
+            0x10330,  // 10330..1034F; Gothic
+            0x10350,  //               unassigned
+            0x10380,  // 10380..1039F; Ugaritic
+            0x103A0,  // 103A0..103DF; Old Persian
+            0x103E0,  //               unassigned
+            0x10400,  // 10400..1044F; Desere
+            0x10450,  // 10450..1047F; Shavian
+            0x10480,  // 10480..104AF; Osmanya
+            0x104B0,  //               unassigned
+            0x10800,  // 10800..1083F; Cypriot Syllabary
+            0x10840,  //               unassigned
+            0x10900,  // 10900..1091F; Phoenician
+            0x10920,  // 10920..1093F; Lydian
+            0x10940,  //               unassigned
+            0x10A00,  // 10A00..10A5F; Kharoshthi
+            0x10A60,  //               unassigned
+            0x12000,  // 12000..123FF; Cuneiform
+            0x12400,  // 12400..1247F; Cuneiform Numbers and Punctuation
+            0x12480,  //               unassigned
+            0x1D000,  // 1D000..1D0FF; Byzantine Musical Symbols
+            0x1D100,  // 1D100..1D1FF; Musical Symbols
+            0x1D200,  // 1D200..1D24F; Ancient Greek Musical Notation
+            0x1D250,  //               unassigned
+            0x1D300,  // 1D300..1D35F; Tai Xuan Jing Symbols
+            0x1D360,  // 1D360..1D37F; Counting Rod Numerals
+            0x1D380,  //               unassigned
+            0x1D400,  // 1D400..1D7FF; Mathematical Alphanumeric Symbols
+            0x1D800,  //               unassigned
+            0x1F000,  // 1F000..1F02F; Mahjong Tiles
+            0x1F030,  // 1F030..1F09F; Domino Tiles
+            0x1F0A0,  //               unassigned
+            0x20000,  // 20000..2A6DF; CJK Unified Ideographs Extension B
+            0x2A6E0,  //               unassigned
+            0x2F800,  // 2F800..2FA1F; CJK Compatibility Ideographs Supplement
+            0x2FA20,  //               unassigned
+            0xE0000,  // E0000..E007F; Tags
+            0xE0080,  //               unassigned
+            0xE0100,  // E0100..E01EF; Variation Selectors Supplement
+            0xE01F0,  //               unassigned
+            0xF0000,  // F0000..FFFFF; Supplementary Private Use Area-A
+            0x100000, // 100000..10FFFF; Supplementary Private Use Area-B
         };
 
         private static final UnicodeBlock[] blocks = {
@@ -1809,8 +2250,9 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             HEBREW,
             ARABIC,
             SYRIAC,
-            null,
+            ARABIC_SUPPLEMENT,
             THAANA,
+            NKO,
             null,
             DEVANAGARI,
             BENGALI,
@@ -1829,7 +2271,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             GEORGIAN,
             HANGUL_JAMO,
             ETHIOPIC,
-            null,
+            ETHIOPIC_SUPPLEMENT,
             CHEROKEE,
             UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS,
             OGHAM,
@@ -1843,11 +2285,19 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             null,
             LIMBU,
             TAI_LE,
-            null,
+            NEW_TAI_LUE,
             KHMER_SYMBOLS,
+            BUGINESE,
+            null,
+            BALINESE,
+            SUNDANESE,
+            null,
+            LEPCHA,
+            OL_CHIKI,
             null,
             PHONETIC_EXTENSIONS,
-            null,
+            PHONETIC_EXTENSIONS_SUPPLEMENT,
+            COMBINING_DIACRITICAL_MARKS_SUPPLEMENT,
             LATIN_EXTENDED_ADDITIONAL,
             GREEK_EXTENDED,
             GENERAL_PUNCTUATION,
@@ -1874,7 +2324,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B,
             SUPPLEMENTAL_MATHEMATICAL_OPERATORS,
             MISCELLANEOUS_SYMBOLS_AND_ARROWS,
-            null,
+            GLAGOLITIC,
+            LATIN_EXTENDED_C,
+            COPTIC,
+            GEORGIAN_SUPPLEMENT,
+            TIFINAGH,
+            ETHIOPIC_EXTENDED,
+            CYRILLIC_EXTENDED_A,
+            SUPPLEMENTAL_PUNCTUATION,
             CJK_RADICALS_SUPPLEMENT,
             KANGXI_RADICALS,
             null,
@@ -1886,7 +2343,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             HANGUL_COMPATIBILITY_JAMO,
             KANBUN,
             BOPOMOFO_EXTENDED,
-            null,
+            CJK_STROKES,
             KATAKANA_PHONETIC_EXTENSIONS,
             ENCLOSED_CJK_LETTERS_AND_MONTHS,
             CJK_COMPATIBILITY,
@@ -1895,6 +2352,21 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             CJK_UNIFIED_IDEOGRAPHS,
             YI_SYLLABLES,
             YI_RADICALS,
+            null,
+            VAI,
+            CYRILLIC_EXTENDED_B,
+            null,
+            MODIFIER_TONE_LETTERS,
+            LATIN_EXTENDED_D,
+            SYLOTI_NAGRI,
+            null,
+            PHAGS_PA,
+            SAURASHTRA,
+            null,
+            KAYAH_LI,
+            REJANG,
+            null,
+            CHAM,
             null,
             HANGUL_SYLLABLES,
             null,
@@ -1906,7 +2378,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             ALPHABETIC_PRESENTATION_FORMS,
             ARABIC_PRESENTATION_FORMS_A,
             VARIATION_SELECTORS,
-            null,
+            VERTICAL_FORMS,
             COMBINING_HALF_MARKS,
             CJK_COMPATIBILITY_FORMS,
             SMALL_FORM_VARIANTS,
@@ -1916,11 +2388,18 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             LINEAR_B_SYLLABARY,
             LINEAR_B_IDEOGRAMS,
             AEGEAN_NUMBERS,
+            ANCIENT_GREEK_NUMBERS,
+            ANCIENT_SYMBOLS,
+            PHAISTOS_DISC,
+            null,
+            LYCIAN,
+            CARIAN,
             null,
             OLD_ITALIC,
             GOTHIC,
             null,
             UGARITIC,
+            OLD_PERSIAN,
             null,
             DESERET,
             SHAVIAN,
@@ -1928,12 +2407,25 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             null,
             CYPRIOT_SYLLABARY,
             null,
+            PHOENICIAN,
+            LYDIAN,
+            null,
+            KHAROSHTHI,
+            null,
+            CUNEIFORM,
+            CUNEIFORM_NUMBERS_AND_PUNCTUATION,
+            null,
             BYZANTINE_MUSICAL_SYMBOLS,
             MUSICAL_SYMBOLS,
+            ANCIENT_GREEK_MUSICAL_NOTATION,
             null,
             TAI_XUAN_JING_SYMBOLS,
+            COUNTING_ROD_NUMERALS,
             null,
             MATHEMATICAL_ALPHANUMERIC_SYMBOLS,
+            null,
+            MAHJONG_TILES,
+            DOMINO_TILES,
             null,
             CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B,
             null,
@@ -2095,6 +2587,10 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * significantly better space and time performance by caching
      * frequently requested values.
      *
+     * This method will always cache values in the range {@code
+     * '\u005Cu0000'} to {@code '\u005Cu007f'}, inclusive, and may
+     * cache other values outside of this range.
+     *
      * @param  c a char value.
      * @return a <tt>Character</tt> instance representing <tt>c</tt>.
      * @since  1.5
@@ -2116,8 +2612,10 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     /**
-     * Returns a hash code for this <code>Character</code>.
-     * @return  a hash code value for this object.
+     * Returns a hash code for this {@code Character}; equal to the result
+     * of invoking {@code charValue()}.
+     *
+     * @return a hash code value for this {@code Character}
      */
     public int hashCode() {
         return (int)value;
@@ -2168,19 +2666,15 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     /**
-     * Determines whether the specified code point is a valid Unicode
-     * code point value in the range of <code>0x0000</code> to
-     * <code>0x10FFFF</code> inclusive. This method is equivalent to
-     * the expression:
-     *
-     * <blockquote><pre>
-     * codePoint >= 0x0000 && codePoint <= 0x10FFFF
-     * </pre></blockquote>
+     * Determines whether the specified code point is a valid
+     * <a href="http://www.unicode.org/glossary/#code_point">
+     * Unicode code point value</a>.
      *
      * @param  codePoint the Unicode code point to be tested
-     * @return <code>true</code> if the specified code point value
-     * is a valid code point value;
-     * <code>false</code> otherwise.
+     * @return {@code true} if the specified code point value is between
+     *         {@link #MIN_CODE_POINT} and
+     *         {@link #MAX_CODE_POINT} inclusive;
+     *         {@code false} otherwise.
      * @since  1.5
      */
     public static boolean isValidCodePoint(int codePoint) {
@@ -2189,15 +2683,13 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
 
     /**
      * Determines whether the specified character (Unicode code point)
-     * is in the supplementary character range. The method call is
-     * equivalent to the expression:
-     * <blockquote><pre>
-     * codePoint >= 0x10000 && codePoint <= 0x10FFFF
-     * </pre></blockquote>
+     * is in the <a href="#supplementary">supplementary character</a> range.
      *
      * @param  codePoint the character (Unicode code point) to be tested
-     * @return <code>true</code> if the specified character is in the Unicode
-     *         supplementary character range; <code>false</code> otherwise.
+     * @return {@code true} if the specified code point is between
+     *         {@link #MIN_SUPPLEMENTARY_CODE_POINT} and
+     *         {@link #MAX_CODE_POINT} inclusive;
+     *         {@code false} otherwise.
      * @since  1.5
      */
     public static boolean isSupplementaryCodePoint(int codePoint) {
@@ -2206,56 +2698,83 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     /**
-     * Determines if the given <code>char</code> value is a
-     * high-surrogate code unit (also known as <i>leading-surrogate
-     * code unit</i>). Such values do not represent characters by
-     * themselves, but are used in the representation of <a
-     * href="#supplementary">supplementary characters</a> in the
-     * UTF-16 encoding.
+     * Determines if the given {@code char} value is a
+     * <a href="http://www.unicode.org/glossary/#high_surrogate_code_unit">
+     * Unicode high-surrogate code unit</a>
+     * (also known as <i>leading-surrogate code unit</i>).
      *
-     * <p>This method returns <code>true</code> if and only if
-     * <blockquote><pre>ch >= '&#92;uD800' && ch <= '&#92;uDBFF'
-     * </pre></blockquote>
-     * is <code>true</code>.
+     * <p>Such values do not represent characters by themselves,
+     * but are used in the representation of
+     * <a href="#supplementary">supplementary characters</a>
+     * in the UTF-16 encoding.
      *
-     * @param   ch   the <code>char</code> value to be tested.
-     * @return  <code>true</code> if the <code>char</code> value
-     *          is between '&#92;uD800' and '&#92;uDBFF' inclusive;
-     *          <code>false</code> otherwise.
-     * @see     java.lang.Character#isLowSurrogate(char)
-     * @see     Character.UnicodeBlock#of(int)
-     * @since   1.5
+     * @param  ch the {@code char} value to be tested.
+     * @return {@code true} if the {@code char} value is between
+     *         {@link #MIN_HIGH_SURROGATE} and
+     *         {@link #MAX_HIGH_SURROGATE} inclusive;
+     *         {@code false} otherwise.
+     * @see    #isLowSurrogate(char)
+     * @see    Character.UnicodeBlock#of(int)
+     * @since  1.5
      */
     public static boolean isHighSurrogate(char ch) {
         return ch >= MIN_HIGH_SURROGATE && ch <= MAX_HIGH_SURROGATE;
     }
 
     /**
-     * Determines if the given <code>char</code> value is a
-     * low-surrogate code unit (also known as <i>trailing-surrogate code
-     * unit</i>). Such values do not represent characters by themselves,
-     * but are used in the representation of <a
-     * href="#supplementary">supplementary characters</a> in the UTF-16 encoding.
+     * Determines if the given {@code char} value is a
+     * <a href="http://www.unicode.org/glossary/#low_surrogate_code_unit">
+     * Unicode low-surrogate code unit</a>
+     * (also known as <i>trailing-surrogate code unit</i>).
      *
-     * <p> This method returns <code>true</code> if and only if
-     * <blockquote><pre>ch >= '&#92;uDC00' && ch <= '&#92;uDFFF'
-     * </pre></blockquote> is <code>true</code>.
+     * <p>Such values do not represent characters by themselves,
+     * but are used in the representation of
+     * <a href="#supplementary">supplementary characters</a>
+     * in the UTF-16 encoding.
      *
-     * @param   ch   the <code>char</code> value to be tested.
-     * @return  <code>true</code> if the <code>char</code> value
-     *          is between '&#92;uDC00' and '&#92;uDFFF' inclusive;
-     *          <code>false</code> otherwise.
-     * @see java.lang.Character#isHighSurrogate(char)
-     * @since   1.5
+     * @param  ch the {@code char} value to be tested.
+     * @return {@code true} if the {@code char} value is between
+     *         {@link #MIN_LOW_SURROGATE} and
+     *         {@link #MAX_LOW_SURROGATE} inclusive;
+     *         {@code false} otherwise.
+     * @see    #isHighSurrogate(char)
+     * @since  1.5
      */
     public static boolean isLowSurrogate(char ch) {
         return ch >= MIN_LOW_SURROGATE && ch <= MAX_LOW_SURROGATE;
     }
 
     /**
+     * Determines if the given {@code char} value is a Unicode
+     * <i>surrogate code unit</i>.
+     *
+     * <p>Such values do not represent characters by themselves,
+     * but are used in the representation of
+     * <a href="#supplementary">supplementary characters</a>
+     * in the UTF-16 encoding.
+     *
+     * <p>A char value is a surrogate code unit if and only if it is either
+     * a {@linkplain #isLowSurrogate(char) low-surrogate code unit} or
+     * a {@linkplain #isHighSurrogate(char) high-surrogate code unit}.
+     *
+     * @param  ch the {@code char} value to be tested.
+     * @return {@code true} if the {@code char} value is between
+     *         {@link #MIN_SURROGATE} and
+     *         {@link #MAX_SURROGATE} inclusive;
+     *         {@code false} otherwise.
+     * @since  1.7
+     */
+    public static boolean isSurrogate(char ch) {
+        return ch >= MIN_SURROGATE && ch <= MAX_SURROGATE;
+    }
+
+    /**
      * Determines whether the specified pair of <code>char</code>
-     * values is a valid surrogate pair. This method is equivalent to
-     * the expression:
+     * values is a valid
+     * <a href="http://www.unicode.org/glossary/#surrogate_pair">
+     * Unicode surrogate pair</a>.
+
+     * <p>This method is equivalent to the expression:
      * <blockquote><pre>
      * isHighSurrogate(high) && isLowSurrogate(low)
      * </pre></blockquote>
@@ -2304,8 +2823,13 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int toCodePoint(char high, char low) {
-        return ((high - MIN_HIGH_SURROGATE) << 10)
-            + (low - MIN_LOW_SURROGATE) + MIN_SUPPLEMENTARY_CODE_POINT;
+        // Optimized form of:
+        // return ((high - MIN_HIGH_SURROGATE) << 10)
+        //         + (low - MIN_LOW_SURROGATE)
+        //         + MIN_SUPPLEMENTARY_CODE_POINT;
+        return ((high << 10) + low) + (MIN_SUPPLEMENTARY_CODE_POINT
+                                       - (MIN_HIGH_SURROGATE << 10)
+                                       - MIN_LOW_SURROGATE);
     }
 
     /**
@@ -2591,9 +3115,10 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     static void toSurrogates(int codePoint, char[] dst, int index) {
-        int offset = codePoint - MIN_SUPPLEMENTARY_CODE_POINT;
-        dst[index+1] = (char)((offset & 0x3ff) + MIN_LOW_SURROGATE);
-        dst[index] = (char)((offset >>> 10) + MIN_HIGH_SURROGATE);
+        // We write elements "backwards" to guarantee all-or-nothing
+        dst[index+1] = (char)((codePoint & 0x3ff) + MIN_LOW_SURROGATE);
+        dst[index] = (char)((codePoint >>> 10)
+            + (MIN_HIGH_SURROGATE - (MIN_SUPPLEMENTARY_CODE_POINT >>> 10)));
     }
 
     /**
@@ -4439,7 +4964,25 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.2
      */
     public int compareTo(Character anotherCharacter) {
-        return this.value - anotherCharacter.value;
+        return compare(this.value, anotherCharacter.value);
+    }
+
+    /**
+     * Compares two {@code char} values numerically.
+     * The value returned is identical to what would be returned by:
+     * <pre>
+     *    Character.valueOf(x).compareTo(Character.valueOf(y))
+     * </pre>
+     *
+     * @param  x the first {@code char} to compare
+     * @param  y the second {@code char} to compare
+     * @return the value {@code 0} if {@code x == y};
+     *         a value less than {@code 0} if {@code x < y}; and
+     *         a value greater than {@code 0} if {@code x > y}
+     * @since 1.7
+     */
+    public static int compare(char x, char y) {
+        return x - y;
     }
 
     /**
@@ -4482,7 +5025,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
 
     /**
      * The number of bits used to represent a <tt>char</tt> value in unsigned
-     * binary form.
+     * binary form, constant {@code 16}.
      *
      * @since 1.5
      */

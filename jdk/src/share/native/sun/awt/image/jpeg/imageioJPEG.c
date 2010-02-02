@@ -396,7 +396,7 @@ static imageIODataPtr initImageioData (JNIEnv *env,
     data->jpegObj = cinfo;
     cinfo->client_data = data;
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("new structures: data is %p, cinfo is %p\n", data, cinfo);
 #endif
 
@@ -673,9 +673,13 @@ static int setQTables(JNIEnv *env,
     j_decompress_ptr decomp;
 
     qlen = (*env)->GetArrayLength(env, qtables);
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("in setQTables, qlen = %d, write is %d\n", qlen, write);
 #endif
+    if (qlen > NUM_QUANT_TBLS) {
+        /* Ignore extra qunterization tables. */
+        qlen = NUM_QUANT_TBLS;
+    }
     for (i = 0; i < qlen; i++) {
         table = (*env)->GetObjectArrayElement(env, qtables, i);
         qdata = (*env)->GetObjectField(env, table, JPEGQTable_tableID);
@@ -727,6 +731,11 @@ static void setHuffTable(JNIEnv *env,
     hlensBody = (*env)->GetShortArrayElements(env,
                                               huffLens,
                                               NULL);
+    if (hlensLen > 16) {
+        /* Ignore extra elements of bits array. Only 16 elements can be
+           stored. 0-th element is not used. (see jpeglib.h, line 107)  */
+        hlensLen = 16;
+    }
     for (i = 1; i <= hlensLen; i++) {
         huff_ptr->bits[i] = (UINT8)hlensBody[i-1];
     }
@@ -743,6 +752,11 @@ static void setHuffTable(JNIEnv *env,
                                               huffValues,
                                               NULL);
 
+    if (hvalsLen > 256) {
+        /* Ignore extra elements of hufval array. Only 256 elements
+           can be stored. (see jpeglib.h, line 109)                  */
+        hlensLen = 256;
+    }
     for (i = 0; i < hvalsLen; i++) {
         huff_ptr->huffval[i] = (UINT8)hvalsBody[i];
     }
@@ -763,6 +777,11 @@ static int setHTables(JNIEnv *env,
     j_compress_ptr comp;
     j_decompress_ptr decomp;
     jsize hlen = (*env)->GetArrayLength(env, DCHuffmanTables);
+
+    if (hlen > NUM_HUFF_TBLS) {
+        /* Ignore extra DC huffman tables. */
+        hlen = NUM_HUFF_TBLS;
+    }
     for (i = 0; i < hlen; i++) {
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
@@ -784,6 +803,10 @@ static int setHTables(JNIEnv *env,
         huff_ptr->sent_table = !write;
     }
     hlen = (*env)->GetArrayLength(env, ACHuffmanTables);
+    if (hlen > NUM_HUFF_TBLS) {
+        /* Ignore extra AC huffman tables. */
+        hlen = NUM_HUFF_TBLS;
+    }
     for (i = 0; i < hlen; i++) {
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
@@ -876,7 +899,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
         return FALSE;
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("Filling input buffer, remaining skip is %ld, ",
            sb->remaining_skip);
     printf("Buffer length is %d\n", sb->bufferLength);
@@ -906,7 +929,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
             cinfo->err->error_exit((j_common_ptr) cinfo);
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
       printf("Buffer filled. ret = %d\n", ret);
 #endif
     /*
@@ -917,7 +940,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
      */
     if (ret <= 0) {
         jobject reader = data->imageIOobj;
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
       printf("YO! Early EOI! ret = %d\n", ret);
 #endif
         RELEASE_ARRAYS(env, data, src->next_input_byte);
@@ -1216,21 +1239,24 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
 {
     jpeg_saved_marker_ptr marker;
     int num_markers = 0;
+    int num_found_markers = 0;
     int seq_no;
     JOCTET *icc_data;
+    JOCTET *dst_ptr;
     unsigned int total_length;
 #define MAX_SEQ_NO  255         // sufficient since marker numbers are bytes
-    char marker_present[MAX_SEQ_NO+1];    // 1 if marker found
-    unsigned int data_length[MAX_SEQ_NO+1]; // size of profile data in marker
-    unsigned int data_offset[MAX_SEQ_NO+1]; // offset for data in marker
+    jpeg_saved_marker_ptr icc_markers[MAX_SEQ_NO + 1];
+    int first;         // index of the first marker in the icc_markers array
+    int last;          // index of the last marker in the icc_markers array
     jbyteArray data = NULL;
 
     /* This first pass over the saved markers discovers whether there are
      * any ICC markers and verifies the consistency of the marker numbering.
      */
 
-    for (seq_no = 1; seq_no <= MAX_SEQ_NO; seq_no++)
-        marker_present[seq_no] = 0;
+    for (seq_no = 0; seq_no <= MAX_SEQ_NO; seq_no++)
+        icc_markers[seq_no] = NULL;
+
 
     for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
         if (marker_is_icc(marker)) {
@@ -1242,37 +1268,58 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
                 return NULL;
             }
             seq_no = GETJOCTET(marker->data[12]);
-            if (seq_no <= 0 || seq_no > num_markers) {
+
+            /* Some third-party tools produce images with profile chunk
+             * numeration started from zero. It is inconsistent with ICC
+             * spec, but seems to be recognized by majority of image
+             * processing tools, so we should be more tolerant to this
+             * departure from the spec.
+             */
+            if (seq_no < 0 || seq_no > num_markers) {
                 JNU_ThrowByName(env, "javax/imageio/IIOException",
                      "Invalid icc profile: bad sequence number");
                 return NULL;
             }
-            if (marker_present[seq_no]) {
+            if (icc_markers[seq_no] != NULL) {
                 JNU_ThrowByName(env, "javax/imageio/IIOException",
                      "Invalid icc profile: duplicate sequence numbers");
                 return NULL;
             }
-            marker_present[seq_no] = 1;
-            data_length[seq_no] = marker->data_length - ICC_OVERHEAD_LEN;
+            icc_markers[seq_no] = marker;
+            num_found_markers ++;
         }
     }
 
     if (num_markers == 0)
         return NULL;  // There is no profile
 
-    /* Check for missing markers, count total space needed,
-     * compute offset of each marker's part of the data.
-     */
+    if (num_markers != num_found_markers) {
+        JNU_ThrowByName(env, "javax/imageio/IIOException",
+                        "Invalid icc profile: invalid number of icc markers");
+        return NULL;
+    }
 
+    first = icc_markers[0] ? 0 : 1;
+    last = num_found_markers + first;
+
+    /* Check for missing markers, count total space needed.
+     */
     total_length = 0;
-    for (seq_no = 1; seq_no <= num_markers; seq_no++) {
-        if (marker_present[seq_no] == 0) {
+    for (seq_no = first; seq_no < last; seq_no++) {
+        unsigned int length;
+        if (icc_markers[seq_no] == NULL) {
             JNU_ThrowByName(env, "javax/imageio/IIOException",
                  "Invalid icc profile: missing sequence number");
             return NULL;
         }
-        data_offset[seq_no] = total_length;
-        total_length += data_length[seq_no];
+        /* check the data length correctness */
+        length = icc_markers[seq_no]->data_length;
+        if (ICC_OVERHEAD_LEN > length || length > MAX_BYTES_IN_MARKER) {
+            JNU_ThrowByName(env, "javax/imageio/IIOException",
+                 "Invalid icc profile: invalid data length");
+            return NULL;
+        }
+        total_length += (length - ICC_OVERHEAD_LEN);
     }
 
     if (total_length <= 0) {
@@ -1301,19 +1348,14 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
     }
 
     /* and fill it in */
-    for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
-        if (marker_is_icc(marker)) {
-            JOCTET FAR *src_ptr;
-            JOCTET *dst_ptr;
-            unsigned int length;
-            seq_no = GETJOCTET(marker->data[12]);
-            dst_ptr = icc_data + data_offset[seq_no];
-            src_ptr = marker->data + ICC_OVERHEAD_LEN;
-            length = data_length[seq_no];
-            while (length--) {
-                *dst_ptr++ = *src_ptr++;
-            }
-        }
+    dst_ptr = icc_data;
+    for (seq_no = first; seq_no < last; seq_no++) {
+        JOCTET FAR *src_ptr = icc_markers[seq_no]->data + ICC_OVERHEAD_LEN;
+        unsigned int length =
+            icc_markers[seq_no]->data_length - ICC_OVERHEAD_LEN;
+
+        memcpy(dst_ptr, src_ptr, length);
+        dst_ptr += length;
     }
 
     /* finally, unpin the array */
@@ -1418,6 +1460,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        free(cinfo);
         return 0;
     }
 
@@ -1454,6 +1497,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName(env,
                         "java/lang/OutOfMemoryError",
                         "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     cinfo->src->bytes_in_buffer = 0;
@@ -1470,6 +1514,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;
@@ -1530,6 +1575,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
     j_decompress_ptr cinfo;
     struct jpeg_source_mgr *src;
     sun_jpeg_error_ptr jerr;
+    jbyteArray profileData = NULL;
 
     if (data == NULL) {
         JNU_ThrowByName(env,
@@ -1557,7 +1603,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
         return retval;
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("In readImageHeader, data is %p cinfo is %p\n", data, cinfo);
     printf("clearFirst is %d\n", clearFirst);
 #endif
@@ -1584,7 +1630,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
     if (ret == JPEG_HEADER_TABLES_ONLY) {
         retval = JNI_TRUE;
         imageio_term_source(cinfo);  // Pushback remaining buffer contents
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
         printf("just read tables-only image; q table 0 at %p\n",
                cinfo->quant_tbl_ptrs[0]);
 #endif
@@ -1691,6 +1737,14 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
             }
         }
         RELEASE_ARRAYS(env, data, src->next_input_byte);
+
+        /* read icc profile data */
+        profileData = read_icc_profile(env, cinfo);
+
+        if ((*env)->ExceptionCheck(env)) {
+            return retval;
+        }
+
         (*env)->CallVoidMethod(env, this,
                                JPEGImageReader_setImageDataID,
                                cinfo->image_width,
@@ -1698,7 +1752,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
                                cinfo->jpeg_color_space,
                                cinfo->out_color_space,
                                cinfo->num_components,
-                               read_icc_profile(env, cinfo));
+                               profileData);
         if (reset) {
             jpeg_abort_decompress(cinfo);
         }
@@ -1755,7 +1809,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
 
     struct jpeg_source_mgr *src;
-    JSAMPROW scanLinePtr;
+    JSAMPROW scanLinePtr = NULL;
     jint bands[MAX_BANDS];
     int i, j;
     jint *body;
@@ -1791,7 +1845,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
     cinfo = (j_decompress_ptr) data->jpegObj;
 
-    if ((numBands < 1) || (numBands > cinfo->num_components) ||
+    if ((numBands < 1) ||
         (sourceXStart < 0) || (sourceXStart >= (jint)cinfo->image_width) ||
         (sourceYStart < 0) || (sourceYStart >= (jint)cinfo->image_height) ||
         (sourceWidth < 1) || (sourceWidth > (jint)cinfo->image_width) ||
@@ -1803,6 +1857,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         JNU_ThrowByName(env, "javax/imageio/IIOException",
                         "Invalid argument to native readImage");
         return JNI_FALSE;
+    }
+
+    if (stepX > cinfo->image_width) {
+        stepX = cinfo->image_width;
+    }
+    if (stepY > cinfo->image_height) {
+        stepY = cinfo->image_height;
     }
 
     /*
@@ -1827,7 +1888,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
     (*env)->ReleaseIntArrayElements(env, srcBands, body, JNI_ABORT);
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("---- in reader.read ----\n");
     printf("numBands is %d\n", numBands);
     printf("bands array: ");
@@ -1849,16 +1910,6 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         return data->abortFlag;  // We already threw an out of memory exception
     }
 
-    // Allocate a 1-scanline buffer
-    scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->num_components);
-    if (scanLinePtr == NULL) {
-        RELEASE_ARRAYS(env, data, src->next_input_byte);
-        JNU_ThrowByName( env,
-                         "java/lang/OutOfMemoryError",
-                         "Reading JPEG Stream");
-        return data->abortFlag;
-    }
-
     /* Establish the setjmp return context for sun_jpeg_error_exit to use. */
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
@@ -1872,7 +1923,10 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
                                           buffer);
             JNU_ThrowByName(env, "javax/imageio/IIOException", buffer);
         }
-        free(scanLinePtr);
+        if (scanLinePtr != NULL) {
+            free(scanLinePtr);
+            scanLinePtr = NULL;
+        }
         return data->abortFlag;
     }
 
@@ -1910,6 +1964,23 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
     jpeg_start_decompress(cinfo);
 
+    if (numBands !=  cinfo->output_components) {
+        JNU_ThrowByName(env, "javax/imageio/IIOException",
+                        "Invalid argument to native readImage");
+        return data->abortFlag;
+    }
+
+
+    // Allocate a 1-scanline buffer
+    scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->output_components);
+    if (scanLinePtr == NULL) {
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
+                         "Reading JPEG Stream");
+        return data->abortFlag;
+    }
+
     // loop over progressive passes
     done = FALSE;
     while (!done) {
@@ -1937,9 +2008,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
         scanlineLimit = sourceYStart+sourceHeight;
         pixelLimit = scanLinePtr
-            +(sourceXStart+sourceWidth)*cinfo->num_components;
+            +(sourceXStart+sourceWidth)*cinfo->output_components;
 
-        pixelStride = stepX*cinfo->num_components;
+        pixelStride = stepX*cinfo->output_components;
         targetLine = 0;
 
         while ((data->abortFlag == JNI_FALSE)
@@ -1954,12 +2025,12 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
                 // Optimization: The component bands are ordered sequentially,
                 // so we can simply use memcpy() to copy the intermediate
                 // scanline buffer into the raster.
-                in = scanLinePtr + (sourceXStart * cinfo->num_components);
+                in = scanLinePtr + (sourceXStart * cinfo->output_components);
                 if (pixelLimit > in) {
                     memcpy(out, in, pixelLimit - in);
                 }
             } else {
-                for (in = scanLinePtr+sourceXStart*cinfo->num_components;
+                for (in = scanLinePtr+sourceXStart*cinfo->output_components;
                      in < pixelLimit;
                      in += pixelStride) {
                     for (i = 0; i < numBands; i++) {
@@ -2382,8 +2453,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
 
@@ -2401,8 +2471,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;
@@ -2487,7 +2556,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
 
     data->streamBuf.suspendable = FALSE;
     if (qtables != NULL) {
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
         printf("in writeTables: qtables not NULL\n");
 #endif
         setQTables(env, (j_common_ptr) cinfo, qtables, TRUE);
@@ -2763,7 +2832,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
     cinfo->restart_interval = restartInterval;
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
     printf("writer setup complete, starting compressor\n");
 #endif
 
@@ -2812,13 +2881,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
             for (i = 0; i < numBands; i++) {
                 if (scale !=NULL && scale[i] != NULL) {
                     *out++ = scale[i][*(in+i)];
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
                         printf("in %d -> out %d, ", *(in+i), *(out-i-1));
                     }
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_IIO_JPEG
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
                         printf("\n");
                     }

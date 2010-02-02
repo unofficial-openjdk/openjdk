@@ -26,37 +26,36 @@
 package javax.swing.plaf.synth;
 
 import java.awt.*;
-import java.awt.event.*;
-
 import java.beans.*;
-
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
-import sun.swing.plaf.synth.SynthUI;
 
 
 /**
- * Synth's ScrollBarUI.
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.JScrollBar}.
  *
  * @author Scott Violet
+ * @since 1.7
  */
-class SynthScrollBarUI extends BasicScrollBarUI implements
-                                    PropertyChangeListener, SynthUI {
+public class SynthScrollBarUI extends BasicScrollBarUI
+                              implements PropertyChangeListener, SynthUI {
 
     private SynthStyle style;
     private SynthStyle thumbStyle;
     private SynthStyle trackStyle;
 
     private boolean validMinimumThumbSize;
-    private int scrollBarWidth;
-
 
     public static ComponentUI createUI(JComponent c)    {
         return new SynthScrollBarUI();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installDefaults() {
         trackHighlight = NO_HIGHLIGHT;
         if (scrollbar.getLayout() == null ||
@@ -66,6 +65,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         updateStyle(scrollbar);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void configureScrollBarColors() {
     }
 
@@ -89,6 +92,31 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
             if (maximumThumbSize == null) {
                 maximumThumbSize = new Dimension(4096, 4097);
             }
+
+            incrGap = style.getInt(context, "ScrollBar.incrementButtonGap", 0);
+            decrGap = style.getInt(context, "ScrollBar.decrementButtonGap", 0);
+
+            // handle scaling for sizeVarients for special case components. The
+            // key "JComponent.sizeVariant" scales for large/small/mini
+            // components are based on Apples LAF
+            String scaleKey = (String)scrollbar.getClientProperty(
+                    "JComponent.sizeVariant");
+            if (scaleKey != null){
+                if ("large".equals(scaleKey)){
+                    scrollBarWidth *= 1.15;
+                    incrGap *= 1.15;
+                    decrGap *= 1.15;
+                } else if ("small".equals(scaleKey)){
+                    scrollBarWidth *= 0.857;
+                    incrGap *= 0.857;
+                    decrGap *= 0.857;
+                } else if ("mini".equals(scaleKey)){
+                    scrollBarWidth *= 0.714;
+                    incrGap *= 0.714;
+                    decrGap *= 0.714;
+                }
+            }
+
             if (oldStyle != null) {
                 uninstallKeyboardActions();
                 installKeyboardActions();
@@ -105,16 +133,28 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installListeners() {
         super.installListeners();
         scrollbar.addPropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallListeners() {
         super.uninstallListeners();
         scrollbar.removePropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallDefaults(){
         SynthContext context = getContext(scrollbar, ENABLED);
         style.uninstallDefaults(context);
@@ -134,22 +174,17 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         super.uninstallDefaults();
     }
 
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
         return SynthContext.getContext(SynthContext.class, c,
                     SynthLookAndFeel.getRegion(c), style, state);
-    }
-
-    private Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
     }
 
     private SynthContext getContext(JComponent c, Region region) {
@@ -174,6 +209,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         return SynthLookAndFeel.getComponentState(c);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public boolean getSupportsAbsolutePositioning() {
         SynthContext context = getContext(scrollbar);
         boolean value = style.getBoolean(context,
@@ -182,6 +221,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         return value;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -193,6 +236,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -200,6 +247,12 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         context.dispose();
     }
 
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
         SynthContext subcontext = getContext(scrollbar,
                                              Region.SCROLL_BAR_TRACK);
@@ -211,31 +264,49 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         subcontext.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintScrollBarBorder(context, g, x, y, w, h,
                                                   scrollbar.getOrientation());
     }
 
-    protected void paintTrack(SynthContext ss, Graphics g,
+    /**
+     * Paints the scrollbar track.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param trackBounds bounding box for the track
+     */
+    protected void paintTrack(SynthContext context, Graphics g,
                               Rectangle trackBounds) {
-        SynthLookAndFeel.updateSubregion(ss, g, trackBounds);
-        ss.getPainter().paintScrollBarTrackBackground(ss, g, trackBounds.x,
+        SynthLookAndFeel.updateSubregion(context, g, trackBounds);
+        context.getPainter().paintScrollBarTrackBackground(context, g, trackBounds.x,
                         trackBounds.y, trackBounds.width, trackBounds.height,
                         scrollbar.getOrientation());
-        ss.getPainter().paintScrollBarTrackBorder(ss, g, trackBounds.x,
+        context.getPainter().paintScrollBarTrackBorder(context, g, trackBounds.x,
                         trackBounds.y, trackBounds.width, trackBounds.height,
                         scrollbar.getOrientation());
     }
 
-    protected void paintThumb(SynthContext ss, Graphics g,
+    /**
+     * Paints the scrollbar thumb.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param thumbBounds bounding box for the thumb
+     */
+    protected void paintThumb(SynthContext context, Graphics g,
                               Rectangle thumbBounds) {
-        SynthLookAndFeel.updateSubregion(ss, g, thumbBounds);
+        SynthLookAndFeel.updateSubregion(context, g, thumbBounds);
         int orientation = scrollbar.getOrientation();
-        ss.getPainter().paintScrollBarThumbBackground(ss, g, thumbBounds.x,
+        context.getPainter().paintScrollBarThumbBackground(context, g, thumbBounds.x,
                         thumbBounds.y, thumbBounds.width, thumbBounds.height,
                         orientation);
-        ss.getPainter().paintScrollBarThumbBorder(ss, g, thumbBounds.x,
+        context.getPainter().paintScrollBarThumbBorder(context, g, thumbBounds.x,
                         thumbBounds.y, thumbBounds.width, thumbBounds.height,
                         orientation);
     }
@@ -256,6 +327,7 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
      * @see #getMaximumSize
      * @see #getMinimumSize
      */
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         Insets insets = c.getInsets();
         return (scrollbar.getOrientation() == JScrollBar.VERTICAL)
@@ -263,6 +335,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
             : new Dimension(48, scrollBarWidth + insets.top + insets.bottom);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected Dimension getMinimumThumbSize() {
         if (!validMinimumThumbSize) {
             if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
@@ -274,22 +350,72 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
             }
         }
         return minimumThumbSize;
-
     }
 
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected JButton createDecreaseButton(int orientation)  {
-        SynthArrowButton synthArrowButton = new SynthArrowButton(orientation);
+        SynthArrowButton synthArrowButton = new SynthArrowButton(orientation) {
+            @Override
+            public boolean contains(int x, int y) {
+                if (decrGap < 0) { //there is an overlap between the track and button
+                    int width = getWidth();
+                    int height = getHeight();
+                    if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
+                        //adjust the height by decrGap
+                        //Note: decrGap is negative!
+                        height += decrGap;
+                    } else {
+                        //adjust the width by decrGap
+                        //Note: decrGap is negative!
+                        width += decrGap;
+                    }
+                    return (x >= 0) && (x < width) && (y >= 0) && (y < height);
+                }
+                return super.contains(x, y);
+            }
+        };
         synthArrowButton.setName("ScrollBar.button");
         return synthArrowButton;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected JButton createIncreaseButton(int orientation)  {
-        SynthArrowButton synthArrowButton = new SynthArrowButton(orientation);
+        SynthArrowButton synthArrowButton = new SynthArrowButton(orientation) {
+            @Override
+            public boolean contains(int x, int y) {
+                if (incrGap < 0) { //there is an overlap between the track and button
+                    int width = getWidth();
+                    int height = getHeight();
+                    if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
+                        //adjust the height and y by incrGap
+                        //Note: incrGap is negative!
+                        height += incrGap;
+                        y += incrGap;
+                    } else {
+                        //adjust the width and x by incrGap
+                        //Note: incrGap is negative!
+                        width += incrGap;
+                        x += incrGap;
+                    }
+                    return (x >= 0) && (x < width) && (y >= 0) && (y < height);
+                }
+                return super.contains(x, y);
+            }
+        };
         synthArrowButton.setName("ScrollBar.button");
         return synthArrowButton;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void setThumbRollover(boolean active) {
         if (isThumbRollover() != active) {
             scrollbar.repaint(getThumbBounds());

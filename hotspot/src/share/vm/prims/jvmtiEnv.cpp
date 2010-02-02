@@ -99,6 +99,9 @@ JvmtiEnv::SetThreadLocalStorage(JavaThread* java_thread, const void* data) {
     }
     // otherwise, create the state
     state = JvmtiThreadState::state_for(java_thread);
+    if (state == NULL) {
+      return JVMTI_ERROR_THREAD_NOT_ALIVE;
+    }
   }
   state->env_thread_state(this)->set_agent_thread_local_storage_data((void*)data);
   return JVMTI_ERROR_NONE;
@@ -130,7 +133,7 @@ JvmtiEnv::GetThreadLocalStorage(jthread thread, void** data_ptr) {
     if (thread_oop == NULL) {
       return JVMTI_ERROR_INVALID_THREAD;
     }
-    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
+    if (!thread_oop->is_a(SystemDictionary::Thread_klass())) {
       return JVMTI_ERROR_INVALID_THREAD;
     }
     JavaThread* java_thread = java_lang_Thread::thread(thread_oop);
@@ -196,7 +199,7 @@ JvmtiEnv::RetransformClasses(jint class_count, const jclass* classes) {
     if (k_mirror == NULL) {
       return JVMTI_ERROR_INVALID_CLASS;
     }
-    if (!k_mirror->is_a(SystemDictionary::class_klass())) {
+    if (!k_mirror->is_a(SystemDictionary::Class_klass())) {
       return JVMTI_ERROR_INVALID_CLASS;
     }
 
@@ -263,7 +266,7 @@ JvmtiEnv::GetObjectSize(jobject object, jlong* size_ptr) {
   oop mirror = JNIHandles::resolve_external_guard(object);
   NULL_CHECK(mirror, JVMTI_ERROR_INVALID_OBJECT);
 
-  if (mirror->klass() == SystemDictionary::class_klass()) {
+  if (mirror->klass() == SystemDictionary::Class_klass()) {
     if (!java_lang_Class::is_primitive(mirror)) {
         mirror = java_lang_Class::as_klassOop(mirror);
         assert(mirror != NULL, "class for non-primitive mirror must exist");
@@ -324,7 +327,7 @@ JvmtiEnv::SetEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event_type, j
     if (thread_oop == NULL) {
       return JVMTI_ERROR_INVALID_THREAD;
     }
-    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
+    if (!thread_oop->is_a(SystemDictionary::Thread_klass())) {
       return JVMTI_ERROR_INVALID_THREAD;
     }
     java_thread = java_lang_Thread::thread(thread_oop);
@@ -589,7 +592,6 @@ JvmtiEnv::SetVerboseFlag(jvmtiVerboseFlag flag, jboolean value) {
     break;
   case JVMTI_VERBOSE_GC:
     PrintGC = value != 0;
-    TraceClassUnloading = value != 0;
     break;
   case JVMTI_VERBOSE_JNI:
     PrintJNIResolving = value != 0;
@@ -629,7 +631,7 @@ JvmtiEnv::GetThreadState(jthread thread, jint* thread_state_ptr) {
     thread_oop = JNIHandles::resolve_external_guard(thread);
   }
 
-  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::thread_klass())) {
+  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::Thread_klass())) {
     return JVMTI_ERROR_INVALID_THREAD;
   }
 
@@ -867,7 +869,7 @@ JvmtiEnv::StopThread(JavaThread* java_thread, jobject exception) {
 jvmtiError
 JvmtiEnv::InterruptThread(jthread thread) {
   oop thread_oop = JNIHandles::resolve_external_guard(thread);
-  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::thread_klass()))
+  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::Thread_klass()))
     return JVMTI_ERROR_INVALID_THREAD;
 
   JavaThread* current_thread  = JavaThread::current();
@@ -904,7 +906,7 @@ JvmtiEnv::GetThreadInfo(jthread thread, jvmtiThreadInfo* info_ptr) {
   } else {
     thread_oop = JNIHandles::resolve_external_guard(thread);
   }
-  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::thread_klass()))
+  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::Thread_klass()))
     return JVMTI_ERROR_INVALID_THREAD;
 
   Handle thread_obj(current_thread, thread_oop);
@@ -1070,7 +1072,7 @@ JvmtiEnv::GetCurrentContendedMonitor(JavaThread* java_thread, jobject* monitor_p
 jvmtiError
 JvmtiEnv::RunAgentThread(jthread thread, jvmtiStartFunction proc, const void* arg, jint priority) {
   oop thread_oop = JNIHandles::resolve_external_guard(thread);
-  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::thread_klass())) {
+  if (thread_oop == NULL || !thread_oop->is_a(SystemDictionary::Thread_klass())) {
     return JVMTI_ERROR_INVALID_THREAD;
   }
   if (priority < JVMTI_THREAD_MIN_PRIORITY || priority > JVMTI_THREAD_MAX_PRIORITY) {
@@ -1320,6 +1322,9 @@ JvmtiEnv::GetFrameCount(JavaThread* java_thread, jint* count_ptr) {
 
   // retrieve or create JvmtiThreadState.
   JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
   uint32_t debug_bits = 0;
   if (is_thread_fully_suspended(java_thread, true, &debug_bits)) {
     err = get_frame_count(state, count_ptr);
@@ -1340,6 +1345,12 @@ JvmtiEnv::PopFrame(JavaThread* java_thread) {
   JavaThread* current_thread  = JavaThread::current();
   HandleMark hm(current_thread);
   uint32_t debug_bits = 0;
+
+  // retrieve or create the state
+  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
 
   // Check if java_thread is fully suspended
   if (!is_thread_fully_suspended(java_thread, true /* wait for suspend completion */, &debug_bits)) {
@@ -1411,9 +1422,6 @@ JvmtiEnv::PopFrame(JavaThread* java_thread) {
     // It's fine to update the thread state here because no JVMTI events
     // shall be posted for this PopFrame.
 
-    // retreive or create the state
-    JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
-
     state->update_for_pop_top_frame();
     java_thread->set_popframe_condition(JavaThread::popframe_pending_bit);
     // Set pending step flag for this popframe and it is cleared when next
@@ -1457,6 +1465,11 @@ JvmtiEnv::NotifyFramePop(JavaThread* java_thread, jint depth) {
   ResourceMark rm;
   uint32_t debug_bits = 0;
 
+  JvmtiThreadState *state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
+
   if (!JvmtiEnv::is_thread_fully_suspended(java_thread, true, &debug_bits)) {
       return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
   }
@@ -1476,7 +1489,6 @@ JvmtiEnv::NotifyFramePop(JavaThread* java_thread, jint depth) {
 
   assert(vf->frame_pointer() != NULL, "frame pointer mustn't be NULL");
 
-  JvmtiThreadState *state = JvmtiThreadState::state_for(java_thread);
   int frame_number = state->count_frames() - depth;
   state->env_thread_state(this)->set_frame_pop(frame_number);
 

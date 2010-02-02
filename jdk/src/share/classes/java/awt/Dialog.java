@@ -262,12 +262,6 @@ public class Dialog extends Window {
         TOOLKIT_EXCLUDE
     };
 
-    /**
-     * @since 1.6
-     */
-    private final static ModalExclusionType DEFAULT_MODAL_EXCLUSION_TYPE =
-        ModalExclusionType.APPLICATION_EXCLUDE;
-
     /* operations with this list should be synchronized on tree lock*/
     transient static IdentityArrayList<Dialog> modalDialogs = new IdentityArrayList<Dialog>();
 
@@ -862,7 +856,7 @@ public class Dialog extends Window {
         if (type == ModalityType.TOOLKIT_MODAL) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                sm.checkPermission(SecurityConstants.TOOLKIT_MODALITY_PERMISSION);
+                sm.checkPermission(SecurityConstants.AWT.TOOLKIT_MODALITY_PERMISSION);
             }
         }
         modalityType = type;
@@ -941,7 +935,7 @@ public class Dialog extends Window {
                 // does not invoke the super.show(). So wried... :(
                 mixOnShowing();
 
-                peer.show(); // now guaranteed never to block
+                peer.setVisible(true); // now guaranteed never to block
                 if (isModalBlocked()) {
                     modalBlocker.toFront();
                 }
@@ -1226,7 +1220,7 @@ public class Dialog extends Window {
         synchronized (getTreeLock()) {
             if (keepBlockingEDT) {
                 keepBlockingEDT = false;
-                PeerEvent wakingEvent = new PeerEvent(this, new WakingRunnable(), PeerEvent.PRIORITY_EVENT);
+                PeerEvent wakingEvent = new PeerEvent(getToolkit(), new WakingRunnable(), PeerEvent.PRIORITY_EVENT);
                 AppContext curAppContext = AppContext.getAppContext();
                 if (showAppContext != curAppContext) {
                     // Wake up event dispatch thread on which the dialog was

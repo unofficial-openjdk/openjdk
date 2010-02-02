@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,36 +26,43 @@
 package sun.nio.ch;
 
 import java.io.IOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.FileLock;
-import java.nio.channels.FileChannel;
+import java.nio.channels.*;
 
 public class FileLockImpl
     extends FileLock
 {
-    boolean valid;
+    private volatile boolean valid = true;
 
     FileLockImpl(FileChannel channel, long position, long size, boolean shared)
     {
         super(channel, position, size, shared);
-        this.valid = true;
     }
 
-    public synchronized boolean isValid() {
+    FileLockImpl(AsynchronousFileChannel channel, long position, long size, boolean shared)
+    {
+        super(channel, position, size, shared);
+    }
+
+    public boolean isValid() {
         return valid;
     }
 
-    synchronized void invalidate() {
+    void invalidate() {
+        assert Thread.holdsLock(this);
         valid = false;
     }
 
     public synchronized void release() throws IOException {
-        if (!channel().isOpen())
+        Channel ch = acquiredBy();
+        if (!ch.isOpen())
             throw new ClosedChannelException();
         if (valid) {
-            ((FileChannelImpl)channel()).release(this);
+            if (ch instanceof FileChannelImpl)
+                ((FileChannelImpl)ch).release(this);
+            else if (ch instanceof AsynchronousFileChannelImpl)
+                ((AsynchronousFileChannelImpl)ch).release(this);
+            else throw new AssertionError();
             valid = false;
         }
     }
-
 }

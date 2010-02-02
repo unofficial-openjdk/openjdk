@@ -30,15 +30,14 @@ import java.awt.*;
 import java.util.LinkedList;
 import java.util.Iterator;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.EmbeddedFrame;
 import sun.awt.SunToolkit;
 
 public class XEmbeddedFramePeer extends XFramePeer {
 
-    private static final Logger xembedLog = Logger.getLogger("sun.awt.X11.xembed.XEmbeddedFramePeer");
+    private static final PlatformLogger xembedLog = PlatformLogger.getLogger("sun.awt.X11.xembed.XEmbeddedFramePeer");
 
     LinkedList<AWTKeyStroke> strokes;
 
@@ -63,7 +62,10 @@ public class XEmbeddedFramePeer extends XFramePeer {
     void postInit(XCreateWindowParams params) {
         super.postInit(params);
         if (embedder != null) {
-            embedder.install(this);
+            // install X11 event dispatcher
+            embedder.setClient(this);
+            // reparent to XEmbed server
+            embedder.install();
         } else if (getParentWindowHandle() != 0) {
             XToolkit.awtLock();
             try {
@@ -75,6 +77,15 @@ public class XEmbeddedFramePeer extends XFramePeer {
                 XToolkit.awtUnlock();
             }
         }
+    }
+
+    @Override
+    public void dispose() {
+        if (embedder != null) {
+            // uninstall X11 event dispatcher
+            embedder.setClient(null);
+        }
+        super.dispose();
     }
 
     public void updateMinimumSize() {
@@ -126,7 +137,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
     {
         assert (SunToolkit.isAWTLockHeldByCurrentThread());
         XConfigureEvent xe = xev.get_xconfigure();
-        if (xembedLog.isLoggable(Level.FINE)) {
+        if (xembedLog.isLoggable(PlatformLogger.FINE)) {
             xembedLog.fine(xe.toString());
         }
 
@@ -182,12 +193,6 @@ public class XEmbeddedFramePeer extends XFramePeer {
         } finally {
             XToolkit.awtUnlock();
         }
-    }
-
-    @Override
-    Rectangle constrainBounds(int x, int y, int width, int height) {
-        // We don't constrain the bounds of the EmbeddedFrames
-        return new Rectangle(x, y, width, height);
     }
 
     // don't use getBounds() inherited from XDecoratedPeer
@@ -249,6 +254,14 @@ public class XEmbeddedFramePeer extends XFramePeer {
         // XEmbed.
         updateDropTarget();
     }
+    void notifyStopped() {
+        if (embedder != null && embedder.isActive()) {
+            for (int i = strokes.size() - 1; i >= 0; i--) {
+                embedder.unregisterAccelerator(i);
+            }
+        }
+    }
+
     long getFocusTargetWindow() {
         return getWindow();
     }

@@ -26,7 +26,9 @@
 package com.sun.tools.javap;
 
 import java.net.URI;
+import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import com.sun.tools.classfile.AccessFlags;
@@ -47,8 +49,6 @@ import com.sun.tools.classfile.Signature_attribute;
 import com.sun.tools.classfile.SourceFile_attribute;
 import com.sun.tools.classfile.Type;
 
-import java.text.DateFormat;
-import java.util.Date;
 import static com.sun.tools.classfile.AccessFlags.*;
 
 /*
@@ -93,17 +93,25 @@ public class ClassWriter extends BasicWriter {
         this.lastModified = lastModified;
     }
 
-    ClassFile getClassFile() {
+    protected ClassFile getClassFile() {
         return classFile;
     }
 
-    Method getMethod() {
+    protected void setClassFile(ClassFile cf) {
+        classFile = cf;
+        constant_pool = classFile.constant_pool;
+    }
+
+    protected Method getMethod() {
         return method;
     }
 
+    protected void setMethod(Method m) {
+        method = m;
+    }
+
     public void write(ClassFile cf) {
-        classFile = cf;
-        constant_pool = classFile.constant_pool;
+        setClassFile(cf);
 
         if ((options.sysInfo || options.verbose) && !options.compat) {
             if (uri != null) {
@@ -112,6 +120,7 @@ public class ClassWriter extends BasicWriter {
                 else
                     println("Classfile " + uri);
             }
+            indent(+1);
             if (lastModified != -1) {
                 Date lm = new Date(lastModified);
                 DateFormat df = DateFormat.getDateInstance();
@@ -134,6 +143,10 @@ public class ClassWriter extends BasicWriter {
         Attribute sfa = cf.getAttribute(Attribute.SourceFile);
         if (sfa instanceof SourceFile_attribute) {
             println("Compiled from \"" + getSourceFile((SourceFile_attribute) sfa) + "\"");
+        }
+
+        if ((options.sysInfo || options.verbose) && !options.compat) {
+            indent(-1);
         }
 
         String name = getJavaName(classFile);
@@ -166,10 +179,10 @@ public class ClassWriter extends BasicWriter {
                 // The signature parser cannot disambiguate between a
                 // FieldType and a ClassSignatureType that only contains a superclass type.
                 if (t instanceof Type.ClassSigType)
-                    print(t);
+                    print(getJavaName(t.toString()));
                 else {
                     print(" extends ");
-                    print(t);
+                    print(getJavaName(t.toString()));
                 }
             } catch (ConstantPoolException e) {
                 print(report(e));
@@ -178,42 +191,35 @@ public class ClassWriter extends BasicWriter {
 
         if (options.verbose) {
             println();
+            indent(+1);
             attrWriter.write(cf, cf.attributes, constant_pool);
-            println("  minor version: " + cf.minor_version);
-            println("  major version: " + cf.major_version);
+            println("minor version: " + cf.minor_version);
+            println("major version: " + cf.major_version);
             if (!options.compat)
-              writeList("  flags: ", flags.getClassFlags(), NEWLINE);
+              writeList("flags: ", flags.getClassFlags(), NEWLINE);
+            indent(-1);
             constantWriter.writeConstantPool();
-            println();
         } else {
-            if (!options.compat)
-                print(" ");
+            print(" ");
         }
 
         println("{");
+        indent(+1);
         writeFields();
         writeMethods();
+        indent(-1);
         println("}");
-        println();
     }
 
-    void writeFields() {
+    protected void writeFields() {
         for (Field f: classFile.fields) {
             writeField(f);
         }
     }
 
-    void writeField(Field f) {
+    protected void writeField(Field f) {
         if (!options.checkAccess(f.access_flags))
             return;
-
-        if (!(options.showLineAndLocalVariableTables
-                || options.showDisassembled
-                || options.verbose
-                || options.showInternalSignatures
-                || options.showAllAttrs)) {
-            print("    ");
-        }
 
         AccessFlags flags = f.access_flags;
         writeModifiers(flags.getFieldModifiers());
@@ -243,11 +249,13 @@ public class ClassWriter extends BasicWriter {
         print(";");
         println();
 
+        indent(+1);
+
         if (options.showInternalSignatures)
-            println("  Signature: " + getValue(f.descriptor));
+            println("Signature: " + getValue(f.descriptor));
 
         if (options.verbose && !options.compat)
-            writeList("  flags: ", flags.getFieldFlags(), NEWLINE);
+            writeList("flags: ", flags.getFieldFlags(), NEWLINE);
 
         if (options.showAllAttrs) {
             for (Attribute attr: f.attributes)
@@ -255,28 +263,23 @@ public class ClassWriter extends BasicWriter {
             println();
         }
 
+        indent(-1);
+
         if (options.showDisassembled || options.showLineAndLocalVariableTables)
             println();
     }
 
-    void writeMethods() {
+    protected void writeMethods() {
         for (Method m: classFile.methods)
             writeMethod(m);
+        setPendingNewline(false);
     }
 
-    void writeMethod(Method m) {
+    protected void writeMethod(Method m) {
         if (!options.checkAccess(m.access_flags))
             return;
 
         method = m;
-
-        if (!(options.showLineAndLocalVariableTables
-                || options.showDisassembled
-                || options.verbose
-                || options.showInternalSignatures
-                || options.showAllAttrs)) {
-            print("    ");
-        }
 
         AccessFlags flags = m.access_flags;
 
@@ -307,7 +310,7 @@ public class ClassWriter extends BasicWriter {
 
         writeModifiers(flags.getMethodModifiers());
         if (methodType != null) {
-            writeListIfNotEmpty("<", methodType.typeArgTypes, "> ");
+            writeListIfNotEmpty("<", methodType.typeParamTypes, "> ");
         }
         if (getName(m).equals("<init>")) {
             print(getJavaName(classFile));
@@ -325,16 +328,6 @@ public class ClassWriter extends BasicWriter {
         if (e_attr != null) { // if there are generic exceptions, there must be erased exceptions
             if (e_attr instanceof Exceptions_attribute) {
                 Exceptions_attribute exceptions = (Exceptions_attribute) e_attr;
-                if (options.compat) { // Bug XXXXXXX whitespace
-                    if (!(options.showLineAndLocalVariableTables
-                            || options.showDisassembled
-                            || options.verbose
-                            || options.showInternalSignatures
-                            || options.showAllAttrs)) {
-                        print("    ");
-                    }
-                    print("  ");
-                }
                 print(" throws ");
                 if (methodExceptions != null) { // use generic list if available
                     writeList("", methodExceptions, "");
@@ -350,14 +343,17 @@ public class ClassWriter extends BasicWriter {
             }
         }
 
-        print(";");
-        println();
+        println(";");
 
-        if (options.showInternalSignatures)
-            println("  Signature: " + getValue(m.descriptor));
+        indent(+1);
 
-        if (options.verbose && !options.compat)
-            writeList("  flags: ", flags.getMethodFlags(), NEWLINE);
+        if (options.showInternalSignatures) {
+            println("Signature: " + getValue(m.descriptor));
+        }
+
+        if (options.verbose && !options.compat) {
+            writeList("flags: ", flags.getMethodFlags(), NEWLINE);
+        }
 
         Code_attribute code = null;
         Attribute c_attr = m.attributes.get(Attribute.Code);
@@ -370,33 +366,35 @@ public class ClassWriter extends BasicWriter {
 
         if (options.showDisassembled && !options.showAllAttrs) {
             if (code != null) {
-                println("  Code:");
+                println("Code:");
                 codeWriter.writeInstrs(code);
                 codeWriter.writeExceptionTable(code);
             }
-            println();
         }
 
         if (options.showLineAndLocalVariableTables) {
-            if (code != null)
+            if (code != null) {
                 attrWriter.write(code, code.attributes.get(Attribute.LineNumberTable), constant_pool);
-            println();
-            if (code != null)
                 attrWriter.write(code, code.attributes.get(Attribute.LocalVariableTable), constant_pool);
-            println();
-            println();
+            }
         }
 
         if (options.showAllAttrs) {
             Attribute[] attrs = m.attributes.attrs;
             for (Attribute attr: attrs)
                 attrWriter.write(m, attr, constant_pool);
-
-//            // the following condition is to mimic old javap
-//            if (!(attrs.length > 0 &&
-//                    attrs[attrs.length - 1] instanceof Exceptions_attribute))
-            println();
         }
+
+        indent(-1);
+
+        // set pendingNewline to write a newline before the next method (if any)
+        // if a separator is desired
+        setPendingNewline(
+                options.showDisassembled ||
+                options.showAllAttrs ||
+                options.showInternalSignatures ||
+                options.showLineAndLocalVariableTables ||
+                options.verbose);
     }
 
     void writeModifiers(Collection<String> items) {

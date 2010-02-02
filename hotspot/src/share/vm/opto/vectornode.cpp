@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,7 +239,7 @@ int VectorNode::opcode(int sopc, uint vlen, const Type* opd_t) {
     return Op_XorV;
 
   case Op_LoadB:
-  case Op_LoadC:
+  case Op_LoadUS:
   case Op_LoadS:
   case Op_LoadI:
   case Op_LoadL:
@@ -269,7 +269,7 @@ int VectorLoadNode::opcode(int sopc, uint vlen) {
     case 16:       return Op_Load16B;
     }
     break;
-  case Op_LoadC:
+  case Op_LoadUS:
     switch (vlen) {
     case  2:       return Op_Load2C;
     case  4:       return Op_Load4C;

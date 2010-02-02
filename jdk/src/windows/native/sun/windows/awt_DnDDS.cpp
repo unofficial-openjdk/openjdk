@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  * have any questions.
  */
 
+#include "awt.h"
 #include "jlong.h"
 #include "awt_DataTransferer.h"
 #include "awt_DnDDS.h"
@@ -36,8 +37,6 @@
 #include "sun_awt_dnd_SunDragSourceContextPeer.h"
 #include "sun_awt_windows_WDragSourceContextPeer.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <memory.h>
 #include <shlobj.h>
 
@@ -649,7 +648,7 @@ HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
             dropfiles->pt.x = m_dropPoint.x;
             dropfiles->pt.y = m_dropPoint.y;
             dropfiles->fNC = m_fNC;
-            dropfiles->fWide = FALSE; // good guess!
+            dropfiles->fWide = TRUE; // good guess!
             dataout += sizeof(DROPFILES);
         }
 
@@ -816,7 +815,7 @@ HRESULT __stdcall AwtDragSource::GetDataHere(FORMATETC __RPC_FAR *pFormatEtc,
             dropfiles->pt.x = m_dropPoint.x;
             dropfiles->pt.y = m_dropPoint.y;
             dropfiles->fNC = m_fNC;
-            dropfiles->fWide = FALSE; // good guess!
+            dropfiles->fWide = TRUE; // good guess!
             dataout += sizeof(DROPFILES);
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
  * @bug 4527345
  * @summary Unit test for DatagramChannel's multicast support
  * @build BasicMulticastTests NetworkConfiguration
+ * @run main BasicMulticastTests
  */
 
 import java.nio.ByteBuffer;
@@ -64,11 +65,11 @@ public class BasicMulticastTests {
         // check key
         if (!key.isValid())
             throw new RuntimeException("key is not valid");
-        if (!key.getGroup().equals(group))
+        if (!key.group().equals(group))
             throw new RuntimeException("group is incorrect");
-        if (!key.getNetworkInterface().equals(nif))
+        if (!key.networkInterface().equals(nif))
             throw new RuntimeException("network interface is incorrect");
-        if (key.getSourceAddress() != null)
+        if (key.sourceAddress() != null)
             throw new RuntimeException("key is source specific");
 
         // drop membership
@@ -86,11 +87,11 @@ public class BasicMulticastTests {
             }
             if (!key.isValid())
                 throw new RuntimeException("key is not valid");
-            if (!key.getGroup().equals(group))
+            if (!key.group().equals(group))
                 throw new RuntimeException("group is incorrect");
-            if (!key.getNetworkInterface().equals(nif))
+            if (!key.networkInterface().equals(nif))
                 throw new RuntimeException("network interface is incorrect");
-            if (!key.getSourceAddress().equals(source))
+            if (!key.sourceAddress().equals(source))
                 throw new RuntimeException("key's source address incorrect");
 
             // drop membership

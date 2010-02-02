@@ -55,6 +55,7 @@ EXCLUDE_PKGS =             \
 # This is a list of regular expressions. So foo.* matches "foo" and "foo.bar".
 #
 ACTIVE_JSR_PKGS= \
+  java.dyn \
   java.sql  \
   javax.activation  \
   javax.annotation.*  \
@@ -96,6 +97,7 @@ CORE_PKGS =                                      \
   java.awt.print                                 \
   java.beans                                     \
   java.beans.beancontext                         \
+  java.dyn                                       \
   java.io                                        \
   java.lang                                      \
   java.lang.annotation                           \
@@ -110,6 +112,9 @@ CORE_PKGS =                                      \
   java.nio.channels.spi                          \
   java.nio.charset                               \
   java.nio.charset.spi                           \
+  java.nio.file					 \
+  java.nio.file.attribute			 \
+  java.nio.file.spi				 \
   java.rmi                                       \
   java.rmi.activation                            \
   java.rmi.dgc                                   \
@@ -155,10 +160,8 @@ CORE_PKGS =                                      \
   javax.lang.model.type                          \
   javax.lang.model.util                          \
   javax.management                               \
-  javax.management.event                         \
   javax.management.loading                       \
   javax.management.monitor                       \
-  javax.management.namespace                     \
   javax.management.relation                      \
   javax.management.openmbean                     \
   javax.management.timer                         \
@@ -212,6 +215,7 @@ CORE_PKGS =                                      \
   javax.swing.plaf.basic                         \
   javax.swing.plaf.metal                         \
   javax.swing.plaf.multi                         \
+  javax.swing.plaf.nimbus                        \
   javax.swing.plaf.synth                         \
   javax.tools                                    \
   javax.transaction                              \
@@ -230,6 +234,7 @@ CORE_PKGS =                                      \
   javax.xml.ws.http                              \
   javax.xml.ws.soap                              \
   javax.xml.ws.spi                               \
+  javax.xml.ws.wsaddressing                      \
   javax.xml.transform                            \
   javax.xml.transform.sax                        \
   javax.xml.transform.dom                        \

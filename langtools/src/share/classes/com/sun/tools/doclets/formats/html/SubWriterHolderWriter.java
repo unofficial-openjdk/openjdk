@@ -43,6 +43,7 @@ import java.io.*;
  *
  * @author Robert Field
  * @author Atul M Dambalkar
+ * @author Bhavesh Patel (Modified)
  */
 public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
 
@@ -72,16 +73,17 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
 
     public void printSummaryHeader(AbstractMemberWriter mw, ClassDoc cd) {
         mw.printSummaryAnchor(cd);
-        tableIndexSummary();
-        tableHeaderStart("#CCCCFF");
-        mw.printSummaryLabel(cd);
-        tableHeaderEnd();
+        mw.printTableSummary();
+        tableCaptionStart();
+        mw.printSummaryLabel();
+        tableCaptionEnd();
+        mw.printSummaryTableHeader(cd);
     }
 
     public void printTableHeadingBackground(String str) {
         tableIndexDetail();
         tableHeaderStart("#CCCCFF", 1);
-        bold(str);
+        strong(str);
         tableHeaderEnd();
         tableEnd();
     }
@@ -117,7 +119,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
     protected void printIndexComment(Doc member, Tag[] firstSentenceTags) {
         Tag[] deprs = member.tags("deprecated");
         if (Util.isDeprecated((ProgramElementDoc) member)) {
-            boldText("doclet.Deprecated");
+            strongText("doclet.Deprecated");
             space();
             if (deprs.length > 0) {
                 printInlineDeprecatedComment(member, deprs[0]);
@@ -126,7 +128,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         } else {
             ClassDoc cd = ((ProgramElementDoc)member).containingClass();
             if (cd != null && Util.isDeprecated(cd)) {
-                boldText("doclet.Deprecated"); space();
+                strongText("doclet.Deprecated"); space();
             }
         }
         printSummaryComment(member, firstSentenceTags);

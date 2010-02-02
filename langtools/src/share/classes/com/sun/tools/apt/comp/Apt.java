@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,7 @@ import static com.sun.tools.apt.mirror.declaration.DeclarationMaker.isJavaIdenti
  *  risk.  This code and its internal interfaces are subject to change
  *  or deletion without notice.</b>
  */
+@SuppressWarnings("deprecation")
 public class Apt extends ListBuffer<Env<AttrContext>> {
     java.util.Set<String> genSourceFileNames = new java.util.LinkedHashSet<String>();
     public java.util.Set<String> getSourceFileNames() {
@@ -200,7 +201,7 @@ public class Apt extends ListBuffer<Env<AttrContext>> {
                     computeAnnotationSet(param, annotationSet);
 
             if (symbol.members() != null) {
-                for(Scope.Entry e: symbol.members().table)
+                for(Scope.Entry e = symbol.members().elems; e != null; e = e.sibling)
                     computeAnnotationSet(e.sym, annotationSet);
             }
         }
@@ -281,7 +282,7 @@ public class Apt extends ListBuffer<Env<AttrContext>> {
             // Discovery process
 
             // List of annotation processory factory instances
-            java.util.Iterator providers = null;
+            java.util.Iterator<AnnotationProcessorFactory> providers = null;
             {
                 /*
                  * If a factory is provided by the user, the
@@ -316,8 +317,13 @@ public class Apt extends ListBuffer<Env<AttrContext>> {
                     }
 
                     providers = list.iterator();
-                } else
-                    providers = sun.misc.Service.providers(AnnotationProcessorFactory.class, aptCL);
+                } else {
+                    @SuppressWarnings("unchecked")
+                    Iterator<AnnotationProcessorFactory> iter =
+                            sun.misc.Service.providers(AnnotationProcessorFactory.class, aptCL);
+                    providers = iter;
+
+                }
             }
 
             java.util.Map<AnnotationProcessorFactory, Set<AnnotationTypeDeclaration>> factoryToAnnotation =

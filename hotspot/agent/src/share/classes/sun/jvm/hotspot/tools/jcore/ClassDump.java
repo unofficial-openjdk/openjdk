@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,8 +59,14 @@ public class ClassDump extends Tool {
             SystemDictionary dict = VM.getVM().getSystemDictionary();
             dict.classesDo(new SystemDictionary.ClassVisitor() {
                     public void visit(Klass k) {
-                        if (k instanceof InstanceKlass)
-                            dumpKlass((InstanceKlass) k);
+                        if (k instanceof InstanceKlass) {
+                            try {
+                                dumpKlass((InstanceKlass) k);
+                            } catch (Exception e) {
+                                System.out.println(k.getName().asString());
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 });
         }

@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,21 @@ $(shell \
   fi)
 endef
 
+# Select a directory if it exists, or the alternate 2, or the alternate 3, or the alternate 4
+define DirExists4
+$(shell \
+  if [ -d "$1" ]; then  \
+    echo "$1"; \
+  elif [ -d "$2" ]; then \
+    echo "$2"; \
+  elif [ -d "$3" ]; then \
+    echo "$3"; \
+  else \
+    echo "$4"; \
+  fi)
+endef
+
+
 # Select a writable directory if it exists and is writable, or the alternate
 define WriteDirExists
 $(shell \
@@ -116,9 +131,9 @@ $(shell \
   fi)
 endef
 
-# Given a line of text, get the major.minor version number from it
+# Given a line of text, get the version number from it
 define GetVersion
-$(shell echo $1 | sed -e 's@[^1-9]*\([1-9][0-9]*\.[0-9][0-9]*\).*@\1@' )
+$(shell echo $1 | sed -e 's@[^0-9]*\([0-9][0-9]*\.[0-9][.0-9]*\).*@\1@' )
 endef
 
 # Given a major.minor.micro version, return the major, minor, or micro number
@@ -133,26 +148,26 @@ $(if $(word 3, $(subst ., ,$1)),$(word 3, $(subst ., ,$1)),0)
 endef
 
 # Macro that returns missing, same, newer, or older $1=version $2=required
-#  (currently does not check the micro number)
 define CheckVersions
 $(shell \
   if [ "$1" = "" -o "$2" = "" ]; then \
     echo missing; \
+  elif [ "$1" = "$2" ]; then \
+    echo same; \
+  elif [ $(call MajorVersion,$1) -lt $(call MajorVersion,$2) ] ; then \
+    echo older; \
+  elif [ $(call MajorVersion,$1) -gt $(call MajorVersion,$2) ] ; then \
+    echo newer; \
+  elif [ $(call MinorVersion,$1) -lt $(call MinorVersion,$2) ]; then \
+    echo older; \
+  elif [ $(call MinorVersion,$1) -gt $(call MinorVersion,$2) ]; then \
+    echo newer; \
+  elif [ $(call MicroVersion,$1) -lt $(call MicroVersion,$2) ]; then \
+    echo older; \
+  elif [ $(call MicroVersion,$1) -gt $(call MicroVersion,$2) ]; then \
+    echo newer; \
   else \
-    if [ "$1" = "$2" ]; then \
-      echo same; \
-    else \
-      if [ $(call MajorVersion,$1) -lt $(call MajorVersion,$2) ] ; then \
-        echo older; \
-      else \
-	if [ $(call MajorVersion,$1) -eq $(call MajorVersion,$2) -a \
-	     $(call MinorVersion,$1) -lt $(call MinorVersion,$2) ]; then \
-          echo older; \
-        else \
-          echo newer; \
-        fi; \
-      fi; \
-    fi; \
+    echo same; \
   fi)
 endef
 
@@ -277,6 +292,7 @@ endif
 PROMOTED_RE_AREA = $(SLASH_JAVA)/re/jdk/$(JDK_VERSION)/promoted
 PROMOTED_BUILD_LATEST = latest
 PROMOTED_BUILD_BASEDIR = $(PROMOTED_RE_AREA)/$(PROMOTED_BUILD_LATEST)
+PROMOTED_BUILD_DISTDIR = $(PROMOTED_BUILD_BASEDIR)/dist/$(PLATFORM)-$(ARCH)
 PROMOTED_BUILD_BINARIES = $(PROMOTED_BUILD_BASEDIR)/binaries
 
 # PARALLEL_COMPILE_JOBS: is the number of compiles done in parallel.
@@ -356,10 +372,15 @@ endif
 
 # BOOTDIR: Bootstrap JDK, previous released JDK.
 #   _BOOTDIR1 and _BOOTDIR2 picked by platform
+#   Platform may optionally define _BOOTDIR3 as well.
 ifdef ALT_BOOTDIR
   BOOTDIR =$(ALT_BOOTDIR)
 else
-  BOOTDIR  :=$(call DirExists,$(_BOOTDIR1),$(_BOOTDIR2),/NO_BOOTDIR)
+  ifdef _BOOTDIR3
+    BOOTDIR  :=$(call DirExists4,$(_BOOTDIR1),$(_BOOTDIR2),$(_BOOTDIR3),/NO_BOOTDIR)
+  else
+    BOOTDIR  :=$(call DirExists,$(_BOOTDIR1),$(_BOOTDIR2),/NO_BOOTDIR)
+  endif
 endif
 export BOOTDIR
 BOOTDIR:=$(call AltCheckSpaces,BOOTDIR)
@@ -529,7 +550,7 @@ ifneq ($(PLATFORM), windows)
 JDK_CUPS_HEADERS_PATH=$(JDK_DEVTOOLS_DIR)/share/cups/include
   ifdef ALT_CUPS_HEADERS_PATH
      CUPS_HEADERS_PATH:=$(call FullPath,$(ALT_CUPS_HEADERS_PATH))
-     CUP_HEADERS_PATH:=$(call AltCheckValue,CUPS_HEADERS_PATH)
+     CUPS_HEADERS_PATH:=$(call AltCheckValue,CUPS_HEADERS_PATH)
   else 
     CUPS_HEADERS_PATH:= \
       $(shell if [ -d "$(JDK_CUPS_HEADERS_PATH)" ]; then \
@@ -558,6 +579,24 @@ else
   COPYRIGHT_YEAR = $(shell $(DATE) '+%Y')
 endif
 
-# Get shared compiler settings
-include $(JDK_MAKE_SHARED_DIR)/Compiler.gmk
+# Windows uses Microsoft compilers by default
+ifeq ($(PLATFORM), windows)
+  override CC_VERSION = msvc
+endif
+
+# Solaris uses Sun Studio compilers by default
+ifeq ($(PLATFORM), solaris)
+  override CC_VERSION = sun
+endif
+
+# Linux uses GNU compilers by default
+ifeq ($(PLATFORM), linux)
+  override CC_VERSION = gcc
+endif
+
+# Get the REQUIRED versions (needs CC_VERSION set)
+include $(JDK_MAKE_SHARED_DIR)/Defs-versions.gmk
+
+# Get the compiler specific settings
+include $(JDK_MAKE_SHARED_DIR)/Compiler-$(CC_VERSION).gmk
 

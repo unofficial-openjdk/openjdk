@@ -480,6 +480,12 @@ public class BasicListUI extends ListUI
         if (renderer == null) {
             ListCellRenderer lcr = (ListCellRenderer)UIManager.get(
                     "List.cellRenderer");
+
+            // fix for 6711072 some LAFs like Nimbus do not provide this
+            // UIManager key and we should not through a NPE here because of it
+            if (lcr == null) {
+                lcr = new DefaultListCellRenderer();
+            }
             renderer = lcr.getListCellRendererComponent(
                     list, "a", -1, false, false);
             lafDefaults.put(BASELINE_COMPONENT_KEY, renderer);
@@ -679,7 +685,7 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Create and install the listeners for the JList, its model, and its
+     * Creates and installs the listeners for the JList, its model, and its
      * selectionModel.  This method is called at installUI() time.
      *
      * @see #installUI
@@ -722,7 +728,7 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Remove the listeners for the JList, its model, and its
+     * Removes the listeners from the JList, its model, and its
      * selectionModel.  All of the listener fields, are reset to
      * null here.  This method is called at uninstallUI() time,
      * it should be kept in sync with installListeners.
@@ -758,8 +764,8 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Initialize JList properties, e.g. font, foreground, and background,
-     * and add the CellRendererPane.  The font, foreground, and background
+     * Initializes list properties such as font, foreground, and background,
+     * and adds the CellRendererPane. The font, foreground, and background
      * properties are only set if their current value is either null
      * or a UIResource, other properties are set if the current
      * value is null.
@@ -814,9 +820,9 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Set the JList properties that haven't been explicitly overridden to
-     * null.  A property is considered overridden if its current value
-     * is not a UIResource.
+     * Sets the list properties that have not been explicitly overridden to
+     * {@code null}. A property is considered overridden if its current value
+     * is not a {@code UIResource}.
      *
      * @see #installDefaults
      * @see #uninstallUI
@@ -2365,8 +2371,9 @@ public class BasicListUI extends ListUI
             JList src = (JList)e.getSource();
             ListModel model = src.getModel();
 
-            if (model.getSize() == 0 || e.isAltDown() || e.isControlDown() || e.isMetaDown() ||
-                isNavigationKey(e)) {
+            if (model.getSize() == 0 || e.isAltDown() ||
+                    BasicGraphicsUtils.isMenuShortcutKeyDown(e) ||
+                    isNavigationKey(e)) {
                 // Nothing to select
                 return;
             }
@@ -2659,7 +2666,7 @@ public class BasicListUI extends ListUI
                 if (row != -1 && DragRecognitionSupport.mousePressed(e)) {
                     dragPressDidSelection = false;
 
-                    if (e.isControlDown()) {
+                    if (BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
                         // do nothing for control - will be handled on release
                         // or when drag starts
                         return;
@@ -2711,7 +2718,7 @@ public class BasicListUI extends ListUI
                     anchorSelected = list.isSelectedIndex(anchorIndex);
                 }
 
-                if (e.isControlDown()) {
+                if (BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
                     if (e.isShiftDown()) {
                         if (anchorSelected) {
                             list.addSelectionInterval(anchorIndex, row);
@@ -2736,7 +2743,7 @@ public class BasicListUI extends ListUI
         }
 
         public void dragStarting(MouseEvent me) {
-            if (me.isControlDown()) {
+            if (BasicGraphicsUtils.isMenuShortcutKeyDown(me)) {
                 int row = SwingUtilities2.loc2IndexFileList(list, me.getPoint());
                 list.addSelectionInterval(row, row);
             }
@@ -2752,7 +2759,7 @@ public class BasicListUI extends ListUI
                 return;
             }
 
-            if (e.isShiftDown() || e.isControlDown()) {
+            if (e.isShiftDown() || BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
                 return;
             }
 

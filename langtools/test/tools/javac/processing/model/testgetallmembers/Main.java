@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @bug     6374357 6308351
+ * @bug     6374357 6308351 6707027
  * @summary PackageElement.getEnclosedElements() throws ClassReader$BadClassFileException
  * @author  Peter von der Ah\u00e9
  * @run main/othervm -Xmx256m Main
@@ -95,7 +95,7 @@ public class Main {
         javac = null;
         elements = null;
 
-        javac = (JavacTask)tool.getTask(null, null, null, null, null, null);
+        javac = (JavacTask)tool.getTask(null, fm, null, null, null, null);
         elements = javac.getElements();
 
         for (String name : packages) {
@@ -118,7 +118,7 @@ public class Main {
                           packages.size(), classes, nestedClasses);
         if (classes < 9000)
             throw new AssertionError("Too few classes in PLATFORM_CLASS_PATH ;-)");
-        if (packages.size() < 545)
+        if (packages.size() < 530)
             throw new AssertionError("Too few packages in PLATFORM_CLASS_PATH ;-)");
         if (nestedClasses < 3000)
             throw new AssertionError("Too few nested classes in PLATFORM_CLASS_PATH ;-)");

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import java.security.AccessController;
 import java.util.*;
 import java.applet.*;
 
+import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
 import sun.awt.DisplayChangedListener;
 import sun.awt.SunToolkit;
@@ -41,7 +42,6 @@ import sun.java2d.SunGraphicsEnvironment;
 import sun.security.action.GetPropertyAction;
 
 import com.sun.java.swing.SwingUtilities3;
-
 
 /**
  * This class manages repaint requests, allowing the number
@@ -310,44 +310,10 @@ public class RepaintManager
             delegate.addInvalidComponent(invalidComponent);
             return;
         }
-        Component validateRoot = null;
+        Component validateRoot =
+            SwingUtilities.getValidateRoot(invalidComponent, true);
 
-        /* Find the first JComponent ancestor of this component whose
-         * isValidateRoot() method returns true.
-         */
-        for(Component c = invalidComponent; c != null; c = c.getParent()) {
-            if ((c instanceof CellRendererPane) || (c.getPeer() == null)) {
-                return;
-            }
-            if ((c instanceof JComponent) && (((JComponent)c).isValidateRoot())) {
-                validateRoot = c;
-                break;
-            }
-        }
-
-        /* There's no validateRoot to apply validate to, so we're done.
-         */
         if (validateRoot == null) {
-            return;
-        }
-
-        /* If the validateRoot and all of its ancestors aren't visible
-         * then we don't do anything.  While we're walking up the tree
-         * we find the root Window or Applet.
-         */
-        Component root = null;
-
-        for(Component c = validateRoot; c != null; c = c.getParent()) {
-            if (!c.isVisible() || (c.getPeer() == null)) {
-                return;
-            }
-            if ((c instanceof Window) || (c instanceof Applet)) {
-                root = c;
-                break;
-            }
-        }
-
-        if (root == null) {
             return;
         }
 
@@ -716,6 +682,37 @@ public class RepaintManager
         }
     }
 
+    private void updateWindows(Map<Component,Rectangle> dirtyComponents) {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (!(toolkit instanceof SunToolkit &&
+              ((SunToolkit)toolkit).needUpdateWindow()))
+        {
+            return;
+        }
+
+        Set<Window> windows = new HashSet<Window>();
+        Set<Component> dirtyComps = dirtyComponents.keySet();
+        for (Iterator<Component> it = dirtyComps.iterator(); it.hasNext();) {
+            Component dirty = it.next();
+            Window window = dirty instanceof Window ?
+                (Window)dirty :
+                SwingUtilities.getWindowAncestor(dirty);
+            if (window != null &&
+                !window.isOpaque())
+            {
+                windows.add(window);
+            }
+        }
+
+        for (Window window : windows) {
+            AWTAccessor.getWindowAccessor().updateWindow(window);
+        }
+    }
+
+    boolean isPainting() {
+        return painting;
+    }
+
     /**
      * Paint all of the components that have been marked dirty.
      *
@@ -756,13 +753,11 @@ public class RepaintManager
         }
 
         count = roots.size();
-        //        System.out.println("roots size is " + count);
         painting = true;
         try {
             for(i=0 ; i < count ; i++) {
                 dirtyComponent = roots.get(i);
                 rect = tmpDirtyComponents.get(dirtyComponent);
-                //            System.out.println("Should refresh :" + rect);
                 localBoundsH = dirtyComponent.getHeight();
                 localBoundsW = dirtyComponent.getWidth();
 
@@ -805,6 +800,9 @@ public class RepaintManager
         } finally {
             painting = false;
         }
+
+        updateWindows(tmpDirtyComponents);
+
         tmpDirtyComponents.clear();
     }
 
@@ -961,6 +959,16 @@ public class RepaintManager
             return delegate.getVolatileOffscreenBuffer(c, proposedWidth,
                                                         proposedHeight);
         }
+
+        // If the window is non-opaque, it's double-buffered at peer's level
+        Window w = (c instanceof Window) ? (Window)c : SwingUtilities.getWindowAncestor(c);
+        if (!w.isOpaque()) {
+            Toolkit tk = Toolkit.getDefaultToolkit();
+            if ((tk instanceof SunToolkit) && (((SunToolkit)tk).needUpdateWindow())) {
+                return null;
+            }
+        }
+
         GraphicsConfiguration config = c.getGraphicsConfiguration();
         if (config == null) {
             config = GraphicsEnvironment.getLocalGraphicsEnvironment().
@@ -987,6 +995,15 @@ public class RepaintManager
         Dimension maxSize = getDoubleBufferMaximumSize();
         DoubleBufferInfo doubleBuffer;
         int width, height;
+
+        // If the window is non-opaque, it's double-buffered at peer's level
+        Window w = (c instanceof Window) ? (Window)c : SwingUtilities.getWindowAncestor(c);
+        if (!w.isOpaque()) {
+            Toolkit tk = Toolkit.getDefaultToolkit();
+            if ((tk instanceof SunToolkit) && (((SunToolkit)tk).needUpdateWindow())) {
+                return null;
+            }
+        }
 
         if (standardDoubleBuffer == null) {
             standardDoubleBuffer = new DoubleBufferInfo();
@@ -1305,9 +1322,12 @@ public class RepaintManager
             if (doubleBufferingEnabled && !nativeDoubleBuffering) {
                 switch (bufferStrategyType) {
                 case BUFFER_STRATEGY_NOT_SPECIFIED:
-                    if (((SunToolkit)Toolkit.getDefaultToolkit()).
-                                                useBufferPerWindow()) {
-                        paintManager = new BufferStrategyPaintManager();
+                    Toolkit tk = Toolkit.getDefaultToolkit();
+                    if (tk instanceof SunToolkit) {
+                        SunToolkit stk = (SunToolkit) tk;
+                        if (stk.useBufferPerWindow()) {
+                            paintManager = new BufferStrategyPaintManager();
+                        }
                     }
                     break;
                 case BUFFER_STRATEGY_SPECIFIED_ON:
@@ -1329,9 +1349,16 @@ public class RepaintManager
 
     private void scheduleProcessingRunnable(AppContext context) {
         if (processingRunnable.markPending()) {
-            SunToolkit.getSystemEventQueueImplPP(context).
-                postEvent(new InvocationEvent(Toolkit.getDefaultToolkit(),
-                                              processingRunnable));
+            Toolkit tk = Toolkit.getDefaultToolkit();
+            if (tk instanceof SunToolkit) {
+                SunToolkit.getSystemEventQueueImplPP(context).
+                  postEvent(new InvocationEvent(Toolkit.getDefaultToolkit(),
+                                                processingRunnable));
+            } else {
+                Toolkit.getDefaultToolkit().getSystemEventQueue().
+                      postEvent(new InvocationEvent(Toolkit.getDefaultToolkit(),
+                                                    processingRunnable));
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.util.Vector;
 import sun.awt.AppContext;
-import sun.awt.ComponentAccessor;
+import sun.awt.AWTAccessor;
 
 public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
 
@@ -187,7 +187,7 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
 
     public void blockWindows(java.util.List<Window> toBlock) {
         for (Window w : toBlock) {
-            WWindowPeer wp = (WWindowPeer)ComponentAccessor.getPeer(w);
+            WWindowPeer wp = (WWindowPeer)AWTAccessor.getComponentAccessor().getPeer(w);
             if (wp != null) {
                 blockWindow(wp);
             }
@@ -225,23 +225,23 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
     public void addDropTarget(DropTarget dt) {}
     public void removeDropTarget(DropTarget dt) {}
     public void updateFocusableWindowState() {}
+    public void setZOrder(ComponentPeer above) {}
 
     /**
      * Initialize JNI field and method ids
      */
     private static native void initIDs();
 
-    /**
-     * WFileDialogPeer doesn't have native pData so we don't do restack on it
-     * @see java.awt.peer.ContainerPeer#restack
-     */
-    public void restack() {
-    }
+    // The effects are not supported for system dialogs.
+    public void applyShape(sun.java2d.pipe.Region shape) {}
+    public void setOpacity(float opacity) {}
+    public void setOpaque(boolean isOpaque) {}
+    public void updateWindow(java.awt.image.BufferedImage backBuffer) {}
 
-    /**
-     * @see java.awt.peer.ContainerPeer#isRestackSupported
-     */
-    public boolean isRestackSupported() {
-        return false;
-    }
+    // the file/print dialogs are native dialogs and
+    // the native system does their own rendering
+    @Override
+    public void createScreenSurface(boolean isResize) {}
+    @Override
+    public void replaceSurfaceData() {}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,14 +164,16 @@ public class PropertyDescriptor extends FeatureDescriptor {
     }
 
     /**
-     * Gets the Class object for the property.
+     * Returns the Java type info for the property.
+     * Note that the {@code Class} object may describe
+     * primitive Java types such as {@code int}.
+     * This type is returned by the read method
+     * or is used as the parameter type of the write method.
+     * Returns {@code null} if the type is an indexed property
+     * that does not support non-indexed access.
      *
-     * @return The Java type info for the property.  Note that
-     * the "Class" object may describe a built-in Java type such as "int".
-     * The result may be "null" if this is an indexed property that
-     * does not support non-indexed access.
-     * <p>
-     * This is the type that will be returned by the ReadMethod.
+     * @return the {@code Class} object that represents the Java type info,
+     *         or {@code null} if the type cannot be determined
      */
     public synchronized Class<?> getPropertyType() {
         Class type = getPropertyType0();
@@ -294,6 +296,11 @@ public class PropertyDescriptor extends FeatureDescriptor {
 
             writeMethod = Introspector.findMethod(cls, writeMethodName, 1,
                           (type == null) ? null : new Class[] { type });
+            if (writeMethod != null) {
+                if (!writeMethod.getReturnType().equals(void.class)) {
+                    writeMethod = null;
+                }
+            }
             try {
                 setWriteMethod(writeMethod);
             } catch (IntrospectionException ex) {

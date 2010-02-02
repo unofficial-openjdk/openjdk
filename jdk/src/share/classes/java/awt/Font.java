@@ -30,30 +30,32 @@ import java.awt.font.GlyphVector;
 import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.font.TransformAttribute;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.peer.FontPeer;
 import java.io.*;
 import java.lang.ref.SoftReference;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
 import sun.font.StandardGlyphVector;
-import sun.java2d.FontSupport;
 
 import sun.font.AttributeMap;
 import sun.font.AttributeValues;
-import sun.font.EAttribute;
 import sun.font.CompositeFont;
+import sun.font.CreatedFontTracker;
 import sun.font.Font2D;
 import sun.font.Font2DHandle;
+import sun.font.FontAccess;
 import sun.font.FontManager;
+import sun.font.FontManagerFactory;
+import sun.font.FontUtilities;
 import sun.font.GlyphLayout;
 import sun.font.FontLineMetrics;
 import sun.font.CoreMetrics;
@@ -220,10 +222,29 @@ import static sun.font.EAttribute.*;
  */
 public class Font implements java.io.Serializable
 {
+    private static class FontAccessImpl extends FontAccess {
+        public Font2D getFont2D(Font font) {
+            return font.getFont2D();
+        }
+
+        public void setFont2D(Font font, Font2DHandle handle) {
+            font.font2DHandle = handle;
+        }
+
+        public void setCreatedFont(Font font) {
+            font.createdFont = true;
+        }
+
+        public boolean isCreatedFont(Font font) {
+            return font.createdFont;
+        }
+    }
+
     static {
         /* ensure that the necessary native libraries are loaded */
         Toolkit.loadLibraries();
         initIDs();
+        FontAccess.setFontAccess(new FontAccessImpl());
     }
 
     /**
@@ -442,34 +463,36 @@ public class Font implements java.io.Serializable
      */
     private AttributeValues getAttributeValues() {
         if (values == null) {
-            values = new AttributeValues();
-            values.setFamily(name);
-            values.setSize(pointSize); // expects the float value.
+            AttributeValues valuesTmp = new AttributeValues();
+            valuesTmp.setFamily(name);
+            valuesTmp.setSize(pointSize); // expects the float value.
 
             if ((style & BOLD) != 0) {
-                values.setWeight(2); // WEIGHT_BOLD
+                valuesTmp.setWeight(2); // WEIGHT_BOLD
             }
 
             if ((style & ITALIC) != 0) {
-                values.setPosture(.2f); // POSTURE_OBLIQUE
+                valuesTmp.setPosture(.2f); // POSTURE_OBLIQUE
             }
-            values.defineAll(PRIMARY_MASK); // for streaming compatibility
+            valuesTmp.defineAll(PRIMARY_MASK); // for streaming compatibility
+            values = valuesTmp;
         }
 
         return values;
     }
 
     private Font2D getFont2D() {
-        if (FontManager.usingPerAppContextComposites &&
+        FontManager fm = FontManagerFactory.getInstance();
+        if (fm.usingPerAppContextComposites() &&
             font2DHandle != null &&
             font2DHandle.font2D instanceof CompositeFont &&
             ((CompositeFont)(font2DHandle.font2D)).isStdComposite()) {
-            return FontManager.findFont2D(name, style,
+            return fm.findFont2D(name, style,
                                           FontManager.LOGICAL_FALLBACK);
         } else if (font2DHandle == null) {
             font2DHandle =
-                FontManager.findFont2D(name, style,
-                                       FontManager.LOGICAL_FALLBACK).handle;
+                fm.findFont2D(name, style,
+                              FontManager.LOGICAL_FALLBACK).handle;
         }
         /* Do not cache the de-referenced font2D. It must be explicitly
          * de-referenced to pick up a valid font in the event that the
@@ -566,8 +589,8 @@ public class Font implements java.io.Serializable
         if (created) {
             if (handle.font2D instanceof CompositeFont &&
                 handle.font2D.getStyle() != style) {
-                this.font2DHandle =
-                    FontManager.getNewComposite(null, style, handle);
+                FontManager fm = FontManagerFactory.getInstance();
+                this.font2DHandle = fm.getNewComposite(null, style, handle);
             } else {
                 this.font2DHandle = handle;
             }
@@ -575,14 +598,16 @@ public class Font implements java.io.Serializable
     }
 
     /* used to implement Font.createFont */
-    private Font(File fontFile, int fontFormat, boolean isCopy)
+    private Font(File fontFile, int fontFormat,
+                 boolean isCopy, CreatedFontTracker tracker)
         throws FontFormatException {
         this.createdFont = true;
         /* Font2D instances created by this method track their font file
          * so that when the Font2D is GC'd it can also remove the file.
          */
-        this.font2DHandle =
-            FontManager.createFont2D(fontFile, fontFormat, isCopy).handle;
+        FontManager fm = FontManagerFactory.getInstance();
+        this.font2DHandle = fm.createFont2D(fontFile, fontFormat, isCopy,
+                                            tracker).handle;
         this.name = this.font2DHandle.font2D.getFontName(Locale.getDefault());
         this.style = Font.PLAIN;
         this.size = 1;
@@ -634,8 +659,9 @@ public class Font implements java.io.Serializable
             }
             if (handle.font2D instanceof CompositeFont) {
                 if (newStyle != -1 || newName != null) {
+                    FontManager fm = FontManagerFactory.getInstance();
                     this.font2DHandle =
-                        FontManager.getNewComposite(newName, newStyle, handle);
+                        fm.getNewComposite(newName, newStyle, handle);
                 }
             } else if (newName != null) {
                 this.createdFont = false;
@@ -788,6 +814,29 @@ public class Font implements java.io.Serializable
     }
 
     /**
+     * Used with the byte count tracker for fonts created from streams.
+     * If a thread can create temp files anyway, no point in counting
+     * font bytes.
+     */
+    private static boolean hasTempPermission() {
+
+        if (System.getSecurityManager() == null) {
+            return true;
+        }
+        File f = null;
+        boolean hasPerm = false;
+        try {
+            f = File.createTempFile("+~JT", ".tmp", null);
+            f.delete();
+            f = null;
+            hasPerm = true;
+        } catch (Throwable t) {
+            /* inc. any kind of SecurityException */
+        }
+        return hasPerm;
+    }
+
+    /**
      * Returns a new <code>Font</code> using the specified font type
      * and input data.  The new <code>Font</code> is
      * created with a point size of 1 and style {@link #PLAIN PLAIN}.
@@ -822,58 +871,95 @@ public class Font implements java.io.Serializable
             fontFormat != Font.TYPE1_FONT) {
             throw new IllegalArgumentException ("font format not recognized");
         }
-        final InputStream fStream = fontStream;
-        Object ret = java.security.AccessController.doPrivileged(
-           new java.security.PrivilegedAction() {
-              public Object run() {
-                  File tFile = null;
-                  FileOutputStream outStream = null;
-                  try {
-                      tFile = File.createTempFile("+~JF", ".tmp", null);
-                      /* Temp file deleted by font shutdown hook */
-                      BufferedInputStream inStream =
-                          new BufferedInputStream(fStream);
-                      outStream = new FileOutputStream(tFile);
-                      int bytesRead = 0;
-                      int bufSize = 8192;
-                      byte [] buf = new byte[bufSize];
-                      while (bytesRead != -1) {
-                          try {
-                              bytesRead = inStream.read(buf, 0, bufSize);
-                          } catch (Throwable t) {
-                              throw new IOException();
-                          }
-                          if (bytesRead != -1) {
-                              outStream.write(buf, 0, bytesRead);
-                          }
-                      }
-                      /* don't close the input stream */
-                      outStream.close();
-                  } catch (IOException e) {
-                      if (outStream != null) {
-                          try {
-                              outStream.close();
-                          } catch (Exception e1) {
-                          }
-                      }
-                      if (tFile != null) {
-                          try {
-                              tFile.delete();
-                          }  catch (Exception e2) {
-                          }
-                      }
-                      return e;
-                  }
-                  return tFile;
-              }
-          });
+        boolean copiedFontData = false;
+        try {
+            final File tFile = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<File>() {
+                    public File run() throws IOException {
+                        return File.createTempFile("+~JF", ".tmp", null);
+                    }
+                }
+            );
 
-        if (ret instanceof File) {
-            return new Font((File)ret, fontFormat, true);
-        } else if (ret instanceof IOException) {
-            throw (IOException)ret;
-        } else {
-            throw new FontFormatException("Couldn't access font stream");
+            int totalSize = 0;
+            CreatedFontTracker tracker = null;
+            try {
+                final OutputStream outStream =
+                    AccessController.doPrivileged(
+                        new PrivilegedExceptionAction<OutputStream>() {
+                            public OutputStream run() throws IOException {
+                                return new FileOutputStream(tFile);
+                            }
+                        }
+                    );
+                if (!hasTempPermission()) {
+                    tracker = CreatedFontTracker.getTracker();
+                }
+                try {
+                    byte[] buf = new byte[8192];
+                    for (;;) {
+                        int bytesRead = fontStream.read(buf);
+                        if (bytesRead < 0) {
+                            break;
+                        }
+                        if (tracker != null) {
+                            if (totalSize+bytesRead > tracker.MAX_FILE_SIZE) {
+                                throw new IOException("File too big.");
+                            }
+                            if (totalSize+tracker.getNumBytes() >
+                                tracker.MAX_TOTAL_BYTES)
+                              {
+                                throw new IOException("Total files too big.");
+                            }
+                            totalSize += bytesRead;
+                            tracker.addBytes(bytesRead);
+                        }
+                        outStream.write(buf, 0, bytesRead);
+                    }
+                    /* don't close the input stream */
+                } finally {
+                    outStream.close();
+                }
+                /* After all references to a Font2D are dropped, the file
+                 * will be removed. To support long-lived AppContexts,
+                 * we need to then decrement the byte count by the size
+                 * of the file.
+                 * If the data isn't a valid font, the implementation will
+                 * delete the tmp file and decrement the byte count
+                 * in the tracker object before returning from the
+                 * constructor, so we can set 'copiedFontData' to true here
+                 * without waiting for the results of that constructor.
+                 */
+                copiedFontData = true;
+                Font font = new Font(tFile, fontFormat, true, tracker);
+                return font;
+            } finally {
+                if (!copiedFontData) {
+                    if (tracker != null) {
+                        tracker.subBytes(totalSize);
+                    }
+                    AccessController.doPrivileged(
+                        new PrivilegedExceptionAction<Void>() {
+                            public Void run() {
+                                tFile.delete();
+                                return null;
+                            }
+                        }
+                    );
+                }
+            }
+        } catch (Throwable t) {
+            if (t instanceof FontFormatException) {
+                throw (FontFormatException)t;
+            }
+            if (t instanceof IOException) {
+                throw (IOException)t;
+            }
+            Throwable cause = t.getCause();
+            if (cause instanceof FontFormatException) {
+                throw (FontFormatException)cause;
+            }
+            throw new IOException("Problem reading font data.");
         }
     }
 
@@ -913,6 +999,9 @@ public class Font implements java.io.Serializable
      */
     public static Font createFont(int fontFormat, File fontFile)
         throws java.awt.FontFormatException, java.io.IOException {
+
+        fontFile = new File(fontFile.getPath());
+
         if (fontFormat != Font.TRUETYPE_FONT &&
             fontFormat != Font.TYPE1_FONT) {
             throw new IllegalArgumentException ("font format not recognized");
@@ -926,7 +1015,7 @@ public class Font implements java.io.Serializable
         if (!fontFile.canRead()) {
             throw new IOException("Can't read " + fontFile);
         }
-        return new Font(fontFile, fontFormat, false);
+        return new Font(fontFile, fontFormat, false, null);
     }
 
     /**
@@ -2250,7 +2339,7 @@ public class Font implements java.io.Serializable
             (values.getKerning() == 0 && values.getLigatures() == 0 &&
               values.getBaselineTransform() == null);
         if (simple) {
-            simple = !FontManager.isComplexText(chars, beginIndex, limit);
+            simple = ! FontUtilities.isComplexText(chars, beginIndex, limit);
         }
 
         if (simple) {

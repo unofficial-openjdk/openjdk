@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,8 @@ typeArrayOop Universe::_the_empty_int_array           = NULL;
 objArrayOop Universe::_the_empty_system_obj_array     = NULL;
 objArrayOop Universe::_the_empty_class_klass_array    = NULL;
 objArrayOop Universe::_the_array_interfaces_array     = NULL;
+oop Universe::_the_null_string                        = NULL;
+oop Universe::_the_min_jint_string                   = NULL;
 LatestMethodOopCache* Universe::_finalizer_register_cache = NULL;
 LatestMethodOopCache* Universe::_loader_addClass_cache    = NULL;
 ActiveMethodOopsCache* Universe::_reflect_invoke_cache    = NULL;
@@ -99,7 +101,8 @@ size_t          Universe::_heap_capacity_at_last_gc;
 size_t          Universe::_heap_used_at_last_gc = 0;
 
 CollectedHeap*  Universe::_collectedHeap = NULL;
-address         Universe::_heap_base = NULL;
+
+NarrowOopStruct Universe::_narrow_oop = { NULL, 0, true };
 
 
 void Universe::basic_type_classes_do(void f(klassOop)) {
@@ -186,6 +189,8 @@ void Universe::oops_do(OopClosure* f, bool do_all) {
   f->do_oop((oop*)&_the_empty_system_obj_array);
   f->do_oop((oop*)&_the_empty_class_klass_array);
   f->do_oop((oop*)&_the_array_interfaces_array);
+  f->do_oop((oop*)&_the_null_string);
+  f->do_oop((oop*)&_the_min_jint_string);
   _finalizer_register_cache->oops_do(f);
   _loader_addClass_cache->oops_do(f);
   _reflect_invoke_cache->oops_do(f);
@@ -286,14 +291,17 @@ void Universe::genesis(TRAPS) {
 
     SystemDictionary::initialize(CHECK);
 
-    klassOop ok = SystemDictionary::object_klass();
+    klassOop ok = SystemDictionary::Object_klass();
+
+    _the_null_string            = StringTable::intern("null", CHECK);
+    _the_min_jint_string       = StringTable::intern("-2147483648", CHECK);
 
     if (UseSharedSpaces) {
       // Verify shared interfaces array.
       assert(_the_array_interfaces_array->obj_at(0) ==
-             SystemDictionary::cloneable_klass(), "u3");
+             SystemDictionary::Cloneable_klass(), "u3");
       assert(_the_array_interfaces_array->obj_at(1) ==
-             SystemDictionary::serializable_klass(), "u3");
+             SystemDictionary::Serializable_klass(), "u3");
 
       // Verify element klass for system obj array klass
       assert(objArrayKlass::cast(_systemObjArrayKlassObj)->element_klass() == ok, "u1");
@@ -312,8 +320,8 @@ void Universe::genesis(TRAPS) {
       assert(Klass::cast(systemObjArrayKlassObj())->super() == ok, "u3");
     } else {
       // Set up shared interfaces array.  (Do this before supers are set up.)
-      _the_array_interfaces_array->obj_at_put(0, SystemDictionary::cloneable_klass());
-      _the_array_interfaces_array->obj_at_put(1, SystemDictionary::serializable_klass());
+      _the_array_interfaces_array->obj_at_put(0, SystemDictionary::Cloneable_klass());
+      _the_array_interfaces_array->obj_at_put(1, SystemDictionary::Serializable_klass());
 
       // Set element klass for system obj array klass
       objArrayKlass::cast(_systemObjArrayKlassObj)->set_element_klass(ok);
@@ -357,7 +365,7 @@ void Universe::genesis(TRAPS) {
   // Initialize _objectArrayKlass after core bootstraping to make
   // sure the super class is set up properly for _objectArrayKlass.
   _objectArrayKlassObj = instanceKlass::
-    cast(SystemDictionary::object_klass())->array_klass(1, CHECK);
+    cast(SystemDictionary::Object_klass())->array_klass(1, CHECK);
   // Add the class to the class hierarchy manually to make sure that
   // its vtable is initialized after core bootstrapping is completed.
   Klass::cast(_objectArrayKlassObj)->append_to_sibling_list();
@@ -418,11 +426,11 @@ void Universe::genesis(TRAPS) {
     while (i < size) {
       if (!UseConcMarkSweepGC) {
         // Allocate dummy in old generation
-        oop dummy = instanceKlass::cast(SystemDictionary::object_klass())->allocate_instance(CHECK);
+        oop dummy = instanceKlass::cast(SystemDictionary::Object_klass())->allocate_instance(CHECK);
         dummy_array->obj_at_put(i++, dummy);
       }
       // Allocate dummy in permanent generation
-      oop dummy = instanceKlass::cast(SystemDictionary::object_klass())->allocate_permanent_instance(CHECK);
+      oop dummy = instanceKlass::cast(SystemDictionary::Object_klass())->allocate_permanent_instance(CHECK);
       dummy_array->obj_at_put(i++, dummy);
     }
     {
@@ -532,7 +540,7 @@ void Universe::fixup_mirrors(TRAPS) {
   // but we cannot do that for classes created before java.lang.Class is loaded. Here we simply
   // walk over permanent objects created so far (mostly classes) and fixup their mirrors. Note
   // that the number of objects allocated at this point is very small.
-  assert(SystemDictionary::class_klass_loaded(), "java.lang.Class should be loaded");
+  assert(SystemDictionary::Class_klass_loaded(), "java.lang.Class should be loaded");
   FixupMirrorClosure blk;
   Universe::heap()->permanent_object_iterate(&blk);
 }
@@ -548,7 +556,7 @@ void Universe::run_finalizers_on_exit() {
   if (TraceReferenceGC) tty->print_cr("Callback to run finalizers on exit");
   {
     PRESERVE_EXCEPTION_MARK;
-    KlassHandle finalizer_klass(THREAD, SystemDictionary::finalizer_klass());
+    KlassHandle finalizer_klass(THREAD, SystemDictionary::Finalizer_klass());
     JavaValue result(T_VOID);
     JavaCalls::call_static(
       &result,
@@ -729,6 +737,78 @@ jint universe_init() {
   return JNI_OK;
 }
 
+// Choose the heap base address and oop encoding mode
+// when compressed oops are used:
+// Unscaled  - Use 32-bits oops without encoding when
+//     NarrowOopHeapBaseMin + heap_size < 4Gb
+// ZeroBased - Use zero based compressed oops with encoding when
+//     NarrowOopHeapBaseMin + heap_size < 32Gb
+// HeapBased - Use compressed oops with heap base + encoding.
+
+// 4Gb
+static const uint64_t NarrowOopHeapMax = (uint64_t(max_juint) + 1);
+// 32Gb
+static const uint64_t OopEncodingHeapMax = NarrowOopHeapMax << LogMinObjAlignmentInBytes;
+
+char* Universe::preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode) {
+  size_t base = 0;
+#ifdef _LP64
+  if (UseCompressedOops) {
+    assert(mode == UnscaledNarrowOop  ||
+           mode == ZeroBasedNarrowOop ||
+           mode == HeapBasedNarrowOop, "mode is invalid");
+    const size_t total_size = heap_size + HeapBaseMinAddress;
+    // Return specified base for the first request.
+    if (!FLAG_IS_DEFAULT(HeapBaseMinAddress) && (mode == UnscaledNarrowOop)) {
+      base = HeapBaseMinAddress;
+    } else if (total_size <= OopEncodingHeapMax && (mode != HeapBasedNarrowOop)) {
+      if (total_size <= NarrowOopHeapMax && (mode == UnscaledNarrowOop) &&
+          (Universe::narrow_oop_shift() == 0)) {
+        // Use 32-bits oops without encoding and
+        // place heap's top on the 4Gb boundary
+        base = (NarrowOopHeapMax - heap_size);
+      } else {
+        // Can't reserve with NarrowOopShift == 0
+        Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
+        if (mode == UnscaledNarrowOop ||
+            mode == ZeroBasedNarrowOop && total_size <= NarrowOopHeapMax) {
+          // Use zero based compressed oops with encoding and
+          // place heap's top on the 32Gb boundary in case
+          // total_size > 4Gb or failed to reserve below 4Gb.
+          base = (OopEncodingHeapMax - heap_size);
+        }
+      }
+    } else {
+      // Can't reserve below 32Gb.
+      Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
+    }
+    // Set narrow_oop_base and narrow_oop_use_implicit_null_checks
+    // used in ReservedHeapSpace() constructors.
+    // The final values will be set in initialize_heap() below.
+    if (base != 0 && (base + heap_size) <= OopEncodingHeapMax) {
+      // Use zero based compressed oops
+      Universe::set_narrow_oop_base(NULL);
+      // Don't need guard page for implicit checks in indexed
+      // addressing mode with zero based Compressed Oops.
+      Universe::set_narrow_oop_use_implicit_null_checks(true);
+    } else {
+      // Set to a non-NULL value so the ReservedSpace ctor computes
+      // the correct no-access prefix.
+      // The final value will be set in initialize_heap() below.
+      Universe::set_narrow_oop_base((address)NarrowOopHeapMax);
+#ifdef _WIN64
+      if (UseLargePages) {
+        // Cannot allocate guard pages for implicit checks in indexed
+        // addressing mode when large pages are specified on windows.
+        Universe::set_narrow_oop_use_implicit_null_checks(false);
+      }
+#endif //  _WIN64
+    }
+  }
+#endif
+  return (char*)base; // also return NULL (don't care) for 32-bit VM
+}
+
 jint Universe::initialize_heap() {
 
   if (UseParallelGC) {
@@ -773,6 +853,8 @@ jint Universe::initialize_heap() {
   if (status != JNI_OK) {
     return status;
   }
+
+#ifdef _LP64
   if (UseCompressedOops) {
     // Subtract a page because something can get allocated at heap base.
     // This also makes implicit null checking work, because the
@@ -780,8 +862,49 @@ jint Universe::initialize_heap() {
     // See needs_explicit_null_check.
     // Only set the heap base for compressed oops because it indicates
     // compressed oops for pstack code.
-    Universe::_heap_base = Universe::heap()->base() - os::vm_page_size();
+    if (PrintCompressedOopsMode) {
+      tty->cr();
+      tty->print("heap address: "PTR_FORMAT, Universe::heap()->base());
+    }
+    if ((uint64_t)Universe::heap()->reserved_region().end() > OopEncodingHeapMax) {
+      // Can't reserve heap below 32Gb.
+      Universe::set_narrow_oop_base(Universe::heap()->base() - os::vm_page_size());
+      Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
+      if (PrintCompressedOopsMode) {
+        tty->print(", Compressed Oops with base: "PTR_FORMAT, Universe::narrow_oop_base());
+      }
+    } else {
+      Universe::set_narrow_oop_base(0);
+      if (PrintCompressedOopsMode) {
+        tty->print(", zero based Compressed Oops");
+      }
+#ifdef _WIN64
+      if (!Universe::narrow_oop_use_implicit_null_checks()) {
+        // Don't need guard page for implicit checks in indexed addressing
+        // mode with zero based Compressed Oops.
+        Universe::set_narrow_oop_use_implicit_null_checks(true);
+      }
+#endif //  _WIN64
+      if((uint64_t)Universe::heap()->reserved_region().end() > NarrowOopHeapMax) {
+        // Can't reserve heap below 4Gb.
+        Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
+      } else {
+        Universe::set_narrow_oop_shift(0);
+        if (PrintCompressedOopsMode) {
+          tty->print(", 32-bits Oops");
+        }
+      }
+    }
+    if (PrintCompressedOopsMode) {
+      tty->cr();
+      tty->cr();
+    }
   }
+  assert(Universe::narrow_oop_base() == (Universe::heap()->base() - os::vm_page_size()) ||
+         Universe::narrow_oop_base() == NULL, "invalid value");
+  assert(Universe::narrow_oop_shift() == LogMinObjAlignmentInBytes ||
+         Universe::narrow_oop_shift() == 0, "invalid value");
+#endif
 
   // We will never reach the CATCH below since Exceptions::_throw will cause
   // the VM to exit if an exception is thrown during initialization
@@ -827,7 +950,7 @@ bool universe_post_init() {
   { ResourceMark rm;
     Interpreter::initialize();      // needed for interpreter entry points
     if (!UseSharedSpaces) {
-      KlassHandle ok_h(THREAD, SystemDictionary::object_klass());
+      KlassHandle ok_h(THREAD, SystemDictionary::Object_klass());
       Universe::reinitialize_vtable_of(ok_h, CHECK_false);
       Universe::reinitialize_itables(CHECK_false);
     }
@@ -837,7 +960,7 @@ bool universe_post_init() {
   instanceKlassHandle k_h;
   if (!UseSharedSpaces) {
     // Setup preallocated empty java.lang.Class array
-    Universe::_the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::class_klass(), 0, CHECK_false);
+    Universe::_the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
     // Setup preallocated OutOfMemoryError errors
     k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_OutOfMemoryError(), true, CHECK_false);
     k_h = instanceKlassHandle(THREAD, k);
@@ -904,8 +1027,8 @@ bool universe_post_init() {
   // Setup static method for registering finalizers
   // The finalizer klass must be linked before looking up the method, in
   // case it needs to get rewritten.
-  instanceKlass::cast(SystemDictionary::finalizer_klass())->link_class(CHECK_false);
-  methodOop m = instanceKlass::cast(SystemDictionary::finalizer_klass())->find_method(
+  instanceKlass::cast(SystemDictionary::Finalizer_klass())->link_class(CHECK_false);
+  methodOop m = instanceKlass::cast(SystemDictionary::Finalizer_klass())->find_method(
                                   vmSymbols::register_method_name(),
                                   vmSymbols::register_method_signature());
   if (m == NULL || !m->is_static()) {
@@ -913,7 +1036,7 @@ bool universe_post_init() {
       "java.lang.ref.Finalizer.register", false);
   }
   Universe::_finalizer_register_cache->init(
-    SystemDictionary::finalizer_klass(), m, CHECK_false);
+    SystemDictionary::Finalizer_klass(), m, CHECK_false);
 
   // Resolve on first use and initialize class.
   // Note: No race-condition here, since a resolve will always return the same result
@@ -930,14 +1053,14 @@ bool universe_post_init() {
   Universe::_reflect_invoke_cache->init(k_h(), m, CHECK_false);
 
   // Setup method for registering loaded classes in class loader vector
-  instanceKlass::cast(SystemDictionary::classloader_klass())->link_class(CHECK_false);
-  m = instanceKlass::cast(SystemDictionary::classloader_klass())->find_method(vmSymbols::addClass_name(), vmSymbols::class_void_signature());
+  instanceKlass::cast(SystemDictionary::ClassLoader_klass())->link_class(CHECK_false);
+  m = instanceKlass::cast(SystemDictionary::ClassLoader_klass())->find_method(vmSymbols::addClass_name(), vmSymbols::class_void_signature());
   if (m == NULL || m->is_static()) {
     THROW_MSG_(vmSymbols::java_lang_NoSuchMethodException(),
       "java.lang.ClassLoader.addClass", false);
   }
   Universe::_loader_addClass_cache->init(
-    SystemDictionary::classloader_klass(), m, CHECK_false);
+    SystemDictionary::ClassLoader_klass(), m, CHECK_false);
 
   // The folowing is initializing converter functions for serialization in
   // JVM.cpp. If we clean up the StrictMath code above we may want to find
@@ -1079,7 +1202,7 @@ void Universe::print_heap_after_gc(outputStream* st) {
   st->print_cr("}");
 }
 
-void Universe::verify(bool allow_dirty, bool silent) {
+void Universe::verify(bool allow_dirty, bool silent, bool option) {
   if (SharedSkipVerify) {
     return;
   }
@@ -1103,7 +1226,7 @@ void Universe::verify(bool allow_dirty, bool silent) {
   if (!silent) gclog_or_tty->print("[Verifying ");
   if (!silent) gclog_or_tty->print("threads ");
   Threads::verify();
-  heap()->verify(allow_dirty, silent);
+  heap()->verify(allow_dirty, silent, option);
 
   if (!silent) gclog_or_tty->print("syms ");
   SymbolTable::verify();

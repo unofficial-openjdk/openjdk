@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,11 +48,7 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
 
 #ifndef PRODUCT
   if (CountCompiledCalls) {
-    Address ctr(G5, SharedRuntime::nof_megamorphic_calls_addr());
-    __ sethi(ctr);
-    __ ld(ctr, G3_scratch);
-    __ inc(G3_scratch);
-    __ st(G3_scratch, ctr);
+    __ inc_counter(SharedRuntime::nof_megamorphic_calls_addr(), G5, G3_scratch);
   }
 #endif /* PRODUCT */
 
@@ -106,6 +102,18 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
   __ delayed()->nop();
 
   masm->flush();
+
+  if (PrintMiscellaneous && (WizardMode || Verbose)) {
+    tty->print_cr("vtable #%d at "PTR_FORMAT"[%d] left over: %d",
+                  vtable_index, s->entry_point(),
+                  (int)(s->code_end() - s->entry_point()),
+                  (int)(s->code_end() - __ pc()));
+  }
+  guarantee(__ pc() <= s->code_end(), "overflowed buffer");
+  // shut the door on sizing bugs
+  int slop = 2*BytesPerInstWord;  // 32-bit offset is this much larger than a 13-bit one
+  assert(vtable_index > 10 || __ pc() + slop <= s->code_end(), "room for sethi;add");
+
   s->set_exception_points(npe_addr, ame_addr);
   return s;
 }
@@ -113,9 +121,9 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
 
 // NOTE:  %%%% if any change is made to this stub make sure that the function
 //             pd_code_size_limit is changed to ensure the correct size for VtableStub
-VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
+VtableStub* VtableStubs::create_itable_stub(int itable_index) {
   const int sparc_code_length = VtableStub::pd_code_size_limit(false);
-  VtableStub* s = new(sparc_code_length) VtableStub(false, vtable_index);
+  VtableStub* s = new(sparc_code_length) VtableStub(false, itable_index);
   ResourceMark rm;
   CodeBuffer cb(s->entry_point(), sparc_code_length);
   MacroAssembler* masm = new MacroAssembler(&cb);
@@ -139,75 +147,38 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   // are passed in the %o registers.  Instead, longs are passed in G1 and G4
   // and so those registers are not available here.
   __ save(SP,-frame::register_save_words*wordSize,SP);
-  Register I0_receiver = I0;    // Location of receiver after save
 
 #ifndef PRODUCT
   if (CountCompiledCalls) {
-    Address ctr(L0, SharedRuntime::nof_megamorphic_calls_addr());
-    __ sethi(ctr);
-    __ ld(ctr, L1);
-    __ inc(L1);
-    __ st(L1, ctr);
+    __ inc_counter(SharedRuntime::nof_megamorphic_calls_addr(), L0, L1);
   }
 #endif /* PRODUCT */
 
-  // load start of itable entries into L0 register
-  const int base = instanceKlass::vtable_start_offset() * wordSize;
-  __ ld(Address(G3_klassOop, 0, instanceKlass::vtable_length_offset() * wordSize), L0);
-
-  // %%% Could store the aligned, prescaled offset in the klassoop.
-  __ sll(L0, exact_log2(vtableEntry::size() * wordSize), L0);
-  // see code for instanceKlass::start_of_itable!
-  const int vtable_alignment = align_object_offset(1);
-  assert(vtable_alignment == 1 || vtable_alignment == 2, "");
-  const int odd_bit = vtableEntry::size() * wordSize;
-  if (vtable_alignment == 2) {
-    __ and3(L0, odd_bit, L1);   // isolate the odd bit
-  }
-  __ add(G3_klassOop, L0, L0);
-  if (vtable_alignment == 2) {
-    __ add(L0, L1, L0);         // double the odd bit, to align up
-  }
-
-  // Loop over all itable entries until desired interfaceOop (G5_interface) found
-  __ bind(search);
-
-  // %%%% Could load both offset and interface in one ldx, if they were
-  // in the opposite order.  This would save a load.
-  __ ld_ptr(L0, base + itableOffsetEntry::interface_offset_in_bytes(), L1);
-
-  // If the entry is NULL then we've reached the end of the table
-  // without finding the expected interface, so throw an exception
   Label throw_icce;
-  __ bpr(Assembler::rc_z, false, Assembler::pn, L1, throw_icce);
-  __ delayed()->cmp(G5_interface, L1);
-  __ brx(Assembler::notEqual, true, Assembler::pn, search);
-  __ delayed()->add(L0, itableOffsetEntry::size() * wordSize, L0);
 
-  // entry found and L0 points to it, move offset of vtable for interface into L0
-  __ ld(L0, base + itableOffsetEntry::offset_offset_in_bytes(), L0);
-
-  // Compute itableMethodEntry and get methodOop(G5_method) and entrypoint(L0) for compiler
-  const int method_offset = (itableMethodEntry::size() * wordSize * vtable_index) + itableMethodEntry::method_offset_in_bytes();
-  __ add(G3_klassOop, L0, L1);
-  __ ld_ptr(L1, method_offset, G5_method);
+  Register L5_method = L5;
+  __ lookup_interface_method(// inputs: rec. class, interface, itable index
+                             G3_klassOop, G5_interface, itable_index,
+                             // outputs: method, scan temp. reg
+                             L5_method, L2, L3,
+                             throw_icce);
 
 #ifndef PRODUCT
   if (DebugVtables) {
     Label L01;
-    __ ld_ptr(L1, method_offset, G5_method);
-    __ bpr(Assembler::rc_nz, false, Assembler::pt, G5_method, L01);
+    __ bpr(Assembler::rc_nz, false, Assembler::pt, L5_method, L01);
     __ delayed()->nop();
     __ stop("methodOop is null");
     __ bind(L01);
-    __ verify_oop(G5_method);
+    __ verify_oop(L5_method);
   }
 #endif
 
   // If the following load is through a NULL pointer, we'll take an OS
   // exception that should translate into an AbstractMethodError.  We need the
   // window count to be correct at that time.
-  __ restore();                 // Restore registers BEFORE the AME point
+  __ restore(L5_method, 0, G5_method);
+  // Restore registers *before* the AME point.
 
   address ame_addr = __ pc();   // if the vtable entry is null, the method is abstract
   __ ld_ptr(G5_method, in_bytes(methodOopDesc::from_compiled_offset()), G3_scratch);
@@ -219,13 +190,22 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
   __ delayed()->nop();
 
   __ bind(throw_icce);
-  Address icce(G3_scratch, StubRoutines::throw_IncompatibleClassChangeError_entry());
-  __ jump_to(icce, 0);
+  AddressLiteral icce(StubRoutines::throw_IncompatibleClassChangeError_entry());
+  __ jump_to(icce, G3_scratch);
   __ delayed()->restore();
 
   masm->flush();
 
+  if (PrintMiscellaneous && (WizardMode || Verbose)) {
+    tty->print_cr("itable #%d at "PTR_FORMAT"[%d] left over: %d",
+                  itable_index, s->entry_point(),
+                  (int)(s->code_end() - s->entry_point()),
+                  (int)(s->code_end() - __ pc()));
+  }
   guarantee(__ pc() <= s->code_end(), "overflowed buffer");
+  // shut the door on sizing bugs
+  int slop = 2*BytesPerInstWord;  // 32-bit offset is this much larger than a 13-bit one
+  assert(itable_index > 10 || __ pc() + slop <= s->code_end(), "room for sethi;add");
 
   s->set_exception_points(npe_addr, ame_addr);
   return s;
@@ -239,17 +219,62 @@ int VtableStub::pd_code_size_limit(bool is_vtable_stub) {
     if (is_vtable_stub) {
       // ld;ld;ld,jmp,nop
       const int basic = 5*BytesPerInstWord +
-                        // shift;add for load_klass
-                        (UseCompressedOops ? 2*BytesPerInstWord : 0);
+                        // shift;add for load_klass (only shift with zero heap based)
+                        (UseCompressedOops ?
+                         ((Universe::narrow_oop_base() == NULL) ? BytesPerInstWord : 2*BytesPerInstWord) : 0);
       return basic + slop;
     } else {
-      // save, ld, ld, sll, and, add, add, ld, cmp, br, add, ld, add, ld, ld, jmp, restore, sethi, jmpl, restore
-      const int basic = (20 LP64_ONLY(+ 6)) * BytesPerInstWord +
-                        // shift;add for load_klass
-                        (UseCompressedOops ? 2*BytesPerInstWord : 0);
+      const int basic = (28 LP64_ONLY(+ 6)) * BytesPerInstWord +
+                        // shift;add for load_klass (only shift with zero heap based)
+                        (UseCompressedOops ?
+                         ((Universe::narrow_oop_base() == NULL) ? BytesPerInstWord : 2*BytesPerInstWord) : 0);
       return (basic + slop);
     }
   }
+
+  // In order to tune these parameters, run the JVM with VM options
+  // +PrintMiscellaneous and +WizardMode to see information about
+  // actual itable stubs.  Look for lines like this:
+  //   itable #1 at 0x5551212[116] left over: 8
+  // Reduce the constants so that the "left over" number is 8
+  // Do not aim at a left-over number of zero, because a very
+  // large vtable or itable offset (> 4K) will require an extra
+  // sethi/or pair of instructions.
+  //
+  // The JVM98 app. _202_jess has a megamorphic interface call.
+  // The itable code looks like this:
+  // Decoding VtableStub itbl[1]@16
+  //   ld  [ %o0 + 4 ], %g3
+  //   save  %sp, -64, %sp
+  //   ld  [ %g3 + 0xe8 ], %l2
+  //   sll  %l2, 2, %l2
+  //   add  %l2, 0x134, %l2
+  //   and  %l2, -8, %l2        ! NOT_LP64 only
+  //   add  %g3, %l2, %l2
+  //   add  %g3, 4, %g3
+  //   ld  [ %l2 ], %l5
+  //   brz,pn   %l5, throw_icce
+  //   cmp  %l5, %g5
+  //   be  %icc, success
+  //   add  %l2, 8, %l2
+  // loop:
+  //   ld  [ %l2 ], %l5
+  //   brz,pn   %l5, throw_icce
+  //   cmp  %l5, %g5
+  //   bne,pn   %icc, loop
+  //   add  %l2, 8, %l2
+  // success:
+  //   ld  [ %l2 + -4 ], %l2
+  //   ld  [ %g3 + %l2 ], %l5
+  //   restore  %l5, 0, %g5
+  //   ld  [ %g5 + 0x44 ], %g3
+  //   jmp  %g3
+  //   nop
+  // throw_icce:
+  //   sethi  %hi(throw_ICCE_entry), %g3
+  //   ! 5 more instructions here, LP64_ONLY
+  //   jmp  %g3 + %lo(throw_ICCE_entry)
+  //   restore
 }
 
 

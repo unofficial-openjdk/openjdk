@@ -25,17 +25,17 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.taglets.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
-
 import java.io.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Writes enum constant documentation in HTML format.
  *
  * @author Jamie Ho
+ * @author Bhavesh Patel (Modified)
  */
 public class EnumConstantWriterImpl extends AbstractMemberWriter
     implements EnumConstantWriter, MemberSummaryWriter {
@@ -143,29 +143,24 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         if (configuration().linksource) {
             writer.printSrcLink(enumConstant, enumConstant.name());
         } else {
-            bold(enumConstant.name());
+            strong(enumConstant.name());
         }
         writer.preEnd();
-        writer.dl();
+        assert !writer.getMemberDetailsListPrinted();
     }
 
     /**
      * {@inheritDoc}
      */
     public void writeDeprecated(FieldDoc enumConstant) {
-        print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(enumConstant,
-            writer.getTagletWriterInstance(false))).toString());
+        printDeprecated(enumConstant);
     }
 
     /**
      * {@inheritDoc}
      */
     public void writeComments(FieldDoc enumConstant) {
-        if (enumConstant.inlineTags().length > 0) {
-            writer.dd();
-            writer.printInlineComment(enumConstant);
-        }
+        printComment(enumConstant);
     }
 
     /**
@@ -179,7 +174,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public void writeEnumConstantFooter() {
-        writer.dlEnd();
+        printMemberFooter();
     }
 
     /**
@@ -200,8 +195,23 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         return VisibleMemberMap.ENUM_CONSTANTS;
     }
 
-    public void printSummaryLabel(ClassDoc cd) {
-        writer.boldText("doclet.Enum_Constant_Summary");
+    public void printSummaryLabel() {
+        writer.printText("doclet.Enum_Constant_Summary");
+    }
+
+    public void printTableSummary() {
+        writer.tableIndexSummary(configuration().getText("doclet.Member_Table_Summary",
+                configuration().getText("doclet.Enum_Constant_Summary"),
+                configuration().getText("doclet.enum_constants")));
+    }
+
+    public void printSummaryTableHeader(ProgramElementDoc member) {
+        String[] header = new String[] {
+            configuration().getText("doclet.0_and_1",
+                    configuration().getText("doclet.Enum_Constant"),
+                    configuration().getText("doclet.Description"))
+        };
+        writer.summaryTableHeader(header, "col");
     }
 
     public void printSummaryAnchor(ClassDoc cd) {
@@ -216,9 +226,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
     }
 
     protected void writeSummaryLink(int context, ClassDoc cd, ProgramElementDoc member) {
-        writer.bold();
+        writer.strong();
         writer.printDocLink(context, (MemberDoc) member, member.name(), false);
-        writer.boldEnd();
+        writer.strongEnd();
     }
 
     protected void writeInheritedSummaryLink(ClassDoc cd,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ public class GTKLookAndFeel extends SynthLookAndFeel {
                                     });
                     isSunDesktop = val.booleanValue();
             }
-            if (isSunDesktop) {
+            if (isSunDesktop && !sun.java2d.SunGraphicsEnvironment.isOpenSolaris) {
                 isSunCJK = true;
             }
         }
@@ -1470,7 +1470,7 @@ public class GTKLookAndFeel extends SynthLookAndFeel {
         aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(gtkAAFontSettingsCond);
     }
 
-    static ReferenceQueue queue = new ReferenceQueue();
+    static ReferenceQueue<GTKLookAndFeel> queue = new ReferenceQueue<GTKLookAndFeel>();
 
     private static void flushUnreferenced() {
         WeakPCL pcl;
@@ -1480,12 +1480,12 @@ public class GTKLookAndFeel extends SynthLookAndFeel {
         }
     }
 
-    static class WeakPCL extends WeakReference implements
+    static class WeakPCL extends WeakReference<GTKLookAndFeel> implements
             PropertyChangeListener {
         private Toolkit kit;
         private String key;
 
-        WeakPCL(Object target, Toolkit kit, String key) {
+        WeakPCL(GTKLookAndFeel target, Toolkit kit, String key) {
             super(target, queue);
             this.kit = kit;
             this.key = key;
@@ -1494,7 +1494,7 @@ public class GTKLookAndFeel extends SynthLookAndFeel {
         public String getKey() { return key; }
 
         public void propertyChange(final PropertyChangeEvent pce) {
-            final GTKLookAndFeel lnf = (GTKLookAndFeel)get();
+            final GTKLookAndFeel lnf = get();
 
             if (lnf == null || UIManager.getLookAndFeel() != lnf) {
                 // The property was GC'ed, we're no longer interested in

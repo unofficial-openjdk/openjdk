@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,10 @@
  * have any questions.
  */
 
+#include "awt.h"
 #include "awt_PrintDialog.h"
 #include "awt_Dialog.h"
 #include "awt_PrintControl.h"
-#include "awt_dlls.h"
 #include "awt_Window.h"
 #include "ComCtl32Util.h"
 #include <sun_awt_windows_WPrintDialog.h>
@@ -39,11 +39,9 @@ jmethodID AwtPrintDialog::setHWndMID;
 
 BOOL
 AwtPrintDialog::PrintDlg(LPPRINTDLG data) {
-    AwtCommDialog::load_comdlg_procs();
     return static_cast<BOOL>(reinterpret_cast<INT_PTR>(
         AwtToolkit::GetInstance().InvokeFunction(
-            reinterpret_cast<void *(*)(void *)>(AwtCommDialog::PrintDlgWrapper),
-            data)));
+            reinterpret_cast<void *(*)(void *)>(::PrintDlg), data)));
 }
 
 LRESULT CALLBACK PrintDialogWndProc(HWND hWnd, UINT message,
@@ -67,7 +65,8 @@ LRESULT CALLBACK PrintDialogWndProc(HWND hWnd, UINT message,
         }
     }
 
-    return ComCtl32Util::GetInstance().DefWindowProc(NULL, hWnd, message, wParam, lParam);
+    WNDPROC lpfnWndProc = (WNDPROC)(::GetProp(hWnd, NativeDialogWndProcProp));
+    return ComCtl32Util::GetInstance().DefWindowProc(lpfnWndProc, hWnd, message, wParam, lParam);
 }
 
 static UINT_PTR CALLBACK
@@ -89,7 +88,7 @@ PrintDialogHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
             DWORD style = ::GetClassLong(hdlg, GCL_STYLE);
             ::SetClassLong(hdlg,GCL_STYLE, style & ~CS_SAVEBITS);
 
-            ::SetFocus(hdlg);
+            ::SetFocus(hdlg); // will not break synthetic focus as hdlg is a native toplevel
 
             // set appropriate icon for parentless dialogs
             jobject awtParent = env->GetObjectField(peer, AwtPrintDialog::parentID);
@@ -101,16 +100,19 @@ PrintDialogHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
             }
 
             // subclass dialog's parent to receive additional messages
-            ComCtl32Util::GetInstance().SubclassHWND(hdlg,
-                                                     PrintDialogWndProc);
+            WNDPROC lpfnWndProc = ComCtl32Util::GetInstance().SubclassHWND(hdlg,
+                                                                           PrintDialogWndProc);
+            ::SetProp(hdlg, NativeDialogWndProcProp, reinterpret_cast<HANDLE>(lpfnWndProc));
 
             break;
         }
         case WM_DESTROY: {
+            WNDPROC lpfnWndProc = (WNDPROC)(::GetProp(hdlg, NativeDialogWndProcProp));
             ComCtl32Util::GetInstance().UnsubclassHWND(hdlg,
                                                        PrintDialogWndProc,
-                                                       NULL);
+                                                       lpfnWndProc);
             ::RemoveProp(hdlg, ModalDialogPeerProp);
+            ::RemoveProp(hdlg, NativeDialogWndProcProp);
             break;
         }
     }

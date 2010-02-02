@@ -26,29 +26,32 @@ package javax.swing.plaf.synth;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.ParseException;
-
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.BasicSpinnerUI;
-import javax.swing.text.*;
-
 import java.beans.*;
-import java.text.*;
-import java.util.*;
-import sun.swing.plaf.synth.SynthUI;
 
 /**
- * Synth's SpinnerUI.
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.JSpinner}.
  *
  * @author Hans Muller
  * @author Joshua Outwater
+ * @since 1.7
  */
-class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
-        SynthUI {
+public class SynthSpinnerUI extends BasicSpinnerUI
+                            implements PropertyChangeListener, SynthUI {
     private SynthStyle style;
-
+    /**
+     * A FocusListener implementation which causes the entire spinner to be
+     * repainted whenever the editor component (typically a text field) becomes
+     * focused, or loses focus. This is necessary because since SynthSpinnerUI
+     * is composed of an editor and two buttons, it is necessary that all three
+     * components indicate that they are "focused" so that they can be drawn
+     * appropriately. The repaint is used to ensure that the buttons are drawn
+     * in the new focused or unfocused state, mirroring that of the editor.
+     */
+    private EditorFocusHandler editorFocusHandler = new EditorFocusHandler();
 
     /**
      * Returns a new instance of SynthSpinnerUI.
@@ -61,26 +64,40 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
         return new SynthSpinnerUI();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installListeners() {
         super.installListeners();
         spinner.addPropertyChangeListener(this);
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)editor).getTextField();
+            if (tf != null) {
+                tf.addFocusListener(editorFocusHandler);
+            }
+        }
     }
 
     /**
-     * Removes the <code>propertyChangeListener</code> added
-     * by installListeners.
-     * <p>
-     * This method is called by <code>uninstallUI</code>.
-     *
-     * @see #installListeners
+     * @inheritDoc
      */
+    @Override
     protected void uninstallListeners() {
         super.uninstallListeners();
         spinner.removePropertyChangeListener(this);
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)editor).getTextField();
+            if (tf != null) {
+                tf.removeFocusListener(editorFocusHandler);
+            }
+        }
     }
 
     /**
-     * Initialize the <code>JSpinner</code> <code>border</code>,
+     * Initializes the <code>JSpinner</code> <code>border</code>,
      * <code>foreground</code>, and <code>background</code>, properties
      * based on the corresponding "Spinner.*" properties from defaults table.
      * The <code>JSpinners</code> layout is set to the value returned by
@@ -92,6 +109,7 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
      * @see LookAndFeel#installBorder
      * @see LookAndFeel#installColors
      */
+    @Override
     protected void installDefaults() {
         LayoutManager layout = spinner.getLayout();
 
@@ -124,6 +142,7 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
      * @see #installDefaults
      * @see #uninstallUI
      */
+    @Override
     protected void uninstallDefaults() {
         if (spinner.getLayout() instanceof UIResource) {
             spinner.setLayout(null);
@@ -136,25 +155,19 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
         style = null;
     }
 
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected LayoutManager createLayout() {
         return new SpinnerLayout();
     }
 
 
     /**
-     * Create a component that will replace the spinner models value
-     * with the object returned by <code>spinner.getPreviousValue</code>.
-     * By default the <code>previousButton</code> is a JButton
-     * who's <code>ActionListener</code> updates it's <code>JSpinner</code>
-     * ancestors model.  If a previousButton isn't needed (in a subclass)
-     * then override this method to return null.
-     *
-     * @return a component that will replace the spinners model with the
-     *     next value in the sequence, or null
-     * @see #installUI
-     * @see #createNextButton
+     * @inheritDoc
      */
+    @Override
     protected Component createPreviousButton() {
         JButton b = new SynthArrowButton(SwingConstants.SOUTH);
         b.setName("Spinner.previousButton");
@@ -164,18 +177,9 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
 
 
     /**
-     * Create a component that will replace the spinner models value
-     * with the object returned by <code>spinner.getNextValue</code>.
-     * By default the <code>nextButton</code> is a JButton
-     * who's <code>ActionListener</code> updates it's <code>JSpinner</code>
-     * ancestors model.  If a nextButton isn't needed (in a subclass)
-     * then override this method to return null.
-     *
-     * @return a component that will replace the spinners model with the
-     *     next value in the sequence, or null
-     * @see #installUI
-     * @see #createPreviousButton
+     * @inheritDoc
      */
+    @Override
     protected Component createNextButton() {
         JButton b = new SynthArrowButton(SwingConstants.NORTH);
         b.setName("Spinner.nextButton");
@@ -207,6 +211,7 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
      * @see #replaceEditor
      * @see JSpinner#getEditor
      */
+    @Override
     protected JComponent createEditor() {
         JComponent editor = spinner.getEditor();
         editor.setName("Spinner.editor");
@@ -230,9 +235,22 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
      * @see #createEditor
      * @see #createPropertyChangeListener
      */
+    @Override
     protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
         spinner.remove(oldEditor);
         spinner.add(newEditor, "Editor");
+        if (oldEditor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)oldEditor).getTextField();
+            if (tf != null) {
+                tf.removeFocusListener(editorFocusHandler);
+            }
+        }
+        if (newEditor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)newEditor).getTextField();
+            if (tf != null) {
+                tf.addFocusListener(editorFocusHandler);
+            }
+        }
     }
 
     private void updateEditorAlignment(JComponent editor) {
@@ -240,15 +258,23 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
             SynthContext context = getContext(spinner);
             Integer alignment = (Integer)context.getStyle().get(
                     context, "Spinner.editorAlignment");
+            JTextField text = ((JSpinner.DefaultEditor)editor).getTextField();
             if (alignment != null) {
-                JTextField text = ((JSpinner.DefaultEditor)editor).getTextField();
                 text.setHorizontalAlignment(alignment);
+
             }
+            // copy across the sizeVariant property to the editor
+            text.putClientProperty("JComponent.sizeVariant",
+                    spinner.getClientProperty("JComponent.sizeVariant"));
         }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
@@ -256,17 +282,10 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
                     SynthLookAndFeel.getRegion(c), style, state);
     }
 
-
-    private Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
-
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
-    }
-
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -278,6 +297,10 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
     }
 
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -285,10 +308,19 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
         context.dispose();
     }
 
-
+    /**
+     * Paints the specified component. This implementation does nothing.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintSpinnerBorder(context, g, x, y, w, h);
@@ -390,9 +422,11 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
         }
     }
 
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
-        String propertyName = e.getPropertyName();
         JSpinner spinner = (JSpinner)(e.getSource());
         SpinnerUI spinnerUI = spinner.getUI();
 
@@ -402,6 +436,19 @@ class SynthSpinnerUI extends BasicSpinnerUI implements PropertyChangeListener,
             if (SynthLookAndFeel.shouldUpdateStyle(e)) {
                 ui.updateStyle(spinner);
             }
+        }
+    }
+
+    /** Listen to editor text field focus changes and repaint whole spinner */
+    private class EditorFocusHandler implements FocusListener{
+        /** Invoked when a editor text field gains the keyboard focus. */
+        @Override public void focusGained(FocusEvent e) {
+            spinner.repaint();
+        }
+
+        /** Invoked when a editor text field loses the keyboard focus. */
+        @Override public void focusLost(FocusEvent e) {
+            spinner.repaint();
         }
     }
 }

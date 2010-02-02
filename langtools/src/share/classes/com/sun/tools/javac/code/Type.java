@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1008,11 +1008,10 @@ public class Type implements PrimitiveType {
         @Override
         public String toString() {
             return "capture#"
-                + (hashCode() & 0xFFFFFFFFL) % PRIME
+                + (hashCode() & 0xFFFFFFFFL) % Printer.PRIME
                 + " of "
                 + wildcard;
         }
-        static final int PRIME = 997;  // largest prime less than 1000
     }
 
     public static abstract class DelegatedType extends Type {
@@ -1065,6 +1064,57 @@ public class Type implements PrimitiveType {
 
         public boolean isErroneous()  {
             return qtype.isErroneous();
+        }
+
+        /**
+         * Replaces this ForAll's typevars with a set of concrete Java types
+         * and returns the instantiated generic type. Subclasses should override
+         * in order to check that the list of types is a valid instantiation
+         * of the ForAll's typevars.
+         *
+         * @param actuals list of actual types
+         * @param types types instance
+         * @return qtype where all occurrences of tvars are replaced
+         * by types in actuals
+         */
+        public Type inst(List<Type> actuals, Types types) {
+            return types.subst(qtype, tvars, actuals);
+        }
+
+        /**
+         * Kind of type-constraint derived during type inference
+         */
+        public enum ConstraintKind {
+            /**
+             * upper bound constraint (a type variable must be instantiated
+             * with a type T, where T is a subtype of all the types specified by
+             * its EXTENDS constraints).
+             */
+            EXTENDS,
+            /**
+             * lower bound constraint (a type variable must be instantiated
+             * with a type T, where T is a supertype of all the types specified by
+             * its SUPER constraints).
+             */
+            SUPER,
+            /**
+             * equality constraint (a type variable must be instantiated to the type
+             * specified by its EQUAL constraint.
+             */
+            EQUAL;
+        }
+
+        /**
+         * Get the type-constraints of a given kind for a given type-variable of
+         * this ForAll type. Subclasses should override in order to return more
+         * accurate sets of constraints.
+         *
+         * @param tv the type-variable for which the constraint is to be retrieved
+         * @param ck the constraint kind to be retrieved
+         * @return the list of types specified by the selected constraint
+         */
+        public List<Type> getConstraints(TypeVar tv, ConstraintKind ck) {
+            return List.nil();
         }
 
         public Type map(Mapping f) {

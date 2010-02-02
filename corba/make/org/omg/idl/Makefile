@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@ BUILDDIR = ../../..
 PACKAGE = com.sun.tools.corba.se.idl
 PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
+
+# This program must contain a manifest that defines the execution level
+# needed to follow standard Vista User Access Control Guidelines
+# This must be set before Program.gmk is included
+#
+BUILD_MANIFEST=true
 
 #
 # Files

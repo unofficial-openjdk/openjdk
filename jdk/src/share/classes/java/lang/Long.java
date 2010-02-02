@@ -1,5 +1,5 @@
 /*
- * Copyright 1994-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1994-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -510,7 +510,7 @@ public final class Long extends Number implements Comparable<Long> {
      *             contain a parsable {@code long}.
      */
     public static Long valueOf(String s, int radix) throws NumberFormatException {
-        return new Long(parseLong(s, radix));
+        return Long.valueOf(parseLong(s, radix));
     }
 
     /**
@@ -537,7 +537,7 @@ public final class Long extends Number implements Comparable<Long> {
      */
     public static Long valueOf(String s) throws NumberFormatException
     {
-        return new Long(parseLong(s, 10));
+        return Long.valueOf(parseLong(s, 10));
     }
 
     private static class LongCache {
@@ -559,6 +559,11 @@ public final class Long extends Number implements Comparable<Long> {
      * {@link #Long(long)}, as this method is likely to yield
      * significantly better space and time performance by caching
      * frequently requested values.
+     *
+     * Note that unlike the {@linkplain Integer#valueOf(int)
+     * corresponding method} in the {@code Integer} class, this method
+     * is <em>not</em> required to cache values within a particular
+     * range.
      *
      * @param  l a long value.
      * @return a {@code Long} instance representing {@code l}.
@@ -650,7 +655,7 @@ public final class Long extends Number implements Comparable<Long> {
 
         try {
             result = Long.valueOf(nm.substring(index), radix);
-            result = negative ? new Long(-result.longValue()) : result;
+            result = negative ? Long.valueOf(-result.longValue()) : result;
         } catch (NumberFormatException e) {
             // If number is Long.MIN_VALUE, we'll end up here. The next line
             // handles this case, and causes any genuine format error to be
@@ -756,7 +761,7 @@ public final class Long extends Number implements Comparable<Long> {
      *          base&nbsp;10.
      */
     public String toString() {
-        return String.valueOf(value);
+        return toString(value);
     }
 
     /**
@@ -869,7 +874,7 @@ public final class Long extends Number implements Comparable<Long> {
      */
     public static Long getLong(String nm, long val) {
         Long result = Long.getLong(nm, null);
-        return (result == null) ? new Long(val) : result;
+        return (result == null) ? Long.valueOf(val) : result;
     }
 
     /**
@@ -945,9 +950,25 @@ public final class Long extends Number implements Comparable<Long> {
      * @since   1.2
      */
     public int compareTo(Long anotherLong) {
-        long thisVal = this.value;
-        long anotherVal = anotherLong.value;
-        return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
+        return compare(this.value, anotherLong.value);
+    }
+
+    /**
+     * Compares two {@code long} values numerically.
+     * The value returned is identical to what would be returned by:
+     * <pre>
+     *    Long.valueOf(x).compareTo(Long.valueOf(y))
+     * </pre>
+     *
+     * @param  x the first {@code long} to compare
+     * @param  y the second {@code long} to compare
+     * @return the value {@code 0} if {@code x == y};
+     *         a value less than {@code 0} if {@code x < y}; and
+     *         a value greater than {@code 0} if {@code x > y}
+     * @since 1.7
+     */
+    public static int compare(long x, long y) {
+        return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
 

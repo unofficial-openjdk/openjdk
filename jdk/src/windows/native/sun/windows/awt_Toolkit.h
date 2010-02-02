@@ -50,7 +50,6 @@
 
 #include "awt.h"
 #include "awtmsg.h"
-#include "awt_Multimon.h"
 #include "Trace.h"
 
 #include "sun_awt_windows_WToolkit.h"
@@ -61,6 +60,14 @@ class AwtDropTarget;
 
 typedef VOID (CALLBACK* IDLEPROC)(VOID);
 typedef BOOL (CALLBACK* PEEKMESSAGEPROC)(MSG&);
+
+// Struct for _WInputMethod_enable|disableNativeIME method
+struct EnableNativeIMEStruct {
+    jobject self;
+    jobject peer;
+    jint context;
+    jboolean useNativeCompWindow;
+};
 
 /*
  * class JNILocalFrame
@@ -89,11 +96,8 @@ class JNILocalFrame {
  */
 class CriticalSection {
   public:
-    INLINE  CriticalSection() { ::InitializeCriticalSection(&rep);
-                                ::InitializeCriticalSection(&tryrep);
-                                tryEntered = 0; }
-    INLINE ~CriticalSection() { ::DeleteCriticalSection(&rep);
-                                ::DeleteCriticalSection(&tryrep); }
+    INLINE  CriticalSection() { ::InitializeCriticalSection(&rep); }
+    INLINE ~CriticalSection() { ::DeleteCriticalSection(&rep); }
 
     class Lock {
       public:
@@ -111,50 +115,18 @@ class CriticalSection {
   private:
     CRITICAL_SECTION rep;
 
-    CRITICAL_SECTION tryrep;
-    long tryEntered;
-
     CriticalSection(const CriticalSection&);
     const CriticalSection& operator =(const CriticalSection&);
 
   public:
-    virtual void    Enter           (void)
-    {
-        ::EnterCriticalSection(&tryrep);
-        tryEntered++;
-        if (tryEntered == 1) {
-            ::EnterCriticalSection(&rep);
-            ::LeaveCriticalSection(&tryrep);
-        } else {
-            ::LeaveCriticalSection(&tryrep);
-            ::EnterCriticalSection(&rep);
-        }
+    virtual void Enter() {
+        ::EnterCriticalSection(&rep);
     }
-    // we cannot use ::TryEnterCriticalSection as it is not supported on Win9x/Me
-    virtual BOOL    TryEnter        (void)
-    {
-        BOOL result = FALSE;
-        ::EnterCriticalSection(&tryrep);
-        if (tryEntered == 0) {
-            ::EnterCriticalSection(&rep);
-            tryEntered++;
-            result = TRUE;
-        }
-        ::LeaveCriticalSection(&tryrep);
-        return result;
+    virtual BOOL TryEnter() {
+        return ::TryEnterCriticalSection(&rep);
     }
-    virtual void    Leave           (void)
-    {
-        ::EnterCriticalSection(&tryrep);
-        if (tryEntered > 0) {
-            tryEntered--;
-        } else {
-            // this may happen only if we call to Leave() before
-            // Enter() so this is definitely a bug
-            DASSERT(FALSE);
-        }
+    virtual void Leave() {
         ::LeaveCriticalSection(&rep);
-        ::LeaveCriticalSection(&tryrep);
     }
 };
 
@@ -211,6 +183,8 @@ public:
     BOOL IsDynamicLayoutSet();
     BOOL IsDynamicLayoutSupported();
     BOOL IsDynamicLayoutActive();
+    BOOL areExtraMouseButtonsEnabled();
+    void setExtraMouseButtonsEnabled(BOOL enable);
 
     INLINE BOOL localPump() { return m_localPump; }
     INLINE BOOL VerifyComponents() { return FALSE; } // TODO: Use new DebugHelper class to set this flag
@@ -244,6 +218,8 @@ public:
                                              LPARAM lParam);
     static LRESULT CALLBACK ForegroundIdleFilter(int code, WPARAM wParam,
                                                  LPARAM lParam);
+    static LRESULT CALLBACK MouseLowLevelHook(int code, WPARAM wParam,
+            LPARAM lParam);
 
     INLINE static AwtToolkit& GetInstance() { return theInstance; }
     INLINE void SetPeer(JNIEnv *env, jobject wToolkit) {
@@ -345,6 +321,30 @@ public:
     HICON GetAwtIcon();
     HICON GetAwtIconSm();
 
+    // Calculate a wave-like value out of the integer 'value' and
+    // the specified period.
+    // The argument 'value' is an integer 0, 1, 2, ... *infinity*.
+    //
+    // Examples:
+    //    Period == 3
+    //    Generated sequence: 0 1 2 1 0 .....
+    //
+    //    Period == 4
+    //    Generated sequence: 0 1 2 3 2 1 0 .....
+    static inline UINT CalculateWave(UINT value, const UINT period) {
+        if (period < 2) {
+            return 0;
+        }
+        // -2 is necessary to avoid repeating extreme values (0 and period-1)
+        value %= period * 2 -2;
+        if (value >= period) {
+            value = period * 2 -2 - value;
+        }
+        return value;
+    }
+
+    HICON GetSecurityWarningIcon(UINT index, UINT w, UINT h);
+
     /* Turns on/off dialog modality for the system. */
     INLINE AwtDialog* SetModal(AwtDialog* frame) {
         AwtDialog* previousDialog = m_pModalDialog;
@@ -387,6 +387,7 @@ private:
     BOOL m_verbose;
     BOOL m_isActive; // set to FALSE at beginning of Dispose
     BOOL m_isDisposed; // set to TRUE at end of Dispose
+    BOOL m_areExtraMouseButtonsEnabled;
 
     BOOL m_vmSignalled; // set to TRUE if QUERYENDSESSION has successfully
                         // raised SIGTERM
@@ -401,6 +402,7 @@ private:
     BOOL                m_mouseDown;
 
     HHOOK m_hGetMessageHook;
+    HHOOK m_hMouseLLHook;
     UINT_PTR  m_timer;
 
     class AwtCmdIDList* m_cmdIDs;
@@ -440,10 +442,28 @@ public:
 
  private:
     static JNIEnv *m_env;
-    static HANDLE m_thread;
+    static DWORD m_threadId;
  public:
     static void SetEnv(JNIEnv *env);
     static JNIEnv* GetEnv();
+
+    static BOOL GetScreenInsets(int screenNum, RECT * rect);
+
+    // If the DWM is active, this function uses
+    // DwmGetWindowAttribute()/DWMWA_EXTENDED_FRAME_BOUNDS.
+    // Otherwise, fall back to regular ::GetWindowRect().
+    // See 6711576 for more details.
+    static void GetWindowRect(HWND hWnd, LPRECT lpRect);
+
+ private:
+    // The window handle of a toplevel window last seen under the mouse cursor.
+    // See MouseLowLevelHook() for details.
+    HWND m_lastWindowUnderMouse;
+ public:
+    HWND GetWindowUnderMouse() { return m_lastWindowUnderMouse; }
+
+    void InstallMouseLowLevelHook();
+    void UninstallMouseLowLevelHook();
 };
 
 /*

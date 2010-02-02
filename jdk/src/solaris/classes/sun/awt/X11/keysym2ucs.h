@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@
  */
 
 tojava /*
-tojava  * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+tojava  * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 tojava  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 tojava  *
 tojava  * This code is free software; you can redistribute it and/or modify it
@@ -66,6 +66,8 @@ tojava
 tojava package sun.awt.X11;
 tojava import java.util.Hashtable;
 tojava import sun.misc.Unsafe;
+tojava
+tojava import sun.util.logging.PlatformLogger;
 tojava
 tojava public class XKeysym {
 tojava
@@ -101,8 +103,13 @@ tojava     static Hashtable<Long, Long> uppercaseHash = new Hashtable<Long, Long
 tojava     // TODO: or not to do: add reverse lookup javakeycode2keysym,
 tojava     // for robot only it seems to me. After that, we can remove lookup table
 tojava     // from XWindow.c altogether.
+tojava     // Another use for reverse lookup: query keyboard state, for some keys.
+tojava     static Hashtable<Integer, Long> javaKeycode2KeysymHash = new Hashtable<Integer, Long>();
 tojava     static long keysym_lowercase = unsafe.allocateMemory(Native.getLongSize());
 tojava     static long keysym_uppercase = unsafe.allocateMemory(Native.getLongSize());
+tojava     static Keysym2JavaKeycode kanaLock = new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_KANA_LOCK,
+tojava                                                                 java.awt.event.KeyEvent.KEY_LOCATION_STANDARD);
+tojava     private static PlatformLogger keyEventLog = PlatformLogger.getLogger("sun.awt.X11.kye.XKeysym");
 tojava     public static char convertKeysym( long ks, int state ) {
 tojava
 tojava         /* First check for Latin-1 characters (1:1 mapping) */
@@ -125,19 +132,59 @@ tojava
 tojava         Character ch = keysym2UCSHash.get(ks);
 tojava         return ch == null ? (char)0 : ch.charValue();
 tojava     }
-tojava     static long xkeycode2keysym(XKeyEvent ev, int ndx) {
+tojava     static long xkeycode2keysym_noxkb(XKeyEvent ev, int ndx) {
 tojava         XToolkit.awtLock();
 tojava         try {
-tojava             return XlibWrapper.XKeycodeToKeysym(ev.get_display(), ev.get_keycode(), ndx );
+tojava             return XlibWrapper.XKeycodeToKeysym(ev.get_display(), ev.get_keycode(), ndx);
 tojava         } finally {
 tojava             XToolkit.awtUnlock();
 tojava         }
+tojava     }
+tojava     static long xkeycode2keysym_xkb(XKeyEvent ev, int ndx) {
+tojava         XToolkit.awtLock();
+tojava         try {
+tojava             int mods = ev.get_state();
+tojava             if ((ndx == 0) && ((mods & XConstants.ShiftMask) != 0)) {
+tojava                 // I don't know all possible meanings of 'ndx' in case of XKB
+tojava                 // and don't want to speculate. But this particular case
+tojava                 // clearly means that caller needs a so called primary keysym.
+tojava                 mods ^= XConstants.ShiftMask;
+tojava             }
+tojava             long kbdDesc = XToolkit.getXKBKbdDesc();
+tojava             if( kbdDesc != 0 ) {
+tojava                 XlibWrapper.XkbTranslateKeyCode(kbdDesc, ev.get_keycode(),
+tojava                        mods, XlibWrapper.iarg1, XlibWrapper.larg3);
+tojava             }else{
+tojava                 // xkb resources already gone
+tojava                 keyEventLog.fine("Thread race: Toolkit shutdown before the end of a key event processing.");
+tojava                 return 0;
+tojava             }
+tojava             //XXX unconsumed modifiers?
+tojava             return Native.getLong(XlibWrapper.larg3);
+tojava         } finally {
+tojava             XToolkit.awtUnlock();
+tojava         }
+tojava     }
+tojava     static long xkeycode2keysym(XKeyEvent ev, int ndx) {
+tojava         XToolkit.awtLock();
+tojava         try {
+tojava             if (XToolkit.canUseXKBCalls()) {
+tojava                 return xkeycode2keysym_xkb(ev, ndx);
+tojava             }else{
+tojava                 return xkeycode2keysym_noxkb(ev, ndx);
+tojava             }
+tojava         } finally {
+tojava             XToolkit.awtUnlock();
+tojava         }
+tojava     }
+tojava     static long xkeycode2primary_keysym(XKeyEvent ev) {
+tojava         return xkeycode2keysym(ev, 0);
 tojava     }
 tojava     public static boolean isKPEvent( XKeyEvent ev )
 tojava     {
 tojava         // Xsun without XKB uses keysymarray[2] keysym to determine if it is KP event.
 tojava         // Otherwise, it is [1].
-tojava         int ndx = XToolkit.isXsunServer() &&
+tojava         int ndx = XToolkit.isXsunKPBehavior() &&
 tojava                   ! XToolkit.isXKBenabled() ? 2 : 1;
 tojava         // Even if XKB is enabled, we have another problem: some symbol tables (e.g. cz) force
 tojava         // a regular comma instead of KP_comma for a decimal separator. Result is,
@@ -185,7 +232,7 @@ tojava     */
 tojava     private static long getKeypadKeysym( XKeyEvent ev ) {
 tojava         int ndx = 0;
 tojava         long keysym = XConstants.NoSymbol;
-tojava         if( XToolkit.isXsunServer() &&
+tojava         if( XToolkit.isXsunKPBehavior() &&
 tojava             ! XToolkit.isXKBenabled() ) {
 tojava             if( (ev.get_state() & XConstants.ShiftMask) != 0 ) { // shift modifier is on
 tojava                 ndx = 3;
@@ -207,12 +254,35 @@ tojava             }
 tojava         }
 tojava         return keysym;
 tojava     }
+tojava
+tojava     /**
+tojava         Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X keysym.
+tojava         Some keysyms maps to more than one keycode, these would require extra processing.
+tojava     */
+tojava     static Keysym2JavaKeycode getJavaKeycode( long keysym ) {
+tojava         if(keysym == XKeySymConstants.XK_Mode_switch){
+tojava            /* XK_Mode_switch on solaris maps either to VK_ALT_GRAPH (default) or VK_KANA_LOCK */
+tojava            if( XToolkit.isKanaKeyboard() ) {
+tojava                return kanaLock;
+tojava            }
+tojava         }else if(keysym == XKeySymConstants.XK_L1){
+tojava            /* if it is Sun keyboard, trick hash to return VK_STOP else VK_F11 (default) */
+tojava            if( XToolkit.isSunKeyboard() ) {
+tojava                keysym = XKeySymConstants.SunXK_Stop;
+tojava            }
+tojava         }else if(keysym == XKeySymConstants.XK_L2) {
+tojava            /* if it is Sun keyboard, trick hash to return VK_AGAIN else VK_F12 (default) */
+tojava            if( XToolkit.isSunKeyboard() ) {
+tojava                keysym = XKeySymConstants.SunXK_Again;
+tojava            }
+tojava         }
+tojava
+tojava         return  keysym2JavaKeycodeHash.get( keysym );
+tojava     }
 tojava     /**
 tojava         Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X Window KeyEvent.
 tojava         Algorithm is, extract via XKeycodeToKeysym  a proper keysym according to Xlib spec rules and
 tojava         err exceptions, then search a java keycode in a table.
-tojava         Some keysyms maps to more than one keycode, these would require extra processing. If someone
-tojava         points me to such a keysym.
 tojava     */
 tojava     static Keysym2JavaKeycode getJavaKeycode( XKeyEvent ev ) {
 tojava         // get from keysym2JavaKeycodeHash.
@@ -227,12 +297,37 @@ tojava             ndx = 0;
 tojava             keysym = xkeycode2keysym(ev, ndx);
 tojava         }
 tojava
-tojava         Keysym2JavaKeycode jkc = keysym2JavaKeycodeHash.get( keysym );
+tojava         Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
 tojava         return jkc;
 tojava     }
 tojava     static int getJavaKeycodeOnly( XKeyEvent ev ) {
 tojava         Keysym2JavaKeycode jkc = getJavaKeycode( ev );
 tojava         return jkc == null ? java.awt.event.KeyEvent.VK_UNDEFINED : jkc.getJavaKeycode();
+tojava     }
+tojava     /**
+tojava      * Return an integer java keycode apprx as it was before extending keycodes range.
+tojava      * This call would ignore for instance XKB and process whatever is on the bottom
+tojava      * of keysym stack. Result will not depend on actual locale, will differ between
+tojava      * dual/multiple keyboard setup systems (e.g. English+Russian vs French+Russian)
+tojava      * but will be someway compatible with old releases.
+tojava      */
+tojava     static int getLegacyJavaKeycodeOnly( XKeyEvent ev ) {
+tojava         long keysym = XConstants.NoSymbol;
+tojava         int ndx = 0;
+tojava         if( (ev.get_state() & XToolkit.numLockMask) != 0 &&
+tojava              isKPEvent(ev)) {
+tojava             keysym = getKeypadKeysym( ev );
+tojava         } else {
+tojava             // we only need primary-layer keysym to derive a java keycode.
+tojava             ndx = 0;
+tojava             keysym = xkeycode2keysym_noxkb(ev, ndx);
+tojava         }
+tojava         Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
+tojava         return jkc == null ? java.awt.event.KeyEvent.VK_UNDEFINED : jkc.getJavaKeycode();
+tojava     }
+tojava     static long javaKeycode2Keysym( int jkey ) {
+tojava         Long ks = javaKeycode2KeysymHash.get( jkey );
+tojava         return  (ks == null ? 0 : ks.longValue());
 tojava     }
 tojava     /**
 tojava         Return keysym derived from a keycode and modifiers.
@@ -578,7 +673,7 @@ SOFTWARE.
 0x0000 #define    XK_ISO_Last_Group                0xFE0E
 0x0000 #define    XK_ISO_Last_Group_Lock                0xFE0F
 
-0x0000 #define    XK_ISO_Left_Tab                    0xFE20
+0x0009 #define    XK_ISO_Left_Tab                    0xFE20
 0x0000 #define    XK_ISO_Move_Line_Up                0xFE21
 0x0000 #define    XK_ISO_Move_Line_Down                0xFE22
 0x0000 #define    XK_ISO_Partial_Line_Up                0xFE23
@@ -2634,6 +2729,14 @@ tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.hpXK_mu
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.hpXK_mute_asciitilde),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_DEAD_TILDE, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XConstants.NoSymbol),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDEFINED, java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN));
+tojava
+tojava         /* Reverse search of keysym by keycode. */
+tojava
+tojava         /* Add keyboard locking codes. */
+tojava         javaKeycode2KeysymHash.put( java.awt.event.KeyEvent.VK_CAPS_LOCK, XKeySymConstants.XK_Caps_Lock);
+tojava         javaKeycode2KeysymHash.put( java.awt.event.KeyEvent.VK_NUM_LOCK, XKeySymConstants.XK_Num_Lock);
+tojava         javaKeycode2KeysymHash.put( java.awt.event.KeyEvent.VK_SCROLL_LOCK, XKeySymConstants.XK_Scroll_Lock);
+tojava         javaKeycode2KeysymHash.put( java.awt.event.KeyEvent.VK_KANA_LOCK, XKeySymConstants.XK_Kana_Lock);
 tojava     };
 tojava
 tojava }

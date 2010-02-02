@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -453,6 +453,19 @@ public class Code {
         if (!alive) return;
         emit2(meth);
         state.pop(argsize + 1);
+        state.push(mtype.getReturnType());
+    }
+
+    /** Emit an invokedynamic instruction.
+     */
+    public void emitInvokedynamic(int desc, Type mtype) {
+        // N.B. this format is under consideration by the JSR 292 EG
+        int argsize = width(mtype.getParameterTypes());
+        emitop(invokedynamic);
+        if (!alive) return;
+        emit2(desc);
+        emit2(0);
+        state.pop(argsize);
         state.push(mtype.getReturnType());
     }
 
@@ -1899,10 +1912,27 @@ public class Code {
                 if (length < Character.MAX_VALUE) {
                     v.length = length;
                     putVar(v);
+                    fillLocalVarPosition(v);
                 }
             }
         }
         state.defined.excl(adr);
+    }
+
+    private void fillLocalVarPosition(LocalVar lv) {
+        if (lv == null || lv.sym == null
+                || lv.sym.typeAnnotations == null)
+            return;
+        for (Attribute.TypeCompound ta : lv.sym.typeAnnotations) {
+            TypeAnnotationPosition p = ta.position;
+            while (p != null) {
+                p.lvarOffset[0] = (int)lv.start_pc;
+                p.lvarLength[0] = (int)lv.length;
+                p.lvarIndex[0] = (int)lv.reg;
+                p.isValidOffset = true;
+                p = p.wildcard_position;
+            }
+        }
     }
 
     /** Put a live variable range into the buffer to be output to the
@@ -2156,7 +2186,7 @@ public class Code {
             mnem[invokespecial] = "invokespecial";
             mnem[invokestatic] = "invokestatic";
             mnem[invokeinterface] = "invokeinterface";
-            // mnem[___unused___] = "___unused___";
+            mnem[invokedynamic] = "invokedynamic";
             mnem[new_] = "new_";
             mnem[newarray] = "newarray";
             mnem[anewarray] = "anewarray";

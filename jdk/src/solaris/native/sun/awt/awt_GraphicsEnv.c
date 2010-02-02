@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,42 +175,11 @@ Java_sun_awt_X11GraphicsDevice_initIDs (JNIEnv *env, jclass cls)
 }
 
 #ifndef HEADLESS
+
 /*
- * error handlers
+ * XIOErrorHandler
  */
-
-int
-xerror_handler(Display * disp, XErrorEvent * err)
-{
-/* #ifdef DEBUG */
-    char msg[128];
-    char buf[128];
-    char *ev = getenv("NOISY_AWT");
-
-    if (!ev || !ev[0])
-        return 0;
-    XGetErrorText(disp, err->error_code, msg, sizeof(msg));
-    jio_fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid, err->serial);
-    jio_snprintf(buf, sizeof(buf), "%d", err->request_code);
-    XGetErrorDatabaseText(disp, "XRequest", buf, "Unknown", msg, sizeof(msg));
-    jio_fprintf(stderr, "Major opcode %d (%s)\n", err->request_code, msg);
-    if (err->request_code > 128) {
-        jio_fprintf(stderr, "Minor opcode %d\n", err->minor_code);
-    }
-    if (awtLockInited) {
-        /*SignalError(lockedee->lastpc, lockedee, "fp/ade/gui/GUIException", msg); */
-    }
-    if (strcasecmp(ev, "abort") == 0) {
-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-
-        (*env)->FatalError(env, "xerror_handler abort");
-    }
-/* #endif */
-    return 0;
-}
-
-static int
-xioerror_handler(Display * disp)
+static int xioerror_handler(Display *disp)
 {
     if (awtLockInited) {
         if (errno == EPIPE) {
@@ -367,6 +336,9 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
     int ind;
     char errmsg[128];
     int xinawareScreen;
+    void* xrenderLibHandle = NULL;
+    XRenderFindVisualFormatFunc* xrenderFindVisualFormat = NULL;
+    int major_opcode, first_event, first_error;
 
     if (usingXinerama) {
         xinawareScreen = 0;
@@ -449,6 +421,26 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
     graphicsConfigs[0] = defaultConfig;
     nConfig = 1; /* reserve index 0 for default config */
 
+    // Only use the RENDER extension if it is available on the X server
+    if (XQueryExtension(awt_display, "RENDER",
+                        &major_opcode, &first_event, &first_error))
+    {
+        xrenderLibHandle = dlopen("libXrender.so.1", RTLD_LAZY | RTLD_GLOBAL);
+
+#ifndef __linux__ /* SOLARIS */
+        if (xrenderLibHandle == NULL) {
+            xrenderLibHandle = dlopen("/usr/sfw/lib/libXrender.so.1",
+                                      RTLD_LAZY | RTLD_GLOBAL);
+        }
+#endif
+
+        if (xrenderLibHandle != NULL) {
+            xrenderFindVisualFormat =
+                (XRenderFindVisualFormatFunc*)dlsym(xrenderLibHandle,
+                                                    "XRenderFindVisualFormat");
+        }
+    }
+
     for (i = 0; i < nTrue; i++) {
         if (XVisualIDFromVisual(pVITrue[i].visual) ==
             XVisualIDFromVisual(defaultConfig->awt_visInfo.visual) ||
@@ -462,6 +454,23 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         graphicsConfigs [ind]->awt_depth = pVITrue [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVITrue [i],
                 sizeof (XVisualInfo));
+       if (xrenderFindVisualFormat != NULL) {
+            XRenderPictFormat *format = xrenderFindVisualFormat (awt_display,
+                    pVITrue [i].visual);
+            if (format &&
+                format->type == PictTypeDirect &&
+                format->direct.alphaMask)
+            {
+                graphicsConfigs [ind]->isTranslucencySupported = 1;
+                memcpy(&graphicsConfigs [ind]->renderPictFormat, format,
+                        sizeof(*format));
+            }
+        }
+    }
+
+    if (xrenderLibHandle != NULL) {
+        dlclose(xrenderLibHandle);
+        xrenderLibHandle = NULL;
     }
 
     for (i = 0; i < n8p; i++) {
@@ -806,7 +815,6 @@ awt_init_Display(JNIEnv *env, jobject this)
         return NULL;
     }
 
-    XSetErrorHandler(xerror_handler);
     XSetIOErrorHandler(xioerror_handler);
 
     /* set awt_numScreens, and whether or not we're using Xinerama */
@@ -1506,6 +1514,26 @@ Java_sun_awt_X11GraphicsConfig_swapBuffers
 }
 
 /*
+ * Class:     sun_awt_X11GraphicsConfig
+ * Method:    isTranslucencyCapable
+ * Signature: (J)V
+ */
+JNIEXPORT jboolean JNICALL
+Java_sun_awt_X11GraphicsConfig_isTranslucencyCapable
+    (JNIEnv *env, jobject this, jlong configData)
+{
+#ifdef HEADLESS
+    return JNI_FALSE;
+#else
+    AwtGraphicsConfigDataPtr aData = (AwtGraphicsConfigDataPtr)jlong_to_ptr(configData);
+    if (aData == NULL) {
+        return JNI_FALSE;
+    }
+    return (jboolean)aData->isTranslucencySupported;
+#endif
+}
+
+/*
  * Class:     sun_awt_X11GraphicsDevice
  * Method:    isDBESupported
  * Signature: ()Z
@@ -1626,6 +1654,7 @@ Java_sun_awt_X11GraphicsEnvironment_getXineramaCenterPoint(JNIEnv *env,
 #ifndef HEADLESS
 
 #define BIT_DEPTH_MULTI java_awt_DisplayMode_BIT_DEPTH_MULTI
+#define REFRESH_RATE_UNKNOWN java_awt_DisplayMode_REFRESH_RATE_UNKNOWN
 
 typedef Status
     (*XRRQueryVersionType) (Display *dpy, int *major_versionp, int *minor_versionp);
@@ -1652,6 +1681,9 @@ typedef Status
                                      Rotation rotation,
                                      short rate,
                                      Time timestamp);
+typedef Rotation
+    (*XRRConfigRotationsType)(XRRScreenConfiguration *config,
+                              Rotation *current_rotation);
 
 static XRRQueryVersionType               awt_XRRQueryVersion;
 static XRRGetScreenInfoType              awt_XRRGetScreenInfo;
@@ -1661,6 +1693,7 @@ static XRRConfigCurrentRateType          awt_XRRConfigCurrentRate;
 static XRRConfigSizesType                awt_XRRConfigSizes;
 static XRRConfigCurrentConfigurationType awt_XRRConfigCurrentConfiguration;
 static XRRSetScreenConfigAndRateType     awt_XRRSetScreenConfigAndRate;
+static XRRConfigRotationsType            awt_XRRConfigRotations;
 
 #define LOAD_XRANDR_FUNC(f) \
     do { \
@@ -1727,6 +1760,7 @@ X11GD_InitXrandrFuncs(JNIEnv *env)
     LOAD_XRANDR_FUNC(XRRConfigSizes);
     LOAD_XRANDR_FUNC(XRRConfigCurrentConfiguration);
     LOAD_XRANDR_FUNC(XRRSetScreenConfigAndRate);
+    LOAD_XRANDR_FUNC(XRRConfigRotations);
 
     return JNI_TRUE;
 }
@@ -1737,6 +1771,7 @@ X11GD_CreateDisplayMode(JNIEnv *env, jint width, jint height,
 {
     jclass displayModeClass;
     jmethodID cid;
+    jint validRefreshRate = refreshRate;
 
     displayModeClass = (*env)->FindClass(env, "java/awt/DisplayMode");
     if (JNU_IsNull(env, displayModeClass)) {
@@ -1752,8 +1787,13 @@ X11GD_CreateDisplayMode(JNIEnv *env, jint width, jint height,
         return NULL;
     }
 
+    // early versions of xrandr may report "empty" rates (6880694)
+    if (validRefreshRate <= 0) {
+        validRefreshRate = REFRESH_RATE_UNKNOWN;
+    }
+
     return (*env)->NewObject(env, displayModeClass, cid,
-                             width, height, bitDepth, refreshRate);
+                             width, height, bitDepth, validRefreshRate);
 }
 
 static void
@@ -1898,8 +1938,7 @@ Java_sun_awt_X11GraphicsDevice_getCurrentDisplayMode
         curRate = awt_XRRConfigCurrentRate(config);
 
         if ((sizes != NULL) &&
-            (curSizeIndex < nsizes) &&
-            (curRate > 0))
+            (curSizeIndex < nsizes))
         {
             XRRScreenSize curSize = sizes[curSizeIndex];
             displayMode = X11GD_CreateDisplayMode(env,
@@ -1976,6 +2015,7 @@ Java_sun_awt_X11GraphicsDevice_configDisplayMode
     jboolean success = JNI_FALSE;
     XRRScreenConfiguration *config;
     Drawable root;
+    Rotation currentRotation = RR_Rotate_0;
 
     AWT_LOCK();
 
@@ -1987,6 +2027,7 @@ Java_sun_awt_X11GraphicsDevice_configDisplayMode
         short chosenRate = -1;
         int nsizes;
         XRRScreenSize *sizes = awt_XRRConfigSizes(config, &nsizes);
+        awt_XRRConfigRotations(config, &currentRotation);
 
         if (sizes != NULL) {
             int i, j;
@@ -2020,7 +2061,7 @@ Java_sun_awt_X11GraphicsDevice_configDisplayMode
             Status status =
                 awt_XRRSetScreenConfigAndRate(awt_display, config, root,
                                               chosenSizeIndex,
-                                              RR_Rotate_0,
+                                              currentRotation,
                                               chosenRate,
                                               CurrentTime);
 

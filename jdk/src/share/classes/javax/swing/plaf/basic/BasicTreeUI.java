@@ -30,16 +30,12 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.datatransfer.*;
-import java.awt.dnd.*;
 import java.beans.*;
-import java.io.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.TooManyListenersException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import javax.swing.plaf.ActionMapUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.TreeUI;
@@ -1244,11 +1240,26 @@ public class BasicTreeUI extends TreeUI
         drawingCache.clear();
     }
 
-    private boolean isDropLine(JTree.DropLocation loc) {
+    /**
+     * Tells if a {@code DropLocation} should be indicated by a line between
+     * nodes. This is meant for {@code javax.swing.DropMode.INSERT} and
+     * {@code javax.swing.DropMode.ON_OR_INSERT} drop modes.
+     *
+     * @param loc a {@code DropLocation}
+     * @return {@code true} if the drop location should be shown as a line
+     * @since 1.7
+     */
+    protected boolean isDropLine(JTree.DropLocation loc) {
         return loc != null && loc.getPath() != null && loc.getChildIndex() != -1;
     }
 
-    private void paintDropLine(Graphics g) {
+    /**
+     * Paints the drop line.
+     *
+     * @param g {@code Graphics} object to draw on
+     * @since 1.7
+     */
+    protected void paintDropLine(Graphics g) {
         JTree.DropLocation loc = tree.getDropLocation();
         if (!isDropLine(loc)) {
             return;
@@ -1262,7 +1273,14 @@ public class BasicTreeUI extends TreeUI
         }
     }
 
-    private Rectangle getDropLineRect(JTree.DropLocation loc) {
+    /**
+     * Returns a ubounding box for the drop line.
+     *
+     * @param loc a {@code DropLocation}
+     * @return bounding box for the drop line
+     * @since 1.7
+     */
+    protected Rectangle getDropLineRect(JTree.DropLocation loc) {
         Rectangle rect;
         TreePath path = loc.getPath();
         int index = loc.getChildIndex();
@@ -1684,7 +1702,7 @@ public class BasicTreeUI extends TreeUI
                     treeState.setExpandedState(path, true);
                 }
             }
-            updateLeadRow();
+            updateLeadSelectionRow();
             updateSize();
         }
     }
@@ -2265,7 +2283,7 @@ public class BasicTreeUI extends TreeUI
      */
     protected boolean isToggleSelectionEvent(MouseEvent event) {
         return (SwingUtilities.isLeftMouseButton(event) &&
-                event.isControlDown());
+                BasicGraphicsUtils.isMenuShortcutKeyDown(event));
     }
 
     /**
@@ -2402,24 +2420,44 @@ public class BasicTreeUI extends TreeUI
         }
         leadRow = getRowForPath(tree, newPath);
 
-        if(repaint) {
-            if(bounds != null)
-                tree.repaint(bounds);
+        if (repaint) {
+            if (bounds != null) {
+                tree.repaint(getRepaintPathBounds(bounds));
+            }
             bounds = getPathBounds(tree, newPath);
-            if(bounds != null)
-                tree.repaint(bounds);
+            if (bounds != null) {
+                tree.repaint(getRepaintPathBounds(bounds));
+            }
         }
+    }
+
+    private Rectangle getRepaintPathBounds(Rectangle bounds) {
+        if (UIManager.getBoolean("Tree.repaintWholeRow")) {
+           bounds.x = 0;
+           bounds.width = tree.getWidth();
+        }
+        return bounds;
     }
 
     private TreePath getLeadSelectionPath() {
         return tree.getLeadSelectionPath();
     }
 
-    private void updateLeadRow() {
+    /**
+     * Updates the lead row of the selection.
+     * @since 1.7
+     */
+    protected void updateLeadSelectionRow() {
         leadRow = getRowForPath(tree, getLeadSelectionPath());
     }
 
-    private int getLeadSelectionRow() {
+    /**
+     * Returns the lead row of the selection.
+     *
+     * @return selection lead row
+     * @since 1.7
+     */
+    protected int getLeadSelectionRow() {
         return leadRow;
     }
 
@@ -3245,7 +3283,7 @@ public class BasicTreeUI extends TreeUI
             // handle first letter navigation
             if(tree != null && tree.getRowCount()>0 && tree.hasFocus() &&
                tree.isEnabled()) {
-                if (e.isAltDown() || e.isControlDown() || e.isMetaDown() ||
+                if (e.isAltDown() || BasicGraphicsUtils.isMenuShortcutKeyDown(e) ||
                     isNavigationKey(e)) {
                     return;
                 }
@@ -3335,7 +3373,7 @@ public class BasicTreeUI extends TreeUI
 
                 if (changeName == JTree.LEAD_SELECTION_PATH_PROPERTY) {
                     if (!ignoreLAChange) {
-                        updateLeadRow();
+                        updateLeadSelectionRow();
                         repaintPath((TreePath)event.getOldValue());
                         repaintPath((TreePath)event.getNewValue());
                     }
@@ -3501,7 +3539,7 @@ public class BasicTreeUI extends TreeUI
 
                 dragPressDidSelection = false;
 
-                if (e.isControlDown()) {
+                if (BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
                     // do nothing for control - will be handled on release
                     // or when drag starts
                     return;
@@ -3555,7 +3593,7 @@ public class BasicTreeUI extends TreeUI
         public void dragStarting(MouseEvent me) {
             dragStarted = true;
 
-            if (me.isControlDown()) {
+            if (BasicGraphicsUtils.isMenuShortcutKeyDown(me)) {
                 tree.addSelectionPath(pressedPath);
                 setAnchorSelectionPath(pressedPath);
                 setLeadSelectionPath(pressedPath, true);
@@ -3641,14 +3679,6 @@ public class BasicTreeUI extends TreeUI
 
         public void focusLost(FocusEvent e) {
             focusGained(e);
-        }
-
-        private Rectangle getRepaintPathBounds(Rectangle bounds) {
-            if(UIManager.getBoolean("Tree.repaintWholeRow")) {
-               bounds.x = 0;
-               bounds.width = tree.getWidth();
-            }
-            return bounds;
         }
 
         //
@@ -3761,7 +3791,7 @@ public class BasicTreeUI extends TreeUI
                 completeEditing();
                 if(path != null && tree.isVisible(path)) {
                     treeState.setExpandedState(path, false);
-                    updateLeadRow();
+                    updateLeadSelectionRow();
                     updateSize();
                 }
             }
@@ -3821,7 +3851,7 @@ public class BasicTreeUI extends TreeUI
             if(treeState != null && e != null) {
                 treeState.treeNodesInserted(e);
 
-                updateLeadRow();
+                updateLeadSelectionRow();
 
                 TreePath       path = e.getTreePath();
 
@@ -3846,7 +3876,7 @@ public class BasicTreeUI extends TreeUI
             if(treeState != null && e != null) {
                 treeState.treeNodesRemoved(e);
 
-                updateLeadRow();
+                updateLeadSelectionRow();
 
                 TreePath       path = e.getTreePath();
 
@@ -3860,7 +3890,7 @@ public class BasicTreeUI extends TreeUI
             if(treeState != null && e != null) {
                 treeState.treeStructureChanged(e);
 
-                updateLeadRow();
+                updateLeadSelectionRow();
 
                 TreePath       pPath = e.getTreePath();
 

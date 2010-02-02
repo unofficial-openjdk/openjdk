@@ -27,6 +27,7 @@
 package java.util.logging;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.security.*;
 import java.lang.ref.WeakReference;
 
@@ -65,7 +66,7 @@ import java.lang.ref.WeakReference;
  * effective level from its parent.
  * <p>
  * On each logging call the Logger initially performs a cheap
- * check of the request level (e.g. SEVERE or FINE) against the
+ * check of the request level (e.g., SEVERE or FINE) against the
  * effective log level of the logger.  If the request level is
  * lower than the log level, the logging call returns immediately.
  * <p>
@@ -165,10 +166,11 @@ public class Logger {
     private static final int offValue = Level.OFF.intValue();
     private LogManager manager;
     private String name;
-    private ArrayList<Handler> handlers;
+    private final CopyOnWriteArrayList<Handler> handlers =
+        new CopyOnWriteArrayList<Handler>();
     private String resourceBundleName;
-    private boolean useParentHandlers = true;
-    private Filter filter;
+    private volatile boolean useParentHandlers = true;
+    private volatile Filter filter;
     private boolean anonymous;
 
     private ResourceBundle catalog;     // Cached resource bundle
@@ -180,9 +182,9 @@ public class Logger {
     private static Object treeLock = new Object();
     // We keep weak references from parents to children, but strong
     // references from children to parents.
-    private Logger parent;    // our nearest parent.
+    private volatile Logger parent;    // our nearest parent.
     private ArrayList<WeakReference<Logger>> kids;   // WeakReferences to loggers that have us as parent
-    private Level levelObject;
+    private volatile Level levelObject;
     private volatile int levelValue;  // current effective level value
 
     /**
@@ -228,7 +230,7 @@ public class Logger {
      * Protected method to construct a logger for a named subsystem.
      * <p>
      * The logger will be initially configured with a null Level
-     * and with useParentHandlers true.
+     * and with useParentHandlers set to true.
      *
      * @param   name    A name for the logger.  This should
      *                          be a dot-separated name and should normally
@@ -238,7 +240,7 @@ public class Logger {
      * @param   resourceBundleName  name of ResourceBundle to be used for localizing
      *                          messages for this logger.  May be null if none
      *                          of the messages require localization.
-     * @throws MissingResourceException if the ResourceBundleName is non-null and
+     * @throws MissingResourceException if the resourceBundleName is non-null and
      *             no corresponding resource can be found.
      */
     protected Logger(String name, String resourceBundleName) {
@@ -283,7 +285,7 @@ public class Logger {
      * <p>
      * If a new logger is created its log level will be configured
      * based on the LogManager configuration and it will configured
-     * to also send logging output to its parent's handlers.  It will
+     * to also send logging output to its parent's Handlers.  It will
      * be registered in the LogManager global namespace.
      *
      * @param   name            A name for the logger.  This should
@@ -306,7 +308,7 @@ public class Logger {
      * <p>
      * If a new logger is created its log level will be configured
      * based on the LogManager and it will configured to also send logging
-     * output to its parent loggers Handlers.  It will be registered in
+     * output to its parent's Handlers.  It will be registered in
      * the LogManager global namespace.
      * <p>
      * If the named Logger already exists and does not yet have a
@@ -324,7 +326,8 @@ public class Logger {
      *                          messages for this logger. May be <CODE>null</CODE> if none of
      *                          the messages require localization.
      * @return a suitable Logger
-     * @throws MissingResourceException if the named ResourceBundle cannot be found.
+     * @throws MissingResourceException if the resourceBundleName is non-null and
+     *             no corresponding resource can be found.
      * @throws IllegalArgumentException if the Logger already exists and uses
      *             a different resource bundle name.
      * @throws NullPointerException if the name is null.
@@ -393,7 +396,8 @@ public class Logger {
      *                          messages for this logger.
      *          May be null if none of the messages require localization.
      * @return a newly created private Logger
-     * @throws MissingResourceException if the named ResourceBundle cannot be found.
+     * @throws MissingResourceException if the resourceBundleName is non-null and
+     *             no corresponding resource can be found.
      */
     public static synchronized Logger getAnonymousLogger(String resourceBundleName) {
         LogManager manager = LogManager.getLogManager();
@@ -438,7 +442,7 @@ public class Logger {
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have LoggingPermission("control").
      */
-    public synchronized void setFilter(Filter newFilter) throws SecurityException {
+    public void setFilter(Filter newFilter) throws SecurityException {
         checkAccess();
         filter = newFilter;
     }
@@ -448,7 +452,7 @@ public class Logger {
      *
      * @return  a filter object (may be null)
      */
-    public synchronized Filter getFilter() {
+    public Filter getFilter() {
         return filter;
     }
 
@@ -465,10 +469,9 @@ public class Logger {
         if (record.getLevel().intValue() < levelValue || levelValue == offValue) {
             return;
         }
-        synchronized (this) {
-            if (filter != null && !filter.isLoggable(record)) {
-                return;
-            }
+        Filter theFilter = filter;
+        if (theFilter != null && !theFilter.isLoggable(record)) {
+            return;
         }
 
         // Post the LogRecord to all our Handlers, and then to
@@ -476,12 +479,8 @@ public class Logger {
 
         Logger logger = this;
         while (logger != null) {
-            Handler targets[] = logger.getHandlers();
-
-            if (targets != null) {
-                for (int i = 0; i < targets.length; i++) {
-                    targets[i].publish(record);
-                }
+            for (Handler handler : logger.getHandlers()) {
+                handler.publish(record);
             }
 
             if (!logger.getUseParentHandlers()) {
@@ -517,7 +516,7 @@ public class Logger {
      * level then the given message is forwarded to all the
      * registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   msg     The string message (or a key in the message catalog)
      */
     public void log(Level level, String msg) {
@@ -535,7 +534,7 @@ public class Logger {
      * level then a corresponding LogRecord is created and forwarded
      * to all the registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   msg     The string message (or a key in the message catalog)
      * @param   param1  parameter to the message
      */
@@ -556,7 +555,7 @@ public class Logger {
      * level then a corresponding LogRecord is created and forwarded
      * to all the registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   msg     The string message (or a key in the message catalog)
      * @param   params  array of parameters to the message
      */
@@ -581,7 +580,7 @@ public class Logger {
      * processed specially by output Formatters and is not treated
      * as a formatting parameter to the LogRecord message property.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   msg     The string message (or a key in the message catalog)
      * @param   thrown  Throwable associated with log message.
      */
@@ -606,7 +605,7 @@ public class Logger {
      * level then the given message is forwarded to all the
      * registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   msg     The string message (or a key in the message catalog)
@@ -629,7 +628,7 @@ public class Logger {
      * level then a corresponding LogRecord is created and forwarded
      * to all the registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   msg      The string message (or a key in the message catalog)
@@ -656,7 +655,7 @@ public class Logger {
      * level then a corresponding LogRecord is created and forwarded
      * to all the registered output Handler objects.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   msg     The string message (or a key in the message catalog)
@@ -687,7 +686,7 @@ public class Logger {
      * processed specially by output Formatters and is not treated
      * as a formatting parameter to the LogRecord message property.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   msg     The string message (or a key in the message catalog)
@@ -734,7 +733,7 @@ public class Logger {
      * resource bundle name is null, or an empty String or invalid
      * then the msg string is not localized.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   bundleName     name of resource bundle to localize msg,
@@ -765,7 +764,7 @@ public class Logger {
      * resource bundle name is null, or an empty String or invalid
      * then the msg string is not localized.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   bundleName     name of resource bundle to localize msg,
@@ -798,7 +797,7 @@ public class Logger {
      * resource bundle name is null, or an empty String or invalid
      * then the msg string is not localized.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   bundleName     name of resource bundle to localize msg,
@@ -835,7 +834,7 @@ public class Logger {
      * processed specially by output Formatters and is not treated
      * as a formatting parameter to the LogRecord message property.
      * <p>
-     * @param   level   One of the message level identifiers, e.g. SEVERE
+     * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   sourceClass    name of class that issued the logging request
      * @param   sourceMethod   name of method that issued the logging request
      * @param   bundleName     name of resource bundle to localize msg,
@@ -1182,13 +1181,10 @@ public class Logger {
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have LoggingPermission("control").
      */
-    public synchronized void addHandler(Handler handler) throws SecurityException {
+    public void addHandler(Handler handler) throws SecurityException {
         // Check for null handler
         handler.getClass();
         checkAccess();
-        if (handlers == null) {
-            handlers = new ArrayList<Handler>();
-        }
         handlers.add(handler);
     }
 
@@ -1201,12 +1197,9 @@ public class Logger {
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have LoggingPermission("control").
      */
-    public synchronized void removeHandler(Handler handler) throws SecurityException {
+    public void removeHandler(Handler handler) throws SecurityException {
         checkAccess();
         if (handler == null) {
-            return;
-        }
-        if (handlers == null) {
             return;
         }
         handlers.remove(handler);
@@ -1217,16 +1210,13 @@ public class Logger {
      * <p>
      * @return  an array of all registered Handlers
      */
-    public synchronized Handler[] getHandlers() {
-        if (handlers == null) {
-            return emptyHandlers;
-        }
-        return handlers.toArray(new Handler[handlers.size()]);
+    public Handler[] getHandlers() {
+        return handlers.toArray(emptyHandlers);
     }
 
     /**
      * Specify whether or not this logger should send its output
-     * to it's parent Logger.  This means that any LogRecords will
+     * to its parent Logger.  This means that any LogRecords will
      * also be written to the parent's Handlers, and potentially
      * to its parent, recursively up the namespace.
      *
@@ -1235,7 +1225,7 @@ public class Logger {
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have LoggingPermission("control").
      */
-    public synchronized void setUseParentHandlers(boolean useParentHandlers) {
+    public void setUseParentHandlers(boolean useParentHandlers) {
         checkAccess();
         this.useParentHandlers = useParentHandlers;
     }
@@ -1246,7 +1236,7 @@ public class Logger {
      *
      * @return  true if output is to be sent to the logger's parent
      */
-    public synchronized boolean getUseParentHandlers() {
+    public boolean getUseParentHandlers() {
         return useParentHandlers;
     }
 
@@ -1354,9 +1344,12 @@ public class Logger {
      * @return nearest existing parent Logger
      */
     public Logger getParent() {
-        synchronized (treeLock) {
-            return parent;
-        }
+        // Note: this used to be synchronized on treeLock.  However, this only
+        // provided memory semantics, as there was no guarantee that the caller
+        // would synchronize on treeLock (in fact, there is no way for external
+        // callers to so synchronize).  Therefore, we have made parent volatile
+        // instead.
+        return parent;
     }
 
     /**

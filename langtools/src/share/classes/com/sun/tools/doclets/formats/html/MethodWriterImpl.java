@@ -25,12 +25,12 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import java.io.*;
+
+import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.taglets.*;
-
-import java.io.*;
-import com.sun.javadoc.*;
 
 /**
  * Writes method documentation in HTML format.
@@ -38,6 +38,7 @@ import com.sun.javadoc.*;
  * @author Robert Field
  * @author Atul M Dambalkar
  * @author Jamie Ho (rewrite)
+ * @author Bhavesh Patel (Modified)
  */
 public class MethodWriterImpl extends AbstractExecutableMemberWriter
         implements MethodWriter, MemberSummaryWriter {
@@ -167,12 +168,12 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         if (configuration().linksource) {
             writer.printSrcLink(method, method.name());
         } else {
-            bold(method.name());
+            strong(method.name());
         }
         writeParameters(method);
         writeExceptions(method);
         writer.preEnd();
-        writer.dl();
+        assert !writer.getMemberDetailsListPrinted();
     }
 
     /**
@@ -181,12 +182,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      * @param method the method being documented.
      */
     public void writeDeprecated(MethodDoc method) {
-        String output = ((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(method,
-            writer.getTagletWriterInstance(false))).toString();
-        if (output != null && output.trim().length() > 0) {
-            writer.print(output);
-        }
+        printDeprecated(method);
     }
 
     /**
@@ -197,11 +193,13 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void writeComments(Type holder, MethodDoc method) {
         ClassDoc holderClassDoc = holder.asClassDoc();
         if (method.inlineTags().length > 0) {
+            writer.printMemberDetailsListStartTag();
             if (holder.asClassDoc().equals(classdoc) ||
                 (! (holderClassDoc.isPublic() ||
                     Util.isLinkable(holderClassDoc, configuration())))) {
                 writer.dd();
                 writer.printInlineComment(method);
+                writer.ddEnd();
             } else {
                 String classlink = writer.codeText(
                     writer.getDocLink(LinkInfoImpl.CONTEXT_METHOD_DOC_COPY,
@@ -210,13 +208,14 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                             holder.typeName() : holder.qualifiedTypeName(),
                         false));
                 writer.dd();
-                writer.boldText(holder.asClassDoc().isClass()?
+                writer.strongText(holder.asClassDoc().isClass()?
                         "doclet.Description_From_Class":
                         "doclet.Description_From_Interface",
                     classlink);
                 writer.ddEnd();
                 writer.dd();
                 writer.printInlineComment(method);
+                writer.ddEnd();
             }
         }
     }
@@ -234,8 +233,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      * Write the method footer.
      */
     public void writeMethodFooter() {
-        writer.ddEnd();
-        writer.dlEnd();
+        printMemberFooter();
     }
 
     /**
@@ -258,8 +256,24 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
         return VisibleMemberMap.METHODS;
     }
 
-    public void printSummaryLabel(ClassDoc cd) {
-        writer.boldText("doclet.Method_Summary");
+    public void printSummaryLabel() {
+        writer.printText("doclet.Method_Summary");
+    }
+
+    public void printTableSummary() {
+        writer.tableIndexSummary(configuration().getText("doclet.Member_Table_Summary",
+                configuration().getText("doclet.Method_Summary"),
+                configuration().getText("doclet.methods")));
+    }
+
+    public void printSummaryTableHeader(ProgramElementDoc member) {
+        String[] header = new String[] {
+            writer.getModifierTypeHeader(),
+            configuration().getText("doclet.0_and_1",
+                    configuration().getText("doclet.Method"),
+                    configuration().getText("doclet.Description"))
+        };
+        writer.summaryTableHeader(header, "col");
     }
 
     public void printSummaryAnchor(ClassDoc cd) {
@@ -274,12 +288,12 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     public void printInheritedSummaryLabel(ClassDoc cd) {
         String classlink = writer.getPreQualifiedClassLink(
             LinkInfoImpl.CONTEXT_MEMBER, cd, false);
-        writer.bold();
+        writer.strong();
         String key = cd.isClass()?
             "doclet.Methods_Inherited_From_Class" :
             "doclet.Methods_Inherited_From_Interface";
         writer.printText(key, classlink);
-        writer.boldEnd();
+        writer.strongEnd();
     }
 
     protected void printSummaryType(ProgramElementDoc member) {
@@ -317,7 +331,8 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                 writer.getLink(new LinkInfoImpl(context, overriddenType)));
             String name = method.name();
             writer.dt();
-            writer.boldText(label);
+            writer.strongText(label);
+            writer.dtEnd();
             writer.dd();
             String methLink = writer.codeText(
                 writer.getLink(
@@ -326,6 +341,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                         writer.getAnchor(method), name, false)
                 ));
             writer.printText("doclet.in_class", methLink, overriddenTypeLink);
+            writer.ddEnd();
         }
     }
 
@@ -363,12 +379,14 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                 writer.getLink(new LinkInfoImpl(
                     LinkInfoImpl.CONTEXT_METHOD_SPECIFIED_BY, intfac)));
             writer.dt();
-            writer.boldText("doclet.Specified_By");
+            writer.strongText("doclet.Specified_By");
+            writer.dtEnd();
             writer.dd();
             methlink = writer.codeText(writer.getDocLink(
                 LinkInfoImpl.CONTEXT_MEMBER, implementedMeth,
                 implementedMeth.name(), false));
             writer.printText("doclet.in_interface", methlink, intfaclink);
+            writer.ddEnd();
         }
 
     }

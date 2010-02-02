@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@ public class TypeMaker {
      * @param errToClassDoc  if true, ERROR type results in a ClassDoc;
      *          false preserves legacy behavior
      */
+    @SuppressWarnings("fallthrough")
     public static com.sun.javadoc.Type getType(DocEnv env, Type t,
                                                boolean errToClassDoc) {
         if (env.legacyDoclet) {

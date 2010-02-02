@@ -32,6 +32,13 @@ PACKAGE = sun.tools.jconsole
 PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
 
+# This program must contain a manifest that defines the execution level
+# needed to follow standard Vista User Access Control Guidelines
+# This must be set before Program.gmk is included
+#
+BUILD_MANIFEST=true
+
+
 JARFILE = $(LIBDIR)/jconsole.jar
 
 OTHER_JAVACFLAGS += -encoding iso8859-1
@@ -63,7 +70,7 @@ include $(BUILDDIR)/common/Classes.gmk
 build: $(FILES_png) $(FILES_gif) $(TEMPDIR)/manifest $(JARFILE)
 
 $(GENSRCDIR)/sun/tools/jconsole/Version.java: \
-                $(SHARE_SRC)/classes/sun/tools/jconsole/Version-template.java
+                $(SHARE_SRC)/classes/sun/tools/jconsole/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(SED) -e 's/@@jconsole_version@@/$(FULL_VERSION)/g' $< > $@
 

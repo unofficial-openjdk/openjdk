@@ -32,11 +32,10 @@ PROGRAM = javaw
 PRODUCT = java
 
 #
-# Statically link javaw to avoid the dependency on msvcr71.dll.  This
+# Statically link javaw to avoid the dependency on msvcrNN.dll.  This
 # must be set before Defs.gmk is included.
 #
 MS_RUNTIME_STATIC = true
-
 #
 # Statically link javaw to avoid the dependency on jli.dll.  This
 # must be set before Program.gmk is included.
@@ -63,4 +62,5 @@ endif
 #
 include $(BUILDDIR)/common/Program.gmk
 OTHER_CPPFLAGS += -DEXPAND_CLASSPATH_WILDCARDS
-OTHER_CPPFLAGS += -DLAUNCHER_NAME=\"$(LAUNCHER_NAME)\"
+OTHER_CPPFLAGS += -DLAUNCHER_NAME='"$(LAUNCHER_NAME)"'
+

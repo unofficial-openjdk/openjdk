@@ -38,6 +38,26 @@ public class BasicChar
     extends Basic
 {
 
+    private static final char[] VALUES = {
+        Character.MIN_VALUE,
+        (char) -1,
+        (char) 0,
+        (char) 1,
+        Character.MAX_VALUE,
+
+
+
+
+
+
+
+
+
+
+
+
+    };
+
     private static void relGet(CharBuffer b) {
         int n = b.capacity();
         char v;
@@ -309,6 +329,12 @@ public class BasicChar
 
 
 
+    private static void fail(String problem,
+                             CharBuffer xb, CharBuffer yb,
+                             char x, char y) {
+        fail(problem + String.format(": x=%s y=%s", x, y), xb, yb);
+    }
+
     private static void tryCatch(Buffer b, Class ex, Runnable thunk) {
         boolean caught = false;
         try {
@@ -365,8 +391,11 @@ public class BasicChar
 
         b.position(2);
         ck(b, b.charAt(1), 'd');
-        CharBuffer c = (CharBuffer)b.subSequence(1, 4);
-        ck(b, b.subSequence(1, 4).toString().equals("def"));
+        CharBuffer c = b.subSequence(1, 4);
+        ck(c, c.capacity(), b.capacity());
+        ck(c, c.position(), b.position()+1);
+        ck(c, c.limit(), b.position()+4);
+        ck(c, b.subSequence(1, 4).toString().equals("def"));
 
         // 4938424
         b.position(4);
@@ -518,6 +547,42 @@ public class BasicChar
             fail("Non-identical buffers equal", b, b2);
         if (b.compareTo(b2) <= 0)
             fail("Comparison to lesser buffer <= 0", b, b2);
+
+        // Check equals and compareTo with interesting values
+        for (char x : VALUES) {
+            CharBuffer xb = CharBuffer.wrap(new char[] { x });
+            if (xb.compareTo(xb) != 0) {
+                fail("compareTo not reflexive", xb, xb, x, x);
+            }
+            if (! xb.equals(xb)) {
+                fail("equals not reflexive", xb, xb, x, x);
+            }
+            for (char y : VALUES) {
+                CharBuffer yb = CharBuffer.wrap(new char[] { y });
+                if (xb.compareTo(yb) != - yb.compareTo(xb)) {
+                    fail("compareTo not anti-symmetric",
+                         xb, yb, x, y);
+                }
+                if ((xb.compareTo(yb) == 0) != xb.equals(yb)) {
+                    fail("compareTo inconsistent with equals",
+                         xb, yb, x, y);
+                }
+                if (xb.compareTo(yb) != Character.compare(x, y)) {
+
+
+
+
+
+
+                    fail("Incorrect results for CharBuffer.compareTo",
+                         xb, yb, x, y);
+                }
+                if (xb.equals(yb) != ((x == y) || ((x != x) && (y != y)))) {
+                    fail("Incorrect results for CharBuffer.equals",
+                         xb, yb, x, y);
+                }
+            }
+        }
 
         // Sub, dup
 
@@ -722,6 +787,8 @@ public class BasicChar
         ck(b, start, b.position());
         ck(b, end, b.limit());
         ck(b, s.length(), b.capacity());
+        b.position(6);
+        ck(b, b.subSequence(0,3).toString().equals("ghi"));
 
         // The index, relative to the position, must be non-negative and
         // smaller than remaining().

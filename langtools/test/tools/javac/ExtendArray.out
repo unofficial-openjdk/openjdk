@@ -1,6 +1,2 @@
-ExtendArray.java:11: unexpected type
-found   : java.lang.Object[]
-required: class
-public class ExtendArray extends Object[] {}
-                                       ^
+ExtendArray.java:11:40: compiler.err.type.found.req: java.lang.Object[], (compiler.misc.type.req.class)
 1 error

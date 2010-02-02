@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,6 +111,7 @@ public class Messager extends Log implements DocErrorReporter {
      * @param warnWriter   Stream for warnings
      * @param noticeWriter Stream for other messages
      */
+    @SuppressWarnings("deprecation")
     protected Messager(Context context,
                        String programName,
                        PrintWriter errWriter,

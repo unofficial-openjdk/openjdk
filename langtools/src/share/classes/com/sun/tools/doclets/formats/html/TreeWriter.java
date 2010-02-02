@@ -25,9 +25,11 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
 import java.io.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
+
 /**
  * Generate Class Hierarchy page for all the Classes in this run.  Use
  * ClassTree for building the Tree. The name of
@@ -119,7 +121,8 @@ public class TreeWriter extends AbstractTreeWriter {
         if (!classesonly) {
             dl();
             dt();
-            boldText("doclet.Package_Hierarchies");
+            strongText("doclet.Package_Hierarchies");
+            dtEnd();
             dd();
             for (int i = 0; i < packages.length; i++) {
                 if (packages[i].name().length() == 0) {
@@ -131,6 +134,7 @@ public class TreeWriter extends AbstractTreeWriter {
                     print(", ");
                 }
             }
+            ddEnd();
             dlEnd();
             hr();
         }

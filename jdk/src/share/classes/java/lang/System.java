@@ -1,5 +1,5 @@
 /*
- * Copyright 1994-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1994-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import java.security.AllPermission;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 import sun.nio.ch.Interruptible;
-import sun.net.InetAddressCachePolicy;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
@@ -310,7 +309,6 @@ public final class System {
         }
 
         security = s;
-        InetAddressCachePolicy.setIfNotSet(InetAddressCachePolicy.FOREVER);
     }
 
     /**
@@ -620,6 +618,20 @@ public final class System {
 
         return props;
     }
+
+    /**
+     * Returns the system-dependent line separator string.  It always
+     * returns the same value - the initial value of the {@linkplain
+     * #getProperty(String) system property} {@code line.separator}.
+     *
+     * <p>On UNIX systems, it returns {@code "\n"}; on Microsoft
+     * Windows systems it returns {@code "\r\n"}.
+     */
+    public static String lineSeparator() {
+        return lineSeparator;
+    }
+
+    private static String lineSeparator;
 
     /**
      * Sets the system properties to the <code>Properties</code>
@@ -1106,7 +1118,25 @@ public final class System {
     private static void initializeSystemClass() {
         props = new Properties();
         initProperties(props);
+        lineSeparator = props.getProperty("line.separator");
         sun.misc.Version.init();
+
+        // Workaround until DownloadManager initialization is revisited.
+        // Make JavaLangAccess available early enough for internal
+        // Shutdown hooks to be registered
+        setJavaLangAccess();
+
+        // Gets and removes system properties that configure the Integer
+        // cache used to support the object identity semantics of autoboxing.
+        // At this time, the size of the cache may be controlled by the
+        // vm option -XX:AutoBoxCacheMax=<size>.
+        Integer.getAndRemoveCacheProperties();
+
+        // Load the zip library now in order to keep java.util.zip.ZipFile
+        // from trying to use itself to load this library later.
+        loadLibrary("zip");
+
+
         FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
         FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
         FileOutputStream fdErr = new FileOutputStream(FileDescriptor.err);
@@ -1114,20 +1144,8 @@ public final class System {
         setOut0(new PrintStream(new BufferedOutputStream(fdOut, 128), true));
         setErr0(new PrintStream(new BufferedOutputStream(fdErr, 128), true));
 
-        // Load the zip library now in order to keep java.util.zip.ZipFile
-        // from trying to use itself to load this library later.
-        loadLibrary("zip");
-
         // Setup Java signal handlers for HUP, TERM, and INT (where available).
         Terminator.setup();
-
-        // The order in with the hooks are added here is important as it
-        // determines the order in which they are run.
-        // (1)Console restore hook needs to be called first.
-        // (2)Application hooks must be run before calling deleteOnExitHook.
-        Shutdown.add(sun.misc.SharedSecrets.getJavaIOAccess().consoleRestoreHook());
-        Shutdown.add(ApplicationShutdownHooks.hook());
-        Shutdown.add(sun.misc.SharedSecrets.getJavaIODeleteOnExitAccess());
 
         // Initialize any miscellenous operating system settings that need to be
         // set for the class libraries. Currently this is no-op everywhere except
@@ -1155,7 +1173,9 @@ public final class System {
         // way as other threads; we must do it ourselves here.
         Thread current = Thread.currentThread();
         current.getThreadGroup().add(current);
+    }
 
+    private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
         sun.misc.SharedSecrets.setJavaLangAccess(new sun.misc.JavaLangAccess(){
             public sun.reflect.ConstantPool getConstantPool(Class klass) {
@@ -1174,11 +1194,20 @@ public final class System {
             public void blockedOn(Thread t, Interruptible b) {
                 t.blockedOn(b);
             }
+            public void registerShutdownHook(int slot, boolean registerShutdownInProgress, Runnable hook) {
+                Shutdown.add(slot, registerShutdownInProgress, hook);
+            }
+            public int getStackTraceDepth(Throwable t) {
+                return t.getStackTraceDepth();
+            }
+            public StackTraceElement getStackTraceElement(Throwable t, int i) {
+                return t.getStackTraceElement(i);
+            }
         });
     }
 
     /* returns the class of the caller. */
-    static Class getCallerClass() {
+    static Class<?> getCallerClass() {
         // NOTE use of more generic Reflection.getCallerClass()
         return Reflection.getCallerClass(3);
     }

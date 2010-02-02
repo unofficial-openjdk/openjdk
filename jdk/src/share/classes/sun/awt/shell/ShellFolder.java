@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.awt.Toolkit;
 import java.io.*;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * @author Michael Martak
@@ -200,9 +201,19 @@ public abstract class ShellFolder extends File {
 
     private static ShellFolderManager shellFolderManager;
 
+    private static Invoker invoker;
+
     static {
-        Class managerClass = (Class)Toolkit.getDefaultToolkit().
-            getDesktopProperty("Shell.shellFolderManager");
+        String managerClassName = (String)Toolkit.getDefaultToolkit().
+                                      getDesktopProperty("Shell.shellFolderManager");
+        Class managerClass = null;
+        try {
+            managerClass = Class.forName(managerClassName);
+        // swallow the exceptions below and use default shell folder
+        } catch(ClassNotFoundException e) {
+        } catch(NullPointerException e) {
+        }
+
         if (managerClass == null) {
             managerClass = ShellFolderManager.class;
         }
@@ -216,6 +227,8 @@ public abstract class ShellFolder extends File {
             throw new Error ("Could not access Shell Folder Manager: "
             + managerClass.getName());
         }
+
+        invoker = shellFolderManager.createInvoker();
     }
 
     /**
@@ -273,45 +286,61 @@ public abstract class ShellFolder extends File {
 
     // Override File methods
 
-    public static void sort(List<? extends File> files) {
+    public static void sort(final List<? extends File> files) {
         if (files == null || files.size() <= 1) {
             return;
         }
 
-        // Check that we can use the ShellFolder.sortChildren() method:
-        //   1. All files have the same non-null parent
-        //   2. All files is ShellFolders
-        File commonParent = null;
+        // To avoid loads of synchronizations with Invoker and improve performance we
+        // synchronize the whole code of the sort method once
+        invoke(new Callable<Void>() {
+            public Void call() {
+                // Check that we can use the ShellFolder.sortChildren() method:
+                //   1. All files have the same non-null parent
+                //   2. All files is ShellFolders
+                File commonParent = null;
 
-        for (File file : files) {
-            File parent = file.getParentFile();
+                for (File file : files) {
+                    File parent = file.getParentFile();
 
-            if (parent == null || !(file instanceof ShellFolder)) {
-                commonParent = null;
+                    if (parent == null || !(file instanceof ShellFolder)) {
+                        commonParent = null;
 
-                break;
-            }
+                        break;
+                    }
 
-            if (commonParent == null) {
-                commonParent = parent;
-            } else {
-                if (commonParent != parent && !commonParent.equals(parent)) {
-                    commonParent = null;
+                    if (commonParent == null) {
+                        commonParent = parent;
+                    } else {
+                        if (commonParent != parent && !commonParent.equals(parent)) {
+                            commonParent = null;
 
-                    break;
+                            break;
+                        }
+                    }
                 }
-            }
-        }
 
-        if (commonParent instanceof ShellFolder) {
-            ((ShellFolder) commonParent).sortChildren(files);
-        } else {
-            Collections.sort(files, FILE_COMPARATOR);
-        }
+                if (commonParent instanceof ShellFolder) {
+                    ((ShellFolder) commonParent).sortChildren(files);
+                } else {
+                    Collections.sort(files, FILE_COMPARATOR);
+                }
+
+                return null;
+            }
+        });
     }
 
-    public void sortChildren(List<? extends File> files) {
-        Collections.sort(files, FILE_COMPARATOR);
+    public void sortChildren(final List<? extends File> files) {
+        // To avoid loads of synchronizations with Invoker and improve performance we
+        // synchronize the whole code of the sort method once
+        invoke(new Callable<Void>() {
+            public Void call() {
+                Collections.sort(files, FILE_COMPARATOR);
+
+                return null;
+            }
+        });
     }
 
     public boolean isAbsolute() {
@@ -459,6 +488,64 @@ public abstract class ShellFolder extends File {
 
     public Object getFolderColumnValue(int column) {
         return null;
+    }
+
+    /**
+     * Invokes the {@code task} which doesn't throw checked exceptions
+     * from its {@code call} method. If invokation is interrupted then Thread.currentThread().isInterrupted() will
+     * be set and result will be {@code null}
+     */
+    public static <T> T invoke(Callable<T> task) {
+        try {
+            return invoke(task, RuntimeException.class);
+        } catch (InterruptedException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Invokes the {@code task} which throws checked exceptions from its {@code call} method.
+     * If invokation is interrupted then Thread.currentThread().isInterrupted() will
+     * be set and InterruptedException will be thrown as well.
+     */
+    public static <T, E extends Throwable> T invoke(Callable<T> task, Class<E> exceptionClass)
+            throws InterruptedException, E {
+        try {
+            return invoker.invoke(task);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                // Rethrow unchecked exceptions
+                throw (RuntimeException) e;
+            }
+
+            if (e instanceof InterruptedException) {
+                // Set isInterrupted flag for current thread
+                Thread.currentThread().interrupt();
+
+                // Rethrow InterruptedException
+                throw (InterruptedException) e;
+            }
+
+            if (exceptionClass.isInstance(e)) {
+                throw exceptionClass.cast(e);
+            }
+
+            throw new RuntimeException("Unexpected error", e);
+        }
+    }
+
+    /**
+     * Interface allowing to invoke tasks in different environments on different platforms.
+     */
+    public static interface Invoker {
+        /**
+         * Invokes a callable task.
+         *
+         * @param task a task to invoke
+         * @throws Exception {@code InterruptedException} or an exception that was thrown from the {@code task}
+         * @return the result of {@code task}'s invokation
+         */
+        <T> T invoke(Callable<T> task) throws Exception;
     }
 
     /**

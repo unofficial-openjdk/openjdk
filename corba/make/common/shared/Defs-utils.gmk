@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -116,7 +116,6 @@ RC             = $(UTILS_COMMAND_PATH)rc
 RMDIR          = $(UTILS_COMMAND_PATH)rmdir
 RPM            = $(UTILS_COMMAND_PATH)rpm
 RPMBUILD       = $(UTILS_COMMAND_PATH)rpmbuild
-SCCS           = $(UTILS_CCS_BIN_PATH)sccs
 SED            = $(UTILS_COMMAND_PATH)sed
 SH             = $(UTILS_COMMAND_PATH)sh
 SHOWREV        = $(UTILS_USR_BIN_PATH)showrev

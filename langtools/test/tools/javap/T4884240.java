@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-15301 USA.
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
@@ -46,9 +46,9 @@ public class T4884240 {
         pw.close();
         String[] lines = sw.toString().split("\n");
         if (lines.length < 3
-            || !lines[0].startsWith("Classfile")
-            || !lines[1].startsWith("Last modified")
-            || !lines[2].startsWith("MD5")) {
+            || !lines[0].trim().startsWith("Classfile")
+            || !lines[1].trim().startsWith("Last modified")
+            || !lines[2].trim().startsWith("MD5")) {
             System.out.println(sw);
             throw new Exception("unexpected output");
         }

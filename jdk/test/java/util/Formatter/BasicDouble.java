@@ -486,6 +486,10 @@ public class BasicDouble extends Basic {
         //---------------------------------------------------------------------
         tryCatch("%-s", MissingFormatWidthException.class);
         tryCatch("%--s", DuplicateFormatFlagsException.class);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, 0);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, 0.5f);
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, "hello");
+        tryCatch("%#s", FormatFlagsConversionMismatchException.class, null);
 
         //---------------------------------------------------------------------
         // %h
@@ -1036,6 +1040,52 @@ public class BasicDouble extends Basic {
         test("%3.0f", "1000000",   1000000.00);
         test("%3.0f", "10000000",  10000000.00);
         test("%3.0f", "100000000", 100000000.00);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

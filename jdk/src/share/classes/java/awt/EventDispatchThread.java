@@ -36,7 +36,7 @@ import sun.awt.AWTAutoShutdown;
 import sun.awt.SunToolkit;
 
 import java.util.Vector;
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.dnd.SunDragSourceContextPeer;
 import sun.awt.EventQueueDelegate;
@@ -61,7 +61,7 @@ import sun.awt.EventQueueDelegate;
  * @since 1.1
  */
 class EventDispatchThread extends Thread {
-    private static final Logger eventLog = Logger.getLogger("java.awt.event.EventDispatchThread");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.EventDispatchThread");
 
     private EventQueue theQueue;
     private boolean doDispatch = true;
@@ -104,11 +104,8 @@ class EventDispatchThread extends Thread {
         } else {
             stopEvent.dispatch();
         }
-        synchronized (theQueue) {
-            if (theQueue.getDispatchThread() == this) {
-                theQueue.detachDispatchThread();
-            }
-        }
+
+        theQueue.detachDispatchThread(this, false);
     }
 
     public void stopDispatching() {
@@ -142,35 +139,7 @@ class EventDispatchThread extends Thread {
                 }
             });
         } finally {
-            /*
-             * This synchronized block is to secure that the event dispatch
-             * thread won't die in the middle of posting a new event to the
-             * associated event queue. It is important because we notify
-             * that the event dispatch thread is busy after posting a new event
-             * to its queue, so the EventQueue.dispatchThread reference must
-             * be valid at that point.
-             */
-            synchronized (theQueue) {
-                if (theQueue.getDispatchThread() == this) {
-                    theQueue.detachDispatchThread();
-                }
-                /*
-                 * Event dispatch thread dies in case of an uncaught exception.
-                 * A new event dispatch thread for this queue will be started
-                 * only if a new event is posted to it. In case if no more
-                 * events are posted after this thread died all events that
-                 * currently are in the queue will never be dispatched.
-                 */
-                /*
-                 * Fix for 4648733. Check both the associated java event
-                 * queue and the PostEventQueue.
-                 */
-                if (theQueue.peekEvent() != null ||
-                    !SunToolkit.isPostEventQueueEmpty()) {
-                    theQueue.initDispatchThread();
-                }
-                AWTAutoShutdown.getInstance().notifyThreadFree(this);
-            }
+            theQueue.detachDispatchThread(this, true);
         }
     }
 
@@ -275,8 +244,8 @@ class EventDispatchThread extends Thread {
             }
             while (eventOK == false);
 
-            if (eventLog.isLoggable(Level.FINEST)) {
-                eventLog.log(Level.FINEST, "Dispatching: " + event);
+            if (eventLog.isLoggable(PlatformLogger.FINEST)) {
+                eventLog.finest("Dispatching: " + event);
             }
 
             Object handle = null;
@@ -300,119 +269,19 @@ class EventDispatchThread extends Thread {
         }
         // Can get and throw only unchecked exceptions
         catch (RuntimeException e) {
-            processException(e, modalFiltersCount > 0);
+            processException(e);
         } catch (Error e) {
-            processException(e, modalFiltersCount > 0);
+            processException(e);
         }
         return true;
     }
 
-    private void processException(Throwable e, boolean isModal) {
-        if (eventLog.isLoggable(Level.FINE)) {
-            eventLog.log(Level.FINE, "Processing exception: " + e +
-                                     ", isModal = " + isModal);
+    private void processException(Throwable e) {
+        if (eventLog.isLoggable(PlatformLogger.FINE)) {
+            eventLog.fine("Processing exception: " + e);
         }
-        if (!handleException(e)) {
-            // See bug ID 4499199.
-            // If we are in a modal dialog, we cannot throw
-            // an exception for the ThreadGroup to handle (as added
-            // in RFE 4063022).  If we did, the message pump of
-            // the modal dialog would be interrupted.
-            // We instead choose to handle the exception ourselves.
-            // It may be useful to add either a runtime flag or API
-            // later if someone would like to instead dispose the
-            // dialog and allow the thread group to handle it.
-            if (isModal) {
-                System.err.println(
-                    "Exception occurred during event dispatching:");
-                e.printStackTrace();
-            } else if (e instanceof RuntimeException) {
-                throw (RuntimeException)e;
-            } else if (e instanceof Error) {
-                throw (Error)e;
-            }
-        }
-    }
-
-    private static final String handlerPropName = "sun.awt.exception.handler";
-    private static String handlerClassName = null;
-    private static String NO_HANDLER = new String();
-
-    /**
-     * Handles an exception thrown in the event-dispatch thread.
-     *
-     * <p> If the system property "sun.awt.exception.handler" is defined, then
-     * when this method is invoked it will attempt to do the following:
-     *
-     * <ol>
-     * <li> Load the class named by the value of that property, using the
-     *      current thread's context class loader,
-     * <li> Instantiate that class using its zero-argument constructor,
-     * <li> Find the resulting handler object's <tt>public void handle</tt>
-     *      method, which should take a single argument of type
-     *      <tt>Throwable</tt>, and
-     * <li> Invoke the handler's <tt>handle</tt> method, passing it the
-     *      <tt>thrown</tt> argument that was passed to this method.
-     * </ol>
-     *
-     * If any of the first three steps fail then this method will return
-     * <tt>false</tt> and all following invocations of this method will return
-     * <tt>false</tt> immediately.  An exception thrown by the handler object's
-     * <tt>handle</tt> will be caught, and will cause this method to return
-     * <tt>false</tt>.  If the handler's <tt>handle</tt> method is successfully
-     * invoked, then this method will return <tt>true</tt>.  This method will
-     * never throw any sort of exception.
-     *
-     * <p> <i>Note:</i> This method is a temporary hack to work around the
-     * absence of a real API that provides the ability to replace the
-     * event-dispatch thread.  The magic "sun.awt.exception.handler" property
-     * <i>will be removed</i> in a future release.
-     *
-     * @param  thrown  The Throwable that was thrown in the event-dispatch
-     *                 thread
-     *
-     * @return  <tt>false</tt> if any of the above steps failed, otherwise
-     *          <tt>true</tt>
-     */
-    private boolean handleException(Throwable thrown) {
-
-        try {
-
-            if (handlerClassName == NO_HANDLER) {
-                return false;   /* Already tried, and failed */
-            }
-
-            /* Look up the class name */
-            if (handlerClassName == null) {
-                handlerClassName = ((String) AccessController.doPrivileged(
-                    new GetPropertyAction(handlerPropName)));
-                if (handlerClassName == null) {
-                    handlerClassName = NO_HANDLER; /* Do not try this again */
-                    return false;
-                }
-            }
-
-            /* Load the class, instantiate it, and find its handle method */
-            Method m;
-            Object h;
-            try {
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                Class c = Class.forName(handlerClassName, true, cl);
-                m = c.getMethod("handle", new Class[] { Throwable.class });
-                h = c.newInstance();
-            } catch (Throwable x) {
-                handlerClassName = NO_HANDLER; /* Do not try this again */
-                return false;
-            }
-
-            /* Finally, invoke the handler */
-            m.invoke(h, new Object[] { thrown });
-
-        } catch (Throwable x) {
-            return false;
-        }
-
-        return true;
+        getUncaughtExceptionHandler().uncaughtException(this, e);
+        // don't rethrow the exception to avoid EDT recreation
     }
 
     boolean isDispatching(EventQueue eq) {

@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -135,7 +135,8 @@ SUNWprivate_1.1 {
 		Java_java_lang_ClassLoader_00024NativeLibrary_find;
 		Java_java_lang_ClassLoader_00024NativeLibrary_load;
 		Java_java_lang_ClassLoader_00024NativeLibrary_unload;
-                Java_java_lang_ClassLoader_registerNatives;
+		Java_java_lang_ClassLoader_getCaller; 
+		Java_java_lang_ClassLoader_registerNatives;
 		Java_java_lang_Compiler_registerNatives;
 		Java_java_lang_Double_longBitsToDouble;
 		Java_java_lang_Double_doubleToRawLongBits;
@@ -149,10 +150,8 @@ SUNWprivate_1.1 {
 		Java_java_lang_StrictMath_asin;
 		Java_java_lang_StrictMath_atan;
 		Java_java_lang_StrictMath_atan2;
-		Java_java_lang_StrictMath_ceil;
 		Java_java_lang_StrictMath_cos;
 		Java_java_lang_StrictMath_exp;
-		Java_java_lang_StrictMath_floor;
 		Java_java_lang_StrictMath_log;
 		Java_java_lang_StrictMath_log10;
 		Java_java_lang_StrictMath_pow;
@@ -278,6 +277,9 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_getThreadStateValues;
                 Java_sun_misc_VM_initialize;
 		Java_sun_misc_VMSupport_initAgentProperties;
+
+                # ZipFile.c needs this one
+		throwFileNotFoundException;
 
 #		Java_sun_misc_VM_getState;			threads.c
 #		Java_sun_misc_VM_threadsSuspended;		threads.c

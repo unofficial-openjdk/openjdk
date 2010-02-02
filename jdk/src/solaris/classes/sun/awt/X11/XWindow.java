@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.*;
 
@@ -46,11 +45,11 @@ import sun.java2d.SunGraphics2D;
 import sun.java2d.SurfaceData;
 
 public class XWindow extends XBaseWindow implements X11ComponentPeer {
-    private static Logger log = Logger.getLogger("sun.awt.X11.XWindow");
-    private static Logger insLog = Logger.getLogger("sun.awt.X11.insets.XWindow");
-    private static Logger eventLog = Logger.getLogger("sun.awt.X11.event.XWindow");
-    private static final Logger focusLog = Logger.getLogger("sun.awt.X11.focus.XWindow");
-    private static Logger keyEventLog = Logger.getLogger("sun.awt.X11.kye.XWindow");
+    private static PlatformLogger log = PlatformLogger.getLogger("sun.awt.X11.XWindow");
+    private static PlatformLogger insLog = PlatformLogger.getLogger("sun.awt.X11.insets.XWindow");
+    private static PlatformLogger eventLog = PlatformLogger.getLogger("sun.awt.X11.event.XWindow");
+    private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.awt.X11.focus.XWindow");
+    private static PlatformLogger keyEventLog = PlatformLogger.getLogger("sun.awt.X11.kye.XWindow");
   /* If a motion comes in while a multi-click is pending,
    * allow a smudge factor so that moving the mouse by a small
    * amount does not wipe out the multi-click state variables.
@@ -68,6 +67,15 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     int oldWidth = -1;
     int oldHeight = -1;
 
+    protected PropMwmHints mwm_hints;
+    protected static XAtom wm_protocols;
+    protected static XAtom wm_delete_window;
+    protected static XAtom wm_take_focus;
+
+    private boolean stateChanged; // Indicates whether the value on savedState is valid
+    private int savedState; // Holds last known state of the top-level window
+
+    XWindowAttributesData winAttr;
 
     protected X11GraphicsConfig graphicsConfig;
     protected AwtGraphicsConfigData graphicsConfigData;
@@ -119,6 +127,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     private native static void initIDs();
 
     private static Field isPostedField;
+    private static Field rawCodeField;
+    private static Field primaryLevelUnicodeField;
+    private static Field extendedKeyCodeField;
     static {
         initIDs();
     }
@@ -144,11 +155,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     XWindow(Component target, long parentWindow) {
-        this(target, parentWindow, target.getBounds());
+        this(target, parentWindow, new Rectangle(target.getBounds()));
     }
 
     XWindow(Component target) {
-        this(target, (target.getParent() == null) ? 0 : getParentWindowID(target), target.getBounds());
+        this(target, (target.getParent() == null) ? 0 : getParentWindowID(target), new Rectangle(target.getBounds()));
     }
 
     XWindow(Object target) {
@@ -186,7 +197,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             | XConstants.ButtonMotionMask | XConstants.ExposureMask | XConstants.StructureNotifyMask);
 
         if (target != null) {
-            params.putIfNull(BOUNDS, target.getBounds());
+            params.putIfNull(BOUNDS, new Rectangle(target.getBounds()));
         } else {
             params.putIfNull(BOUNDS, new Rectangle(0, 0, MIN_SIZE, MIN_SIZE));
         }
@@ -218,6 +229,20 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         }
 
         params.putIfNull(BACKING_STORE, XToolkit.getBackingStoreType());
+
+        XToolkit.awtLock();
+        try {
+            if (wm_protocols == null) {
+                wm_protocols = XAtom.get("WM_PROTOCOLS");
+                wm_delete_window = XAtom.get("WM_DELETE_WINDOW");
+                wm_take_focus = XAtom.get("WM_TAKE_FOCUS");
+            }
+        }
+        finally {
+            XToolkit.awtUnlock();
+        }
+        winAttr = new XWindowAttributesData();
+        savedState = XUtilConstants.WithdrawnState;
     }
 
     void postInit(XCreateWindowParams params) {
@@ -300,9 +325,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if (!(target instanceof Container) || win == null || win.getTarget() == null) {
             return false;
         }
-        Container parent = ComponentAccessor.getParent_NoClientCode(win.target);
+        Container parent = AWTAccessor.getComponentAccessor().getParent(win.target);
         while (parent != null && parent != target) {
-            parent = ComponentAccessor.getParent_NoClientCode(parent);
+            parent = AWTAccessor.getComponentAccessor().getParent(parent);
         }
         return (parent == target);
     }
@@ -388,7 +413,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                     ((Component)e.getSource()).dispatchEvent(e);
                 }
             }, PeerEvent.ULTIMATE_PRIORITY_EVENT);
-        if (focusLog.isLoggable(Level.FINER) && (e instanceof FocusEvent)) focusLog.finer("Sending " + e);
+        if (focusLog.isLoggable(PlatformLogger.FINER) && (e instanceof FocusEvent)) focusLog.finer("Sending " + e);
         XToolkit.postEvent(XToolkit.targetToAppContext(e.getSource()), pe);
     }
 
@@ -535,10 +560,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         int h = xe.get_height();
 
         Component target = (Component)getEventSource();
+        AWTAccessor.ComponentAccessor compAccessor = AWTAccessor.getComponentAccessor();
 
-        if (!ComponentAccessor.getIgnoreRepaint(target)
-            && ComponentAccessor.getWidth(target) != 0
-            && ComponentAccessor.getHeight(target) != 0)
+        if (!compAccessor.getIgnoreRepaint(target)
+            && compAccessor.getWidth(target) != 0
+            && compAccessor.getHeight(target) != 0)
         {
             handleExposeEvent(target, x, y, w, h);
         }
@@ -553,6 +579,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     static int getModifiers(int state, int button, int keyCode) {
+        return getModifiers(state, button, keyCode, 0,  false);
+    }
+
+    static int getModifiers(int state, int button, int keyCode, int type, boolean wheel_mouse) {
         int modifiers = 0;
 
         if (((state & XConstants.ShiftMask) != 0) ^ (keyCode == KeyEvent.VK_SHIFT)) {
@@ -570,14 +600,23 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if (((state & XToolkit.modeSwitchMask) != 0) ^ (keyCode == KeyEvent.VK_ALT_GRAPH)) {
             modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
         }
-        if (((state & XConstants.Button1Mask) != 0) ^ (button == MouseEvent.BUTTON1)) {
-            modifiers |= InputEvent.BUTTON1_DOWN_MASK;
-        }
-        if (((state & XConstants.Button2Mask) != 0) ^ (button == MouseEvent.BUTTON2)) {
-            modifiers |= InputEvent.BUTTON2_DOWN_MASK;
-        }
-        if (((state & XConstants.Button3Mask) != 0) ^ (button == MouseEvent.BUTTON3)) {
-            modifiers |= InputEvent.BUTTON3_DOWN_MASK;
+        //InputEvent.BUTTON_DOWN_MASK array is starting from BUTTON1_DOWN_MASK on index == 0.
+        // button currently reflects a real button number and starts from 1. (except NOBUTTON which is zero )
+
+        /* this is an attempt to refactor button IDs in : MouseEvent, InputEvent, XlibWrapper and XWindow.*/
+
+        //reflects a button number similar to MouseEvent.BUTTON1, 2, 3 etc.
+        for (int i = 0; i < XConstants.buttonsMask.length; i ++){
+            //modifier should be added if :
+            // 1) current button is now still in PRESSED state (means that user just pressed mouse but not released yet) or
+            // 2) if Xsystem reports that "state" represents that button was just released. This only happens on RELEASE with 1,2,3 buttons.
+            // ONLY one of these conditions should be TRUE to add that modifier.
+            if (((state & XConstants.buttonsMask[i]) != 0) != (button == XConstants.buttons[i])){
+                //exclude wheel buttons from adding their numbers as modifiers
+                if (!wheel_mouse) {
+                    modifiers |= InputEvent.getMaskForButton(i+1);
+                }
+            }
         }
         return modifiers;
     }
@@ -601,17 +640,6 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             res |= XToolkit.modeSwitchMask;
         }
         return res;
-    }
-
-    private static int getButtonMask(long mouseButton) {
-        if (mouseButton == XConstants.Button1) {
-            return XConstants.Button1Mask;
-        } else if (mouseButton == XConstants.Button2) {
-            return XConstants.Button2Mask;
-        } else if (mouseButton == XConstants.Button3) {
-            return XConstants.Button3Mask;
-        }
-        return 0;
     }
 
     /**
@@ -642,13 +670,21 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if (isEventDisabled(xev)) {
             return;
         }
-        if (eventLog.isLoggable(Level.FINE)) eventLog.fine(xbe.toString());
+        if (eventLog.isLoggable(PlatformLogger.FINE)) eventLog.fine(xbe.toString());
         long when;
         int modifiers;
         boolean popupTrigger = false;
         int button=0;
         boolean wheel_mouse = false;
-        long lbutton = xbe.get_button();
+        int lbutton = xbe.get_button();
+        /*
+         * Ignore the buttons above 20 due to the bit limit for
+         * InputEvent.BUTTON_DOWN_MASK.
+         * One more bit is reserved for FIRST_HIGH_BIT.
+         */
+        if (lbutton > SunToolkit.MAX_BUTTONS_SUPPORTED) {
+            return;
+        }
         int type = xev.get_type();
         when = xbe.get_time();
         long jWhen = XToolkit.nowMillisUTC_offset(when);
@@ -663,12 +699,12 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
         if (type == XConstants.ButtonPress) {
             //Allow this mouse button to generate CLICK event on next ButtonRelease
-            mouseButtonClickAllowed |= getButtonMask(lbutton);
+            mouseButtonClickAllowed |= XConstants.buttonsMask[lbutton];
             XWindow lastWindow = (lastWindowRef != null) ? ((XWindow)lastWindowRef.get()):(null);
             /*
                multiclick checking
             */
-            if (eventLog.isLoggable(Level.FINEST)) eventLog.finest("lastWindow = " + lastWindow + ", lastButton "
+            if (eventLog.isLoggable(PlatformLogger.FINEST)) eventLog.finest("lastWindow = " + lastWindow + ", lastButton "
                                                                    + lastButton + ", lastTime " + lastTime + ", multiClickTime "
                                                                    + XToolkit.getMultiClickTime());
             if (lastWindow == this && lastButton == lbutton && (when - lastTime) < XToolkit.getMultiClickTime()) {
@@ -693,21 +729,22 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             }
         }
 
-        if (lbutton == XConstants.Button1)
-            button = MouseEvent.BUTTON1;
-        else if (lbutton ==  XConstants.Button2 )
-            button = MouseEvent.BUTTON2;
-        else if (lbutton == XConstants.Button3)
-            button = MouseEvent.BUTTON3;
-        else if (lbutton == XConstants.Button4) {
-            button = 4;
-            wheel_mouse = true;
-        } else if (lbutton == XConstants.Button5) {
-            button = 5;
+        button = XConstants.buttons[lbutton - 1];
+        // 4 and 5 buttons are usually considered assigned to a first wheel
+        if (lbutton == XConstants.buttons[3] ||
+            lbutton == XConstants.buttons[4]) {
             wheel_mouse = true;
         }
 
-        modifiers = getModifiers(xbe.get_state(),button,0);
+        // mapping extra buttons to numbers starting from 4.
+        if ((button > XConstants.buttons[4]) && (!Toolkit.getDefaultToolkit().areExtraMouseButtonsEnabled())){
+            return;
+        }
+
+        if (button > XConstants.buttons[4]){
+            button -= 2;
+        }
+        modifiers = getModifiers(xbe.get_state(),button,0, type, wheel_mouse);
 
         if (!wheel_mouse) {
             MouseEvent me = new MouseEvent((Component)getEventSource(),
@@ -720,7 +757,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             postEventToEventQueue(me);
 
             if ((type == XConstants.ButtonRelease) &&
-                ((mouseButtonClickAllowed & getButtonMask(lbutton)) != 0) ) // No up-button in the drag-state
+                ((mouseButtonClickAllowed & XConstants.buttonsMask[lbutton]) != 0) ) // No up-button in the drag-state
             {
                 postEventToEventQueue(me = new MouseEvent((Component)getEventSource(),
                                                      MouseEvent.MOUSE_CLICKED,
@@ -750,7 +787,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         /* Update the state variable AFTER the CLICKED event post. */
         if (type == XConstants.ButtonRelease) {
             /* Exclude this mouse button from allowed list.*/
-            mouseButtonClickAllowed &= ~getButtonMask(lbutton);
+            mouseButtonClickAllowed &= ~XConstants.buttonsMask[lbutton];
         }
     }
 
@@ -761,7 +798,20 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             return;
         }
 
-        int mouseKeyState = (xme.get_state() & (XConstants.Button1Mask | XConstants.Button2Mask | XConstants.Button3Mask));
+        int mouseKeyState = 0; //(xme.get_state() & (XConstants.buttonsMask[0] | XConstants.buttonsMask[1] | XConstants.buttonsMask[2]));
+
+        //this doesn't work for extra buttons because Xsystem is sending state==0 for every extra button event.
+        // we can't correct it in MouseEvent class as we done it with modifiers, because exact type (DRAG|MOVE)
+        // should be passed from XWindow.
+        final int buttonsNumber = ((SunToolkit)(Toolkit.getDefaultToolkit())).getNumberOfButtons();
+
+        for (int i = 0; i < buttonsNumber; i++){
+            // TODO : here is the bug in WM: extra buttons doesn't have state!=0 as they should.
+            if ((i != 4) && (i != 5)) {
+                mouseKeyState = mouseKeyState | (xme.get_state() & XConstants.buttonsMask[i]);
+            }
+        }
+
         boolean isDragging = (mouseKeyState != 0);
         int mouseEventType = 0;
 
@@ -817,11 +867,41 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     public native boolean x11inputMethodLookupString(long event, long [] keysymArray);
     native boolean haveCurrentX11InputMethodInstance();
 
+    private boolean mouseAboveMe;
+
+    public boolean isMouseAbove() {
+        synchronized (getStateLock()) {
+            return mouseAboveMe;
+        }
+    }
+    protected void setMouseAbove(boolean above) {
+        synchronized (getStateLock()) {
+            mouseAboveMe = above;
+        }
+    }
+
+    protected void enterNotify(long window) {
+        if (window == getWindow()) {
+            setMouseAbove(true);
+        }
+    }
+    protected void leaveNotify(long window) {
+        if (window == getWindow()) {
+            setMouseAbove(false);
+        }
+    }
+
     public void handleXCrossingEvent(XEvent xev) {
         super.handleXCrossingEvent(xev);
         XCrossingEvent xce = xev.get_xcrossing();
 
-        if (eventLog.isLoggable(Level.FINEST)) eventLog.finest(xce.toString());
+        if (eventLog.isLoggable(PlatformLogger.FINEST)) eventLog.finest(xce.toString());
+
+        if (xce.get_type() == XConstants.EnterNotify) {
+            enterNotify(xce.get_window());
+        } else { // LeaveNotify:
+            leaveNotify(xce.get_window());
+        }
 
         // Skip event If it was caused by a grab
         // This is needed because on displays with focus-follows-mouse on MousePress X system generates
@@ -871,7 +951,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                     XAwtState.setComponentMouseEntered(null);
                 }
             } else {
-                ((XComponentPeer) ComponentAccessor.getPeer(target))
+                ((XComponentPeer) AWTAccessor.getComponentAccessor().getPeer(target))
                     .pSetCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
         }
@@ -917,8 +997,8 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         Rectangle oldBounds = getBounds();
 
         super.handleConfigureNotifyEvent(xev);
-        insLog.log(Level.FINER, "Configure, {0}, event disabled: {1}",
-                   new Object[] {xev.get_xconfigure(), isEventDisabled(xev)});
+        insLog.finer("Configure, {0}, event disabled: {1}",
+                     xev.get_xconfigure(), isEventDisabled(xev));
         if (isEventDisabled(xev)) {
             return;
         }
@@ -937,7 +1017,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
     public void handleMapNotifyEvent(XEvent xev) {
         super.handleMapNotifyEvent(xev);
-        log.log(Level.FINE, "Mapped {0}", new Object[] {this});
+        log.fine("Mapped {0}", this);
         if (isEventDisabled(xev)) {
             return;
         }
@@ -969,7 +1049,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
        Parameter is a keysym basically from keysymdef.h
        XXX: how about vendor keys? Is there some with Unicode value and not in the list?
     */
-    char keysymToUnicode( long keysym, int state ) {
+    int keysymToUnicode( long keysym, int state ) {
         return XKeysym.convertKeysym( keysym, state );
     }
     int keyEventType2Id( int xEventType ) {
@@ -979,6 +1059,13 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     static private long xkeycodeToKeysym(XKeyEvent ev) {
         return XKeysym.getKeysym( ev );
     }
+    private long xkeycodeToPrimaryKeysym(XKeyEvent ev) {
+        return XKeysym.xkeycode2primary_keysym( ev );
+    }
+    static private int primaryUnicode2JavaKeycode(int uni) {
+        return (uni > 0? sun.awt.ExtendedKeyCodes.getExtendedKeyCodeForChar(uni) : 0);
+        //return (uni > 0? uni + 0x01000000 : 0);
+    }
     void logIncomingKeyEvent(XKeyEvent ev) {
         keyEventLog.fine("--XWindow.java:handleKeyEvent:"+ev);
         dumpKeysymArray(ev);
@@ -987,7 +1074,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     public void handleKeyPress(XEvent xev) {
         super.handleKeyPress(xev);
         XKeyEvent ev = xev.get_xkey();
-        if (eventLog.isLoggable(Level.FINE)) eventLog.fine(ev.toString());
+        if (eventLog.isLoggable(PlatformLogger.FINE)) eventLog.fine(ev.toString());
         if (isEventDisabled(xev)) {
             return;
         }
@@ -997,17 +1084,17 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     // un-final it if you need to override it in a subclass.
     final void handleKeyPress(XKeyEvent ev) {
         long keysym[] = new long[2];
-        char unicodeKey = 0;
+        int unicodeKey = 0;
         keysym[0] = XConstants.NoSymbol;
 
-        if (keyEventLog.isLoggable(Level.FINE)) {
+        if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
             logIncomingKeyEvent( ev );
         }
         if ( //TODO check if there's an active input method instance
              // without calling a native method. Is it necessary though?
             haveCurrentX11InputMethodInstance()) {
             if (x11inputMethodLookupString(ev.pData, keysym)) {
-                if (keyEventLog.isLoggable(Level.FINE)) {
+                if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
                     keyEventLog.fine("--XWindow.java XIM did process event; return; dec keysym processed:"+(keysym[0])+
                                    "; hex keysym processed:"+Long.toHexString(keysym[0])
                                    );
@@ -1015,7 +1102,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                 return;
             }else {
                 unicodeKey = keysymToUnicode( keysym[0], ev.get_state() );
-                if (keyEventLog.isLoggable(Level.FINE)) {
+                if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
                     keyEventLog.fine("--XWindow.java XIM did NOT process event, hex keysym:"+Long.toHexString(keysym[0])+"\n"+
                                      "                                         unicode key:"+Integer.toHexString((int)unicodeKey));
                 }
@@ -1025,7 +1112,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             // Produce do-it-yourself keysym and perhaps unicode character.
             keysym[0] = xkeycodeToKeysym(ev);
             unicodeKey = keysymToUnicode( keysym[0], ev.get_state() );
-            if (keyEventLog.isLoggable(Level.FINE)) {
+            if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
                 keyEventLog.fine("--XWindow.java XIM is absent;             hex keysym:"+Long.toHexString(keysym[0])+"\n"+
                                  "                                         unicode key:"+Integer.toHexString((int)unicodeKey));
             }
@@ -1042,19 +1129,36 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if( jkc == null ) {
             jkc = new XKeysym.Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDEFINED, java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN);
         }
-        if (keyEventLog.isLoggable(Level.FINE)) {
+
+        // Take the first keysym from a keysym array associated with the XKeyevent
+        // and convert it to Unicode. Then, even if a Java keycode for the keystroke
+        // is undefined, we still have a guess of what has been engraved on a keytop.
+        int unicodeFromPrimaryKeysym = keysymToUnicode( xkeycodeToPrimaryKeysym(ev) ,0);
+
+        if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
             keyEventLog.fine(">>>Fire Event:"+
                (ev.get_type() == XConstants.KeyPress ? "KEY_PRESSED; " : "KEY_RELEASED; ")+
                "jkeycode:decimal="+jkc.getJavaKeycode()+
-               ", hex=0x"+Integer.toHexString(jkc.getJavaKeycode())+"; "
+               ", hex=0x"+Integer.toHexString(jkc.getJavaKeycode())+"; "+
+               " legacy jkeycode: decimal="+XKeysym.getLegacyJavaKeycodeOnly(ev)+
+               ", hex=0x"+Integer.toHexString(XKeysym.getLegacyJavaKeycodeOnly(ev))+"; "
             );
         }
+
+        int jkeyToReturn = XKeysym.getLegacyJavaKeycodeOnly(ev); // someway backward compatible
+        int jkeyExtended = jkc.getJavaKeycode() == java.awt.event.KeyEvent.VK_UNDEFINED ?
+                           primaryUnicode2JavaKeycode( unicodeFromPrimaryKeysym ) :
+                             jkc.getJavaKeycode();
         postKeyEvent( java.awt.event.KeyEvent.KEY_PRESSED,
                           ev.get_time(),
-                          jkc.getJavaKeycode(),
+                          jkeyToReturn,
                           (unicodeKey == 0 ? java.awt.event.KeyEvent.CHAR_UNDEFINED : unicodeKey),
                           jkc.getKeyLocation(),
-                          ev.get_state(),ev.getPData(), XKeyEvent.getSize());
+                          ev.get_state(),ev.getPData(), XKeyEvent.getSize(), (long)(ev.get_keycode()),
+                          unicodeFromPrimaryKeysym,
+                          jkeyExtended);
+
+
         if( unicodeKey > 0 ) {
                 keyEventLog.fine("fire _TYPED on "+unicodeKey);
                 postKeyEvent( java.awt.event.KeyEvent.KEY_TYPED,
@@ -1062,7 +1166,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                               java.awt.event.KeyEvent.VK_UNDEFINED,
                               unicodeKey,
                               java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN,
-                              ev.get_state(),ev.getPData(), XKeyEvent.getSize());
+                              ev.get_state(),ev.getPData(), XKeyEvent.getSize(), (long)0,
+                              unicodeFromPrimaryKeysym,
+                              java.awt.event.KeyEvent.VK_UNDEFINED);
+
         }
 
 
@@ -1071,7 +1178,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     public void handleKeyRelease(XEvent xev) {
         super.handleKeyRelease(xev);
         XKeyEvent ev = xev.get_xkey();
-        if (eventLog.isLoggable(Level.FINE)) eventLog.fine(ev.toString());
+        if (eventLog.isLoggable(PlatformLogger.FINE)) eventLog.fine(ev.toString());
         if (isEventDisabled(xev)) {
             return;
         }
@@ -1080,10 +1187,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     // un-private it if you need to call it from elsewhere
     private void handleKeyRelease(XKeyEvent ev) {
         long keysym[] = new long[2];
-        char unicodeKey = 0;
+        int unicodeKey = 0;
         keysym[0] = XConstants.NoSymbol;
 
-        if (keyEventLog.isLoggable(Level.FINE)) {
+        if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
             logIncomingKeyEvent( ev );
         }
         // Keysym should be converted to Unicode, if possible and necessary,
@@ -1094,11 +1201,13 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if( jkc == null ) {
             jkc = new XKeysym.Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDEFINED, java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN);
         }
-        if (keyEventLog.isLoggable(Level.FINE)) {
+        if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
             keyEventLog.fine(">>>Fire Event:"+
                (ev.get_type() == XConstants.KeyPress ? "KEY_PRESSED; " : "KEY_RELEASED; ")+
                "jkeycode:decimal="+jkc.getJavaKeycode()+
-               ", hex=0x"+Integer.toHexString(jkc.getJavaKeycode())+"; "
+               ", hex=0x"+Integer.toHexString(jkc.getJavaKeycode())+"; "+
+               " legacy jkeycode: decimal="+XKeysym.getLegacyJavaKeycodeOnly(ev)+
+               ", hex=0x"+Integer.toHexString(XKeysym.getLegacyJavaKeycodeOnly(ev))+"; "
             );
         }
         // We obtain keysym from IM and derive unicodeKey from it for KeyPress only.
@@ -1109,13 +1218,74 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         // That's why we use the same procedure as if there was no IM instance: do-it-yourself unicode.
         unicodeKey = keysymToUnicode( xkeycodeToKeysym(ev), ev.get_state() );
 
+        // Take a first keysym from a keysym array associated with the XKeyevent
+        // and convert it to Unicode. Then, even if Java keycode for the keystroke
+        // is undefined, we still will have a guess of what was engraved on a keytop.
+        int unicodeFromPrimaryKeysym = keysymToUnicode( xkeycodeToPrimaryKeysym(ev) ,0);
+
+        int jkeyToReturn = XKeysym.getLegacyJavaKeycodeOnly(ev); // someway backward compatible
+        int jkeyExtended = jkc.getJavaKeycode() == java.awt.event.KeyEvent.VK_UNDEFINED ?
+                           primaryUnicode2JavaKeycode( unicodeFromPrimaryKeysym ) :
+                             jkc.getJavaKeycode();
         postKeyEvent(  java.awt.event.KeyEvent.KEY_RELEASED,
                           ev.get_time(),
-                          jkc.getJavaKeycode(),
+                          jkeyToReturn,
                           (unicodeKey == 0 ? java.awt.event.KeyEvent.CHAR_UNDEFINED : unicodeKey),
                           jkc.getKeyLocation(),
-                          ev.get_state(),ev.getPData(), XKeyEvent.getSize());
+                          ev.get_state(),ev.getPData(), XKeyEvent.getSize(), (long)(ev.get_keycode()),
+                          unicodeFromPrimaryKeysym,
+                          jkeyExtended);
 
+
+    }
+
+    /*
+     * XmNiconic and Map/UnmapNotify (that XmNiconic relies on) are
+     * unreliable, since mapping changes can happen for a virtual desktop
+     * switch or MacOS style shading that became quite popular under X as
+     * well.  Yes, it probably should not be this way, as it violates
+     * ICCCM, but reality is that quite a lot of window managers abuse
+     * mapping state.
+     */
+    int getWMState() {
+        if (stateChanged) {
+            stateChanged = false;
+            WindowPropertyGetter getter =
+                new WindowPropertyGetter(window, XWM.XA_WM_STATE, 0, 1, false,
+                                         XWM.XA_WM_STATE);
+            try {
+                int status = getter.execute();
+                if (status != XConstants.Success || getter.getData() == 0) {
+                    return savedState = XUtilConstants.WithdrawnState;
+                }
+
+                if (getter.getActualType() != XWM.XA_WM_STATE.getAtom() && getter.getActualFormat() != 32) {
+                    return savedState = XUtilConstants.WithdrawnState;
+                }
+                savedState = (int)Native.getCard32(getter.getData());
+            } finally {
+                getter.dispose();
+            }
+        }
+        return savedState;
+    }
+
+    /**
+     * Override this methods to get notifications when top-level window state changes. The state is
+     * meant in terms of ICCCM: WithdrawnState, IconicState, NormalState
+     */
+    protected void stateChanged(long time, int oldState, int newState) {
+    }
+
+    @Override
+    public void handlePropertyNotify(XEvent xev) {
+        super.handlePropertyNotify(xev);
+        XPropertyEvent ev = xev.get_xproperty();
+        if (ev.get_atom() == XWM.XA_WM_STATE.getAtom()) {
+            // State has changed, invalidate saved value
+            stateChanged = true;
+            stateChanged(ev.get_time(), savedState, getWMState());
+        }
     }
 
     public void reshape(Rectangle bounds) {
@@ -1163,10 +1333,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     void updateSizeHints(int x, int y, int width, int height) {
         long flags = XUtilConstants.PSize | (isLocationByPlatform() ? 0 : (XUtilConstants.PPosition | XUtilConstants.USPosition));
         if (!isResizable()) {
-            log.log(Level.FINER, "Window {0} is not resizable", new Object[] {this});
+            log.finer("Window {0} is not resizable", this);
             flags |= XUtilConstants.PMinSize | XUtilConstants.PMaxSize;
         } else {
-            log.log(Level.FINER, "Window {0} is resizable", new Object[] {this});
+            log.finer("Window {0} is resizable", this);
         }
         setSizeHints(flags, x, y, width, height);
     }
@@ -1174,23 +1344,28 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     void updateSizeHints(int x, int y) {
         long flags = isLocationByPlatform() ? 0 : (XUtilConstants.PPosition | XUtilConstants.USPosition);
         if (!isResizable()) {
-            log.log(Level.FINER, "Window {0} is not resizable", new Object[] {this});
+            log.finer("Window {0} is not resizable", this);
             flags |= XUtilConstants.PMinSize | XUtilConstants.PMaxSize | XUtilConstants.PSize;
         } else {
-            log.log(Level.FINER, "Window {0} is resizable", new Object[] {this});
+            log.finer("Window {0} is resizable", this);
         }
         setSizeHints(flags, x, y, width, height);
     }
 
-      void validateSurface() {
+    void validateSurface() {
         if ((width != oldWidth) || (height != oldHeight)) {
-            SurfaceData oldData = surfaceData;
-            if (oldData != null) {
-                surfaceData = graphicsConfig.createSurfaceData(this);
-                oldData.invalidate();
-            }
+            doValidateSurface();
+
             oldWidth = width;
             oldHeight = height;
+        }
+    }
+
+    final void doValidateSurface() {
+        SurfaceData oldData = surfaceData;
+        if (oldData != null) {
+            surfaceData = graphicsConfig.createSurfaceData(this);
+            oldData.invalidate();
         }
     }
 
@@ -1213,7 +1388,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             Component comp = target;
 
             while (comp != null && !(comp instanceof Window)) {
-                comp = ComponentAccessor.getParent_NoClientCode(comp);
+                comp = AWTAccessor.getComponentAccessor().getParent(comp);
             }
 
             // applets, embedded, etc - translate directly
@@ -1262,20 +1437,97 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         }
     }
 
-    public void postKeyEvent(int id, long when, int keyCode, char keyChar,
-        int keyLocation, int state, long event, int eventSize)
+    public void postKeyEvent(int id, long when, int keyCode, int keyChar,
+        int keyLocation, int state, long event, int eventSize, long rawCode,
+        int unicodeFromPrimaryKeysym, int extendedKeyCode)
+
     {
         long jWhen = XToolkit.nowMillisUTC_offset(when);
         int modifiers = getModifiers(state, 0, keyCode);
+        if (rawCodeField == null) {
+            rawCodeField = XToolkit.getField(KeyEvent.class, "rawCode");
+        }
+        if (primaryLevelUnicodeField == null) {
+            primaryLevelUnicodeField = XToolkit.getField(KeyEvent.class, "primaryLevelUnicode");
+        }
+        if (extendedKeyCodeField == null) {
+            extendedKeyCodeField = XToolkit.getField(KeyEvent.class, "extendedKeyCode");
+        }
+
         KeyEvent ke = new KeyEvent((Component)getEventSource(), id, jWhen,
-                                   modifiers, keyCode, keyChar, keyLocation);
+                                   modifiers, keyCode, (char)keyChar, keyLocation);
         if (event != 0) {
             byte[] data = Native.toBytes(event, eventSize);
             setBData(ke, data);
+        }
+        try {
+            rawCodeField.set(ke, rawCode);
+            primaryLevelUnicodeField.set(ke, (long)unicodeFromPrimaryKeysym);
+            extendedKeyCodeField.set(ke, (long)extendedKeyCode);
+        } catch (IllegalArgumentException e) {
+            assert(false);
+        } catch (IllegalAccessException e) {
+            assert(false);
         }
         postEventToEventQueue(ke);
     }
 
     static native int getAWTKeyCodeForKeySym(int keysym);
     static native int getKeySymForAWTKeyCode(int keycode);
+
+    /* These two methods are actually applicable to toplevel windows only.
+     * However, the functionality is required by both the XWindowPeer and
+     * XWarningWindow, both of which have the XWindow as a common ancestor.
+     * See XWM.setMotifDecor() for details.
+     */
+    public PropMwmHints getMWMHints() {
+        if (mwm_hints == null) {
+            mwm_hints = new PropMwmHints();
+            if (!XWM.XA_MWM_HINTS.getAtomData(getWindow(), mwm_hints.pData, MWMConstants.PROP_MWM_HINTS_ELEMENTS)) {
+                mwm_hints.zero();
+            }
+        }
+        return mwm_hints;
+    }
+
+    public void setMWMHints(PropMwmHints hints) {
+        mwm_hints = hints;
+        if (hints != null) {
+            XWM.XA_MWM_HINTS.setAtomData(getWindow(), mwm_hints.pData, MWMConstants.PROP_MWM_HINTS_ELEMENTS);
+        }
+    }
+
+    protected final void initWMProtocols() {
+        wm_protocols.setAtomListProperty(this, getWMProtocols());
+    }
+
+    /**
+     * Returns list of protocols which should be installed on this window.
+     * Descendants can override this method to add class-specific protocols
+     */
+    protected XAtomList getWMProtocols() {
+        // No protocols on simple window
+        return new XAtomList();
+    }
+
+    /**
+     * Indicates if the window is currently in the FSEM.
+     * Synchronization: state lock.
+     */
+    private boolean fullScreenExclusiveModeState = false;
+
+    // Implementation of the X11ComponentPeer
+    @Override
+    public void setFullScreenExclusiveModeState(boolean state) {
+        synchronized (getStateLock()) {
+            fullScreenExclusiveModeState = state;
+        }
+    }
+
+    public final boolean isFullScreenExclusiveMode() {
+        synchronized (getStateLock()) {
+            return fullScreenExclusiveModeState;
+        }
+    }
+
 }

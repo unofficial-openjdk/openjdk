@@ -215,6 +215,14 @@ public class LogManager {
     // This private class is used as a shutdown hook.
     // It does a "reset" to close all open handlers.
     private class Cleaner extends Thread {
+
+        private Cleaner() {
+            /* Set context class loader to null in order to avoid
+             * keeping a strong reference to an application classloader.
+             */
+            this.setContextClassLoader(null);
+        }
+
         public void run() {
             // This is to ensure the LogManager.<clinit> is completed
             // before synchronized block. Otherwise deadlocks are possible.
@@ -275,6 +283,10 @@ public class LogManager {
                         AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                                 public Object run() throws Exception {
                                     readConfiguration();
+
+                                    // Platform loggers begin to delegate to java.util.logging.Logger
+                                    sun.util.logging.PlatformLogger.redirectPlatformLoggers();
+
                                     return null;
                                 }
                             });
@@ -330,7 +342,7 @@ public class LogManager {
     // already been created with the given name it is returned.
     // Otherwise a new logger instance is created and registered
     // in the LogManager global namespace.
-    synchronized Logger demandLogger(String name) {
+    Logger demandLogger(String name) {
         Logger result = getLogger(name);
         if (result == null) {
             result = new Logger(name, null);
@@ -1027,12 +1039,16 @@ public class LogManager {
 
     /**
      * Returns <tt>LoggingMXBean</tt> for managing loggers.
-     * The <tt>LoggingMXBean</tt> can also obtained from the
-     * {@link java.lang.management.ManagementFactory#getPlatformMBeanServer
-     * platform <tt>MBeanServer</tt>} method.
+     * An alternative way to manage loggers is using
+     * the {@link java.lang.management.ManagementFactory#getPlatformMXBeans(Class)
+     * ManagementFactory.getPlatformMXBeans} method as follows:
+     * <pre>
+     *     List&lt{@link PlatformLoggingMXBean}&gt result = ManagementFactory.getPlatformMXBeans(PlatformLoggingMXBean.class);
+     * </pre>
      *
      * @return a {@link LoggingMXBean} object.
      *
+     * @see PlatformLoggingMXBean
      * @see java.lang.management.ManagementFactory
      * @since 1.5
      */

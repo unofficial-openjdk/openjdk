@@ -249,12 +249,19 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
 
         RMIConnection client = makeClient(connectionId, subject);
 
-        connServer.connectionOpened(connectionId, "Connection opened", null);
-
         dropDeadReferences();
         WeakReference<RMIConnection> wr = new WeakReference<RMIConnection>(client);
         synchronized (clientList) {
             clientList.add(wr);
+        }
+
+        connServer.connectionOpened(connectionId, "Connection opened", null);
+
+        synchronized (clientList) {
+            if (!clientList.contains(wr)) {
+                // can be removed only by a JMXConnectionNotification listener
+                throw new IOException("The connection is refused.");
+            }
         }
 
         if (tracing)

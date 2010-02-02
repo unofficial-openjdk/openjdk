@@ -121,7 +121,7 @@ class JvmtiEnvBase : public CHeapObj {
 
  public:
 
-  bool is_valid()                                  { return _magic == JVMTI_MAGIC; }
+  bool is_valid();
 
   bool use_version_1_0_semantics();  // agent asked for version 1.0
   bool use_version_1_1_semantics();  // agent asked for version 1.1

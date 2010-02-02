@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,21 +60,9 @@ inline void OrderAccess::release() {
   dummy = 0;
 }
 
-#if defined(COMPILER2) || defined(_LP64)
-
 inline void OrderAccess::fence() {
   _OrderAccess_fence();
 }
-
-#else  // defined(COMPILER2) || defined(_LP64)
-
-inline void OrderAccess::fence() {
-  if (os::is_MP()) {
-    (*os::fence_func)();
-  }
-}
-
-#endif // defined(COMPILER2) || defined(_LP64)
 
 #endif // _GNU_SOURCE
 

@@ -27,12 +27,12 @@ package javax.swing.plaf.synth;
 
 import javax.swing.*;
 import javax.swing.text.*;
-import javax.swing.event.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.BasicTextAreaUI;
 import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeEvent;
-import sun.swing.plaf.synth.SynthUI;
 
 /**
  * Provides the look and feel for a plain text editor in the
@@ -49,39 +49,47 @@ import sun.swing.plaf.synth.SynthUI;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Shannon Hickey
+ * @since 1.7
  */
-class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
+public class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
+    private Handler handler = new Handler();
     private SynthStyle style;
 
     /**
-     * Creates a UI for a JTextArea.
+     * Creates a UI object for a JTextArea.
      *
      * @param ta a text area
-     * @return the UI
+     * @return the UI object
      */
     public static ComponentUI createUI(JComponent ta) {
         return new SynthTextAreaUI();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installDefaults() {
         // Installs the text cursor on the component
         super.installDefaults();
         updateStyle(getComponent());
+        getComponent().addFocusListener(handler);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallDefaults() {
         SynthContext context = getContext(getComponent(), ENABLED);
 
         getComponent().putClientProperty("caretAspectRatio", null);
+        getComponent().removeFocusListener(handler);
 
         style.uninstallDefaults(context);
         context.dispose();
         style = null;
         super.uninstallDefaults();
-    }
-
-    public void installUI(JComponent c) {
-        super.installUI(c);
     }
 
     private void updateStyle(JTextComponent comp) {
@@ -101,8 +109,12 @@ class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
@@ -110,10 +122,10 @@ class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
                     SynthLookAndFeel.getRegion(c), style, state);
     }
 
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
-    }
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -124,14 +136,30 @@ class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
         context.dispose();
     }
 
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
         super.paint(g, getComponent());
     }
 
+    /**
+     * @inheritDoc
+     *
+     * Overridden to do nothing.
+     */
+    @Override
     protected void paintBackground(Graphics g) {
         // Overriden to do nothing, all our painting is done from update/paint.
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintTextAreaBorder(context, g, x, y, w, h);
@@ -147,10 +175,21 @@ class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
      *
      * @param evt the property change event
      */
+    @Override
     protected void propertyChange(PropertyChangeEvent evt) {
         if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
             updateStyle((JTextComponent)evt.getSource());
         }
         super.propertyChange(evt);
+    }
+
+    private final class Handler implements FocusListener {
+        public void focusGained(FocusEvent e) {
+            getComponent().repaint();
+        }
+
+        public void focusLost(FocusEvent e) {
+            getComponent().repaint();
+        }
     }
 }

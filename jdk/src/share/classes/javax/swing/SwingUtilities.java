@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -999,24 +999,20 @@ public class SwingUtilities implements SwingConstants
                 textR.height = (int) v.getPreferredSpan(View.Y_AXIS);
             } else {
                 textR.width = SwingUtilities2.stringWidth(c, fm, text);
-
-                // Take into account the left and right side bearings.
-                // This gives more space than it is actually needed,
-                // but there are two reasons:
-                // 1. If we set the width to the actual bounds,
-                //    all callers would have to account for the bearings
-                //    themselves. NOTE: all pref size calculations don't do it.
-                // 2. You can do a drawString at the returned location
-                //    and the text won't be clipped.
                 lsb = SwingUtilities2.getLeftSideBearing(c, fm, text);
                 if (lsb < 0) {
+                    // If lsb is negative, add it to the width and later
+                    // adjust the x location. This gives more space than is
+                    // actually needed.
+                    // This is done like this for two reasons:
+                    // 1. If we set the width to the actual bounds all
+                    //    callers would have to account for negative lsb
+                    //    (pref size calculations ONLY look at width of
+                    //    textR)
+                    // 2. You can do a drawString at the returned location
+                    //    and the text won't be clipped.
                     textR.width -= lsb;
                 }
-                rsb = SwingUtilities2.getRightSideBearing(c, fm, text);
-                if (rsb > 0) {
-                    textR.width += rsb;
-                }
-
                 if (textR.width > availTextWidth) {
                     text = SwingUtilities2.clipString(c, fm, text,
                                                       availTextWidth);
@@ -1589,15 +1585,6 @@ public class SwingUtilities implements SwingConstants
      * processing the key bindings associated with JComponents.
      */
     static boolean isValidKeyEventForKeyBindings(KeyEvent e) {
-        if (e.getID() == KeyEvent.KEY_TYPED) {
-            int mod = e.getModifiers();
-            if (((mod & ActionEvent.ALT_MASK) != 0) &&
-                ((mod & ActionEvent.CTRL_MASK) == 0)) {
-                // filter out typed "alt-?" keys, but not those created
-                // with AltGr, and not control characters
-                return false;
-            }
-        }
         return true;
     }
 
@@ -1979,5 +1966,115 @@ public class SwingUtilities implements SwingConstants
         if (component != null) {
             SwingUtilities.updateComponentTreeUI(component);
         }
+    }
+
+    /**
+     * Looks for the first ancestor of the {@code component}
+     * which is not an instance of {@link JLayer}.
+     * If this ancestor is an instance of {@code JViewport},
+     * this {@code JViewport} is returned, otherwise returns {@code null}.
+     * The following way of obtaining the parent {@code JViewport}
+     * is not recommended any more:
+     * <pre>
+     * JViewport port = null;
+     * Container parent = component.getParent();
+     * // not recommended any more
+     * if(parent instanceof JViewport) {
+     *     port = (JViewport) parent;
+     * }
+     * </pre>
+     * Here is the way to go:
+     * <pre>
+     * // the correct way:
+     * JViewport port = SwingUtilities.getParentViewport(component);
+     * </pre>
+     * @param component {@code Component} to get the parent {@code JViewport} of.
+     * @return the {@code JViewport} instance for the {@code component}
+     * or {@code null}
+     * @throws NullPointerException if {@code component} is {@code null}
+     *
+     * @since 1.7
+     */
+    public static JViewport getParentViewport(Component component) {
+        do {
+            component = component.getParent();
+            if (component instanceof JViewport) {
+                return (JViewport) component;
+            }
+        } while(component instanceof JLayer);
+        return null;
+    }
+
+    /**
+     * Returns the first {@code JViewport}'s descendant
+     * which is not an instance of {@code JLayer} or {@code null}.
+     *
+     * If the {@code viewport}'s view component is not a {@code JLayer},
+     * this method is equal to {@link JViewport#getView()}
+     * otherwise {@link JLayer#getView()} will be recursively tested
+     *
+     * @return the first {@code JViewport}'s descendant
+     * which is not an instance of {@code JLayer} or {@code null}.
+     *
+     * @throws NullPointerException if {@code viewport} is {@code null}
+     * @see JViewport#getView()
+     * @see JLayer
+     */
+    static Component getUnwrappedView(JViewport viewport) {
+        Component view = viewport.getView();
+        while (view instanceof JLayer) {
+            view = ((JLayer)view).getView();
+        }
+        return view;
+    }
+
+   /**
+     * Retrieves the validate root of a given container.
+     *
+     * If the container is contained within a {@code CellRendererPane}, this
+     * method returns {@code null} due to the synthetic nature of the {@code
+     * CellRendererPane}.
+     * <p>
+     * The component hierarchy must be displayable up to the toplevel component
+     * (either a {@code Frame} or an {@code Applet} object.) Otherwise this
+     * method returns {@code null}.
+     * <p>
+     * If the {@code visibleOnly} argument is {@code true}, the found validate
+     * root and all its parents up to the toplevel component must also be
+     * visible. Otherwise this method returns {@code null}.
+     *
+     * @return the validate root of the given container or null
+     * @see java.awt.Component#isDisplayable()
+     * @see java.awt.Component#isVisible()
+     * @since 1.7
+     */
+    static Container getValidateRoot(Container c, boolean visibleOnly) {
+        Container root = null;
+
+        for (; c != null; c = c.getParent())
+        {
+            if (!c.isDisplayable() || c instanceof CellRendererPane) {
+                return null;
+            }
+            if (c.isValidateRoot()) {
+                root = c;
+                break;
+            }
+        }
+
+        if (root == null) {
+            return null;
+        }
+
+        for (; c != null; c = c.getParent()) {
+            if (!c.isDisplayable() || (visibleOnly && !c.isVisible())) {
+                return null;
+            }
+            if (c instanceof Window || c instanceof Applet) {
+                return root;
+            }
+        }
+
+        return null;
     }
 }

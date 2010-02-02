@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.io.IOException;
  */
 public class Annotation {
     static class InvalidAnnotation extends AttributeException {
+        private static final long serialVersionUID = -4620480740735772708L;
         InvalidAnnotation(String msg) {
             super(msg);
         }

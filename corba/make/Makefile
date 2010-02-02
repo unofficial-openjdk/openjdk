@@ -1,5 +1,5 @@
 #
-# Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -106,13 +106,16 @@ endif
 
 SOURCE_LEVEL = 5
 BOOTSTRAP_TARGET_LEVEL = 5
-TARGET_LEVEL = 6
+
+ifdef TARGET_CLASS_VERSION
+    TARGET_LEVEL = $(TARGET_CLASS_VERSION)
+else
+    TARGET_LEVEL = 7
+endif
 
 ifndef TARGET_JAVA
   TARGET_JAVA = java
 endif
-
-NO_PROPRIETARY_API_WARNINGS = -XDignore.symbol.file=true
 
 SELF = $(lastword $(MAKEFILE_LIST))
 
@@ -138,12 +141,12 @@ $(CLASSES_JAR):
 
 #----- src.zip
 
-SRC_ZIP_FILES = $(shell $(FIND) $(SRC_CLASSES_DIR) \( -name SCCS -o -name \*-template \) -prune -o -type f -print )
+SRC_ZIP_FILES = $(shell $(FIND) $(SRC_CLASSES_DIR) \( -name \*-template \) -prune -o -type f -print )
 
 SRC_ZIP = $(LIB_DIR)/src.zip
 $(SRC_ZIP): $(SRC_ZIP_FILES)
 	abs_src_zip=`cd $(@D) ; pwd`/$(@F) ; \
-	( cd $(SRC_CLASSES_DIR) ; $(FIND) . \( -name SCCS -o -name \*-template \) -prune -o -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ; \
+	( cd $(SRC_CLASSES_DIR) ; $(FIND) . \( -name \*-template \) -prune -o -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ; \
 	( cd $(GENSRC_DIR) ; $(FIND) . -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ;
 
 #----- bin.zip

@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,6 @@ FILES_c = \
         FourByteAbgrPre.c \
 	BufferedMaskBlit.c \
 	BufferedRenderPipe.c \
-	RenderBuffer.c \
 	ShapeSpanIterator.c \
 	SpanClipRenderer.c \
 	SurfaceData.c \
@@ -104,7 +103,8 @@ FILES_c = \
         OGLVertexCache.c \
         WGLGraphicsConfig.c \
         WGLSurfaceData.c \
-        AccelGlyphCache.c
+        AccelGlyphCache.c \
+        rect.c
 
 FILES_cpp = \
 	CmdIDList.cpp \
@@ -153,7 +153,6 @@ FILES_cpp = \
 	awt_Menu.cpp \
 	awt_MenuBar.cpp \
 	awt_MenuItem.cpp \
-	awt_MMStub.cpp \
 	awt_MouseEvent.cpp \
 	awt_Object.cpp \
 	awt_Palette.cpp \
@@ -171,7 +170,6 @@ FILES_cpp = \
 	awt_TextComponent.cpp \
 	awt_TextField.cpp \
 	awt_Toolkit.cpp \
-	awt_Unicode.cpp \
 	awt_Window.cpp \
 	awt_Win32GraphicsEnv.cpp \
 	awt_Win32GraphicsDevice.cpp \
@@ -201,7 +199,6 @@ FILES_cpp = \
 	ShellFolder2.cpp \
 	ThemeReader.cpp \
 	ComCtl32Util.cpp \
+	DllUtil.cpp \
 	initIDs.cpp \
-	awt_dlls.cpp \
-	UnicowsLoader.cpp \
 	MouseInfo.cpp

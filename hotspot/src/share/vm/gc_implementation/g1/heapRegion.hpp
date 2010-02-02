@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -227,6 +227,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // next region in the young "generation" region set
   HeapRegion* _next_young_region;
 
+  // Next region whose cards need cleaning
+  HeapRegion* _next_dirty_cards_region;
+
   // For parallel heapRegion traversal.
   jint _claimed;
 
@@ -237,15 +240,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
 
   // See "sort_index" method.  -1 means is not in the array.
   int _sort_index;
-
-  // Means it has (or at least had) a very large RS, and should not be
-  // considered for membership in a collection set.
-  enum PopularityState {
-    NotPopular,
-    PopularPending,
-    Popular
-  };
-  PopularityState _popularity;
 
   // <PREDICTION>
   double _gc_efficiency;
@@ -303,22 +297,32 @@ class HeapRegion: public G1OffsetTableContigSpace {
   HeapRegion(G1BlockOffsetSharedArray* sharedOffsetArray,
              MemRegion mr, bool is_zeroed);
 
-  enum SomePublicConstants {
-    // HeapRegions are GrainBytes-aligned
-    // and have sizes that are multiples of GrainBytes.
-    LogOfHRGrainBytes = 20,
-    LogOfHRGrainWords = LogOfHRGrainBytes - LogHeapWordSize,
-    GrainBytes = 1 << LogOfHRGrainBytes,
-    GrainWords = 1 <<LogOfHRGrainWords,
-    MaxAge = 2, NoOfAges = MaxAge+1
-  };
+  static int LogOfHRGrainBytes;
+  static int LogOfHRGrainWords;
+  // The normal type of these should be size_t. However, they used to
+  // be members of an enum before and they are assumed by the
+  // compilers to be ints. To avoid going and fixing all their uses,
+  // I'm declaring them as ints. I'm not anticipating heap region
+  // sizes to reach anywhere near 2g, so using an int here is safe.
+  static int GrainBytes;
+  static int GrainWords;
+  static int CardsPerRegion;
+
+  // It sets up the heap region size (GrainBytes / GrainWords), as
+  // well as other related fields that are based on the heap region
+  // size (LogOfHRGrainBytes / LogOfHRGrainWords /
+  // CardsPerRegion). All those fields are considered constant
+  // throughout the JVM's execution, therefore they should only be set
+  // up once during initialization time.
+  static void setup_heap_region_size(uintx min_heap_size);
 
   enum ClaimValues {
     InitialClaimValue     = 0,
     FinalCountClaimValue  = 1,
     NoteEndClaimValue     = 2,
     ScrubRemSetClaimValue = 3,
-    ParVerifyClaimValue   = 4
+    ParVerifyClaimValue   = 4,
+    RebuildRSClaimValue   = 5
   };
 
   // Concurrent refinement requires contiguous heap regions (in which TLABs
@@ -432,10 +436,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
     _next_in_special_set = r;
   }
 
-  bool is_reserved() {
-    return popular();
-  }
-
   bool is_on_free_list() {
     return _is_on_free_list;
   }
@@ -479,6 +479,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_next_young_region(HeapRegion* hr) {
     _next_young_region = hr;
   }
+
+  HeapRegion* get_next_dirty_cards_region() const { return _next_dirty_cards_region; }
+  HeapRegion** next_dirty_cards_region_addr() { return &_next_dirty_cards_region; }
+  void set_next_dirty_cards_region(HeapRegion* hr) { _next_dirty_cards_region = hr; }
+  bool is_on_dirty_cards_region_list() const { return get_next_dirty_cards_region() != NULL; }
 
   // Allows logical separation between objects allocated before and after.
   void save_marks();
@@ -564,8 +569,7 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // ever evacuated into this region.  If we evacuate, allocate, and
   // then evacuate we are in deep doodoo.
   void note_end_of_copying() {
-    assert(top() >= _next_top_at_mark_start,
-           "Increase only");
+    assert(top() >= _next_top_at_mark_start, "Increase only");
     _next_top_at_mark_start = top();
   }
 
@@ -602,23 +606,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
 
     zero_marked_bytes();
     init_top_at_mark_start();
-  }
-
-  bool popular() { return _popularity == Popular; }
-  void set_popular(bool b) {
-    if (b) {
-      _popularity = Popular;
-    } else {
-      _popularity = NotPopular;
-    }
-  }
-  bool popular_pending() { return _popularity == PopularPending; }
-  void set_popular_pending(bool b) {
-    if (b) {
-      _popularity = PopularPending;
-    } else {
-      _popularity = NotPopular;
-    }
   }
 
   // <PREDICTION>
@@ -799,7 +786,16 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void print() const;
   void print_on(outputStream* st) const;
 
-  // Override
+  // use_prev_marking == true  -> use "prev" marking information,
+  // use_prev_marking == false -> use "next" marking information
+  // NOTE: Only the "prev" marking information is guaranteed to be
+  // consistent most of the time, so most calls to this should use
+  // use_prev_marking == true. Currently, there is only one case where
+  // this is called with use_prev_marking == false, which is to verify
+  // the "next" marking information at the end of remark.
+  void verify(bool allow_dirty, bool use_prev_marking, bool *failures) const;
+
+  // Override; it uses the "prev" marking information
   virtual void verify(bool allow_dirty) const;
 
 #ifdef DEBUG
@@ -829,7 +825,7 @@ class HeapRegionClosure : public StackObj {
 
 // A linked lists of heap regions.  It leaves the "next" field
 // unspecified; that's up to subtypes.
-class RegionList {
+class RegionList VALUE_OBJ_CLASS_SPEC {
 protected:
   virtual HeapRegion* get_next(HeapRegion* chr) = 0;
   virtual void set_next(HeapRegion* chr,

@@ -232,7 +232,21 @@ public final class StrikeCache {
             if (disposer.pScalerContext != 0L) {
                 freeLongMemory(new long[0], disposer.pScalerContext);
             }
+        } else if (disposer.pScalerContext != 0L) {
+            /* Rarely a strike may have been created that never cached
+             * any glyphs. In this case we still want to free the scaler
+             * context.
+             */
+            if (longAddresses()) {
+                freeLongMemory(new long[0], disposer.pScalerContext);
+            } else {
+                freeIntMemory(new int[0], disposer.pScalerContext);
+            }
         }
+    }
+
+    private static boolean longAddresses() {
+        return nativeAddressSize == 8;
     }
 
     static void disposeStrike(final FontStrikeDisposer disposer) {
@@ -240,9 +254,20 @@ public final class StrikeCache {
         // because they may be accessed on that thread at the time of the
         // disposal (for example, when the accel. cache is invalidated)
 
-        // REMIND: this look a bit heavyweight, but should be ok
-        // because strike disposal is a relatively infrequent operation,
-        // more worrisome is the necessity of getting a GC here.
+        // Whilst this is a bit heavyweight, in most applications
+        // strike disposal is a relatively infrequent operation, so it
+        // doesn't matter. But in some tests that use vast numbers
+        // of strikes, the switching back and forth is measurable.
+        // So the "pollRemove" call is added to batch up the work.
+        // If we are polling we know we've already been called back
+        // and can directly dispose the record.
+        // Also worrisome is the necessity of getting a GC here.
+
+        if (Disposer.pollingQueue) {
+            doDispose(disposer);
+            return;
+        }
+
         RenderQueue rq = null;
         GraphicsEnvironment ge =
             GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -263,6 +288,7 @@ public final class StrikeCache {
                 rq.flushAndInvokeNow(new Runnable() {
                     public void run() {
                         doDispose(disposer);
+                        Disposer.pollRemove();
                     }
                 });
             } finally {

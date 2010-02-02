@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,6 +80,11 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         { false, false, false, false, false, false, true };
     private static final boolean[] ALL_REASONS =
         {true, true, true, true, true, true, true, true, true};
+    private boolean mOnlyEECert = false;
+
+    // Maximum clock skew in milliseconds (15 minutes) allowed when checking
+    // validity of CRLs
+    private static final long MAX_CLOCK_SKEW = 900000;
 
     /**
      * Creates a <code>CrlRevocationChecker</code>.
@@ -110,6 +115,12 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
     CrlRevocationChecker(TrustAnchor anchor, PKIXParameters params,
         Collection<X509Certificate> certs) throws CertPathValidatorException
     {
+        this(anchor, params, certs, false);
+    }
+
+    CrlRevocationChecker(TrustAnchor anchor, PKIXParameters params,
+        Collection<X509Certificate> certs, boolean onlyEECert)
+        throws CertPathValidatorException {
         mAnchor = anchor;
         mParams = params;
         mStores = new ArrayList<CertStore>(params.getCertStores());
@@ -129,6 +140,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         }
         Date testDate = params.getDate();
         mCurrentTime = (testDate != null ? testDate : new Date());
+        mOnlyEECert = onlyEECert;
         init(false);
     }
 
@@ -260,6 +272,13 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
                 " ---checking " + msg + "...");
         }
 
+        if (mOnlyEECert && currCert.getBasicConstraints() != -1) {
+            if (debug != null) {
+                debug.println("Skipping revocation check, not end entity cert");
+            }
+            return;
+        }
+
         // reject circular dependencies - RFC 3280 is not explicit on how
         // to handle this, so we feel it is safest to reject them until
         // the issue is resolved in the PKIX WG.
@@ -281,7 +300,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         try {
             X509CRLSelector sel = new X509CRLSelector();
             sel.setCertificateChecking(currCert);
-            sel.setDateAndTime(mCurrentTime);
+            CertPathHelper.setDateAndTime(sel, mCurrentTime, MAX_CLOCK_SKEW);
 
             for (CertStore mStore : mStores) {
                 for (java.security.cert.CRL crl : mStore.getCRLs(sel)) {

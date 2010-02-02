@@ -1,5 +1,5 @@
 /*
- * Copyright 1994-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1994-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -338,7 +338,8 @@ static void read_all_code(context_type *context, jclass cb, int num_methods,
                           int** code_lengths, unsigned char*** code);
 static void verify_method(context_type *context, jclass cb, int index,
                           int code_length, unsigned char* code);
-static void free_all_code(int num_methods, int* lengths, unsigned char** code);
+static void free_all_code(context_type* context, int num_methods,
+                          unsigned char** code);
 static void verify_field(context_type *context, jclass cb, int index);
 
 static void verify_opcode_operands (context_type *, unsigned int inumber, int offset);
@@ -813,11 +814,11 @@ VerifyClassForMajorVersion(JNIEnv *env, jclass cb, char *buffer, jint len,
         /* Look at each method */
         for (i = JVM_GetClassFieldsCount(env, cb); --i >= 0;)
             verify_field(context, cb, i);
-  num_methods = JVM_GetClassMethodsCount(env, cb);
-  read_all_code(context, cb, num_methods, &code_lengths, &code);
-  for (i = num_methods - 1; i >= 0; --i)
+        num_methods = JVM_GetClassMethodsCount(env, cb);
+        read_all_code(context, cb, num_methods, &code_lengths, &code);
+        for (i = num_methods - 1; i >= 0; --i)
             verify_method(context, cb, i, code_lengths[i], code[i]);
-  free_all_code(num_methods, code_lengths, code);
+        free_all_code(context, num_methods, code);
         result = CC_OK;
     } else {
         result = context->err_code;
@@ -835,9 +836,6 @@ VerifyClassForMajorVersion(JNIEnv *env, jclass cb, char *buffer, jint len,
 
     if (context->exceptions)
         free(context->exceptions);
-
-    if (context->code)
-        free(context->code);
 
     if (context->constant_types)
         free(context->constant_types);
@@ -895,41 +893,42 @@ static void
 read_all_code(context_type* context, jclass cb, int num_methods,
               int** lengths_addr, unsigned char*** code_addr)
 {
-  int* lengths = malloc(sizeof(int) * num_methods);
-  unsigned char** code = malloc(sizeof(unsigned char*) * num_methods);
-
-  *(lengths_addr) = lengths;
-  *(code_addr) = code;
-
-  if (lengths == 0 || code == 0) {
-    CCout_of_memory(context);
-  } else {
+    int* lengths;
+    unsigned char** code;
     int i;
+
+    lengths = malloc(sizeof(int) * num_methods);
+    check_and_push(context, lengths, VM_MALLOC_BLK);
+
+    code = malloc(sizeof(unsigned char*) * num_methods);
+    check_and_push(context, code, VM_MALLOC_BLK);
+
+    *(lengths_addr) = lengths;
+    *(code_addr) = code;
+
     for (i = 0; i < num_methods; ++i) {
-      lengths[i] = JVM_GetMethodIxByteCodeLength(context->env, cb, i);
-      if (lengths[i] != 0) {
-        code[i] = malloc(sizeof(unsigned char) * (lengths[i] + 1));
-        if (code[i] == NULL) {
-          CCout_of_memory(context);
+        lengths[i] = JVM_GetMethodIxByteCodeLength(context->env, cb, i);
+        if (lengths[i] > 0) {
+            code[i] = malloc(sizeof(unsigned char) * (lengths[i] + 1));
+            check_and_push(context, code[i], VM_MALLOC_BLK);
+            JVM_GetMethodIxByteCode(context->env, cb, i, code[i]);
         } else {
-          JVM_GetMethodIxByteCode(context->env, cb, i, code[i]);
+            code[i] = NULL;
         }
-      } else {
-        code[i] = NULL;
-      }
     }
-  }
 }
 
 static void
-free_all_code(int num_methods, int* lengths, unsigned char** code)
+free_all_code(context_type* context, int num_methods, unsigned char** code)
 {
   int i;
   for (i = 0; i < num_methods; ++i) {
-    free(code[i]);
+      if (code[i] != NULL) {
+          pop_and_free(context);
+      }
   }
-  free(lengths);
-  free(code);
+  pop_and_free(context); /* code */
+  pop_and_free(context); /* lengths */
 }
 
 /* Verify the code of one method */
@@ -1223,16 +1222,20 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
     case JVM_OPC_invokevirtual:
     case JVM_OPC_invokespecial:
     case JVM_OPC_invokestatic:
+    case JVM_OPC_invokedynamic:
     case JVM_OPC_invokeinterface: {
         /* Make sure the constant pool item is the right type. */
         int key = (code[offset + 1] << 8) + code[offset + 2];
         const char *methodname;
         jclass cb = context->class;
         fullinfo_type clazz_info;
-        int is_constructor, is_internal;
+        int is_constructor, is_internal, is_invokedynamic;
         int kind = (opcode == JVM_OPC_invokeinterface
                             ? 1 << JVM_CONSTANT_InterfaceMethodref
+                  : opcode == JVM_OPC_invokedynamic
+                            ? 1 << JVM_CONSTANT_NameAndType
                             : 1 << JVM_CONSTANT_Methodref);
+        is_invokedynamic = opcode == JVM_OPC_invokedynamic;
         /* Make sure the constant pool item is the right type. */
         verify_constant_pool_type(context, key, kind);
         methodname = JVM_GetCPMethodNameUTF(env, cb, key);
@@ -1241,8 +1244,11 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
         is_internal = methodname[0] == '<';
         pop_and_free(context);
 
-        clazz_info = cp_index_to_class_fullinfo(context, key,
-                                                JVM_CONSTANT_Methodref);
+        if (is_invokedynamic)
+          clazz_info = context->object_info;  // anything will do
+        else
+          clazz_info = cp_index_to_class_fullinfo(context, key,
+                                                  JVM_CONSTANT_Methodref);
         this_idata->operand.i = key;
         this_idata->operand2.fi = clazz_info;
         if (is_constructor) {
@@ -1304,6 +1310,11 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
                         "Fourth operand byte of invokeinterface must be zero");
             }
             pop_and_free(context);
+        } else if (opcode == JVM_OPC_invokedynamic) {
+            if (code[offset + 3] != 0 || code[offset + 4] != 0) {
+                CCerror(context,
+                        "Third and fourth operand bytes of invokedynamic must be zero");
+            }
         } else if (opcode == JVM_OPC_invokevirtual
                       || opcode == JVM_OPC_invokespecial)
             set_protected(context, inumber, key, opcode);
@@ -1990,6 +2001,7 @@ pop_stack(context_type *context, unsigned int inumber, stack_info_type *new_stac
 
         case JVM_OPC_invokevirtual: case JVM_OPC_invokespecial:
         case JVM_OPC_invokeinit:    /* invokespecial call to <init> */
+        case JVM_OPC_invokedynamic:
         case JVM_OPC_invokestatic: case JVM_OPC_invokeinterface: {
             /* The top stuff on the stack depends on the method signature */
             int operand = this_idata->operand.i;
@@ -2005,7 +2017,8 @@ pop_stack(context_type *context, unsigned int inumber, stack_info_type *new_stac
                 print_formatted_methodname(context, operand);
             }
 #endif
-            if (opcode != JVM_OPC_invokestatic)
+            if (opcode != JVM_OPC_invokestatic &&
+                opcode != JVM_OPC_invokedynamic)
                 /* First, push the object */
                 *ip++ = (opcode == JVM_OPC_invokeinit ? '@' : 'A');
             for (p = signature + 1; *p != JVM_SIGNATURE_ENDFUNC; ) {
@@ -2290,6 +2303,7 @@ pop_stack(context_type *context, unsigned int inumber, stack_info_type *new_stac
 
         case JVM_OPC_invokevirtual: case JVM_OPC_invokespecial:
         case JVM_OPC_invokeinit:
+        case JVM_OPC_invokedynamic:
         case JVM_OPC_invokeinterface: case JVM_OPC_invokestatic: {
             int operand = this_idata->operand.i;
             const char *signature =
@@ -2299,7 +2313,8 @@ pop_stack(context_type *context, unsigned int inumber, stack_info_type *new_stac
             int item;
             const char *p;
             check_and_push(context, signature, VM_STRING_UTF);
-            if (opcode == JVM_OPC_invokestatic) {
+            if (opcode == JVM_OPC_invokestatic ||
+                opcode == JVM_OPC_invokedynamic) {
                 item = 0;
             } else if (opcode == JVM_OPC_invokeinit) {
                 fullinfo_type init_type = this_idata->operand2.fi;
@@ -2680,6 +2695,7 @@ push_stack(context_type *context, unsigned int inumber, stack_info_type *new_sta
 
         case JVM_OPC_invokevirtual: case JVM_OPC_invokespecial:
         case JVM_OPC_invokeinit:
+        case JVM_OPC_invokedynamic:
         case JVM_OPC_invokestatic: case JVM_OPC_invokeinterface: {
             /* Look to signature to determine correct result. */
             int operand = this_idata->operand.i;

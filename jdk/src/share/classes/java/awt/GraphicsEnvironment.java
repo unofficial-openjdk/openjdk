@@ -27,9 +27,14 @@
 package java.awt;
 
 import java.awt.image.BufferedImage;
+import java.security.AccessController;
 import java.util.Locale;
+
+import sun.font.FontManager;
+import sun.font.FontManagerFactory;
 import sun.java2d.HeadlessGraphicsEnvironment;
 import sun.java2d.SunGraphicsEnvironment;
+import sun.security.action.GetPropertyAction;
 
 /**
  *
@@ -73,31 +78,50 @@ public abstract class GraphicsEnvironment {
      */
     public static synchronized GraphicsEnvironment getLocalGraphicsEnvironment() {
         if (localEnv == null) {
-            String nm = (String) java.security.AccessController.doPrivileged
-                (new sun.security.action.GetPropertyAction
-                 ("java.awt.graphicsenv", null));
-
-            try {
-//                      long t0 = System.currentTimeMillis();
-                localEnv =
-                    (GraphicsEnvironment) Class.forName(nm).newInstance();
-//              long t1 = System.currentTimeMillis();
-//              System.out.println("GE creation took " + (t1-t0)+ "ms.");
-                if (isHeadless()) {
-                    localEnv = new HeadlessGraphicsEnvironment(localEnv);
-                }
-            } catch (ClassNotFoundException e) {
-                throw new Error("Could not find class: "+nm);
-            } catch (InstantiationException e) {
-                throw new Error("Could not instantiate Graphics Environment: "
-                                + nm);
-            } catch (IllegalAccessException e) {
-                throw new Error ("Could not access Graphics Environment: "
-                                 + nm);
-            }
+            localEnv = createGE();
         }
 
         return localEnv;
+    }
+
+    /**
+     * Creates and returns the GraphicsEnvironment, according to the
+     * system property 'java.awt.graphicsenv'.
+     *
+     * @return the graphics environment
+     */
+    private static GraphicsEnvironment createGE() {
+        GraphicsEnvironment ge;
+        String nm = AccessController.doPrivileged(new GetPropertyAction("java.awt.graphicsenv", null));
+        try {
+//          long t0 = System.currentTimeMillis();
+            Class geCls;
+            try {
+                // First we try if the bootclassloader finds the requested
+                // class. This way we can avoid to run in a privileged block.
+                geCls = Class.forName(nm);
+            } catch (ClassNotFoundException ex) {
+                // If the bootclassloader fails, we try again with the
+                // application classloader.
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+                geCls = Class.forName(nm, true, cl);
+            }
+            ge = (GraphicsEnvironment) geCls.newInstance();
+//          long t1 = System.currentTimeMillis();
+//          System.out.println("GE creation took " + (t1-t0)+ "ms.");
+            if (isHeadless()) {
+                localEnv = new HeadlessGraphicsEnvironment(localEnv);
+            }
+        } catch (ClassNotFoundException e) {
+            throw new Error("Could not find class: "+nm);
+        } catch (InstantiationException e) {
+            throw new Error("Could not instantiate Graphics Environment: "
+                            + nm);
+        } catch (IllegalAccessException e) {
+            throw new Error ("Could not access Graphics Environment: "
+                             + nm);
+        }
+        return ge;
     }
 
     /**
@@ -332,7 +356,8 @@ public abstract class GraphicsEnvironment {
         if (font == null) {
             throw new NullPointerException("font cannot be null.");
         }
-        return sun.font.FontManager.registerFont(font);
+        FontManager fm = FontManagerFactory.getInstance();
+        return fm.registerFont(font);
     }
 
     /**
@@ -356,7 +381,8 @@ public abstract class GraphicsEnvironment {
      * @since 1.5
      */
     public void preferLocaleFonts() {
-        sun.font.FontManager.preferLocaleFonts();
+        FontManager fm = FontManagerFactory.getInstance();
+        fm.preferLocaleFonts();
     }
 
     /**
@@ -376,7 +402,8 @@ public abstract class GraphicsEnvironment {
      * @since 1.5
      */
     public void preferProportionalFonts() {
-        sun.font.FontManager.preferProportionalFonts();
+        FontManager fm = FontManagerFactory.getInstance();
+        fm.preferProportionalFonts();
     }
 
     /**

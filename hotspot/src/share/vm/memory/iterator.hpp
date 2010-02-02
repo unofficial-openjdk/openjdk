@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@
 
 // The following classes are C++ `closures` for iterating over objects, roots and spaces
 
+class CodeBlob;
+class nmethod;
 class ReferenceProcessor;
+class DataLayout;
 
 // Closure provides abortability.
 
@@ -54,11 +57,19 @@ class OopClosure : public Closure {
 
   // In support of post-processing of weak links of KlassKlass objects;
   // see KlassKlass::oop_oop_iterate().
-  virtual const bool should_remember_klasses() const { return false;    }
+
+  virtual const bool should_remember_klasses() const {
+    assert(!must_remember_klasses(), "Should have overriden this method.");
+    return false;
+  }
+
   virtual void remember_klass(Klass* k) { /* do nothing */ }
 
-  // If "true", invoke on nmethods (when scanning compiled frames).
-  virtual const bool do_nmethods() const { return false; }
+  // In support of post-processing of weak references in
+  // ProfileData (MethodDataOop) objects; see, for example,
+  // VirtualCallData::oop_iterate().
+  virtual const bool should_remember_mdo() const { return false; }
+  virtual void remember_mdo(DataLayout* v) { /* do nothing */ }
 
   // The methods below control how object iterations invoking this closure
   // should be performed:
@@ -74,6 +85,12 @@ class OopClosure : public Closure {
   // location without an intervening "major reset" (like the end of a GC).
   virtual bool idempotent() { return false; }
   virtual bool apply_to_weak_ref_discovered_field() { return false; }
+
+#ifdef ASSERT
+  static bool _must_remember_klasses;
+  static bool must_remember_klasses();
+  static void set_must_remember_klasses(bool v);
+#endif
 };
 
 // ObjectClosure is used for iterating through an object space
@@ -158,6 +175,51 @@ class CompactibleSpaceClosure : public StackObj {
 };
 
 
+// CodeBlobClosure is used for iterating through code blobs
+// in the code cache or on thread stacks
+
+class CodeBlobClosure : public Closure {
+ public:
+  // Called for each code blob.
+  virtual void do_code_blob(CodeBlob* cb) = 0;
+};
+
+
+class MarkingCodeBlobClosure : public CodeBlobClosure {
+ public:
+  // Called for each code blob, but at most once per unique blob.
+  virtual void do_newly_marked_nmethod(nmethod* nm) = 0;
+
+  virtual void do_code_blob(CodeBlob* cb);
+    // = { if (!nmethod(cb)->test_set_oops_do_mark())  do_newly_marked_nmethod(cb); }
+
+  class MarkScope : public StackObj {
+  protected:
+    bool _active;
+  public:
+    MarkScope(bool activate = true);
+      // = { if (active) nmethod::oops_do_marking_prologue(); }
+    ~MarkScope();
+      // = { if (active) nmethod::oops_do_marking_epilogue(); }
+  };
+};
+
+
+// Applies an oop closure to all ref fields in code blobs
+// iterated over in an object iteration.
+class CodeBlobToOopClosure: public MarkingCodeBlobClosure {
+  OopClosure* _cl;
+  bool _do_marking;
+public:
+  virtual void do_newly_marked_nmethod(nmethod* cb);
+    // = { cb->oops_do(_cl); }
+  virtual void do_code_blob(CodeBlob* cb);
+    // = { if (_do_marking)  super::do_code_blob(cb); else cb->oops_do(_cl); }
+  CodeBlobToOopClosure(OopClosure* cl, bool do_marking)
+    : _cl(cl), _do_marking(do_marking) {}
+};
+
+
 
 // MonitorClosure is used for iterating over monitors in the monitors cache
 
@@ -219,3 +281,47 @@ public:
   // correct length.
   virtual void do_tag(int tag) = 0;
 };
+
+#ifdef ASSERT
+// This class is used to flag phases of a collection that
+// can unload classes and which should override the
+// should_remember_klasses() and remember_klass() of OopClosure.
+// The _must_remember_klasses is set in the contructor and restored
+// in the destructor.  _must_remember_klasses is checked in assertions
+// in the OopClosure implementations of should_remember_klasses() and
+// remember_klass() and the expectation is that the OopClosure
+// implementation should not be in use if _must_remember_klasses is set.
+// Instances of RememberKlassesChecker can be place in
+// marking phases of collections which can do class unloading.
+// RememberKlassesChecker can be passed "false" to turn off checking.
+// It is used by CMS when CMS yields to a different collector.
+class RememberKlassesChecker: StackObj {
+ bool _saved_state;
+ bool _do_check;
+ public:
+  RememberKlassesChecker(bool checking_on) : _saved_state(false),
+    _do_check(true) {
+    // The ClassUnloading unloading flag affects the collectors except
+    // for CMS.
+    // CMS unloads classes if CMSClassUnloadingEnabled is true or
+    // if ExplicitGCInvokesConcurrentAndUnloadsClasses is true and
+    // the current collection is an explicit collection.  Turning
+    // on the checking in general for
+    // ExplicitGCInvokesConcurrentAndUnloadsClasses and
+    // UseConcMarkSweepGC should not lead to false positives.
+    _do_check =
+      ClassUnloading && !UseConcMarkSweepGC ||
+      CMSClassUnloadingEnabled && UseConcMarkSweepGC ||
+      ExplicitGCInvokesConcurrentAndUnloadsClasses && UseConcMarkSweepGC;
+    if (_do_check) {
+      _saved_state = OopClosure::must_remember_klasses();
+      OopClosure::set_must_remember_klasses(checking_on);
+    }
+  }
+  ~RememberKlassesChecker() {
+    if (_do_check) {
+      OopClosure::set_must_remember_klasses(_saved_state);
+    }
+  }
+};
+#endif  // ASSERT

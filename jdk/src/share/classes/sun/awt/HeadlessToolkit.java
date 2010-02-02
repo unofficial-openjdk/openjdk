@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,9 +179,15 @@ public class HeadlessToolkit extends Toolkit
         throw new HeadlessException();
     }
 
-    public  KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) throws HeadlessException {
-        KeyboardFocusManagerPeerImpl peer = new KeyboardFocusManagerPeerImpl(manager);
-        return peer;
+    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) {
+        // See 6833019.
+        return
+            new KeyboardFocusManagerPeer() {
+                public Window getCurrentFocusedWindow() { return null; }
+                public void setCurrentFocusOwner(Component comp) {}
+                public Component getCurrentFocusOwner() { return null; }
+                public void clearGlobalFocusOwner(Window activeWindow) {}
+            };
     }
 
     public TrayIconPeer createTrayIcon(TrayIcon target)
@@ -456,12 +462,20 @@ public class HeadlessToolkit extends Toolkit
         return tk.getAWTEventListeners();
     }
 
+    public AWTEventListener[] getAWTEventListeners(long eventMask) {
+        return tk.getAWTEventListeners(eventMask);
+    }
+
     public boolean isDesktopSupported() {
         return false;
     }
 
     public DesktopPeer createDesktopPeer(Desktop target)
     throws HeadlessException{
+        throw new HeadlessException();
+    }
+
+    public boolean areExtraMouseButtonsEnabled() throws HeadlessException{
         throw new HeadlessException();
     }
 }

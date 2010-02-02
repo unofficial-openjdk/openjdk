@@ -1,5 +1,5 @@
 #
-# Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 # have any questions.
 #
 
-# Makefile for jaxws: wrapper around Ant build.xml file
+# Makefile wrapper around Ant build.xml file
 
 #
 # On Solaris, the 'make' utility from Sun will not work with these makefiles.
@@ -41,30 +41,8 @@ ifdef VERBOSE
   ANT_OPTIONS += -verbose
 endif
 
-ifdef JDK_VERSION
-  ANT_OPTIONS += -Djdk.version=$(JDK_VERSION)
-endif 
-
-ifdef FULL_VERSION
-  ANT_OPTIONS += -Dfull.version='$(FULL_VERSION)' # will contain spaces
-endif 
-
-ifdef MILESTONE
-  ANT_OPTIONS += -Dmilestone=$(MILESTONE)
-endif
-
-ifdef BUILD_NUMBER
-  ANT_OPTIONS += -Dbuild.number=$(BUILD_NUMBER)
-else
-  ifdef JDK_BUILD_NUMBER
-    ANT_OPTIONS += -Dbuild.number=$(JDK_BUILD_NUMBER)
-  endif
-endif
-
-ifeq ($(VARIANT), DBG)
-  ANT_OPTIONS += -Djavac.debug=true
-else
-  ifeq ($(VARIANT), OPT)
+ifeq ($(VARIANT), OPT)
+  ifneq ($(DEBUG_CLASSFILES), true)
     ANT_OPTIONS += -Djavac.debug=false
   endif
 endif
@@ -79,24 +57,70 @@ else
   endif
 endif
 
-ifdef ALT_BOOTDIR
-  ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
+ifdef SOURCE_LANGUAGE_VERSION
+  ANT_OPTIONS += -Djavac.source=$(SOURCE_LANGUAGE_VERSION)
+else
+  ifdef JAVAC_SOURCE_ARG 
+    ANT_OPTIONS += -Djavac.source=$(JAVAC_SOURCE_ARG)
+  endif
+endif 
+
+# Figure out the platform we are using
+_SYSTEM_UNAME := $(shell uname)
+_PLATFORM_KIND = unix
+ifeq ($(_SYSTEM_UNAME), Windows_NT)
+  _PLATFORM_KIND = windows
 endif
+ifneq (,$(findstring CYGWIN,$(_SYSTEM_UNAME)))
+  _PLATFORM_KIND = windows
+endif
+
+# Where is /java in case we need it
+ifdef ALT_SLASH_JAVA
+  _SLASHJAVA = $(ALT_SLASH_JAVA)
+else
+  ifeq ($(_PLATFORM_KIND), windows)
+    _SLASHJAVA=J:/
+  else
+    _SLASHJAVA=/java
+  endif
+endif
+
+# Do we have the drops already downloaded?
+# Check ALT_DROPS_DIR for a full path first,
+# before trying to use the devtools path,
+# either via ALT_JDK_DEVTOOLS_DIR or /java/devtools.
+ifdef ALT_DROPS_DIR
+  DROPS_DIR = $(ALT_DROPS_DIR)
+else
+  ifdef ALT_JDK_DEVTOOLS_DIR
+    DROPS_DIR = $(ALT_JDK_DEVTOOLS_DIR)/share/jdk7-drops
+  else
+    DROPS_DIR = $(_SLASHJAVA)/devtools/share/jdk7-drops
+  endif
+endif
+
+# Add in path to drops already downloaded
+ANT_OPTIONS += -Ddrops.dir=$(DROPS_DIR)
 
 ifdef ALT_OUTPUTDIR
   OUTPUTDIR = $(ALT_OUTPUTDIR)
-  ANT_OPTIONS += -Dbuild.dir=$(ALT_OUTPUTDIR)/build
-  ANT_OPTIONS += -Ddist.dir=$(ALT_OUTPUTDIR)/dist
+  ANT_OPTIONS += -Doutput.dir=$(ALT_OUTPUTDIR)
 else
   OUTPUTDIR = ..
 endif
 
 ifdef ALT_LANGTOOLS_DIST
+  ifdef ALT_BOOTDIR
+    ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
+    ANT_OPTIONS += -Djdk.home=$(ALT_BOOTDIR)
+  endif
   ANT_OPTIONS += -Dbootstrap.dir=$(ALT_LANGTOOLS_DIST)/bootstrap
-endif
-
-ifdef FINDBUGS_HOME
-  ANT_OPTIONS += -Dfindbugs.home=$(FINDBUGS_HOME)
+else
+  ifdef ALT_JDK_IMPORT_PATH
+    ANT_JAVA_HOME = JAVA_HOME=$(ALT_JDK_IMPORT_PATH)
+    ANT_OPTIONS += -Djdk.home=$(ALT_JDK_IMPORT_PATH)
+  endif
 endif
 
 ifdef ANT_HOME
@@ -112,18 +136,59 @@ else
 endif
 
 # Default target and expected 'do everything' target
-all: build
-
-# Standard make clobber target
-clobber: clean
+default: all
 
 # All ant targets of interest
-ANT_TARGETS = build clean sanity # for now
+ANT_TARGETS = all source drop_included build dist clobber clean sanity
 
 # Create a make target for each
 $(ANT_TARGETS):
-	$(ANT_JAVA_HOME) $(ANT) -version
-	$(ANT_JAVA_HOME) $(ANT) $(ANT_OPTIONS) $@
+	cd .. && $(ANT_JAVA_HOME) $(ANT) $(ANT_OPTIONS) -version
+	cd .. && $(ANT_JAVA_HOME) $(ANT) $(ANT_OPTIONS) $@
+
+# Help target
+define helpenvline
+@echo "    $1";echo "        $2"
+endef
+help:
+	@echo "----------------------------------------------------------"
+	@echo " "
+	@echo "Help information for this Makefile:"
+	@echo " "
+	@echo "  Targets (see ant project information for descriptions):"
+	@echo "    $(ANT_TARGETS)"
+	@echo " "
+	@echo "  Environment or command line variables (all optional):"
+	$(call helpenvline, ALT_BOOTDIR,\
+	       "JAVA_HOME to use when running ant")
+	$(call helpenvline, ALT_LANGTOOLS_DIST,\
+	       "path to langtools repository dist directory")
+	$(call helpenvline, ALT_OUTPUTDIR,\
+	       "path to root of output")
+	$(call helpenvline, DEBUG_CLASSFILES,\
+	       "if set makes sure ant property javac.debug is true")
+	$(call helpenvline, JAVAC_SOURCE_ARG,\
+	       "if SOURCE_LANGUAGE_VERSION not set uses this to set ant property javac.source")
+	$(call helpenvline, JAVAC_TARGET_ARG,\
+	       "if TARGET_CLASS_VERSION not set uses this to set ant property javac.target")
+	$(call helpenvline, SOURCE_LANGUAGE_VERSION,\
+	       "if set uses this to set ant property javac.source")
+	$(call helpenvline, QUIET,\
+	       "if set will pass -quiet to ant")
+	$(call helpenvline, TARGET_CLASS_VERSION,\
+	       "JAVA_HOME to use when running ant")
+	$(call helpenvline, VARIANT,\
+	       "if set to OPT means optimized build will set javac.debug to false")
+	$(call helpenvline, VERBOSE,\
+	       "if set will pass -verbose to ant")
+	@echo " "
+	@echo "----------------------------------------------------------"
+	@echo " "
+	@echo "Ant project file help information:"
+	@echo " "
+	@$(ANT_JAVA_HOME) cd .. && $(ANT) $(ANT_OPTIONS) -p
+	@echo " "
+	@echo "----------------------------------------------------------"
 
 # Targets for Sun's internal JPRT build system
 JPRT_ARCHIVE_BUNDLE=$(OUTPUTDIR)/jprt.zip
@@ -133,5 +198,5 @@ jprt_build_product jprt_build_debug jprt_build_fastdebug: all
 	   zip -q -r $(JPRT_ARCHIVE_BUNDLE) . )
 
 # Declare these phony (not filenames)
-.PHONY: $(ANT_TARGETS) all clobber \
+.PHONY: $(ANT_TARGETS) \
 	jprt_build_product jprt_build_debug jprt_build_fastdebug

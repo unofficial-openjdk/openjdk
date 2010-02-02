@@ -205,6 +205,9 @@ public class BasicSliderUI extends SliderUI{
         focusColor = UIManager.getColor("Slider.focus");
 
         focusInsets = (Insets)UIManager.get( "Slider.focusInsets" );
+        // use default if missing so that BasicSliderUI can be used in other
+        // LAFs like Nimbus
+        if (focusInsets == null) focusInsets = new InsetsUIResource(2,2,2,2);
     }
 
     protected TrackListener createTrackListener(JSlider slider) {
@@ -836,18 +839,24 @@ public class BasicSliderUI extends SliderUI{
      */
     protected Integer getHighestValue() {
         Dictionary dictionary = slider.getLabelTable();
-        if (dictionary != null) {
-            Enumeration keys = dictionary.keys();
-            int max = slider.getMinimum() - 1;
-            while (keys.hasMoreElements()) {
-                max = Math.max(max, ((Integer)keys.nextElement()).intValue());
-            }
-            if (max == slider.getMinimum() - 1) {
-                return null;
-            }
-            return max;
+
+        if (dictionary == null) {
+            return null;
         }
-        return null;
+
+        Enumeration keys = dictionary.keys();
+
+        Integer max = null;
+
+        while (keys.hasMoreElements()) {
+            Integer i = (Integer) keys.nextElement();
+
+            if (max == null || i > max) {
+                max = i;
+            }
+        }
+
+        return max;
     }
 
     /**
@@ -859,18 +868,24 @@ public class BasicSliderUI extends SliderUI{
      */
     protected Integer getLowestValue() {
         Dictionary dictionary = slider.getLabelTable();
-        if (dictionary != null) {
-            Enumeration keys = dictionary.keys();
-            int min = slider.getMaximum() + 1;
-            while (keys.hasMoreElements()) {
-                min = Math.min(min, ((Integer)keys.nextElement()).intValue());
-            }
-            if (min == slider.getMaximum() + 1) {
-                return null;
-            }
-            return min;
+
+        if (dictionary == null) {
+            return null;
         }
-        return null;
+
+        Enumeration keys = dictionary.keys();
+
+        Integer min = null;
+
+        while (keys.hasMoreElements()) {
+            Integer i = (Integer) keys.nextElement();
+
+            if (min == null || i < min) {
+                min = i;
+            }
+        }
+
+        return min;
     }
 
 
@@ -992,47 +1007,62 @@ public class BasicSliderUI extends SliderUI{
         g.setColor(DefaultLookup.getColor(slider, this, "Slider.tickColor", Color.black));
 
         if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
-           g.translate( 0, tickBounds.y);
+            g.translate(0, tickBounds.y);
 
-            int value = slider.getMinimum();
-            int xPos;
+            if (slider.getMinorTickSpacing() > 0) {
+                int value = slider.getMinimum();
 
-            if ( slider.getMinorTickSpacing() > 0 ) {
                 while ( value <= slider.getMaximum() ) {
-                    xPos = xPositionForValue( value );
+                    int xPos = xPositionForValue(value);
                     paintMinorTickForHorizSlider( g, tickBounds, xPos );
+
+                    // Overflow checking
+                    if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+                        break;
+                    }
+
                     value += slider.getMinorTickSpacing();
                 }
             }
 
-            if ( slider.getMajorTickSpacing() > 0 ) {
-                value = slider.getMinimum();
+            if (slider.getMajorTickSpacing() > 0) {
+                int value = slider.getMinimum();
 
                 while ( value <= slider.getMaximum() ) {
-                    xPos = xPositionForValue( value );
+                    int xPos = xPositionForValue(value);
                     paintMajorTickForHorizSlider( g, tickBounds, xPos );
+
+                    // Overflow checking
+                    if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+                        break;
+                    }
+
                     value += slider.getMajorTickSpacing();
                 }
             }
 
             g.translate( 0, -tickBounds.y);
-        }
-        else {
-           g.translate(tickBounds.x, 0);
+        } else {
+            g.translate(tickBounds.x, 0);
 
-            int value = slider.getMinimum();
-            int yPos;
-
-            if ( slider.getMinorTickSpacing() > 0 ) {
+            if (slider.getMinorTickSpacing() > 0) {
                 int offset = 0;
                 if(!BasicGraphicsUtils.isLeftToRight(slider)) {
                     offset = tickBounds.width - tickBounds.width / 2;
                     g.translate(offset, 0);
                 }
 
-                while ( value <= slider.getMaximum() ) {
-                    yPos = yPositionForValue( value );
+                int value = slider.getMinimum();
+
+                while (value <= slider.getMaximum()) {
+                    int yPos = yPositionForValue(value);
                     paintMinorTickForVertSlider( g, tickBounds, yPos );
+
+                    // Overflow checking
+                    if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+                        break;
+                    }
+
                     value += slider.getMinorTickSpacing();
                 }
 
@@ -1041,15 +1071,22 @@ public class BasicSliderUI extends SliderUI{
                 }
             }
 
-            if ( slider.getMajorTickSpacing() > 0 ) {
-                value = slider.getMinimum();
+            if (slider.getMajorTickSpacing() > 0) {
                 if(!BasicGraphicsUtils.isLeftToRight(slider)) {
                     g.translate(2, 0);
                 }
 
-                while ( value <= slider.getMaximum() ) {
-                    yPos = yPositionForValue( value );
+                int value = slider.getMinimum();
+
+                while (value <= slider.getMaximum()) {
+                    int yPos = yPositionForValue(value);
                     paintMajorTickForVertSlider( g, tickBounds, yPos );
+
+                    // Overflow checking
+                    if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+                        break;
+                    }
+
                     value += slider.getMajorTickSpacing();
                 }
 
@@ -1372,9 +1409,10 @@ public class BasicSliderUI extends SliderUI{
     }
 
     /**
-     * Returns a value give a y position.  If yPos is past the track at the top or the
-     * bottom it will set the value to the min or max of the slider, depending if the
-     * slider is inverted or not.
+     * Returns the value at the y position. If {@code yPos} is beyond the
+     * track at the the bottom or the top, this method sets the value to either
+     * the minimum or maximum value of the slider, depending on if the slider
+     * is inverted or not.
      */
     public int valueForYPosition( int yPos ) {
         int value;
@@ -1403,9 +1441,10 @@ public class BasicSliderUI extends SliderUI{
     }
 
     /**
-     * Returns a value give an x position.  If xPos is past the track at the left or the
-     * right it will set the value to the min or max of the slider, depending if the
-     * slider is inverted or not.
+     * Returns the value at the x position.  If {@code xPos} is beyond the
+     * track at the left or the right, this method sets the value to either the
+     * minimum or maximum value of the slider, depending on if the slider is
+     * inverted or not.
      */
     public int valueForXPosition( int xPos ) {
         int value;
@@ -1470,7 +1509,8 @@ public class BasicSliderUI extends SliderUI{
                     propertyName == "paintTicks" ||
                     propertyName == "paintTrack" ||
                     propertyName == "font" ||
-                    propertyName == "paintLabels") {
+                    propertyName == "paintLabels" ||
+                    propertyName == "Slider.paintThumbArrowShape") {
                 checkedLabelBaselines = false;
                 calculateGeometry();
                 slider.repaint();
@@ -1763,8 +1803,6 @@ public class BasicSliderUI extends SliderUI{
                 thumbMiddle = thumbLeft + halfThumbWidth;
                 slider.setValue(valueForXPosition(thumbMiddle));
                 break;
-            default:
-                return;
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -247,6 +247,10 @@ int generateJvmOffsets(GEN_variant gen_variant) {
   GEN_OFFS(PcDesc, _pc_offset);
   GEN_OFFS(PcDesc, _scope_decode_offset);
 
+  printf("\n");
+
+  GEN_OFFS(NarrowOopStruct, _base);
+  GEN_OFFS(NarrowOopStruct, _shift);
   printf("\n");
 
   GEN_VALUE(SIZE_HeapBlockHeader, sizeof(HeapBlock::Header));

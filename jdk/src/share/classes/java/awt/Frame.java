@@ -36,6 +36,7 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 import java.lang.ref.WeakReference;
 import javax.accessibility.*;
 
@@ -738,11 +739,15 @@ public class Frame extends Window implements MenuContainer {
      * @since   1.4
      * @see java.awt.Window#addWindowStateListener
      */
-    public synchronized void setExtendedState(int state) {
+    public void setExtendedState(int state) {
         if ( !isFrameStateSupported( state ) ) {
             return;
         }
-        this.state = state;
+        synchronized (getObjectLock()) {
+            this.state = state;
+        }
+        // peer.setState must be called outside of object lock
+        // synchronization block to avoid possible deadlock
         FramePeer peer = (FramePeer)this.peer;
         if (peer != null) {
             peer.setState(state);
@@ -804,12 +809,27 @@ public class Frame extends Window implements MenuContainer {
      * @see     #setExtendedState(int)
      * @since 1.4
      */
-    public synchronized int getExtendedState() {
-        FramePeer peer = (FramePeer)this.peer;
-        if (peer != null) {
-            state = peer.getState();
+    public int getExtendedState() {
+        synchronized (getObjectLock()) {
+            return state;
         }
-        return state;
+    }
+
+    static {
+        AWTAccessor.setFrameAccessor(
+            new AWTAccessor.FrameAccessor() {
+                public void setExtendedState(Frame frame, int state) {
+                    synchronized(frame.getObjectLock()) {
+                        frame.state = state;
+                    }
+                }
+                public int getExtendedState(Frame frame) {
+                    synchronized(frame.getObjectLock()) {
+                        return frame.state;
+                    }
+                }
+            }
+        );
     }
 
     /**
@@ -825,8 +845,11 @@ public class Frame extends Window implements MenuContainer {
      * others by setting those fields you want to accept from system
      * to <code>Integer.MAX_VALUE</code>.
      * <p>
-     * On some systems only the size portion of the bounds is taken
-     * into account.
+     * Note, the given maximized bounds are used as a hint for the native
+     * system, because the underlying platform may not support setting the
+     * location and/or size of the maximized windows.  If that is the case, the
+     * provided values do not affect the appearance of the frame in the
+     * maximized state.
      *
      * @param bounds  bounds for the maximized state
      * @see #getMaximizedBounds()
@@ -967,7 +990,7 @@ public class Frame extends Window implements MenuContainer {
         if (resizable) {
             str += ",resizable";
         }
-        getExtendedState();     // sync with peer
+        int state = getExtendedState();
         if (state == NORMAL) {
             str += ",normal";
         }

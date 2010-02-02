@@ -25,16 +25,16 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.taglets.*;
-import com.sun.javadoc.*;
-
 import java.io.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
 
 /**
  * Writes annotation type required member documentation in HTML format.
  *
  * @author Jamie Ho
+ * @author Bhavesh Patel (Modified)
  */
 public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
     implements AnnotationTypeRequiredMemberWriter, MemberSummaryWriter {
@@ -131,20 +131,17 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
         if (configuration().linksource) {
             writer.printSrcLink(member, member.name());
         } else {
-            bold(member.name());
+            strong(member.name());
         }
         writer.preEnd();
-        writer.dl();
+        assert !writer.getMemberDetailsListPrinted();
     }
 
     /**
      * {@inheritDoc}
      */
     public void writeComments(MemberDoc member) {
-        if (member.inlineTags().length > 0) {
-            writer.dd();
-            writer.printInlineComment(member);
-        }
+        printComment(member);
     }
 
     /**
@@ -160,7 +157,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      * Write the annotation type member footer.
      */
     public void writeMemberFooter() {
-        writer.dlEnd();
+        printMemberFooter();
     }
 
     /**
@@ -182,8 +179,27 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
     /**
      * {@inheritDoc}
      */
-    public void printSummaryLabel(ClassDoc cd) {
-        writer.boldText("doclet.Annotation_Type_Required_Member_Summary");
+    public void printSummaryLabel() {
+        writer.printText("doclet.Annotation_Type_Required_Member_Summary");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void printTableSummary() {
+        writer.tableIndexSummary(configuration().getText("doclet.Member_Table_Summary",
+                configuration().getText("doclet.Annotation_Type_Required_Member_Summary"),
+                configuration().getText("doclet.annotation_type_required_members")));
+    }
+
+    public void printSummaryTableHeader(ProgramElementDoc member) {
+        String[] header = new String[] {
+            writer.getModifierTypeHeader(),
+            configuration().getText("doclet.0_and_1",
+                    configuration().getText("doclet.Annotation_Type_Required_Member"),
+                    configuration().getText("doclet.Description"))
+        };
+        writer.summaryTableHeader(header, "col");
     }
 
     /**
@@ -210,9 +226,9 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     protected void writeSummaryLink(int context, ClassDoc cd, ProgramElementDoc member) {
-        writer.bold();
+        writer.strong();
         writer.printDocLink(context, (MemberDoc) member, member.name(), false);
-        writer.boldEnd();
+        writer.strongEnd();
     }
 
     /**
@@ -267,9 +283,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public void writeDeprecated(MemberDoc member) {
-        print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(member,
-            writer.getTagletWriterInstance(false))).toString());
+        printDeprecated(member);
     }
 
     private Type getType(MemberDoc member) {

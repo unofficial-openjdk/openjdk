@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,11 +61,8 @@ extern "C" {
 #endif // AMD64
   }
   inline void _OrderAccess_fence() {
-#ifdef AMD64
-    __asm__ __volatile__ ("mfence":::"memory");
-#else
+    // Always use locked addl since mfence is sometimes expensive
     __asm__ volatile ("lock; addl $0,0(%%esp)" : : : "cc", "memory");
-#endif // AMD64
   }
 
 }

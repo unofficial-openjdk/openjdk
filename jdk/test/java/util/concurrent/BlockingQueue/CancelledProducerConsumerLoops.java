@@ -34,7 +34,7 @@
 /*
  * @test
  * @bug 4486658
- * @compile -source 1.5 CancelledProducerConsumerLoops.java
+ * @compile CancelledProducerConsumerLoops.java
  * @run main/timeout=7000 CancelledProducerConsumerLoops
  * @summary Checks for responsiveness of blocking queues to cancellation.
  * Runs under the assumption that ITERS computations require more than
@@ -75,10 +75,12 @@ public class CancelledProducerConsumerLoops {
    }
 
     static void oneRun(BlockingQueue<Integer> q, int npairs, int iters) throws Exception {
+        if (print)
+            System.out.printf("%-18s", q.getClass().getSimpleName());
         LoopHelpers.BarrierTimer timer = new LoopHelpers.BarrierTimer();
         CyclicBarrier barrier = new CyclicBarrier(npairs * 2 + 1, timer);
-        Future[] prods = new Future[npairs];
-        Future[] cons = new Future[npairs];
+        Future<?>[] prods = new Future<?>[npairs];
+        Future<?>[] cons  = new Future<?>[npairs];
 
         for (int i = 0; i < npairs; ++i) {
             prods[i] = pool.submit(new Producer(q, barrier, iters));
@@ -117,24 +119,40 @@ public class CancelledProducerConsumerLoops {
         }
     }
 
+    static final class LTQasSQ<T> extends LinkedTransferQueue<T> {
+        LTQasSQ() { super(); }
+        public void put(T x) {
+            try { super.transfer(x); }
+            catch (InterruptedException ex) { throw new Error(); }
+        }
+        private final static long serialVersionUID = 42;
+    }
+
+    static final class HalfSyncLTQ<T> extends LinkedTransferQueue<T> {
+        HalfSyncLTQ() { super(); }
+        public void put(T x) {
+            if (ThreadLocalRandom.current().nextBoolean())
+                super.put(x);
+            else {
+                try { super.transfer(x); }
+                catch (InterruptedException ex) { throw new Error(); }
+            }
+        }
+        private final static long serialVersionUID = 42;
+    }
+
     static void oneTest(int pairs, int iters) throws Exception {
 
-        if (print)
-            System.out.print("ArrayBlockingQueue      ");
         oneRun(new ArrayBlockingQueue<Integer>(CAPACITY), pairs, iters);
-
-        if (print)
-            System.out.print("LinkedBlockingQueue     ");
         oneRun(new LinkedBlockingQueue<Integer>(CAPACITY), pairs, iters);
-
-        if (print)
-            System.out.print("SynchronousQueue        ");
+        oneRun(new LinkedBlockingDeque<Integer>(CAPACITY), pairs, iters);
         oneRun(new SynchronousQueue<Integer>(), pairs, iters / 8);
 
-        /* PriorityBlockingQueue is unbounded
-        if (print)
-            System.out.print("PriorityBlockingQueue   ");
+        /* TODO: unbounded queue implementations are prone to OOME
         oneRun(new PriorityBlockingQueue<Integer>(iters / 2 * pairs), pairs, iters / 4);
+        oneRun(new LinkedTransferQueue<Integer>(), pairs, iters);
+        oneRun(new LTQasSQ<Integer>(), pairs, iters);
+        oneRun(new HalfSyncLTQ<Integer>(), pairs, iters);
         */
     }
 

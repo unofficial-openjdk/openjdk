@@ -25,9 +25,10 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
 import java.io.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Class to generate Tree page for a package. The name of the file generated is
@@ -144,9 +145,11 @@ public class PackageTreeWriter extends AbstractTreeWriter {
     protected void printLinkToMainTree() {
         dl();
         dt();
-        boldText("doclet.Package_Hierarchies");
+        strongText("doclet.Package_Hierarchies");
+        dtEnd();
         dd();
         navLinkMainTree(configuration.getText("doclet.All_Packages"));
+        ddEnd();
         dlEnd();
         hr();
     }

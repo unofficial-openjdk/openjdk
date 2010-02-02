@@ -23,14 +23,14 @@
  * have any questions.
  */
 
-#include <windows.h>
-#include <jni.h>
 #include <awt.h>
 #include <sun_awt_Win32GraphicsEnvironment.h>
+#include <sun_awt_Win32FontManager.h>
 #include "awt_Canvas.h"
 #include "awt_Win32GraphicsDevice.h"
 #include "Devices.h"
 #include "WindowsFlags.h"
+#include "DllUtil.h"
 
 BOOL DWMIsCompositionEnabled();
 
@@ -91,13 +91,8 @@ void DWMResetCompositionEnabled() {
 /**
  * Returns true if dwm composition is enabled, false if it is not applicable
  * (if the OS is not Vista) or dwm composition is disabled.
- *
- * Note: since DWM composition state changes are very rare we load/unload the
- * dll on every change.
  */
 BOOL DWMIsCompositionEnabled() {
-    typedef HRESULT (WINAPI DwmIsCompositionEnabledFunc)(BOOL*);
-
     // cheaper to check than whether it's vista or not
     if (dwmIsCompositionEnabled != DWM_COMP_UNDEFINED) {
         return (BOOL)dwmIsCompositionEnabled;
@@ -109,32 +104,22 @@ BOOL DWMIsCompositionEnabled() {
     }
 
     BOOL bRes = FALSE;
-    HMODULE hDwmApiDll = ::LoadLibrary(TEXT("dwmapi.dll"));
 
-    if (hDwmApiDll != NULL) {
-        DwmIsCompositionEnabledFunc *lpDwmIsCompEnabled =
-            (DwmIsCompositionEnabledFunc*)
-                GetProcAddress(hDwmApiDll, "DwmIsCompositionEnabled");
-        if (lpDwmIsCompEnabled != NULL) {
-            BOOL bEnabled;
-            HRESULT res = lpDwmIsCompEnabled(&bEnabled);
-            if (SUCCEEDED(res)) {
-                bRes = bEnabled;
-                J2dTraceLn1(J2D_TRACE_VERBOSE, " composition enabled: %d",bRes);
-            } else {
-                J2dTraceLn1(J2D_TRACE_ERROR,
-                            "IsDWMCompositionEnabled: error %x when detecting"\
-                            "if composition is enabled", res);
-            }
+    try {
+        BOOL bEnabled;
+        HRESULT res = DwmAPI::DwmIsCompositionEnabled(&bEnabled);
+        if (SUCCEEDED(res)) {
+            bRes = bEnabled;
+            J2dTraceLn1(J2D_TRACE_VERBOSE, " composition enabled: %d",bRes);
         } else {
-            J2dTraceLn(J2D_TRACE_ERROR,
-                       "IsDWMCompositionEnabled: no DwmIsCompositionEnabled() "\
-                       "in dwmapi.dll");
+            J2dTraceLn1(J2D_TRACE_ERROR,
+                    "IsDWMCompositionEnabled: error %x when detecting"\
+                    "if composition is enabled", res);
         }
-        ::FreeLibrary(hDwmApiDll);
-    } else {
+    } catch (const DllUtil::Exception &) {
         J2dTraceLn(J2D_TRACE_ERROR,
-                   "IsDWMCompositionEnabled: error opening dwmapi.dll");
+                "IsDWMCompositionEnabled: no DwmIsCompositionEnabled() "\
+                "in dwmapi.dll or dwmapi.dll cannot be loaded");
     }
 
     dwmIsCompositionEnabled = bRes;
@@ -188,76 +173,40 @@ Java_sun_awt_Win32GraphicsEnvironment_getDefaultScreen(JNIEnv *env,
     return AwtWin32GraphicsDevice::GetDefaultDeviceIndex();
 }
 
-#define FR_PRIVATE 0x10 /* from wingdi.h */
-typedef int (WINAPI *AddFontResourceExType)(LPCTSTR,DWORD,VOID*);
-typedef int (WINAPI *RemoveFontResourceExType)(LPCTSTR,DWORD,VOID*);
-
-static AddFontResourceExType procAddFontResourceEx = NULL;
-static RemoveFontResourceExType procRemoveFontResourceEx = NULL;
-
-static int winVer = -1;
-
-static int getWinVer() {
-    if (winVer == -1) {
-        OSVERSIONINFO osvi;
-        osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-        GetVersionEx(&osvi);
-        winVer = osvi.dwMajorVersion;
-        if (winVer >= 5) {
-          // REMIND verify on 64 bit windows
-          HMODULE hGDI = LoadLibrary(TEXT("gdi32.dll"));
-          if (hGDI != NULL) {
-            procAddFontResourceEx =
-              (AddFontResourceExType)GetProcAddress(hGDI,"AddFontResourceExW");
-            if (procAddFontResourceEx == NULL) {
-              winVer = 0;
-            }
-            procRemoveFontResourceEx =
-              (RemoveFontResourceExType)GetProcAddress(hGDI,
-                                                      "RemoveFontResourceExW");
-            if (procRemoveFontResourceEx == NULL) {
-              winVer = 0;
-            }
-            FreeLibrary(hGDI);
-          }
-        }
-    }
-
-    return winVer;
-}
-
 /*
- * Class:     sun_awt_Win32GraphicsEnvironment
+ * Class:     sun_awt_Win32FontManager
  * Method:    registerFontWithPlatform
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_Win32GraphicsEnvironment_registerFontWithPlatform(JNIEnv *env,
-                                                              jclass cl,
-                                                              jstring fontName)
+Java_sun_awt_Win32FontManager_registerFontWithPlatform(JNIEnv *env,
+                                                       jclass cl,
+                                                       jstring fontName)
 {
-    if (getWinVer() >= 5 && procAddFontResourceEx != NULL) {
-      LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, NULL);
-      (*procAddFontResourceEx)(file, FR_PRIVATE, NULL);
+    LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, JNI_FALSE);
+    if (file) {
+        ::AddFontResourceEx(file, FR_PRIVATE, NULL);
+        JNU_ReleaseStringPlatformChars(env, fontName, file);
     }
 }
 
 
 /*
- * Class:     sun_awt_Win32GraphicsEnvironment
+ * Class:     sun_awt_Win32FontManagerEnvironment
  * Method:    deRegisterFontWithPlatform
  * Signature: (Ljava/lang/String;)V
  *
  * This method intended for future use.
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_Win32GraphicsEnvironment_deRegisterFontWithPlatform(JNIEnv *env,
-                                                              jclass cl,
-                                                              jstring fontName)
+Java_sun_awt_Win32FontManager_deRegisterFontWithPlatform(JNIEnv *env,
+                                                         jclass cl,
+                                                         jstring fontName)
 {
-    if (getWinVer() >= 5 && procRemoveFontResourceEx != NULL) {
-      LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, NULL);
-      (*procRemoveFontResourceEx)(file, FR_PRIVATE, NULL);
+    LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, JNI_FALSE);
+    if (file) {
+        ::RemoveFontResourceEx(file, FR_PRIVATE, NULL);
+        JNU_ReleaseStringPlatformChars(env, fontName, file);
     }
 }
 
@@ -275,7 +224,7 @@ Java_sun_awt_Win32GraphicsEnvironment_deRegisterFontWithPlatform(JNIEnv *env,
 
 
 JNIEXPORT jstring JNICALL
-Java_sun_awt_Win32GraphicsEnvironment_getEUDCFontFile(JNIEnv *env, jclass cl) {
+Java_sun_awt_Win32FontManager_getEUDCFontFile(JNIEnv *env, jclass cl) {
     int    rc;
     HKEY   key;
     DWORD  type;

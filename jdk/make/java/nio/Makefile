@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -56,56 +56,214 @@ FILES_java += \
         sun/nio/ch/DevPollSelectorProvider.java \
 	sun/nio/ch/InheritedChannel.java \
         sun/nio/ch/PollSelectorProvider.java \
-        sun/nio/ch/PollSelectorImpl.java
+        sun/nio/ch/PollSelectorImpl.java \
+	sun/nio/ch/Port.java \
+	sun/nio/ch/SimpleAsynchronousFileChannelImpl.java \
+	sun/nio/ch/SolarisAsynchronousChannelProvider.java \
+	sun/nio/ch/SolarisEventPort.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/PollingWatchService.java \
+	sun/nio/fs/SolarisAclFileAttributeView.java \
+	sun/nio/fs/SolarisFileStore.java \
+	sun/nio/fs/SolarisFileSystem.java \
+	sun/nio/fs/SolarisFileSystemProvider.java \
+	sun/nio/fs/SolarisUserDefinedFileAttributeView.java \
+	sun/nio/fs/SolarisNativeDispatcher.java \
+	sun/nio/fs/SolarisWatchService.java \
+	sun/nio/fs/UnixChannelFactory.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixDirectoryStream.java \
+	sun/nio/fs/UnixException.java \
+	sun/nio/fs/UnixFileAttributeViews.java \
+	sun/nio/fs/UnixFileAttributes.java \
+	sun/nio/fs/UnixFileKey.java \
+	sun/nio/fs/UnixFileModeAttribute.java \
+	sun/nio/fs/UnixFileStore.java \
+	sun/nio/fs/UnixFileStoreAttributes.java \
+	sun/nio/fs/UnixFileSystem.java \
+	sun/nio/fs/UnixFileSystemProvider.java \
+	sun/nio/fs/UnixMountEntry.java \
+	sun/nio/fs/UnixNativeDispatcher.java \
+	sun/nio/fs/UnixPath.java \
+	sun/nio/fs/UnixSecureDirectoryStream.java \
+	sun/nio/fs/UnixUriUtils.java \
+	sun/nio/fs/UnixUserPrincipals.java
 
 FILES_c += \
         DevPollArrayWrapper.c \
 	InheritedChannel.c \
 	NativeThread.c \
-        PollArrayWrapper.c
+        PollArrayWrapper.c \
+	SolarisEventPort.c \
+	UnixAsynchronousServerSocketChannelImpl.c \
+	UnixAsynchronousSocketChannelImpl.c \
+	\
+	GnomeFileTypeDetector.c \
+	SolarisNativeDispatcher.c \
+	SolarisWatchService.c \
+	UnixCopyFile.c \
+	UnixNativeDispatcher.c
 
 FILES_export += \
 	sun/nio/ch/DevPollArrayWrapper.java \
 	sun/nio/ch/InheritedChannel.java \
-	sun/nio/ch/NativeThread.java
+	sun/nio/ch/NativeThread.java \
+	sun/nio/ch/SolarisEventPort.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/SolarisNativeDispatcher.java \
+	sun/nio/fs/SolarisWatchService.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixNativeDispatcher.java
+
+FILES_gen += \
+	sun/nio/fs/SolarisConstants.java \
+	sun/nio/fs/UnixConstants.java
 endif # PLATFORM = solaris
 
 ifeq ($(PLATFORM), windows)
 FILES_java += \
+	sun/nio/ch/Iocp.java \
+	sun/nio/ch/PendingIoCache.java \
+	sun/nio/ch/WindowsAsynchronousChannelProvider.java \
+	sun/nio/ch/WindowsAsynchronousFileChannelImpl.java \
+	sun/nio/ch/WindowsAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/WindowsAsynchronousSocketChannelImpl.java \
         sun/nio/ch/WindowsSelectorImpl.java \
-        sun/nio/ch/WindowsSelectorProvider.java
+        sun/nio/ch/WindowsSelectorProvider.java \
+	\
+	sun/nio/fs/RegistryFileTypeDetector.java \
+	sun/nio/fs/WindowsAclFileAttributeView.java \
+	sun/nio/fs/WindowsChannelFactory.java \
+	sun/nio/fs/WindowsConstants.java \
+	sun/nio/fs/WindowsDirectoryStream.java \
+	sun/nio/fs/WindowsException.java \
+	sun/nio/fs/WindowsFileAttributeViews.java \
+	sun/nio/fs/WindowsFileAttributes.java \
+	sun/nio/fs/WindowsFileCopy.java \
+	sun/nio/fs/WindowsFileStore.java \
+	sun/nio/fs/WindowsFileSystem.java \
+	sun/nio/fs/WindowsFileSystemProvider.java \
+	sun/nio/fs/WindowsLinkSupport.java \
+	sun/nio/fs/WindowsUserDefinedFileAttributeView.java \
+	sun/nio/fs/WindowsNativeDispatcher.java \
+	sun/nio/fs/WindowsPath.java \
+	sun/nio/fs/WindowsPathParser.java \
+	sun/nio/fs/WindowsPathType.java \
+	sun/nio/fs/WindowsSecurity.java \
+	sun/nio/fs/WindowsSecurityDescriptor.java \
+	sun/nio/fs/WindowsUriSupport.java \
+	sun/nio/fs/WindowsUserPrincipals.java \
+	sun/nio/fs/WindowsWatchService.java
 
 FILES_c += \
+	Iocp.c \
+	RegistryFileTypeDetector.c \
+	WindowsAsynchronousFileChannelImpl.c \
+	WindowsAsynchronousServerSocketChannelImpl.c \
+	WindowsAsynchronousSocketChannelImpl.c \
+	WindowsNativeDispatcher.c \
         WindowsSelectorImpl.c
 
 FILES_export += \
-	sun/nio/ch/WindowsSelectorImpl.java
+	sun/nio/ch/Iocp.java \
+	sun/nio/ch/WindowsAsynchronousFileChannelImpl.java \
+	sun/nio/ch/WindowsAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/WindowsAsynchronousSocketChannelImpl.java \
+	sun/nio/ch/WindowsSelectorImpl.java \
+	sun/nio/fs/WindowsNativeDispatcher.java \
+	sun/nio/fs/RegistryFileTypeDetector.java
 endif # PLATFORM = windows
 
 ifeq ($(PLATFORM), linux)
 FILES_java += \
         sun/nio/ch/AbstractPollSelectorImpl.java \
+	sun/nio/ch/EPoll.java \
 	sun/nio/ch/EPollArrayWrapper.java \
+	sun/nio/ch/EPollPort.java \
 	sun/nio/ch/EPollSelectorProvider.java \
 	sun/nio/ch/EPollSelectorImpl.java \
 	sun/nio/ch/InheritedChannel.java \
+	sun/nio/ch/LinuxAsynchronousChannelProvider.java \
         sun/nio/ch/PollSelectorProvider.java \
-        sun/nio/ch/PollSelectorImpl.java
+        sun/nio/ch/PollSelectorImpl.java \
+	sun/nio/ch/Port.java \
+	sun/nio/ch/SimpleAsynchronousFileChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/LinuxDosFileAttributeView.java \
+	sun/nio/fs/LinuxFileStore.java \
+	sun/nio/fs/LinuxFileSystem.java \
+	sun/nio/fs/LinuxFileSystemProvider.java \
+	sun/nio/fs/LinuxUserDefinedFileAttributeView.java \
+	sun/nio/fs/LinuxNativeDispatcher.java \
+	sun/nio/fs/LinuxWatchService.java \
+	sun/nio/fs/PollingWatchService.java \
+	sun/nio/fs/UnixChannelFactory.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixDirectoryStream.java \
+	sun/nio/fs/UnixException.java \
+	sun/nio/fs/UnixFileAttributeViews.java \
+	sun/nio/fs/UnixFileAttributes.java \
+	sun/nio/fs/UnixFileKey.java \
+	sun/nio/fs/UnixFileModeAttribute.java \
+	sun/nio/fs/UnixFileStore.java \
+	sun/nio/fs/UnixFileStoreAttributes.java \
+	sun/nio/fs/UnixFileSystem.java \
+	sun/nio/fs/UnixFileSystemProvider.java \
+	sun/nio/fs/UnixMountEntry.java \
+	sun/nio/fs/UnixNativeDispatcher.java \
+	sun/nio/fs/UnixPath.java \
+	sun/nio/fs/UnixSecureDirectoryStream.java \
+	sun/nio/fs/UnixUriUtils.java \
+	sun/nio/fs/UnixUserPrincipals.java
 
 FILES_c += \
+	EPoll.c \
 	EPollArrayWrapper.c \
+	EPollPort.c \
 	InheritedChannel.c \
 	NativeThread.c \
-        PollArrayWrapper.c
+        PollArrayWrapper.c \
+	UnixAsynchronousServerSocketChannelImpl.c \
+	UnixAsynchronousSocketChannelImpl.c \
+	\
+	GnomeFileTypeDetector.c \
+	LinuxNativeDispatcher.c \
+	LinuxWatchService.c \
+	UnixCopyFile.c \
+	UnixNativeDispatcher.c
 
 FILES_export += \
+	sun/nio/ch/EPoll.java \
         sun/nio/ch/EPollArrayWrapper.java \
+	sun/nio/ch/EPollPort.java \
 	sun/nio/ch/InheritedChannel.java \
-	sun/nio/ch/NativeThread.java
+	sun/nio/ch/NativeThread.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/LinuxNativeDispatcher.java \
+	sun/nio/fs/LinuxWatchService.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixNativeDispatcher.java
+	
+FILES_gen += \
+	sun/nio/fs/UnixConstants.java
 endif # PLATFORM = linux
 
+#
 # Find platform-specific C source files
 #
+vpath %.c $(PLATFORM_SRC)/native/sun/nio/fs
 vpath %.c $(PLATFORM_SRC)/native/sun/nio/ch
 vpath %.c $(SHARE_SRC)/native/sun/nio/ch
 
@@ -175,14 +333,27 @@ CH_SRC=$(NIO_SRC)/channels
 CS_SRC=$(NIO_SRC)/charset
 SCH_SRC=$(SNIO_SRC)/ch
 SCS_SRC=$(SNIO_SRC)/cs
+SFS_SRC=$(SNIO_SRC)/fs
+
+# Template files
+HEAP_X_BUF_TEMPLATE=$(BUF_SRC)/Heap-X-Buffer.java.template
+BYTE_X_BUF_TEMPLATE=$(BUF_SRC)/ByteBufferAs-X-Buffer.java.template
+X_BUF_TEMPLATE=$(BUF_SRC)/X-Buffer.java.template
+X_BUF_BIN_TEMPLATE=$(BUF_SRC)/X-Buffer-bin.java.template
+DIRECT_X_BUF_TEMPLATE=$(BUF_SRC)/Direct-X-Buffer.java.template
+DIRECT_X_BUF_BIN_TEMPLATE=$(BUF_SRC)/Direct-X-Buffer-bin.java.template
+CHARSET_X_CODER_TEMPLATE=$(CS_SRC)/Charset-X-Coder.java.template
 
 BUF_GEN=$(NIO_GEN)
 CH_GEN=$(NIO_GEN)/channels
 CS_GEN=$(NIO_GEN)/charset
 SCH_GEN=$(SNIO_GEN)/ch
 SCS_GEN=$(SNIO_GEN)/cs
+SFS_GEN=$(SNIO_GEN)/fs
 
-sources: $(SPP_JARFILE) $(FILES_genout)
+FILES_gensbcs_out = $(FILES_gen_sbcs:%.java=$(GENSRCDIR)/%.java)
+
+sources: $(SPP_JARFILE) $(FILES_genout) $(FILES_gensbcs_out)
 
 #
 # Generated buffer classes
@@ -195,39 +366,39 @@ GEN_BUFFER_CMD = SPP="$(SPP_CMD)" NAWK="$(NAWK)" SED="$(SED)" SH="$(SH)" \
 
 # Public abstract buffer classes
 #
-$(BUF_GEN)/ByteBuffer.java: $(BUF_SRC)/X-Buffer.java \
-			    $(BUF_SRC)/X-Buffer-bin.java \
+$(BUF_GEN)/ByteBuffer.java: $(X_BUF_TEMPLATE) \
+			    $(X_BUF_BIN_TEMPLATE) \
 			    $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=byte BIN=1 SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/CharBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/CharBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ShortBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ShortBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/IntBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/IntBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/LongBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/LongBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/FloatBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/FloatBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DoubleBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DoubleBuffer.java: $(X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -235,72 +406,72 @@ $(BUF_GEN)/DoubleBuffer.java: $(BUF_SRC)/X-Buffer.java $(GEN_BUFFER_SH)
 
 # Buffers whose contents are heap-allocated
 # 
-$(BUF_GEN)/HeapByteBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapByteBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=byte SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapByteBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapByteBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=byte RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapCharBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapCharBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapCharBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapCharBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapShortBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapShortBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapShortBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapShortBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapIntBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapIntBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapIntBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapIntBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapLongBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapLongBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapLongBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapLongBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapFloatBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapFloatBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapFloatBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapFloatBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapDoubleBuffer.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapDoubleBuffer.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/HeapDoubleBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/HeapDoubleBuffer%.java: $(HEAP_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double RW=$* SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -308,15 +479,15 @@ $(BUF_GEN)/HeapDoubleBuffer%.java: $(BUF_SRC)/Heap-X-Buffer.java $(GEN_BUFFER_SH
 
 # Direct byte buffer
 # 
-$(BUF_GEN)/DirectByteBuffer.java: $(BUF_SRC)/Direct-X-Buffer.java \
-				  $(BUF_SRC)/Direct-X-Buffer.java \
+$(BUF_GEN)/DirectByteBuffer.java: $(DIRECT_X_BUF_TEMPLATE) \
+				  $(DIRECT_X_BUF_TEMPLATE) \
 				  $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=byte BIN=1 SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectByteBuffer%.java: $(BUF_SRC)/Direct-X-Buffer.java \
-				   $(BUF_SRC)/Direct-X-Buffer.java \
+$(BUF_GEN)/DirectByteBuffer%.java: $(DIRECT_X_BUF_TEMPLATE) \
+				   $(DIRECT_X_BUF_TEMPLATE) \
 				   $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
@@ -325,62 +496,62 @@ $(BUF_GEN)/DirectByteBuffer%.java: $(BUF_SRC)/Direct-X-Buffer.java \
 
 # Unswapped views of direct byte buffers
 #
-$(BUF_GEN)/DirectCharBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectCharBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectCharBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectCharBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectShortBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectShortBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectShortBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectShortBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectIntBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectIntBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectIntBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectIntBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectLongBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectLongBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectLongBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectLongBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectFloatBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectFloatBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectFloatBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectFloatBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectDoubleBufferU.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectDoubleBufferU.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectDoubleBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectDoubleBuffer%U.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double RW=$* BO=U SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -388,62 +559,62 @@ $(BUF_GEN)/DirectDoubleBuffer%U.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFF
 
 # Swapped views of direct byte buffers
 #
-$(BUF_GEN)/DirectCharBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectCharBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectCharBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectCharBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectShortBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectShortBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectShortBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectShortBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectIntBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectIntBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectIntBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectIntBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectLongBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectLongBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectLongBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectLongBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectFloatBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectFloatBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectFloatBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectFloatBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectDoubleBufferS.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectDoubleBufferS.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/DirectDoubleBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/DirectDoubleBuffer%S.java: $(DIRECT_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double RW=$* BO=S SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -451,62 +622,62 @@ $(BUF_GEN)/DirectDoubleBuffer%S.java: $(BUF_SRC)/Direct-X-Buffer.java $(GEN_BUFF
 
 # Big-endian views of byte buffers
 #
-$(BUF_GEN)/ByteBufferAsCharBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsCharBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsCharBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsCharBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsShortBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsShortBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsShortBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsShortBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsIntBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsIntBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsIntBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsIntBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsLongBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsLongBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsLongBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsLongBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsFloatBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsFloatBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsFloatBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsFloatBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsDoubleBufferB.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsDoubleBufferB.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsDoubleBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsDoubleBuffer%B.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double RW=$* BO=B SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -514,62 +685,62 @@ $(BUF_GEN)/ByteBufferAsDoubleBuffer%B.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.jav
 
 # Little-endian views of byte buffers
 #
-$(BUF_GEN)/ByteBufferAsCharBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsCharBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsCharBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsCharBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=char RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsShortBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsShortBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsShortBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsShortBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=short RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsIntBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsIntBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsIntBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsIntBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=int RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsLongBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsLongBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsLongBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsLongBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=long RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsFloatBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsFloatBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsFloatBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsFloatBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=float RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsDoubleBufferL.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsDoubleBufferL.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
 	$(MV) $@.temp $@
-$(BUF_GEN)/ByteBufferAsDoubleBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.java $(GEN_BUFFER_SH)
+$(BUF_GEN)/ByteBufferAsDoubleBuffer%L.java: $(BYTE_X_BUF_TEMPLATE) $(GEN_BUFFER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	TYPE=double RW=$* BO=L SRC=$< DST=$@.temp $(GEN_BUFFER_CMD)
@@ -583,13 +754,13 @@ GEN_CODER_SH = genCoder.sh
 
 GEN_CODER_CMD = SPP="$(SPP_CMD)" SED="$(SED)" NAWK="$(NAWK)" SH="$(SH)" $(SH) $(GEN_CODER_SH)
 
-$(CS_GEN)/CharsetDecoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
+$(CS_GEN)/CharsetDecoder.java: $(CHARSET_X_CODER_TEMPLATE) $(GEN_CODER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	$(GEN_CODER_CMD) decoder $< $@.temp
 	$(MV) $@.temp $@
 
-$(CS_GEN)/CharsetEncoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
+$(CS_GEN)/CharsetEncoder.java: $(CHARSET_X_CODER_TEMPLATE) $(GEN_CODER_SH)
 	$(prep-target)
 	@$(RM) $@.temp
 	$(GEN_CODER_CMD) encoder $< $@.temp
@@ -656,5 +827,51 @@ $(SCH_GEN)/SocketOptionRegistry.java: $(GENSOR_EXE)
 	$(prep-target)
 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh $(SOR_COPYRIGHT_YEARS) > $@
 	$(GENSOR_EXE) >> $@
+
+#
+# Generated sun.nio.cs SingleByte classes
+#
+GENCSSRC = $(BUILDDIR)/tools/CharsetMapping
+CHARSETMAPPING_JARFILE = $(BUILDTOOLJARDIR)/charsetmapping.jar
+
+$(FILES_gensbcs_out): $(GENCSSRC)/SingleByte-X.java.template $(GENCSSRC)/sbcs
+	@$(prep-target)
+	$(BOOT_JAVA_CMD) -jar $(CHARSETMAPPING_JARFILE) $(GENCSSRC) $(SCS_GEN) sbcs
+
+# 
+# Generated file system implementation classes (Unix only)
+#
+
+GENUC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genUnixConstants.c
+
+GENUC_EXE = $(TEMPDIR)/genUnixConstants
+
+GENUC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENUC_SRC) | \
+	$(NAWK) '/^.*Copyright.*Sun/ { print $$3 }')
+
+$(GENUC_EXE) : $(GENUC_SRC)
+	$(prep-target)
+	$(CC) $(CPPFLAGS) -o $@ $(GENUC_SRC)
+
+$(SFS_GEN)/UnixConstants.java: $(GENUC_EXE)
+	$(prep-target)
+	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh $(GENUC_COPYRIGHT_YEARS) > $@
+	$(GENUC_EXE) >> $@
+
+GENSC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genSolarisConstants.c
+
+GENSC_EXE = $(TEMPDIR)/genSolarisConstants
+
+GENSC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENSC_SRC) | \
+	$(NAWK) '/^.*Copyright.*Sun/ { print $$3 }')
+
+$(GENSC_EXE) : $(GENSC_SRC)
+	$(prep-target)
+	$(CC) $(CPPFLAGS) -o $@ $(GENSC_SRC)
+
+$(SFS_GEN)/SolarisConstants.java: $(GENSC_EXE)
+	$(prep-target)
+	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh $(GENSC_COPYRIGHT_YEARS) > $@
+	$(GENSC_EXE) >> $@
 
 .PHONY: sources 

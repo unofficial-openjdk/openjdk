@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,8 @@
  */
 
 #include "awt_List.h"
-#include "awt_KeyboardFocusManager.h"
 #include "awt_Canvas.h"
 #include "awt_Dimension.h"
-#include "awt_Unicode.h"
 #include "awt_Toolkit.h"
 #include "awt_Window.h"
 
@@ -112,9 +110,8 @@ AwtList* AwtList::Create(jobject peer, jobject parent)
             DWORD wrapExStyle = 0;
 
             DWORD style = WS_CHILD | WS_CLIPSIBLINGS | WS_VSCROLL | WS_HSCROLL |
-                LBS_NOINTEGRALHEIGHT | LBS_NOTIFY | LBS_OWNERDRAWFIXED |
-                (IS_WIN4X ? 0 : WS_BORDER);
-            DWORD exStyle = IS_WIN4X ? WS_EX_CLIENTEDGE : 0;
+                LBS_NOINTEGRALHEIGHT | LBS_NOTIFY | LBS_OWNERDRAWFIXED;
+            DWORD exStyle = WS_EX_CLIENTEDGE;
 
             /*
              * NOTE: WS_VISIBLE is always set for the listbox. Listbox
@@ -154,28 +151,6 @@ AwtList* AwtList::Create(jobject peer, jobject parent)
 done:
     env->DeleteLocalRef(target);
     return c;
-}
-
-BOOL AwtList::ActMouseMessage(MSG * pMsg) {
-    if (!IsFocusingMessage(pMsg->message)) {
-        return FALSE;
-    }
-
-    if (pMsg->message == WM_LBUTTONDOWN) {
-        LONG item = static_cast<LONG>(SendListMessage(LB_ITEMFROMPOINT, 0, pMsg->lParam));
-        if (item != LB_ERR) {
-            if (isMultiSelect) {
-                if (IsItemSelected(item)) {
-                    Deselect(item);
-                } else {
-                    Select(item);
-                }
-            } else {
-                Select(item);
-            }
-        }
-    }
-    return TRUE;
 }
 
 void AwtList::SetDragCapture(UINT flags)
@@ -475,17 +450,11 @@ AwtList::WmMouseDown(UINT flags, int x, int y, int button)
     }
 
     /*
-     * Fix for 6240202. List being inside a non-focusable Window (or non-focusable List
-     * being a single component inside a focusable Window) won't trigger ActionEvent by
-     * double click. All focus events will be filtered (in the AWT focus hook) for such
-     * a Window containing the List. In such a case OS Windows won't generate WM_COMMAND
-     * (and no WmNotify() will be called for the List). Here we call WmCommand()
-     * synthetically.
+     * As we consume WM_LBUTONDOWN the list won't trigger ActionEvent by double click.
+     * We trigger it ourselves. (see also 6240202)
      */
     int clickCount = GetClickCount();
-    if (button == LEFT_BUTTON && clickCount >= 2 && clickCount % 2 == 0 &&
-        !GetContainer()->IsFocusableWindow())
-    {
+    if (button == LEFT_BUTTON && clickCount >= 2 && clickCount % 2 == 0) {
         WmCommand(0, GetListHandle(), LBN_DBLCLK);
     }
     return mrResult;
@@ -502,67 +471,32 @@ AwtList::WmCtlColor(HDC hDC, HWND hCtrl, UINT ctlColor, HBRUSH& retBrush)
     return mrConsume;
 }
 
-// Override WmSetFocus and WmKillFocus so that they operate on the List handle
-// instead of the wrapper handle. Otherwise, the methods are the same as their
-// AwtComponent counterparts.
-
-MsgRouting AwtList::WmSetFocus(HWND hWndLostFocus) {
-    if (sm_focusOwner == GetListHandle()) {
-        sm_realFocusOpposite = NULL;
-        return mrConsume;
-    }
-
-    sm_focusOwner = GetListHandle();
-
-    if (sm_realFocusOpposite != NULL) {
-        hWndLostFocus = sm_realFocusOpposite;
-        sm_realFocusOpposite = NULL;
-    }
-
-    SendFocusEvent(java_awt_event_FocusEvent_FOCUS_GAINED, hWndLostFocus);
-
-    return mrDoDefault;
-}
-
-MsgRouting AwtList::WmKillFocus(HWND hWndGotFocus) {
-    if (sm_focusOwner != NULL && sm_focusOwner == hWndGotFocus) {
-        return mrConsume;
-    }
-
-    if (sm_focusOwner != GetListHandle()) {
-        if (sm_focusOwner != NULL) {
-            if (hWndGotFocus != NULL &&
-                AwtComponent::GetComponent(hWndGotFocus) != NULL)
-                {
-                    sm_realFocusOpposite = sm_focusOwner;
-                }
-            ::SendMessage(sm_focusOwner, WM_KILLFOCUS, (WPARAM)hWndGotFocus,
-                          0);
-        }
-        return mrConsume;
-    }
-
-    sm_focusOwner = NULL;
-
-    SendFocusEvent(java_awt_event_FocusEvent_FOCUS_LOST, hWndGotFocus);
-
-    return mrDoDefault;
+BOOL AwtList::IsFocusingMouseMessage(MSG *pMsg)
+{
+    return pMsg->message == WM_LBUTTONDOWN || pMsg->message == WM_LBUTTONDBLCLK;
 }
 
 MsgRouting AwtList::HandleEvent(MSG *msg, BOOL synthetic)
 {
-    if (AwtComponent::sm_focusOwner != GetListHandle() &&
-        (msg->message == WM_LBUTTONDOWN || msg->message == WM_LBUTTONDBLCLK))
-    {
-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        jobject target = GetTarget(env);
-        env->CallStaticVoidMethod
-            (AwtKeyboardFocusManager::keyboardFocusManagerCls,
-             AwtKeyboardFocusManager::heavyweightButtonDownMID,
-             target, ((jlong)msg->time) & 0xFFFFFFFF);
-        env->DeleteLocalRef(target);
+    if (IsFocusingMouseMessage(msg)) {
+        LONG item = static_cast<LONG>(SendListMessage(LB_ITEMFROMPOINT, 0, msg->lParam));
+        if (item != LB_ERR) {
+            if (isMultiSelect) {
+                if (IsItemSelected(item)) {
+                    Deselect(item);
+                } else {
+                    Select(item);
+                }
+            } else {
+                Select(item);
+            }
+        }
+        delete msg;
+        return mrConsume;
     }
-
+    if (msg->message == WM_KEYDOWN && msg->wParam == VK_RETURN) {
+        WmNotify(LBN_DBLCLK);
+    }
     return AwtComponent::HandleEvent(msg, synthetic);
 }
 
@@ -571,10 +505,10 @@ MsgRouting AwtList::HandleEvent(MSG *msg, BOOL synthetic)
 // operate WM_PRINT to be compatible with the "smooth scrolling" feature.
 MsgRouting AwtList::WmPrint(HDC hDC, LPARAM flags)
 {
-    if (!isWrapperPrint && IS_WIN4X
-            && (flags & PRF_CLIENT)
-            && (GetStyleEx() & WS_EX_CLIENTEDGE)) {
-
+    if (!isWrapperPrint &&
+        (flags & PRF_CLIENT) &&
+        (GetStyleEx() & WS_EX_CLIENTEDGE))
+    {
         int nOriginalDC = ::SaveDC(hDC);
         DASSERT(nOriginalDC != 0);
         // Save a copy of the DC for WmPrintClient
@@ -607,15 +541,6 @@ AwtList::WmNotify(UINT notifyCode)
         }
     }
     return mrDoDefault;
-}
-
-MsgRouting
-AwtList::WmKeyDown(UINT wkey, UINT repCnt, UINT flags, BOOL system)
-{
-    if (wkey == VK_RETURN) {
-        WmNotify(LBN_DBLCLK);
-    }
-    return AwtComponent::WmKeyDown(wkey, repCnt, flags, system);
 }
 
 BOOL AwtList::InheritsNativeMouseWheelBehavior() {return true;}

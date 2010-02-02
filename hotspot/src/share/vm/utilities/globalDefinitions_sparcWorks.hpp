@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,7 +115,9 @@
   #ifdef _LP64
     #define NULL_WORD  0L
   #else
-    #define NULL_WORD  0
+    // Cast 0 to intptr_t rather than int32_t since they are not the same type
+    // on some platforms.
+    #define NULL_WORD  ((intptr_t)0)
   #endif
 #else
   #define NULL_WORD  NULL

@@ -22,7 +22,7 @@
  */
 
 /* @test
-   @bug 5066863 5066867 5066874 5066879 5066884 5066887
+   @bug 5066863 5066867 5066874 5066879 5066884 5066887 5065777 6730652
    @summary canEncode() false iff encode() throws CharacterCodingException
    @run main/timeout=1200 FindCanEncodeBugs
    @author Martin Buchholz
@@ -52,10 +52,7 @@ public class FindCanEncodeBugs {
             String csn = e.getKey();
             Charset cs = e.getValue();
 
-            if (! cs.canEncode() ||
-                csn.matches("x-COMPOUND_TEXT") ||
-                csn.matches("x-ISO-2022-CN-CNS") || // ISO2022_CN_CNS supports less
-                csn.matches("(x-)?IBM(970).*")) // Broken as of 2004-07
+            if (! cs.canEncode() || csn.matches("x-COMPOUND_TEXT"))
                 continue;
 
             //System.out.println(csn);

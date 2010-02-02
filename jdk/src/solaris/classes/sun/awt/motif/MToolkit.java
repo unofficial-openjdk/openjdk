@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Iterator;
-import java.util.logging.*;
 
 import sun.awt.AppContext;
 import sun.awt.AWTAutoShutdown;
@@ -61,6 +60,7 @@ import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.dnd.peer.DragSourceContextPeer;
 
 //import sun.awt.motif.MInputMethod;
+import sun.awt.X11FontManager;
 import sun.awt.X11GraphicsConfig;
 import sun.awt.X11GraphicsEnvironment;
 import sun.awt.XSettings;
@@ -73,10 +73,11 @@ import sun.misc.PerformanceLogger;
 import sun.misc.Unsafe;
 
 import sun.security.action.GetBooleanAction;
+import sun.util.logging.PlatformLogger;
 
 public class MToolkit extends UNIXToolkit implements Runnable {
 
-    private static final Logger log = Logger.getLogger("sun.awt.motif.MToolkit");
+    private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.motif.MToolkit");
 
     // the system clipboard - CLIPBOARD selection
     //X11Clipboard clipboard;
@@ -124,7 +125,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
          * and when we know that MToolkit is the one that will be used,
          * since XToolkit doesn't need the X11 font path set
          */
-        X11GraphicsEnvironment.setNativeFontPath();
+        X11FontManager.getInstance().setNativeFontPath();
 
         motifdnd = ((Boolean)java.security.AccessController.doPrivileged(
             new GetBooleanAction("awt.dnd.motifdnd"))).booleanValue();
@@ -333,6 +334,10 @@ public class MToolkit extends UNIXToolkit implements Runnable {
         //CheckboxMenuItemPeer peer = new MCheckboxMenuItemPeer(target);
         //targetCreatedPeer(target, peer);
         //return peer;
+        return null;
+    }
+
+    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) {
         return null;
     }
 
@@ -612,15 +617,14 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     protected Boolean lazilyLoadDynamicLayoutSupportedProperty(String name) {
         boolean nativeDynamic = isDynamicLayoutSupportedNative();
 
-        if (log.isLoggable(Level.FINER)) {
-            log.log(Level.FINER, "nativeDynamic == " + nativeDynamic);
+        if (log.isLoggable(PlatformLogger.FINER)) {
+            log.finer("nativeDynamic == " + nativeDynamic);
         }
 
         return Boolean.valueOf(nativeDynamic);
     }
 
     private native int getMulticlickTime();
-    private native int getNumMouseButtons();
 
     protected void initializeDesktopProperties() {
         desktopProperties.put("DnD.Autoscroll.initialDelay",     Integer.valueOf(50));
@@ -639,7 +643,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
             desktopProperties.put("awt.multiClickInterval",
                                   Integer.valueOf(getMulticlickTime()));
             desktopProperties.put("awt.mouse.numButtons",
-                                  Integer.valueOf(getNumMouseButtons()));
+                                  Integer.valueOf(getNumberOfButtons()));
         }
     }
 

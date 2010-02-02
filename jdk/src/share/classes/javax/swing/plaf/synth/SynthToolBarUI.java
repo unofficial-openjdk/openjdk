@@ -25,55 +25,87 @@
 
 package javax.swing.plaf.synth;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.*;
-import java.awt.event.*;
-
-import java.beans.*;
-
-import javax.swing.border.*;
-import javax.swing.plaf.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import javax.swing.JToolBar;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolBarUI;
-import sun.swing.plaf.synth.*;
-
+import sun.swing.plaf.synth.SynthIcon;
 
 /**
- * A Synth L&F implementation of ToolBarUI.  This implementation
- * is a "combined" view/controller.
- * <p>
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.JToolBar}.
  *
+ * @since 1.7
  */
-class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
-           SynthUI {
-    protected Icon handleIcon = null;
-    protected Rectangle contentRect = new Rectangle();
+public class SynthToolBarUI extends BasicToolBarUI
+                            implements PropertyChangeListener, SynthUI {
+    private Icon handleIcon = null;
+    private Rectangle contentRect = new Rectangle();
 
     private SynthStyle style;
     private SynthStyle contentStyle;
     private SynthStyle dragWindowStyle;
 
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
     public static ComponentUI createUI(JComponent c) {
         return new SynthToolBarUI();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installDefaults() {
         toolBar.setLayout(createLayout());
         updateStyle(toolBar);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installListeners() {
         super.installListeners();
         toolBar.addPropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallListeners() {
         super.uninstallListeners();
         toolBar.removePropertyChangeListener(this);
     }
 
     private void updateStyle(JToolBar c) {
-        SynthContext context = getContext(c, ENABLED);
+        SynthContext context = getContext(
+                c, Region.TOOL_BAR_CONTENT, null, ENABLED);
+        contentStyle = SynthLookAndFeel.updateStyle(context, this);
+        context.dispose();
+
+        context = getContext(c, Region.TOOL_BAR_DRAG_WINDOW, null, ENABLED);
+        dragWindowStyle = SynthLookAndFeel.updateStyle(context, this);
+        context.dispose();
+
+        context = getContext(c, ENABLED);
         SynthStyle oldStyle = style;
 
         style = SynthLookAndFeel.updateStyle(context, this);
@@ -86,16 +118,12 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
             }
         }
         context.dispose();
-
-        context = getContext(c, Region.TOOL_BAR_CONTENT, ENABLED);
-        contentStyle = SynthLookAndFeel.updateStyle(context, this);
-        context.dispose();
-
-        context = getContext(c, Region.TOOL_BAR_DRAG_WINDOW, ENABLED);
-        dragWindowStyle = SynthLookAndFeel.updateStyle(context, this);
-        context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallDefaults() {
         SynthContext context = getContext(toolBar, ENABLED);
 
@@ -105,12 +133,14 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
 
         handleIcon = null;
 
-        context = getContext(toolBar, Region.TOOL_BAR_CONTENT, ENABLED);
+        context = getContext(toolBar, Region.TOOL_BAR_CONTENT,
+                             contentStyle, ENABLED);
         contentStyle.uninstallDefaults(context);
         context.dispose();
         contentStyle = null;
 
-        context = getContext(toolBar, Region.TOOL_BAR_DRAG_WINDOW, ENABLED);
+        context = getContext(toolBar, Region.TOOL_BAR_DRAG_WINDOW,
+                             dragWindowStyle, ENABLED);
         dragWindowStyle.uninstallDefaults(context);
         context.dispose();
         dragWindowStyle = null;
@@ -118,18 +148,33 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
         toolBar.setLayout(null);
     }
 
-    protected void installComponents() {
-    }
+    /**
+     * @inheritDoc
+     */
+    @Override
+    protected void installComponents() {}
 
-    protected void uninstallComponents() {
-    }
+    /**
+     * @inheritDoc
+     */
+    @Override
+    protected void uninstallComponents() {}
 
+    /**
+     * Creates a {@code LayoutManager} to use with the toolbar.
+     *
+     * @return a {@code LayoutManager} instance
+     */
     protected LayoutManager createLayout() {
         return new SynthToolBarLayoutManager();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
     private SynthContext getContext(JComponent c, int state) {
@@ -137,27 +182,25 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                     SynthLookAndFeel.getRegion(c), style, state);
     }
 
-    private SynthContext getContext(JComponent c, Region region) {
-        return getContext(c, region, getComponentState(c, region));
-    }
-
-    private SynthContext getContext(JComponent c, Region region, int state) {
+    private SynthContext getContext(JComponent c, Region region, SynthStyle style) {
         return SynthContext.getContext(SynthContext.class, c, region,
-                                       dragWindowStyle, state);
+                                       style, getComponentState(c, region));
     }
 
-    private Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
-    private int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
+    private SynthContext getContext(JComponent c, Region region,
+                                    SynthStyle style, int state) {
+        return SynthContext.getContext(SynthContext.class, c, region,
+                                       style, state);
     }
 
     private int getComponentState(JComponent c, Region region) {
         return SynthLookAndFeel.getComponentState(c);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -169,6 +212,10 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -176,6 +223,10 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintToolBarBorder(context, g, x, y, w, h,
@@ -183,14 +234,32 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
     }
 
     // Overloaded to do nothing so we can share listeners.
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void setBorderToNonRollover(Component c) {}
 
     // Overloaded to do nothing so we can share listeners.
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void setBorderToRollover(Component c) {}
 
     // Overloaded to do nothing so we can share listeners.
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void setBorderToNormal(Component c) {}
 
+    /**
+     * Paints the toolbar.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
     protected void paint(SynthContext context, Graphics g) {
         if (handleIcon != null && toolBar.isFloatable()) {
             int startX = toolBar.getComponentOrientation().isLeftToRight() ?
@@ -201,12 +270,20 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                     SynthIcon.getIconHeight(handleIcon, context));
         }
 
-        SynthContext subcontext = getContext(toolBar, Region.TOOL_BAR_CONTENT);
+        SynthContext subcontext = getContext(
+                toolBar, Region.TOOL_BAR_CONTENT, contentStyle);
         paintContent(subcontext, g, contentRect);
         subcontext.dispose();
     }
 
-    public void paintContent(SynthContext context, Graphics g,
+    /**
+     * Paints the toolbar content.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param bounds bounding box for the toolbar
+     */
+    protected void paintContent(SynthContext context, Graphics g,
             Rectangle bounds) {
         SynthLookAndFeel.updateSubregion(context, g, bounds);
         context.getPainter().paintToolBarContentBackground(context, g,
@@ -217,12 +294,17 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                              toolBar.getOrientation());
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void paintDragWindow(Graphics g) {
         int w = dragWindow.getWidth();
         int h = dragWindow.getHeight();
-        SynthContext context = getContext(toolBar,Region.TOOL_BAR_DRAG_WINDOW);
-        SynthLookAndFeel.updateSubregion(context, g, new Rectangle(
-                         0, 0, w, h));
+        SynthContext context = getContext(
+                toolBar, Region.TOOL_BAR_DRAG_WINDOW, dragWindowStyle);
+        SynthLookAndFeel.updateSubregion(
+                context, g, new Rectangle(0, 0, w, h));
         context.getPainter().paintToolBarDragWindowBackground(context,
                                                            g, 0, 0, w, h,
                                                            dragWindow.getOrientation());
@@ -235,6 +317,10 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
     // PropertyChangeListener
     //
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         if (SynthLookAndFeel.shouldUpdateStyle(e)) {
             updateStyle((JToolBar)e.getSource());
@@ -319,6 +405,19 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
 
             Component c;
             Dimension d;
+
+            // JToolBar by default uses a somewhat modified BoxLayout as
+            // its layout manager. For compatibility reasons, we want to
+            // support Box "glue" as a way to move things around on the
+            // toolbar. "glue" is represented in BoxLayout as a Box.Filler
+            // with a minimum and preferred size of (0,0).
+            // So what we do here is find the number of such glue fillers
+            // and figure out how much space should be allocated to them.
+            int glueCount = 0;
+            for (int i=0; i<tb.getComponentCount(); i++) {
+                if (isGlue(tb.getComponent(i))) glueCount++;
+            }
+
             if (tb.getOrientation() == JToolBar.HORIZONTAL) {
                 int handleWidth = tb.isFloatable() ?
                     SynthIcon.getIconWidth(handleIcon, context) : 0;
@@ -339,6 +438,16 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                 int baseY = insets.top;
                 int baseH = tb.getHeight() - insets.top - insets.bottom;
 
+                // we need to get the minimum width for laying things out
+                // so that we can calculate how much empty space needs to
+                // be distributed among the "glue", if any
+                int extraSpacePerGlue = 0;
+                if (glueCount > 0) {
+                    int minWidth = minimumLayoutSize(parent).width;
+                    extraSpacePerGlue = (tb.getWidth() - minWidth) / glueCount;
+                    if (extraSpacePerGlue < 0) extraSpacePerGlue = 0;
+                }
+
                 for (int i = 0; i < tb.getComponentCount(); i++) {
                     c = tb.getComponent(i);
                     d = c.getPreferredSize();
@@ -352,6 +461,9 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                         y = baseY + (baseH / 2) - (d.height / 2);
                         h = d.height;
                     }
+                    //if the component is a "glue" component then add to its
+                    //width the extraSpacePerGlue it is due
+                    if (isGlue(c)) d.width += extraSpacePerGlue;
                     c.setBounds(ltr ? x : x - d.width, y, d.width, h);
                     x = ltr ? x + d.width : x - d.width;
                 }
@@ -369,6 +481,16 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                 int baseW = tb.getWidth() - insets.left - insets.right;
                 int y = handleHeight + insets.top;
 
+                // we need to get the minimum height for laying things out
+                // so that we can calculate how much empty space needs to
+                // be distributed among the "glue", if any
+                int extraSpacePerGlue = 0;
+                if (glueCount > 0) {
+                    int minHeight = minimumLayoutSize(parent).height;
+                    extraSpacePerGlue = (tb.getHeight() - minHeight) / glueCount;
+                    if (extraSpacePerGlue < 0) extraSpacePerGlue = 0;
+                }
+
                 for (int i = 0; i < tb.getComponentCount(); i++) {
                     c = tb.getComponent(i);
                     d = c.getPreferredSize();
@@ -382,11 +504,25 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                         x = baseX + (baseW / 2) - (d.width / 2);
                         w = d.width;
                     }
+                    //if the component is a "glue" component then add to its
+                    //height the extraSpacePerGlue it is due
+                    if (isGlue(c)) d.height += extraSpacePerGlue;
                     c.setBounds(x, y, w, d.height);
                     y += d.height;
                 }
             }
             context.dispose();
+        }
+
+        private boolean isGlue(Component c) {
+            if (c instanceof Box.Filler) {
+                Box.Filler f = (Box.Filler)c;
+                Dimension min = f.getMinimumSize();
+                Dimension pref = f.getPreferredSize();
+                return min.width == 0 &&  min.height == 0 &&
+                        pref.width == 0 && pref.height == 0;
+            }
+            return false;
         }
     }
 }

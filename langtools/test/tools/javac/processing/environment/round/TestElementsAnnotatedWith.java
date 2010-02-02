@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 6397298 6400986 6425592 6449798 6453386 6508401
+ * @bug 6397298 6400986 6425592 6449798 6453386 6508401 6498938 6911854
  * @summary Tests that getElementsAnnotatedWith works properly.
  * @author  Joseph D. Darcy
  * @compile TestElementsAnnotatedWith.java
@@ -31,16 +31,22 @@
  * @compile -processor TestElementsAnnotatedWith -proc:only SurfaceAnnotations.java
  * @compile -processor TestElementsAnnotatedWith -proc:only BuriedAnnotations.java
  * @compile -processor TestElementsAnnotatedWith -proc:only Part1.java Part2.java
- * @compile -processor TestElementsAnnotatedWith -proc:only TestElementsAnnotatedWith.java
  * @compile -processor TestElementsAnnotatedWith -proc:only C2.java
+ * @compile -processor TestElementsAnnotatedWith -proc:only Foo.java
+ * @compile Foo.java
+ * @compile/process -processor TestElementsAnnotatedWith -proc:only Foo
  */
 
 import java.lang.annotation.Annotation;
+import java.io.*;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 import javax.annotation.processing.*;
+import javax.tools.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.util.*;
@@ -83,7 +89,7 @@ public class TestElementsAnnotatedWith extends AbstractProcessor {
                 // Verify that the annotation information is as
                 // expected.
 
-                Set<String> expectedNames = new HashSet<String>(Arrays.asList(annotatedElementInfo.names()));
+                Set<String> expectedNames = new HashSet<>(Arrays.asList(annotatedElementInfo.names()));
 
                 resultsMeta =
                     roundEnvironment.
@@ -154,9 +160,10 @@ public class TestElementsAnnotatedWith extends AbstractProcessor {
         } catch(IllegalArgumentException iae) {}
 
         try {
-            Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(processingEnv.
-                                                                                        getElementUtils().
-                                                                                        getTypeElement("java.lang.Object") );
+            Set<? extends Element> elements =
+                roundEnvironment.getElementsAnnotatedWith(processingEnv.
+                                                          getElementUtils().
+                                                          getTypeElement("java.lang.Object") );
             throw new RuntimeException("Illegal argument exception not thrown");
         } catch(IllegalArgumentException iae) {}
     }

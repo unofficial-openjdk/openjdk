@@ -57,6 +57,7 @@ package javax.management;
  *             what = "Unknown type " + n.getType();
  *         System.out.println("Received MBean Server notification: " + what + ": " +
  *                 mbsn.getMBeanName());
+ *     }
  * };
  *
  * ...
@@ -64,32 +65,33 @@ package javax.management;
  *             MBeanServerDelegate.DELEGATE_NAME, printListener, null, null);
  * </pre>
  *
- * <p>The following code prints a message every time an MBean is registered
- * or unregistered in the MBean Server {@code mbeanServer}:</p>
+ * <p id="group">
+ * An MBean which is not an {@link MBeanServerDelegate} may also emit
+ * MBeanServerNotifications. In particular, there is a convention for
+ * MBeans to emit an MBeanServerNotification for a group of MBeans.</p>
  *
- * <pre>
- * private static final NotificationListener printListener = new NotificationListener() {
- *     public void handleNotification(Notification n, Object handback) {
- *         if (!(n instanceof MBeanServerNotification)) {
- *             System.out.println("Ignored notification of class " + n.getClass().getName());
- *             return;
- *         }
- *         MBeanServerNotification mbsn = (MBeanServerNotification) n;
- *         String what;
- *         if (n.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION))
- *             what = "MBean registered";
- *         else if (n.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION))
- *             what = "MBean unregistered";
- *         else
- *             what = "Unknown type " + n.getType();
- *         System.out.println("Received MBean Server notification: " + what + ": " +
- *                 mbsn.getMBeanName());
- * };
- *
- * ...
- *     mbeanServer.addNotificationListener(
- *             MBeanServerDelegate.DELEGATE_NAME, printListener, null, null);
- * </pre>
+ * <p>An MBeanServerNotification emitted to denote the registration or
+ * unregistration of a group of MBeans has the following characteristics:
+ * <ul><li>Its {@linkplain Notification#getType() notification type} is
+ *     {@code "JMX.mbean.registered.group"} or
+ *     {@code "JMX.mbean.unregistered.group"}, which can also be written {@link
+ *     MBeanServerNotification#REGISTRATION_NOTIFICATION}{@code + ".group"} or
+ *     {@link
+ *     MBeanServerNotification#UNREGISTRATION_NOTIFICATION}{@code + ".group"}.
+ * </li>
+ * <li>Its {@linkplain #getMBeanName() MBean name} is an ObjectName pattern
+ *     that selects the set (or a superset) of the MBeans being registered
+ *     or unregistered</li>
+ * <li>Its {@linkplain Notification#getUserData() user data} can optionally
+ *     be set to an array of ObjectNames containing the names of all MBeans
+ *     being registered or unregistered.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * MBeans which emit these group registration/unregistration notifications will
+ * declare them in their {@link MBeanInfo#getNotifications()
+ * MBeanNotificationInfo}.
+ * </p>
  *
  * @since 1.5
  */

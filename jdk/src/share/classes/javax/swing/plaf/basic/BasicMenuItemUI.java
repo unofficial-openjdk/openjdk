@@ -32,7 +32,6 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.border.*;
 import javax.swing.plaf.*;
 import javax.swing.text.View;
 
@@ -54,7 +53,12 @@ public class BasicMenuItemUI extends MenuItemUI
     protected Color disabledForeground;
     protected Color acceleratorForeground;
     protected Color acceleratorSelectionForeground;
-    private   String acceleratorDelimiter;
+
+    /**
+     * Accelerator delimiter string, such as {@code '+'} in {@code 'Ctrl+C'}.
+     * @since 1.7
+     */
+    protected String acceleratorDelimiter;
 
     protected int defaultTextIconGap;
     protected Font acceleratorFont;
@@ -111,6 +115,11 @@ public class BasicMenuItemUI extends MenuItemUI
         String prefix = getPropertyPrefix();
 
         acceleratorFont = UIManager.getFont("MenuItem.acceleratorFont");
+        // use default if missing so that BasicMenuItemUI can be used in other
+        // LAFs like Nimbus
+        if (acceleratorFont == null) {
+            acceleratorFont = UIManager.getFont("MenuItem.font");
+        }
 
         Object opaque = UIManager.get(getPropertyPrefix() + ".opaque");
         if (opaque != null) {
@@ -130,7 +139,7 @@ public class BasicMenuItemUI extends MenuItemUI
         LookAndFeel.installBorder(menuItem, prefix + ".border");
         oldBorderPainted = menuItem.isBorderPainted();
         LookAndFeel.installProperty(menuItem, "borderPainted",
-                                    UIManager.get(prefix + ".borderPainted"));
+                                    UIManager.getBoolean(prefix + ".borderPainted"));
         LookAndFeel.installColorsAndFont(menuItem,
                                          prefix + ".background",
                                          prefix + ".foreground",

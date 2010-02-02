@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,9 @@
 
 package sun.net.spi;
 
-import sun.net.www.http.*;
 import sun.net.NetProperties;
 import java.net.*;
 import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 import sun.misc.RegexpPool;
 import java.security.AccessController;
@@ -78,7 +76,6 @@ public class DefaultProxySelector extends ProxySelector {
     };
 
     private static boolean hasSystemProxies = false;
-    private static Properties defprops = new Properties();
 
     static {
         final String key = "java.net.useSystemProxies";
@@ -103,19 +100,25 @@ public class DefaultProxySelector extends ProxySelector {
      */
 
     static class NonProxyInfo {
+        // Default value for nonProxyHosts, this provides backward compatibility
+        // by excluding localhost and its litteral notations.
+        static final String defStringVal = "localhost|127.*|[::1]";
+
         String hostsSource;
         RegexpPool hostsPool;
-        String property;
+        final String property;
+        final String defaultVal;
+        static NonProxyInfo ftpNonProxyInfo = new NonProxyInfo("ftp.nonProxyHosts", null, null, defStringVal);
+        static NonProxyInfo httpNonProxyInfo = new NonProxyInfo("http.nonProxyHosts", null, null, defStringVal);
 
-        NonProxyInfo(String p, String s, RegexpPool pool) {
+        NonProxyInfo(String p, String s, RegexpPool pool, String d) {
             property = p;
             hostsSource = s;
             hostsPool = pool;
+            defaultVal = d;
         }
     }
 
-    private static NonProxyInfo ftpNonProxyInfo = new NonProxyInfo("ftp.nonProxyHosts", null, null);
-    private static NonProxyInfo httpNonProxyInfo = new NonProxyInfo("http.nonProxyHosts", null, null);
 
     /**
      * select() method. Where all the hard work is done.
@@ -130,7 +133,6 @@ public class DefaultProxySelector extends ProxySelector {
         }
         String protocol = uri.getScheme();
         String host = uri.getHost();
-        int port = uri.getPort();
 
         if (host == null) {
             // This is a hack to ensure backward compatibility in two
@@ -149,11 +151,6 @@ public class DefaultProxySelector extends ProxySelector {
                 }
                 i = auth.lastIndexOf(':');
                 if (i >= 0) {
-                    try {
-                        port = Integer.parseInt(auth.substring(i+1));
-                    } catch (NumberFormatException e) {
-                        port = -1;
-                    }
                     auth = auth.substring(0,i);
                 }
                 host = auth;
@@ -165,23 +162,16 @@ public class DefaultProxySelector extends ProxySelector {
         }
         List<Proxy> proxyl = new ArrayList<Proxy>(1);
 
-        // special case localhost and loopback addresses to
-        // not go through proxy
-        if (isLoopback(host)) {
-            proxyl.add(Proxy.NO_PROXY);
-            return proxyl;
-        }
-
         NonProxyInfo pinfo = null;
 
         if ("http".equalsIgnoreCase(protocol)) {
-            pinfo = httpNonProxyInfo;
+            pinfo = NonProxyInfo.httpNonProxyInfo;
         } else if ("https".equalsIgnoreCase(protocol)) {
             // HTTPS uses the same property as HTTP, for backward
             // compatibility
-            pinfo = httpNonProxyInfo;
+            pinfo = NonProxyInfo.httpNonProxyInfo;
         } else if ("ftp".equalsIgnoreCase(protocol)) {
-            pinfo = ftpNonProxyInfo;
+            pinfo = NonProxyInfo.ftpNonProxyInfo;
         }
 
         /**
@@ -244,9 +234,14 @@ public class DefaultProxySelector extends ProxySelector {
                                 nphosts = NetProperties.get(nprop.property);
                                 synchronized (nprop) {
                                     if (nphosts == null) {
-                                        nprop.hostsSource = null;
-                                        nprop.hostsPool = null;
-                                    } else {
+                                        if (nprop.defaultVal != null) {
+                                            nphosts = nprop.defaultVal;
+                                        } else {
+                                            nprop.hostsSource = null;
+                                            nprop.hostsPool = null;
+                                        }
+                                    }
+                                    if (nphosts != null) {
                                         if (!nphosts.equals(nprop.hostsSource)) {
                                             RegexpPool pool = new RegexpPool();
                                             StringTokenizer st = new StringTokenizer(nphosts, "|", false);
@@ -332,107 +327,6 @@ public class DefaultProxySelector extends ProxySelector {
         } else {
             return -1;
         }
-    }
-
-    private static final Pattern p6 = Pattern.compile("::1|(0:){7}1|(0:){1,6}:1");
-    private boolean isLoopback(String host) {
-        if (host == null || host.length() == 0)
-            return false;
-
-        if (host.equalsIgnoreCase("localhost"))
-            return true;
-
-        /* The string could represent a numerical IP address.
-         * For IPv4 addresses, check whether it starts with 127.
-         * For IPv6 addresses, check whether it is ::1 or its equivalent.
-         * Don't check IPv4-mapped or IPv4-compatible addresses
-         */
-
-        if (host.startsWith("127.")) {
-            // possible IPv4 loopback address
-            int p = 4;
-            int q;
-            int n = host.length();
-            // Per RFC2732: At most three digits per byte
-            // Further constraint: Each element fits in a byte
-            if ((q = scanByte(host, p, n)) <= p) return false;   p = q;
-            if ((q = scan(host, p, n, '.')) <= p) return q == n && number > 0;  p = q;
-            if ((q = scanByte(host, p, n)) <= p) return false;   p = q;
-            if ((q = scan(host, p, n, '.')) <= p) return q == n && number > 0;  p = q;
-            if ((q = scanByte(host, p, n)) <= p) return false;
-            return q == n && number > 0;
-        }
-
-        if (host.endsWith(":1")) {
-            return p6.matcher(host).matches();
-        }
-        return false;
-    }
-
-    // Character-class masks, in reverse order from RFC2396 because
-    // initializers for static fields cannot make forward references.
-
-    // Compute a low-order mask for the characters
-    // between first and last, inclusive
-    private static long lowMask(char first, char last) {
-        long m = 0;
-        int f = Math.max(Math.min(first, 63), 0);
-        int l = Math.max(Math.min(last, 63), 0);
-        for (int i = f; i <= l; i++)
-            m |= 1L << i;
-        return m;
-    }
-    // digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-    //            "8" | "9"
-    private static final long L_DIGIT = lowMask('0', '9');
-    private static final long H_DIGIT = 0L;
-
-    // Scan a string of decimal digits whose value fits in a byte
-    //
-    private int number;
-    private int scanByte(String input, int start, int n)
-    {
-        int p = start;
-        int q = scan(input, p, n, L_DIGIT, H_DIGIT);
-        if (q <= p) return q;
-        number = Integer.parseInt(input.substring(p, q));
-        if (number > 255) return p;
-        return q;
-    }
-
-    // Scan a specific char: If the char at the given start position is
-    // equal to c, return the index of the next char; otherwise, return the
-    // start position.
-    //
-    private int scan(String input, int start, int end, char c) {
-        if ((start < end) && (input.charAt(start) == c))
-            return start + 1;
-        return start;
-    }
-
-    // Scan chars that match the given mask pair
-    //
-    private int scan(String input, int start, int n, long lowMask, long highMask)
-    {
-        int p = start;
-        while (p < n) {
-            char c = input.charAt(p);
-            if (match(c, lowMask, highMask)) {
-                p++;
-                continue;
-            }
-            break;
-        }
-        return p;
-    }
-
-    // Tell whether the given character is permitted by the given mask pair
-    private boolean match(char c, long lowMask, long highMask) {
-        if (c < 64)
-            return ((1L << c) & lowMask) != 0;
-        if (c < 128)
-            return ((1L << (c - 64)) & highMask) != 0;
-        return false;
     }
 
     private native static boolean init();

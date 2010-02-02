@@ -38,11 +38,6 @@ public class FindEncoderBugs {
 
     static boolean isBroken(String csn) {
         if (csn.equals("x-COMPOUND_TEXT")) return true;
-        if (csn.equals("x-IBM834")) return true;  // stateful korean
-        if (csn.equals("x-IBM933")) return true;  // stateful korean
-        if (csn.equals("x-IBM970")) return true;  // stateful korean
-        if (csn.equals("x-IBM949")) return true;  // stateful korean
-        if (csn.equals("x-IBM949C")) return true; // stateful korean
         return false;
     }
 
@@ -526,4 +521,3 @@ public class FindEncoderBugs {
         System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
         if (failed > 0) throw new AssertionError("Some tests failed");}
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,9 @@ import sun.awt.OSInfo;
 import sun.security.action.GetPropertyAction;
 import sun.swing.SwingUtilities2;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
 
 
 /**
@@ -194,6 +197,8 @@ public class UIManager implements Serializable
         Vector<LookAndFeel> auxLookAndFeels = null;
         SwingPropertyChangeSupport changeSupport;
 
+        LookAndFeelInfo[] installedLAFs;
+
         UIDefaults getLookAndFeelDefaults() { return tables[0]; }
         void setLookAndFeelDefaults(UIDefaults x) { tables[0] = x; }
 
@@ -224,18 +229,6 @@ public class UIManager implements Serializable
      */
     private static final Object classLock = new Object();
 
-
-    /* Cache the last referenced LAFState to improve performance
-     * when accessing it.  The cache is based on last thread rather
-     * than last AppContext because of the cost of looking up the
-     * AppContext each time.  Since most Swing UI work is on the
-     * EventDispatchThread, this hits often enough to justify the
-     * overhead.  (4193032)
-     */
-    private static Thread currentLAFStateThread = null;
-    private static LAFState currentLAFState = null;
-
-
     /**
      * Return the <code>LAFState</code> object, lazily create one if necessary.
      * All access to the <code>LAFState</code> fields is done via this method,
@@ -245,13 +238,6 @@ public class UIManager implements Serializable
      * </pre>
      */
     private static LAFState getLAFState() {
-        // First check whether we're running on the same thread as
-        // the last request.
-        Thread thisThread = Thread.currentThread();
-        if (thisThread == currentLAFStateThread) {
-            return currentLAFState;
-        }
-
         LAFState rv = (LAFState)SwingUtilities.appContextGet(
                 SwingUtilities2.LAF_STATE_KEY);
         if (rv == null) {
@@ -265,10 +251,6 @@ public class UIManager implements Serializable
                 }
             }
         }
-
-        currentLAFStateThread = thisThread;
-        currentLAFState = rv;
-
         return rv;
     }
 
@@ -381,6 +363,8 @@ public class UIManager implements Serializable
         ArrayList<LookAndFeelInfo> iLAFs = new ArrayList<LookAndFeelInfo>(4);
         iLAFs.add(new LookAndFeelInfo(
                       "Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
+        iLAFs.add(new LookAndFeelInfo(
+                      "Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
         iLAFs.add(new LookAndFeelInfo("CDE/Motif",
                   "com.sun.java.swing.plaf.motif.MotifLookAndFeel"));
 
@@ -426,7 +410,10 @@ public class UIManager implements Serializable
      */
     public static LookAndFeelInfo[] getInstalledLookAndFeels() {
         maybeInitialize();
-        LookAndFeelInfo[] ilafs = installedLAFs;
+        LookAndFeelInfo[] ilafs = getLAFState().installedLAFs;
+        if (ilafs == null) {
+            ilafs = installedLAFs;
+        }
         LookAndFeelInfo[] rv = new LookAndFeelInfo[ilafs.length];
         System.arraycopy(ilafs, 0, rv, 0, ilafs.length);
         return rv;
@@ -448,9 +435,10 @@ public class UIManager implements Serializable
     public static void setInstalledLookAndFeels(LookAndFeelInfo[] infos)
         throws SecurityException
     {
+        maybeInitialize();
         LookAndFeelInfo[] newInfos = new LookAndFeelInfo[infos.length];
         System.arraycopy(infos, 0, newInfos, 0, infos.length);
-        installedLAFs = newInfos;
+        getLAFState().installedLAFs = newInfos;
     }
 
 
@@ -1302,10 +1290,11 @@ public class UIManager implements Serializable
             }
         }
 
-        installedLAFs = new LookAndFeelInfo[ilafs.size()];
+        LookAndFeelInfo[] installedLAFs = new LookAndFeelInfo[ilafs.size()];
         for(int i = 0; i < ilafs.size(); i++) {
             installedLAFs[i] = ilafs.elementAt(i);
         }
+        getLAFState().installedLAFs = installedLAFs;
     }
 
 
@@ -1323,19 +1312,29 @@ public class UIManager implements Serializable
             return;
         }
 
-        String metalLnf = getCrossPlatformLookAndFeelClassName();
-        String lnfDefault = metalLnf;
+        // Try to get default LAF from system property, then from AppContext
+        // (6653395), then use cross-platform one by default.
+        String lafName = null;
+        HashMap lafData =
+                (HashMap) AppContext.getAppContext().remove("swing.lafdata");
+        if (lafData != null) {
+            lafName = (String) lafData.remove("defaultlaf");
+        }
+        if (lafName == null) {
+            lafName = getCrossPlatformLookAndFeelClassName();
+        }
+        lafName = swingProps.getProperty(defaultLAFKey, lafName);
 
-        String lnfName = "<undefined>" ;
         try {
-            lnfName = swingProps.getProperty(defaultLAFKey, lnfDefault);
-            setLookAndFeel(lnfName);
+            setLookAndFeel(lafName);
         } catch (Exception e) {
-            try {
-                lnfName = swingProps.getProperty(defaultLAFKey, metalLnf);
-                setLookAndFeel(lnfName);
-            } catch (Exception e2) {
-                throw new Error("can't load " + lnfName);
+            throw new Error("Cannot load " + lafName);
+        }
+
+        // Set any properties passed through AppContext (6653395).
+        if (lafData != null) {
+            for (Object key: lafData.keySet()) {
+                UIManager.put(key, lafData.get(key));
             }
         }
     }
@@ -1458,21 +1457,7 @@ public class UIManager implements Serializable
                         return false;
                     }
                 });
-        try {
-            Method setRequestFocusControllerM = java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedExceptionAction<Method>() {
-                        public Method run() throws Exception {
-                            Method method =
-                            Component.class.getDeclaredMethod("setRequestFocusController",
-                                                              sun.awt.RequestFocusController.class);
-                            method.setAccessible(true);
-                            return method;
-                        }
-                    });
-            setRequestFocusControllerM.invoke(null, JComponent.focusController);
-        } catch (Exception e) {
-            // perhaps we should log this
-            assert false;
-        }
+        AWTAccessor.getComponentAccessor().
+            setRequestFocusController(JComponent.focusController);
     }
 }

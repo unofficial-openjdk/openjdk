@@ -50,6 +50,7 @@ import sun.awt.image.PixelConverter;
 import sun.font.X11TextRenderer;
 import sun.java2d.InvalidPipeException;
 import sun.java2d.SunGraphics2D;
+import sun.java2d.SunGraphicsEnvironment;
 import sun.java2d.SurfaceData;
 import sun.java2d.SurfaceDataProxy;
 import sun.java2d.loops.SurfaceType;
@@ -80,6 +81,13 @@ public abstract class X11SurfaceData extends SurfaceData {
         DESC_INT_BGR_X11        = "Integer BGR Pixmap";
     public static final String
         DESC_INT_RGB_X11        = "Integer RGB Pixmap";
+
+    public static final String
+        DESC_4BYTE_ABGR_PRE_X11 = "4 byte ABGR Pixmap with pre-multplied alpha";
+    public static final String
+        DESC_INT_ARGB_PRE_X11   = "Integer ARGB Pixmap with pre-multiplied " +
+                                  "alpha";
+
     public static final String
         DESC_BYTE_IND_OPQ_X11   = "Byte Indexed Opaque Pixmap";
 
@@ -131,6 +139,11 @@ public abstract class X11SurfaceData extends SurfaceData {
         SurfaceType.IntBgr.deriveSubType(DESC_INT_BGR_X11);
     public static final SurfaceType IntRgbX11 =
         SurfaceType.IntRgb.deriveSubType(DESC_INT_RGB_X11);
+
+    public static final SurfaceType FourByteAbgrPreX11 =
+        SurfaceType.FourByteAbgrPre.deriveSubType(DESC_4BYTE_ABGR_PRE_X11);
+    public static final SurfaceType IntArgbPreX11 =
+        SurfaceType.IntArgbPre.deriveSubType(DESC_INT_ARGB_PRE_X11);
 
     public static final SurfaceType ThreeByteRgbX11 =
         SurfaceType.ThreeByteRgb.deriveSubType(DESC_3BYTE_RGB_X11);
@@ -240,6 +253,11 @@ public abstract class X11SurfaceData extends SurfaceData {
      */
     public static native boolean isDgaAvailable();
 
+    /**
+     * Returns true if shared memory pixmaps are available
+     */
+    private static native boolean isShmPMAvailable();
+
     public static boolean isAccelerationEnabled() {
         if (accelerationEnabled == null) {
 
@@ -253,8 +271,17 @@ public abstract class X11SurfaceData extends SurfaceData {
                     // true iff prop==true, false otherwise
                     accelerationEnabled = Boolean.valueOf(prop);
                 } else {
-                    // use pixmaps if there is no dga, no matter local or remote
-                    accelerationEnabled = Boolean.valueOf(!isDgaAvailable());
+                    boolean isDisplayLocal = false;
+                    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                    if (ge instanceof SunGraphicsEnvironment) {
+                        isDisplayLocal = ((SunGraphicsEnvironment) ge).isDisplayLocal();
+                     }
+
+                    // EXA based drivers tend to place pixmaps in VRAM, slowing down readbacks.
+                    // Don't use pixmaps if dga is available,
+                    // or we are local and shared memory Pixmaps are not available.
+                    accelerationEnabled =
+                        !(isDgaAvailable() || (isDisplayLocal && !isShmPMAvailable()));
                 }
             }
         }
@@ -361,7 +388,10 @@ public abstract class X11SurfaceData extends SurfaceData {
             // if a GlyphVector overrides the AA setting.
             // We use getRenderLoops() rather than setting solidloops
             // directly so that we get the appropriate loops in XOR mode.
-            sg2d.loops = getRenderLoops(sg2d);
+            if (sg2d.loops == null) {
+                // assert(some pipe will always be a LoopBasedPipe)
+                sg2d.loops = getRenderLoops(sg2d);
+            }
         } else {
             super.validatePipe(sg2d);
         }
@@ -398,7 +428,7 @@ public abstract class X11SurfaceData extends SurfaceData {
                                                   int transparency)
     {
         return new X11PixmapSurfaceData(gc, width, height, image,
-                                        getSurfaceType(gc, transparency),
+                                        getSurfaceType(gc, transparency, true),
                                         cm, drawable, transparency);
     }
 
@@ -483,6 +513,13 @@ public abstract class X11SurfaceData extends SurfaceData {
     public static SurfaceType getSurfaceType(X11GraphicsConfig gc,
                                              int transparency)
     {
+        return getSurfaceType(gc, transparency, false);
+    }
+
+    public static SurfaceType getSurfaceType(X11GraphicsConfig gc,
+                                             int transparency,
+                                             boolean pixmapSurface)
+    {
         boolean transparent = (transparency == Transparency.BITMASK);
         SurfaceType sType;
         ColorModel cm = gc.getColorModel();
@@ -509,12 +546,23 @@ public abstract class X11SurfaceData extends SurfaceData {
             // Fall through for 32 bit case
         case 32:
             if (cm instanceof DirectColorModel) {
-                if (((DirectColorModel)cm).getRedMask() == 0xff0000) {
-                    sType = transparent ? X11SurfaceData.IntRgbX11_BM : X11SurfaceData.IntRgbX11;
+                if (((SunToolkit)java.awt.Toolkit.getDefaultToolkit()
+                     ).isTranslucencyCapable(gc) && !pixmapSurface)
+                {
+                    sType = X11SurfaceData.IntArgbPreX11;
                 } else {
-                    sType = transparent ? X11SurfaceData.IntBgrX11_BM : X11SurfaceData.IntBgrX11;
+                    if (((DirectColorModel)cm).getRedMask() == 0xff0000) {
+                        sType = transparent ? X11SurfaceData.IntRgbX11_BM :
+                                              X11SurfaceData.IntRgbX11;
+                    } else {
+                        sType = transparent ? X11SurfaceData.IntBgrX11_BM :
+                                              X11SurfaceData.IntBgrX11;
+                    }
                 }
+            } else if (cm instanceof ComponentColorModel) {
+                   sType = X11SurfaceData.FourByteAbgrPreX11;
             } else {
+
                 throw new sun.java2d.InvalidPipeException("Unsupported bit " +
                                                           "depth/cm combo: " +
                                                           cm.getPixelSize()  +

@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,22 @@ const UINT MAX_ACP_STR_LEN = 7; // ANSI CP identifiers are no longer than this
 #define MIDDLE_BUTTON 2
 #define RIGHT_BUTTON 4
 #define DBL_CLICK 8
+#define X1_BUTTON 16
+#define X2_BUTTON 32
+
+#ifndef MK_XBUTTON1
+#define MK_XBUTTON1         0x0020
+#endif
+
+#ifndef MK_XBUTTON2
+#define MK_XBUTTON2         0x0040
+#endif
+
+// combination of standard mouse button flags
+const int ALL_MK_BUTTONS = MK_LBUTTON|MK_MBUTTON|MK_RBUTTON;
+const int X_BUTTONS = MK_XBUTTON1|MK_XBUTTON2;
+
+
 
 // Whether to check for embedded frame and adjust location
 #define CHECK_EMBEDDED 0
@@ -61,8 +77,6 @@ const UINT MAX_ACP_STR_LEN = 7; // ANSI CP identifiers are no longer than this
 class AwtPopupMenu;
 
 class AwtDropTarget;
-
-struct WmComponentSetFocusData;
 
 /*
  * Message routing codes
@@ -81,11 +95,6 @@ enum MsgRouting {
 
 class AwtComponent : public AwtObject {
 public:
-    enum {
-        // combination of all mouse button flags
-        ALL_MK_BUTTONS = MK_LBUTTON|MK_MBUTTON|MK_RBUTTON
-    };
-
     /* java.awt.Component fields and method IDs */
     static jfieldID peerID;
     static jfieldID xID;
@@ -112,6 +121,7 @@ public:
     static jmethodID replaceSurfaceDataLaterMID;
 
     static const UINT WmAwtIsComponent;
+    static jint * masks; //InputEvent mask array
     AwtComponent();
     virtual ~AwtComponent();
 
@@ -127,12 +137,13 @@ public:
     virtual void RegisterClass();
     virtual void UnregisterClass();
 
-    void CreateHWnd(JNIEnv *env, LPCWSTR title,
+    virtual void CreateHWnd(JNIEnv *env, LPCWSTR title,
                     DWORD windowStyle, DWORD windowExStyle,
                     int x, int y, int w, int h,
                     HWND hWndParent, HMENU hMenu,
                     COLORREF colorForeground, COLORREF colorBackground,
                     jobject peer);
+    virtual void DestroyHWnd();
     void InitPeerGraphicsConfig(JNIEnv *env, jobject peer);
 
     virtual void Dispose();
@@ -209,17 +220,10 @@ public:
     virtual BOOL IsContainer() { return FALSE;} // Plain components can't
 
     /**
-     * Perform some actions which by default are being performed by Default Window procedure of
-     * this window class
-     * For detailed comments see implementation in awt_Component.cpp
+     * Returns TRUE if this message will trigger native focus change, FALSE otherwise.
      */
-    virtual BOOL ActMouseMessage(MSG * pMsg);
-    /**
-     * Returns TRUE if this message will this component to become focused. Returns FALSE otherwise.
-     */
-    inline BOOL IsFocusingMessage(UINT message) {
-        return message == WM_LBUTTONDOWN || message == WM_LBUTTONUP || message == WM_LBUTTONDBLCLK;
-    }
+    virtual BOOL IsFocusingKeyMessage(MSG *pMsg);
+    virtual BOOL IsFocusingMouseMessage(MSG *pMsg);
 
     BOOL IsFocusable();
 
@@ -361,7 +365,7 @@ public:
     }
 
     void SendKeyEventToFocusOwner(jint id, jlong when, jint raw, jint cooked,
-                                  jint modifiers, jint keyLocation,
+                                  jint modifiers, jint keyLocation, jlong nativeCode,
                                   MSG *msg = NULL);
     /*
      * Allocate and initialize a new java.awt.event.KeyEvent, and
@@ -369,7 +373,7 @@ public:
      * from the target.
      */
     void SendKeyEvent(jint id, jlong when, jint raw, jint cooked,
-                      jint modifiers, jint keyLocation,
+                      jint modifiers, jint keyLocation, jlong nativeCode,
                       MSG *msg = NULL);
 
     /*
@@ -419,13 +423,6 @@ public:
      */
     virtual BOOL InheritsNativeMouseWheelBehavior();
 
-    /* Functions for MouseWheel support on Windows95
-     * These should only be called if running on 95
-     */
-    static void Wheel95Init();
-    INLINE static UINT Wheel95GetMsg() {return sm_95WheelMessage;}
-    static UINT Wheel95GetScrLines();
-
     /* Determines whether the component is obscured by another window */
     // Called on Toolkit thread
     static jboolean _IsObscured(void *param);
@@ -445,6 +442,7 @@ public:
     static UINT GetButtonMK(int mouseButton);
     static UINT WindowsKeyToJavaKey(UINT windowsKey, UINT modifiers);
     static void JavaKeyToWindowsKey(UINT javaKey, UINT *windowsKey, UINT *modifiers, UINT originalWindowsKey);
+    static void UpdateDynPrimaryKeymap(UINT wkey, UINT jkeyLegacy, jint keyLocation, UINT modifiers);
 
     INLINE static void AwtComponent::JavaKeyToWindowsKey(UINT javaKey,
                                        UINT *windowsKey, UINT *modifiers)
@@ -468,6 +466,12 @@ public:
     HIMC ImmGetContext();
     HIMC ImmAssociateContext(HIMC himc);
     HWND GetProxyFocusOwner();
+
+    INLINE HWND GetProxyToplevelContainer() {
+        HWND proxyHWnd = GetProxyFocusOwner();
+        return ::GetAncestor(proxyHWnd, GA_ROOT); // a browser in case of EmbeddedFrame
+    }
+
     void CallProxyDefWindowProc(UINT message,
                                 WPARAM wParam,
                                 LPARAM lParam,
@@ -505,11 +509,6 @@ public:
     virtual MsgRouting WmShowWindow(BOOL show, UINT status);
     virtual MsgRouting WmSetFocus(HWND hWndLost);
     virtual MsgRouting WmKillFocus(HWND hWndGot);
-    jboolean WmComponentSetFocus(WmComponentSetFocusData *data);
-    // Use instead of ::SetFocus to maintain special focusing semantics for
-    // Windows which are not Frames/Dialogs.
-    BOOL AwtSetFocus();
-
     virtual MsgRouting WmCtlColor(HDC hDC, HWND hCtrl,
                                   UINT ctlColor, HBRUSH& retBrush);
     virtual MsgRouting WmHScroll(UINT scrollCode, UINT pos, HWND hScrollBar);
@@ -597,11 +596,7 @@ public:
 
     void UpdateColorModel();
 
-    jintArray CreatePrintedPixels(SIZE &loc, SIZE &size);
-
-    static void * GetNativeFocusOwner();
-    static void * GetNativeFocusedWindow();
-    static void   ClearGlobalFocusOwner();
+    jintArray CreatePrintedPixels(SIZE &loc, SIZE &size, int alpha);
 
     /*
      * HWND, AwtComponent and Java Peer interaction
@@ -661,7 +656,6 @@ public:
     static void _SetForeground(void *param);
     static void _SetBackground(void *param);
     static void _SetFont(void *param);
-    static jboolean _RequestFocus(void *param);
     static void _Start(void *param);
     static void _BeginValidate(void *param);
     static void _EndValidate(void *param);
@@ -671,13 +665,39 @@ public:
     static jintArray _CreatePrintedPixels(void *param);
     static jboolean _NativeHandlesWheelScrolling(void *param);
     static void _SetRectangularShape(void *param);
+    static void _SetZOrder(void *param);
 
     static HWND sm_focusOwner;
+
+private:
     static HWND sm_focusedWindow;
 
-    static BOOL m_isWin95;
-    static BOOL m_isWin2000;
-    static BOOL m_isWinNT;
+public:
+    static inline HWND GetFocusedWindow() { return sm_focusedWindow; }
+    static void SetFocusedWindow(HWND window);
+
+    static void _SetFocus(void *param);
+
+    static void *SetNativeFocusOwner(void *self);
+    static void *GetNativeFocusedWindow();
+    static void *GetNativeFocusOwner();
+
+    static BOOL sm_inSynthesizeFocus;
+
+    // Execute on Toolkit only.
+    INLINE static LRESULT SynthesizeWmSetFocus(HWND targetHWnd, HWND oppositeHWnd) {
+        sm_inSynthesizeFocus = TRUE;
+        LRESULT res = ::SendMessage(targetHWnd, WM_SETFOCUS, (WPARAM)oppositeHWnd, 0);
+        sm_inSynthesizeFocus = FALSE;
+        return res;
+    }
+    // Execute on Toolkit only.
+    INLINE static LRESULT SynthesizeWmKillFocus(HWND targetHWnd, HWND oppositeHWnd) {
+        sm_inSynthesizeFocus = TRUE;
+        LRESULT res = ::SendMessage(targetHWnd, WM_KILLFOCUS, (WPARAM)oppositeHWnd, 0);
+        sm_inSynthesizeFocus = FALSE;
+        return res;
+    }
 
     static BOOL sm_bMenuLoop;
     static INLINE BOOL isMenuLoopActive() {
@@ -702,14 +722,24 @@ protected:
     BOOL     m_visible;         /* copy of Component.visible */
 
     static BOOL sm_suppressFocusAndActivation;
-    static HWND sm_realFocusOpposite;
+    static BOOL sm_restoreFocusAndActivation;
+
+    /*
+     * The function sets the focus-restore flag ON/OFF.
+     * When the flag is ON, focus is restored immidiately after the proxy loses it.
+     * All focus messages are suppressed. It's also assumed that sm_focusedWindow and
+     * sm_focusOwner don't change after the flag is set ON and before it's set OFF.
+     */
+    static INLINE void SetRestoreFocus(BOOL doSet) {
+        sm_suppressFocusAndActivation = doSet;
+        sm_restoreFocusAndActivation = doSet;
+    }
 
     virtual void SetDragCapture(UINT flags);
     virtual void ReleaseDragCapture(UINT flags);
 
-    // 95 support for mouse wheel
-    static UINT sm_95WheelMessage;
-    static UINT sm_95WheelSupport;
+    virtual void FillBackground(HDC hMemoryDC, SIZE &size);
+    virtual void FillAlpha(void *bitmapBits, SIZE &size, BYTE alpha);
 
 private:
     /* A bitmask keeps the button's numbers as MK_LBUTTON, MK_MBUTTON, MK_RBUTTON
@@ -753,6 +783,8 @@ private:
     static BOOL sm_rtl;
     static BOOL sm_rtlReadingOrder;
 
+    static BOOL sm_PrimaryDynamicTableBuilt;
+
     jobject m_InputMethod;
     BOOL    m_useNativeCompWindow;
     LPARAM  m_bitsCandType;
@@ -772,8 +804,6 @@ private:
 
     static BOOL m_QueryNewPaletteCalled;
 
-    BOOL m_skipNextSetFocus;
-
     static AwtComponent* sm_getComponentCache; // a cache for the GetComponent(..) method.
 
     int windowMoveLockPosX;
@@ -782,7 +812,7 @@ private:
     int windowMoveLockPosCY;
 
     // 6524352: support finer-resolution
-    static int sm_wheelRotationAmount;
+    int m_wheelRotationAmount;
 
     /*
      * The association list of children's IDs and corresponding components.
@@ -818,6 +848,7 @@ private:
     AwtComponent* SearchChild(UINT id);
     void RemoveChild(UINT id) ;
     static BOOL IsNavigationKey(UINT wkey);
+    static void BuildPrimaryDynamicTable();
 
     ChildListItem* m_childList;
 
@@ -866,14 +897,6 @@ public:
     DCItem          *RemoveDC(HDC hDC);
     DCItem          *RemoveAllDCs(HWND hWnd);
     void            RealizePalettes(int screen);
-};
-
-struct WmComponentSetFocusData {
-    jobject lightweightChild;
-    jboolean temporary;
-    jboolean focusedWindowChangeAllowed;
-    jlong time;
-    jobject cause;
 };
 
 void ReleaseDCList(HWND hwnd, DCList &list);

@@ -25,8 +25,10 @@
 
 package com.sun.tools.javap;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+
 import com.sun.tools.classfile.AccessFlags;
 
 /*
@@ -77,13 +79,15 @@ public class Options {
     public boolean showLineAndLocalVariableTables;
     public int showAccess;
     public Set<String> accessOptions = new HashSet<String>();
+    public Set<InstructionDetailWriter.Kind> details = EnumSet.noneOf(InstructionDetailWriter.Kind.class);
     public boolean showDisassembled;
     public boolean showInternalSignatures;
     public boolean showAllAttrs;
     public boolean showConstants;
     public boolean sysInfo;
+    public boolean showInnerClasses;
+    public int indentWidth = 2;   // #spaces per indentWidth level
+    public int tabColumn = 40;    // column number for comments
 
     public boolean compat;             // bug-for-bug compatibility mode with old javap
-    public boolean jsr277;
-    public boolean ignoreSymbolFile;   // file manager should ignore ct.sym
 }

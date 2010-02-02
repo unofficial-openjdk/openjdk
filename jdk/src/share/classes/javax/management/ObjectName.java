@@ -27,8 +27,6 @@ package javax.management;
 
 import com.sun.jmx.mbeanserver.GetPropertyAction;
 import com.sun.jmx.mbeanserver.Util;
-import com.sun.jmx.namespace.serial.JMXNamespaceContext;
-
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
@@ -225,17 +223,6 @@ import java.util.Map;
 public class ObjectName implements Comparable<ObjectName>, QueryExp {
 
     /**
-     * The sequence of characters used to separate name spaces in a name space
-     * path.
-     *
-     * @see javax.management.namespace
-     * @since 1.7
-     **/
-    public static final String NAMESPACE_SEPARATOR = "//";
-    private static final int NAMESPACE_SEPARATOR_LENGTH =
-            NAMESPACE_SEPARATOR.length();
-
-    /**
      * A structure recording property structure and
      * proposing minimal services
      */
@@ -264,17 +251,16 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
         /**
          * Returns a key string for receiver key
          */
-        String getKeyString(String name, int offset) {
-            final int start = _key_index+offset;
-            return name.substring(start, start + _key_length);
+        String getKeyString(String name) {
+            return name.substring(_key_index, _key_index + _key_length);
         }
 
         /**
          * Returns a value string for receiver key
          */
-        String getValueString(String name, int offset) {
-            final int in_begin = _key_index + offset + _key_length + 1;
-            final int out_end = in_begin + _value_length;
+        String getValueString(String name) {
+            int in_begin = _key_index + _key_length + 1;
+            int out_end = in_begin + _value_length;
             return name.substring(in_begin, out_end);
         }
     }
@@ -406,45 +392,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * value of at least one key property
      */
     private transient boolean _property_value_pattern = false;
-
-    private ObjectName(String newDomain, ObjectName aname)
-        throws MalformedObjectNameException{
-        copyToOtherDomain(newDomain,aname);
-    }
-
-    private void copyToOtherDomain(String domain, ObjectName aname)
-        throws MalformedObjectNameException {
-
-        // The domain cannot be null
-        if (domain == null)
-            throw new NullPointerException("domain cannot be null");
-
-        // The key property list cannot be null
-        if (aname == null)
-            throw new MalformedObjectNameException(
-                        "key property list cannot be empty");
-
-        // checks domain validity. A side effect of this method is also to
-        // set the _domain_pattern flag.
-        if (!isDomain(domain))
-            throw new MalformedObjectNameException("Invalid domain: " + domain);
-
-        // init canonicalname
-        _domain_length = domain.length();
-
-        _canonicalName = (domain +
-             aname._canonicalName.substring(aname._domain_length)).intern();
-        _kp_array = aname._kp_array;
-        _ca_array = aname._ca_array;
-        _propertyList = aname._propertyList;
-        _property_list_pattern = aname._property_list_pattern;
-        _property_value_pattern = aname._property_value_pattern;
-        // TODO remove this hack
-        // if (toString().endsWith("//javax.management.service:type1=event_client_delegeate_mbean,type2=default")) {
-        //    Thread.currentThread().dumpStack();
-        //    throw new Error("************************ Gotcha!");
-        //}
-    }
 
     // Instance private fields <=======================================
 
@@ -690,12 +637,10 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
 
             // we got the key and value part, prepare a property for this
             if (!value_pattern) {
-                prop = new Property(key_index-_domain_length,
-                                    key_length, value_length);
+                prop = new Property(key_index, key_length, value_length);
             } else {
                 _property_value_pattern = true;
-                prop = new PatternProperty(key_index-_domain_length,
-                                    key_length, value_length);
+                prop = new PatternProperty(key_index, key_length, value_length);
             }
             key_name = name.substring(key_index, key_index + key_length);
 
@@ -780,12 +725,12 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             boolean value_pattern = checkValue(value);
             sb.append(value);
             if (!value_pattern) {
-                prop = new Property(key_index-_domain_length,
+                prop = new Property(key_index,
                                     key.length(),
                                     value.length());
             } else {
                 _property_value_pattern = true;
-                prop = new PatternProperty(key_index-_domain_length,
+                prop = new PatternProperty(key_index,
                                            key.length(),
                                            value.length());
             }
@@ -865,9 +810,9 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
                 prop = _ca_array[i];
                 // length of prop including '=' char
                 prop_len = prop._key_length + prop._value_length + 1;
-                System.arraycopy(specified_chars, prop._key_index+_domain_length,
+                System.arraycopy(specified_chars, prop._key_index,
                                  canonical_chars, prop_index, prop_len);
-                prop.setKeyIndex(prop_index-_domain_length);
+                prop.setKeyIndex(prop_index);
                 prop_index += prop_len;
                 if (i != last_index) {
                     canonical_chars[prop_index] = ',';
@@ -1096,11 +1041,10 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      */
     private boolean isDomain(String domain) {
         if (domain == null) return true;
-        final char[] d=domain.toCharArray();
-        final int len = d.length;
+        final int len = domain.length();
         int next = 0;
         while (next < len) {
-            final char c = d[next++];
+            final char c = domain.charAt(next++);
             switch (c) {
                 case ':' :
                 case '\n' :
@@ -1205,43 +1149,15 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             cn = (String)in.readObject();
         }
 
-        final JMXNamespaceContext ctxt =
-                JMXNamespaceContext.getDeserializationContext();
         try {
-            construct(changeContext(ctxt,cn));
+            construct(cn);
         } catch (NullPointerException e) {
-            throw new InvalidObjectException(e.toString());
-        } catch (IllegalArgumentException e) {
             throw new InvalidObjectException(e.toString());
         } catch (MalformedObjectNameException e) {
             throw new InvalidObjectException(e.toString());
         }
     }
 
-    private String changeContext(JMXNamespaceContext context, String nameString) {
-        final String old = context.prefixToRemove;
-        final String nw  = context.prefixToAdd;
-        final int ol = old.length();
-        if (nameString.startsWith(NAMESPACE_SEPARATOR)) return nameString;
-        if (ol>0) {
-            if (!nameString.startsWith(old) ||
-                    !nameString.startsWith(NAMESPACE_SEPARATOR,ol))
-                throw new IllegalArgumentException(
-                        "Serialized ObjectName does not start with " + old +
-                        ": " + nameString);
-            nameString = nameString.substring(ol+NAMESPACE_SEPARATOR_LENGTH);
-        }
-        if (!nw.equals("")) {
-            nameString = nw + NAMESPACE_SEPARATOR + nameString;
-        }
-        // TODO remove this hack
-        // if (nameString.endsWith("//javax.management.service:type1=event_client_delegeate_mbean,type2=default")) {
-        //    System.err.println("old="+old+", nw="+nw);
-        //    Thread.currentThread().dumpStack();
-        //    throw new Error("************************ Gotcha!");
-        // }
-        return nameString;
-    }
 
     /**
      * Serializes an {@link ObjectName} to an {@link ObjectOutputStream}.
@@ -1304,22 +1220,15 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
     private void writeObject(ObjectOutputStream out)
             throws IOException {
 
-      final JMXNamespaceContext ctxt =
-                JMXNamespaceContext.getSerializationContext();
-
       if (compat)
       {
         // Serializes this instance in the old serial form
         // Read CR 6441274 before making any changes to this code
         ObjectOutputStream.PutField fields = out.putFields();
-        final String domain =
-                changeContext(ctxt,_canonicalName.substring(0, _domain_length));
-        final String cn =
-                changeContext(ctxt,_canonicalName);
-        fields.put("domain", domain);
+        fields.put("domain", _canonicalName.substring(0, _domain_length));
         fields.put("propertyList", getKeyPropertyList());
         fields.put("propertyListString", getKeyPropertyListString());
-        fields.put("canonicalName", cn);
+        fields.put("canonicalName", _canonicalName);
         fields.put("pattern", (_domain_pattern || _property_list_pattern));
         fields.put("propertyPattern", _property_list_pattern);
         out.writeFields();
@@ -1329,8 +1238,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
         // Serializes this instance in the new serial form
         //
         out.defaultWriteObject();
-
-        out.writeObject(changeContext(ctxt,getSerializedNameString()));
+        out.writeObject(getSerializedNameString());
       }
     }
 
@@ -1359,10 +1267,9 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * @exception NullPointerException The <code>name</code> parameter
      * is null.
      *
-     * @see #valueOf(String)
      */
     public static ObjectName getInstance(String name)
-            throws MalformedObjectNameException {
+            throws MalformedObjectNameException, NullPointerException {
         return new ObjectName(name);
     }
 
@@ -1387,7 +1294,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * follow the rules for quoting.
      * @exception NullPointerException One of the parameters is null.
      *
-     * @see #valueOf(String, String, String)
      */
     public static ObjectName getInstance(String domain, String key,
                                          String value)
@@ -1419,7 +1325,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * quoting.
      * @exception NullPointerException One of the parameters is null.
      *
-     * @see #valueOf(String, Hashtable)
      */
     public static ObjectName getInstance(String domain,
                                          Hashtable<String,String> table)
@@ -1459,138 +1364,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
     public static ObjectName getInstance(ObjectName name) {
         if (name.getClass().equals(ObjectName.class))
             return name;
-        return valueOf(name.getSerializedNameString());
-    }
-
-    /**
-     * <p>Return an instance of ObjectName that can be used anywhere
-     * an object obtained with {@link #ObjectName(String) new
-     * ObjectName(name)} can be used.  The returned object may be of
-     * a subclass of ObjectName.  Calling this method twice with the
-     * same parameters may return the same object or two equal but
-     * not identical objects.</p>
-     *
-     * <p>This method is equivalent to {@link #getInstance(String)} except that
-     * it does not throw any checked exceptions.</p>
-     *
-     * @param name  A string representation of the object name.
-     *
-     * @return an ObjectName corresponding to the given String.
-     *
-     * @exception IllegalArgumentException The string passed as a
-     * parameter does not have the right format.  The {@linkplain
-     * Throwable#getCause() cause} of this exception will be a
-     * {@link MalformedObjectNameException}.
-     * @exception NullPointerException The <code>name</code> parameter
-     * is null.
-     *
-     * @since 1.7
-     */
-    public static ObjectName valueOf(String name) {
-        try {
-            return getInstance(name);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-            // Just plain IllegalArgumentException(e) produces an exception
-            // message "javax.management.MalformedObjectNameException: ..."
-            // which is distracting.
-        }
-    }
-
-    /**
-     * <p>Return an instance of ObjectName that can be used anywhere
-     * an object obtained with {@link #ObjectName(String, String,
-     * String) new ObjectName(domain, key, value)} can be used.  The
-     * returned object may be of a subclass of ObjectName.  Calling
-     * this method twice with the same parameters may return the same
-     * object or two equal but not identical objects.</p>
-     *
-     * <p>This method is equivalent to {@link #getInstance(String, String,
-     * String)} except that it does not throw any checked exceptions.</p>
-     *
-     * @param domain  The domain part of the object name.
-     * @param key  The attribute in the key property of the object name.
-     * @param value The value in the key property of the object name.
-     *
-     * @return an ObjectName corresponding to the given domain,
-     * key, and value.
-     *
-     * @exception IllegalArgumentException The
-     * <code>domain</code>, <code>key</code>, or <code>value</code>
-     * contains an illegal character, or <code>value</code> does not
-     * follow the rules for quoting.  The {@linkplain
-     * Throwable#getCause() cause} of this exception will be a
-     * {@link MalformedObjectNameException}.
-     * @exception NullPointerException One of the parameters is null.
-     *
-     * @since 1.7
-     */
-    public static ObjectName valueOf(String domain, String key, String value) {
-        try {
-            return getInstance(domain, key, value);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * <p>Return an instance of ObjectName that can be used anywhere
-     * an object obtained with {@link #ObjectName(String, Hashtable)
-     * new ObjectName(domain, table)} can be used.  The returned
-     * object may be of a subclass of ObjectName.  Calling this method
-     * twice with the same parameters may return the same object or
-     * two equal but not identical objects.</p>
-     *
-     * <p>This method is equivalent to {@link #getInstance(String, Hashtable)}
-     * except that it does not throw any checked exceptions.</p>
-     *
-     * @param domain  The domain part of the object name.
-     * @param table A hash table containing one or more key
-     * properties.  The key of each entry in the table is the key of a
-     * key property in the object name.  The associated value in the
-     * table is the associated value in the object name.
-     *
-     * @return an ObjectName corresponding to the given domain and
-     * key mappings.
-     *
-     * @exception IllegalArgumentException The <code>domain</code>
-     * contains an illegal character, or one of the keys or values in
-     * <code>table</code> contains an illegal character, or one of the
-     * values in <code>table</code> does not follow the rules for
-     * quoting.  The {@linkplain Throwable#getCause() cause} of this exception
-     * will be a {@link MalformedObjectNameException}.
-     * @exception NullPointerException One of the parameters is null.
-     *
-     * @since 1.7
-     */
-    public static ObjectName valueOf(String domain,
-                                     Hashtable<String,String> table) {
-        try {
-            return new ObjectName(domain, table);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Returns an {@code ObjectName} that is the same as this one but
-     * with the specified domain.
-     * This method preserves the original key order in the new instance.
-     * If the provided name has a key property pattern, it will also be
-     * preserved in the returned instance.
-     *
-     * @param newDomain The new domain for the returned instance;
-     *        must not be null.
-     * @return A new {@code ObjectName} that is the same as {@code this}
-     *         except the domain is {@code newDomain}.
-     * @throws NullPointerException if {@code newDomain} is null.
-     * @throws MalformedObjectNameException if the new domain is syntactically
-     *         illegal.
-     * @since 1.7
-     **/
-    public final ObjectName withDomain(String newDomain)
-            throws MalformedObjectNameException {
-        return new ObjectName(newDomain, this);
+        return Util.newObjectName(name.getSerializedNameString());
     }
 
     /**
@@ -1602,8 +1376,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * parameter does not have the right format.
      * @exception NullPointerException The <code>name</code> parameter
      * is null.
-     *
-     * @see #valueOf(String)
      */
     public ObjectName(String name)
         throws MalformedObjectNameException {
@@ -1622,8 +1394,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * contains an illegal character, or <code>value</code> does not
      * follow the rules for quoting.
      * @exception NullPointerException One of the parameters is null.
-     *
-     * @see #valueOf(String, String, String)
      */
     public ObjectName(String domain, String key, String value)
         throws MalformedObjectNameException {
@@ -1649,8 +1419,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      * values in <code>table</code> does not follow the rules for
      * quoting.
      * @exception NullPointerException One of the parameters is null.
-     *
-     * @see #valueOf(String, Hashtable)
      */
     public ObjectName(String domain, Hashtable<String,String> table)
             throws MalformedObjectNameException {
@@ -1752,7 +1520,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             throw new NullPointerException("key property can't be null");
         for (int i = 0; i < _ca_array.length; i++) {
             Property prop = _ca_array[i];
-            String key = prop.getKeyString(_canonicalName,_domain_length);
+            String key = prop.getKeyString(_canonicalName);
             if (key.equals(property))
                 return (prop instanceof PatternProperty);
         }
@@ -1832,10 +1600,8 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
                 Property prop;
                 for (int i = len - 1; i >= 0; i--) {
                     prop = _ca_array[i];
-                    _propertyList.put(prop.getKeyString(_canonicalName,
-                                            _domain_length),
-                                      prop.getValueString(_canonicalName,
-                                            _domain_length));
+                    _propertyList.put(prop.getKeyString(_canonicalName),
+                                      prop.getValueString(_canonicalName));
                 }
             }
         }
@@ -1920,8 +1686,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             }
         }
 
-        final String name = new String(dest_chars);
-        return name;
+        return new String(dest_chars);
     }
 
     /**
@@ -1947,7 +1712,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
         for (int i = 0; i < len; i++) {
             final Property prop = _kp_array[i];
             final int prop_len = prop._key_length + prop._value_length + 1;
-            System.arraycopy(value, prop._key_index+_domain_length, dest_chars, index,
+            System.arraycopy(value, prop._key_index, dest_chars, index,
                              prop_len);
             index += prop_len;
             if (i < last ) dest_chars[index++] = ',';
@@ -1990,10 +1755,6 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
     @Override
     public String toString()  {
         return getSerializedNameString();
-    }
-
-    String toQueryString() {
-        return "like " + Query.value(toString());
     }
 
     /**
@@ -2156,7 +1917,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      *
      * @since 1.6
      */
-    public static final ObjectName WILDCARD = valueOf("*:*");
+    public static final ObjectName WILDCARD = Util.newObjectName("*:*");
 
     // Category : Utilities <===================================
 
@@ -2202,7 +1963,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             // wildmatch domains
             // This ObjectName is the pattern
             // The other ObjectName is the string.
-            return Util.wildpathmatch(name.getDomain(),getDomain());
+            return Util.wildmatch(name.getDomain(),getDomain());
         }
         return getDomain().equals(name.getDomain());
     }
@@ -2228,7 +1989,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
                 // index in receiver
                 //
                 final Property p = props[i];
-                final String   k = p.getKeyString(cn,_domain_length);
+                final String   k = p.getKeyString(cn);
                 final String   v = nameProps.get(k);
                 // Did we find a value for this key ?
                 //
@@ -2238,12 +1999,12 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
                 if (_property_value_pattern && (p instanceof PatternProperty)) {
                     // wildmatch key property values
                     // p is the property pattern, v is the string
-                    if (Util.wildmatch(v,p.getValueString(cn,_domain_length)))
+                    if (Util.wildmatch(v,p.getValueString(cn)))
                         continue;
                     else
                         return false;
                 }
-                if (v.equals(p.getValueString(cn,_domain_length))) continue;
+                if (v.equals(p.getValueString(cn))) continue;
                 return false;
             }
             return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -181,7 +181,7 @@ int Block::is_Empty() const {
 }
 
 //------------------------------has_uncommon_code------------------------------
-// Return true if the block's code implies that it is not likely to be
+// Return true if the block's code implies that it is likely to be
 // executed infrequently.  Check to see if the block ends in a Halt or
 // a low probability call.
 bool Block::has_uncommon_code() const {
@@ -356,6 +356,9 @@ PhaseCFG::PhaseCFG( Arena *a, RootNode *r, Matcher &m ) :
   _root(r)
 #ifndef PRODUCT
   , _trace_opto_pipelining(TraceOptoPipelining || C->method_has_option("TraceOptoPipelining"))
+#endif
+#ifdef ASSERT
+  , _raw_oops(a)
 #endif
 {
   ResourceMark rm;
@@ -880,6 +883,7 @@ void PhaseCFG::dump_headers() {
 }
 
 void PhaseCFG::verify( ) const {
+#ifdef ASSERT
   // Verify sane CFG
   for( uint i = 0; i < _num_blocks; i++ ) {
     Block *b = _blocks[i];
@@ -894,10 +898,33 @@ void PhaseCFG::verify( ) const {
                 "CreateEx must be first instruction in block" );
       }
       for( uint k = 0; k < n->req(); k++ ) {
-        Node *use = n->in(k);
-        if( use && use != n ) {
-          assert( _bbs[use->_idx] || use->is_Con(),
+        Node *def = n->in(k);
+        if( def && def != n ) {
+          assert( _bbs[def->_idx] || def->is_Con(),
                   "must have block; constants for debug info ok" );
+          // Verify that instructions in the block is in correct order.
+          // Uses must follow their definition if they are at the same block.
+          // Mostly done to check that MachSpillCopy nodes are placed correctly
+          // when CreateEx node is moved in build_ifg_physical().
+          if( _bbs[def->_idx] == b &&
+              !(b->head()->is_Loop() && n->is_Phi()) &&
+              // See (+++) comment in reg_split.cpp
+              !(n->jvms() != NULL && n->jvms()->is_monitor_use(k)) ) {
+            bool is_loop = false;
+            if (n->is_Phi()) {
+              for( uint l = 1; l < def->req(); l++ ) {
+                if (n == def->in(l)) {
+                  is_loop = true;
+                  break; // Some kind of loop
+                }
+              }
+            }
+            assert( is_loop || b->find_node(def) < j, "uses must follow definitions" );
+          }
+          if( def->is_SafePointScalarObject() ) {
+            assert(_bbs[def->_idx] == b, "SafePointScalarObject Node should be at the same block as its SafePoint node");
+            assert(_bbs[def->_idx] == _bbs[def->in(0)->_idx], "SafePointScalarObject Node should be at the same block as its control edge");
+          }
         }
       }
     }
@@ -914,6 +941,7 @@ void PhaseCFG::verify( ) const {
       assert( b->_num_succs == 2, "Conditional branch must have two targets");
     }
   }
+#endif
 }
 #endif
 
@@ -1295,7 +1323,7 @@ void PhaseBlockLayout::merge_traces(bool fall_thru_only)
       }
     } else if (e->state() == CFGEdge::open) {
       // Append traces, even without a fall-thru connection.
-      // But leave root entry at the begining of the block list.
+      // But leave root entry at the beginning of the block list.
       if (targ_trace != trace(_cfg._broot)) {
         e->set_state(CFGEdge::connected);
         src_trace->append(targ_trace);
@@ -1418,7 +1446,7 @@ bool Trace::backedge(CFGEdge *e) {
     }
 
     // Backbranch to the top of a trace
-    // Scroll foward through the trace from the targ_block. If we find
+    // Scroll forward through the trace from the targ_block. If we find
     // a loop head before another loop top, use the the loop head alignment.
     for (Block *b = targ_block; b != NULL; b = next(b)) {
       if (b->has_loop_alignment()) {

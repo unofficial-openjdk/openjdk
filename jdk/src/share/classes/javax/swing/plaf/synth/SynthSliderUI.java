@@ -38,20 +38,34 @@ import java.util.Enumeration;
 import javax.swing.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.BasicSliderUI;
-import sun.swing.plaf.synth.SynthUI;
 import sun.swing.SwingUtilities2;
 
 
 /**
- * Synth's SliderUI.
+ * Provides the Synth L&F UI delegate for
+ * {@link javax.swing.JSlider}.
  *
  * @author Joshua Outwater
+ * @since 1.7
  */
-class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
-        SynthUI {
-    protected Dimension contentDim = new Dimension();
-    protected Rectangle valueRect = new Rectangle();
-    protected boolean paintValue;
+public class SynthSliderUI extends BasicSliderUI
+                           implements PropertyChangeListener, SynthUI {
+    private Rectangle valueRect = new Rectangle();
+    private boolean paintValue;
+
+    /**
+     * When a JSlider is used as a renderer in a JTable, its layout is not
+     * being recomputed even though the size is changing. Even though there
+     * is a ComponentListener installed, it is not being notified. As such,
+     * at times when being asked to paint the layout should first be redone.
+     * At the end of the layout method we set this lastSize variable, which
+     * represents the size of the slider the last time it was layed out.
+     *
+     * In the paint method we then check to see that this is accurate, that
+     * the slider has not changed sizes since being last layed out. If necessary
+     * we recompute the layout.
+     */
+    private Dimension lastSize = null;
 
     private int trackHeight;
     private int trackBorder;
@@ -63,23 +77,38 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
     private SynthStyle sliderThumbStyle;
 
     /** Used to determine the color to paint the thumb. */
-    private transient boolean thumbActive;
+    private transient boolean thumbActive; //happens on rollover, and when pressed
+    private transient boolean thumbPressed; //happens when mouse was depressed while over thumb
 
     ///////////////////////////////////////////////////
     // ComponentUI Interface Implementation methods
     ///////////////////////////////////////////////////
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
     public static ComponentUI createUI(JComponent c) {
         return new SynthSliderUI((JSlider)c);
     }
 
-    public SynthSliderUI(JSlider c) {
+    protected SynthSliderUI(JSlider c) {
         super(c);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installDefaults(JSlider slider) {
         updateStyle(slider);
     }
 
+    /**
+     * Uninstalls default setting. This method is called when a
+     * {@code LookAndFeel} is uninstalled.
+     */
     protected void uninstallDefaults() {
         SynthContext context = getContext(slider, ENABLED);
         style.uninstallDefaults(context);
@@ -97,11 +126,19 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         sliderThumbStyle = null;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void installListeners(JSlider slider) {
         super.installListeners(slider);
         slider.addPropertyChangeListener(this);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void uninstallListeners(JSlider slider) {
         slider.removePropertyChangeListener(this);
         super.uninstallListeners(slider);
@@ -118,6 +155,24 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
 
             thumbHeight =
                 style.getInt(context, "Slider.thumbHeight", 14);
+
+            // handle scaling for sizeVarients for special case components. The
+            // key "JComponent.sizeVariant" scales for large/small/mini
+            // components are based on Apples LAF
+            String scaleKey = (String)slider.getClientProperty(
+                    "JComponent.sizeVariant");
+            if (scaleKey != null){
+                if ("large".equals(scaleKey)){
+                    thumbWidth *= 1.15;
+                    thumbHeight *= 1.15;
+                } else if ("small".equals(scaleKey)){
+                    thumbWidth *= 0.857;
+                    thumbHeight *= 0.857;
+                } else if ("mini".equals(scaleKey)){
+                    thumbWidth *= 0.784;
+                    thumbHeight *= 0.784;
+                }
+            }
 
             trackBorder =
                 style.getInt(context, "Slider.trackBorder", 1);
@@ -144,12 +199,21 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected TrackListener createTrackListener(JSlider s) {
         return new SynthTrackListener();
     }
 
     private void updateThumbState(int x, int y) {
         setThumbActive(thumbRect.contains(x, y));
+    }
+
+    private void updateThumbState(int x, int y, boolean pressed) {
+        updateThumbState(x, y);
+        setThumbPressed(pressed);
     }
 
     private void setThumbActive(boolean active) {
@@ -159,6 +223,17 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         }
     }
 
+    private void setThumbPressed(boolean pressed) {
+        if (thumbPressed != pressed) {
+            thumbPressed = pressed;
+            slider.repaint(thumbRect);
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
     public int getBaseline(JComponent c, int width, int height) {
         if (c == null) {
             throw new NullPointerException("Component must be non-null");
@@ -226,9 +301,13 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return -1;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public Dimension getPreferredSize(JComponent c)  {
         recalculateIfInsetsChanged();
-        Dimension d = new Dimension(contentDim);
+        Dimension d = new Dimension(contentRect.width, contentRect.height);
         if (slider.getOrientation() == JSlider.VERTICAL) {
             d.height = 200;
         } else {
@@ -240,9 +319,13 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return d;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public Dimension getMinimumSize(JComponent c) {
         recalculateIfInsetsChanged();
-        Dimension d = new Dimension(contentDim);
+        Dimension d = new Dimension(contentRect.width, contentRect.height);
         if (slider.getOrientation() == JSlider.VERTICAL) {
             d.height = thumbRect.height + insetCache.top + insetCache.bottom;
         } else {
@@ -251,11 +334,18 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return d;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void calculateGeometry() {
         layout();
         calculateThumbLocation();
     }
 
+    /**
+     * Lays out the slider.
+     */
     protected void layout() {
         SynthContext context = getContext(slider);
         SynthGraphicsUtils synthGraphics = style.getGraphicsUtils(context);
@@ -291,10 +381,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
                 labelRect.height = getHeightOfTallestLabel();
             }
 
-            contentDim.height = valueRect.height + trackRect.height
+            contentRect.height = valueRect.height + trackRect.height
                 + trackInsets.top + trackInsets.bottom
                 + tickRect.height + labelRect.height + 4;
-            contentDim.width = slider.getWidth() - insetCache.left
+            contentRect.width = slider.getWidth() - insetCache.left
                 - insetCache.right;
 
             // Check if any of the labels will paint out of bounds.
@@ -303,7 +393,7 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
                 // Calculate the track rectangle.  It is necessary for
                 // xPositionForValue to return correct values.
                 trackRect.x = insetCache.left;
-                trackRect.width = contentDim.width;
+                trackRect.width = contentRect.width;
 
                 Dictionary dictionary = slider.getLabelTable();
                 if (dictionary != null) {
@@ -336,9 +426,9 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
             valueRect.x = trackRect.x = tickRect.x = labelRect.x =
                 (insetCache.left + pad);
             valueRect.width = trackRect.width = tickRect.width =
-                labelRect.width = (contentDim.width - (pad * 2));
+                labelRect.width = (contentRect.width - (pad * 2));
 
-            int centerY = slider.getHeight() / 2 - contentDim.height / 2;
+            int centerY = slider.getHeight() / 2 - contentRect.height / 2;
 
             valueRect.y = centerY;
             centerY += valueRect.height + 2;
@@ -385,18 +475,18 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
             int w1 = trackInsets.left + trackRect.width / 2;
             int w2 = trackRect.width / 2 + trackInsets.right +
                               tickRect.width + labelRect.width;
-            contentDim.width = Math.max(w1, l) + Math.max(w2, l) +
+            contentRect.width = Math.max(w1, l) + Math.max(w2, l) +
                     2 + insetCache.left + insetCache.right;
-            contentDim.height = slider.getHeight() -
+            contentRect.height = slider.getHeight() -
                                     insetCache.top - insetCache.bottom;
 
             // Layout the components.
             trackRect.y = tickRect.y = labelRect.y =
                 valueRect.y + valueRect.height;
             trackRect.height = tickRect.height = labelRect.height =
-                contentDim.height - valueRect.height;
+                contentRect.height - valueRect.height;
 
-            int startX = slider.getWidth() / 2 - contentDim.width / 2;
+            int startX = slider.getWidth() / 2 - contentRect.width / 2;
             if (SynthLookAndFeel.isLeftToRight(slider)) {
                 if (l > w1) {
                     startX += (l - w1);
@@ -418,6 +508,7 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
             }
         }
         context.dispose();
+        lastSize = slider.getSize();
     }
 
     /**
@@ -445,6 +536,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return pad;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void calculateThumbLocation() {
         super.calculateThumbLocation();
         if (slider.getOrientation() == JSlider.HORIZONTAL) {
@@ -458,6 +553,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
        }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void calculateTickRect() {
         if (slider.getOrientation() == JSlider.HORIZONTAL) {
             tickRect.x = trackRect.x;
@@ -487,6 +586,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void setThumbLocation(int x, int y) {
         super.setThumbLocation(x, y);
         // Value rect is tied to the thumb location.  We need to repaint when
@@ -496,6 +599,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         setThumbActive(false);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected int xPositionForValue(int value) {
         int min = slider.getMinimum();
         int max = slider.getMaximum();
@@ -521,6 +628,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return xPosition;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected int yPositionForValue(int value, int trackY, int trackHeight) {
         int min = slider.getMinimum();
         int max = slider.getMaximum();
@@ -547,10 +658,9 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
     }
 
     /**
-     * Returns a value give a y position.  If yPos is past the track at the
-     * top or the bottom it will set the value to the min or max of the
-     * slider, depending if the slider is inverted or not.
+     * @inheritDoc
      */
+    @Override
     public int valueForYPosition(int yPos) {
         int value;
         int minValue = slider.getMinimum();
@@ -577,10 +687,9 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
     }
 
     /**
-     * Returns a value give an x position.  If xPos is past the track at the
-     * left or the right it will set the value to the min or max of the
-     * slider, depending if the slider is inverted or not.
+     * @inheritDoc
      */
+    @Override
     public int valueForXPosition(int xPos) {
         int value;
         int minValue = slider.getMinimum();
@@ -606,6 +715,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return value;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected Dimension getThumbSize() {
         Dimension size = new Dimension();
 
@@ -619,6 +732,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return size;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     protected void recalculateIfInsetsChanged() {
         SynthContext context = getContext(slider);
         Insets newInsets = style.getInsets(context, null);
@@ -632,20 +749,20 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         context.dispose();
     }
 
-    public Region getRegion(JComponent c) {
-        return SynthLookAndFeel.getRegion(c);
-    }
-
+    /**
+     * @inheritDoc
+     */
+    @Override
     public SynthContext getContext(JComponent c) {
-        return getContext(c, getComponentState(c));
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
     }
 
-    public SynthContext getContext(JComponent c, int state) {
+    private SynthContext getContext(JComponent c, int state) {
         return SynthContext.getContext(SynthContext.class, c,
                             SynthLookAndFeel.getRegion(c), style, state);
     }
 
-    public SynthContext getContext(JComponent c, Region subregion) {
+    private SynthContext getContext(JComponent c, Region subregion) {
         return getContext(c, subregion, getComponentState(c, subregion));
     }
 
@@ -661,17 +778,19 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         return SynthContext.getContext(klass, c, subregion, style, state);
     }
 
-    public int getComponentState(JComponent c) {
-        return SynthLookAndFeel.getComponentState(c);
-    }
-
     private int getComponentState(JComponent c, Region region) {
         if (region == Region.SLIDER_THUMB && thumbActive &&c.isEnabled()) {
-            return MOUSE_OVER;
+            int state = thumbPressed ? PRESSED : MOUSE_OVER;
+            if (c.isFocusOwner()) state |= FOCUSED;
+            return state;
         }
         return SynthLookAndFeel.getComponentState(c);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
         SynthLookAndFeel.update(context, g);
@@ -682,16 +801,30 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         context.dispose();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
         paint(context, g);
         context.dispose();
     }
 
-    public void paint(SynthContext context, Graphics g) {
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     */
+    protected void paint(SynthContext context, Graphics g) {
         recalculateIfInsetsChanged();
         recalculateIfOrientationChanged();
         Rectangle clip = g.getClipBounds();
+
+        if (lastSize == null || !lastSize.equals(slider.getSize())) {
+            calculateGeometry();
+        }
 
         if (paintValue) {
             FontMetrics fm = SwingUtilities2.getFontMetrics(slider, g);
@@ -703,8 +836,8 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
             // For horizontal sliders, make sure value is not painted
             // outside slider bounds.
             if (slider.getOrientation() == JSlider.HORIZONTAL) {
-                if (valueRect.x + labelWidth > insetCache.left + contentDim.width) {
-                    valueRect.x =  (insetCache.left + contentDim.width) - labelWidth;
+                if (valueRect.x + labelWidth > insetCache.left + contentRect.width) {
+                    valueRect.x =  (insetCache.left + contentRect.width) - labelWidth;
                 }
                 valueRect.x = Math.max(valueRect.x, 0);
             }
@@ -733,13 +866,24 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
         }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         context.getPainter().paintSliderBorder(context, g, x, y, w, h,
                                                slider.getOrientation());
     }
 
-    public void paintThumb(SynthContext context, Graphics g,
+    /**
+     * Paints the slider thumb.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param thumbBounds bounding box for the thumb
+     */
+    protected void paintThumb(SynthContext context, Graphics g,
             Rectangle thumbBounds)  {
         int orientation = slider.getOrientation();
         SynthLookAndFeel.updateSubregion(context, g, thumbBounds);
@@ -751,7 +895,14 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
                              thumbBounds.height, orientation);
     }
 
-    public void paintTrack(SynthContext context, Graphics g,
+    /**
+     * Paints the slider track.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param trackBounds bounding box for the track
+     */
+    protected void paintTrack(SynthContext context, Graphics g,
             Rectangle trackBounds) {
         int orientation = slider.getOrientation();
         SynthLookAndFeel.updateSubregion(context, g, trackBounds);
@@ -763,6 +914,10 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
                 trackBounds.height, orientation);
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         if (SynthLookAndFeel.shouldUpdateStyle(e)) {
             updateStyle((JSlider)e.getSource());
@@ -775,18 +930,23 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
     /**
      * Track mouse movements.
      */
-    protected class SynthTrackListener extends TrackListener {
+    private class SynthTrackListener extends TrackListener {
 
-        public void mouseExited(MouseEvent e) {
+        @Override public void mouseExited(MouseEvent e) {
             setThumbActive(false);
         }
 
-        public void mouseReleased(MouseEvent e) {
-            super.mouseReleased(e);
-            updateThumbState(e.getX(), e.getY());
+        @Override public void mousePressed(MouseEvent e) {
+            super.mousePressed(e);
+            setThumbPressed(thumbRect.contains(e.getX(), e.getY()));
         }
 
-        public void mouseDragged(MouseEvent e) {
+        @Override public void mouseReleased(MouseEvent e) {
+            super.mouseReleased(e);
+            updateThumbState(e.getX(), e.getY(), false);
+        }
+
+        @Override public void mouseDragged(MouseEvent e) {
             int thumbMiddle;
 
             if (!slider.isEnabled()) {
@@ -814,6 +974,7 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
 
                 if (drawInverted()) {
                     trackBottom = vMax;
+                    trackTop = trackTop + halfThumbHeight;
                 } else {
                     trackTop = vMax;
                 }
@@ -856,7 +1017,7 @@ class SynthSliderUI extends BasicSliderUI implements PropertyChangeListener,
             }
         }
 
-        public void mouseMoved(MouseEvent e) {
+        @Override public void mouseMoved(MouseEvent e) {
             updateThumbState(e.getX(), e.getY());
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -715,7 +715,7 @@ public class JFileChooser extends JComponent implements Accessible {
      * <ul>
      * <li>JFileChooser.CANCEL_OPTION
      * <li>JFileChooser.APPROVE_OPTION
-     * <li>JFileCHooser.ERROR_OPTION if an error occurs or the
+     * <li>JFileChooser.ERROR_OPTION if an error occurs or the
      *                  dialog is dismissed
      * </ul>
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
@@ -724,6 +724,11 @@ public class JFileChooser extends JComponent implements Accessible {
      */
     public int showDialog(Component parent, String approveButtonText)
         throws HeadlessException {
+        if (dialog != null) {
+            // Prevent to show second instance of dialog if the previous one still exists
+            return JFileChooser.ERROR_OPTION;
+        }
+
         if(approveButtonText != null) {
             setApproveButtonText(approveButtonText);
             setDialogType(CUSTOM_DIALOG);
@@ -739,6 +744,11 @@ public class JFileChooser extends JComponent implements Accessible {
 
         dialog.show();
         firePropertyChange("JFileChooserDialogIsClosingProperty", dialog, null);
+
+        // Remove all components from dialog. The MetalFileChooserUI.installUI() method (and other LAFs)
+        // registers AWT listener for dialogs and produces memory leaks. It happens when
+        // installUI invoked after the showDialog method.
+        dialog.getContentPane().removeAll();
         dialog.dispose();
         dialog = null;
         return returnValue;

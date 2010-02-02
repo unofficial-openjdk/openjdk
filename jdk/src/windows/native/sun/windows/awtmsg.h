@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -182,18 +182,6 @@ extern const UINT SYSCOMMAND_IMM;
 #endif //AW_BLEND
 
 
-
-
-// WM_MOUSEWHEEL should be WM_MOUSELAST, but
-// is not being defined.  See winuser.h
-#ifdef WM_MOUSELAST
-#if WM_MOUSELAST <= 0x020A
-#define WM_AWT_MOUSELAST                0x020A
-#else
-#error Unexpected value of WM_MOUSELAST
-#endif //WM_MOUSELAST <= 0x0209
-#endif //WM_MOUSELAST
-
 // AwtComponent messages
 enum {
     // 6427323: unfortunately WM_APP+nnn conflicts with edit control messages
@@ -206,6 +194,7 @@ enum {
     WM_AWT_COMPONENT_SHOW,
     WM_AWT_COMPONENT_HIDE,
     WM_AWT_COMPONENT_SETFOCUS,
+    WM_AWT_WINDOW_SETACTIVE,
     WM_AWT_LIST_SETMULTISELECT,
     WM_AWT_HANDLE_EVENT,
     WM_AWT_PRINT_COMPONENT,
@@ -219,6 +208,8 @@ enum {
     WM_AWT_CREATECONTEXT,
     WM_AWT_DESTROYCONTEXT,
     WM_AWT_ASSOCIATECONTEXT,
+    WM_AWT_GET_DEFAULT_IME_HANDLER,
+    WM_AWT_HANDLE_NATIVE_IME_EVENT,
     WM_AWT_PRE_KEYDOWN,
     WM_AWT_PRE_KEYUP,
     WM_AWT_PRE_SYSKEYDOWN,

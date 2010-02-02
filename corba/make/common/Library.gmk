@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -158,9 +158,9 @@ ifndef LOCAL_RESOURCE_FILE
 endif
 	@$(ECHO) Created $@ 
 
-RC_FLAGS += /D "J2SE_FNAME=$(LIBRARY).dll" \
-            /D "J2SE_INTERNAL_NAME=$(LIBRARY)" \
-            /D "J2SE_FTYPE=0x2L"
+RC_FLAGS += /D "JDK_FNAME=$(LIBRARY).dll" \
+            /D "JDK_INTERNAL_NAME=$(LIBRARY)" \
+            /D "JDK_FTYPE=0x2L"
 
 $(OBJDIR)/$(LIBRARY).res: $(VERSIONINFO_RESOURCE)
 ifndef LOCAL_RESOURCE_FILE

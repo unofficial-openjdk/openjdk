@@ -44,6 +44,7 @@ rwkey=XX
 
 case $type in
   char)  fulltype=character;;
+  int)   fulltype=integer;;
   *)     fulltype=$type;;
 esac
 
@@ -52,6 +53,11 @@ case $type in
   char | short)   LBPV=1;;
   int | float)    LBPV=2;;
   long | double)  LBPV=3;;
+esac
+
+case $type in 
+  float|double) floatingPointOrIntegralType=floatingPointType;;
+  *)            floatingPointOrIntegralType=integralType;;
 esac
 
 typesAndBits() {
@@ -101,6 +107,7 @@ set -e
 
 $SPP <$SRC >$DST \
   -K$type \
+  -K$floatingPointOrIntegralType \
   -Dtype=$type \
   -DType=$Type \
   -Dfulltype=$fulltype \
@@ -154,7 +161,7 @@ if [ $BIN ]; then
   mv $DST $DST.tmp
   sed -e '/#BIN/,$d' <$DST.tmp >$DST
   rm -f $DST.tmp
-  binops=`dirname $SRC`/`basename $SRC .java`-bin.java
+  binops=`dirname $SRC`/`basename $SRC .java.template`-bin.java.template
   genBinOps char character 1 two one $binops >>$DST
   genBinOps short short 1 two one $binops >>$DST
   genBinOps int integer 2 four three $binops >>$DST

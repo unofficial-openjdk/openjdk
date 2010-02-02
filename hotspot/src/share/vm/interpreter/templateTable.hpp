@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -261,6 +261,7 @@ class TemplateTable: AllStatic {
   static void invokespecial(int byte_no);
   static void invokestatic(int byte_no);
   static void invokeinterface(int byte_no);
+  static void invokedynamic(int byte_no);
   static void fast_invokevfinal(int byte_no);
 
   static void getfield_or_static(int byte_no, bool is_static);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,8 @@ void InvocationCounter::set_carry() {
   // executed many more times before re-entering the VM.
   int old_count = count();
   int new_count = MIN2(old_count, (int) (CompileThreshold / 2));
+  // prevent from going to zero, to distinguish from never-executed methods
+  if (new_count == 0)  new_count = 1;
   if (old_count != new_count)  set(state(), new_count);
 }
 

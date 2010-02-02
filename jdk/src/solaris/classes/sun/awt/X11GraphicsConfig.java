@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,10 @@ import java.awt.ImageCapabilities;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.color.ColorSpace;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.DirectColorModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.VolatileImage;
 import java.awt.image.WritableRaster;
 import java.awt.geom.AffineTransform;
@@ -228,6 +231,22 @@ public class X11GraphicsConfig extends GraphicsConfiguration
         default:
             return null;
         }
+    }
+
+    public static DirectColorModel createDCM32(int rMask, int gMask, int bMask,
+                                               int aMask, boolean aPre) {
+        return new DirectColorModel(
+            ColorSpace.getInstance(ColorSpace.CS_sRGB),
+            32, rMask, gMask, bMask, aMask, aPre, DataBuffer.TYPE_INT);
+    }
+
+    public static ComponentColorModel createABGRCCM() {
+        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        int[] nBits = {8, 8, 8, 8};
+        int[] bOffs = {3, 2, 1, 0};
+        return new ComponentColorModel(cs, nBits, true, true,
+                                       Transparency.TRANSLUCENT,
+                                       DataBuffer.TYPE_BYTE);
     }
 
     /**
@@ -450,4 +469,11 @@ public class X11GraphicsConfig extends GraphicsConfiguration
             return 0x00; // UNDEFINED
         }
     }
+
+    @Override
+    public boolean isTranslucencyCapable() {
+        return isTranslucencyCapable(getAData());
+    }
+
+    private native boolean isTranslucencyCapable(long x11ConfigData);
 }

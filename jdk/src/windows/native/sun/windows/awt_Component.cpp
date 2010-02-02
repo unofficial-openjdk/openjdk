@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,14 @@
  * have any questions.
  */
 
-#include "windows.h"
+#include "awt.h"
+
 #include <windowsx.h>
 #include <zmouse.h>
 
 #include "jlong.h"
 #include "awt_AWTEvent.h"
+#include "awt_BitmapUtil.h"
 #include "awt_Component.h"
 #include "awt_Cursor.h"
 #include "awt_Dimension.h"
@@ -37,12 +39,10 @@
 #include "awt_InputTextInfor.h"
 #include "awt_Insets.h"
 #include "awt_KeyEvent.h"
-#include "awt_KeyboardFocusManager.h"
 #include "awt_MenuItem.h"
 #include "awt_MouseEvent.h"
 #include "awt_Palette.h"
 #include "awt_Toolkit.h"
-#include "awt_Unicode.h"
 #include "awt_Window.h"
 #include "awt_Win32GraphicsDevice.h"
 #include "Hashtable.h"
@@ -58,7 +58,6 @@
 #include <java_awt_Event.h>
 #include <java_awt_event_KeyEvent.h>
 #include <java_awt_Insets.h>
-#include <java_awt_KeyboardFocusManager.h>
 #include <sun_awt_windows_WPanelPeer.h>
 #include <java_awt_event_InputEvent.h>
 #include <java_awt_event_InputMethodEvent.h>
@@ -67,29 +66,9 @@
 #include <java_awt_event_MouseWheelEvent.h>
 
 // Begin -- Win32 SDK include files
-#include <tchar.h>
 #include <imm.h>
 #include <ime.h>
 // End -- Win32 SDK include files
-
-#ifndef GET_KEYSTATE_WPARAM     // defined for (_WIN32_WINNT >= 0x0400)
-#define GET_KEYSTATE_WPARAM(wParam)     (LOWORD(wParam))
-#endif
-
-#ifndef GET_WHEEL_DELTA_WPARAM  // defined for (_WIN32_WINNT >= 0x0500)
-#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
-#endif
-
-// <XXX> <!-- TEMPORARY HACK TO TEST AGAINST OLD VC INLCUDES -->
-#if !defined(__int3264)
-#define GetWindowLongPtr GetWindowLong
-#define SetWindowLongPtr SetWindowLong
-#define GWLP_USERDATA GWL_USERDATA
-#define GWLP_WNDPROC  GWL_WNDPROC
-typedef __int32 LONG_PTR;
-typedef unsigned __int32 ULONG_PTR;
-#endif // __int3264
-// </XXX>
 
 #include <awt_DnDDT.h>
 
@@ -114,12 +93,13 @@ extern "C" {
     BOOL g_bUserHasChangedInputLang = FALSE;
 }
 
-BOOL AwtComponent::sm_suppressFocusAndActivation;
-HWND AwtComponent::sm_focusOwner;
-HWND AwtComponent::sm_focusedWindow;
-HWND AwtComponent::sm_realFocusOpposite;
+BOOL AwtComponent::sm_suppressFocusAndActivation = FALSE;
+BOOL AwtComponent::sm_restoreFocusAndActivation = FALSE;
+HWND AwtComponent::sm_focusOwner = NULL;
+HWND AwtComponent::sm_focusedWindow = NULL;
 BOOL AwtComponent::sm_bMenuLoop = FALSE;
 AwtComponent* AwtComponent::sm_getComponentCache = NULL;
+BOOL AwtComponent::sm_inSynthesizeFocus = FALSE;
 
 /************************************************************************/
 // Struct for _Reshape() and ReshapeNoCheck() methods
@@ -143,20 +123,12 @@ struct SetFontStruct {
     jobject component;
     jobject font;
 };
-// Struct for _RequestFocus() method
-struct RequestFocusStruct {
-    jobject component;
-    jobject lightweightChild;
-    jboolean temporary;
-    jboolean focusedWindowChangeAllowed;
-    jlong time;
-    jobject cause;
-};
 // Struct for _CreatePrintedPixels() method
 struct CreatePrintedPixelsStruct {
     jobject component;
     int srcx, srcy;
     int srcw, srch;
+    jint alpha;
 };
 // Struct for _SetRectangularShape() method
 struct SetRectangularShapeStruct {
@@ -168,6 +140,16 @@ struct SetRectangularShapeStruct {
 struct GetInsetsStruct {
     jobject window;
     RECT *insets;
+};
+// Struct for _SetZOrder function
+struct SetZOrderStruct {
+    jobject component;
+    jlong above;
+};
+// Struct for _SetFocus function
+struct SetFocusStruct {
+    jobject component;
+    jboolean doSetFocus;
 };
 /************************************************************************/
 
@@ -207,9 +189,7 @@ LANGID AwtComponent::m_idLang = LOWORD(::GetKeyboardLayout(0));
 UINT   AwtComponent::m_CodePage
                        = AwtComponent::LangToCodePage(m_idLang);
 
-BOOL AwtComponent::m_isWin95 = IS_WIN95;
-BOOL AwtComponent::m_isWin2000 = IS_WIN2000;
-BOOL AwtComponent::m_isWinNT = IS_NT;
+jint *AwtComponent::masks;
 
 static BOOL bLeftShiftIsDown = false;
 static BOOL bRightShiftIsDown = false;
@@ -221,16 +201,13 @@ BOOL AwtComponent::sm_rtl = PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC ||
 BOOL AwtComponent::sm_rtlReadingOrder =
     PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC;
 
-UINT AwtComponent::sm_95WheelMessage = WM_NULL;
-UINT AwtComponent::sm_95WheelSupport = WM_NULL;
+BOOL AwtComponent::sm_PrimaryDynamicTableBuilt = FALSE;
 
 HWND AwtComponent::sm_cursorOn;
 BOOL AwtComponent::m_QueryNewPaletteCalled = FALSE;
 
 CriticalSection windowMoveLock;
 BOOL windowMoveLockHeld = FALSE;
-
-int AwtComponent::sm_wheelRotationAmount = 0;
 
 /************************************************************************
  * AwtComponent methods
@@ -259,7 +236,6 @@ AwtComponent::AwtComponent()
     m_InputMethod = NULL;
     m_useNativeCompWindow = TRUE;
     m_PendingLeadByte = 0;
-    m_skipNextSetFocus = FALSE;
     m_bitsCandType = 0;
 
     windowMoveLockPosX = 0;
@@ -272,6 +248,12 @@ AwtComponent::AwtComponent()
     m_bSubclassed = FALSE;
 
     m_MessagesProcessing = 0;
+    m_wheelRotationAmount = 0;
+    if (!sm_PrimaryDynamicTableBuilt) {
+        // do it once.
+        AwtComponent::BuildPrimaryDynamicTable();
+        sm_PrimaryDynamicTableBuilt = TRUE;
+    }
 }
 
 AwtComponent::~AwtComponent()
@@ -287,8 +269,7 @@ AwtComponent::~AwtComponent()
      * the native one anymore. So we can safely destroy component's
      * handle.
      */
-    AwtToolkit::DestroyComponentHWND(m_hwnd);
-    m_hwnd = NULL;
+    DestroyHWnd();
 
     if (sm_getComponentCache == this) {
         sm_getComponentCache = NULL;
@@ -297,15 +278,8 @@ AwtComponent::~AwtComponent()
 
 void AwtComponent::Dispose()
 {
-    if (sm_focusOwner == GetHWnd()) {
-        ::SetFocus(NULL);
-    }
-    if (sm_focusedWindow == GetHWnd()) {
-        sm_focusedWindow = NULL;
-    }
-    if (sm_realFocusOpposite == GetHWnd()) {
-        sm_realFocusOpposite = NULL;
-    }
+    // NOTE: in case the component/toplevel was focused, Java should
+    // have already taken care of proper transfering it or clearing.
 
     if (m_hdwp != NULL) {
     // end any deferred window positioning, regardless
@@ -389,8 +363,8 @@ AwtComponent* AwtComponent::GetComponent(HWND hWnd) {
 AwtComponent* AwtComponent::GetComponentImpl(HWND hWnd) {
     AwtComponent *component =
         (AwtComponent *)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
-    DASSERT( !IsBadReadPtr(component, sizeof(AwtComponent)) );
-    DASSERT( component->GetHWnd() == hWnd );
+    DASSERT(!component || !IsBadReadPtr(component, sizeof(AwtComponent)) );
+    DASSERT(!component || component->GetHWnd() == hWnd );
     return component;
 }
 
@@ -544,7 +518,7 @@ AwtComponent::CreateHWnd(JNIEnv *env, LPCWSTR title,
         jobject createError = NULL;
         if (dw == ERROR_OUTOFMEMORY)
         {
-            jstring errorMsg = env->NewStringUTF("too many window handles");
+            jstring errorMsg = JNU_NewStringPlatform(env, L"too many window handles");
             createError = JNU_NewObjectByName(env, "java/lang/OutOfMemoryError",
                                                       "(Ljava/lang/String;)V",
                                                       errorMsg);
@@ -607,6 +581,17 @@ AwtComponent::CreateHWnd(JNIEnv *env, LPCWSTR title,
     }
     env->DeleteLocalRef(target);
     env->DeleteLocalRef(bkgrd);
+}
+
+/*
+ * Destroy this window's HWND
+ */
+void AwtComponent::DestroyHWnd() {
+    if (m_hwnd != NULL) {
+        AwtToolkit::DestroyComponentHWND(m_hwnd);
+        //AwtToolkit::DestroyComponent(this);
+        m_hwnd = NULL;
+    }
 }
 
 /*
@@ -910,27 +895,8 @@ void AwtComponent::Show()
 
 void AwtComponent::Hide()
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    jobject peer = GetPeer(env);
-    BOOL oldValue = sm_suppressFocusAndActivation;
     m_visible = false;
-
-    // On disposal the focus owner actually loses focus at the moment of hiding.
-    // So, focus change suppression (if requested) should be made here.
-    if (GetHWnd() == sm_focusOwner &&
-        !JNU_CallMethodByName(env, NULL, peer, "isAutoFocusTransferOnDisposal", "()Z").z)
-   {
-        sm_suppressFocusAndActivation = TRUE;
-        // The native system may autotransfer focus on hiding to the parent
-        // of the component. Nevertheless this focus change won't be posted
-        // to the Java level, we're better to avoid this. Anyway, after
-        // the disposal focus should be requested to the right component.
-        ::SetFocus(NULL);
-        sm_focusOwner = NULL;
-    }
     ::ShowWindow(GetHWnd(), SW_HIDE);
-
-    sm_suppressFocusAndActivation = oldValue;
 }
 
 BOOL
@@ -1201,6 +1167,9 @@ void SpyWinMessage(HWND hwnd, UINT message, LPCTSTR szComment) {
         WIN_MSG(WM_MBUTTONDOWN)
         WIN_MSG(WM_MBUTTONUP)
         WIN_MSG(WM_MBUTTONDBLCLK)
+        WIN_MSG(WM_XBUTTONDBLCLK)
+        WIN_MSG(WM_XBUTTONDOWN)
+        WIN_MSG(WM_XBUTTONUP)
         WIN_MSG(WM_MOUSEWHEEL)
         WIN_MSG(WM_PARENTNOTIFY)
         WIN_MSG(WM_ENTERMENULOOP)
@@ -1271,6 +1240,7 @@ void SpyWinMessage(HWND hwnd, UINT message, LPCTSTR szComment) {
         WIN_MSG(WM_AWT_COMPONENT_SHOW)
         WIN_MSG(WM_AWT_COMPONENT_HIDE)
         WIN_MSG(WM_AWT_COMPONENT_SETFOCUS)
+        WIN_MSG(WM_AWT_WINDOW_SETACTIVE)
         WIN_MSG(WM_AWT_LIST_SETMULTISELECT)
         WIN_MSG(WM_AWT_HANDLE_EVENT)
         WIN_MSG(WM_AWT_PRINT_COMPONENT)
@@ -1284,6 +1254,8 @@ void SpyWinMessage(HWND hwnd, UINT message, LPCTSTR szComment) {
         WIN_MSG(WM_AWT_CREATECONTEXT)
         WIN_MSG(WM_AWT_DESTROYCONTEXT)
         WIN_MSG(WM_AWT_ASSOCIATECONTEXT)
+        WIN_MSG(WM_AWT_GET_DEFAULT_IME_HANDLER)
+        WIN_MSG(WM_AWT_HANDLE_NATIVE_IME_EVENT)
         WIN_MSG(WM_AWT_PRE_KEYDOWN)
         WIN_MSG(WM_AWT_PRE_KEYUP)
         WIN_MSG(WM_AWT_PRE_SYSKEYDOWN)
@@ -1347,17 +1319,9 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
         return (LRESULT)TRUE;
     }
 
-    UINT switchMessage;
-    if (IS_WIN95 && !IS_WIN98 && message == Wheel95GetMsg()) {
-        // Wheel message is generated dynamically on 95.  A quick swap and
-        // we're good to go.
-        DTRACE_PRINTLN1("got wheel event on 95.  msg is %i\n", message);
-        switchMessage = WM_MOUSEWHEEL;
-    }
-    else {
-        switchMessage = message;
-    }
+    DWORD curPos = 0;
 
+    UINT switchMessage = message;
     switch (switchMessage) {
       case WM_AWT_GETDC:
       {
@@ -1530,67 +1494,54 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           sm_bMenuLoop = FALSE;
           break;
 
+      // We don't expect any focus messages on non-proxy component,
+      // except those that came from Java.
       case WM_SETFOCUS:
-          mr = (!sm_suppressFocusAndActivation && !m_skipNextSetFocus)
-              ? WmSetFocus((HWND)wParam) : mrConsume;
-          m_skipNextSetFocus = FALSE;
+          if (sm_inSynthesizeFocus) {
+              mr = WmSetFocus((HWND)wParam);
+          } else {
+              mr = mrConsume;
+          }
           break;
       case WM_KILLFOCUS:
-          mr = (!sm_suppressFocusAndActivation)
-              ? WmKillFocus((HWND)wParam) : mrConsume;
+          if (sm_inSynthesizeFocus) {
+              mr = WmKillFocus((HWND)wParam);
+          } else {
+              mr = mrConsume;
+          }
           break;
-      case WM_ACTIVATE:
-      {
+      case WM_ACTIVATE: {
           UINT nState = LOWORD(wParam);
           BOOL fMinimized = (BOOL)HIWORD(wParam);
+          mr = mrConsume;
+
           if (!sm_suppressFocusAndActivation &&
               (!fMinimized || (nState == WA_INACTIVE)))
           {
               mr = WmActivate(nState, fMinimized, (HWND)lParam);
-              m_skipNextSetFocus = FALSE;
+
               // When the window is deactivated, send WM_IME_ENDCOMPOSITION
               // message to deactivate the composition window so that
               // it won't receive keyboard input focus.
               if (ImmGetContext() != NULL) {
                   DefWindowProc(WM_IME_ENDCOMPOSITION, 0, 0);
               }
-          } else {
-              if (!sm_suppressFocusAndActivation
-                  && fMinimized && (nState != WA_INACTIVE))
-              {
-                  m_skipNextSetFocus = TRUE;
-              }
-              mr = mrConsume;
           }
+          break;
       }
-      break;
-    case WM_MOUSEACTIVATE: {
-        AwtWindow * window = (AwtWindow*)GetComponent((HWND)wParam);
-        if (window != NULL) {
-            if (!window->IsFocusableWindow()) {
-                // if it is non-focusable window we can return
-                // MA_NOACTIVATExxx and it will not be activated. We
-                // return NOACTIVATE for a client part of the window so we
-                // receive mouse event responsible for activation. We
-                // return NOACTIVEA for Frame's non-client so user be able
-                // to resize and move frames by title and borders. We
-                // return NOACTIVATEANDEAT for Window non-client area as
-                // there is noone to listen for this event.
-                mr = mrConsume;
-                if ((window == this) && LOWORD(lParam) != HTCLIENT ) {
-                    if (window->IsSimpleWindow()) {
-                        retValue = MA_NOACTIVATEANDEAT;
-                    } else {
-                        retValue = MA_NOACTIVATE;
-                    }
-                } else {
-                    retValue = MA_NOACTIVATE;
-                }
-            }
-        }
-        break;
-    }
-
+      case WM_MOUSEACTIVATE: {
+          AwtWindow *window = GetContainer();
+          if (window && window->IsFocusableWindow()) {
+              // AWT/Swing will later request focus to a proper component
+              // on handling the Java mouse event. Anyway, we have to
+              // activate the window here as it works both for AWT & Swing.
+              // Do it in our own fassion,
+              window->AwtSetActiveWindow(TRUE, LOWORD(lParam)/*hittest*/);
+          }
+          mr = mrConsume;
+          retValue = MA_NOACTIVATE;
+          break;
+      }
       case WM_CTLCOLORMSGBOX:
       case WM_CTLCOLOREDIT:
       case WM_CTLCOLORLISTBOX:
@@ -1644,67 +1595,87 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case WM_MBUTTONDOWN:
       case WM_MBUTTONDBLCLK:
       case WM_MBUTTONUP:
+      case WM_XBUTTONDBLCLK:
+      case WM_XBUTTONDOWN:
+      case WM_XBUTTONUP:
       case WM_MOUSEMOVE:
       case WM_MOUSEWHEEL:
       case WM_AWT_MOUSEENTER:
       case WM_AWT_MOUSEEXIT:
-      {
-          DWORD curPos = ::GetMessagePos();
+          curPos = ::GetMessagePos();
           POINT myPos;
           myPos.x = GET_X_LPARAM(curPos);
           myPos.y = GET_Y_LPARAM(curPos);
           ::ScreenToClient(GetHWnd(), &myPos);
           switch(switchMessage) {
           case WM_AWT_MOUSEENTER:
-              mr = WmMouseEnter(static_cast<UINT>(wParam), myPos.x, myPos.y); break;
+              mr = WmMouseEnter(static_cast<UINT>(wParam), myPos.x, myPos.y);
+              break;
           case WM_LBUTTONDOWN:
           case WM_LBUTTONDBLCLK:
-                mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                           LEFT_BUTTON); break;
-            case WM_LBUTTONUP:
-                mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                               LEFT_BUTTON); break;
-            case WM_MOUSEMOVE:
-                mr = WmMouseMove(static_cast<UINT>(wParam), myPos.x, myPos.y); break;
-      case WM_MBUTTONDOWN:
-      case WM_MBUTTONDBLCLK:
-                mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                           MIDDLE_BUTTON); break;
-      case WM_RBUTTONDOWN:
-      case WM_RBUTTONDBLCLK:
-                mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                           RIGHT_BUTTON); break;
-      case WM_RBUTTONUP:
-                mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                         RIGHT_BUTTON);
-          break;
-      case WM_MBUTTONUP:
-                mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
-                         MIDDLE_BUTTON);
-          break;
-      case WM_AWT_MOUSEEXIT:
-                mr = WmMouseExit(static_cast<UINT>(wParam), myPos.x, myPos.y);
-          break;
-      case  WM_MOUSEWHEEL:
-          if (IS_WIN95 && !IS_WIN98) {
-              // On 95, the wParam doesn't contain the keystate flags, just
-              // the wheel rotation.  The keystates are fetched in WmMouseWheel
-              // using GetJavaModifiers().
-              mr = WmMouseWheel(0,
-                                GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
-                                (int)wParam);
-              return FALSE;
-          }
-          else {
+              mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                               LEFT_BUTTON);
+              break;
+          case WM_LBUTTONUP:
+              mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                             LEFT_BUTTON);
+              break;
+          case WM_MOUSEMOVE:
+              mr = WmMouseMove(static_cast<UINT>(wParam), myPos.x, myPos.y);
+              break;
+          case WM_MBUTTONDOWN:
+          case WM_MBUTTONDBLCLK:
+              mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                               MIDDLE_BUTTON);
+              break;
+          case WM_XBUTTONDOWN:
+          case WM_XBUTTONDBLCLK:
+              if (AwtToolkit::GetInstance().areExtraMouseButtonsEnabled()) {
+                  if (HIWORD(wParam) == 1) {
+                      mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                                       X1_BUTTON);
+                  }
+                  if (HIWORD(wParam) == 2) {
+                      mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                                       X2_BUTTON);
+                  }
+              }
+              break;
+          case WM_XBUTTONUP:
+              if (AwtToolkit::GetInstance().areExtraMouseButtonsEnabled()) {
+                  if (HIWORD(wParam) == 1) {
+                      mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                                     X1_BUTTON);
+                  }
+                  if (HIWORD(wParam) == 2) {
+                      mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                                     X2_BUTTON);
+                  }
+              }
+              break;
+          case WM_RBUTTONDOWN:
+          case WM_RBUTTONDBLCLK:
+              mr = WmMouseDown(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                               RIGHT_BUTTON);
+              break;
+          case WM_RBUTTONUP:
+              mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                             RIGHT_BUTTON);
+              break;
+          case WM_MBUTTONUP:
+              mr = WmMouseUp(static_cast<UINT>(wParam), myPos.x, myPos.y,
+                             MIDDLE_BUTTON);
+              break;
+          case WM_AWT_MOUSEEXIT:
+              mr = WmMouseExit(static_cast<UINT>(wParam), myPos.x, myPos.y);
+              break;
+          case  WM_MOUSEWHEEL:
               mr = WmMouseWheel(GET_KEYSTATE_WPARAM(wParam),
                                 GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
                                 GET_WHEEL_DELTA_WPARAM(wParam));
+              break;
           }
           break;
-          }
-      }
-          break;
-
       case WM_SETCURSOR:
           mr = mrDoDefault;
           if (LOWORD(lParam) == HTCLIENT) {
@@ -1876,8 +1847,13 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case WM_AWT_SETALWAYSONTOP: {
         AwtWindow* w = (AwtWindow*)lParam;
         BOOL value = (BOOL)wParam;
+        UINT flags = SWP_NOMOVE | SWP_NOSIZE;
+        // transient windows shouldn't change the owner window's position in the z-order
+        if (w->IsRetainingHierarchyZOrder()) {
+            flags |= SWP_NOOWNERZORDER;
+        }
         ::SetWindowPos(w->GetHWnd(), (value != 0 ? HWND_TOPMOST : HWND_NOTOPMOST),
-                       0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+                       0,0,0,0, flags);
         break;
       }
 
@@ -1927,7 +1903,15 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           break;
 
       case WM_AWT_COMPONENT_SETFOCUS:
-          retValue = (LRESULT)WmComponentSetFocus((WmComponentSetFocusData *)wParam);
+          if ((BOOL)wParam) {
+              retValue = SynthesizeWmSetFocus(GetHWnd(), NULL);
+          } else {
+              retValue = SynthesizeWmKillFocus(GetHWnd(), NULL);
+          }
+          mr = mrConsume;
+          break;
+      case WM_AWT_WINDOW_SETACTIVE:
+          retValue = (LRESULT)((AwtWindow*)this)->AwtSetActiveWindow((BOOL)wParam);
           mr = mrConsume;
           break;
 
@@ -1938,11 +1922,14 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           mr = mrConsume;
           break;
       }
-      case WM_AWT_CREATE_PRINTED_PIXELS:
-          retValue = (LRESULT)CreatePrintedPixels(*((SIZE *)wParam),
-                                                  *((SIZE *)lParam));
+      case WM_AWT_CREATE_PRINTED_PIXELS: {
+          CreatePrintedPixelsStruct* cpps = (CreatePrintedPixelsStruct*)wParam;
+          SIZE loc = { cpps->srcx, cpps->srcy };
+          SIZE size = { cpps->srcw, cpps->srch };
+          retValue = (LRESULT)CreatePrintedPixels(loc, size, cpps->alpha);
           mr = mrConsume;
           break;
+      }
       case WM_UNDOCUMENTED_CLICKMENUBAR:
       {
           if (::IsWindow(AwtWindow::GetModalBlocker(GetHWnd()))) {
@@ -2055,186 +2042,14 @@ MsgRouting AwtComponent::WmShowWindow(BOOL show, UINT status)
 
 MsgRouting AwtComponent::WmSetFocus(HWND hWndLostFocus)
 {
-    if (sm_focusOwner == GetHWnd()) {
-        sm_realFocusOpposite = NULL;
-        return mrConsume;
-    }
-
-    HWND toplevelHWnd = AwtComponent::GetTopLevelParentForWindow(GetHWnd());
-    AwtComponent *comp = AwtComponent::GetComponent(toplevelHWnd);
-
-    if (comp && comp->IsEmbeddedFrame() &&
-        !((AwtFrame*)comp)->activateEmbeddedFrameOnSetFocus(hWndLostFocus))
-    {
-        // Fix for 6562716.
-        // In order that AwtSetFocus() returns FALSE.
-        sm_suppressFocusAndActivation = TRUE;
-        ::SetFocus(NULL);
-        sm_suppressFocusAndActivation = FALSE;
-
-        return mrConsume;
-    }
-
-    sm_focusOwner = GetHWnd();
-    sm_focusedWindow = toplevelHWnd;
-
-    if (sm_realFocusOpposite != NULL) {
-        hWndLostFocus = sm_realFocusOpposite;
-        sm_realFocusOpposite = NULL;
-    }
-
-    sm_wheelRotationAmount = 0;
-
-    SendFocusEvent(java_awt_event_FocusEvent_FOCUS_GAINED, hWndLostFocus);
-
+    m_wheelRotationAmount = 0;
     return mrDoDefault;
 }
 
 MsgRouting AwtComponent::WmKillFocus(HWND hWndGotFocus)
 {
-    if (sm_focusOwner != NULL && sm_focusOwner == hWndGotFocus) {
-        return mrConsume;
-    }
-
-    if (sm_focusOwner != GetHWnd()) {
-        if (sm_focusOwner != NULL) {
-            if (hWndGotFocus != NULL &&
-                AwtComponent::GetComponent(hWndGotFocus) != NULL)
-            {
-                sm_realFocusOpposite = sm_focusOwner;
-            }
-            ::SendMessage(sm_focusOwner, WM_KILLFOCUS, (WPARAM)hWndGotFocus,
-                          0);
-        }
-        return mrConsume;
-    }
-
-    AwtComponent *comp = AwtComponent::GetComponent(sm_focusedWindow);
-
-    if (comp && comp->IsEmbeddedFrame()) {
-        ((AwtFrame*)comp)->deactivateEmbeddedFrameOnKillFocus(hWndGotFocus);
-    }
-
-    sm_focusOwner = NULL;
-    sm_wheelRotationAmount = 0;
-
-    SendFocusEvent(java_awt_event_FocusEvent_FOCUS_LOST, hWndGotFocus);
+    m_wheelRotationAmount = 0;
     return mrDoDefault;
-}
-
-jboolean
-AwtComponent::WmComponentSetFocus(WmComponentSetFocusData *data)
-{
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    if (env->EnsureLocalCapacity(1) < 0) {
-        env->DeleteGlobalRef(data->lightweightChild);
-        delete data;
-        return JNI_FALSE;
-    }
-
-    jboolean result = JNI_FALSE;
-
-    BOOL setSuppressFocusAndActivation = FALSE;
-
-    /*
-     * This is a fix for 4628933.
-     * If sm_suppressFocusAndActivation is TRUE here then
-     * this means that we dispatch WM_COMPONENT_SET_FOCUS inside
-     * dispatching bounce activation, this unlikely but possible.
-     * So we reset sm_suppressFocusAndActivation to give a chance
-     * to dispatch focus events which will generate due this focus
-     * request to Java.
-     *
-     * son@sparc.spb.su
-     */
-    if (sm_suppressFocusAndActivation) {
-        sm_suppressFocusAndActivation = FALSE;
-        setSuppressFocusAndActivation = TRUE;
-    }
-
-    jobject heavyweight = GetTarget(env);
-    jint retval = env->CallStaticIntMethod
-        (AwtKeyboardFocusManager::keyboardFocusManagerCls,
-         AwtKeyboardFocusManager::shouldNativelyFocusHeavyweightMID,
-         heavyweight, data->lightweightChild, data->temporary,
-         data->focusedWindowChangeAllowed, data->time, data->cause);
-
-    if (retval == java_awt_KeyboardFocusManager_SNFH_SUCCESS_HANDLED) {
-        result = JNI_TRUE;
-    } else if (retval == java_awt_KeyboardFocusManager_SNFH_SUCCESS_PROCEED) {
-        result = (AwtSetFocus()) ? JNI_TRUE : JNI_FALSE;
-        if (result == JNI_FALSE) {
-            env->CallStaticVoidMethod
-                (AwtKeyboardFocusManager::keyboardFocusManagerCls,
-                 AwtKeyboardFocusManager::removeLastFocusRequestMID,
-                 heavyweight);
-        }
-    } else {
-        DASSERT(retval == java_awt_KeyboardFocusManager_SNFH_FAILURE);
-        result = JNI_FALSE;
-    }
-    env->DeleteLocalRef(heavyweight);
-
-    /*
-     * Set sm_suppressFocusAndActivation back to TRUE if needed.
-     * Fix for 4628933 (son@sparc.spb.su)
-     */
-   if (setSuppressFocusAndActivation) {
-        sm_suppressFocusAndActivation = TRUE;
-    }
-
-    env->DeleteGlobalRef(data->lightweightChild);
-    delete data;
-    return result;
-}
-
-BOOL
-AwtComponent::AwtSetFocus()
-{
-    HWND hwnd = GetHWnd();
-
-    if (sm_focusOwner == hwnd) {
-        return TRUE;
-    }
-
-    HWND fgWindow = ::GetForegroundWindow();
-    if (NULL != fgWindow) {
-        DWORD fgProcessID;
-        ::GetWindowThreadProcessId(fgWindow, &fgProcessID);
-
-        if (fgProcessID != ::GetCurrentProcessId()
-            && !AwtToolkit::GetInstance().IsEmbedderProcessId(fgProcessID))
-        {
-            // fix for 6458497.  we shouldn't request focus if it is out of both
-            // our and embedder process.
-            return FALSE;
-        }
-    }
-
-    AwtWindow *pCont = GetContainer();
-    AwtFrame *owner = pCont ? pCont->GetOwningFrameOrDialog() : NULL;
-
-    if (owner == NULL) {
-        ::SetFocus(hwnd);
-        if (::GetFocus() != hwnd) {
-            return FALSE;
-        }
-    } else {
-        HWND oldFocusOwner = sm_focusOwner;
-        if (oldFocusOwner != NULL) {
-            ::SendMessage(oldFocusOwner, WM_KILLFOCUS, (WPARAM)hwnd, 0);
-        }
-
-        sm_suppressFocusAndActivation = TRUE;
-        ::SetActiveWindow(owner->GetHWnd());
-        ::SetFocus(owner->GetProxyFocusOwner());
-        sm_suppressFocusAndActivation = FALSE;
-
-        sm_focusedWindow = GetTopLevelParentForWindow(GetHWnd());
-        ::SendMessage(hwnd, WM_SETFOCUS, (WPARAM)oldFocusOwner, 0);
-    }
-
-    return TRUE;
 }
 
 MsgRouting AwtComponent::WmCtlColor(HDC hDC, HWND hCtrl,
@@ -2531,7 +2346,6 @@ MsgRouting AwtComponent::WmMouseDown(UINT flags, int x, int y, int button)
             AwtWindow::GetGrabbedWindow()->Ungrab();
         }
     }
-
     return mrConsume;
 }
 
@@ -2589,8 +2403,12 @@ MsgRouting AwtComponent::WmMouseMove(UINT flags, int x, int y)
         lastComp = this;
         lastX = x;
         lastY = y;
-
-        if ( (flags & ALL_MK_BUTTONS) != 0 ) {
+        BOOL extraButtonsEnabled = AwtToolkit::GetInstance().areExtraMouseButtonsEnabled();
+        if (((flags & (ALL_MK_BUTTONS)) != 0) ||
+            (extraButtonsEnabled && (flags & (X_BUTTONS)) != 0))
+//        if (( extraButtonsEnabled && ( (flags & (ALL_MK_BUTTONS | X_BUTTONS)) != 0 )) ||
+//            ( !extraButtonsEnabled && (((flags & (ALL_MK_BUTTONS)) != 0 )) && ((flags & (X_BUTTONS)) == 0) ))
+        {
             // 6404008 : if Dragged event fired we shouldn't fire
             // Clicked event: m_firstDragSent set to TRUE.
             // This is a partial backout of 5039416 fix.
@@ -2641,29 +2459,18 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
     BOOL result;
     UINT platformLines;
 
-    sm_wheelRotationAmount += wheelRotation;
+    m_wheelRotationAmount += wheelRotation;
 
     // AWT interprets wheel rotation differently than win32, so we need to
     // decode wheel amount.
-    jint roundedWheelRotation = sm_wheelRotationAmount / (-1 * WHEEL_DELTA);
+    jint roundedWheelRotation = m_wheelRotationAmount / (-1 * WHEEL_DELTA);
     jdouble preciseWheelRotation = (jdouble) wheelRotation / (-1 * WHEEL_DELTA);
 
     MSG msg;
-
-    if (IS_WIN95 && !IS_WIN98) {
-        // 95 doesn't understand the SPI_GETWHEELSCROLLLINES - get the user
-        // preference by other means
-        DTRACE_PRINTLN("WmMouseWheel: using 95 branch");
-        platformLines = Wheel95GetScrLines();
-        result = true;
-        InitMessage(&msg, lastMessage, wheelRotation, MAKELPARAM(x, y));
-    }
-    else {
-        result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
-                                        &platformLines, 0);
-        InitMessage(&msg, lastMessage, MAKEWPARAM(flags, wheelRotation),
-                            MAKELPARAM(x, y));
-    }
+    result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                                    &platformLines, 0);
+    InitMessage(&msg, lastMessage, MAKEWPARAM(flags, wheelRotation),
+                MAKELPARAM(x, y));
 
     if (result) {
         if (platformLines == WHEEL_PAGESCROLL) {
@@ -2682,7 +2489,9 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
                         eventPt.x, eventPt.y, GetJavaModifiers(), 0, 0, scrollType,
                         scrollLines, roundedWheelRotation, preciseWheelRotation, &msg);
 
-    sm_wheelRotationAmount %= WHEEL_DELTA;
+    m_wheelRotationAmount %= WHEEL_DELTA;
+    // this message could be propagated up to the parent chain
+    // by the mouse message post processors
     return mrConsume;
 }
 
@@ -2743,156 +2552,21 @@ jint AwtComponent::GetShiftKeyLocation(UINT vkey, UINT flags)
       "AwtComponent::GetShiftKeyLocation  vkey = %d = 0x%x  scan = %d",
       vkey, vkey, keyScanCode);
 
-    if (m_isWinNT) {
-        leftShiftScancode = ::MapVirtualKey(VK_LSHIFT, 0);
-        rightShiftScancode = ::MapVirtualKey(VK_RSHIFT, 0);
+    leftShiftScancode = ::MapVirtualKey(VK_LSHIFT, 0);
+    rightShiftScancode = ::MapVirtualKey(VK_RSHIFT, 0);
 
-        if (keyScanCode == leftShiftScancode) {
-            return java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-        }
-        if (keyScanCode == rightShiftScancode) {
-            return java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-        }
-
-        DASSERT(false);
-        // Note: the above should not fail on NT (or 2000),
-        // but just in case it does, try the more complicated method
-        // we use for Win9x below.
+    if (keyScanCode == leftShiftScancode) {
+        return java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
+    }
+    if (keyScanCode == rightShiftScancode) {
+        return java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
     }
 
-    // "Transition" bit = 0 if keyPressed, 1 if keyReleased
-    BOOL released = ((1<<15) & flags);
+    DASSERT(false);
+    // Note: the above should not fail on NT (or 2000)
 
-    DTRACE_PRINTLN2(
-      "AwtComponent::GetShiftKeyLocation  bLeftShiftIsDown = %d  bRightShiftIsDown == %d",
-      bLeftShiftIsDown, bRightShiftIsDown);
-    DTRACE_PRINTLN2(
-      "AwtComponent::GetShiftKeyLocation  lastShiftKeyPressed = %d  released = %d",
-      lastShiftKeyPressed, released);
-
-    jint keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
-
-    // It is possible for somebody to hold down one or both
-    // Shift keys, causing repeat key events.  We need to
-    // handle all the cases.
-    //
-    // Just a side-note: if two or more keys are being held down,
-    // and then one key is released, whether more key presses are
-    // generated for the keys that are still held down depends on
-    // which keys they are, and whether you released the right or
-    // the left shift/ctrl/etc. key first.  This also differs
-    // between Win9x and NT.  Just plain screwy.
-    //
-    // Note: on my PC, the repeat count is always 1.  Yup, we need
-    // 16 bits to handle that, all right.
-
-    // Handle the case where only one of the Shift keys
-    // was down before this event took place
-    if (bLeftShiftIsDown && !bRightShiftIsDown) {
-        if (released) {
-            // This is a left Shift release
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-        } else {
-            // This is a right Shift press
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-        }
-    } else if (!bLeftShiftIsDown && bRightShiftIsDown) {
-        if (released) {
-            // This is a right Shift release
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-        } else {
-            // This is a left Shift press
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-        }
-    }
-
-    // Handle the case where neither of the Shift keys
-    // were down before this event took place
-    if (!bLeftShiftIsDown && !bRightShiftIsDown) {
-        DASSERT(!released);
-        if (HIBYTE(::GetKeyState(VK_LSHIFT)) != 0) {
-            // This is a left Shift press
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-        } else if (HIBYTE(::GetKeyState(VK_RSHIFT)) != 0) {
-            // This is a right Shift press
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-        } else {
-            DASSERT(false);
-        }
-    }
-
-    // Handle the case where both Shift keys were down before
-    // this event took place
-    if (bLeftShiftIsDown && bRightShiftIsDown) {
-        // If this is a key release event, we can just check to see
-        // what the keyboard state is after the event
-        if (released) {
-            if (HIBYTE(::GetKeyState(VK_RSHIFT)) == 0) {
-                // This is a right Shift release
-                keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-            } else if (HIBYTE(::GetKeyState(VK_LSHIFT)) == 0) {
-                // This is a left Shift release
-                keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-            } else {
-                DASSERT(false);
-            }
-        } else {
-            // If this is a key press event, and both Shift keys were
-            // already down, this is going to be a repeat of the last
-            // Shift press
-            if (lastShiftKeyPressed == VK_LSHIFT) {
-                keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-            } else if (lastShiftKeyPressed == VK_RSHIFT) {
-                keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-            } else {
-                DASSERT(false);
-            }
-        }
-    }
-
-    if (keyLocation == java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN) {
-        // Nothing we tried above worked for some reason.  Sigh.
-        // Make a last-ditch effort to guess what happened:
-        // guess that the Shift scancodes are usually the same
-        // from system to system, even though this isn't guaranteed.
-        DTRACE_PRINTLN("Last-ditch effort at guessing Shift keyLocation");
-
-        // Tested on a couple of Windows keyboards: these are standard values
-        leftShiftScancode = 42;
-        rightShiftScancode = 54;
-
-        if (keyScanCode == leftShiftScancode) {
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
-        } else if (keyScanCode == rightShiftScancode) {
-            keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_RIGHT;
-        }
-    }
-
-    // Set the Shift flags with the new key state.
-    bLeftShiftIsDown = (HIBYTE(::GetKeyState(VK_LSHIFT)) != 0);
-    bRightShiftIsDown = (HIBYTE(::GetKeyState(VK_RSHIFT)) != 0);
-
-    // Update lastShiftKeyPressed
-    if (released) {
-        // At most one shift key is down now, so just check which one
-        if (bLeftShiftIsDown) {
-            lastShiftKeyPressed = VK_LSHIFT;
-            DASSERT(!bRightShiftIsDown);
-        } else if (bRightShiftIsDown) {
-            lastShiftKeyPressed = VK_RSHIFT;
-        } else {
-            lastShiftKeyPressed = 0;
-        }
-    } else {
-        // It was a press, so at least one shift key is down now
-        if (keyLocation == java_awt_event_KeyEvent_KEY_LOCATION_LEFT) {
-            lastShiftKeyPressed = VK_LSHIFT;
-        } else if (keyLocation == java_awt_event_KeyEvent_KEY_LOCATION_RIGHT) {
-            lastShiftKeyPressed = VK_RSHIFT;
-        }
-    }
-
-    return keyLocation;
+    // default value
+    return java_awt_event_KeyEvent_KEY_LOCATION_LEFT;
 }
 
 /* Returns Java extended InputEvent modifieres.
@@ -2914,13 +2588,20 @@ AwtComponent::GetJavaModifiers()
         modifiers |= java_awt_event_InputEvent_ALT_DOWN_MASK;
     }
     if (HIBYTE(::GetKeyState(VK_MBUTTON)) != 0) {
-        modifiers |= java_awt_event_InputEvent_BUTTON2_DOWN_MASK;
+       modifiers |= java_awt_event_InputEvent_BUTTON2_DOWN_MASK;
     }
     if (HIBYTE(::GetKeyState(VK_RBUTTON)) != 0) {
         modifiers |= java_awt_event_InputEvent_BUTTON3_DOWN_MASK;
     }
     if (HIBYTE(::GetKeyState(VK_LBUTTON)) != 0) {
         modifiers |= java_awt_event_InputEvent_BUTTON1_DOWN_MASK;
+    }
+
+    if (HIBYTE(::GetKeyState(VK_XBUTTON1)) != 0) {
+        modifiers |= masks[3];
+    }
+    if (HIBYTE(::GetKeyState(VK_XBUTTON2)) != 0) {
+        modifiers |= masks[4];
     }
     return modifiers;
 }
@@ -2936,6 +2617,11 @@ AwtComponent::GetButton(int mouseButton)
         return java_awt_event_MouseEvent_BUTTON2;
     case RIGHT_BUTTON:
         return java_awt_event_MouseEvent_BUTTON3;
+    case X1_BUTTON: //16 :
+        //just assign 4 and 5 numbers because MouseEvent class doesn't contain const identifier for them now
+        return 4;
+    case X2_BUTTON: //32
+        return 5;
     }
     return java_awt_event_MouseEvent_NOBUTTON;
 }
@@ -2950,6 +2636,10 @@ AwtComponent::GetButtonMK(int mouseButton)
         return MK_MBUTTON;
     case RIGHT_BUTTON:
         return MK_RBUTTON;
+    case X1_BUTTON:
+        return MK_XBUTTON1;
+    case X2_BUTTON:
+        return MK_XBUTTON2;
     }
     return 0;
 }
@@ -2965,6 +2655,14 @@ AwtComponent::GetButtonMK(int mouseButton)
 #define VK_KANJI          0x19
 #define VK_CONVERT        0x1C
 #define VK_NONCONVERT     0x1D
+#endif
+
+#ifndef VK_XBUTTON1
+#define VK_XBUTTON1      0x05
+#endif
+
+#ifndef VK_XBUTTON2
+#define VK_XBUTTON2      0x06
 #endif
 
 typedef struct {
@@ -3213,6 +2911,19 @@ static const CharToVKEntry charToDeadVKTable[] = {
     {0,0}
 };
 
+// The full map of the current keyboard state including
+// windows virtual key, scancode, java virtual key, and unicode
+// for this key sans modifiers.
+// All but first element may be 0.
+// XXX in the update releases this is an addition to the unchanged existing code
+struct DynPrimaryKeymapEntry {
+    UINT wkey;
+    UINT scancode;
+    UINT jkey;
+    WCHAR unicode;
+};
+
+static DynPrimaryKeymapEntry dynPrimaryKeymap[256];
 
 void
 AwtComponent::InitDynamicKeyMapTable()
@@ -3221,6 +2932,8 @@ AwtComponent::InitDynamicKeyMapTable()
 
     if (!kbdinited) {
         AwtComponent::BuildDynamicKeyMapTable();
+        // We cannot build it here since JNI is not available yet:
+        //AwtComponent::BuildPrimaryDynamicTable();
         kbdinited = TRUE;
     }
 }
@@ -3446,7 +3159,11 @@ UINT AwtComponent::WindowsKeyToJavaKey(UINT windowsKey, UINT modifiers)
 
     for (int j = 0; dynamicKeyMapTable[j].windowsKey != 0; j++) {
         if (dynamicKeyMapTable[j].windowsKey == windowsKey) {
-            return dynamicKeyMapTable[j].javaKey;
+            if (dynamicKeyMapTable[j].javaKey != java_awt_event_KeyEvent_VK_UNDEFINED) {
+                return dynamicKeyMapTable[j].javaKey;
+            }else{
+                break;
+            }
         }
     }
 
@@ -3522,6 +3239,128 @@ BOOL AwtComponent::IsNumPadKey(UINT vkey, BOOL extended)
     }
 
     return FALSE;
+}
+static void
+resetKbdState( BYTE kstate[256]) {
+    BYTE tmpState[256];
+    WCHAR wc[2];
+    memmove(tmpState, kstate, sizeof(kstate));
+    tmpState[VK_SHIFT] = 0;
+    tmpState[VK_CONTROL] = 0;
+    tmpState[VK_MENU] = 0;
+
+    ::ToUnicodeEx(VK_SPACE,::MapVirtualKey(VK_SPACE, 0), tmpState, wc, 2, 0,  GetKeyboardLayout(0));
+}
+
+// XXX in the update releases this is an addition to the unchanged existing code
+// After the call, a table will have a unicode associated with a windows virtual keycode
+// sans modifiers. With some further simplification, one can
+// derive java keycode from it, and anyway we will pass this unicode value
+// all the way up in a comment to a KeyEvent.
+void
+AwtComponent::BuildPrimaryDynamicTable() {
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    // XXX: how about that?
+    //CriticalSection::Lock l(GetLock());
+    //if (GetPeer(env) == NULL) {
+    //    /* event received during termination. */
+    //    return;
+    //}
+
+    HKL hkl = GetKeyboardLayout();
+    UINT sc = 0;
+    BYTE kbdState[AwtToolkit::KB_STATE_SIZE];
+    memset(kbdState, 0, sizeof (kbdState));
+
+    // Use JNI call to obtain java key code. We should keep a list
+    // of currently available keycodes in a single place.
+    static jclass extKeyCodesCls;
+    if( extKeyCodesCls == NULL) {
+        jclass extKeyCodesClsLocal = env->FindClass("sun/awt/ExtendedKeyCodes");
+        DASSERT(extKeyCodesClsLocal);
+        if (extKeyCodesClsLocal == NULL) {
+            /* exception already thrown */
+            return;
+        }
+        extKeyCodesCls = (jclass)env->NewGlobalRef(extKeyCodesClsLocal);
+        env->DeleteLocalRef(extKeyCodesClsLocal);
+    }
+    static jmethodID getExtendedKeyCodeForChar;
+    if (getExtendedKeyCodeForChar == NULL) {
+        getExtendedKeyCodeForChar =
+                  env->GetStaticMethodID(extKeyCodesCls, "getExtendedKeyCodeForChar", "(I)I");
+        DASSERT(getExtendedKeyCodeForChar);
+    }
+    jint extJKC; //extended Java key code
+
+    for (UINT i = 0; i < 256; i++) {
+        dynPrimaryKeymap[i].wkey = i;
+        dynPrimaryKeymap[i].jkey = java_awt_event_KeyEvent_VK_UNDEFINED;
+        dynPrimaryKeymap[i].unicode = 0;
+
+        if ((sc = MapVirtualKey (i, 0)) == 0) {
+            dynPrimaryKeymap[i].scancode = 0;
+            continue;
+        }
+        dynPrimaryKeymap[i].scancode = sc;
+
+        // XXX process cases like VK_SHIFT etc.
+        kbdState[i] = 0x80; // "key pressed".
+        WCHAR wc[16];
+        int k = ::ToUnicodeEx(i, sc, kbdState, wc, 16, 0, hkl);
+        if (k == 1) {
+            // unicode
+            dynPrimaryKeymap[i].unicode = wc[0];
+            if (dynPrimaryKeymap[i].jkey == java_awt_event_KeyEvent_VK_UNDEFINED) {
+            // Convert unicode to java keycode.
+                //dynPrimaryKeymap[i].jkey = ((UINT)(wc[0]) + 0x01000000);
+                //
+                //XXX If this key in on the keypad, we should force a special value equal to
+                //XXX an old java keycode: but how to say if it is a keypad key?
+                //XXX We'll do it in WmKeyUp/Down.
+                extJKC = env->CallStaticIntMethod(extKeyCodesCls,
+                                                  getExtendedKeyCodeForChar, (jint)(wc[0]));
+                dynPrimaryKeymap[i].jkey = extJKC;
+            }
+        }else if (k == -1) {
+            // dead key: use charToDeadVKTable
+            dynPrimaryKeymap[i].unicode = wc[0];
+            resetKbdState( kbdState );
+            for (const CharToVKEntry *map = charToDeadVKTable;  map->c != 0;  ++map) {
+                if (wc[0] == map->c) {
+                    dynPrimaryKeymap[i].jkey = map->javaKey;
+                    break;
+                }
+            }
+        } else if (k == 0) {
+            // reset
+            resetKbdState( kbdState );
+        }else {
+            // k > 1: this key does generate multiple characters. Ignore it.
+            // An example: Arabic Lam and Alef ligature.
+            // There will be no extended keycode and thus shortcuts for this  key.
+            // XXX shouldn't we reset the kbd state?
+#ifdef DEBUG
+            DTRACE_PRINTLN2("wkey 0x%02X (%d)", i,i);
+#endif
+        }
+        kbdState[i] = 0; // "key unpressed"
+    }
+}
+void
+AwtComponent::UpdateDynPrimaryKeymap(UINT wkey, UINT jkeyLegacy, jint keyLocation, UINT modifiers)
+{
+    if( wkey && wkey < 256 ) {
+        if(keyLocation == java_awt_event_KeyEvent_KEY_LOCATION_NUMPAD) {
+            // At the creation time,
+            // dynPrimaryKeymap cannot distinguish between e.g. "/" and "NumPad /"
+            dynPrimaryKeymap[wkey].jkey = jkeyLegacy;
+        }
+        if(dynPrimaryKeymap[wkey].jkey ==  java_awt_event_KeyEvent_VK_UNDEFINED) {
+            // E.g. it is non-unicode key
+            dynPrimaryKeymap[wkey].jkey = jkeyLegacy;
+        }
+    }
 }
 
 UINT AwtComponent::WindowsKeyToJavaChar(UINT wkey, UINT modifiers, TransOps ops)
@@ -3679,10 +3518,12 @@ MsgRouting AwtComponent::WmKeyDown(UINT wkey, UINT repCnt,
     jint keyLocation = GetKeyLocation(wkey, flags);
     UINT jkey = WindowsKeyToJavaKey(wkey, modifiers);
     UINT character = WindowsKeyToJavaChar(wkey, modifiers, SAVE);
+    UpdateDynPrimaryKeymap(wkey, jkey, keyLocation, modifiers);
+
 
     SendKeyEventToFocusOwner(java_awt_event_KeyEvent_KEY_PRESSED,
                              TimeHelper::windowsToUTC(msg.time), jkey, character,
-                             modifiers, keyLocation, &msg);
+                             modifiers, keyLocation, (jlong)wkey, &msg);
 
     // bugid 4724007: Windows does not create a WM_CHAR for the Del key
     // for some reason, so we need to create the KEY_TYPED event on the
@@ -3694,7 +3535,7 @@ MsgRouting AwtComponent::WmKeyDown(UINT wkey, UINT repCnt,
                                  TimeHelper::windowsToUTC(msg.time),
                                  java_awt_event_KeyEvent_VK_UNDEFINED,
                                  character, modifiers,
-                                 java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN);
+                                 java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, (jlong)0);
     }
 
     return mrConsume;
@@ -3719,10 +3560,11 @@ MsgRouting AwtComponent::WmKeyUp(UINT wkey, UINT repCnt,
     jint keyLocation = GetKeyLocation(wkey, flags);
     UINT jkey = WindowsKeyToJavaKey(wkey, modifiers);
     UINT character = WindowsKeyToJavaChar(wkey, modifiers, LOAD);
+    UpdateDynPrimaryKeymap(wkey, jkey, keyLocation, modifiers);
 
     SendKeyEventToFocusOwner(java_awt_event_KeyEvent_KEY_RELEASED,
                              TimeHelper::windowsToUTC(msg.time), jkey, character,
-                             modifiers, keyLocation, &msg);
+                             modifiers, keyLocation, (jlong)wkey, &msg);
     return mrConsume;
 }
 
@@ -3738,6 +3580,7 @@ MsgRouting AwtComponent::WmInputLangChange(UINT charset, HKL hKeyboardLayout)
     m_idLang = LOWORD(hKeyboardLayout); // lower word of HKL is LANGID
     m_CodePage = LangToCodePage(m_idLang);
     BuildDynamicKeyMapTable();  // compute new mappings for VK_OEM
+    BuildPrimaryDynamicTable();
     return mrConsume;           // do not propagate to children
 }
 
@@ -3768,7 +3611,7 @@ MsgRouting AwtComponent::WmIMEChar(UINT character, UINT repCnt, UINT flags, BOOL
                              TimeHelper::windowsToUTC(msg.time),
                              java_awt_event_KeyEvent_VK_UNDEFINED,
                              unicodeChar, modifiers,
-                             java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN,
+                             java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, (jlong)0,
                              &msg);
     return mrConsume;
 }
@@ -3785,22 +3628,6 @@ MsgRouting AwtComponent::WmChar(UINT character, UINT repCnt, UINT flags,
     // PM_REMOVE).  I would like to be able to pass this character off
     // via WM_AWT_FORWARD_BYTE, but the Edit classes don't seem to
     // like that.
-
-    // Begin pollution
-    if (!m_isWinNT && IsDBCSLeadByteEx(GetCodePage(), BYTE(character))) {
-        if (GetDBCSEditHandle() != NULL) {
-            return mrDoDefault;
-        } else {
-            // Kludge: Some Chinese IMEs, e.g. QuanPin, sends two WM_CHAR
-            // messages for some punctuations (e.g. full stop) without sending
-            // WM_IME_CHAR message beforehand.
-            if (m_PendingLeadByte == 0) {
-                m_PendingLeadByte = character;
-                return mrConsume;
-            }
-        }
-    }
-    // End pollution
 
     // We will simply create Java events here.
     UINT message = system ? WM_SYSCHAR : WM_CHAR;
@@ -3853,7 +3680,7 @@ MsgRouting AwtComponent::WmChar(UINT character, UINT repCnt, UINT flags,
                              TimeHelper::windowsToUTC(msg.time),
                              java_awt_event_KeyEvent_VK_UNDEFINED,
                              unicodeChar, modifiers,
-                             java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN,
+                             java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, (jlong)0,
                              &msg);
     return mrConsume;
 }
@@ -3861,43 +3688,8 @@ MsgRouting AwtComponent::WmChar(UINT character, UINT repCnt, UINT flags,
 MsgRouting AwtComponent::WmForwardChar(WCHAR character, LPARAM lParam,
                                        BOOL synthetic)
 {
-    if (m_isWinNT) {
-        // just post WM_CHAR with unicode key value
-        DefWindowProc(WM_CHAR, (WPARAM)character, lParam);
-        return mrConsume;
-    }
-
-    // This message is sent from the Java key event handler.
-    CHAR mbChar[2] = {'\0', '\0'};
-
-    int cBytes = ::WideCharToMultiByte(GetCodePage(), 0, &character, 1, mbChar, 2, NULL, NULL);
-    if (cBytes!=1 && cBytes!=2)    return mrConsume;
-
-    HWND hDBCSEditHandle = GetDBCSEditHandle();
-
-    if (hDBCSEditHandle != NULL && cBytes==2)
-    {
-        // The first WM_CHAR message will get handled by the WmChar, but
-        // the second WM_CHAR message will get picked off by the Edit class.
-        // WmChar will never see it.
-        // If an Edit class gets a lead byte, it immediately calls PeekMessage
-        // and pulls the trail byte out of the message queue.
-        ::PostMessage(hDBCSEditHandle, WM_CHAR, mbChar[0] & 0x00ff, lParam);
-        ::PostMessage(hDBCSEditHandle, WM_CHAR, mbChar[1] & 0x00ff, lParam);
-    }
-    else
-    {
-        MSG* pMsg;
-        pMsg = CreateMessage(WM_CHAR, mbChar[0] & 0x00ff, lParam);
-        ::PostMessage(GetHWnd(), WM_AWT_FORWARD_BYTE, (WPARAM)synthetic,
-                      (LPARAM)pMsg);
-        if (mbChar[1])
-        {
-            pMsg = CreateMessage(WM_CHAR, mbChar[1] & 0x00ff, lParam);
-            ::PostMessage(GetHWnd(), WM_AWT_FORWARD_BYTE, (WPARAM)synthetic,
-                          (LPARAM)pMsg);
-        }
-    }
+    // just post WM_CHAR with unicode key value
+    DefWindowProc(WM_CHAR, (WPARAM)character, lParam);
     return mrConsume;
 }
 
@@ -3929,7 +3721,7 @@ void AwtComponent::OpenCandidateWindow(int x, int y)
             SetCandidateWindow(iCandType, x-rc.left, y-rc.top);
     }
     if (m_bitsCandType != 0) {
-        DefWindowProc(WM_IME_NOTIFY, IMN_OPENCANDIDATE, m_bitsCandType);
+        ::DefWindowProc(GetHWnd(), WM_IME_NOTIFY, IMN_OPENCANDIDATE, m_bitsCandType);
     }
 }
 
@@ -3947,11 +3739,12 @@ void AwtComponent::SetCandidateWindow(int iCandType, int x, int y)
 
 MsgRouting AwtComponent::WmImeSetContext(BOOL fSet, LPARAM *lplParam)
 {
-    // This message causes native status window shown even it is disabled.  So don't
-    // let DefWindowProc process this message if this IMC is disabled.
+    // If the Windows input context is disabled, do not let Windows
+    // display any UIs.
     HIMC hIMC = ImmGetContext();
     if (hIMC == NULL) {
-        return mrConsume;
+        *lplParam = 0;
+        return mrDoDefault;
     }
 
     if (fSet) {
@@ -4209,14 +4002,15 @@ HIMC AwtComponent::ImmAssociateContext(HIMC himc)
 
 HWND AwtComponent::GetProxyFocusOwner()
 {
-    AwtWindow * window = GetContainer();
+    AwtWindow *window = GetContainer();
     if (window != 0) {
-        AwtFrame * owner = window->GetOwningFrameOrDialog();
+        AwtFrame *owner = window->GetOwningFrameOrDialog();
         if (owner != 0) {
             return owner->GetProxyFocusOwner();
+        } else if (!window->IsSimpleWindow()) { // isn't an owned simple window
+            return ((AwtFrame*)window)->GetProxyFocusOwner();
         }
     }
-
     return (HWND)NULL;
 }
 
@@ -4543,7 +4337,7 @@ MsgRouting AwtComponent::WmPrint(HDC hDC, LPARAM flags)
 
         // Special case for components with a sunken border. Windows does not
         // print the border correctly on PCL printers, so we have to do it ourselves.
-        if (IS_WIN4X && (GetStyleEx() & WS_EX_CLIENTEDGE)) {
+        if (GetStyleEx() & WS_EX_CLIENTEDGE) {
             RECT r;
             VERIFY(::GetWindowRect(GetHWnd(), &r));
             VERIFY(::OffsetRect(&r, -r.left, -r.top));
@@ -4559,7 +4353,7 @@ MsgRouting AwtComponent::WmPrint(HDC hDC, LPARAM flags)
          * We will first print the non-client area with the original offset,
          * then the client area with a corrected offset.
          */
-        if (IS_WIN4X && (GetStyleEx() & WS_EX_CLIENTEDGE)) {
+        if (GetStyleEx() & WS_EX_CLIENTEDGE) {
 
             int nEdgeWidth = ::GetSystemMetrics(SM_CXEDGE);
             int nEdgeHeight = ::GetSystemMetrics(SM_CYEDGE);
@@ -4738,7 +4532,28 @@ HDC AwtComponent::GetDCFromComponent()
     return hdc;
 }
 
-jintArray AwtComponent::CreatePrintedPixels(SIZE &loc, SIZE &size) {
+void AwtComponent::FillBackground(HDC hMemoryDC, SIZE &size)
+{
+    RECT eraseR = { 0, 0, size.cx, size.cy };
+    VERIFY(::FillRect(hMemoryDC, &eraseR, GetBackgroundBrush()));
+}
+
+void AwtComponent::FillAlpha(void *bitmapBits, SIZE &size, BYTE alpha)
+{
+    if (!bitmapBits) {
+        return;
+    }
+
+    DWORD* dest = (DWORD*)bitmapBits;
+    //XXX: might be optimized to use one loop (cy*cx -> 0)
+    for (int i = 0; i < size.cy; i++ ) {
+        for (int j = 0; j < size.cx; j++ ) {
+            ((BYTE*)(dest++))[3] = alpha;
+        }
+    }
+}
+
+jintArray AwtComponent::CreatePrintedPixels(SIZE &loc, SIZE &size, int alpha) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (!::IsWindowVisible(GetHWnd())) {
@@ -4750,18 +4565,26 @@ jintArray AwtComponent::CreatePrintedPixels(SIZE &loc, SIZE &size) {
         return NULL;
     }
     HDC hMemoryDC = ::CreateCompatibleDC(hdc);
-    HBITMAP hBitmap = ::CreateCompatibleBitmap(hdc, size.cx, size.cy);
+    void *bitmapBits = NULL;
+    HBITMAP hBitmap = BitmapUtil::CreateARGBBitmap(size.cx, size.cy, &bitmapBits);
     HBITMAP hOldBitmap = (HBITMAP)::SelectObject(hMemoryDC, hBitmap);
     SendMessage(WM_AWT_RELEASEDC, (WPARAM)hdc);
 
-    RECT eraseR = { 0, 0, size.cx, size.cy };
-    VERIFY(::FillRect(hMemoryDC, &eraseR, GetBackgroundBrush()));
+    FillBackground(hMemoryDC, size);
 
     VERIFY(::SetWindowOrgEx(hMemoryDC, loc.cx, loc.cy, NULL));
 
     // Don't bother with PRF_CHECKVISIBLE because we called IsWindowVisible
     // above.
     SendMessage(WM_PRINT, (WPARAM)hMemoryDC, PRF_CLIENT | PRF_NONCLIENT);
+
+    // First make sure the system completed any drawing to the bitmap.
+    ::GdiFlush();
+
+    // WM_PRINT does not fill the alpha-channel of the ARGB bitmap
+    // leaving it equal to zero. Hence we need to fill it manually. Otherwise
+    // the pixels will be considered transparent when interpreting the data.
+    FillAlpha(bitmapBits, size, alpha);
 
     ::SelectObject(hMemoryDC, hOldBitmap);
 
@@ -4795,25 +4618,52 @@ jintArray AwtComponent::CreatePrintedPixels(SIZE &loc, SIZE &size) {
     return pixelArray;
 }
 
-void *
-AwtComponent::GetNativeFocusOwner() {
+void* AwtComponent::SetNativeFocusOwner(void *self) {
+    if (self == NULL) {
+        // It means that the KFM wants to set focus to null
+        sm_focusOwner = NULL;
+        return NULL;
+    }
+
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
+    AwtComponent *c = NULL;
+    jobject peer = (jobject)self;
+
+    PDATA pData;
+    JNI_CHECK_NULL_GOTO(peer, "peer", ret);
+    pData = JNI_GET_PDATA(peer);
+    if (pData == NULL) {
+        goto ret;
+    }
+    c = (AwtComponent *)pData;
+
+ret:
+    if (c && ::IsWindow(c->GetHWnd())) {
+        sm_focusOwner = c->GetHWnd();
+        AwtFrame *owner = (AwtFrame*)GetComponent(c->GetProxyToplevelContainer());
+        if (owner) {
+            owner->SetLastProxiedFocusOwner(sm_focusOwner);
+        }
+    } else {
+        sm_focusOwner = NULL;
+    }
+    env->DeleteGlobalRef(peer);
+    return NULL;
+}
+
+void* AwtComponent::GetNativeFocusedWindow() {
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    AwtComponent *comp =
+        AwtComponent::GetComponent(AwtComponent::GetFocusedWindow());
+    return (comp != NULL) ? comp->GetTargetAsGlobalRef(env) : NULL;
+}
+
+void* AwtComponent::GetNativeFocusOwner() {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     AwtComponent *comp =
         AwtComponent::GetComponent(AwtComponent::sm_focusOwner);
     return (comp != NULL) ? comp->GetTargetAsGlobalRef(env) : NULL;
-}
-void *
-AwtComponent::GetNativeFocusedWindow() {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    AwtComponent *comp =
-        AwtComponent::GetComponent(AwtComponent::sm_focusedWindow);
-    return (comp != NULL) ? comp->GetTargetAsGlobalRef(env) : NULL;
-}
-void
-AwtComponent::ClearGlobalFocusOwner() {
-    if (AwtComponent::sm_focusOwner != NULL) {
-        ::SetFocus(NULL);
-    }
 }
 
 AwtComponent* AwtComponent::SearchChild(UINT id) {
@@ -4850,7 +4700,7 @@ void AwtComponent::RemoveChild(UINT id) {
 }
 
 void AwtComponent::SendKeyEvent(jint id, jlong when, jint raw, jint cooked,
-                                jint modifiers, jint keyLocation, MSG *pMsg)
+                                jint modifiers, jint keyLocation, jlong nativeCode, MSG *pMsg)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     CriticalSection::Lock l(GetLock());
@@ -4887,6 +4737,18 @@ void AwtComponent::SendKeyEvent(jint id, jlong when, jint raw, jint cooked,
     if (safe_ExceptionOccurred(env)) env->ExceptionDescribe();
     DASSERT(!safe_ExceptionOccurred(env));
     DASSERT(keyEvent != NULL);
+    env->SetLongField(keyEvent, AwtKeyEvent::rawCodeID, nativeCode);
+    if( nativeCode && nativeCode < 256 ) {
+        env->SetLongField(keyEvent, AwtKeyEvent::primaryLevelUnicodeID, (jlong)(dynPrimaryKeymap[nativeCode].unicode));
+        env->SetLongField(keyEvent, AwtKeyEvent::extendedKeyCodeID, (jlong)(dynPrimaryKeymap[nativeCode].jkey));
+        if( nativeCode < 255 ) {
+            env->SetLongField(keyEvent, AwtKeyEvent::scancodeID, (jlong)(dynPrimaryKeymap[nativeCode].scancode));
+        }else if( pMsg != NULL ) {
+            // unknown key with virtual keycode 0xFF.
+            // Its scancode is not in the table, pickup it from the message.
+            env->SetLongField(keyEvent, AwtKeyEvent::scancodeID, (jlong)(HIWORD(pMsg->lParam) & 0xFF));
+        }
+    }
     if (pMsg != NULL) {
         AwtAWTEvent::saveMSG(env, pMsg, keyEvent);
     }
@@ -4900,16 +4762,17 @@ void
 AwtComponent::SendKeyEventToFocusOwner(jint id, jlong when,
                                        jint raw, jint cooked,
                                        jint modifiers, jint keyLocation,
+                                       jlong nativeCode,
                                        MSG *msg)
 {
     /*
      * if focus owner is null, but focused window isn't
      * we will send key event to focused window
      */
-    HWND hwndTarget = ((sm_focusOwner != NULL) ? sm_focusOwner : sm_focusedWindow);
+    HWND hwndTarget = ((sm_focusOwner != NULL) ? sm_focusOwner : AwtComponent::GetFocusedWindow());
 
     if (hwndTarget == GetHWnd()) {
-        SendKeyEvent(id, when, raw, cooked, modifiers, keyLocation, msg);
+        SendKeyEvent(id, when, raw, cooked, modifiers, keyLocation, nativeCode, msg);
     } else {
         AwtComponent *target = NULL;
         if (hwndTarget != NULL) {
@@ -4920,7 +4783,7 @@ AwtComponent::SendKeyEventToFocusOwner(jint id, jlong when,
         }
         if (target != NULL) {
             target->SendKeyEvent(id, when, raw, cooked, modifiers,
-              keyLocation, msg);
+              keyLocation, nativeCode, msg);
         }
     }
 }
@@ -5305,7 +5168,12 @@ void AwtComponent::SynthesizeMouseMessage(JNIEnv *env, jobject mouseEvent)
           if (modifiers & java_awt_event_InputEvent_BUTTON3_DOWN_MASK) {
               wLow |= MK_MBUTTON;
           }
-
+          if (modifiers & X1_BUTTON) {
+              wLow |= GetButtonMK(X1_BUTTON);
+          }
+          if (modifiers & X2_BUTTON) {
+              wLow |= GetButtonMK(X2_BUTTON);
+          }
 
           wheelAmt = (jint)JNU_CallMethodByName(env,
                                                NULL,
@@ -5319,18 +5187,8 @@ void AwtComponent::SynthesizeMouseMessage(JNIEnv *env, jobject mouseEvent)
           // convert Java wheel amount value to Win32
           wheelAmt *= -1 * WHEEL_DELTA;
 
-          if (IS_WIN95 && !IS_WIN98) {
-              // 95 doesn't understand WM_MOUSEWHEEL, so plug in value of
-              // mouse wheel event on 95
-              DTRACE_PRINTLN("awt_C::synthmm - 95 case");
-              DASSERT(Wheel95GetMsg() != NULL);
-              message = Wheel95GetMsg();
-              wParam = wheelAmt;
-          }
-          else {
-              message = WM_MOUSEWHEEL;
-              wParam = MAKEWPARAM(wLow, wheelAmt);
-          }
+          message = WM_MOUSEWHEEL;
+          wParam = MAKEWPARAM(wLow, wheelAmt);
 
           break;
       default:
@@ -5339,14 +5197,7 @@ void AwtComponent::SynthesizeMouseMessage(JNIEnv *env, jobject mouseEvent)
     jint x = (env)->GetIntField(mouseEvent, AwtMouseEvent::xID);
     jint y = (env)->GetIntField(mouseEvent, AwtMouseEvent::yID);
     MSG* msg = CreateMessage(message, wParam, MAKELPARAM(x, y), x, y);
-    // If the window is not focusable but if this is a focusing
-    // message we should skip it then and perform our own actions.
-    AwtWindow *pCont = GetContainer();
-    if ((pCont && pCont->IsFocusableWindow()) || !ActMouseMessage(msg)) {
-        PostHandleEventMessage(msg, TRUE);
-    } else {
-        delete msg;
-    }
+    PostHandleEventMessage(msg, TRUE);
 }
 
 BOOL AwtComponent::InheritsNativeMouseWheelBehavior() {return false;}
@@ -5432,56 +5283,16 @@ void AwtComponent::UnlinkObjects()
 
 void AwtComponent::Enable(BOOL bEnable)
 {
-    sm_suppressFocusAndActivation = TRUE;
-
     if (bEnable && IsTopLevel()) {
         // we should not enable blocked toplevels
         bEnable = !::IsWindow(AwtWindow::GetModalBlocker(GetHWnd()));
     }
+    // Shouldn't trigger native focus change
+    // (only the proxy may be the native focus owner).
     ::EnableWindow(GetHWnd(), bEnable);
 
-    sm_suppressFocusAndActivation = FALSE;
     CriticalSection::Lock l(GetLock());
     VerifyState();
-}
-
-/* Initialization of MouseWheel support on Windows 95 */
-void AwtComponent::Wheel95Init() {
-    DASSERT(IS_WIN95 && !IS_WIN98);
-
-    HWND mwHWND = NULL;
-    UINT wheelMSG = WM_NULL;
-    UINT suppMSG = WM_NULL;
-    UINT linesMSG = WM_NULL;
-    BOOL wheelActive;
-    INT lines;
-
-    mwHWND = HwndMSWheel(&wheelMSG, &suppMSG, &linesMSG, &wheelActive, &lines);
-    if (mwHWND != WM_NULL) {
-        sm_95WheelMessage = wheelMSG;
-        sm_95WheelSupport = suppMSG;
-    }
-}
-
-/* Win95 only
- * Return the user's preferred number of lines of test to scroll when the
- * mouse wheel is rotated.
- */
-UINT AwtComponent::Wheel95GetScrLines() {
-    DASSERT(IS_WIN95 && !IS_WIN98);
-    DASSERT(sm_95WheelSupport != NULL);
-
-    HWND mwHWND = NULL;
-    UINT linesMSG = WM_NULL;
-    INT numLines = 3;
-
-    linesMSG = RegisterWindowMessage(MSH_SCROLL_LINES);
-    mwHWND = FindWindow(MSH_WHEELMODULE_CLASS, MSH_WHEELMODULE_TITLE);
-
-    if (mwHWND && linesMSG) {
-        numLines = (INT)::SendMessage(mwHWND, linesMSG, 0, 0);
-    }
-    return numLines;
 }
 
 /*
@@ -5506,23 +5317,12 @@ void AwtComponent::DestroyDropTarget() {
     }
 }
 
-/**
- * Special procedure responsible for performing the actions which
- * usually happen with component when mouse buttons are being
- * pressed. It is required in case of non-focusable components - we
- * don't pass mouse messages directly to the windows because otherwise
- * it will try to focus component first which we don't want.  This
- * function receives MSG and should return TRUE if it processed the
- * message and no furhter processing is allowed, FALSE otherwise.
- * Default implementation returns TRUE it is the message on which
- * Windows try to focus the component.  Descendant components write
- * their own implementation of this procedure.
- */
-BOOL AwtComponent::ActMouseMessage(MSG * pMsg) {
-    if (IsFocusingMessage(pMsg->message)) {
-        return TRUE;
-    }
-    return FALSE;
+BOOL AwtComponent::IsFocusingMouseMessage(MSG *pMsg) {
+    return pMsg->message == WM_LBUTTONDOWN || pMsg->message == WM_LBUTTONDBLCLK;
+}
+
+BOOL AwtComponent::IsFocusingKeyMessage(MSG *pMsg) {
+    return pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_SPACE;
 }
 
 void AwtComponent::_Show(void *param)
@@ -5860,22 +5660,12 @@ void AwtComponent::_NativeHandleEvent(void *param)
                 return;
             }
 
-            /* Post the message directly to the subclassed component. */
-            if (self && (pData = JNI_GET_PDATA(self))) {
-                AwtComponent* p = (AwtComponent*)pData;
-                // If the window is not focusable but if this is a focusing
-                // message we should skip it then and perform our own actions.
-                AwtWindow *pCont = (AwtWindow*)(p->GetContainer());
-                if ((pCont && pCont->IsFocusableWindow()) ||
-                    !p->ActMouseMessage(&msg))
-                {
-                    // Create copy for local msg
-                    MSG* pCopiedMsg = new MSG;
-                    memmove(pCopiedMsg, &msg, sizeof(MSG));
-                    // Event handler deletes msg
-                    p->PostHandleEventMessage(pCopiedMsg, FALSE);
-                }
-            }
+            // Create copy for local msg
+            MSG* pCopiedMsg = new MSG;
+            memmove(pCopiedMsg, &msg, sizeof(MSG));
+            // Event handler deletes msg
+            p->PostHandleEventMessage(pCopiedMsg, FALSE);
+
             env->DeleteGlobalRef(self);
             env->DeleteGlobalRef(event);
             delete nhes;
@@ -5983,7 +5773,7 @@ void AwtComponent::_SetFont(void *param)
     {
         AwtFont *awtFont = (AwtFont *)env->GetLongField(font, AwtFont::pDataID);
         if (awtFont == NULL) {
-        /*arguments of AwtFont::Create are changed for multifont component */
+            /*arguments of AwtFont::Create are changed for multifont component */
             awtFont = AwtFont::Create(env, font);
         }
         env->SetLongField(font, AwtFont::pDataID, (jlong)awtFont);
@@ -5997,19 +5787,15 @@ ret:
     delete sfs;
 }
 
-jboolean AwtComponent::_RequestFocus(void *param)
+// Sets or kills focus for a component.
+void AwtComponent::_SetFocus(void *param)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
-    RequestFocusStruct *rfs = (RequestFocusStruct *)param;
-    jobject self = rfs->component;
-    jobject lightweightChild = rfs->lightweightChild;
-    jboolean temporary = rfs->temporary;
-    jboolean focusedWindowChangeAllowed = rfs->focusedWindowChangeAllowed;
-    jlong time = rfs->time;
-    jobject cause = rfs->cause;
+    SetFocusStruct *sfs = (SetFocusStruct *)param;
+    jobject self = sfs->component;
+    jboolean doSetFocus = sfs->doSetFocus;
 
-    jboolean result = JNI_FALSE;
     AwtComponent *c = NULL;
 
     PDATA pData;
@@ -6021,25 +5807,13 @@ jboolean AwtComponent::_RequestFocus(void *param)
     }
 
     c = (AwtComponent *)pData;
-    if (::IsWindow(c->GetHWnd()))
-    {
-        WmComponentSetFocusData *data = new WmComponentSetFocusData;
-        data->lightweightChild = env->NewGlobalRef(lightweightChild);
-        data->temporary = temporary;
-        data->focusedWindowChangeAllowed = focusedWindowChangeAllowed;
-        data->time = time;
-        data->cause = cause;
-        result = (jboolean)c->SendMessage(WM_AWT_COMPONENT_SETFOCUS, (WPARAM)data, 0);
-        // data and global ref in it are deleted in WmComponentSetFocus
+    if (::IsWindow(c->GetHWnd())) {
+        c->SendMessage(WM_AWT_COMPONENT_SETFOCUS, (WPARAM)doSetFocus, 0);
     }
 ret:
     env->DeleteGlobalRef(self);
-    env->DeleteGlobalRef(lightweightChild);
-    env->DeleteGlobalRef(cause);
 
-    delete rfs;
-
-    return result;
+    delete sfs;
 }
 
 void AwtComponent::_Start(void *param)
@@ -6187,10 +5961,6 @@ jintArray AwtComponent::_CreatePrintedPixels(void *param)
 
     CreatePrintedPixelsStruct *cpps = (CreatePrintedPixelsStruct *)param;
     jobject self = cpps->component;
-    jint srcx = cpps->srcx;
-    jint srcy = cpps->srcy;
-    jint srcw = cpps->srcw;
-    jint srch = cpps->srch;
 
     jintArray result = NULL;
     AwtComponent *c = NULL;
@@ -6200,28 +5970,13 @@ jintArray AwtComponent::_CreatePrintedPixels(void *param)
     c = (AwtComponent *)pData;
     if (::IsWindow(c->GetHWnd()))
     {
-        SIZE loc = { srcx, srcy };
-        SIZE size = { srcw, srch };
-
-        result = (jintArray)
-            c->SendMessage(WM_AWT_CREATE_PRINTED_PIXELS, (WPARAM)&loc,
-                          (LPARAM)&size);
+        result = (jintArray)c->SendMessage(WM_AWT_CREATE_PRINTED_PIXELS, (WPARAM)cpps, 0);
     }
 ret:
     env->DeleteGlobalRef(self);
 
     delete cpps;
-
-    if (result != NULL)
-    {
-        jintArray resultGlobalRef = (jintArray)env->NewGlobalRef(result);
-        env->DeleteLocalRef(result);
-        return resultGlobalRef;
-    }
-    else
-    {
-        return NULL;
-    }
+    return result; // this reference is global
 }
 
 jboolean AwtComponent::_IsObscured(void *param)
@@ -6302,9 +6057,9 @@ void AwtComponent::SetParent(void * param) {
             HWND selfWnd = comps[0]->GetHWnd();
             HWND parentWnd = comps[1]->GetHWnd();
             if (::IsWindow(selfWnd) && ::IsWindow(parentWnd)) {
-                sm_suppressFocusAndActivation = TRUE;
+                // Shouldn't trigger native focus change
+                // (only the proxy may be the native focus owner).
                 ::SetParent(selfWnd, parentWnd);
-                sm_suppressFocusAndActivation = FALSE;
             }
         }
         delete[] comps;
@@ -6327,37 +6082,40 @@ void AwtComponent::_SetRectangularShape(void *param)
 
     AwtComponent *c = NULL;
 
-
-
     PDATA pData;
     JNI_CHECK_PEER_GOTO(self, ret);
+
     c = (AwtComponent *)pData;
-    if (::IsWindow(c->GetHWnd()))
-    {
-        RGNDATA *pRgnData = NULL;
-        RGNDATAHEADER *pRgnHdr;
+    if (::IsWindow(c->GetHWnd())) {
+        HRGN hRgn = NULL;
+        if (region || x1 || x2 || y1 || y2) {
+            // If all the params are zeros, the shape must be simply reset.
+            // Otherwise, convert it into a region.
+            RGNDATA *pRgnData = NULL;
+            RGNDATAHEADER *pRgnHdr;
 
-        /* reserving memory for the worst case */
-        size_t worstBufferSize = size_t(((x2 - x1) / 2 + 1) * (y2 - y1));
-        pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
-                sizeof(RECT_T) * worstBufferSize);
-        pRgnHdr = (RGNDATAHEADER *) pRgnData;
+            /* reserving memory for the worst case */
+            size_t worstBufferSize = size_t(((x2 - x1) / 2 + 1) * (y2 - y1));
+            pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
+                    sizeof(RECT_T) * worstBufferSize);
+            pRgnHdr = (RGNDATAHEADER *) pRgnData;
 
-        pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
-        pRgnHdr->iType = RDH_RECTANGLES;
-        pRgnHdr->nRgnSize = 0;
-        pRgnHdr->rcBound.top = 0;
-        pRgnHdr->rcBound.left = 0;
-        pRgnHdr->rcBound.bottom = LONG(y2 - y1);
-        pRgnHdr->rcBound.right = LONG(x2 - x1);
+            pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
+            pRgnHdr->iType = RDH_RECTANGLES;
+            pRgnHdr->nRgnSize = 0;
+            pRgnHdr->rcBound.top = 0;
+            pRgnHdr->rcBound.left = 0;
+            pRgnHdr->rcBound.bottom = LONG(y2 - y1);
+            pRgnHdr->rcBound.right = LONG(x2 - x1);
 
-        RECT_T * pRect = (RECT_T *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER));
-        pRgnHdr->nCount = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region, &pRect, worstBufferSize);
+            RECT_T * pRect = (RECT_T *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER));
+            pRgnHdr->nCount = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region, &pRect, worstBufferSize);
 
-        HRGN hRgn = ::ExtCreateRegion(NULL,
-                sizeof(RGNDATAHEADER) + sizeof(RECT_T) * pRgnHdr->nCount, pRgnData);
+            hRgn = ::ExtCreateRegion(NULL,
+                    sizeof(RGNDATAHEADER) + sizeof(RECT_T) * pRgnHdr->nCount, pRgnData);
 
-        free(pRgnData);
+            free(pRgnData);
+        }
 
         ::SetWindowRgn(c->GetHWnd(), hRgn, TRUE);
     }
@@ -6367,6 +6125,33 @@ ret:
     if (region) {
         env->DeleteGlobalRef(region);
     }
+
+    delete data;
+}
+
+void AwtComponent::_SetZOrder(void *param) {
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
+    SetZOrderStruct *data = (SetZOrderStruct *)param;
+    jobject self = data->component;
+    HWND above = HWND_TOP;
+    if (data->above != 0) {
+        above = reinterpret_cast<HWND>(data->above);
+    }
+
+    AwtComponent *c = NULL;
+
+    PDATA pData;
+    JNI_CHECK_PEER_GOTO(self, ret);
+
+    c = (AwtComponent *)pData;
+    if (::IsWindow(c->GetHWnd())) {
+        ::SetWindowPos(c->GetHWnd(), above, 0, 0, 0, 0,
+                       SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_DEFERERASE | SWP_ASYNCWINDOWPOS);
+    }
+
+ret:
+    env->DeleteGlobalRef(self);
 
     delete data;
 }
@@ -6385,6 +6170,14 @@ void AwtComponent::PostUngrabEvent() {
         SendEvent(event);
         env->DeleteLocalRef(event);
     }
+}
+
+void AwtComponent::SetFocusedWindow(HWND window)
+{
+    HWND old = sm_focusedWindow;
+    sm_focusedWindow = window;
+
+    AwtWindow::FocusedWindowChanged(old, window);
 }
 
 /************************************************************************
@@ -6451,6 +6244,18 @@ JNIEXPORT void JNICALL
 Java_java_awt_Component_initIDs(JNIEnv *env, jclass cls)
 {
     TRY;
+    jclass inputEventClazz = env->FindClass("java/awt/event/InputEvent");
+    jmethodID getButtonDownMasksID = env->GetStaticMethodID(inputEventClazz, "getButtonDownMasks", "()[I");
+    jintArray obj = (jintArray)env->CallStaticObjectMethod(inputEventClazz, getButtonDownMasksID);
+    jint * tmp = env->GetIntArrayElements(obj, JNI_FALSE);
+
+    jsize len = env->GetArrayLength(obj);
+    AwtComponent::masks = new jint[len];
+    for (int i = 0; i < len; i++) {
+        AwtComponent::masks[i] = tmp[i];
+    }
+    env->ReleaseIntArrayElements(obj, tmp, 0);
+    env->DeleteLocalRef(obj);
 
     /* class ids */
     jclass peerCls = env->FindClass("sun/awt/windows/WComponentPeer");
@@ -6789,31 +6594,25 @@ Java_sun_awt_windows_WComponentPeer__1setFont(JNIEnv *env, jobject self,
 
 /*
  * Class:     sun_awt_windows_WComponentPeer
- * Method:    requestFocus
- * Signature: (Ljava/awt/Component;ZZJ)Z
+ * Method:    focusGained
+ * Signature: (Z)
  */
-JNIEXPORT jboolean JNICALL Java_sun_awt_windows_WComponentPeer__1requestFocus
-    (JNIEnv *env, jobject self, jobject lightweightChild, jboolean temporary,
-     jboolean focusedWindowChangeAllowed, jlong time, jobject cause)
+JNIEXPORT void JNICALL Java_sun_awt_windows_WComponentPeer_setFocus
+    (JNIEnv *env, jobject self, jboolean doSetFocus)
 {
     TRY;
 
     jobject selfGlobalRef = env->NewGlobalRef(self);
-    jobject lightweightChildGlobalRef = env->NewGlobalRef(lightweightChild);
 
-    RequestFocusStruct *rfs = new RequestFocusStruct;
-    rfs->component = selfGlobalRef;
-    rfs->lightweightChild = lightweightChildGlobalRef;
-    rfs->temporary = temporary;
-    rfs->focusedWindowChangeAllowed = focusedWindowChangeAllowed;
-    rfs->time = time;
-    rfs->cause = env->NewGlobalRef(cause);
+    SetFocusStruct *sfs = new SetFocusStruct;
+    sfs->component = selfGlobalRef;
+    sfs->doSetFocus = doSetFocus;
 
-    return (jboolean)AwtToolkit::GetInstance().SyncCall(
-        (void*(*)(void*))AwtComponent::_RequestFocus, rfs);
-    // global refs and rfs are deleted in _RequestFocus
+    AwtToolkit::GetInstance().SyncCall(
+        (void*(*)(void*))AwtComponent::_SetFocus, sfs);
+    // global refs and self are deleted in _SetFocus
 
-    CATCH_BAD_ALLOC_RET(JNI_FALSE);
+    CATCH_BAD_ALLOC;
 }
 
 /*
@@ -6955,7 +6754,7 @@ Java_sun_awt_windows_WComponentPeer_getTargetGC(JNIEnv* env, jobject theThis)
  */
 JNIEXPORT jintArray JNICALL
 Java_sun_awt_windows_WComponentPeer_createPrintedPixels(JNIEnv* env,
-    jobject self, jint srcX, jint srcY, jint srcW, jint srcH)
+    jobject self, jint srcX, jint srcY, jint srcW, jint srcH, jint alpha)
 {
     TRY;
 
@@ -6967,6 +6766,7 @@ Java_sun_awt_windows_WComponentPeer_createPrintedPixels(JNIEnv* env,
     cpps->srcy = srcY;
     cpps->srcw = srcW;
     cpps->srch = srcH;
+    cpps->alpha = alpha;
 
     jintArray globalRef = (jintArray)AwtToolkit::GetInstance().SyncCall(
         (void*(*)(void*))AwtComponent::_CreatePrintedPixels, cpps);
@@ -7025,39 +6825,6 @@ Java_sun_awt_windows_WComponentPeer_isObscured(JNIEnv* env,
     CATCH_BAD_ALLOC_RET(NULL);
 }
 
-/*
- * Class:     sun_awt_windows_WComponentPeer
- * Method:    wheelInit
- * Signature: ()V
- */
-JNIEXPORT void JNICALL
-Java_sun_awt_windows_WComponentPeer_wheelInit(JNIEnv *env, jclass cls)
-{
-    // Only necessary on Win95
-    if (IS_WIN95 && !IS_WIN98) {
-        AwtComponent::Wheel95Init();
-    }
-}
-
-JNIEXPORT jboolean JNICALL
-Java_sun_awt_windows_WComponentPeer_processSynchronousLightweightTransfer(JNIEnv *env, jclass cls,
-                                                                          jobject heavyweight,
-                                                                          jobject descendant,
-                                                                          jboolean temporary,
-                                                                          jboolean focusedWindowChangeAllowed,
-                                                                          jlong time)
-{
-    TRY;
-
-    return env->CallStaticBooleanMethod(AwtKeyboardFocusManager::keyboardFocusManagerCls,
-                                        AwtKeyboardFocusManager::processSynchronousTransfer,
-                                        heavyweight, descendant, temporary,
-                                        focusedWindowChangeAllowed,
-                                        time);
-
-    CATCH_BAD_ALLOC_RET(JNI_TRUE);
-}
-
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WComponentPeer_pSetParent(JNIEnv* env, jobject self, jobject parent) {
     TRY;
@@ -7095,6 +6862,21 @@ Java_sun_awt_windows_WComponentPeer_setRectangularShape(JNIEnv* env, jobject sel
 
     AwtToolkit::GetInstance().SyncCall(AwtComponent::_SetRectangularShape, data);
     // global refs and data are deleted in _SetRectangularShape
+
+    CATCH_BAD_ALLOC;
+}
+
+JNIEXPORT void JNICALL
+Java_sun_awt_windows_WComponentPeer_setZOrder(JNIEnv* env, jobject self, jlong above)
+{
+    TRY;
+
+    SetZOrderStruct * data = new SetZOrderStruct;
+    data->component = env->NewGlobalRef(self);
+    data->above = above;
+
+    AwtToolkit::GetInstance().SyncCall(AwtComponent::_SetZOrder, data);
+    // global refs and data are deleted in _SetLower
 
     CATCH_BAD_ALLOC;
 }
@@ -7217,7 +6999,9 @@ void AwtComponent::VerifyState()
                                               "getName",
                                               "()Ljava/lang/String;").l;
             DASSERT(!safe_ExceptionOccurred(env));
-            printf("\t%S\n", TO_WSTRING(targetStr));
+            LPCWSTR targetStrW = JNU_GetStringPlatformChars(env, targetStr, NULL);
+            printf("\t%S\n", targetStrW);
+            JNU_ReleaseStringPlatformChars(env, targetStr, targetStrW);
         }
         printf("\twas:       [%d,%d,%dx%d]\n", x, y, width, height);
         if (!fSizeValid) {

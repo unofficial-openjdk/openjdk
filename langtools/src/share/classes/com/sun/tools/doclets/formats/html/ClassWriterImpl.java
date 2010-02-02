@@ -25,12 +25,12 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import java.util.*;
+
+import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.builders.*;
-import com.sun.javadoc.*;
-
-import java.util.*;
 import com.sun.tools.doclets.internal.toolkit.taglets.*;
 
 /**
@@ -91,7 +91,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
     protected void navLinkClass() {
         navCellRevStart();
         fontStyle("NavBarFont1Rev");
-        boldText("doclet.Class");
+        strongText("doclet.Class");
         fontEnd();
         navCellEnd();
     }
@@ -171,8 +171,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter
      */
     public void writeClassSignature(String modifiers) {
         boolean isInterface = classDoc.isInterface();
-        dl();
-        dt();
         preNoNewLine();
         writeAnnotationInfo(classDoc);
         print(modifiers);
@@ -185,13 +183,13 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         if (configuration().linksource) {
             printSrcLink(classDoc, name);
         } else {
-            bold(name);
+            strong(name);
         }
         if (!isInterface) {
             Type superclass = Util.getFirstVisibleSuperClass(classDoc,
                 configuration());
             if (superclass != null) {
-                dt();
+                println();
                 print("extends ");
                 printLink(new LinkInfoImpl(
                     LinkInfoImpl.CONTEXT_CLASS_SIGNATURE_PARENT_NAME,
@@ -208,7 +206,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
                     continue;
                 }
                 if (counter == 0) {
-                    dt();
+                    println();
                     print(isInterface? "extends " : "implements ");
                 } else {
                     print(", ");
@@ -219,7 +217,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter
                 counter++;
             }
         }
-        dlEnd();
         preEnd();
         p();
     }
@@ -258,7 +255,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         hr();
         Tag[] deprs = classDoc.tags("deprecated");
         if (Util.isDeprecated(classDoc)) {
-            boldText("doclet.Deprecated");
+            strongText("doclet.Deprecated");
             if (deprs.length > 0) {
                 Tag[] commentTags = deprs[0].inlineTags();
                 if (commentTags.length > 0) {
@@ -307,9 +304,9 @@ public class ClassWriterImpl extends SubWriterHolderWriter
                     classDoc, false));
             if (configuration.shouldExcludeQualifier(
                     classDoc.containingPackage().name())) {
-                bold(type.asClassDoc().name() + typeParameters);
+                strong(type.asClassDoc().name() + typeParameters);
             } else {
-                bold(type.asClassDoc().qualifiedName() + typeParameters);
+                strong(type.asClassDoc().qualifiedName() + typeParameters);
             }
         } else {
             print(getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS_TREE_PARENT,
@@ -342,6 +339,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             TagletOutput output = (new ParamTaglet()).getTagletOutput(classDoc,
                 getTagletWriterInstance(false));
             print(output.toString());
+            dtEnd();
             dlEnd();
         }
     }
@@ -355,13 +353,15 @@ public class ClassWriterImpl extends SubWriterHolderWriter
                 classDoc.qualifiedName().equals("org.omg.CORBA.Object")) {
                 return;    // Don't generate the list, too huge
             }
-            List subclasses = classtree.subs(classDoc, false);
+            List<ClassDoc> subclasses = classtree.subs(classDoc, false);
             if (subclasses.size() > 0) {
                 dl();
                 dt();
-                boldText("doclet.Subclasses");
+                strongText("doclet.Subclasses");
+                dtEnd();
                 writeClassLinks(LinkInfoImpl.CONTEXT_SUBCLASSES,
                     subclasses);
+                dlEnd();
             }
         }
     }
@@ -371,13 +371,15 @@ public class ClassWriterImpl extends SubWriterHolderWriter
      */
     public void writeSubInterfacesInfo() {
         if (classDoc.isInterface()) {
-            List subInterfaces = classtree.allSubs(classDoc, false);
+            List<ClassDoc> subInterfaces = classtree.allSubs(classDoc, false);
             if (subInterfaces.size() > 0) {
                 dl();
                 dt();
-                boldText("doclet.Subinterfaces");
+                strongText("doclet.Subinterfaces");
+                dtEnd();
                 writeClassLinks(LinkInfoImpl.CONTEXT_SUBINTERFACES,
                     subInterfaces);
+                dlEnd();
             }
         }
     }
@@ -393,13 +395,15 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             classDoc.qualifiedName().equals("java.io.Serializable")) {
             return;   // Don't generate the list, too big
         }
-        List implcl = classtree.implementingclasses(classDoc);
+        List<ClassDoc> implcl = classtree.implementingclasses(classDoc);
         if (implcl.size() > 0) {
             dl();
             dt();
-            boldText("doclet.Implementing_Classes");
+            strongText("doclet.Implementing_Classes");
+            dtEnd();
             writeClassLinks(LinkInfoImpl.CONTEXT_IMPLEMENTED_CLASSES,
                 implcl);
+            dlEnd();
         }
     }
 
@@ -409,13 +413,15 @@ public class ClassWriterImpl extends SubWriterHolderWriter
     public void writeImplementedInterfacesInfo() {
         //NOTE:  we really should be using ClassDoc.interfaceTypes() here, but
         //       it doesn't walk up the tree like we want it to.
-        List interfaceArray = Util.getAllInterfaces(classDoc, configuration);
+        List<Type> interfaceArray = Util.getAllInterfaces(classDoc, configuration);
         if (classDoc.isClass() && interfaceArray.size() > 0) {
             dl();
             dt();
-            boldText("doclet.All_Implemented_Interfaces");
+            strongText("doclet.All_Implemented_Interfaces");
+            dtEnd();
             writeClassLinks(LinkInfoImpl.CONTEXT_IMPLEMENTED_INTERFACES,
                 interfaceArray);
+            dlEnd();
         }
     }
 
@@ -425,20 +431,22 @@ public class ClassWriterImpl extends SubWriterHolderWriter
     public void writeSuperInterfacesInfo() {
         //NOTE:  we really should be using ClassDoc.interfaceTypes() here, but
         //       it doesn't walk up the tree like we want it to.
-        List interfaceArray = Util.getAllInterfaces(classDoc, configuration);
+        List<Type> interfaceArray = Util.getAllInterfaces(classDoc, configuration);
         if (classDoc.isInterface() && interfaceArray.size() > 0) {
             dl();
             dt();
-            boldText("doclet.All_Superinterfaces");
+            strongText("doclet.All_Superinterfaces");
+            dtEnd();
             writeClassLinks(LinkInfoImpl.CONTEXT_SUPER_INTERFACES,
                 interfaceArray);
+            dlEnd();
         }
     }
 
     /**
      * Generate links to the given classes.
      */
-    private void writeClassLinks(int context, List list) {
+    private void writeClassLinks(int context, List<?> list) {
         Object[] typeList = list.toArray();
         //Sort the list to be printed.
         print(' ');
@@ -455,7 +463,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             }
         }
         ddEnd();
-        dlEnd();
     }
 
     protected void navLinkTree() {
@@ -570,10 +577,11 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             dl();
             dt();
             if (outerClass.isInterface()) {
-                boldText("doclet.Enclosing_Interface");
+                strongText("doclet.Enclosing_Interface");
             } else {
-                boldText("doclet.Enclosing_Class");
+                strongText("doclet.Enclosing_Class");
             }
+            dtEnd();
             dd();
             printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, outerClass,
                 false));

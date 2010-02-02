@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ import com.sun.tools.javac.parser.DocCommentScanner;
  *  risk.  This code and its internal interfaces are subject to change
  *  or deletion without notice.</b>
  */
+@SuppressWarnings("deprecation")
 public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
     /** The context key for the compiler. */
     protected static final Context.Key<JavaCompiler> compilerKey =
@@ -233,6 +234,7 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
 
         ListBuffer<ClassSymbol> classes = new ListBuffer<ClassSymbol>();
         try {
+            JavacFileManager fm = (JavacFileManager)fileManager;
             //parse all files
             ListBuffer<JCCompilationUnit> trees = new ListBuffer<JCCompilationUnit>();
             for (List<String> l = filenames; l.nonEmpty(); l = l.tail) {
@@ -250,7 +252,8 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
                         continue;
                     }
                 }
-                trees.append(parse(l.head));
+                JavaFileObject fo = fm.getJavaFileObjectsFromStrings(List.of(l.head)).iterator().next();
+                trees.append(parse(fo));
             }
 
             //enter symbols for all files

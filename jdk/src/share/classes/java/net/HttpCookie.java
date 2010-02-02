@@ -33,6 +33,7 @@ import java.util.TimeZone;
 import java.util.Date;
 
 import java.lang.NullPointerException;  // for javadoc
+import java.util.Locale;
 
 /**
  * An HttpCookie object represents an http cookie, which carries state
@@ -1035,7 +1036,7 @@ public final class HttpCookie implements Cloneable {
                         int version = Integer.parseInt(attrValue);
                         cookie.setVersion(version);
                     } catch (NumberFormatException ignored) {
-                        throw new IllegalArgumentException("Illegal cookie version attribute");
+                        // Just ignore bogus version, it will default to 0 or 1
                     }
                 }
             });
@@ -1058,8 +1059,7 @@ public final class HttpCookie implements Cloneable {
         if (assignor != null) {
             assignor.assign(cookie, attrName, attrValue);
         } else {
-            // must be an error
-            throw new IllegalArgumentException("Illegal cookie attribute");
+            // Ignore the attribute as per RFC 2965
         }
     }
 
@@ -1097,7 +1097,7 @@ public final class HttpCookie implements Cloneable {
     static {
             cDateFormats = new SimpleDateFormat[COOKIE_DATE_FORMATS.length];
             for (int i = 0; i < COOKIE_DATE_FORMATS.length; i++) {
-                cDateFormats[i] = new SimpleDateFormat(COOKIE_DATE_FORMATS[i]);
+                cDateFormats[i] = new SimpleDateFormat(COOKIE_DATE_FORMATS[i], Locale.US);
                 cDateFormats[i].setTimeZone(TimeZone.getTimeZone("GMT"));
             }
     }
@@ -1147,12 +1147,15 @@ public final class HttpCookie implements Cloneable {
     }
 
     private static String stripOffSurroundingQuote(String str) {
-        if (str != null && str.length() > 0 &&
+        if (str != null && str.length() > 2 &&
             str.charAt(0) == '"' && str.charAt(str.length() - 1) == '"') {
             return str.substring(1, str.length() - 1);
-        } else {
-            return str;
         }
+        if (str != null && str.length() > 2 &&
+            str.charAt(0) == '\'' && str.charAt(str.length() - 1) == '\'') {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 
     private static boolean equalsIgnoreCase(String s, String t) {

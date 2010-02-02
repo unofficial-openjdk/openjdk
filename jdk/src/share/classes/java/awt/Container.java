@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,9 +46,9 @@ import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 
-import java.util.logging.*;
-
 import javax.accessibility.*;
+
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.AppContext;
 import sun.awt.CausedFocusEvent;
@@ -85,8 +85,8 @@ import sun.java2d.pipe.Region;
  */
 public class Container extends Component {
 
-    private static final Logger log = Logger.getLogger("java.awt.Container");
-    private static final Logger eventLog = Logger.getLogger("java.awt.event.Container");
+    private static final PlatformLogger log = PlatformLogger.getLogger("java.awt.Container");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.Container");
 
     private static final Component[] EMPTY_ARRAY = new Component[0];
 
@@ -167,6 +167,9 @@ public class Container extends Component {
     transient int listeningBoundsChildren;
     transient int descendantsCount;
 
+    /* Non-opaque window support -- see Window.setLayersOpaque */
+    transient Color preserveBackgroundColor = null;
+
     /**
      * JDK 1.1 serialVersionUID
      */
@@ -198,7 +201,7 @@ public class Container extends Component {
     private transient int numOfHWComponents = 0;
     private transient int numOfLWComponents = 0;
 
-    private static final Logger mixingLog = Logger.getLogger("java.awt.mixing.Container");
+    private static final PlatformLogger mixingLog = PlatformLogger.getLogger("java.awt.mixing.Container");
 
     /**
      * @serialField ncomponents                     int
@@ -267,9 +270,13 @@ public class Container extends Component {
 
     /**
      * Gets the number of components in this panel.
+     * <p>
+     * Note: This method should be called under AWT tree lock.
+     *
      * @return    the number of components in this panel.
      * @see       #getComponent
      * @since     JDK1.1
+     * @see Component#getTreeLock()
      */
     public int getComponentCount() {
         return countComponents();
@@ -281,43 +288,65 @@ public class Container extends Component {
      */
     @Deprecated
     public int countComponents() {
-        synchronized (getTreeLock()) {
-            return component.size();
-        }
+        // This method is not synchronized under AWT tree lock.
+        // Instead, the calling code is responsible for the
+        // synchronization. See 6784816 for details.
+        return component.size();
     }
 
     /**
      * Gets the nth component in this container.
+     * <p>
+     * Note: This method should be called under AWT tree lock.
+     *
      * @param      n   the index of the component to get.
      * @return     the n<sup>th</sup> component in this container.
      * @exception  ArrayIndexOutOfBoundsException
      *                 if the n<sup>th</sup> value does not exist.
+     * @see Component#getTreeLock()
      */
     public Component getComponent(int n) {
-        synchronized (getTreeLock()) {
-            if ((n < 0) || (n >= component.size())) {
-                throw new ArrayIndexOutOfBoundsException("No such child: " + n);
-            }
+        // This method is not synchronized under AWT tree lock.
+        // Instead, the calling code is responsible for the
+        // synchronization. See 6784816 for details.
+        try {
             return component.get(n);
+        } catch (IndexOutOfBoundsException z) {
+            throw new ArrayIndexOutOfBoundsException("No such child: " + n);
         }
     }
 
     /**
      * Gets all the components in this container.
+     * <p>
+     * Note: This method should be called under AWT tree lock.
+     *
      * @return    an array of all the components in this container.
+     * @see Component#getTreeLock()
      */
     public Component[] getComponents() {
+        // This method is not synchronized under AWT tree lock.
+        // Instead, the calling code is responsible for the
+        // synchronization. See 6784816 for details.
         return getComponents_NoClientCode();
     }
+
     // NOTE: This method may be called by privileged threads.
     //       This functionality is implemented in a package-private method
     //       to insure that it cannot be overridden by client subclasses.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     final Component[] getComponents_NoClientCode() {
+        return component.toArray(EMPTY_ARRAY);
+    }
+
+    /*
+     * Wrapper for getComponents() method with a proper synchronization.
+     */
+    Component[] getComponentsSync() {
         synchronized (getTreeLock()) {
-            return component.toArray(EMPTY_ARRAY);
+            return getComponents();
         }
-    } // getComponents_NoClientCode()
+    }
 
     /**
      * Determines the insets of this container, which indicate the size
@@ -343,7 +372,7 @@ public class Container extends Component {
         ComponentPeer peer = this.peer;
         if (peer instanceof ContainerPeer) {
             ContainerPeer cpeer = (ContainerPeer)peer;
-            return (Insets)cpeer.insets().clone();
+            return (Insets)cpeer.getInsets().clone();
         }
         return new Insets(0, 0, 0, 0);
     }
@@ -352,16 +381,15 @@ public class Container extends Component {
      * Appends the specified component to the end of this container.
      * This is a convenience method for {@link #addImpl}.
      * <p>
-     * Note: If a component has been added to a container that
-     * has been displayed, <code>validate</code> must be
-     * called on that container to display the new component.
-     * If multiple components are being added, you can improve
-     * efficiency by calling <code>validate</code> only once,
-     * after all the components have been added.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
      *
      * @param     comp   the component to be added
      * @exception NullPointerException if {@code comp} is {@code null}
      * @see #addImpl
+     * @see #invalidate
      * @see #validate
      * @see javax.swing.JComponent#revalidate()
      * @return    the component argument
@@ -377,8 +405,15 @@ public class Container extends Component {
      * <p>
      * This method is obsolete as of 1.1.  Please use the
      * method <code>add(Component, Object)</code> instead.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
+     *
      * @exception NullPointerException if {@code comp} is {@code null}
      * @see #add(Component, Object)
+     * @see #invalidate
      */
     public Component add(String name, Component comp) {
         addImpl(comp, name, -1);
@@ -390,12 +425,11 @@ public class Container extends Component {
      * position.
      * This is a convenience method for {@link #addImpl}.
      * <p>
-     * Note: If a component has been added to a container that
-     * has been displayed, <code>validate</code> must be
-     * called on that container to display the new component.
-     * If multiple components are being added, you can improve
-     * efficiency by calling <code>validate</code> only once,
-     * after all the components have been added.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
+     *
      *
      * @param     comp   the component to be added
      * @param     index    the position at which to insert the component,
@@ -406,6 +440,7 @@ public class Container extends Component {
      * @return    the component <code>comp</code>
      * @see #addImpl
      * @see #remove
+     * @see #invalidate
      * @see #validate
      * @see javax.swing.JComponent#revalidate()
      */
@@ -503,6 +538,9 @@ public class Container extends Component {
             adjustDescendants(-(comp.countHierarchyMembers()));
 
             comp.parent = null;
+            if (needRemoveNotify) {
+                comp.setGraphicsConfiguration(null);
+            }
             component.remove(index);
 
             invalidateIfValid();
@@ -569,7 +607,7 @@ public class Container extends Component {
      * @return true if there is at least one heavyweight children in a container, false otherwise
      * @since 1.5
      */
-    private boolean hasHeavyweightDescendants() {
+    final boolean hasHeavyweightDescendants() {
         checkTreeLock();
         return numOfHWComponents > 0;
     }
@@ -580,7 +618,7 @@ public class Container extends Component {
      * @return true if there is at least one lightweight children in a container, false otherwise
      * @since 1.7
      */
-    private boolean hasLightweightDescendants() {
+    final boolean hasLightweightDescendants() {
         checkTreeLock();
         return numOfLWComponents > 0;
     }
@@ -643,10 +681,7 @@ public class Container extends Component {
             // each HW descendant independently.
             return !comp.peer.isReparentSupported();
         } else {
-            // if container didn't change we still might need to recreate component's window as
-            // changes to zorder should be reflected in native window stacking order and it might
-            // not be supported by the platform. This is important only for heavyweight child
-            return !((ContainerPeer)(newNativeContainer.peer)).isRestackSupported();
+            return false;
         }
     }
 
@@ -671,6 +706,9 @@ public class Container extends Component {
      * This property is guaranteed to apply only to lightweight
      * non-<code>Container</code> components.
      * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     * <p>
      * <b>Note</b>: Not all platforms support changing the z-order of
      * heavyweight components from one container into another without
      * the call to <code>removeNotify</code>. There is no way to detect
@@ -694,6 +732,7 @@ public class Container extends Component {
      * @exception IllegalArgumentException if adding a <code>Window</code>
      *            to a container
      * @see #getComponentZOrder(java.awt.Component)
+     * @see #invalidate
      * @since 1.5
      */
     public void setComponentZOrder(Component comp, int index) {
@@ -786,6 +825,7 @@ public class Container extends Component {
                 component.add(index, comp);
             }
             comp.parent = this;
+            comp.setGraphicsConfiguration(getGraphicsConfiguration());
 
             adjustListeningChildren(AWTEvent.HIERARCHY_EVENT_MASK,
                                     comp.numListening(AWTEvent.HIERARCHY_EVENT_MASK));
@@ -802,11 +842,6 @@ public class Container extends Component {
         if (peer != null) {
             if (comp.peer == null) { // Remove notify was called or it didn't have peer - create new one
                 comp.addNotify();
-                // New created peer creates component on top of the stacking order
-                Container newNativeContainer = getHeavyweightContainer();
-                if (((ContainerPeer)newNativeContainer.getPeer()).isRestackSupported()) {
-                    ((ContainerPeer)newNativeContainer.getPeer()).restack();
-                }
             } else { // Both container and child have peers, it means child peer should be reparented.
                 // In both cases we need to reparent native widgets.
                 Container newNativeContainer = getHeavyweightContainer();
@@ -815,13 +850,8 @@ public class Container extends Component {
                     // Native container changed - need to reparent native widgets
                     newNativeContainer.reparentChild(comp);
                 }
-                // If component still has a peer and it is either container or heavyweight
-                // and restack is supported we have to restack native windows since order might have changed
-                if ((!comp.isLightweight() || (comp instanceof Container))
-                    && ((ContainerPeer)newNativeContainer.getPeer()).isRestackSupported())
-                {
-                    ((ContainerPeer)newNativeContainer.getPeer()).restack();
-                }
+                comp.updateZOrder();
+
                 if (!comp.isLightweight() && isLightweight()) {
                     // If component is heavyweight and one of the containers is lightweight
                     // the location of the component should be fixed.
@@ -903,18 +933,18 @@ public class Container extends Component {
      * this container's layout using the specified constraints object.
      * This is a convenience method for {@link #addImpl}.
      * <p>
-     * Note: If a component has been added to a container that
-     * has been displayed, <code>validate</code> must be
-     * called on that container to display the new component.
-     * If multiple components are being added, you can improve
-     * efficiency by calling <code>validate</code> only once,
-     * after all the components have been added.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
+     *
      *
      * @param     comp the component to be added
      * @param     constraints an object expressing
      *                  layout contraints for this component
      * @exception NullPointerException if {@code comp} is {@code null}
      * @see #addImpl
+     * @see #invalidate
      * @see #validate
      * @see javax.swing.JComponent#revalidate()
      * @see       LayoutManager
@@ -931,12 +961,11 @@ public class Container extends Component {
      * the specified constraints object.
      * This is a convenience method for {@link #addImpl}.
      * <p>
-     * Note: If a component has been added to a container that
-     * has been displayed, <code>validate</code> must be
-     * called on that container to display the new component.
-     * If multiple components are being added, you can improve
-     * efficiency by calling <code>validate</code> only once,
-     * after all the components have been added.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
+     *
      *
      * @param comp the component to be added
      * @param constraints an object expressing layout contraints for this
@@ -947,6 +976,7 @@ public class Container extends Component {
      * @exception IllegalArgumentException if {@code index} is invalid (see
      *            {@link #addImpl} for details)
      * @see #addImpl
+     * @see #invalidate
      * @see #validate
      * @see javax.swing.JComponent#revalidate()
      * @see #remove
@@ -994,6 +1024,11 @@ public class Container extends Component {
      * <code>super.addImpl(comp, constraints, index)</code>
      * </blockquote>
      * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * display the added component.
+     *
      * @param     comp       the component to be added
      * @param     constraints an object expressing layout constraints
      *                 for this component
@@ -1013,6 +1048,7 @@ public class Container extends Component {
      * @see       #add(Component)
      * @see       #add(Component, int)
      * @see       #add(Component, java.lang.Object)
+     * @see #invalidate
      * @see       LayoutManager
      * @see       LayoutManager2
      * @since     JDK1.1
@@ -1034,9 +1070,9 @@ public class Container extends Component {
             }
             checkAddToSelf(comp);
             checkNotAWindow(comp);
-        if (thisGC != null) {
-            comp.checkGD(thisGC.getDevice().getIDstring());
-        }
+            if (thisGC != null) {
+                comp.checkGD(thisGC.getDevice().getIDstring());
+            }
 
             /* Reparent the component and tidy up the tree's state. */
             if (comp.parent != null) {
@@ -1053,6 +1089,7 @@ public class Container extends Component {
                 component.add(index, comp);
             }
             comp.parent = this;
+            comp.setGraphicsConfiguration(thisGC);
 
             adjustListeningChildren(AWTEvent.HIERARCHY_EVENT_MASK,
                 comp.numListening(AWTEvent.HIERARCHY_EVENT_MASK));
@@ -1091,6 +1128,20 @@ public class Container extends Component {
         }
     }
 
+    @Override
+    boolean updateGraphicsData(GraphicsConfiguration gc) {
+        checkTreeLock();
+
+        boolean ret = super.updateGraphicsData(gc);
+
+        for (Component comp : component) {
+            if (comp != null) {
+                ret |= comp.updateGraphicsData(gc);
+            }
+        }
+        return ret;
+    }
+
     /**
      * Checks that all Components that this Container contains are on
      * the same GraphicsDevice as this Container.  If not, throws an
@@ -1110,19 +1161,18 @@ public class Container extends Component {
      * This method also notifies the layout manager to remove the
      * component from this container's layout via the
      * <code>removeLayoutComponent</code> method.
-     *
      * <p>
-     * Note: If a component has been removed from a container that
-     * had been displayed, {@link #validate} must be
-     * called on that container to reflect changes.
-     * If multiple components are being removed, you can improve
-     * efficiency by calling {@link #validate} only once,
-     * after all the components have been removed.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * reflect the changes.
+     *
      *
      * @param     index   the index of the component to be removed
      * @throws ArrayIndexOutOfBoundsException if {@code index} is not in
      *         range {@code [0, getComponentCount()-1]}
      * @see #add
+     * @see #invalidate
      * @see #validate
      * @see #getComponentCount
      * @since JDK1.1
@@ -1148,6 +1198,7 @@ public class Container extends Component {
 
             comp.parent = null;
             component.remove(index);
+            comp.setGraphicsConfiguration(null);
 
             invalidateIfValid();
             if (containerListener != null ||
@@ -1173,17 +1224,15 @@ public class Container extends Component {
      * This method also notifies the layout manager to remove the
      * component from this container's layout via the
      * <code>removeLayoutComponent</code> method.
-     *
      * <p>
-     * Note: If a component has been removed from a container that
-     * had been displayed, {@link #validate} must be
-     * called on that container to reflect changes.
-     * If multiple components are being removed, you can improve
-     * efficiency by calling {@link #validate} only once,
-     * after all the components have been removed.
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * reflect the changes.
      *
      * @param comp the component to be removed
      * @see #add
+     * @see #invalidate
      * @see #validate
      * @see #remove(int)
      */
@@ -1203,8 +1252,15 @@ public class Container extends Component {
      * This method also notifies the layout manager to remove the
      * components from this container's layout via the
      * <code>removeLayoutComponent</code> method.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy. If the container has already been
+     * displayed, the hierarchy must be validated thereafter in order to
+     * reflect the changes.
+     *
      * @see #add
      * @see #remove
+     * @see #invalidate
      */
     public void removeAll() {
         synchronized (getTreeLock()) {
@@ -1224,6 +1280,7 @@ public class Container extends Component {
                     layoutMgr.removeLayoutComponent(comp);
                 }
                 comp.parent = null;
+                comp.setGraphicsConfiguration(null);
                 if (containerListener != null ||
                    (eventMask & AWTEvent.CONTAINER_EVENT_MASK) != 0 ||
                     Toolkit.enabledOnToolkit(AWTEvent.CONTAINER_EVENT_MASK)) {
@@ -1250,33 +1307,33 @@ public class Container extends Component {
         int superListening = super.numListening(mask);
 
         if (mask == AWTEvent.HIERARCHY_EVENT_MASK) {
-            if (eventLog.isLoggable(Level.FINE)) {
+            if (eventLog.isLoggable(PlatformLogger.FINE)) {
                 // Verify listeningChildren is correct
                 int sum = 0;
                 for (Component comp : component) {
                     sum += comp.numListening(mask);
                 }
                 if (listeningChildren != sum) {
-                    eventLog.log(Level.FINE, "Assertion (listeningChildren == sum) failed");
+                    eventLog.fine("Assertion (listeningChildren == sum) failed");
                 }
             }
             return listeningChildren + superListening;
         } else if (mask == AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) {
-            if (eventLog.isLoggable(Level.FINE)) {
+            if (eventLog.isLoggable(PlatformLogger.FINE)) {
                 // Verify listeningBoundsChildren is correct
                 int sum = 0;
                 for (Component comp : component) {
                     sum += comp.numListening(mask);
                 }
                 if (listeningBoundsChildren != sum) {
-                    eventLog.log(Level.FINE, "Assertion (listeningBoundsChildren == sum) failed");
+                    eventLog.fine("Assertion (listeningBoundsChildren == sum) failed");
                 }
             }
             return listeningBoundsChildren + superListening;
         } else {
             // assert false;
-            if (eventLog.isLoggable(Level.FINE)) {
-                eventLog.log(Level.FINE, "This code must never be reached");
+            if (eventLog.isLoggable(PlatformLogger.FINE)) {
+                eventLog.fine("This code must never be reached");
             }
             return superListening;
         }
@@ -1284,13 +1341,13 @@ public class Container extends Component {
 
     // Should only be called while holding tree lock
     void adjustListeningChildren(long mask, int num) {
-        if (eventLog.isLoggable(Level.FINE)) {
+        if (eventLog.isLoggable(PlatformLogger.FINE)) {
             boolean toAssert = (mask == AWTEvent.HIERARCHY_EVENT_MASK ||
                                 mask == AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK ||
                                 mask == (AWTEvent.HIERARCHY_EVENT_MASK |
                                          AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK));
             if (!toAssert) {
-                eventLog.log(Level.FINE, "Assertion failed");
+                eventLog.fine("Assertion failed");
             }
         }
 
@@ -1325,21 +1382,21 @@ public class Container extends Component {
 
     // Should only be called while holding tree lock
     int countHierarchyMembers() {
-        if (log.isLoggable(Level.FINE)) {
+        if (log.isLoggable(PlatformLogger.FINE)) {
             // Verify descendantsCount is correct
             int sum = 0;
             for (Component comp : component) {
                 sum += comp.countHierarchyMembers();
             }
             if (descendantsCount != sum) {
-                log.log(Level.FINE, "Assertion (descendantsCount == sum) failed");
+                log.fine("Assertion (descendantsCount == sum) failed");
             }
         }
         return descendantsCount + 1;
     }
 
     private int getListenersCount(int id, boolean enabledOnToolkit) {
-        assert Thread.holdsLock(getTreeLock());
+        checkTreeLock();
         if (enabledOnToolkit) {
             return descendantsCount;
         }
@@ -1357,7 +1414,7 @@ public class Container extends Component {
     final int createHierarchyEvents(int id, Component changed,
         Container changedParent, long changeFlags, boolean enabledOnToolkit)
     {
-        assert Thread.holdsLock(getTreeLock());
+        checkTreeLock();
         int listeners = getListenersCount(id, enabledOnToolkit);
 
         for (int count = listeners, i = 0; count > 0; i++) {
@@ -1372,7 +1429,7 @@ public class Container extends Component {
     final void createChildHierarchyEvents(int id, long changeFlags,
         boolean enabledOnToolkit)
     {
-        assert Thread.holdsLock(getTreeLock());
+        checkTreeLock();
         if (component.isEmpty()) {
             return;
         }
@@ -1395,9 +1452,14 @@ public class Container extends Component {
 
     /**
      * Sets the layout manager for this container.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
      * @param mgr the specified layout manager
      * @see #doLayout
      * @see #getLayout
+     * @see #invalidate
      */
     public void setLayout(LayoutManager mgr) {
         layoutMgr = mgr;
@@ -1430,20 +1492,59 @@ public class Container extends Component {
     }
 
     /**
-     * Invalidates the container.  The container and all parents
-     * above it are marked as needing to be laid out.  This method can
-     * be called often, so it needs to execute quickly.
+     * Indicates if this container is a <i>validate root</i>.
+     * <p>
+     * Layout-related changes, such as bounds of the validate root descendants,
+     * do not affect the layout of the validate root parent. This peculiarity
+     * enables the {@code invalidate()} method to stop invalidating the
+     * component hierarchy when the method encounters a validate root.
+     * <p>
+     * If a component hierarchy contains validate roots, the {@code validate()}
+     * method must be invoked on the validate root of a previously invalidated
+     * component, rather than on the top-level container (such as a {@code
+     * Frame} object) to restore the validity of the hierarchy later.
+     * <p>
+     * The {@code Window} class and the {@code Applet} class are the validate
+     * roots in AWT.  Swing introduces more validate roots.
      *
-     * <p> If the {@code LayoutManager} installed on this container is
-     * an instance of {@code LayoutManager2}, then
-     * {@link LayoutManager2#invalidateLayout(Container)} is invoked on
-     * it supplying this {@code Container} as the argument.
+     * @return whether this container is a validate root
+     * @see #invalidate
+     * @see java.awt.Component#invalidate
+     * @see javax.swing.JComponent#isValidateRoot
+     * @see javax.swing.JComponent#revalidate
+     * @since 1.7
+     */
+    public boolean isValidateRoot() {
+        return false;
+    }
+
+    /**
+     * Invalidates the parent of the container unless the container
+     * is a validate root.
+     */
+    @Override
+    void invalidateParent() {
+        if (!isValidateRoot()) {
+            super.invalidateParent();
+        }
+    }
+
+    /**
+     * Invalidates the container.
+     * <p>
+     * If the {@code LayoutManager} installed on this container is an instance
+     * of the {@code LayoutManager2} interface, then
+     * the {@link LayoutManager2#invalidateLayout(Container)} method is invoked
+     * on it supplying this {@code Container} as the argument.
+     * <p>
+     * Afterwards this method marks this container invalid, and invalidates its
+     * ancestors. See the {@link Component#invalidate} method for more details.
      *
      * @see #validate
      * @see #layout
-     * @see LayoutManager
-     * @see LayoutManager2#invalidateLayout(Container)
+     * @see LayoutManager2
      */
+    @Override
     public void invalidate() {
         LayoutManager layoutMgr = this.layoutMgr;
         if (layoutMgr instanceof LayoutManager2) {
@@ -1456,44 +1557,90 @@ public class Container extends Component {
     /**
      * Validates this container and all of its subcomponents.
      * <p>
-     * The <code>validate</code> method is used to cause a container
-     * to lay out its subcomponents again. It should be invoked when
-     * this container's subcomponents are modified (added to or
-     * removed from the container, or layout-related information
-     * changed) after the container has been displayed.
-     *
-     * <p>If this {@code Container} is not valid, this method invokes
+     * Validating a container means laying out its subcomponents.
+     * Layout-related changes, such as setting the bounds of a component, or
+     * adding a component to the container, invalidate the container
+     * automatically.  Note that the ancestors of the container may be
+     * invalidated also (see {@link Component#invalidate} for details.)
+     * Therefore, to restore the validity of the hierarchy, the {@code
+     * validate()} method should be invoked on a validate root of an
+     * invalidated component, or on the top-most container if the hierarchy
+     * does not contain validate roots.
+     * <p>
+     * Validating the container may be a quite time-consuming operation. For
+     * performance reasons a developer may postpone the validation of the
+     * hierarchy till a set of layout-related operations completes, e.g. after
+     * adding all the children to the container.
+     * <p>
+     * If this {@code Container} is not valid, this method invokes
      * the {@code validateTree} method and marks this {@code Container}
      * as valid. Otherwise, no action is performed.
      *
      * @see #add(java.awt.Component)
-     * @see Component#invalidate
+     * @see #invalidate
+     * @see Container#isValidateRoot
      * @see javax.swing.JComponent#revalidate()
      * @see #validateTree
      */
     public void validate() {
-        /* Avoid grabbing lock unless really necessary. */
-        if (!isValid()) {
-            boolean updateCur = false;
-            synchronized (getTreeLock()) {
-                if (!isValid() && peer != null) {
-                    ContainerPeer p = null;
-                    if (peer instanceof ContainerPeer) {
-                        p = (ContainerPeer) peer;
-                    }
-                    if (p != null) {
-                        p.beginValidate();
-                    }
-                    validateTree();
-                    if (p != null) {
-                        p.endValidate();
+        boolean updateCur = false;
+        synchronized (getTreeLock()) {
+            if ((!isValid() || descendUnconditionallyWhenValidating)
+                    && peer != null)
+            {
+                ContainerPeer p = null;
+                if (peer instanceof ContainerPeer) {
+                    p = (ContainerPeer) peer;
+                }
+                if (p != null) {
+                    p.beginValidate();
+                }
+                validateTree();
+                if (p != null) {
+                    p.endValidate();
+                    // Avoid updating cursor if this is an internal call.
+                    // See validateUnconditionally() for details.
+                    if (!descendUnconditionallyWhenValidating) {
                         updateCur = isVisible();
                     }
                 }
             }
-            if (updateCur) {
-                updateCursorImmediately();
+        }
+        if (updateCur) {
+            updateCursorImmediately();
+        }
+    }
+
+    /**
+     * Indicates whether valid containers should also traverse their
+     * children and call the validateTree() method on them.
+     *
+     * Synchronization: TreeLock.
+     *
+     * The field is allowed to be static as long as the TreeLock itself is
+     * static.
+     *
+     * @see #validateUnconditionally()
+     */
+    private static boolean descendUnconditionallyWhenValidating = false;
+
+    /**
+     * Unconditionally validate the component hierarchy.
+     */
+    final void validateUnconditionally() {
+        boolean updateCur = false;
+        synchronized (getTreeLock()) {
+            descendUnconditionallyWhenValidating = true;
+
+            validate();
+            if (peer instanceof ContainerPeer) {
+                updateCur = isVisible();
             }
+
+            descendUnconditionallyWhenValidating = false;
+        }
+        if (updateCur) {
+            updateCursorImmediately();
         }
     }
 
@@ -1507,16 +1654,21 @@ public class Container extends Component {
      * @see #validate
      */
     protected void validateTree() {
-        if (!isValid()) {
+        checkTreeLock();
+        if (!isValid() || descendUnconditionallyWhenValidating) {
             if (peer instanceof ContainerPeer) {
                 ((ContainerPeer)peer).beginLayout();
             }
-            doLayout();
+            if (!isValid()) {
+                doLayout();
+            }
             for (int i = 0; i < component.size(); i++) {
                 Component comp = component.get(i);
                 if (   (comp instanceof Container)
                        && !(comp instanceof Window)
-                       && !comp.isValid()) {
+                       && (!comp.isValid() ||
+                           descendUnconditionallyWhenValidating))
+                {
                     ((Container)comp).validateTree();
                 } else {
                     comp.validate();
@@ -1550,8 +1702,13 @@ public class Container extends Component {
 
     /**
      * Sets the font of this container.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
      * @param f The font to become this container's font.
      * @see Component#getFont
+     * @see #invalidate
      * @since JDK1.0
      */
     public void setFont(Font f) {
@@ -1783,7 +1940,7 @@ public class Container extends Component {
             // super.paint(); -- Don't bother, since it's a NOP.
 
             GraphicsCallback.PaintCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.LIGHTWEIGHTS);
+                runComponents(getComponentsSync(), g, GraphicsCallback.LIGHTWEIGHTS);
         }
     }
 
@@ -1838,7 +1995,7 @@ public class Container extends Component {
             }
 
             GraphicsCallback.PrintCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.LIGHTWEIGHTS);
+                runComponents(getComponentsSync(), g, GraphicsCallback.LIGHTWEIGHTS);
         }
     }
 
@@ -1851,7 +2008,7 @@ public class Container extends Component {
     public void paintComponents(Graphics g) {
         if (isShowing()) {
             GraphicsCallback.PaintAllCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.TWO_PASSES);
+                runComponents(getComponentsSync(), g, GraphicsCallback.TWO_PASSES);
         }
     }
 
@@ -1873,8 +2030,8 @@ public class Container extends Component {
     void paintHeavyweightComponents(Graphics g) {
         if (isShowing()) {
             GraphicsCallback.PaintHeavyweightComponentsCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.LIGHTWEIGHTS |
-                                            GraphicsCallback.HEAVYWEIGHTS);
+                runComponents(getComponentsSync(), g,
+                              GraphicsCallback.LIGHTWEIGHTS | GraphicsCallback.HEAVYWEIGHTS);
         }
     }
 
@@ -1887,7 +2044,7 @@ public class Container extends Component {
     public void printComponents(Graphics g) {
         if (isShowing()) {
             GraphicsCallback.PrintAllCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.TWO_PASSES);
+                runComponents(getComponentsSync(), g, GraphicsCallback.TWO_PASSES);
         }
     }
 
@@ -1909,8 +2066,8 @@ public class Container extends Component {
     void printHeavyweightComponents(Graphics g) {
         if (isShowing()) {
             GraphicsCallback.PrintHeavyweightComponentsCallback.getInstance().
-                runComponents(component.toArray(EMPTY_ARRAY), g, GraphicsCallback.LIGHTWEIGHTS |
-                                            GraphicsCallback.HEAVYWEIGHTS);
+                runComponents(getComponentsSync(), g,
+                              GraphicsCallback.LIGHTWEIGHTS | GraphicsCallback.HEAVYWEIGHTS);
         }
     }
 
@@ -2460,9 +2617,7 @@ public class Container extends Component {
      * @since 1.2
      */
     public Component findComponentAt(int x, int y) {
-        synchronized (getTreeLock()) {
-            return findComponentAt(x, y, true);
-        }
+        return findComponentAt(x, y, true);
     }
 
     /**
@@ -2475,58 +2630,60 @@ public class Container extends Component {
      * The addition of this feature is temporary, pending the
      * adoption of new, public API which exports this feature.
      */
-    final Component findComponentAt(int x, int y, boolean ignoreEnabled)
-    {
-        if (isRecursivelyVisible()){
-            return findComponentAtImpl(x, y, ignoreEnabled);
+    final Component findComponentAt(int x, int y, boolean ignoreEnabled) {
+        synchronized (getTreeLock()) {
+            if (isRecursivelyVisible()){
+                return findComponentAtImpl(x, y, ignoreEnabled);
+            }
         }
         return null;
     }
 
     final Component findComponentAtImpl(int x, int y, boolean ignoreEnabled){
+        checkTreeLock();
+
         if (!(contains(x, y) && visible && (ignoreEnabled || enabled))) {
             return null;
         }
 
         // Two passes: see comment in sun.awt.SunGraphicsCallback
-        synchronized (getTreeLock()) {
-            for (int i = 0; i < component.size(); i++) {
-                Component comp = component.get(i);
-                if (comp != null &&
-                    !(comp.peer instanceof LightweightPeer)) {
-                    if (comp instanceof Container) {
-                        comp = ((Container)comp).findComponentAtImpl(x - comp.x,
-                                                                     y - comp.y,
-                                                                     ignoreEnabled);
-                    } else {
-                        comp = comp.locate(x - comp.x, y - comp.y);
-                    }
-                    if (comp != null && comp.visible &&
-                        (ignoreEnabled || comp.enabled))
-                        {
-                            return comp;
-                        }
+        for (int i = 0; i < component.size(); i++) {
+            Component comp = component.get(i);
+            if (comp != null &&
+                !(comp.peer instanceof LightweightPeer)) {
+                if (comp instanceof Container) {
+                    comp = ((Container)comp).findComponentAtImpl(x - comp.x,
+                                                                 y - comp.y,
+                                                                 ignoreEnabled);
+                } else {
+                    comp = comp.locate(x - comp.x, y - comp.y);
                 }
-            }
-            for (int i = 0; i < component.size(); i++) {
-                Component comp = component.get(i);
-                if (comp != null &&
-                    comp.peer instanceof LightweightPeer) {
-                    if (comp instanceof Container) {
-                        comp = ((Container)comp).findComponentAtImpl(x - comp.x,
-                                                                     y - comp.y,
-                                                                     ignoreEnabled);
-                    } else {
-                        comp = comp.locate(x - comp.x, y - comp.y);
-                    }
-                    if (comp != null && comp.visible &&
-                        (ignoreEnabled || comp.enabled))
-                        {
-                            return comp;
-                        }
+                if (comp != null && comp.visible &&
+                    (ignoreEnabled || comp.enabled))
+                {
+                    return comp;
                 }
             }
         }
+        for (int i = 0; i < component.size(); i++) {
+            Component comp = component.get(i);
+            if (comp != null &&
+                comp.peer instanceof LightweightPeer) {
+                if (comp instanceof Container) {
+                    comp = ((Container)comp).findComponentAtImpl(x - comp.x,
+                                                                 y - comp.y,
+                                                                 ignoreEnabled);
+                } else {
+                    comp = comp.locate(x - comp.x, y - comp.y);
+                }
+                if (comp != null && comp.visible &&
+                    (ignoreEnabled || comp.enabled))
+                {
+                    return comp;
+                }
+            }
+        }
+
         return this;
     }
 
@@ -2584,13 +2741,6 @@ public class Container extends Component {
             for (int i = 0; i < component.size(); i++) {
                 component.get(i).addNotify();
             }
-            // Update stacking order if native platform allows
-            ContainerPeer cpeer = (ContainerPeer)peer;
-            if (cpeer.isRestackSupported()) {
-                cpeer.restack();
-            }
-
-
         }
     }
 
@@ -3355,12 +3505,16 @@ public class Container extends Component {
     /**
      * Sets the <code>ComponentOrientation</code> property of this container
      * and all components contained within it.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
      *
      * @param o the new component orientation of this container and
      *        the components contained within it.
      * @exception NullPointerException if <code>orientation</code> is null.
      * @see Component#setComponentOrientation
      * @see Component#getComponentOrientation
+     * @see #invalidate
      * @since 1.4
      */
     public void applyComponentOrientation(ComponentOrientation o) {
@@ -3488,7 +3642,7 @@ public class Container extends Component {
     private void writeObject(ObjectOutputStream s) throws IOException {
         ObjectOutputStream.PutField f = s.putFields();
         f.put("ncomponents", component.size());
-        f.put("component", component.toArray(EMPTY_ARRAY));
+        f.put("component", getComponentsSync());
         f.put("layoutMgr", layoutMgr);
         f.put("dispatcher", dispatcher);
         f.put("maxSize", maxSize);
@@ -3861,6 +4015,28 @@ public class Container extends Component {
         return -1;
     }
 
+    /*
+     * This method is overriden to handle opaque children in non-opaque
+     * containers.
+     */
+    @Override
+    final Region getOpaqueShape() {
+        checkTreeLock();
+        if (isLightweight() && isNonOpaqueForMixing()
+                && hasLightweightDescendants())
+        {
+            Region s = Region.EMPTY_REGION;
+            for (int index = 0; index < getComponentCount(); index++) {
+                Component c = getComponent(index);
+                if (c.isLightweight() && c.isShowing()) {
+                    s = s.getUnion(c.getOpaqueShape());
+                }
+            }
+            return s.getIntersection(getNormalShape());
+        }
+        return super.getOpaqueShape();
+    }
+
     final void recursiveSubtractAndApplyShape(Region shape) {
         recursiveSubtractAndApplyShape(shape, getTopmostComponentIndex(), getBottommostComponentIndex());
     }
@@ -3871,11 +4047,20 @@ public class Container extends Component {
 
     final void recursiveSubtractAndApplyShape(Region shape, int fromZorder, int toZorder) {
         checkTreeLock();
-        if (mixingLog.isLoggable(Level.FINE)) {
+        if (mixingLog.isLoggable(PlatformLogger.FINE)) {
             mixingLog.fine("this = " + this +
                 "; shape=" + shape + "; fromZ=" + fromZorder + "; toZ=" + toZorder);
         }
         if (fromZorder == -1) {
+            return;
+        }
+        if (shape.isEmpty()) {
+            return;
+        }
+        // An invalid container with not-null layout should be ignored
+        // by the mixing code, the container will be validated later
+        // and the mixing code will be executed later.
+        if (getLayout() != null && !isValid()) {
             return;
         }
         for (int index = fromZorder; index <= toZorder; index++) {
@@ -3899,18 +4084,25 @@ public class Container extends Component {
 
     final void recursiveApplyCurrentShape(int fromZorder, int toZorder) {
         checkTreeLock();
-        if (mixingLog.isLoggable(Level.FINE)) {
+        if (mixingLog.isLoggable(PlatformLogger.FINE)) {
             mixingLog.fine("this = " + this +
                 "; fromZ=" + fromZorder + "; toZ=" + toZorder);
         }
         if (fromZorder == -1) {
             return;
         }
+        // An invalid container with not-null layout should be ignored
+        // by the mixing code, the container will be validated later
+        // and the mixing code will be executed later.
+        if (getLayout() != null && !isValid()) {
+            return;
+        }
         for (int index = fromZorder; index <= toZorder; index++) {
             Component comp = getComponent(index);
             if (!comp.isLightweight()) {
                 comp.applyCurrentShape();
-            } else if (comp instanceof Container &&
+            }
+            if (comp instanceof Container &&
                     ((Container)comp).hasHeavyweightDescendants()) {
                 ((Container)comp).recursiveApplyCurrentShape();
             }
@@ -3931,7 +4123,7 @@ public class Container extends Component {
                 if (comp.isVisible()) {
                     ComponentPeer peer = comp.getPeer();
                     if (peer != null) {
-                        peer.show();
+                        peer.setVisible(true);
                     }
                 }
             }
@@ -3952,7 +4144,7 @@ public class Container extends Component {
                 if (comp.isVisible()) {
                     ComponentPeer peer = comp.getPeer();
                     if (peer != null) {
-                        peer.hide();
+                        peer.setVisible(false);
                     }
                 }
             }
@@ -3981,22 +4173,35 @@ public class Container extends Component {
         }
     }
 
-    /*
+    /**
+     * Checks if the container and its direct lightweight containers are
+     * visible.
+     *
      * Consider the heavyweight container hides or shows the HW descendants
      * automatically. Therefore we care of LW containers' visibility only.
+     *
+     * This method MUST be invoked under the TreeLock.
      */
-    private boolean isRecursivelyVisibleUpToHeavyweightContainer() {
+    final boolean isRecursivelyVisibleUpToHeavyweightContainer() {
         if (!isLightweight()) {
             return true;
         }
-        return isVisible() && (getContainer() == null ||
-             getContainer().isRecursivelyVisibleUpToHeavyweightContainer());
+
+        for (Container cont = getContainer();
+                cont != null && cont.isLightweight();
+                cont = cont.getContainer())
+        {
+            if (!cont.isVisible()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     void mixOnShowing() {
         synchronized (getTreeLock()) {
-            if (mixingLog.isLoggable(Level.FINE)) {
+            if (mixingLog.isLoggable(PlatformLogger.FINE)) {
                 mixingLog.fine("this = " + this);
             }
 
@@ -4004,6 +4209,10 @@ public class Container extends Component {
 
             if (isLightweight && isRecursivelyVisibleUpToHeavyweightContainer()) {
                 recursiveShowHeavyweightChildren();
+            }
+
+            if (!isMixingNeeded()) {
+                return;
             }
 
             if (!isLightweight || (isLightweight && hasHeavyweightDescendants())) {
@@ -4017,7 +4226,7 @@ public class Container extends Component {
     @Override
     void mixOnHiding(boolean isLightweight) {
         synchronized (getTreeLock()) {
-            if (mixingLog.isLoggable(Level.FINE)) {
+            if (mixingLog.isLoggable(PlatformLogger.FINE)) {
                 mixingLog.fine("this = " + this +
                         "; isLightweight=" + isLightweight);
             }
@@ -4031,9 +4240,12 @@ public class Container extends Component {
     @Override
     void mixOnReshaping() {
         synchronized (getTreeLock()) {
-            if (mixingLog.isLoggable(Level.FINE)) {
+            if (mixingLog.isLoggable(PlatformLogger.FINE)) {
                 mixingLog.fine("this = " + this);
             }
+
+            boolean isMixingNeeded = isMixingNeeded();
+
             if (isLightweight() && hasHeavyweightDescendants()) {
                 final Point origin = new Point(getX(), getY());
                 for (Container cont = getContainer();
@@ -4044,7 +4256,18 @@ public class Container extends Component {
                 }
 
                 recursiveRelocateHeavyweightChildren(origin);
+
+                if (!isMixingNeeded) {
+                    return;
+                }
+
+                recursiveApplyCurrentShape();
             }
+
+            if (!isMixingNeeded) {
+                return;
+            }
+
             super.mixOnReshaping();
         }
     }
@@ -4052,9 +4275,13 @@ public class Container extends Component {
     @Override
     void mixOnZOrderChanging(int oldZorder, int newZorder) {
         synchronized (getTreeLock()) {
-            if (mixingLog.isLoggable(Level.FINE)) {
+            if (mixingLog.isLoggable(PlatformLogger.FINE)) {
                 mixingLog.fine("this = " + this +
                     "; oldZ=" + oldZorder + "; newZ=" + newZorder);
+            }
+
+            if (!isMixingNeeded()) {
+                return;
             }
 
             boolean becameHigher = newZorder < oldZorder;
@@ -4069,12 +4296,20 @@ public class Container extends Component {
     @Override
     void mixOnValidating() {
         synchronized (getTreeLock()) {
-            if (mixingLog.isLoggable(Level.FINE)) {
+            if (mixingLog.isLoggable(PlatformLogger.FINE)) {
                 mixingLog.fine("this = " + this);
+            }
+
+            if (!isMixingNeeded()) {
+                return;
             }
 
             if (hasHeavyweightDescendants()) {
                 recursiveApplyCurrentShape();
+            }
+
+            if (isLightweight() && isNonOpaqueForMixing()) {
+                subtractAndApplyShapeBelowMe();
             }
 
             super.mixOnValidating();
@@ -4107,7 +4342,7 @@ class LightweightDispatcher implements java.io.Serializable, AWTEventListener {
      */
     private static final int  LWD_MOUSE_DRAGGED_OVER = 1500;
 
-    private static final Logger eventLog = Logger.getLogger("java.awt.event.LightweightDispatcher");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.LightweightDispatcher");
 
     LightweightDispatcher(Container nativeContainer) {
         this.nativeContainer = nativeContainer;
@@ -4249,10 +4484,10 @@ class LightweightDispatcher implements java.io.Serializable, AWTEventListener {
             // This may send it somewhere that doesn't have MouseWheelEvents
             // enabled.  In this case, Component.dispatchEventImpl() will
             // retarget the event to a parent that DOES have the events enabled.
-            if (eventLog.isLoggable(Level.FINEST) && (mouseOver != null)) {
-                eventLog.log(Level.FINEST, "retargeting mouse wheel to " +
-                             mouseOver.getName() + ", " +
-                             mouseOver.getClass());
+            if (eventLog.isLoggable(PlatformLogger.FINEST) && (mouseOver != null)) {
+                eventLog.finest("retargeting mouse wheel to " +
+                                mouseOver.getName() + ", " +
+                                mouseOver.getClass());
             }
             retargetMouseEvent(mouseOver, id, e);
         break;

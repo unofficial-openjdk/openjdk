@@ -43,6 +43,18 @@ void ObjPtrQueue::apply_closure_to_buffer(ObjectClosure* cl,
     }
   }
 }
+
+#ifdef ASSERT
+void ObjPtrQueue::verify_oops_in_buffer() {
+  if (_buf == NULL) return;
+  for (size_t i = _index; i < _sz; i += oopSize) {
+    oop obj = (oop)_buf[byte_index_to_index((int)i)];
+    assert(obj != NULL && obj->is_oop(true /* ignore mark word */),
+           "Not an oop");
+  }
+}
+#endif
+
 #ifdef _MSC_VER // the use of 'this' below gets a warning, make it go away
 #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
 #endif // _MSC_VER
@@ -55,9 +67,9 @@ SATBMarkQueueSet::SATBMarkQueueSet() :
 {}
 
 void SATBMarkQueueSet::initialize(Monitor* cbl_mon, Mutex* fl_lock,
-                                  int max_completed_queue,
+                                  int process_completed_threshold,
                                   Mutex* lock) {
-  PtrQueueSet::initialize(cbl_mon, fl_lock, max_completed_queue);
+  PtrQueueSet::initialize(cbl_mon, fl_lock, process_completed_threshold, -1);
   _shared_satb_queue.set_lock(lock);
   if (ParallelGCThreads > 0) {
     _par_closures = NEW_C_HEAP_ARRAY(ObjectClosure*, ParallelGCThreads);
@@ -66,6 +78,7 @@ void SATBMarkQueueSet::initialize(Monitor* cbl_mon, Mutex* fl_lock,
 
 
 void SATBMarkQueueSet::handle_zero_index_for_thread(JavaThread* t) {
+  DEBUG_ONLY(t->satb_mark_queue().verify_oops_in_buffer();)
   t->satb_mark_queue().handle_zero_index();
 }
 
@@ -109,12 +122,12 @@ void SATBMarkQueueSet::par_iterate_closure_all_threads(int worker) {
 
 bool SATBMarkQueueSet::apply_closure_to_completed_buffer_work(bool par,
                                                               int worker) {
-  CompletedBufferNode* nd = NULL;
+  BufferNode* nd = NULL;
   {
     MutexLockerEx x(_cbl_mon, Mutex::_no_safepoint_check_flag);
     if (_completed_buffers_head != NULL) {
       nd = _completed_buffers_head;
-      _completed_buffers_head = nd->next;
+      _completed_buffers_head = nd->next();
       if (_completed_buffers_head == NULL) _completed_buffers_tail = NULL;
       _n_completed_buffers--;
       if (_n_completed_buffers == 0) _process_completed = false;
@@ -122,9 +135,9 @@ bool SATBMarkQueueSet::apply_closure_to_completed_buffer_work(bool par,
   }
   ObjectClosure* cl = (par ? _par_closures[worker] : _closure);
   if (nd != NULL) {
-    ObjPtrQueue::apply_closure_to_buffer(cl, nd->buf, 0, _sz);
-    deallocate_buffer(nd->buf);
-    delete nd;
+    void **buf = BufferNode::make_buffer_from_node(nd);
+    ObjPtrQueue::apply_closure_to_buffer(cl, buf, 0, _sz);
+    deallocate_buffer(buf);
     return true;
   } else {
     return false;
@@ -132,24 +145,23 @@ bool SATBMarkQueueSet::apply_closure_to_completed_buffer_work(bool par,
 }
 
 void SATBMarkQueueSet::abandon_partial_marking() {
-  CompletedBufferNode* buffers_to_delete = NULL;
+  BufferNode* buffers_to_delete = NULL;
   {
     MutexLockerEx x(_cbl_mon, Mutex::_no_safepoint_check_flag);
     while (_completed_buffers_head != NULL) {
-      CompletedBufferNode* nd = _completed_buffers_head;
-      _completed_buffers_head = nd->next;
-      nd->next = buffers_to_delete;
+      BufferNode* nd = _completed_buffers_head;
+      _completed_buffers_head = nd->next();
+      nd->set_next(buffers_to_delete);
       buffers_to_delete = nd;
     }
     _completed_buffers_tail = NULL;
     _n_completed_buffers = 0;
-    debug_only(assert_completed_buffer_list_len_correct_locked());
+    DEBUG_ONLY(assert_completed_buffer_list_len_correct_locked());
   }
   while (buffers_to_delete != NULL) {
-    CompletedBufferNode* nd = buffers_to_delete;
-    buffers_to_delete = nd->next;
-    deallocate_buffer(nd->buf);
-    delete nd;
+    BufferNode* nd = buffers_to_delete;
+    buffers_to_delete = nd->next();
+    deallocate_buffer(BufferNode::make_buffer_from_node(nd));
   }
   assert(SafepointSynchronize::is_at_safepoint(), "Must be at safepoint.");
   // So we can safely manipulate these queues.

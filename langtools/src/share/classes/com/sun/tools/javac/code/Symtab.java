@@ -119,6 +119,8 @@ public class Symtab {
     public final Type stringBuilderType;
     public final Type cloneableType;
     public final Type serializableType;
+    public final Type methodHandleType;
+    public final Type invokeDynamicType;
     public final Type throwableType;
     public final Type errorType;
     public final Type illegalArgumentExceptionType;
@@ -191,7 +193,7 @@ public class Symtab {
 
     public void initType(Type type, String name, String bname) {
         initType(type, name);
-        boxedName[type.tag] = names.fromString("java.lang." + bname);
+            boxedName[type.tag] = names.fromString("java.lang." + bname);
     }
 
     /** The class symbol that owns all predefined symbols.
@@ -283,6 +285,24 @@ public class Symtab {
                     } catch (CompletionFailure e) {
                         sym.flags_field |= (PUBLIC | INTERFACE);
                         ((ClassType) sym.type).supertype_field = objectType;
+                    }
+                }
+            };
+        }
+    }
+
+    public void synthesizeMHTypeIfMissing(final Type type) {
+        final Completer completer = type.tsym.completer;
+        if (completer != null) {
+            type.tsym.completer = new Completer() {
+                public void complete(Symbol sym) throws CompletionFailure {
+                    try {
+                        completer.complete(sym);
+                    } catch (CompletionFailure e) {
+                        sym.flags_field |= (PUBLIC | ABSTRACT);
+                        ((ClassType) sym.type).supertype_field = objectType;
+                        // do not bother to create MH.type if not visibly declared
+                        // this sym just accumulates invoke(...) methods
                     }
                 }
             };
@@ -405,6 +425,8 @@ public class Symtab {
         cloneableType = enterClass("java.lang.Cloneable");
         throwableType = enterClass("java.lang.Throwable");
         serializableType = enterClass("java.io.Serializable");
+        methodHandleType = enterClass("java.dyn.MethodHandle");
+        invokeDynamicType = enterClass("java.dyn.InvokeDynamic");
         errorType = enterClass("java.lang.Error");
         illegalArgumentExceptionType = enterClass("java.lang.IllegalArgumentException");
         exceptionType = enterClass("java.lang.Exception");
@@ -441,8 +463,11 @@ public class Symtab {
 
         synthesizeEmptyInterfaceIfMissing(cloneableType);
         synthesizeEmptyInterfaceIfMissing(serializableType);
+        synthesizeMHTypeIfMissing(methodHandleType);
+        synthesizeMHTypeIfMissing(invokeDynamicType);
         synthesizeBoxTypeIfMissing(doubleType);
         synthesizeBoxTypeIfMissing(floatType);
+        synthesizeBoxTypeIfMissing(voidType);
 
         // Enter a synthetic class that is used to mark Sun
         // proprietary classes in ct.sym.  This class does not have a

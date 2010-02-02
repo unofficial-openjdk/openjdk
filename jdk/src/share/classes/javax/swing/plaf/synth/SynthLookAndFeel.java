@@ -138,9 +138,9 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
             }
         }
         else {
-            selectedUIState = SynthConstants.FOCUSED;
             if (enabled) {
                 selectedUIState |= SynthConstants.ENABLED;
+                selectedUIState = SynthConstants.FOCUSED;
             }
             else {
                 selectedUIState |= SynthConstants.DISABLED;
@@ -234,24 +234,9 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      * <code>shouldUpdateStyleOnAncestorChanged</code> as necessary.
      */
     static boolean shouldUpdateStyle(PropertyChangeEvent event) {
-        String eName = event.getPropertyName();
-        if ("name" == eName) {
-            // Always update on a name change
-            return true;
-        }
-        else if ("componentOrientation" == eName) {
-            // Always update on a component orientation change
-            return true;
-        }
-        else if ("ancestor" == eName && event.getNewValue() != null) {
-            // Only update on an ancestor change when getting a valid
-            // parent and the LookAndFeel wants this.
-            LookAndFeel laf = UIManager.getLookAndFeel();
-            return (laf instanceof SynthLookAndFeel &&
-                    ((SynthLookAndFeel)laf).
-                     shouldUpdateStyleOnAncestorChanged());
-        }
-        return false;
+        LookAndFeel laf = UIManager.getLookAndFeel();
+        return (laf instanceof SynthLookAndFeel &&
+                ((SynthLookAndFeel) laf).shouldUpdateStyleOnEvent(event));
     }
 
     /**
@@ -283,12 +268,6 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      * @param c Component to update style for.
      */
     public static void updateStyles(Component c) {
-        _updateStyles(c);
-        c.repaint();
-    }
-
-    // Implementation for updateStyles
-    private static void _updateStyles(Component c) {
         if (c instanceof JComponent) {
             // Yes, this is hacky. A better solution is to get the UI
             // and cast, but JComponent doesn't expose a getter for the UI
@@ -312,6 +291,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
                 updateStyles(child);
             }
         }
+        c.repaint();
     }
 
     /**
@@ -622,6 +602,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     /**
      * Called by UIManager when this look and feel is installed.
      */
+    @Override
     public void initialize() {
         super.initialize();
         DefaultLookup.setDefaultLookup(new SynthDefaultLookup());
@@ -633,6 +614,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     /**
      * Called by UIManager when this look and feel is uninstalled.
      */
+    @Override
     public void uninitialize() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().
             removePropertyChangeListener(_handler);
@@ -647,6 +629,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return Defaults table.
      */
+    @Override
     public UIDefaults getDefaults() {
         UIDefaults table = new UIDefaults(60, 0.75f);
 
@@ -704,6 +687,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return true.
      */
+    @Override
     public boolean isSupportedLookAndFeel() {
         return true;
     }
@@ -713,6 +697,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return false
      */
+    @Override
     public boolean isNativeLookAndFeel() {
         return false;
     }
@@ -722,6 +707,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return textual description of synth.
      */
+    @Override
     public String getDescription() {
         return "Synth look and feel";
     }
@@ -731,6 +717,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return a short string identifying this look and feel.
      */
+    @Override
     public String getName() {
         return "Synth look and feel";
     }
@@ -740,6 +727,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      *
      * @return a short string identifying this look and feel.
      */
+    @Override
     public String getID() {
         return "Synth";
     }
@@ -757,6 +745,27 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      * when the ancestor changed.
      */
     public boolean shouldUpdateStyleOnAncestorChanged() {
+        return false;
+    }
+
+    /**
+     * Returns whether or not the UIs should update their styles when a
+     * particular event occurs.
+     *
+     * @param ev a {@code PropertyChangeEvent}
+     * @return whether or not the UIs should update their styles
+     * @since 1.7
+     */
+    protected boolean shouldUpdateStyleOnEvent(PropertyChangeEvent ev) {
+        String eName = ev.getPropertyName();
+        if ("name" == eName || "componentOrientation" == eName) {
+            return true;
+        }
+        if ("ancestor" == eName && ev.getNewValue() != null) {
+            // Only update on an ancestor change when getting a valid
+            // parent and the LookAndFeel wants this.
+            return shouldUpdateStyleOnAncestorChanged();
+        }
         return false;
     }
 
@@ -805,6 +814,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
             tk.addPropertyChangeListener(key, this);
         }
 
+        @Override
         public void propertyChange(PropertyChangeEvent pce) {
             UIDefaults defaults = UIManager.getLookAndFeelDefaults();
             if (defaults.getBoolean("Synth.doNotSetTextAA")) {
@@ -873,6 +883,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
             if (!isUpdatePending()) {
                 setUpdatePending(true);
                 Runnable uiUpdater = new Runnable() {
+                    @Override
                     public void run() {
                         updateAllUIs();
                         setUpdatePending(false);
@@ -889,6 +900,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     }
 
     private class Handler implements PropertyChangeListener {
+        @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String propertyName = evt.getPropertyName();
             Object newValue = evt.getNewValue();

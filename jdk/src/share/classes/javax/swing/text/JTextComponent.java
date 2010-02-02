@@ -76,6 +76,7 @@ import sun.awt.AppContext;
 import sun.swing.PrintingStatus;
 import sun.swing.SwingUtilities2;
 import sun.swing.text.TextComponentPrintable;
+import sun.swing.SwingAccessor;
 
 /**
  * <code>JTextComponent</code> is the base class for swing text
@@ -759,6 +760,23 @@ public abstract class JTextComponent extends JComponent implements Scrollable, A
      */
     public final DropMode getDropMode() {
         return dropMode;
+    }
+
+    static {
+        SwingAccessor.setJTextComponentAccessor(
+            new SwingAccessor.JTextComponentAccessor() {
+                public TransferHandler.DropLocation dropLocationForPoint(JTextComponent textComp,
+                                                                         Point p)
+                {
+                    return textComp.dropLocationForPoint(p);
+                }
+                public Object setDropLocation(JTextComponent textComp,
+                                              TransferHandler.DropLocation location,
+                                              Object state, boolean forDrop)
+                {
+                    return textComp.setDropLocation(location, state, forDrop);
+                }
+            });
     }
 
 
@@ -2051,8 +2069,9 @@ public abstract class JTextComponent extends JComponent implements Scrollable, A
      *   width to match its own
      */
     public boolean getScrollableTracksViewportWidth() {
-        if (getParent() instanceof JViewport) {
-            return (getParent().getWidth() > getPreferredSize().width);
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            return port.getWidth() > getPreferredSize().width;
         }
         return false;
     }
@@ -2071,8 +2090,9 @@ public abstract class JTextComponent extends JComponent implements Scrollable, A
      *   to match its own
      */
     public boolean getScrollableTracksViewportHeight() {
-        if (getParent() instanceof JViewport) {
-            return (getParent().getHeight() > getPreferredSize().height);
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            return (port.getHeight() > getPreferredSize().height);
         }
         return false;
     }
@@ -4795,7 +4815,18 @@ public abstract class JTextComponent extends JComponent implements Scrollable, A
                 new AttributedString(text, composedIndex, text.getEndIndex()));
     }
 
-    private boolean saveComposedText(int pos) {
+    /**
+     * Saves composed text around the specified position.
+     *
+     * The composed text (if any) around the specified position is saved
+     * in a backing store and removed from the document.
+     *
+     * @param pos  document position to identify the composed text location
+     * @return  {@code true} if the composed text exists and is saved,
+     *          {@code false} otherwise
+     * @see #restoreComposedText
+     */
+    protected boolean saveComposedText(int pos) {
         if (composedTextExists()) {
             int start = composedTextStart.getOffset();
             int len = composedTextEnd.getOffset() -
@@ -4810,7 +4841,15 @@ public abstract class JTextComponent extends JComponent implements Scrollable, A
         return false;
     }
 
-    private void restoreComposedText() {
+    /**
+     * Restores composed text previously saved by {@code saveComposedText}.
+     *
+     * The saved composed text is inserted back into the document. This method
+     * should be invoked only if {@code saveComposedText} returns {@code true}.
+     *
+     * @see #saveComposedText
+     */
+    protected void restoreComposedText() {
         Document doc = getDocument();
         try {
             doc.insertString(caret.getDot(),

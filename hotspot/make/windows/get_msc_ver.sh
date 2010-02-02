@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 # cl version 13.10.3077 returns "MSC_VER=1310"
 # cl version 14.00.30701 returns "MSC_VER=1399" (OLD_MSSDK version)
 # cl version 14.00.40310.41 returns "MSC_VER=1400"
+# cl version 15.00.21022.8 returns "MSC_VER=1500"
 
 # Note that we currently do not have a way to set HotSpotMksHome in
 # the batch build, but so far this has not seemed to be a problem. The

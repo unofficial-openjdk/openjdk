@@ -26,7 +26,6 @@
 package com.sun.tools.apt.main;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,14 +36,15 @@ import java.util.StringTokenizer;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
-import java.util.Collection;
 
 import java.net.URLClassLoader;
 import java.net.URL;
-import java.io.File;
 import java.net.MalformedURLException;
 
-import com.sun.tools.javac.file.Paths;
+import javax.tools.JavaFileManager;
+import javax.tools.StandardLocation;
+
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
@@ -64,6 +64,7 @@ import com.sun.mirror.apt.AnnotationProcessorFactory;
  *  risk.  This code and its internal interfaces are subject to change
  *  or deletion without notice.</b>
  */
+@SuppressWarnings("deprecation")
 public class Main {
 
     /** For testing: enter any options you want to be set implicitly
@@ -766,6 +767,7 @@ public class Main {
         providedFactory = factory;
 
         Context context = new Context();
+        JavacFileManager.preRegister(context);
         options = Options.instance(context);
         Bark bark;
 
@@ -779,7 +781,6 @@ public class Main {
         // prefixed to command line arguments.
         processArgs(forcedOpts);
 
-
         /*
          * A run of apt only gets passed the most recently generated
          * files; the initial run of apt gets passed the files from
@@ -791,6 +792,11 @@ public class Main {
             // assign args the result of parse to capture results of
             // '@file' expansion
             origFilenames = processArgs((args=CommandLine.parse(args)));
+
+            if (options.get("suppress-tool-api-removal-message") == null) {
+                Bark.printLines(out, getLocalizedString("misc.Deprecation"));
+            }
+
             if (origFilenames == null) {
                 return EXIT_CMDERR;
             } else if (origFilenames.size() == 0) {
@@ -862,14 +868,14 @@ public class Main {
             }
             origOptions = Collections.unmodifiableMap(origOptions);
 
+            JavacFileManager fm = (JavacFileManager) context.get(JavaFileManager.class);
             {
                 // Note: it might be necessary to check for an empty
                 // component ("") of the source path or class path
-                Paths paths = Paths.instance(context);
 
                 String sourceDest = options.get("-s");
-                if (paths.sourcePath() != null) {
-                    for(File f: paths.sourcePath())
+                if (fm.hasLocation(StandardLocation.SOURCE_PATH)) {
+                    for(File f: fm.getLocation(StandardLocation.SOURCE_PATH))
                         augmentedSourcePath += (f + File.pathSeparator);
                     augmentedSourcePath += (sourceDest == null)?".":sourceDest;
                 } else {
@@ -880,8 +886,8 @@ public class Main {
                 }
 
                 String classDest = options.get("-d");
-                if (paths.userClassPath() != null) {
-                    for(File f: paths.userClassPath())
+                if (fm.hasLocation(StandardLocation.CLASS_PATH)) {
+                    for(File f: fm.getLocation(StandardLocation.CLASS_PATH))
                         baseClassPath += (f + File.pathSeparator);
                     // put baseClassPath into map to handle any
                     // value needed for the classloader
@@ -908,9 +914,8 @@ public class Main {
              * uses.
              */
                 String aptclasspath = "";
-                Paths paths = Paths.instance(context);
                 String bcp = "";
-                Collection<File> bootclasspath = paths.bootClassPath();
+                Iterable<? extends File> bootclasspath = fm.getLocation(StandardLocation.PLATFORM_CLASS_PATH);
 
                 if (bootclasspath != null) {
                     for(File f: bootclasspath)

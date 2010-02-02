@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include <X11/extensions/shape.h>
 #include <string.h>
 #include <stdlib.h>
+#include <X11/Sunkeysym.h>
 
 #include <jni.h>
 #include <jni_util.h>
@@ -42,7 +43,9 @@
 #include <jvm.h>
 
 #include <Region.h>
+#include "utility/rect.h"
 
+#include <X11/XKBlib.h>
 #if defined(DEBUG) || defined(INTERNAL_BUILD)
 static jmethodID lockIsHeldMID = NULL;
 
@@ -305,6 +308,20 @@ JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XRestackWindows
 
 /*
  * Class:     XlibWrapper
+ * Method:    XConfigureWindow
+ * Signature: (JJJJ)V
+ */
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XConfigureWindow
+(JNIEnv *env, jclass clazz, jlong display, jlong window, jlong value_mask,
+ jlong values)
+{
+    AWT_CHECK_HAVE_LOCK();
+    XConfigureWindow((Display*)jlong_to_ptr(display), (Window)window,
+            (unsigned int)value_mask, (XWindowChanges*)jlong_to_ptr(values));
+}
+
+/*
+ * Class:     XlibWrapper
  * Method:    XSetInputFocus
  * Signature: (JJ)V
  */
@@ -433,6 +450,79 @@ JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XSelectInput
     AWT_CHECK_HAVE_LOCK();
     XSelectInput((Display *) jlong_to_ptr(display), (Window) window, mask);
 }
+
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XkbSelectEvents
+(JNIEnv *env, jclass clazz, jlong display, jlong device, jlong bits_to_change, jlong values_for_bits)
+{
+    AWT_CHECK_HAVE_LOCK();
+    XkbSelectEvents((Display *) jlong_to_ptr(display), (unsigned int)device,
+                   (unsigned long)bits_to_change,
+                   (unsigned long)values_for_bits);
+}
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XkbSelectEventDetails
+(JNIEnv *env, jclass clazz, jlong display, jlong device, jlong event_type, jlong bits_to_change, jlong values_for_bits)
+{
+    AWT_CHECK_HAVE_LOCK();
+    XkbSelectEventDetails((Display *) jlong_to_ptr(display), (unsigned int)device,
+                   (unsigned int) event_type,
+                   (unsigned long)bits_to_change,
+                   (unsigned long)values_for_bits);
+}
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_XkbQueryExtension
+(JNIEnv *env, jclass clazz, jlong display, jlong opcode_rtrn, jlong event_rtrn,
+              jlong error_rtrn, jlong major_in_out, jlong minor_in_out)
+{
+    AWT_CHECK_HAVE_LOCK();
+    return XkbQueryExtension( (Display *) jlong_to_ptr(display),
+                       (int *) jlong_to_ptr(opcode_rtrn),
+                       (int *) jlong_to_ptr(event_rtrn),
+                       (int *) jlong_to_ptr(error_rtrn),
+                       (int *) jlong_to_ptr(major_in_out),
+                       (int *) jlong_to_ptr(minor_in_out));
+}
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_XkbLibraryVersion
+(JNIEnv *env, jclass clazz, jlong lib_major_in_out, jlong lib_minor_in_out)
+{
+    AWT_CHECK_HAVE_LOCK();
+    *((int *)lib_major_in_out) =  XkbMajorVersion;
+    *((int *)lib_minor_in_out) =  XkbMinorVersion;
+    return  XkbLibraryVersion((int *)jlong_to_ptr(lib_major_in_out), (int *)jlong_to_ptr(lib_minor_in_out));
+}
+
+JNIEXPORT jlong JNICALL Java_sun_awt_X11_XlibWrapper_XkbGetMap
+(JNIEnv *env, jclass clazz, jlong display, jlong which, jlong device_spec)
+{
+    AWT_CHECK_HAVE_LOCK();
+    return (jlong) XkbGetMap( (Display *) jlong_to_ptr(display),
+                              (unsigned int) which,
+                              (unsigned int) device_spec);
+}
+JNIEXPORT jlong JNICALL Java_sun_awt_X11_XlibWrapper_XkbGetUpdatedMap
+(JNIEnv *env, jclass clazz, jlong display, jlong which, jlong xkb)
+{
+    AWT_CHECK_HAVE_LOCK();
+    return (jlong) XkbGetUpdatedMap( (Display *) jlong_to_ptr(display),
+                              (unsigned int) which,
+                              (XkbDescPtr) jlong_to_ptr(xkb));
+}
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XkbFreeKeyboard
+(JNIEnv *env, jclass clazz, jlong xkb, jlong which, jboolean free_all)
+{
+    AWT_CHECK_HAVE_LOCK();
+    XkbFreeKeyboard(jlong_to_ptr(xkb), (unsigned int)which, free_all);
+}
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_XkbTranslateKeyCode
+(JNIEnv *env, jclass clazz, jlong xkb, jint keycode, jlong mods, jlong mods_rtrn, jlong keysym_rtrn)
+{
+    Bool b;
+    b = XkbTranslateKeyCode((XkbDescPtr)xkb, (unsigned int)keycode, (unsigned int)mods,
+                              (unsigned int *)jlong_to_ptr(mods_rtrn),
+                               (KeySym *)jlong_to_ptr(keysym_rtrn));
+    //printf("native,  input: keycode:0x%0X; mods:0x%0X\n", keycode, mods);
+    //printf("native, output:  keysym:0x%0X; mods:0x%0X\n", *(unsigned int *)jlong_to_ptr(keysym_rtrn), *(unsigned int *)jlong_to_ptr(mods_rtrn));
+    return b;
+}
+
 
 /*
  * Class:     sun_awt_X11_XlibWrapper
@@ -1092,12 +1182,86 @@ JNIEXPORT jint JNICALL Java_sun_awt_X11_XlibWrapper_VendorRelease
     AWT_CHECK_HAVE_LOCK();
     return VendorRelease((Display*)jlong_to_ptr(display));
 }
+/*
+ * Class:     sun_awt_X11_XlibWrapper
+ * Method:    IsXsunKPBehavior
+ * Signature: (J)Z;
+ */
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_IsXsunKPBehavior
+(JNIEnv *env, jclass clazz, jlong display)
+{
+    // Xsun without XKB uses keysymarray[2] keysym to determine if it is KP event.
+    // Otherwise, it is [1] or sometimes [0].
+    // This sniffer first tries to determine what is a keycode for XK_KP_7
+    // using XKeysymToKeycode;
+    // second, in which place in the keysymarray is XK_KP_7
+    // using XKeycodeToKeysym.
+    int kc7;
+    AWT_CHECK_HAVE_LOCK();
+    kc7 = XKeysymToKeycode((Display*)jlong_to_ptr(display), XK_KP_7);
+    if( !kc7 ) {
+        // keycode is not defined. Why, it's a reduced keyboard perhaps:
+        // report arbitrarily false.
+        return JNI_FALSE;
+    } else {
+        long ks2 = XKeycodeToKeysym((Display*)jlong_to_ptr(display), kc7, 2);
+        if( ks2 == XK_KP_7 ) {
+            //XXX If some Xorg server would put XK_KP_7 in keysymarray[2] as well,
+            //XXX for yet unknown to me reason, the sniffer would lie.
+            return JNI_TRUE;
+        }else{
+            return JNI_FALSE;
+        }
+    }
+}
+
+
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_IsSunKeyboard
+(JNIEnv *env, jclass clazz, jlong display)
+{
+    int xx;
+    AWT_CHECK_HAVE_LOCK();
+    xx = XKeysymToKeycode((Display*)jlong_to_ptr(display), SunXK_F37);
+    return (!xx) ? JNI_FALSE : JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XlibWrapper_IsKanaKeyboard
+(JNIEnv *env, jclass clazz, jlong display)
+{
+    int xx;
+    AWT_CHECK_HAVE_LOCK();
+    static jboolean result = JNI_FALSE;
+
+    int32_t minKeyCode, maxKeyCode, keySymsPerKeyCode;
+    KeySym *keySyms, *keySymsStart, keySym;
+    int32_t i;
+    int32_t kanaCount = 0;
+
+    // There's no direct way to determine whether the keyboard has
+    // a kana lock key. From available keyboard mapping tables, it looks
+    // like only keyboards with the kana lock key can produce keysyms
+    // for kana characters. So, as an indirect test, we check for those.
+    XDisplayKeycodes((Display*)jlong_to_ptr(display), &minKeyCode, &maxKeyCode);
+    keySyms = XGetKeyboardMapping((Display*)jlong_to_ptr(display), minKeyCode, maxKeyCode - minKeyCode + 1, &keySymsPerKeyCode);
+    keySymsStart = keySyms;
+    for (i = 0; i < (maxKeyCode - minKeyCode + 1) * keySymsPerKeyCode; i++) {
+        keySym = *keySyms++;
+        if ((keySym & 0xff00) == 0x0400) {
+            kanaCount++;
+        }
+    }
+    XFree(keySymsStart);
+
+    // use a (somewhat arbitrary) minimum so we don't get confused by a stray function key
+    result = kanaCount > 10;
+    return result ? JNI_TRUE : JNI_FALSE;
+}
 
 JavaVM* jvm = NULL;
 static int ToolkitErrorHandler(Display * dpy, XErrorEvent * event) {
     if (jvm != NULL) {
         JNIEnv * env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit", "GlobalErrorHandler", "(JJ)I",
+        return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit", "globalErrorHandler", "(JJ)I",
                                           ptr_to_jlong(dpy), ptr_to_jlong(event)).i;
     } else {
         return 0;
@@ -1140,6 +1304,29 @@ JNIEXPORT jint JNICALL Java_sun_awt_X11_XlibWrapper_CallErrorHandler
     return (*(XErrorHandler)jlong_to_ptr(handler))((Display*) jlong_to_ptr(display), (XErrorEvent*) jlong_to_ptr(event_ptr));
 }
 
+
+/*
+ * Class:     sun_awt_X11_XlibWrapper
+ * Method:    PrintXErrorEvent
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_PrintXErrorEvent
+(JNIEnv *env, jclass clazz, jlong display, jlong event_ptr)
+{
+    char msg[128];
+    char buf[128];
+
+    XErrorEvent* err = (XErrorEvent *)jlong_to_ptr(event_ptr);
+
+    XGetErrorText((Display *)jlong_to_ptr(display), err->error_code, msg, sizeof(msg));
+    jio_fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid, err->serial);
+    jio_snprintf(buf, sizeof(buf), "%d", err->request_code);
+    XGetErrorDatabaseText((Display *)jlong_to_ptr(display), "XRequest", buf, "Unknown", msg, sizeof(msg));
+    jio_fprintf(stderr, "Major opcode %d (%s)\n", err->request_code, msg);
+    if (err->request_code > 128) {
+        jio_fprintf(stderr, "Minor opcode %d\n", err->minor_code);
+    }
+}
 
 
 /*
@@ -1641,6 +1828,13 @@ JNIEXPORT jint JNICALL Java_sun_awt_X11_XlibWrapper_XdbeSwapBuffers
     AWT_CHECK_HAVE_LOCK();
     return XdbeSwapBuffers((Display*) jlong_to_ptr(display), (XdbeSwapInfo *) jlong_to_ptr(swap_info), num_windows);
 }
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XQueryKeymap
+(JNIEnv *env, jclass clazz, jlong display, jlong vector)
+{
+
+    AWT_CHECK_HAVE_LOCK();
+    XQueryKeymap( (Display *) jlong_to_ptr(display), (char *) jlong_to_ptr(vector));
+}
 
 JNIEXPORT jlong JNICALL
 Java_sun_awt_X11_XlibWrapper_XKeycodeToKeysym(JNIEnv *env, jclass clazz,
@@ -1648,6 +1842,39 @@ Java_sun_awt_X11_XlibWrapper_XKeycodeToKeysym(JNIEnv *env, jclass clazz,
                                               jint index) {
     AWT_CHECK_HAVE_LOCK();
     return XKeycodeToKeysym((Display*) jlong_to_ptr(display), (unsigned int)keycode, (int)index);
+}
+
+JNIEXPORT jint JNICALL
+Java_sun_awt_X11_XlibWrapper_XkbGetEffectiveGroup(JNIEnv *env, jclass clazz,
+                                              jlong display) {
+    XkbStateRec sr;
+    AWT_CHECK_HAVE_LOCK();
+    memset(&sr, 0, sizeof(XkbStateRec));
+    XkbGetState((Display*) jlong_to_ptr(display), XkbUseCoreKbd, &sr);
+//    printf("-------------------------------------VVVV\n");
+//    printf("                 group:0x%0X\n",sr.group);
+//    printf("            base_group:0x%0X\n",sr.base_group);
+//    printf("         latched_group:0x%0X\n",sr.latched_group);
+//    printf("          locked_group:0x%0X\n",sr.locked_group);
+//    printf("                  mods:0x%0X\n",sr.mods);
+//    printf("             base_mods:0x%0X\n",sr.base_mods);
+//    printf("          latched_mods:0x%0X\n",sr.latched_mods);
+//    printf("           locked_mods:0x%0X\n",sr.locked_mods);
+//    printf("          compat_state:0x%0X\n",sr.compat_state);
+//    printf("             grab_mods:0x%0X\n",sr.grab_mods);
+//    printf("      compat_grab_mods:0x%0X\n",sr.compat_grab_mods);
+//    printf("           lookup_mods:0x%0X\n",sr.lookup_mods);
+//    printf("    compat_lookup_mods:0x%0X\n",sr.compat_lookup_mods);
+//    printf("           ptr_buttons:0x%0X\n",sr.ptr_buttons);
+//    printf("-------------------------------------^^^^\n");
+    return (jint)(sr.group);
+}
+JNIEXPORT jlong JNICALL
+Java_sun_awt_X11_XlibWrapper_XkbKeycodeToKeysym(JNIEnv *env, jclass clazz,
+                                              jlong display, jint keycode,
+                                              jint group, jint level) {
+    AWT_CHECK_HAVE_LOCK();
+    return XkbKeycodeToKeysym((Display*) jlong_to_ptr(display), (unsigned int)keycode, (unsigned int)group, (unsigned int)level);
 }
 
 JNIEXPORT jint JNICALL
@@ -1669,6 +1896,17 @@ Java_sun_awt_X11_XlibWrapper_XFreeModifiermap(JNIEnv *env, jclass clazz,
                                               jlong keymap) {
     AWT_CHECK_HAVE_LOCK();
     XFreeModifiermap((XModifierKeymap*) jlong_to_ptr(keymap));
+}
+/*
+ * Class:     sun_awt_X11_XlibWrapper
+ * Method:    XRefreshKeyboardMapping
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_XRefreshKeyboardMapping
+(JNIEnv *env, jclass clazz, jlong event_ptr)
+{
+    AWT_CHECK_HAVE_LOCK();
+    XRefreshKeyboardMapping((XMappingEvent*) jlong_to_ptr(event_ptr));
 }
 
 JNIEXPORT void JNICALL
@@ -1911,19 +2149,104 @@ Java_sun_awt_X11_XlibWrapper_SetRectangularShape
  jint x1, jint y1, jint x2, jint y2,
  jobject region)
 {
-    XRectangle rects[256];
-    XRectangle *pRect = rects;
-    int numrects;
+    AWT_CHECK_HAVE_LOCK();
+
+    // If all the params are zeros, the shape must be simply reset.
+    // Otherwise, the shape may be not rectangular.
+    if (region || x1 || x2 || y1 || y2) {
+        XRectangle rects[256];
+        XRectangle *pRect = rects;
+
+        int numrects = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region,
+                &pRect, 256);
+
+        XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+                ShapeClip, 0, 0, pRect, numrects, ShapeSet, YXBanded);
+        XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+                ShapeBounding, 0, 0, pRect, numrects, ShapeSet, YXBanded);
+
+        if (pRect != rects) {
+            free(pRect);
+        }
+    } else {
+        // Reset the shape to a rectangular form.
+        XShapeCombineMask((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+                ShapeClip, 0, 0, None, ShapeSet);
+        XShapeCombineMask((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+                ShapeBounding, 0, 0, None, ShapeSet);
+    }
+}
+
+/*
+ * Class:     XlibWrapper
+ * Method:    SetZOrder
+ */
+
+JNIEXPORT void JNICALL
+Java_sun_awt_X11_XlibWrapper_SetZOrder
+(JNIEnv *env, jclass clazz, jlong display, jlong window, jlong above)
+{
+    AWT_CHECK_HAVE_LOCK();
+
+    XWindowChanges wc;
+    wc.sibling = (Window)jlong_to_ptr(above);
+
+    unsigned int value_mask = CWStackMode;
+
+    if (above == 0) {
+        wc.stack_mode = Above;
+    } else {
+        wc.stack_mode = Below;
+        value_mask |= CWSibling;
+    }
+
+    XConfigureWindow((Display *)jlong_to_ptr(display),
+                     (Window)jlong_to_ptr(window),
+                     value_mask, &wc );
+}
+
+/*
+ * Class:     XlibWrapper
+ * Method:    SetBitmapShape
+ */
+JNIEXPORT void JNICALL
+Java_sun_awt_X11_XlibWrapper_SetBitmapShape
+(JNIEnv *env, jclass clazz, jlong display, jlong window,
+ jint width, jint height, jintArray bitmap)
+{
+    jsize len;
+    jint *values;
+    jboolean isCopy = JNI_FALSE;
+    size_t worstBufferSize = (size_t)((width / 2 + 1) * height);
+    RECT_T * pRect;
 
     AWT_CHECK_HAVE_LOCK();
 
-    numrects = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region,
-            &pRect, 256);
+    len = (*env)->GetArrayLength(env, bitmap);
+    if (len == 0 || len < width * height) {
+        return;
+    }
+
+    values = (*env)->GetIntArrayElements(env, bitmap, &isCopy);
+    if (JNU_IsNull(env, values)) {
+        return;
+    }
+
+    pRect = (RECT_T *)malloc(worstBufferSize * sizeof(RECT_T));
+
+    /* Note: the values[0] and values[1] are supposed to contain the width
+     * and height (see XIconInfo.getIntData() for details). So, we do +2.
+     */
+    int numrects = BitmapToYXBandedRectangles(32, (int)width, (int)height,
+            (unsigned char *)(values + 2), pRect);
 
     XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
-                ShapeBounding, 0, 0, pRect, numrects, ShapeSet, YXBanded);
+            ShapeClip, 0, 0, pRect, numrects, ShapeSet, YXBanded);
+    XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+            ShapeBounding, 0, 0, pRect, numrects, ShapeSet, YXBanded);
 
-    if (pRect != rects) {
-        free(pRect);
-    }
+    free(pRect);
+
+    (*env)->ReleaseIntArrayElements(env, bitmap, values, JNI_ABORT);
 }
+

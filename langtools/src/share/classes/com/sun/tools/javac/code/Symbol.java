@@ -100,6 +100,17 @@ public abstract class Symbol implements Element {
      */
     public Type type;
 
+    /** The type annotations targeted to a tree directly owned by this symbol
+     */
+    // type annotations are stored here for two purposes:
+    //  - convenient location to store annotations for generation after erasure
+    //  - a private interface for accessing type annotations parsed from
+    //    classfiles
+    //  the field is populated for the following declaration only
+    //  class, field, variable and type parameters
+    //
+    public List<Attribute.TypeCompound> typeAnnotations;
+
     /** The owner of this symbol.
      */
     public Symbol owner;
@@ -122,6 +133,7 @@ public abstract class Symbol implements Element {
         this.completer = null;
         this.erasure_field = null;
         this.attributes_field = List.nil();
+        this.typeAnnotations = List.nil();
         this.name = name;
     }
 
@@ -1185,21 +1197,9 @@ public abstract class Symbol implements Element {
          *  as possible implementations.
          */
         public MethodSymbol implementation(TypeSymbol origin, Types types, boolean checkResult) {
-            for (Type t = origin.type; t.tag == CLASS || t.tag == TYPEVAR; t = types.supertype(t)) {
-                while (t.tag == TYPEVAR)
-                    t = t.getUpperBound();
-                TypeSymbol c = t.tsym;
-                for (Scope.Entry e = c.members().lookup(name);
-                     e.scope != null;
-                     e = e.next()) {
-                    if (e.sym.kind == MTH) {
-                        MethodSymbol m = (MethodSymbol) e.sym;
-                        if (m.overrides(this, origin, types, checkResult) &&
-                            (m.flags() & SYNTHETIC) == 0)
-                            return m;
-                    }
-                }
-            }
+            MethodSymbol res = types.implementation(this, origin, types, checkResult);
+            if (res != null)
+                return res;
             // if origin is derived from a raw type, we might have missed
             // an implementation because we do not know enough about instantiations.
             // in this case continue with the supertype as origin.
@@ -1212,23 +1212,56 @@ public abstract class Symbol implements Element {
         public List<VarSymbol> params() {
             owner.complete();
             if (params == null) {
-                List<Name> names = savedParameterNames;
+                // If ClassReader.saveParameterNames has been set true, then
+                // savedParameterNames will be set to a list of names that
+                // matches the types in type.getParameterTypes().  If any names
+                // were not found in the class file, those names in the list will
+                // be set to the empty name.
+                // If ClassReader.saveParameterNames has been set false, then
+                // savedParameterNames will be null.
+                List<Name> paramNames = savedParameterNames;
                 savedParameterNames = null;
-                if (names == null) {
-                    names = List.nil();
-                    int i = 0;
-                    for (Type t : type.getParameterTypes())
-                        names = names.prepend(name.table.fromString("arg" + i++));
-                    names = names.reverse();
-                }
+                // discard the provided names if the list of names is the wrong size.
+                if (paramNames == null || paramNames.size() != type.getParameterTypes().size())
+                    paramNames = List.nil();
                 ListBuffer<VarSymbol> buf = new ListBuffer<VarSymbol>();
+                List<Name> remaining = paramNames;
+                // assert: remaining and paramNames are both empty or both
+                // have same cardinality as type.getParameterTypes()
+                int i = 0;
                 for (Type t : type.getParameterTypes()) {
-                    buf.append(new VarSymbol(PARAMETER, names.head, t, this));
-                    names = names.tail;
+                    Name paramName;
+                    if (remaining.isEmpty()) {
+                        // no names for any parameters available
+                        paramName = createArgName(i, paramNames);
+                    } else {
+                        paramName = remaining.head;
+                        remaining = remaining.tail;
+                        if (paramName.isEmpty()) {
+                            // no name for this specific parameter
+                            paramName = createArgName(i, paramNames);
+                        }
+                    }
+                    buf.append(new VarSymbol(PARAMETER, paramName, t, this));
+                    i++;
                 }
                 params = buf.toList();
             }
             return params;
+        }
+
+        // Create a name for the argument at position 'index' that is not in
+        // the exclude list. In normal use, either no names will have been
+        // provided, in which case the exclude list is empty, or all the names
+        // will have been provided, in which case this method will not be called.
+        private Name createArgName(int index, List<Name> exclude) {
+            String prefix = "arg";
+            while (true) {
+                Name argName = name.table.fromString(prefix + index);
+                if (!exclude.contains(argName))
+                    return argName;
+                prefix += "$";
+            }
         }
 
         public Symbol asMemberOf(Type site, Types types) {

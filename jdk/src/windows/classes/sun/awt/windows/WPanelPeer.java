@@ -30,11 +30,9 @@ import java.awt.peer.*;
 import java.util.Vector;
 
 import sun.awt.SunGraphicsCallback;
-import java.util.logging.*;
 
 class WPanelPeer extends WCanvasPeer implements PanelPeer {
 
-    private static final Logger log = Logger.getLogger("sun.awt.windows.WPanelPeer");
     // ComponentPeer overrides
 
     public void paint(Graphics g) {
@@ -98,74 +96,5 @@ class WPanelPeer extends WCanvasPeer implements PanelPeer {
      */
     public Insets insets() {
         return getInsets();
-    }
-
-    /*
-     * From the DisplayChangedListener interface. Often is
-     * up-called from a WWindowPeer instance.
-     */
-    public void displayChanged() {
-        super.displayChanged();
-        displayChanged((Container)target);
-    }
-
-    /*
-     * Recursively iterates through all the HW and LW children
-     * of the container and calls displayChanged() for HW peers.
-     * Iteration through children peers only is not enough as the
-     * displayChanged notification may not be propagated to HW
-     * components inside LW containers, see 4452373 for details.
-     */
-    private static void displayChanged(Container target) {
-        Component children[] = ((Container)target).getComponents();
-        for (Component child : children) {
-            ComponentPeer cpeer = child.getPeer();
-            if (cpeer instanceof WComponentPeer) {
-                ((WComponentPeer)cpeer).displayChanged();
-            } else if (child instanceof Container) {
-                displayChanged((Container)child);
-            }
-        }
-    }
-
-    private native void pRestack(Object[] peers);
-    private void restack(Container cont, Vector peers) {
-        for (int i = 0; i < cont.getComponentCount(); i++) {
-            Component comp = cont.getComponent(i);
-            if (!comp.isLightweight()) {
-                ComponentPeer peer = comp.getPeer();
-                if (peer != null && (peer instanceof WComponentPeer))
-                {
-                    peers.add(peer);
-                } else {
-                    if (log.isLoggable(Level.FINE)) {
-                        log.log(Level.FINE,
-                                "peer of a {0} is null or not a WComponentPeer: {1}.",
-                                new Object[]{comp, peer});
-                    }
-                }
-            }
-            if (comp.isLightweight() && comp instanceof Container) {
-                restack((Container)comp, peers);
-            }
-        }
-    }
-
-    /**
-     * @see java.awt.peer.ContainerPeer#restack
-     */
-    public void restack() {
-        Vector peers = new Vector();
-        peers.add(this);
-        Container cont = (Container)target;
-        restack(cont, peers);
-        pRestack(peers.toArray());
-    }
-
-    /**
-     * @see java.awt.peer.ContainerPeer#isRestackSupported
-     */
-    public boolean isRestackSupported() {
-        return true;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -531,6 +531,18 @@ public class AlgorithmId implements Serializable, DerEncoder {
                 || name.equalsIgnoreCase("ECDSA")) {
             return AlgorithmId.sha1WithECDSA_oid;
         }
+        if (name.equalsIgnoreCase("SHA224withECDSA")) {
+            return AlgorithmId.sha224WithECDSA_oid;
+        }
+        if (name.equalsIgnoreCase("SHA256withECDSA")) {
+            return AlgorithmId.sha256WithECDSA_oid;
+        }
+        if (name.equalsIgnoreCase("SHA384withECDSA")) {
+            return AlgorithmId.sha384WithECDSA_oid;
+        }
+        if (name.equalsIgnoreCase("SHA512withECDSA")) {
+            return AlgorithmId.sha512WithECDSA_oid;
+        }
 
         // See if any of the installed providers supply a mapping from
         // the given algorithm name to an OID string
@@ -621,7 +633,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
     private static final int DH_PKIX_data[] = { 1, 2, 840, 10046, 2, 1 };
     private static final int DSA_OIW_data[] = { 1, 3, 14, 3, 2, 12 };
     private static final int DSA_PKIX_data[] = { 1, 2, 840, 10040, 4, 1 };
-    private static final int RSA_data[] = { 1, 2, 5, 8, 1, 1 };
+    private static final int RSA_data[] = { 2, 5, 8, 1, 1 };
     private static final int RSAEncryption_data[] =
                                  { 1, 2, 840, 113549, 1, 1, 1 };
 
@@ -745,7 +757,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
      * Algorithm ID for RSA keys used for any purpose, as defined in X.509.
      * The algorithm parameter is a single value, the number of bits in the
      * public modulus.
-     * OID = 1.2.5.8.1.1
+     * OID = 2.5.8.1.1
      */
         RSA_oid = ObjectIdentifier.newInternal(RSA_data);
 
@@ -870,5 +882,54 @@ public class AlgorithmId implements Serializable, DerEncoder {
         nameTable.put(pbeWithSHA1AndRC2_oid, "PBEWithSHA1AndRC2");
         nameTable.put(pbeWithSHA1AndDESede_oid, "PBEWithSHA1AndDESede");
         nameTable.put(pbeWithSHA1AndRC2_40_oid, "PBEWithSHA1AndRC2_40");
+    }
+
+    /**
+     * Creates a signature algorithm name from a digest algorithm
+     * name and a encryption algorithm name.
+     */
+    public static String makeSigAlg(String digAlg, String encAlg) {
+        digAlg = digAlg.replace("-", "").toUpperCase(Locale.ENGLISH);
+        if (digAlg.equalsIgnoreCase("SHA")) digAlg = "SHA1";
+
+        encAlg = encAlg.toUpperCase(Locale.ENGLISH);
+        if (encAlg.equals("EC")) encAlg = "ECDSA";
+
+        return digAlg + "with" + encAlg;
+    }
+
+    /**
+     * Extracts the encryption algorithm name from a signature
+     * algorithm name.
+      */
+    public static String getEncAlgFromSigAlg(String signatureAlgorithm) {
+        signatureAlgorithm = signatureAlgorithm.toUpperCase(Locale.ENGLISH);
+        int with = signatureAlgorithm.indexOf("WITH");
+        String keyAlgorithm = null;
+        if (with > 0) {
+            int and = signatureAlgorithm.indexOf("AND", with + 4);
+            if (and > 0) {
+                keyAlgorithm = signatureAlgorithm.substring(with + 4, and);
+            } else {
+                keyAlgorithm = signatureAlgorithm.substring(with + 4);
+            }
+            if (keyAlgorithm.equalsIgnoreCase("ECDSA")) {
+                keyAlgorithm = "EC";
+            }
+        }
+        return keyAlgorithm;
+    }
+
+    /**
+     * Extracts the digest algorithm name from a signature
+     * algorithm name.
+      */
+    public static String getDigAlgFromSigAlg(String signatureAlgorithm) {
+        signatureAlgorithm = signatureAlgorithm.toUpperCase(Locale.ENGLISH);
+        int with = signatureAlgorithm.indexOf("WITH");
+        if (with > 0) {
+            return signatureAlgorithm.substring(0, with);
+        }
+        return null;
     }
 }

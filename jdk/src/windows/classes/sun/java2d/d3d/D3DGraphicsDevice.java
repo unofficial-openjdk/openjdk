@@ -67,6 +67,9 @@ public class D3DGraphicsDevice extends Win32GraphicsDevice {
         if (d3dAvailable) {
             // we don't use pixel formats for the d3d pipeline
             pfDisabled = true;
+            sun.misc.PerfCounter.getD3DAvailable().set(1);
+        } else {
+            sun.misc.PerfCounter.getD3DAvailable().set(0);
         }
     }
 
@@ -426,7 +429,7 @@ public class D3DGraphicsDevice extends Win32GraphicsDevice {
                 if (defaultConfig != null) {
                     configs = new GraphicsConfiguration[1];
                     configs[0] = defaultConfig;
-                    return configs;
+                    return configs.clone();
                 }
             }
         }

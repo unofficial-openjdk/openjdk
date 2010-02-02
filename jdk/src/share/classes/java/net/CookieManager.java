@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
 import java.io.IOException;
+import sun.util.logging.PlatformLogger;
 
 /**
  * CookieManager provides a concrete implementation of {@link CookieHandler},
@@ -107,8 +108,9 @@ import java.io.IOException;
  * </ul>
  * </blockquote>
  *
- * <p>The implementation conforms to RFC 2965, section 3.3.
+ * <p>The implementation conforms to <a href="http://www.ietf.org/rfc/rfc2965.txt">RFC 2965</a>, section 3.3.
  *
+ * @see CookiePolicy
  * @author Edward Wang
  * @since 1.6
  */
@@ -156,7 +158,7 @@ public class CookieManager extends CookieHandler
 
         // if not specify CookieStore to use, use default one
         if (store == null) {
-            cookieJar = new sun.net.www.protocol.http.InMemoryCookieStore();
+            cookieJar = new InMemoryCookieStore();
         } else {
             cookieJar = store;
         }
@@ -217,6 +219,13 @@ public class CookieManager extends CookieHandler
             // 'secure' cookies over unsecure links)
             if (pathMatches(path, cookie.getPath()) &&
                     (secureLink || !cookie.getSecure())) {
+                // Enforce httponly attribute
+                if (cookie.isHttpOnly()) {
+                    String s = uri.getScheme();
+                    if (!"http".equalsIgnoreCase(s) && !"https".equalsIgnoreCase(s)) {
+                        continue;
+                    }
+                }
                 // Let's check the authorize port list if it exists
                 String ports = cookie.getPortlist();
                 if (ports != null && !ports.isEmpty()) {
@@ -255,6 +264,7 @@ public class CookieManager extends CookieHandler
         if (cookieJar == null)
             return;
 
+    PlatformLogger logger = PlatformLogger.getLogger("java.net.CookieManager");
         for (String headerKey : responseHeaders.keySet()) {
             // RFC 2965 3.2.2, key must be 'Set-Cookie2'
             // we also accept 'Set-Cookie' here for backward compatibility
@@ -269,7 +279,16 @@ public class CookieManager extends CookieHandler
 
             for (String headerValue : responseHeaders.get(headerKey)) {
                 try {
-                    List<HttpCookie> cookies = HttpCookie.parse(headerValue);
+                    List<HttpCookie> cookies;
+                    try {
+                        cookies = HttpCookie.parse(headerValue);
+                    } catch (IllegalArgumentException e) {
+                        // Bogus header, make an empty list and log the error
+                        cookies = java.util.Collections.EMPTY_LIST;
+                        if (logger.isLoggable(PlatformLogger.SEVERE)) {
+                            logger.severe("Invalid cookie for " + uri + ": " + headerValue);
+                        }
+                    }
                     for (HttpCookie cookie : cookies) {
                         if (cookie.getPath() == null) {
                             // If no path is specified, then by default
@@ -284,6 +303,14 @@ public class CookieManager extends CookieHandler
                                 }
                             }
                             cookie.setPath(path);
+                        }
+
+                        // As per RFC 2965, section 3.3.1:
+                        // Domain  Defaults to the effective request-host.  (Note that because
+                        // there is no dot at the beginning of effective request-host,
+                        // the default Domain can only domain-match itself.)
+                        if (cookie.getDomain() == null) {
+                            cookie.setDomain(uri.getHost());
                         }
                         String ports = cookie.getPortlist();
                         if (ports != null) {

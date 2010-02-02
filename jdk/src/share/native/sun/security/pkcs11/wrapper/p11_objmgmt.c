@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  */
 
 /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
@@ -72,8 +72,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CreateObject
     CK_OBJECT_HANDLE ckObjectHandle;
     CK_ATTRIBUTE_PTR ckpAttributes = NULL_PTR;
     CK_ULONG ckAttributesLength;
-    jlong jObjectHandle;
-    CK_ULONG i;
+    jlong jObjectHandle = 0L;
     CK_RV rv;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
@@ -81,16 +80,14 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CreateObject
 
     ckSessionHandle = jLongToCKULong(jSessionHandle);
     jAttributeArrayToCKAttributeArray(env, jTemplate, &ckpAttributes, &ckAttributesLength);
+    if ((*env)->ExceptionCheck(env)) { return 0L; }
 
     rv = (*ckpFunctions->C_CreateObject)(ckSessionHandle, ckpAttributes, ckAttributesLength, &ckObjectHandle);
 
     jObjectHandle = ckULongToJLong(ckObjectHandle);
-    for(i=0; i<ckAttributesLength; i++)
-        if(ckpAttributes[i].pValue != NULL_PTR)
-            free(ckpAttributes[i].pValue);
-    free(ckpAttributes);
+    freeCKAttributeArray(ckpAttributes, ckAttributesLength);
 
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
+    if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
 
     return jObjectHandle ;
 }
@@ -116,8 +113,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CopyObject
     CK_OBJECT_HANDLE ckNewObjectHandle;
     CK_ATTRIBUTE_PTR ckpAttributes = NULL_PTR;
     CK_ULONG ckAttributesLength;
-    jlong jNewObjectHandle;
-    CK_ULONG i;
+    jlong jNewObjectHandle = 0L;
     CK_RV rv;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
@@ -126,14 +122,12 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CopyObject
     ckSessionHandle = jLongToCKULong(jSessionHandle);
     ckObjectHandle = jLongToCKULong(jObjectHandle);
     jAttributeArrayToCKAttributeArray(env, jTemplate, &ckpAttributes, &ckAttributesLength);
+    if ((*env)->ExceptionCheck(env)) { return 0L; }
 
     rv = (*ckpFunctions->C_CopyObject)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength, &ckNewObjectHandle);
 
     jNewObjectHandle = ckULongToJLong(ckNewObjectHandle);
-    for(i=0; i<ckAttributesLength; i++)
-        if(ckpAttributes[i].pValue != NULL_PTR)
-            free(ckpAttributes[i].pValue);
-    free(ckpAttributes);
+    freeCKAttributeArray(ckpAttributes, ckAttributesLength);
 
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
 
@@ -164,7 +158,7 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1DestroyObject
     ckObjectHandle = jLongToCKULong(jObjectHandle);
 
     rv = (*ckpFunctions->C_DestroyObject)(ckSessionHandle, ckObjectHandle);
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
+    if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
 }
 #endif
 
@@ -184,7 +178,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetObjectSize
     CK_SESSION_HANDLE ckSessionHandle;
     CK_OBJECT_HANDLE ckObjectHandle;
     CK_ULONG ckObjectSize;
-    jlong jObjectSize;
+    jlong jObjectSize = 0L;
     CK_RV rv;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
@@ -194,7 +188,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetObjectSize
     ckObjectHandle = jLongToCKULong(jObjectHandle);
 
     rv = (*ckpFunctions->C_GetObjectSize)(ckSessionHandle, ckObjectHandle, &ckObjectSize);
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
+    if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
 
     jObjectSize = ckULongToJLong(ckObjectSize);
 
@@ -238,19 +232,20 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetAttributeVa
     ckObjectHandle = jLongToCKULong(jObjectHandle);
     TRACE1("jAttributeArrayToCKAttributeArray now with jTemplate = %d", jTemplate);
     jAttributeArrayToCKAttributeArray(env, jTemplate, &ckpAttributes, &ckAttributesLength);
+    if ((*env)->ExceptionCheck(env)) { return; }
+
     TRACE2("DEBUG: jAttributeArrayToCKAttributeArray finished with ckpAttribute = %d, Length = %d\n", ckpAttributes, ckAttributesLength);
 
     /* first set all pValue to NULL, to get the needed buffer length */
     for(i = 0; i < ckAttributesLength; i++) {
-        if(ckpAttributes[i].pValue != NULL_PTR) {
+        if (ckpAttributes[i].pValue != NULL_PTR) {
             free(ckpAttributes[i].pValue);
+            ckpAttributes[i].pValue = NULL_PTR;
         }
     }
-    for (i = 0; i < ckAttributesLength; i++) {
-        ckpAttributes[i].pValue = NULL_PTR;
-    }
+
     rv = (*ckpFunctions->C_GetAttributeValue)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength);
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) {
+    if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) {
         free(ckpAttributes);
         return ;
     }
@@ -261,27 +256,34 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetAttributeVa
     for (i = 0; i < ckAttributesLength; i++) {
         ckBufferLength = sizeof(CK_BYTE) * ckpAttributes[i].ulValueLen;
         ckpAttributes[i].pValue = (void *) malloc(ckBufferLength);
+        if (ckpAttributes[i].pValue == NULL) {
+            freeCKAttributeArray(ckpAttributes, i);
+            JNU_ThrowOutOfMemoryError(env, 0);
+            return;
+        }
         ckpAttributes[i].ulValueLen = ckBufferLength;
     }
 
     /* now get the attributes with all values */
     rv = (*ckpFunctions->C_GetAttributeValue)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength);
 
-    /* copy back the values to the Java attributes */
-    for (i = 0; i < ckAttributesLength; i++) {
-        jAttribute = ckAttributePtrToJAttribute(env, &(ckpAttributes[i]));
-        (*env)->SetObjectArrayElement(env, jTemplate, i, jAttribute);
-    }
-
-    for(i=0; i<ckAttributesLength; i++) {
-        if(ckpAttributes[i].pValue != NULL_PTR) {
-            free(ckpAttributes[i].pValue);
+    if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
+        /* copy back the values to the Java attributes */
+        for (i = 0; i < ckAttributesLength; i++) {
+            jAttribute = ckAttributePtrToJAttribute(env, &(ckpAttributes[i]));
+            if (jAttribute == NULL) {
+                freeCKAttributeArray(ckpAttributes, ckAttributesLength);
+                return;
+            }
+            (*env)->SetObjectArrayElement(env, jTemplate, i, jAttribute);
+            if ((*env)->ExceptionCheck(env)) {
+                freeCKAttributeArray(ckpAttributes, ckAttributesLength);
+                return;
+            }
         }
     }
-    free(ckpAttributes);
+    freeCKAttributeArray(ckpAttributes, ckAttributesLength);
     TRACE0("FINISHED\n");
-
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return ; }
 }
 #endif
 
@@ -303,7 +305,6 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1SetAttributeVa
     CK_OBJECT_HANDLE ckObjectHandle;
     CK_ATTRIBUTE_PTR ckpAttributes = NULL_PTR;
     CK_ULONG ckAttributesLength;
-    CK_ULONG i;
     CK_RV rv;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
@@ -312,15 +313,11 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1SetAttributeVa
     ckSessionHandle = jLongToCKULong(jSessionHandle);
     ckObjectHandle = jLongToCKULong(jObjectHandle);
     jAttributeArrayToCKAttributeArray(env, jTemplate, &ckpAttributes, &ckAttributesLength);
+    if ((*env)->ExceptionCheck(env)) { return; }
 
     rv = (*ckpFunctions->C_SetAttributeValue)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength);
 
-    for(i=0; i<ckAttributesLength; i++) {
-        if(ckpAttributes[i].pValue != NULL_PTR) {
-            free(ckpAttributes[i].pValue);
-        }
-    }
-    free(ckpAttributes);
+    freeCKAttributeArray(ckpAttributes, ckAttributesLength);
 
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
 }
@@ -342,7 +339,6 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObjectsIni
     CK_SESSION_HANDLE ckSessionHandle;
     CK_ATTRIBUTE_PTR ckpAttributes = NULL_PTR;
     CK_ULONG ckAttributesLength;
-    CK_ULONG i;
     CK_RV rv;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
@@ -355,15 +351,11 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObjectsIni
 
     ckSessionHandle = jLongToCKULong(jSessionHandle);
     jAttributeArrayToCKAttributeArray(env, jTemplate, &ckpAttributes, &ckAttributesLength);
+    if ((*env)->ExceptionCheck(env)) { return; }
 
     rv = (*ckpFunctions->C_FindObjectsInit)(ckSessionHandle, ckpAttributes, ckAttributesLength);
 
-    for(i=0; i<ckAttributesLength; i++) {
-        if(ckpAttributes[i].pValue != NULL_PTR) {
-            free(ckpAttributes[i].pValue);
-        }
-    }
-    free(ckpAttributes);
+    freeCKAttributeArray(ckpAttributes, ckAttributesLength);
     TRACE0("FINISHED\n");
 
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
@@ -389,7 +381,7 @@ JNIEXPORT jlongArray JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObje
     CK_ULONG ckMaxObjectLength;
     CK_OBJECT_HANDLE_PTR ckpObjectHandleArray;
     CK_ULONG ckActualObjectCount;
-    jlongArray jObjectHandleArray;
+    jlongArray jObjectHandleArray = NULL;
 
     CK_FUNCTION_LIST_PTR ckpFunctions = getFunctionList(env, obj);
     if (ckpFunctions == NULL) { return NULL; }
@@ -397,13 +389,17 @@ JNIEXPORT jlongArray JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObje
     ckSessionHandle = jLongToCKULong(jSessionHandle);
     ckMaxObjectLength = jLongToCKULong(jMaxObjectCount);
     ckpObjectHandleArray = (CK_OBJECT_HANDLE_PTR) malloc(sizeof(CK_OBJECT_HANDLE) * ckMaxObjectLength);
+    if (ckpObjectHandleArray == NULL) {
+        JNU_ThrowOutOfMemoryError(env, 0);
+        return NULL;
+    }
 
     rv = (*ckpFunctions->C_FindObjects)(ckSessionHandle, ckpObjectHandleArray, ckMaxObjectLength, &ckActualObjectCount);
+    if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
+        jObjectHandleArray = ckULongArrayToJLongArray(env, ckpObjectHandleArray, ckActualObjectCount);
+    }
 
-    jObjectHandleArray = ckULongArrayToJLongArray(env, ckpObjectHandleArray, ckActualObjectCount);
     free(ckpObjectHandleArray);
-
-    if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return NULL ; }
 
     return jObjectHandleArray ;
 }

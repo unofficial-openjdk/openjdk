@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,42 +38,40 @@ import java.awt.image.ColorModel;
 import java.awt.event.PaintEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.InputEvent;
 import sun.awt.Win32GraphicsConfig;
+import sun.awt.Win32GraphicsEnvironment;
 import sun.java2d.InvalidPipeException;
 import sun.java2d.SurfaceData;
-import sun.java2d.d3d.D3DScreenUpdateManager;
-import static sun.java2d.d3d.D3DSurfaceData.*;
 import sun.java2d.ScreenUpdateManager;
+import sun.java2d.d3d.D3DSurfaceData;
 import sun.java2d.opengl.OGLSurfaceData;
+import sun.java2d.pipe.Region;
 import sun.awt.DisplayChangedListener;
 import sun.awt.PaintEventDispatcher;
+import sun.awt.SunToolkit;
 import sun.awt.event.IgnorePaintEvent;
 
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.peer.DropTargetPeer;
-import sun.awt.ComponentAccessor;
+import sun.awt.AWTAccessor;
 
-
-import java.util.logging.*;
-
+import sun.util.logging.PlatformLogger;
 
 public abstract class WComponentPeer extends WObjectPeer
-    implements ComponentPeer, DropTargetPeer, DisplayChangedListener
+    implements ComponentPeer, DropTargetPeer
 {
     /**
      * Handle to native window
      */
     protected volatile long hwnd;
 
-    private static final Logger log = Logger.getLogger("sun.awt.windows.WComponentPeer");
-    private static final Logger shapeLog = Logger.getLogger("sun.awt.windows.shape.WComponentPeer");
-
-    static {
-        wheelInit();
-    }
-
-    // Only actually does stuff if running on 95
-    native static void wheelInit();
+    private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.windows.WComponentPeer");
+    private static final PlatformLogger shapeLog = PlatformLogger.getLogger("sun.awt.windows.shape.WComponentPeer");
+    private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.awt.windows.focus.WComponentPeer");
 
     // ComponentPeer implementation
     SurfaceData surfaceData;
@@ -179,10 +177,10 @@ public abstract class WComponentPeer extends WObjectPeer
     void dynamicallyLayoutContainer() {
         // If we got the WM_SIZING, this must be a Container, right?
         // In fact, it must be the top-level Container.
-        if (log.isLoggable(Level.FINE)) {
+        if (log.isLoggable(PlatformLogger.FINE)) {
             Container parent = WToolkit.getNativeContainer((Component)target);
             if (parent != null) {
-                log.log(Level.FINE, "Assertion (parent == null) failed");
+                log.fine("Assertion (parent == null) failed");
             }
         }
         final Container cont = (Container)target;
@@ -193,7 +191,7 @@ public abstract class WComponentPeer extends WObjectPeer
                 cont.invalidate();
                 cont.validate();
 
-                if (surfaceData instanceof D3DWindowSurfaceData ||
+                if (surfaceData instanceof D3DSurfaceData.D3DWindowSurfaceData ||
                     surfaceData instanceof OGLSurfaceData)
                 {
                     // When OGL or D3D is enabled, it is necessary to
@@ -240,7 +238,8 @@ public abstract class WComponentPeer extends WObjectPeer
 
     private static final double BANDING_DIVISOR = 4.0;
     private native int[] createPrintedPixels(int srcX, int srcY,
-                                             int srcW, int srcH);
+                                             int srcW, int srcH,
+                                             int alpha);
     public void print(Graphics g) {
 
         Component comp = (Component)target;
@@ -262,10 +261,12 @@ public abstract class WComponentPeer extends WObjectPeer
             }
             int h = endY - startY + 1;
 
-            int[] pix = createPrintedPixels(0, startY, totalW, h);
+            Color bgColor = comp.getBackground();
+            int[] pix = createPrintedPixels(0, startY, totalW, h,
+                                            bgColor == null ? 255 : bgColor.getAlpha());
             if (pix != null) {
                 BufferedImage bim = new BufferedImage(totalW, h,
-                                              BufferedImage.TYPE_INT_RGB);
+                                              BufferedImage.TYPE_INT_ARGB);
                 bim.setRGB(0, 0, totalW, h, pix, 0, totalW);
                 g.drawImage(bim, 0, startY, null);
                 bim.flush();
@@ -281,14 +282,14 @@ public abstract class WComponentPeer extends WObjectPeer
             paintArea.add(r, e.getID());
         }
 
-        if (log.isLoggable(Level.FINEST)) {
+        if (log.isLoggable(PlatformLogger.FINEST)) {
             switch(e.getID()) {
             case PaintEvent.UPDATE:
-                log.log(Level.FINEST, "coalescePaintEvent: UPDATE: add: x = " +
+                log.finest("coalescePaintEvent: UPDATE: add: x = " +
                     r.x + ", y = " + r.y + ", width = " + r.width + ", height = " + r.height);
                 return;
             case PaintEvent.PAINT:
-                log.log(Level.FINEST, "coalescePaintEvent: PAINT: add: x = " +
+                log.finest("coalescePaintEvent: PAINT: add: x = " +
                     r.x + ", y = " + r.y + ", width = " + r.width + ", height = " + r.height);
                 return;
             }
@@ -302,14 +303,35 @@ public abstract class WComponentPeer extends WObjectPeer
     // on handling '\n' to prevent it from being passed to native code
     public boolean handleJavaKeyEvent(KeyEvent e) { return false; }
 
+    public void handleJavaMouseEvent(MouseEvent e) {
+        switch (e.getID()) {
+          case MouseEvent.MOUSE_PRESSED:
+              // Note that Swing requests focus in its own mouse event handler.
+              if (target == e.getSource() &&
+                  !((Component)target).isFocusOwner() &&
+                  WKeyboardFocusManagerPeer.shouldFocusOnClick((Component)target))
+              {
+                  WKeyboardFocusManagerPeer.requestFocusFor((Component)target,
+                                                            CausedFocusEvent.Cause.MOUSE_EVENT);
+              }
+              break;
+        }
+    }
+
     native void nativeHandleEvent(AWTEvent e);
 
     public void handleEvent(AWTEvent e) {
         int id = e.getID();
 
-        if (((Component)target).isEnabled() && (e instanceof KeyEvent) && !((KeyEvent)e).isConsumed())  {
-            if (handleJavaKeyEvent((KeyEvent)e)) {
-                return;
+        if ((e instanceof InputEvent) && !((InputEvent)e).isConsumed() &&
+            ((Component)target).isEnabled())
+        {
+            if (e instanceof MouseEvent && !(e instanceof MouseWheelEvent)) {
+                handleJavaMouseEvent((MouseEvent) e);
+            } else if (e instanceof KeyEvent) {
+                if (handleJavaKeyEvent((KeyEvent)e)) {
+                    return;
+                }
             }
         }
 
@@ -325,6 +347,9 @@ public abstract class WComponentPeer extends WObjectPeer
                     paintArea.paint(target,shouldClearRectBeforePaint());
                 }
                 return;
+            case FocusEvent.FOCUS_LOST:
+            case FocusEvent.FOCUS_GAINED:
+                handleJavaFocusEvent((FocusEvent)e);
             default:
             break;
         }
@@ -332,6 +357,13 @@ public abstract class WComponentPeer extends WObjectPeer
         // Call the native code
         nativeHandleEvent(e);
     }
+
+    void handleJavaFocusEvent(FocusEvent fe) {
+        if (focusLog.isLoggable(PlatformLogger.FINER)) focusLog.finer(fe.toString());
+        setFocus(fe.getID() == FocusEvent.FOCUS_GAINED);
+    }
+
+    native void setFocus(boolean doSetFocus);
 
     public Dimension getMinimumSize() {
         return ((Component)target).getSize();
@@ -384,6 +416,15 @@ public abstract class WComponentPeer extends WObjectPeer
         replaceSurfaceData(this.numBackBuffers, this.backBufferCaps);
     }
 
+    public void createScreenSurface(boolean isResize)
+    {
+        Win32GraphicsConfig gc = (Win32GraphicsConfig)getGraphicsConfiguration();
+        ScreenUpdateManager mgr = ScreenUpdateManager.getInstance();
+
+        surfaceData = mgr.createScreenSurface(gc, this, numBackBuffers, isResize);
+    }
+
+
     /**
      * Multi-buffer version of replaceSurfaceData.  This version is called
      * by createBuffers(), which needs to acquire the same locks in the same
@@ -401,13 +442,10 @@ public abstract class WComponentPeer extends WObjectPeer
                     return;
                 }
                 numBackBuffers = newNumBackBuffers;
-                Win32GraphicsConfig gc =
-                        (Win32GraphicsConfig)getGraphicsConfiguration();
                 ScreenUpdateManager mgr = ScreenUpdateManager.getInstance();
                 oldData = surfaceData;
                 mgr.dropScreenSurface(oldData);
-                surfaceData =
-                    mgr.createScreenSurface(gc, this, numBackBuffers, true);
+                createScreenSurface(true);
                 if (oldData != null) {
                     oldData.invalidate();
                 }
@@ -416,6 +454,8 @@ public abstract class WComponentPeer extends WObjectPeer
                 if (numBackBuffers > 0) {
                     // set the caps first, they're used when creating the bb
                     backBufferCaps = caps;
+                    Win32GraphicsConfig gc =
+                        (Win32GraphicsConfig)getGraphicsConfiguration();
                     backBuffer = gc.createBackBuffer(this);
                 } else if (backBuffer != null) {
                     backBufferCaps = null;
@@ -458,27 +498,14 @@ public abstract class WComponentPeer extends WObjectPeer
         }
     }
 
-    /**
-     * From the DisplayChangedListener interface.
-     *
-     * Called after a change in the display mode.  This event
-     * triggers replacing the surfaceData object (since that object
-     * reflects the current display depth information, which has
-     * just changed).
-     */
-    public void displayChanged() {
+    public boolean updateGraphicsData(GraphicsConfiguration gc) {
+        winGraphicsConfig = (Win32GraphicsConfig)gc;
         try {
             replaceSurfaceData();
         } catch (InvalidPipeException e) {
             // REMIND : what do we do if our surface creation failed?
         }
-    }
-
-    /**
-     * Part of the DisplayChangedListener interface: components
-     * do not need to react to this event
-     */
-    public void paletteChanged() {
+        return false;
     }
 
     //This will return null for Components not yet added to a Container
@@ -523,8 +550,34 @@ public abstract class WComponentPeer extends WObjectPeer
     final static Font defaultFont = new Font(Font.DIALOG, Font.PLAIN, 12);
 
     public Graphics getGraphics() {
+        if (isDisposed()) {
+            return null;
+        }
+
+        Component target = (Component)getTarget();
+        Window window = SunToolkit.getContainingWindow(target);
+        if (window != null && !window.isOpaque()) {
+            // Non-opaque windows do not support heavyweight children.
+            // Redirect all painting to the Window's Graphics instead.
+            // The caller is responsible for calling the
+            // WindowPeer.updateWindow() after painting has finished.
+            int x = 0, y = 0;
+            for (Component c = target; c != window; c = c.getParent()) {
+                x += c.getX();
+                y += c.getY();
+            }
+
+            Graphics g =
+                ((WWindowPeer)window.getPeer()).getTranslucentGraphics();
+
+            g.translate(x, y);
+            g.clipRect(0, 0, target.getWidth(), target.getHeight());
+
+            return g;
+        }
+
         SurfaceData surfaceData = this.surfaceData;
-        if (!isDisposed() && surfaceData != null) {
+        if (surfaceData != null) {
             /* Fix for bug 4746122. Color and Font shouldn't be null */
             Color bgColor = background;
             if (bgColor == null) {
@@ -592,22 +645,64 @@ public abstract class WComponentPeer extends WObjectPeer
         WGlobalCursorManager.getCursorManager().updateCursorImmediately();
     }
 
-    native static boolean processSynchronousLightweightTransfer(Component heavyweight, Component descendant,
-                                                                boolean temporary, boolean focusedWindowChangeAllowed,
-                                                                long time);
-    public boolean requestFocus
-        (Component lightweightChild, boolean temporary,
-         boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause) {
-        if (processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary,
-                                                                      focusedWindowChangeAllowed, time)) {
+    // TODO: consider moving it to KeyboardFocusManagerPeerImpl
+    public boolean requestFocus(Component lightweightChild, boolean temporary,
+                                boolean focusedWindowChangeAllowed, long time,
+                                CausedFocusEvent.Cause cause)
+    {
+        if (WKeyboardFocusManagerPeer.
+            processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary,
+                                                  focusedWindowChangeAllowed, time))
+        {
             return true;
-        } else {
-            return _requestFocus(lightweightChild, temporary, focusedWindowChangeAllowed, time, cause);
         }
+
+        int result = WKeyboardFocusManagerPeer
+            .shouldNativelyFocusHeavyweight((Component)target, lightweightChild,
+                                            temporary, focusedWindowChangeAllowed,
+                                            time, cause);
+
+        switch (result) {
+          case WKeyboardFocusManagerPeer.SNFH_FAILURE:
+              return false;
+          case WKeyboardFocusManagerPeer.SNFH_SUCCESS_PROCEED:
+              if (focusLog.isLoggable(PlatformLogger.FINER)) {
+                  focusLog.finer("Proceeding with request to " + lightweightChild + " in " + target);
+              }
+              Window parentWindow = SunToolkit.getContainingWindow((Component)target);
+              if (parentWindow == null) {
+                  return rejectFocusRequestHelper("WARNING: Parent window is null");
+              }
+              WWindowPeer wpeer = (WWindowPeer)parentWindow.getPeer();
+              if (wpeer == null) {
+                  return rejectFocusRequestHelper("WARNING: Parent window's peer is null");
+              }
+              boolean res = wpeer.requestWindowFocus(cause);
+
+              if (focusLog.isLoggable(PlatformLogger.FINER)) focusLog.finer("Requested window focus: " + res);
+              // If parent window can be made focused and has been made focused(synchronously)
+              // then we can proceed with children, otherwise we retreat.
+              if (!(res && parentWindow.isFocused())) {
+                  return rejectFocusRequestHelper("Waiting for asynchronous processing of the request");
+              }
+              return WKeyboardFocusManagerPeer.deliverFocus(lightweightChild,
+                                                            (Component)target,
+                                                            temporary,
+                                                            focusedWindowChangeAllowed,
+                                                            time, cause);
+
+          case WKeyboardFocusManagerPeer.SNFH_SUCCESS_HANDLED:
+              // Either lightweight or excessive request - all events are generated.
+              return true;
+        }
+        return false;
     }
-    public native boolean _requestFocus
-        (Component lightweightChild, boolean temporary,
-         boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause);
+
+    private boolean rejectFocusRequestHelper(String logMsg) {
+        if (focusLog.isLoggable(PlatformLogger.FINER)) focusLog.finer(logMsg);
+        WKeyboardFocusManagerPeer.removeLastFocusRequest((Component)target);
+        return false;
+    }
 
     public Image createImage(ImageProducer producer) {
         return new ToolkitImage(producer);
@@ -649,11 +744,8 @@ public abstract class WComponentPeer extends WObjectPeer
         create(parentPeer);
         // fix for 5088782: check if window object is created successfully
         checkCreation();
-        this.winGraphicsConfig =
-            (Win32GraphicsConfig)getGraphicsConfiguration();
-        ScreenUpdateManager mgr = ScreenUpdateManager.getInstance();
-        this.surfaceData = mgr.createScreenSurface(winGraphicsConfig, this,
-                                                   numBackBuffers, false);
+
+        createScreenSurface(false);
         initialize();
         start();  // Initialize enable/disable state, turn on callbacks
     }
@@ -720,12 +812,12 @@ public abstract class WComponentPeer extends WObjectPeer
      * NOTE: This is called on the privileged toolkit thread. Do not
      *       call directly into user code using this thread!
      */
-    void handlePaint(int x, int y, int w, int h) {
+    public void handlePaint(int x, int y, int w, int h) {
         postPaintIfNecessary(x, y, w, h);
     }
 
     private void postPaintIfNecessary(int x, int y, int w, int h) {
-        if ( !ComponentAccessor.getIgnoreRepaint( (Component) target) ) {
+        if ( !AWTAccessor.getComponentAccessor().getIgnoreRepaint( (Component) target) ) {
             PaintEvent event = PaintEventDispatcher.getPaintEventDispatcher().
                 createPaintEvent((Component)target, x, y, w, h);
             if (event != null) {
@@ -738,8 +830,11 @@ public abstract class WComponentPeer extends WObjectPeer
      * Post an event. Queue it for execution by the callback thread.
      */
     void postEvent(AWTEvent event) {
+        preprocessPostEvent(event);
         WToolkit.postEvent(WToolkit.targetToAppContext(target), event);
     }
+
+    void preprocessPostEvent(AWTEvent event) {}
 
     // Routines to support deferred window positioning.
     public void beginLayout() {
@@ -902,9 +997,30 @@ public abstract class WComponentPeer extends WObjectPeer
     public void setBoundsOperation(int operation) {
     }
 
+    /**
+     * Returns whether this component is capable of being hw accelerated.
+     * More specifically, whether rendering to this component or a
+     * BufferStrategy's back-buffer for this component can be hw accelerated.
+     *
+     * Conditions which could prevent hw acceleration include the toplevel
+     * window containing this component being
+     * {@link GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSLUCENT
+     * PERPIXEL_TRANSLUCENT}.
+     *
+     * @return {@code true} if this component is capable of being hw
+     * accelerated, {@code false} otherwise
+     * @see GraphicsDevice.WindowTranslucency#PERPIXEL_TRANSLUCENT
+     */
+    public boolean isAccelCapable() {
+        boolean isTranslucent =
+            SunToolkit.isContainingTopLevelTranslucent((Component)target);
+        // D3D/OGL and translucent windows interacted poorly in Windows XP;
+        // these problems are no longer present in Vista
+        return !isTranslucent || Win32GraphicsEnvironment.isVistaOS();
+    }
 
     native void setRectangularShape(int lox, int loy, int hix, int hiy,
-                     sun.java2d.pipe.Region region);
+                     Region region);
 
 
     // REMIND: Temp workaround for issues with using HW acceleration
@@ -922,50 +1038,34 @@ public abstract class WComponentPeer extends WObjectPeer
     }
 
     /**
-     * Returns whether this component is capable of being hw accelerated.
-     * More specifically, whether rendering to this component or a
-     * BufferStrategy's back-buffer for this component can be hw accelerated.
-     *
-     * Conditions which could prevent hw acceleration include the toplevel
-     * window containing this component being
-     * {@link com.sun.awt.AWTUtilities.Translucency#TRANSLUCENT TRANSLUCENT}.
-     *
-     * @return {@code true} if this component is capable of being hw
-     * accelerated, {@code false} otherwise
-     * @see com.sun.awt.AWTUtilities.Translucency#TRANSLUCENT
-     */
-    public boolean isAccelCapable() {
-        // REMIND: Temp workaround for issues with using HW acceleration
-        // in the browser on Vista when DWM is enabled
-        if (!isContainingTopLevelAccelCapable((Component)target)) {
-            return false;
-        }
-
-        // REMIND: translucent windows support-related
-/*
-        boolean isTranslucent =
-            SunToolkit.isContainingTopLevelTranslucent((Component)target);
-        // D3D/OGL and translucent windows interacted poorly in Windows XP;
-        // these problems are no longer present in Vista
-        return !isTranslucent || Win32GraphicsEnvironment.isVistaOS();
-*/
-        return true;
-    }
-
-    /**
      * Applies the shape to the native component window.
      * @since 1.7
      */
-    public void applyShape(sun.java2d.pipe.Region shape) {
-        if (shapeLog.isLoggable(Level.FINER)) {
+    public void applyShape(Region shape) {
+        if (shapeLog.isLoggable(PlatformLogger.FINER)) {
             shapeLog.finer(
                     "*** INFO: Setting shape: PEER: " + this
                     + "; TARGET: " + target
                     + "; SHAPE: " + shape);
         }
 
-        setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(),
-                (shape.isRectangular() ? null : shape));
+        if (shape != null) {
+            setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(),
+                    (shape.isRectangular() ? null : shape));
+        } else {
+            setRectangularShape(0, 0, 0, 0, null);
+        }
     }
 
+    /**
+     * Lowers this component at the bottom of the above component. If the above parameter
+     * is null then the method places this component at the top of the Z-order.
+     */
+    public void setZOrder(ComponentPeer above) {
+        long aboveHWND = (above != null) ? ((WComponentPeer)above).getHWnd() : 0;
+
+        setZOrder(aboveHWND);
+    }
+
+    private native void setZOrder(long above);
 }

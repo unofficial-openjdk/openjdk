@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,8 +58,7 @@ import com.sun.jmx.remote.util.ClassLogger;
  *
  * @since 1.5
  */
-public class NotificationBroadcasterSupport
-        implements NotificationEmitter, SendNotification {
+public class NotificationBroadcasterSupport implements NotificationEmitter {
     /**
      * Constructs a NotificationBroadcasterSupport where each listener is invoked by the
      * thread sending the notification. This constructor is equivalent to

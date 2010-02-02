@@ -25,7 +25,12 @@
 
 package java.util.logging;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.io.*;
+
+import sun.misc.JavaLangAccess;
+import sun.misc.SharedSecrets;
 
 /**
  * LogRecord objects are used to pass logging requests between
@@ -64,9 +69,24 @@ import java.io.*;
  */
 
 public class LogRecord implements java.io.Serializable {
-    private static long globalSequenceNumber;
-    private static int nextThreadId=10;
-    private static ThreadLocal<Integer> threadIds = new ThreadLocal<Integer>();
+    private static final AtomicLong globalSequenceNumber
+        = new AtomicLong(0);
+
+    /**
+     * The default value of threadID will be the current thread's
+     * thread id, for ease of correlation, unless it is greater than
+     * MIN_SEQUENTIAL_THREAD_ID, in which case we try harder to keep
+     * our promise to keep threadIDs unique by avoiding collisions due
+     * to 32-bit wraparound.  Unfortunately, LogRecord.getThreadID()
+     * returns int, while Thread.getId() returns long.
+     */
+    private static final int MIN_SEQUENTIAL_THREAD_ID = Integer.MAX_VALUE / 2;
+
+    private static final AtomicInteger nextThreadId
+        = new AtomicInteger(MIN_SEQUENTIAL_THREAD_ID);
+
+    private static final ThreadLocal<Integer> threadIds
+        = new ThreadLocal<Integer>();
 
     /**
      * @serial Logging message level
@@ -123,6 +143,23 @@ public class LogRecord implements java.io.Serializable {
     private transient ResourceBundle resourceBundle;
 
     /**
+     * Returns the default value for a new LogRecord's threadID.
+     */
+    private int defaultThreadID() {
+        long tid = Thread.currentThread().getId();
+        if (tid < MIN_SEQUENTIAL_THREAD_ID) {
+            return (int) tid;
+        } else {
+            Integer id = threadIds.get();
+            if (id == null) {
+                id = nextThreadId.getAndIncrement();
+                threadIds.set(id);
+            }
+            return id;
+        }
+    }
+
+    /**
      * Construct a LogRecord with the given level and message values.
      * <p>
      * The sequence property will be initialized with a new unique value.
@@ -144,21 +181,14 @@ public class LogRecord implements java.io.Serializable {
         this.level = level;
         message = msg;
         // Assign a thread ID and a unique sequence number.
-        synchronized (LogRecord.class) {
-            sequenceNumber = globalSequenceNumber++;
-            Integer id = threadIds.get();
-            if (id == null) {
-                id = new Integer(nextThreadId++);
-                threadIds.set(id);
-            }
-            threadID = id.intValue();
-        }
+        sequenceNumber = globalSequenceNumber.getAndIncrement();
+        threadID = defaultThreadID();
         millis = System.currentTimeMillis();
         needToInferCaller = true;
    }
 
     /**
-     * Get the source Logger name's
+     * Get the source Logger's name.
      *
      * @return source logger name (may be null)
      */
@@ -167,7 +197,7 @@ public class LogRecord implements java.io.Serializable {
     }
 
     /**
-     * Set the source Logger name.
+     * Set the source Logger's name.
      *
      * @param name   the source logger name (may be null)
      */
@@ -495,29 +525,35 @@ public class LogRecord implements java.io.Serializable {
     // Private method to infer the caller's class and method names
     private void inferCaller() {
         needToInferCaller = false;
-        // Get the stack trace.
-        StackTraceElement stack[] = (new Throwable()).getStackTrace();
-        // First, search back to a method in the Logger class.
-        int ix = 0;
-        while (ix < stack.length) {
-            StackTraceElement frame = stack[ix];
+        JavaLangAccess access = SharedSecrets.getJavaLangAccess();
+        Throwable throwable = new Throwable();
+        int depth = access.getStackTraceDepth(throwable);
+
+        String logClassName = "java.util.logging.Logger";
+        String plogClassName = "sun.util.logging.PlatformLogger";
+        boolean lookingForLogger = true;
+        for (int ix = 0; ix < depth; ix++) {
+            // Calling getStackTraceElement directly prevents the VM
+            // from paying the cost of building the entire stack frame.
+            StackTraceElement frame =
+                access.getStackTraceElement(throwable, ix);
             String cname = frame.getClassName();
-            if (cname.equals("java.util.logging.Logger")) {
-                break;
+            if (lookingForLogger) {
+                // Skip all frames until we have found the first logger frame.
+                if (cname.equals(logClassName) || cname.startsWith(plogClassName)) {
+                    lookingForLogger = false;
+                }
+            } else {
+                if (!cname.equals(logClassName) && !cname.startsWith(plogClassName)) {
+                    // skip reflection call
+                    if (!cname.startsWith("java.lang.reflect.") && !cname.startsWith("sun.reflect.")) {
+                       // We've found the relevant frame.
+                       setSourceClassName(cname);
+                       setSourceMethodName(frame.getMethodName());
+                       return;
+                    }
+                }
             }
-            ix++;
-        }
-        // Now search for the first frame before the "Logger" class.
-        while (ix < stack.length) {
-            StackTraceElement frame = stack[ix];
-            String cname = frame.getClassName();
-            if (!cname.equals("java.util.logging.Logger")) {
-                // We've found the relevant frame.
-                setSourceClassName(cname);
-                setSourceMethodName(frame.getMethodName());
-                return;
-            }
-            ix++;
         }
         // We haven't found a suitable frame, so just punt.  This is
         // OK as we are only committed to making a "best effort" here.

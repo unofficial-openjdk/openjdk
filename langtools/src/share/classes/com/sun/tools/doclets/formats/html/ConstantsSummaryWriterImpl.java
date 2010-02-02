@@ -35,6 +35,7 @@ import java.util.*;
  * Write the Constants Summary Page in HTML format.
  *
  * @author Jamie Ho
+ * @author Bhavesh Patel (Modified)
  * @since 1.4
  */
 public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
@@ -50,6 +51,10 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
      */
     private ClassDoc currentClassDoc;
 
+    private final String constantsTableSummary;
+
+    private final String[] constantsTableHeader;
+
     /**
      * Construct a ConstantsSummaryWriter.
      * @param configuration the configuration used in this run
@@ -59,6 +64,13 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
             throws IOException {
         super(configuration, ConfigurationImpl.CONSTANTS_FILE_NAME);
         this.configuration = configuration;
+        constantsTableSummary = configuration.getText("doclet.Constants_Table_Summary",
+                configuration.getText("doclet.Constants_Summary"));
+        constantsTableHeader = new String[] {
+            getModifierTypeHeader(),
+            configuration.getText("doclet.ConstantField"),
+            configuration.getText("doclet.Value")
+        };
     }
 
     /**
@@ -92,7 +104,7 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
      * {@inheritDoc}
      */
     public void writeContentsHeader() {
-        bold(configuration.getText("doclet.Contents"));
+        strong(configuration.getText("doclet.Contents"));
         ul();
     }
 
@@ -151,12 +163,11 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
      * @param classStr the heading to print.
      */
     protected void writeClassName(String classStr) {
-        table(1, 3, 0);
-        trBgcolorStyle("#EEEEFF", "TableSubHeadingColor");
-        thAlignColspan("left", 3);
+        table(1, 3, 0, constantsTableSummary);
+        tableSubCaptionStart();
         write(classStr);
-        thEnd();
-        trEnd();
+        tableCaptionEnd();
+        summaryTableHeader(constantsTableHeader, "col");
     }
 
     private void tableFooter(boolean isHeader) {
@@ -194,10 +205,10 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter
     /**
      * {@inheritDoc}
      */
-    public void writeConstantMembers(ClassDoc cd, List fields) {
+    public void writeConstantMembers(ClassDoc cd, List<FieldDoc> fields) {
         currentClassDoc = cd;
         for (int i = 0; i < fields.size(); ++i) {
-            writeConstantMember((FieldDoc)(fields.get(i)));
+            writeConstantMember(fields.get(i));
         }
     }
 

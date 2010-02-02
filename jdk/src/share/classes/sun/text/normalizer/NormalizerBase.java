@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,9 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 /*
  *******************************************************************************
- * (C) Copyright IBM Corp. 1996-2005 - All Rights Reserved                     *
+ * (C) Copyright IBM Corp. and others, 1996-2009 - All Rights Reserved         *
  *                                                                             *
  * The original version of this source code and documentation is copyrighted   *
  * and owned by IBM, These materials are provided under terms of a License     *
@@ -127,7 +126,7 @@ import java.text.Normalizer;
  * normalize(FCD) may be implemented with NFD.
  *
  * For more details on FCD see the collation design document:
- * http://oss.software.ibm.com/cvs/icu/~checkout~/icuhtml/design/collation/ICU_collation_design.htm
+ * http://source.icu-project.org/repos/icu/icuhtml/trunk/design/collation/ICU_collation_design.htm
  *
  * ICU collation performs either NFD or FCD normalization automatically if
  * normalization is turned on for the collator object. Beyond collation and
@@ -1599,15 +1598,34 @@ public final class NormalizerBase implements Cloneable {
      * @param options   the optional features to be enabled.
      */
     public static String normalize(String str, Normalizer.Form form, int options) {
+        int len = str.length();
+        boolean asciiOnly = true;
+        if (len < 80) {
+            for (int i = 0; i < len; i++) {
+                if (str.charAt(i) > 127) {
+                    asciiOnly = false;
+                    break;
+                }
+            }
+        } else {
+            char[] a = str.toCharArray();
+            for (int i = 0; i < len; i++) {
+                if (a[i] > 127) {
+                    asciiOnly = false;
+                    break;
+                }
+            }
+        }
+
         switch (form) {
         case NFC :
-            return NFC.normalize(str, options);
+            return asciiOnly ? str : NFC.normalize(str, options);
         case NFD :
-            return NFD.normalize(str, options);
+            return asciiOnly ? str : NFD.normalize(str, options);
         case NFKC :
-            return NFKC.normalize(str, options);
+            return asciiOnly ? str : NFKC.normalize(str, options);
         case NFKD :
-            return NFKD.normalize(str, options);
+            return asciiOnly ? str : NFKD.normalize(str, options);
         }
 
         throw new IllegalArgumentException("Unexpected normalization form: " +

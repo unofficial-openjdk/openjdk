@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,8 @@ class ConcurrentMarkThread: public ConcurrentGCThread {
   static SurrogateLockerThread* slt() { return _slt; }
 
   // Printing
-  void print();
+  void print_on(outputStream* st) const;
+  void print() const;
 
   // Total virtual time so far.
   double vtime_accum();
@@ -80,5 +81,5 @@ class ConcurrentMarkThread: public ConcurrentGCThread {
   void            yield();
 
   // shutdown
-  static void stop();
+  void stop();
 };

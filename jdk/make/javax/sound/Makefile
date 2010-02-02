@@ -54,18 +54,6 @@ include FILES_c.gmk
 AUTO_FILES_JAVA_DIRS = javax/sound com/sun/media/sound
 
 #
-# Specific to OpenJDK building
-#
-ifdef OPENJDK
-
-# copy closed .class files
-build: import-binary-plug-sound-classes 
-
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-endif # OPENJDK
-
-#
 # Files that just need cp.
 #
 SERVICEDIR = $(CLASSBINDIR)/META-INF/services
@@ -79,13 +67,11 @@ FILES_copy = \
 	$(SERVICEDIR)/javax.sound.sampled.spi.AudioFileReader \
 	$(SERVICEDIR)/javax.sound.sampled.spi.FormatConversionProvider \
 	$(SERVICEDIR)/javax.sound.sampled.spi.MixerProvider \
-	$(LIBDIR)/audio/soundbank.gm \
 	$(LIBDIR)/sound.properties
 
 FILES_mkdirs = \
 	$(CLASSBINDIR)/META-INF \
-	$(CLASSBINDIR)/META-INF/services \
-	$(LIBDIR)/audio
+	$(CLASSBINDIR)/META-INF/services
 
 FILES_copydirs = \
 	$(CLASSBINDIR) \
@@ -94,11 +80,6 @@ FILES_copydirs = \
 
 FILES_c += $(FILES_$(PLATFORM))
 
-
-#
-# add "closed" library
-#
-SUBDIRS += jsoundhs
 
 #
 # system dependent flags
@@ -127,27 +108,19 @@ ifeq ($(PLATFORM), linux)
 endif # PLATFORM linux
 
 ifeq ($(PLATFORM), solaris)
-  ifneq ($(ARCH), amd64)
-    # build with ports and direct audio
-    CPPFLAGS += -DUSE_PORTS=TRUE 	\
-                -DUSE_DAUDIO=TRUE
+  # build with ports and direct audio
+  CPPFLAGS += -DUSE_PORTS=TRUE 	\
+              -DUSE_DAUDIO=TRUE
 
-    INCLUDE_PORTS = TRUE
-    INCLUDE_DAUDIO = TRUE
-    INCLUDE_MIDI = TRUE
-  else
-    # build with empty MIDI i/o
-    INCLUDE_MIDI = TRUE
-    # build with empty ports
-    INCLUDE_PORTS = TRUE
-    # build with empty direct audio
-    INCLUDE_DAUDIO = TRUE
-  endif
+  INCLUDE_PORTS = TRUE
+  INCLUDE_DAUDIO = TRUE
+  # build with empty MIDI i/o
+  INCLUDE_MIDI = TRUE
 endif # PLATFORM solaris
 
 # for dynamic inclusion of extra sound libs: these
 # JNI libs will be loaded from Platform.java
-CPPFLAGS += -DEXTRA_SOUND_JNI_LIBS="\"$(EXTRA_SOUND_JNI_LIBS)\""
+CPPFLAGS += -DEXTRA_SOUND_JNI_LIBS='"$(EXTRA_SOUND_JNI_LIBS)"'
 
 # integrate MIDI i/o in jsound lib
 ifeq ($(INCLUDE_MIDI),TRUE)

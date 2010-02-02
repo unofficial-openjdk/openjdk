@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -795,7 +795,6 @@ public abstract class JComponent extends Container implements Serializable,
      * @see java.awt.Container#paint
      */
     protected void paintChildren(Graphics g) {
-        boolean isJComponent;
         Graphics sg = g;
 
         synchronized(getTreeLock()) {
@@ -826,12 +825,21 @@ public abstract class JComponent extends Container implements Serializable,
                 }
             }
             boolean printing = getFlag(IS_PRINTING);
+            final Window window = SwingUtilities.getWindowAncestor(this);
+            final boolean isWindowOpaque = window == null || window.isOpaque();
             for (; i >= 0 ; i--) {
                 Component comp = getComponent(i);
-                isJComponent = (comp instanceof JComponent);
-                if (comp != null &&
-                    (isJComponent || isLightweightComponent(comp)) &&
-                    (comp.isVisible() == true)) {
+                if (comp == null) {
+                    continue;
+                }
+
+                final boolean isJComponent = comp instanceof JComponent;
+
+                // Enable painting of heavyweights in non-opaque windows.
+                // See 6884960
+                if ((!isWindowOpaque || isJComponent ||
+                            isLightweightComponent(comp)) && comp.isVisible())
+                {
                     Rectangle cr;
 
                     cr = comp.getBounds(tmpRect);
@@ -887,6 +895,8 @@ public abstract class JComponent extends Container implements Serializable,
                                     }
                                 }
                             } else {
+                                // The component is either lightweight, or
+                                // heavyweight in a non-opaque window
                                 if (!printing) {
                                     comp.paint(cg);
                                 }
@@ -1021,8 +1031,10 @@ public abstract class JComponent extends Container implements Serializable,
 
             int bw,bh;
             boolean printing = getFlag(IS_PRINTING);
-            if(!printing && repaintManager.isDoubleBufferingEnabled() &&
-               !getFlag(ANCESTOR_USING_BUFFER) && isDoubleBuffered()) {
+            if (!printing && repaintManager.isDoubleBufferingEnabled() &&
+                !getFlag(ANCESTOR_USING_BUFFER) && isDoubleBuffered() &&
+                (getFlag(IS_REPAINTING) || repaintManager.isPainting()))
+            {
                 repaintManager.beginPaint();
                 try {
                     repaintManager.paint(this, this, co, clipX, clipY, clipW,
@@ -2888,7 +2900,10 @@ public abstract class JComponent extends Container implements Serializable,
           return false;
       }
       // Get the KeyStroke
+      // There may be two keystrokes associated with a low-level key event;
+      // in this case a keystroke made of an extended key code has a priority.
       KeyStroke ks;
+      KeyStroke ksE = null;
 
       if (e.getID() == KeyEvent.KEY_TYPED) {
           ks = KeyStroke.getKeyStroke(e.getKeyChar());
@@ -2896,9 +2911,18 @@ public abstract class JComponent extends Container implements Serializable,
       else {
           ks = KeyStroke.getKeyStroke(e.getKeyCode(),e.getModifiers(),
                                     (pressed ? false:true));
+          if (e.getKeyCode() != e.getExtendedKeyCode()) {
+              ksE = KeyStroke.getKeyStroke(e.getExtendedKeyCode(),e.getModifiers(),
+                                    (pressed ? false:true));
+          }
       }
 
-      /* Do we have a key binding for e? */
+      // Do we have a key binding for e?
+      // If we have a binding by an extended code, use it.
+      // If not, check for regular code binding.
+      if(ksE != null && processKeyBinding(ksE, e, WHEN_FOCUSED, pressed)) {
+          return true;
+      }
       if(processKeyBinding(ks, e, WHEN_FOCUSED, pressed))
           return true;
 
@@ -2910,6 +2934,9 @@ public abstract class JComponent extends Container implements Serializable,
       while (parent != null && !(parent instanceof Window) &&
              !(parent instanceof Applet)) {
           if(parent instanceof JComponent) {
+              if(ksE != null && ((JComponent)parent).processKeyBinding(ksE, e,
+                               WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, pressed))
+                  return true;
               if(((JComponent)parent).processKeyBinding(ks, e,
                                WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, pressed))
                   return true;
@@ -4851,7 +4878,9 @@ public abstract class JComponent extends Container implements Serializable,
      * @see #revalidate
      * @see java.awt.Component#invalidate
      * @see java.awt.Container#validate
+     * @see java.awt.Container#isValidateRoot
      */
+    @Override
     public boolean isValidateRoot() {
         return false;
     }

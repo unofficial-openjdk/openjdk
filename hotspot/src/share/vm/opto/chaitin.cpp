@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,6 +149,9 @@ PhaseChaitin::PhaseChaitin(uint unique, PhaseCFG &cfg, Matcher &matcher)
 #endif
 {
   NOT_PRODUCT( Compile::TracePhase t3("ctorChaitin", &_t_ctorChaitin, TimeCompiler); )
+
+  _high_frequency_lrg = MIN2(float(OPTO_LRG_HIGH_FREQ), _cfg._outer_loop_freq);
+
   uint i,j;
   // Build a list of basic blocks, sorted by frequency
   _blks = NEW_RESOURCE_ARRAY( Block *, _cfg._num_blocks );
@@ -228,6 +231,11 @@ void PhaseChaitin::Register_Allocate() {
   // them for real.
   de_ssa();
 
+#ifdef ASSERT
+  // Veify the graph before RA.
+  verify(&live_arena);
+#endif
+
   {
     NOT_PRODUCT( Compile::TracePhase t3("computeLive", &_t_computeLive, TimeCompiler); )
     _live = NULL;                 // Mark live as being not available
@@ -306,12 +314,6 @@ void PhaseChaitin::Register_Allocate() {
     C->check_node_count(2*NodeLimitFudgeFactor, "out of nodes after physical split");
     if (C->failing())  return;
 
-#ifdef ASSERT
-    if( VerifyOpto ) {
-      _cfg.verify();
-      verify_base_ptrs(&live_arena);
-    }
-#endif
     NOT_PRODUCT( C->verify_graph_edges(); )
 
     compact();                  // Compact LRGs; return new lower max lrg
@@ -340,7 +342,7 @@ void PhaseChaitin::Register_Allocate() {
     compress_uf_map_for_nodes();
 
 #ifdef ASSERT
-    if( VerifyOpto ) _ifg->verify(this);
+    verify(&live_arena, true);
 #endif
   } else {
     ifg.SquareUp();
@@ -376,12 +378,6 @@ void PhaseChaitin::Register_Allocate() {
     // Bail out if unique gets too large (ie - unique > MaxNodeLimit - 2*NodeLimitFudgeFactor)
     C->check_node_count(2*NodeLimitFudgeFactor, "out of nodes after split");
     if (C->failing())  return;
-#ifdef ASSERT
-    if( VerifyOpto ) {
-      _cfg.verify();
-      verify_base_ptrs(&live_arena);
-    }
-#endif
 
     compact();                  // Compact LRGs; return new lower max lrg
 
@@ -412,7 +408,7 @@ void PhaseChaitin::Register_Allocate() {
     }
     compress_uf_map_for_nodes();
 #ifdef ASSERT
-    if( VerifyOpto ) _ifg->verify(this);
+    verify(&live_arena, true);
 #endif
     cache_lrg_info();           // Count degree of LRGs
 
@@ -431,6 +427,11 @@ void PhaseChaitin::Register_Allocate() {
 
   // Peephole remove copies
   post_allocate_copy_removal();
+
+#ifdef ASSERT
+  // Veify the graph after RA.
+  verify(&live_arena);
+#endif
 
   // max_reg is past the largest *register* used.
   // Convert that to a frame_slot number.
@@ -956,7 +957,7 @@ void PhaseChaitin::Simplify( ) {
       while ((neighbor = elements.next()) != 0) {
         LRG *n = &lrgs(neighbor);
 #ifdef ASSERT
-        if( VerifyOpto ) {
+        if( VerifyOpto || VerifyRegisterAllocator ) {
           assert( _ifg->effective_degree(neighbor) == n->degree(), "" );
         }
 #endif
@@ -984,6 +985,8 @@ void PhaseChaitin::Simplify( ) {
     uint lo_score = _hi_degree;
     double score = lrgs(lo_score).score();
     double area = lrgs(lo_score)._area;
+    double cost = lrgs(lo_score)._cost;
+    bool bound = lrgs(lo_score)._is_bound;
 
     // Find cheapest guy
     debug_only( int lo_no_simplify=0; );
@@ -1001,17 +1004,27 @@ void PhaseChaitin::Simplify( ) {
       debug_only( if( lrgs(i)._was_lo ) lo_no_simplify=i; );
       double iscore = lrgs(i).score();
       double iarea = lrgs(i)._area;
+      double icost = lrgs(i)._cost;
+      bool ibound = lrgs(i)._is_bound;
 
       // Compare cost/area of i vs cost/area of lo_score.  Smaller cost/area
       // wins.  Ties happen because all live ranges in question have spilled
       // a few times before and the spill-score adds a huge number which
       // washes out the low order bits.  We are choosing the lesser of 2
       // evils; in this case pick largest area to spill.
+      // Ties also happen when live ranges are defined and used only inside
+      // one block. In which case their area is 0 and score set to max.
+      // In such case choose bound live range over unbound to free registers
+      // or with smaller cost to spill.
       if( iscore < score ||
-          (iscore == score && iarea > area && lrgs(lo_score)._was_spilled2) ) {
+          (iscore == score && iarea > area && lrgs(lo_score)._was_spilled2) ||
+          (iscore == score && iarea == area &&
+           ( (ibound && !bound) || ibound == bound && (icost < cost) )) ) {
         lo_score = i;
         score = iscore;
         area = iarea;
+        cost = icost;
+        bound = ibound;
       }
     }
     LRG *lo_lrg = &lrgs(lo_score);
@@ -1248,7 +1261,7 @@ uint PhaseChaitin::Select( ) {
 
       // If the live range is not bound, then we actually had some choices
       // to make.  In this case, the mask has more bits in it than the colors
-      // choosen.  Restrict the mask to just what was picked.
+      // chosen.  Restrict the mask to just what was picked.
       if( lrg->num_regs() == 1 ) { // Size 1 live range
         lrg->Clear();           // Clear the mask
         lrg->Insert(reg);       // Set regmask to match selected reg
@@ -1422,17 +1435,33 @@ Node *PhaseChaitin::find_base_for_derived( Node **derived_base_map, Node *derive
   // pointers derived from NULL!  These are always along paths that
   // can't happen at run-time but the optimizer cannot deduce it so
   // we have to handle it gracefully.
+  assert(!derived->bottom_type()->isa_narrowoop() ||
+          derived->bottom_type()->make_ptr()->is_ptr()->_offset == 0, "sanity");
   const TypePtr *tj = derived->bottom_type()->isa_ptr();
   // If its an OOP with a non-zero offset, then it is derived.
-  if( tj->_offset == 0 ) {
+  if( tj == NULL || tj->_offset == 0 ) {
     derived_base_map[derived->_idx] = derived;
     return derived;
   }
   // Derived is NULL+offset?  Base is NULL!
   if( derived->is_Con() ) {
-    Node *base = new (C, 1) ConPNode( TypePtr::NULL_PTR );
-    uint no_lidx = 0;  // an unmatched constant in debug info has no LRG
-    _names.extend(base->_idx, no_lidx);
+    Node *base = _matcher.mach_null();
+    assert(base != NULL, "sanity");
+    if (base->in(0) == NULL) {
+      // Initialize it once and make it shared:
+      // set control to _root and place it into Start block
+      // (where top() node is placed).
+      base->init_req(0, _cfg._root);
+      Block *startb = _cfg._bbs[C->top()->_idx];
+      startb->_nodes.insert(startb->find_node(C->top()), base );
+      _cfg._bbs.map( base->_idx, startb );
+      assert (n2lidx(base) == 0, "should not have LRG yet");
+    }
+    if (n2lidx(base) == 0) {
+      new_lrg(base, maxlrg++);
+    }
+    assert(base->in(0) == _cfg._root &&
+           _cfg._bbs[base->_idx] == _cfg._bbs[C->top()->_idx], "base NULL should be shared");
     derived_base_map[derived->_idx] = base;
     return base;
   }
@@ -1459,9 +1488,13 @@ Node *PhaseChaitin::find_base_for_derived( Node **derived_base_map, Node *derive
   }
 
   // Now we see we need a base-Phi here to merge the bases
-  base = new (C, derived->req()) PhiNode( derived->in(0), base->bottom_type() );
-  for( i = 1; i < derived->req(); i++ )
+  const Type *t = base->bottom_type();
+  base = new (C, derived->req()) PhiNode( derived->in(0), t );
+  for( i = 1; i < derived->req(); i++ ) {
     base->init_req(i, find_base_for_derived(derived_base_map, derived->in(i), maxlrg));
+    t = t->meet(base->in(i)->bottom_type());
+  }
+  base->as_Phi()->set_type(t);
 
   // Search the current block for an existing base-Phi
   Block *b = _cfg._bbs[derived->_idx];
@@ -1559,6 +1592,8 @@ bool PhaseChaitin::stretch_base_pointer_live_ranges( ResourceArea *a ) {
           // This works because we are still in SSA during this call.
           Node *derived = lrgs(neighbor)._def;
           const TypePtr *tj = derived->bottom_type()->isa_ptr();
+          assert(!derived->bottom_type()->isa_narrowoop() ||
+                  derived->bottom_type()->make_ptr()->is_ptr()->_offset == 0, "sanity");
           // If its an OOP with a non-zero offset, then it is derived.
           if( tj && tj->_offset != 0 && tj->isa_oop_ptr() ) {
             Node *base = find_base_for_derived( derived_base_map, derived, maxlrg );

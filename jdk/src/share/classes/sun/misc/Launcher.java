@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import java.util.StringTokenizer;
 import java.util.Set;
 import java.util.Vector;
 import java.security.AccessController;
+import java.security.AllPermission;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.security.AccessControlContext;
@@ -49,7 +50,6 @@ import java.security.CodeSource;
 import sun.security.action.GetPropertyAction;
 import sun.security.util.SecurityConstants;
 import sun.net.www.ParseUtil;
-
 
 /**
  * This class is used by the system to launch the main application.
@@ -116,11 +116,26 @@ public class Launcher {
         return loader;
     }
 
+    public static void addURLToAppClassLoader(URL u) {
+        AccessController.checkPermission(new AllPermission());
+        ClassLoader loader = Launcher.getLauncher().getClassLoader();
+        ((Launcher.AppClassLoader) loader).addAppURL(u);
+    }
+
+    public static void addURLToExtClassLoader(URL u) {
+        AccessController.checkPermission(new AllPermission());
+        ClassLoader loader = Launcher.getLauncher().getClassLoader();
+        ((Launcher.ExtClassLoader) loader.getParent()).addExtURL(u);
+    }
+
     /*
      * The class loader used for loading installed extensions.
      */
     static class ExtClassLoader extends URLClassLoader {
-        private File[] dirs;
+
+        static {
+            ClassLoader.registerAsParallelCapable();
+        }
 
         /**
          * create an ExtClassLoader. The ExtClassLoader is created
@@ -146,12 +161,12 @@ public class Launcher {
                         }
                     });
             } catch (java.security.PrivilegedActionException e) {
-                    throw (IOException) e.getException();
+                throw (IOException) e.getException();
             }
         }
 
         void addExtURL(URL url) {
-                super.addURL(url);
+            super.addURL(url);
         }
 
         /*
@@ -159,7 +174,6 @@ public class Launcher {
          */
         public ExtClassLoader(File[] dirs) throws IOException {
             super(getExtURLs(dirs), null, factory);
-            this.dirs = dirs;
         }
 
         private static File[] getExtDirs() {
@@ -206,22 +220,34 @@ public class Launcher {
          */
         public String findLibrary(String name) {
             name = System.mapLibraryName(name);
-            for (int i = 0; i < dirs.length; i++) {
-                // Look in architecture-specific subdirectory first
-                String arch = System.getProperty("os.arch");
-                if (arch != null) {
-                    File file = new File(new File(dirs[i], arch), name);
+            URL[] urls = super.getURLs();
+            File prevDir = null;
+            for (int i = 0; i < urls.length; i++) {
+                // Get the ext directory from the URL
+                File dir = new File(urls[i].getPath()).getParentFile();
+                if (dir != null && !dir.equals(prevDir)) {
+                    // Look in architecture-specific subdirectory first
+                    String arch = System.getProperty("os.arch");
+                    if (arch != null) {
+                        File file = new File(new File(dir, arch), name);
+                        if (file.exists()) {
+                            return file.getAbsolutePath();
+                        }
+                    }
+                    // Then check the extension directory
+                    File file = new File(dir, name);
                     if (file.exists()) {
                         return file.getAbsolutePath();
                     }
                 }
-                // Then check the extension directory
-                File file = new File(dirs[i], name);
-                if (file.exists()) {
-                    return file.getAbsolutePath();
-                }
+                prevDir = dir;
             }
             return null;
+        }
+
+        protected Class findClass(String name) throws ClassNotFoundException {
+            BootClassLoaderHook.preLoadClass(name);
+            return super.findClass(name);
         }
 
         private static AccessControlContext getContext(File[] dirs)
@@ -247,6 +273,10 @@ public class Launcher {
      * runs in a restricted security context.
      */
     static class AppClassLoader extends URLClassLoader {
+
+        static {
+            ClassLoader.registerAsParallelCapable();
+        }
 
         public static ClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
@@ -281,9 +311,10 @@ public class Launcher {
         /**
          * Override loadClass so we can checkPackageAccess.
          */
-        public synchronized Class loadClass(String name, boolean resolve)
+        public Class loadClass(String name, boolean resolve)
             throws ClassNotFoundException
         {
+            BootClassLoaderHook.preLoadClass(name);
             int i = name.lastIndexOf('.');
             if (i != -1) {
                 SecurityManager sm = System.getSecurityManager();
@@ -340,39 +371,64 @@ public class Launcher {
 
             return acc;
         }
+
+        void addAppURL(URL url) {
+            super.addURL(url);
+        }
     }
 
-    public static URLClassPath getBootstrapClassPath() {
-        String prop = AccessController.doPrivileged(
-            new GetPropertyAction("sun.boot.class.path"));
-        URL[] urls;
-        if (prop != null) {
-            final String path = prop;
-            urls = AccessController.doPrivileged(
-                new PrivilegedAction<URL[]>() {
-                    public URL[] run() {
-                        File[] classPath = getClassPath(path);
-                        int len = classPath.length;
-                        Set<File> seenDirs = new HashSet<File>();
-                        for (int i = 0; i < len; i++) {
-                            File curEntry = classPath[i];
-                            // Negative test used to properly handle
-                            // nonexistent jars on boot class path
-                            if (!curEntry.isDirectory()) {
-                                curEntry = curEntry.getParentFile();
+    private static URLClassPath bootstrapClassPath;
+
+    public static synchronized URLClassPath getBootstrapClassPath() {
+        if (bootstrapClassPath == null) {
+            String prop = AccessController.doPrivileged(
+                new GetPropertyAction("sun.boot.class.path"));
+            URL[] urls;
+            if (prop != null) {
+                final String path = prop;
+                urls = AccessController.doPrivileged(
+                    new PrivilegedAction<URL[]>() {
+                        public URL[] run() {
+                            File[] classPath = getClassPath(path);
+                            int len = classPath.length;
+                            Set<File> seenDirs = new HashSet<File>();
+                            for (int i = 0; i < len; i++) {
+                                File curEntry = classPath[i];
+                                // Negative test used to properly handle
+                                // nonexistent jars on boot class path
+                                if (!curEntry.isDirectory()) {
+                                    curEntry = curEntry.getParentFile();
+                                }
+                                if (curEntry != null && seenDirs.add(curEntry)) {
+                                    MetaIndex.registerDirectory(curEntry);
+                                }
                             }
-                            if (curEntry != null && seenDirs.add(curEntry)) {
-                                MetaIndex.registerDirectory(curEntry);
-                            }
+                            return pathToURLs(classPath);
                         }
-                        return pathToURLs(classPath);
                     }
+                );
+            } else {
+                urls = new URL[0];
+            }
+
+            bootstrapClassPath = new URLClassPath(urls, factory);
+            final File[] additionalBootStrapPaths =
+                BootClassLoaderHook.getBootstrapPaths();
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    for (int i=0; i<additionalBootStrapPaths.length; i++) {
+                        bootstrapClassPath.addURL(
+                            getFileURL(additionalBootStrapPaths[i]));
+                    }
+                    return null;
                 }
-            );
-        } else {
-            urls = new URL[0];
+            });
         }
-        return new URLClassPath(urls, factory);
+        return bootstrapClassPath;
+    }
+
+    public static synchronized void flushBootstrapClassPath() {
+        bootstrapClassPath = null;
     }
 
     private static URL[] pathToURLs(File[] path) {

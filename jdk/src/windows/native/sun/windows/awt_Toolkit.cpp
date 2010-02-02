@@ -23,15 +23,16 @@
  * have any questions.
  */
 
+#include "awt.h"
 #include <signal.h>
 #include <windowsx.h>
 
-#if defined(_DEBUG) && defined(_MSC_VER) && _MSC_VER >= 1000
-#include <crtdbg.h>
-#endif
+//#if defined(_DEBUG) && defined(_MSC_VER) && _MSC_VER >= 1000
+//#include <crtdbg.h>
+//#endif
 
 #define _JNI_IMPLEMENTATION_
-#include "stdhdrs.h"
+
 #include "awt_DrawingSurface.h"
 #include "awt_AWTEvent.h"
 #include "awt_Component.h"
@@ -51,11 +52,11 @@
 #include "awt_FileDialog.h"
 #include "CmdIDList.h"
 #include "awt_new.h"
-#include "awt_Unicode.h"
 #include "debug_trace.h"
 #include "debug_mem.h"
 
 #include "ComCtl32Util.h"
+#include "DllUtil.h"
 
 #include "D3DPipelineManager.h"
 
@@ -225,8 +226,7 @@ BOOL AwtToolkit::activateKeyboardLayout(HKL hkl) {
     HKL prev = ::ActivateKeyboardLayout(hkl, 0);
 
     // If the above call fails, try loading the layout in case of NT
-    if ((prev == 0) && IS_NT) {
-
+    if (!prev) {
         // create input locale string, e.g., "00000409", from hkl.
         TCHAR inputLocale[9];
         TCHAR buf[9];
@@ -297,7 +297,7 @@ JavaStringBuffer::JavaStringBuffer(JNIEnv *env, jstring jstr) {
     if (jstr != NULL) {
         int length = env->GetStringLength(jstr);
         buffer = new TCHAR[length + 1];
-        LPCTSTR tmp = (LPCTSTR)JNU_GetStringPlatformChars(env, jstr, NULL);
+        LPCTSTR tmp = JNU_GetStringPlatformChars(env, jstr, NULL);
         _tcscpy(buffer, tmp);
         JNU_ReleaseStringPlatformChars(env, jstr, tmp);
     } else {
@@ -323,6 +323,7 @@ AwtToolkit::AwtToolkit() {
     m_vmSignalled = FALSE;
 
     m_isDynamicLayoutSet = FALSE;
+    m_areExtraMouseButtonsEnabled = TRUE;
 
     m_verifyComponents = FALSE;
     m_breakOnError = FALSE;
@@ -334,6 +335,8 @@ AwtToolkit::AwtToolkit() {
     m_mouseDown = FALSE;
 
     m_hGetMessageHook = 0;
+    m_hMouseLLHook = 0;
+    m_lastWindowUnderMouse = NULL;
     m_timer = 0;
 
     m_cmdIDs = new AwtCmdIDList();
@@ -483,14 +486,13 @@ BOOL AwtToolkit::Dispose() {
     tk.UnregisterClass();
 
     ::UnhookWindowsHookEx(tk.m_hGetMessageHook);
+    UninstallMouseLowLevelHook();
 
     tk.m_mainThreadId = 0;
 
     delete tk.m_cmdIDs;
 
     ::CloseHandle(m_waitEvent);
-
-    ComCtl32Util::GetInstance().FreeLibraries();
 
     tk.m_isDisposed = TRUE;
 
@@ -802,8 +804,73 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
           return 0;
       }
       case WM_AWT_ASSOCIATECONTEXT: {
-          AwtComponent *p = AwtComponent::GetComponent((HWND)wParam);
-          p->ImmAssociateContext((HIMC)lParam);
+          EnableNativeIMEStruct *data = (EnableNativeIMEStruct*)wParam;
+
+          jobject peer = data->peer;
+          jobject self = data->self;
+          jint context = data->context;
+          jboolean useNativeCompWindow = data->useNativeCompWindow;
+
+          AwtComponent* comp = (AwtComponent*)JNI_GET_PDATA(peer);
+          if (comp != NULL)
+          {
+              comp->SetInputMethod(self, useNativeCompWindow);
+              comp->ImmAssociateContext((HIMC)context);
+          }
+
+          if (peer != NULL) {
+              env->DeleteGlobalRef(peer);
+          }
+          if (self != NULL) {
+              env->DeleteGlobalRef(self);
+          }
+
+          delete data;
+          return 0;
+      }
+      case WM_AWT_GET_DEFAULT_IME_HANDLER: {
+          LRESULT ret = (LRESULT)FALSE;
+          jobject peer = (jobject)wParam;
+
+          AwtComponent* comp = (AwtComponent*)JNI_GET_PDATA(peer);
+          if (comp != NULL) {
+              HWND defaultIMEHandler = ImmGetDefaultIMEWnd(comp->GetHWnd());
+              if (defaultIMEHandler != NULL) {
+                  AwtToolkit::GetInstance().SetInputMethodWindow(defaultIMEHandler);
+                  ret = (LRESULT)TRUE;
+              }
+          }
+
+          if (peer != NULL) {
+              env->DeleteGlobalRef(peer);
+          }
+          return ret;
+      }
+      case WM_AWT_HANDLE_NATIVE_IME_EVENT: {
+          jobject peer = (jobject)wParam;
+          AwtComponent* comp = (AwtComponent*)JNI_GET_PDATA(peer);
+          MSG* msg = (MSG*)lParam;
+
+          long modifiers = comp->GetJavaModifiers();
+          if ((comp != NULL) && (msg->message==WM_CHAR || msg->message==WM_SYSCHAR)) {
+              WCHAR unicodeChar = (WCHAR)msg->wParam;
+              comp->SendKeyEvent(java_awt_event_KeyEvent_KEY_TYPED,
+                                 0, //to be fixed nowMillis(),
+                                 java_awt_event_KeyEvent_CHAR_UNDEFINED,
+                                 unicodeChar,
+                                 modifiers,
+                                 java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, (jlong)0,
+                                 msg);
+          } else if (comp != NULL) {
+              MSG* pCopiedMsg = new MSG;
+              *pCopiedMsg = *msg;
+              comp->SendMessage(WM_AWT_HANDLE_EVENT, (WPARAM) FALSE,
+                                (LPARAM) pCopiedMsg);
+          }
+
+          if (peer != NULL) {
+              env->DeleteGlobalRef(peer);
+          }
           return 0;
       }
       case WM_AWT_ENDCOMPOSITION: {
@@ -886,8 +953,6 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
           return (DWORD)ImmGetOpenStatus((HIMC)wParam);
       }
       case WM_DISPLAYCHANGE: {
-          AwtCursor::DirtyAllCustomCursors();
-
           // Reinitialize screens
           initScreens(env);
 
@@ -960,6 +1025,79 @@ LRESULT CALLBACK AwtToolkit::GetMessageFilter(int code,
     }
     return ::CallNextHookEx(AwtToolkit::GetInstance().m_hGetMessageHook, code,
                             wParam, lParam);
+
+    CATCH_BAD_ALLOC_RET(0);
+}
+
+void AwtToolkit::InstallMouseLowLevelHook()
+{
+    // We need the low-level hook since we need to process mouse move
+    // messages outside of our windows.
+    m_hMouseLLHook = ::SetWindowsHookEx(WH_MOUSE_LL,
+            (HOOKPROC)MouseLowLevelHook,
+            GetModuleHandle(), NULL);
+
+    // Reset the old value
+    m_lastWindowUnderMouse = NULL;
+}
+
+void AwtToolkit::UninstallMouseLowLevelHook()
+{
+    if (m_hMouseLLHook != 0) {
+        ::UnhookWindowsHookEx(m_hMouseLLHook);
+        m_hMouseLLHook = 0;
+    }
+}
+
+LRESULT CALLBACK AwtToolkit::MouseLowLevelHook(int code,
+        WPARAM wParam, LPARAM lParam)
+{
+    TRY;
+
+    if (code >= 0 && wParam == WM_MOUSEMOVE) {
+        POINT pt = ((MSLLHOOKSTRUCT*)lParam)->pt;
+
+        // We can't use GA_ROOTOWNER since in this case we'll go up to
+        // the root Java toplevel, not the actual owned toplevel.
+        HWND hwnd = ::GetAncestor(::WindowFromPoint(pt), GA_ROOT);
+
+        AwtToolkit& tk = AwtToolkit::GetInstance();
+
+        if (tk.m_lastWindowUnderMouse != hwnd) {
+            AwtWindow *fw = NULL, *tw = NULL;
+
+            if (tk.m_lastWindowUnderMouse) {
+                fw = (AwtWindow*)
+                    AwtComponent::GetComponent(tk.m_lastWindowUnderMouse);
+            }
+            if (hwnd) {
+                tw = (AwtWindow*)AwtComponent::GetComponent(hwnd);
+            }
+
+            tk.m_lastWindowUnderMouse = hwnd;
+
+            if (fw) {
+                fw->UpdateSecurityWarningVisibility();
+            }
+            // ... however, because we use GA_ROOT, we may find the warningIcon
+            // which is not a Java windows.
+            if (AwtWindow::IsWarningWindow(hwnd)) {
+                hwnd = ::GetParent(hwnd);
+                if (hwnd) {
+                    tw = (AwtWindow*)AwtComponent::GetComponent(hwnd);
+                }
+                tk.m_lastWindowUnderMouse = hwnd;
+            }
+            if (tw) {
+                tw->UpdateSecurityWarningVisibility();
+            }
+
+
+        }
+    }
+
+    return ::CallNextHookEx(AwtToolkit::GetInstance().m_hMouseLLHook, code,
+            wParam, lParam);
 
     CATCH_BAD_ALLOC_RET(0);
 }
@@ -1161,9 +1299,7 @@ BOOL AwtToolkit::PreProcessMsg(MSG& msg)
     if (p && p->PreProcessMsg(msg) == mrConsume)
         return TRUE;
 
-    if ((msg.message >= WM_MOUSEFIRST && msg.message <= WM_AWT_MOUSELAST) ||
-        (IS_WIN95 && !IS_WIN98 &&
-                                msg.message == AwtComponent::Wheel95GetMsg()) ||
+    if ((msg.message >= WM_MOUSEFIRST && msg.message <= WM_MOUSELAST) ||
         (msg.message >= WM_NCMOUSEMOVE && msg.message <= WM_NCMBUTTONDBLCLK)) {
         if (PreProcessMouseMsg(p, msg)) {
             return TRUE;
@@ -1190,9 +1326,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
         return FALSE;
     }
 
-    if (msg.message >= WM_MOUSEFIRST && msg.message <= WM_AWT_MOUSELAST ||
-        (IS_WIN95 && !IS_WIN98 && msg.message == AwtComponent::Wheel95GetMsg()))
-    {
+    if (msg.message >= WM_MOUSEFIRST && msg.message <= WM_MOUSELAST) {
         mouseWParam = msg.wParam;
         mouseLParam = msg.lParam;
     } else {
@@ -1286,21 +1420,6 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
         mouseWheelComp != NULL) { //i.e. mouse is over client area for this
                                   //window
         msg.hwnd = hWndForWheel;
-    }
-    else if (IS_WIN95 && !IS_WIN98 &&
-             msg.message == AwtComponent::Wheel95GetMsg() &&
-             mouseWheelComp != NULL) {
-
-        // On Win95, mouse wheels are _always_ delivered to the top level
-        // Frame.  Default behavior only takes place if the message's hwnd
-        // remains that of the Frame.  We only want to change the hwnd if
-        // we're changing it to a Component that DOESN'T handle the
-        // mousewheel natively.
-
-        if (!mouseWheelComp->InheritsNativeMouseWheelBehavior()) {
-            DTRACE_PRINTLN("AwtT::PPMM: changing hwnd on 95");
-            msg.hwnd = hWndForWheel;
-        }
     }
 
     /*
@@ -1399,6 +1518,48 @@ HICON AwtToolkit::GetAwtIconSm()
     return defaultIconSm;
 }
 
+// The icon at index 0 must be gray. See AwtWindow::GetSecurityWarningIcon()
+HICON AwtToolkit::GetSecurityWarningIcon(UINT index, UINT w, UINT h)
+{
+    //Note: should not exceed 10 because of the current implementation.
+    static const int securityWarningIconCounter = 3;
+
+    static HICON securityWarningIcon[securityWarningIconCounter]      = {NULL, NULL, NULL};;
+    static UINT securityWarningIconWidth[securityWarningIconCounter]  = {0, 0, 0};
+    static UINT securityWarningIconHeight[securityWarningIconCounter] = {0, 0, 0};
+
+    index = AwtToolkit::CalculateWave(index, securityWarningIconCounter);
+
+    if (securityWarningIcon[index] == NULL ||
+            w != securityWarningIconWidth[index] ||
+            h != securityWarningIconHeight[index])
+    {
+        if (securityWarningIcon[index] != NULL)
+        {
+            ::DestroyIcon(securityWarningIcon[index]);
+        }
+
+        static const wchar_t securityWarningIconName[] = L"SECURITY_WARNING_";
+        wchar_t iconResourceName[sizeof(securityWarningIconName) + 2];
+        ::ZeroMemory(iconResourceName, sizeof(iconResourceName));
+        wcscpy(iconResourceName, securityWarningIconName);
+
+        wchar_t strIndex[2];
+        ::ZeroMemory(strIndex, sizeof(strIndex));
+        strIndex[0] = L'0' + index;
+
+        wcscat(iconResourceName, strIndex);
+
+        securityWarningIcon[index] = (HICON)::LoadImage(GetModuleHandle(),
+                iconResourceName,
+                IMAGE_ICON, w, h, LR_DEFAULTCOLOR);
+        securityWarningIconWidth[index] = w;
+        securityWarningIconHeight[index] = h;
+    }
+
+    return securityWarningIcon[index];
+}
+
 void AwtToolkit::SetHeapCheck(long flag) {
     if (flag) {
         printf("heap checking not supported with this build\n");
@@ -1436,19 +1597,62 @@ void AwtToolkit::RegisterEmbedderProcessId(HWND embedder)
 }
 
 JNIEnv* AwtToolkit::m_env;
-HANDLE AwtToolkit::m_thread;
+DWORD AwtToolkit::m_threadId;
 
 void AwtToolkit::SetEnv(JNIEnv *env) {
     if (m_env != NULL) { // If already cashed (by means of embeddedInit() call).
         return;
     }
-    m_thread = GetCurrentThread();
+    m_threadId = GetCurrentThreadId();
     m_env = env;
 }
 
 JNIEnv* AwtToolkit::GetEnv() {
-    return (m_env == NULL || m_thread != GetCurrentThread()) ?
+    return (m_env == NULL || m_threadId != GetCurrentThreadId()) ?
         (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2) : m_env;
+}
+
+BOOL AwtToolkit::GetScreenInsets(int screenNum, RECT * rect)
+{
+    /* if primary display */
+    if (screenNum == 0) {
+        RECT rRW;
+        if (::SystemParametersInfo(SPI_GETWORKAREA,0,(void *) &rRW,0) == TRUE) {
+            rect->top = rRW.top;
+            rect->left = rRW.left;
+            rect->bottom = ::GetSystemMetrics(SM_CYSCREEN) - rRW.bottom;
+            rect->right = ::GetSystemMetrics(SM_CXSCREEN) - rRW.right;
+            return TRUE;
+        }
+    }
+    /* if additional display */
+    else {
+        MONITORINFO *miInfo;
+        miInfo = AwtWin32GraphicsDevice::GetMonitorInfo(screenNum);
+        if (miInfo) {
+            rect->top = miInfo->rcWork.top    - miInfo->rcMonitor.top;
+            rect->left = miInfo->rcWork.left   - miInfo->rcMonitor.left;
+            rect->bottom = miInfo->rcMonitor.bottom - miInfo->rcWork.bottom;
+            rect->right = miInfo->rcMonitor.right - miInfo->rcWork.right;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+void AwtToolkit::GetWindowRect(HWND hWnd, LPRECT lpRect)
+{
+    try {
+        if (S_OK == DwmAPI::DwmGetWindowAttribute(hWnd,
+                DwmAPI::DWMWA_EXTENDED_FRAME_BOUNDS,
+                lpRect, sizeof(*lpRect)))
+        {
+            return;
+        }
+    } catch (const DllUtil::Exception &) {}
+
+    ::GetWindowRect(hWnd, lpRect);
 }
 
 /************************************************************************
@@ -1779,7 +1983,6 @@ Java_sun_awt_windows_WToolkit_getScreenHeight(JNIEnv *env, jobject self)
     CATCH_BAD_ALLOC_RET(0);
 }
 
-
 /*
  * Class:     sun_awt_windows_WToolkit
  * Method:    getSreenInsets
@@ -1791,34 +1994,17 @@ Java_sun_awt_windows_WToolkit_getScreenInsets(JNIEnv *env,
                                               jint screen)
 {
     jobject insets = NULL;
-    RECT rRW;
-    MONITOR_INFO *miInfo;
+    RECT rect;
 
     TRY;
 
-/* if primary display */
-   if (screen == 0) {
-      if (::SystemParametersInfo(SPI_GETWORKAREA,0,(void *) &rRW,0) == TRUE) {
-          insets = env->NewObject(env->FindClass("java/awt/Insets"),
-             AwtToolkit::insetsMID,
-             rRW.top,
-             rRW.left,
-             ::GetSystemMetrics(SM_CYSCREEN) - rRW.bottom,
-             ::GetSystemMetrics(SM_CXSCREEN) - rRW.right);
-      }
-    }
-
-/* if additional display */
-    else {
-        miInfo = AwtWin32GraphicsDevice::GetMonitorInfo(screen);
-        if (miInfo) {
-            insets = env->NewObject(env->FindClass("java/awt/Insets"),
+    if (AwtToolkit::GetScreenInsets(screen, &rect)) {
+        insets = env->NewObject(env->FindClass("java/awt/Insets"),
                 AwtToolkit::insetsMID,
-                miInfo->rWork.top    - miInfo->rMonitor.top,
-                miInfo->rWork.left   - miInfo->rMonitor.left,
-                miInfo->rMonitor.bottom - miInfo->rWork.bottom,
-                miInfo->rMonitor.right - miInfo->rWork.right);
-        }
+                rect.top,
+                rect.left,
+                rect.bottom,
+                rect.right);
     }
 
     if (safe_ExceptionOccurred(env)) {
@@ -2057,29 +2243,15 @@ Java_sun_awt_windows_WToolkit_getWindowsVersion(JNIEnv *env, jclass cls)
     swprintf(szVer, L"0x%x = %ld", version, version);
     int l = lstrlen(szVer);
 
-    if (IS_WIN95) {
-        if (IS_WIN98) {
-            if (IS_WINME) {
-                swprintf(szVer + l, L" (Windows ME)");
+    if (IS_WIN2000) {
+        if (IS_WINXP) {
+            if (IS_WINVISTA) {
+                swprintf(szVer + l, L" (Windows Vista)");
             } else {
-                swprintf(szVer + l, L" (Windows 98)");
+                swprintf(szVer + l, L" (Windows XP)");
             }
         } else {
-            swprintf(szVer + l, L" (Windows 95)");
-        }
-    } else if (IS_NT) {
-        if (IS_WIN2000) {
-            if (IS_WINXP) {
-                if (IS_WINVISTA) {
-                    swprintf(szVer + l, L" (Windows Vista)");
-                } else {
-                    swprintf(szVer + l, L" (Windows XP)");
-                }
-            } else {
-                swprintf(szVer + l, L" (Windows 2000)");
-            }
-        } else {
-            swprintf(szVer + l, L" (Windows NT)");
+            swprintf(szVer + l, L" (Windows 2000)");
         }
     } else {
         swprintf(szVer + l, L" (Unknown)");
@@ -2129,4 +2301,32 @@ Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls)
     if (splashClose) {
         splashClose();
     }
+}
+
+/*
+ * accessible from awt_Component
+ */
+BOOL AwtToolkit::areExtraMouseButtonsEnabled() {
+    return m_areExtraMouseButtonsEnabled;
+}
+
+/*
+ * Class:     sun_awt_windows_WToolkit
+ * Method:    setExtraMouseButtonsEnabledNative
+ * Signature: (Z)V
+ */
+extern "C" JNIEXPORT void JNICALL Java_sun_awt_windows_WToolkit_setExtraMouseButtonsEnabledNative
+(JNIEnv *env, jclass self, jboolean enable){
+    TRY;
+    AwtToolkit::GetInstance().setExtraMouseButtonsEnabled(enable);
+    CATCH_BAD_ALLOC;
+}
+
+void AwtToolkit::setExtraMouseButtonsEnabled(BOOL enable) {
+    m_areExtraMouseButtonsEnabled = enable;
+}
+
+JNIEXPORT jint JNICALL Java_sun_awt_windows_WToolkit_getNumberOfButtonsImpl
+(JNIEnv *, jobject self) {
+    return GetSystemMetrics(SM_CMOUSEBUTTONS);
 }

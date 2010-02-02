@@ -134,6 +134,15 @@ class GTKFileChooserUI extends SynthFileChooserUI {
         super(filechooser);
     }
 
+    protected ActionMap createActionMap() {
+        ActionMap map = new ActionMapUIResource();
+        map.put("approveSelection", getApproveSelectionAction());
+        map.put("cancelSelection", getCancelSelectionAction());
+        map.put("Go Up", getChangeToParentDirectoryAction());
+        map.put("fileNameCompletion", getFileNameCompletionAction());
+        return map;
+    }
+
     public String getFileName() {
         JFileChooser fc = getFileChooser();
         String typedInName = fileNameTextField != null ?
@@ -148,7 +157,7 @@ class GTKFileChooserUI extends SynthFileChooserUI {
             directoryList : fileList;
         Object[] files = list.getSelectedValues();
         int len = files.length;
-        Vector result = new Vector(len + 1);
+        Vector<String> result = new Vector<String>(len + 1);
 
         // we return all selected file names
         for (int i = 0; i < len; i++) {
@@ -263,13 +272,13 @@ class GTKFileChooserUI extends SynthFileChooserUI {
         ListSelectionModel sm = directoryList.getSelectionModel();
         if (sm instanceof DefaultListSelectionModel) {
             ((DefaultListSelectionModel)sm).moveLeadSelectionIndex(0);
-            ((DefaultListSelectionModel)sm).setAnchorSelectionIndex(0);
+            sm.setAnchorSelectionIndex(0);
         }
         fileList.clearSelection();
         sm = fileList.getSelectionModel();
         if (sm instanceof DefaultListSelectionModel) {
             ((DefaultListSelectionModel)sm).moveLeadSelectionIndex(0);
-            ((DefaultListSelectionModel)sm).setAnchorSelectionIndex(0);
+            sm.setAnchorSelectionIndex(0);
         }
 
         File currentDirectory = getFileChooser().getCurrentDirectory();
@@ -425,16 +434,16 @@ class GTKFileChooserUI extends SynthFileChooserUI {
                             setDirectorySelected(true);
                             setDirectory(((File)objects[0]));
                         } else {
-                            ArrayList fList = new ArrayList(objects.length);
-                            for (int i = 0; i < objects.length; i++) {
-                                File f = (File)objects[i];
+                            ArrayList<File> fList = new ArrayList<File>(objects.length);
+                            for (Object object : objects) {
+                                File f = (File) object;
                                 if ((chooser.isFileSelectionEnabled() && f.isFile())
                                     || (chooser.isDirectorySelectionEnabled() && f.isDirectory())) {
                                     fList.add(f);
                                 }
                             }
                             if (fList.size() > 0) {
-                                files = (File[])fList.toArray(new File[fList.size()]);
+                                files = fList.toArray(new File[fList.size()]);
                             }
                             setDirectorySelected(false);
                         }
@@ -671,9 +680,9 @@ class GTKFileChooserUI extends SynthFileChooserUI {
 
         pathFieldLabel.setLabelFor(fileNameTextField);
 
-        Set forwardTraversalKeys = fileNameTextField.getFocusTraversalKeys(
+        Set<AWTKeyStroke> forwardTraversalKeys = fileNameTextField.getFocusTraversalKeys(
             KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
-        forwardTraversalKeys = new HashSet(forwardTraversalKeys);
+        forwardTraversalKeys = new HashSet<AWTKeyStroke>(forwardTraversalKeys);
         forwardTraversalKeys.remove(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
         fileNameTextField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, forwardTraversalKeys);
 
@@ -895,10 +904,9 @@ class GTKFileChooserUI extends SynthFileChooserUI {
 
     private class GTKDirectoryModel extends BasicDirectoryModel {
         FileSystemView fsv;
-        private Comparator fileComparator = new Comparator() {
-            public int compare(Object o, Object o1) {
-                return fsv.getSystemDisplayName((File) o).compareTo
-                      (fsv.getSystemDisplayName((File) o1));
+        private Comparator<File> fileComparator = new Comparator<File>() {
+            public int compare(File o, File o1) {
+                return fsv.getSystemDisplayName(o).compareTo(fsv.getSystemDisplayName(o1));
             }
         };
 
@@ -1074,7 +1082,7 @@ class GTKFileChooserUI extends SynthFileChooserUI {
      * Data model for a type-face selection combo-box.
      */
     protected class DirectoryComboBoxModel extends AbstractListModel implements ComboBoxModel {
-        Vector directories = new Vector();
+        Vector<File> directories = new Vector<File>();
         File selectedDirectory = null;
         JFileChooser chooser = getFileChooser();
         FileSystemView fsv = chooser.getFileSystemView();
@@ -1216,7 +1224,7 @@ class GTKFileChooserUI extends SynthFileChooserUI {
                     ListSelectionModel sm = fileList.getSelectionModel();
                     if (sm instanceof DefaultListSelectionModel) {
                         ((DefaultListSelectionModel)sm).moveLeadSelectionIndex(0);
-                        ((DefaultListSelectionModel)sm).setAnchorSelectionIndex(0);
+                        sm.setAnchorSelectionIndex(0);
                     }
                     rescanCurrentDirectory(getFileChooser());
                     return;
@@ -1352,8 +1360,8 @@ class GTKFileChooserUI extends SynthFileChooserUI {
             FileFilter currentFilter = getFileChooser().getFileFilter();
             boolean found = false;
             if (currentFilter != null) {
-                for (int i = 0; i < filters.length; i++) {
-                    if (filters[i] == currentFilter) {
+                for (FileFilter filter : filters) {
+                    if (filter == currentFilter) {
                         found = true;
                     }
                 }

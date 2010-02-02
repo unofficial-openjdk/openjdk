@@ -57,6 +57,7 @@ import sun.swing.SwingUtilities2;
 import sun.swing.SwingUtilities2.Section;
 import static sun.swing.SwingUtilities2.Section.*;
 import sun.swing.PrintingStatus;
+import sun.swing.SwingLazyValue;
 
 /**
  * The <code>JTable</code> is used to display and edit regular two-dimensional tables
@@ -718,19 +719,52 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see #addNotify
      */
     protected void configureEnclosingScrollPane() {
-        Container p = getParent();
-        if (p instanceof JViewport) {
-            Container gp = p.getParent();
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
             if (gp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane)gp;
                 // Make certain we are the viewPort's view and not, for
                 // example, the rowHeaderView of the scrollPane -
                 // an implementor of fixed columns might do this.
                 JViewport viewport = scrollPane.getViewport();
-                if (viewport == null || viewport.getView() != this) {
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
                     return;
                 }
                 scrollPane.setColumnHeaderView(getTableHeader());
+                // configure the scrollpane for any LAF dependent settings
+                configureEnclosingScrollPaneUI();
+            }
+        }
+    }
+
+    /**
+     * This is a sub-part of configureEnclosingScrollPane() that configures
+     * anything on the scrollpane that may change when the look and feel
+     * changes. It needed to be split out from configureEnclosingScrollPane() so
+     * that it can be called from updateUI() when the LAF changes without
+     * causing the regression found in bug 6687962. This was because updateUI()
+     * is called from the constructor which then caused
+     * configureEnclosingScrollPane() to be called by the constructor which
+     * changes its contract for any subclass that overrides it. So by splitting
+     * it out in this way configureEnclosingScrollPaneUI() can be called both
+     * from configureEnclosingScrollPane() and updateUI() in a safe manor.
+     */
+    private void configureEnclosingScrollPaneUI() {
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
+            if (gp instanceof JScrollPane) {
+                JScrollPane scrollPane = (JScrollPane)gp;
+                // Make certain we are the viewPort's view and not, for
+                // example, the rowHeaderView of the scrollPane -
+                // an implementor of fixed columns might do this.
+                JViewport viewport = scrollPane.getViewport();
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
+                    return;
+                }
                 //  scrollPane.getViewport().setBackingStoreEnabled(true);
                 Border border = scrollPane.getBorder();
                 if (border == null || border instanceof UIResource) {
@@ -739,6 +773,24 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                     if (scrollPaneBorder != null) {
                         scrollPane.setBorder(scrollPaneBorder);
                     }
+                }
+                // add JScrollBar corner component if available from LAF and not already set by the user
+                Component corner =
+                        scrollPane.getCorner(JScrollPane.UPPER_TRAILING_CORNER);
+                if (corner == null || corner instanceof UIResource){
+                    corner = null;
+                    Object componentClass = UIManager.get(
+                            "Table.scrollPaneCornerComponent");
+                    if (componentClass instanceof Class){
+                        try {
+                            corner = (Component)
+                                    ((Class)componentClass).newInstance();
+                        } catch (Exception e) {
+                            // just ignore and don't set corner
+                        }
+                    }
+                    scrollPane.setCorner(JScrollPane.UPPER_TRAILING_CORNER,
+                            corner);
                 }
             }
         }
@@ -770,19 +822,27 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @since 1.3
      */
     protected void unconfigureEnclosingScrollPane() {
-        Container p = getParent();
-        if (p instanceof JViewport) {
-            Container gp = p.getParent();
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
             if (gp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane)gp;
                 // Make certain we are the viewPort's view and not, for
                 // example, the rowHeaderView of the scrollPane -
                 // an implementor of fixed columns might do this.
                 JViewport viewport = scrollPane.getViewport();
-                if (viewport == null || viewport.getView() != this) {
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
                     return;
                 }
                 scrollPane.setColumnHeaderView(null);
+                // remove ScrollPane corner if one was added by the LAF
+                Component corner =
+                        scrollPane.getCorner(JScrollPane.UPPER_TRAILING_CORNER);
+                if (corner instanceof UIResource){
+                    scrollPane.setCorner(JScrollPane.UPPER_TRAILING_CORNER,
+                            null);
+                }
             }
         }
     }
@@ -1277,7 +1337,11 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                 return (TableCellRenderer)renderer;
             }
             else {
-                return getDefaultRenderer(columnClass.getSuperclass());
+                Class c = columnClass.getSuperclass();
+                if (c == null && columnClass != Object.class) {
+                    c = Object.class;
+                }
+                return getDefaultRenderer(c);
             }
         }
     }
@@ -3592,6 +3656,9 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
             tableHeader.updateUI();
         }
 
+        // Update UI applied to parent ScrollPane
+        configureEnclosingScrollPaneUI();
+
         setUI((TableUI)UIManager.getUI(this));
     }
 
@@ -5156,9 +5223,10 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see #getFillsViewportHeight
      */
     public boolean getScrollableTracksViewportHeight() {
+        JViewport port = SwingUtilities.getParentViewport(this);
         return getFillsViewportHeight()
-               && getParent() instanceof JViewport
-               && (getParent().getHeight() > getPreferredSize().height);
+               && port != null
+               && port.getHeight() > getPreferredSize().height;
     }
 
     /**
@@ -5256,7 +5324,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
     }
 
     private void setLazyValue(Hashtable h, Class c, String s) {
-        h.put(c, new UIDefaults.ProxyLazyValue(s));
+        h.put(c, new SwingLazyValue(s));
     }
 
     private void setLazyRenderer(Class c, String s) {

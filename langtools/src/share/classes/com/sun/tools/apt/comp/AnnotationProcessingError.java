@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package com.sun.tools.apt.comp;
 
 public class AnnotationProcessingError extends Error {
+    private static final long serialVersionUID = 3279196183341719287L;
     AnnotationProcessingError(Throwable cause) {
         super(cause);
     }

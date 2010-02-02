@@ -25,12 +25,11 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.taglets.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
-
 import java.io.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Writes field documentation in HTML format.
@@ -38,6 +37,7 @@ import java.io.*;
  * @author Robert Field
  * @author Atul M Dambalkar
  * @author Jamie Ho (rewrite)
+ * @author Bhavesh Patel (Modified)
  */
 public class FieldWriterImpl extends AbstractMemberWriter
     implements FieldWriter, MemberSummaryWriter {
@@ -153,10 +153,10 @@ public class FieldWriterImpl extends AbstractMemberWriter
         if (configuration().linksource) {
             writer.printSrcLink(field, field.name());
         } else {
-            bold(field.name());
+            strong(field.name());
         }
         writer.preEnd();
-        writer.dl();
+        assert !writer.getMemberDetailsListPrinted();
     }
 
     /**
@@ -165,9 +165,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
      * @param field the field being documented.
      */
     public void writeDeprecated(FieldDoc field) {
-        print(((TagletOutputImpl)
-            (new DeprecatedTaglet()).getTagletOutput(field,
-            writer.getTagletWriterInstance(false))).toString());
+        printDeprecated(field);
     }
 
     /**
@@ -178,10 +176,12 @@ public class FieldWriterImpl extends AbstractMemberWriter
     public void writeComments(FieldDoc field) {
         ClassDoc holder = field.containingClass();
         if (field.inlineTags().length > 0) {
+            writer.printMemberDetailsListStartTag();
             if (holder.equals(classdoc) ||
                 (! (holder.isPublic() || Util.isLinkable(holder, configuration())))) {
                 writer.dd();
                 writer.printInlineComment(field);
+                writer.ddEnd();
             } else {
                 String classlink = writer.codeText(
                     writer.getDocLink(LinkInfoImpl.CONTEXT_FIELD_DOC_COPY,
@@ -190,12 +190,13 @@ public class FieldWriterImpl extends AbstractMemberWriter
                             holder.typeName() : holder.qualifiedTypeName(),
                         false));
                 writer.dd();
-                writer.bold(configuration().getText(holder.isClass()?
+                writer.strong(configuration().getText(holder.isClass()?
                    "doclet.Description_From_Class" :
                     "doclet.Description_From_Interface", classlink));
                 writer.ddEnd();
                 writer.dd();
                 writer.printInlineComment(field);
+                writer.ddEnd();
             }
         }
     }
@@ -213,7 +214,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
      * Write the field footer.
      */
     public void writeFieldFooter() {
-        writer.dlEnd();
+        printMemberFooter();
     }
 
     /**
@@ -236,8 +237,24 @@ public class FieldWriterImpl extends AbstractMemberWriter
         return VisibleMemberMap.FIELDS;
     }
 
-    public void printSummaryLabel(ClassDoc cd) {
-        writer.boldText("doclet.Field_Summary");
+    public void printSummaryLabel() {
+        writer.printText("doclet.Field_Summary");
+    }
+
+    public void printTableSummary() {
+        writer.tableIndexSummary(configuration().getText("doclet.Member_Table_Summary",
+                configuration().getText("doclet.Field_Summary"),
+                configuration().getText("doclet.fields")));
+    }
+
+    public void printSummaryTableHeader(ProgramElementDoc member) {
+        String[] header = new String[] {
+            writer.getModifierTypeHeader(),
+            configuration().getText("doclet.0_and_1",
+                    configuration().getText("doclet.Field"),
+                    configuration().getText("doclet.Description"))
+        };
+        writer.summaryTableHeader(header, "col");
     }
 
     public void printSummaryAnchor(ClassDoc cd) {
@@ -251,18 +268,18 @@ public class FieldWriterImpl extends AbstractMemberWriter
     public void printInheritedSummaryLabel(ClassDoc cd) {
         String classlink = writer.getPreQualifiedClassLink(
             LinkInfoImpl.CONTEXT_MEMBER, cd, false);
-        writer.bold();
+        writer.strong();
         String key = cd.isClass()?
             "doclet.Fields_Inherited_From_Class" :
             "doclet.Fields_Inherited_From_Interface";
         writer.printText(key, classlink);
-        writer.boldEnd();
+        writer.strongEnd();
     }
 
     protected void writeSummaryLink(int context, ClassDoc cd, ProgramElementDoc member) {
-        writer.bold();
+        writer.strong();
         writer.printDocLink(context, cd , (MemberDoc) member, member.name(), false);
-        writer.boldEnd();
+        writer.strongEnd();
     }
 
     protected void writeInheritedSummaryLink(ClassDoc cd,

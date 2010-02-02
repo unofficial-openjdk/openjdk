@@ -39,6 +39,7 @@ import static com.sun.tools.javac.code.TypeTags.*;
 /**
  * Utility class for operating on constant expressions.
  */
+@SuppressWarnings("deprecation")
 class Constants {
 
     /**
@@ -130,8 +131,8 @@ class Constants {
                 append((EnumConstantDeclarationImpl) val);
             } else if (val instanceof AnnotationMirror) {
                 append((AnnotationMirrorImpl) val);
-            } else if (val instanceof Collection) {
-                append((Collection) val);
+            } else if (val instanceof Collection<?>) {
+                append((Collection<?>) val);
             } else {
                 appendUnquoted(val.toString());
             }
@@ -234,7 +235,7 @@ class Constants {
          * and separated by ", ".  Useful for array-valued annotation
          * elements.
          */
-        void append(Collection vals) {
+        void append(Collection<?> vals) {
             buf.append('{');
             boolean first = true;
             for (Object val : vals) {

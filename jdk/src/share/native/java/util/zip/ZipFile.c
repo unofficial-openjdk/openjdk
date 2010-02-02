@@ -40,6 +40,8 @@
 #include "zip_util.h"
 #ifdef WIN32
 #include "io_util_md.h"
+#else
+#include "io_util.h"
 #endif
 
 #include "java_util_zip_ZipFile.h"
@@ -102,11 +104,12 @@ Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
             }
 #else
             zfd = JVM_Open(path, flag, 0);
-#endif
-
-            if (zfd >= 0) {
-                zip = ZIP_Put_In_Cache(path, zfd, &msg, lastModified);
+            if (zfd < 0) {
+                throwFileNotFoundException(env, name);
+                goto finally;
             }
+#endif
+            zip = ZIP_Put_In_Cache(path, zfd, &msg, lastModified);
         }
 
         if (zip != 0) {
@@ -118,7 +121,6 @@ Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
         } else {
             ThrowZipException(env, "error in opening zip file");
         }
-
 finally:
         JNU_ReleaseStringPlatformChars(env, name, path);
     }
@@ -141,12 +143,11 @@ Java_java_util_zip_ZipFile_close(JNIEnv *env, jclass cls, jlong zfile)
 
 JNIEXPORT jlong JNICALL
 Java_java_util_zip_ZipFile_getEntry(JNIEnv *env, jclass cls, jlong zfile,
-                                    jstring name, jboolean addSlash)
+                                    jbyteArray name, jboolean addSlash)
 {
 #define MAXNAME 1024
     jzfile *zip = jlong_to_ptr(zfile);
-    jsize slen = (*env)->GetStringLength(env, name);
-    jsize ulen = (*env)->GetStringUTFLength(env, name);
+    jsize ulen = (*env)->GetArrayLength(env, name);
     char buf[MAXNAME+2], *path;
     jzentry *ze;
 
@@ -159,7 +160,7 @@ Java_java_util_zip_ZipFile_getEntry(JNIEnv *env, jclass cls, jlong zfile,
     } else {
         path = buf;
     }
-    (*env)->GetStringUTFRegion(env, name, 0, slen, path);
+    (*env)->GetByteArrayRegion(env, name, 0, ulen, (jbyte *)path);
     path[ulen] = '\0';
     if (addSlash == JNI_FALSE) {
         ze = ZIP_GetEntry(zip, path, 0);
@@ -186,32 +187,103 @@ Java_java_util_zip_ZipFile_getNextEntry(JNIEnv *env, jclass cls, jlong zfile,
                                         jint n)
 {
     jzentry *ze = ZIP_GetNextEntry(jlong_to_ptr(zfile), n);
-
     return ptr_to_jlong(ze);
 }
 
 JNIEXPORT jint JNICALL
-Java_java_util_zip_ZipFile_getMethod(JNIEnv *env, jclass cls, jlong zentry)
+Java_java_util_zip_ZipFile_getEntryMethod(JNIEnv *env, jclass cls, jlong zentry)
 {
     jzentry *ze = jlong_to_ptr(zentry);
-
     return ze->csize != 0 ? DEFLATED : STORED;
 }
 
-JNIEXPORT jlong JNICALL
-Java_java_util_zip_ZipFile_getCSize(JNIEnv *env, jclass cls, jlong zentry)
+JNIEXPORT jint JNICALL
+Java_java_util_zip_ZipFile_getEntryFlag(JNIEnv *env, jclass cls, jlong zentry)
 {
     jzentry *ze = jlong_to_ptr(zentry);
+    return ze->flag;
+}
 
+JNIEXPORT jlong JNICALL
+Java_java_util_zip_ZipFile_getEntryCSize(JNIEnv *env, jclass cls, jlong zentry)
+{
+    jzentry *ze = jlong_to_ptr(zentry);
     return ze->csize != 0 ? ze->csize : ze->size;
 }
 
 JNIEXPORT jlong JNICALL
-Java_java_util_zip_ZipFile_getSize(JNIEnv *env, jclass cls, jlong zentry)
+Java_java_util_zip_ZipFile_getEntrySize(JNIEnv *env, jclass cls, jlong zentry)
 {
     jzentry *ze = jlong_to_ptr(zentry);
-
     return ze->size;
+}
+
+JNIEXPORT jlong JNICALL
+Java_java_util_zip_ZipFile_getEntryTime(JNIEnv *env, jclass cls, jlong zentry)
+{
+    jzentry *ze = jlong_to_ptr(zentry);
+    return (jlong)ze->time & 0xffffffffUL;
+}
+
+JNIEXPORT jlong JNICALL
+Java_java_util_zip_ZipFile_getEntryCrc(JNIEnv *env, jclass cls, jlong zentry)
+{
+    jzentry *ze = jlong_to_ptr(zentry);
+    return (jlong)ze->crc & 0xffffffffUL;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_java_util_zip_ZipFile_getCommentBytes(JNIEnv *env,
+                                           jclass cls,
+                                           jlong zfile)
+{
+    jzfile *zip = jlong_to_ptr(zfile);
+    jbyteArray jba = NULL;
+
+    if (zip->comment != NULL) {
+        if ((jba = (*env)->NewByteArray(env, zip->clen)) == NULL)
+            return NULL;
+        (*env)->SetByteArrayRegion(env, jba, 0, zip->clen, (jbyte*)zip->comment);
+    }
+    return jba;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_java_util_zip_ZipFile_getEntryBytes(JNIEnv *env,
+                                         jclass cls,
+                                         jlong zentry, jint type)
+{
+    jzentry *ze = jlong_to_ptr(zentry);
+    int len = 0;
+    jbyteArray jba = NULL;
+    switch (type) {
+    case java_util_zip_ZipFile_JZENTRY_NAME:
+        if (ze->name != 0) {
+            len = (int)strlen(ze->name);
+            if (len == 0 || (jba = (*env)->NewByteArray(env, len)) == NULL)
+                break;
+            (*env)->SetByteArrayRegion(env, jba, 0, len, (jbyte *)ze->name);
+        }
+        break;
+    case java_util_zip_ZipFile_JZENTRY_EXTRA:
+        if (ze->extra != 0) {
+            unsigned char *bp = (unsigned char *)&ze->extra[0];
+            len = (bp[0] | (bp[1] << 8));
+            if (len <= 0 || (jba = (*env)->NewByteArray(env, len)) == NULL)
+                break;
+            (*env)->SetByteArrayRegion(env, jba, 0, len, &ze->extra[2]);
+        }
+        break;
+    case java_util_zip_ZipFile_JZENTRY_COMMENT:
+        if (ze->comment != 0) {
+            len = (int)strlen(ze->comment);
+            if (len == 0 || (jba = (*env)->NewByteArray(env, len)) == NULL)
+                break;
+            (*env)->SetByteArrayRegion(env, jba, 0, len, (jbyte*)ze->comment);
+        }
+        break;
+    }
+    return jba;
 }
 
 JNIEXPORT jint JNICALL

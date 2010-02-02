@@ -38,7 +38,6 @@ SUBDIRS =                   \
   compile_properties        \
   dir_diff                  \
   dtdbuilder                \
-  fontchecker               \
   freetypecheck             \
   generate_break_iterator   \
   GenerateCharacter         \
@@ -52,6 +51,10 @@ SUBDIRS =                   \
   strip_properties          \
   spp                       \
   CharsetMapping
+
+ifndef DISABLE_NIMBUS
+  SUBDIRS += generate_nimbus
+endif
 
 all build clean clobber::
 	$(SUBDIRS-loop)

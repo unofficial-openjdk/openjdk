@@ -25,10 +25,10 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.builders.*;
-import com.sun.javadoc.*;
 
 /**
  * Generate the Class Information Page.
@@ -84,7 +84,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     protected void navLinkClass() {
         navCellRevStart();
         fontStyle("NavBarFont1Rev");
-        boldText("doclet.Class");
+        strongText("doclet.Class");
         fontEnd();
         navCellEnd();
     }
@@ -165,8 +165,6 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * {@inheritDoc}
      */
     public void writeAnnotationTypeSignature(String modifiers) {
-        dl();
-        dt();
         preNoNewLine();
         writeAnnotationInfo(annotationType);
         print(modifiers);
@@ -176,9 +174,8 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (configuration().linksource) {
             printSrcLink(annotationType, name);
         } else {
-            bold(name);
+            strong(name);
         }
-        dlEnd();
         preEnd();
         p();
     }
@@ -220,7 +217,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         hr();
         Tag[] deprs = annotationType.tags("deprecated");
         if (Util.isDeprecated(annotationType)) {
-            boldText("doclet.Deprecated");
+            strongText("doclet.Deprecated");
             if (deprs.length > 0) {
                 Tag[] commentTags = deprs[0].inlineTags();
                 if (commentTags.length > 0) {
@@ -330,10 +327,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             dl();
             dt();
             if (annotationType.isInterface()) {
-                boldText("doclet.Enclosing_Interface");
+                strongText("doclet.Enclosing_Interface");
             } else {
-                boldText("doclet.Enclosing_Class");
+                strongText("doclet.Enclosing_Class");
             }
+            dtEnd();
             dd();
             printLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_CLASS, outerClass,
                 false));

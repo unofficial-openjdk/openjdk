@@ -41,7 +41,7 @@ public class TestIndex extends JavadocTester {
 
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", BUG_ID, "-source", "1.5", "-sourcepath", SRC_DIR, "pkg", SRC_DIR + FS + "NoPackage.java"
+        "-d", BUG_ID, "-sourcepath", SRC_DIR, "pkg", SRC_DIR + FS + "NoPackage.java"
     };
 
     //Input for string search tests.
@@ -54,29 +54,29 @@ public class TestIndex extends JavadocTester {
 
         //Test index-all.html
         {BUG_ID + FS + "index-all.html",
-            "<A HREF=\"./pkg/C.html\" title=\"class in pkg\"><B>C</B></A>" +
+            "<A HREF=\"./pkg/C.html\" title=\"class in pkg\"><STRONG>C</STRONG></A>" +
             " - Class in <A HREF=\"./pkg/package-summary.html\">pkg</A>"},
         {BUG_ID + FS + "index-all.html",
             "<A HREF=\"./pkg/Interface.html\" title=\"interface in pkg\">" +
-            "<B>Interface</B></A> - Interface in " +
+            "<STRONG>Interface</STRONG></A> - Interface in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
         {BUG_ID + FS + "index-all.html",
             "<A HREF=\"./pkg/AnnotationType.html\" title=\"annotation in pkg\">" +
-            "<B>AnnotationType</B></A> - Annotation Type in " +
+            "<STRONG>AnnotationType</STRONG></A> - Annotation Type in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
         {BUG_ID + FS + "index-all.html",
             "<A HREF=\"./pkg/Coin.html\" title=\"enum in pkg\">" +
-            "<B>Coin</B></A> - Enum in " +
+            "<STRONG>Coin</STRONG></A> - Enum in " +
             "<A HREF=\"./pkg/package-summary.html\">pkg</A>"},
         {BUG_ID + FS + "index-all.html",
             "Class in <A HREF=\"./package-summary.html\">&lt;Unnamed&gt;</A>"},
         {BUG_ID + FS + "index-all.html",
-            "<DT><A HREF=\"./pkg/C.html#Java\"><B>Java</B></A> - " + NL +
+            "<DT><A HREF=\"./pkg/C.html#Java\"><STRONG>Java</STRONG></A> - " + NL +
             "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL +
-            "<DD>&nbsp;" + NL +
-            "<DT><A HREF=\"./pkg/C.html#JDK\"><B>JDK</B></A> - " + NL +
+            "</DT><DD>&nbsp;</DD>" + NL + NL +
+            "<DT><A HREF=\"./pkg/C.html#JDK\"><STRONG>JDK</STRONG></A> - " + NL +
             "Static variable in class pkg.<A HREF=\"./pkg/C.html\" title=\"class in pkg\">C</A>" + NL +
-            "<DD>&nbsp;"},
+            "</DT><DD>&nbsp;</DD>"},
     };
     private static final String[][] NEGATED_TEST = NO_TEST;
 

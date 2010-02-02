@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1530,6 +1530,12 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     assert(thread->env() == &ci_env, "set by ci_env");
     // The thread-env() field is cleared in ~CompileTaskWrapper.
 
+    // Cache Jvmti state
+    ci_env.cache_jvmti_state();
+
+    // Cache DTrace flags
+    ci_env.cache_dtrace_flags();
+
     ciMethod* target = ci_env.get_method_from_handle(target_handle);
 
     TraceTime t1("compilation", &time);
@@ -1814,9 +1820,11 @@ void CompileBroker::print_times() {
                 CompileBroker::_t_standard_compilation.seconds(),
                 CompileBroker::_t_standard_compilation.seconds() / CompileBroker::_total_standard_compile_count);
   tty->print_cr("    On stack replacement   : %6.3f s, Average : %2.3f", CompileBroker::_t_osr_compilation.seconds(), CompileBroker::_t_osr_compilation.seconds() / CompileBroker::_total_osr_compile_count);
-  compiler(CompLevel_fast_compile)->print_timers();
-  if (compiler(CompLevel_fast_compile) != compiler(CompLevel_highest_tier)) {
-    compiler(CompLevel_highest_tier)->print_timers();
+
+  if (compiler(CompLevel_fast_compile)) {
+    compiler(CompLevel_fast_compile)->print_timers();
+    if (compiler(CompLevel_fast_compile) != compiler(CompLevel_highest_tier))
+      compiler(CompLevel_highest_tier)->print_timers();
   }
 
   tty->cr();

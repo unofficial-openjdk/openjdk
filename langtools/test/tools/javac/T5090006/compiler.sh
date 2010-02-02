@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,14 +47,10 @@ echo "CLASSPATH=${CLASSPATH}"
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS | Linux )
-    NULL=/dev/null
-    PS=":"
+  SunOS | Linux | CYGWIN* )
     FS="/"
     ;;
   Windows* )
-    NULL=NUL
-    PS=";"
     FS="\\"
     ;;
   * )
@@ -63,7 +59,7 @@ case "$OS" in
     ;;
 esac
 
-"${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -verbose -source 5 -d "${TESTCLASSES}" -cp "${TESTSRC}${FS}broken.jar" "${TESTSRC}${FS}$1"
+"${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -verbose -d "${TESTCLASSES}" -cp "${TESTSRC}${FS}broken.jar" "${TESTSRC}${FS}$1"
 
 result=$?
 

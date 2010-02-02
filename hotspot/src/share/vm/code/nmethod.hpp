@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,18 +81,19 @@ class PcDescCache VALUE_OBJ_CLASS_SPEC {
 
 struct nmFlags {
   friend class VMStructs;
-  unsigned int version:8;                 // version number (0 = first version)
-  unsigned int level:4;                   // optimization level
-  unsigned int age:4;                     // age (in # of sweep steps)
+  unsigned int version:8;                    // version number (0 = first version)
+  unsigned int level:4;                      // optimization level
+  unsigned int age:4;                        // age (in # of sweep steps)
 
-  unsigned int state:2;                   // {alive, zombie, unloaded)
+  unsigned int state:2;                      // {alive, zombie, unloaded)
 
-  unsigned int isUncommonRecompiled:1;    // recompiled because of uncommon trap?
-  unsigned int isToBeRecompiled:1;        // to be recompiled as soon as it matures
-  unsigned int hasFlushedDependencies:1;  // Used for maintenance of dependencies
-  unsigned int markedForReclamation:1;    // Used by NMethodSweeper
+  unsigned int isUncommonRecompiled:1;       // recompiled because of uncommon trap?
+  unsigned int isToBeRecompiled:1;           // to be recompiled as soon as it matures
+  unsigned int hasFlushedDependencies:1;     // Used for maintenance of dependencies
+  unsigned int markedForReclamation:1;       // Used by NMethodSweeper
 
-  unsigned int has_unsafe_access:1;       // May fault due to unsafe access.
+  unsigned int has_unsafe_access:1;          // May fault due to unsafe access.
+  unsigned int has_method_handle_invokes:1;  // Has this method MethodHandle invokes?
 
   void clear();
 };
@@ -125,6 +126,7 @@ class xmlStream;
 class nmethod : public CodeBlob {
   friend class VMStructs;
   friend class NMethodSweeper;
+  friend class CodeCache;  // non-perm oops
  private:
   // Shared fields for all nmethod's
   static int _zombie_instruction_size;
@@ -132,7 +134,12 @@ class nmethod : public CodeBlob {
   methodOop _method;
   int       _entry_bci;        // != InvocationEntryBci if this nmethod is an on-stack replacement method
 
-  nmethod*  _link;             // To support simple linked-list chaining of nmethods
+  // To support simple linked-list chaining of nmethods:
+  nmethod*  _osr_link;         // from instanceKlass::osr_nmethods_head
+  nmethod*  _scavenge_root_link; // from CodeCache::scavenge_root_nmethods
+
+  static nmethod* volatile _oops_do_mark_nmethods;
+  nmethod*        volatile _oops_do_mark_link;
 
   AbstractCompiler* _compiler; // The compiler which compiled this nmethod
 
@@ -167,12 +174,14 @@ class nmethod : public CodeBlob {
   nmFlags flags;           // various flags to keep track of nmethod state
   bool _markedForDeoptimization;       // Used for stack deoptimization
   enum { alive        = 0,
-         not_entrant  = 1, // uncommon trap has happend but activations may still exist
+         not_entrant  = 1, // uncommon trap has happened but activations may still exist
          zombie       = 2,
          unloaded     = 3 };
 
   // used by jvmti to track if an unload event has been posted for this nmethod.
   bool _unload_reported;
+
+  jbyte _scavenge_root_state;
 
   NOT_PRODUCT(bool _has_debug_info; )
 
@@ -242,10 +251,11 @@ class nmethod : public CodeBlob {
 
   // helper methods
   void* operator new(size_t size, int nmethod_size);
-  void check_store();
 
   const char* reloc_string_for(u_char* begin, u_char* end);
-  void make_not_entrant_or_zombie(int state);
+  // Returns true if this thread changed the state of the nmethod or
+  // false if another thread performed the transition.
+  bool make_not_entrant_or_zombie(unsigned int state);
   void inc_decompile_count();
 
   // used to check that writes to nmFlags are done consistently.
@@ -314,7 +324,6 @@ class nmethod : public CodeBlob {
   bool is_java_method() const                     { return !method()->is_native(); }
   bool is_native_method() const                   { return method()->is_native(); }
   bool is_osr_method() const                      { return _entry_bci != InvocationEntryBci; }
-  bool is_osr_only_method() const                 { return is_osr_method(); }
 
   bool is_compiled_by_c1() const;
   bool is_compiled_by_c2() const;
@@ -369,10 +378,12 @@ class nmethod : public CodeBlob {
   bool  is_zombie() const                         { return flags.state == zombie; }
   bool  is_unloaded() const                       { return flags.state == unloaded;   }
 
-  // Make the nmethod non entrant. The nmethod will continue to be alive.
-  // It is used when an uncommon trap happens.
-  void  make_not_entrant()                        { make_not_entrant_or_zombie(not_entrant); }
-  void  make_zombie()                             { make_not_entrant_or_zombie(zombie); }
+  // Make the nmethod non entrant. The nmethod will continue to be
+  // alive.  It is used when an uncommon trap happens.  Returns true
+  // if this thread changed the state of the nmethod or false if
+  // another thread performed the transition.
+  bool  make_not_entrant()                        { return make_not_entrant_or_zombie(not_entrant); }
+  bool  make_zombie()                             { return make_not_entrant_or_zombie(zombie); }
 
   // used by jvmti to track if the unload event has been reported
   bool  unload_reported()                         { return _unload_reported; }
@@ -399,6 +410,9 @@ class nmethod : public CodeBlob {
   bool  has_unsafe_access() const                 { return flags.has_unsafe_access; }
   void  set_has_unsafe_access(bool z)             { flags.has_unsafe_access = z; }
 
+  bool  has_method_handle_invokes() const         { return flags.has_method_handle_invokes; }
+  void  set_has_method_handle_invokes(bool z)     { flags.has_method_handle_invokes = z; }
+
   int   level() const                             { return flags.level; }
   void  set_level(int newLevel)                   { check_safepoint(); flags.level = newLevel; }
 
@@ -406,6 +420,24 @@ class nmethod : public CodeBlob {
 
   int   version() const                           { return flags.version; }
   void  set_version(int v);
+
+  // Non-perm oop support
+  bool  on_scavenge_root_list() const                  { return (_scavenge_root_state & 1) != 0; }
+ protected:
+  enum { npl_on_list = 0x01, npl_marked = 0x10 };
+  void  set_on_scavenge_root_list()                    { _scavenge_root_state = npl_on_list; }
+  void  clear_on_scavenge_root_list()                  { _scavenge_root_state = 0; }
+  // assertion-checking and pruning logic uses the bits of _scavenge_root_state
+#ifndef PRODUCT
+  void  set_scavenge_root_marked()                     { _scavenge_root_state |= npl_marked; }
+  void  clear_scavenge_root_marked()                   { _scavenge_root_state &= ~npl_marked; }
+  bool  scavenge_root_not_marked()                     { return (_scavenge_root_state &~ npl_on_list) == 0; }
+  // N.B. there is no positive marked query, and we only use the not_marked query for asserts.
+#endif //PRODUCT
+  nmethod* scavenge_root_link() const                  { return _scavenge_root_link; }
+  void     set_scavenge_root_link(nmethod *n)          { _scavenge_root_link = n; }
+
+ public:
 
   // Sweeper support
   long  stack_traversal_mark()                    { return _stack_traversal_mark; }
@@ -425,8 +457,8 @@ class nmethod : public CodeBlob {
   int   osr_entry_bci() const                     { assert(_entry_bci != InvocationEntryBci, "wrong kind of nmethod"); return _entry_bci; }
   address  osr_entry() const                      { assert(_entry_bci != InvocationEntryBci, "wrong kind of nmethod"); return _osr_entry_point; }
   void  invalidate_osr_method();
-  nmethod* link() const                           { return _link; }
-  void     set_link(nmethod *n)                   { _link = n; }
+  nmethod* osr_link() const                       { return _osr_link; }
+  void     set_osr_link(nmethod *n)               { _osr_link = n; }
 
   // tells whether frames described by this nmethod can be deoptimized
   // note: native wrappers cannot be deoptimized.
@@ -466,7 +498,16 @@ class nmethod : public CodeBlob {
 
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map,
                                      OopClosure* f);
-  void oops_do(OopClosure* f);
+  virtual void oops_do(OopClosure* f) { oops_do(f, false); }
+  void         oops_do(OopClosure* f, bool do_strong_roots_only);
+  bool detect_scavenge_root_oops();
+  void verify_scavenge_root_oops() PRODUCT_RETURN;
+
+  bool test_set_oops_do_mark();
+  static void oops_do_marking_prologue();
+  static void oops_do_marking_epilogue();
+  static bool oops_do_marking_is_active() { return _oops_do_mark_nmethods != NULL; }
+  DEBUG_ONLY(bool test_oops_do_mark() { return _oops_do_mark_link != NULL; })
 
   // ScopeDesc for an instruction
   ScopeDesc* scope_desc_at(address pc);
@@ -504,6 +545,9 @@ class nmethod : public CodeBlob {
   address get_original_pc(const frame* fr) { return *orig_pc_addr(fr); }
   void    set_original_pc(const frame* fr, address pc) { *orig_pc_addr(fr) = pc; }
 
+  // MethodHandle
+  bool is_method_handle_return(address return_pc);
+
   // jvmti support:
   void post_compiled_method_load_event();
 
@@ -530,7 +574,14 @@ class nmethod : public CodeBlob {
   // Logging
   void log_identity(xmlStream* log) const;
   void log_new_nmethod() const;
-  void log_state_change(int state) const;
+  void log_state_change() const;
+
+  // Prints block-level comments, including nmethod specific block labels:
+  virtual void print_block_comment(outputStream* stream, address block_begin) {
+    print_nmethod_labels(stream, block_begin);
+    CodeBlob::print_block_comment(stream, block_begin);
+  }
+  void print_nmethod_labels(outputStream* stream, address block_begin);
 
   // Prints a comment for one native instruction (reloc info, pc desc)
   void print_code_comment_on(outputStream* st, int column, address begin, address end);

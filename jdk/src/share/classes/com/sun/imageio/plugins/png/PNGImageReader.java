@@ -37,6 +37,7 @@ import java.awt.image.WritableRaster;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.SequenceInputStream;
@@ -44,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import javax.imageio.IIOException;
@@ -57,9 +57,10 @@ import javax.imageio.stream.ImageInputStream;
 import com.sun.imageio.plugins.common.InputStreamAdapter;
 import com.sun.imageio.plugins.common.ReaderUtil;
 import com.sun.imageio.plugins.common.SubImageInputStream;
+import java.io.ByteArrayOutputStream;
 import sun.awt.image.ByteInterleavedRaster;
 
-class PNGImageDataEnumeration implements Enumeration {
+class PNGImageDataEnumeration implements Enumeration<InputStream> {
 
     boolean firstTime = true;
     ImageInputStream stream;
@@ -72,7 +73,7 @@ class PNGImageDataEnumeration implements Enumeration {
         int type = stream.readInt(); // skip chunk type
     }
 
-    public Object nextElement() {
+    public InputStream nextElement() {
         try {
             firstTime = false;
             ImageInputStream iis = new SubImageInputStream(stream, length);
@@ -207,14 +208,15 @@ public class PNGImageReader extends ImageReader {
         resetStreamSettings();
     }
 
-    private String readNullTerminatedString() throws IOException {
-        StringBuilder b = new StringBuilder();
-        int c;
-
-        while ((c = stream.read()) != 0) {
-            b.append((char)c);
+    private String readNullTerminatedString(String charset, int maxLen) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int b;
+        int count = 0;
+        while ((maxLen > count++) && ((b = stream.read()) != 0)) {
+            if (b == -1) throw new EOFException();
+            baos.write(b);
         }
-        return b.toString();
+        return new String(baos.toByteArray(), charset);
     }
 
     private void readHeader() throws IIOException {
@@ -425,7 +427,7 @@ public class PNGImageReader extends ImageReader {
     }
 
     private void parse_iCCP_chunk(int chunkLength) throws IOException {
-        String keyword = readNullTerminatedString();
+        String keyword = readNullTerminatedString("ISO-8859-1", 80);
         metadata.iCCP_profileName = keyword;
 
         metadata.iCCP_compressionMethod = stream.readUnsignedByte();
@@ -441,30 +443,33 @@ public class PNGImageReader extends ImageReader {
     private void parse_iTXt_chunk(int chunkLength) throws IOException {
         long chunkStart = stream.getStreamPosition();
 
-        String keyword = readNullTerminatedString();
+        String keyword = readNullTerminatedString("ISO-8859-1", 80);
         metadata.iTXt_keyword.add(keyword);
 
         int compressionFlag = stream.readUnsignedByte();
-        metadata.iTXt_compressionFlag.add(new Integer(compressionFlag));
+        metadata.iTXt_compressionFlag.add(Boolean.valueOf(compressionFlag == 1));
 
         int compressionMethod = stream.readUnsignedByte();
-        metadata.iTXt_compressionMethod.add(new Integer(compressionMethod));
+        metadata.iTXt_compressionMethod.add(Integer.valueOf(compressionMethod));
 
-        String languageTag = readNullTerminatedString();
+        String languageTag = readNullTerminatedString("UTF8", 80);
         metadata.iTXt_languageTag.add(languageTag);
 
-        String translatedKeyword = stream.readUTF();
+        long pos = stream.getStreamPosition();
+        int maxLen = (int)(chunkStart + chunkLength - pos);
+        String translatedKeyword =
+            readNullTerminatedString("UTF8", maxLen);
         metadata.iTXt_translatedKeyword.add(translatedKeyword);
-        stream.skipBytes(1); // Null separator
 
         String text;
+        pos = stream.getStreamPosition();
+        byte[] b = new byte[(int)(chunkStart + chunkLength - pos)];
+        stream.readFully(b);
+
         if (compressionFlag == 1) { // Decompress the text
-            long pos = stream.getStreamPosition();
-            byte[] b = new byte[(int)(chunkStart + chunkLength - pos)];
-            stream.readFully(b);
-            text = inflate(b);
+            text = new String(inflate(b), "UTF8");
         } else {
-            text = stream.readUTF();
+            text = new String(b, "UTF8");
         }
         metadata.iTXt_text.add(text);
     }
@@ -501,7 +506,7 @@ public class PNGImageReader extends ImageReader {
 
     private void parse_sPLT_chunk(int chunkLength)
         throws IOException, IIOException {
-        metadata.sPLT_paletteName = readNullTerminatedString();
+        metadata.sPLT_paletteName = readNullTerminatedString("ISO-8859-1", 80);
         chunkLength -= metadata.sPLT_paletteName.length() + 1;
 
         int sampleDepth = stream.readUnsignedByte();
@@ -544,12 +549,12 @@ public class PNGImageReader extends ImageReader {
     }
 
     private void parse_tEXt_chunk(int chunkLength) throws IOException {
-        String keyword = readNullTerminatedString();
+        String keyword = readNullTerminatedString("ISO-8859-1", 80);
         metadata.tEXt_keyword.add(keyword);
 
         byte[] b = new byte[chunkLength - keyword.length() - 1];
         stream.readFully(b);
-        metadata.tEXt_text.add(new String(b));
+        metadata.tEXt_text.add(new String(b, "ISO-8859-1"));
     }
 
     private void parse_tIME_chunk() throws IOException {
@@ -613,19 +618,24 @@ public class PNGImageReader extends ImageReader {
         metadata.tRNS_present = true;
     }
 
-    private static String inflate(byte[] b) throws IOException {
+    private static byte[] inflate(byte[] b) throws IOException {
         InputStream bais = new ByteArrayInputStream(b);
         InputStream iis = new InflaterInputStream(bais);
-        StringBuilder sb = new StringBuilder(80);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
         int c;
-        while ((c = iis.read()) != -1) {
-            sb.append((char)c);
+        try {
+            while ((c = iis.read()) != -1) {
+                baos.write(c);
+            }
+        } finally {
+            iis.close();
         }
-        return sb.toString();
+        return baos.toByteArray();
     }
 
     private void parse_zTXt_chunk(int chunkLength) throws IOException {
-        String keyword = readNullTerminatedString();
+        String keyword = readNullTerminatedString("ISO-8859-1", 80);
         metadata.zTXt_keyword.add(keyword);
 
         int method = stream.readUnsignedByte();
@@ -633,7 +643,7 @@ public class PNGImageReader extends ImageReader {
 
         byte[] b = new byte[chunkLength - keyword.length() - 2];
         stream.readFully(b);
-        metadata.zTXt_text.add(inflate(b));
+        metadata.zTXt_text.add(new String(inflate(b), "ISO-8859-1"));
     }
 
     private void readMetadata() throws IIOException {
@@ -1244,13 +1254,26 @@ public class PNGImageReader extends ImageReader {
             destinationBands = param.getDestinationBands();
             destinationOffset = param.getDestinationOffset();
         }
-
+        Inflater inf = null;
         try {
             stream.seek(imageStartPosition);
 
-            Enumeration e = new PNGImageDataEnumeration(stream);
+            Enumeration<InputStream> e = new PNGImageDataEnumeration(stream);
             InputStream is = new SequenceInputStream(e);
-            is = new InflaterInputStream(is, new Inflater());
+
+           /* InflaterInputStream uses an Inflater instance which consumes
+            * native (non-GC visible) resources. This is normally implicitly
+            * freed when the stream is closed. However since the
+            * InflaterInputStream wraps a client-supplied input stream,
+            * we cannot close it.
+            * But the app may depend on GC finalization to close the stream.
+            * Therefore to ensure timely freeing of native resources we
+            * explicitly create the Inflater instance and free its resources
+            * when we are done with the InflaterInputStream by calling
+            * inf.end();
+            */
+            inf = new Inflater();
+            is = new InflaterInputStream(is, inf);
             is = new BufferedInputStream(is);
             this.pixelStream = new DataInputStream(is);
 
@@ -1283,6 +1306,10 @@ public class PNGImageReader extends ImageReader {
             }
         } catch (IOException e) {
             throw new IIOException("Error reading PNG image data", e);
+        } finally {
+            if (inf != null) {
+                inf.end();
+            }
         }
     }
 

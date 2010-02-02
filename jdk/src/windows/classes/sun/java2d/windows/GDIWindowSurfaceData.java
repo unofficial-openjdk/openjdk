@@ -38,8 +38,6 @@ import sun.awt.SunHints;
 import sun.awt.Win32GraphicsConfig;
 import sun.awt.Win32GraphicsDevice;
 import sun.awt.windows.WComponentPeer;
-import sun.awt.windows.WFileDialogPeer;
-import sun.awt.windows.WPrintDialogPeer;
 import sun.java2d.ScreenUpdateManager;
 import sun.java2d.SunGraphics2D;
 import sun.java2d.SurfaceData;
@@ -212,7 +210,10 @@ public class GDIWindowSurfaceData extends SurfaceData {
             // if a GlyphVector overrides the AA setting.
             // We use getRenderLoops() rather than setting solidloops
             // directly so that we get the appropriate loops in XOR mode.
-            sg2d.loops = getRenderLoops(sg2d);
+            if (sg2d.loops == null) {
+                // assert(some pipe will always be a LoopBasedPipe)
+                sg2d.loops = getRenderLoops(sg2d);
+            }
         } else {
             super.validatePipe(sg2d);
         }
@@ -264,17 +265,7 @@ public class GDIWindowSurfaceData extends SurfaceData {
         this.graphicsConfig =
             (Win32GraphicsConfig) peer.getGraphicsConfiguration();
         this.solidloops = graphicsConfig.getSolidLoops(sType);
-        if (peer instanceof WFileDialogPeer ||
-            peer instanceof WPrintDialogPeer )
-        {
-            // REMIND: Awful hack.  The right fix for this problem
-            // would be for these type of Peers to not even use a
-            // GDIWindowSurfaceData object since they never do any
-            // rendering.  Or they could actually implement the
-            // functionality needed in initOps.  But this seems
-            // to work for now.  See bug 4391928 for more info.
-            return;
-        }
+
         Win32GraphicsDevice gd =
             (Win32GraphicsDevice)graphicsConfig.getDevice();
         initOps(peer, depth, rMask, gMask, bMask, gd.getScreen());

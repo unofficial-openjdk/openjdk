@@ -34,6 +34,7 @@ import javax.swing.plaf.RootPaneUI;
 import java.util.Vector;
 import java.io.Serializable;
 import javax.swing.border.*;
+import sun.awt.AWTAccessor;
 import sun.security.action.GetBooleanAction;
 
 
@@ -688,6 +689,9 @@ public class JRootPane extends JComponent implements Accessible {
             throw new NullPointerException("glassPane cannot be set to null.");
         }
 
+        AWTAccessor.getComponentAccessor().setMixingCutoutShape(glass,
+                new Rectangle());
+
         boolean visible = false;
         if (glassPane != null && glassPane.getParent() == this) {
             this.remove(glassPane);
@@ -721,8 +725,10 @@ public class JRootPane extends JComponent implements Accessible {
      * because both classes override <code>isValidateRoot</code> to return true.
      *
      * @see JComponent#isValidateRoot
+     * @see java.awt.Container#isValidateRoot
      * @return true
      */
+    @Override
     public boolean isValidateRoot() {
         return true;
     }
