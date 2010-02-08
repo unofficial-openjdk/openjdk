@@ -1033,6 +1033,7 @@ codeCache.cpp                           objArrayOop.hpp
 codeCache.cpp                           oop.inline.hpp
 codeCache.cpp                           pcDesc.hpp
 codeCache.cpp                           resourceArea.hpp
+codeCache.cpp                           xmlstream.hpp
 
 codeCache.hpp                           allocation.hpp
 codeCache.hpp                           codeBlob.hpp
@@ -1121,6 +1122,7 @@ compileBroker.cpp                       nativeLookup.hpp
 compileBroker.cpp                       oop.inline.hpp
 compileBroker.cpp                       os.hpp
 compileBroker.cpp                       sharedRuntime.hpp
+compileBroker.cpp                       sweeper.hpp
 compileBroker.cpp                       systemDictionary.hpp
 compileBroker.cpp                       vmSymbols.hpp
 
@@ -3720,6 +3722,7 @@ sharedHeap.hpp                          permGen.hpp
 sharedRuntime.cpp                       abstractCompiler.hpp
 sharedRuntime.cpp                       arguments.hpp
 sharedRuntime.cpp                       biasedLocking.hpp
+sharedRuntime.cpp                       compileBroker.hpp
 sharedRuntime.cpp                       compiledIC.hpp
 sharedRuntime.cpp                       compilerOracle.hpp
 sharedRuntime.cpp                       copy.hpp
@@ -3974,6 +3977,7 @@ stubs.hpp                               os_<os_family>.inline.hpp
 
 sweeper.cpp                             atomic.hpp
 sweeper.cpp                             codeCache.hpp
+sweeper.cpp                             compileBroker.hpp
 sweeper.cpp                             events.hpp
 sweeper.cpp                             methodOop.hpp
 sweeper.cpp                             mutexLocker.hpp
@@ -3981,6 +3985,8 @@ sweeper.cpp                             nmethod.hpp
 sweeper.cpp                             os.hpp
 sweeper.cpp                             resourceArea.hpp
 sweeper.cpp                             sweeper.hpp
+sweeper.cpp                             vm_operations.hpp
+sweeper.cpp                             xmlstream.hpp
 
 symbolKlass.cpp                         gcLocker.hpp
 symbolKlass.cpp                         handles.inline.hpp
@@ -4634,6 +4640,7 @@ vm_operations.cpp                       deoptimization.hpp
 vm_operations.cpp                       interfaceSupport.hpp
 vm_operations.cpp                       isGCActiveMark.hpp
 vm_operations.cpp                       resourceArea.hpp
+vm_operations.cpp                       sweeper.hpp
 vm_operations.cpp                       threadService.hpp
 vm_operations.cpp                       thread_<os_family>.inline.hpp
 vm_operations.cpp                       vmSymbols.hpp
