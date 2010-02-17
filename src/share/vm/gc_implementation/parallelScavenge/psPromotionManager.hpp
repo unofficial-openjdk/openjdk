@@ -59,7 +59,7 @@ class PSPromotionManager : public CHeapObj {
   uint                                _masked_pushes;
 
   uint                                _overflow_pushes;
-  uint                                _max_overflow_length;
+  uint                                _max_overflow_size;
 
   uint                                _arrays_chunked;
   uint                                _array_chunks_processed;
@@ -78,9 +78,9 @@ class PSPromotionManager : public CHeapObj {
   PrefetchQueue                       _prefetch_queue;
 
   OopStarTaskQueue                    _claimed_stack_depth;
-  GrowableArray<StarTask>*            _overflow_stack_depth;
+  Stack<StarTask>                     _overflow_stack_depth;
   OopTaskQueue                        _claimed_stack_breadth;
-  GrowableArray<oop>*                 _overflow_stack_breadth;
+  Stack<oop>                          _overflow_stack_breadth;
 
   bool                                _depth_first;
   bool                                _totally_drain;
@@ -97,8 +97,8 @@ class PSPromotionManager : public CHeapObj {
   template <class T> inline void claim_or_forward_internal_depth(T* p);
   template <class T> inline void claim_or_forward_internal_breadth(T* p);
 
-  GrowableArray<StarTask>* overflow_stack_depth() { return _overflow_stack_depth; }
-  GrowableArray<oop>*  overflow_stack_breadth()   { return _overflow_stack_breadth; }
+  Stack<StarTask>* overflow_stack_depth()   { return &_overflow_stack_depth; }
+  Stack<oop>*      overflow_stack_breadth() { return &_overflow_stack_breadth; }
 
   // On the task queues we push reference locations as well as
   // partially-scanned arrays (in the latter case, we push an oop to
@@ -157,9 +157,9 @@ class PSPromotionManager : public CHeapObj {
       overflow_stack_depth()->push(p);
 #if PS_PM_STATS
       ++_overflow_pushes;
-      uint stack_length = (uint) overflow_stack_depth()->length();
-      if (stack_length > _max_overflow_length) {
-        _max_overflow_length = stack_length;
+      uint stack_size = (uint) overflow_stack_depth()->size();
+      if (stack_size > _max_overflow_size) {
+        _max_overflow_size = stack_size;
       }
 #endif // PS_PM_STATS
     }
@@ -176,9 +176,9 @@ class PSPromotionManager : public CHeapObj {
       overflow_stack_breadth()->push(o);
 #if PS_PM_STATS
       ++_overflow_pushes;
-      uint stack_length = (uint) overflow_stack_breadth()->length();
-      if (stack_length > _max_overflow_length) {
-        _max_overflow_length = stack_length;
+      uint stack_size = (uint) overflow_stack_breadth()->size();
+      if (stack_size > _max_overflow_size) {
+        _max_overflow_size = stack_size;
       }
 #endif // PS_PM_STATS
     }
@@ -248,16 +248,16 @@ class PSPromotionManager : public CHeapObj {
 
   bool claimed_stack_empty() {
     if (depth_first()) {
-      return claimed_stack_depth()->size() <= 0;
+      return claimed_stack_depth()->size() == 0;
     } else {
-      return claimed_stack_breadth()->size() <= 0;
+      return claimed_stack_breadth()->size() == 0;
     }
   }
   bool overflow_stack_empty() {
     if (depth_first()) {
-      return overflow_stack_depth()->length() <= 0;
+      return overflow_stack_depth()->is_empty();
     } else {
-      return overflow_stack_breadth()->length() <= 0;
+      return overflow_stack_breadth()->is_empty();
     }
   }
   bool stacks_empty() {

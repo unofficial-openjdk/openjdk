@@ -165,6 +165,7 @@ concurrentMarkSweepGeneration.hpp       gcStats.hpp
 concurrentMarkSweepGeneration.hpp       generation.hpp
 concurrentMarkSweepGeneration.hpp       generationCounters.hpp
 concurrentMarkSweepGeneration.hpp       mutexLocker.hpp
+concurrentMarkSweepGeneration.hpp       stack.inline.hpp
 concurrentMarkSweepGeneration.hpp       taskqueue.hpp
 concurrentMarkSweepGeneration.hpp       virtualspace.hpp
 concurrentMarkSweepGeneration.hpp       yieldingWorkgroup.hpp

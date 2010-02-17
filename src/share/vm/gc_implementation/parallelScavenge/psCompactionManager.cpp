@@ -41,39 +41,8 @@ ParCompactionManager::ParCompactionManager() :
   _old_gen = heap->old_gen();
   _start_array = old_gen()->start_array();
 
-
   marking_stack()->initialize();
-
-  // We want the overflow stack to be permanent
-  _overflow_stack = new (ResourceObj::C_HEAP) GrowableArray<oop>(10, true);
-#ifdef USE_RegionTaskQueueWithOverflow
   region_stack()->initialize();
-#else
-  region_stack()->initialize();
-
-  // We want the overflow stack to be permanent
-  _region_overflow_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<size_t>(10, true);
-#endif
-
-  // Note that _revisit_klass_stack is allocated out of the
-  // C heap (as opposed to out of ResourceArena).
-  int size =
-    (SystemDictionary::number_of_classes() * 2) * 2 / ParallelGCThreads;
-  _revisit_klass_stack = new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
-  // From some experiments (#klass/k)^2 for k = 10 seems a better fit, but this will
-  // have to do for now until we are able to investigate a more optimal setting.
-  _revisit_mdo_stack = new (ResourceObj::C_HEAP) GrowableArray<DataLayout*>(size*2, true);
-
-}
-
-ParCompactionManager::~ParCompactionManager() {
-  delete _overflow_stack;
-  delete _revisit_klass_stack;
-  delete _revisit_mdo_stack;
-  // _manager_array and _stack_array are statics
-  // shared with all instances of ParCompactionManager
-  // should not be deallocated.
 }
 
 void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
@@ -197,9 +166,9 @@ ParCompactionManager::gc_thread_compaction_manager(int index) {
 }
 
 void ParCompactionManager::reset() {
-  for(uint i=0; i<ParallelGCThreads+1; i++) {
-    manager_array(i)->revisit_klass_stack()->clear();
-    manager_array(i)->revisit_mdo_stack()->clear();
+  for(uint i = 0; i < ParallelGCThreads + 1; i++) {
+    assert(manager_array(i)->revisit_klass_stack()->is_empty(), "sanity");
+    assert(manager_array(i)->revisit_mdo_stack()->is_empty(), "sanity");
   }
 }
 
@@ -229,10 +198,10 @@ void ParCompactionManager::drain_marking_stacks(OopClosure* blk) {
       // pop, but they can come from anywhere, unfortunately.
       obj->follow_contents(this);
     }
-  } while((marking_stack()->size() != 0) || (overflow_stack()->length() != 0));
+  } while(marking_stack()->size() != 0 || !overflow_stack()->is_empty());
 
   assert(marking_stack()->size() == 0, "Sanity");
-  assert(overflow_stack()->length() == 0, "Sanity");
+  assert(overflow_stack()->is_empty(), "Sanity");
 }
 
 void ParCompactionManager::drain_region_overflow_stack() {
@@ -281,15 +250,14 @@ void ParCompactionManager::drain_region_stacks() {
       // pop, but they can come from anywhere, unfortunately.
       PSParallelCompact::fill_and_update_region(this, region_index);
     }
-  } while((region_stack()->size() != 0) ||
-          (region_overflow_stack()->length() != 0));
+  } while (region_stack()->size() != 0 || !region_overflow_stack()->is_empty());
 #endif
 
 #ifdef USE_RegionTaskQueueWithOverflow
   assert(region_stack()->is_empty(), "Sanity");
 #else
   assert(region_stack()->size() == 0, "Sanity");
-  assert(region_overflow_stack()->length() == 0, "Sanity");
+  assert(region_overflow_stack()->is_empty(), "Sanity");
 #endif
 #else
   oop obj;
@@ -298,10 +266,3 @@ void ParCompactionManager::drain_region_stacks() {
   }
 #endif
 }
-
-#ifdef ASSERT
-bool ParCompactionManager::stacks_have_been_allocated() {
-  return (revisit_klass_stack()->data_addr() != NULL &&
-          revisit_mdo_stack()->data_addr() != NULL);
-}
-#endif

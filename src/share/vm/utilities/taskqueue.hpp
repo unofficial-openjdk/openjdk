@@ -557,13 +557,13 @@ typedef GenericTaskQueueSet<RegionTask> RegionTaskQueueSet;
 
 class RegionTaskQueueWithOverflow: public CHeapObj {
  protected:
-  RegionTaskQueue              _region_queue;
-  GrowableArray<RegionTask>*   _overflow_stack;
+  RegionTaskQueue   _region_queue;
+  Stack<RegionTask> _overflow_stack;
 
  public:
-  RegionTaskQueueWithOverflow() : _overflow_stack(NULL) {}
+  RegionTaskQueueWithOverflow() { }
   // Initialize both stealable queue and overflow
-  void initialize();
+  inline void initialize();
   // Save first to stealable queue and then to overflow
   void save(RegionTask t);
   // Retrieve first from overflow and then from stealable queue
@@ -572,11 +572,27 @@ class RegionTaskQueueWithOverflow: public CHeapObj {
   bool retrieve_from_stealable_queue(RegionTask& region_index);
   // Retrieve from overflow
   bool retrieve_from_overflow(RegionTask& region_index);
-  bool is_empty();
-  bool stealable_is_empty();
-  bool overflow_is_empty();
+  inline bool is_empty();
+  inline bool stealable_is_empty();
+  inline bool overflow_is_empty();
   uint stealable_size() { return _region_queue.size(); }
   RegionTaskQueue* task_queue() { return &_region_queue; }
 };
+
+void RegionTaskQueueWithOverflow::initialize() {
+  _region_queue.initialize();
+}
+
+bool RegionTaskQueueWithOverflow::is_empty() {
+  return _region_queue.size() == 0 && _overflow_stack.is_empty();
+}
+
+bool RegionTaskQueueWithOverflow::stealable_is_empty() {
+  return _region_queue.size() == 0;
+}
+
+bool RegionTaskQueueWithOverflow::overflow_is_empty() {
+  return _overflow_stack.is_empty();
+}
 
 #define USE_RegionTaskQueueWithOverflow

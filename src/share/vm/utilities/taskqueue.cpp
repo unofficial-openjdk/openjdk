@@ -180,32 +180,12 @@ void ParallelTaskTerminator::reset_for_reuse() {
   }
 }
 
-bool RegionTaskQueueWithOverflow::is_empty() {
-  return (_region_queue.size() == 0) &&
-         (_overflow_stack->length() == 0);
-}
-
-bool RegionTaskQueueWithOverflow::stealable_is_empty() {
-  return _region_queue.size() == 0;
-}
-
-bool RegionTaskQueueWithOverflow::overflow_is_empty() {
-  return _overflow_stack->length() == 0;
-}
-
-void RegionTaskQueueWithOverflow::initialize() {
-  _region_queue.initialize();
-  assert(_overflow_stack == 0, "Creating memory leak");
-  _overflow_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<RegionTask>(10, true);
-}
-
 void RegionTaskQueueWithOverflow::save(RegionTask t) {
   if (TraceRegionTasksQueuing && Verbose) {
     gclog_or_tty->print_cr("CTQ: save " PTR_FORMAT, t);
   }
   if(!_region_queue.push(t)) {
-    _overflow_stack->push(t);
+    _overflow_stack.push(t);
   }
 }
 
@@ -237,8 +217,8 @@ bool RegionTaskQueueWithOverflow::retrieve_from_stealable_queue(
 bool
 RegionTaskQueueWithOverflow::retrieve_from_overflow(RegionTask& region_task) {
   bool result;
-  if (!_overflow_stack->is_empty()) {
-    region_task = _overflow_stack->pop();
+  if (!_overflow_stack.is_empty()) {
+    region_task = _overflow_stack.pop();
     result = true;
   } else {
     region_task = (RegionTask) NULL;
