@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,6 +127,7 @@ Thread::Thread() {
   debug_only(_owned_locks = NULL;)
   debug_only(_allow_allocation_count = 0;)
   NOT_PRODUCT(_allow_safepoint_count = 0;)
+  NOT_PRODUCT(_skip_gcalot = false;)
   CHECK_UNHANDLED_OOPS_ONLY(_gc_locked_out_count = 0;)
   _jvmti_env_iteration_count = 0;
   _vm_operation_started_count = 0;
@@ -784,7 +785,6 @@ void Thread::check_for_valid_safepoint_state(bool potential_vm_operation) {
       // We could enter a safepoint here and thus have a gc
       InterfaceSupport::check_gc_alot();
     }
-
 #endif
 }
 #endif
@@ -1212,6 +1212,7 @@ JavaThread::JavaThread(bool is_attaching) :
 {
   initialize();
   _is_attaching = is_attaching;
+  assert(_deferred_card_mark.is_empty(), "Default MemRegion ctor");
 }
 
 bool JavaThread::reguard_stack(address cur_sp) {
@@ -2317,6 +2318,10 @@ void JavaThread::gc_prologue() {
 
 
 void JavaThread::oops_do(OopClosure* f) {
+  // Flush deferred store-barriers, if any, associated with
+  // initializing stores done by this JavaThread in the current epoch.
+  Universe::heap()->flush_deferred_store_barrier(this);
+
   // The ThreadProfiler oops_do is done from FlatProfiler::oops_do
   // since there may be more than one thread using each ThreadProfiler.
 
@@ -2995,14 +3000,16 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
         // Forcibly initialize java/lang/StringValue and mutate the private
         // static final "stringCacheEnabled" field before we start creating instances
         klassOop k_o = SystemDictionary::resolve_or_null(vmSymbolHandles::java_lang_StringValue(), Handle(), Handle(), CHECK_0);
-        KlassHandle k = KlassHandle(THREAD, k_o);
-        guarantee(k.not_null(), "Must find java/lang/StringValue");
-        instanceKlassHandle ik = instanceKlassHandle(THREAD, k());
-        ik->initialize(CHECK_0);
-        fieldDescriptor fd;
-        // Possible we might not find this field; if so, don't break
-        if (ik->find_local_field(vmSymbols::stringCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
-          k()->bool_field_put(fd.offset(), true);
+        // Possible that StringValue isn't present: if so, silently don't break
+        if (k_o != NULL) {
+          KlassHandle k = KlassHandle(THREAD, k_o);
+          instanceKlassHandle ik = instanceKlassHandle(THREAD, k());
+          ik->initialize(CHECK_0);
+          fieldDescriptor fd;
+          // Possible we might not find this field: if so, silently don't break
+          if (ik->find_local_field(vmSymbols::stringCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
+            k()->bool_field_put(fd.offset(), true);
+          }
         }
       }
     }

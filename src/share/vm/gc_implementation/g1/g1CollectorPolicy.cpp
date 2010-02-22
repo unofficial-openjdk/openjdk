@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,7 +94,14 @@ G1CollectorPolicy::G1CollectorPolicy() :
   _summary(new Summary()),
   _abandoned_summary(new AbandonedSummary()),
 
+#ifndef PRODUCT
   _cur_clear_ct_time_ms(0.0),
+  _min_clear_cc_time_ms(-1.0),
+  _max_clear_cc_time_ms(-1.0),
+  _cur_clear_cc_time_ms(0.0),
+  _cum_clear_cc_time_ms(0.0),
+  _num_cc_clears(0L),
+#endif
 
   _region_num_young(0),
   _region_num_tenured(0),
@@ -167,11 +174,6 @@ G1CollectorPolicy::G1CollectorPolicy() :
 
   _all_full_gc_times_ms(new NumberSeq()),
 
-  _conc_refine_enabled(0),
-  _conc_refine_zero_traversals(0),
-  _conc_refine_max_traversals(0),
-  _conc_refine_current_delta(G1ConcRefineInitialDelta),
-
   // G1PausesBtwnConcMark defaults to -1
   // so the hack is to do the cast  QQQ FIXME
   _pauses_btwn_concurrent_mark((size_t)G1PausesBtwnConcMark),
@@ -199,6 +201,11 @@ G1CollectorPolicy::G1CollectorPolicy() :
   _survivors_age_table(true)
 
 {
+  // Set up the region size and associated fields. Given that the
+  // policy is created before the heap, we have to set this up here,
+  // so it's done as soon as possible.
+  HeapRegion::setup_heap_region_size(Arguments::min_heap_size());
+
   _recent_prev_end_times_for_all_gcs_sec->add(os::elapsedTime());
   _prev_collection_pause_end_ms = os::elapsedTime() * 1000.0;
 
@@ -297,10 +304,6 @@ void G1CollectorPolicy::init() {
 
   if (G1SteadyStateUsed < 50) {
     vm_exit_during_initialization("G1SteadyStateUsed must be at least 50%.");
-  }
-  if (UseConcMarkSweepGC) {
-    vm_exit_during_initialization("-XX:+UseG1GC is incompatible with "
-                                  "-XX:+UseConcMarkSweepGC.");
   }
 
   initialize_gc_policy_counters();
@@ -995,8 +998,6 @@ void G1CollectorPolicy::record_full_collection_end() {
   double full_gc_time_sec = end_sec - _cur_collection_start_sec;
   double full_gc_time_ms = full_gc_time_sec * 1000.0;
 
-  checkpoint_conc_overhead();
-
   _all_full_gc_times_ms->add(full_gc_time_ms);
 
   update_recent_gc_times(end_sec, full_gc_time_ms);
@@ -1166,7 +1167,6 @@ void G1CollectorPolicy::record_concurrent_mark_init_end() {
   double end_time_sec = os::elapsedTime();
   double elapsed_time_ms = (end_time_sec - _mark_init_start_sec) * 1000.0;
   _concurrent_mark_init_times_ms->add(elapsed_time_ms);
-  checkpoint_conc_overhead();
   record_concurrent_mark_init_end_pre(elapsed_time_ms);
 
   _mmu_tracker->add_pause(_mark_init_start_sec, end_time_sec, true);
@@ -1180,7 +1180,6 @@ void G1CollectorPolicy::record_concurrent_mark_remark_start() {
 void G1CollectorPolicy::record_concurrent_mark_remark_end() {
   double end_time_sec = os::elapsedTime();
   double elapsed_time_ms = (end_time_sec - _mark_remark_start_sec)*1000.0;
-  checkpoint_conc_overhead();
   _concurrent_mark_remark_times_ms->add(elapsed_time_ms);
   _cur_mark_stop_world_time_ms += elapsed_time_ms;
   _prev_collection_pause_end_ms += elapsed_time_ms;
@@ -1212,7 +1211,6 @@ record_concurrent_mark_cleanup_end_work1(size_t freed_bytes,
 
 // The important thing about this is that it includes "os::elapsedTime".
 void G1CollectorPolicy::record_concurrent_mark_cleanup_end_work2() {
-  checkpoint_conc_overhead();
   double end_time_sec = os::elapsedTime();
   double elapsed_time_ms = (end_time_sec - _mark_cleanup_start_sec)*1000.0;
   _concurrent_mark_cleanup_times_ms->add(elapsed_time_ms);
@@ -1427,8 +1425,6 @@ void G1CollectorPolicy::record_collection_pause_end(bool abandoned) {
   }
 #endif // PRODUCT
 
-  checkpoint_conc_overhead();
-
   if (in_young_gc_mode()) {
     last_pause_included_initial_mark = _should_initiate_conc_mark;
     if (last_pause_included_initial_mark)
@@ -1520,7 +1516,8 @@ void G1CollectorPolicy::record_collection_pause_end(bool abandoned) {
       (end_time_sec - _recent_prev_end_times_for_all_gcs_sec->oldest()) * 1000.0;
     update_recent_gc_times(end_time_sec, elapsed_ms);
     _recent_avg_pause_time_ratio = _recent_gc_times_ms->sum()/interval_ms;
-    assert(recent_avg_pause_time_ratio() < 1.00, "All GC?");
+    // using 1.01 to account for floating point inaccuracies
+    assert(recent_avg_pause_time_ratio() < 1.01, "All GC?");
   }
 
   if (G1PolicyVerbose > 1) {
@@ -1634,9 +1631,8 @@ void G1CollectorPolicy::record_collection_pause_end(bool abandoned) {
         print_stats(1, "Parallel Time", _cur_collection_par_time_ms);
         print_par_stats(2, "Update RS (Start)", _par_last_update_rs_start_times_ms, false);
         print_par_stats(2, "Update RS", _par_last_update_rs_times_ms);
-        if (G1RSBarrierUseQueue)
-          print_par_buffers(3, "Processed Buffers",
-                            _par_last_update_rs_processed_buffers, true);
+        print_par_buffers(3, "Processed Buffers",
+                          _par_last_update_rs_processed_buffers, true);
         print_par_stats(2, "Ext Root Scanning", _par_last_ext_root_scan_times_ms);
         print_par_stats(2, "Mark Stack Scanning", _par_last_mark_stack_scan_times_ms);
         print_par_stats(2, "Scan-Only Scanning", _par_last_scan_only_times_ms);
@@ -1649,9 +1645,8 @@ void G1CollectorPolicy::record_collection_pause_end(bool abandoned) {
         print_stats(1, "Clear CT", _cur_clear_ct_time_ms);
       } else {
         print_stats(1, "Update RS", update_rs_time);
-        if (G1RSBarrierUseQueue)
-          print_stats(2, "Processed Buffers",
-                      (int)update_rs_processed_buffers);
+        print_stats(2, "Processed Buffers",
+                    (int)update_rs_processed_buffers);
         print_stats(1, "Ext Root Scanning", ext_root_scan_time);
         print_stats(1, "Mark Stack Scanning", mark_stack_scan_time);
         print_stats(1, "Scan-Only Scanning", scan_only_time);
@@ -1659,6 +1654,15 @@ void G1CollectorPolicy::record_collection_pause_end(bool abandoned) {
         print_stats(1, "Object Copying", obj_copy_time);
       }
     }
+#ifndef PRODUCT
+    print_stats(1, "Cur Clear CC", _cur_clear_cc_time_ms);
+    print_stats(1, "Cum Clear CC", _cum_clear_cc_time_ms);
+    print_stats(1, "Min Clear CC", _min_clear_cc_time_ms);
+    print_stats(1, "Max Clear CC", _max_clear_cc_time_ms);
+    if (_num_cc_clears > 0) {
+      print_stats(1, "Avg Clear CC", _cum_clear_cc_time_ms / ((double)_num_cc_clears));
+    }
+#endif
     print_stats(1, "Other", other_time_ms);
     for (int i = 0; i < _aux_num; ++i) {
       if (_cur_aux_times_set[i]) {
@@ -2467,18 +2471,6 @@ void G1CollectorPolicy::print_tracing_info() const {
                (double) _region_num_young / (double) all_region_num * 100.0,
                _region_num_tenured,
                (double) _region_num_tenured / (double) all_region_num * 100.0);
-
-    if (!G1RSBarrierUseQueue) {
-      gclog_or_tty->print_cr("Of %d times conc refinement was enabled, %d (%7.2f%%) "
-                    "did zero traversals.",
-                    _conc_refine_enabled, _conc_refine_zero_traversals,
-                    _conc_refine_enabled > 0 ?
-                    100.0 * (float)_conc_refine_zero_traversals/
-                    (float)_conc_refine_enabled : 0.0);
-      gclog_or_tty->print_cr("  Max # of traversals = %d.",
-                    _conc_refine_max_traversals);
-      gclog_or_tty->print_cr("");
-    }
   }
   if (TraceGen1Time) {
     if (_all_full_gc_times_ms->num() > 0) {
@@ -2498,38 +2490,6 @@ void G1CollectorPolicy::print_yg_surv_rate_info() const {
   _short_lived_surv_rate_group->print_surv_rate_summary();
   // add this call for any other surv rate groups
 #endif // PRODUCT
-}
-
-void G1CollectorPolicy::update_conc_refine_data() {
-  unsigned traversals = _g1->concurrent_g1_refine()->disable();
-  if (traversals == 0) _conc_refine_zero_traversals++;
-  _conc_refine_max_traversals = MAX2(_conc_refine_max_traversals,
-                                     (size_t)traversals);
-
-  if (G1PolicyVerbose > 1)
-    gclog_or_tty->print_cr("Did a CR traversal series: %d traversals.", traversals);
-  double multiplier = 1.0;
-  if (traversals == 0) {
-    multiplier = 4.0;
-  } else if (traversals > (size_t)G1ConcRefineTargTraversals) {
-    multiplier = 1.0/1.5;
-  } else if (traversals < (size_t)G1ConcRefineTargTraversals) {
-    multiplier = 1.5;
-  }
-  if (G1PolicyVerbose > 1) {
-    gclog_or_tty->print_cr("  Multiplier = %7.2f.", multiplier);
-    gclog_or_tty->print("  Delta went from %d regions to ",
-               _conc_refine_current_delta);
-  }
-  _conc_refine_current_delta =
-    MIN2(_g1->n_regions(),
-         (size_t)(_conc_refine_current_delta * multiplier));
-  _conc_refine_current_delta =
-    MAX2(_conc_refine_current_delta, (size_t)1);
-  if (G1PolicyVerbose > 1) {
-    gclog_or_tty->print_cr("%d regions.", _conc_refine_current_delta);
-  }
-  _conc_refine_enabled++;
 }
 
 bool
@@ -2563,19 +2523,6 @@ region_num_to_mbs(int length) {
   return buffer;
 }
 #endif // PRODUCT
-
-void
-G1CollectorPolicy::checkpoint_conc_overhead() {
-  double conc_overhead = 0.0;
-  if (G1AccountConcurrentOverhead)
-    conc_overhead = COTracker::totalPredConcOverhead();
-  _mmu_tracker->update_conc_overhead(conc_overhead);
-#if 0
-  gclog_or_tty->print(" CO %1.4lf TARGET %1.4lf",
-             conc_overhead, _mmu_tracker->max_gc_time());
-#endif
-}
-
 
 size_t G1CollectorPolicy::max_regions(int purpose) {
   switch (purpose) {

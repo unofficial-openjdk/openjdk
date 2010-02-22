@@ -1643,7 +1643,8 @@ inline hrtime_t oldgetTimeNanos() {
 inline hrtime_t getTimeNanos() {
   if (VM_Version::supports_cx8()) {
     const hrtime_t now = gethrtime();
-    const hrtime_t prev = max_hrtime;
+    // Use atomic long load since 32-bit x86 uses 2 registers to keep long.
+    const hrtime_t prev = Atomic::load((volatile jlong*)&max_hrtime);
     if (now <= prev)  return prev;   // same or retrograde time;
     const hrtime_t obsv = Atomic::cmpxchg(now, (volatile jlong*)&max_hrtime, prev);
     assert(obsv >= prev, "invariant");   // Monotonicity
@@ -2653,15 +2654,16 @@ int os::vm_allocation_granularity() {
   return page_size;
 }
 
-bool os::commit_memory(char* addr, size_t bytes) {
+bool os::commit_memory(char* addr, size_t bytes, bool exec) {
+  int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
   size_t size = bytes;
   return
-     NULL != Solaris::mmap_chunk(addr, size, MAP_PRIVATE|MAP_FIXED,
-                                 PROT_READ | PROT_WRITE | PROT_EXEC);
+     NULL != Solaris::mmap_chunk(addr, size, MAP_PRIVATE|MAP_FIXED, prot);
 }
 
-bool os::commit_memory(char* addr, size_t bytes, size_t alignment_hint) {
-  if (commit_memory(addr, bytes)) {
+bool os::commit_memory(char* addr, size_t bytes, size_t alignment_hint,
+                       bool exec) {
+  if (commit_memory(addr, bytes, exec)) {
     if (UseMPSS && alignment_hint > (size_t)vm_page_size()) {
       // If the large page size has been set and the VM
       // is using large pages, use the large page size
@@ -3250,7 +3252,9 @@ bool os::Solaris::set_mpss_range(caddr_t start, size_t bytes, size_t align) {
   return true;
 }
 
-char* os::reserve_memory_special(size_t bytes) {
+char* os::reserve_memory_special(size_t bytes, char* addr, bool exec) {
+  // "exec" is passed in but not used.  Creating the shared image for
+  // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseISM, "only for ISM large pages");
 
   size_t size = bytes;
@@ -4481,6 +4485,9 @@ int_fnP_thread_t_i os::Solaris::_thr_setmutator;
 int_fnP_thread_t os::Solaris::_thr_suspend_mutator;
 int_fnP_thread_t os::Solaris::_thr_continue_mutator;
 
+// (Static) wrapper for getisax(2) call.
+os::Solaris::getisax_func_t os::Solaris::_getisax = 0;
+
 // (Static) wrappers for the liblgrp API
 os::Solaris::lgrp_home_func_t os::Solaris::_lgrp_home;
 os::Solaris::lgrp_init_func_t os::Solaris::_lgrp_init;
@@ -4495,16 +4502,19 @@ os::Solaris::lgrp_cookie_t os::Solaris::_lgrp_cookie = 0;
 // (Static) wrapper for meminfo() call.
 os::Solaris::meminfo_func_t os::Solaris::_meminfo = 0;
 
-static address resolve_symbol(const char *name) {
-  address addr;
-
-  addr = (address) dlsym(RTLD_DEFAULT, name);
+static address resolve_symbol_lazy(const char* name) {
+  address addr = (address) dlsym(RTLD_DEFAULT, name);
   if(addr == NULL) {
     // RTLD_DEFAULT was not defined on some early versions of 2.5.1
     addr = (address) dlsym(RTLD_NEXT, name);
-    if(addr == NULL) {
-      fatal(dlerror());
-    }
+  }
+  return addr;
+}
+
+static address resolve_symbol(const char* name) {
+  address addr = resolve_symbol_lazy(name);
+  if(addr == NULL) {
+    fatal(dlerror());
   }
   return addr;
 }
@@ -4703,13 +4713,24 @@ bool os::Solaris::liblgrp_init() {
 }
 
 void os::Solaris::misc_sym_init() {
-  address func = (address)dlsym(RTLD_DEFAULT, "meminfo");
-  if(func == NULL) {
-    func = (address) dlsym(RTLD_NEXT, "meminfo");
+  address func;
+
+  // getisax
+  func = resolve_symbol_lazy("getisax");
+  if (func != NULL) {
+    os::Solaris::_getisax = CAST_TO_FN_PTR(getisax_func_t, func);
   }
+
+  // meminfo
+  func = resolve_symbol_lazy("meminfo");
   if (func != NULL) {
     os::Solaris::set_meminfo(CAST_TO_FN_PTR(meminfo_func_t, func));
   }
+}
+
+uint_t os::Solaris::getisax(uint32_t* array, uint_t n) {
+  assert(_getisax != NULL, "_getisax not set");
+  return _getisax(array, n);
 }
 
 // Symbol doesn't exist in Solaris 8 pset.h
@@ -4745,6 +4766,10 @@ void os::init(void) {
   init_page_sizes((size_t) page_size);
 
   Solaris::initialize_system_info();
+
+  // Initialize misc. symbols as soon as possible, so we can use them
+  // if we need them.
+  Solaris::misc_sym_init();
 
   int fd = open("/dev/zero", O_RDWR);
   if (fd < 0) {
@@ -4887,7 +4912,6 @@ jint os::init_2(void) {
     }
   }
 
-  Solaris::misc_sym_init();
   Solaris::signal_sets_init();
   Solaris::init_signal_mem();
   Solaris::install_signal_handlers();
@@ -5779,6 +5803,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   if (_counter > 0) {
       _counter = 0 ;
+      OrderAccess::fence();
       return ;
   }
 
@@ -5822,6 +5847,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = os::Solaris::mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    OrderAccess::fence();
     return;
   }
 
@@ -5867,7 +5893,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   if (jt->handle_special_suspend_equivalent_condition()) {
     jt->java_suspend_self();
   }
-
+  OrderAccess::fence();
 }
 
 void Parker::unpark() {

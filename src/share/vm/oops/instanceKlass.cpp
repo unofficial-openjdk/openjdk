@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,7 +110,7 @@ bool instanceKlass::verify_code(
   // 1) Verify the bytecodes
   Verifier::Mode mode =
     throw_verifyerror ? Verifier::ThrowException : Verifier::NoException;
-  return Verifier::verify(this_oop, mode, CHECK_false);
+  return Verifier::verify(this_oop, mode, this_oop->should_verify_class(), CHECK_false);
 }
 
 
@@ -158,9 +158,6 @@ bool instanceKlass::link_class_impl(
   // timer handles recursion
   assert(THREAD->is_Java_thread(), "non-JavaThread in link_class_impl");
   JavaThread* jt = (JavaThread*)THREAD;
-  PerfTraceTimedEvent vmtimer(ClassLoader::perf_class_link_time(),
-                        ClassLoader::perf_classes_linked(),
-                        jt->get_thread_stat()->class_link_recursion_count_addr());
 
   // link super class before linking this class
   instanceKlassHandle super(THREAD, this_oop->super());
@@ -194,6 +191,15 @@ bool instanceKlass::link_class_impl(
     return true;
   }
 
+  // trace only the link time for this klass that includes
+  // the verification time
+  PerfClassTraceTime vmtimer(ClassLoader::perf_class_link_time(),
+                             ClassLoader::perf_class_link_selftime(),
+                             ClassLoader::perf_classes_linked(),
+                             jt->get_thread_stat()->perf_recursion_counts_addr(),
+                             jt->get_thread_stat()->perf_timers_addr(),
+                             PerfClassTraceTime::CLASS_LINK);
+
   // verification & rewriting
   {
     ObjectLocker ol(this_oop, THREAD);
@@ -203,12 +209,14 @@ bool instanceKlass::link_class_impl(
     if (!this_oop->is_linked()) {
       if (!this_oop->is_rewritten()) {
         {
-          assert(THREAD->is_Java_thread(), "non-JavaThread in link_class_impl");
-          JavaThread* jt = (JavaThread*)THREAD;
           // Timer includes any side effects of class verification (resolution,
           // etc), but not recursive entry into verify_code().
-          PerfTraceTime timer(ClassLoader::perf_class_verify_time(),
-                            jt->get_thread_stat()->class_verify_recursion_count_addr());
+          PerfClassTraceTime timer(ClassLoader::perf_class_verify_time(),
+                                   ClassLoader::perf_class_verify_selftime(),
+                                   ClassLoader::perf_classes_verified(),
+                                   jt->get_thread_stat()->perf_recursion_counts_addr(),
+                                   jt->get_thread_stat()->perf_timers_addr(),
+                                   PerfClassTraceTime::CLASS_VERIFY);
           bool verify_ok = verify_code(this_oop, throw_verifyerror, THREAD);
           if (!verify_ok) {
             return false;
@@ -350,9 +358,12 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
     JavaThread* jt = (JavaThread*)THREAD;
     // Timer includes any side effects of class initialization (resolution,
     // etc), but not recursive entry into call_class_initializer().
-    PerfTraceTimedEvent timer(ClassLoader::perf_class_init_time(),
-                              ClassLoader::perf_classes_inited(),
-                              jt->get_thread_stat()->class_init_recursion_count_addr());
+    PerfClassTraceTime timer(ClassLoader::perf_class_init_time(),
+                             ClassLoader::perf_class_init_selftime(),
+                             ClassLoader::perf_classes_inited(),
+                             jt->get_thread_stat()->perf_recursion_counts_addr(),
+                             jt->get_thread_stat()->perf_timers_addr(),
+                             PerfClassTraceTime::CLASS_CLINIT);
     this_oop->call_class_initializer(THREAD);
   }
 
@@ -497,6 +508,7 @@ bool instanceKlass::implements_interface(klassOop k) const {
 objArrayOop instanceKlass::allocate_objArray(int n, int length, TRAPS) {
   if (length < 0) THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
   if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
+    report_java_out_of_memory("Requested array size exceeds VM limit");
     THROW_OOP_0(Universe::out_of_memory_error_array_size());
   }
   int size = objArrayOopDesc::object_size(length);
@@ -1385,18 +1397,18 @@ template <class T> void assert_nothing(T *p) {}
   /* Compute oopmap block range. The common case                         \
      is nonstatic_oop_map_size == 1. */                                  \
   OopMapBlock* map           = start_of_nonstatic_oop_maps();            \
-  OopMapBlock* const end_map = map + nonstatic_oop_map_size();           \
+  OopMapBlock* const end_map = map + nonstatic_oop_map_count();          \
   if (UseCompressedOops) {                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_OOP_ITERATE(narrowOop,                   \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
     }                                                                    \
   } else {                                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_OOP_ITERATE(oop,                         \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
     }                                                                    \
@@ -1406,19 +1418,19 @@ template <class T> void assert_nothing(T *p) {}
 #define InstanceKlass_OOP_MAP_REVERSE_ITERATE(obj, do_oop, assert_fn)    \
 {                                                                        \
   OopMapBlock* const start_map = start_of_nonstatic_oop_maps();          \
-  OopMapBlock* map             = start_map + nonstatic_oop_map_size();   \
+  OopMapBlock* map             = start_map + nonstatic_oop_map_count();  \
   if (UseCompressedOops) {                                               \
     while (start_map < map) {                                            \
       --map;                                                             \
       InstanceKlass_SPECIALIZED_OOP_REVERSE_ITERATE(narrowOop,           \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         do_oop, assert_fn)                                               \
     }                                                                    \
   } else {                                                               \
     while (start_map < map) {                                            \
       --map;                                                             \
       InstanceKlass_SPECIALIZED_OOP_REVERSE_ITERATE(oop,                 \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         do_oop, assert_fn)                                               \
     }                                                                    \
   }                                                                      \
@@ -1432,11 +1444,11 @@ template <class T> void assert_nothing(T *p) {}
      usually non-existent extra overhead of examining                    \
      all the maps. */                                                    \
   OopMapBlock* map           = start_of_nonstatic_oop_maps();            \
-  OopMapBlock* const end_map = map + nonstatic_oop_map_size();           \
+  OopMapBlock* const end_map = map + nonstatic_oop_map_count();          \
   if (UseCompressedOops) {                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(narrowOop,           \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         low, high,                                                       \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
@@ -1444,7 +1456,7 @@ template <class T> void assert_nothing(T *p) {}
   } else {                                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(oop,                 \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         low, high,                                                       \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
@@ -1814,6 +1826,8 @@ bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_nam
                                           oop class_loader2, symbolOop class_name2) {
   if (class_loader1 != class_loader2) {
     return false;
+  } else if (class_name1 == class_name2) {
+    return true;                // skip painful bytewise comparison
   } else {
     ResourceMark rm;
 
@@ -1858,6 +1872,75 @@ bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_nam
       return UTF8::equal(name1, length1, name2, length2);
     }
   }
+}
+
+// Returns true iff super_method can be overridden by a method in targetclassname
+// See JSL 3rd edition 8.4.6.1
+// Assumes name-signature match
+// "this" is instanceKlass of super_method which must exist
+// note that the instanceKlass of the method in the targetclassname has not always been created yet
+bool instanceKlass::is_override(methodHandle super_method, Handle targetclassloader, symbolHandle targetclassname, TRAPS) {
+   // Private methods can not be overridden
+   if (super_method->is_private()) {
+     return false;
+   }
+   // If super method is accessible, then override
+   if ((super_method->is_protected()) ||
+       (super_method->is_public())) {
+     return true;
+   }
+   // Package-private methods are not inherited outside of package
+   assert(super_method->is_package_private(), "must be package private");
+   return(is_same_class_package(targetclassloader(), targetclassname()));
+}
+
+/* defined for now in jvm.cpp, for historical reasons *--
+klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
+                                                     symbolOop& simple_name_result, TRAPS) {
+  ...
+}
+*/
+
+// tell if two classes have the same enclosing class (at package level)
+bool instanceKlass::is_same_package_member_impl(instanceKlassHandle class1,
+                                                klassOop class2_oop, TRAPS) {
+  if (class2_oop == class1->as_klassOop())          return true;
+  if (!Klass::cast(class2_oop)->oop_is_instance())  return false;
+  instanceKlassHandle class2(THREAD, class2_oop);
+
+  // must be in same package before we try anything else
+  if (!class1->is_same_class_package(class2->class_loader(), class2->name()))
+    return false;
+
+  // As long as there is an outer1.getEnclosingClass,
+  // shift the search outward.
+  instanceKlassHandle outer1 = class1;
+  for (;;) {
+    // As we walk along, look for equalities between outer1 and class2.
+    // Eventually, the walks will terminate as outer1 stops
+    // at the top-level class around the original class.
+    symbolOop ignore_name;
+    klassOop next = outer1->compute_enclosing_class(ignore_name, CHECK_false);
+    if (next == NULL)  break;
+    if (next == class2())  return true;
+    outer1 = instanceKlassHandle(THREAD, next);
+  }
+
+  // Now do the same for class2.
+  instanceKlassHandle outer2 = class2;
+  for (;;) {
+    symbolOop ignore_name;
+    klassOop next = outer2->compute_enclosing_class(ignore_name, CHECK_false);
+    if (next == NULL)  break;
+    // Might as well check the new outer against all available values.
+    if (next == class1())  return true;
+    if (next == outer1())  return true;
+    outer2 = instanceKlassHandle(THREAD, next);
+  }
+
+  // If by this point we have not found an equality between the
+  // two classes, we know they are in separate package members.
+  return false;
 }
 
 
@@ -1918,7 +2001,7 @@ methodOop instanceKlass::method_at_itable(klassOop holder, int index, TRAPS) {
                        / itableOffsetEntry::size();
 
   for (int cnt = 0 ; ; cnt ++, ioe ++) {
-    // If the interface isn't implemented by the reciever class,
+    // If the interface isn't implemented by the receiver class,
     // the VM should throw IncompatibleClassChangeError.
     if (cnt >= nof_interfaces) {
       THROW_OOP_0(vmSymbols::java_lang_IncompatibleClassChangeError());
@@ -1997,9 +2080,11 @@ nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci) const {
 
 // Printing
 
+#define BULLET  " - "
+
 void FieldPrinter::do_field(fieldDescriptor* fd) {
-   if (fd->is_static() == (_obj == NULL)) {
-     _st->print("   - ");
+  _st->print(BULLET);
+   if (fd->is_static() || (_obj == NULL)) {
      fd->print_on(_st);
      _st->cr();
    } else {
@@ -2020,7 +2105,7 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
         value->is_typeArray() &&
         offset          <= (juint) value->length() &&
         offset + length <= (juint) value->length()) {
-      st->print("string: ");
+      st->print(BULLET"string: ");
       Handle h_obj(obj);
       java_lang_String::print(h_obj, st);
       st->cr();
@@ -2028,22 +2113,25 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
     }
   }
 
-  st->print_cr("fields:");
+  st->print_cr(BULLET"---- fields (total size %d words):", oop_size(obj));
   FieldPrinter print_nonstatic_field(st, obj);
   do_nonstatic_fields(&print_nonstatic_field);
 
   if (as_klassOop() == SystemDictionary::class_klass()) {
+    st->print(BULLET"signature: ");
+    java_lang_Class::print_signature(obj, st);
+    st->cr();
     klassOop mirrored_klass = java_lang_Class::as_klassOop(obj);
-    st->print("   - fake entry for mirror: ");
+    st->print(BULLET"fake entry for mirror: ");
     mirrored_klass->print_value_on(st);
     st->cr();
-    st->print("   - fake entry resolved_constructor: ");
+    st->print(BULLET"fake entry resolved_constructor: ");
     methodOop ctor = java_lang_Class::resolved_constructor(obj);
     ctor->print_value_on(st);
     klassOop array_klass = java_lang_Class::array_klass(obj);
-    st->print("   - fake entry for array: ");
-    array_klass->print_value_on(st);
     st->cr();
+    st->print(BULLET"fake entry for array: ");
+    array_klass->print_value_on(st);
     st->cr();
   }
 }
@@ -2052,6 +2140,28 @@ void instanceKlass::oop_print_value_on(oop obj, outputStream* st) {
   st->print("a ");
   name()->print_value_on(st);
   obj->print_address_on(st);
+  if (as_klassOop() == SystemDictionary::string_klass()
+      && java_lang_String::value(obj) != NULL) {
+    ResourceMark rm;
+    int len = java_lang_String::length(obj);
+    int plen = (len < 24 ? len : 12);
+    char* str = java_lang_String::as_utf8_string(obj, 0, plen);
+    st->print(" = \"%s\"", str);
+    if (len > plen)
+      st->print("...[%d]", len);
+  } else if (as_klassOop() == SystemDictionary::class_klass()) {
+    klassOop k = java_lang_Class::as_klassOop(obj);
+    st->print(" = ");
+    if (k != NULL) {
+      k->print_value_on(st);
+    } else {
+      const char* tname = type2name(java_lang_Class::primitive_type(obj));
+      st->print("%s", tname ? tname : "type?");
+    }
+  } else if (java_lang_boxing_object::is_instance(obj)) {
+    st->print(" = ");
+    java_lang_boxing_object::print(obj, st);
+  }
 }
 
 #endif // ndef PRODUCT
@@ -2107,14 +2217,15 @@ void instanceKlass::verify_class_klass_nonstatic_oop_maps(klassOop k) {
     first_time = false;
     const int extra = java_lang_Class::number_of_fake_oop_fields;
     guarantee(ik->nonstatic_field_size() == extra, "just checking");
-    guarantee(ik->nonstatic_oop_map_size() == 1, "just checking");
+    guarantee(ik->nonstatic_oop_map_count() == 1, "just checking");
     guarantee(ik->size_helper() == align_object_size(instanceOopDesc::header_size() + extra), "just checking");
 
     // Check that the map is (2,extra)
     int offset = java_lang_Class::klass_offset;
 
     OopMapBlock* map = ik->start_of_nonstatic_oop_maps();
-    guarantee(map->offset() == offset && map->length() == extra, "just checking");
+    guarantee(map->offset() == offset && map->count() == (unsigned int) extra,
+              "sanity");
   }
 }
 

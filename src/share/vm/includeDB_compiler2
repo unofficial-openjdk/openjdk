@@ -1,5 +1,5 @@
 //
-// Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -140,6 +140,7 @@ c2_globals_<os_family>.hpp              globalDefinitions.hpp
 c2_globals_<os_family>.hpp              macros.hpp
 
 c2_init_<arch>.cpp                      compile.hpp
+c2_init_<arch>.cpp                      node.hpp
 
 c2compiler.cpp                          ad_<arch_model>.hpp
 c2compiler.cpp                          c2compiler.hpp
@@ -148,6 +149,7 @@ c2compiler.cpp                          runtime.hpp
 c2compiler.hpp                          abstractCompiler.hpp
 
 callGenerator.cpp                       addnode.hpp
+callGenerator.cpp                       bcEscapeAnalyzer.hpp
 callGenerator.cpp                       callGenerator.hpp
 callGenerator.cpp                       callnode.hpp
 callGenerator.cpp                       cfgnode.hpp
@@ -320,6 +322,7 @@ compile.cpp                             phaseX.hpp
 compile.cpp                             rootnode.hpp
 compile.cpp                             runtime.hpp
 compile.cpp                             signature.hpp
+compile.cpp                             stringopts.hpp
 compile.cpp                             stubRoutines.hpp
 compile.cpp                             systemDictionary.hpp
 compile.cpp                             timer.hpp
@@ -475,12 +478,16 @@ graphKit.cpp                            rootnode.hpp
 graphKit.cpp                            runtime.hpp
 graphKit.cpp                            sharedRuntime.hpp
 
+graphKit.hpp                            addnode.hpp
 graphKit.hpp                            callnode.hpp
 graphKit.hpp                            cfgnode.hpp
 graphKit.hpp                            ciEnv.hpp
+graphKit.hpp                            divnode.hpp
 graphKit.hpp                            compile.hpp
 graphKit.hpp                            deoptimization.hpp
 graphKit.hpp                            phaseX.hpp
+graphKit.hpp                            mulnode.hpp
+graphKit.hpp                            subnode.hpp
 graphKit.hpp                            type.hpp
 
 idealKit.cpp                            addnode.hpp
@@ -489,7 +496,10 @@ idealKit.cpp                            cfgnode.hpp
 idealKit.cpp                            idealKit.hpp
 idealKit.cpp				runtime.hpp
 
+idealKit.hpp                            addnode.hpp
+idealKit.hpp                            cfgnode.hpp
 idealKit.hpp                            connode.hpp
+idealKit.hpp                            divnode.hpp
 idealKit.hpp                            mulnode.hpp
 idealKit.hpp                            phaseX.hpp
 idealKit.hpp                            subnode.hpp
@@ -640,6 +650,7 @@ macro.cpp                               addnode.hpp
 macro.cpp                               callnode.hpp
 macro.cpp                               cfgnode.hpp
 macro.cpp                               compile.hpp
+macro.cpp                              compileLog.hpp
 macro.cpp                               connode.hpp
 macro.cpp                               locknode.hpp
 macro.cpp                               loopnode.hpp
@@ -839,6 +850,7 @@ parseHelper.cpp                         systemDictionary.hpp
 phase.cpp                               compile.hpp
 phase.cpp                               compileBroker.hpp
 phase.cpp                               nmethod.hpp
+phase.cpp                               node.hpp
 phase.cpp                               phase.hpp
 
 phase.hpp                               port.hpp
@@ -990,6 +1002,21 @@ split_if.cpp                            allocation.inline.hpp
 split_if.cpp                            callnode.hpp
 split_if.cpp                            connode.hpp
 split_if.cpp                            loopnode.hpp
+
+stringopts.hpp                          phaseX.hpp
+stringopts.hpp                          node.hpp
+
+stringopts.cpp                          addnode.hpp
+stringopts.cpp                          callnode.hpp
+stringopts.cpp                          callGenerator.hpp
+stringopts.cpp                          compileLog.hpp
+stringopts.cpp                          divnode.hpp
+stringopts.cpp                          idealKit.hpp
+stringopts.cpp                          graphKit.hpp
+stringopts.cpp                          rootnode.hpp
+stringopts.cpp                          runtime.hpp
+stringopts.cpp                          subnode.hpp
+stringopts.cpp                          stringopts.hpp
 
 stubGenerator_<arch_model>.cpp          runtime.hpp
 

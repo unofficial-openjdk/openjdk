@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -235,7 +235,7 @@ class BlockOffsetArray: public BlockOffsetTable {
   };
 
   static size_t power_to_cards_back(uint i) {
-    return 1 << (LogBase * i);
+    return (size_t)(1 << (LogBase * i));
   }
   static size_t power_to_words_back(uint i) {
     return power_to_cards_back(i) * N_words;

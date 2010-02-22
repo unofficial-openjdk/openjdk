@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,9 +92,7 @@ protected:
   int _parallel_gc_threads;
 
   enum SomePrivateConstants {
-    NumPrevPausesForHeuristics = 10,
-    NumPrevGCsForHeuristics = 10,
-    NumAPIs = HeapRegion::MaxAge
+    NumPrevPausesForHeuristics = 10
   };
 
   G1MMUTracker* _mmu_tracker;
@@ -112,7 +110,6 @@ protected:
     return 8*M;
   }
 
-
   double _cur_collection_start_sec;
   size_t _cur_collection_pause_used_at_start_bytes;
   size_t _cur_collection_pause_used_regions_at_start;
@@ -121,6 +118,15 @@ protected:
   double _cur_satb_drain_time_ms;
   double _cur_clear_ct_time_ms;
   bool   _satb_drain_time_set;
+
+#ifndef PRODUCT
+  // Card Table Count Cache stats
+  double _min_clear_cc_time_ms;         // min
+  double _max_clear_cc_time_ms;         // max
+  double _cur_clear_cc_time_ms;         // clearing time during current pause
+  double _cum_clear_cc_time_ms;         // cummulative clearing time
+  jlong  _num_cc_clears;                // number of times the card count cache has been cleared
+#endif
 
   double _cur_CH_strong_roots_end_sec;
   double _cur_CH_strong_roots_dur_ms;
@@ -637,18 +643,6 @@ protected:
   // The number of collection pauses at the end of the last mark.
   size_t _n_pauses_at_mark_end;
 
-  // ==== This section is for stats related to starting Conc Refinement on time.
-  size_t _conc_refine_enabled;
-  size_t _conc_refine_zero_traversals;
-  size_t _conc_refine_max_traversals;
-  // In # of heap regions.
-  size_t _conc_refine_current_delta;
-
-  // At the beginning of a collection pause, update the variables above,
-  // especially the "delta".
-  void update_conc_refine_data();
-  // ====
-
   // Stash a pointer to the g1 heap.
   G1CollectedHeap* _g1;
 
@@ -943,6 +937,18 @@ public:
     _cur_aux_times_ms[i] += ms;
   }
 
+#ifndef PRODUCT
+  void record_cc_clear_time(double ms) {
+    if (_min_clear_cc_time_ms < 0.0 || ms <= _min_clear_cc_time_ms)
+      _min_clear_cc_time_ms = ms;
+    if (_max_clear_cc_time_ms < 0.0 || ms >= _max_clear_cc_time_ms)
+      _max_clear_cc_time_ms = ms;
+    _cur_clear_cc_time_ms = ms;
+    _cum_clear_cc_time_ms += ms;
+    _num_cc_clears++;
+  }
+#endif
+
   // Record the fact that "bytes" bytes allocated in a region.
   void record_before_bytes(size_t bytes);
   void record_after_bytes(size_t bytes);
@@ -972,8 +978,6 @@ public:
   bool should_initiate_conc_mark()      { return _should_initiate_conc_mark; }
   void set_should_initiate_conc_mark()  { _should_initiate_conc_mark = true; }
   void unset_should_initiate_conc_mark(){ _should_initiate_conc_mark = false; }
-
-  void checkpoint_conc_overhead();
 
   // If an expansion would be appropriate, because recent GC overhead had
   // exceeded the desired limit, return an amount to expand by.
@@ -1107,6 +1111,10 @@ public:
     _recorded_survivor_regions = regions;
     _recorded_survivor_head    = head;
     _recorded_survivor_tail    = tail;
+  }
+
+  size_t recorded_survivor_regions() {
+    return _recorded_survivor_regions;
   }
 
   void record_thread_age_table(ageTable* age_table)

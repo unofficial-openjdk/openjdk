@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public:
   };
 
   // See if it is OK to inline.
-  // The reciever is the inline tree for the caller.
+  // The receiver is the inline tree for the caller.
   //
   // The result is a temperature indication.  If it is hot or cold,
   // inlining is immediate or undesirable.  Otherwise, the info block
@@ -476,7 +476,7 @@ class Parse : public GraphKit {
   void do_newarray(BasicType elemtype);
   void do_anewarray();
   void do_multianewarray();
-  Node* expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions);
+  Node* expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions, int nargs);
 
   // implementation of jsr/ret
   void do_jsr();

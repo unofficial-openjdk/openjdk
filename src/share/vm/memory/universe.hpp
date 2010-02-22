@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,6 +90,19 @@ class LatestMethodOopCache : public CommonMethodOopCache {
   methodOop get_methodOop();
 };
 
+// For UseCompressedOops.
+struct NarrowOopStruct {
+  // Base address for oop-within-java-object materialization.
+  // NULL if using wide oops or zero based narrow oops.
+  address _base;
+  // Number of shift bits for encoding/decoding narrow oops.
+  // 0 if using wide oops or zero based unscaled narrow oops,
+  // LogMinObjAlignmentInBytes otherwise.
+  int     _shift;
+  // Generate code with implicit null checks for narrow oops.
+  bool    _use_implicit_null_checks;
+};
+
 
 class Universe: AllStatic {
   // Ugh.  Universe is much too friendly.
@@ -156,6 +169,8 @@ class Universe: AllStatic {
   static objArrayOop  _the_empty_system_obj_array;    // Canonicalized system obj array
   static objArrayOop  _the_empty_class_klass_array;   // Canonicalized obj array of type java.lang.Class
   static objArrayOop  _the_array_interfaces_array;    // Canonicalized 2-array of cloneable & serializable klasses
+  static oop          _the_null_string;               // A cache of "null" as a Java string
+  static oop          _the_min_jint_string;          // A cache of "-2147483648" as a Java string
   static LatestMethodOopCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodOopCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
   static ActiveMethodOopsCache* _reflect_invoke_cache;    // method for security checks
@@ -181,9 +196,9 @@ class Universe: AllStatic {
 
   // The particular choice of collected heap.
   static CollectedHeap* _collectedHeap;
-  // Base address for oop-within-java-object materialization.
-  // NULL if using wide oops.  Doubles as heap oop null value.
-  static address        _heap_base;
+
+  // For UseCompressedOops.
+  static struct NarrowOopStruct _narrow_oop;
 
   // array of dummy objects used with +FullGCAlot
   debug_only(static objArrayOop _fullgc_alot_dummy_array;)
@@ -297,6 +312,8 @@ class Universe: AllStatic {
   static objArrayOop  the_empty_system_obj_array ()   { return _the_empty_system_obj_array;    }
   static objArrayOop  the_empty_class_klass_array ()  { return _the_empty_class_klass_array;   }
   static objArrayOop  the_array_interfaces_array()    { return _the_array_interfaces_array;    }
+  static oop          the_null_string()               { return _the_null_string;               }
+  static oop          the_min_jint_string()          { return _the_min_jint_string;          }
   static methodOop    finalizer_register_method()     { return _finalizer_register_cache->get_methodOop(); }
   static methodOop    loader_addClass_method()        { return _loader_addClass_cache->get_methodOop(); }
   static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }
@@ -328,8 +345,26 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
   // For UseCompressedOops
-  static address heap_base()       { return _heap_base; }
-  static address* heap_base_addr() { return &_heap_base; }
+  static address* narrow_oop_base_addr()              { return &_narrow_oop._base; }
+  static address  narrow_oop_base()                   { return  _narrow_oop._base; }
+  static bool  is_narrow_oop_base(void* addr)         { return (narrow_oop_base() == (address)addr); }
+  static int      narrow_oop_shift()                  { return  _narrow_oop._shift; }
+  static void     set_narrow_oop_base(address base)   { _narrow_oop._base  = base; }
+  static void     set_narrow_oop_shift(int shift)     { _narrow_oop._shift = shift; }
+  static bool     narrow_oop_use_implicit_null_checks()             { return  _narrow_oop._use_implicit_null_checks; }
+  static void     set_narrow_oop_use_implicit_null_checks(bool use) { _narrow_oop._use_implicit_null_checks = use; }
+  // Narrow Oop encoding mode:
+  // 0 - Use 32-bits oops without encoding when
+  //     NarrowOopHeapBaseMin + heap_size < 4Gb
+  // 1 - Use zero based compressed oops with encoding when
+  //     NarrowOopHeapBaseMin + heap_size < 32Gb
+  // 2 - Use compressed oops with heap base + encoding.
+  enum NARROW_OOP_MODE {
+    UnscaledNarrowOop  = 0,
+    ZeroBasedNarrowOop = 1,
+    HeapBasedNarrowOop = 2
+  };
+  static char* preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode);
 
   // Historic gc information
   static size_t get_heap_capacity_at_last_gc()         { return _heap_capacity_at_last_gc; }
@@ -368,7 +403,7 @@ class Universe: AllStatic {
 
   // Debugging
   static bool verify_in_progress() { return _verify_in_progress; }
-  static void verify(bool allow_dirty = true, bool silent = false);
+  static void verify(bool allow_dirty = true, bool silent = false, bool option = true);
   static int  verify_count()                  { return _verify_count; }
   static void print();
   static void print_on(outputStream* st);

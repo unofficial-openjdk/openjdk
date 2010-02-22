@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,11 +68,16 @@ typedef struct _DISPATCHER_CONTEXT {
     PVOID HandlerData;
 } DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
 
+#if MSC_VER < 1500
+
+/* Not needed for VS2008 compiler, comes from winnt.h. */
 typedef EXCEPTION_DISPOSITION (*PEXCEPTION_ROUTINE) (
     IN PEXCEPTION_RECORD ExceptionRecord,
     IN ULONG64 EstablisherFrame,
     IN OUT PCONTEXT ContextRecord,
     IN OUT PDISPATCHER_CONTEXT DispatcherContext
 );
+
+#endif
 
 #endif // AMD64

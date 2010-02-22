@@ -218,6 +218,31 @@ char* GenCollectedHeap::allocate(size_t alignment,
     heap_address -= total_reserved;
   } else {
     heap_address = NULL;  // any address will do.
+    if (UseCompressedOops) {
+      heap_address = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);
+      *_total_reserved = total_reserved;
+      *_n_covered_regions = n_covered_regions;
+      *heap_rs = ReservedHeapSpace(total_reserved, alignment,
+                                   UseLargePages, heap_address);
+
+      if (heap_address != NULL && !heap_rs->is_reserved()) {
+        // Failed to reserve at specified address - the requested memory
+        // region is taken already, for example, by 'java' launcher.
+        // Try again to reserver heap higher.
+        heap_address = Universe::preferred_heap_base(total_reserved, Universe::ZeroBasedNarrowOop);
+        *heap_rs = ReservedHeapSpace(total_reserved, alignment,
+                                     UseLargePages, heap_address);
+
+        if (heap_address != NULL && !heap_rs->is_reserved()) {
+          // Failed to reserve at specified address again - give up.
+          heap_address = Universe::preferred_heap_base(total_reserved, Universe::HeapBasedNarrowOop);
+          assert(heap_address == NULL, "");
+          *heap_rs = ReservedHeapSpace(total_reserved, alignment,
+                                       UseLargePages, heap_address);
+        }
+      }
+      return heap_address;
+    }
   }
 
   *_total_reserved = total_reserved;
@@ -461,6 +486,7 @@ void GenCollectedHeap::do_collection(bool  full,
             // The full_collections increment was missed above.
             increment_total_full_collections();
           }
+          pre_full_gc_dump();    // do any pre full gc dumps
         }
         // Timer for individual generations. Last argument is false: no CR
         TraceTime t1(_gens[i]->short_name(), PrintGCDetails, false, gclog_or_tty);
@@ -579,6 +605,10 @@ void GenCollectedHeap::do_collection(bool  full,
     // a whole heap collection.
     complete = complete || (max_level_collected == n_gens() - 1);
 
+    if (complete) { // We did a "major" collection
+      post_full_gc_dump();   // do any post full gc dumps
+    }
+
     if (PrintGCDetails) {
       print_heap_change(gch_prev_used);
 
@@ -615,6 +645,10 @@ void GenCollectedHeap::do_collection(bool  full,
   if (PrintHeapAtGC) {
     Universe::print_heap_after_gc();
   }
+
+#ifdef TRACESPINNING
+  ParallelTaskTerminator::print_termination_counts();
+#endif
 
   if (ExitAfterGCNum > 0 && total_collections() == ExitAfterGCNum) {
     tty->print_cr("Stopping after GC #%d", ExitAfterGCNum);
@@ -916,6 +950,13 @@ void GenCollectedHeap::object_iterate(ObjectClosure* cl) {
   perm_gen()->object_iterate(cl);
 }
 
+void GenCollectedHeap::safe_object_iterate(ObjectClosure* cl) {
+  for (int i = 0; i < _n_gens; i++) {
+    _gens[i]->safe_object_iterate(cl);
+  }
+  perm_gen()->safe_object_iterate(cl);
+}
+
 void GenCollectedHeap::object_iterate_since_last_GC(ObjectClosure* cl) {
   for (int i = 0; i < _n_gens; i++) {
     _gens[i]->object_iterate_since_last_GC(cl);
@@ -1157,7 +1198,7 @@ GCStats* GenCollectedHeap::gc_stats(int level) const {
   return _gens[level]->gc_stats();
 }
 
-void GenCollectedHeap::verify(bool allow_dirty, bool silent) {
+void GenCollectedHeap::verify(bool allow_dirty, bool silent, bool option /* ignored */) {
   if (!silent) {
     gclog_or_tty->print("permgen ");
   }

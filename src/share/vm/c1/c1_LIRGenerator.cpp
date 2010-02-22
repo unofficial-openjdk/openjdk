@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1064,7 +1064,7 @@ void LIRGenerator::do_IfInstanceOf(IfInstanceOf* x) {
 
 
 void LIRGenerator::do_Return(Return* x) {
-  if (DTraceMethodProbes) {
+  if (compilation()->env()->dtrace_method_probes()) {
     BasicTypeList signature;
     signature.append(T_INT);    // thread
     signature.append(T_OBJECT); // methodOop
@@ -1534,12 +1534,8 @@ void LIRGenerator::do_StoreField(StoreField* x) {
   }
 
   if (is_oop) {
-#ifdef PRECISE_CARDMARK
-    // Precise cardmarks don't work
-    post_barrier(LIR_OprFact::address(address), value.result());
-#else
+    // Store to object so mark the card of the header
     post_barrier(object.result(), value.result());
-#endif // PRECISE_CARDMARK
   }
 
   if (is_volatile && os::is_MP()) {
@@ -1769,7 +1765,7 @@ void LIRGenerator::do_Throw(Throw* x) {
     __ null_check(exception_opr, new CodeEmitInfo(info, true));
   }
 
-  if (JvmtiExport::can_post_exceptions() &&
+  if (compilation()->env()->jvmti_can_post_exceptions() &&
       !block()->is_set(BlockBegin::default_exception_handler_flag)) {
     // we need to go through the exception lookup path to get JVMTI
     // notification done
@@ -1779,7 +1775,7 @@ void LIRGenerator::do_Throw(Throw* x) {
   assert(!block()->is_set(BlockBegin::default_exception_handler_flag) || unwind,
          "should be no more handlers to dispatch to");
 
-  if (DTraceMethodProbes &&
+  if (compilation()->env()->dtrace_method_probes() &&
       block()->is_set(BlockBegin::default_exception_handler_flag)) {
     // notify that this frame is unwinding
     BasicTypeList signature;
@@ -2204,7 +2200,7 @@ void LIRGenerator::do_Base(Base* x) {
     java_index += type2size[t];
   }
 
-  if (DTraceMethodProbes) {
+  if (compilation()->env()->dtrace_method_probes()) {
     BasicTypeList signature;
     signature.append(T_INT);    // thread
     signature.append(T_OBJECT); // methodOop

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,18 @@ class GraphKit : public Phase {
   Node* makecon(const Type *t)  const { return _gvn.makecon(t); }
   Node* zerocon(BasicType bt)   const { return _gvn.zerocon(bt); }
   // (See also macro MakeConX in type.hpp, which uses intcon or longcon.)
+
+  // Helper for byte_map_base
+  Node* byte_map_base_node() {
+    // Get base of card map
+    CardTableModRefBS* ct = (CardTableModRefBS*)(Universe::heap()->barrier_set());
+    assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust users of this code");
+    if (ct->byte_map_base != NULL) {
+      return makecon(TypeRawPtr::make((address)ct->byte_map_base));
+    } else {
+      return null();
+    }
+  }
 
   jint  find_int_con(Node* n, jint value_if_unknown) {
     return _gvn.find_int_con(n, value_if_unknown);
@@ -267,6 +279,34 @@ class GraphKit : public Phase {
   }
   Node* basic_plus_adr(Node* base, Node* ptr, Node* offset);
 
+
+  // Some convenient shortcuts for common nodes
+  Node* IfTrue(IfNode* iff)                   { return _gvn.transform(new (C,1) IfTrueNode(iff));      }
+  Node* IfFalse(IfNode* iff)                  { return _gvn.transform(new (C,1) IfFalseNode(iff));     }
+
+  Node* AddI(Node* l, Node* r)                { return _gvn.transform(new (C,3) AddINode(l, r));       }
+  Node* SubI(Node* l, Node* r)                { return _gvn.transform(new (C,3) SubINode(l, r));       }
+  Node* MulI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MulINode(l, r));       }
+  Node* DivI(Node* ctl, Node* l, Node* r)     { return _gvn.transform(new (C,3) DivINode(ctl, l, r));  }
+
+  Node* AndI(Node* l, Node* r)                { return _gvn.transform(new (C,3) AndINode(l, r));       }
+  Node* OrI(Node* l, Node* r)                 { return _gvn.transform(new (C,3) OrINode(l, r));        }
+  Node* XorI(Node* l, Node* r)                { return _gvn.transform(new (C,3) XorINode(l, r));       }
+
+  Node* MaxI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MaxINode(l, r));       }
+  Node* MinI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MinINode(l, r));       }
+
+  Node* LShiftI(Node* l, Node* r)             { return _gvn.transform(new (C,3) LShiftINode(l, r));    }
+  Node* RShiftI(Node* l, Node* r)             { return _gvn.transform(new (C,3) RShiftINode(l, r));    }
+  Node* URShiftI(Node* l, Node* r)            { return _gvn.transform(new (C,3) URShiftINode(l, r));   }
+
+  Node* CmpI(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpINode(l, r));       }
+  Node* CmpL(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpLNode(l, r));       }
+  Node* CmpP(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpPNode(l, r));       }
+  Node* Bool(Node* cmp, BoolTest::mask relop) { return _gvn.transform(new (C,2) BoolNode(cmp, relop)); }
+
+  Node* AddP(Node* b, Node* a, Node* o)       { return _gvn.transform(new (C,4) AddPNode(b, a, o));    }
+
   // Convert between int and long, and size_t.
   // (See macros ConvI2X, etc., in type.hpp for ConvI2X, etc.)
   Node* ConvI2L(Node* offset);
@@ -388,7 +428,7 @@ class GraphKit : public Phase {
   void set_all_memory(Node* newmem);
 
   // Create a memory projection from the call, then set_all_memory.
-  void set_all_memory_call(Node* call);
+  void set_all_memory_call(Node* call, bool separate_io_proj = false);
 
   // Create a LoadNode, reading from the parser's memory state.
   // (Note:  require_atomic_access is useful only with T_LONG.)
@@ -437,21 +477,34 @@ class GraphKit : public Phase {
   //
   // If val==NULL, it is taken to be a completely unknown value. QQQ
 
+  Node* store_oop(Node* ctl,
+                  Node* obj,   // containing obj
+                  Node* adr,  // actual adress to store val at
+                  const TypePtr* adr_type,
+                  Node* val,
+                  const TypeOopPtr* val_type,
+                  BasicType bt,
+                  bool use_precise);
+
   Node* store_oop_to_object(Node* ctl,
                             Node* obj,   // containing obj
                             Node* adr,  // actual adress to store val at
                             const TypePtr* adr_type,
                             Node* val,
-                            const Type* val_type,
-                            BasicType bt);
+                            const TypeOopPtr* val_type,
+                            BasicType bt) {
+    return store_oop(ctl, obj, adr, adr_type, val, val_type, bt, false);
+  }
 
   Node* store_oop_to_array(Node* ctl,
                            Node* obj,   // containing obj
                            Node* adr,  // actual adress to store val at
                            const TypePtr* adr_type,
                            Node* val,
-                           const Type* val_type,
-                           BasicType bt);
+                           const TypeOopPtr* val_type,
+                           BasicType bt) {
+    return store_oop(ctl, obj, adr, adr_type, val, val_type, bt, true);
+  }
 
   // Could be an array or object we don't know at compile time (unsafe ref.)
   Node* store_oop_to_unknown(Node* ctl,
@@ -459,12 +512,11 @@ class GraphKit : public Phase {
                              Node* adr,  // actual adress to store val at
                              const TypePtr* adr_type,
                              Node* val,
-                             const Type* val_type,
                              BasicType bt);
 
   // For the few case where the barriers need special help
   void pre_barrier(Node* ctl, Node* obj, Node* adr, uint adr_idx,
-                   Node* val, const Type* val_type, BasicType bt);
+                   Node* val, const TypeOopPtr* val_type, BasicType bt);
 
   void post_barrier(Node* ctl, Node* store, Node* obj, Node* adr, uint adr_idx,
                     Node* val, BasicType bt, bool use_precise);
@@ -476,9 +528,6 @@ class GraphKit : public Phase {
 
   // Return a load of array element at idx.
   Node* load_array_element(Node* ctl, Node* ary, Node* idx, const TypeAryPtr* arytype);
-
-  // CMS card-marks have an input from the corresponding oop_store
-  void  cms_card_mark(Node* ctl, Node* adr, Node* val, Node* oop_store);
 
   //---------------- Dtrace support --------------------
   void make_dtrace_method_entry_exit(ciMethod* method, bool is_entry);
@@ -522,12 +571,12 @@ class GraphKit : public Phase {
   // Transform the call, and update the basics: control, i_o, memory.
   // (The next step is usually to call set_results_for_java_call.)
   void set_edges_for_java_call(CallJavaNode* call,
-                               bool must_throw = false);
+                               bool must_throw = false, bool separate_io_proj = false);
 
   // Finish up a java call that was started by set_edges_for_java_call.
   // Call add_exception on any throw arising from the call.
   // Return the call result (transformed).
-  Node* set_results_for_java_call(CallJavaNode* call);
+  Node* set_results_for_java_call(CallJavaNode* call, bool separate_io_proj = false);
 
   // Similar to set_edges_for_java_call, but simplified for runtime calls.
   void  set_predefined_output_for_runtime_call(Node* call) {
@@ -537,6 +586,11 @@ class GraphKit : public Phase {
                                                Node* keep_mem,
                                                const TypePtr* hook_mem);
   Node* set_predefined_input_for_runtime_call(SafePointNode* call);
+
+  // Replace the call with the current state of the kit.  Requires
+  // that the call was generated with separate io_projs so that
+  // exceptional control flow can be handled properly.
+  void replace_call(CallNode* call, Node* result);
 
   // helper functions for statistics
   void increment_counter(address counter_addr);   // increment a debug counter
@@ -571,9 +625,6 @@ class GraphKit : public Phase {
     return C->too_many_recompiles(method(), bci(), reason);
   }
 
-  // vanilla/CMS post barrier
-  void write_barrier_post(Node *store, Node* obj, Node* adr, Node* val, bool use_precise);
-
   // Returns the object (if any) which was created the moment before.
   Node* just_allocated_object(Node* current_control);
 
@@ -582,12 +633,17 @@ class GraphKit : public Phase {
             && Universe::heap()->can_elide_tlab_store_barriers());
   }
 
+  void sync_kit(IdealKit& ideal);
+
+  // vanilla/CMS post barrier
+  void write_barrier_post(Node *store, Node* obj, Node* adr, Node* val, bool use_precise);
+
   // G1 pre/post barriers
   void g1_write_barrier_pre(Node* obj,
                             Node* adr,
                             uint alias_idx,
                             Node* val,
-                            const Type* val_type,
+                            const TypeOopPtr* val_type,
                             BasicType bt);
 
   void g1_write_barrier_post(Node* store,
@@ -599,7 +655,7 @@ class GraphKit : public Phase {
                              bool use_precise);
   // Helper function for g1
   private:
-  void g1_mark_card(IdealKit* ideal, Node* card_adr, Node* store,  Node* index, Node* index_adr,
+  void g1_mark_card(IdealKit& ideal, Node* card_adr, Node* store,  Node* index, Node* index_adr,
                     Node* buffer, const TypeFunc* tf);
 
   public:
@@ -687,7 +743,7 @@ class GraphKit : public Phase {
                      Node* slow_test = NULL,
                      bool raw_mem_only = false,
                      Node* *return_size_val = NULL);
-  Node* new_array(Node* klass_node, Node* count_val,
+  Node* new_array(Node* klass_node, Node* count_val, int nargs,
                   bool raw_mem_only = false, Node* *return_size_val = NULL);
 
   // Handy for making control flow
@@ -739,4 +795,17 @@ class BuildCutout: public PreserveJVMState {
  public:
   BuildCutout(GraphKit* kit, Node* p, float prob, float cnt = COUNT_UNKNOWN);
   ~BuildCutout();
+};
+
+// Helper class to preserve the original _reexecute bit and _sp and restore
+// them back
+class PreserveReexecuteState: public StackObj {
+ protected:
+  GraphKit*                 _kit;
+  uint                      _sp;
+  JVMState::ReexecuteState  _reexecute;
+
+ public:
+  PreserveReexecuteState(GraphKit* kit);
+  ~PreserveReexecuteState();
 };

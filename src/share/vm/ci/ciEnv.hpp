@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,18 @@ private:
   char* _name_buffer;
   int   _name_buffer_len;
 
+  // Cache Jvmti state
+  bool  _jvmti_can_hotswap_or_post_breakpoint;
+  bool  _jvmti_can_examine_or_deopt_anywhere;
+  bool  _jvmti_can_access_local_variables;
+  bool  _jvmti_can_post_exceptions;
+
+  // Cache DTrace flags
+  bool  _dtrace_extended_probes;
+  bool  _dtrace_monitor_probes;
+  bool  _dtrace_method_probes;
+  bool  _dtrace_alloc_probes;
+
   // Distinguished instances of certain ciObjects..
   static ciObject*              _null_object_instance;
   static ciMethodKlass*         _method_klass_instance;
@@ -70,6 +82,9 @@ private:
   static ciInstanceKlass* _Thread;
   static ciInstanceKlass* _OutOfMemoryError;
   static ciInstanceKlass* _String;
+  static ciInstanceKlass* _StringBuffer;
+  static ciInstanceKlass* _StringBuilder;
+  static ciInstanceKlass* _Integer;
 
   static ciSymbol*        _unloaded_cisymbol;
   static ciInstanceKlass* _unloaded_ciinstance_klass;
@@ -84,6 +99,9 @@ private:
   ciInstance* _ArrayIndexOutOfBoundsException_instance;
   ciInstance* _ArrayStoreException_instance;
   ciInstance* _ClassCastException_instance;
+
+  ciInstance* _the_null_string;      // The Java string "null"
+  ciInstance* _the_min_jint_string; // The Java string "-2147483648"
 
   // Look up a klass by name from a particular class loader (the accessor's).
   // If require_local, result must be defined in that class loader, or NULL.
@@ -236,6 +254,20 @@ public:
   bool break_at_compile() { return _break_at_compile; }
   void set_break_at_compile(bool z) { _break_at_compile = z; }
 
+  // Cache Jvmti state
+  void  cache_jvmti_state();
+  bool  jvmti_can_hotswap_or_post_breakpoint() const { return _jvmti_can_hotswap_or_post_breakpoint; }
+  bool  jvmti_can_examine_or_deopt_anywhere()  const { return _jvmti_can_examine_or_deopt_anywhere; }
+  bool  jvmti_can_access_local_variables()     const { return _jvmti_can_access_local_variables; }
+  bool  jvmti_can_post_exceptions()            const { return _jvmti_can_post_exceptions; }
+
+  // Cache DTrace flags
+  void  cache_dtrace_flags();
+  bool  dtrace_extended_probes() const { return _dtrace_extended_probes; }
+  bool  dtrace_monitor_probes()  const { return _dtrace_monitor_probes; }
+  bool  dtrace_method_probes()   const { return _dtrace_method_probes; }
+  bool  dtrace_alloc_probes()    const { return _dtrace_alloc_probes; }
+
   // The compiler task which has created this env.
   // May be useful to find out compile_id, comp_level, etc.
   CompileTask* task() { return _task; }
@@ -284,6 +316,15 @@ public:
   ciInstanceKlass* String_klass() {
     return _String;
   }
+  ciInstanceKlass* StringBuilder_klass() {
+    return _StringBuilder;
+  }
+  ciInstanceKlass* StringBuffer_klass() {
+    return _StringBuffer;
+  }
+  ciInstanceKlass* Integer_klass() {
+    return _Integer;
+  }
   ciInstance* NullPointerException_instance() {
     assert(_NullPointerException_instance != NULL, "initialization problem");
     return _NullPointerException_instance;
@@ -297,6 +338,9 @@ public:
   ciInstance* ArrayIndexOutOfBoundsException_instance();
   ciInstance* ArrayStoreException_instance();
   ciInstance* ClassCastException_instance();
+
+  ciInstance* the_null_string();
+  ciInstance* the_min_jint_string();
 
   static ciSymbol* unloaded_cisymbol() {
     return _unloaded_cisymbol;

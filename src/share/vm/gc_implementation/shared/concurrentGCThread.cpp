@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,13 +27,12 @@
 # include "incls/_precompiled.incl"
 # include "incls/_concurrentGCThread.cpp.incl"
 
-bool ConcurrentGCThread::_should_terminate    = false;
-bool ConcurrentGCThread::_has_terminated      = false;
 int  ConcurrentGCThread::_CGC_flag            = CGC_nil;
 
 SuspendibleThreadSet ConcurrentGCThread::_sts;
 
-ConcurrentGCThread::ConcurrentGCThread() {
+ConcurrentGCThread::ConcurrentGCThread() :
+  _should_terminate(false), _has_terminated(false) {
   _sts.initialize();
 };
 

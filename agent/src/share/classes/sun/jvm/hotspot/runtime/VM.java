@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -318,11 +318,17 @@ public class VM {
     logMinObjAlignmentInBytes = db.lookupIntConstant("LogMinObjAlignmentInBytes").intValue();
     heapWordSize = db.lookupIntConstant("HeapWordSize").intValue();
     oopSize  = db.lookupIntConstant("oopSize").intValue();
-    heapOopSize  = db.lookupIntConstant("heapOopSize").intValue();
 
     intxType = db.lookupType("intx");
     uintxType = db.lookupType("uintx");
     boolType = (CIntegerType) db.lookupType("bool");
+
+    if (isCompressedOopsEnabled()) {
+      // Size info for oops within java objects is fixed
+      heapOopSize = (int)getIntSize();
+    } else {
+      heapOopSize = (int)getOopSize();
+    }
   }
 
   /** This could be used by a reflective runtime system */
@@ -342,11 +348,13 @@ public class VM {
       throw new RuntimeException("Attempt to initialize VM twice");
     }
     soleInstance = new VM(db, debugger, debugger.getMachineDescription().isBigEndian());
-    debugger.putHeapConst(Universe.getHeapBase(), soleInstance.getHeapOopSize(),
-                          soleInstance.logMinObjAlignmentInBytes);
+
     for (Iterator iter = vmInitializedObservers.iterator(); iter.hasNext(); ) {
       ((Observer) iter.next()).update(null, null);
     }
+
+    debugger.putHeapConst(soleInstance.getHeapOopSize(), Universe.getNarrowOopBase(),
+                          Universe.getNarrowOopShift());
   }
 
   /** This is used by the debugging system */

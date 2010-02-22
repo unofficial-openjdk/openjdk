@@ -430,31 +430,28 @@ Node *AndINode::Identity( PhaseTransform *phase ) {
   // x & x => x
   if (phase->eqv(in(1), in(2))) return in(1);
 
-  Node *load = in(1);
-  const TypeInt *t2 = phase->type( in(2) )->isa_int();
-  if( t2 && t2->is_con() ) {
+  Node* in1 = in(1);
+  uint op = in1->Opcode();
+  const TypeInt* t2 = phase->type(in(2))->isa_int();
+  if (t2 && t2->is_con()) {
     int con = t2->get_con();
     // Masking off high bits which are always zero is useless.
     const TypeInt* t1 = phase->type( in(1) )->isa_int();
     if (t1 != NULL && t1->_lo >= 0) {
-      jint t1_support = ((jint)1 << (1 + log2_intptr(t1->_hi))) - 1;
+      jint t1_support = right_n_bits(1 + log2_intptr(t1->_hi));
       if ((t1_support & con) == t1_support)
-        return load;
+        return in1;
     }
-    uint lop = load->Opcode();
-    if( lop == Op_LoadC &&
-        con == 0x0000FFFF )     // Already zero-extended
-      return load;
     // Masking off the high bits of a unsigned-shift-right is not
     // needed either.
-    if( lop == Op_URShiftI ) {
-      const TypeInt *t12 = phase->type( load->in(2) )->isa_int();
-      if( t12 && t12->is_con() ) {  // Shift is by a constant
+    if (op == Op_URShiftI) {
+      const TypeInt* t12 = phase->type(in1->in(2))->isa_int();
+      if (t12 && t12->is_con()) {  // Shift is by a constant
         int shift = t12->get_con();
         shift &= BitsPerJavaInteger - 1;  // semantics of Java shifts
         int mask = max_juint >> shift;
-        if( (mask&con) == mask )  // If AND is useless, skip it
-          return load;
+        if ((mask & con) == mask)  // If AND is useless, skip it
+          return in1;
       }
     }
   }
@@ -471,35 +468,29 @@ Node *AndINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   uint lop = load->Opcode();
 
   // Masking bits off of a Character?  Hi bits are already zero.
-  if( lop == Op_LoadC &&
+  if( lop == Op_LoadUS &&
       (mask & 0xFFFF0000) )     // Can we make a smaller mask?
     return new (phase->C, 3) AndINode(load,phase->intcon(mask&0xFFFF));
 
   // Masking bits off of a Short?  Loading a Character does some masking
-  if( lop == Op_LoadS &&
-      (mask & 0xFFFF0000) == 0 ) {
-    Node *ldc = new (phase->C, 3) LoadCNode(load->in(MemNode::Control),
-                                  load->in(MemNode::Memory),
-                                  load->in(MemNode::Address),
-                                  load->adr_type());
-    ldc = phase->transform(ldc);
-    return new (phase->C, 3) AndINode(ldc,phase->intcon(mask&0xFFFF));
+  if (lop == Op_LoadS && (mask & 0xFFFF0000) == 0 ) {
+    Node *ldus = new (phase->C, 3) LoadUSNode(load->in(MemNode::Control),
+                                              load->in(MemNode::Memory),
+                                              load->in(MemNode::Address),
+                                              load->adr_type());
+    ldus = phase->transform(ldus);
+    return new (phase->C, 3) AndINode(ldus, phase->intcon(mask & 0xFFFF));
   }
 
-  // Masking sign bits off of a Byte?  Let the matcher use an unsigned load
-  if( lop == Op_LoadB &&
-      (!in(0) && load->in(0)) &&
-      (mask == 0x000000FF) ) {
-    // Associate this node with the LoadB, so the matcher can see them together.
-    // If we don't do this, it is common for the LoadB to have one control
-    // edge, and the store or call containing this AndI to have a different
-    // control edge.  This will cause Label_Root to group the AndI with
-    // the encoding store or call, so the matcher has no chance to match
-    // this AndI together with the LoadB.  Setting the control edge here
-    // prevents Label_Root from grouping the AndI with the store or call,
-    // if it has a control edge that is inconsistent with the LoadB.
-    set_req(0, load->in(0));
-    return this;
+  // Masking sign bits off of a Byte?  Do an unsigned byte load plus
+  // an and.
+  if (lop == Op_LoadB && (mask & 0xFFFFFF00) == 0) {
+    Node* ldub = new (phase->C, 3) LoadUBNode(load->in(MemNode::Control),
+                                              load->in(MemNode::Memory),
+                                              load->in(MemNode::Address),
+                                              load->adr_type());
+    ldub = phase->transform(ldub);
+    return new (phase->C, 3) AndINode(ldub, phase->intcon(mask));
   }
 
   // Masking off sign bits?  Dont make them!
@@ -599,12 +590,37 @@ Node *AndLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( !t2 || !t2->is_con() ) return MulNode::Ideal(phase, can_reshape);
   const jlong mask = t2->get_con();
 
-  Node *rsh = in(1);
-  uint rop = rsh->Opcode();
+  Node* in1 = in(1);
+  uint op = in1->Opcode();
+
+  // Masking sign bits off of an integer?  Do an unsigned integer to
+  // long load.
+  // NOTE: This check must be *before* we try to convert the AndLNode
+  // to an AndINode and commute it with ConvI2LNode because
+  // 0xFFFFFFFFL masks the whole integer and we get a sign extension,
+  // which is wrong.
+  if (op == Op_ConvI2L && in1->in(1)->Opcode() == Op_LoadI && mask == CONST64(0x00000000FFFFFFFF)) {
+    Node* load = in1->in(1);
+    return new (phase->C, 3) LoadUI2LNode(load->in(MemNode::Control),
+                                          load->in(MemNode::Memory),
+                                          load->in(MemNode::Address),
+                                          load->adr_type());
+  }
+
+  // Are we masking a long that was converted from an int with a mask
+  // that fits in 32-bits?  Commute them and use an AndINode.  Don't
+  // convert masks which would cause a sign extension of the integer
+  // value.  This check includes UI2L masks (0x00000000FFFFFFFF) which
+  // would be optimized away later in Identity.
+  if (op == Op_ConvI2L && (mask & CONST64(0xFFFFFFFF80000000)) == 0) {
+    Node* andi = new (phase->C, 3) AndINode(in1->in(1), phase->intcon(mask));
+    andi = phase->transform(andi);
+    return new (phase->C, 2) ConvI2LNode(andi);
+  }
 
   // Masking off sign bits?  Dont make them!
-  if( rop == Op_RShiftL ) {
-    const TypeInt *t12 = phase->type(rsh->in(2))->isa_int();
+  if (op == Op_RShiftL) {
+    const TypeInt* t12 = phase->type(in1->in(2))->isa_int();
     if( t12 && t12->is_con() ) { // Shift is by a constant
       int shift = t12->get_con();
       shift &= BitsPerJavaLong - 1;  // semantics of Java shifts
@@ -613,8 +629,8 @@ Node *AndLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       // bits survive.  NO sign-extension bits survive the maskings.
       if( (sign_bits_mask & mask) == 0 ) {
         // Use zero-fill shift instead
-        Node *zshift = phase->transform(new (phase->C, 3) URShiftLNode(rsh->in(1),rsh->in(2)));
-        return new (phase->C, 3) AndLNode( zshift, in(2) );
+        Node *zshift = phase->transform(new (phase->C, 3) URShiftLNode(in1->in(1), in1->in(2)));
+        return new (phase->C, 3) AndLNode(zshift, in(2));
       }
     }
   }
@@ -915,7 +931,7 @@ Node *RShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       set_req(2, phase->intcon(0));
       return this;
     }
-    else if( ld->Opcode() == Op_LoadC )
+    else if( ld->Opcode() == Op_LoadUS )
       // Replace zero-extension-load with sign-extension-load
       return new (phase->C, 3) LoadSNode( ld->in(MemNode::Control),
                                 ld->in(MemNode::Memory),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -545,6 +545,11 @@ class CMSCollector: public CHeapObj {
   bool unloaded_classes_last_cycle() const {
     return concurrent_cycles_since_last_unload() == 0;
   }
+  // Root scanning options for perm gen
+  int _roots_scanning_options;
+  int roots_scanning_options() const      { return _roots_scanning_options; }
+  void add_root_scanning_option(int o)    { _roots_scanning_options |= o;   }
+  void remove_root_scanning_option(int o) { _roots_scanning_options &= ~o;  }
 
   // Verification support
   CMSBitMap     _verification_mark_bm;
@@ -595,7 +600,7 @@ class CMSCollector: public CHeapObj {
   size_t        _ser_kac_preclean_ovflw;
   size_t        _ser_kac_ovflw;
   size_t        _par_kac_ovflw;
-  NOT_PRODUCT(size_t _num_par_pushes;)
+  NOT_PRODUCT(ssize_t _num_par_pushes;)
 
   // ("Weak") Reference processing support
   ReferenceProcessor*            _ref_processor;
@@ -718,11 +723,6 @@ class CMSCollector: public CHeapObj {
   NOT_PRODUCT(int _overflow_counter;)
   NOT_PRODUCT(bool simulate_overflow();)       // sequential
   NOT_PRODUCT(bool par_simulate_overflow();)   // MT version
-
-  int _roots_scanning_options;
-  int roots_scanning_options() const      { return _roots_scanning_options; }
-  void add_root_scanning_option(int o)    { _roots_scanning_options |= o;   }
-  void remove_root_scanning_option(int o) { _roots_scanning_options &= ~o;  }
 
   // CMS work methods
   void checkpointRootsInitialWork(bool asynch); // initial checkpoint work
@@ -1212,6 +1212,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   // More iteration support
   virtual void oop_iterate(MemRegion mr, OopClosure* cl);
   virtual void oop_iterate(OopClosure* cl);
+  virtual void safe_object_iterate(ObjectClosure* cl);
   virtual void object_iterate(ObjectClosure* cl);
 
   // Need to declare the full complement of closures, whether we'll
@@ -1789,12 +1790,13 @@ class CMSParDrainMarkingStackClosure: public VoidClosure {
  public:
   CMSParDrainMarkingStackClosure(CMSCollector* collector,
                                  MemRegion span, CMSBitMap* bit_map,
+                                 CMSMarkStack* revisit_stack,
                                  OopTaskQueue* work_queue):
     _collector(collector),
     _span(span),
     _bit_map(bit_map),
     _work_queue(work_queue),
-    _mark_and_push(collector, span, bit_map, work_queue) { }
+    _mark_and_push(collector, span, bit_map, revisit_stack, work_queue) { }
 
  public:
   void trim_queue(uint max);

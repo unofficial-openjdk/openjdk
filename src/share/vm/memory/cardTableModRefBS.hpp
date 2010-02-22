@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -287,7 +287,7 @@ public:
   // these functions here for performance.
 protected:
   void write_ref_field_work(oop obj, size_t offset, oop newVal);
-  void write_ref_field_work(void* field, oop newVal);
+  virtual void write_ref_field_work(void* field, oop newVal);
 public:
 
   bool has_write_ref_array_opt() { return true; }
@@ -317,10 +317,10 @@ public:
 
   // *** Card-table-barrier-specific things.
 
-  inline void inline_write_ref_field_pre(void* field, oop newVal) {}
+  template <class T> inline void inline_write_ref_field_pre(T* field, oop newVal) {}
 
-  inline void inline_write_ref_field(void* field, oop newVal) {
-    jbyte* byte = byte_for(field);
+  template <class T> inline void inline_write_ref_field(T* field, oop newVal) {
+    jbyte* byte = byte_for((void*)field);
     *byte = dirty_card;
   }
 
@@ -456,6 +456,7 @@ public:
   void verify_guard();
 
   void verify_clean_region(MemRegion mr) PRODUCT_RETURN;
+  void verify_dirty_region(MemRegion mr) PRODUCT_RETURN;
 
   static size_t par_chunk_heapword_alignment() {
     return CardsPerStrideChunk * card_size_in_words;

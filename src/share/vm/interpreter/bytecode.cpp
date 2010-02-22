@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,6 @@
 void Bytecode::set_code(Bytecodes::Code code) {
   Bytecodes::check(code);
   *addr_at(0) = u_char(code);
-}
-
-
-void Bytecode::set_fast_index(int i) {
-  assert(0 <= i && i < 0x10000, "illegal index value");
-  Bytes::put_native_u2(addr_at(1), (jushort)i);
 }
 
 
@@ -118,7 +112,12 @@ methodHandle Bytecode_invoke::static_target(TRAPS) {
 
 
 int Bytecode_invoke::index() const {
-  return Bytes::get_Java_u2(bcp() + 1);
+  // Note:  Rewriter::rewrite changes the Java_u2 of an invokedynamic to a native_u4,
+  // at the same time it allocates per-call-site CP cache entries.
+  if (has_giant_index())
+    return Bytes::get_native_u4(bcp() + 1);
+  else
+    return Bytes::get_Java_u2(bcp() + 1);
 }
 
 

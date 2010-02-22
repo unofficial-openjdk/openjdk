@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,9 @@ ciInstanceKlass* ciEnv::_Throwable;
 ciInstanceKlass* ciEnv::_Thread;
 ciInstanceKlass* ciEnv::_OutOfMemoryError;
 ciInstanceKlass* ciEnv::_String;
+ciInstanceKlass* ciEnv::_StringBuffer;
+ciInstanceKlass* ciEnv::_StringBuilder;
+ciInstanceKlass* ciEnv::_Integer;
 
 ciSymbol*        ciEnv::_unloaded_cisymbol = NULL;
 ciInstanceKlass* ciEnv::_unloaded_ciinstance_klass = NULL;
@@ -110,6 +113,8 @@ ciEnv::ciEnv(CompileTask* task, int system_dictionary_modification_counter) {
   _ArrayIndexOutOfBoundsException_instance = NULL;
   _ArrayStoreException_instance = NULL;
   _ClassCastException_instance = NULL;
+  _the_null_string = NULL;
+  _the_min_jint_string = NULL;
 }
 
 ciEnv::ciEnv(Arena* arena) {
@@ -163,11 +168,41 @@ ciEnv::ciEnv(Arena* arena) {
   _ArrayIndexOutOfBoundsException_instance = NULL;
   _ArrayStoreException_instance = NULL;
   _ClassCastException_instance = NULL;
+  _the_null_string = NULL;
+  _the_min_jint_string = NULL;
 }
 
 ciEnv::~ciEnv() {
   CompilerThread* current_thread = CompilerThread::current();
   current_thread->set_env(NULL);
+}
+
+// ------------------------------------------------------------------
+// Cache Jvmti state
+void ciEnv::cache_jvmti_state() {
+  VM_ENTRY_MARK;
+  // Get Jvmti capabilities under lock to get consistant values.
+  MutexLocker mu(JvmtiThreadState_lock);
+  _jvmti_can_hotswap_or_post_breakpoint = JvmtiExport::can_hotswap_or_post_breakpoint();
+  _jvmti_can_examine_or_deopt_anywhere  = JvmtiExport::can_examine_or_deopt_anywhere();
+  _jvmti_can_access_local_variables     = JvmtiExport::can_access_local_variables();
+  _jvmti_can_post_exceptions            = JvmtiExport::can_post_exceptions();
+}
+
+// ------------------------------------------------------------------
+// Cache DTrace flags
+void ciEnv::cache_dtrace_flags() {
+  // Need lock?
+  _dtrace_extended_probes = ExtendedDTraceProbes;
+  if (_dtrace_extended_probes) {
+    _dtrace_monitor_probes  = true;
+    _dtrace_method_probes   = true;
+    _dtrace_alloc_probes    = true;
+  } else {
+    _dtrace_monitor_probes  = DTraceMonitorProbes;
+    _dtrace_method_probes   = DTraceMethodProbes;
+    _dtrace_alloc_probes    = DTraceAllocProbes;
+  }
 }
 
 // ------------------------------------------------------------------
@@ -218,6 +253,22 @@ ciInstance* ciEnv::ClassCastException_instance() {
           vmSymbolHandles::java_lang_ClassCastException());
   }
   return _ClassCastException_instance;
+}
+
+ciInstance* ciEnv::the_null_string() {
+  if (_the_null_string == NULL) {
+    VM_ENTRY_MARK;
+    _the_null_string = get_object(Universe::the_null_string())->as_instance();
+  }
+  return _the_null_string;
+}
+
+ciInstance* ciEnv::the_min_jint_string() {
+  if (_the_min_jint_string == NULL) {
+    VM_ENTRY_MARK;
+    _the_min_jint_string = get_object(Universe::the_min_jint_string())->as_instance();
+  }
+  return _the_min_jint_string;
 }
 
 // ------------------------------------------------------------------
@@ -810,16 +861,39 @@ void ciEnv::register_method(ciMethod* target,
     // and invalidating our dependencies until we install this method.
     MutexLocker ml(Compile_lock);
 
-    if (log() != NULL) {
-      // Log the dependencies which this compilation declares.
-      dependencies()->log_all_dependencies();
+    // Change in Jvmti state may invalidate compilation.
+    if (!failing() &&
+        ( (!jvmti_can_hotswap_or_post_breakpoint() &&
+           JvmtiExport::can_hotswap_or_post_breakpoint()) ||
+          (!jvmti_can_examine_or_deopt_anywhere() &&
+           JvmtiExport::can_examine_or_deopt_anywhere()) ||
+          (!jvmti_can_access_local_variables() &&
+           JvmtiExport::can_access_local_variables()) ||
+          (!jvmti_can_post_exceptions() &&
+           JvmtiExport::can_post_exceptions()) )) {
+      record_failure("Jvmti state change invalidated dependencies");
     }
 
-    // Encode the dependencies now, so we can check them right away.
-    dependencies()->encode_content_bytes();
+    // Change in DTrace flags may invalidate compilation.
+    if (!failing() &&
+        ( (!dtrace_extended_probes() && ExtendedDTraceProbes) ||
+          (!dtrace_method_probes() && DTraceMethodProbes) ||
+          (!dtrace_alloc_probes() && DTraceAllocProbes) )) {
+      record_failure("DTrace flags change invalidated dependencies");
+    }
 
-    // Check for {class loads, evolution, breakpoints} during compilation
-    check_for_system_dictionary_modification(target);
+    if (!failing()) {
+      if (log() != NULL) {
+        // Log the dependencies which this compilation declares.
+        dependencies()->log_all_dependencies();
+      }
+
+      // Encode the dependencies now, so we can check them right away.
+      dependencies()->encode_content_bytes();
+
+      // Check for {class loads, evolution, breakpoints} during compilation
+      check_for_system_dictionary_modification(target);
+    }
 
     methodHandle method(THREAD, target->get_methodOop());
 

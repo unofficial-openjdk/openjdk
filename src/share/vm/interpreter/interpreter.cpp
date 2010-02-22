@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -168,10 +168,14 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
   // Abstract method?
   if (m->is_abstract()) return abstract;
 
+  // Invoker for method handles?
+  if (m->is_method_handle_invoke())  return method_handle;
+
   // Native method?
   // Note: This test must come _before_ the test for intrinsic
   //       methods. See also comments below.
   if (m->is_native()) {
+    assert(!m->is_method_handle_invoke(), "overlapping bits here, watch out");
     return m->is_synchronized() ? native_synchronized : native;
   }
 
@@ -249,6 +253,7 @@ void AbstractInterpreter::print_method_kind(MethodKind kind) {
     case empty                  : tty->print("empty"                  ); break;
     case accessor               : tty->print("accessor"               ); break;
     case abstract               : tty->print("abstract"               ); break;
+    case method_handle          : tty->print("method_handle"          ); break;
     case java_lang_math_sin     : tty->print("java_lang_math_sin"     ); break;
     case java_lang_math_cos     : tty->print("java_lang_math_cos"     ); break;
     case java_lang_math_tan     : tty->print("java_lang_math_tan"     ); break;
@@ -279,76 +284,19 @@ static BasicType constant_pool_type(methodOop method, int index) {
 //------------------------------------------------------------------------------------------------------------------------
 // Deoptimization support
 
-// If deoptimization happens, this method returns the point where to continue in
-// interpreter. For calls (invokexxxx, newxxxx) the continuation is at next
-// bci and the top of stack is in eax/edx/FPU tos.
-// For putfield/getfield, put/getstatic, the continuation is at the same
-// bci and the TOS is on stack.
-
-// Note: deopt_entry(type, 0) means reexecute bytecode
-//       deopt_entry(type, length) means continue at next bytecode
-
-address AbstractInterpreter::continuation_for(methodOop method, address bcp, int callee_parameters, bool is_top_frame, bool& use_next_mdp) {
+// If deoptimization happens, this function returns the point of next bytecode to continue execution
+address AbstractInterpreter::deopt_continue_after_entry(methodOop method, address bcp, int callee_parameters, bool is_top_frame) {
   assert(method->contains(bcp), "just checkin'");
   Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+  assert(!Interpreter::bytecode_should_reexecute(code), "should not reexecute");
   int             bci    = method->bci_from(bcp);
   int             length = -1; // initial value for debugging
   // compute continuation length
   length = Bytecodes::length_at(bcp);
   // compute result type
   BasicType type = T_ILLEGAL;
-  // when continuing after a compiler safepoint, re-execute the bytecode
-  // (an invoke is continued after the safepoint)
-  use_next_mdp = true;
+
   switch (code) {
-    case Bytecodes::_lookupswitch:
-    case Bytecodes::_tableswitch:
-    case Bytecodes::_fast_binaryswitch:
-    case Bytecodes::_fast_linearswitch:
-    // recompute condtional expression folded into _if<cond>
-    case Bytecodes::_lcmp      :
-    case Bytecodes::_fcmpl     :
-    case Bytecodes::_fcmpg     :
-    case Bytecodes::_dcmpl     :
-    case Bytecodes::_dcmpg     :
-    case Bytecodes::_ifnull    :
-    case Bytecodes::_ifnonnull :
-    case Bytecodes::_goto      :
-    case Bytecodes::_goto_w    :
-    case Bytecodes::_ifeq      :
-    case Bytecodes::_ifne      :
-    case Bytecodes::_iflt      :
-    case Bytecodes::_ifge      :
-    case Bytecodes::_ifgt      :
-    case Bytecodes::_ifle      :
-    case Bytecodes::_if_icmpeq :
-    case Bytecodes::_if_icmpne :
-    case Bytecodes::_if_icmplt :
-    case Bytecodes::_if_icmpge :
-    case Bytecodes::_if_icmpgt :
-    case Bytecodes::_if_icmple :
-    case Bytecodes::_if_acmpeq :
-    case Bytecodes::_if_acmpne :
-    // special cases
-    case Bytecodes::_getfield  :
-    case Bytecodes::_putfield  :
-    case Bytecodes::_getstatic :
-    case Bytecodes::_putstatic :
-    case Bytecodes::_aastore   :
-      // reexecute the operation and TOS value is on stack
-      assert(is_top_frame, "must be top frame");
-      use_next_mdp = false;
-      return Interpreter::deopt_entry(vtos, 0);
-      break;
-
-#ifdef COMPILER1
-    case Bytecodes::_athrow    :
-      assert(is_top_frame, "must be top frame");
-      use_next_mdp = false;
-      return Interpreter::rethrow_exception_entry();
-      break;
-#endif /* COMPILER1 */
-
     case Bytecodes::_invokevirtual  :
     case Bytecodes::_invokespecial  :
     case Bytecodes::_invokestatic   :
@@ -385,6 +333,70 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
     is_top_frame
     ? Interpreter::deopt_entry (as_TosState(type), length)
     : Interpreter::return_entry(as_TosState(type), length);
+}
+
+// If deoptimization happens, this function returns the point where the interpreter reexecutes
+// the bytecode.
+// Note: Bytecodes::_athrow is a special case in that it does not return
+//       Interpreter::deopt_entry(vtos, 0) like others
+address AbstractInterpreter::deopt_reexecute_entry(methodOop method, address bcp) {
+  assert(method->contains(bcp), "just checkin'");
+  Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+#ifdef COMPILER1
+  if(code == Bytecodes::_athrow ) {
+    return Interpreter::rethrow_exception_entry();
+  }
+#endif /* COMPILER1 */
+  return Interpreter::deopt_entry(vtos, 0);
+}
+
+// If deoptimization happens, the interpreter should reexecute these bytecodes.
+// This function mainly helps the compilers to set up the reexecute bit.
+bool AbstractInterpreter::bytecode_should_reexecute(Bytecodes::Code code) {
+  switch (code) {
+    case Bytecodes::_lookupswitch:
+    case Bytecodes::_tableswitch:
+    case Bytecodes::_fast_binaryswitch:
+    case Bytecodes::_fast_linearswitch:
+    // recompute condtional expression folded into _if<cond>
+    case Bytecodes::_lcmp      :
+    case Bytecodes::_fcmpl     :
+    case Bytecodes::_fcmpg     :
+    case Bytecodes::_dcmpl     :
+    case Bytecodes::_dcmpg     :
+    case Bytecodes::_ifnull    :
+    case Bytecodes::_ifnonnull :
+    case Bytecodes::_goto      :
+    case Bytecodes::_goto_w    :
+    case Bytecodes::_ifeq      :
+    case Bytecodes::_ifne      :
+    case Bytecodes::_iflt      :
+    case Bytecodes::_ifge      :
+    case Bytecodes::_ifgt      :
+    case Bytecodes::_ifle      :
+    case Bytecodes::_if_icmpeq :
+    case Bytecodes::_if_icmpne :
+    case Bytecodes::_if_icmplt :
+    case Bytecodes::_if_icmpge :
+    case Bytecodes::_if_icmpgt :
+    case Bytecodes::_if_icmple :
+    case Bytecodes::_if_acmpeq :
+    case Bytecodes::_if_acmpne :
+    // special cases
+    case Bytecodes::_getfield  :
+    case Bytecodes::_putfield  :
+    case Bytecodes::_getstatic :
+    case Bytecodes::_putstatic :
+    case Bytecodes::_aastore   :
+#ifdef COMPILER1
+    //special case of reexecution
+    case Bytecodes::_athrow    :
+#endif
+      return true;
+
+    default:
+      return false;
+  }
 }
 
 void AbstractInterpreterGenerator::bang_stack_shadow_pages(bool native_call) {

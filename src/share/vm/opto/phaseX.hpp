@@ -345,7 +345,11 @@ public:
   Node  *hash_find(const Node *n) { return _table.hash_find(n); }
 
   // Used after parsing to eliminate values that are no longer in program
-  void   remove_useless_nodes(VectorSet &useful) { _table.remove_useless_nodes(useful); }
+  void   remove_useless_nodes(VectorSet &useful) {
+    _table.remove_useless_nodes(useful);
+    // this may invalidate cached cons so reset the cache
+    init_con_caches();
+  }
 
   virtual ConNode* uncached_makecon(const Type* t);  // override from PhaseTransform
 
@@ -449,6 +453,8 @@ public:
     hash_delete(old);
     subsume_node(old, nn);
   }
+
+  bool delay_transform() const { return _delay_transform; }
 
   void set_delay_transform(bool delay) {
     _delay_transform = delay;

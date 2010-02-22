@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -170,10 +170,6 @@ LINK_FLAGS = /manifest $(LINK_FLAGS) $(BUFFEROVERFLOWLIB)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
 MT=mt.exe
-!if "$(BUILDARCH)" == "i486"
-# VS2005 on x86 restricts the use of certain libc functions without this
-CPP_FLAGS=$(CPP_FLAGS) /D _CRT_SECURE_NO_DEPRECATE
-!endif
 !endif
 
 !if "$(COMPILER_NAME)" == "VS2008"
@@ -185,10 +181,6 @@ LINK_FLAGS = /manifest $(LINK_FLAGS)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
 MT=mt.exe
-!if "$(BUILDARCH)" == "i486"
-# VS2005 on x86 restricts the use of certain libc functions without this
-CPP_FLAGS=$(CPP_FLAGS) /D _CRT_SECURE_NO_DEPRECATE
-!endif
 !endif
 
 # Compile for space above time.

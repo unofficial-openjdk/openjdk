@@ -1,5 +1,5 @@
 //
-// Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2004-2009 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ binaryTreeDictionary.cpp                allocationStats.hpp
 binaryTreeDictionary.cpp                binaryTreeDictionary.hpp
 binaryTreeDictionary.cpp                globals.hpp
 binaryTreeDictionary.cpp                ostream.hpp
+binaryTreeDictionary.cpp                space.inline.hpp
 binaryTreeDictionary.cpp                spaceDecorator.hpp
 
 binaryTreeDictionary.hpp                freeBlockDictionary.hpp
@@ -144,6 +145,7 @@ concurrentMarkSweepGeneration.cpp       genOopClosures.inline.hpp
 concurrentMarkSweepGeneration.cpp       globals_extension.hpp
 concurrentMarkSweepGeneration.cpp       handles.inline.hpp
 concurrentMarkSweepGeneration.cpp       isGCActiveMark.hpp
+concurrentMarkSweepGeneration.cpp       iterator.hpp
 concurrentMarkSweepGeneration.cpp       java.hpp
 concurrentMarkSweepGeneration.cpp       jvmtiExport.hpp
 concurrentMarkSweepGeneration.cpp       oop.inline.hpp

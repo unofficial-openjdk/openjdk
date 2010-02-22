@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -442,6 +442,8 @@ int methodDataOopDesc::bytecode_cell_count(Bytecodes::Code code) {
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:
     return VirtualCallData::static_cell_count();
+  case Bytecodes::_invokedynamic:
+    return CounterData::static_cell_count();
   case Bytecodes::_ret:
     return RetData::static_cell_count();
   case Bytecodes::_ifeq:
@@ -569,6 +571,11 @@ int methodDataOopDesc::initialize_data(BytecodeStream* stream,
   case Bytecodes::_invokeinterface:
     cell_count = VirtualCallData::static_cell_count();
     tag = DataLayout::virtual_call_data_tag;
+    break;
+  case Bytecodes::_invokedynamic:
+    // %%% should make a type profile for any invokedynamic that takes a ref argument
+    cell_count = CounterData::static_cell_count();
+    tag = DataLayout::counter_data_tag;
     break;
   case Bytecodes::_ret:
     cell_count = RetData::static_cell_count();

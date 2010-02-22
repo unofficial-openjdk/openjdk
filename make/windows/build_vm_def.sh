@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,19 @@ CAT="$MKS_HOME/cat.exe"
 RM="$MKS_HOME/rm.exe"
 DUMPBIN="link.exe /dump"
 
+# When called from IDE the first param should contain the link version, otherwise may be nill
+if [ "x$1" != "x" ]; then
+LINK_VER="$1"
+fi
+
+if [ "x$LINK_VER" != "x800" -a  "x$LINK_VER" != "x900" ]; then
 $DUMPBIN /symbols *.obj | "$GREP" "??_7.*@@6B@" | "$AWK" '{print $7}' | "$SORT" | "$UNIQ" > vm2.def
+else
+# Can't use pipes when calling cl.exe or link.exe from IDE. Using transit file vm3.def
+$DUMPBIN /OUT:vm3.def /symbols *.obj 
+"$CAT" vm3.def | "$GREP" "??_7.*@@6B@" | "$AWK" '{print $7}' | "$SORT" | "$UNIQ" > vm2.def
+"$RM" -f vm3.def
+fi
+
 "$CAT" vm1.def vm2.def > vm.def
 "$RM" -f vm1.def vm2.def

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -129,8 +129,8 @@ class ParallelScavengeHeap : public CollectedHeap {
     return perm_gen()->is_in(p);
   }
 
-  static bool is_in_young(oop *p);        // reserved part
-  static bool is_in_old_or_perm(oop *p);  // reserved part
+  inline bool is_in_young(oop p);        // reserved part
+  inline bool is_in_old_or_perm(oop p);  // reserved part
 
   // Memory allocation.   "gc_time_limit_was_exceeded" will
   // be set to true if the adaptive size policy determine that
@@ -191,6 +191,10 @@ class ParallelScavengeHeap : public CollectedHeap {
     return true;
   }
 
+  // Return true if we don't we need a store barrier for
+  // initializing stores to an object at this address.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj);
+
   // Can a compiler elide a store barrier when it writes
   // a permanent oop into the heap?  Applies when the compiler
   // is storing x to the heap, where x->is_perm() is true.
@@ -200,6 +204,7 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   void oop_iterate(OopClosure* cl);
   void object_iterate(ObjectClosure* cl);
+  void safe_object_iterate(ObjectClosure* cl) { object_iterate(cl); }
   void permanent_oop_iterate(OopClosure* cl);
   void permanent_object_iterate(ObjectClosure* cl);
 
@@ -216,7 +221,7 @@ class ParallelScavengeHeap : public CollectedHeap {
   virtual void gc_threads_do(ThreadClosure* tc) const;
   virtual void print_tracing_info() const;
 
-  void verify(bool allow_dirty, bool silent);
+  void verify(bool allow_dirty, bool silent, bool /* option */);
 
   void print_heap_change(size_t prev_used);
 

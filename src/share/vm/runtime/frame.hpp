@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,7 +117,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool can_be_deoptimized() const;
 
   // returns the frame size in stack slots
-  int frame_size() const;
+  int frame_size(RegisterMap* map) const;
 
   // returns the sending frame
   frame sender(RegisterMap* map) const;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,15 +217,28 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
       (HeapWord*) align_size_up((uintptr_t)new_end, _page_size);
     assert(new_end_aligned >= (HeapWord*) new_end,
            "align up, but less");
+    // Check the other regions (excludes "ind") to ensure that
+    // the new_end_aligned does not intrude onto the committed
+    // space of another region.
     int ri = 0;
     for (ri = 0; ri < _cur_covered_regions; ri++) {
       if (ri != ind) {
         if (_committed[ri].contains(new_end_aligned)) {
-          assert((new_end_aligned >= _committed[ri].start()) &&
-                 (_committed[ri].start() > _committed[ind].start()),
+          // The prior check included in the assert
+          // (new_end_aligned >= _committed[ri].start())
+          // is redundant with the "contains" test.
+          // Any region containing the new end
+          // should start at or beyond the region found (ind)
+          // for the new end (committed regions are not expected to
+          // be proper subsets of other committed regions).
+          assert(_committed[ri].start() >= _committed[ind].start(),
                  "New end of committed region is inconsistent");
           new_end_aligned = _committed[ri].start();
-          assert(new_end_aligned > _committed[ind].start(),
+          // new_end_aligned can be equal to the start of its
+          // committed region (i.e., of "ind") if a second
+          // region following "ind" also start at the same location
+          // as "ind".
+          assert(new_end_aligned >= _committed[ind].start(),
             "New end of committed region is before start");
           debug_only(collided = true;)
           // Should only collide with 1 region
@@ -240,8 +253,16 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     }
 #endif
     // The guard page is always committed and should not be committed over.
-    HeapWord* const new_end_for_commit = MIN2(new_end_aligned,
-                                              _guard_region.start());
+    // "guarded" is used for assertion checking below and recalls the fact
+    // that the would-be end of the new committed region would have
+    // penetrated the guard page.
+    HeapWord* new_end_for_commit = new_end_aligned;
+
+    DEBUG_ONLY(bool guarded = false;)
+    if (new_end_for_commit > _guard_region.start()) {
+      new_end_for_commit = _guard_region.start();
+      DEBUG_ONLY(guarded = true;)
+    }
 
     if (new_end_for_commit > cur_committed.end()) {
       // Must commit new pages.
@@ -289,7 +310,7 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     // not the aligned up expanded region.
     // jbyte* const end = byte_after(new_region.last());
     jbyte* const end = (jbyte*) new_end_for_commit;
-    assert((end >= byte_after(new_region.last())) || collided,
+    assert((end >= byte_after(new_region.last())) || collided || guarded,
       "Expect to be beyond new region unless impacting another region");
     // do nothing if we resized downward.
 #ifdef ASSERT
@@ -490,6 +511,8 @@ void CardTableModRefBS::mod_oop_in_space_iterate(Space* sp,
 }
 
 void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
+  assert((HeapWord*)align_size_down((uintptr_t)mr.start(), HeapWordSize) == mr.start(), "Unaligned start");
+  assert((HeapWord*)align_size_up  ((uintptr_t)mr.end(),   HeapWordSize) == mr.end(),   "Unaligned end"  );
   jbyte* cur  = byte_for(mr.start());
   jbyte* last = byte_after(mr.last());
   while (cur < last) {
@@ -499,6 +522,8 @@ void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
 }
 
 void CardTableModRefBS::invalidate(MemRegion mr, bool whole_heap) {
+  assert((HeapWord*)align_size_down((uintptr_t)mr.start(), HeapWordSize) == mr.start(), "Unaligned start");
+  assert((HeapWord*)align_size_up  ((uintptr_t)mr.end(),   HeapWordSize) == mr.end(),   "Unaligned end"  );
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) dirty_MemRegion(mri);
@@ -638,6 +663,29 @@ public:
 void CardTableModRefBS::verify_clean_region(MemRegion mr) {
   GuaranteeNotModClosure blk(this);
   non_clean_card_iterate_work(mr, &blk, false);
+}
+
+// To verify a MemRegion is entirely dirty this closure is passed to
+// dirty_card_iterate. If the region is dirty do_MemRegion will be
+// invoked only once with a MemRegion equal to the one being
+// verified.
+class GuaranteeDirtyClosure: public MemRegionClosure {
+  CardTableModRefBS* _ct;
+  MemRegion _mr;
+  bool _result;
+public:
+  GuaranteeDirtyClosure(CardTableModRefBS* ct, MemRegion mr)
+    : _ct(ct), _mr(mr), _result(false) {}
+  void do_MemRegion(MemRegion mr) {
+    _result = _mr.equals(mr);
+  }
+  bool result() const { return _result; }
+};
+
+void CardTableModRefBS::verify_dirty_region(MemRegion mr) {
+  GuaranteeDirtyClosure blk(this, mr);
+  dirty_card_iterate(mr, &blk);
+  guarantee(blk.result(), "Non-dirty cards in region that should be dirty");
 }
 #endif
 

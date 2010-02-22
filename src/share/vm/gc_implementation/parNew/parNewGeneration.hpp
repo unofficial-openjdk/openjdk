@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -289,6 +289,7 @@ class ParNewGeneration: public DefNewGeneration {
   friend class ParNewRefProcTask;
   friend class ParNewRefProcTaskExecutor;
   friend class ParScanThreadStateSet;
+  friend class ParEvacuateFollowersClosure;
 
  private:
   // XXX use a global constant instead of 64!
@@ -310,6 +311,7 @@ class ParNewGeneration: public DefNewGeneration {
   // klass-pointers (klass information already copied to the forwarded
   // image.)  Manipulated with CAS.
   oop _overflow_list;
+  NOT_PRODUCT(ssize_t _num_par_pushes;)
 
   // If true, older generation does not support promotion undo, so avoid.
   static bool _avoid_promotion_undo;
@@ -397,8 +399,8 @@ class ParNewGeneration: public DefNewGeneration {
   void push_on_overflow_list(oop from_space_obj, ParScanThreadState* par_scan_state);
 
   // If the global overflow list is non-empty, move some tasks from it
-  // onto "work_q" (which must be empty).  No more than 1/4 of the
-  // max_elems of "work_q" are moved.
+  // onto "work_q" (which need not be empty).  No more than 1/4 of the
+  // available space on "work_q" is used.
   bool take_from_overflow_list(ParScanThreadState* par_scan_state);
   bool take_from_overflow_list_work(ParScanThreadState* par_scan_state);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,10 +66,13 @@ void InterfaceSupport::trace(const char* result_type, const char* header) {
 
 void InterfaceSupport::gc_alot() {
   Thread *thread = Thread::current();
-  if (thread->is_VM_thread()) return; // Avoid concurrent calls
+  if (!thread->is_Java_thread()) return; // Avoid concurrent calls
   // Check for new, not quite initialized thread. A thread in new mode cannot initiate a GC.
   JavaThread *current_thread = (JavaThread *)thread;
   if (current_thread->active_handles() == NULL) return;
+
+  // Short-circuit any possible re-entrant gc-a-lot attempt
+  if (thread->skip_gcalot()) return;
 
   if (is_init_completed()) {
 

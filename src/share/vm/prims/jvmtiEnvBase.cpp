@@ -95,25 +95,35 @@ JvmtiEnvBase::initialize() {
 
 
 bool
-JvmtiEnvBase::use_version_1_0_semantics() {
-  int major, minor, micro;
+JvmtiEnvBase::is_valid() {
+  jint value = 0;
 
-  JvmtiExport::decode_version_values(_version, &major, &minor, &micro);
-  return major == 1 && minor == 0;  // micro version doesn't matter here
+  // This object might not be a JvmtiEnvBase so we can't assume
+  // the _magic field is properly aligned. Get the value in a safe
+  // way and then check against JVMTI_MAGIC.
+
+  switch (sizeof(_magic)) {
+  case 2:
+    value = Bytes::get_native_u2((address)&_magic);
+    break;
+
+  case 4:
+    value = Bytes::get_native_u4((address)&_magic);
+    break;
+
+  case 8:
+    value = Bytes::get_native_u8((address)&_magic);
+    break;
+
+  default:
+    guarantee(false, "_magic field is an unexpected size");
+  }
+
+  return value == JVMTI_MAGIC;
 }
 
 
-bool
-JvmtiEnvBase::use_version_1_1_semantics() {
-  int major, minor, micro;
-
-  JvmtiExport::decode_version_values(_version, &major, &minor, &micro);
-  return major == 1 && minor == 1;  // micro version doesn't matter here
-}
-
-
-JvmtiEnvBase::JvmtiEnvBase(jint version) : _env_event_enable() {
-  _version = version;
+JvmtiEnvBase::JvmtiEnvBase() : _env_event_enable() {
   _env_local_storage = NULL;
   _tag_map = NULL;
   _native_method_prefix_count = 0;
@@ -596,6 +606,7 @@ JvmtiEnvBase::count_locked_objects(JavaThread *java_thread, Handle hobj) {
     if (!mons->is_empty()) {
       for (int i = 0; i < mons->length(); i++) {
         MonitorInfo *mi = mons->at(i);
+        if (mi->owner_is_scalar_replaced()) continue;
 
         // see if owner of the monitor is our object
         if (mi->owner() != NULL && mi->owner() == hobj()) {
@@ -715,6 +726,8 @@ JvmtiEnvBase::get_locked_objects_in_frame(JavaThread* calling_thread, JavaThread
 
   for (int i = 0; i < mons->length(); i++) {
     MonitorInfo *mi = mons->at(i);
+
+    if (mi->owner_is_scalar_replaced()) continue;
 
     oop obj = mi->owner();
     if (obj == NULL) {

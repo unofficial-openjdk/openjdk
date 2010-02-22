@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -306,7 +306,7 @@ void VMError::report(outputStream* st) {
 
          strncpy(buf, file, buflen);
          if (len + 10 < buflen) {
-           sprintf(buf + len, ":" SIZE_FORMAT, _lineno);
+           sprintf(buf + len, ":%d", _lineno);
          }
          st->print(" (%s)", buf);
        } else {
@@ -420,7 +420,7 @@ void VMError::report(outputStream* st) {
 
        if (fr.sp()) {
          st->print(",  sp=" PTR_FORMAT, fr.sp());
-         st->print(",  free space=%dk",
+         st->print(",  free space=%" INTPTR_FORMAT "k",
                      ((intptr_t)fr.sp() - (intptr_t)stack_bottom) >> 10);
        }
 
@@ -674,6 +674,11 @@ void VMError::report_and_die() {
     reset_signal_handlers();
 
   } else {
+    // If UseOsErrorReporting we call this for each level of the call stack
+    // while searching for the exception handler.  Only the first level needs
+    // to be reported.
+    if (UseOSErrorReporting && log_done) return;
+
     // This is not the first error, see if it happened in a different thread
     // or in the same thread during error reporting.
     if (first_error_tid != mytid) {

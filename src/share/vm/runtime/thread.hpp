@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -191,6 +191,9 @@ class Thread: public ThreadShadow {
   NOT_PRODUCT(int _allow_safepoint_count;)       // If 0, thread allow a safepoint to happen
   debug_only (int _allow_allocation_count;)      // If 0, the thread is allowed to allocate oops.
 
+  // Used by SkipGCALot class.
+  NOT_PRODUCT(bool _skip_gcalot;)                // Should we elide gc-a-lot?
+
   // Record when GC is locked out via the GC_locker mechanism
   CHECK_UNHANDLED_OOPS_ONLY(int _gc_locked_out_count;)
 
@@ -308,6 +311,11 @@ class Thread: public ThreadShadow {
   bool is_gc_locked_out() { return _gc_locked_out_count > 0; }
 #endif // CHECK_UNHANDLED_OOPS
 
+#ifndef PRODUCT
+  bool skip_gcalot()           { return _skip_gcalot; }
+  void set_skip_gcalot(bool v) { _skip_gcalot = v;    }
+#endif
+
  public:
   // Installs a pending exception to be inserted later
   static void send_async_exception(oop thread_oop, oop java_throwable);
@@ -392,8 +400,10 @@ public:
   // Sweeper support
   void nmethods_do();
 
-  // Tells if adr belong to this thread. This is used for checking if a lock
-  // is owned by the running thread. It is used to support fast lock.
+  // Tells if adr belong to this thread. This is used
+  // for checking if a lock is owned by the running thread.
+
+  // Used by fast lock support
   virtual bool is_lock_owned(address adr) const;
 
   // Check if address is in the stack of the thread (not just for locks).
@@ -673,8 +683,13 @@ class JavaThread: public Thread {
   methodOop     _callee_target;
 
   // Oop results of VM runtime calls
-  oop           _vm_result;                      // Used to pass back an oop result into Java code, GC-preserved
-  oop           _vm_result_2;                    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result;    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result_2;  // Used to pass back an oop result into Java code, GC-preserved
+
+  // See ReduceInitialCardMarks: this holds the precise space interval of
+  // the most recent slow path allocation for which compiled code has
+  // elided card-marks for performance along the fast-path.
+  MemRegion     _deferred_card_mark;
 
   MonitorChunk* _monitor_chunks;                 // Contains the off stack monitors
                                                  // allocated during deoptimization
@@ -1079,6 +1094,9 @@ class JavaThread: public Thread {
 
   oop  vm_result_2() const                       { return _vm_result_2; }
   void set_vm_result_2  (oop x)                  { _vm_result_2   = x; }
+
+  MemRegion deferred_card_mark() const           { return _deferred_card_mark; }
+  void set_deferred_card_mark(MemRegion mr)      { _deferred_card_mark = mr;   }
 
   // Exception handling for compiled methods
   oop      exception_oop() const                 { return _exception_oop; }

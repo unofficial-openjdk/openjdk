@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,43 @@ int constantPoolCacheKlass::oop_size(oop obj) const {
 }
 
 
-constantPoolCacheOop constantPoolCacheKlass::allocate(int length, TRAPS) {
+constantPoolCacheOop constantPoolCacheKlass::allocate(int length,
+                                                      bool is_conc_safe,
+                                                      TRAPS) {
   // allocate memory
   int size = constantPoolCacheOopDesc::object_size(length);
+
   KlassHandle klass (THREAD, as_klassOop());
-  constantPoolCacheOop cache = (constantPoolCacheOop)
-    CollectedHeap::permanent_obj_allocate(klass, size, CHECK_NULL);
+
+  // This is the original code.  The code from permanent_obj_allocate()
+  // was in-lined to allow the setting of is_conc_safe before the klass
+  // is installed.
+  // constantPoolCacheOop cache = (constantPoolCacheOop)
+  //   CollectedHeap::permanent_obj_allocate(klass, size, CHECK_NULL);
+
+  oop obj = CollectedHeap::permanent_obj_allocate_no_klass_install(klass, size, CHECK_NULL);
+  constantPoolCacheOop cache = (constantPoolCacheOop) obj;
+  cache->set_is_conc_safe(is_conc_safe);
+  // The store to is_conc_safe must be visible before the klass
+  // is set.  This should be done safely because _is_conc_safe has
+  // been declared volatile.  If there are any problems, consider adding
+  // OrderAccess::storestore();
+  CollectedHeap::post_allocation_install_obj_klass(klass, obj, size);
+  NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value((HeapWord*) obj,
+                                                              size));
+
+  // The length field affects the size of the object.  The allocation
+  // above allocates the correct size (see calculation of "size") but
+  // the size() method of the constant pool cache oop will not reflect
+  // that size until the correct length is set.
   cache->set_length(length);
+
+  // The store of the length must be visible before is_conc_safe is
+  // set to a safe state.
+  // This should be done safely because _is_conc_safe has
+  // been declared volatile.  If there are any problems, consider adding
+  // OrderAccess::storestore();
+  cache->set_is_conc_safe(methodOopDesc::IsSafeConc);
   cache->set_constant_pool(NULL);
   return cache;
 }
@@ -114,7 +144,6 @@ int constantPoolCacheKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegio
   return size;
 }
 
-
 int constantPoolCacheKlass::oop_adjust_pointers(oop obj) {
   assert(obj->is_constantPoolCache(), "obj must be constant pool cache");
   constantPoolCacheOop cache = (constantPoolCacheOop)obj;
@@ -131,15 +160,56 @@ int constantPoolCacheKlass::oop_adjust_pointers(oop obj) {
   return size;
 }
 
+bool constantPoolCacheKlass::oop_is_conc_safe(oop obj) const {
+  assert(obj->is_constantPoolCache(), "should be constant pool");
+  return constantPoolCacheOop(obj)->is_conc_safe();
+}
+
 #ifndef SERIALGC
 void constantPoolCacheKlass::oop_copy_contents(PSPromotionManager* pm,
                                                oop obj) {
   assert(obj->is_constantPoolCache(), "should be constant pool");
+  if (EnableInvokeDynamic) {
+    constantPoolCacheOop cache = (constantPoolCacheOop)obj;
+    // during a scavenge, it is safe to inspect my pool, since it is perm
+    constantPoolOop pool = cache->constant_pool();
+    assert(pool->is_constantPool(), "should be constant pool");
+    if (pool->has_invokedynamic()) {
+      for (int i = 0; i < cache->length(); i++) {
+        ConstantPoolCacheEntry* e = cache->entry_at(i);
+        oop* p = (oop*)&e->_f1;
+        if (e->is_secondary_entry()) {
+          if (PSScavenge::should_scavenge(p))
+            pm->claim_or_forward_breadth(p);
+          assert(!(e->is_vfinal() && PSScavenge::should_scavenge((oop*)&e->_f2)),
+                 "no live oops here");
+        }
+      }
+    }
+  }
 }
 
 void constantPoolCacheKlass::oop_push_contents(PSPromotionManager* pm,
                                                oop obj) {
   assert(obj->is_constantPoolCache(), "should be constant pool");
+  if (EnableInvokeDynamic) {
+    constantPoolCacheOop cache = (constantPoolCacheOop)obj;
+    // during a scavenge, it is safe to inspect my pool, since it is perm
+    constantPoolOop pool = cache->constant_pool();
+    assert(pool->is_constantPool(), "should be constant pool");
+    if (pool->has_invokedynamic()) {
+      for (int i = 0; i < cache->length(); i++) {
+        ConstantPoolCacheEntry* e = cache->entry_at(i);
+        oop* p = (oop*)&e->_f1;
+        if (e->is_secondary_entry()) {
+          if (PSScavenge::should_scavenge(p))
+            pm->claim_or_forward_depth(p);
+          assert(!(e->is_vfinal() && PSScavenge::should_scavenge((oop*)&e->_f2)),
+                 "no live oops here");
+        }
+      }
+    }
+  }
 }
 
 int

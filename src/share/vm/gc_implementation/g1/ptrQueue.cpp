@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,7 +107,7 @@ void** PtrQueueSet::allocate_buffer() {
     res[0] = NULL;
     return res;
   } else {
-    return NEW_C_HEAP_ARRAY(void*, _sz);
+    return (void**) NEW_C_HEAP_ARRAY(char, _sz);
   }
 }
 
@@ -127,7 +127,8 @@ void PtrQueueSet::reduce_free_list() {
     assert(_buf_free_list != NULL, "_buf_free_list_sz must be wrong.");
     void** head = _buf_free_list;
     _buf_free_list = (void**)_buf_free_list[0];
-    FREE_C_HEAP_ARRAY(void*,head);
+    FREE_C_HEAP_ARRAY(char, head);
+    _buf_free_list_sz --;
     n--;
   }
 }
@@ -172,7 +173,7 @@ void PtrQueueSet::enqueue_complete_buffer(void** buf, size_t index, bool ignore_
   _n_completed_buffers++;
 
   if (!_process_completed &&
-      _n_completed_buffers == _process_completed_threshold) {
+      _n_completed_buffers >= _process_completed_threshold) {
     _process_completed = true;
     if (_notify_when_complete)
       _cbl_mon->notify_all();

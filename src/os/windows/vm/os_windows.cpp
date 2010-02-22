@@ -616,12 +616,13 @@ julong os::available_memory() {
 }
 
 julong os::win32::available_memory() {
-  // FIXME: GlobalMemoryStatus() may return incorrect value if total memory
-  // is larger than 4GB
-  MEMORYSTATUS ms;
-  GlobalMemoryStatus(&ms);
+  // Use GlobalMemoryStatusEx() because GlobalMemoryStatus() may return incorrect
+  // value if total memory is larger than 4GB
+  MEMORYSTATUSEX ms;
+  ms.dwLength = sizeof(ms);
+  GlobalMemoryStatusEx(&ms);
 
-  return (julong)ms.dwAvailPhys;
+  return (julong)ms.ullAvailPhys;
 }
 
 julong os::physical_memory() {
@@ -1560,8 +1561,7 @@ void os::print_os_info(outputStream* st) {
         if (osvi.wProductType == VER_NT_WORKSTATION) {
             st->print(" Windows 7");
         } else {
-            // Unrecognized windows, print out its major and minor versions
-            st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+            st->print(" Windows Server 2008 R2");
         }
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
@@ -1589,16 +1589,17 @@ void os::print_memory_info(outputStream* st) {
   st->print("Memory:");
   st->print(" %dk page", os::vm_page_size()>>10);
 
-  // FIXME: GlobalMemoryStatus() may return incorrect value if total memory
-  // is larger than 4GB
-  MEMORYSTATUS ms;
-  GlobalMemoryStatus(&ms);
+  // Use GlobalMemoryStatusEx() because GlobalMemoryStatus() may return incorrect
+  // value if total memory is larger than 4GB
+  MEMORYSTATUSEX ms;
+  ms.dwLength = sizeof(ms);
+  GlobalMemoryStatusEx(&ms);
 
   st->print(", physical %uk", os::physical_memory() >> 10);
   st->print("(%uk free)", os::available_memory() >> 10);
 
-  st->print(", swap %uk", ms.dwTotalPageFile >> 10);
-  st->print("(%uk free)", ms.dwAvailPageFile >> 10);
+  st->print(", swap %uk", ms.ullTotalPageFile >> 10);
+  st->print("(%uk free)", ms.ullAvailPageFile >> 10);
   st->cr();
 }
 
@@ -2234,7 +2235,8 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
           if (addr > thread->stack_yellow_zone_base() && addr < thread->stack_base() ) {
                   addr = (address)((uintptr_t)addr &
                          (~((uintptr_t)os::vm_page_size() - (uintptr_t)1)));
-                  os::commit_memory( (char *)addr, thread->stack_base() - addr );
+                  os::commit_memory((char *)addr, thread->stack_base() - addr,
+                                    false );
                   return EXCEPTION_CONTINUE_EXECUTION;
           }
           else
@@ -2610,8 +2612,7 @@ char* os::reserve_memory(size_t bytes, char* addr, size_t alignment_hint) {
   assert((size_t)addr % os::vm_allocation_granularity() == 0,
          "reserve alignment");
   assert(bytes % os::vm_allocation_granularity() == 0, "reserve block size");
-  char* res = (char*)VirtualAlloc(addr, bytes, MEM_RESERVE,
-                                  PAGE_EXECUTE_READWRITE);
+  char* res = (char*)VirtualAlloc(addr, bytes, MEM_RESERVE, PAGE_READWRITE);
   assert(res == NULL || addr == NULL || addr == res,
          "Unexpected address from reserve.");
   return res;
@@ -2640,7 +2641,9 @@ bool os::can_execute_large_page_memory() {
   return true;
 }
 
-char* os::reserve_memory_special(size_t bytes) {
+char* os::reserve_memory_special(size_t bytes, char* addr, bool exec) {
+
+  const DWORD prot = exec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
 
   if (UseLargePagesIndividualAllocation) {
     if (TracePageSizes && Verbose) {
@@ -2660,10 +2663,10 @@ char* os::reserve_memory_special(size_t bytes) {
         "use -XX:-UseLargePagesIndividualAllocation to turn off");
       return NULL;
     }
-    p_buf = (char *) VirtualAlloc(NULL,
+    p_buf = (char *) VirtualAlloc(addr,
                                  size_of_reserve,  // size of Reserve
                                  MEM_RESERVE,
-                                 PAGE_EXECUTE_READWRITE);
+                                 PAGE_READWRITE);
     // If reservation failed, return NULL
     if (p_buf == NULL) return NULL;
 
@@ -2704,7 +2707,7 @@ char* os::reserve_memory_special(size_t bytes) {
         p_new = (char *) VirtualAlloc(next_alloc_addr,
                                     bytes_to_rq,
                                     MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES,
-                                    PAGE_EXECUTE_READWRITE);
+                                    prot);
       }
 
       if (p_new == NULL) {
@@ -2733,10 +2736,7 @@ char* os::reserve_memory_special(size_t bytes) {
   } else {
     // normal policy just allocate it all at once
     DWORD flag = MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES;
-    char * res = (char *)VirtualAlloc(NULL,
-                                      bytes,
-                                      flag,
-                                      PAGE_EXECUTE_READWRITE);
+    char * res = (char *)VirtualAlloc(NULL, bytes, flag, prot);
     return res;
   }
 }
@@ -2748,7 +2748,7 @@ bool os::release_memory_special(char* base, size_t bytes) {
 void os::print_statistics() {
 }
 
-bool os::commit_memory(char* addr, size_t bytes) {
+bool os::commit_memory(char* addr, size_t bytes, bool exec) {
   if (bytes == 0) {
     // Don't bother the OS with noops.
     return true;
@@ -2757,11 +2757,19 @@ bool os::commit_memory(char* addr, size_t bytes) {
   assert(bytes % os::vm_page_size() == 0, "commit in page-sized chunks");
   // Don't attempt to print anything if the OS call fails. We're
   // probably low on resources, so the print itself may cause crashes.
-  return VirtualAlloc(addr, bytes, MEM_COMMIT, PAGE_EXECUTE_READWRITE) != NULL;
+  bool result = VirtualAlloc(addr, bytes, MEM_COMMIT, PAGE_READWRITE) != 0;
+  if (result != NULL && exec) {
+    DWORD oldprot;
+    // Windows doc says to use VirtualProtect to get execute permissions
+    return VirtualProtect(addr, bytes, PAGE_EXECUTE_READWRITE, &oldprot) != 0;
+  } else {
+    return result;
+  }
 }
 
-bool os::commit_memory(char* addr, size_t size, size_t alignment_hint) {
-  return commit_memory(addr, size);
+bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
+                       bool exec) {
+  return commit_memory(addr, size, exec);
 }
 
 bool os::uncommit_memory(char* addr, size_t bytes) {
@@ -2795,7 +2803,7 @@ bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
 
   // Strange enough, but on Win32 one can change protection only for committed
   // memory, not a big deal anyway, as bytes less or equal than 64K
-  if (!is_committed && !commit_memory(addr, bytes)) {
+  if (!is_committed && !commit_memory(addr, bytes, prot == MEM_PROT_RWX)) {
     fatal("cannot commit protection page");
   }
   // One cannot use os::guard_memory() here, as on Win32 guard page
@@ -3138,11 +3146,13 @@ void os::win32::initialize_system_info() {
   _processor_level = si.wProcessorLevel;
   _processor_count = si.dwNumberOfProcessors;
 
-  MEMORYSTATUS ms;
+  MEMORYSTATUSEX ms;
+  ms.dwLength = sizeof(ms);
+
   // also returns dwAvailPhys (free physical memory bytes), dwTotalVirtual, dwAvailVirtual,
   // dwMemoryLoad (% of memory in use)
-  GlobalMemoryStatus(&ms);
-  _physical_memory = ms.dwTotalPhys;
+  GlobalMemoryStatusEx(&ms);
+  _physical_memory = ms.ullTotalPhys;
 
   OSVERSIONINFO oi;
   oi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -3293,10 +3303,10 @@ jint os::init_2(void) {
 #endif
 
   if (!UseMembar) {
-    address mem_serialize_page = (address)VirtualAlloc(NULL, os::vm_page_size(), MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    address mem_serialize_page = (address)VirtualAlloc(NULL, os::vm_page_size(), MEM_RESERVE, PAGE_READWRITE);
     guarantee( mem_serialize_page != NULL, "Reserve Failed for memory serialize page");
 
-    return_page  = (address)VirtualAlloc(mem_serialize_page, os::vm_page_size(), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    return_page  = (address)VirtualAlloc(mem_serialize_page, os::vm_page_size(), MEM_COMMIT, PAGE_READWRITE);
     guarantee( return_page != NULL, "Commit Failed for memory serialize page");
 
     os::set_memory_serialize_page( mem_serialize_page );

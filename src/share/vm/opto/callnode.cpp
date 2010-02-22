@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -223,6 +223,7 @@ uint TailJumpNode::match_edge(uint idx) const {
 JVMState::JVMState(ciMethod* method, JVMState* caller) {
   assert(method != NULL, "must be valid call site");
   _method = method;
+  _reexecute = Reexecute_Undefined;
   debug_only(_bci = -99);  // random garbage value
   debug_only(_map = (SafePointNode*)-1);
   _caller = caller;
@@ -237,6 +238,7 @@ JVMState::JVMState(ciMethod* method, JVMState* caller) {
 JVMState::JVMState(int stack_size) {
   _method = NULL;
   _bci = InvocationEntryBci;
+  _reexecute = Reexecute_Undefined;
   debug_only(_map = (SafePointNode*)-1);
   _caller = NULL;
   _depth  = 1;
@@ -269,6 +271,7 @@ bool JVMState::same_calls_as(const JVMState* that) const {
     if (p->_method != q->_method)    return false;
     if (p->_method == NULL)          return true;   // bci is irrelevant
     if (p->_bci    != q->_bci)       return false;
+    if (p->_reexecute != q->_reexecute)  return false;
     p = p->caller();
     q = q->caller();
     if (p == q)                      return true;
@@ -490,6 +493,7 @@ void JVMState::dump_spec(outputStream *st) const {
     if (!printed)
       _method->print_short_name(st);
     st->print(" @ bci:%d",_bci);
+    st->print(" reexecute:%s", _reexecute==Reexecute_True?"true":"false");
   } else {
     st->print(" runtime stub");
   }
@@ -509,8 +513,8 @@ void JVMState::dump_on(outputStream* st) const {
     }
     _map->dump(2);
   }
-  st->print("JVMS depth=%d loc=%d stk=%d mon=%d scalar=%d end=%d mondepth=%d sp=%d bci=%d method=",
-             depth(), locoff(), stkoff(), monoff(), scloff(), endoff(), monitor_depth(), sp(), bci());
+  st->print("JVMS depth=%d loc=%d stk=%d mon=%d scalar=%d end=%d mondepth=%d sp=%d bci=%d reexecute=%s method=",
+             depth(), locoff(), stkoff(), monoff(), scloff(), endoff(), monitor_depth(), sp(), bci(), should_reexecute()?"true":"false");
   if (_method == NULL) {
     st->print_cr("(none)");
   } else {
@@ -537,6 +541,7 @@ void dump_jvms(JVMState* jvms) {
 JVMState* JVMState::clone_shallow(Compile* C) const {
   JVMState* n = has_method() ? new (C) JVMState(_method, _caller) : new (C) JVMState(0);
   n->set_bci(_bci);
+  n->_reexecute = _reexecute;
   n->set_locoff(_locoff);
   n->set_stkoff(_stkoff);
   n->set_monoff(_monoff);
@@ -682,6 +687,84 @@ Node *CallNode::result_cast() {
     }
   }
   return cast;
+}
+
+
+void CallNode::extract_projections(CallProjections* projs, bool separate_io_proj) {
+  projs->fallthrough_proj      = NULL;
+  projs->fallthrough_catchproj = NULL;
+  projs->fallthrough_ioproj    = NULL;
+  projs->catchall_ioproj       = NULL;
+  projs->catchall_catchproj    = NULL;
+  projs->fallthrough_memproj   = NULL;
+  projs->catchall_memproj      = NULL;
+  projs->resproj               = NULL;
+  projs->exobj                 = NULL;
+
+  for (DUIterator_Fast imax, i = fast_outs(imax); i < imax; i++) {
+    ProjNode *pn = fast_out(i)->as_Proj();
+    if (pn->outcnt() == 0) continue;
+    switch (pn->_con) {
+    case TypeFunc::Control:
+      {
+        // For Control (fallthrough) and I_O (catch_all_index) we have CatchProj -> Catch -> Proj
+        projs->fallthrough_proj = pn;
+        DUIterator_Fast jmax, j = pn->fast_outs(jmax);
+        const Node *cn = pn->fast_out(j);
+        if (cn->is_Catch()) {
+          ProjNode *cpn = NULL;
+          for (DUIterator_Fast kmax, k = cn->fast_outs(kmax); k < kmax; k++) {
+            cpn = cn->fast_out(k)->as_Proj();
+            assert(cpn->is_CatchProj(), "must be a CatchProjNode");
+            if (cpn->_con == CatchProjNode::fall_through_index)
+              projs->fallthrough_catchproj = cpn;
+            else {
+              assert(cpn->_con == CatchProjNode::catch_all_index, "must be correct index.");
+              projs->catchall_catchproj = cpn;
+            }
+          }
+        }
+        break;
+      }
+    case TypeFunc::I_O:
+      if (pn->_is_io_use)
+        projs->catchall_ioproj = pn;
+      else
+        projs->fallthrough_ioproj = pn;
+      for (DUIterator j = pn->outs(); pn->has_out(j); j++) {
+        Node* e = pn->out(j);
+        if (e->Opcode() == Op_CreateEx && e->in(0)->is_CatchProj()) {
+          assert(projs->exobj == NULL, "only one");
+          projs->exobj = e;
+        }
+      }
+      break;
+    case TypeFunc::Memory:
+      if (pn->_is_io_use)
+        projs->catchall_memproj = pn;
+      else
+        projs->fallthrough_memproj = pn;
+      break;
+    case TypeFunc::Parms:
+      projs->resproj = pn;
+      break;
+    default:
+      assert(false, "unexpected projection from allocation node.");
+    }
+  }
+
+  // The resproj may not exist because the result couuld be ignored
+  // and the exception object may not exist if an exception handler
+  // swallows the exception but all the other must exist and be found.
+  assert(projs->fallthrough_proj      != NULL, "must be found");
+  assert(projs->fallthrough_catchproj != NULL, "must be found");
+  assert(projs->fallthrough_memproj   != NULL, "must be found");
+  assert(projs->fallthrough_ioproj    != NULL, "must be found");
+  assert(projs->catchall_catchproj    != NULL, "must be found");
+  if (separate_io_proj) {
+    assert(projs->catchall_memproj      != NULL, "must be found");
+    assert(projs->catchall_ioproj       != NULL, "must be found");
+  }
 }
 
 
@@ -975,6 +1058,7 @@ SafePointScalarObjectNode::SafePointScalarObjectNode(const TypeOopPtr* tp,
 }
 
 bool SafePointScalarObjectNode::pinned() const { return true; }
+bool SafePointScalarObjectNode::depends_only_on_test() const { return false; }
 
 uint SafePointScalarObjectNode::ideal_reg() const {
   return 0; // No matching to machine instruction
@@ -1041,6 +1125,51 @@ AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
 
 //=============================================================================
 uint AllocateArrayNode::size_of() const { return sizeof(*this); }
+
+Node* AllocateArrayNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+  if (remove_dead_region(phase, can_reshape))  return this;
+
+  const Type* type = phase->type(Ideal_length());
+  if (type->isa_int() && type->is_int()->_hi < 0) {
+    if (can_reshape) {
+      PhaseIterGVN *igvn = phase->is_IterGVN();
+      // Unreachable fall through path (negative array length),
+      // the allocation can only throw so disconnect it.
+      Node* proj = proj_out(TypeFunc::Control);
+      Node* catchproj = NULL;
+      if (proj != NULL) {
+        for (DUIterator_Fast imax, i = proj->fast_outs(imax); i < imax; i++) {
+          Node *cn = proj->fast_out(i);
+          if (cn->is_Catch()) {
+            catchproj = cn->as_Multi()->proj_out(CatchProjNode::fall_through_index);
+            break;
+          }
+        }
+      }
+      if (catchproj != NULL && catchproj->outcnt() > 0 &&
+          (catchproj->outcnt() > 1 ||
+           catchproj->unique_out()->Opcode() != Op_Halt)) {
+        assert(catchproj->is_CatchProj(), "must be a CatchProjNode");
+        Node* nproj = catchproj->clone();
+        igvn->register_new_node_with_optimizer(nproj);
+
+        Node *frame = new (phase->C, 1) ParmNode( phase->C->start(), TypeFunc::FramePtr );
+        frame = phase->transform(frame);
+        // Halt & Catch Fire
+        Node *halt = new (phase->C, TypeFunc::Parms) HaltNode( nproj, frame );
+        phase->C->root()->add_req(halt);
+        phase->transform(halt);
+
+        igvn->replace_node(catchproj, phase->C->top());
+        return this;
+      }
+    } else {
+      // Can't correct it during regular GVN so register for IGVN
+      phase->C->record_for_igvn(this);
+    }
+  }
+  return NULL;
+}
 
 // Retrieve the length from the AllocateArrayNode. Narrow the type with a
 // CastII, if appropriate.  If we are not allowed to create new nodes, and

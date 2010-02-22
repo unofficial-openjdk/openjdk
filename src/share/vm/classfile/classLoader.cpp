@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,26 @@ static canonicalize_fn_t CanonicalizeEntry  = NULL;
 PerfCounter*    ClassLoader::_perf_accumulated_time = NULL;
 PerfCounter*    ClassLoader::_perf_classes_inited = NULL;
 PerfCounter*    ClassLoader::_perf_class_init_time = NULL;
+PerfCounter*    ClassLoader::_perf_class_init_selftime = NULL;
+PerfCounter*    ClassLoader::_perf_classes_verified = NULL;
 PerfCounter*    ClassLoader::_perf_class_verify_time = NULL;
+PerfCounter*    ClassLoader::_perf_class_verify_selftime = NULL;
 PerfCounter*    ClassLoader::_perf_classes_linked = NULL;
 PerfCounter*    ClassLoader::_perf_class_link_time = NULL;
+PerfCounter*    ClassLoader::_perf_class_link_selftime = NULL;
+PerfCounter*    ClassLoader::_perf_class_parse_time = NULL;
+PerfCounter*    ClassLoader::_perf_class_parse_selftime = NULL;
+PerfCounter*    ClassLoader::_perf_sys_class_lookup_time = NULL;
+PerfCounter*    ClassLoader::_perf_shared_classload_time = NULL;
+PerfCounter*    ClassLoader::_perf_sys_classload_time = NULL;
+PerfCounter*    ClassLoader::_perf_app_classload_time = NULL;
+PerfCounter*    ClassLoader::_perf_app_classload_selftime = NULL;
+PerfCounter*    ClassLoader::_perf_app_classload_count = NULL;
+PerfCounter*    ClassLoader::_perf_define_appclasses = NULL;
+PerfCounter*    ClassLoader::_perf_define_appclass_time = NULL;
+PerfCounter*    ClassLoader::_perf_define_appclass_selftime = NULL;
+PerfCounter*    ClassLoader::_perf_app_classfile_bytes_read = NULL;
+PerfCounter*    ClassLoader::_perf_sys_classfile_bytes_read = NULL;
 PerfCounter*    ClassLoader::_sync_systemLoaderLockContentionRate = NULL;
 PerfCounter*    ClassLoader::_sync_nonSystemLoaderLockContentionRate = NULL;
 PerfCounter*    ClassLoader::_sync_JVMFindLoadedClassLockFreeCounter = NULL;
@@ -152,6 +169,9 @@ ClassFileStream* ClassPathDirEntry::open_stream(const char* name) {
       hpi::close(file_handle);
       // construct ClassFileStream
       if (num_read == (size_t)st.st_size) {
+        if (UsePerfData) {
+          ClassLoader::perf_sys_classfile_bytes_read()->inc(num_read);
+        }
         return new ClassFileStream(buffer, st.st_size, _dir);    // Resource allocated
       }
     }
@@ -197,6 +217,9 @@ ClassFileStream* ClassPathZipEntry::open_stream(const char* name) {
       // read contents into resource array
       buffer     = NEW_RESOURCE_ARRAY(u1, filesize);
       if (!(*ReadEntry)(_zip, entry, buffer, filename)) return NULL;
+  }
+  if (UsePerfData) {
+    ClassLoader::perf_sys_classfile_bytes_read()->inc(filesize);
   }
   // return result
   return new ClassFileStream(buffer, filesize, _zip_name);    // Resource allocated
@@ -825,7 +848,9 @@ instanceKlassHandle ClassLoader::load_classfile(symbolHandle h_name, TRAPS) {
   ClassFileStream* stream = NULL;
   int classpath_index = 0;
   {
-    PerfTraceTime vmtimer(perf_accumulated_time());
+    PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
+                               ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
+                               PerfClassTraceTime::CLASS_LOAD);
     ClassPathEntry* e = _first_entry;
     while (e != NULL) {
       stream = e->open_stream(name);
@@ -849,6 +874,7 @@ instanceKlassHandle ClassLoader::load_classfile(symbolHandle h_name, TRAPS) {
                                                        class_loader,
                                                        protection_domain,
                                                        parsed_name,
+                                                       false,
                                                        CHECK_(h));
 
     // add to package table
@@ -890,11 +916,29 @@ void ClassLoader::initialize() {
     // jvmstat performance counters
     NEWPERFTICKCOUNTER(_perf_accumulated_time, SUN_CLS, "time");
     NEWPERFTICKCOUNTER(_perf_class_init_time, SUN_CLS, "classInitTime");
+    NEWPERFTICKCOUNTER(_perf_class_init_selftime, SUN_CLS, "classInitTime.self");
     NEWPERFTICKCOUNTER(_perf_class_verify_time, SUN_CLS, "classVerifyTime");
+    NEWPERFTICKCOUNTER(_perf_class_verify_selftime, SUN_CLS, "classVerifyTime.self");
     NEWPERFTICKCOUNTER(_perf_class_link_time, SUN_CLS, "classLinkedTime");
-
+    NEWPERFTICKCOUNTER(_perf_class_link_selftime, SUN_CLS, "classLinkedTime.self");
     NEWPERFEVENTCOUNTER(_perf_classes_inited, SUN_CLS, "initializedClasses");
     NEWPERFEVENTCOUNTER(_perf_classes_linked, SUN_CLS, "linkedClasses");
+    NEWPERFEVENTCOUNTER(_perf_classes_verified, SUN_CLS, "verifiedClasses");
+
+    NEWPERFTICKCOUNTER(_perf_class_parse_time, SUN_CLS, "parseClassTime");
+    NEWPERFTICKCOUNTER(_perf_class_parse_selftime, SUN_CLS, "parseClassTime.self");
+    NEWPERFTICKCOUNTER(_perf_sys_class_lookup_time, SUN_CLS, "lookupSysClassTime");
+    NEWPERFTICKCOUNTER(_perf_shared_classload_time, SUN_CLS, "sharedClassLoadTime");
+    NEWPERFTICKCOUNTER(_perf_sys_classload_time, SUN_CLS, "sysClassLoadTime");
+    NEWPERFTICKCOUNTER(_perf_app_classload_time, SUN_CLS, "appClassLoadTime");
+    NEWPERFTICKCOUNTER(_perf_app_classload_selftime, SUN_CLS, "appClassLoadTime.self");
+    NEWPERFEVENTCOUNTER(_perf_app_classload_count, SUN_CLS, "appClassLoadCount");
+    NEWPERFTICKCOUNTER(_perf_define_appclasses, SUN_CLS, "defineAppClasses");
+    NEWPERFTICKCOUNTER(_perf_define_appclass_time, SUN_CLS, "defineAppClassTime");
+    NEWPERFTICKCOUNTER(_perf_define_appclass_selftime, SUN_CLS, "defineAppClassTime.self");
+    NEWPERFBYTECOUNTER(_perf_app_classfile_bytes_read, SUN_CLS, "appClassBytes");
+    NEWPERFBYTECOUNTER(_perf_sys_classfile_bytes_read, SUN_CLS, "sysClassBytes");
+
 
     // The following performance counters are added for measuring the impact
     // of the bug fix of 6365597. They are mainly focused on finding out
@@ -1217,31 +1261,34 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
     // valid class file.  The class loader will check everything else.
     if (strchr(buffer, '.') == NULL) {
       _compile_the_world_counter++;
-      if (_compile_the_world_counter >= CompileTheWorldStartAt && _compile_the_world_counter <= CompileTheWorldStopAt) {
-        // Construct name without extension
-        symbolHandle sym = oopFactory::new_symbol_handle(buffer, CHECK);
-        // Use loader to load and initialize class
-        klassOop ik = SystemDictionary::resolve_or_null(sym, loader, Handle(), THREAD);
-        instanceKlassHandle k (THREAD, ik);
-        if (k.not_null() && !HAS_PENDING_EXCEPTION) {
-          k->initialize(THREAD);
+      if (_compile_the_world_counter > CompileTheWorldStopAt) return;
+
+      // Construct name without extension
+      symbolHandle sym = oopFactory::new_symbol_handle(buffer, CHECK);
+      // Use loader to load and initialize class
+      klassOop ik = SystemDictionary::resolve_or_null(sym, loader, Handle(), THREAD);
+      instanceKlassHandle k (THREAD, ik);
+      if (k.not_null() && !HAS_PENDING_EXCEPTION) {
+        k->initialize(THREAD);
+      }
+      bool exception_occurred = HAS_PENDING_EXCEPTION;
+      CLEAR_PENDING_EXCEPTION;
+      if (CompileTheWorldPreloadClasses && k.not_null()) {
+        constantPoolKlass::preload_and_initialize_all_classes(k->constants(), THREAD);
+        if (HAS_PENDING_EXCEPTION) {
+          // If something went wrong in preloading we just ignore it
+          CLEAR_PENDING_EXCEPTION;
+          tty->print_cr("Preloading failed for (%d) %s", _compile_the_world_counter, buffer);
         }
-        bool exception_occurred = HAS_PENDING_EXCEPTION;
-        CLEAR_PENDING_EXCEPTION;
+      }
+
+      if (_compile_the_world_counter >= CompileTheWorldStartAt) {
         if (k.is_null() || (exception_occurred && !CompileTheWorldIgnoreInitErrors)) {
           // If something went wrong (e.g. ExceptionInInitializerError) we skip this class
           tty->print_cr("CompileTheWorld (%d) : Skipping %s", _compile_the_world_counter, buffer);
         } else {
           tty->print_cr("CompileTheWorld (%d) : %s", _compile_the_world_counter, buffer);
           // Preload all classes to get around uncommon traps
-          if (CompileTheWorldPreloadClasses) {
-            constantPoolKlass::preload_and_initialize_all_classes(k->constants(), THREAD);
-            if (HAS_PENDING_EXCEPTION) {
-              // If something went wrong in preloading we just ignore it
-              CLEAR_PENDING_EXCEPTION;
-              tty->print_cr("Preloading failed for (%d) %s", _compile_the_world_counter, buffer);
-            }
-          }
           // Iterate over all methods in class
           for (int n = 0; n < k->methods()->length(); n++) {
             methodHandle m (THREAD, methodOop(k->methods()->obj_at(n)));
@@ -1253,16 +1300,28 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
                 CLEAR_PENDING_EXCEPTION;
                 tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
               }
-            if (TieredCompilation) {
-              // Clobber the first compile and force second tier compilation
-              m->clear_code();
-              CompileBroker::compile_method(m, InvocationEntryBci,
-                                            methodHandle(), 0, "CTW", THREAD);
-              if (HAS_PENDING_EXCEPTION) {
-                CLEAR_PENDING_EXCEPTION;
-                tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
+              if (TieredCompilation) {
+                // Clobber the first compile and force second tier compilation
+                nmethod* nm = m->code();
+                if (nm != NULL) {
+                  // Throw out the code so that the code cache doesn't fill up
+                  nm->make_not_entrant();
+                  m->clear_code();
+                }
+                CompileBroker::compile_method(m, InvocationEntryBci,
+                                              methodHandle(), 0, "CTW", THREAD);
+                if (HAS_PENDING_EXCEPTION) {
+                  CLEAR_PENDING_EXCEPTION;
+                  tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
+                }
               }
             }
+
+            nmethod* nm = m->code();
+            if (nm != NULL) {
+              // Throw out the code so that the code cache doesn't fill up
+              nm->make_not_entrant();
+              m->clear_code();
             }
           }
         }

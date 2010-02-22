@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,16 @@ public:
   // Testing
   bool oop_is_constMethod() const { return true; }
   virtual bool oop_is_parsable(oop obj) const;
+  virtual bool oop_is_conc_safe(oop obj) const;
+
 
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(constMethodKlass);
   constMethodOop allocate(int byte_code_size, int compressed_line_number_size,
                           int localvariable_table_length,
-                          int checked_exceptions_length, TRAPS);
+                          int checked_exceptions_length,
+                          bool is_conc_safe,
+                          TRAPS);
   static klassOop create_klass(TRAPS);
 
   // Sizing

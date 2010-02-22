@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,23 @@ COMPILE_RMIC=rmic
 BOOT_JAVA_HOME=
 !endif
 
+ProjectFile=vm.vcproj
+
 !if "$(MSC_VER)" == "1200"
+
 VcVersion=VC6
 ProjectFile=vm.dsp
+
+!elseif "$(MSC_VER)" == "1400"
+
+VcVersion=VC8
+
+!elseif "$(MSC_VER)" == "1500"
+
+VcVersion=VC9
+
 !else
+
 VcVersion=VC7
-ProjectFile=vm.vcproj
+
 !endif

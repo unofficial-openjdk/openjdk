@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,9 +116,9 @@ public:
 
   // For now.  Could "expand" some tables in the future, so that this made
   // sense.
-  void add_reference(oop* from, int tid);
+  void add_reference(OopOrNarrowOopStar from, int tid);
 
-  void add_reference(oop* from) {
+  void add_reference(OopOrNarrowOopStar from) {
     return add_reference(from, 0);
   }
 
@@ -140,8 +140,8 @@ public:
   static size_t static_mem_size();
   static size_t fl_mem_size();
 
-  bool contains_reference(oop* from) const;
-  bool contains_reference_locked(oop* from) const;
+  bool contains_reference(OopOrNarrowOopStar from) const;
+  bool contains_reference_locked(OopOrNarrowOopStar from) const;
 
   void clear();
 
@@ -177,8 +177,6 @@ private:
   G1BlockOffsetSharedArray* _bosa;
   G1BlockOffsetSharedArray* bosa() const { return _bosa; }
 
-  static bool _par_traversal;
-
   OtherRegionsTable _other_regions;
 
   // One set bit for every region that has an entry for this one.
@@ -194,10 +192,10 @@ private:
   // Unused unless G1RecordHRRSOops is true.
 
   static const int MaxRecorded = 1000000;
-  static oop**        _recorded_oops;
-  static HeapWord**   _recorded_cards;
-  static HeapRegion** _recorded_regions;
-  static int          _n_recorded;
+  static OopOrNarrowOopStar* _recorded_oops;
+  static HeapWord**          _recorded_cards;
+  static HeapRegion**        _recorded_regions;
+  static int                 _n_recorded;
 
   static const int MaxRecordedEvents = 1000;
   static Event*       _recorded_events;
@@ -211,8 +209,6 @@ public:
                    HeapRegion* hr);
 
   static int num_par_rem_sets();
-  static bool par_traversal() { return _par_traversal; }
-  static void set_par_traversal(bool b);
 
   HeapRegion* hr() const {
     return _other_regions.hr();
@@ -235,13 +231,13 @@ public:
 
   /* Used in the sequential case.  Returns "true" iff this addition causes
      the size limit to be reached. */
-  void add_reference(oop* from) {
+  void add_reference(OopOrNarrowOopStar from) {
     _other_regions.add_reference(from);
   }
 
   /* Used in the parallel case.  Returns "true" iff this addition causes
      the size limit to be reached. */
-  void add_reference(oop* from, int tid) {
+  void add_reference(OopOrNarrowOopStar from, int tid) {
     _other_regions.add_reference(from, tid);
   }
 
@@ -305,7 +301,7 @@ public:
     return OtherRegionsTable::fl_mem_size();
   }
 
-  bool contains_reference(oop* from) const {
+  bool contains_reference(OopOrNarrowOopStar from) const {
     return _other_regions.contains_reference(from);
   }
   void print() const;
@@ -333,7 +329,7 @@ public:
   }
 #endif
 
-  static void record(HeapRegion* hr, oop* f);
+  static void record(HeapRegion* hr, OopOrNarrowOopStar f);
   static void print_recorded();
   static void record_event(Event evnt);
 

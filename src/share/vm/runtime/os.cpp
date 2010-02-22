@@ -79,7 +79,6 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     assert(false, "Failed localtime_pd");
     return NULL;
   }
-
   const time_t zone = timezone;
 
   // If daylight savings time is in effect,
@@ -92,10 +91,10 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     UTC_to_local = UTC_to_local - seconds_per_hour;
   }
   // Compute the time zone offset.
-  //    localtime_pd sets timezone to the difference (in seconds)
+  //    localtime_pd() sets timezone to the difference (in seconds)
   //    between UTC and and local time.
   //    ISO 8601 says we need the difference between local time and UTC,
-  //    we change the sign of the localtime_pd result.
+  //    we change the sign of the localtime_pd() result.
   const time_t local_to_UTC = -(UTC_to_local);
   // Then we have to figure out if if we are ahead (+) or behind (-) UTC.
   char sign_local_to_UTC = '+';
@@ -208,7 +207,8 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
         VMThread::execute(&op1);
         Universe::print_heap_at_SIGBREAK();
         if (PrintClassHistogram) {
-          VM_GC_HeapInspection op1(gclog_or_tty, true /* force full GC before heap inspection */);
+          VM_GC_HeapInspection op1(gclog_or_tty, true /* force full GC before heap inspection */,
+                                   true /* need_prologue */);
           VMThread::execute(&op1);
         }
         if (JvmtiExport::should_post_data_dump()) {
@@ -997,7 +997,7 @@ bool os::stack_shadow_pages_available(Thread *thread, methodHandle method) {
   assert(StackRedPages > 0 && StackYellowPages > 0,"Sanity check");
   address sp = current_stack_pointer();
   // Check if we have StackShadowPages above the yellow zone.  This parameter
-  // is dependant on the depth of the maximum VM call stack possible from
+  // is dependent on the depth of the maximum VM call stack possible from
   // the handler for stack overflow.  'instanceof' in the stack overflow
   // handler or a println uses at least 8k stack of VM and native code
   // respectively.

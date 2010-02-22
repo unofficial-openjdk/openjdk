@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,7 @@ void IdealLoopTree::compute_profile_trip_cnt( PhaseIdealLoop *phase ) {
 
 //---------------------is_invariant_addition-----------------------------
 // Return nonzero index of invariant operand for an Add or Sub
-// of (nonconstant) invariant and variant values. Helper for reassoicate_invariants.
+// of (nonconstant) invariant and variant values. Helper for reassociate_invariants.
 int IdealLoopTree::is_invariant_addition(Node* n, PhaseIdealLoop *phase) {
   int op = n->Opcode();
   if (op == Op_AddI || op == Op_SubI) {
@@ -520,7 +520,7 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
 //------------------------------policy_align-----------------------------------
 // Return TRUE or FALSE if the loop should be cache-line aligned.  Gather the
 // expression that does the alignment.  Note that only one array base can be
-// aligned in a loop (unless the VM guarentees mutual alignment).  Note that
+// aligned in a loop (unless the VM guarantees mutual alignment).  Note that
 // if we vectorize short memory ops into longer memory ops, we may want to
 // increase alignment.
 bool IdealLoopTree::policy_align( PhaseIdealLoop *phase ) const {
@@ -1630,15 +1630,15 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
   // Before attempting fancy unrolling, RCE or alignment, see if we want
   // to completely unroll this loop or do loop unswitching.
   if( cl->is_normal_loop() ) {
+    if (should_unswitch) {
+      phase->do_unswitching(this, old_new);
+      return true;
+    }
     bool should_maximally_unroll =  policy_maximally_unroll(phase);
     if( should_maximally_unroll ) {
       // Here we did some unrolling and peeling.  Eventually we will
       // completely unroll this loop and it will no longer be a loop.
       phase->do_maximally_unroll(this,old_new);
-      return true;
-    }
-    if (should_unswitch) {
-      phase->do_unswitching(this, old_new);
       return true;
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
   CallGenerator* cg;
 
   // Dtrace currently doesn't work unless all calls are vanilla
-  if (DTraceMethodProbes) {
+  if (env()->dtrace_method_probes()) {
     allow_inline = false;
   }
 
@@ -128,6 +128,12 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
 
       if (allow_inline) {
         CallGenerator* cg = CallGenerator::for_inline(call_method, expected_uses);
+        if (require_inline && cg != NULL && should_delay_inlining(call_method, jvms)) {
+          // Delay the inlining of this method to give us the
+          // opportunity to perform some high level optimizations
+          // first.
+          return CallGenerator::for_late_inline(call_method, cg);
+        }
         if (cg == NULL) {
           // Fall through.
         } else if (require_inline || !InlineWarmCalls) {
@@ -225,8 +231,61 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
   } else {
     // Class Hierarchy Analysis or Type Profile reveals a unique target,
     // or it is a static or special call.
-    return CallGenerator::for_direct_call(call_method);
+    return CallGenerator::for_direct_call(call_method, should_delay_inlining(call_method, jvms));
   }
+}
+
+// Return true for methods that shouldn't be inlined early so that
+// they are easier to analyze and optimize as intrinsics.
+bool Compile::should_delay_inlining(ciMethod* call_method, JVMState* jvms) {
+  if (has_stringbuilder()) {
+
+    if ((call_method->holder() == C->env()->StringBuilder_klass() ||
+         call_method->holder() == C->env()->StringBuffer_klass()) &&
+        (jvms->method()->holder() == C->env()->StringBuilder_klass() ||
+         jvms->method()->holder() == C->env()->StringBuffer_klass())) {
+      // Delay SB calls only when called from non-SB code
+      return false;
+    }
+
+    switch (call_method->intrinsic_id()) {
+      case vmIntrinsics::_StringBuilder_void:
+      case vmIntrinsics::_StringBuilder_int:
+      case vmIntrinsics::_StringBuilder_String:
+      case vmIntrinsics::_StringBuilder_append_char:
+      case vmIntrinsics::_StringBuilder_append_int:
+      case vmIntrinsics::_StringBuilder_append_String:
+      case vmIntrinsics::_StringBuilder_toString:
+      case vmIntrinsics::_StringBuffer_void:
+      case vmIntrinsics::_StringBuffer_int:
+      case vmIntrinsics::_StringBuffer_String:
+      case vmIntrinsics::_StringBuffer_append_char:
+      case vmIntrinsics::_StringBuffer_append_int:
+      case vmIntrinsics::_StringBuffer_append_String:
+      case vmIntrinsics::_StringBuffer_toString:
+      case vmIntrinsics::_Integer_toString:
+        return true;
+
+      case vmIntrinsics::_String_String:
+        {
+          Node* receiver = jvms->map()->in(jvms->argoff() + 1);
+          if (receiver->is_Proj() && receiver->in(0)->is_CallStaticJava()) {
+            CallStaticJavaNode* csj = receiver->in(0)->as_CallStaticJava();
+            ciMethod* m = csj->method();
+            if (m != NULL &&
+                (m->intrinsic_id() == vmIntrinsics::_StringBuffer_toString ||
+                 m->intrinsic_id() == vmIntrinsics::_StringBuilder_toString))
+              // Delay String.<init>(new SB())
+              return true;
+          }
+          return false;
+        }
+
+      default:
+        return false;
+    }
+  }
+  return false;
 }
 
 
@@ -245,6 +304,14 @@ bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* kl
       !holder_klass->is_interface()) {
     uncommon_trap(Deoptimization::Reason_uninitialized,
                   Deoptimization::Action_reinterpret,
+                  holder_klass);
+    return true;
+  }
+  if (dest_method->is_method_handle_invoke()
+      && holder_klass->name() == ciSymbol::java_dyn_Dynamic()) {
+    // FIXME: NYI
+    uncommon_trap(Deoptimization::Reason_unhandled,
+                  Deoptimization::Action_none,
                   holder_klass);
     return true;
   }
@@ -748,6 +815,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_inlined_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_inlined_interface_calls_addr()); break;
       case Bytecodes::_invokestatic:
+      case Bytecodes::_invokedynamic:
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_inlined_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }
@@ -756,6 +824,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
       case Bytecodes::_invokevirtual:   increment_counter(SharedRuntime::nof_normal_calls_addr()); break;
       case Bytecodes::_invokeinterface: increment_counter(SharedRuntime::nof_interface_calls_addr()); break;
       case Bytecodes::_invokestatic:
+      case Bytecodes::_invokedynamic:
       case Bytecodes::_invokespecial:   increment_counter(SharedRuntime::nof_static_calls_addr()); break;
       default: fatal("unexpected call bytecode");
       }

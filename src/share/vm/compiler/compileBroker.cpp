@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1529,6 +1529,12 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     }
     assert(thread->env() == &ci_env, "set by ci_env");
     // The thread-env() field is cleared in ~CompileTaskWrapper.
+
+    // Cache Jvmti state
+    ci_env.cache_jvmti_state();
+
+    // Cache DTrace flags
+    ci_env.cache_dtrace_flags();
 
     ciMethod* target = ci_env.get_method_from_handle(target_handle);
 

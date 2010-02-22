@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,8 +53,8 @@ static void* verify_byte_codes_fn() {
 
 // Methods in Verifier
 
-bool Verifier::should_verify_for(oop class_loader) {
-  return class_loader == NULL ?
+bool Verifier::should_verify_for(oop class_loader, bool should_verify_class) {
+  return (class_loader == NULL || !should_verify_class) ?
     BytecodeVerificationLocal : BytecodeVerificationRemote;
 }
 
@@ -68,7 +68,7 @@ bool Verifier::relax_verify_for(oop loader) {
   return !need_verify;
 }
 
-bool Verifier::verify(instanceKlassHandle klass, Verifier::Mode mode, TRAPS) {
+bool Verifier::verify(instanceKlassHandle klass, Verifier::Mode mode, bool should_verify_class, TRAPS) {
   ResourceMark rm(THREAD);
   HandleMark hm;
 
@@ -81,7 +81,7 @@ bool Verifier::verify(instanceKlassHandle klass, Verifier::Mode mode, TRAPS) {
   // If the class should be verified, first see if we can use the split
   // verifier.  If not, or if verification fails and FailOverToOldVerifier
   // is set, then call the inference verifier.
-  if (is_eligible_for_verification(klass)) {
+  if (is_eligible_for_verification(klass, should_verify_class)) {
     if (TraceClassInitialization) {
       tty->print_cr("Start class verification for: %s", klassName);
     }
@@ -141,12 +141,13 @@ bool Verifier::verify(instanceKlassHandle klass, Verifier::Mode mode, TRAPS) {
   }
 }
 
-bool Verifier::is_eligible_for_verification(instanceKlassHandle klass) {
+bool Verifier::is_eligible_for_verification(instanceKlassHandle klass, bool should_verify_class) {
   symbolOop name = klass->name();
   klassOop refl_magic_klass = SystemDictionary::reflect_magic_klass();
 
-  return (should_verify_for(klass->class_loader()) &&
+  return (should_verify_for(klass->class_loader(), should_verify_class) &&
     // return if the class is a bootstrapping class
+    // or defineClass specified not to verify by default (flags override passed arg)
     // We need to skip the following four for bootstraping
     name != vmSymbols::java_lang_Object() &&
     name != vmSymbols::java_lang_Class() &&
@@ -1174,6 +1175,7 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
             &this_uninit, return_type, cp, CHECK_VERIFY(this));
           no_control_flow = false; break;
         case Bytecodes::_invokeinterface :
+        case Bytecodes::_invokedynamic :
           verify_invoke_instructions(
             &bcs, code_length, &current_frame,
             &this_uninit, return_type, cp, CHECK_VERIFY(this));
@@ -1895,12 +1897,23 @@ void ClassVerifier::verify_invoke_instructions(
   Bytecodes::Code opcode = bcs->code();
   unsigned int types = (opcode == Bytecodes::_invokeinterface
                                 ? 1 << JVM_CONSTANT_InterfaceMethodref
+                      : opcode == Bytecodes::_invokedynamic
+                                ? 1 << JVM_CONSTANT_NameAndType
                                 : 1 << JVM_CONSTANT_Methodref);
   verify_cp_type(index, cp, types, CHECK_VERIFY(this));
 
   // Get method name and signature
-  symbolHandle method_name(THREAD, cp->name_ref_at(index));
-  symbolHandle method_sig(THREAD, cp->signature_ref_at(index));
+  symbolHandle method_name;
+  symbolHandle method_sig;
+  if (opcode == Bytecodes::_invokedynamic) {
+    int name_index = cp->name_ref_index_at(index);
+    int sig_index  = cp->signature_ref_index_at(index);
+    method_name = symbolHandle(THREAD, cp->symbol_at(name_index));
+    method_sig  = symbolHandle(THREAD, cp->symbol_at(sig_index));
+  } else {
+    method_name = symbolHandle(THREAD, cp->name_ref_at(index));
+    method_sig  = symbolHandle(THREAD, cp->signature_ref_at(index));
+  }
 
   if (!SignatureVerifier::is_valid_method_signature(method_sig)) {
     class_format_error(
@@ -1910,8 +1923,17 @@ void ClassVerifier::verify_invoke_instructions(
   }
 
   // Get referenced class type
-  VerificationType ref_class_type = cp_ref_index_to_type(
-    index, cp, CHECK_VERIFY(this));
+  VerificationType ref_class_type;
+  if (opcode == Bytecodes::_invokedynamic) {
+    if (!EnableInvokeDynamic) {
+      class_format_error(
+        "invokedynamic instructions not enabled on this JVM",
+        _klass->external_name());
+      return;
+    }
+  } else {
+    ref_class_type = cp_ref_index_to_type(index, cp, CHECK_VERIFY(this));
+  }
 
   // For a small signature length, we just allocate 128 bytes instead
   // of parsing the signature once to find its size.
@@ -1970,6 +1992,14 @@ void ClassVerifier::verify_invoke_instructions(
     }
   }
 
+  if (opcode == Bytecodes::_invokedynamic) {
+    address bcp = bcs->bcp();
+    if (*(bcp+3) != 0 || *(bcp+4) != 0) {
+      verify_error(bci, "Third and fourth operand bytes of invokedynamic must be zero");
+      return;
+    }
+  }
+
   if (method_name->byte_at(0) == '<') {
     // Make sure <init> can only be invoked by invokespecial
     if (opcode != Bytecodes::_invokespecial ||
@@ -1994,7 +2024,8 @@ void ClassVerifier::verify_invoke_instructions(
     current_frame->pop_stack(sig_types[i], CHECK_VERIFY(this));
   }
   // Check objectref on operand stack
-  if (opcode != Bytecodes::_invokestatic) {
+  if (opcode != Bytecodes::_invokestatic &&
+      opcode != Bytecodes::_invokedynamic) {
     if (method_name() == vmSymbols::object_initializer_name()) {  // <init> method
       verify_invoke_init(bcs, ref_class_type, current_frame,
         code_length, this_uninit, cp, CHECK_VERIFY(this));

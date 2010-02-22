@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,7 +163,7 @@
 #ifdef USELABELS
 // Have to do this dispatch this way in C++ because otherwise gcc complains about crossing an
 // initialization (which is is the initialization of the table pointer...)
-#define DISPATCH(opcode) goto *dispatch_table[opcode]
+#define DISPATCH(opcode) goto *(void*)dispatch_table[opcode]
 #define CONTINUE {                              \
         opcode = *pc;                           \
         DO_UPDATE_INSTRUCTION_COUNT(opcode);    \
@@ -341,7 +341,7 @@
  */
 #undef CHECK_NULL
 #define CHECK_NULL(obj_)                                                 \
-    if ((obj_) == 0) {                                                   \
+    if ((obj_) == NULL) {                                                \
         VM_JAVA_ERROR(vmSymbols::java_lang_NullPointerException(), "");  \
     }
 
@@ -1362,7 +1362,7 @@ run:
 
 #define NULL_COMPARISON_NOT_OP(name)                                         \
       CASE(_if##name): {                                                     \
-          int skip = (!(STACK_OBJECT(-1) == 0))                              \
+          int skip = (!(STACK_OBJECT(-1) == NULL))                           \
                       ? (int16_t)Bytes::get_Java_u2(pc + 1) : 3;             \
           address branch_pc = pc;                                            \
           UPDATE_PC_AND_TOS(skip, -1);                                       \
@@ -1372,7 +1372,7 @@ run:
 
 #define NULL_COMPARISON_OP(name)                                             \
       CASE(_if##name): {                                                     \
-          int skip = ((STACK_OBJECT(-1) == 0))                               \
+          int skip = ((STACK_OBJECT(-1) == NULL))                            \
                       ? (int16_t)Bytes::get_Java_u2(pc + 1) : 3;             \
           address branch_pc = pc;                                            \
           UPDATE_PC_AND_TOS(skip, -1);                                       \
@@ -2642,7 +2642,7 @@ handle_return:
         // two interpreted frames). We need to save the current arguments in C heap so that
         // the deoptimized frame when it restarts can copy the arguments to its expression
         // stack and re-execute the call. We also have to notify deoptimization that this
-        // has occured and to pick the preerved args copy them to the deoptimized frame's
+        // has occurred and to pick the preserved args copy them to the deoptimized frame's
         // java expression stack. Yuck.
         //
         THREAD->popframe_preserve_args(in_ByteSize(METHOD->size_of_parameters() * wordSize),

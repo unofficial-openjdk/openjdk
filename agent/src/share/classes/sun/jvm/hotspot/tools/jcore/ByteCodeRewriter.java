@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,29 +88,6 @@ public class ByteCodeRewriter
 
             // update the code buffer hotspot specific bytecode with the jvm bytecode
             code[bci] = (byte) (0xFF & bytecode);
-
-            // RewriteFrequentPairs
-            if(hotspotcode == Bytecodes._fast_iaccess_0 ||
-               hotspotcode == Bytecodes._fast_aaccess_0 ||
-               hotspotcode == Bytecodes._fast_faccess_0) {
-               // rewrite next bytecode as _getfield
-                bci++;
-               code[bci] = (byte) (0xFF & Bytecodes._getfield);
-               bytecode  = Bytecodes._getfield;
-               hotspotcode  = Bytecodes._getfield;
-            } else if (hotspotcode == Bytecodes._fast_iload2) {
-               // rewrite next bytecode as _iload
-               bci++;
-               code[bci] = (byte) (0xFF & Bytecodes._iload);
-               bytecode = Bytecodes._iload;
-               hotspotcode = Bytecodes._iload;
-            } else if (hotspotcode == Bytecodes._fast_icaload) {
-               // rewrite next bytecode as _caload
-               bci++;
-               code[bci] = (byte) (0xFF & Bytecodes._caload);
-               bytecode = Bytecodes._caload;
-               bytecode = Bytecodes._caload;
-            }
 
             short cpoolIndex = 0;
             switch (bytecode) {

@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ endif
 
 OPT_CFLAGS/NOOPT=-O0
 
-# 6835796. Problem in GCC 4.3.0 with mulnode.o optimized compilation.
+# 6835796. Problem in GCC 4.3.0 with mulnode.o optimized compilation. 
 ifneq "$(shell expr \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) = 3 \) \))" "0"
 OPT_CFLAGS/mulnode.o += -O0
 endif
@@ -135,6 +135,14 @@ endif
 
 # Enable linker optimization
 LFLAGS += -Xlinker -O1
+
+# If this is a --hash-style=gnu system, use --hash-style=both
+#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | grep -- '--hash-style=gnu')
+ifneq ($(_HAS_HASH_STYLE_GNU),)
+  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+endif
+LFLAGS += $(LDFLAGS_HASH_STYLE)
 
 # Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
 MAPFLAG = -Xlinker --version-script=FILENAME
