@@ -78,6 +78,7 @@ instanceRefKlass.cpp                    g1CollectedHeap.inline.hpp
 instanceRefKlass.cpp                    g1OopClosures.inline.hpp
 instanceRefKlass.cpp                    oop.pcgc.inline.hpp
 instanceRefKlass.cpp                    psPromotionManager.inline.hpp
+instanceRefKlass.cpp                    oop.pcgc.inline.hpp
 instanceRefKlass.cpp                    psScavenge.inline.hpp
 instanceRefKlass.cpp                    parOopClosures.inline.hpp
 

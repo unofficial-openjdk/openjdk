@@ -136,4 +136,3 @@ class FreeChunk VALUE_OBJ_CLASS_SPEC {
 enum AlignmentConstants {
   MinChunkSize = numQuanta(sizeof(FreeChunk), MinObjAlignmentInBytes) * MinObjAlignment
 };
-

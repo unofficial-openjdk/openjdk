@@ -571,15 +571,15 @@ void os::Linux::libpthread_init() {
   }
 
   if (strstr(libpthread_version(), "NPTL")) {
-     os::Linux::set_is_NPTL();
+    os::Linux::set_is_NPTL();
   } else {
-     os::Linux::set_is_LinuxThreads();
+    os::Linux::set_is_LinuxThreads();
   }
 
   // LinuxThreads have two flavors: floating-stack mode, which allows variable
   // stack size; and fixed-stack mode. NPTL is always floating-stack.
   if (os::Linux::is_NPTL() || os::Linux::supports_variable_stack_size()) {
-     os::Linux::set_is_floating_stack();
+    os::Linux::set_is_floating_stack();
   }
 }
 
@@ -1533,8 +1533,8 @@ void os::dll_build_name(char* buffer, size_t buflen,
 
   // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
-      *buffer = '\0';
-      return;
+    *buffer = '\0';
+    return;
   }
 
   if (pnamelen == 0) {

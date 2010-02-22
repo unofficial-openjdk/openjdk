@@ -4650,4 +4650,3 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
 #endif // KERNEL
 }
 JVM_END
-
