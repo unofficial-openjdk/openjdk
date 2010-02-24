@@ -477,12 +477,6 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             return log.nwarnings;
     }
 
-    /** Whether or not any parse errors have occurred.
-     */
-    public boolean parseErrors() {
-        return parseErrors;
-    }
-
     protected Scanner.Factory getScannerFactory() {
         return Scanner.Factory.instance(context);
     }
@@ -521,7 +515,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             Scanner scanner = getScannerFactory().newScanner(content);
             Parser parser = parserFactory.newParser(scanner, keepComments(), genEndPos);
             tree = parser.compilationUnit();
-            parseErrors |= (log.nerrors > initialErrorCount);
+            log.unrecoverableError |= (log.nerrors > initialErrorCount);
             if (lineDebugInfo) {
                 tree.lineMap = scanner.getLineMap();
             }
@@ -703,9 +697,6 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
     private boolean hasBeenUsed = false;
     private long start_msec = 0;
     public long elapsed_msec = 0;
-
-    /** Track whether any errors occurred while parsing source text. */
-    private boolean parseErrors = false;
 
     public void compile(List<JavaFileObject> sourceFileObject)
         throws Throwable {

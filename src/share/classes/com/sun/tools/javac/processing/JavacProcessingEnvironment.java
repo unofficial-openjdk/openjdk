@@ -838,7 +838,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     roots = cleanTrees(roots).appendList(parsedFiles);
 
                     // Check for errors after parsing
-                    if (compiler.parseErrors()) {
+                    if (log.unrecoverableError) {
                         errorStatus = true;
                         break runAround;
                     } else {
@@ -866,7 +866,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         roots = runLastRound(xout, roundNumber, errorStatus, compiler, roots, taskListener);
         // Set error status for any files compiled and generated in
         // the last round
-        if (compiler.parseErrors())
+        if (log.unrecoverableError)
             errorStatus = true;
 
         compiler.close(false);
