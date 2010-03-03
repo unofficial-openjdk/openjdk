@@ -1263,7 +1263,8 @@ void Arguments::set_ergonomics_flags() {
   if (MaxHeapSize <= max_heap_for_compressed_oops()) {
 #ifndef COMPILER1
     if (FLAG_IS_DEFAULT(UseCompressedOops) && !UseG1GC) {
-      FLAG_SET_ERGO(bool, UseCompressedOops, true);
+      // Disable Compressed Oops by default. Uncomment next line to enable it.
+      // FLAG_SET_ERGO(bool, UseCompressedOops, true);
     }
 #endif
 #ifdef _WIN64
@@ -1463,11 +1464,17 @@ void Arguments::set_aggressive_opts_flags() {
     sprintf(buffer, "java.lang.Integer.IntegerCache.high=" INTX_FORMAT, AutoBoxCacheMax);
     add_property(buffer);
   }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
-    FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
-    FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
+  if (AggressiveOpts) {
+    // Switch on optimizations with AggressiveOpts.
+    if (FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
+      FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
+    }
+    if (FLAG_IS_DEFAULT(UseLoopPredicate)) {
+      FLAG_SET_DEFAULT(UseLoopPredicate, true);
+    }
+    if (FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
+      FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
+    }
   }
 #endif
 
