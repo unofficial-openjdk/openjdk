@@ -28,8 +28,7 @@
  * and not thereafter
  * @author gafter
  * @build EarlyAssert EarlyAssertWrapper
- * @compile -source 1.4 EarlyAssert.java
- * @run main EarlyAssert
+ * @run main EarlyAssertWrapper
  */
 
 /*
