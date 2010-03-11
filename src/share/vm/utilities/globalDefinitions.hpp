@@ -598,6 +598,7 @@ inline TosState as_TosState(BasicType type) {
     case T_VOID   : return vtos;
     case T_ARRAY  : // fall through
     case T_OBJECT : return atos;
+    default       : return ilgl; // fixes the -Wall -Werror under gcc 4.5
   }
   return ilgl;
 }
