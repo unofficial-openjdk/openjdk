@@ -141,6 +141,10 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
                                      "Heure d'\u00e9t\u00e9 de Malaisie", "MYST"};
         String NORONHA[] = new String[] {"Heure de Fernando de Noronha", "FNT",
                                          "Heure d'\u00e9t\u00e9 de Fernando de Noronha", "FNST"};
+        String NOVT[] = new String[] {"Heure de Novossibirsk", "NOVT",
+                                      "Heure d'\u00e9t\u00e9 de Novossibirsk", "NOVST"};
+        String NPT[] = new String[] {"Heure du N\u00e9pal", "NPT",
+                                     "Heure d'\u00e9t\u00e9 du N\u00e9pal", "NPST"};
         String NST[] = new String[] {"Heure normale de Terre-Neuve", "NST",
                                      "Heure avanc\u00e9e de Terre-Neuve", "NDT"} ;
         String NZST[] = new String[] {"Heure normale de Nouvelle-Z\u00e9lande", "NZST",
@@ -151,6 +155,8 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
                                      "Heure d'\u00e9t\u00e9 du Pakistan", "PKST"} ;
         String PST[] = new String[] {"Heure normale du Pacifique", "PST",
                                      "Heure avanc\u00e9e du Pacifique", "PDT"} ;
+        String RST[] = new String[] {"Heure normale de l'Est", "EST",
+                                     "Heure avanc\u00e9e du Centre", "CDT"} ;
         String SAST[] = new String[] {"Heure normale d'Afrique du Sud", "SAST",
                                       "Heure d'\u00e9t\u00e9 d'Afrique du Sud", "SAST"} ;
         String SBT[] = new String[] {"Heure des \u00celes Salomon", "SBT",
@@ -167,6 +173,8 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
                                       "Heure d'\u00e9t\u00e9 de Truk", "TRUST"};
         String ULAT[]= new String[] {"Heure de l'Ulaanbaatar", "ULAT",
                                      "Heure d'\u00e9t\u00e9 de l'Ulaanbaatar", "ULAST"} ;
+        String WART[] = new String[] {"Heure D'Argentine", "WART",
+                                      "Heure d'\u00e9t\u00e9 D'Argentine", "WARST"} ;
         String WAT[] = new String[] {"Heure d'Afrique de l'Ouest", "WAT",
                                      "Heure d'\u00e9t\u00e9 d'Afrique de l'Ouest", "WAST"} ;
         String WET[] = new String[] {"Heure d'Europe de l'Ouest", "WET",
@@ -290,8 +298,9 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
             {"America/Argentina/La_Rioja", AGT},
             {"America/Argentina/Mendoza", AGT},
             {"America/Argentina/Rio_Gallegos", AGT},
+            {"America/Argentina/Salta", AGT},
             {"America/Argentina/San_Juan", AGT},
-            {"America/Argentina/San_Luis", AGT},
+            {"America/Argentina/San_Luis", WART},
             {"America/Argentina/Tucuman", AGT},
             {"America/Argentina/Ushuaia", AGT},
             {"America/Aruba", AST},
@@ -375,6 +384,7 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
             {"America/Manaus", AMT},
            {"America/Marigot", AST},
             {"America/Martinique", AST},
+            {"America/Matamoros", CST},
             {"America/Mazatlan", MST},
             {"America/Mendoza", AGT},
             {"America/Menominee", CST},
@@ -394,6 +404,7 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
             {"America/Noronha", NORONHA},
             {"America/North_Dakota/Center", CST},
             {"America/North_Dakota/New_Salem", CST},
+            {"America/Ojinaga", MST},
             {"America/Panama", EST},
             {"America/Pangnirtung", EST},
             {"America/Paramaribo", new String[] {"Heure du Surinam", "SRT",
@@ -407,9 +418,10 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
             {"America/Rankin_Inlet", CST},
             {"America/Recife", BRT},
             {"America/Regina", CST},
-            {"America/Resolute", EST},
+            {"America/Resolute", RST},
             {"America/Rio_Branco", AMT},
             {"America/Rosario", AGT},
+            {"America/Santa_Isabel", PST},
             {"America/Santarem", BRT},
             {"America/Santiago", CLT},
             {"America/Santo_Domingo", AST},
@@ -434,7 +446,6 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
             {"America/Winnipeg", CST},
             {"America/Yakutat", AKST},
             {"America/Yellowknife", MST},
-            {"Antarctica/Casey", WST_AUS},
             {"Antarctica/Davis", new String[] {"Heure de Davis", "DAVT",
                                                "Heure d'\u00e9t\u00e9 de Davis", "DAVST"}},
             {"Antarctica/DumontDUrville", new String[] {"Heure de Dumont-d'Urville", "DDUT",
@@ -505,8 +516,8 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
                                              "Heure d'\u00e9t\u00e9 de Petropavlovsk-Kamchatski", "PETST"}},
             {"Asia/Karachi", PKT},
             {"Asia/Kashgar", CTT},
-            {"Asia/Katmandu", new String[] {"Heure du N\u00e9pal", "NPT",
-                                            "Heure d'\u00e9t\u00e9 du N\u00e9pal", "NPST"}},
+            {"Asia/Kathmandu", NPT},
+            {"Asia/Katmandu", NPT},
             {"Asia/Kolkata", IST},
             {"Asia/Krasnoyarsk", new String[] {"Heure de Krasno\u00efarsk", "KRAT",
                                                "Heure d'\u00e9t\u00e9 de Krasno\u00efarsk", "KRAST"}},
@@ -522,8 +533,8 @@ public final class TimeZoneNames_fr extends TimeZoneNamesBundle {
                                           "Heure d'\u00e9t\u00e9 des Philippines", "PHST"}},
             {"Asia/Muscat", GST},
             {"Asia/Nicosia", EET},
-            {"Asia/Novosibirsk", new String[] {"Heure de Novossibirsk", "NOVT",
-                                               "Heure d'\u00e9t\u00e9 de Novossibirsk", "NOVST"}},
+            {"Asia/Novokuznetsk", NOVT},
+            {"Asia/Novosibirsk", NOVT},
             {"Asia/Oral", new String[] {"Heure d'Oral", "ORAT",
                                         "Heure d'\u00e9t\u00e9 d'Oral", "ORAST"}},
             {"Asia/Omsk", new String[] {"Heure d'Omsk", "OMST",

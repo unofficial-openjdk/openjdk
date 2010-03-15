@@ -197,6 +197,7 @@ static int getWinTimeZone(char *winZoneName, char *winMapID)
          * Vista uses the different key name.
          */
         if (ret != ERROR_SUCCESS) {
+          bufSize = sizeof(val);
             ret = RegQueryValueExA(hKey, "DynamicDaylightTimeDisabled",
                                    NULL, &valueType, (LPBYTE) &val, &bufSize);
         }
@@ -344,7 +345,7 @@ static int getWinTimeZone(char *winZoneName, char *winMapID)
      * Get the "MapID" value of the registry to be able to eliminate
      * duplicated key names later.
      */
-    valueSize = MAX_ZONE_CHAR;
+    valueSize = MAX_MAPID_LENGTH;
     ret = RegQueryValueExA(hSubKey, "MapID", NULL, &valueType, winMapID, &valueSize);
     (void) RegCloseKey(hSubKey);
     (void) RegCloseKey(hKey);

@@ -602,11 +602,7 @@ abstract public class TimeZone implements Serializable, Cloneable {
                 }
             });
 
-        if (hasPermission()) {
-            defaultTimeZone = tz;
-        } else {
-            defaultZoneTL.set(tz);
-        }
+        defaultTimeZone = tz;
         return tz;
     }
 
@@ -637,6 +633,7 @@ abstract public class TimeZone implements Serializable, Cloneable {
         if (hasPermission()) {
             synchronized (TimeZone.class) {
                 defaultTimeZone = zone;
+                defaultZoneTL.set(null);
             }
         } else {
             defaultZoneTL.set(zone);

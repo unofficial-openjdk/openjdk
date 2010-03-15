@@ -141,6 +141,10 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                      "Ora estiva della Malaysia", "MYST"};
         String NORONHA[] = new String[] {"Ora di Fernando de Noronha", "FNT",
                                          "Ora estiva di Fernando de Noronha", "FNST"};
+        String NOVT[] = new String[] {"Ora di Novosibirsk", "NOVT",
+                                      "Ora estiva di Novosibirsk", "NOVST"};
+        String NPT[] = new String[] {"Ora del Nepal", "NPT",
+                                     "Ora estiva del Nepal", "NPST"};
         String NST[] = new String[] {"Ora solare di Terranova", "NST",
                                      "Ora legale di Terranova", "NDT"};
         String NZST[] = new String[] {"Ora solare della Nuova Zelanda", "NZST",
@@ -151,6 +155,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                      "Ora estiva del Pakistan", "PKST"};
         String PST[] = new String[] {"Ora solare della costa occidentale USA", "PST",
                                      "Ora legale della costa occidentale USA", "PDT"};
+        String RST[] = new String[] {"Ora solare USA orientale", "EST",
+                                     "Ora legale USA centrale", "CDT"};
         String SAST[] = new String[] {"Ora solare del Sudafrica", "SAST",
                                       "Ora estiva del Sudafrica", "SAST"};
         String SBT[] = new String[] {"Ora delle Isole Salomone", "SBT",
@@ -167,6 +173,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                       "Ora estiva di Truk", "TRUST"};
         String ULAT[]= new String[] {"Ora di Ulaanbaatar", "ULAT",
                                      "Ora estiva di Ulaanbaatar", "ULAST"};
+        String WART[] = new String[] {"Ora dell'Argentina", "WART",
+                                      "Ora estiva dell'Argentina", "WARST"};
         String WAT[] = new String[] {"Ora dell'Africa occidentale", "WAT",
                                      "Ora estiva dell'Africa occidentale", "WAST"};
         String WET[] = new String[] {"Ora dell'Europa occidentale", "WET",
@@ -290,8 +298,9 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"America/Argentina/La_Rioja", AGT},
             {"America/Argentina/Mendoza", AGT},
             {"America/Argentina/Rio_Gallegos", AGT},
+            {"America/Argentina/Salta", AGT},
             {"America/Argentina/San_Juan", AGT},
-            {"America/Argentina/San_Luis", AGT},
+            {"America/Argentina/San_Luis", WART},
             {"America/Argentina/Tucuman", AGT},
             {"America/Argentina/Ushuaia", AGT},
             {"America/Aruba", AST},
@@ -375,6 +384,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"America/Manaus", AMT},
            {"America/Marigot", AST},
             {"America/Martinique", AST},
+            {"America/Matamoros", CST},
             {"America/Mazatlan", MST},
             {"America/Mendoza", AGT},
             {"America/Menominee", CST},
@@ -394,6 +404,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"America/Noronha", NORONHA},
             {"America/North_Dakota/Center", CST},
             {"America/North_Dakota/New_Salem", CST},
+            {"America/Ojinaga", MST},
             {"America/Panama", EST},
             {"America/Pangnirtung", EST},
             {"America/Paramaribo", new String[] {"Ora di Suriname", "SRT",
@@ -407,9 +418,10 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"America/Rankin_Inlet", CST},
             {"America/Recife", BRT},
             {"America/Regina", CST},
-            {"America/Resolute", EST},
+            {"America/Resolute", RST},
             {"America/Rio_Branco", AMT},
             {"America/Rosario", AGT},
+            {"America/Santa_Isabel", PST},
             {"America/Santarem", BRT},
             {"America/Santiago", CLT},
             {"America/Santo_Domingo", AST},
@@ -434,7 +446,6 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"America/Winnipeg", CST},
             {"America/Yakutat", AKST},
             {"America/Yellowknife", MST},
-            {"Antarctica/Casey", WST_AUS},
             {"Antarctica/Davis", new String[] {"Ora di Davis", "DAVT",
                                                "Ora estiva di Davis", "DAVST"}},
             {"Antarctica/DumontDUrville", new String[] {"Ora di Dumont-d'Urville", "DDUT",
@@ -505,8 +516,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                              "Ora estiva di Petropavlovsk-Kamchatski", "PETST"}},
             {"Asia/Karachi", PKT},
             {"Asia/Kashgar", CTT},
-            {"Asia/Katmandu", new String[] {"Ora del Nepal", "NPT",
-                                            "Ora estiva del Nepal", "NPST"}},
+            {"Asia/Kathmandu", NPT},
+            {"Asia/Katmandu", NPT},
             {"Asia/Kolkata", IST},
             {"Asia/Krasnoyarsk", new String[] {"Ora di Krasnojarsk", "KRAT",
                                                "Ora estiva di Krasnojarsk", "KRAST"}},
@@ -522,8 +533,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                           "Ora estiva delle Filippine", "PHST"}},
             {"Asia/Muscat", GST},
             {"Asia/Nicosia", EET},
-            {"Asia/Novosibirsk", new String[] {"Ora di Novosibirsk", "NOVT",
-                                               "Ora estiva di Novosibirsk", "NOVST"}},
+            {"Asia/Novokuznetsk", NOVT},
+            {"Asia/Novosibirsk", NOVT},
             {"Asia/Oral", new String[] {"Ora di Oral", "ORAT",
                                         "Ora estiva di Oral", "ORAST"}},
             {"Asia/Omsk", new String[] {"Ora di Omsk", "OMST",

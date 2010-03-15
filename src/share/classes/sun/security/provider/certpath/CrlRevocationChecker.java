@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,6 +80,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         { false, false, false, false, false, false, true };
     private static final boolean[] ALL_REASONS =
         {true, true, true, true, true, true, true, true, true};
+    private boolean mOnlyEECert = false;
 
     /**
      * Creates a <code>CrlRevocationChecker</code>.
@@ -110,6 +111,13 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
     CrlRevocationChecker(TrustAnchor anchor, PKIXParameters params,
         Collection<X509Certificate> certs) throws CertPathValidatorException
     {
+        this(anchor, params, certs, false);
+    }
+
+    CrlRevocationChecker(TrustAnchor anchor, PKIXParameters params,
+        Collection<X509Certificate> certs, boolean onlyEECert)
+        throws CertPathValidatorException
+    {
         mAnchor = anchor;
         mParams = params;
         mStores = new ArrayList<CertStore>(params.getCertStores());
@@ -129,6 +137,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         }
         Date testDate = params.getDate();
         mCurrentTime = (testDate != null ? testDate : new Date());
+        mOnlyEECert = onlyEECert;
         init(false);
     }
 
@@ -258,6 +267,13 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
         if (debug != null) {
             debug.println("CrlRevocationChecker.verifyRevocationStatus()" +
                 " ---checking " + msg + "...");
+        }
+
+        if (mOnlyEECert && currCert.getBasicConstraints() != -1) {
+            if (debug != null) {
+                debug.println("Skipping revocation check, not end entity cert");
+            }
+            return;
         }
 
         // reject circular dependencies - RFC 3280 is not explicit on how

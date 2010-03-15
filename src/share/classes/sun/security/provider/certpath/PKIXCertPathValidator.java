@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,6 @@ package sun.security.provider.certpath;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.PrivilegedAction;
-import java.security.Security;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathParameters;
 import java.security.cert.CertPathValidatorException;
@@ -49,6 +47,7 @@ import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
 import javax.security.auth.x500.X500Principal;
+import sun.security.action.GetBooleanSecurityPropertyAction;
 import sun.security.util.Debug;
 
 /**
@@ -67,6 +66,8 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
     private List<PKIXCertPathChecker> userCheckers;
     private String sigProvider;
     private BasicChecker basicChecker;
+    private boolean ocspEnabled = false;
+    private boolean onlyEECert = false;
 
     /**
      * Default constructor.
@@ -250,6 +251,16 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
 
         userCheckers = pkixParam.getCertPathCheckers();
         sigProvider = pkixParam.getSigProvider();
+
+        if (pkixParam.isRevocationEnabled()) {
+            // Examine OCSP security property
+            ocspEnabled = AccessController.doPrivileged(
+                new GetBooleanSecurityPropertyAction
+                    (OCSPChecker.OCSP_ENABLE_PROP));
+            onlyEECert = AccessController.doPrivileged(
+                new GetBooleanSecurityPropertyAction
+                    ("com.sun.security.onlyCheckRevocationOfEECert"));
+        }
     }
 
     /**
@@ -292,25 +303,16 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
         // only add a revocationChecker if revocation is enabled
         if (pkixParam.isRevocationEnabled()) {
 
-            // Examine OCSP security property
-            String ocspProperty = AccessController.doPrivileged(
-                new PrivilegedAction<String>() {
-                    public String run() {
-                        return
-                            Security.getProperty(OCSPChecker.OCSP_ENABLE_PROP);
-                    }
-                });
-
             // Use OCSP if it has been enabled
-            if ("true".equalsIgnoreCase(ocspProperty)) {
+            if (ocspEnabled) {
                 OCSPChecker ocspChecker =
-                    new OCSPChecker(cpOriginal, pkixParam);
+                    new OCSPChecker(cpOriginal, pkixParam, onlyEECert);
                 certPathCheckers.add(ocspChecker);
             }
 
             // Always use CRLs
-            CrlRevocationChecker revocationChecker =
-                new CrlRevocationChecker(anchor, pkixParam, certList);
+            CrlRevocationChecker revocationChecker = new
+                CrlRevocationChecker(anchor, pkixParam, certList, onlyEECert);
             certPathCheckers.add(revocationChecker);
         }
 

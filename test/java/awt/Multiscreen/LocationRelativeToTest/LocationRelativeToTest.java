@@ -50,7 +50,8 @@ public class LocationRelativeToTest
 
         GraphicsEnvironment ge =
             GraphicsEnvironment.getLocalGraphicsEnvironment();
-        System.out.println("Center point: " + ge.getCenterPoint());
+        Point centerPoint = ge.getCenterPoint();
+        System.out.println("Center point: " + centerPoint);
         GraphicsDevice[] gds = ge.getScreenDevices();
         GraphicsDevice gdDef = ge.getDefaultScreenDevice();
         GraphicsConfiguration gcDef =
@@ -77,8 +78,9 @@ public class LocationRelativeToTest
             // second, check setLocationRelativeTo(invisible)
             f.setLocationRelativeTo(f2);
             Util.waitForIdle(r);
-            checkLocation(f, new Point(gcBounds.x + gcBounds.width / 2,
-                                       gcBounds.y + gcBounds.height / 2));
+            // Warning: this command is correct only
+            // on OpenJDK6, not OpenJDK7
+            checkLocation(f, centerPoint);
 
             // third, check setLocationRelativeTo(visible)
             f2.setVisible(true);

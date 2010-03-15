@@ -23,7 +23,7 @@
 # have any questions.
 #
 
-#  @test
+#  @test @(#)StringConvertTest.sh	1.6 03/04/09
 #  @bug 4511950 4843082
 #  @summary 1. jdb's expression evaluation doesn't perform string conversion properly
 #           2. TTY: run on expression evaluation

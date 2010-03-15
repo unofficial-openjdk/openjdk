@@ -166,8 +166,10 @@ public class HatRun {
                             jre_home );
         String cdir      = System.getProperty("test.classes", ".");
         String os_arch   = System.getProperty("os.arch");
-        boolean d64      = os_arch.equals("sparcv9") ||
-                           os_arch.equals("amd64");
+        String os_name   = System.getProperty("os.name");
+        boolean d64      = os_name.equals("SunOS") && (
+                             os_arch.equals("sparcv9") ||
+                             os_arch.equals("amd64"));
         String isa_dir   = d64?(File.separator+os_arch):"";
         String java      = jre_home
                              + File.separator + "bin" + isa_dir
@@ -176,21 +178,25 @@ public class HatRun {
                            + File.separator + "jhat";
         /* Array of strings to be passed in for exec:
          *   1. java
-         *   2. -Dtest.classes=.
-         *   3. -d64                 (optional)
-         *   4. -Xcheck:jni          (Just because it finds bugs)
-         *   5. -Xverify:all         (Make sure verification is on full blast)
-         *   6. -agent
+         *   2. -cp
+         *   3. cdir
+         *   4. -Dtest.classes=.
+         *   5. -d64                 (optional)
+         *   6. -Xcheck:jni          (Just because it finds bugs)
+         *   7. -Xverify:all         (Make sure verification is on full blast)
+         *   8. -agent
          *       vm_options
-         *   7+i. classname
+         *   9+i. classname
          */
         int nvm_options = 0;
         if ( vm_options != null ) nvm_options = vm_options.length;
-        String cmd[]     = new String[1 + (d64?1:0) + 5 + nvm_options];
+        String cmd[]     = new String[1 + (d64?1:0) + 7 + nvm_options];
         int i,j;
 
         i = 0;
         cmd[i++] = java;
+        cmd[i++] = "-cp";
+        cmd[i++] = cdir;
         cmd[i++] = "-Dtest.classes=" + cdir;
         if ( d64 ) {
             cmd[i++] = "-d64";

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,18 @@
 
 #ifndef JDWP_UTIL_MD_H
 #define JDWP_UTIL_MD_H
+
+#include <stddef.h>
+
+/* To get uintptr_t */
+#ifdef LINUX
+#include <stdint.h>
+#else
+/* The file stdint.h is not on Solaris 8 machines. */
+#include <sys/int_types.h>
+#include <sys/int_limits.h>
+#include <sys/int_const.h>
+#endif
 
 #include <limits.h>
 #include <sys/types.h>

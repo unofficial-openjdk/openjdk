@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,12 +118,12 @@ public class DefaultTableCellRenderer extends JLabel
         if (System.getSecurityManager() != null) {
             if (border != null) return border;
             return SAFE_NO_FOCUS_BORDER;
-        } else {
+        } else if (border != null) {
             if (noFocusBorder == null || noFocusBorder == DEFAULT_NO_FOCUS_BORDER) {
                 return border;
             }
-            return noFocusBorder;
         }
+        return noFocusBorder;
     }
 
     /**
@@ -214,8 +214,9 @@ public class DefaultTableCellRenderer extends JLabel
                                     : table.getBackground();
             if (background == null || background instanceof javax.swing.plaf.UIResource) {
                 Color alternateColor = DefaultLookup.getColor(this, ui, "Table.alternateRowColor");
-                if (alternateColor != null && row % 2 == 0)
+                if (alternateColor != null && row % 2 != 0) {
                     background = alternateColor;
+                }
             }
             super.setForeground(unselectedForeground != null
                                     ? unselectedForeground
