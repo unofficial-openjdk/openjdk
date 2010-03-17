@@ -32,21 +32,28 @@
 // insertions only enqueue old versions for deletions, but do not delete
 // old versions synchronously.
 
-
 class SparsePRTEntry: public CHeapObj {
 public:
-
   enum SomePublicConstants {
-    CardsPerEntry =  4,
-    NullEntry     = -1
+    NullEntry     = -1,
+    UnrollFactor  =  4
   };
-
 private:
   RegionIdx_t _region_ind;
   int         _next_index;
-  CardIdx_t   _cards[CardsPerEntry];
-
+  CardIdx_t   _cards[1];
+  // WARNING: Don't put any data members beyond this line. Card array has, in fact, variable length.
+  // It should always be the last data member.
 public:
+  // Returns the size of the entry, used for entry allocation.
+  static size_t size() { return sizeof(SparsePRTEntry) + sizeof(CardIdx_t) * (cards_num() - 1); }
+  // Returns the size of the card array.
+  static int cards_num() {
+    // The number of cards should be a multiple of 4, because that's our current
+    // unrolling factor.
+    static const int s = MAX2<int>(G1RSetSparseRegionEntries & ~(UnrollFactor - 1), UnrollFactor);
+    return s;
+  }
 
   // Set the region_ind to the given value, and delete all cards.
   inline void init(RegionIdx_t region_ind);
@@ -102,13 +109,6 @@ class RSHashTable : public CHeapObj {
   int  _free_region;
   int  _free_list;
 
-  static RSHashTable* _head_deleted_list;
-  RSHashTable* _next_deleted;
-  RSHashTable* next_deleted() { return _next_deleted; }
-  void set_next_deleted(RSHashTable* rsht) { _next_deleted = rsht; }
-  bool _deleted;
-  void set_deleted(bool b) { _deleted = b; }
-
   // Requires that the caller hold a lock preventing parallel modifying
   // operations, and that the the table be less than completely full.  If
   // an entry for "region_ind" is already in the table, finds it and
@@ -141,11 +141,14 @@ public:
   bool add_card(RegionIdx_t region_id, CardIdx_t card_index);
 
   bool get_cards(RegionIdx_t region_id, CardIdx_t* cards);
+
   bool delete_entry(RegionIdx_t region_id);
 
   bool contains_card(RegionIdx_t region_id, CardIdx_t card_index) const;
 
   void add_entry(SparsePRTEntry* e);
+
+  SparsePRTEntry* get_entry(RegionIdx_t region_id);
 
   void clear();
 
@@ -154,27 +157,19 @@ public:
   size_t occupied_entries() const { return _occupied_entries; }
   size_t occupied_cards() const   { return _occupied_cards;   }
   size_t mem_size() const;
-  bool deleted() { return _deleted; }
 
-  SparsePRTEntry* entry(int i) const { return &_entries[i]; }
+  SparsePRTEntry* entry(int i) const { return (SparsePRTEntry*)((char*)_entries + SparsePRTEntry::size() * i); }
 
   void print();
-
-  static void add_to_deleted_list(RSHashTable* rsht);
-  static RSHashTable* get_from_deleted_list();
 };
 
 // ValueObj because will be embedded in HRRS iterator.
 class RSHashTableIter VALUE_OBJ_CLASS_SPEC {
   int _tbl_ind;         // [-1, 0.._rsht->_capacity)
   int _bl_ind;          // [-1, 0.._rsht->_capacity)
-  short _card_ind;      // [0..CardsPerEntry)
+  short _card_ind;      // [0..SparsePRTEntry::cards_num())
   RSHashTable* _rsht;
   size_t _heap_bot_card_ind;
-
-  enum SomePrivateConstants {
-    CardsPerRegion = HeapRegion::GrainBytes >> CardTableModRefBS::card_shift
-  };
 
   // If the bucket list pointed to by _bl_ind contains a card, sets
   // _bl_ind to the index of that entry, and returns the card.
@@ -191,7 +186,7 @@ public:
   RSHashTableIter(size_t heap_bot_card_ind) :
     _tbl_ind(RSHashTable::NullEntry),
     _bl_ind(RSHashTable::NullEntry),
-    _card_ind((SparsePRTEntry::CardsPerEntry-1)),
+    _card_ind((SparsePRTEntry::cards_num() - 1)),
     _rsht(NULL),
     _heap_bot_card_ind(heap_bot_card_ind)
   {}
@@ -200,7 +195,7 @@ public:
     _rsht = rsht;
     _tbl_ind = -1; // So that first increment gets to 0.
     _bl_ind = RSHashTable::NullEntry;
-    _card_ind = (SparsePRTEntry::CardsPerEntry-1);
+    _card_ind = (SparsePRTEntry::cards_num() - 1);
   }
 
   bool has_next(size_t& card_index);
@@ -256,8 +251,12 @@ public:
 
   // If the table hold an entry for "region_ind",  Copies its
   // cards into "cards", which must be an array of length at least
-  // "CardsPerEntry", and returns "true"; otherwise, returns "false".
+  // "SparePRTEntry::cards_num()", and returns "true"; otherwise,
+  // returns "false".
   bool get_cards(RegionIdx_t region_ind, CardIdx_t* cards);
+
+  // Return the pointer to the entry associated with the given region.
+  SparsePRTEntry* get_entry(RegionIdx_t region_ind);
 
   // If there is an entry for "region_ind", removes it and return "true";
   // otherwise returns "false."

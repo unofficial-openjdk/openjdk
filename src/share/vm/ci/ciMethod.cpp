@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -325,10 +325,10 @@ ciTypeFlow* ciMethod::get_osr_flow_analysis(int osr_bci) {
 }
 
 // ------------------------------------------------------------------
-// ciMethod::liveness_at_bci
+// ciMethod::raw_liveness_at_bci
 //
 // Which local variables are live at a specific bci?
-MethodLivenessResult ciMethod::liveness_at_bci(int bci) {
+MethodLivenessResult ciMethod::raw_liveness_at_bci(int bci) {
   check_is_loaded();
   if (_liveness == NULL) {
     // Create the liveness analyzer.
@@ -336,7 +336,17 @@ MethodLivenessResult ciMethod::liveness_at_bci(int bci) {
     _liveness = new (arena) MethodLiveness(arena, this);
     _liveness->compute_liveness();
   }
-  MethodLivenessResult result = _liveness->get_liveness_at(bci);
+  return _liveness->get_liveness_at(bci);
+}
+
+// ------------------------------------------------------------------
+// ciMethod::liveness_at_bci
+//
+// Which local variables are live at a specific bci?  When debugging
+// will return true for all locals in some cases to improve debug
+// information.
+MethodLivenessResult ciMethod::liveness_at_bci(int bci) {
+  MethodLivenessResult result = raw_liveness_at_bci(bci);
   if (CURRENT_ENV->jvmti_can_access_local_variables() || DeoptimizeALot || CompileTheWorld) {
     // Keep all locals live for the user's edification and amusement.
     result.at_put_range(0, result.size(), true);
@@ -426,15 +436,21 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
           // we will set result._method also.
         }
         // Determine call site's morphism.
-        // The call site count could be == (receivers_count_total + 1)
-        // not only in the case of a polymorphic call but also in the case
-        // when a method data snapshot is taken after the site count was updated
-        // but before receivers counters were updated.
-        if (morphism == result._limit) {
-           // There were no array klasses and morphism <= MorphismLimit.
-           if (morphism <  ciCallProfile::MorphismLimit ||
-               morphism == ciCallProfile::MorphismLimit &&
-               (receivers_count_total+1) >= count) {
+        // The call site count is 0 with known morphism (onlt 1 or 2 receivers)
+        // or < 0 in the case of a type check failured for checkcast, aastore, instanceof.
+        // The call site count is > 0 in the case of a polymorphic virtual call.
+        if (morphism > 0 && morphism == result._limit) {
+           // The morphism <= MorphismLimit.
+           if ((morphism <  ciCallProfile::MorphismLimit) ||
+               (morphism == ciCallProfile::MorphismLimit && count == 0)) {
+#ifdef ASSERT
+             if (count > 0) {
+               this->print_short_name(tty);
+               tty->print_cr(" @ bci:%d", bci);
+               this->print_codes();
+               assert(false, "this call site should not be polymorphic");
+             }
+#endif
              result._morphism = morphism;
            }
         }
@@ -442,10 +458,8 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
         // zero or less, presume that this is a typecheck profile and
         // do nothing.  Otherwise, increase count to be the sum of all
         // receiver's counts.
-        if (count > 0) {
-          if (count < receivers_count_total) {
-            count = receivers_count_total;
-          }
+        if (count >= 0) {
+          count += receivers_count_total;
         }
       }
       result._count = count;
@@ -677,7 +691,7 @@ int ciMethod::scale_count(int count, float prof_factor) {
 // ------------------------------------------------------------------
 // invokedynamic support
 //
-bool ciMethod::is_method_handle_invoke() {
+bool ciMethod::is_method_handle_invoke() const {
   check_is_loaded();
   bool flag = ((flags().as_int() & JVM_MH_INVOKE_BITS) == JVM_MH_INVOKE_BITS);
 #ifdef ASSERT
@@ -688,6 +702,12 @@ bool ciMethod::is_method_handle_invoke() {
   }
 #endif //ASSERT
   return flag;
+}
+
+bool ciMethod::is_method_handle_adapter() const {
+  check_is_loaded();
+  VM_ENTRY_MARK;
+  return get_methodOop()->is_method_handle_adapter();
 }
 
 ciInstance* ciMethod::method_handle_type() {

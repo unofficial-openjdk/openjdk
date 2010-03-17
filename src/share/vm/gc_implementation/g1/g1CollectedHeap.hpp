@@ -167,15 +167,10 @@ class G1CollectedHeap : public SharedHeap {
   friend class G1MarkSweep;
 
 private:
-  enum SomePrivateConstants {
-    VeryLargeInBytes = HeapRegion::GrainBytes/2,
-    VeryLargeInWords = VeryLargeInBytes/HeapWordSize,
-    MinHeapDeltaBytes = 10 * HeapRegion::GrainBytes,      // FIXME
-    NumAPIs = HeapRegion::MaxAge
-  };
-
   // The one and only G1CollectedHeap, so static functions can find it.
   static G1CollectedHeap* _g1h;
+
+  static size_t _humongous_object_threshold_in_words;
 
   // Storage for the G1 heap (excludes the permanent generation).
   VirtualSpace _g1_storage;
@@ -697,7 +692,7 @@ public:
 
   // Reserved (g1 only; super method includes perm), capacity and the used
   // portion in bytes.
-  size_t g1_reserved_obj_bytes() { return _g1_reserved.byte_size(); }
+  size_t g1_reserved_obj_bytes() const { return _g1_reserved.byte_size(); }
   virtual size_t capacity() const;
   virtual size_t used() const;
   // This should be called when we're not holding the heap lock. The
@@ -859,7 +854,7 @@ public:
     return _g1_committed;
   }
 
-  NOT_PRODUCT( bool is_in_closed_subset(const void* p) const; )
+  NOT_PRODUCT(bool is_in_closed_subset(const void* p) const;)
 
   // Dirty card table entries covering a list of young regions.
   void dirtyCardsForYoungRegions(CardTableModRefBS* ct_bs, HeapRegion* list);
@@ -997,11 +992,50 @@ public:
 
   // Can a compiler initialize a new object without store barriers?
   // This permission only extends from the creation of a new object
-  // via a TLAB up to the first subsequent safepoint.
+  // via a TLAB up to the first subsequent safepoint. If such permission
+  // is granted for this heap type, the compiler promises to call
+  // defer_store_barrier() below on any slow path allocation of
+  // a new object for which such initializing store barriers will
+  // have been elided. G1, like CMS, allows this, but should be
+  // ready to provide a compensating write barrier as necessary
+  // if that storage came out of a non-young region. The efficiency
+  // of this implementation depends crucially on being able to
+  // answer very efficiently in constant time whether a piece of
+  // storage in the heap comes from a young region or not.
+  // See ReduceInitialCardMarks.
   virtual bool can_elide_tlab_store_barriers() const {
-    // Since G1's TLAB's may, on occasion, come from non-young regions
-    // as well. (Is there a flag controlling that? XXX)
-    return false;
+    // 6920090: Temporarily disabled, because of lingering
+    // instabilities related to RICM with G1. In the
+    // interim, the option ReduceInitialCardMarksForG1
+    // below is left solely as a debugging device at least
+    // until 6920109 fixes the instabilities.
+    return ReduceInitialCardMarksForG1;
+  }
+
+  virtual bool card_mark_must_follow_store() const {
+    return true;
+  }
+
+  bool is_in_young(oop obj) {
+    HeapRegion* hr = heap_region_containing(obj);
+    return hr != NULL && hr->is_young();
+  }
+
+  // We don't need barriers for initializing stores to objects
+  // in the young gen: for the SATB pre-barrier, there is no
+  // pre-value that needs to be remembered; for the remembered-set
+  // update logging post-barrier, we don't maintain remembered set
+  // information for young gen objects. Note that non-generational
+  // G1 does not have any "young" objects, should not elide
+  // the rs logging barrier and so should always answer false below.
+  // However, non-generational G1 (-XX:-G1Gen) appears to have
+  // bit-rotted so was not tested below.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj) {
+    // Re 6920090, 6920109 above.
+    assert(ReduceInitialCardMarksForG1, "Else cannot be here");
+    assert(G1Gen || !is_in_young(new_obj),
+           "Non-generational G1 should never return true below");
+    return is_in_young(new_obj);
   }
 
   // Can a compiler elide a store barrier when it writes
@@ -1021,7 +1055,7 @@ public:
 
   // Returns "true" iff the given word_size is "very large".
   static bool isHumongous(size_t word_size) {
-    return word_size >= VeryLargeInWords;
+    return word_size >= _humongous_object_threshold_in_words;
   }
 
   // Update mod union table with the set of dirty cards.
@@ -1589,7 +1623,7 @@ public:
   template <class T> void push_on_queue(T* ref) {
     assert(ref != NULL, "invariant");
     assert(has_partial_array_mask(ref) ||
-           _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(ref)), "invariant");
+           _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(ref)), "invariant");
 #ifdef ASSERT
     if (has_partial_array_mask(ref)) {
       oop p = clear_partial_array_mask(ref);
@@ -1610,9 +1644,9 @@ public:
       assert((oop*)ref != NULL, "pop_local() returned true");
       assert(UseCompressedOops || !ref.is_narrow(), "Error");
       assert(has_partial_array_mask((oop*)ref) ||
-             _g1h->obj_in_cs(ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)ref)
-                                             : oopDesc::load_decode_heap_oop((oop*)ref)),
-             "invariant");
+             _g1h->is_in_g1_reserved(ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)ref)
+                                                     : oopDesc::load_decode_heap_oop((oop*)ref)),
+              "invariant");
       IF_G1_DETAILED_STATS(note_pop());
     } else {
       StarTask null_task;
@@ -1625,9 +1659,9 @@ public:
     assert((oop*)new_ref != NULL, "pop() from a local non-empty stack");
     assert(UseCompressedOops || !new_ref.is_narrow(), "Error");
     assert(has_partial_array_mask((oop*)new_ref) ||
-           _g1h->obj_in_cs(new_ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)new_ref)
-                                               : oopDesc::load_decode_heap_oop((oop*)new_ref)),
-             "invariant");
+           _g1h->is_in_g1_reserved(new_ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)new_ref)
+                                                       : oopDesc::load_decode_heap_oop((oop*)new_ref)),
+           "invariant");
     ref = new_ref;
   }
 
@@ -1791,12 +1825,12 @@ public:
           assert(UseCompressedOops, "Error");
           narrowOop* p = (narrowOop*)ref_to_scan;
           assert(!has_partial_array_mask(p) &&
-                 _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                 _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
           deal_with_reference(p);
         } else {
           oop* p = (oop*)ref_to_scan;
-          assert((has_partial_array_mask(p) && _g1h->obj_in_cs(clear_partial_array_mask(p))) ||
-                 _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+          assert((has_partial_array_mask(p) && _g1h->is_in_g1_reserved(clear_partial_array_mask(p))) ||
+                 _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
           deal_with_reference(p);
         }
       }
@@ -1810,12 +1844,12 @@ public:
             assert(UseCompressedOops, "Error");
             narrowOop* p = (narrowOop*)ref_to_scan;
             assert(!has_partial_array_mask(p) &&
-                   _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                    _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
             deal_with_reference(p);
           } else {
             oop* p = (oop*)ref_to_scan;
             assert((has_partial_array_mask(p) && _g1h->obj_in_cs(clear_partial_array_mask(p))) ||
-                  _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                   _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
             deal_with_reference(p);
           }
         }

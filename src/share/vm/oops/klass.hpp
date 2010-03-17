@@ -546,7 +546,7 @@ class Klass : public Klass_vtbl {
   // For arrays, this returns the name of the element with a leading '['.
   // For classes, this returns the name with a leading 'L' and a trailing ';'
   //     and the package separators as '/'.
-  virtual char* signature_name() const;
+  virtual const char* signature_name() const;
 
   // garbage collection support
   virtual void oop_follow_contents(oop obj) = 0;
@@ -776,14 +776,13 @@ class Klass : public Klass_vtbl {
   // JVMTI support
   virtual jint jvmti_class_status() const;
 
-#ifndef PRODUCT
  public:
   // Printing
-  virtual void oop_print_on      (oop obj, outputStream* st);
   virtual void oop_print_value_on(oop obj, outputStream* st);
-#endif
+#ifndef PRODUCT
+  virtual void oop_print_on      (oop obj, outputStream* st);
+#endif //PRODUCT
 
- public:
   // Verification
   virtual const char* internal_name() const = 0;
   virtual void oop_verify_on(oop obj, outputStream* st);

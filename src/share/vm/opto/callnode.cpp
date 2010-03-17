@@ -421,21 +421,23 @@ void JVMState::format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) 
         iklass = cik->as_instance_klass();
       } else if (cik->is_type_array_klass()) {
         cik->as_array_klass()->base_element_type()->print_name_on(st);
-        st->print("[%d]=", spobj->n_fields());
+        st->print("[%d]", spobj->n_fields());
       } else if (cik->is_obj_array_klass()) {
-        ciType* cie = cik->as_array_klass()->base_element_type();
-        int ndim = 1;
-        while (cie->is_obj_array_klass()) {
-          ndim += 1;
-          cie = cie->as_array_klass()->base_element_type();
+        ciKlass* cie = cik->as_obj_array_klass()->base_element_klass();
+        if (cie->is_instance_klass()) {
+          cie->print_name_on(st);
+        } else if (cie->is_type_array_klass()) {
+          cie->as_array_klass()->base_element_type()->print_name_on(st);
+        } else {
+          ShouldNotReachHere();
         }
-        cie->print_name_on(st);
+        st->print("[%d]", spobj->n_fields());
+        int ndim = cik->as_array_klass()->dimension() - 1;
         while (ndim-- > 0) {
           st->print("[]");
         }
-        st->print("[%d]=", spobj->n_fields());
       }
-      st->print("{");
+      st->print("={");
       uint nf = spobj->n_fields();
       if (nf > 0) {
         uint first_ind = spobj->first_index();
@@ -493,7 +495,8 @@ void JVMState::dump_spec(outputStream *st) const {
     if (!printed)
       _method->print_short_name(st);
     st->print(" @ bci:%d",_bci);
-    st->print(" reexecute:%s", _reexecute==Reexecute_True?"true":"false");
+    if(_reexecute == Reexecute_True)
+      st->print(" reexecute");
   } else {
     st->print(" runtime stub");
   }
@@ -687,6 +690,84 @@ Node *CallNode::result_cast() {
     }
   }
   return cast;
+}
+
+
+void CallNode::extract_projections(CallProjections* projs, bool separate_io_proj) {
+  projs->fallthrough_proj      = NULL;
+  projs->fallthrough_catchproj = NULL;
+  projs->fallthrough_ioproj    = NULL;
+  projs->catchall_ioproj       = NULL;
+  projs->catchall_catchproj    = NULL;
+  projs->fallthrough_memproj   = NULL;
+  projs->catchall_memproj      = NULL;
+  projs->resproj               = NULL;
+  projs->exobj                 = NULL;
+
+  for (DUIterator_Fast imax, i = fast_outs(imax); i < imax; i++) {
+    ProjNode *pn = fast_out(i)->as_Proj();
+    if (pn->outcnt() == 0) continue;
+    switch (pn->_con) {
+    case TypeFunc::Control:
+      {
+        // For Control (fallthrough) and I_O (catch_all_index) we have CatchProj -> Catch -> Proj
+        projs->fallthrough_proj = pn;
+        DUIterator_Fast jmax, j = pn->fast_outs(jmax);
+        const Node *cn = pn->fast_out(j);
+        if (cn->is_Catch()) {
+          ProjNode *cpn = NULL;
+          for (DUIterator_Fast kmax, k = cn->fast_outs(kmax); k < kmax; k++) {
+            cpn = cn->fast_out(k)->as_Proj();
+            assert(cpn->is_CatchProj(), "must be a CatchProjNode");
+            if (cpn->_con == CatchProjNode::fall_through_index)
+              projs->fallthrough_catchproj = cpn;
+            else {
+              assert(cpn->_con == CatchProjNode::catch_all_index, "must be correct index.");
+              projs->catchall_catchproj = cpn;
+            }
+          }
+        }
+        break;
+      }
+    case TypeFunc::I_O:
+      if (pn->_is_io_use)
+        projs->catchall_ioproj = pn;
+      else
+        projs->fallthrough_ioproj = pn;
+      for (DUIterator j = pn->outs(); pn->has_out(j); j++) {
+        Node* e = pn->out(j);
+        if (e->Opcode() == Op_CreateEx && e->in(0)->is_CatchProj()) {
+          assert(projs->exobj == NULL, "only one");
+          projs->exobj = e;
+        }
+      }
+      break;
+    case TypeFunc::Memory:
+      if (pn->_is_io_use)
+        projs->catchall_memproj = pn;
+      else
+        projs->fallthrough_memproj = pn;
+      break;
+    case TypeFunc::Parms:
+      projs->resproj = pn;
+      break;
+    default:
+      assert(false, "unexpected projection from allocation node.");
+    }
+  }
+
+  // The resproj may not exist because the result couuld be ignored
+  // and the exception object may not exist if an exception handler
+  // swallows the exception but all the other must exist and be found.
+  assert(projs->fallthrough_proj      != NULL, "must be found");
+  assert(projs->fallthrough_catchproj != NULL, "must be found");
+  assert(projs->fallthrough_memproj   != NULL, "must be found");
+  assert(projs->fallthrough_ioproj    != NULL, "must be found");
+  assert(projs->catchall_catchproj    != NULL, "must be found");
+  if (separate_io_proj) {
+    assert(projs->catchall_memproj      != NULL, "must be found");
+    assert(projs->catchall_ioproj       != NULL, "must be found");
+  }
 }
 
 

@@ -102,9 +102,14 @@ void G1MarkSweep::allocate_stacks() {
   GenMarkSweep::_marking_stack =
     new (ResourceObj::C_HEAP) GrowableArray<oop>(4000, true);
 
-  size_t size = SystemDictionary::number_of_classes() * 2;
+  int size = SystemDictionary::number_of_classes() * 2;
   GenMarkSweep::_revisit_klass_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<Klass*>((int)size, true);
+    new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
+  // (#klass/k)^2 for k ~ 10 appears a better fit, but this will have to do
+  // for now until we have a chance to work out a more optimal setting.
+  GenMarkSweep::_revisit_mdo_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<DataLayout*>(size*2, true);
+
 }
 
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
@@ -116,9 +121,11 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activeate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_SystemClasses,
                            &GenMarkSweep::follow_root_closure,
+                           &GenMarkSweep::follow_code_root_closure,
                            &GenMarkSweep::follow_root_closure);
 
   // Process reference objects found during marking
@@ -139,12 +146,17 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   CodeCache::do_unloading(&GenMarkSweep::is_alive,
                                    &GenMarkSweep::keep_alive,
                                    purged_class);
-           GenMarkSweep::follow_stack();
+  GenMarkSweep::follow_stack();
 
   // Update subklass/sibling/implementor links of live klasses
   GenMarkSweep::follow_weak_klass_links();
   assert(GenMarkSweep::_marking_stack->is_empty(),
          "stack should be empty by now");
+
+  // Visit memoized MDO's and clear any unmarked weak refs
+  GenMarkSweep::follow_mdo_weak_refs();
+  assert(GenMarkSweep::_marking_stack->is_empty(), "just drained");
+
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(&GenMarkSweep::is_alive);
@@ -276,9 +288,11 @@ void G1MarkSweep::mark_sweep_phase3() {
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_AllClasses,
                            &GenMarkSweep::adjust_root_pointer_closure,
+                           NULL,  // do not touch code cache here
                            &GenMarkSweep::adjust_pointer_closure);
 
   g1h->ref_processor()->weak_oops_do(&GenMarkSweep::adjust_root_pointer_closure);

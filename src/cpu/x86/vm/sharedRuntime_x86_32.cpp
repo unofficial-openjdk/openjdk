@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -907,7 +907,8 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
                                                             int total_args_passed,
                                                             int comp_args_on_stack,
                                                             const BasicType *sig_bt,
-                                                            const VMRegPair *regs) {
+                                                            const VMRegPair *regs,
+                                                            AdapterFingerPrint* fingerprint) {
   address i2c_entry = __ pc();
 
   gen_i2c_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs);
@@ -954,7 +955,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
   gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, skip_fixup);
 
   __ flush();
-  return new AdapterHandlerEntry(i2c_entry, c2i_entry, c2i_unverified_entry);
+  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
 }
 
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
@@ -2381,7 +2382,7 @@ void SharedRuntime::generate_deopt_blob() {
 
   // Save everything in sight.
 
-  map = RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  map = RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
   // Normal deoptimization
   __ push(Deoptimization::Unpack_deopt);
   __ jmp(cont);
@@ -2392,7 +2393,7 @@ void SharedRuntime::generate_deopt_blob() {
   // return address is the pc describes what bci to do re-execute at
 
   // No need to update map as each call to save_live_registers will produce identical oopmap
-  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
 
   __ push(Deoptimization::Unpack_reexecute);
   __ jmp(cont);
@@ -2428,7 +2429,7 @@ void SharedRuntime::generate_deopt_blob() {
   // Save everything in sight.
 
   // No need to update map as each call to save_live_registers will produce identical oopmap
-  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words);
+  (void) RegisterSaver::save_live_registers(masm, additional_words, &frame_size_in_words, false);
 
   // Now it is safe to overwrite any register
 
@@ -2514,6 +2515,11 @@ void SharedRuntime::generate_deopt_blob() {
   // in the vframeArray.
 
   RegisterSaver::restore_result_registers(masm);
+
+  // Non standard control word may be leaked out through a safepoint blob, and we can
+  // deopt at a poll point with the non standard control word. However, we should make
+  // sure the control word is correct after restore_result_registers.
+  __ fldcw(ExternalAddress(StubRoutines::addr_fpu_cntrl_wrd_std()));
 
   // All of the register save area has been popped of the stack. Only the
   // return address remains.

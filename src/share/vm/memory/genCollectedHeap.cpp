@@ -51,6 +51,8 @@ GenCollectedHeap::GenCollectedHeap(GenCollectorPolicy *policy) :
 }
 
 jint GenCollectedHeap::initialize() {
+  CollectedHeap::pre_initialize();
+
   int i;
   _n_gens = gen_policy()->number_of_generations();
 
@@ -129,6 +131,7 @@ jint GenCollectedHeap::initialize() {
 
   _rem_set = collector_policy()->create_rem_set(_reserved, n_covered_regions);
   set_barrier_set(rem_set()->bs());
+
   _gch = this;
 
   for (i = 0; i < _n_gens; i++) {
@@ -677,13 +680,23 @@ static AssertIsPermClosure assert_is_perm_closure;
 void GenCollectedHeap::
 gen_process_strong_roots(int level,
                          bool younger_gens_as_roots,
+                         bool activate_scope,
                          bool collecting_perm_gen,
                          SharedHeap::ScanningOption so,
-                         OopsInGenClosure* older_gens,
-                         OopsInGenClosure* not_older_gens) {
+                         OopsInGenClosure* not_older_gens,
+                         bool do_code_roots,
+                         OopsInGenClosure* older_gens) {
   // General strong roots.
-  SharedHeap::process_strong_roots(collecting_perm_gen, so,
-                                   not_older_gens, older_gens);
+
+  if (!do_code_roots) {
+    SharedHeap::process_strong_roots(activate_scope, collecting_perm_gen, so,
+                                     not_older_gens, NULL, older_gens);
+  } else {
+    bool do_code_marking = (activate_scope || nmethod::oops_do_marking_is_active());
+    CodeBlobToOopClosure code_roots(not_older_gens, /*do_marking=*/ do_code_marking);
+    SharedHeap::process_strong_roots(activate_scope, collecting_perm_gen, so,
+                                     not_older_gens, &code_roots, older_gens);
+  }
 
   if (younger_gens_as_roots) {
     if (!_gen_process_strong_tasks->is_task_claimed(GCH_PS_younger_gens)) {
@@ -706,8 +719,9 @@ gen_process_strong_roots(int level,
 }
 
 void GenCollectedHeap::gen_process_weak_roots(OopClosure* root_closure,
+                                              CodeBlobClosure* code_roots,
                                               OopClosure* non_root_closure) {
-  SharedHeap::process_weak_roots(root_closure, non_root_closure);
+  SharedHeap::process_weak_roots(root_closure, code_roots, non_root_closure);
   // "Local" "weak" refs
   for (int i = 0; i < _n_gens; i++) {
     _gens[i]->ref_processor()->weak_oops_do(root_closure);
@@ -914,6 +928,8 @@ bool GenCollectedHeap::is_in(const void* p) const {
   guarantee(VerifyBeforeGC   ||
             VerifyDuringGC   ||
             VerifyBeforeExit ||
+            PrintAssembly    ||
+            tty->count() != 0 ||   // already printing
             VerifyAfterGC, "too expensive");
   #endif
   // This might be sped up with a cache of the last generation that

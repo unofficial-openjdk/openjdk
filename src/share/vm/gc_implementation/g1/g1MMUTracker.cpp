@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,21 +37,7 @@
 
 G1MMUTracker::G1MMUTracker(double time_slice, double max_gc_time) :
   _time_slice(time_slice),
-  _max_gc_time(max_gc_time),
-  _conc_overhead_time_sec(0.0) { }
-
-void
-G1MMUTracker::update_conc_overhead(double conc_overhead) {
-  double conc_overhead_time_sec = _time_slice * conc_overhead;
-  if (conc_overhead_time_sec > 0.9 * _max_gc_time) {
-    // We are screwed, as we only seem to have <10% of the soft
-    // real-time goal available for pauses. Let's admit defeat and
-    // allow something more generous as a pause target.
-    conc_overhead_time_sec = 0.75 * _max_gc_time;
-  }
-
-  _conc_overhead_time_sec = conc_overhead_time_sec;
-}
+  _max_gc_time(max_gc_time) { }
 
 G1MMUTrackerQueue::G1MMUTrackerQueue(double time_slice, double max_gc_time) :
   G1MMUTracker(time_slice, max_gc_time),
@@ -100,12 +86,22 @@ void G1MMUTrackerQueue::add_pause(double start, double end, bool gc_thread) {
     //   increase the array size (:-)
     //   remove the oldest entry (this might allow more GC time for
     //     the time slice than what's allowed)
-    //   concolidate the two entries with the minimum gap between them
-    //     (this mighte allow less GC time than what's allowed)
-    guarantee(0, "array full, currently we can't recover");
+    //   consolidate the two entries with the minimum gap between them
+    //     (this might allow less GC time than what's allowed)
+    guarantee(NOT_PRODUCT(ScavengeALot ||) G1UseFixedWindowMMUTracker,
+              "array full, currently we can't recover unless +G1UseFixedWindowMMUTracker");
+    // In the case where ScavengeALot is true, such overflow is not
+    // uncommon; in such cases, we can, without much loss of precision
+    // or performance (we are GC'ing most of the time anyway!),
+    // simply overwrite the oldest entry in the tracker: this
+    // is also the behaviour when G1UseFixedWindowMMUTracker is enabled.
+    _head_index = trim_index(_head_index + 1);
+    assert(_head_index == _tail_index, "Because we have a full circular buffer");
+    _tail_index = trim_index(_tail_index + 1);
+  } else {
+    _head_index = trim_index(_head_index + 1);
+    ++_no_entries;
   }
-  _head_index = trim_index(_head_index + 1);
-  ++_no_entries;
   _array[_head_index] = G1MMUTrackerQueueElem(start, end);
 }
 
@@ -128,7 +124,7 @@ double G1MMUTrackerQueue::longest_pause_internal(double current_time) {
 
   while( 1 ) {
     double gc_time =
-      calculate_gc_time(current_time + target_time) + _conc_overhead_time_sec;
+      calculate_gc_time(current_time + target_time);
     double diff = target_time + gc_time - _max_gc_time;
     if (!is_double_leq_0(diff)) {
       target_time -= diff;

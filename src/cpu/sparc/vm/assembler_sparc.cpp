@@ -2631,13 +2631,13 @@ void MacroAssembler::regcon_inc_ptr( RegisterOrConstant& dest, RegisterOrConstan
       (src.is_register() && src.as_register() == G0)) {
     // do nothing
   } else if (dest.is_register()) {
-    add(dest.as_register(), ensure_rs2(src, temp), dest.as_register());
+    add(dest.as_register(), ensure_simm13_or_reg(src, temp), dest.as_register());
   } else if (src.is_constant()) {
     intptr_t res = dest.as_constant() + src.as_constant();
     dest = RegisterOrConstant(res); // side effect seen by caller
   } else {
     assert(temp != noreg, "cannot handle constant += register");
-    add(src.as_register(), ensure_rs2(dest, temp), temp);
+    add(src.as_register(), ensure_simm13_or_reg(dest, temp), temp);
     dest = RegisterOrConstant(temp); // side effect seen by caller
   }
 }
@@ -2710,7 +2710,7 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
   RegisterOrConstant itable_offset = itable_index;
   regcon_sll_ptr(itable_offset, exact_log2(itableMethodEntry::size() * wordSize));
   regcon_inc_ptr(itable_offset, itableMethodEntry::method_offset_in_bytes());
-  add(recv_klass, ensure_rs2(itable_offset, sethi_temp), recv_klass);
+  add(recv_klass, ensure_simm13_or_reg(itable_offset, sethi_temp), recv_klass);
 
   // for (scan = klass->itable(); scan->interface() != NULL; scan += scan_step) {
   //   if (scan->interface() == intf) {
@@ -4676,3 +4676,50 @@ void MacroAssembler::reinit_heapbase() {
     load_ptr_contents(base, G6_heapbase);
   }
 }
+
+// Compare char[] arrays aligned to 4 bytes.
+void MacroAssembler::char_arrays_equals(Register ary1, Register ary2,
+                                        Register limit, Register result,
+                                        Register chr1, Register chr2, Label& Ldone) {
+  Label Lvector, Lloop;
+  assert(chr1 == result, "should be the same");
+
+  // Note: limit contains number of bytes (2*char_elements) != 0.
+  andcc(limit, 0x2, chr1); // trailing character ?
+  br(Assembler::zero, false, Assembler::pt, Lvector);
+  delayed()->nop();
+
+  // compare the trailing char
+  sub(limit, sizeof(jchar), limit);
+  lduh(ary1, limit, chr1);
+  lduh(ary2, limit, chr2);
+  cmp(chr1, chr2);
+  br(Assembler::notEqual, true, Assembler::pt, Ldone);
+  delayed()->mov(G0, result);     // not equal
+
+  // only one char ?
+  br_on_reg_cond(rc_z, true, Assembler::pn, limit, Ldone);
+  delayed()->add(G0, 1, result); // zero-length arrays are equal
+
+  // word by word compare, dont't need alignment check
+  bind(Lvector);
+  // Shift ary1 and ary2 to the end of the arrays, negate limit
+  add(ary1, limit, ary1);
+  add(ary2, limit, ary2);
+  neg(limit, limit);
+
+  lduw(ary1, limit, chr1);
+  bind(Lloop);
+  lduw(ary2, limit, chr2);
+  cmp(chr1, chr2);
+  br(Assembler::notEqual, true, Assembler::pt, Ldone);
+  delayed()->mov(G0, result);     // not equal
+  inccc(limit, 2*sizeof(jchar));
+  // annul LDUW if branch is not taken to prevent access past end of array
+  br(Assembler::notZero, true, Assembler::pt, Lloop);
+  delayed()->lduw(ary1, limit, chr1); // hoisted
+
+  // Caller should set it:
+  // add(G0, 1, result); // equals
+}
+

@@ -25,6 +25,12 @@
 #include "incls/_precompiled.incl"
 #include "incls/_heapRegion.cpp.incl"
 
+int HeapRegion::LogOfHRGrainBytes = 0;
+int HeapRegion::LogOfHRGrainWords = 0;
+int HeapRegion::GrainBytes        = 0;
+int HeapRegion::GrainWords        = 0;
+int HeapRegion::CardsPerRegion    = 0;
+
 HeapRegionDCTOC::HeapRegionDCTOC(G1CollectedHeap* g1,
                                  HeapRegion* hr, OopClosure* cl,
                                  CardTableModRefBS::PrecisionStyle precision,
@@ -229,6 +235,73 @@ void HeapRegionDCTOC::walk_mem_region_with_cl(MemRegion mr,
       oop(bottom)->oop_iterate(cl2, mr);
     }
   }
+}
+
+// Minimum region size; we won't go lower than that.
+// We might want to decrease this in the future, to deal with small
+// heaps a bit more efficiently.
+#define MIN_REGION_SIZE  (      1024 * 1024 )
+
+// Maximum region size; we don't go higher than that. There's a good
+// reason for having an upper bound. We don't want regions to get too
+// large, otherwise cleanup's effectiveness would decrease as there
+// will be fewer opportunities to find totally empty regions after
+// marking.
+#define MAX_REGION_SIZE  ( 32 * 1024 * 1024 )
+
+// The automatic region size calculation will try to have around this
+// many regions in the heap (based on the min heap size).
+#define TARGET_REGION_NUMBER          2048
+
+void HeapRegion::setup_heap_region_size(uintx min_heap_size) {
+  // region_size in bytes
+  uintx region_size = G1HeapRegionSize;
+  if (FLAG_IS_DEFAULT(G1HeapRegionSize)) {
+    // We base the automatic calculation on the min heap size. This
+    // can be problematic if the spread between min and max is quite
+    // wide, imagine -Xms128m -Xmx32g. But, if we decided it based on
+    // the max size, the region size might be way too large for the
+    // min size. Either way, some users might have to set the region
+    // size manually for some -Xms / -Xmx combos.
+
+    region_size = MAX2(min_heap_size / TARGET_REGION_NUMBER,
+                       (uintx) MIN_REGION_SIZE);
+  }
+
+  int region_size_log = log2_long((jlong) region_size);
+  // Recalculate the region size to make sure it's a power of
+  // 2. This means that region_size is the largest power of 2 that's
+  // <= what we've calculated so far.
+  region_size = 1 << region_size_log;
+
+  // Now make sure that we don't go over or under our limits.
+  if (region_size < MIN_REGION_SIZE) {
+    region_size = MIN_REGION_SIZE;
+  } else if (region_size > MAX_REGION_SIZE) {
+    region_size = MAX_REGION_SIZE;
+  }
+
+  // And recalculate the log.
+  region_size_log = log2_long((jlong) region_size);
+
+  // Now, set up the globals.
+  guarantee(LogOfHRGrainBytes == 0, "we should only set it once");
+  LogOfHRGrainBytes = region_size_log;
+
+  guarantee(LogOfHRGrainWords == 0, "we should only set it once");
+  LogOfHRGrainWords = LogOfHRGrainBytes - LogHeapWordSize;
+
+  guarantee(GrainBytes == 0, "we should only set it once");
+  // The cast to int is safe, given that we've bounded region_size by
+  // MIN_REGION_SIZE and MAX_REGION_SIZE.
+  GrainBytes = (int) region_size;
+
+  guarantee(GrainWords == 0, "we should only set it once");
+  GrainWords = GrainBytes >> LogHeapWordSize;
+  guarantee(1 << LogOfHRGrainWords == GrainWords, "sanity");
+
+  guarantee(CardsPerRegion == 0, "we should only set it once");
+  CardsPerRegion = GrainBytes >> CardTableModRefBS::card_shift;
 }
 
 void HeapRegion::reset_after_compaction() {
@@ -649,12 +722,13 @@ void HeapRegion::print_on(outputStream* st) const {
     st->print(" F");
   else
     st->print("  ");
-  st->print(" %d", _gc_time_stamp);
+  st->print(" %5d", _gc_time_stamp);
   G1OffsetTableContigSpace::print_on(st);
 }
 
 void HeapRegion::verify(bool allow_dirty) const {
-  verify(allow_dirty, /* use_prev_marking */ true);
+  bool dummy = false;
+  verify(allow_dirty, /* use_prev_marking */ true, /* failures */ &dummy);
 }
 
 #define OBJ_SAMPLE_INTERVAL 0
@@ -663,8 +737,11 @@ void HeapRegion::verify(bool allow_dirty) const {
 // This really ought to be commoned up into OffsetTableContigSpace somehow.
 // We would need a mechanism to make that code skip dead objects.
 
-void HeapRegion::verify(bool allow_dirty, bool use_prev_marking) const {
+void HeapRegion::verify(bool allow_dirty,
+                        bool use_prev_marking,
+                        bool* failures) const {
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
+  *failures = false;
   HeapWord* p = bottom();
   HeapWord* prev_p = NULL;
   int objs = 0;
@@ -673,8 +750,14 @@ void HeapRegion::verify(bool allow_dirty, bool use_prev_marking) const {
   while (p < top()) {
     size_t size = oop(p)->size();
     if (blocks == BLOCK_SAMPLE_INTERVAL) {
-      guarantee(p == block_start_const(p + (size/2)),
-                "check offset computation");
+      HeapWord* res = block_start_const(p + (size/2));
+      if (p != res) {
+        gclog_or_tty->print_cr("offset computation 1 for "PTR_FORMAT" and "
+                               SIZE_FORMAT" returned "PTR_FORMAT,
+                               p, size, res);
+        *failures = true;
+        return;
+      }
       blocks = 0;
     } else {
       blocks++;
@@ -682,11 +765,34 @@ void HeapRegion::verify(bool allow_dirty, bool use_prev_marking) const {
     if (objs == OBJ_SAMPLE_INTERVAL) {
       oop obj = oop(p);
       if (!g1->is_obj_dead_cond(obj, this, use_prev_marking)) {
-        obj->verify();
-        vl_cl.set_containing_obj(obj);
-        obj->oop_iterate(&vl_cl);
-        if (G1MaxVerifyFailures >= 0
-            && vl_cl.n_failures() >= G1MaxVerifyFailures) break;
+        if (obj->is_oop()) {
+          klassOop klass = obj->klass();
+          if (!klass->is_perm()) {
+            gclog_or_tty->print_cr("klass "PTR_FORMAT" of object "PTR_FORMAT" "
+                                   "not in perm", klass, obj);
+            *failures = true;
+            return;
+          } else if (!klass->is_klass()) {
+            gclog_or_tty->print_cr("klass "PTR_FORMAT" of object "PTR_FORMAT" "
+                                   "not a klass", klass, obj);
+            *failures = true;
+            return;
+          } else {
+            vl_cl.set_containing_obj(obj);
+            obj->oop_iterate(&vl_cl);
+            if (vl_cl.failures()) {
+              *failures = true;
+            }
+            if (G1MaxVerifyFailures >= 0 &&
+                vl_cl.n_failures() >= G1MaxVerifyFailures) {
+              return;
+            }
+          }
+        } else {
+          gclog_or_tty->print_cr(PTR_FORMAT" no an oop", obj);
+          *failures = true;
+          return;
+        }
       }
       objs = 0;
     } else {
@@ -698,21 +804,22 @@ void HeapRegion::verify(bool allow_dirty, bool use_prev_marking) const {
   HeapWord* rend = end();
   HeapWord* rtop = top();
   if (rtop < rend) {
-    guarantee(block_start_const(rtop + (rend - rtop) / 2) == rtop,
-              "check offset computation");
+    HeapWord* res = block_start_const(rtop + (rend - rtop) / 2);
+    if (res != rtop) {
+        gclog_or_tty->print_cr("offset computation 2 for "PTR_FORMAT" and "
+                               PTR_FORMAT" returned "PTR_FORMAT,
+                               rtop, rend, res);
+        *failures = true;
+        return;
+    }
   }
-  if (vl_cl.failures()) {
-    gclog_or_tty->print_cr("Heap:");
-    G1CollectedHeap::heap()->print_on(gclog_or_tty, true /* extended */);
-    gclog_or_tty->print_cr("");
+
+  if (p != top()) {
+    gclog_or_tty->print_cr("end of last object "PTR_FORMAT" "
+                           "does not match top "PTR_FORMAT, p, top());
+    *failures = true;
+    return;
   }
-  if (VerifyDuringGC &&
-      G1VerifyConcMarkPrintReachable &&
-      vl_cl.failures()) {
-    g1->concurrent_mark()->print_prev_bitmap_reachable();
-  }
-  guarantee(!vl_cl.failures(), "region verification failed");
-  guarantee(p == top(), "end of last object must match end of space");
 }
 
 // G1OffsetTableContigSpace code; copied from space.cpp.  Hope this can go
