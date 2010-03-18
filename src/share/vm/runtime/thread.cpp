@@ -2318,9 +2318,8 @@ void JavaThread::gc_prologue() {
 
 
 void JavaThread::oops_do(OopClosure* f) {
-  // Flush deferred store-barriers, if any, associated with
-  // initializing stores done by this JavaThread in the current epoch.
-  Universe::heap()->flush_deferred_store_barrier(this);
+  // Verify that the deferred card marks have been flushed.
+  assert(deferred_card_mark().is_empty(), "Should be empty during GC");
 
   // The ThreadProfiler oops_do is done from FlatProfiler::oops_do
   // since there may be more than one thread using each ThreadProfiler.
