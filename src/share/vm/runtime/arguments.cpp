@@ -1203,6 +1203,11 @@ void Arguments::set_cms_and_parnew_gc_flags() {
   if (!FLAG_IS_DEFAULT(CMSParPromoteBlocksToClaim) || !FLAG_IS_DEFAULT(OldPLABWeight)) {
     CFLS_LAB::modify_initialization(OldPLABSize, OldPLABWeight);
   }
+  if (PrintGCDetails && Verbose) {
+    tty->print_cr("MarkStackSize: %uk  MarkStackSizeMax: %uk",
+      MarkStackSize / K, MarkStackSizeMax / K);
+    tty->print_cr("ConcGCThreads: %u", ConcGCThreads);
+  }
 }
 #endif // KERNEL
 
@@ -1258,7 +1263,8 @@ void Arguments::set_ergonomics_flags() {
   if (MaxHeapSize <= max_heap_for_compressed_oops()) {
 #ifndef COMPILER1
     if (FLAG_IS_DEFAULT(UseCompressedOops) && !UseG1GC) {
-      FLAG_SET_ERGO(bool, UseCompressedOops, true);
+      // Disable Compressed Oops by default. Uncomment next line to enable it.
+      // FLAG_SET_ERGO(bool, UseCompressedOops, true);
     }
 #endif
 #ifdef _WIN64
@@ -1338,6 +1344,17 @@ void Arguments::set_g1_gc_flags() {
   // Set the maximum pause time goal to be a reasonable default.
   if (FLAG_IS_DEFAULT(MaxGCPauseMillis)) {
     FLAG_SET_DEFAULT(MaxGCPauseMillis, 200);
+  }
+
+  if (FLAG_IS_DEFAULT(MarkStackSize)) {
+    // Size as a multiple of TaskQueueSuper::N which is larger
+    // for 64-bit.
+    FLAG_SET_DEFAULT(MarkStackSize, 128 * TaskQueueSuper::total_size());
+  }
+  if (PrintGCDetails && Verbose) {
+    tty->print_cr("MarkStackSize: %uk  MarkStackSizeMax: %uk",
+      MarkStackSize / K, MarkStackSizeMax / K);
+    tty->print_cr("ConcGCThreads: %u", ConcGCThreads);
   }
 }
 
@@ -1447,11 +1464,17 @@ void Arguments::set_aggressive_opts_flags() {
     sprintf(buffer, "java.lang.Integer.IntegerCache.high=" INTX_FORMAT, AutoBoxCacheMax);
     add_property(buffer);
   }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
-    FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
-    FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
+  if (AggressiveOpts) {
+    // Switch on optimizations with AggressiveOpts.
+    if (FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
+      FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
+    }
+    if (FLAG_IS_DEFAULT(UseLoopPredicate)) {
+      FLAG_SET_DEFAULT(UseLoopPredicate, true);
+    }
+    if (FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
+      FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
+    }
   }
 #endif
 
@@ -1737,6 +1760,11 @@ bool Arguments::check_vm_args_consistency() {
     status = false;
   }
 
+  if (UseG1GC) {
+    status = status && verify_percentage(InitiatingHeapOccupancyPercent,
+                                         "InitiatingHeapOccupancyPercent");
+  }
+
   status = status && verify_interval(RefDiscoveryPolicy,
                                      ReferenceProcessor::DiscoveryPolicyMin,
                                      ReferenceProcessor::DiscoveryPolicyMax,
@@ -1788,6 +1816,29 @@ static bool match_option(const JavaVMOption* option, const char** names, const c
   for (/* empty */; *names != NULL; ++names) {
     if (match_option(option, *names, tail)) {
       if (**tail == '\0' || tail_allowed && **tail == ':') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool Arguments::parse_uintx(const char* value,
+                            uintx* uintx_arg,
+                            uintx min_size) {
+
+  // Check the sign first since atomull() parses only unsigned values.
+  bool value_is_positive = !(*value == '-');
+
+  if (value_is_positive) {
+    julong n;
+    bool good_return = atomull(value, &n);
+    if (good_return) {
+      bool above_minimum = n >= min_size;
+      bool value_is_too_large = n > max_uintx;
+
+      if (above_minimum && !value_is_too_large) {
+        *uintx_arg = n;
         return true;
       }
     }
@@ -2453,6 +2504,37 @@ SOLARIS_ONLY(
       jio_fprintf(defaultStream::error_stream(),
                   "Please use -XX:YoungPLABSize in place of "
                   "-XX:ParallelGCToSpaceAllocBufferSize in the future\n");
+    } else if (match_option(option, "-XX:CMSMarkStackSize=", &tail) ||
+               match_option(option, "-XX:G1MarkStackSize=", &tail)) {
+      julong stack_size = 0;
+      ArgsRange errcode = parse_memory_size(tail, &stack_size, 1);
+      if (errcode != arg_in_range) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Invalid mark stack size: %s\n", option->optionString);
+        describe_range_error(errcode);
+        return JNI_EINVAL;
+      }
+      FLAG_SET_CMDLINE(uintx, MarkStackSize, stack_size);
+    } else if (match_option(option, "-XX:CMSMarkStackSizeMax=", &tail)) {
+      julong max_stack_size = 0;
+      ArgsRange errcode = parse_memory_size(tail, &max_stack_size, 1);
+      if (errcode != arg_in_range) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Invalid maximum mark stack size: %s\n",
+                    option->optionString);
+        describe_range_error(errcode);
+        return JNI_EINVAL;
+      }
+      FLAG_SET_CMDLINE(uintx, MarkStackSizeMax, max_stack_size);
+    } else if (match_option(option, "-XX:ParallelMarkingThreads=", &tail) ||
+               match_option(option, "-XX:ParallelCMSThreads=", &tail)) {
+      uintx conc_threads = 0;
+      if (!parse_uintx(tail, &conc_threads, 1)) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Invalid concurrent threads: %s\n", option->optionString);
+        return JNI_EINVAL;
+      }
+      FLAG_SET_CMDLINE(uintx, ConcGCThreads, conc_threads);
     } else if (match_option(option, "-XX:", &tail)) { // -XX:xxxx
       // Skip -XX:Flags= since that case has already been handled
       if (strncmp(tail, "Flags=", strlen("Flags=")) != 0) {
