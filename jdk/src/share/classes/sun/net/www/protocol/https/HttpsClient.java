@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,6 @@ import java.util.Iterator;
 import java.security.AccessController;
 
 import javax.security.auth.x500.X500Principal;
-import javax.security.auth.kerberos.KerberosPrincipal;
 
 import javax.net.ssl.*;
 import sun.security.x509.X500Name;
@@ -461,17 +460,19 @@ final class HttpsClient extends HttpClient
         }
 
         Certificate[] peerCerts = null;
+        String cipher = session.getCipherSuite();
         try {
             HostnameChecker checker = HostnameChecker.getInstance(
                                                 HostnameChecker.TYPE_TLS);
 
-            Principal principal = getPeerPrincipal();
-            if (principal instanceof KerberosPrincipal) {
-                if (!checker.match(host, (KerberosPrincipal)principal)) {
+            // Use ciphersuite to determine whether Kerberos is present.
+            if (cipher.startsWith("TLS_KRB5")) {
+                if (!checker.match(host, getPeerPrincipal())) {
                     throw new SSLPeerUnverifiedException("Hostname checker" +
                                 " failed for Kerberos");
                 }
-            } else {
+            } else { // X.509
+
                 // get the subject's certificate
                 peerCerts = session.getPeerCertificates();
 
@@ -499,7 +500,6 @@ final class HttpsClient extends HttpClient
             // ignore
         }
 
-        String cipher = session.getCipherSuite();
         if ((cipher != null) && (cipher.indexOf("_anon_") != -1)) {
             return;
         } else if ((hostnameVerifier != null) &&

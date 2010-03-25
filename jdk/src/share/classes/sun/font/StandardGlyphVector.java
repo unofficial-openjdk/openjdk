@@ -197,7 +197,7 @@ public class StandardGlyphVector extends GlyphVector {
 
             // how do we know its a base glyph
             // for now, it is if the natural advance of the glyph is non-zero
-            Font2D f2d = FontManager.getFont2D(font);
+            Font2D f2d = FontUtilities.getFont2D(font);
             FontStrike strike = f2d.getStrike(font, frc);
 
             float[] deltas = { trackPt.x, trackPt.y };
@@ -396,12 +396,19 @@ public class StandardGlyphVector extends GlyphVector {
 
     // !!! not cached, assume TextLayout will cache if necessary
     public Rectangle2D getVisualBounds() {
-        if (glyphs.length == 0) {
-            return new Rectangle2D.Float(0, 0, 0, 0);
+        Rectangle2D result = null;
+        for (int i = 0; i < glyphs.length; ++i) {
+            Rectangle2D glyphVB = getGlyphVisualBounds(i).getBounds2D();
+            if (!glyphVB.isEmpty()) {
+                if (result == null) {
+                    result = glyphVB;
+                } else {
+                    Rectangle2D.union(result, glyphVB, result);
+                }
+            }
         }
-        Rectangle2D result = getGlyphVisualBounds(0).getBounds2D();
-        for (int i = 1; i < glyphs.length; ++i) {
-            Rectangle2D.union(result, getGlyphVisualBounds(i).getBounds2D(), result);
+        if (result == null) {
+            result = new Rectangle2D.Float(0, 0, 0, 0);
         }
         return result;
     }
@@ -1116,7 +1123,7 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     private void initFontData() {
-        font2D = FontManager.getFont2D(font);
+        font2D = FontUtilities.getFont2D(font);
         float s = font.getSize2D();
         if (font.isTransformed()) {
             ftx = font.getTransform();
@@ -1787,8 +1794,19 @@ public class StandardGlyphVector extends GlyphVector {
                 gp.transform(sgv.invdtx);
                 result = gp.getBounds2D();
             }
-            result.setRect(result.getMinX() + x + dx, result.getMinY() + y + dy,
-                           result.getWidth(), result.getHeight());
+            /* Since x is the logical advance of the glyph to this point.
+             * Because of the way that Rectangle.union is specified, this
+             * means that subsequent unioning of a rect including that
+             * will be affected, even if the glyph is empty. So skip such
+             * cases. This alone isn't a complete solution since x==0
+             * may also not be what is wanted. The code that does the
+             * unioning also needs to be aware to ignore empty glyphs.
+             */
+            if (!result.isEmpty()) {
+                result.setRect(result.getMinX() + x + dx,
+                               result.getMinY() + y + dy,
+                               result.getWidth(), result.getHeight());
+            }
             return result;
         }
 

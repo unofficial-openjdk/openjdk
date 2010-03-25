@@ -92,9 +92,7 @@ protected:
   int _parallel_gc_threads;
 
   enum SomePrivateConstants {
-    NumPrevPausesForHeuristics = 10,
-    NumPrevGCsForHeuristics = 10,
-    NumAPIs = HeapRegion::MaxAge
+    NumPrevPausesForHeuristics = 10
   };
 
   G1MMUTracker* _mmu_tracker;
@@ -317,6 +315,10 @@ private:
 #ifndef PRODUCT
   bool verify_young_ages(HeapRegion* head, SurvRateGroup *surv_rate_group);
 #endif // PRODUCT
+
+  void adjust_concurrent_refinement(double update_rs_time,
+                                    double update_rs_processed_buffers,
+                                    double goal_ms);
 
 protected:
   double _pause_time_target_ms;
@@ -980,8 +982,6 @@ public:
   bool should_initiate_conc_mark()      { return _should_initiate_conc_mark; }
   void set_should_initiate_conc_mark()  { _should_initiate_conc_mark = true; }
   void unset_should_initiate_conc_mark(){ _should_initiate_conc_mark = false; }
-
-  void checkpoint_conc_overhead();
 
   // If an expansion would be appropriate, because recent GC overhead had
   // exceeded the desired limit, return an amount to expand by.

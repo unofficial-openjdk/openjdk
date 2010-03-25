@@ -33,19 +33,15 @@ protected:
   double          _time_slice;
   double          _max_gc_time; // this is per time slice
 
-  double          _conc_overhead_time_sec;
-
 public:
   G1MMUTracker(double time_slice, double max_gc_time);
-
-  void update_conc_overhead(double conc_overhead);
 
   virtual void add_pause(double start, double end, bool gc_thread) = 0;
   virtual double longest_pause(double current_time) = 0;
   virtual double when_sec(double current_time, double pause_time) = 0;
 
   double max_gc_time() {
-    return _max_gc_time - _conc_overhead_time_sec;
+    return _max_gc_time;
   }
 
   inline bool now_max_gc(double current_time) {
@@ -103,7 +99,10 @@ private:
   // The array is of fixed size and I don't think we'll need more than
   // two or three entries with the current behaviour of G1 pauses.
   // If the array is full, an easy fix is to look for the pauses with
-  // the shortest gap between them and concolidate them.
+  // the shortest gap between them and consolidate them.
+  // For now, we have taken the expedient alternative of forgetting
+  // the oldest entry in the event that +G1UseFixedWindowMMUTracker, thus
+  // potentially violating MMU specs for some time thereafter.
 
   G1MMUTrackerQueueElem _array[QueueLength];
   int                   _head_index;

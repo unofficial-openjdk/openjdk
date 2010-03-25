@@ -51,45 +51,46 @@ public class ScopeDesc {
   /** Scalar replaced bjects pool */
   private List    objects; // ArrayList<ScopeValue>
 
-
-  public ScopeDesc(NMethod code, int decodeOffset) {
+  private ScopeDesc(NMethod code, int decodeOffset, List objects, boolean reexecute) {
     this.code = code;
     this.decodeOffset = decodeOffset;
-    this.objects      = decodeObjectValues(DebugInformationRecorder.SERIALIZED_NULL);
+    this.objects      = objects;
+    this.reexecute    = reexecute;
 
     // Decode header
     DebugInfoReadStream stream  = streamAt(decodeOffset);
 
     senderDecodeOffset = stream.readInt();
     method = (Method) VM.getVM().getObjectHeap().newOop(stream.readOopHandle());
-    setBCIAndReexecute(stream.readInt());
+    bci    = stream.readBCI();
     // Decode offsets for body and sender
     localsDecodeOffset      = stream.readInt();
     expressionsDecodeOffset = stream.readInt();
     monitorsDecodeOffset    = stream.readInt();
   }
 
-  public ScopeDesc(NMethod code, int decodeOffset, int objectDecodeOffset) {
+  public ScopeDesc(NMethod code, int decodeOffset, int objectDecodeOffset, boolean reexecute) {
     this.code = code;
     this.decodeOffset = decodeOffset;
     this.objects      = decodeObjectValues(objectDecodeOffset);
+    this.reexecute    = reexecute;
 
     // Decode header
     DebugInfoReadStream stream  = streamAt(decodeOffset);
 
     senderDecodeOffset = stream.readInt();
     method = (Method) VM.getVM().getObjectHeap().newOop(stream.readOopHandle());
-    setBCIAndReexecute(stream.readInt());
+    bci    = stream.readBCI();
     // Decode offsets for body and sender
     localsDecodeOffset      = stream.readInt();
     expressionsDecodeOffset = stream.readInt();
     monitorsDecodeOffset    = stream.readInt();
   }
 
-  public NMethod getNMethod() { return code; }
-  public Method getMethod() { return method; }
-  public int    getBCI()    { return bci;    }
-  public boolean getReexecute() {return reexecute;}
+  public NMethod getNMethod()   { return code; }
+  public Method getMethod()     { return method; }
+  public int    getBCI()        { return bci;    }
+  public boolean getReexecute() { return reexecute;}
 
   /** Returns a List&lt;ScopeValue&gt; */
   public List getLocals() {
@@ -106,7 +107,7 @@ public class ScopeDesc {
     return decodeMonitorValues(monitorsDecodeOffset);
   }
 
-  /** Returns a List&lt;MonitorValue&gt; */
+  /** Returns a List&lt;ObjectValue&gt; */
   public List getObjects() {
     return objects;
   }
@@ -117,7 +118,7 @@ public class ScopeDesc {
       return null;
     }
 
-    return new ScopeDesc(code, senderDecodeOffset);
+    return new ScopeDesc(code, senderDecodeOffset, objects, false);
   }
 
   /** Returns where the scope was decoded */
@@ -151,8 +152,8 @@ public class ScopeDesc {
   public void printValueOn(PrintStream tty) {
     tty.print("ScopeDesc for ");
     method.printValueOn(tty);
-    tty.println(" @bci " + bci);
-    tty.println(" reexecute: " + reexecute);
+    tty.print(" @bci " + bci);
+    tty.println(" reexecute=" + reexecute);
   }
 
   // FIXME: add more accessors
@@ -160,12 +161,6 @@ public class ScopeDesc {
   //--------------------------------------------------------------------------------
   // Internals only below this point
   //
-  private void setBCIAndReexecute(int combination) {
-    int InvocationEntryBci = VM.getVM().getInvocationEntryBCI();
-    bci = (combination >> 1) + InvocationEntryBci;
-    reexecute = (combination & 1)==1 ? true : false;
-  }
-
   private DebugInfoReadStream streamAt(int decodeOffset) {
     return new DebugInfoReadStream(code, decodeOffset, objects);
   }

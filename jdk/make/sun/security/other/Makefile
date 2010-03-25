@@ -39,10 +39,21 @@ AUTO_FILES_JAVA_DIRS = \
     sun/security/provider \
     sun/security/rsa \
     sun/security/ssl \
+    sun/security/ssl/krb5 \
     sun/security/timestamp \
     sun/security/validator \
     sun/security/x509 \
     com/sun/net/ssl/internal/ssl
+
+#
+# EC classes used by the packages above
+#
+FILES_java += \
+    sun/security/ec/ECKeyFactory.java \
+    sun/security/ec/ECParameters.java \
+    sun/security/ec/ECPrivateKeyImpl.java \
+    sun/security/ec/ECPublicKeyImpl.java \
+    sun/security/ec/NamedCurve.java
 
 #
 # Rules

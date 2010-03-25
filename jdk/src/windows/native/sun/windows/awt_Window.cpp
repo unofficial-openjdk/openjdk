@@ -143,6 +143,11 @@ struct RepositionSecurityWarningStruct {
     jobject window;
 };
 
+struct SetFullScreenExclusiveModeStateStruct {
+    jobject window;
+    jboolean isFSEMState;
+};
+
 
 /************************************************************************
  * AwtWindow fields
@@ -158,9 +163,11 @@ jfieldID AwtWindow::sysXID;
 jfieldID AwtWindow::sysYID;
 jfieldID AwtWindow::sysWID;
 jfieldID AwtWindow::sysHID;
+jfieldID AwtWindow::windowTypeID;
 
 jmethodID AwtWindow::getWarningStringMID;
 jmethodID AwtWindow::calculateSecurityWarningPositionMID;
+jmethodID AwtWindow::windowTypeNameMID;
 
 int AwtWindow::ms_instanceCounter = 0;
 HHOOK AwtWindow::ms_hCBTFilter;
@@ -211,6 +218,9 @@ AwtWindow::AwtWindow() {
     hContentBitmap = NULL;
 
     ::InitializeCriticalSection(&contentBitmapCS);
+
+    m_windowType = Type::NORMAL;
+    m_alwaysOnTop = false;
 }
 
 AwtWindow::~AwtWindow()
@@ -218,12 +228,7 @@ AwtWindow::~AwtWindow()
     if (warningString != NULL) {
         delete [] warningString;
     }
-    ::EnterCriticalSection(&contentBitmapCS);
-    if (hContentBitmap != NULL) {
-        ::DeleteObject(hContentBitmap);
-        hContentBitmap = NULL;
-    }
-    ::LeaveCriticalSection(&contentBitmapCS);
+    DeleteContentBitmap();
     ::DeleteCriticalSection(&contentBitmapCS);
 }
 
@@ -348,10 +353,10 @@ void AwtWindow::RepositionSecurityWarning(JNIEnv *env)
     RECT rect;
     CalculateWarningWindowBounds(env, &rect);
 
-    ::SetWindowPos(warningWindow, HWND_NOTOPMOST,
+    ::SetWindowPos(warningWindow, IsAlwaysOnTop() ? HWND_TOPMOST : GetHWnd(),
             rect.left, rect.top,
             rect.right - rect.left, rect.bottom - rect.top,
-            SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOZORDER |
+            SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE |
             SWP_NOOWNERZORDER
             );
 }
@@ -370,6 +375,10 @@ MsgRouting AwtWindow::WmWindowPosChanged(LPARAM windowPos) {
         if (wp->flags & SWP_SHOWWINDOW) {
             UpdateSecurityWarningVisibility();
         }
+    }
+
+    if (wp->flags & SWP_HIDEWINDOW) {
+        EnableTranslucency(FALSE);
     }
 
     return mrDoDefault;
@@ -470,6 +479,9 @@ void AwtWindow::CreateHWnd(JNIEnv *env, LPCWSTR title,
         env->DeleteLocalRef(javaWarningString);
     }
     env->DeleteLocalRef(target);
+
+    InitType(env, peer);
+    TweakStyle(windowStyle, windowExStyle);
 
     AwtCanvas::CreateHWnd(env, title,
             windowStyle,
@@ -641,7 +653,10 @@ void AwtWindow::UnregisterWarningWindowClass()
 
 HICON AwtWindow::GetSecurityWarningIcon()
 {
-    HICON ico = AwtToolkit::GetInstance().GetSecurityWarningIcon(securityWarningAnimationStage,
+    // It is assumed that the icon at index 0 is gray
+    const UINT index = securityAnimationKind == akShow ?
+        securityWarningAnimationStage : 0;
+    HICON ico = AwtToolkit::GetInstance().GetSecurityWarningIcon(index,
             warningWindowWidth, warningWindowHeight);
     return ico;
 }
@@ -817,7 +832,9 @@ void AwtWindow::StartSecurityAnimation(AnimationKind kind)
             securityAnimationTimerElapse, NULL);
 
     if (securityAnimationKind == akShow) {
-        ::SetWindowPos(warningWindow, HWND_NOTOPMOST, 0, 0, 0, 0,
+        ::SetWindowPos(warningWindow,
+                IsAlwaysOnTop() ? HWND_TOPMOST : GetHWnd(),
+                0, 0, 0, 0,
                 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE |
                 SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 
@@ -916,7 +933,9 @@ void AwtWindow::UpdateSecurityWarningVisibility()
 
     bool show = false;
 
-    if (IsVisible() && currentWmSizeState != SIZE_MINIMIZED) {
+    if (IsVisible() && currentWmSizeState != SIZE_MINIMIZED &&
+            !isFullScreenExclusiveMode())
+    {
         if (AwtComponent::GetFocusedWindow() == GetHWnd()) {
             show = true;
         }
@@ -974,6 +993,50 @@ void AwtWindow::_RepositionSecurityWarning(void* param)
   ret:
     env->DeleteGlobalRef(self);
     delete rsws;
+}
+
+void AwtWindow::InitType(JNIEnv *env, jobject peer)
+{
+    jobject type = env->GetObjectField(peer, windowTypeID);
+    if (type == NULL) {
+        return;
+    }
+
+    jstring value = (jstring)env->CallObjectMethod(type, windowTypeNameMID);
+    if (value == NULL) {
+        env->DeleteLocalRef(type);
+        return;
+    }
+
+    const char* valueNative = env->GetStringUTFChars(value, 0);
+    if (valueNative == NULL) {
+        env->DeleteLocalRef(value);
+        env->DeleteLocalRef(type);
+        return;
+    }
+
+    if (strcmp(valueNative, "UTILITY") == 0) {
+        m_windowType = Type::UTILITY;
+    } else if (strcmp(valueNative, "POPUP") == 0) {
+        m_windowType = Type::POPUP;
+    }
+
+    env->ReleaseStringUTFChars(value, valueNative);
+    env->DeleteLocalRef(value);
+    env->DeleteLocalRef(type);
+}
+
+void AwtWindow::TweakStyle(DWORD & style, DWORD & exStyle)
+{
+    switch (GetType()) {
+        case Type::UTILITY:
+            exStyle |= WS_EX_TOOLWINDOW;
+            break;
+        case Type::POPUP:
+            style &= ~WS_OVERLAPPED;
+            style |= WS_POPUP;
+            break;
+    }
 }
 
 /* Create a new AwtWindow object and window.   */
@@ -1129,6 +1192,8 @@ void AwtWindow::Show()
     if (locationByPlatform) {
          moveToDefaultLocation();
     }
+
+    EnableTranslucency(TRUE);
 
     // The following block exists to support Menu/Tooltip animation for
     // Swing programs in a way which avoids introducing any new public api into
@@ -2208,6 +2273,7 @@ void AwtWindow::_SetAlwaysOnTop(void *param)
     if (::IsWindow(w->GetHWnd()))
     {
         w->SendMessage(WM_AWT_SETALWAYSONTOP, (WPARAM)value, (LPARAM)w);
+        w->m_alwaysOnTop = (bool)value;
     }
 ret:
     env->DeleteGlobalRef(self);
@@ -2494,27 +2560,73 @@ void AwtWindow::RedrawWindow()
     }
 }
 
-void AwtWindow::SetTranslucency(BYTE opacity, BOOL opaque)
+// Deletes the hContentBitmap if it is non-null
+void AwtWindow::DeleteContentBitmap()
 {
-    BYTE old_opacity = getOpacity();
-    BOOL old_opaque = isOpaque();
+    ::EnterCriticalSection(&contentBitmapCS);
+    if (hContentBitmap != NULL) {
+        ::DeleteObject(hContentBitmap);
+        hContentBitmap = NULL;
+    }
+    ::LeaveCriticalSection(&contentBitmapCS);
+}
+
+// The effects are enabled only upon showing the window.
+// See 6780496 for details.
+void AwtWindow::EnableTranslucency(BOOL enable)
+{
+    if (enable) {
+        SetTranslucency(getOpacity(), isOpaque(), FALSE, TRUE);
+    } else {
+        SetTranslucency(0xFF, TRUE, FALSE);
+    }
+}
+
+/**
+ * Sets the translucency effects.
+ *
+ * This method is used to:
+ *
+ * 1. Apply the translucency effects upon showing the window
+ *    (setValues == FALSE, useDefaultForOldValues == TRUE);
+ * 2. Turn off the effects upon hiding the window
+ *    (setValues == FALSE, useDefaultForOldValues == FALSE);
+ * 3. Set the effects per user's request
+ *    (setValues == TRUE, useDefaultForOldValues == FALSE);
+ *
+ * In case #3 the effects may or may not be applied immediately depending on
+ * the current visibility status of the window.
+ *
+ * The setValues argument indicates if we need to preserve the passed values
+ * in local fields for further use.
+ * The useDefaultForOldValues argument indicates whether we should consider
+ * the window as if it has not any effects applied at the moment.
+ */
+void AwtWindow::SetTranslucency(BYTE opacity, BOOL opaque, BOOL setValues,
+        BOOL useDefaultForOldValues)
+{
+    BYTE old_opacity = useDefaultForOldValues ? 0xFF : getOpacity();
+    BOOL old_opaque = useDefaultForOldValues ? TRUE : isOpaque();
 
     if (opacity == old_opacity && opaque == old_opaque) {
         return;
     }
 
-    setOpacity(opacity);
-    setOpaque(opaque);
+    if (setValues) {
+       m_opacity = opacity;
+       m_opaque = opaque;
+    }
+
+    // If we're invisible and are storing the values, return
+    // Otherwise, apply the effects immediately
+    if (!IsVisible() && setValues) {
+        return;
+    }
 
     HWND hwnd = GetHWnd();
 
     if (opaque != old_opaque) {
-        ::EnterCriticalSection(&contentBitmapCS);
-        if (hContentBitmap != NULL) {
-            ::DeleteObject(hContentBitmap);
-            hContentBitmap = NULL;
-        }
-        ::LeaveCriticalSection(&contentBitmapCS);
+        DeleteContentBitmap();
     }
 
     if (opaque && opacity == 0xff) {
@@ -2634,9 +2746,7 @@ void AwtWindow::UpdateWindow(JNIEnv* env, jintArray data, int width, int height,
     }
 
     ::EnterCriticalSection(&contentBitmapCS);
-    if (hContentBitmap != NULL) {
-        ::DeleteObject(hContentBitmap);
-    }
+    DeleteContentBitmap();
     hContentBitmap = hBitmap;
     contentWidth = width;
     contentHeight = height;
@@ -2909,6 +3019,25 @@ void AwtWindow::_UpdateWindow(void* param)
     delete uws;
 }
 
+void AwtWindow::_SetFullScreenExclusiveModeState(void *param)
+{
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
+    SetFullScreenExclusiveModeStateStruct * data =
+        (SetFullScreenExclusiveModeStateStruct*)param;
+    jobject self = data->window;
+    jboolean state = data->isFSEMState;
+
+    PDATA pData;
+    JNI_CHECK_PEER_GOTO(self, ret);
+    AwtWindow *window = (AwtWindow *)pData;
+
+    window->setFullScreenExclusiveModeState(state != 0);
+
+  ret:
+    env->DeleteGlobalRef(self);
+    delete data;
+}
 
 extern "C" {
 
@@ -2937,6 +3066,11 @@ Java_java_awt_Window_initIDs(JNIEnv *env, jclass cls)
     AwtWindow::calculateSecurityWarningPositionMID =
         env->GetMethodID(cls, "calculateSecurityWarningPosition", "(DDDD)Ljava/awt/geom/Point2D;");
 
+    jclass windowTypeClass = env->FindClass("java/awt/Window$Type");
+    AwtWindow::windowTypeNameMID =
+        env->GetMethodID(windowTypeClass, "name", "()Ljava/lang/String;");
+    env->DeleteLocalRef(windowTypeClass);
+
     CATCH_BAD_ALLOC;
 }
 
@@ -2963,6 +3097,9 @@ Java_sun_awt_windows_WWindowPeer_initIDs(JNIEnv *env, jclass cls)
     AwtWindow::sysYID = env->GetFieldID(cls, "sysY", "I");
     AwtWindow::sysWID = env->GetFieldID(cls, "sysW", "I");
     AwtWindow::sysHID = env->GetFieldID(cls, "sysH", "I");
+
+    AwtWindow::windowTypeID = env->GetFieldID(cls, "windowType",
+            "Ljava/awt/Window$Type;");
 
     CATCH_BAD_ALLOC;
 }
@@ -3286,6 +3423,29 @@ Java_sun_awt_windows_WWindowPeer_getScreenImOn(JNIEnv *env, jobject self)
     // global ref is deleted in _GetScreenImOn()
 
     CATCH_BAD_ALLOC_RET(-1);
+}
+
+/*
+ * Class:     sun_awt_windows_WWindowPeer
+ * Method:    setFullScreenExclusiveModeState
+ * Signature: (Z)V
+ */
+JNIEXPORT void JNICALL
+Java_sun_awt_windows_WWindowPeer_setFullScreenExclusiveModeState(JNIEnv *env,
+        jobject self, jboolean state)
+{
+    TRY;
+
+    SetFullScreenExclusiveModeStateStruct *data =
+        new SetFullScreenExclusiveModeStateStruct;
+    data->window = env->NewGlobalRef(self);
+    data->isFSEMState = state;
+
+    AwtToolkit::GetInstance().SyncCall(
+            AwtWindow::_SetFullScreenExclusiveModeState, data);
+    // global ref and data are deleted in the invoked method
+
+    CATCH_BAD_ALLOC;
 }
 
 /*

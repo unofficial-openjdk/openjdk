@@ -118,8 +118,6 @@ public class JarSigner {
     KeyStore store;                 // the keystore specified by -keystore
                                     // or the default keystore, never null
 
-    IdentityScope scope;
-
     String keystore; // key store file
     boolean nullStream = false; // null keystore input stream (NONE)
     boolean token = false; // token-based keystore
@@ -212,7 +210,6 @@ public class JarSigner {
             if (verify) {
                 try {
                     loadKeyStore(keystore, false);
-                    scope = IdentityScope.getSystemScope();
                 } catch (Exception e) {
                     if ((keystore != null) || (storepass != null)) {
                         System.out.println(rb.getString("jarsigner error: ") +
@@ -291,13 +288,21 @@ public class JarSigner {
         for (n=0; n < args.length; n++) {
 
             String flags = args[n];
+            String modifier = null;
+            if (flags.charAt(0) == '-') {
+                int pos = flags.indexOf(':');
+                if (pos > 0) {
+                    modifier = flags.substring(pos+1);
+                    flags = flags.substring(0, pos);
+                }
+            }
 
             if (collator.compare(flags, "-keystore") == 0) {
                 if (++n == args.length) usageNoArg();
                 keystore = args[n];
             } else if (collator.compare(flags, "-storepass") ==0) {
                 if (++n == args.length) usageNoArg();
-                storepass = args[n].toCharArray();
+                storepass = getPass(modifier, args[n]);
             } else if (collator.compare(flags, "-storetype") ==0) {
                 if (++n == args.length) usageNoArg();
                 storetype = args[n];
@@ -329,7 +334,7 @@ public class JarSigner {
                 debug = true;
             } else if (collator.compare(flags, "-keypass") ==0) {
                 if (++n == args.length) usageNoArg();
-                keypass = args[n].toCharArray();
+                keypass = getPass(modifier, args[n]);
             } else if (collator.compare(flags, "-sigfile") ==0) {
                 if (++n == args.length) usageNoArg();
                 sigfile = args[n];
@@ -355,13 +360,7 @@ public class JarSigner {
             } else if (collator.compare(flags, "-verify") ==0) {
                 verify = true;
             } else if (collator.compare(flags, "-verbose") ==0) {
-                verbose = "all";
-            } else if (collator.compare(flags, "-verbose:all") ==0) {
-                verbose = "all";
-            } else if (collator.compare(flags, "-verbose:summary") ==0) {
-                verbose = "summary";
-            } else if (collator.compare(flags, "-verbose:grouped") ==0) {
-                verbose = "grouped";
+                verbose = (modifier != null) ? modifier : "all";
             } else if (collator.compare(flags, "-sigalg") ==0) {
                 if (++n == args.length) usageNoArg();
                 sigalg = args[n];
@@ -465,18 +464,25 @@ public class JarSigner {
         }
     }
 
-    void usageNoArg() {
+    static char[] getPass(String modifier, String arg) {
+        char[] output = KeyTool.getPassWithModifier(modifier, arg);
+        if (output != null) return output;
+        usage();
+        return null;    // Useless, usage() already exit
+    }
+
+    static void usageNoArg() {
         System.out.println(rb.getString("Option lacks argument"));
         usage();
     }
 
-    void usage() {
+    static void usage() {
         System.out.println();
         System.out.println(rb.getString("Please type jarsigner -help for usage"));
         System.exit(1);
     }
 
-    void fullusage() {
+    static void fullusage() {
         System.out.println(rb.getString
                 ("Usage: jarsigner [options] jar-file alias"));
         System.out.println(rb.getString
@@ -975,13 +981,6 @@ public class JarSigner {
                         result |= IN_KEYSTORE;
                     }
                 }
-                if (!found && (scope != null)) {
-                    Identity id = scope.getIdentity(c.getPublicKey());
-                    if (id != null) {
-                        result |= IN_SCOPE;
-                        storeHash.put(c, "[" + id.getName() + "]");
-                    }
-                }
                 if (ckaliases.contains(alias)) {
                     result |= SIGNED_BY_ALIAS;
                 }
@@ -1022,9 +1021,9 @@ public class JarSigner {
         }
 
         if (sigfile.length() > 8) {
-            sigfile = sigfile.substring(0, 8).toUpperCase();
+            sigfile = sigfile.substring(0, 8).toUpperCase(Locale.ENGLISH);
         } else {
-            sigfile = sigfile.toUpperCase();
+            sigfile = sigfile.toUpperCase(Locale.ENGLISH);
         }
 
         StringBuilder tmpSigFile = new StringBuilder(sigfile.length());
@@ -1074,8 +1073,8 @@ public class JarSigner {
         ZipOutputStream zos = new ZipOutputStream(ps);
 
         /* First guess at what they might be - we don't xclude RSA ones. */
-        String sfFilename = (META_INF + sigfile + ".SF").toUpperCase();
-        String bkFilename = (META_INF + sigfile + ".DSA").toUpperCase();
+        String sfFilename = (META_INF + sigfile + ".SF").toUpperCase(Locale.ENGLISH);
+        String bkFilename = (META_INF + sigfile + ".DSA").toUpperCase(Locale.ENGLISH);
 
         Manifest manifest = new Manifest();
         Map<String,Attributes> mfEntries = manifest.getEntries();
@@ -1438,9 +1437,10 @@ public class JarSigner {
      * . META-INF/*.SF
      * . META-INF/*.DSA
      * . META-INF/*.RSA
+     * . META-INF/*.EC
      */
     private boolean signatureRelated(String name) {
-        String ucName = name.toUpperCase();
+        String ucName = name.toUpperCase(Locale.ENGLISH);
         if (ucName.equals(JarFile.MANIFEST_NAME) ||
             ucName.equals(META_INF) ||
             (ucName.startsWith(SIG_PREFIX) &&
@@ -1450,7 +1450,7 @@ public class JarSigner {
 
         if (ucName.startsWith(META_INF) &&
             SignatureFileVerifier.isBlockOrSF(ucName)) {
-            // .SF/.DSA/.RSA files in META-INF subdirs
+            // .SF/.DSA/.RSA/.EC files in META-INF subdirs
             // are not considered signature-related
             return (ucName.indexOf("/") == ucName.lastIndexOf("/"));
         }
@@ -1473,6 +1473,7 @@ public class JarSigner {
         Timestamp timestamp = signer.getTimestamp();
         if (timestamp != null) {
             s.append(printTimestamp(tab, timestamp));
+            s.append('\n');
         }
         // display the certificate(s)
         for (Certificate c : certs) {
@@ -1978,20 +1979,35 @@ public class JarSigner {
         String[] base64Digests = getDigests(ze, zf, digests, encoder);
 
         for (int i=0; i<digests.length; i++) {
-            String name = digests[i].getAlgorithm()+"-Digest";
-            String mfDigest = attrs.getValue(name);
-            if (mfDigest == null
-                && digests[i].getAlgorithm().equalsIgnoreCase("SHA")) {
-                // treat "SHA" and "SHA1" the same
-                mfDigest = attrs.getValue("SHA-Digest");
+            // The entry name to be written into attrs
+            String name = null;
+            try {
+                // Find if the digest already exists
+                AlgorithmId aid = AlgorithmId.get(digests[i].getAlgorithm());
+                for (Object key: attrs.keySet()) {
+                    if (key instanceof Attributes.Name) {
+                        String n = ((Attributes.Name)key).toString();
+                        if (n.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST")) {
+                            String tmp = n.substring(0, n.length() - 7);
+                            if (AlgorithmId.get(tmp).equals(aid)) {
+                                name = n;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (NoSuchAlgorithmException nsae) {
+                // Ignored. Writing new digest entry.
             }
-            if (mfDigest == null) {
-                // compute digest and add it to list of attributes
+
+            if (name == null) {
+                name = digests[i].getAlgorithm()+"-Digest";
                 attrs.putValue(name, base64Digests[i]);
                 update=true;
             } else {
                 // compare digests, and replace the one in the manifest
                 // if they are different
+                String mfDigest = attrs.getValue(name);
                 if (!mfDigest.equalsIgnoreCase(base64Digests[i])) {
                     attrs.putValue(name, base64Digests[i]);
                     update=true;
@@ -2203,7 +2219,6 @@ class SignatureFile {
             }
             BigInteger serial = certChain[0].getSerialNumber();
 
-            String digestAlgorithm;
             String signatureAlgorithm;
             String keyAlgorithm = privateKey.getAlgorithm();
             /*
@@ -2213,22 +2228,24 @@ class SignatureFile {
             if (sigalg == null) {
 
                 if (keyAlgorithm.equalsIgnoreCase("DSA"))
-                    digestAlgorithm = "SHA1";
+                    signatureAlgorithm = "SHA1withDSA";
                 else if (keyAlgorithm.equalsIgnoreCase("RSA"))
-                    digestAlgorithm = "SHA256";
-                else {
+                    signatureAlgorithm = "SHA256withRSA";
+                else if (keyAlgorithm.equalsIgnoreCase("EC"))
+                    signatureAlgorithm = "SHA256withECDSA";
+                else
                     throw new RuntimeException("private key is not a DSA or "
                                                + "RSA key");
-                }
-                signatureAlgorithm = digestAlgorithm + "with" + keyAlgorithm;
             } else {
                 signatureAlgorithm = sigalg;
             }
 
             // check common invalid key/signature algorithm combinations
-            String sigAlgUpperCase = signatureAlgorithm.toUpperCase();
+            String sigAlgUpperCase = signatureAlgorithm.toUpperCase(Locale.ENGLISH);
             if ((sigAlgUpperCase.endsWith("WITHRSA") &&
                 !keyAlgorithm.equalsIgnoreCase("RSA")) ||
+                (sigAlgUpperCase.endsWith("WITHECDSA") &&
+                !keyAlgorithm.equalsIgnoreCase("EC")) ||
                 (sigAlgUpperCase.endsWith("WITHDSA") &&
                 !keyAlgorithm.equalsIgnoreCase("DSA"))) {
                 throw new SignatureException

@@ -25,16 +25,15 @@
 
 package sun.net.www.protocol.http;
 
-import java.util.HashMap;
-
-import sun.net.www.HeaderParser;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
-
 import java.net.URL;
 import java.io.IOException;
 import java.net.Authenticator.RequestorType;
-
+import java.util.HashMap;
+import sun.net.www.HeaderParser;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+import static sun.net.www.protocol.http.AuthScheme.NEGOTIATE;
+import static sun.net.www.protocol.http.AuthScheme.KERBEROS;
 
 /**
  * NegotiateAuthentication:
@@ -48,9 +47,6 @@ class NegotiateAuthentication extends AuthenticationInfo {
     private static final long serialVersionUID = 100L;
 
     final private HttpCallerInfo hci;
-
-    static final char NEGOTIATE_AUTH = 'S';
-    static final char KERBEROS_AUTH = 'K';
 
     // These maps are used to manage the GSS availability for diffrent
     // hosts. The key for both maps is the host name.
@@ -68,18 +64,18 @@ class NegotiateAuthentication extends AuthenticationInfo {
     * @param hci a schemed object.
     */
     public NegotiateAuthentication(HttpCallerInfo hci) {
-        super(RequestorType.PROXY==hci.authType?
-                    PROXY_AUTHENTICATION:SERVER_AUTHENTICATION,
-                hci.scheme.equalsIgnoreCase("Negotiate")?
-                    NEGOTIATE_AUTH:KERBEROS_AUTH,
-                hci.url, "");
+        super(RequestorType.PROXY==hci.authType ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+              hci.scheme.equalsIgnoreCase("Negotiate") ? NEGOTIATE : KERBEROS,
+              hci.url,
+              "");
         this.hci = hci;
     }
 
     /**
      * @return true if this authentication supports preemptive authorization
      */
-    boolean supportsPreemptiveAuthorization() {
+    @Override
+    public boolean supportsPreemptiveAuthorization() {
         return false;
     }
 
@@ -105,34 +101,24 @@ class NegotiateAuthentication extends AuthenticationInfo {
             return supported.get(hostname);
         }
 
-        try {
-            Negotiator neg = Negotiator.getSupported(hci);
+        Negotiator neg = Negotiator.getNegotiator(hci);
+        if (neg != null) {
             supported.put(hostname, true);
             // the only place cache.put is called. here we can make sure
             // the object is valid and the oneToken inside is not null
             cache.put(hostname, neg);
             return true;
-        } catch(Exception e) {
+        } else {
             supported.put(hostname, false);
             return false;
         }
     }
 
     /**
-     * @return the name of the HTTP header this authentication wants to set
-     */
-    String getHeaderName() {
-        if (type == SERVER_AUTHENTICATION) {
-            return "Authorization";
-        } else {
-            return "Proxy-Authorization";
-        }
-    }
-
-    /**
      * Not supported. Must use the setHeaders() method
      */
-    String getHeaderValue(URL url, String method) {
+    @Override
+    public String getHeaderValue(URL url, String method) {
         throw new RuntimeException ("getHeaderValue not supported");
     }
 
@@ -144,7 +130,8 @@ class NegotiateAuthentication extends AuthenticationInfo {
      * returning false means we have to go back to the user to ask for a new
      * username password.
      */
-    boolean isAuthorizationStale (String header) {
+    @Override
+    public boolean isAuthorizationStale (String header) {
         return false; /* should not be called for Negotiate */
     }
 
@@ -156,7 +143,8 @@ class NegotiateAuthentication extends AuthenticationInfo {
      * @param raw The raw header field.
      * @return true if all goes well, false if no headers were set.
      */
-    synchronized boolean setHeaders(HttpURLConnection conn, HeaderParser p, String raw) {
+    @Override
+    public synchronized boolean setHeaders(HttpURLConnection conn, HeaderParser p, String raw) {
 
         try {
             String response;
@@ -178,7 +166,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
     /**
      * return the first token.
      * @returns the token
-     * @throws IOException if <code>Negotiator.getSupported()</code> or
+     * @throws IOException if <code>Negotiator.getNegotiator()</code> or
      *                     <code>Negotiator.firstToken()</code> failed.
      */
     private byte[] firstToken() throws IOException {
@@ -192,11 +180,9 @@ class NegotiateAuthentication extends AuthenticationInfo {
             }
         }
         if (negotiator == null) {
-            try {
-                negotiator = Negotiator.getSupported(hci);
-            } catch(Exception e) {
+            negotiator = Negotiator.getNegotiator(hci);
+            if (negotiator == null) {
                 IOException ioe = new IOException("Cannot initialize Negotiator");
-                ioe.initCause(e);
                 throw ioe;
             }
         }
@@ -215,12 +201,6 @@ class NegotiateAuthentication extends AuthenticationInfo {
         return negotiator.nextToken(token);
     }
 
-    /**
-     * no-use for Negotiate
-     */
-    public void checkResponse (String header, String method, URL url) throws IOException {
-    }
-
     class B64Encoder extends BASE64Encoder {
         protected int bytesPerLine () {
             return 100000;  // as big as it can be, maybe INT_MAX
@@ -234,28 +214,4 @@ class NegotiateAuthentication extends AuthenticationInfo {
     //
     // Currently we ignore this header.
 
-}
-
-/**
- * This abstract class is a bridge to connect NegotiteAuthentication and
- * NegotiatorImpl, so that JAAS and JGSS calls can be made
- */
-abstract class Negotiator {
-    static Negotiator getSupported(HttpCallerInfo hci)
-                throws Exception {
-
-        // These lines are equivalent to
-        //     return new NegotiatorImpl(hci);
-        // The current implementation will make sure NegotiatorImpl is not
-        // directly referenced when compiling, thus smooth the way of building
-        // the J2SE platform where HttpURLConnection is a bootstrap class.
-
-        Class clazz = Class.forName("sun.net.www.protocol.http.NegotiatorImpl");
-        java.lang.reflect.Constructor c = clazz.getConstructor(HttpCallerInfo.class);
-        return (Negotiator) (c.newInstance(hci));
-    }
-
-    abstract byte[] firstToken() throws IOException;
-
-    abstract byte[] nextToken(byte[] in) throws IOException;
 }

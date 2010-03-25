@@ -50,8 +50,6 @@ ACTUAL_PROGRAM_NAME = $(PROGRAM)$(EXE_SUFFIX)
 ACTUAL_PROGRAM_DIR  = $(BINDIR)
 ACTUAL_PROGRAM      = $(ACTUAL_PROGRAM_DIR)/$(ACTUAL_PROGRAM_NAME)
 
-JVMCFG = $(LIBDIR)/$(LIBARCH)/jvm.cfg
-
 # Make sure the default rule is all
 program_default_rule: all
 
@@ -85,7 +83,7 @@ ifneq (,$(findstring $(PLATFORM), linux solaris))	# UNIX systems
 	endif
     endif
     ifeq ($(PLATFORM), linux)
-	LDFLAGS += -z origin
+	LDFLAGS += -Wl,-z -Wl,origin
 	LDFLAGS += -Wl,--allow-shlib-undefined
 	LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../lib/$(LIBARCH)/jli
 	LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../jre/lib/$(LIBARCH)/jli
@@ -116,7 +114,7 @@ endif
 
 ifeq ($(COMPILE_IT),true)
 
-$(ACTUAL_PROGRAM):: classes $(JVMCFG) $(INIT) 
+$(ACTUAL_PROGRAM):: classes $(INIT) 
 
 #
 # Windows only
@@ -190,12 +188,13 @@ $(ACTUAL_PROGRAM):: $(FILES_o)
 	@$(MKDIR) -p $(TEMPDIR)
 	$(LINK_PRE_CMD) $(CC) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LDFLAGS) \
 	    $(FILES_o) $(THREADLIBS) $(LDLIBS)
+	$(install-module-file)
 
 endif # PLATFORM
 
 else  # COMPILE_IT
 
-$(ACTUAL_PROGRAM):: $(JVMCFG)
+$(ACTUAL_PROGRAM)::
 
 # Copies in the file from the JDK_IMPORT_PATH area
 $(ACTUAL_PROGRAM_DIR)/%: $(JDK_IMPORT_PATH)/jre/bin/%
@@ -236,13 +235,13 @@ endif # files
 endif # INCREMENTAL_BUILD
 
 ifdef JAVA_ARGS
-OTHER_CPPFLAGS += -DJAVA_ARGS=$(JAVA_ARGS)
-OTHER_CPPFLAGS += -DLAUNCHER_NAME=\"$(LAUNCHER_NAME)\"
+OTHER_CPPFLAGS += -DJAVA_ARGS='$(JAVA_ARGS)'
+OTHER_CPPFLAGS += -DLAUNCHER_NAME='"$(LAUNCHER_NAME)"'
 endif
 
 ifeq ($(PLATFORM), windows)
 ifdef RELEASE
-OTHER_CPPFLAGS += -DVERSION="$(RELEASE)"
+OTHER_CPPFLAGS += -DVERSION='"$(RELEASE)"'
 endif
 endif
 
@@ -258,14 +257,8 @@ endif
 OTHER_INCLUDES += -I$(LAUNCHER_SHARE_SRC)/bin -I$(LAUNCHER_PLATFORM_SRC)/bin
 OTHER_INCLUDES += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
 
-# this may not be necessary...
-ifeq ($(PLATFORM), windows)
-OTHER_CPPFLAGS += -DPROGNAME="\"$(PROGRAM)\""
-VERSION_DEFINES += -DFULL_VERSION="\"$(FULL_VERSION)\""
-else
 OTHER_CPPFLAGS += -DPROGNAME='"$(PROGRAM)"'
 VERSION_DEFINES += -DFULL_VERSION='"$(FULL_VERSION)"'
-endif
 
 VERSION_DEFINES += -DJDK_MAJOR_VERSION='"$(JDK_MAJOR_VERSION)"' \
 		   -DJDK_MINOR_VERSION='"$(JDK_MINOR_VERSION)"'
@@ -276,12 +269,6 @@ $(OBJDIR)/main.$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/main.c
 	@$(prep-target)
 	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$(OBJDIR)/main.$(OBJECT_SUFFIX) \
 		$(VERSION_DEFINES) $<
-
-#
-# How to install jvm.cfg. 
-# 
-$(JVMCFG): $(LAUNCHER_PLATFORM_SRC)/bin/$(ARCH)/jvm.cfg 
-	$(install-file)
 
 #
 # Default dependencies

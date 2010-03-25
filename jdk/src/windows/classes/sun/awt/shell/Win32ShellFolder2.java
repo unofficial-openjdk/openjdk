@@ -524,7 +524,7 @@ final class Win32ShellFolder2 extends ShellFolder {
     // NOTE: this method uses COM and must be called on the 'COM thread'. See ComInvoker for the details
     private static native int compareIDs(long pParentIShellFolder, long pidl1, long pidl2);
 
-    private Boolean cachedIsFileSystem;
+    private volatile Boolean cachedIsFileSystem;
 
     /**
      * @return Whether this is a file system shell folder
@@ -693,29 +693,32 @@ final class Win32ShellFolder2 extends ShellFolder {
                     ArrayList<Win32ShellFolder2> list = new ArrayList<Win32ShellFolder2>();
                     long pEnumObjects = getEnumObjects(includeHiddenFiles);
                     if (pEnumObjects != 0) {
-                        long childPIDL;
-                        int testedAttrs = ATTRIB_FILESYSTEM | ATTRIB_FILESYSANCESTOR;
-                        do {
-                            childPIDL = getNextChild(pEnumObjects);
-                            boolean releasePIDL = true;
-                            if (childPIDL != 0 &&
-                                    (getAttributes0(pIShellFolder, childPIDL, testedAttrs) & testedAttrs) != 0) {
-                                Win32ShellFolder2 childFolder;
-                                if (Win32ShellFolder2.this.equals(desktop)
-                                        && personal != null
-                                        && pidlsEqual(pIShellFolder, childPIDL, personal.disposer.relativePIDL)) {
-                                    childFolder = personal;
-                                } else {
-                                    childFolder = new Win32ShellFolder2(Win32ShellFolder2.this, childPIDL);
-                                    releasePIDL = false;
+                        try {
+                            long childPIDL;
+                            int testedAttrs = ATTRIB_FILESYSTEM | ATTRIB_FILESYSANCESTOR;
+                            do {
+                                childPIDL = getNextChild(pEnumObjects);
+                                boolean releasePIDL = true;
+                                if (childPIDL != 0 &&
+                                        (getAttributes0(pIShellFolder, childPIDL, testedAttrs) & testedAttrs) != 0) {
+                                    Win32ShellFolder2 childFolder;
+                                    if (Win32ShellFolder2.this.equals(desktop)
+                                            && personal != null
+                                            && pidlsEqual(pIShellFolder, childPIDL, personal.disposer.relativePIDL)) {
+                                        childFolder = personal;
+                                    } else {
+                                        childFolder = new Win32ShellFolder2(Win32ShellFolder2.this, childPIDL);
+                                        releasePIDL = false;
+                                    }
+                                    list.add(childFolder);
                                 }
-                                list.add(childFolder);
-                            }
-                            if (releasePIDL) {
-                                releasePIDL(childPIDL);
-                            }
-                        } while (childPIDL != 0 && !Thread.currentThread().isInterrupted());
-                        releaseEnumObjects(pEnumObjects);
+                                if (releasePIDL) {
+                                    releasePIDL(childPIDL);
+                                }
+                            } while (childPIDL != 0 && !Thread.currentThread().isInterrupted());
+                        } finally {
+                            releaseEnumObjects(pEnumObjects);
+                        }
                     }
                     return Thread.currentThread().isInterrupted()
                         ? new File[0]
@@ -759,7 +762,7 @@ final class Win32ShellFolder2 extends ShellFolder {
         }, InterruptedException.class);
     }
 
-    private Boolean cachedIsLink;
+    private volatile Boolean cachedIsLink;
 
     /**
      * @return Whether this shell folder is a link
@@ -922,7 +925,7 @@ final class Win32ShellFolder2 extends ShellFolder {
     // Dispose the HICON
     private static native void disposeIcon(long hIcon);
 
-    public static native int[] getFileChooserBitmapBits();
+    static native int[] getStandardViewButton0(int iconIndex);
 
     // Should be called from the COM thread
     private long getIShellIcon() {
@@ -932,34 +935,6 @@ final class Win32ShellFolder2 extends ShellFolder {
 
         return pIShellIcon;
     }
-
-
-    static int[] fileChooserBitmapBits = null;
-    static Image[] fileChooserIcons = new Image[47];
-
-    static Image getFileChooserIcon(int i) {
-        if (fileChooserIcons[i] != null) {
-            return fileChooserIcons[i];
-        } else {
-            if (fileChooserBitmapBits == null) {
-                fileChooserBitmapBits = getFileChooserBitmapBits();
-            }
-            if (fileChooserBitmapBits != null) {
-                int nImages = fileChooserBitmapBits.length / (16*16);
-                int[] bitmapBits = new int[16 * 16];
-                for (int y = 0; y < 16; y++) {
-                    for (int x = 0; x < 16; x++) {
-                        bitmapBits[y * 16 + x] = fileChooserBitmapBits[y * (nImages * 16) + (i * 16) + x];
-                    }
-                }
-                BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-                img.setRGB(0, 0, 16, 16, bitmapBits, 0, 16);
-                fileChooserIcons[i] = img;
-            }
-        }
-        return fileChooserIcons[i];
-    }
-
 
     private static Image makeIcon(long hIcon, boolean getLargeIcon) {
         if (hIcon != 0L && hIcon != -1L) {

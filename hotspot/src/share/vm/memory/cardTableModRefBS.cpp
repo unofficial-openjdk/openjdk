@@ -511,6 +511,8 @@ void CardTableModRefBS::mod_oop_in_space_iterate(Space* sp,
 }
 
 void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
+  assert((HeapWord*)align_size_down((uintptr_t)mr.start(), HeapWordSize) == mr.start(), "Unaligned start");
+  assert((HeapWord*)align_size_up  ((uintptr_t)mr.end(),   HeapWordSize) == mr.end(),   "Unaligned end"  );
   jbyte* cur  = byte_for(mr.start());
   jbyte* last = byte_after(mr.last());
   while (cur < last) {
@@ -520,6 +522,8 @@ void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
 }
 
 void CardTableModRefBS::invalidate(MemRegion mr, bool whole_heap) {
+  assert((HeapWord*)align_size_down((uintptr_t)mr.start(), HeapWordSize) == mr.start(), "Unaligned start");
+  assert((HeapWord*)align_size_up  ((uintptr_t)mr.end(),   HeapWordSize) == mr.end(),   "Unaligned end"  );
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) dirty_MemRegion(mri);
@@ -659,6 +663,29 @@ public:
 void CardTableModRefBS::verify_clean_region(MemRegion mr) {
   GuaranteeNotModClosure blk(this);
   non_clean_card_iterate_work(mr, &blk, false);
+}
+
+// To verify a MemRegion is entirely dirty this closure is passed to
+// dirty_card_iterate. If the region is dirty do_MemRegion will be
+// invoked only once with a MemRegion equal to the one being
+// verified.
+class GuaranteeDirtyClosure: public MemRegionClosure {
+  CardTableModRefBS* _ct;
+  MemRegion _mr;
+  bool _result;
+public:
+  GuaranteeDirtyClosure(CardTableModRefBS* ct, MemRegion mr)
+    : _ct(ct), _mr(mr), _result(false) {}
+  void do_MemRegion(MemRegion mr) {
+    _result = _mr.equals(mr);
+  }
+  bool result() const { return _result; }
+};
+
+void CardTableModRefBS::verify_dirty_region(MemRegion mr) {
+  GuaranteeDirtyClosure blk(this, mr);
+  dirty_card_iterate(mr, &blk);
+  guarantee(blk.result(), "Non-dirty cards in region that should be dirty");
 }
 #endif
 

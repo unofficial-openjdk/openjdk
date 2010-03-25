@@ -54,7 +54,6 @@ import java.net.SocketPermission;
 import java.net.NetPermission;
 import java.util.PropertyPermission;
 import java.util.concurrent.atomic.AtomicReference;
-import java.awt.AWTPermission;
 /*
 import javax.security.auth.AuthPermission;
 import javax.security.auth.kerberos.ServicePermission;
@@ -296,16 +295,13 @@ public class PolicyFile extends java.security.Policy {
 
     private static final int DEFAULT_CACHE_SIZE = 1;
 
-    /** the scope to check */
-    private static IdentityScope scope = null;
-
     // contains the policy grant entries, PD cache, and alias mapping
     private AtomicReference<PolicyInfo> policyInfo =
         new AtomicReference<PolicyInfo>();
     private boolean constructed = false;
 
     private boolean expandProperties = true;
-    private boolean ignoreIdentityScope = false;
+    private boolean ignoreIdentityScope = true;
     private boolean allowSystemProperties = true;
     private boolean notUtf8 = false;
     private URL url;
@@ -1023,8 +1019,6 @@ public class PolicyFile extends java.security.Policy {
             return new NetPermission(name, actions);
         } else if (claz.equals(AllPermission.class)) {
             return SecurityConstants.ALL_PERMISSION;
-        } else if (claz.equals(AWTPermission.class)) {
-            return new AWTPermission(name, actions);
 /*
         } else if (claz.equals(ReflectPermission.class)) {
             return new ReflectPermission(name, actions);
@@ -1835,8 +1829,9 @@ public class PolicyFile extends java.security.Policy {
         return canonCs;
     }
 
-    // public for java.io.FilePermission
-    public static String canonPath(String path) throws IOException {
+    // Wrapper to return a canonical path that avoids calling getCanonicalPath()
+    // with paths that are intended to match all entries in the directory
+    private static String canonPath(String path) throws IOException {
         if (path.endsWith("*")) {
             path = path.substring(0, path.length()-1) + "-";
             path = new File(path).getCanonicalPath();
@@ -2026,83 +2021,7 @@ public class PolicyFile extends java.security.Policy {
     private boolean checkForTrustedIdentity(final Certificate cert,
         PolicyInfo myInfo)
     {
-        if (cert == null)
-            return false;
-
-        // see if we are ignoring the identity scope or not
-        if (ignoreIdentityScope)
-            return false;
-
-        // try to initialize scope
-        synchronized(PolicyFile.class) {
-            if (scope == null) {
-                IdentityScope is = IdentityScope.getSystemScope();
-
-                if (is instanceof sun.security.provider.IdentityDatabase) {
-                    scope = is;
-                } else {
-                    // leave scope null
-                }
-            }
-        }
-
-        if (scope == null) {
-            ignoreIdentityScope = true;
-            return false;
-        }
-
-        // need privileged block for getIdentity in case we are trying
-        // to get a signer
-        final Identity id = AccessController.doPrivileged(
-                              new java.security.PrivilegedAction<Identity>() {
-            public Identity run() {
-                return scope.getIdentity(cert.getPublicKey());
-            }
-        });
-
-        if (isTrusted(id)) {
-            if (debug != null) {
-                debug.println("Adding policy entry for trusted Identity: ");
-                //needed for identity toString!
-                AccessController.doPrivileged(
-                      new java.security.PrivilegedAction<Void>() {
-                    public Void run() {
-                        debug.println("  identity = " + id);
-                        return null;
-                    }
-                });
-                debug.println("");
-            }
-
-            // add it to the policy for future reference
-            Certificate certs[] = new Certificate[] {cert};
-            PolicyEntry pe = new PolicyEntry(new CodeSource(null, certs));
-            pe.add(SecurityConstants.ALL_PERMISSION);
-
-            myInfo.identityPolicyEntries.add(pe);
-
-            // add it to the mapping as well so
-            // we don't have to go through this again
-            myInfo.aliasMapping.put(cert, id.getName());
-
-            return true;
-        }
         return false;
-    }
-
-    private static boolean isTrusted(Identity id) {
-            if (id instanceof SystemIdentity) {
-                SystemIdentity sysid = (SystemIdentity)id;
-                if (sysid.isTrusted()) {
-                    return true;
-                }
-            } else if (id instanceof SystemSigner) {
-                SystemSigner sysid = (SystemSigner)id;
-                if (sysid.isTrusted()) {
-                    return true;
-                }
-            }
-            return false;
     }
 
     /**

@@ -364,6 +364,7 @@ void AwtDialog::Show()
     if (locationByPlatform) {
          moveToDefaultLocation();
     }
+    EnableTranslucency(TRUE);
     if (IsFocusableWindow() && (IsAutoRequestFocus() || IsFocusedWindowModalBlocker())) {
         ::ShowWindow(GetHWnd(), SW_SHOW);
     } else {
@@ -759,7 +760,7 @@ extern "C" {
  * Signature: (Lsun/awt/windows/WComponentPeer;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WDialogPeer_create(JNIEnv *env, jobject self,
+Java_sun_awt_windows_WDialogPeer_createAwtDialog(JNIEnv *env, jobject self,
                                         jobject parent)
 {
     TRY;

@@ -168,7 +168,7 @@ public:
   // MEET operation; lower in lattice.
   const Type *meet( const Type *t ) const;
   // WIDEN: 'widens' for Ints and other range types
-  virtual const Type *widen( const Type *old ) const { return this; }
+  virtual const Type *widen( const Type *old, const Type* limit ) const { return this; }
   // NARROW: complement for widen, used by pessimistic phases
   virtual const Type *narrow( const Type *old ) const { return this; }
 
@@ -409,7 +409,7 @@ public:
 
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
-  virtual const Type *widen( const Type *t ) const;
+  virtual const Type *widen( const Type *t, const Type* limit_type ) const;
   virtual const Type *narrow( const Type *t ) const;
   // Do not kill _widen bits.
   virtual const Type *filter( const Type *kills ) const;
@@ -465,7 +465,7 @@ public:
 
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.
-  virtual const Type *widen( const Type *t ) const;
+  virtual const Type *widen( const Type *t, const Type* limit_type ) const;
   virtual const Type *narrow( const Type *t ) const;
   // Do not kill _widen bits.
   virtual const Type *filter( const Type *kills ) const;
@@ -711,10 +711,13 @@ public:
     return make_from_klass_common(klass, false, false);
   }
   // Creates a singleton type given an object.
-  static const TypeOopPtr* make_from_constant(ciObject* o);
+  // If the object cannot be rendered as a constant,
+  // may return a non-singleton type.
+  // If require_constant, produce a NULL if a singleton is not possible.
+  static const TypeOopPtr* make_from_constant(ciObject* o, bool require_constant = false);
 
   // Make a generic (unclassed) pointer to an oop.
-  static const TypeOopPtr* make(PTR ptr, int offset);
+  static const TypeOopPtr* make(PTR ptr, int offset, int instance_id);
 
   ciObject* const_oop()    const { return _const_oop; }
   virtual ciKlass* klass() const { return _klass;     }
@@ -843,9 +846,6 @@ public:
   static const TypeAryPtr *make( PTR ptr, const TypeAry *ary, ciKlass* k, bool xk, int offset, int instance_id = InstanceBot);
   // Constant pointer to array
   static const TypeAryPtr *make( PTR ptr, ciObject* o, const TypeAry *ary, ciKlass* k, bool xk, int offset, int instance_id = InstanceBot);
-
-  // Convenience
-  static const TypeAryPtr *make(ciObject* o);
 
   // Return a 'ptr' version of this type
   virtual const Type *cast_to_ptr_type(PTR ptr) const;

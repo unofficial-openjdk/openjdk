@@ -37,12 +37,12 @@ import java.awt.dnd.InvalidDnDOperationException;
 
 import java.util.*;
 
-import java.util.logging.*;
-import sun.awt.ComponentAccessor;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.dnd.SunDragSourceContextPeer;
 import sun.awt.dnd.SunDropTargetContextPeer;
 import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 
 /**
  * The XDragSourceContextPeer class is the class responsible for handling
@@ -52,8 +52,8 @@ import sun.awt.SunToolkit;
  */
 public final class XDragSourceContextPeer
     extends SunDragSourceContextPeer implements XDragSourceProtocolListener {
-    private static final Logger logger =
-        Logger.getLogger("sun.awt.X11.xembed.xdnd.XDragSourceContextPeer");
+    private static final PlatformLogger logger =
+        PlatformLogger.getLogger("sun.awt.X11.xembed.xdnd.XDragSourceContextPeer");
 
     /* The events selected on the root window when the drag begins. */
     private static final int ROOT_EVENT_MASK = (int)XConstants.ButtonMotionMask |
@@ -116,7 +116,7 @@ public final class XDragSourceContextPeer
         XWindowPeer wpeer = null;
 
         for (c = component; c != null && !(c instanceof Window);
-             c = ComponentAccessor.getParent_NoClientCode(c));
+             c = AWTAccessor.getComponentAccessor().getParent(c));
 
         if (c instanceof Window) {
             wpeer = (XWindowPeer)c.getPeer();
@@ -542,7 +542,7 @@ public final class XDragSourceContextPeer
             return false;
         }
 
-        if (logger.isLoggable(Level.FINEST)) {
+        if (logger.isLoggable(PlatformLogger.FINEST)) {
             logger.finest("        proxyModeSourceWindow=" +
                           getProxyModeSourceWindow() +
                           " ev=" + ev);

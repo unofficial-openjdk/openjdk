@@ -25,12 +25,10 @@
 
 package sun.net.www.protocol.http;
 
-import java.io.*;
-import java.net.*;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Enumeration;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.PasswordAuthentication;
+import java.net.URL;
 import java.util.HashMap;
 
 import sun.net.www.HeaderParser;
@@ -51,12 +49,12 @@ import sun.net.www.HeaderParser;
 //      policy in HttpURLConnection.  A failure on baz.foo.com shouldn't
 //      uncache foo.com!
 
-abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
+public abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
 
     // Constants saying what kind of authroization this is.  This determines
     // the namespace in the hash table lookup.
-    static final char SERVER_AUTHENTICATION = 's';
-    static final char PROXY_AUTHENTICATION = 'p';
+    public static final char SERVER_AUTHENTICATION = 's';
+    public static final char PROXY_AUTHENTICATION = 'p';
 
     /**
      * If true, then simultaneous authentication requests to the same realm/proxy
@@ -85,6 +83,11 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
             AuthCacheValue.Type.Server:
             AuthCacheValue.Type.Proxy;
     }
+
+    AuthScheme getAuthScheme() {
+        return authScheme;
+    }
+
     public String getHost() {
         return host;
     }
@@ -108,7 +111,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * at the same time, then all but the first will block until
      * the first completes its authentication.
      */
-    static private HashMap requests = new HashMap ();
+    static private HashMap<String,Thread> requests = new HashMap<>();
 
     /* check if a request for this destination is in progress
      * return false immediately if not. Otherwise block until
@@ -122,7 +125,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
         synchronized (requests) {
             Thread t, c;
             c = Thread.currentThread();
-            if ((t=(Thread)requests.get(key))==null) {
+            if ((t = requests.get(key)) == null) {
                 requests.put (key, c);
                 return false;
             }
@@ -144,14 +147,17 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      */
     static private void requestCompleted (String key) {
         synchronized (requests) {
-            boolean waspresent = requests.remove (key) != null;
-            assert waspresent;
+            Thread thread = requests.get(key);
+            if (thread != null && thread == Thread.currentThread()) {
+                boolean waspresent = requests.remove(key) != null;
+                assert waspresent;
+            }
             requests.notifyAll();
         }
     }
 
     //public String toString () {
-        //return ("{"+type+":"+authType+":"+protocol+":"+host+":"+port+":"+realm+":"+path+"}");
+        //return ("{"+type+":"+authScheme+":"+protocol+":"+host+":"+port+":"+realm+":"+path+"}");
     //}
 
     // REMIND:  This cache just grows forever.  We should put in a bounded
@@ -160,8 +166,8 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     /** The type (server/proxy) of authentication this is.  Used for key lookup */
     char type;
 
-    /** The authentication type (basic/digest). Also used for key lookup */
-    char authType;
+    /** The authentication scheme (basic/digest). Also used for key lookup */
+    AuthScheme authScheme;
 
     /** The protocol/scheme (i.e. http or https ). Need to keep the caches
      *  logically separate for the two protocols. This field is only used
@@ -183,9 +189,9 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     String path;
 
     /** Use this constructor only for proxy entries */
-    AuthenticationInfo(char type, char authType, String host, int port, String realm) {
+    public AuthenticationInfo(char type, AuthScheme authScheme, String host, int port, String realm) {
         this.type = type;
-        this.authType = authType;
+        this.authScheme = authScheme;
         this.protocol = "";
         this.host = host.toLowerCase();
         this.port = port;
@@ -206,9 +212,9 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * Constructor used to limit the authorization to the path within
      * the URL. Use this constructor for origin server entries.
      */
-    AuthenticationInfo(char type, char authType, URL url, String realm) {
+    public AuthenticationInfo(char type, AuthScheme authScheme, URL url, String realm) {
         this.type = type;
-        this.authType = authType;
+        this.authScheme = authScheme;
         this.protocol = url.getProtocol().toLowerCase();
         this.host = url.getHost().toLowerCase();
         this.port = url.getPort();
@@ -264,12 +270,12 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * In this case we do not use the path because the protection space
      * is identified by the host:port:realm only
      */
-    static AuthenticationInfo getServerAuth(URL url, String realm, char atype) {
+    static AuthenticationInfo getServerAuth(URL url, String realm, AuthScheme scheme) {
         int port = url.getPort();
         if (port == -1) {
             port = url.getDefaultPort();
         }
-        String key = SERVER_AUTHENTICATION + ":" + atype + ":" + url.getProtocol().toLowerCase()
+        String key = SERVER_AUTHENTICATION + ":" + scheme + ":" + url.getProtocol().toLowerCase()
                      + ":" + url.getHost().toLowerCase() + ":" + port + ":" + realm;
         AuthenticationInfo cached = getAuth(key, null);
         if ((cached == null) && requestIsInProgress (key)) {
@@ -308,8 +314,8 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * Used in response to a challenge. Note, the protocol field is always
      * blank for proxies.
      */
-    static AuthenticationInfo getProxyAuth(String host, int port, String realm, char atype) {
-        String key = PROXY_AUTHENTICATION + ":" + atype + "::" + host.toLowerCase()
+    static AuthenticationInfo getProxyAuth(String host, int port, String realm, AuthScheme scheme) {
+        String key = PROXY_AUTHENTICATION + ":" + scheme + "::" + host.toLowerCase()
                         + ":" + port + ":" + realm;
         AuthenticationInfo cached = (AuthenticationInfo) cache.get(key, null);
         if ((cached == null) && requestIsInProgress (key)) {
@@ -353,13 +359,19 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     /**
      * @return true if this authentication supports preemptive authorization
      */
-    abstract boolean supportsPreemptiveAuthorization();
+    public abstract boolean supportsPreemptiveAuthorization();
 
     /**
      * @return the name of the HTTP header this authentication wants set.
      *          This is used for preemptive authorization.
      */
-    abstract String getHeaderName();
+    public String getHeaderName() {
+        if (type == SERVER_AUTHENTICATION) {
+            return "Authorization";
+        } else {
+            return "Proxy-authorization";
+        }
+    }
 
     /**
      * Calculates and returns the authentication header value based
@@ -370,7 +382,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * @return the value of the HTTP header this authentication wants set.
      *          Used for preemptive authorization.
      */
-    abstract String getHeaderValue(URL url, String method);
+    public abstract String getHeaderValue(URL url, String method);
 
     /**
      * Set header(s) on the given connection.  Subclasses must override
@@ -381,7 +393,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * @param raw The raw header field (if needed)
      * @return true if all goes well, false if no headers were set.
      */
-    abstract boolean setHeaders(HttpURLConnection conn, HeaderParser p, String raw);
+    public abstract boolean setHeaders(HttpURLConnection conn, HeaderParser p, String raw);
 
     /**
      * Check if the header indicates that the current auth. parameters are stale.
@@ -391,14 +403,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * returning false means we have to go back to the user to ask for a new
      * username password.
      */
-    abstract boolean isAuthorizationStale (String header);
-
-    /**
-     * Check for any expected authentication information in the response
-     * from the server
-     */
-    abstract void checkResponse (String header, String method, URL url)
-                                        throws IOException;
+    public abstract boolean isAuthorizationStale (String header);
 
     /**
      * Give a key for hash table lookups.
@@ -409,7 +414,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
         // This must be kept in sync with the getXXXAuth() methods in this
         // class.
         if (includeRealm) {
-            return type + ":" + authType + ":" + protocol + ":"
+            return type + ":" + authScheme + ":" + protocol + ":"
                         + host + ":" + port + ":" + realm;
         } else {
             return type + ":" + protocol + ":" + host + ":" + port;

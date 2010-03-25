@@ -60,8 +60,17 @@ ifeq ($(PLATFORM), windows)
   endif
 endif
 
-SUBDIRS = ec other action util tools jgss krb5 smartcardio $(PKCS11) \
-          $(JGSS_WRAPPER) $(MSCAPI)
+# Build in-tree elliptic curve crypto provider only when
+# DISABLE_INTREE_EC is not set
+INTREE_EC = ec
+ifdef DISABLE_INTREE_EC
+  INTREE_EC =
+endif
+
+SUBDIRS       = $(INTREE_EC) other action util krb5
+SUBDIRS_misc  = jgss $(PKCS11) $(JGSS_WRAPPER) $(MSCAPI) smartcardio
+SUBDIRS_tools = tools
+include $(BUILDDIR)/common/Subdirs.gmk
 
 all build clean clobber::
 	$(SUBDIRS-loop)

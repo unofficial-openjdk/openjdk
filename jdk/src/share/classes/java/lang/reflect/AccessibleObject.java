@@ -44,6 +44,8 @@ import java.lang.annotation.Annotation;
  * as Java Object Serialization or other persistence mechanisms, to
  * manipulate objects in a manner that would normally be prohibited.
  *
+ * <p>By default, a reflected object is <em>not</em> accessible.
+ *
  * @see Field
  * @see Method
  * @see Constructor
@@ -131,7 +133,7 @@ public class AccessibleObject implements AnnotatedElement {
         throws SecurityException
     {
         if (obj instanceof Constructor && flag == true) {
-            Constructor c = (Constructor)obj;
+            Constructor<?> c = (Constructor<?>)obj;
             if (c.getDeclaringClass() == Class.class) {
                 throw new SecurityException("Can not make a java.lang.Class" +
                                             " constructor accessible");

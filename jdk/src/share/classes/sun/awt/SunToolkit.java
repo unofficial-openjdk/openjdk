@@ -40,8 +40,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import sun.util.logging.PlatformLogger;
 import sun.misc.SoftCache;
 import sun.font.FontDesignMetrics;
 import sun.awt.im.InputContext;
@@ -61,7 +60,7 @@ public abstract class SunToolkit extends Toolkit
     implements WindowClosingSupport, WindowClosingListener,
     ComponentFactory, InputMethodSupport, KeyboardFocusManagerPeerProvider {
 
-    private static final Logger log = Logger.getLogger("sun.awt.SunToolkit");
+    private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.SunToolkit");
 
     /* Load debug settings for native code */
     static {
@@ -723,13 +722,7 @@ public abstract class SunToolkit extends Toolkit
         EventQueue eq = (EventQueue)appContext.get(AppContext.EVENT_QUEUE_KEY);
 
         AWTAccessor.EventQueueAccessor accessor = AWTAccessor.getEventQueueAccessor();
-        EventQueue next = accessor.getNextQueue(eq);
-        while (next != null) {
-            eq = next;
-            next = accessor.getNextQueue(eq);
-        }
-
-        return (Thread.currentThread() == accessor.getDispatchThread(eq));
+        return accessor.isDispatchThreadImpl(eq);
     }
 
     public Dimension getScreenSize() {
@@ -807,17 +800,9 @@ public abstract class SunToolkit extends Toolkit
     }
 
 
-    /**
-     * Makes the window OverrideRedirect, on X11 platforms. See
-     * ICCCM specification for more details about OverrideRedirect
-     * windows. Implemented in XToolkit, no-op in WToolkit.
-     */
-    public void setOverrideRedirect(Window target) {
-    }
+    static final SoftCache imgCache = new SoftCache();
 
-    static SoftCache imgCache = new SoftCache();
-
-    static synchronized Image getImageFromHash(Toolkit tk, URL url) {
+    static Image getImageFromHash(Toolkit tk, URL url) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             try {
@@ -845,32 +830,36 @@ public abstract class SunToolkit extends Toolkit
                     sm.checkConnect(url.getHost(), url.getPort());
             }
         }
-        Image img = (Image)imgCache.get(url);
-        if (img == null) {
-            try {
-                img = tk.createImage(new URLImageSource(url));
-                imgCache.put(url, img);
-            } catch (Exception e) {
+        synchronized (imgCache) {
+            Image img = (Image)imgCache.get(url);
+            if (img == null) {
+                try {
+                    img = tk.createImage(new URLImageSource(url));
+                    imgCache.put(url, img);
+                } catch (Exception e) {
+                }
             }
+            return img;
         }
-        return img;
     }
 
-    static synchronized Image getImageFromHash(Toolkit tk,
+    static Image getImageFromHash(Toolkit tk,
                                                String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(filename);
         }
-        Image img = (Image)imgCache.get(filename);
-        if (img == null) {
-            try {
-                img = tk.createImage(new FileImageSource(filename));
-                imgCache.put(filename, img);
-            } catch (Exception e) {
+        synchronized (imgCache) {
+            Image img = (Image)imgCache.get(filename);
+            if (img == null) {
+                try {
+                    img = tk.createImage(new FileImageSource(filename));
+                    imgCache.put(filename, img);
+                } catch (Exception e) {
+                }
             }
+            return img;
         }
-        return img;
     }
 
     public Image getImage(String filename) {
@@ -986,9 +975,9 @@ public abstract class SunToolkit extends Toolkit
             //with scale factors x1, x3/4, x2/3, xN, x1/N.
             Image im = i.next();
             if (im == null) {
-                if (log.isLoggable(Level.FINER)) {
-                    log.log(Level.FINER, "SunToolkit.getScaledIconImage: " +
-                            "Skipping the image passed into Java because it's null.");
+                if (log.isLoggable(PlatformLogger.FINER)) {
+                    log.finer("SunToolkit.getScaledIconImage: " +
+                              "Skipping the image passed into Java because it's null.");
                 }
                 continue;
             }
@@ -1002,9 +991,9 @@ public abstract class SunToolkit extends Toolkit
                 iw = im.getWidth(null);
                 ih = im.getHeight(null);
             } catch (Exception e){
-                if (log.isLoggable(Level.FINER)) {
-                    log.log(Level.FINER, "SunToolkit.getScaledIconImage: " +
-                            "Perhaps the image passed into Java is broken. Skipping this icon.");
+                if (log.isLoggable(PlatformLogger.FINER)) {
+                    log.finer("SunToolkit.getScaledIconImage: " +
+                              "Perhaps the image passed into Java is broken. Skipping this icon.");
                 }
                 continue;
             }
@@ -1077,8 +1066,8 @@ public abstract class SunToolkit extends Toolkit
         try {
             int x = (width - bestWidth) / 2;
             int y = (height - bestHeight) / 2;
-            if (log.isLoggable(Level.FINER)) {
-                log.log(Level.FINER, "WWindowPeer.getScaledIconData() result : " +
+            if (log.isLoggable(PlatformLogger.FINER)) {
+                log.finer("WWindowPeer.getScaledIconData() result : " +
                         "w : " + width + " h : " + height +
                         " iW : " + bestImage.getWidth(null) + " iH : " + bestImage.getHeight(null) +
                         " sim : " + bestSimilarity + " sf : " + bestScaleFactor +
@@ -1095,9 +1084,9 @@ public abstract class SunToolkit extends Toolkit
     public static DataBufferInt getScaledIconData(java.util.List<Image> imageList, int width, int height) {
         BufferedImage bimage = getScaledIconImage(imageList, width, height);
         if (bimage == null) {
-             if (log.isLoggable(Level.FINER)) {
-                 log.log(Level.FINER, "SunToolkit.getScaledIconData: " +
-                         "Perhaps the image passed into Java is broken. Skipping this icon.");
+             if (log.isLoggable(PlatformLogger.FINER)) {
+                 log.finer("SunToolkit.getScaledIconData: " +
+                           "Perhaps the image passed into Java is broken. Skipping this icon.");
              }
             return null;
         }
@@ -1127,6 +1116,18 @@ public abstract class SunToolkit extends Toolkit
      */
     public static Container getNativeContainer(Component c) {
         return Toolkit.getNativeContainer(c);
+    }
+
+    /**
+     * Gives native peers the ability to query the closest HW component.
+     * If the given component is heavyweight, then it returns this. Otherwise,
+     * it goes one level up in the hierarchy and tests next component.
+     */
+    public static Component getHeavyweightComponent(Component c) {
+        while (c != null && AWTAccessor.getComponentAccessor().isLightweight(c)) {
+            c = AWTAccessor.getComponentAccessor().getParent(c);
+        }
+        return c;
     }
 
     /**
@@ -1913,7 +1914,7 @@ public abstract class SunToolkit extends Toolkit
         }
     }
 
-    protected static void dumpPeers(final Logger aLog) {
+    protected static void dumpPeers(final PlatformLogger aLog) {
         AWTAutoShutdown.getInstance().dumpPeers(aLog);
     }
 

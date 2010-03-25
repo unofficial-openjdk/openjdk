@@ -54,7 +54,6 @@ class ParallelScavengeHeap : public CollectedHeap {
  protected:
   static inline size_t total_invocations();
   HeapWord* allocate_new_tlab(size_t size);
-  void fill_all_tlabs(bool retire);
 
  public:
   ParallelScavengeHeap() : CollectedHeap() {
@@ -129,8 +128,8 @@ class ParallelScavengeHeap : public CollectedHeap {
     return perm_gen()->is_in(p);
   }
 
-  static bool is_in_young(oop *p);        // reserved part
-  static bool is_in_old_or_perm(oop *p);  // reserved part
+  inline bool is_in_young(oop p);        // reserved part
+  inline bool is_in_old_or_perm(oop p);  // reserved part
 
   // Memory allocation.   "gc_time_limit_was_exceeded" will
   // be set to true if the adaptive size policy determine that
@@ -191,6 +190,14 @@ class ParallelScavengeHeap : public CollectedHeap {
     return true;
   }
 
+  virtual bool card_mark_must_follow_store() const {
+    return false;
+  }
+
+  // Return true if we don't we need a store barrier for
+  // initializing stores to an object at this address.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj);
+
   // Can a compiler elide a store barrier when it writes
   // a permanent oop into the heap?  Applies when the compiler
   // is storing x to the heap, where x->is_perm() is true.
@@ -234,6 +241,13 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   // Mangle the unused parts of all spaces in the heap
   void gen_mangle_unused_area() PRODUCT_RETURN;
+
+  // Call these in sequential code around the processing of strong roots.
+  class ParStrongRootsScope : public MarkingCodeBlobClosure::MarkScope {
+  public:
+    ParStrongRootsScope();
+    ~ParStrongRootsScope();
+  };
 };
 
 inline size_t ParallelScavengeHeap::set_alignment(size_t& var, size_t val)

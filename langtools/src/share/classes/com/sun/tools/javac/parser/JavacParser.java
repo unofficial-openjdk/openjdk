@@ -131,6 +131,7 @@ public class JavacParser implements Parser {
         this.allowForeach = source.allowForeach();
         this.allowStaticImport = source.allowStaticImport();
         this.allowAnnotations = source.allowAnnotations();
+        this.allowDiamond = source.allowDiamond();
         this.allowTypeAnnotations = source.allowTypeAnnotations();
         this.keepDocComments = keepDocComments;
         if (keepDocComments)
@@ -147,6 +148,10 @@ public class JavacParser implements Parser {
     /** Switch: Should generics be recognized?
      */
     boolean allowGenerics;
+
+    /** Switch: Should diamond operator be recognized?
+     */
+    boolean allowDiamond;
 
     /** Switch: Should varargs be recognized?
      */
@@ -194,6 +199,7 @@ public class JavacParser implements Parser {
     static final int TYPE = 2;
     static final int NOPARAMS = 4;
     static final int TYPEARG = 8;
+    static final int DIAMOND = 16;
 
     /** The current mode.
      */
@@ -587,7 +593,7 @@ public class JavacParser implements Parser {
 //where
         boolean isZero(String s) {
             char[] cs = s.toCharArray();
-            int base = ((Character.toLowerCase(s.charAt(1)) == 'x') ? 16 : 10);
+            int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16 : 10);
             int i = ((base==16) ? 2 : 0);
             while (i < cs.length && (cs[i] == '0' || cs[i] == '.')) i++;
             return !(i < cs.length && (Character.digit(cs[i], base) > 0));
@@ -755,23 +761,28 @@ public class JavacParser implements Parser {
         JCExpression[] odStack = newOdStack();
         List<Token[]> savedOp = opStackSupply.elems;
         Token[] opStack = newOpStack();
+        List<int[]> savedPos = posStackSupply.elems;
+        int[] posStack = newPosStack();
         // optimization, was odStack = new Tree[...]; opStack = new Tree[...];
         int top = 0;
         odStack[0] = t;
         int startPos = S.pos();
         Token topOp = ERROR;
+        int topOpPos = Position.NOPOS;
         while (prec(S.token()) >= minprec) {
+            posStack[top] = topOpPos;
             opStack[top] = topOp;
             top++;
             topOp = S.token();
-            int pos = S.pos();
+            topOpPos = S.pos();
             S.nextToken();
-            odStack[top] = topOp == INSTANCEOF ? parseType() : term3();
+            odStack[top] = (topOp == INSTANCEOF) ? parseType() : term3();
             while (top > 0 && prec(topOp) >= prec(S.token())) {
-                odStack[top-1] = makeOp(pos, topOp, odStack[top-1],
+                odStack[top-1] = makeOp(topOpPos, topOp, odStack[top-1],
                                         odStack[top]);
                 top--;
                 topOp = opStack[top];
+                topOpPos = posStack[top];
             }
         }
         assert top == 0;
@@ -786,6 +797,7 @@ public class JavacParser implements Parser {
 
         odStackSupply.elems = savedOd; // optimization
         opStackSupply.elems = savedOp; // optimization
+        posStackSupply.elems = savedPos; // optimization
         return t;
     }
 //where
@@ -839,6 +851,7 @@ public class JavacParser implements Parser {
          */
         ListBuffer<JCExpression[]> odStackSupply = new ListBuffer<JCExpression[]>();
         ListBuffer<Token[]> opStackSupply = new ListBuffer<Token[]>();
+        ListBuffer<int[]> posStackSupply = new ListBuffer<int[]>();
 
         private JCExpression[] newOdStack() {
             if (odStackSupply.elems == odStackSupply.last)
@@ -854,6 +867,14 @@ public class JavacParser implements Parser {
             Token[] opStack = opStackSupply.elems.head;
             opStackSupply.elems = opStackSupply.elems.tail;
             return opStack;
+        }
+
+        private int[] newPosStack() {
+            if (posStackSupply.elems == posStackSupply.last)
+                posStackSupply.append(new int[infixPrecedenceLevels + 1]);
+            int[] posStack = posStackSupply.elems.head;
+            posStackSupply.elems = posStackSupply.elems.tail;
+            return posStack;
         }
 
     /** Expression3    = PrefixOp Expression3
@@ -933,7 +954,7 @@ public class JavacParser implements Parser {
                             args.append(typeArgument());
                         }
                         accept(GT);
-                        t = F.at(pos1).TypeApply(t, args.toList());
+                        t = toP(F.at(pos1).TypeApply(t, args.toList()));
                         checkGenerics();
                         while (S.token() == DOT) {
                             S.nextToken();
@@ -944,7 +965,8 @@ public class JavacParser implements Parser {
                         t = bracketsOpt(toP(t));
                     } else if ((mode & EXPR) != 0) {
                         mode = EXPR;
-                        t = F.at(pos1).Binary(op, t, term2Rest(t1, TreeInfo.shiftPrec));
+                        JCExpression e = term2Rest(t1, TreeInfo.shiftPrec);
+                        t = F.at(pos1).Binary(op, t, e);
                         t = termRest(term1Rest(term2Rest(t, TreeInfo.orPrec)));
                     } else {
                         accept(GT);
@@ -992,7 +1014,8 @@ public class JavacParser implements Parser {
         case SUPER:
             if ((mode & EXPR) != 0) {
                 mode = EXPR;
-                t = to(superSuffix(typeArgs, F.at(pos).Ident(names._super)));
+                t = to(F.at(pos).Ident(names._super));
+                t = superSuffix(typeArgs, t);
                 typeArgs = null;
             } else return illegal();
             break;
@@ -1326,6 +1349,11 @@ public class JavacParser implements Parser {
         ListBuffer<JCExpression> args = lb();
         if (S.token() == LT) {
             S.nextToken();
+            if (S.token() == GT && (mode & DIAMOND) != 0) {
+                checkDiamond();
+                S.nextToken();
+                return List.nil();
+            }
             args.append(((mode & EXPR) == 0) ? typeArgument() : parseType());
             while (S.token() == COMMA) {
                 S.nextToken();
@@ -1369,13 +1397,15 @@ public class JavacParser implements Parser {
         S.nextToken();
         JCExpression result;
         if (S.token() == EXTENDS) {
-            TypeBoundKind t = to(F.at(S.pos()).TypeBoundKind(BoundKind.EXTENDS));
+            TypeBoundKind t = to(F.at(pos).TypeBoundKind(BoundKind.EXTENDS));
             S.nextToken();
-            result = F.at(pos).Wildcard(t, parseType());
+            JCExpression bound = parseType();
+            result = F.at(pos).Wildcard(t, bound);
         } else if (S.token() == SUPER) {
-            TypeBoundKind t = to(F.at(S.pos()).TypeBoundKind(BoundKind.SUPER));
+            TypeBoundKind t = to(F.at(pos).TypeBoundKind(BoundKind.SUPER));
             S.nextToken();
-            result = F.at(pos).Wildcard(t, parseType());
+            JCExpression bound = parseType();
+            result = F.at(pos).Wildcard(t, bound);
         } else if (S.token() == IDENTIFIER) {
             //error recovery
             reportSyntaxError(S.prevEndPos(), "expected3",
@@ -1385,7 +1415,7 @@ public class JavacParser implements Parser {
             JCIdent id = toP(F.at(S.pos()).Ident(ident()));
             result = F.at(pos).Erroneous(List.<JCTree>of(wc, id));
         } else {
-            TypeBoundKind t = F.at(Position.NOPOS).TypeBoundKind(BoundKind.UNBOUND);
+            TypeBoundKind t = toP(F.at(pos).TypeBoundKind(BoundKind.UNBOUND));
             result = toP(F.at(pos).Wildcard(t, null));
         }
         if (!annotations.isEmpty())
@@ -1497,7 +1527,7 @@ public class JavacParser implements Parser {
             t = F.AnnotatedType(newAnnotations, t);
 
         int oldmode = mode;
-        mode = TYPE;
+        mode = TYPE | DIAMOND;
         if (S.token() == LT) {
             checkGenerics();
             t = typeArguments(t);
@@ -1547,8 +1577,11 @@ public class JavacParser implements Parser {
     JCExpression innerCreator(int newpos, List<JCExpression> typeArgs, JCExpression encl) {
         JCExpression t = toP(F.at(S.pos()).Ident(ident()));
         if (S.token() == LT) {
+            int oldmode = mode;
+            mode |= DIAMOND;
             checkGenerics();
             t = typeArguments(t);
+            mode = oldmode;
         }
         return classCreatorRest(newpos, encl, typeArgs, t);
     }
@@ -2103,14 +2136,21 @@ public class JavacParser implements Parser {
         return modifiersOpt(null);
     }
     JCModifiers modifiersOpt(JCModifiers partial) {
-        long flags = (partial == null) ? 0 : partial.flags;
+        long flags;
+        ListBuffer<JCAnnotation> annotations = new ListBuffer<JCAnnotation>();
+        int pos;
+        if (partial == null) {
+            flags = 0;
+            pos = S.pos();
+        } else {
+            flags = partial.flags;
+            annotations.appendList(partial.annotations);
+            pos = partial.pos;
+        }
         if (S.deprecatedFlag()) {
             flags |= Flags.DEPRECATED;
             S.resetDeprecatedFlag();
         }
-        ListBuffer<JCAnnotation> annotations = new ListBuffer<JCAnnotation>();
-        if (partial != null) annotations.appendList(partial.annotations);
-        int pos = S.pos();
         int lastPos = Position.NOPOS;
     loop:
         while (true) {
@@ -2136,12 +2176,12 @@ public class JavacParser implements Parser {
             if (flag == Flags.ANNOTATION) {
                 checkAnnotations();
                 if (S.token() != INTERFACE) {
-                JCAnnotation ann = annotation(lastPos, AnnotationKind.DEFAULT_ANNO);
-                // if first modifier is an annotation, set pos to annotation's.
-                if (flags == 0 && annotations.isEmpty())
-                    pos = ann.pos;
-                annotations.append(ann);
-                lastPos = ann.pos;
+                    JCAnnotation ann = annotation(lastPos, AnnotationKind.DEFAULT_ANNO);
+                    // if first modifier is an annotation, set pos to annotation's.
+                    if (flags == 0 && annotations.isEmpty())
+                        pos = ann.pos;
+                    annotations.append(ann);
+                    lastPos = ann.pos;
                     flag = 0;
                 }
             }
@@ -2155,7 +2195,7 @@ public class JavacParser implements Parser {
 
         /* A modifiers tree with no modifier tokens or annotations
          * has no text position. */
-        if (flags == 0 && annotations.isEmpty())
+        if ((flags & Flags.ModifierFlags) == 0 && annotations.isEmpty())
             pos = Position.NOPOS;
 
         JCModifiers mods = F.at(pos).Modifiers(flags, annotations.toList());
@@ -2212,7 +2252,8 @@ public class JavacParser implements Parser {
             if (t1.getTag() == JCTree.IDENT && S.token() == EQ) {
                 int pos = S.pos();
                 accept(EQ);
-                return toP(F.at(pos).Assign(t1, annotationValue()));
+                JCExpression v = annotationValue();
+                return toP(F.at(pos).Assign(t1, v));
             } else {
                 return t1;
             }
@@ -2222,7 +2263,7 @@ public class JavacParser implements Parser {
 
     /* AnnotationValue          = ConditionalExpression
      *                          | Annotation
-     *                          | "{" [ AnnotationValue { "," AnnotationValue } ] "}"
+     *                          | "{" [ AnnotationValue { "," AnnotationValue } ] [","] "}"
      */
     JCExpression annotationValue() {
         int pos;
@@ -2239,7 +2280,7 @@ public class JavacParser implements Parser {
                 buf.append(annotationValue());
                 while (S.token() == COMMA) {
                     S.nextToken();
-                    if (S.token() == RPAREN) break;
+                    if (S.token() == RBRACE) break;
                     buf.append(annotationValue());
                 }
             }
@@ -2529,10 +2570,9 @@ public class JavacParser implements Parser {
         }
 
         List<JCTree> defs = enumBody(name);
-        JCModifiers newMods =
-            F.at(mods.pos).Modifiers(mods.flags|Flags.ENUM, mods.annotations);
+        mods.flags |= Flags.ENUM;
         JCClassDecl result = toP(F.at(pos).
-            ClassDef(newMods, name, List.<JCTypeParameter>nil(),
+            ClassDef(mods, name, List.<JCTypeParameter>nil(),
                 null, implementing, defs));
         attach(result, dc);
         return result;
@@ -2599,12 +2639,12 @@ public class JavacParser implements Parser {
             body = toP(F.at(identPos).AnonymousClassDef(mods1, defs));
         }
         if (args.isEmpty() && body == null)
-            createPos = Position.NOPOS;
-        JCIdent ident = F.at(Position.NOPOS).Ident(enumName);
+            createPos = identPos;
+        JCIdent ident = F.at(identPos).Ident(enumName);
         JCNewClass create = F.at(createPos).NewClass(null, typeArgs, ident, args, body);
-        if (createPos != Position.NOPOS)
+        if (createPos != identPos)
             storeEnd(create, S.prevEndPos());
-        ident = F.at(Position.NOPOS).Ident(enumName);
+        ident = F.at(identPos).Ident(enumName);
         JCTree result = toP(F.at(pos).VarDef(mods, name, ident, create));
         attach(result, dc);
         return result;
@@ -2681,16 +2721,8 @@ public class JavacParser implements Parser {
             } else {
                 pos = S.pos();
                 List<JCTypeParameter> typarams = typeParametersOpt();
-                // Hack alert:  if there are type arguments but no Modifiers, the start
-                // position will be lost unless we set the Modifiers position.  There
-                // should be an AST node for type parameters (BugId 5005090).
-                if (typarams.length() > 0 && mods.pos == Position.NOPOS) {
-                    mods.pos = pos;
-                }
-
                 List<JCAnnotation> annosAfterParams = annotationsOpt(AnnotationKind.DEFAULT_ANNO);
 
-                Token token = S.token();
                 Name name = S.name();
                 pos = S.pos();
                 JCExpression type;
@@ -2701,7 +2733,11 @@ public class JavacParser implements Parser {
                     type = to(F.at(pos).TypeIdent(TypeTags.VOID));
                     S.nextToken();
                 } else {
-                    mods.annotations = mods.annotations.appendList(annosAfterParams);
+                    if (annosAfterParams.nonEmpty()) {
+                        mods.annotations = mods.annotations.appendList(annosAfterParams);
+                        if (mods.pos == Position.NOPOS)
+                            mods.pos = mods.annotations.head.pos;
+                    }
                     // method returns types are un-annotated types
                     type = unannotatedType();
                 }
@@ -2799,6 +2835,7 @@ public class JavacParser implements Parser {
                 }
             }
         }
+
         JCMethodDecl result =
             toP(F.at(pos).MethodDef(mods, name, type, typarams,
                                     params, receiverAnnotations, thrown,
@@ -3099,6 +3136,12 @@ public class JavacParser implements Parser {
         }
     }
 
+    void checkDiamond() {
+        if (!allowDiamond) {
+            log.error(S.pos(), "diamond.not.supported.in.source", source.name);
+            allowDiamond = true;
+        }
+    }
     void checkGenerics() {
         if (!allowGenerics) {
             log.error(S.pos(), "generics.not.supported.in.source", source.name);

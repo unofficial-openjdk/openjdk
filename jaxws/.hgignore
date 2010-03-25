@@ -1,3 +1,6 @@
 ^build/
 ^dist/
-^nbproject/private/
+^drop/
+^drop_included/
+^webrev/
+/nbproject/private/

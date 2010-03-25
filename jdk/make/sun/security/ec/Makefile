@@ -24,7 +24,7 @@
 #
 
 #
-# Makefile for building sunec.jar and sunecc native library.
+# Makefile for building sunec.jar and sunec native library.
 #
 # This file was derived from make/com/sun/crypto/provider/Makefile.
 #
@@ -89,6 +89,7 @@
 #
 
 BUILDDIR = ../../..
+MODULE  = security-sunec
 PACKAGE = sun.security.ec
 PRODUCT = sun
 
@@ -121,7 +122,15 @@ CLASSDESTDIR = $(TEMPDIR)/classes
 #
 AUTO_FILES_JAVA_DIRS = $(PKGDIR)
 
-include $(BUILDDIR)/common/Classes.gmk
+#
+# Exclude the sources that get built by ../other/Makefile
+#
+AUTO_JAVA_PRUNE = \
+    ECKeyFactory.java \
+    ECParameters.java \
+    ECPrivateKeyImpl.java \
+    ECPublicKeyImpl.java \
+    NamedCurve.java
 
 #
 # Some licensees do not get the native ECC sources, but we still need to
@@ -130,7 +139,7 @@ include $(BUILDDIR)/common/Classes.gmk
 #
 
 NATIVE_ECC_AVAILABLE := $(shell \
-    if [ -d $(SHARE_SRC)/native/$(PKGDIR) ] ; then \
+    if [ -d $(SHARE_SRC)/native/$(PKGDIR)/impl ] ; then \
 	$(ECHO) true; \
     else \
 	$(ECHO) false; \
@@ -138,7 +147,7 @@ NATIVE_ECC_AVAILABLE := $(shell \
 
 ifeq ($(NATIVE_ECC_AVAILABLE), true)
 
-  LIBRARY = sunecc
+  LIBRARY = sunec
 
   #
   # Java files that define native methods
@@ -166,12 +175,12 @@ ifeq ($(NATIVE_ECC_AVAILABLE), true)
   #
   vpath %.cpp $(SHARE_SRC)/native/$(PKGDIR)
 
-  vpath %.c $(SHARE_SRC)/native/$(PKGDIR)
+  vpath %.c $(SHARE_SRC)/native/$(PKGDIR)/impl
 
   #
   # Find include files
   #
-  OTHER_INCLUDES += -I$(SHARE_SRC)/native/$(PKGDIR)
+  OTHER_INCLUDES += -I$(SHARE_SRC)/native/$(PKGDIR)/impl
 
   #
   # Compiler flags
@@ -190,6 +199,10 @@ ifeq ($(NATIVE_ECC_AVAILABLE), true)
   include $(BUILDDIR)/common/Mapfile-vers.gmk
 
   include $(BUILDDIR)/common/Library.gmk
+
+else # NATIVE_ECC_AVAILABLE
+
+  include $(BUILDDIR)/common/Classes.gmk
 
 endif # NATIVE_ECC_AVAILABLE
 
@@ -296,7 +309,7 @@ $(JAR_DESTFILE): $(UNSIGNED_DIR)/sunec.jar
 else
 $(JAR_DESTFILE): $(SIGNED_DIR)/sunec.jar
 endif
-	$(install-file)
+	$(install-non-module-file)
 
 ifndef OPENJDK
 install-prebuilt:

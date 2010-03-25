@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,10 @@ ifeq ($(DEBUG_NAME), fastdebug)
   HOTSPOT_TARGET = all_fastdebug
 endif
 
+ifeq ($(ZERO_BUILD), true)
+  HOTSPOT_TARGET := $(HOTSPOT_TARGET)zero
+endif
+
 HOTSPOT_BUILD_ARGUMENTS += $(COMMON_BUILD_ARGUMENTS)
 HOTSPOT_BUILD_ARGUMENTS += ALT_OUTPUTDIR=$(HOTSPOT_OUTPUTDIR)
 HOTSPOT_BUILD_ARGUMENTS += ALT_EXPORT_PATH=$(HOTSPOT_EXPORT_PATH)
@@ -88,8 +92,10 @@ endif
 hotspot-build::
 	$(MKDIR) -p $(HOTSPOT_OUTPUTDIR)
 	$(MKDIR) -p $(HOTSPOT_EXPORT_PATH)
+	@$(call MakeStart, hotspot, $(HOTSPOT_TARGET))
 	$(CD) $(HOTSPOT_TOPDIR)/make && \
 	    $(MAKE) $(HOTSPOT_BUILD_ARGUMENTS) $(HOTSPOT_TARGET)
+	@$(call MakeFinish, hotspot, $(HOTSPOT_TARGET))
 
 #####################
 # .PHONY

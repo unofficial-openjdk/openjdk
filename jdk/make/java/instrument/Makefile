@@ -27,6 +27,7 @@
 # agent, supporting java.lang.instrument
 
 BUILDDIR = ../..
+MODULE  = instrument
 PACKAGE = sun.instrument
 LIBRARY = instrument
 PRODUCT = sun
@@ -109,7 +110,7 @@ else
     LDFLAGS += -R \$$ORIGIN/jli
   endif
   ifeq ($(PLATFORM), linux)
-    LDFLAGS += -z origin
+    LDFLAGS += -Wl,-z -Wl,origin
     LDFLAGS += -Wl,--allow-shlib-undefined
     LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/jli
   endif

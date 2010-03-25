@@ -33,7 +33,6 @@ import java.util.Set;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.api.DiagnosticFormatter;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -146,7 +145,10 @@ public class Log extends AbstractLog {
         private int getIntOption(Options options, String optionName, int defaultValue) {
             String s = options.get(optionName);
             try {
-                if (s != null) return Integer.parseInt(s);
+                if (s != null) {
+                    int n = Integer.parseInt(s);
+                    return (n <= 0 ? Integer.MAX_VALUE : n);
+                }
             } catch (NumberFormatException e) {
                 // silently ignore ill-formed numbers
             }
@@ -428,7 +430,7 @@ public class Log extends AbstractLog {
             JavaFileObject file = source.getFile();
             if (file != null)
                 printLines(errWriter,
-                           JavacFileManager.getJavacFileName(file) + ":" +
+                           file.getName() + ":" +
                            line + ": " + msg);
             printErrLine(pos, errWriter);
         }

@@ -36,6 +36,7 @@ import javax.tools.JavaFileObject;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
+import com.sun.tools.javac.file.BaseFileObject;
 import com.sun.tools.javac.util.*;
 
 import static com.sun.tools.javac.code.BoundKind.*;
@@ -964,11 +965,11 @@ public class ClassWriter extends ClassFile {
          // Class extends and implements clauses
         case CLASS_EXTENDS:
         case CLASS_EXTENDS_GENERIC_OR_ARRAY:
-            databuf.appendByte(p.type_index);
+            databuf.appendChar(p.type_index);
             break;
         // throws
         case THROWS:
-            databuf.appendByte(p.type_index);
+            databuf.appendChar(p.type_index);
             break;
         case CLASS_LITERAL:
         case CLASS_LITERAL_GENERIC_OR_ARRAY:
@@ -1685,13 +1686,8 @@ public class ClassWriter extends ClassFile {
             // the last possible moment because the sourcefile may be used
             // elsewhere in error diagnostics. Fixes 4241573.
             //databuf.appendChar(c.pool.put(c.sourcefile));
-            String filename = c.sourcefile.toString();
-            int sepIdx = filename.lastIndexOf(File.separatorChar);
-            // Allow '/' as separator on all platforms, e.g., on Win32.
-            int slashIdx = filename.lastIndexOf('/');
-            if (slashIdx > sepIdx) sepIdx = slashIdx;
-            if (sepIdx >= 0) filename = filename.substring(sepIdx + 1);
-            databuf.appendChar(c.pool.put(names.fromString(filename)));
+            String simpleName = BaseFileObject.getSimpleName(c.sourcefile);
+            databuf.appendChar(c.pool.put(names.fromString(simpleName)));
             endAttr(alenIdx);
             acount++;
         }
