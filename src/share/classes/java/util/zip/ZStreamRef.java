@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,24 @@
  * have any questions.
  */
 
-#ifndef __SAFE_ALLOC_H__
-#define __SAFE_ALLOC_H__
+package java.util.zip;
 
-#include "j2d_md.h"
-
-/*
- * Macroses defined below are wrappers for alloc functions
- * that perform buffer size calculation with integer overflow
- * check.
+/**
+ * A reference to the native zlib's z_stream structure.
  */
-#define SAFE_TO_ALLOC_2(c, sz)                                             \
-    (((c) > 0) && ((sz) > 0) &&                                            \
-     ((0xffffffffu / ((juint)(c))) > ((juint)(sz))))
 
-#define SAFE_TO_ALLOC_3(w, h, sz)                                          \
-    (((w) > 0) && ((h) > 0) && ((sz) > 0) &&                               \
-     (((0xffffffffu / ((juint)(w))) / ((juint)(h))) > ((juint)(sz))))
+class ZStreamRef {
 
+    private long address;
+    ZStreamRef (long address) {
+        this.address = address;
+    }
 
-#endif // __SAFE_ALLOC_H__
+    long address() {
+        return address;
+    }
+
+    void clear() {
+        address = 0;
+    }
+}
