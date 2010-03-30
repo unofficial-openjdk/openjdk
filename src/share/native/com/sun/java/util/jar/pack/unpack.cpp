@@ -488,7 +488,7 @@ void* unpacker::alloc_heap(size_t size, bool smallOK, bool temp) {
 
 maybe_inline
 void unpacker::saveTo(bytes& b, byte* ptr, size_t len) {
-  b.ptr = U_NEW(byte, len+1);
+  b.ptr = U_NEW(byte, add_size(len,1));
   if (aborting()) {
     b.len = 0;
     return;
@@ -675,7 +675,7 @@ void unpacker::read_file_header() {
     if (archive_size < header_size_1) {
       abort("too much read-ahead");  // somehow we pre-fetched too much?
       return;
-    }   
+    }
     input.set(U_NEW(byte, add_size(header_size_0, archive_size, C_SLOP)),
               (size_t) header_size_0 + archive_size);
     CHECK;
@@ -1129,7 +1129,7 @@ void unpacker::read_Utf8_values(entry* cpMap, int len) {
     *fillp = 0;  // bigbuf must contain a well-formed Utf8 string
     int length = fillp - bigbuf.ptr;
     bytes& value = cpMap[i].value.b;
-    value.set(U_NEW(byte, length+1), length);
+    value.set(U_NEW(byte, add_size(length,1)), length);
     value.copyFrom(bigbuf.ptr, length);
     CHECK;
     // Index all Utf8 strings
@@ -1601,7 +1601,7 @@ unpacker::attr_definitions::popBody(int bs_base) {
     return no_bands;
   } else {
     int nb = bs_limit - bs_base;
-    band** res = U_NEW(band*, nb+1);
+    band** res = U_NEW(band*, add_size(nb, 1));
     CHECK_(no_bands);
     for (int i = 0; i < nb; i++) {
       band* b = (band*) band_stack.get(bs_base + i);
@@ -1710,7 +1710,7 @@ unpacker::attr_definitions::parseLayout(const char* lp, band** &res,
             }
             // save away the case labels
             int ntags = band_stack.length() - case_base;
-            int* tags = U_NEW(int, 1+ntags);
+            int* tags = U_NEW(int, add_size(ntags, 1));
             CHECK_(lp);
             k_case.le_casetags = tags;
             *tags++ = ntags;
@@ -3115,8 +3115,8 @@ void cpool::initMemberIndexes() {
   int*     field_counts  = T_NEW(int, nclasses);
   int*     method_counts = T_NEW(int, nclasses);
   cpindex* all_indexes   = U_NEW(cpindex, nclasses*2);
-  entry**  field_ix      = U_NEW(entry*, nfields+nclasses);
-  entry**  method_ix     = U_NEW(entry*, nmethods+nclasses);
+  entry**  field_ix      = U_NEW(entry*, add_size(nfields, nclasses));
+  entry**  method_ix     = U_NEW(entry*, add_size(nmethods, nclasses));
 
   for (j = 0; j < nfields; j++) {
     entry& f = fields[j];
@@ -4104,7 +4104,7 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
           }
           const char* suffix = ".java";
           int len = prefix.len + strlen(suffix);
-          bytes name; name.set(T_NEW(byte, len + 1), len);
+          bytes name; name.set(T_NEW(byte, add_size(len, 1)), len);
           name.strcat(prefix).strcat(suffix);
           ref = cp.ensureUtf8(name);
         }
@@ -4619,7 +4619,7 @@ unpacker::file* unpacker::get_next_file() {
       bytes& prefix = cur_class->ref(0)->value.b;
       const char* suffix = ".class";
       int len = prefix.len + strlen(suffix);
-      bytes name; name.set(T_NEW(byte, len + 1), len);
+      bytes name; name.set(T_NEW(byte, add_size(len, 1)), len);
       cur_file.name = name.strcat(prefix).strcat(suffix).strval();
     }
   } else {
@@ -4686,6 +4686,7 @@ void unpacker::write_file_to_jar(unpacker::file* f) {
         input.ensureSize(fleft);
       }
       rplimit = rp = input.base();
+      CHECK;
       input.setLimit(rp + fleft);
       if (!ensure_input(fleft))
         abort("EOF reading resource file");

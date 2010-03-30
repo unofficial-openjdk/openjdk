@@ -1,12 +1,10 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,19 @@
  * have any questions.
  */
 
-#ifndef __SAFE_ALLOC_H__
-#define __SAFE_ALLOC_H__
-
-#include "j2d_md.h"
-
 /*
- * Macroses defined below are wrappers for alloc functions
- * that perform buffer size calculation with integer overflow
- * check.
+ * @test
+ * @bug 6898622
+ * @summary ObjectIdentifer.equals is not capable of detecting incorrectly encoded CommonName OIDs
+ * @run main/fail BerOid
  */
-#define SAFE_TO_ALLOC_2(c, sz)                                             \
-    (((c) > 0) && ((sz) > 0) &&                                            \
-     ((0xffffffffu / ((juint)(c))) > ((juint)(sz))))
 
-#define SAFE_TO_ALLOC_3(w, h, sz)                                          \
-    (((w) > 0) && ((h) > 0) && ((sz) > 0) &&                               \
-     (((0xffffffffu / ((juint)(w))) / ((juint)(h))) > ((juint)(sz))))
+import sun.security.util.*;
+
+public class BerOid {
+    public static void main(String[] args) throws Exception {
+        new DerValue(new byte[] {6, 4, 85, 4, (byte)0x80, 3}).getOID();
+    }
+}
 
 
-#endif // __SAFE_ALLOC_H__
