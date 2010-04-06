@@ -92,7 +92,8 @@ public class MemoryAllocatorTest {
         "archive header had incorrect size",
         "EOF reading band",
         "impossible archive size",
-	"bad value count"
+	"bad value count",
+	"file too large"
     };
 
     static int testExitValue = 0;

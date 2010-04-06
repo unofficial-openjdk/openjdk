@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -323,6 +323,10 @@ class ObjectIdentifier implements Serializable
         for (i = 0, retval = 0; i < 4; i++) {
             retval <<= 7;
             tmp = in.getByte ();
+            if (i == 0 && tmp == 0x80) {   // First byte is 0x80, BER
+                throw new IOException ("ObjectIdentifier() -- " +
+                        "sub component starts with 0x80");
+            }
             retval |= (tmp & 0x07f);
             if ((tmp & 0x080) == 0)
                 return retval;

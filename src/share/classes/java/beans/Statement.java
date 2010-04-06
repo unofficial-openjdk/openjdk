@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 import com.sun.beans.finder.ClassFinder;
 import sun.reflect.misc.MethodUtil;
@@ -61,9 +65,10 @@ public class Statement {
         }
     };
 
-    Object target;
-    String methodName;
-    Object[] arguments;
+    private final AccessControlContext acc = AccessController.getContext();
+    private final Object target;
+    private final String methodName;
+    private final Object[] arguments;
 
     /**
      * Creates a new <code>Statement</code> object with a <code>target</code>,
@@ -141,6 +146,27 @@ public class Statement {
     }
 
     Object invoke() throws Exception {
+        AccessControlContext acc = this.acc;
+        if ((acc == null) && (System.getSecurityManager() != null)) {
+            throw new SecurityException("AccessControlContext is not set");
+        }
+        try {
+            return AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<Object>() {
+                        public Object run()
+                                throws Exception {
+                            return invokeInternal();
+                        }
+                    },
+                    acc
+            );
+        }
+        catch (PrivilegedActionException exception) {
+            throw exception.getException();
+        }
+    }
+
+    private Object invokeInternal() throws Exception {
         Object target = getTarget();
         String methodName = getMethodName();
 
