@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,9 +66,6 @@ public:
   //                                           bool is_method, TRAPS)
 
   klassOop find_constrained_klass(symbolHandle name, Handle loader);
-  klassOop find_constrained_elem_klass(symbolHandle name, symbolHandle elem_name,
-                                       Handle loader, TRAPS);
-
 
   // Class loader constraints
 
