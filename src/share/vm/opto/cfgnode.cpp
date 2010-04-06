@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -956,6 +956,7 @@ const Type *PhiNode::Value( PhaseTransform *phase ) const {
     }
     if( jtkp && ttkp ) {
       if( jtkp->is_loaded() &&  jtkp->klass()->is_interface() &&
+          !jtkp->klass_is_exact() && // Keep exact interface klass (6894807)
           ttkp->is_loaded() && !ttkp->klass()->is_interface() ) {
         assert(ft == ttkp->cast_to_ptr_type(jtkp->ptr()) ||
                ft->isa_narrowoop() && ft->make_ptr() == ttkp->cast_to_ptr_type(jtkp->ptr()), "");
