@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -396,30 +396,6 @@ ciKlass* ciEnv::get_klass_by_name_impl(ciKlass* accessing_klass,
   if (found_klass != NULL) {
     // Found it.  Build a CI handle.
     return get_object(found_klass)->as_klass();
-  }
-
-  // If we fail to find an array klass, look again for its element type.
-  // The element type may be available either locally or via constraints.
-  // In either case, if we can find the element type in the system dictionary,
-  // we must build an array type around it.  The CI requires array klasses
-  // to be loaded if their element klasses are loaded, except when memory
-  // is exhausted.
-  if (sym->byte_at(0) == '[' &&
-      (sym->byte_at(1) == '[' || sym->byte_at(1) == 'L')) {
-    // We have an unloaded array.
-    // Build it on the fly if the element class exists.
-    symbolOop elem_sym = oopFactory::new_symbol(sym->as_utf8()+1,
-                                                sym->utf8_length()-1,
-                                                KILL_COMPILE_ON_FATAL_(fail_type));
-    // Get element ciKlass recursively.
-    ciKlass* elem_klass =
-      get_klass_by_name_impl(accessing_klass,
-                             get_object(elem_sym)->as_symbol(),
-                             require_local);
-    if (elem_klass != NULL && elem_klass->is_loaded()) {
-      // Now make an array for it
-      return ciObjArrayKlass::make_impl(elem_klass);
-    }
   }
 
   if (require_local)  return NULL;
