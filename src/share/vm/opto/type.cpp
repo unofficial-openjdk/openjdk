@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2523,10 +2523,14 @@ const Type *TypeOopPtr::filter( const Type *kills ) const {
       ftip->is_loaded() &&  ftip->klass()->is_interface() &&
       ktip->is_loaded() && !ktip->klass()->is_interface()) {
     // Happens in a CTW of rt.jar, 320-341, no extra flags
+    assert(!ftip->klass_is_exact(), "interface could not be exact");
     return ktip->cast_to_ptr_type(ftip->ptr());
   }
+  // Interface klass type could be exact in opposite to interface type,
+  // return it here instead of incorrect Constant ptr J/L/Object (6894807).
   if (ftkp != NULL && ktkp != NULL &&
       ftkp->is_loaded() &&  ftkp->klass()->is_interface() &&
+      !ftkp->klass_is_exact() && // Keep exact interface klass
       ktkp->is_loaded() && !ktkp->klass()->is_interface()) {
     // Happens in a CTW of rt.jar, 320-341, no extra flags
     return ktkp->cast_to_ptr_type(ftkp->ptr());
