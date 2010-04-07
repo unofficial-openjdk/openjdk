@@ -1,6 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,33 +22,44 @@
  *
  */
 
-  // This file holds the platform specific parts of the StubRoutines
-  // definition. See stubRoutines.hpp for a description on how to
-  // extend it.
+/**
+ * @test
+ * @bug 6892265
+ * @summary System.arraycopy unable to reference elements beyond Integer.MAX_VALUE bytes
+ *
+ * @run main/othervm Test
+ */
 
- public:
-  static address call_stub_return_pc() {
-    return (address) -1;
+public class Test {
+  static  final int NCOPY = 1;
+  static  final int OVERFLOW = 1;
+  static  int[] src2 = new int[NCOPY];
+  static  int[] dst2;
+
+  static void test() {
+    int N;
+    int SIZE;
+
+    N = Integer.MAX_VALUE/4 + OVERFLOW;
+    System.arraycopy(src2, 0, dst2, N, NCOPY);
+    System.arraycopy(dst2, N, src2, 0, NCOPY);
   }
 
-  static bool returns_to_call_stub(address return_pc) {
-    return return_pc == call_stub_return_pc();
+  public static void main(String[] args) {
+    try {
+      dst2 = new int[NCOPY + Integer.MAX_VALUE/4 + OVERFLOW];
+    } catch (OutOfMemoryError e) {
+       System.exit(95); // Not enough memory
+    }
+    System.out.println("warmup");
+    for (int i=0; i <11000; i++) {
+      test();
+    }
+    System.out.println("start");
+    for (int i=0; i <1000; i++) {
+      test();
+    }
+    System.out.println("finish");
   }
 
-  enum platform_dependent_constants {
-    code_size1 = 0,      // The assembler will fail with a guarantee
-    code_size2 = 0       // if these are too small.  Simply increase
-  };                     // them if that happens.
-
-  enum method_handles_platform_dependent_constants {
-    method_handles_adapters_code_size = 0
-  };
-
-#ifdef IA32
-  class x86 {
-    friend class VMStructs;
-
-   private:
-    static address _call_stub_compiled_return;
-  };
-#endif // IA32
+}
