@@ -29,6 +29,7 @@ import java.util.jar.JarFile;
 import java.io.Console;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.security.ProtectionDomain;
 
 /** A repository of "shared secrets", which are a mechanism for
     calling implementation-private methods in another package without
@@ -118,6 +119,9 @@ public class SharedSecrets {
 
     public static JavaSecurityProtectionDomainAccess
         getJavaSecurityProtectionDomainAccess() {
-            return javaSecurityProtectionDomainAccess;
+        if (javaSecurityProtectionDomainAccess == null)
+            unsafe.ensureClassInitialized(ProtectionDomain.class);
+
+        return javaSecurityProtectionDomainAccess;
     }
 }
