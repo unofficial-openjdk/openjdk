@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,28 +19,27 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
  */
 
-#define DTRACE_ALLOC_PROBES    0x1
-#define DTRACE_METHOD_PROBES   0x2
-#define DTRACE_MONITOR_PROBES  0x4
-#define DTRACE_ALL_PROBES      (DTRACE_ALLOC_PROBES  | \
-                                DTRACE_METHOD_PROBES | \
-                                DTRACE_MONITOR_PROBES)
+/*
+ * @test
+ * @bug 6707226
+ * @summary Tests the value updating in Expression
+ * @author Sergey Malenkov
+ */
 
-class DTrace : public AllStatic {
- private:
-  // disable one or more probes - OR above constants
-  static void disable_dprobes(int probe_types);
+import java.beans.Expression;
 
- public:
-  // enable one or more probes - OR above constants
-  static void enable_dprobes(int probe_types);
-  // all clients detached, do any clean-up
-  static void detach_all_clients();
-  // set ExtendedDTraceProbes flag
-  static void set_extended_dprobes(bool value);
-  // set DTraceMonitorProbes flag
-  static void set_monitor_dprobes(bool value);
-};
+public class Test6707226 {
+    public static void main(String[] args) throws Exception {
+        Object value = new Object();
+
+        Expression expression = new Expression(value, Object.class, "new", null);
+        if (!value.equals(expression.getValue()))
+            throw new Error("the value is updated unexpectedly");
+
+        expression.execute();
+        if (value.equals(expression.getValue()))
+            throw new Error("the value is not updated as expected");
+    }
+}
