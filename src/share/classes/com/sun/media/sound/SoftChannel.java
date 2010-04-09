@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,7 +116,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     protected int tuning_program = 0;
     protected SoftInstrument current_instrument = null;
     protected ModelChannelMixer current_mixer = null;
-    private ModelDirector current_director = null;
+    protected ModelDirector current_director = null;
 
     // Controller Destination Settings
     protected int cds_control_number = -1;
@@ -1259,7 +1259,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         }
     }
 
-    public void programChange(int program) {        
+    public void programChange(int program) {
         programChange(bank, program);
     }
 
@@ -1268,9 +1268,12 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         program = restrict7Bit(program);        
         synchronized (control_mutex) {
             mainmixer.activity();
-            this.bank = bank;
-            this.program = program;
-            current_instrument = null;
+            if(this.bank != bank || this.program != program)
+            {
+                this.bank = bank;
+                this.program = program;
+                current_instrument = null;
+            }
         }
     }
 
