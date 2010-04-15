@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -910,6 +910,10 @@ class CommandLineFlags {
           " Controls emission of inline sync fast-path code")               \
                                                                             \
   product(intx, AlwaysInflate, 0, "(Unstable) Force inflation")             \
+                                                                            \
+  product(intx, MonitorBound, 0, "Bound Monitor population")                \
+                                                                            \
+  product(bool, MonitorInUseLists, false, "Track Monitors for Deflation")   \
                                                                             \
   product(intx, Atomics, 0,                                                 \
           "(Unsafe,Unstable) Diagnostic - Controls emission of atomics")    \
