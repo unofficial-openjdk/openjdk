@@ -49,7 +49,6 @@ public class ISO_8859_15 extends Charset implements HistoricallyNamedCharset
 
     public boolean contains(Charset cs) {
         return ((cs instanceof US_ASCII)
-                || (cs instanceof ISO_8859_1)
                 || (cs instanceof ISO_8859_15));
     }
 
