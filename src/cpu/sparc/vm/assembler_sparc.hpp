@@ -661,9 +661,6 @@ class Assembler : public AbstractAssembler  {
     stx_op3      = 0x0e,
     swap_op3     = 0x0f,
 
-    lduwa_op3    = 0x10,
-    ldxa_op3     = 0x1b,
-
     stwa_op3     = 0x14,
     stxa_op3     = 0x1e,
 
@@ -1065,7 +1062,7 @@ class Assembler : public AbstractAssembler  {
   }
   void assert_not_delayed(const char* msg) {
 #ifdef CHECK_DELAY
-    assert_msg ( delay_state == no_delay, msg);
+    assert(delay_state == no_delay, msg);
 #endif
   }
 

@@ -652,6 +652,11 @@ class CommandLineFlags {
   product(bool, PrintGCApplicationStoppedTime, false,                       \
           "Print the time the application has been stopped")                \
                                                                             \
+  notproduct(uintx, ErrorHandlerTest, 0,                                    \
+          "If > 0, provokes an error after VM initialization; the value"    \
+          "determines which error to provoke.  See test_error_handler()"    \
+          "in debug.cpp.")                                                  \
+                                                                            \
   develop(bool, Verbose, false,                                             \
           "Prints additional debugging information from other modes")       \
                                                                             \
@@ -1052,7 +1057,8 @@ class CommandLineFlags {
           "Use SSE2 MOVDQU instruction for Arraycopy")                      \
                                                                             \
   product(intx, FieldsAllocationStyle, 1,                                   \
-          "0 - type based with oops first, 1 - with oops last")             \
+          "0 - type based with oops first, 1 - with oops last, "            \
+          "2 - oops in super and sub classes are together")                 \
                                                                             \
   product(bool, CompactFields, true,                                        \
           "Allocate nonstatic fields in gaps between previous fields")      \
@@ -2707,7 +2713,8 @@ class CommandLineFlags {
   product(intx,  AllocatePrefetchStyle, 1,                                  \
           "0 = no prefetch, "                                               \
           "1 = prefetch instructions for each allocation, "                 \
-          "2 = use TLAB watermark to gate allocation prefetch")             \
+          "2 = use TLAB watermark to gate allocation prefetch, "            \
+          "3 = use BIS instruction on Sparc for allocation prefetch")       \
                                                                             \
   product(intx,  AllocatePrefetchDistance, -1,                              \
           "Distance to prefetch ahead of allocation pointer")               \
@@ -3109,6 +3116,9 @@ class CommandLineFlags {
                                                                             \
   develop_pd(intx, CodeEntryAlignment,                                      \
           "Code entry alignment for generated code (in bytes)")             \
+                                                                            \
+  product_pd(intx, OptoLoopAlignment,                                       \
+          "Align inner loops to zero relative to this modulus")             \
                                                                             \
   product_pd(uintx, InitialCodeCacheSize,                                   \
           "Initial code cache size (in bytes)")                             \
