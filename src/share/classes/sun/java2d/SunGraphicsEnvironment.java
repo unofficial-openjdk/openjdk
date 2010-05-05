@@ -459,7 +459,7 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
             return;
         }
         /* Use lock specific to the font system */
-        synchronized (lucidaFontName) {
+        synchronized (FontManager.class) {
             if (debugFonts) {
                 Thread.dumpStack();
                 logger.info("SunGraphicsEnvironment.loadFonts() called");
@@ -499,7 +499,7 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
             return;
         }
         /* Use lock specific to the font system */
-        synchronized (lucidaFontName) {
+        synchronized (FontManager.class) {
             if (debugFonts) {
                 Thread.dumpStack();
                 logger.info("loadAllFontFiles() called");
