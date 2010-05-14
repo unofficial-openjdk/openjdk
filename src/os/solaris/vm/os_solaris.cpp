@@ -1843,8 +1843,8 @@ void os::dll_build_name(char* buffer, size_t buflen,
 
   // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
-      *buffer = '\0';
-      return;
+    *buffer = '\0';
+    return;
   }
 
   if (pnamelen == 0) {
